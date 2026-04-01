@@ -1,0 +1,447 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Talisay Housing Information System</title>
+    <link rel="stylesheet" href="{% static 'css/home.css' %}">
+</head>
+<body>
+    <div class="page-wrapper">
+        <!-- Top Bar / Header -->
+        <header class="header">
+            <!-- Gov Banner -->
+            <div class="gov-banner">
+                Official website of the Talisay City Housing Authority · Republic of the Philippines
+            </div>
+
+            <div class="header-content">
+                <div class="header-inner">
+                    <!-- Logo + Name -->
+                    <div class="logo-section">
+                        <div class="logo-circle">
+                            <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 21h18M5 21V7l8-4 8 4v14M9 21v-6h6v6"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="logo-title">Talisay Housing Authority</div>
+                            <div class="logo-subtitle">Housing Information System</div>
+                        </div>
+                    </div>
+
+                    <!-- Desktop Nav -->
+                    <nav class="desktop-nav">
+                        <a href="#requirements" class="nav-link">Help / Requirements</a>
+                        <a href="#contact" class="nav-link">Contact</a>
+                        <a href="{% url 'login' %}" class="login-btn">Log In</a>
+                    </nav>
+
+                    <!-- Mobile Menu Toggle -->
+                    <button class="mobile-menu-btn" id="mobileMenuBtn">
+                        <svg class="menu-icon" id="menuIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 12h18M3 6h18M3 18h18"/>
+                        </svg>
+                        <svg class="close-icon hidden" id="closeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M18 6L6 18M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Mobile Menu -->
+                <div class="mobile-menu hidden" id="mobileMenu">
+                    <a href="#requirements" class="mobile-nav-link">Help / Requirements</a>
+                    <a href="#contact" class="mobile-nav-link">Contact</a>
+                    <a href="{% url 'login' %}" class="mobile-login-btn">Log In</a>
+                </div>
+            </div>
+        </header>
+
+        <!-- Hero Section -->
+        <section class="hero">
+            <img src="https://images.unsplash.com/photo-1658063677205-9fc181e7ad3f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjBnb3Zlcm5tZW50JTIwYnVpbGRpbmclMjBwaGlsaXBwaW5lcyUyMGNpdHklMjBoYWxsfGVufDF8fHx8MTc3NTAxNjk2OHww&ixlib=rb-4.1.0&q=80&w=1080" 
+                alt="Talisay City Hall" 
+                class="hero-bg">
+            <div class="hero-overlay"></div>
+
+            <div class="hero-content">
+                <div class="hero-text">
+                    <div class="hero-badge">
+                        <svg class="badge-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                            <polyline points="22 4 12 14.01 9 11.01"/>
+                        </svg>
+                        Official Housing Management Platform · Talisay City
+                    </div>
+
+                    <h1 class="hero-title">
+                        Talisay Housing Authority
+                        <br>
+                        <span class="hero-title-accent">Information System</span>
+                    </h1>
+
+                    <p class="hero-description">
+                        Centralized applicant intake, document tracking, unit monitoring, and
+                        reporting — designed for efficient day-to-day operations of the Talisay
+                        City Housing Authority.
+                    </p>
+
+                    <div class="hero-buttons">
+                        <a href="{% url 'login' %}" class="btn-primary">
+                            Staff Log In
+                            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="9 18 15 12 9 6"/>
+                            </svg>
+                        </a>
+                        <a href="#requirements" class="btn-secondary">
+                            View Requirements
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Stats Strip -->
+        <section class="stats-section">
+            <div class="stats-container">
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-icon-wrapper">
+                            <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                <circle cx="9" cy="7" r="4"/>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="stat-value">2,400+</div>
+                            <div class="stat-label">Registered Applicants</div>
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-icon-wrapper">
+                            <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 21h18M5 21V7l8-4 8 4v14M9 21v-6h6v6"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="stat-value">850+</div>
+                            <div class="stat-label">Housing Units Monitored</div>
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-icon-wrapper">
+                            <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
+                                <rect x="9" y="3" width="6" height="4" rx="1"/>
+                                <path d="M9 12h6M9 16h6"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="stat-value">1,200+</div>
+                            <div class="stat-label">Applications Processed</div>
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-icon-wrapper">
+                            <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                                <circle cx="12" cy="10" r="3"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="stat-value">18</div>
+                            <div class="stat-label">Barangays Covered</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Feature Cards / System Modules -->
+        <section class="features-section">
+            <div class="features-container">
+                <div class="section-header">
+                    <h2 class="section-title">System Modules</h2>
+                    <p class="section-subtitle">
+                        An integrated platform covering all stages of the housing application and occupancy lifecycle.
+                    </p>
+                </div>
+
+                <div class="features-grid">
+                    <!-- Feature 1 -->
+                    <div class="feature-card">
+                        <div class="feature-icon-wrapper blue">
+                            <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                <circle cx="9" cy="7" r="4"/>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+                            </svg>
+                        </div>
+                        <h3 class="feature-title">Applicant Registration & Queues</h3>
+                        <p class="feature-description">
+                            Register ISF applicants, manage priority and walk-in queues, track eligibility status, and monitor CDRRMO certification progress.
+                        </p>
+                        <ul class="feature-highlights">
+                            <li><svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Priority Queue Management</li>
+                            <li><svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Walk-in FIFO System</li>
+                            <li><svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Eligibility Tracking</li>
+                        </ul>
+                    </div>
+
+                    <!-- Feature 2 -->
+                    <div class="feature-card">
+                        <div class="feature-icon-wrapper green">
+                            <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14 2 14 8 20 8"/>
+                                <line x1="16" y1="13" x2="8" y2="13"/>
+                                <line x1="16" y1="17" x2="8" y2="17"/>
+                                <polyline points="10 9 9 9 8 9"/>
+                            </svg>
+                        </div>
+                        <h3 class="feature-title">Document Checklist & Application Processing</h3>
+                        <p class="feature-description">
+                            Manage housing application documents, track checklist completion, and route applications through signatory workflows.
+                        </p>
+                        <ul class="feature-highlights">
+                            <li><svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> 7-Step Document Checklist</li>
+                            <li><svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Signatory Routing</li>
+                            <li><svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Digital Tracking</li>
+                        </ul>
+                    </div>
+
+                    <!-- Feature 3 -->
+                    <div class="feature-card">
+                        <div class="feature-icon-wrapper amber">
+                            <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                                <polyline points="9 22 9 12 15 12 15 22"/>
+                            </svg>
+                        </div>
+                        <h3 class="feature-title">Housing Unit Monitoring & Notices</h3>
+                        <p class="feature-description">
+                            Monitor occupancy status of housing units, issue compliance notices, manage repossessions, and oversee standby lot awarding.
+                        </p>
+                        <ul class="feature-highlights">
+                            <li><svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Occupancy Monitoring</li>
+                            <li><svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> 30-Day & 10-Day Notices</li>
+                            <li><svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Lot Awarding</li>
+                        </ul>
+                    </div>
+
+                    <!-- Feature 4 -->
+                    <div class="feature-card">
+                        <div class="feature-icon-wrapper purple">
+                            <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="20" x2="18" y2="10"/>
+                                <line x1="12" y1="20" x2="12" y2="4"/>
+                                <line x1="6" y1="20" x2="6" y2="14"/>
+                            </svg>
+                        </div>
+                        <h3 class="feature-title">Reports & Analytics</h3>
+                        <p class="feature-description">
+                            Generate accomplishment summaries, export data for DILG reporting, track pipeline metrics, and produce compliance analytics.
+                        </p>
+                        <ul class="feature-highlights">
+                            <li><svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> CSV & PDF Exports</li>
+                            <li><svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Pipeline Analytics</li>
+                            <li><svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> DILG Reporting</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Application Process -->
+        <section id="requirements" class="process-section">
+            <div class="process-container">
+                <div class="section-header">
+                    <h2 class="section-title">Application Process</h2>
+                    <p class="section-subtitle">
+                        A simplified overview of the steps to apply for housing assistance through the Talisay City Housing Authority.
+                    </p>
+                </div>
+
+                <div class="steps-wrapper">
+                    <div class="steps-line"></div>
+                    <div class="steps-grid">
+                        <div class="step-item">
+                            <div class="step-circle">1</div>
+                            <h4 class="step-label">Submit Requirements</h4>
+                            <p class="step-desc">Visit the office with your documents</p>
+                        </div>
+                        <div class="step-item">
+                            <div class="step-circle">2</div>
+                            <h4 class="step-label">Eligibility Assessment</h4>
+                            <p class="step-desc">Staff verifies CDRRMO certification</p>
+                        </div>
+                        <div class="step-item">
+                            <div class="step-circle">3</div>
+                            <h4 class="step-label">Application Processing</h4>
+                            <p class="step-desc">Complete the housing application form</p>
+                        </div>
+                        <div class="step-item">
+                            <div class="step-circle">4</div>
+                            <h4 class="step-label">Lot Awarding</h4>
+                            <p class="step-desc">Receive notice of unit assignment</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Requirements Boxes -->
+                <div class="requirements-grid">
+                    <div class="requirements-box blue-box">
+                        <h3 class="requirements-title">
+                            <svg class="req-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14 2 14 8 20 8"/>
+                            </svg>
+                            Documentary Requirements
+                        </h3>
+                        <ul class="requirements-list">
+                            <li><svg class="check-blue" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Valid government-issued ID</li>
+                            <li><svg class="check-blue" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Proof of residency / community certification</li>
+                            <li><svg class="check-blue" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> CDRRMO certification (for ISF applicants)</li>
+                            <li><svg class="check-blue" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Birth certificate of all household members</li>
+                            <li><svg class="check-blue" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Marriage certificate (if applicable)</li>
+                            <li><svg class="check-blue" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Certificate of No Land Ownership (CNLO)</li>
+                            <li><svg class="check-blue" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Income declaration / employment records</li>
+                        </ul>
+                    </div>
+
+                    <div class="requirements-box amber-box">
+                        <h3 class="requirements-title amber">
+                            <svg class="req-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <line x1="12" y1="8" x2="12" y2="12"/>
+                                <line x1="12" y1="16" x2="12.01" y2="16"/>
+                            </svg>
+                            Important Reminders
+                        </h3>
+                        <ul class="reminders-list">
+                            <li><span class="bullet"></span> Applications are processed on a first-come, first-served basis for walk-in applicants.</li>
+                            <li><span class="bullet"></span> Priority queue is reserved for certified ISF (Informal Settler Families) applicants.</li>
+                            <li><span class="bullet"></span> All documents must be original plus one photocopy.</li>
+                            <li><span class="bullet"></span> Incomplete submissions will not be processed until all documents are complete.</li>
+                            <li><span class="bullet"></span> For updates on your application status, please visit the THA office with your reference number.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Banner -->
+        <section class="cta-section">
+            <div class="cta-container">
+                <h2 class="cta-title">Are you a THA Staff Member?</h2>
+                <p class="cta-description">
+                    Log in to access your role-based dashboard, manage applicant queues, process documents, and generate reports.
+                </p>
+                <a href="{% url 'login' %}" class="cta-button">
+                    Staff Portal Log In
+                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9 18 15 12 9 6"/>
+                    </svg>
+                </a>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer id="contact" class="footer">
+            <div class="footer-content">
+                <div class="footer-grid">
+                    <!-- Office Info -->
+                    <div class="footer-col">
+                        <div class="footer-logo">
+                            <div class="footer-logo-circle">
+                                <svg class="footer-logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M3 21h18M5 21V7l8-4 8 4v14M9 21v-6h6v6"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="footer-brand">Talisay Housing Authority</div>
+                                <div class="footer-tagline">Housing Information System</div>
+                            </div>
+                        </div>
+                        <p class="footer-description">
+                            The Talisay City Housing Authority manages the intake, assessment, and
+                            placement of informal settler families under the city's socialized
+                            housing program.
+                        </p>
+                        <div class="footer-address">
+                            <svg class="address-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                                <circle cx="12" cy="10" r="3"/>
+                            </svg>
+                            <span>Talisay City Hall Compound, Talisay City, Negros Occidental, Philippines</span>
+                        </div>
+                    </div>
+
+                    <!-- Contact -->
+                    <div class="footer-col">
+                        <h4 class="footer-heading">Contact Information</h4>
+                        <div class="contact-items">
+                            <div class="contact-item">
+                                <div class="contact-icon-wrapper">
+                                    <svg class="contact-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <div class="contact-label">Hotline</div>
+                                    <div class="contact-value">(034) 495-XXXX</div>
+                                </div>
+                            </div>
+                            <div class="contact-item">
+                                <div class="contact-icon-wrapper">
+                                    <svg class="contact-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"/>
+                                        <polyline points="12 6 12 12 16 14"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <div class="contact-label">Office Hours</div>
+                                    <div class="contact-value">Mon–Fri, 8:00 AM – 5:00 PM</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Links -->
+                    <div class="footer-col">
+                        <h4 class="footer-heading">Quick Links</h4>
+                        <ul class="quick-links">
+                            <li><a href="#">Talisay City Official Website</a></li>
+                            <li><a href="#">DILG Region VI</a></li>
+                            <li><a href="#">National Housing Authority</a></li>
+                            <li><a href="#requirements">Application Requirements</a></li>
+                        </ul>
+
+                        <div class="privacy-box">
+                            <svg class="privacy-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                            </svg>
+                            <p>
+                                <strong>Data Privacy Notice:</strong>
+                                Personal data collected is protected under Republic Act No. 10173 (Data Privacy Act of 2012) and is used solely for housing application processing.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Bar -->
+            <div class="footer-bottom">
+                <div class="footer-bottom-content">
+                    <p>© 2026 Talisay City Housing Authority. All rights reserved.</p>
+                    <p>Republic of the Philippines · Talisay City, Negros Occidental</p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script src="{% static 'js/home.js' %}"></script>
+</body>
+</html>
