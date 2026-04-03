@@ -57,7 +57,7 @@
                     {% endfor %}
                 {% endif %}
 
-                <form method="post" class="login-form" autocomplete="off">
+                <form method="post" class="login-form" autocomplete="off" id="loginForm">
                     {% csrf_token %}
                     <div class="form-group">
                         <label for="{{ form.username.id_for_label }}" class="form-label">Username</label>
@@ -68,6 +68,7 @@
                                 <circle cx="12" cy="7" r="4"/>
                             </svg>
                         </div>
+                        <p class="input-hint">Format: firstname.lastname (e.g., joie.tingson)</p>
                         {% if form.username.errors %}
                             <span class="form-error">{{ form.username.errors.0 }}</span>
                         {% endif %}
@@ -97,10 +98,24 @@
                         {% endif %}
                     </div>
 
+                    <div class="form-options">
+                        <a href="#" class="forgot-password" id="forgotPasswordLink">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                                <line x1="12" y1="17" x2="12.01" y2="17"/>
+                            </svg>
+                            Forgot Password?
+                        </a>
+                    </div>
+
                     <button type="submit" class="login-btn" id="loginBtn">
-                        <span>Sign In</span>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <span class="btn-text">Sign In</span>
+                        <svg class="btn-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <polyline points="9 18 15 12 9 6"/>
+                        </svg>
+                        <svg class="btn-spinner hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10" stroke-dasharray="60" stroke-dashoffset="20"/>
                         </svg>
                     </button>
 
@@ -144,23 +159,57 @@
         });
 
         // Form submission loading state
-        const loginForm = document.querySelector('.login-form');
+        const loginForm = document.getElementById('loginForm');
         const loginBtn = document.getElementById('loginBtn');
+        const btnText = loginBtn.querySelector('.btn-text');
+        const btnArrow = loginBtn.querySelector('.btn-arrow');
+        const btnSpinner = loginBtn.querySelector('.btn-spinner');
 
-        loginForm.addEventListener('submit', function() {
+        loginForm.addEventListener('submit', function(e) {
+            // Show loading state
+            loginBtn.disabled = true;
             loginBtn.classList.add('loading');
-            loginBtn.innerHTML = `
-                <svg class="animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10" stroke-dasharray="60" stroke-dashoffset="20"/>
-                </svg>
-                <span>Signing in...</span>
-            `;
+            btnText.textContent = 'Signing in...';
+            btnArrow.classList.add('hidden');
+            btnSpinner.classList.remove('hidden');
+        });
+
+        // Keyboard accessibility - Enter key to submit (native behavior, but explicit for clarity)
+        loginForm.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                // Native form submission will handle this, but we ensure button is focusable
+                if (document.activeElement.tagName !== 'BUTTON') {
+                    loginBtn.focus();
+                }
+            }
+        });
+
+        // Forgot password functionality (placeholder)
+        const forgotPasswordLink = document.getElementById('forgotPasswordLink');
+        forgotPasswordLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            alert('Password recovery feature coming soon!\n\nFor now, please contact your system administrator:\n\nEmail: admin@talisayhousing.gov.ph\nPhone: (034) 495-XXXX\nOffice Hours: Monday - Friday, 8:00 AM - 5:00 PM');
         });
     </script>
     <style>
         .hidden { display: none !important; }
-        .animate-spin { animation: spin 1s linear infinite; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        
+        /* Spinner animation */
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .btn-spinner {
+            animation: spin 1s linear infinite;
+            width: 20px;
+            height: 20px;
+        }
+        
+        .login-btn.loading {
+            opacity: 0.8;
+            cursor: not-allowed;
+        }
     </style>
 </body>
 </html>
