@@ -1,23 +1,20 @@
-{% extends 'base.html' %}
+{% extends 'staff_base.html' %}
 {% load static %}
 {% load widget_tweaks %}
 
 {% block title %}Review ISF {{ isf_record.reference_number }} - THA{% endblock %}
 
+{% block nav_intake %}active{% endblock %}
+
+{% block page_title %}Review ISF Application{% endblock %}
+
 {% block extra_css %}
 <style>
-    /* Modern clean UI - Tailwind-inspired design */
-    body {
-        margin: 0;
-        padding: 0;
-        background: #f8fafc;
-        min-height: 100vh;
-    }
-    
+    /* Page-specific styles - Modern clean UI */
     .review-container {
         max-width: 900px;
-        margin: 1rem auto;
-        padding: 0 1rem;
+        margin: 0 auto;
+        padding: 0;
     }
     
     .back-nav {
@@ -337,7 +334,7 @@
 </style>
 {% endblock %}
 
-{% block body %}
+{% block content %}
 <div class="review-container">
     
     <a href="{% url 'intake:submission_review' isf_record.submission.id %}" class="back-nav">
