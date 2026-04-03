@@ -77,10 +77,17 @@ def landowner_form(request):
 def submission_list(request):
     """
     Staff view: List all landowner submissions for review.
-    Jocel uses this to see pending submissions.
+    
+    ACCESS CONTROL - Hierarchical Model:
+    ✅ Jocel (fourth_member) - Primary reviewer
+    ✅ Joie (second_member) - Supervisor/oversight, quality control
+    ✅ Victor (oic) - Management oversight
+    ✅ Arthur (head) - Executive oversight
+    
+    This allows for: backup coverage, quality control, management visibility
     """
-    # Only show to authorized staff (Jocel, management)
-    if not request.user.position in ['fourth_member', 'head', 'oic', 'second_member']:
+    # Hierarchical access: Primary reviewer + Supervisor + Management
+    if not request.user.position in ['fourth_member', 'second_member', 'oic', 'head']:
         messages.error(request, 'You do not have permission to access this page.')
         return redirect('accounts:dashboard')
     
@@ -101,10 +108,15 @@ def submission_list(request):
 def submission_review(request, submission_id):
     """
     Staff view: Review a specific landowner submission.
-    Jocel reviews each ISF, adds phone numbers, runs eligibility checks.
+    
+    ACCESS CONTROL - Hierarchical Model:
+    ✅ Jocel (fourth_member) - Primary reviewer, adds phone numbers, runs eligibility
+    ✅ Joie (second_member) - Supervisor/oversight, can review Jocel's work
+    ✅ Victor (oic) - Management oversight
+    ✅ Arthur (head) - Executive oversight
     """
-    # Only Jocel, management
-    if not request.user.position in ['fourth_member', 'head', 'oic', 'second_member']:
+    # Hierarchical access: Primary reviewer + Supervisor + Management
+    if not request.user.position in ['fourth_member', 'second_member', 'oic', 'head']:
         messages.error(request, 'You do not have permission to access this page.')
         return redirect('accounts:dashboard')
     
@@ -132,10 +144,20 @@ def submission_review(request, submission_id):
 def isf_review(request, isf_id):
     """
     Staff view: Review individual ISF record.
-    Jocel adds phone, extracts barangay, checks property ownership, adds household members.
+    
+    ACCESS CONTROL - Hierarchical Model:
+    ✅ Jocel (fourth_member) - Primary reviewer, performs eligibility checks
+    ✅ Joie (second_member) - Supervisor/oversight, quality control
+    ✅ Victor (oic) - Management oversight
+    ✅ Arthur (head) - Executive oversight
+    
+    Benefits:
+    - Quality control and cross-checking of eligibility decisions
+    - Backup coverage when primary reviewer is unavailable
+    - Management visibility into workload and decision-making
     """
-    # Only Jocel, management
-    if not request.user.position in ['fourth_member', 'head', 'oic', 'second_member']:
+    # Hierarchical access: Primary reviewer + Supervisor + Management
+    if not request.user.position in ['fourth_member', 'second_member', 'oic', 'head']:
         messages.error(request, 'You do not have permission to access this page.')
         return redirect('accounts:dashboard')
     
