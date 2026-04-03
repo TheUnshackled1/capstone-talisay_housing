@@ -1,0 +1,33 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="{% block meta_description %}Talisay Housing Authority Information System{% endblock %}">
+    <title>{% block title %}THA{% endblock %} | Talisay Housing Authority</title>
+    <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}">
+    
+    <!-- Base Styles -->
+    <link rel="stylesheet" href="{% static 'css/home.css' %}">
+    
+    <!-- Page-specific styles -->
+    {% block extra_css %}{% endblock %}
+    
+    <style>
+        /* Ensure hidden class works globally */
+        .hidden { display: none !important; }
+        .animate-spin { animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    {% block body %}{% endblock %}
+    
+    <!-- Base Scripts with scroll animations -->
+    <script src="{% static 'js/home.js' %}"></script>
+    
+    <!-- Page-specific scripts -->
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

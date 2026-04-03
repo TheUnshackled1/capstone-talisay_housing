@@ -1006,3 +1006,147 @@ img {
 .footer-bottom p:last-child {
     color: #3b82f6;
 }
+
+/* ========================================
+   SCROLL ANIMATIONS
+   ======================================== */
+
+/* Base state - elements start hidden */
+.scroll-animate {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+/* Animated state - when element enters viewport */
+.scroll-animate.animate-in {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Fade from left */
+.scroll-animate-left {
+    opacity: 0;
+    transform: translateX(-60px);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.scroll-animate-left.animate-in {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* Fade from right */
+.scroll-animate-right {
+    opacity: 0;
+    transform: translateX(60px);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.scroll-animate-right.animate-in {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* Scale up animation */
+.scroll-animate-scale {
+    opacity: 0;
+    transform: scale(0.85);
+    transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+}
+
+.scroll-animate-scale.animate-in {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* Fade in only (no movement) */
+.scroll-animate-fade {
+    opacity: 0;
+    transition: opacity 0.8s ease-out;
+}
+
+.scroll-animate-fade.animate-in {
+    opacity: 1;
+}
+
+/* Stagger delays for grouped elements */
+.scroll-delay-1 { transition-delay: 0.1s; }
+.scroll-delay-2 { transition-delay: 0.2s; }
+.scroll-delay-3 { transition-delay: 0.3s; }
+.scroll-delay-4 { transition-delay: 0.4s; }
+.scroll-delay-5 { transition-delay: 0.5s; }
+.scroll-delay-6 { transition-delay: 0.6s; }
+
+/* Slide up with bounce */
+.scroll-animate-bounce {
+    opacity: 0;
+    transform: translateY(50px);
+    transition: opacity 0.6s ease-out, transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.scroll-animate-bounce.animate-in {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Rotate in */
+.scroll-animate-rotate {
+    opacity: 0;
+    transform: rotate(-10deg) scale(0.9);
+    transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+}
+
+.scroll-animate-rotate.animate-in {
+    opacity: 1;
+    transform: rotate(0) scale(1);
+}
+
+/* Blur in effect */
+.scroll-animate-blur {
+    opacity: 0;
+    filter: blur(10px);
+    transform: translateY(20px);
+    transition: opacity 0.6s ease-out, filter 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.scroll-animate-blur.animate-in {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+}
+
+/* Special for cards - subtle lift */
+.scroll-animate-card {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.5s ease-out, transform 0.5s ease-out, box-shadow 0.3s ease;
+}
+
+.scroll-animate-card.animate-in {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Counter number animation helper */
+.counter-animate {
+    display: inline-block;
+}
+
+/* Respect reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+    .scroll-animate,
+    .scroll-animate-left,
+    .scroll-animate-right,
+    .scroll-animate-scale,
+    .scroll-animate-fade,
+    .scroll-animate-bounce,
+    .scroll-animate-rotate,
+    .scroll-animate-blur,
+    .scroll-animate-card {
+        opacity: 1;
+        transform: none;
+        filter: none;
+        transition: none;
+    }
+}
