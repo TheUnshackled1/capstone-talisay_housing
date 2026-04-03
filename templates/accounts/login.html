@@ -1,4 +1,5 @@
 {% load static %}
+{% load widget_tweaks %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -50,37 +51,23 @@
                 <form method="post" class="login-form" autocomplete="off">
                     {% csrf_token %}
                     <div class="form-group">
-                        <label for="username" class="form-label">Username</label>
+                        <label for="{{ form.username.id_for_label }}" class="form-label">Username</label>
                         <div class="input-wrapper">
-                            <input 
-                                type="text" 
-                                id="username" 
-                                name="username" 
-                                class="form-input" 
-                                placeholder="Enter your username"
-                                required
-                                autofocus
-                                autocomplete="username"
-                            >
+                            {% render_field form.username class="form-input" required=True %}
                             <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
                                 <circle cx="12" cy="7" r="4"/>
                             </svg>
                         </div>
+                        {% if form.username.errors %}
+                            <span class="form-error">{{ form.username.errors.0 }}</span>
+                        {% endif %}
                     </div>
 
                     <div class="form-group">
-                        <label for="password" class="form-label">Password</label>
+                        <label for="{{ form.password.id_for_label }}" class="form-label">Password</label>
                         <div class="input-wrapper">
-                            <input 
-                                type="password" 
-                                id="password" 
-                                name="password" 
-                                class="form-input" 
-                                placeholder="Enter your password"
-                                required
-                                autocomplete="current-password"
-                            >
+                            {% render_field form.password class="form-input" required=True id="password" %}
                             <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
                                 <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
@@ -96,6 +83,9 @@
                                 </svg>
                             </button>
                         </div>
+                        {% if form.password.errors %}
+                            <span class="form-error">{{ form.password.errors.0 }}</span>
+                        {% endif %}
                     </div>
 
                     <button type="submit" class="login-btn" id="loginBtn">
