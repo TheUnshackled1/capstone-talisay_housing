@@ -1,0 +1,164 @@
+{% comment %}
+Dashboard Widgets for Head (Arthur Benjamin S. Maramba)
+Responsibilities:
+- M2: Final signatory
+- M6: Receives reports and analytics
+{% endcomment %}
+
+<!-- Pending Final Approval Widget -->
+<div class="card scroll-animate">
+    <div class="card-header">
+        <h3 class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <path d="M12 18v-6M9 15h6"/>
+            </svg>
+            Awaiting Your Signature
+        </h3>
+        <span class="badge badge-danger">{{ pending_approvals|length|default:0 }}</span>
+    </div>
+    <div class="card-body">
+        {% if pending_approvals %}
+            <ul class="approval-list">
+                {% for application in pending_approvals %}
+                <li class="approval-item">
+                    <div class="approval-content">
+                        <div class="approval-name">{{ application.applicant_name }}</div>
+                        <div class="approval-meta">
+                            <span class="approval-ref">{{ application.reference }}</span>
+                            <span class="approval-date">Forwarded {{ application.forwarded_date }}</span>
+                            {% if application.days_waiting > 3 %}
+                            <span class="badge badge-warning">{{ application.days_waiting }} days</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <a href="#" class="btn btn-sm btn-primary">Review & Sign</a>
+                </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <div class="empty-state-sm">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                    <polyline points="22 4 12 14.01 9 11.01"/>
+                </svg>
+                <p>No applications pending your approval</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- System Overview Widget -->
+<div class="card scroll-animate scroll-delay-1">
+    <div class="card-header">
+        <h3 class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="7" rx="1"/>
+                <rect x="14" y="3" width="7" height="7" rx="1"/>
+                <rect x="14" y="14" width="7" height="7" rx="1"/>
+                <rect x="3" y="14" width="7" height="7" rx="1"/>
+            </svg>
+            System Overview
+        </h3>
+    </div>
+    <div class="card-body">
+        <div class="overview-grid">
+            <div class="overview-item">
+                <div class="overview-icon blue">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                        <circle cx="9" cy="7" r="4"/>
+                    </svg>
+                </div>
+                <div class="overview-content">
+                    <div class="overview-value">{{ total_applicants|default:0 }}</div>
+                    <div class="overview-label">Total Applicants</div>
+                </div>
+            </div>
+            <div class="overview-item">
+                <div class="overview-icon green">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                        <polyline points="22 4 12 14.01 9 11.01"/>
+                    </svg>
+                </div>
+                <div class="overview-content">
+                    <div class="overview-value">{{ approved_this_month|default:0 }}</div>
+                    <div class="overview-label">Approved This Month</div>
+                </div>
+            </div>
+            <div class="overview-item">
+                <div class="overview-icon purple">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                    </svg>
+                </div>
+                <div class="overview-content">
+                    <div class="overview-value">{{ housing_units|default:0 }}</div>
+                    <div class="overview-label">Total Housing Units</div>
+                </div>
+            </div>
+            <div class="overview-item">
+                <div class="overview-icon amber">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="20" x2="18" y2="10"/>
+                        <line x1="12" y1="20" x2="12" y2="4"/>
+                        <line x1="6" y1="20" x2="6" y2="14"/>
+                    </svg>
+                </div>
+                <div class="overview-content">
+                    <div class="overview-value">{{ occupancy_rate|default:0 }}%</div>
+                    <div class="overview-label">Occupancy Rate</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Reports Widget -->
+<div class="card scroll-animate scroll-delay-2">
+    <div class="card-header">
+        <h3 class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="20" x2="18" y2="10"/>
+                <line x1="12" y1="20" x2="12" y2="4"/>
+                <line x1="6" y1="20" x2="6" y2="14"/>
+            </svg>
+            Analytics & Reports
+        </h3>
+    </div>
+    <div class="card-body">
+        {% if recent_reports %}
+            <ul class="reports-list">
+                {% for report in recent_reports %}
+                <li class="reports-item">
+                    <div class="reports-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                        </svg>
+                    </div>
+                    <div class="reports-content">
+                        <div class="reports-title">{{ report.title }}</div>
+                        <div class="reports-meta">Generated {{ report.generated_date }}</div>
+                    </div>
+                    <a href="#" class="btn btn-sm btn-outline">Download</a>
+                </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <div class="empty-state-sm">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <line x1="18" y1="20" x2="18" y2="10"/>
+                    <line x1="12" y1="20" x2="12" y2="4"/>
+                    <line x1="6" y1="20" x2="6" y2="14"/>
+                </svg>
+                <p>No reports generated yet</p>
+            </div>
+        {% endif %}
+        <div class="card-footer">
+            <a href="#" class="btn btn-outline btn-block">View Analytics Dashboard</a>
+        </div>
+    </div>
+</div>

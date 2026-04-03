@@ -1,0 +1,159 @@
+{% comment %}
+Dashboard Widgets for Fifth Member (Laarni C. Hellera)
+Responsibilities:
+- M2: Electricity connection tracking with Joie
+{% endcomment %}
+
+<!-- Electricity Connection Queue Widget -->
+<div class="card scroll-animate">
+    <div class="card-header">
+        <h3 class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+            </svg>
+            Connection Queue
+        </h3>
+        <span class="badge badge-primary">{{ electricity_queue|length|default:0 }}</span>
+    </div>
+    <div class="card-body">
+        {% if electricity_queue %}
+            <div class="connection-queue">
+                {% for item in electricity_queue|slice:":8" %}
+                <div class="connection-card">
+                    <div class="connection-header">
+                        <div class="connection-unit">Block {{ item.block }} Lot {{ item.lot }}</div>
+                        <span class="connection-status status-{{ item.status }}">{{ item.status_display }}</span>
+                    </div>
+                    <div class="connection-beneficiary">{{ item.beneficiary_name }}</div>
+                    <div class="connection-progress-bar">
+                        <div class="connection-progress-fill" style="width: {{ item.progress }}%"></div>
+                    </div>
+                    <div class="connection-steps">
+                        <span class="step {% if item.step >= 1 %}step-done{% endif %}">Docs</span>
+                        <span class="step {% if item.step >= 2 %}step-done{% endif %}">NPC</span>
+                        <span class="step {% if item.step >= 3 %}step-done{% endif %}">Approved</span>
+                        <span class="step {% if item.step >= 4 %}step-done{% endif %}">Connected</span>
+                    </div>
+                    <div class="connection-actions">
+                        <a href="#" class="connection-action-link">Update Status</a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% if electricity_queue|length > 8 %}
+            <div class="card-footer">
+                <a href="#" class="view-all-link">View all {{ electricity_queue|length }} connections →</a>
+            </div>
+            {% endif %}
+        {% else %}
+            <div class="empty-state-sm">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                </svg>
+                <p>No connections in queue</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Pending with Negros Power Widget -->
+<div class="card scroll-animate scroll-delay-1">
+    <div class="card-header">
+        <h3 class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+            </svg>
+            Pending with Negros Power
+        </h3>
+        <span class="badge badge-amber">{{ negros_power_pending|length|default:0 }}</span>
+    </div>
+    <div class="card-body">
+        {% if negros_power_pending %}
+            <ul class="pending-npc-list">
+                {% for item in negros_power_pending %}
+                <li class="pending-npc-item {% if item.days_pending > 30 %}item-urgent{% endif %}">
+                    <div class="pending-npc-content">
+                        <div class="pending-npc-unit">Block {{ item.block }}, Lot {{ item.lot }}</div>
+                        <div class="pending-npc-name">{{ item.beneficiary_name }}</div>
+                        <div class="pending-npc-meta">
+                            <span class="pending-npc-date">Submitted {{ item.submitted_date }}</span>
+                            {% if item.days_pending > 30 %}
+                            <span class="badge badge-warning">{{ item.days_pending }} days</span>
+                            {% else %}
+                            <span class="badge badge-secondary">{{ item.days_pending }} days</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <a href="#" class="btn btn-sm btn-outline">Follow Up</a>
+                </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <div class="empty-state-sm">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                    <polyline points="22 4 12 14.01 9 11.01"/>
+                </svg>
+                <p>No applications with Negros Power</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Monthly Summary Widget -->
+<div class="card scroll-animate scroll-delay-2">
+    <div class="card-header">
+        <h3 class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="20" x2="18" y2="10"/>
+                <line x1="12" y1="20" x2="12" y2="4"/>
+                <line x1="6" y1="20" x2="6" y2="14"/>
+            </svg>
+            This Month's Progress
+        </h3>
+    </div>
+    <div class="card-body">
+        <div class="monthly-summary">
+            <div class="summary-metric">
+                <div class="metric-icon green">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                        <polyline points="22 4 12 14.01 9 11.01"/>
+                    </svg>
+                </div>
+                <div class="metric-content">
+                    <div class="metric-value">{{ connected_this_month|default:0 }}</div>
+                    <div class="metric-label">Connections Completed</div>
+                </div>
+            </div>
+            <div class="summary-metric">
+                <div class="metric-icon blue">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                    </svg>
+                </div>
+                <div class="metric-content">
+                    <div class="metric-value">{{ docs_submitted|default:0 }}</div>
+                    <div class="metric-label">Documents Submitted</div>
+                </div>
+            </div>
+            <div class="summary-metric">
+                <div class="metric-icon purple">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                </div>
+                <div class="metric-content">
+                    <div class="metric-value">{{ pending_connections|default:0 }}</div>
+                    <div class="metric-label">Pending Connections</div>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer">
+            <a href="#" class="btn btn-outline btn-block">Generate Monthly Report</a>
+        </div>
+    </div>
+</div>

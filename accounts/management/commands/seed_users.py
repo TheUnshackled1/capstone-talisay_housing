@@ -6,7 +6,7 @@ User = get_user_model()
 
 class Command(BaseCommand):
     help = 'Seed initial THA staff users'
-
+    
     def handle(self, *args, **options):
         # Superusers (Admin access)
         superusers_data = [

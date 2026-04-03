@@ -1,0 +1,278 @@
+{% comment %}
+Dashboard Widgets for Fourth Member (Jocel O. Cuaysing)
+Responsibilities:
+- M1: Masterlist, eligibility checks, queue management
+- M2: Requirements checklist, lot awarding records
+- M3: Document filing
+- M4: Property custodian (repossession, blacklist)
+{% endcomment %}
+
+<!-- Priority Queue Widget -->
+<div class="card scroll-animate">
+    <div class="card-header">
+        <h3 class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+            </svg>
+            Priority Queue
+        </h3>
+        <span class="badge badge-danger">{{ priority_queue|length|default:0 }}</span>
+    </div>
+    <div class="card-body">
+        {% if priority_queue %}
+            <ul class="queue-list">
+                {% for applicant in priority_queue|slice:":5" %}
+                <li class="queue-item">
+                    <div class="queue-number">#{{ forloop.counter }}</div>
+                    <div class="queue-content">
+                        <div class="queue-name">{{ applicant.full_name }}</div>
+                        <div class="queue-meta">
+                            <span class="queue-tag tag-priority">{{ applicant.channel_display }}</span>
+                            <span class="queue-date">{{ applicant.registered_date }}</span>
+                        </div>
+                    </div>
+                    <a href="#" class="queue-action">Process</a>
+                </li>
+                {% endfor %}
+            </ul>
+            {% if priority_queue|length > 5 %}
+            <div class="card-footer">
+                <a href="#" class="view-all-link">View all {{ priority_queue|length }} applicants →</a>
+            </div>
+            {% endif %}
+        {% else %}
+            <div class="empty-state-sm">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                    <polyline points="22 4 12 14.01 9 11.01"/>
+                </svg>
+                <p>Priority queue is empty</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Walk-in Queue Widget -->
+<div class="card scroll-animate scroll-delay-1">
+    <div class="card-header">
+        <h3 class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+            Walk-in FIFO Queue
+        </h3>
+        <span class="badge badge-blue">{{ walkin_queue|length|default:0 }}</span>
+    </div>
+    <div class="card-body">
+        {% if walkin_queue %}
+            <ul class="queue-list">
+                {% for applicant in walkin_queue|slice:":5" %}
+                <li class="queue-item">
+                    <div class="queue-number">#{{ applicant.queue_position }}</div>
+                    <div class="queue-content">
+                        <div class="queue-name">{{ applicant.full_name }}</div>
+                        <div class="queue-meta">
+                            <span class="queue-tag tag-walkin">Walk-in</span>
+                            <span class="queue-date">{{ applicant.registered_date }}</span>
+                        </div>
+                    </div>
+                    <a href="#" class="queue-action">View</a>
+                </li>
+                {% endfor %}
+            </ul>
+            {% if walkin_queue|length > 5 %}
+            <div class="card-footer">
+                <a href="#" class="view-all-link">View all {{ walkin_queue|length }} applicants →</a>
+            </div>
+            {% endif %}
+        {% else %}
+            <div class="empty-state-sm">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+                <p>No walk-in applicants</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- CDRRMO Pending Certification Widget -->
+<div class="card scroll-animate scroll-delay-2">
+    <div class="card-header">
+        <h3 class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+            </svg>
+            Pending CDRRMO Certification
+        </h3>
+        <span class="badge badge-amber">{{ pending_cdrrmo|length|default:0 }}</span>
+    </div>
+    <div class="card-body">
+        {% if pending_cdrrmo %}
+            <ul class="pending-list">
+                {% for applicant in pending_cdrrmo %}
+                <li class="pending-item {% if applicant.days_pending > 14 %}item-urgent{% endif %}">
+                    <div class="pending-content">
+                        <div class="pending-name">{{ applicant.full_name }}</div>
+                        <div class="pending-location">{{ applicant.declared_location }}</div>
+                        <div class="pending-meta">
+                            {% if applicant.days_pending > 14 %}
+                            <span class="badge badge-danger">{{ applicant.days_pending }} days pending</span>
+                            {% else %}
+                            <span class="badge badge-secondary">{{ applicant.days_pending }} days pending</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <a href="#" class="pending-action">Follow Up</a>
+                </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <div class="empty-state-sm">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                    <polyline points="22 4 12 14.01 9 11.01"/>
+                </svg>
+                <p>No pending certifications</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Requirements Checklist Widget -->
+<div class="card scroll-animate scroll-delay-3">
+    <div class="card-header">
+        <h3 class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+            </svg>
+            Incomplete Requirements
+        </h3>
+        <span class="badge badge-warning">{{ requirements_checklist|length|default:0 }}</span>
+    </div>
+    <div class="card-body">
+        {% if requirements_checklist %}
+            <ul class="requirements-list">
+                {% for applicant in requirements_checklist|slice:":5" %}
+                <li class="requirements-item">
+                    <div class="requirements-content">
+                        <div class="requirements-name">{{ applicant.full_name }}</div>
+                        <div class="requirements-progress">
+                            <div class="progress-bar-mini">
+                                <div class="progress-fill-mini" style="width: {{ applicant.completion_percent }}%"></div>
+                            </div>
+                            <span class="progress-text">{{ applicant.completed_count }}/7</span>
+                        </div>
+                        <div class="requirements-missing">Missing: {{ applicant.missing_docs }}</div>
+                    </div>
+                    <a href="#" class="requirements-action">Update</a>
+                </li>
+                {% endfor %}
+            </ul>
+            {% if requirements_checklist|length > 5 %}
+            <div class="card-footer">
+                <a href="#" class="view-all-link">View all {{ requirements_checklist|length }} applicants →</a>
+            </div>
+            {% endif %}
+        {% else %}
+            <div class="empty-state-sm">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                    <polyline points="22 4 12 14.01 9 11.01"/>
+                </svg>
+                <p>No applicants with pending requirements</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Standby Queue & Available Lots Widget -->
+<div class="card scroll-animate scroll-delay-4">
+    <div class="card-header">
+        <h3 class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+            Lot Awarding
+        </h3>
+        <div class="badge-group">
+            <span class="badge badge-green">{{ available_lots|length|default:0 }} Lots</span>
+            <span class="badge badge-purple">{{ standby_queue|length|default:0 }} Standby</span>
+        </div>
+    </div>
+    <div class="card-body">
+        {% if available_lots %}
+            <div class="awarding-summary">
+                <div class="summary-item">
+                    <div class="summary-label">Available Units</div>
+                    <div class="summary-value">{{ available_lots|length }}</div>
+                </div>
+                <div class="summary-divider"></div>
+                <div class="summary-item">
+                    <div class="summary-label">On Standby</div>
+                    <div class="summary-value">{{ standby_queue|length }}</div>
+                </div>
+                <div class="summary-divider"></div>
+                <div class="summary-item">
+                    <div class="summary-label">Ready to Award</div>
+                    <div class="summary-value highlight">{{ available_lots|length|add:standby_queue|length|min }}</div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <a href="#" class="btn btn-primary btn-block">Prepare Draw Lots Event</a>
+            </div>
+        {% else %}
+            <div class="empty-state-sm">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                </svg>
+                <p>No lots available for awarding</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Blacklist Summary Widget (Property Custodian Function) -->
+<div class="card scroll-animate scroll-delay-5">
+    <div class="card-header">
+        <h3 class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="15" y1="9" x2="9" y2="15"/>
+                <line x1="9" y1="9" x2="15" y2="15"/>
+            </svg>
+            Property Custodian
+        </h3>
+        <span class="badge badge-dark">{{ blacklist_count|default:0 }}</span>
+    </div>
+    <div class="card-body">
+        <div class="custodian-stats">
+            <div class="stat-row">
+                <span class="stat-label">Blacklisted Beneficiaries</span>
+                <span class="stat-value">{{ blacklist_count|default:0 }}</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Repossessed Units</span>
+                <span class="stat-value">{{ repossessed_count|default:0 }}</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Awaiting Re-award</span>
+                <span class="stat-value">{{ awaiting_reaw ard|default:0 }}</span>
+            </div>
+        </div>
+        <div class="card-footer">
+            <a href="#" class="view-all-link">View Blacklist →</a>
+        </div>
+    </div>
+</div>
