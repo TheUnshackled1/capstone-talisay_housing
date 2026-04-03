@@ -5,17 +5,53 @@
 
 {% block extra_css %}
 <style>
+    /* Ultra-compact styling with THA Navy theme - matching landowner forms */
+    body {
+        margin: 0;
+        padding: 0;
+        background: linear-gradient(135deg, #0f2447 0%, #1a3a6b 100%);
+        min-height: 100vh;
+    }
+    
+    .container {
+        max-width: 900px !important;
+        margin: 1rem auto !important;
+        padding: 0 1rem !important;
+    }
+    
+    .page-header {
+        background: white;
+        border-radius: 8px;
+        padding: 0.9rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    }
+    
+    .page-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #1a3a6b;
+        margin: 0 0 0.3rem 0;
+    }
+    
+    .page-subtitle {
+        color: #64748b;
+        font-size: 0.75rem;
+        margin: 0;
+        line-height: 1.3;
+    }
+    
     .submission-card {
         background: white;
-        border-radius: 12px;
-        box-shadow: 0 2 8px rgba(0,0,0,0.1);
-        padding: 1.5rem;
-        margin-bottom: 1.25rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        padding: 0.9rem;
+        margin-bottom: 0.9rem;
         transition: all 0.2s ease;
     }
     
     .submission-card:hover {
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.2);
         transform: translateY(-2px);
     }
     
@@ -23,23 +59,31 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 1rem;
-        padding-bottom: 1rem;
+        margin-bottom: 0.7rem;
+        padding-bottom: 0.7rem;
         border-bottom: 2px solid #e5e7eb;
     }
     
     .ref-number {
-        font-size: 1.1rem;
+        font-size: 0.95rem;
         font-weight: 700;
         color: #1a3a6b;
+        letter-spacing: 0.3px;
+    }
+    
+    .timestamp {
+        font-size: 0.7rem;
+        color: #9ca3af;
+        margin-top: 0.2rem;
     }
     
     .status-badge {
-        padding: 0.4rem 0.875rem;
-        border-radius: 20px;
-        font-size: 0.8rem;
+        padding: 0.25rem 0.65rem;
+        border-radius: 12px;
+        font-size: 0.65rem;
         font-weight: 600;
         text-transform: uppercase;
+        letter-spacing: 0.3px;
     }
     
     .status-pending {
@@ -58,116 +102,138 @@
     }
     
     .landowner-info {
-        margin-bottom: 1rem;
+        margin-bottom: 0.75rem;
     }
     
     .landowner-name {
         font-weight: 600;
         color: #374151;
-        margin-bottom: 0.25rem;
+        margin-bottom: 0.2rem;
+        font-size: 0.85rem;
     }
     
     .address {
         color: #6b7280;
-        font-size: 0.875rem;
+        font-size: 0.75rem;
+        line-height: 1.3;
     }
     
     .isf-stats {
-        display: flex;
-        gap: 1.5rem;
-        margin-top: 1rem;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.6rem;
+        margin-top: 0.75rem;
     }
     
     .stat {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
+        gap: 0.4rem;
     }
     
     .stat-icon {
-        width: 36px;
-        height: 36px;
-        border-radius: 8px;
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.1rem;
+        font-size: 0.85rem;
+        flex-shrink: 0;
     }
     
     .stat-pending { background: #fef3c7; color: #d97706; }
     .stat-eligible { background: #d1fae5; color: #059669; }
     .stat-disqualified { background: #fee2e2; color: #dc2626; }
+    .stat-total { background: #e5e7eb; color: #374151; }
     
     .stat-label {
-        font-size: 0.75rem;
+        font-size: 0.65rem;
         color: #6b7280;
         text-transform: uppercase;
+        line-height: 1.2;
     }
     
     .stat-value {
-        font-size: 1.25rem;
+        font-size: 1rem;
         font-weight: 700;
         color: #1f2937;
+        line-height: 1;
     }
     
     .review-btn {
         background: linear-gradient(135deg, #1a3a6b 0%, #0f2447 100%);
         color: white;
-        padding: 0.625rem 1.5rem;
-        border-radius: 8px;
+        padding: 0.5rem 1.1rem;
+        border-radius: 6px;
         text-decoration: none;
         display: inline-flex;
         align-items: center;
-        gap: 0.5rem;
+        gap: 0.4rem;
         font-weight: 600;
-        font-size: 0.875rem;
+        font-size: 0.75rem;
         transition: all 0.2s ease;
     }
     
     .review-btn:hover {
-        transform: translateX(4px);
+        transform: translateX(3px);
         box-shadow: 0 4px 12px rgba(26, 58, 107, 0.3);
         color: white;
     }
     
+    .review-btn svg {
+        width: 14px;
+        height: 14px;
+    }
+    
     .empty-state {
         text-align: center;
-        padding: 4rem 2rem;
+        padding: 2.5rem 1.5rem;
         color: #6b7280;
     }
     
     .empty-icon {
-        font-size: 4rem;
-        margin-bottom: 1rem;
+        font-size: 3rem;
+        margin-bottom: 0.75rem;
         opacity: 0.3;
     }
     
-    .page-header {
-        margin-bottom: 2rem;
+    .empty-state h3 {
+        font-size: 1.1rem;
+        color: #374151;
+        margin: 0 0 0.4rem 0;
     }
     
-    .page-title {
-        font-size: 1.75rem;
-        font-weight: 700;
-        color: #1a3a6b;
-        margin-bottom: 0.5rem;
-    }
-    
-    .page-subtitle {
-        color: #6b7280;
-        font-size: 0.95rem;
-    }
-    
-    .timestamp {
+    .empty-state p {
         font-size: 0.8rem;
-        color: #9ca3af;
-        margin-top: 0.25rem;
+        margin: 0;
+    }
+    
+    /* Alert messages on navy background */
+    .alert {
+        border-radius: 6px;
+        padding: 0.7rem;
+        margin-bottom: 1rem;
+        font-size: 0.8rem;
+    }
+    
+    /* Responsive for mobile */
+    @media (max-width: 600px) {
+        .isf-stats {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .submission-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
     }
 </style>
 {% endblock %}
 
 {% block body %}
-<div class="container" style="max-width: 1200px; margin: 2rem auto; padding: 0 1.5rem;">
+<div class="container">
     
     <div class="page-header">
         <h1 class="page-title">📋 Landowner Submissions</h1>
@@ -229,15 +295,15 @@
                 </div>
                 
                 <div class="stat">
-                    <div class="stat-icon" style="background: #e5e7eb; color: #374151;">👥</div>
+                    <div class="stat-icon stat-total">👥</div>
                     <div>
                         <div class="stat-label">Total ISFs</div>
-                        <div class="stat-value">{{ submission.isf_count }}</div>
+                        <div class="stat-value">{{ submission.isf_records.count }}</div>
                     </div>
                 </div>
             </div>
             
-            <div style="margin-top: 1.5rem; text-align: right;">
+            <div style="margin-top: 1rem; text-align: right;">
                 <a href="{% url 'intake:submission_review' submission.id %}" class="review-btn">
                     Review ISFs
                     <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
