@@ -1,5 +1,5 @@
 from django import forms
-from .models import LandownerSubmission, ISFRecord
+from .models import LandownerSubmission, ISFRecord, HouseholdMember
 
 
 # Talisay City barangays (official 27 barangays)
