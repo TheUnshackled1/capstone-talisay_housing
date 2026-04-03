@@ -75,15 +75,24 @@ function initSidebar() {
  * Display Current Date
  */
 function initCurrentDate() {
+    const options = { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+    };
+    const dateStr = new Date().toLocaleDateString('en-US', options);
+    
+    // Topbar date
     const dateEl = document.getElementById('currentDate');
     if (dateEl) {
-        const options = { 
-            weekday: 'long', 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
-        };
-        dateEl.textContent = new Date().toLocaleDateString('en-US', options);
+        dateEl.textContent = dateStr;
+    }
+    
+    // Welcome banner date
+    const welcomeDateEl = document.getElementById('welcomeDate');
+    if (welcomeDateEl) {
+        welcomeDateEl.textContent = dateStr;
     }
 }
 
