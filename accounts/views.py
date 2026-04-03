@@ -36,13 +36,14 @@ def login_view(request):
             user = authenticate(request, username=username, password=password)
             
             if user is not None:
-                # Optional: Verify the user's position matches the requested role
+                # ENFORCE: Verify the user's position matches the requested role
                 if role and user.position != role:
-                    messages.warning(
+                    messages.error(
                         request, 
-                        f'You logged in successfully, but your position is {user.get_position_display()}, '
-                        f'not {role_display}. Redirecting to your dashboard.'
+                        f'Access Denied: Your account is registered as {user.get_position_display()}, '
+                        f'not {role_display}. Please use the correct login portal for your position.'
                     )
+                    return redirect('accounts:login')  # Return to login without authenticating
                 
                 login(request, user)
                 messages.success(request, f'Welcome back, {user.first_name or user.username}!')
