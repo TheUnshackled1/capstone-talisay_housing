@@ -26,12 +26,12 @@ class UserProfileForm(forms.ModelForm):
     """Form for updating user profile."""
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'email', 'phone_number']
+        fields = ['first_name', 'last_name', 'email', 'phone']
         widgets = {
             'first_name': forms.TextInput(attrs={'placeholder': 'First Name'}),
             'last_name': forms.TextInput(attrs={'placeholder': 'Last Name'}),
             'email': forms.EmailInput(attrs={'placeholder': 'Email Address'}),
-            'phone_number': forms.TextInput(attrs={'placeholder': 'Phone Number'}),
+            'phone': forms.TextInput(attrs={'placeholder': 'Phone Number'}),
         }
 
 
