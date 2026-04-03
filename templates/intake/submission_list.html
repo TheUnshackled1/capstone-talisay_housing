@@ -1,0 +1,259 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Landowner Submissions - THA{% endblock %}
+
+{% block extra_css %}
+<style>
+    .submission-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2 8px rgba(0,0,0,0.1);
+        padding: 1.5rem;
+        margin-bottom: 1.25rem;
+        transition: all 0.2s ease;
+    }
+    
+    .submission-card:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        transform: translateY(-2px);
+    }
+    
+    .submission-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #e5e7eb;
+    }
+    
+    .ref-number {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #1a3a6b;
+    }
+    
+    .status-badge {
+        padding: 0.4rem 0.875rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .status-pending {
+        background: #fef3c7;
+        color: #d97706;
+    }
+    
+    .status-reviewed {
+        background: #dbeafe;
+        color: #1d4ed8;
+    }
+    
+    .status-processed {
+        background: #d1fae5;
+        color: #059669;
+    }
+    
+    .landowner-info {
+        margin-bottom: 1rem;
+    }
+    
+    .landowner-name {
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 0.25rem;
+    }
+    
+    .address {
+        color: #6b7280;
+        font-size: 0.875rem;
+    }
+    
+    .isf-stats {
+        display: flex;
+        gap: 1.5rem;
+        margin-top: 1rem;
+    }
+    
+    .stat {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .stat-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+    }
+    
+    .stat-pending { background: #fef3c7; color: #d97706; }
+    .stat-eligible { background: #d1fae5; color: #059669; }
+    .stat-disqualified { background: #fee2e2; color: #dc2626; }
+    
+    .stat-label {
+        font-size: 0.75rem;
+        color: #6b7280;
+        text-transform: uppercase;
+    }
+    
+    .stat-value {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #1f2937;
+    }
+    
+    .review-btn {
+        background: linear-gradient(135deg, #1a3a6b 0%, #0f2447 100%);
+        color: white;
+        padding: 0.625rem 1.5rem;
+        border-radius: 8px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 600;
+        font-size: 0.875rem;
+        transition: all 0.2s ease;
+    }
+    
+    .review-btn:hover {
+        transform: translateX(4px);
+        box-shadow: 0 4px 12px rgba(26, 58, 107, 0.3);
+        color: white;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: #6b7280;
+    }
+    
+    .empty-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.3;
+    }
+    
+    .page-header {
+        margin-bottom: 2rem;
+    }
+    
+    .page-title {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #1a3a6b;
+        margin-bottom: 0.5rem;
+    }
+    
+    .page-subtitle {
+        color: #6b7280;
+        font-size: 0.95rem;
+    }
+    
+    .timestamp {
+        font-size: 0.8rem;
+        color: #9ca3af;
+        margin-top: 0.25rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 1200px; margin: 2rem auto; padding: 0 1.5rem;">
+    
+    <div class="page-header">
+        <h1 class="page-title">📋 Landowner Submissions</h1>
+        <p class="page-subtitle">Review ISF lists submitted by landowners via the public portal</p>
+    </div>
+    
+    {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+    {% endif %}
+    
+    {% if submissions %}
+        {% for submission in submissions %}
+        <div class="submission-card">
+            <div class="submission-header">
+                <div>
+                    <div class="ref-number">{{ submission.reference_number }}</div>
+                    <div class="timestamp">
+                        Submitted {{ submission.submitted_at|date:"M d, Y g:i A" }}
+                    </div>
+                </div>
+                <span class="status-badge status-{{ submission.status }}">
+                    {{ submission.get_status_display }}
+                </span>
+            </div>
+            
+            <div class="landowner-info">
+                <div class="landowner-name">🏠 {{ submission.landowner_name }}</div>
+                <div class="address">{{ submission.property_address }}</div>
+            </div>
+            
+            <div class="isf-stats">
+                <div class="stat">
+                    <div class="stat-icon stat-pending">⏳</div>
+                    <div>
+                        <div class="stat-label">Pending</div>
+                        <div class="stat-value">{{ submission.pending_count }}</div>
+                    </div>
+                </div>
+                
+                <div class="stat">
+                    <div class="stat-icon stat-eligible">✓</div>
+                    <div>
+                        <div class="stat-label">Eligible</div>
+                        <div class="stat-value">{{ submission.eligible_count }}</div>
+                    </div>
+                </div>
+                
+                <div class="stat">
+                    <div class="stat-icon stat-disqualified">✕</div>
+                    <div>
+                        <div class="stat-label">Disqualified</div>
+                        <div class="stat-value">{{ submission.disqualified_count }}</div>
+                    </div>
+                </div>
+                
+                <div class="stat">
+                    <div class="stat-icon" style="background: #e5e7eb; color: #374151;">👥</div>
+                    <div>
+                        <div class="stat-label">Total ISFs</div>
+                        <div class="stat-value">{{ submission.isf_count }}</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 1.5rem; text-align: right;">
+                <a href="{% url 'intake:submission_review' submission.id %}" class="review-btn">
+                    Review ISFs
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="submission-card empty-state">
+            <div class="empty-icon">📭</div>
+            <h3>No Submissions Yet</h3>
+            <p>Landowner submissions will appear here once they are submitted via the public portal.</p>
+        </div>
+    {% endif %}
+    
+</div>
+{% endblock %}

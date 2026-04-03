@@ -1,0 +1,314 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Review Submission {{ submission.reference_number }} - THA{% endblock %}
+
+{% block extra_css %}
+<style>
+    .review-container {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 0 1.5rem;
+    }
+    
+    .back-nav {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #6b7280;
+        text-decoration: none;
+        margin-bottom: 1.5rem;
+        font-size: 0.875rem;
+        transition: color 0.2s ease;
+    }
+    
+    .back-nav:hover {
+        color: #1a3a6b;
+    }
+    
+    .submission-info-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .info-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #e5e7eb;
+    }
+    
+    .ref-number-large {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1a3a6b;
+    }
+    
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .info-item label {
+        display: block;
+        font-size: 0.75rem;
+        color: #6b7280;
+        text-transform: uppercase;
+        margin-bottom: 0.25rem;
+    }
+    
+    .info-item value {
+        display: block;
+        font-weight: 600;
+        color: #1f2937;
+    }
+    
+    .isf-table-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+    
+    .table-header {
+        background: linear-gradient(135deg, #1a3a6b 0%, #0f2447 100%);
+        color: white;
+        padding: 1.25rem 1.5rem;
+    }
+    
+    .table-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin: 0;
+    }
+    
+    .isf-row {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr 1fr 1.5fr 120px;
+        gap: 1rem;
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid #e5e7eb;
+        align-items: center;
+        transition: background 0.2s ease;
+    }
+    
+    .isf-row:hover {
+        background: #f9fafb;
+    }
+    
+    .isf-header-row {
+        background: #f3f4f6;
+        font-weight: 600;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        color: #374151;
+    }
+    
+    .isf-header-row:hover {
+        background: #f3f4f6;
+    }
+    
+    .isf-name {
+        font-weight: 600;
+        color: #1f2937;
+    }
+    
+    .isf-ref {
+        font-size: 0.75rem;
+        color: #9ca3af;
+        margin-top: 0.2rem;
+    }
+    
+    .isf-data {
+        font-size: 0.875rem;
+        color: #6b7280;
+    }
+    
+    .status-badge-sm {
+        padding: 0.3rem 0.75rem;
+        border-radius: 16px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        display: inline-block;
+    }
+    
+    .status-pending-sm {
+        background: #fef3c7;
+        color: #d97706;
+    }
+    
+    .status-eligible-sm {
+        background: #d1fae5;
+        color: #059669;
+    }
+    
+    .status-disqualified-sm {
+        background: #fee2e2;
+        color: #dc2626;
+    }
+    
+    .review-btn-sm {
+        background: linear-gradient(135deg, #1a3a6b 0%, #0f2447 100%);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.375rem;
+        font-weight: 600;
+        font-size: 0.8rem;
+        transition: all 0.2s ease;
+    }
+    
+    .review-btn-sm:hover {
+        box-shadow: 0 4px 12px rgba(26, 58, 107, 0.3);
+        color: white;
+    }
+    
+    .review-btn-sm.disabled {
+        background: #9ca3af;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+    
+    @media (max-width: 768px) {
+        .isf-row {
+            grid-template-columns: 1fr;
+            gap: 0.5rem;
+        }
+        
+        .isf-header-row {
+            display: none;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="review-container">
+    
+    <a href="{% url 'intake:submission_list' %}" class="back-nav">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+        Back to Submissions
+    </a>
+    
+    {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+    {% endif %}
+    
+    <div class="submission-info-card">
+        <div class="info-header">
+            <div class="ref-number-large">{{ submission.reference_number }}</div>
+            <span class="status-badge status-{{ submission.status }}">
+                {{ submission.get_status_display }}
+            </span>
+        </div>
+        
+        <div class="info-grid">
+            <div class="info-item">
+                <label>Landowner Name</label>
+                <value>🏠 {{ submission.landowner_name }}</value>
+            </div>
+            
+            <div class="info-item">
+                <label>Property Address</label>
+                <value>{{ submission.property_address }}</value>
+            </div>
+            
+            <div class="info-item">
+                <label>Submitted</label>
+                <value>{{ submission.submitted_at|date:"M d, Y g:i A" }}</value>
+            </div>
+            
+            {% if submission.reviewed_by %}
+            <div class="info-item">
+                <label>Reviewed By</label>
+                <value>{{ submission.reviewed_by.get_full_name }}</value>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="isf-table-card">
+        <div class="table-header">
+            <h2 class="table-title">ISF Records ({{ isf_records.count }})</h2>
+        </div>
+        
+        <div class="isf-header-row isf-row">
+            <div>ISF Name</div>
+            <div>Household</div>
+            <div>Income</div>
+            <div>Years</div>
+            <div>Status</div>
+            <div>Action</div>
+        </div>
+        
+        {% for isf in isf_records %}
+        <div class="isf-row">
+            <div>
+                <div class="isf-name">{{ isf.full_name }}</div>
+                <div class="isf-ref">{{ isf.reference_number }}</div>
+            </div>
+            
+            <div class="isf-data">
+                👥 {{ isf.household_members }} members
+            </div>
+            
+            <div class="isf-data">
+                ₱{{ isf.monthly_income|floatformat:2 }}
+            </div>
+            
+            <div class="isf-data">
+                {{ isf.years_residing }} yrs
+            </div>
+            
+            <div>
+                <span class="status-badge-sm status-{{ isf.status }}-sm">
+                    {{ isf.get_status_display }}
+                </span>
+                {% if not isf.is_income_eligible %}
+                    <br><small style="color: #dc2626;">⚠️ Income > ₱10,000</small>
+                {% endif %}
+            </div>
+            
+            <div>
+                {% if isf.converted_to_applicant %}
+                    <span class="review-btn-sm disabled">
+                        ✓ Converted
+                    </span>
+                {% else %}
+                    <a href="{% url 'intake:isf_review' isf.id %}" class="review-btn-sm">
+                        Review
+                        <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+        {% empty %}
+        <div style="padding: 3rem; text-align: center; color: #6b7280;">
+            No ISF records found in this submission.
+        </div>
+        {% endfor %}
+    </div>
+    
+</div>
+{% endblock %}

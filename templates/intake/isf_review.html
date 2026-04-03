@@ -1,0 +1,422 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}Review ISF {{ isf_record.reference_number }} - THA{% endblock %}
+
+{% block extra_css %}
+<style>
+    .review-container {
+        max-width: 900px;
+        margin: 2rem auto;
+        padding: 0 1.5rem;
+    }
+    
+    .back-nav {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #6b7280;
+        text-decoration: none;
+        margin-bottom: 1.5rem;
+        font-size: 0.875rem;
+        transition: color 0.2s ease;
+    }
+    
+    .back-nav:hover {
+        color: #1a3a6b;
+    }
+    
+    .review-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+    }
+    
+    .card-header {
+        background: linear-gradient(135deg, #1a3a6b 0%, #0f2447 100%);
+        color: white;
+        padding: 1.5rem;
+    }
+    
+    .card-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 0 0 0.5rem 0;
+    }
+    
+    .card-subtitle {
+        font-size: 0.9rem;
+        color: #93c5fd;
+        margin: 0;
+    }
+    
+    .card-body {
+        padding: 1.5rem;
+    }
+    
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.25rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .info-item {
+        padding: 1rem;
+        background: #f9fafb;
+        border-radius: 8px;
+    }
+    
+    .info-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        color: #6b7280;
+        margin-bottom: 0.5rem;
+    }
+    
+    .info-value {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #1f2937;
+    }
+    
+    .warning-box {
+        background: #fef3c7;
+        border: 2px solid #f59e0b;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        gap: 0.75rem;
+        align-items: start;
+    }
+    
+    .warning-icon {
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+    
+    .warning-text {
+        color: #92400e;
+        font-size: 0.9rem;
+    }
+    
+    .error-box {
+        background: #fee2e2;
+        border: 2px solid #dc2626;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        gap: 0.75rem;
+        align-items: start;
+    }
+    
+    .error-icon {
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+    
+    .error-text {
+        color: #991b1b;
+        font-size: 0.9rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+    
+    .form-label {
+        display: block;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 0.75rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        transition: all 0.2s ease;
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: #1a3a6b;
+        box-shadow: 0 0 0 3px rgba(26, 58, 107, 0.1);
+    }
+    
+    .form-select {
+        width: 100%;
+        padding: 0.75rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        background: white;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .form-select:focus {
+        outline: none;
+        border-color: #1a3a6b;
+        box-shadow: 0 0 0 3px rgba(26, 58, 107, 0.1);
+    }
+    
+    .help-text {
+        font-size: 0.8rem;
+        color: #6b7280;
+        margin-top: 0.35rem;
+        font-style: italic;
+    }
+    
+    .section-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #1a3a6b;
+        margin: 2rem 0 1rem 0;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #e5e7eb;
+    }
+    
+    .btn-submit {
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        color: white;
+        padding: 0.875rem 2rem;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-submit:hover {
+        box-shadow: 0 4px 12px rgba(5, 150, 105, 0.4);
+        transform: translateY(-2px);
+    }
+    
+    .btn-disqualify {
+        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+        color: white;
+        padding: 0.875rem 2rem;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-disqualify:hover {
+        box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
+        transform: translateY(-2px);
+    }
+    
+    .button-group {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 2px solid #e5e7eb;
+    }
+    
+    @media (max-width: 768px) {
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .button-group {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="review-container">
+    
+    <a href="{% url 'intake:submission_review' isf_record.submission.id %}" class="back-nav">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+        Back to Submission
+    </a>
+    
+    {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+    {% endif %}
+    
+    <div class="review-card">
+        <div class="card-header">
+            <h1 class="card-title">{{ isf_record.full_name }}</h1>
+            <p class="card-subtitle">{{ isf_record.reference_number }}</p>
+        </div>
+        
+        <div class="card-body">
+            
+            <!-- ISF Information (Read-only) -->
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">Household Members</div>
+                    <div class="info-value">👥 {{ isf_record.household_members }} members</div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-label">Monthly Income</div>
+                    <div class="info-value">₱{{ isf_record.monthly_income|floatformat:2 }}</div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-label">Years Residing</div>
+                    <div class="info-value">{{ isf_record.years_residing }} years</div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-label">Property Address</div>
+                    <div class="info-value">{{ submission.property_address }}</div>
+                </div>
+            </div>
+            
+            <!-- Income Eligibility Warning -->
+            {% if not isf_record.is_income_eligible %}
+            <div class="error-box">
+                <span class="error-icon">⚠️</span>
+                <div>
+                    <strong class="error-text">INCOME EXCEEDS LIMIT</strong>
+                    <p class="error-text" style="margin: 0.5rem 0 0 0;">
+                        Monthly income (₱{{ isf_record.monthly_income|floatformat:2 }}) exceeds the ₱10,000.00 eligibility threshold.
+                        This ISF must be disqualified.
+                    </p>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Eligibility Review Form -->
+            <form method="post" action="">
+                {% csrf_token %}
+                
+                <div class="section-title">📋 Eligibility Review</div>
+                
+                <!-- Phone Number -->
+                <div class="form-group">
+                    <label class="form-label" for="id_phone_number">
+                        Contact Number (for SMS) *
+                    </label>
+                    {% render_field form.phone_number class="form-control" placeholder="09XX XXX XXXX" %}
+                    <div class="help-text">Required to send SMS notification to ISF</div>
+                </div>
+                
+                <!-- Barangay -->
+                <div class="form-group">
+                    <label class="form-label" for="id_barangay">
+                        Barangay *
+                    </label>
+                    {% render_field form.barangay class="form-select" %}
+                    <div class="help-text">Extract from property address above</div>
+                </div>
+                
+                <!-- Property Ownership Verification -->
+                <div class="form-group">
+                    <label class="form-label" for="id_has_property_in_talisay">
+                        Property Ownership Verification *
+                    </label>
+                    {% render_field form.has_property_in_talisay class="form-select" %}
+                    <div class="help-text">Verify against Assessor's Office records</div>
+                </div>
+                
+                <div class="warning-box">
+                    <span class="warning-icon">📌</span>
+                    <div class="warning-text">
+                        <strong>Eligibility Criteria:</strong>
+                        <ul style="margin: 0.5rem 0 0 0; padding-left: 1.5rem;">
+                            <li>No property ownership in Talisay City</li>
+                            <li>Monthly income ≤ ₱10,000</li>
+                            <li>Not on the blacklist</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- Disqualification Reason (conditional) -->
+                <div class="form-group" id="disqualification-reason-group" style="display: none;">
+                    <label class="form-label" for="id_disqualification_reason">
+                        Disqualification Reason *
+                    </label>
+                    {% render_field form.disqualification_reason class="form-control" rows="3" %}
+                </div>
+                
+                <!-- Buttons -->
+                <div class="button-group">
+                    <button type="submit" class="btn-submit" id="btn-approve">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        Mark as Eligible & Convert to Applicant
+                    </button>
+                    
+                    <button type="button" class="btn-disqualify" id="btn-reject" onclick="showDisqualifyMode()">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                        Mark as Disqualified
+                    </button>
+                </div>
+            </form>
+            
+        </div>
+    </div>
+    
+</div>
+
+<script>
+function showDisqualifyMode() {
+    // Show disqualification reason field
+    document.getElementById('disqualification-reason-group').style.display = 'block';
+    
+    // Change status select to disqualified
+    const statusSelect = document.getElementById('id_status');
+    if (statusSelect) {
+        statusSelect.value = 'disqualified';
+    }
+    
+    // Scroll to reason field
+    document.getElementById('disqualification-reason-group').scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'center' 
+    });
+    
+    // Change button label
+    document.getElementById('btn-approve').innerHTML = `
+        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+        Confirm Disqualification
+    `;
+}
+
+// Show/hide disqualification reason based on property ownership
+document.getElementById('id_has_property_in_talisay').addEventListener('change', function() {
+    if (this.value === 'yes') {
+        showDisqualifyMode();
+        document.getElementById('id_disqualification_reason').value = 'Owns property in Talisay City';
+    }
+});
+</script>
+{% endblock %}
