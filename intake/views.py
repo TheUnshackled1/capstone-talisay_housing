@@ -36,22 +36,22 @@ def landowner_form(request):
             submission = form.save()
             
             # Create ISF records
-            isf_references = []
+            isf_records = []
             for isf_data in isf_records_data:
                 isf_record = ISFRecord.objects.create(
                     submission=submission,
                     full_name=isf_data.get('full_name', '').strip(),
                     household_members=int(isf_data.get('household_members', 1)),
                     monthly_income=float(isf_data.get('monthly_income', 0)),
-                    years_residing=int(isf_data.get('years_residing', 0)),
+                    years_residing=float(isf_data.get('years_residing', 0)),
                     phone_number=isf_data.get('phone_number', '').strip(),
                 )
-                isf_references.append(isf_record.reference_number)
+                isf_records.append(isf_record)
             
             # Success - redirect to confirmation page
             return render(request, 'intake/submission_success.html', {
                 'submission': submission,
-                'isf_references': isf_references,
+                'isf_records': isf_records,
             })
         else:
             messages.error(request, 'Please correct the errors below.')

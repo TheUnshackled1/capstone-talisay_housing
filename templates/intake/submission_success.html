@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Submission Successful - Talisay Housing Authority{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/intake.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="success-container">
+    <div class="success-card scroll-animate-scale">
+        <div class="success-icon">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        
+        <h1>Submission Successful!</h1>
+        <p class="success-message">
+            Your ISF list has been submitted to the Talisay City Housing Authority for review.
+        </p>
+
+        <div class="reference-box scroll-animate">
+            <h3>Your Reference Number</h3>
+            <div class="reference-number">{{ submission.reference_number }}</div>
+            <p class="reference-note">Please save this number for future reference</p>
+        </div>
+
+        <div class="submission-summary scroll-animate-left">
+            <h3><i class="fas fa-clipboard-list"></i> Submission Summary</h3>
+            
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <span class="label">Landowner:</span>
+                    <span class="value">{{ submission.landowner_name }}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="label">Phone:</span>
+                    <span class="value">{{ submission.landowner_phone }}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="label">Property:</span>
+                    <span class="value">{{ submission.property_address }}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="label">Barangay:</span>
+                    <span class="value">{{ submission.get_barangay_display }}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="label">Submitted:</span>
+                    <span class="value">{{ submission.submitted_at|date:"F d, Y g:i A" }}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="label">ISF Count:</span>
+                    <span class="value">{{ isf_records|length }} household{{ isf_records|length|pluralize }}</span>
+                </div>
+            </div>
+        </div>
+
+        {% if isf_records %}
+        <div class="isf-summary scroll-animate-right">
+            <h3><i class="fas fa-users"></i> ISF Households Submitted</h3>
+            <div class="isf-table-wrapper">
+                <table class="isf-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Reference No.</th>
+                            <th>Name</th>
+                            <th>Members</th>
+                            <th>Income</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for isf in isf_records %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td><code>{{ isf.reference_number }}</code></td>
+                            <td>{{ isf.full_name }}</td>
+                            <td>{{ isf.household_members }}</td>
+                            <td>₱{{ isf.monthly_income|floatformat:2 }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="next-steps scroll-animate">
+            <h3><i class="fas fa-info-circle"></i> What Happens Next?</h3>
+            <ol class="steps-list">
+                <li>
+                    <div class="step-icon"><span>1</span></div>
+                    <div class="step-content">
+                        <strong>SMS Notification</strong>
+                        <p>Each ISF household will receive an SMS notification with their reference number.</p>
+                    </div>
+                </li>
+                <li>
+                    <div class="step-icon"><span>2</span></div>
+                    <div class="step-content">
+                        <strong>Eligibility Review</strong>
+                        <p>THA staff will review each household for eligibility (income ≤ ₱10,000/month, no property ownership).</p>
+                    </div>
+                </li>
+                <li>
+                    <div class="step-icon"><span>3</span></div>
+                    <div class="step-content">
+                        <strong>Document Submission</strong>
+                        <p>Eligible households will be notified to visit the THA office with required documents.</p>
+                    </div>
+                </li>
+                <li>
+                    <div class="step-icon"><span>4</span></div>
+                    <div class="step-content">
+                        <strong>Queue Placement</strong>
+                        <p>Once verified, eligible applicants will be placed in the housing priority queue.</p>
+                    </div>
+                </li>
+            </ol>
+        </div>
+
+        <div class="action-buttons">
+            <a href="{% url 'intake:landowner_form' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Submit Another List
+            </a>
+            <a href="{% url 'home' %}" class="btn btn-outline">
+                <i class="fas fa-home"></i> Back to Home
+            </a>
+        </div>
+
+        <div class="contact-footer">
+            <p>Questions? Contact the Talisay Housing Authority at (034) 495-XXXX</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
