@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initCurrentDate();
     initAlerts();
     initTooltips();
+    initScrollAnimations();
 });
 
 /**
@@ -423,3 +424,52 @@ dialogStyle.textContent = `
     }
 `;
 document.head.appendChild(dialogStyle);
+
+/**
+ * Scroll Animations - Intersection Observer
+ */
+function initScrollAnimations() {
+    // Check for reduced motion preference
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    
+    if (prefersReducedMotion) {
+        // Just show everything immediately
+        document.querySelectorAll(
+            '.scroll-animate, .scroll-animate-left, .scroll-animate-right, ' +
+            '.scroll-animate-scale, .scroll-animate-fade, .scroll-animate-bounce, ' +
+            '.scroll-animate-rotate, .scroll-animate-blur, .scroll-animate-card'
+        ).forEach(function(el) {
+            el.classList.add('animate-in');
+        });
+        return;
+    }
+    
+    // Select all elements with scroll animation classes
+    const animatedElements = document.querySelectorAll(
+        '.scroll-animate, .scroll-animate-left, .scroll-animate-right, ' +
+        '.scroll-animate-scale, .scroll-animate-fade, .scroll-animate-bounce, ' +
+        '.scroll-animate-rotate, .scroll-animate-blur, .scroll-animate-card'
+    );
+
+    // Create intersection observer
+    const observerOptions = {
+        root: null, // viewport
+        rootMargin: '0px 0px -50px 0px', // trigger slightly before element enters
+        threshold: 0.1 // 10% visible triggers animation
+    };
+
+    const scrollObserver = new IntersectionObserver(function(entries, observer) {
+        entries.forEach(function(entry) {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('animate-in');
+                // Once animated, stop observing (one-time animation)
+                observer.unobserve(entry.target);
+            }
+        });
+    }, observerOptions);
+
+    // Observe each element
+    animatedElements.forEach(function(element) {
+        scrollObserver.observe(element);
+    });
+}
