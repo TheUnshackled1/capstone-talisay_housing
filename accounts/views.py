@@ -10,6 +10,23 @@ def login_view(request):
     if request.user.is_authenticated:
         return redirect('dashboard')
     
+    # Get the requested role from URL parameter
+    role = request.GET.get('role', '')
+    role_display = None
+    
+    # Map role codes to display names
+    role_map = {
+        'head': 'Head / First Member',
+        'oic': 'OIC-THA',
+        'second_member': 'Second Member',
+        'third_member': 'Third Member',
+        'fourth_member': 'Fourth Member',
+        'fifth_member': 'Fifth Member',
+        'caretaker': 'Caretaker',
+        'ronda': 'Ronda / Field Personnel',
+    }
+    role_display = role_map.get(role, None)
+    
     if request.method == 'POST':
         form = LoginForm(request.POST)
         if form.is_valid():
@@ -19,6 +36,14 @@ def login_view(request):
             user = authenticate(request, username=username, password=password)
             
             if user is not None:
+                # Optional: Verify the user's position matches the requested role
+                if role and user.position != role:
+                    messages.warning(
+                        request, 
+                        f'You logged in successfully, but your position is {user.get_position_display()}, '
+                        f'not {role_display}. Redirecting to your dashboard.'
+                    )
+                
                 login(request, user)
                 messages.success(request, f'Welcome back, {user.first_name or user.username}!')
                 next_url = request.GET.get('next', 'dashboard')
@@ -30,7 +55,11 @@ def login_view(request):
     else:
         form = LoginForm()
     
-    return render(request, 'accounts/login.html', {'form': form})
+    return render(request, 'accounts/login.html', {
+        'form': form,
+        'role': role,
+        'role_display': role_display,
+    })
 
 
 def logout_view(request):
