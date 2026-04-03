@@ -1,273 +1,328 @@
 {% extends 'base.html' %}
 {% load static %}
-{% load widget_tweaks %}
 
 {% block title %}Submit ISF List - Talisay Housing Authority{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/intake.css' %}">
+<style>
+    /* Compact form styling - matching login form theme */
+    body {
+        margin: 0;
+        padding: 1.5rem 0.75rem;
+        background: linear-gradient(135deg, #0f2447 0%, #1a3a6b 100%);
+        min-height: 100vh;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    
+    .form-container {
+        max-width: 520px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        padding: 1.75rem;
+    }
+    
+    .form-header {
+        text-align: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1.25rem;
+        border-bottom: 2px solid #e5e7eb;
+    }
+    
+    .form-title {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #1a3a6b;
+        margin: 0 0 0.4rem 0;
+    }
+    
+    .form-subtitle {
+        font-size: 0.85rem;
+        color: #64748b;
+        margin: 0;
+    }
+    
+    .section-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #1a3a6b;
+        margin: 1.25rem 0 0.75rem 0;
+        padding-left: 0.5rem;
+        border-left: 3px solid #1a3a6b;
+    }
+    
+    .form-group {
+        margin-bottom: 1rem;
+    }
+    
+    .form-label {
+        display: block;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 0.4rem;
+    }
+    
+    .required {
+        color: #dc2626;
+    }
+    
+    .form-control, .form-select {
+        width: 100%;
+        padding: 0.6rem 0.75rem;
+        font-size: 0.9rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        transition: all 0.2s;
+        box-sizing: border-box;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        outline: none;
+        border-color: #1a3a6b;
+        box-shadow: 0 0 0 3px rgba(26, 58, 107, 0.1);
+    }
+    
+    textarea.form-control {
+        resize: vertical;
+        min-height: 70px;
+    }
+    
+    .isf-card {
+        background: #f8fafc;
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        position: relative;
+    }
+    
+    .isf-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.75rem;
+    }
+    
+    .isf-number {
+        font-weight: 700;
+        color: #1a3a6b;
+        font-size: 0.95rem;
+    }
+    
+    .btn-remove {
+        background: #dc2626;
+        color: white;
+        border: none;
+        padding: 0.3rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+    
+    .btn-remove:hover {
+        background: #b91c1c;
+    }
+    
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+    
+    .form-row .form-group {
+        margin-bottom: 0;
+    }
+    
+    .btn-add {
+        background: #059669;
+        color: white;
+        border: none;
+        padding: 0.7rem 1.25rem;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        width: 100%;
+        margin: 1rem 0;
+        transition: all 0.2s;
+    }
+    
+    .btn-add:hover {
+        background: #047857;
+        transform: translateY(-1px);
+    }
+    
+    .btn-submit {
+        background: linear-gradient(135deg, #1a3a6b 0%, #0f2447 100%);
+        color: white;
+        border: none;
+        padding: 0.85rem;
+        border-radius: 10px;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+        width: 100%;
+        margin-top: 1.5rem;
+        transition: all 0.2s;
+    }
+    
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(26, 58, 107, 0.4);
+    }
+    
+    .info-box {
+        background: #dbeafe;
+        border-left: 4px solid #1a3a6b;
+        padding: 0.75rem;
+        border-radius: 6px;
+        margin-bottom: 1.25rem;
+        font-size: 0.8rem;
+        color: #1e40af;
+    }
+    
+    @media (max-width: 600px) {
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
 {% endblock %}
 
 {% block body %}
-<div class="intake-container">
-    <!-- Header Section -->
-    <div class="intake-header scroll-animate">
-        <div class="header-content">
-            <img src="{% static 'images/logo.png' %}" alt="THA Logo" class="header-logo" onerror="this.style.display='none'">
-            <div class="header-text">
-                <h1>Informal Settler Family (ISF) Submission</h1>
-                <p>Landowner Registration Portal</p>
-            </div>
-        </div>
-        <div class="header-info">
-            <p>This form allows landowners to submit a list of informal settler families residing on their property for housing assistance consideration.</p>
-        </div>
+<div class="form-container">
+    <div class="form-header">
+        <h1 class="form-title">🏠 ISF Submission Portal</h1>
+        <p class="form-subtitle">Talisay City Housing Authority</p>
     </div>
-
-    <!-- Progress Steps -->
-    <div class="progress-steps scroll-animate-scale">
-        <div class="step active" data-step="1">
-            <div class="step-number">1</div>
-            <span>Landowner Info</span>
-        </div>
-        <div class="step-connector"></div>
-        <div class="step" data-step="2">
-            <div class="step-number">2</div>
-            <span>Property Details</span>
-        </div>
-        <div class="step-connector"></div>
-        <div class="step" data-step="3">
-            <div class="step-number">3</div>
-            <span>ISF List</span>
-        </div>
-        <div class="step-connector"></div>
-        <div class="step" data-step="4">
-            <div class="step-number">4</div>
-            <span>Review & Submit</span>
-        </div>
+    
+    <div class="info-box">
+        <strong>For Landowners:</strong> Submit the list of informal settlers residing on your property.
     </div>
-
-    <!-- Main Form -->
-    <form method="post" id="landowner-form" novalidate>
+    
+    {% if messages %}
+        {% for message in messages %}
+        <div style="padding: 0.75rem; margin-bottom: 1rem; background: {% if message.tags == 'error' %}#fed7d7{% else %}#c6f6d5{% endif %}; border-radius: 8px; font-size: 0.85rem;">
+            {{ message }}
+        </div>
+        {% endfor %}
+    {% endif %}
+    
+    <form method="post" id="landowner-form">
         {% csrf_token %}
         
-        <!-- Step 1: Landowner Information -->
-        <div class="form-step active scroll-animate-left" data-step="1">
-            <div class="form-card">
-                <div class="card-header">
-                    <h2><i class="fas fa-user"></i> Landowner Information</h2>
-                </div>
-                <div class="card-body">
-                    <div class="form-row">
-                        <div class="form-group full-width">
-                            <label for="{{ form.landowner_name.id_for_label }}">Full Name <span class="required">*</span></label>
-                            {% render_field form.landowner_name class="form-control" placeholder="Enter your full name" %}
-                            {% if form.landowner_name.errors %}
-                                <span class="error-message">{{ form.landowner_name.errors.0 }}</span>
-                            {% endif %}
-                        </div>
-                    </div>
-                    <div class="form-row two-cols">
-                        <div class="form-group">
-                            <label for="{{ form.landowner_phone.id_for_label }}">Phone Number <span class="required">*</span></label>
-                            {% render_field form.landowner_phone class="form-control" placeholder="09XX XXX XXXX" %}
-                            {% if form.landowner_phone.errors %}
-                                <span class="error-message">{{ form.landowner_phone.errors.0 }}</span>
-                            {% endif %}
-                        </div>
-                        <div class="form-group">
-                            <label for="{{ form.landowner_email.id_for_label }}">Email Address</label>
-                            {% render_field form.landowner_email class="form-control" placeholder="email@example.com (optional)" %}
-                            {% if form.landowner_email.errors %}
-                                <span class="error-message">{{ form.landowner_email.errors.0 }}</span>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <!-- Landowner Information -->
+        <div class="section-title">Landowner Information</div>
+        
+        <div class="form-group">
+            <label class="form-label">Full Name <span class="required">*</span></label>
+            {{ form.landowner_name }}
         </div>
-
-        <!-- Step 2: Property Details -->
-        <div class="form-step scroll-animate-right" data-step="2">
-            <div class="form-card">
-                <div class="card-header">
-                    <h2><i class="fas fa-map-marker-alt"></i> Property Details</h2>
-                </div>
-                <div class="card-body">
-                    <div class="form-row">
-                        <div class="form-group full-width">
-                            <label for="{{ form.property_address.id_for_label }}">Property Address <span class="required">*</span></label>
-                            {% render_field form.property_address class="form-control" placeholder="Enter complete property address" rows="3" %}
-                            {% if form.property_address.errors %}
-                                <span class="error-message">{{ form.property_address.errors.0 }}</span>
-                            {% endif %}
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group full-width">
-                            <label for="{{ form.barangay.id_for_label }}">Barangay <span class="required">*</span></label>
-                            {% render_field form.barangay class="form-control form-select" %}
-                            {% if form.barangay.errors %}
-                                <span class="error-message">{{ form.barangay.errors.0 }}</span>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-            </div>
+        
+        <div class="form-group">
+            <label class="form-label">Property Address <span class="required">*</span></label>
+            {{ form.property_address }}
         </div>
-
-        <!-- Step 3: ISF List -->
-        <div class="form-step scroll-animate-left" data-step="3">
-            <div class="form-card">
-                <div class="card-header">
-                    <h2><i class="fas fa-users"></i> Informal Settler Families</h2>
-                    <p class="card-subtitle">Add all ISF households residing on your property</p>
-                </div>
-                <div class="card-body">
-                    <div id="isf-list">
-                        <!-- ISF entries will be added here dynamically -->
-                    </div>
-                    
-                    <button type="button" id="add-isf-btn" class="btn btn-secondary">
-                        <i class="fas fa-plus"></i> Add ISF Household
-                    </button>
-                    
-                    <div class="isf-count-display">
-                        <span>Total Households: </span>
-                        <strong id="isf-count">0</strong>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Step 4: Review & Submit -->
-        <div class="form-step scroll-animate-scale" data-step="4">
-            <div class="form-card">
-                <div class="card-header">
-                    <h2><i class="fas fa-clipboard-check"></i> Review Your Submission</h2>
-                </div>
-                <div class="card-body">
-                    <div class="review-section">
-                        <h3>Landowner Information</h3>
-                        <div class="review-grid">
-                            <div class="review-item">
-                                <span class="label">Name:</span>
-                                <span class="value" id="review-name">-</span>
-                            </div>
-                            <div class="review-item">
-                                <span class="label">Phone:</span>
-                                <span class="value" id="review-phone">-</span>
-                            </div>
-                            <div class="review-item">
-                                <span class="label">Email:</span>
-                                <span class="value" id="review-email">-</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="review-section">
-                        <h3>Property Details</h3>
-                        <div class="review-grid">
-                            <div class="review-item full">
-                                <span class="label">Address:</span>
-                                <span class="value" id="review-address">-</span>
-                            </div>
-                            <div class="review-item">
-                                <span class="label">Barangay:</span>
-                                <span class="value" id="review-barangay">-</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="review-section">
-                        <h3>ISF Households (<span id="review-isf-count">0</span>)</h3>
-                        <div id="review-isf-list" class="review-isf-list">
-                            <!-- ISF review items will be inserted here -->
-                        </div>
-                    </div>
-
-                    <div class="consent-section">
-                        <label class="checkbox-container">
-                            <input type="checkbox" id="consent-checkbox" required>
-                            <span class="checkmark"></span>
-                            <span class="consent-text">
-                                I certify that the information provided is true and accurate to the best of my knowledge. 
-                                I understand that each ISF listed will receive an SMS notification about this submission.
-                            </span>
-                        </label>
-                    </div>
-                </div>
-            </div>
-        </div>
-
+        
+        <!-- ISF Records -->
+        <div class="section-title">Informal Settlers on Your Property</div>
+        
+        <div id="isf-container"></div>
+        
+        <button type="button" class="btn-add" onclick="addISF()">
+            + Add ISF Household
+        </button>
+        
         <!-- Hidden field for ISF data -->
-        <input type="hidden" name="isf_data" id="isf-data-field" value="[]">
-
-        <!-- Navigation Buttons -->
-        <div class="form-navigation">
-            <button type="button" id="prev-btn" class="btn btn-outline" disabled>
-                <i class="fas fa-arrow-left"></i> Previous
-            </button>
-            <button type="button" id="next-btn" class="btn btn-primary">
-                Next <i class="fas fa-arrow-right"></i>
-            </button>
-            <button type="submit" id="submit-btn" class="btn btn-success" style="display: none;">
-                <i class="fas fa-paper-plane"></i> Submit Application
-            </button>
-        </div>
+        <input type="hidden" name="isf_data" id="isf_data" value="[]">
+        
+        <button type="submit" class="btn-submit">Submit ISF List</button>
     </form>
-
-    <!-- Help Section -->
-    <div class="help-section scroll-animate">
-        <h3><i class="fas fa-question-circle"></i> Need Help?</h3>
-        <p>If you have questions or need assistance, please contact:</p>
-        <div class="contact-info">
-            <p><i class="fas fa-phone"></i> Talisay Housing Authority: (034) 495-XXXX</p>
-            <p><i class="fas fa-envelope"></i> Email: housing@talisay.gov.ph</p>
-            <p><i class="fas fa-clock"></i> Office Hours: Monday - Friday, 8:00 AM - 5:00 PM</p>
-        </div>
-    </div>
 </div>
 
-<!-- ISF Entry Template (hidden) -->
+<!-- ISF Template -->
 <template id="isf-template">
-    <div class="isf-entry" data-index="">
+    <div class="isf-card">
         <div class="isf-header">
-            <h4>ISF Household #<span class="isf-number"></span></h4>
-            <button type="button" class="btn-remove-isf" title="Remove">
-                <i class="fas fa-times"></i>
-            </button>
+            <span class="isf-number">ISF #<span class="num"></span></span>
+            <button type="button" class="btn-remove" onclick="removeISF(this)">Remove</button>
         </div>
-        <div class="isf-body">
-            <div class="form-row two-cols">
-                <div class="form-group">
-                    <label>Full Name <span class="required">*</span></label>
-                    <input type="text" class="form-control isf-name" placeholder="Head of household's full name" required>
-                </div>
-                <div class="form-group">
-                    <label>Phone Number</label>
-                    <input type="tel" class="form-control isf-phone" placeholder="09XX XXX XXXX">
-                </div>
+        
+        <div class="form-group">
+            <label class="form-label">Full Name <span class="required">*</span></label>
+            <input type="text" class="form-control isf-name" required placeholder="Juan Dela Cruz">
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">Household Members <span class="required">*</span></label>
+                <input type="number" class="form-control isf-members" min="1" required placeholder="5">
             </div>
-            <div class="form-row three-cols">
-                <div class="form-group">
-                    <label>Household Members <span class="required">*</span></label>
-                    <input type="number" class="form-control isf-members" min="1" max="20" placeholder="1" required>
-                </div>
-                <div class="form-group">
-                    <label>Monthly Income (₱) <span class="required">*</span></label>
-                    <input type="number" class="form-control isf-income" min="0" max="100000" placeholder="0" required>
-                </div>
-                <div class="form-group">
-                    <label>Years Residing <span class="required">*</span></label>
-                    <input type="number" class="form-control isf-years" min="0" max="100" step="0.5" placeholder="0" required>
-                </div>
+            
+            <div class="form-group">
+                <label class="form-label">Monthly Income (₱) <span class="required">*</span></label>
+                <input type="number" class="form-control isf-income" min="0" step="0.01" required placeholder="8000">
             </div>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label">Years Residing <span class="required">*</span></label>
+            <input type="number" class="form-control isf-years" min="0" step="0.5" required placeholder="3">
         </div>
     </div>
 </template>
-{% endblock %}
 
-{% block extra_js %}
-<script src="{% static 'js/intake.js' %}"></script>
+<script>
+let isfCount = 0;
+
+// Add first ISF on load
+window.addEventListener('DOMContentLoaded', function() {
+    addISF();
+});
+
+function addISF() {
+    isfCount++;
+    const template = document.getElementById('isf-template');
+    const clone = template.content.cloneNode(true);
+    clone.querySelector('.num').textContent = isfCount;
+    document.getElementById('isf-container').appendChild(clone);
+}
+
+function removeISF(btn) {
+    const cards = document.querySelectorAll('.isf-card');
+    if (cards.length <= 1) {
+        alert('You must have at least one ISF record.');
+        return;
+    }
+    btn.closest('.isf-card').remove();
+    // Renumber
+    document.querySelectorAll('.isf-card').forEach((card, i) => {
+        card.querySelector('.num').textContent = i + 1;
+    });
+    isfCount = document.querySelectorAll('.isf-card').length;
+}
+
+// Collect data on submit
+document.getElementById('landowner-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const isfData = [];
+    document.querySelectorAll('.isf-card').forEach(card => {
+        isfData.push({
+            full_name: card.querySelector('.isf-name').value,
+            household_members: card.querySelector('.isf-members').value,
+            monthly_income: card.querySelector('.isf-income').value,
+            years_residing: card.querySelector('.isf-years').value,
+        });
+    });
+    
+    document.getElementById('isf_data').value = JSON.stringify(isfData);
+    this.submit();
+});
+</script>
 {% endblock %}
