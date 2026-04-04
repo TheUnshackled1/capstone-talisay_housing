@@ -4,75 +4,7 @@ Adapted from Housing Services System UI Design
 Responsibilities: M2 (notices, electricity), M3 (docs), M4 (compliance), M6 (reports)
 {% endcomment %}
 
-<!-- KPI Cards Grid -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-    <!-- Total Applicants Card -->
-    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex items-start gap-3 hover:shadow-md transition-shadow">
-        <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 bg-blue-100">
-            <svg class="w-5 h-5 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                <circle cx="9" cy="7" r="4"/>
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
-            </svg>
-        </div>
-        <div class="flex-1 min-w-0">
-            <p class="text-[11px] text-slate-500 uppercase tracking-wide leading-none">Total Applicants</p>
-            <p class="text-2xl font-medium text-slate-900 mt-1">{{ total_applicants|default:0 }}</p>
-            <p class="text-[11px] text-slate-500 mt-0.5">Across all channels</p>
-        </div>
-    </div>
-
-    <!-- Pending Notices Card -->
-    <div class="bg-white rounded-xl border border-amber-200 shadow-sm p-4 flex items-start gap-3 hover:shadow-md transition-shadow ring-1 ring-amber-100">
-        <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 bg-amber-100">
-            <svg class="w-5 h-5 text-amber-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                <polyline points="14 2 14 8 20 8"/>
-            </svg>
-        </div>
-        <div class="flex-1 min-w-0">
-            <p class="text-[11px] text-slate-500 uppercase tracking-wide leading-none">Pending Notices</p>
-            <p class="text-2xl font-medium text-slate-900 mt-1">{{ pending_notices|default:0 }}</p>
-            <p class="text-[11px] text-slate-500 mt-0.5">To prepare & issue</p>
-        </div>
-        {% if pending_notices > 0 %}
-        <svg class="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-            <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-        </svg>
-        {% endif %}
-    </div>
-
-    <!-- Electricity Pending Card -->
-    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex items-start gap-3 hover:shadow-md transition-shadow">
-        <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 bg-purple-100">
-            <svg class="w-5 h-5 text-purple-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-            </svg>
-        </div>
-        <div class="flex-1 min-w-0">
-            <p class="text-[11px] text-slate-500 uppercase tracking-wide leading-none">Electricity Pending</p>
-            <p class="text-2xl font-medium text-slate-900 mt-1">{{ electricity_pending|default:0 }}</p>
-            <p class="text-[11px] text-slate-500 mt-0.5">Connection tracking</p>
-        </div>
-    </div>
-
-    <!-- Incomplete Documents Card -->
-    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex items-start gap-3 hover:shadow-md transition-shadow">
-        <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 bg-teal-100">
-            <svg class="w-5 h-5 text-teal-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-            </svg>
-        </div>
-        <div class="flex-1 min-w-0">
-            <p class="text-[11px] text-slate-500 uppercase tracking-wide leading-none">Incomplete Docs</p>
-            <p class="text-2xl font-medium text-slate-900 mt-1">{{ incomplete_docs|default:0 }}</p>
-            <p class="text-[11px] text-slate-500 mt-0.5">Oversight alerts</p>
-        </div>
-    </div>
-</div>
-
-<!-- Main Content Grid -->
+<!-- Widgets Grid -->
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
     <!-- Priority Tasks Widget -->
     <div class="bg-white rounded-xl border border-slate-200 shadow-sm">
