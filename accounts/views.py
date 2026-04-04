@@ -219,7 +219,15 @@ def dashboard_fourth_member(request):
         'standby_queue': [],  # TODO: Fully approved applicants on standby
         'available_lots': [],  # TODO: Vacant lots ready for awarding
         'blacklist_count': 0,  # TODO: Total blacklisted beneficiaries
+        'repossessed_count': 0,  # TODO: Repossessed units count
+        'awaiting_reaward': 0,  # TODO: Units awaiting re-award after repossession
     }
+    
+    # Calculate ready_to_award (min of available lots and standby queue)
+    standby_count = len(context['standby_queue']) if context['standby_queue'] else 0
+    available_count = len(context['available_lots']) if context['available_lots'] else 0
+    context['ready_to_award'] = min(standby_count, available_count)
+    
     return render(request, 'accounts/dashboard.html', context)
 
 
