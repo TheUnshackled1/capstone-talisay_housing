@@ -3,6 +3,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .forms import LoginForm
+import json
 
 
 def login_view(request):
@@ -158,15 +159,38 @@ def dashboard_second_member(request):
     context = {
         'page_title': 'Second Member Dashboard',
         'user_position': 'second_member',
+        # Original second member stats
         'total_applicants': 0,  # TODO: Total applicants
         'pending_notices': 0,  # TODO: Compliance notices to prepare
         'electricity_pending': 0,  # TODO: Electricity connections pending
         'incomplete_docs': 0,  # TODO: Profiles with incomplete documents
+        # Added fourth member stats
+        'queue_today': 0,  # TODO: Applicants in queue today
+        'incomplete_requirements': 0,  # TODO: Applicants with incomplete requirements
+        'documents_filed': 0,  # TODO: Documents filed this month
+        'lots_for_awarding': 0,  # TODO: Vacant units available for awarding
+        # Widget data
         'notices_to_prepare': [],  # TODO: List of notices to prepare
         'electricity_tracking': [],  # TODO: Electricity connection tracking items
         'doc_completeness_alerts': [],  # TODO: Profiles needing document attention
         'reports_to_generate': [],  # TODO: Reports due for Full Disclosure Portal
+        # Added fourth member widget data
+        'priority_queue': [],  # TODO: Priority queue applicants
+        'walkin_queue': [],  # TODO: Walk-in queue applicants
+        'pending_cdrrmo': [],  # TODO: Applicants pending CDRRMO certification
+        'requirements_checklist': [],  # TODO: Applicants with partial requirements
+        'standby_queue': [],  # TODO: Fully approved applicants on standby
+        'available_lots': [],  # TODO: Vacant lots ready for awarding
+        'blacklist_count': 0,  # TODO: Total blacklisted beneficiaries
+        'repossessed_count': 0,  # TODO: Repossessed units count
+        'awaiting_reaward': 0,  # TODO: Units awaiting re-award after repossession
     }
+    
+    # Calculate ready_to_award (min of available lots and standby queue)
+    standby_count = len(context['standby_queue']) if context['standby_queue'] else 0
+    available_count = len(context['available_lots']) if context['available_lots'] else 0
+    context['ready_to_award'] = min(standby_count, available_count)
+    
     return render(request, 'accounts/dashboard.html', context)
 
 
@@ -301,3 +325,242 @@ def dashboard_field(request):
 def dashboard_view(request):
     """Legacy dashboard view - redirects to position-specific dashboard."""
     return dashboard_redirect(request)
+
+
+@login_required
+def applicants_list(request):
+    """
+    Module 1: ISF Recording Management - Applicant Intake
+    Accessible to: Second Member (Joie), Fourth Member (Jocel)
+    """
+    allowed_positions = ['second_member', 'fourth_member']
+    if request.user.position not in allowed_positions:
+        messages.error(request, 'Access denied. This module is for Second and Fourth Members only.')
+        return redirect('accounts:dashboard')
+    
+    # Mock data - matching the React mockApplicants structure
+    mock_applicants = [
+        {
+            'id': 1,
+            'fullName': 'Dela Cruz, Maria Santos',
+            'referenceNumber': 'THA-2024-00123',
+            'dateRegistered': '2024-01-15',
+            'channel': 'A',
+            'barangay': 'Poblacion',
+            'monthlyIncome': 8500,
+            'householdSize': 5,
+            'yearsResiding': 12,
+            'eligibilityStatus': 'Eligible',
+            'queueType': 'Priority',
+            'queuePosition': 3,
+            'applicationStage': 'Requirements Submission',
+            'cdrrmoStatus': None,
+            'dangerZoneType': None,
+            'isCdrrmoFlagged': False,
+            'signatoryRoutingDelayed': False,
+            'disqualificationReason': None,
+            'documents': {
+                'barangayCertResidency': True,
+                'barangayCertIndigency': True,
+                'cedula': True,
+                'policeClearance': False,
+                'certNoProperty': True,
+                'picture2x2': True,
+                'sketchHouseLocation': False
+            },
+            'lotAssignment': None,
+            'electricityStatus': None
+        },
+        {
+            'id': 2,
+            'fullName': 'Santos, Juan Pedro',
+            'referenceNumber': 'THA-2024-00045',
+            'dateRegistered': '2023-11-20',
+            'channel': 'B',
+            'barangay': 'Cabatangan',
+            'monthlyIncome': 7200,
+            'householdSize': 4,
+            'yearsResiding': 8,
+            'eligibilityStatus': 'Pending CDRRMO',
+            'queueType': 'None',
+            'queuePosition': None,
+            'applicationStage': 'Awaiting Certification',
+            'cdrrmoStatus': 'Pending',
+            'dangerZoneType': 'Riverside',
+            'isCdrrmoFlagged': True,
+            'signatoryRoutingDelayed': False,
+            'disqualificationReason': None,
+            'documents': {
+                'barangayCertResidency': True,
+                'barangayCertIndigency': True,
+                'cedula': True,
+                'policeClearance': True,
+                'certNoProperty': True,
+                'picture2x2': True,
+                'sketchHouseLocation': True
+            },
+            'lotAssignment': None,
+            'electricityStatus': None
+        },
+        {
+            'id': 3,
+            'fullName': 'Reyes, Ana Marie',
+            'referenceNumber': 'THA-2024-00087',
+            'dateRegistered': '2024-02-01',
+            'channel': 'C',
+            'barangay': 'Tabunoc',
+            'monthlyIncome': 9200,
+            'householdSize': 3,
+            'yearsResiding': 5,
+            'eligibilityStatus': 'Eligible',
+            'queueType': 'Walk-in',
+            'queuePosition': 12,
+            'applicationStage': 'Queue',
+            'cdrrmoStatus': None,
+            'dangerZoneType': None,
+            'isCdrrmoFlagged': False,
+            'signatoryRoutingDelayed': False,
+            'disqualificationReason': None,
+            'documents': {
+                'barangayCertResidency': True,
+                'barangayCertIndigency': True,
+                'cedula': True,
+                'policeClearance': True,
+                'certNoProperty': True,
+                'picture2x2': True,
+                'sketchHouseLocation': True
+            },
+            'lotAssignment': None,
+            'electricityStatus': None
+        },
+        {
+            'id': 4,
+            'fullName': 'Garcia, Roberto Luis',
+            'referenceNumber': 'THA-2024-00198',
+            'dateRegistered': '2024-01-05',
+            'channel': 'A',
+            'barangay': 'Dumlog',
+            'monthlyIncome': 15000,
+            'householdSize': 6,
+            'yearsResiding': 15,
+            'eligibilityStatus': 'Disqualified',
+            'queueType': 'None',
+            'queuePosition': None,
+            'applicationStage': 'Eligibility Check',
+            'cdrrmoStatus': None,
+            'dangerZoneType': None,
+            'isCdrrmoFlagged': False,
+            'signatoryRoutingDelayed': False,
+            'disqualificationReason': 'Monthly income exceeds ₱10,000 limit',
+            'documents': {
+                'barangayCertResidency': False,
+                'barangayCertIndigency': False,
+                'cedula': False,
+                'policeClearance': False,
+                'certNoProperty': False,
+                'picture2x2': False,
+                'sketchHouseLocation': False
+            },
+            'lotAssignment': None,
+            'electricityStatus': None
+        },
+        {
+            'id': 5,
+            'fullName': 'Mendoza, Elena Cruz',
+            'referenceNumber': 'THA-2023-00234',
+            'dateRegistered': '2023-09-12',
+            'channel': 'A',
+            'barangay': 'Poblacion',
+            'monthlyIncome': 6800,
+            'householdSize': 4,
+            'yearsResiding': 20,
+            'eligibilityStatus': 'Eligible',
+            'queueType': 'Priority',
+            'queuePosition': 1,
+            'applicationStage': 'Lot Awarding',
+            'cdrrmoStatus': None,
+            'dangerZoneType': None,
+            'isCdrrmoFlagged': False,
+            'signatoryRoutingDelayed': False,
+            'disqualificationReason': None,
+            'documents': {
+                'barangayCertResidency': True,
+                'barangayCertIndigency': True,
+                'cedula': True,
+                'policeClearance': True,
+                'certNoProperty': True,
+                'picture2x2': True,
+                'sketchHouseLocation': True
+            },
+            'lotAssignment': {
+                'block': 'A',
+                'lot': '5',
+                'site': 'GK Cabatangan',
+                'dateAwarded': '2024-02-15'
+            },
+            'electricityStatus': 'Application Submitted'
+        },
+        {
+            'id': 6,
+            'fullName': 'Torres, Miguel Angel',
+            'referenceNumber': 'THA-2024-00067',
+            'dateRegistered': '2024-01-22',
+            'channel': 'B',
+            'barangay': 'Biasong',
+            'monthlyIncome': 7500,
+            'householdSize': 7,
+            'yearsResiding': 10,
+            'eligibilityStatus': 'Eligible',
+            'queueType': 'Priority',
+            'queuePosition': 5,
+            'applicationStage': 'Signatory Routing',
+            'cdrrmoStatus': 'Certified',
+            'dangerZoneType': 'Flood-prone area',
+            'isCdrrmoFlagged': False,
+            'signatoryRoutingDelayed': True,
+            'signatoryRoutingDelayedAt': 'OIC Signature',
+            'disqualificationReason': None,
+            'documents': {
+                'barangayCertResidency': True,
+                'barangayCertIndigency': True,
+                'cedula': True,
+                'policeClearance': True,
+                'certNoProperty': True,
+                'picture2x2': True,
+                'sketchHouseLocation': True
+            },
+            'lotAssignment': None,
+            'electricityStatus': None
+        }
+    ]
+    
+    # Barangays list
+    barangays = [
+        'Biasong', 'Bulawan', 'Cabatangan', 'Cadulawan', 'Camp IV', 'Cansojong',
+        'Dumlog', 'Jaclupan', 'Lagtang', 'Lawaan I', 'Lawaan II', 'Lawaan III',
+        'Linao', 'Maghaway', 'Manipis', 'Mohon', 'Poblacion', 'Pooc', 'San Isidro',
+        'San Roque', 'Tabunoc', 'Tanke', 'Tapul', 'Tigbao', 'Talisay City',
+        'Zone 1', 'Zone 2'
+    ]
+    
+    # Calculate stats
+    total_applicants = len(mock_applicants)
+    priority_count = len([a for a in mock_applicants if a['queueType'] == 'Priority'])
+    walkin_count = len([a for a in mock_applicants if a['queueType'] == 'Walk-in'])
+    pending_cdrrmo = len([a for a in mock_applicants if a.get('cdrrmoStatus') == 'Pending'])
+    
+    context = {
+        'page_title': 'ISF Recording Management',
+        'user_position': request.user.position,
+        'applicants': mock_applicants,
+        'applicants_json': json.dumps(mock_applicants),
+        'barangays': barangays,
+        'stats': {
+            'total': total_applicants,
+            'priority': priority_count,
+            'walkin': walkin_count,
+            'pending_cdrrmo': pending_cdrrmo
+        }
+    }
+    
+    return render(request, 'accounts/applicants.html', context)

@@ -1,0 +1,1097 @@
+{% extends 'staff_base.html' %}
+{% load static %}
+
+{% block nav_applicants %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Applicants Page Styles */
+    .applicants-container {
+        padding: 1.5rem;
+        max-width: 100%;
+    }
+
+    .page-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.5rem;
+    }
+
+    .page-title {
+        font-size: 1.75rem;
+        font-weight: 600;
+        color: #1e293b;
+        margin: 0;
+    }
+
+    .page-subtitle {
+        font-size: 0.875rem;
+        color: #64748b;
+        margin-top: 0.25rem;
+    }
+
+    .btn-primary-add {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.625rem 1rem;
+        background: #1d4ed8;
+        color: white;
+        border: none;
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: 500;
+        cursor: pointer;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        transition: background 0.2s;
+    }
+
+    .btn-primary-add:hover {
+        background: #1e40af;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .stat-card {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.75rem;
+        padding: 0.75rem;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    .stat-card.alert {
+        border-color: #fcd34d;
+    }
+
+    .stat-label {
+        font-size: 0.625rem;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-value {
+        font-size: 1.75rem;
+        font-weight: 600;
+        margin: 0;
+    }
+
+    .stat-value.blue { color: #1d4ed8; }
+    .stat-value.purple { color: #7c3aed; }
+    .stat-value.teal { color: #0d9488; }
+    .stat-value.amber { color: #d97706; }
+
+    .alert-banner {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+        padding: 0.75rem;
+        background: #fef3c7;
+        border: 1px solid #fcd34d;
+        border-radius: 0.75rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .alert-icon {
+        width: 1rem;
+        height: 1rem;
+        color: #d97706;
+        flex-shrink: 0;
+        margin-top: 0.125rem;
+    }
+
+    .alert-text {
+        font-size: 0.75rem;
+        color: #92400e;
+        margin: 0;
+    }
+
+    .controls-bar {
+        display: flex;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .search-box {
+        flex: 1;
+        min-width: 250px;
+        position: relative;
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 0.625rem 0.75rem 0.625rem 2.5rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        outline: none;
+    }
+
+    .search-input:focus {
+        border-color: #3b82f6;
+    }
+
+    .search-icon {
+        position: absolute;
+        left: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 1rem;
+        height: 1rem;
+        color: #94a3b8;
+    }
+
+    .filter-select {
+        padding: 0.625rem 2rem 0.625rem 0.75rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        background: white;
+        cursor: pointer;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2364748b'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 0.5rem center;
+    }
+
+    .applicants-table {
+        width: 100%;
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.75rem;
+        overflow: hidden;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    .applicants-table thead {
+        background: #f8fafc;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .applicants-table th {
+        padding: 0.75rem;
+        text-align: left;
+        font-size: 0.625rem;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .applicants-table tbody tr {
+        border-bottom: 1px solid #f1f5f9;
+        transition: background 0.15s;
+    }
+
+    .applicants-table tbody tr:hover {
+        background: #f8fafc;
+    }
+
+    .applicants-table tbody tr:last-child {
+        border-bottom: none;
+    }
+
+    .applicants-table td {
+        padding: 0.75rem;
+        font-size: 0.75rem;
+        color: #334155;
+    }
+
+    .btn-review {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.5rem 0.875rem;
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        color: white;
+        border: none;
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-review:hover {
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+        transform: translateY(-1px);
+    }
+
+    .btn-review .btn-icon {
+        width: 0.875rem;
+        height: 0.875rem;
+    }
+
+    .badge {
+        display: inline-block;
+        padding: 0.125rem 0.5rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        white-space: nowrap;
+    }
+
+    .badge.channel-a { background: #dbeafe; color: #1e40af; }
+    .badge.channel-b { background: #fef3c7; color: #92400e; }
+    .badge.channel-c { background: #ccfbf1; color: #115e59; }
+
+    .badge.status-eligible { background: #dcfce7; color: #166534; }
+    .badge.status-disqualified { background: #fee2e2; color: #991b1b; }
+    .badge.status-pending { background: #fef3c7; color: #92400e; }
+    .badge.status-pending-cdrrmo { background: #fed7aa; color: #9a3412; }
+
+    .badge.queue-priority { background: #f3e8ff; color: #6b21a8; }
+    .badge.queue-walkin { background: #dbeafe; color: #1e40af; }
+    .badge.queue-standby { background: #ccfbf1; color: #115e59; }
+    .badge.queue-none { background: #f1f5f9; color: #64748b; }
+
+    .flag-icon {
+        display: inline-block;
+        width: 1rem;
+        height: 1rem;
+        color: #d97706;
+        vertical-align: middle;
+        margin-left: 0.25rem;
+    }
+
+    /* Modal Styles */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 50;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+    }
+
+    .modal-overlay.active {
+        display: flex;
+    }
+
+    .modal-content {
+        background: white;
+        border-radius: 1rem;
+        width: 100%;
+        max-width: 42rem;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+
+    .modal-header {
+        position: sticky;
+        top: 0;
+        background: white;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 1rem 1.5rem;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        border-radius: 1rem 1rem 0 0;
+        z-index: 10;
+    }
+
+    .modal-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #1e293b;
+        margin: 0;
+    }
+
+    .modal-subtitle {
+        font-size: 0.75rem;
+        color: #64748b;
+        margin-top: 0.125rem;
+    }
+
+    .btn-close {
+        padding: 0.375rem;
+        border: none;
+        background: none;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        color: #94a3b8;
+        transition: background 0.2s;
+    }
+
+    .btn-close:hover {
+        background: #f1f5f9;
+    }
+
+    .modal-body {
+        padding: 1.5rem;
+    }
+
+    .modal-section {
+        margin-bottom: 1.25rem;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+    }
+
+    .info-item label {
+        display: block;
+        font-size: 0.625rem;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.25rem;
+    }
+
+    .info-item .value {
+        font-size: 0.75rem;
+        color: #334155;
+    }
+
+    .info-box {
+        padding: 0.75rem;
+        border-radius: 0.5rem;
+        border: 1px solid;
+    }
+
+    .info-box.danger {
+        background: #fef2f2;
+        border-color: #fecaca;
+    }
+
+    .info-box.warning {
+        background: #fef3c7;
+        border-color: #fcd34d;
+    }
+
+    .info-box.success {
+        background: #dcfce7;
+        border-color: #bbf7d0;
+    }
+
+    .info-box-label {
+        font-size: 0.625rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.25rem;
+    }
+
+    .info-box.danger .info-box-label { color: #dc2626; }
+    .info-box.warning .info-box-label { color: #d97706; }
+    .info-box.success .info-box-label { color: #16a34a; }
+
+    .info-box-text {
+        font-size: 0.75rem;
+        margin: 0;
+    }
+
+    .info-box.danger .info-box-text { color: #991b1b; }
+    .info-box.warning .info-box-text { color: #92400e; }
+    .info-box.success .info-box-text { color: #166534; }
+
+    .document-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.375rem;
+    }
+
+    .document-item {
+        display: flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.375rem;
+        border-radius: 0.5rem;
+        font-size: 0.6875rem;
+    }
+
+    .document-item.complete {
+        color: #166534;
+    }
+
+    .document-item.incomplete {
+        color: #dc2626;
+    }
+
+    .document-icon {
+        width: 0.875rem;
+        height: 0.875rem;
+        flex-shrink: 0;
+    }
+
+    .modal-footer {
+        position: sticky;
+        bottom: 0;
+        background: #f8fafc;
+        border-top: 1px solid #e2e8f0;
+        padding: 0.75rem 1.5rem;
+        display: flex;
+        gap: 0.5rem;
+        border-radius: 0 0 1rem 1rem;
+    }
+
+    .btn-modal {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.75rem;
+        font-weight: 500;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: 1px solid;
+    }
+
+    .btn-modal.primary {
+        background: #1d4ed8;
+        color: white;
+        border-color: #1d4ed8;
+    }
+
+    .btn-modal.primary:hover {
+        background: #1e40af;
+    }
+
+    .btn-modal.secondary {
+        background: white;
+        color: #64748b;
+        border-color: #cbd5e1;
+    }
+
+    .btn-modal.secondary:hover {
+        background: #f8fafc;
+    }
+
+    .btn-icon {
+        width: 0.875rem;
+        height: 0.875rem;
+    }
+
+    /* Add Applicant Form */
+    .form-group {
+        margin-bottom: 1rem;
+    }
+
+    .form-label {
+        display: block;
+        font-size: 0.6875rem;
+        color: #64748b;
+        margin-bottom: 0.25rem;
+    }
+
+    .form-input, .form-select {
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        outline: none;
+    }
+
+    .form-input:focus, .form-select:focus {
+        border-color: #3b82f6;
+    }
+
+    .channel-selector {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .channel-btn {
+        padding: 0.625rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.5rem;
+        background: white;
+        cursor: pointer;
+        text-align: center;
+        transition: all 0.2s;
+    }
+
+    .channel-btn.active {
+        border-color: #3b82f6;
+        background: #eff6ff;
+    }
+
+    .channel-btn-label {
+        display: block;
+        font-weight: 500;
+        font-size: 0.75rem;
+        color: #334155;
+    }
+
+    .channel-btn.active .channel-btn-label {
+        color: #1d4ed8;
+    }
+
+    .channel-btn-sublabel {
+        display: block;
+        font-size: 0.625rem;
+        color: #64748b;
+        margin-top: 0.125rem;
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+    }
+
+    .info-note {
+        background: #fef3c7;
+        border: 1px solid #fcd34d;
+        border-radius: 0.5rem;
+        padding: 0.75rem;
+    }
+
+    .info-note-text {
+        font-size: 0.6875rem;
+        color: #92400e;
+        margin: 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="applicants-container">
+    <!-- Header -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">ISF Recording Management</h1>
+            <p class="page-subtitle">Module 1 — All intake channels: Landowner, Danger Zone, Walk-in</p>
+        </div>
+        <button class="btn-primary-add" onclick="openAddModal()">
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Register Applicant
+        </button>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <p class="stat-label">Total Applicants</p>
+            <p class="stat-value blue">{{ stats.total }}</p>
+        </div>
+        <div class="stat-card">
+            <p class="stat-label">Priority Queue</p>
+            <p class="stat-value purple">{{ stats.priority }}</p>
+        </div>
+        <div class="stat-card">
+            <p class="stat-label">Walk-in Queue</p>
+            <p class="stat-value teal">{{ stats.walkin }}</p>
+        </div>
+        <div class="stat-card alert">
+            <p class="stat-label">Pending CDRRMO</p>
+            <p class="stat-value amber">{{ stats.pending_cdrrmo }}</p>
+        </div>
+    </div>
+
+    <!-- CDRRMO Alert -->
+    {% if stats.pending_cdrrmo > 0 %}
+    <div class="alert-banner">
+        <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+        <p class="alert-text">
+            <strong>{{ stats.pending_cdrrmo }}</strong> applicant{{ stats.pending_cdrrmo|pluralize }} pending CDRRMO certification. 
+            Follow up required to prevent delays.
+        </p>
+    </div>
+    {% endif %}
+
+    <!-- Controls -->
+    <div class="controls-bar">
+        <div class="search-box">
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.35-4.35"></path>
+            </svg>
+            <input 
+                type="text" 
+                class="search-input" 
+                placeholder="Search by name, reference number, or barangay..." 
+                id="searchInput"
+                onkeyup="filterTable()"
+            >
+        </div>
+        <select class="filter-select" id="filterChannel" onchange="filterTable()">
+            <option value="all">All Channels</option>
+            <option value="A">Channel A — Landowner</option>
+            <option value="B">Channel B — Danger Zone</option>
+            <option value="C">Channel C — Walk-in</option>
+        </select>
+        <select class="filter-select" id="filterStatus" onchange="filterTable()">
+            <option value="all">All Status</option>
+            <option value="Eligible">Eligible</option>
+            <option value="Disqualified">Disqualified</option>
+            <option value="Pending">Pending</option>
+            <option value="Pending CDRRMO">Pending CDRRMO</option>
+        </select>
+    </div>
+
+    <!-- Table -->
+    <table class="applicants-table">
+        <thead>
+            <tr>
+                <th>Transaction #</th>
+                <th>Date & Time</th>
+                <th>Reference #</th>
+                <th>Full Name</th>
+                <th>Channel</th>
+                <th>Eligibility</th>
+                <th>Queue</th>
+                <th>Flags</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody id="applicantsTableBody">
+            {% for applicant in applicants %}
+            <tr 
+                data-channel="{{ applicant.channel }}" 
+                data-status="{{ applicant.eligibilityStatus }}"
+                data-searchable="{{ applicant.fullName|lower }} {{ applicant.referenceNumber|lower }} {{ applicant.barangay|lower }}"
+            >
+                <td style="font-weight: 600; color: #1d4ed8;">#{{ applicant.id }}</td>
+                <td style="font-size: 0.6875rem; color: #64748b;">{{ applicant.dateTime }}</td>
+                <td>{{ applicant.referenceNumber }}</td>
+                <td style="font-weight: 500;">{{ applicant.fullName }}</td>
+                <td>
+                    {% if applicant.channel == 'A' %}
+                        <span class="badge channel-a">Channel A — Landowner</span>
+                    {% elif applicant.channel == 'B' %}
+                        <span class="badge channel-b">Channel B — Danger Zone</span>
+                    {% else %}
+                        <span class="badge channel-c">Channel C — Walk-in</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if applicant.eligibilityStatus == 'Eligible' %}
+                        <span class="badge status-eligible">Eligible</span>
+                    {% elif applicant.eligibilityStatus == 'Disqualified' %}
+                        <span class="badge status-disqualified">Disqualified</span>
+                    {% elif applicant.eligibilityStatus == 'Pending CDRRMO' %}
+                        <span class="badge status-pending-cdrrmo">Pending CDRRMO</span>
+                    {% else %}
+                        <span class="badge status-pending">Pending</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if applicant.queueType == 'Priority' %}
+                        <span class="badge queue-priority">Priority {% if applicant.queuePosition %}#{{ applicant.queuePosition }}{% endif %}</span>
+                    {% elif applicant.queueType == 'Walk-in' %}
+                        <span class="badge queue-walkin">Walk-in {% if applicant.queuePosition %}#{{ applicant.queuePosition }}{% endif %}</span>
+                    {% elif applicant.queueType == 'Standby' %}
+                        <span class="badge queue-standby">Standby</span>
+                    {% else %}
+                        <span class="badge queue-none">—</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if applicant.isCdrrmoFlagged or applicant.signatoryRoutingDelayed %}
+                        <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                            <line x1="12" y1="9" x2="12" y2="13"></line>
+                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                        </svg>
+                    {% endif %}
+                </td>
+                <td>
+                    <button class="btn-review" onclick='openDetailModal({{ forloop.counter0 }})'>
+                        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                        Review
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal-overlay" id="detailModal" onclick="closeDetailModal()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <div>
+                <h2 class="modal-title" id="detailName"></h2>
+                <p class="modal-subtitle" id="detailReference"></p>
+            </div>
+            <button class="btn-close" onclick="closeDetailModal()">
+                <svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <div class="modal-body" id="detailBody">
+            <!-- Content populated by JavaScript -->
+        </div>
+        <div class="modal-footer">
+            <button class="btn-modal primary">
+                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <polyline points="16 11 18 13 22 9"></polyline>
+                </svg>
+                Update Eligibility
+            </button>
+            <button class="btn-modal secondary">
+                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 2L11 13"></path>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+                Send SMS
+            </button>
+            <button class="btn-modal secondary">
+                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                Full Profile
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Add Applicant Modal -->
+<div class="modal-overlay" id="addModal" onclick="closeAddModal()">
+    <div class="modal-content" style="max-width: 36rem;" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <h2 class="modal-title">Register New Applicant</h2>
+            <button class="btn-close" onclick="closeAddModal()">
+                <svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <form id="addApplicantForm">
+                <div class="form-group">
+                    <label class="form-label">Intake Channel</label>
+                    <div class="channel-selector">
+                        <button type="button" class="channel-btn active" onclick="selectChannel('C')">
+                            <span class="channel-btn-label">Channel C</span>
+                            <span class="channel-btn-sublabel">Walk-in</span>
+                        </button>
+                        <button type="button" class="channel-btn" onclick="selectChannel('B')">
+                            <span class="channel-btn-label">Channel B</span>
+                            <span class="channel-btn-sublabel">Danger Zone</span>
+                        </button>
+                        <button type="button" class="channel-btn" onclick="selectChannel('A')">
+                            <span class="channel-btn-label">Channel A</span>
+                            <span class="channel-btn-sublabel">Landowner</span>
+                        </button>
+                    </div>
+                    <input type="hidden" id="channelInput" name="channel" value="C">
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Full Name</label>
+                        <input type="text" class="form-input" placeholder="Last, First, Middle" name="fullName" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Barangay</label>
+                        <select class="form-select" name="barangay" required>
+                            <option value="">Select barangay...</option>
+                            {% for barangay in barangays %}
+                            <option value="{{ barangay }}">{{ barangay }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Monthly Income (₱)</label>
+                        <input type="number" class="form-input" placeholder="e.g. 8500" name="monthlyIncome" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Household Size</label>
+                        <input type="number" class="form-input" placeholder="No. of members" name="householdSize" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Years Residing</label>
+                        <input type="number" class="form-input" placeholder="Years at current address" name="yearsResiding" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Contact Number</label>
+                        <input type="tel" class="form-input" placeholder="09XX-XXX-XXXX" name="contactNumber" required>
+                    </div>
+                </div>
+
+                <div class="form-group" id="dangerZoneGroup" style="display: none;">
+                    <label class="form-label">Declared Danger Zone Type</label>
+                    <select class="form-select" name="dangerZoneType">
+                        <option value="">Select type...</option>
+                        <option>Riverbank</option>
+                        <option>Riverside</option>
+                        <option>Flood-prone area</option>
+                        <option>Other danger zone</option>
+                    </select>
+                </div>
+
+                <div class="info-note">
+                    <p class="info-note-text">
+                        System will automatically assign a reference number and send SMS to the applicant upon saving.
+                    </p>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="submit" form="addApplicantForm" class="btn-modal primary">
+                Save & Run Eligibility Check
+            </button>
+            <button type="button" class="btn-modal secondary" onclick="closeAddModal()">
+                Cancel
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Store applicants data in JavaScript
+    const applicantsData = {{ applicants_json|safe }};
+
+    // Table filtering
+    function filterTable() {
+        const searchValue = document.getElementById('searchInput').value.toLowerCase();
+        const channelFilter = document.getElementById('filterChannel').value;
+        const statusFilter = document.getElementById('filterStatus').value;
+        const rows = document.querySelectorAll('#applicantsTableBody tr');
+
+        rows.forEach(row => {
+            const channel = row.dataset.channel;
+            const status = row.dataset.status;
+            const searchable = row.dataset.searchable;
+
+            const matchSearch = searchValue === '' || searchable.includes(searchValue);
+            const matchChannel = channelFilter === 'all' || channel === channelFilter;
+            const matchStatus = statusFilter === 'all' || status === statusFilter;
+
+            if (matchSearch && matchChannel && matchStatus) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+
+    // Detail Modal
+    function openDetailModal(index) {
+        const applicant = applicantsData[index];
+        const modal = document.getElementById('detailModal');
+        document.getElementById('detailName').textContent = applicant.fullName;
+        document.getElementById('detailReference').textContent = applicant.referenceNumber + ' · Reg. ' + applicant.dateRegistered;
+
+        let bodyHTML = '';
+
+        // Flags
+        if (applicant.isCdrrmoFlagged) {
+            bodyHTML += `
+                <div class="modal-section">
+                    <div class="info-box warning">
+                        <p class="info-box-label">⚠️ CDRRMO Certification Alert</p>
+                        <p class="info-box-text">CDRRMO certification pending for more than 14 days — flag for follow-up</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        if (applicant.signatoryRoutingDelayed) {
+            bodyHTML += `
+                <div class="modal-section">
+                    <div class="info-box danger">
+                        <p class="info-box-label">⚠️ Routing Delay</p>
+                        <p class="info-box-text">Signatory routing delayed more than 3 days — stalled at: <strong>${applicant.signatoryRoutingDelayedAt || 'Unknown'}</strong></p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Basic Info
+        const channelLabels = {
+            'A': 'Channel A — Landowner Submission',
+            'B': 'Channel B — Danger Zone',
+            'C': 'Channel C — Regular Walk-in'
+        };
+
+        bodyHTML += `
+            <div class="modal-section">
+                <div class="info-grid">
+                    <div class="info-item">
+                        <label>Channel</label>
+                        <div class="value">${channelLabels[applicant.channel]}</div>
+                    </div>
+                    <div class="info-item">
+                        <label>Eligibility</label>
+                        <div class="value">${applicant.eligibilityStatus}</div>
+                    </div>
+                    <div class="info-item">
+                        <label>Barangay</label>
+                        <div class="value">${applicant.barangay}</div>
+                    </div>
+                    <div class="info-item">
+                        <label>Queue</label>
+                        <div class="value">${applicant.queueType}${applicant.queuePosition ? ' #' + applicant.queuePosition : ''}</div>
+                    </div>
+                    <div class="info-item">
+                        <label>Monthly Income</label>
+                        <div class="value">₱${applicant.monthlyIncome.toLocaleString()}</div>
+                    </div>
+                    <div class="info-item">
+                        <label>Household Size</label>
+                        <div class="value">${applicant.householdSize} members</div>
+                    </div>
+                    <div class="info-item">
+                        <label>Years Residing</label>
+                        <div class="value">${applicant.yearsResiding} years</div>
+                    </div>
+                    <div class="info-item">
+                        <label>Application Stage</label>
+                        <div class="value">${applicant.applicationStage}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Disqualification
+        if (applicant.disqualificationReason) {
+            bodyHTML += `
+                <div class="modal-section">
+                    <div class="info-box danger">
+                        <p class="info-box-label">Disqualification Reason</p>
+                        <p class="info-box-text">${applicant.disqualificationReason}</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Danger Zone
+        if (applicant.channel === 'B' && applicant.dangerZoneType) {
+            bodyHTML += `
+                <div class="modal-section">
+                    <label style="font-size: 0.625rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; display: block;">CDRRMO Status</label>
+                    <div class="info-box warning">
+                        <p class="info-box-text">
+                            <strong>Declared:</strong> ${applicant.dangerZoneType}<br>
+                            <strong>CDRRMO:</strong> ${applicant.cdrrmoStatus || 'Pending'}
+                        </p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Documents
+        const docs = [
+            { key: 'barangayCertResidency', label: 'Brgy. Certificate of Residency' },
+            { key: 'barangayCertIndigency', label: 'Brgy. Certificate of Indigency' },
+            { key: 'cedula', label: 'Cedula' },
+            { key: 'policeClearance', label: 'Police Clearance' },
+            { key: 'certNoProperty', label: 'Certificate of No Property' },
+            { key: 'picture2x2', label: '2x2 Picture' },
+            { key: 'sketchHouseLocation', label: 'Sketch of House Location' }
+        ];
+
+        bodyHTML += `
+            <div class="modal-section">
+                <label style="font-size: 0.625rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; display: block;">Document Checklist</label>
+                <div class="document-grid">
+        `;
+
+        docs.forEach(doc => {
+            const checked = applicant.documents[doc.key];
+            const iconSVG = checked
+                ? '<svg class="document-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>'
+                : '<svg class="document-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>';
+            bodyHTML += `
+                <div class="document-item ${checked ? 'complete' : 'incomplete'}">
+                    ${iconSVG}
+                    ${doc.label}
+                </div>
+            `;
+        });
+
+        bodyHTML += `</div></div>`;
+
+        // Lot Assignment
+        if (applicant.lotAssignment) {
+            bodyHTML += `
+                <div class="modal-section">
+                    <div class="info-box success">
+                        <p class="info-box-label">Lot Assignment</p>
+                        <p class="info-box-text">
+                            Block ${applicant.lotAssignment.block}, Lot ${applicant.lotAssignment.lot} — ${applicant.lotAssignment.site}<br>
+                            <strong>Awarded:</strong> ${applicant.lotAssignment.dateAwarded}
+                            ${applicant.electricityStatus ? '<br><strong>Electricity:</strong> ' + applicant.electricityStatus : ''}
+                        </p>
+                    </div>
+                </div>
+            `;
+        }
+
+        document.getElementById('detailBody').innerHTML = bodyHTML;
+        modal.classList.add('active');
+    }
+
+    function closeDetailModal() {
+        document.getElementById('detailModal').classList.remove('active');
+    }
+
+    // Add Modal
+    function openAddModal() {
+        document.getElementById('addModal').classList.add('active');
+    }
+
+    function closeAddModal() {
+        document.getElementById('addModal').classList.remove('active');
+        document.getElementById('addApplicantForm').reset();
+        selectChannel('C');
+    }
+
+    function selectChannel(channel) {
+        document.querySelectorAll('.channel-btn').forEach(btn => btn.classList.remove('active'));
+        event.currentTarget.classList.add('active');
+        document.getElementById('channelInput').value = channel;
+        
+        // Show/hide danger zone field
+        const dangerZoneGroup = document.getElementById('dangerZoneGroup');
+        dangerZoneGroup.style.display = channel === 'B' ? 'block' : 'none';
+    }
+
+    // Form submission (placeholder - implement backend)
+    document.getElementById('addApplicantForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        alert('Form submission would be handled here. Implement Django backend to process new applicant registration.');
+        closeAddModal();
+    });
+
+    // Pass applicant data as JSON for onclick handler
+    function escapeHtml(text) {
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return text.replace(/[&<>"']/g, m => map[m]);
+    }
+</script>
+{% endblock %}
