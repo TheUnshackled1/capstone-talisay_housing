@@ -312,104 +312,117 @@
             <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
             </svg>
-            Landowner Submissions
+            Applicant Intake List
         </h1>
-        <p class="page-subtitle">Review ISF lists submitted by landowners via the public portal</p>
+        <p class="page-subtitle">ISF records from landowner submissions and walk-in applicants</p>
     </div>
     
-    {% if messages %}
-        {% for message in messages %}
-        <div class="alert alert-{{ message.tags }}" role="alert">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    <!-- Statistics Cards -->
+    <div class="isf-stats">
+        <div class="stat">
+            <div class="stat-icon stat-pending">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                </svg>
+            </div>
+            <div>
+                <div class="stat-label">Pending Review</div>
+                <div class="stat-value">{{ pending_isf|add:pending_walkin }}</div>
+            </div>
         </div>
-        {% endfor %}
-    {% endif %}
+        
+        <div class="stat">
+            <div class="stat-icon stat-eligible">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20 6 9 17 4 12"/>
+                </svg>
+            </div>
+            <div>
+                <div class="stat-label">Eligible</div>
+                <div class="stat-value">{{ eligible_isf|add:eligible_walkin }}</div>
+            </div>
+        </div>
+        
+        <div class="stat">
+            <div class="stat-icon stat-disqualified">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </div>
+            <div>
+                <div class="stat-label">Disqualified</div>
+                <div class="stat-value">{{ disqualified_isf|add:disqualified_walkin }}</div>
+            </div>
+        </div>
+        
+        <div class="stat">
+            <div class="stat-icon stat-total">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+            </div>
+            <div>
+                <div class="stat-label">Total Records</div>
+                <div class="stat-value">{{ total_isf|add:total_walkin }}</div>
+            </div>
+        </div>
+    </div>
     
-    {% if submissions %}
-        {% for submission in submissions %}
+    <!-- ISF Records from Landowner Submissions -->
+    {% if isf_records %}
+        <div style="margin: 1.5rem 0 1rem; font-weight: 600; color: #0f172a; font-size: 1rem;">
+            📋 Channel A - Landowner Submissions ({{ isf_records.count }})
+        </div>
+        {% for isf in isf_records %}
         <div class="submission-card">
             <div class="submission-header">
                 <div style="display: flex; align-items: center; gap: 0.6rem;">
                     <div class="submission-number">#{{ forloop.counter }}</div>
                     <div>
-                        <div class="ref-number">{{ submission.reference_number }}</div>
+                        <div class="ref-number">{{ isf.reference_number }}</div>
                         <div class="timestamp">
-                            Submitted {{ submission.submitted_at|date:"M d, Y g:i A" }}
+                            Submitted {{ isf.created_at|date:"M d, Y g:i A" }}
                         </div>
                     </div>
                 </div>
-                <span class="status-badge status-{{ submission.status }}">
-                    {{ submission.get_status_display }}
+                <span class="status-badge status-{{ isf.status }}">
+                    {{ isf.get_status_display }}
                 </span>
             </div>
             
+            <!-- ISF Personal Info -->
             <div class="landowner-info">
                 <div class="landowner-name">
                     <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                        <polyline points="9 22 9 12 15 12 15 22"/>
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
                     </svg>
-                    {{ submission.landowner_name }}
+                    {{ isf.full_name }}
                 </div>
-                <div class="address">{{ submission.property_address }}</div>
+                <div class="address">From: {{ isf.submission.landowner_name }} - {{ isf.submission.property_address }}</div>
             </div>
             
-            <div class="isf-stats">
-                <div class="stat">
-                    <div class="stat-icon stat-pending">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <div class="stat-label">Pending</div>
-                        <div class="stat-value">{{ submission.pending_count }}</div>
-                    </div>
+            <!-- ISF Details -->
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e2e8f0;">
+                <div>
+                    <div style="font-size: 0.75rem; color: #64748b; margin-bottom: 0.25rem;">Household Members</div>
+                    <div style="font-weight: 600; color: #0f172a;">{{ isf.household_members }}</div>
                 </div>
-                
-                <div class="stat">
-                    <div class="stat-icon stat-eligible">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="20 6 9 17 4 12"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <div class="stat-label">Eligible</div>
-                        <div class="stat-value">{{ submission.eligible_count }}</div>
-                    </div>
+                <div>
+                    <div style="font-size: 0.75rem; color: #64748b; margin-bottom: 0.25rem;">Monthly Income</div>
+                    <div style="font-weight: 600; color: #0f172a;">₱{{ isf.monthly_income|floatformat:2 }}</div>
                 </div>
-                
-                <div class="stat">
-                    <div class="stat-icon stat-disqualified">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <div class="stat-label">Disqualified</div>
-                        <div class="stat-value">{{ submission.disqualified_count }}</div>
-                    </div>
-                </div>
-                
-                <div class="stat">
-                    <div class="stat-icon stat-total">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                            <circle cx="9" cy="7" r="4"/>
-                            <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <div class="stat-label">Total ISFs</div>
-                        <div class="stat-value">{{ submission.isf_records.count }}</div>
-                    </div>
+                <div>
+                    <div style="font-size: 0.75rem; color: #64748b; margin-bottom: 0.25rem;">Years Residing</div>
+                    <div style="font-weight: 600; color: #0f172a;">{{ isf.years_residing }} year{% if isf.years_residing != 1 %}s{% endif %}</div>
                 </div>
             </div>
             
             <div style="margin-top: 1rem; text-align: right;">
-                <a href="{% url 'intake:submission_review' submission.id %}" class="review-btn">
-                    Review ISFs
+                <a href="{% url 'intake:isf_review' isf.id %}" class="review-btn">
+                    Review Application
                     <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                     </svg>
@@ -424,8 +437,83 @@
                     <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                 </svg>
             </div>
-            <h3>No Submissions Yet</h3>
-            <p>Landowner submissions will appear here once they are submitted via the public portal.</p>
+            <h3>No Landowner Submissions Yet</h3>
+            <p>ISF records from landowners will appear here.</p>
+        </div>
+    {% endif %}
+    
+    <!-- Walk-in Applicants (Channel B & C) -->
+    {% if walk_in_applicants %}
+        <div style="margin: 2rem 0 1rem; font-weight: 600; color: #0f172a; font-size: 1rem;">
+            🚶 Channel B & C - Walk-in Applicants ({{ walk_in_applicants.count }})
+        </div>
+        {% for applicant in walk_in_applicants %}
+        <div class="submission-card">
+            <div class="submission-header">
+                <div style="display: flex; align-items: center; gap: 0.6rem;">
+                    <div class="submission-number">#{{ forloop.counter }}</div>
+                    <div>
+                        <div class="ref-number">{{ applicant.reference_number }}</div>
+                        <div class="timestamp">
+                            Registered {{ applicant.created_at|date:"M d, Y g:i A" }}
+                        </div>
+                    </div>
+                </div>
+                <span class="status-badge status-{{ applicant.status }}">
+                    {{ applicant.get_status_display }}
+                </span>
+            </div>
+            
+            <!-- Applicant Personal Info -->
+            <div class="landowner-info">
+                <div class="landowner-name">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    {{ applicant.full_name }}
+                </div>
+                <div class="address">{{ applicant.current_address }} ({{ applicant.barangay.name }})</div>
+                <div style="margin-top: 0.5rem; padding: 0.5rem; background: #f8fafc; border-radius: 0.5rem; font-size: 0.875rem;">
+                    <strong>Channel:</strong> {{ applicant.get_channel_display }}
+                </div>
+            </div>
+            
+            <!-- Applicant Details -->
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e2e8f0;">
+                <div>
+                    <div style="font-size: 0.75rem; color: #64748b; margin-bottom: 0.25rem;">Monthly Income</div>
+                    <div style="font-weight: 600; color: #0f172a;">₱{{ applicant.monthly_income|floatformat:2 }}</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.75rem; color: #64748b; margin-bottom: 0.25rem;">Years Residing</div>
+                    <div style="font-weight: 600; color: #0f172a;">{{ applicant.years_residing }} year{% if applicant.years_residing != 1 %}s{% endif %}</div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 1rem; text-align: right;">
+                <a href="#" class="review-btn">
+                    View Profile
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div style="margin: 2rem 0 1rem; font-weight: 600; color: #0f172a; font-size: 1rem;">
+            🚶 Channel B & C - Walk-in Applicants (0)
+        </div>
+        <div class="submission-card empty-state">
+            <div class="empty-icon">
+                <svg class="w-20 h-20 mx-auto text-slate-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                </svg>
+            </div>
+            <h3>No Walk-in Applicants Yet</h3>
+            <p>Walk-in applicants (danger zone or regular) will appear here.</p>
         </div>
     {% endif %}
     

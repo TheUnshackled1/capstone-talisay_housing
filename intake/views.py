@@ -76,7 +76,7 @@ def landowner_form(request):
 @login_required
 def submission_list(request):
     """
-    Staff view: List all landowner submissions for review.
+    Staff view: List all ISF records for review (from landowner submissions).
     
     ACCESS CONTROL - Hierarchical Model:
     ✅ Jocel (fourth_member) - Primary reviewer
@@ -91,16 +91,37 @@ def submission_list(request):
         messages.error(request, 'You do not have permission to access this page.')
         return redirect('accounts:dashboard')
     
-    submissions = LandownerSubmission.objects.all().prefetch_related('isf_records')
+    # Get all ISF records with related submission data
+    isf_records = ISFRecord.objects.select_related('submission').order_by('-created_at')
     
-    # Count ISFs by status
-    for submission in submissions:
-        submission.pending_count = submission.isf_records.filter(status='pending').count()
-        submission.eligible_count = submission.isf_records.filter(status='eligible').count()
-        submission.disqualified_count = submission.isf_records.filter(status='disqualified').count()
+    # Also get walk-in applicants (Channel B and C)
+    from .models import Applicant
+    walk_in_applicants = Applicant.objects.filter(
+        channel__in=['danger_zone', 'walk_in']
+    ).order_by('-created_at')
+    
+    # Count statistics
+    total_isf = isf_records.count()
+    pending_isf = isf_records.filter(status='pending').count()
+    eligible_isf = isf_records.filter(status='eligible').count()
+    disqualified_isf = isf_records.filter(status='disqualified').count()
+    
+    total_walkin = walk_in_applicants.count()
+    pending_walkin = walk_in_applicants.filter(status='pending').count()
+    eligible_walkin = walk_in_applicants.filter(status='eligible').count()
+    disqualified_walkin = walk_in_applicants.filter(status='disqualified').count()
     
     return render(request, 'intake/staff/submission_list.html', {
-        'submissions': submissions,
+        'isf_records': isf_records,
+        'walk_in_applicants': walk_in_applicants,
+        'total_isf': total_isf,
+        'pending_isf': pending_isf,
+        'eligible_isf': eligible_isf,
+        'disqualified_isf': disqualified_isf,
+        'total_walkin': total_walkin,
+        'pending_walkin': pending_walkin,
+        'eligible_walkin': eligible_walkin,
+        'disqualified_walkin': disqualified_walkin,
     })
 
 
