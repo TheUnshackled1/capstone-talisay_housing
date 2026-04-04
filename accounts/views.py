@@ -8,7 +8,7 @@ from .forms import LoginForm
 def login_view(request):
     """Staff login page."""
     if request.user.is_authenticated:
-        return redirect('dashboard')
+        return redirect('accounts:dashboard')
     
     # Get the requested role from URL parameter
     role = request.GET.get('role', '')
@@ -47,7 +47,7 @@ def login_view(request):
                 
                 login(request, user)
                 messages.success(request, f'Welcome back, {user.first_name or user.username}!')
-                next_url = request.GET.get('next', 'dashboard')
+                next_url = request.GET.get('next', 'accounts:dashboard')
                 return redirect(next_url)
             else:
                 messages.error(request, 'Invalid username or password.')
