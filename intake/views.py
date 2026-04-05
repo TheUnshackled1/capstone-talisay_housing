@@ -20,8 +20,12 @@ def landowner_form(request):
     """
     Public form for landowners to submit ISF records.
     No login required - accessible to anyone.
-    MINIMAL FORM: Only 6 fields (landowner name + address, ISF: name + household + income + years)
+    Enhanced form: landowner name, phone, email, address, barangay + ISF data
     """
+    # Get barangay list for template dropdown
+    from .forms import BARANGAY_CHOICES
+    barangays = [b[0] for b in BARANGAY_CHOICES if b[0]]  # Exclude empty choice
+    
     if request.method == 'POST':
         form = LandownerSubmissionForm(request.POST)
         
@@ -35,6 +39,7 @@ def landowner_form(request):
                 return render(request, 'intake/landowner_form.html', {
                     'form': form,
                     'isf_form': ISFRecordForm(),
+                    'barangays': barangays,
                 })
             
             if not isf_records_data:
@@ -42,21 +47,25 @@ def landowner_form(request):
                 return render(request, 'intake/landowner_form.html', {
                     'form': form,
                     'isf_form': ISFRecordForm(),
+                    'barangays': barangays,
                 })
             
-            # Create the submission
-            submission = form.save()
+            # Create the submission with barangay from form
+            submission = form.save(commit=False)
+            submission.barangay = request.POST.get('barangay', '')
+            submission.save()
             
-            # Create ISF records (minimal - no phone yet)
+            # Create ISF records with phone and barangay
             isf_records = []
             for isf_data in isf_records_data:
                 isf_record = ISFRecord.objects.create(
                     submission=submission,
                     full_name=isf_data.get('full_name', '').strip(),
+                    phone_number=isf_data.get('phone_number', '').strip(),
+                    barangay=isf_data.get('barangay', '').strip() or submission.barangay,
                     household_members=int(isf_data.get('household_members', 1)),
                     monthly_income=float(isf_data.get('monthly_income', 0)),
                     years_residing=int(isf_data.get('years_residing', 0)),
-                    # Phone number NOT collected yet - Jocel will add during review
                 )
                 isf_records.append(isf_record)
             
@@ -73,6 +82,7 @@ def landowner_form(request):
     return render(request, 'intake/landowner_form.html', {
         'form': form,
         'isf_form': ISFRecordForm(),
+        'barangays': barangays,
     })
 
 
@@ -855,6 +865,16 @@ def update_applicant(request):
             if current_address:
                 applicant.current_address = current_address
             
+            # Channel B specific: Danger zone fields
+            if channel == 'B':
+                danger_zone_type = request.POST.get('danger_zone_type', '').strip()
+                danger_zone_location = request.POST.get('danger_zone_location', '').strip()
+                
+                if danger_zone_type:
+                    applicant.danger_zone_type = danger_zone_type
+                if danger_zone_location:
+                    applicant.danger_zone_location = danger_zone_location
+            
             applicant.save()
             
             return JsonResponse({
@@ -931,10 +951,16 @@ def applicants_list(request):
             'channel': 'A',
             'submissionId': str(isf.submission.id),  # For Channel A review
             'applicantId': None,
-            'barangay': isf.submission.barangay,
+            'barangay': isf.barangay or isf.submission.barangay or '',  # ISF barangay or submission barangay
             'monthlyIncome': float(isf.monthly_income),
             'householdSize': isf.household_members,
             'yearsResiding': isf.years_residing,
+            'phoneNumber': isf.phone_number or '',
+            # Landowner info from submission
+            'landownerName': isf.submission.landowner_name or '',
+            'landownerPhone': isf.submission.landowner_phone or '',
+            'propertyAddress': isf.submission.property_address or '',
+            'submissionBarangay': isf.submission.barangay or '',  # Landowner's barangay
             'eligibilityStatus': eligibility_status,
             'queueType': queue_type,
             'queuePosition': queue_position,
@@ -1004,11 +1030,15 @@ def applicants_list(request):
             'monthlyIncome': float(app.monthly_income),
             'householdSize': app.household_member_count,
             'yearsResiding': app.years_residing,
+            'phoneNumber': app.phone_number or '',
+            'currentAddress': app.current_address or '',
+            # Channel B specific - get from model or CDRRMO cert
+            'dangerZoneType': app.danger_zone_type if hasattr(app, 'danger_zone_type') and app.danger_zone_type else '',
+            'dangerZoneLocation': app.danger_zone_location if hasattr(app, 'danger_zone_location') and app.danger_zone_location else (danger_zone_type or ''),
             'eligibilityStatus': eligibility_status,
             'queueType': queue_type,
             'queuePosition': queue_position,
             'cdrrmoStatus': cdrrmo_status,
-            'dangerZoneType': danger_zone_type,
             'isCdrrmoFlagged': is_cdrrmo_flagged,
             'signatoryRoutingDelayed': False,  # TODO: Link to Module 2
             'disqualificationReason': app.disqualification_reason or None,

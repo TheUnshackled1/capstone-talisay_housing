@@ -213,6 +213,7 @@ class ISFRecord(models.Model):
         verbose_name="Monthly Income (₱)"
     )
     years_residing = models.PositiveIntegerField(verbose_name="Years Residing on Property")
+    barangay = models.CharField(max_length=100, blank=True, verbose_name="Barangay")
     
     # Contact (optional, for SMS notifications)
     phone_number = models.CharField(max_length=20, blank=True, verbose_name="Contact Number")
@@ -350,6 +351,19 @@ class Applicant(models.Model):
     # Channel and Status
     channel = models.CharField(max_length=20, choices=CHANNEL_CHOICES)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    
+    # Channel B: Danger Zone specific fields
+    danger_zone_type = models.CharField(
+        max_length=50,
+        blank=True,
+        verbose_name="Type of Danger Zone",
+        help_text="flood_prone, landslide, storm_surge, river_bank, cliff_edge, coastal, other"
+    )
+    danger_zone_location = models.CharField(
+        max_length=255,
+        blank=True,
+        verbose_name="Specific Danger Zone Location"
+    )
     
     # Link to Channel A source (if applicable)
     isf_record = models.OneToOneField(

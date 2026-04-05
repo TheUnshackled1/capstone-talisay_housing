@@ -38,14 +38,23 @@ BARANGAY_CHOICES = [
 
 class LandownerSubmissionForm(forms.ModelForm):
     """
-    Minimal landowner form (spec-compliant).
+    Landowner submission form (enhanced).
     Public form - no authentication required.
-    Only collects: landowner name + property address
+    Collects: landowner name, phone, email, property address, barangay
     """
+    barangay = forms.ChoiceField(
+        choices=BARANGAY_CHOICES,
+        required=False,
+        label="Barangay",
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+    
     class Meta:
         model = LandownerSubmission
         fields = [
             'landowner_name',
+            'landowner_phone',
+            'landowner_email',
             'property_address',
         ]
         widgets = {
@@ -54,15 +63,25 @@ class LandownerSubmissionForm(forms.ModelForm):
                 'autofocus': True,
                 'class': 'form-control',
             }),
+            'landowner_phone': forms.TextInput(attrs={
+                'placeholder': '09XX-XXX-XXXX',
+                'class': 'form-control',
+            }),
+            'landowner_email': forms.EmailInput(attrs={
+                'placeholder': 'email@example.com',
+                'class': 'form-control',
+            }),
             'property_address': forms.Textarea(attrs={
-                'placeholder': 'Complete address of the property where informal settlers are residing (include barangay)',
-                'rows': 3,
+                'placeholder': 'Complete address of the property where informal settlers are residing',
+                'rows': 2,
                 'class': 'form-control',
             }),
         }
         labels = {
-            'landowner_name': 'Your Full Name',
-            'property_address': 'Property Address (Include Barangay)',
+            'landowner_name': 'Full Name',
+            'landowner_phone': 'Contact Number',
+            'landowner_email': 'Email Address',
+            'property_address': 'Property Address',
         }
 
 

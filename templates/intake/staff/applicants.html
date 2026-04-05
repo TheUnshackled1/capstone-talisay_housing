@@ -824,54 +824,151 @@
             <input type="hidden" id="reviewSubmissionId" name="submission_id" value="">
             
             <div class="modal-body" id="reviewBody">
-                <!-- Channel A: Landowner Submission View -->
+                <!-- Channel A: Landowner Submission View (Compact) -->
                 <div id="landownerReviewSection" style="display: none;">
-                    <div class="info-note" style="background: #dbeafe; border-color: #93c5fd; margin-bottom: 1rem;">
-                        <p class="info-note-text" style="color: #1e40af;">
-                            <strong>📋 Channel A — Landowner Submission</strong>
-                        </p>
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.75rem;">
+                        <span class="status-badge status-info">Channel A — Landowner</span>
+                        <span class="status-badge" id="reviewEligibilityBadgeA"></span>
                     </div>
                     
-                    <!-- Landowner Information (Editable) -->
-                    <div style="margin-bottom: 1rem;">
-                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">Landowner Information</h4>
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label class="form-label">Landowner Name</label>
-                                <input type="text" class="form-input" id="reviewLandownerName" name="landowner_name" readonly>
+                    <!-- Compact Landowner Info -->
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 0.75rem; margin-bottom: 0.75rem;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.8125rem;">
+                            <div>
+                                <span style="color: #64748b;">Landowner:</span>
+                                <input type="text" class="form-input" id="reviewLandownerName" name="landowner_name" readonly style="padding: 0.25rem 0.5rem; font-size: 0.8125rem; margin-top: 0.25rem;">
                             </div>
-                            <div class="form-group">
-                                <label class="form-label">Contact Number</label>
-                                <input type="tel" class="form-input" id="reviewLandownerPhone" name="landowner_phone" readonly>
+                            <div>
+                                <span style="color: #64748b;">Phone:</span>
+                                <input type="tel" class="form-input" id="reviewLandownerPhone" name="landowner_phone" readonly style="padding: 0.25rem 0.5rem; font-size: 0.8125rem; margin-top: 0.25rem;">
                             </div>
-                            <div class="form-group" style="grid-column: span 2;">
-                                <label class="form-label">Property Address</label>
-                                <textarea class="form-input" id="reviewPropertyAddress" name="property_address" rows="2" readonly></textarea>
+                            <div>
+                                <span style="color: #64748b;">Property:</span>
+                                <input type="text" class="form-input" id="reviewPropertyAddress" name="property_address" readonly style="padding: 0.25rem 0.5rem; font-size: 0.8125rem; margin-top: 0.25rem;">
+                            </div>
+                            <div>
+                                <span style="color: #64748b;">Barangay:</span>
+                                <input type="text" class="form-input" id="reviewSubmissionBarangay" name="submission_barangay" readonly style="padding: 0.25rem 0.5rem; font-size: 0.8125rem; margin-top: 0.25rem;">
                             </div>
                         </div>
                     </div>
                     
-                    <!-- ISF Records Section -->
-                    <div style="border-top: 1px solid #e2e8f0; padding-top: 1rem;">
-                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">ISF Records from this Submission</h4>
-                        <div id="isfListContainer">
-                            <!-- ISF cards populated by JavaScript -->
+                    <!-- Compact ISF Records -->
+                    <div id="isfListContainer">
+                        <!-- ISF cards populated by JavaScript -->
+                    </div>
+                </div>
+                
+                <!-- Channel B: Danger Zone Applicant View -->
+                <div id="dangerZoneReviewSection" style="display: none;">
+                    <!-- Status Badges Row -->
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;">
+                        <span class="status-badge status-warning">Channel B — Danger Zone</span>
+                        <span class="status-badge" id="reviewEligibilityBadgeB"></span>
+                        <span class="status-badge" id="reviewQueueBadgeB" style="display: none;"></span>
+                    </div>
+                    
+                    <!-- Editable Fields for Channel B -->
+                    <div class="form-grid" style="margin-bottom: 1rem;">
+                        <div class="form-group" style="grid-column: span 2;">
+                            <label class="form-label">Full Name</label>
+                            <input type="text" class="form-input" id="reviewFullNameB" name="full_name_b" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Barangay</label>
+                            <select class="form-select" id="reviewBarangayB" name="barangay_b" disabled>
+                                <option value="">Select barangay...</option>
+                                {% for brgy in barangays %}
+                                <option value="{{ brgy }}">{{ brgy }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Monthly Income (₱)</label>
+                            <input type="number" class="form-input" id="reviewIncomeB" name="monthly_income_b" min="0" step="0.01" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Household Size</label>
+                            <input type="number" class="form-input" id="reviewHouseholdB" name="household_size_b" min="1" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Years Residing</label>
+                            <input type="number" class="form-input" id="reviewYearsB" name="years_residing_b" min="0" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Contact Number</label>
+                            <input type="tel" class="form-input" id="reviewPhoneB" name="phone_number_b" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Current Address</label>
+                            <input type="text" class="form-input" id="reviewAddressB" name="current_address_b" readonly>
+                        </div>
+                    </div>
+                    
+                    <!-- Danger Zone Specific Fields -->
+                    <div style="border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-bottom: 1rem;">
+                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">Danger Zone Information</h4>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">Danger Zone Type</label>
+                                <select class="form-select" id="reviewDangerType" name="danger_zone_type" disabled>
+                                    <option value="">Select type...</option>
+                                    <option value="flood_prone">Flood-prone Area</option>
+                                    <option value="landslide">Landslide-prone Area</option>
+                                    <option value="storm_surge">Storm Surge Zone</option>
+                                    <option value="river_bank">Near River Bank</option>
+                                    <option value="cliff_edge">Near Cliff/Steep Slope</option>
+                                    <option value="coastal">Coastal Erosion Zone</option>
+                                    <option value="other">Other Hazard Area</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Specific Location</label>
+                                <input type="text" class="form-input" id="reviewDangerLocation" name="danger_zone_location" readonly>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- CDRRMO Certification Status -->
+                    <div style="border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-bottom: 1rem;">
+                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">CDRRMO Certification</h4>
+                        <div id="cdrrmoStatusBox" class="info-note" style="background: #fef3c7; border-color: #fcd34d;">
+                            <p class="info-note-text" style="color: #92400e;" id="cdrrmoStatusText">
+                                <strong>⚠️ Pending CDRRMO Certification</strong><br>
+                                Applicant must be certified by CDRRMO before eligibility can be determined.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Eligibility Check Section -->
+                    <div style="border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-bottom: 1rem;">
+                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">Eligibility Check</h4>
+                        <div id="eligibilityChecksB" style="display: grid; gap: 0.5rem;">
+                            <!-- Populated by JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <!-- Document Checklist -->
+                    <div style="border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-bottom: 1rem;">
+                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">Document Checklist</h4>
+                        <div class="document-grid" id="documentChecklistB">
+                            <!-- Populated by JavaScript -->
                         </div>
                     </div>
                 </div>
                 
-                <!-- Channel B/C: Individual Applicant View -->
+                <!-- Channel C: Regular Walk-in Applicant View -->
                 <div id="walkinReviewSection" style="display: none;">
                     <!-- Status Badges Row -->
                     <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;">
-                        <span class="status-badge" id="reviewChannelBadge"></span>
+                        <span class="status-badge status-info">Channel C — Walk-in</span>
                         <span class="status-badge" id="reviewEligibilityBadge"></span>
                         <span class="status-badge" id="reviewQueueBadge" style="display: none;"></span>
                     </div>
                     
-                    <!-- Editable Fields -->
+                    <!-- Editable Fields for Channel C -->
                     <div class="form-grid" style="margin-bottom: 1rem;">
-                        <div class="form-group">
+                        <div class="form-group" style="grid-column: span 2;">
                             <label class="form-label">Full Name</label>
                             <input type="text" class="form-input" id="reviewFullName" name="full_name" readonly>
                         </div>
@@ -900,26 +997,15 @@
                             <label class="form-label">Contact Number</label>
                             <input type="tel" class="form-input" id="reviewPhone" name="phone_number" readonly>
                         </div>
-                        <div class="form-group" style="grid-column: span 2;">
+                        <div class="form-group">
                             <label class="form-label">Current Address</label>
                             <input type="text" class="form-input" id="reviewAddress" name="current_address" readonly>
-                        </div>
-                    </div>
-                    
-                    <!-- CDRRMO Section (Channel B only) -->
-                    <div id="cdrrmoSection" style="display: none; margin-bottom: 1rem;">
-                        <div class="info-note" style="background: #fef3c7; border-color: #fcd34d;">
-                            <p class="info-note-text" style="color: #92400e;">
-                                <strong>⚠️ CDRRMO Certification Required</strong><br>
-                                <span id="cdrrmoDetails"></span>
-                            </p>
                         </div>
                     </div>
                     
                     <!-- Eligibility Check Section -->
                     <div style="border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-bottom: 1rem;">
                         <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">Eligibility Check</h4>
-                        
                         <div id="eligibilityChecks" style="display: grid; gap: 0.5rem;">
                             <!-- Populated by JavaScript -->
                         </div>
@@ -928,7 +1014,6 @@
                     <!-- Document Checklist -->
                     <div style="border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-bottom: 1rem;">
                         <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">Document Checklist</h4>
-                        
                         <div class="document-grid" id="documentChecklist">
                             <!-- Populated by JavaScript -->
                         </div>
@@ -1270,26 +1355,34 @@
             'C': 'Channel C — Walk-in'
         };
         
+        // Hide all sections first
+        document.getElementById('landownerReviewSection').style.display = 'none';
+        document.getElementById('dangerZoneReviewSection').style.display = 'none';
+        document.getElementById('walkinReviewSection').style.display = 'none';
+        
         // Show appropriate section based on channel
         if (currentApplicant.channel === 'A') {
             document.getElementById('landownerReviewSection').style.display = 'block';
-            document.getElementById('walkinReviewSection').style.display = 'none';
             document.getElementById('reviewSubmissionId').value = currentApplicant.submissionId || '';
+            
+            // Set eligibility badge for Channel A
+            const eligBadgeA = document.getElementById('reviewEligibilityBadgeA');
+            eligBadgeA.textContent = currentApplicant.eligibilityStatus;
+            const eligClassA = currentApplicant.eligibilityStatus === 'Eligible' ? 'success' : 
+                              currentApplicant.eligibilityStatus === 'Disqualified' ? 'danger' : 'warning';
+            eligBadgeA.className = 'status-badge status-' + eligClassA;
             
             // Populate landowner info fields
             document.getElementById('reviewLandownerName').value = currentApplicant.landownerName || '';
             document.getElementById('reviewLandownerPhone').value = currentApplicant.landownerPhone || '';
             document.getElementById('reviewPropertyAddress').value = currentApplicant.propertyAddress || '';
+            document.getElementById('reviewSubmissionBarangay').value = currentApplicant.submissionBarangay || currentApplicant.barangay || '';
             
-            // Populate ISF list (this would need submission data)
+            // Populate ISF list
             populateISFList(currentApplicant);
-        } else {
-            document.getElementById('landownerReviewSection').style.display = 'none';
+        } else if (currentApplicant.channel === 'C') {
+            // Channel C: Regular Walk-in
             document.getElementById('walkinReviewSection').style.display = 'block';
-            
-            // Set badges
-            document.getElementById('reviewChannelBadge').textContent = channelLabels[currentApplicant.channel];
-            document.getElementById('reviewChannelBadge').className = 'status-badge status-' + (currentApplicant.channel === 'B' ? 'warning' : 'info');
             
             document.getElementById('reviewEligibilityBadge').textContent = currentApplicant.eligibilityStatus;
             const eligClass = currentApplicant.eligibilityStatus === 'Eligible' ? 'success' : 
@@ -1304,7 +1397,7 @@
                 document.getElementById('reviewQueueBadge').style.display = 'none';
             }
             
-            // Populate form fields
+            // Populate Channel C form fields
             document.getElementById('reviewFullName').value = currentApplicant.fullName || '';
             document.getElementById('reviewBarangay').value = currentApplicant.barangay || '';
             document.getElementById('reviewIncome').value = currentApplicant.monthlyIncome || '';
@@ -1312,17 +1405,6 @@
             document.getElementById('reviewYears').value = currentApplicant.yearsResiding || '';
             document.getElementById('reviewPhone').value = currentApplicant.phoneNumber || '';
             document.getElementById('reviewAddress').value = currentApplicant.currentAddress || '';
-            
-            // CDRRMO section for Channel B
-            if (currentApplicant.channel === 'B') {
-                document.getElementById('cdrrmoSection').style.display = 'block';
-                document.getElementById('cdrrmoDetails').innerHTML = `
-                    <strong>Declared Location:</strong> ${currentApplicant.dangerZoneType || 'Not specified'}<br>
-                    <strong>Status:</strong> ${currentApplicant.cdrrmoStatus || 'Pending'}
-                `;
-            } else {
-                document.getElementById('cdrrmoSection').style.display = 'none';
-            }
             
             // Populate eligibility checks
             populateEligibilityChecks(currentApplicant);
@@ -1341,6 +1423,59 @@
             } else {
                 document.getElementById('lotAssignmentSection').style.display = 'none';
             }
+        } else if (currentApplicant.channel === 'B') {
+            // Channel B: Danger Zone
+            document.getElementById('landownerReviewSection').style.display = 'none';
+            document.getElementById('dangerZoneReviewSection').style.display = 'block';
+            document.getElementById('walkinReviewSection').style.display = 'none';
+            
+            // Set eligibility badge
+            document.getElementById('reviewEligibilityBadgeB').textContent = currentApplicant.eligibilityStatus;
+            const eligClassB = currentApplicant.eligibilityStatus === 'Eligible' ? 'success' : 
+                              currentApplicant.eligibilityStatus === 'Disqualified' ? 'danger' : 'warning';
+            document.getElementById('reviewEligibilityBadgeB').className = 'status-badge status-' + eligClassB;
+            
+            if (currentApplicant.queueType && currentApplicant.queueType !== 'None') {
+                document.getElementById('reviewQueueBadgeB').style.display = 'inline-flex';
+                document.getElementById('reviewQueueBadgeB').textContent = currentApplicant.queueType + (currentApplicant.queuePosition ? ' #' + currentApplicant.queuePosition : '');
+                document.getElementById('reviewQueueBadgeB').className = 'status-badge status-info';
+            } else {
+                document.getElementById('reviewQueueBadgeB').style.display = 'none';
+            }
+            
+            // Populate Channel B form fields
+            document.getElementById('reviewFullNameB').value = currentApplicant.fullName || '';
+            document.getElementById('reviewBarangayB').value = currentApplicant.barangay || '';
+            document.getElementById('reviewIncomeB').value = currentApplicant.monthlyIncome || '';
+            document.getElementById('reviewHouseholdB').value = currentApplicant.householdSize || '';
+            document.getElementById('reviewYearsB').value = currentApplicant.yearsResiding || '';
+            document.getElementById('reviewPhoneB').value = currentApplicant.phoneNumber || '';
+            document.getElementById('reviewAddressB').value = currentApplicant.currentAddress || '';
+            
+            // Danger zone specific fields
+            document.getElementById('reviewDangerType').value = currentApplicant.dangerZoneType || '';
+            document.getElementById('reviewDangerLocation').value = currentApplicant.dangerZoneLocation || '';
+            
+            // CDRRMO status
+            const cdrrmoBox = document.getElementById('cdrrmoStatusBox');
+            const cdrrmoText = document.getElementById('cdrrmoStatusText');
+            if (currentApplicant.cdrrmoStatus === 'Certified') {
+                cdrrmoBox.style.background = '#dcfce7';
+                cdrrmoBox.style.borderColor = '#86efac';
+                cdrrmoText.style.color = '#166534';
+                cdrrmoText.innerHTML = `<strong>✓ CDRRMO Certified</strong><br>Applicant has been verified as residing in a danger zone.`;
+            } else {
+                cdrrmoBox.style.background = '#fef3c7';
+                cdrrmoBox.style.borderColor = '#fcd34d';
+                cdrrmoText.style.color = '#92400e';
+                cdrrmoText.innerHTML = `<strong>⚠️ Pending CDRRMO Certification</strong><br>Applicant must be certified by CDRRMO before eligibility can be determined.`;
+            }
+            
+            // Populate eligibility checks for Channel B
+            populateEligibilityChecksB(currentApplicant);
+            
+            // Populate document checklist for Channel B
+            populateDocumentChecklistB(currentApplicant);
         }
         
         // Show/hide action buttons based on status
@@ -1358,70 +1493,56 @@
         const isfId = applicant.id || applicant.applicantId;
         const statusClass = applicant.eligibilityStatus === 'Eligible' ? 'success' : 
                            applicant.eligibilityStatus === 'Disqualified' ? 'danger' : 'warning';
+        const income = applicant.monthlyIncome || 0;
+        const incomePass = income <= 10000;
         
-        // For Channel A, show editable ISF card
+        // Compact ISF card
         container.innerHTML = `
-            <div class="isf-review-card" data-isf-id="${isfId}" style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 1rem; border-radius: 0.5rem; margin-bottom: 0.75rem;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+            <div class="isf-review-card" data-isf-id="${isfId}" style="background: white; border: 1px solid #e2e8f0; border-radius: 0.5rem; overflow: hidden;">
+                <!-- Header -->
+                <div style="background: #f1f5f9; padding: 0.375rem 0.75rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0;">
+                    <span style="font-size: 0.75rem; color: #64748b;">${applicant.referenceNumber}</span>
+                    <span class="status-badge status-${statusClass}" style="font-size: 0.625rem; padding: 0.125rem 0.5rem;">${applicant.eligibilityStatus}</span>
+                </div>
+                
+                <!-- Compact Fields -->
+                <div style="padding: 0.5rem 0.75rem; display: grid; grid-template-columns: 1fr 1fr; gap: 0.375rem; font-size: 0.75rem;">
+                    <div style="grid-column: span 2;">
+                        <label style="color: #64748b; font-size: 0.625rem; text-transform: uppercase;">Name</label>
+                        <input type="text" class="form-input isf-field" name="isf_name_${isfId}" value="${applicant.fullName || ''}" ${isEditMode ? '' : 'readonly'} style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">
+                    </div>
                     <div>
-                        <span style="font-weight: 600; color: #1e293b;">ISF #1</span>
-                        <span style="font-size: 0.75rem; color: #64748b; margin-left: 0.5rem;">${applicant.referenceNumber}</span>
+                        <label style="color: #64748b; font-size: 0.625rem; text-transform: uppercase;">Income (₱)</label>
+                        <input type="number" class="form-input isf-field" name="isf_income_${isfId}" value="${income}" min="0" ${isEditMode ? '' : 'readonly'} style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">
                     </div>
-                    <span class="status-badge status-${statusClass}">${applicant.eligibilityStatus}</span>
-                </div>
-                
-                <div class="form-grid">
-                    <div class="form-group" style="grid-column: span 2;">
-                        <label class="form-label">Full Name</label>
-                        <input type="text" class="form-input isf-field" name="isf_name_${isfId}" value="${applicant.fullName || ''}" ${isEditMode ? '' : 'readonly'}>
+                    <div>
+                        <label style="color: #64748b; font-size: 0.625rem; text-transform: uppercase;">Household</label>
+                        <input type="number" class="form-input isf-field" name="isf_household_${isfId}" value="${applicant.householdSize || 1}" min="1" ${isEditMode ? '' : 'readonly'} style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Monthly Income (₱)</label>
-                        <input type="number" class="form-input isf-field" name="isf_income_${isfId}" value="${applicant.monthlyIncome || 0}" min="0" step="0.01" ${isEditMode ? '' : 'readonly'}>
+                    <div>
+                        <label style="color: #64748b; font-size: 0.625rem; text-transform: uppercase;">Years</label>
+                        <input type="number" class="form-input isf-field" name="isf_years_${isfId}" value="${applicant.yearsResiding || 0}" min="0" ${isEditMode ? '' : 'readonly'} style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Household Members</label>
-                        <input type="number" class="form-input isf-field" name="isf_household_${isfId}" value="${applicant.householdSize || 1}" min="1" ${isEditMode ? '' : 'readonly'}>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Years Residing</label>
-                        <input type="number" class="form-input isf-field" name="isf_years_${isfId}" value="${applicant.yearsResiding || 0}" min="0" ${isEditMode ? '' : 'readonly'}>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Barangay</label>
-                        <input type="text" class="form-input isf-field" name="isf_barangay_${isfId}" value="${applicant.barangay || ''}" ${isEditMode ? '' : 'readonly'}>
+                    <div>
+                        <label style="color: #64748b; font-size: 0.625rem; text-transform: uppercase;">Barangay</label>
+                        <input type="text" class="form-input isf-field" name="isf_barangay_${isfId}" value="${applicant.barangay || ''}" ${isEditMode ? '' : 'readonly'} style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">
                     </div>
                 </div>
                 
-                <!-- Eligibility Check for this ISF -->
-                <div style="border-top: 1px solid #e2e8f0; margin-top: 0.75rem; padding-top: 0.75rem;">
-                    <div style="font-size: 0.75rem; font-weight: 600; color: #475569; margin-bottom: 0.5rem;">Eligibility Check</div>
-                    <div style="display: grid; gap: 0.25rem;">
-                        ${generateEligibilityCheckHTML(applicant)}
+                <!-- Compact Footer: Eligibility + Actions -->
+                <div style="background: #f8fafc; padding: 0.375rem 0.75rem; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; gap: 0.5rem; font-size: 0.625rem;">
+                        <span style="color: ${incomePass ? '#16a34a' : '#dc2626'};">${incomePass ? '✓' : '✗'} ≤₱10k</span>
+                        <span style="color: #16a34a;">✓ No property</span>
+                        <span style="color: #16a34a;">✓ Not blacklisted</span>
                     </div>
-                </div>
-                
-                <!-- Action buttons for this ISF -->
-                <div style="border-top: 1px solid #e2e8f0; margin-top: 0.75rem; padding-top: 0.75rem; display: flex; gap: 0.5rem;" id="isfActions_${isfId}">
                     ${applicant.eligibilityStatus === 'Pending' ? `
-                        <button type="button" class="btn-modal success" style="padding: 0.375rem 0.75rem; font-size: 0.75rem;" onclick="markISFEligible('${isfId}')">
-                            <svg style="width: 0.875rem; height: 0.875rem; margin-right: 0.25rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <polyline points="20 6 9 17 4 12"></polyline>
-                            </svg>
-                            Mark Eligible
-                        </button>
-                        <button type="button" class="btn-modal danger" style="padding: 0.375rem 0.75rem; font-size: 0.75rem;" onclick="showDisqualifyReason()">
-                            <svg style="width: 0.875rem; height: 0.875rem; margin-right: 0.25rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <line x1="15" y1="9" x2="9" y2="15"></line>
-                                <line x1="9" y1="9" x2="15" y2="15"></line>
-                            </svg>
-                            Disqualify
-                        </button>
+                        <div style="display: flex; gap: 0.25rem;">
+                            <button type="button" onclick="markISFEligible('${isfId}')" style="background: #10b981; color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.625rem; cursor: pointer;">✓ Eligible</button>
+                            <button type="button" onclick="showDisqualifyReason()" style="background: #ef4444; color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.625rem; cursor: pointer;">✗ Disqualify</button>
+                        </div>
                     ` : `
-                        <span style="font-size: 0.75rem; color: #64748b;">
-                            ${applicant.eligibilityStatus === 'Eligible' ? '✓ Added to Priority Queue' : '✗ Disqualified'}
-                        </span>
+                        <span style="font-size: 0.625rem; color: #64748b;">${applicant.eligibilityStatus === 'Eligible' ? '→ Priority Queue' : 'Disqualified'}</span>
                     `}
                 </div>
             </div>
@@ -1545,6 +1666,73 @@
         container.innerHTML = html;
     }
     
+    // Channel B specific eligibility checks (includes CDRRMO)
+    function populateEligibilityChecksB(applicant) {
+        const container = document.getElementById('eligibilityChecksB');
+        const income = applicant.monthlyIncome || 0;
+        const incomePass = income <= 10000;
+        const cdrrmoPass = applicant.cdrrmoStatus === 'Certified';
+        
+        container.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: ${incomePass ? '#dcfce7' : '#fee2e2'}; border-radius: 0.375rem;">
+                <svg style="width: 1rem; height: 1rem; color: ${incomePass ? '#16a34a' : '#dc2626'};" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    ${incomePass ? '<polyline points="20 6 9 17 4 12"></polyline>' : '<line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>'}
+                </svg>
+                <span style="font-size: 0.8125rem;">Monthly income ≤ ₱10,000 <strong>(₱${income.toLocaleString()})</strong></span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: #dcfce7; border-radius: 0.375rem;">
+                <svg style="width: 1rem; height: 1rem; color: #16a34a;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span style="font-size: 0.8125rem;">No property ownership in Talisay City</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: #dcfce7; border-radius: 0.375rem;">
+                <svg style="width: 1rem; height: 1rem; color: #16a34a;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span style="font-size: 0.8125rem;">Not on blacklist</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: ${cdrrmoPass ? '#dcfce7' : '#fef3c7'}; border-radius: 0.375rem;">
+                <svg style="width: 1rem; height: 1rem; color: ${cdrrmoPass ? '#16a34a' : '#d97706'};" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    ${cdrrmoPass ? '<polyline points="20 6 9 17 4 12"></polyline>' : '<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>'}
+                </svg>
+                <span style="font-size: 0.8125rem;">CDRRMO Certification: <strong>${applicant.cdrrmoStatus || 'Pending'}</strong></span>
+            </div>
+        `;
+    }
+    
+    // Channel B specific document checklist
+    function populateDocumentChecklistB(applicant) {
+        const container = document.getElementById('documentChecklistB');
+        const docs = [
+            { key: 'barangayCertResidency', label: 'Brgy. Certificate of Residency' },
+            { key: 'barangayCertIndigency', label: 'Brgy. Certificate of Indigency' },
+            { key: 'cedula', label: 'Cedula' },
+            { key: 'policeClearance', label: 'Police Clearance' },
+            { key: 'certNoProperty', label: 'Certificate of No Property' },
+            { key: 'picture2x2', label: '2x2 Picture' },
+            { key: 'sketchHouseLocation', label: 'Sketch of House Location' },
+            { key: 'cdrmoCert', label: 'CDRRMO Certification' }
+        ];
+        
+        let html = '';
+        docs.forEach(doc => {
+            const checked = applicant.documents?.[doc.key] || false;
+            html += `
+                <label class="document-item ${checked ? 'complete' : 'incomplete'}" style="cursor: ${isEditMode ? 'pointer' : 'default'};">
+                    <input type="checkbox" name="doc_b_${doc.key}" ${checked ? 'checked' : ''} ${isEditMode ? '' : 'disabled'} style="display: none;">
+                    <svg class="document-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        ${checked 
+                            ? '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>'
+                            : '<circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>'}
+                    </svg>
+                    ${doc.label}
+                </label>
+            `;
+        });
+        container.innerHTML = html;
+    }
+    
     function updateActionButtons(applicant) {
         const btnMarkEligible = document.getElementById('btnMarkEligible');
         const btnDisqualify = document.getElementById('btnDisqualify');
@@ -1579,20 +1767,35 @@
     }
     
     function updateEditModeUI() {
-        // Channel B/C fields
+        // Channel C fields
         const walkinFields = ['reviewFullName', 'reviewIncome', 'reviewHousehold', 'reviewYears', 'reviewPhone', 'reviewAddress'];
-        const selectFields = ['reviewBarangay'];
+        const selectFieldsC = ['reviewBarangay'];
+        
+        // Channel B (Danger Zone) fields
+        const dangerZoneFields = ['reviewFullNameB', 'reviewIncomeB', 'reviewHouseholdB', 'reviewYearsB', 'reviewPhoneB', 'reviewAddressB', 'reviewDangerLocation'];
+        const selectFieldsB = ['reviewBarangayB', 'reviewDangerType'];
         
         // Channel A landowner fields
-        const landownerFields = ['reviewLandownerName', 'reviewLandownerPhone', 'reviewPropertyAddress'];
+        const landownerFields = ['reviewLandownerName', 'reviewLandownerPhone', 'reviewPropertyAddress', 'reviewSubmissionBarangay'];
         
-        // Update Channel B/C fields
+        // Update Channel C fields
         walkinFields.forEach(id => {
             const el = document.getElementById(id);
             if (el) el.readOnly = !isEditMode;
         });
         
-        selectFields.forEach(id => {
+        selectFieldsC.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.disabled = !isEditMode;
+        });
+        
+        // Update Channel B fields
+        dangerZoneFields.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.readOnly = !isEditMode;
+        });
+        
+        selectFieldsB.forEach(id => {
             const el = document.getElementById(id);
             if (el) el.disabled = !isEditMode;
         });
@@ -1618,12 +1821,14 @@
             document.getElementById('reviewActions').style.display = isEditMode ? 'none' : 'flex';
         }
         
-        // Update document checklist interactivity
+        // Update document checklists based on channel
         if (currentApplicant) {
-            populateDocumentChecklist(currentApplicant);
-            // Re-populate ISF list to update readonly state
             if (currentApplicant.channel === 'A') {
                 populateISFList(currentApplicant);
+            } else if (currentApplicant.channel === 'B') {
+                populateDocumentChecklistB(currentApplicant);
+            } else {
+                populateDocumentChecklist(currentApplicant);
             }
         }
     }
@@ -1631,15 +1836,33 @@
     function cancelEdit() {
         isEditMode = false;
         updateEditModeUI();
-        // Reset form values
+        // Reset form values based on channel
         if (currentApplicant) {
-            document.getElementById('reviewFullName').value = currentApplicant.fullName || '';
-            document.getElementById('reviewBarangay').value = currentApplicant.barangay || '';
-            document.getElementById('reviewIncome').value = currentApplicant.monthlyIncome || '';
-            document.getElementById('reviewHousehold').value = currentApplicant.householdSize || '';
-            document.getElementById('reviewYears').value = currentApplicant.yearsResiding || '';
-            document.getElementById('reviewPhone').value = currentApplicant.phoneNumber || '';
-            document.getElementById('reviewAddress').value = currentApplicant.currentAddress || '';
+            if (currentApplicant.channel === 'A') {
+                document.getElementById('reviewLandownerName').value = currentApplicant.landownerName || '';
+                document.getElementById('reviewLandownerPhone').value = currentApplicant.landownerPhone || '';
+                document.getElementById('reviewPropertyAddress').value = currentApplicant.propertyAddress || '';
+                document.getElementById('reviewSubmissionBarangay').value = currentApplicant.submissionBarangay || currentApplicant.barangay || '';
+                populateISFList(currentApplicant);
+            } else if (currentApplicant.channel === 'B') {
+                document.getElementById('reviewFullNameB').value = currentApplicant.fullName || '';
+                document.getElementById('reviewBarangayB').value = currentApplicant.barangay || '';
+                document.getElementById('reviewIncomeB').value = currentApplicant.monthlyIncome || '';
+                document.getElementById('reviewHouseholdB').value = currentApplicant.householdSize || '';
+                document.getElementById('reviewYearsB').value = currentApplicant.yearsResiding || '';
+                document.getElementById('reviewPhoneB').value = currentApplicant.phoneNumber || '';
+                document.getElementById('reviewAddressB').value = currentApplicant.currentAddress || '';
+                document.getElementById('reviewDangerType').value = currentApplicant.dangerZoneType || '';
+                document.getElementById('reviewDangerLocation').value = currentApplicant.dangerZoneLocation || '';
+            } else {
+                document.getElementById('reviewFullName').value = currentApplicant.fullName || '';
+                document.getElementById('reviewBarangay').value = currentApplicant.barangay || '';
+                document.getElementById('reviewIncome').value = currentApplicant.monthlyIncome || '';
+                document.getElementById('reviewHousehold').value = currentApplicant.householdSize || '';
+                document.getElementById('reviewYears').value = currentApplicant.yearsResiding || '';
+                document.getElementById('reviewPhone').value = currentApplicant.phoneNumber || '';
+                document.getElementById('reviewAddress').value = currentApplicant.currentAddress || '';
+            }
         }
     }
     
@@ -1732,6 +1955,7 @@
             formData.append('landowner_name', document.getElementById('reviewLandownerName').value);
             formData.append('landowner_phone', document.getElementById('reviewLandownerPhone').value);
             formData.append('property_address', document.getElementById('reviewPropertyAddress').value);
+            formData.append('submission_barangay', document.getElementById('reviewSubmissionBarangay').value);
             
             // Get ISF field data
             const isfId = currentApplicant.applicantId || currentApplicant.id;
@@ -1740,8 +1964,26 @@
             formData.append('isf_household', document.querySelector(`[name="isf_household_${isfId}"]`)?.value || '');
             formData.append('isf_years', document.querySelector(`[name="isf_years_${isfId}"]`)?.value || '');
             formData.append('isf_barangay', document.querySelector(`[name="isf_barangay_${isfId}"]`)?.value || '');
+            
+        } else if (currentApplicant.channel === 'B') {
+            // Channel B: Danger Zone applicant data
+            formData.append('full_name', document.getElementById('reviewFullNameB').value);
+            formData.append('barangay', document.getElementById('reviewBarangayB').value);
+            formData.append('monthly_income', document.getElementById('reviewIncomeB').value);
+            formData.append('household_size', document.getElementById('reviewHouseholdB').value);
+            formData.append('years_residing', document.getElementById('reviewYearsB').value);
+            formData.append('phone_number', document.getElementById('reviewPhoneB').value);
+            formData.append('current_address', document.getElementById('reviewAddressB').value);
+            formData.append('danger_zone_type', document.getElementById('reviewDangerType').value);
+            formData.append('danger_zone_location', document.getElementById('reviewDangerLocation').value);
+            
+            // Include Channel B document checklist
+            document.querySelectorAll('#documentChecklistB input[type="checkbox"]').forEach(cb => {
+                formData.append(cb.name, cb.checked);
+            });
+            
         } else {
-            // Channel B/C: Individual applicant data
+            // Channel C: Regular walk-in applicant data
             formData.append('full_name', document.getElementById('reviewFullName').value);
             formData.append('barangay', document.getElementById('reviewBarangay').value);
             formData.append('monthly_income', document.getElementById('reviewIncome').value);
@@ -1749,12 +1991,12 @@
             formData.append('years_residing', document.getElementById('reviewYears').value);
             formData.append('phone_number', document.getElementById('reviewPhone').value);
             formData.append('current_address', document.getElementById('reviewAddress').value);
+            
+            // Include Channel C document checklist
+            document.querySelectorAll('#documentChecklist input[type="checkbox"]').forEach(cb => {
+                formData.append(cb.name, cb.checked);
+            });
         }
-        
-        // Include document checklist
-        document.querySelectorAll('#documentChecklist input[type="checkbox"]').forEach(cb => {
-            formData.append(cb.name, cb.checked);
-        });
         
         fetch('{% url "intake:update_applicant" %}', {
             method: 'POST',
