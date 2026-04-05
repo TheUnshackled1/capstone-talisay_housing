@@ -1195,6 +1195,15 @@
                 <button type="button" class="btn-modal secondary" onclick="closeReviewModal()">
                     Close
                 </button>
+                
+                <!-- Delete Button -->
+                <button type="button" class="btn-modal danger" onclick="confirmDelete()" style="background: #dc2626; margin-left: auto;">
+                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                    Delete
+                </button>
             </div>
         </form>
     </div>
@@ -1467,70 +1476,77 @@
     let isEditMode = false;
     
     function openReviewModal(index) {
-        currentApplicant = applicantsData[index];
-        const modal = document.getElementById('reviewModal');
-        
-        // Set header info
-        document.getElementById('reviewName').textContent = currentApplicant.fullName;
-        document.getElementById('reviewReference').textContent = currentApplicant.referenceNumber + ' · Reg. ' + currentApplicant.dateRegistered;
-        document.getElementById('reviewApplicantId').value = currentApplicant.applicantId || currentApplicant.id;
-        document.getElementById('reviewChannel').value = currentApplicant.channel;
-        
-        // Channel labels
-        const channelLabels = {
-            'A': 'Channel A — Landowner',
-            'B': 'Channel B — Danger Zone',
-            'C': 'Channel C — Walk-in'
-        };
-        
-        // Hide all sections first
-        document.getElementById('landownerReviewSection').style.display = 'none';
-        document.getElementById('dangerZoneReviewSection').style.display = 'none';
-        document.getElementById('walkinReviewSection').style.display = 'none';
-        
-        // Show appropriate section based on channel
-        if (currentApplicant.channel === 'A') {
-            document.getElementById('landownerReviewSection').style.display = 'block';
-            document.getElementById('reviewSubmissionId').value = currentApplicant.submissionId || '';
-            
-            // Set eligibility badge for Channel A
-            const eligBadgeA = document.getElementById('reviewEligibilityBadgeA');
-            eligBadgeA.textContent = currentApplicant.eligibilityStatus;
-            const eligClassA = currentApplicant.eligibilityStatus === 'Eligible' ? 'success' : 
-                              currentApplicant.eligibilityStatus === 'Disqualified' ? 'danger' : 'warning';
-            eligBadgeA.className = 'status-badge status-' + eligClassA;
-            
-            // Queue badge for Channel A
-            const queueBadgeA = document.getElementById('reviewQueueBadgeA');
-            if (currentApplicant.queueType && currentApplicant.queueType !== 'None') {
-                queueBadgeA.style.display = 'inline-flex';
-                queueBadgeA.textContent = currentApplicant.queueType + (currentApplicant.queuePosition ? ' #' + currentApplicant.queuePosition : '');
-                queueBadgeA.className = 'status-badge status-info';
-            } else {
-                queueBadgeA.style.display = 'none';
+        try {
+            currentApplicant = applicantsData[index];
+            if (!currentApplicant) {
+                console.error('No applicant data at index:', index);
+                alert('Error: No applicant data found.');
+                return;
             }
             
-            // Populate ISF info fields (main applicant data)
-            document.getElementById('reviewFullNameA').value = currentApplicant.fullName || '';
-            document.getElementById('reviewBarangayA').value = currentApplicant.barangay || '';
-            document.getElementById('reviewIncomeA').value = currentApplicant.monthlyIncome || '';
-            document.getElementById('reviewHouseholdA').value = currentApplicant.householdSize || '';
-            document.getElementById('reviewYearsA').value = currentApplicant.yearsResiding || '';
-            document.getElementById('reviewPhoneA').value = currentApplicant.phoneNumber || '';
-            document.getElementById('reviewAddressA').value = currentApplicant.propertyAddress || '';
+            const modal = document.getElementById('reviewModal');
             
-            // Populate landowner info fields
-            document.getElementById('reviewLandownerName').value = currentApplicant.landownerName || '';
-            document.getElementById('reviewLandownerPhone').value = currentApplicant.landownerPhone || '';
-            document.getElementById('reviewPropertyAddress').value = currentApplicant.propertyAddress || '';
-            document.getElementById('reviewSubmissionBarangay').value = currentApplicant.submissionBarangay || currentApplicant.barangay || '';
+            // Set header info
+            document.getElementById('reviewName').textContent = currentApplicant.fullName;
+            document.getElementById('reviewReference').textContent = currentApplicant.referenceNumber + ' · Reg. ' + currentApplicant.dateRegistered;
+            document.getElementById('reviewApplicantId').value = currentApplicant.applicantId || currentApplicant.id;
+            document.getElementById('reviewChannel').value = currentApplicant.channel;
             
-            // Populate eligibility checks for Channel A
-            populateEligibilityChecksA(currentApplicant);
+            // Channel labels
+            const channelLabels = {
+                'A': 'Channel A — Landowner',
+                'B': 'Channel B — Danger Zone',
+                'C': 'Channel C — Walk-in'
+            };
             
-            // Populate document checklist for Channel A
-            populateDocumentChecklistA(currentApplicant);
-        } else if (currentApplicant.channel === 'C') {
+            // Hide all sections first
+            document.getElementById('landownerReviewSection').style.display = 'none';
+            document.getElementById('dangerZoneReviewSection').style.display = 'none';
+            document.getElementById('walkinReviewSection').style.display = 'none';
+            
+            // Show appropriate section based on channel
+            if (currentApplicant.channel === 'A') {
+                document.getElementById('landownerReviewSection').style.display = 'block';
+                document.getElementById('reviewSubmissionId').value = currentApplicant.submissionId || '';
+                
+                // Set eligibility badge for Channel A
+                const eligBadgeA = document.getElementById('reviewEligibilityBadgeA');
+                eligBadgeA.textContent = currentApplicant.eligibilityStatus;
+                const eligClassA = currentApplicant.eligibilityStatus === 'Eligible' ? 'success' : 
+                                  currentApplicant.eligibilityStatus === 'Disqualified' ? 'danger' : 'warning';
+                eligBadgeA.className = 'status-badge status-' + eligClassA;
+                
+                // Queue badge for Channel A
+                const queueBadgeA = document.getElementById('reviewQueueBadgeA');
+                if (currentApplicant.queueType && currentApplicant.queueType !== 'None') {
+                    queueBadgeA.style.display = 'inline-flex';
+                    queueBadgeA.textContent = currentApplicant.queueType + (currentApplicant.queuePosition ? ' #' + currentApplicant.queuePosition : '');
+                    queueBadgeA.className = 'status-badge status-info';
+                } else {
+                    queueBadgeA.style.display = 'none';
+                }
+                
+                // Populate ISF info fields (main applicant data)
+                document.getElementById('reviewFullNameA').value = currentApplicant.fullName || '';
+                document.getElementById('reviewBarangayA').value = currentApplicant.barangay || '';
+                document.getElementById('reviewIncomeA').value = currentApplicant.monthlyIncome || '';
+                document.getElementById('reviewHouseholdA').value = currentApplicant.householdSize || '';
+                document.getElementById('reviewYearsA').value = currentApplicant.yearsResiding || '';
+                document.getElementById('reviewPhoneA').value = currentApplicant.phoneNumber || '';
+                document.getElementById('reviewAddressA').value = currentApplicant.propertyAddress || '';
+                
+                // Populate landowner info fields
+                document.getElementById('reviewLandownerName').value = currentApplicant.landownerName || '';
+                document.getElementById('reviewLandownerPhone').value = currentApplicant.landownerPhone || '';
+                document.getElementById('reviewPropertyAddress').value = currentApplicant.propertyAddress || '';
+                document.getElementById('reviewSubmissionBarangay').value = currentApplicant.submissionBarangay || currentApplicant.barangay || '';
+                
+                // Populate eligibility checks for Channel A
+                populateEligibilityChecksA(currentApplicant);
+                
+                // Populate document checklist for Channel A
+                populateDocumentChecklistA(currentApplicant);
+            } else if (currentApplicant.channel === 'C') {
             // Channel C: Regular Walk-in
             document.getElementById('walkinReviewSection').style.display = 'block';
             
@@ -1636,6 +1652,10 @@
         updateEditModeUI();
         
         modal.classList.add('active');
+        } catch (error) {
+            console.error('Error opening review modal:', error);
+            alert('Error opening modal: ' + error.message);
+        }
     }
     
     function populateISFList(applicant) {
@@ -1993,6 +2013,10 @@
         // Channel A landowner fields
         const landownerFields = ['reviewLandownerName', 'reviewLandownerPhone', 'reviewPropertyAddress', 'reviewSubmissionBarangay'];
         
+        // Channel A ISF fields (redesigned modal)
+        const channelAFields = ['reviewFullNameA', 'reviewIncomeA', 'reviewHouseholdA', 'reviewYearsA', 'reviewPhoneA', 'reviewAddressA'];
+        const selectFieldsA = ['reviewBarangayA'];
+        
         // Update Channel C fields
         walkinFields.forEach(id => {
             const el = document.getElementById(id);
@@ -2022,24 +2046,27 @@
         });
         
         // Update Channel A ISF fields
-        document.querySelectorAll('.isf-field').forEach(field => {
-            field.readOnly = !isEditMode;
+        channelAFields.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.readOnly = !isEditMode;
+        });
+        
+        selectFieldsA.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.disabled = !isEditMode;
         });
         
         document.getElementById('editToggleText').textContent = isEditMode ? 'Cancel Edit' : 'Edit';
         document.getElementById('editActions').style.display = isEditMode ? 'flex' : 'none';
         
-        // For Channel A, hide review actions (use ISF-level buttons instead)
-        if (currentApplicant && currentApplicant.channel === 'A') {
-            document.getElementById('reviewActions').style.display = 'none';
-        } else {
-            document.getElementById('reviewActions').style.display = isEditMode ? 'none' : 'flex';
-        }
+        // Show review actions for all channels when not in edit mode
+        document.getElementById('reviewActions').style.display = isEditMode ? 'none' : 'flex';
         
         // Update document checklists based on channel
         if (currentApplicant) {
             if (currentApplicant.channel === 'A') {
-                populateISFList(currentApplicant);
+                // Channel A uses static form fields - just update document checklist
+                populateDocumentChecklistA(currentApplicant);
             } else if (currentApplicant.channel === 'B') {
                 populateDocumentChecklistB(currentApplicant);
             } else {
@@ -2054,11 +2081,20 @@
         // Reset form values based on channel
         if (currentApplicant) {
             if (currentApplicant.channel === 'A') {
+                // Reset landowner fields
                 document.getElementById('reviewLandownerName').value = currentApplicant.landownerName || '';
                 document.getElementById('reviewLandownerPhone').value = currentApplicant.landownerPhone || '';
                 document.getElementById('reviewPropertyAddress').value = currentApplicant.propertyAddress || '';
                 document.getElementById('reviewSubmissionBarangay').value = currentApplicant.submissionBarangay || currentApplicant.barangay || '';
-                populateISFList(currentApplicant);
+                
+                // Reset ISF fields (redesigned modal)
+                document.getElementById('reviewFullNameA').value = currentApplicant.fullName || '';
+                document.getElementById('reviewBarangayA').value = currentApplicant.barangay || '';
+                document.getElementById('reviewIncomeA').value = currentApplicant.monthlyIncome || '';
+                document.getElementById('reviewHouseholdA').value = currentApplicant.householdSize || '';
+                document.getElementById('reviewYearsA').value = currentApplicant.yearsResiding || '';
+                document.getElementById('reviewPhoneA').value = currentApplicant.phoneNumber || '';
+                document.getElementById('reviewAddressA').value = currentApplicant.propertyAddress || '';
             } else if (currentApplicant.channel === 'B') {
                 document.getElementById('reviewFullNameB').value = currentApplicant.fullName || '';
                 document.getElementById('reviewBarangayB').value = currentApplicant.barangay || '';
@@ -2172,13 +2208,12 @@
             formData.append('property_address', document.getElementById('reviewPropertyAddress').value);
             formData.append('submission_barangay', document.getElementById('reviewSubmissionBarangay').value);
             
-            // Get ISF field data
-            const isfId = currentApplicant.applicantId || currentApplicant.id;
-            formData.append('isf_name', document.querySelector(`[name="isf_name_${isfId}"]`)?.value || '');
-            formData.append('isf_income', document.querySelector(`[name="isf_income_${isfId}"]`)?.value || '');
-            formData.append('isf_household', document.querySelector(`[name="isf_household_${isfId}"]`)?.value || '');
-            formData.append('isf_years', document.querySelector(`[name="isf_years_${isfId}"]`)?.value || '');
-            formData.append('isf_barangay', document.querySelector(`[name="isf_barangay_${isfId}"]`)?.value || '');
+            // Get ISF field data from redesigned modal
+            formData.append('isf_name', document.getElementById('reviewFullNameA').value);
+            formData.append('isf_income', document.getElementById('reviewIncomeA').value);
+            formData.append('isf_household', document.getElementById('reviewHouseholdA').value);
+            formData.append('isf_years', document.getElementById('reviewYearsA').value);
+            formData.append('isf_barangay', document.getElementById('reviewBarangayA').value);
             
         } else if (currentApplicant.channel === 'B') {
             // Channel B: Danger Zone applicant data
@@ -2233,6 +2268,45 @@
     
     // Attach form submit handler
     document.getElementById('reviewForm').addEventListener('submit', saveReviewChanges);
+    
+    // Delete Applicant
+    function confirmDelete() {
+        if (!currentApplicant) return;
+        
+        const name = currentApplicant.fullName;
+        const ref = currentApplicant.referenceNumber;
+        
+        if (!confirm(`Are you sure you want to delete this applicant?\n\nName: ${name}\nReference: ${ref}\n\nThis action cannot be undone.`)) {
+            return;
+        }
+        
+        const formData = new FormData();
+        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+        formData.append('applicant_id', currentApplicant.applicantId || currentApplicant.id);
+        formData.append('channel', currentApplicant.channel);
+        
+        if (currentApplicant.channel === 'A') {
+            formData.append('submission_id', currentApplicant.submissionId);
+        }
+        
+        fetch('{% url "intake:delete_applicant" %}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('✓ Applicant deleted successfully.');
+                closeReviewModal();
+                location.reload();
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            alert('Error: ' + error.message);
+        });
+    }
 
     // Add Modal
     function openAddModal() {

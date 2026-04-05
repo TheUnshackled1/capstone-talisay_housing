@@ -897,6 +897,79 @@ def update_applicant(request):
 
 
 @login_required
+def delete_applicant(request):
+    """
+    AJAX endpoint to delete an applicant.
+    Handles both Channel A (ISF records) and Channel B/C (Applicants).
+    
+    ACCESS CONTROL:
+    ✅ Jocel (fourth_member) - Can delete applicants
+    ✅ Joie (second_member) - Supervisor oversight
+    ✅ OIC and Head - Administrative override
+    """
+    from django.http import JsonResponse
+    
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'POST required'}, status=405)
+    
+    allowed_positions = ['fourth_member', 'second_member', 'oic', 'head']
+    if request.user.position not in allowed_positions:
+        return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
+    
+    applicant_id = request.POST.get('applicant_id')
+    channel = request.POST.get('channel')
+    
+    if not applicant_id:
+        return JsonResponse({'success': False, 'error': 'Missing applicant_id'})
+    
+    try:
+        if channel == 'A':
+            # Delete Channel A: ISF Record
+            isf = ISFRecord.objects.get(id=applicant_id)
+            isf_name = isf.full_name
+            isf_ref = isf.reference_number
+            
+            # If this ISF was converted to an applicant, also handle that
+            if isf.converted_to_applicant and hasattr(isf, 'applicant_profile'):
+                isf.applicant_profile.delete()
+            
+            isf.delete()
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'ISF record "{isf_name}" ({isf_ref}) deleted successfully'
+            })
+            
+        else:
+            # Delete Channel B or C: Applicant
+            applicant = Applicant.objects.get(id=applicant_id)
+            app_name = applicant.full_name
+            app_ref = applicant.reference_number
+            
+            # Delete related objects (CDRRMO certification, queue entries, etc.)
+            if hasattr(applicant, 'cdrrmocertification'):
+                applicant.cdrrmocertification.delete()
+            
+            # Remove from queues
+            applicant.queue_entries.all().delete()
+            
+            # Delete the applicant
+            applicant.delete()
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'Applicant "{app_name}" ({app_ref}) deleted successfully'
+            })
+            
+    except ISFRecord.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'ISF record not found'})
+    except Applicant.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Applicant not found'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
+@login_required
 def applicants_list(request):
     """
     Module 1: ISF Recording Management - Applicant Intake

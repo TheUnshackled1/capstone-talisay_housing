@@ -238,6 +238,15 @@ class ISFRecord(models.Model):
     registration_sms_sent = models.BooleanField(default=False)
     eligibility_sms_sent = models.BooleanField(default=False)
     
+    # Document Checklist (7 required documents)
+    doc_brgy_residency = models.BooleanField(default=False, verbose_name="Brgy. Certificate of Residency")
+    doc_brgy_indigency = models.BooleanField(default=False, verbose_name="Brgy. Certificate of Indigency")
+    doc_cedula = models.BooleanField(default=False, verbose_name="Cedula")
+    doc_police_clearance = models.BooleanField(default=False, verbose_name="Police Clearance")
+    doc_no_property = models.BooleanField(default=False, verbose_name="Certificate of No Property")
+    doc_2x2_picture = models.BooleanField(default=False, verbose_name="2x2 Picture")
+    doc_sketch_location = models.BooleanField(default=False, verbose_name="Sketch of House Location")
+    
     # Metadata
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
