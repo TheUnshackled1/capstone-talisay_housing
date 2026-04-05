@@ -817,6 +817,7 @@ def update_applicant(request):
                     lo_name = request.POST.get('landowner_name', '').strip()
                     lo_phone = request.POST.get('landowner_phone', '').strip()
                     prop_addr = request.POST.get('property_address', '').strip()
+                    sub_barangay = request.POST.get('submission_barangay', '').strip()
                     
                     if lo_name:
                         submission.landowner_name = lo_name
@@ -824,6 +825,8 @@ def update_applicant(request):
                         submission.landowner_phone = lo_phone
                     if prop_addr:
                         submission.property_address = prop_addr
+                    if sub_barangay:
+                        submission.barangay = sub_barangay
                     
                     submission.save()
                 except LandownerSubmission.DoesNotExist:
