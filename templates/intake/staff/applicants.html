@@ -220,11 +220,22 @@
         cursor: pointer;
         transition: all 0.2s;
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        text-decoration: none;
     }
 
     .btn-review:hover {
         box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
         transform: translateY(-1px);
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-review-walkin {
+        background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
+    }
+
+    .btn-review-walkin:hover {
+        box-shadow: 0 4px 12px rgba(13, 148, 136, 0.4);
     }
 
     .btn-review .btn-icon {
@@ -549,17 +560,75 @@
     }
 
     .info-note {
-        background: #fef3c7;
-        border: 1px solid #fcd34d;
+        background: #eff6ff;
+        border: 1px solid #93c5fd;
         border-radius: 0.5rem;
         padding: 0.75rem;
+        margin-top: 1rem;
     }
 
     .info-note-text {
-        font-size: 0.6875rem;
-        color: #92400e;
+        font-size: 0.75rem;
+        color: #1e40af;
         margin: 0;
     }
+    
+    .help-text {
+        font-size: 0.6875rem;
+        color: #64748b;
+        margin-top: 0.25rem;
+    }
+    
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+    
+    @media (max-width: 640px) {
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+        .form-grid .form-group[style*="span 2"] {
+            grid-column: span 1;
+        }
+    }
+    
+    /* Review Modal Styles */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.6875rem;
+        font-weight: 500;
+        border-radius: 9999px;
+    }
+    
+    .status-badge.status-success { background: #dcfce7; color: #166534; }
+    .status-badge.status-warning { background: #fef3c7; color: #92400e; }
+    .status-badge.status-danger { background: #fee2e2; color: #991b1b; }
+    .status-badge.status-info { background: #dbeafe; color: #1e40af; }
+    
+    .btn-modal.success { background: #10b981; }
+    .btn-modal.success:hover { background: #059669; }
+    .btn-modal.danger { background: #ef4444; }
+    .btn-modal.danger:hover { background: #dc2626; }
+    
+    #reviewActions, #editActions {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .btn-review {
+        background: none;
+        border: 1px solid #e2e8f0;
+        cursor: pointer;
+    }
+    
+    .btn-review-landowner { color: #1e40af; border-color: #93c5fd; }
+    .btn-review-landowner:hover { background: #dbeafe; }
+    .btn-review-walkin { color: #166534; border-color: #86efac; }
+    .btn-review-walkin:hover { background: #dcfce7; }
 </style>
 {% endblock %}
 
@@ -576,7 +645,7 @@
                 <line x1="12" y1="5" x2="12" y2="19"></line>
                 <line x1="5" y1="12" x2="19" y2="12"></line>
             </svg>
-            Register Applicant
+            Register New Applicant
         </button>
     </div>
 
@@ -712,12 +781,18 @@
                     {% endif %}
                 </td>
                 <td>
-                    <button class="btn-review" onclick='openDetailModal({{ forloop.counter0 }})'>
+                    <!-- Review button - opens modal -->
+                    <button type="button" onclick="openReviewModal({{ forloop.counter0 }})" class="btn-review {% if applicant.channel == 'A' %}btn-review-landowner{% else %}btn-review-walkin{% endif %}">
                         <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                            <circle cx="12" cy="12" r="3"></circle>
+                            {% if applicant.channel == 'A' %}
+                            <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                            {% else %}
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <polyline points="16 11 18 13 22 9"></polyline>
+                            {% endif %}
                         </svg>
-                        Review
+                        {% if applicant.channel == 'A' %}Review ISFs{% else %}Review{% endif %}
                     </button>
                 </td>
             </tr>
@@ -726,46 +801,214 @@
     </table>
 </div>
 
-<!-- Detail Modal -->
-<div class="modal-overlay" id="detailModal" onclick="closeDetailModal()">
-    <div class="modal-content" onclick="event.stopPropagation()">
-        <div class="modal-header">
+<!-- Review/Edit Modal - Combined Detail & Review -->
+<div class="modal-overlay" id="reviewModal" onclick="closeReviewModal()">
+    <div class="modal-content" style="max-width: 48rem; max-height: 90vh; overflow-y: auto;" onclick="event.stopPropagation()">
+        <div class="modal-header" style="position: sticky; top: 0; background: white; z-index: 10;">
             <div>
-                <h2 class="modal-title" id="detailName"></h2>
-                <p class="modal-subtitle" id="detailReference"></p>
+                <h2 class="modal-title" id="reviewName"></h2>
+                <p class="modal-subtitle" id="reviewReference"></p>
             </div>
-            <button class="btn-close" onclick="closeDetailModal()">
+            <button class="btn-close" onclick="closeReviewModal()">
                 <svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
                     <line x1="6" y1="6" x2="18" y2="18"></line>
                 </svg>
             </button>
         </div>
-        <div class="modal-body" id="detailBody">
-            <!-- Content populated by JavaScript -->
+        
+        <form id="reviewForm" method="post">
+            {% csrf_token %}
+            <input type="hidden" id="reviewApplicantId" name="applicant_id" value="">
+            <input type="hidden" id="reviewChannel" name="channel" value="">
+            
+            <div class="modal-body" id="reviewBody">
+                <!-- Channel A: Landowner Submission View -->
+                <div id="landownerReviewSection" style="display: none;">
+                    <div class="info-note" style="background: #dbeafe; border-color: #93c5fd; margin-bottom: 1rem;">
+                        <p class="info-note-text" style="color: #1e40af;">
+                            <strong>📋 Channel A — Landowner Submission</strong><br>
+                            <span id="landownerInfo"></span>
+                        </p>
+                    </div>
+                    
+                    <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">ISF Records from this Submission</h4>
+                    <div id="isfListContainer">
+                        <!-- ISF cards populated by JavaScript -->
+                    </div>
+                </div>
+                
+                <!-- Channel B/C: Individual Applicant View -->
+                <div id="walkinReviewSection" style="display: none;">
+                    <!-- Status Badges Row -->
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;">
+                        <span class="status-badge" id="reviewChannelBadge"></span>
+                        <span class="status-badge" id="reviewEligibilityBadge"></span>
+                        <span class="status-badge" id="reviewQueueBadge" style="display: none;"></span>
+                    </div>
+                    
+                    <!-- Editable Fields -->
+                    <div class="form-grid" style="margin-bottom: 1rem;">
+                        <div class="form-group">
+                            <label class="form-label">Full Name</label>
+                            <input type="text" class="form-input" id="reviewFullName" name="full_name" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Barangay</label>
+                            <select class="form-select" id="reviewBarangay" name="barangay" disabled>
+                                <option value="">Select barangay...</option>
+                                {% for brgy in barangays %}
+                                <option value="{{ brgy }}">{{ brgy }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Monthly Income (₱)</label>
+                            <input type="number" class="form-input" id="reviewIncome" name="monthly_income" min="0" step="0.01" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Household Size</label>
+                            <input type="number" class="form-input" id="reviewHousehold" name="household_size" min="1" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Years Residing</label>
+                            <input type="number" class="form-input" id="reviewYears" name="years_residing" min="0" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Contact Number</label>
+                            <input type="tel" class="form-input" id="reviewPhone" name="phone_number" readonly>
+                        </div>
+                        <div class="form-group" style="grid-column: span 2;">
+                            <label class="form-label">Current Address</label>
+                            <input type="text" class="form-input" id="reviewAddress" name="current_address" readonly>
+                        </div>
+                    </div>
+                    
+                    <!-- CDRRMO Section (Channel B only) -->
+                    <div id="cdrrmoSection" style="display: none; margin-bottom: 1rem;">
+                        <div class="info-note" style="background: #fef3c7; border-color: #fcd34d;">
+                            <p class="info-note-text" style="color: #92400e;">
+                                <strong>⚠️ CDRRMO Certification Required</strong><br>
+                                <span id="cdrrmoDetails"></span>
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Eligibility Check Section -->
+                    <div style="border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-bottom: 1rem;">
+                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">Eligibility Check</h4>
+                        
+                        <div id="eligibilityChecks" style="display: grid; gap: 0.5rem;">
+                            <!-- Populated by JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <!-- Document Checklist -->
+                    <div style="border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-bottom: 1rem;">
+                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">Document Checklist</h4>
+                        
+                        <div class="document-grid" id="documentChecklist">
+                            <!-- Populated by JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <!-- Lot Assignment (if applicable) -->
+                    <div id="lotAssignmentSection" style="display: none; border-top: 1px solid #e2e8f0; padding-top: 1rem;">
+                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">Lot Assignment</h4>
+                        <div class="info-note" style="background: #dcfce7; border-color: #86efac;">
+                            <p class="info-note-text" style="color: #166534;" id="lotDetails"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-footer" style="position: sticky; bottom: 0; background: white; border-top: 1px solid #e2e8f0;">
+                <!-- Edit Mode Toggle -->
+                <button type="button" class="btn-modal secondary" id="btnEditToggle" onclick="toggleEditMode()">
+                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                    <span id="editToggleText">Edit</span>
+                </button>
+                
+                <!-- Action Buttons -->
+                <div id="reviewActions">
+                    <button type="button" class="btn-modal success" id="btnMarkEligible" onclick="markEligible()" style="background: #10b981;">
+                        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        Mark Eligible
+                    </button>
+                    <button type="button" class="btn-modal danger" id="btnDisqualify" onclick="showDisqualifyReason()" style="background: #ef4444;">
+                        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="15" y1="9" x2="9" y2="15"></line>
+                            <line x1="9" y1="9" x2="15" y2="15"></line>
+                        </svg>
+                        Disqualify
+                    </button>
+                </div>
+                
+                <!-- Save/Cancel (Edit Mode) -->
+                <div id="editActions" style="display: none;">
+                    <button type="submit" class="btn-modal primary">
+                        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                            <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                            <polyline points="7 3 7 8 15 8"></polyline>
+                        </svg>
+                        Save Changes
+                    </button>
+                    <button type="button" class="btn-modal secondary" onclick="cancelEdit()">
+                        Cancel
+                    </button>
+                </div>
+                
+                <button type="button" class="btn-modal secondary" onclick="closeReviewModal()">
+                    Close
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Disqualify Reason Modal -->
+<div class="modal-overlay" id="disqualifyModal" onclick="closeDisqualifyModal()" style="z-index: 1001;">
+    <div class="modal-content" style="max-width: 24rem;" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <h2 class="modal-title">Disqualify Applicant</h2>
+            <button class="btn-close" onclick="closeDisqualifyModal()">
+                <svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label class="form-label">Reason for Disqualification *</label>
+                <select class="form-select" id="disqualifyReason" required>
+                    <option value="">Select reason...</option>
+                    <option value="income_exceeds">Income exceeds ₱10,000 limit</option>
+                    <option value="property_owner">Owns property in Talisay City</option>
+                    <option value="blacklisted">On blacklist</option>
+                    <option value="incomplete_docs">Incomplete documents</option>
+                    <option value="false_info">False information provided</option>
+                    <option value="other">Other (specify below)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Additional Notes</label>
+                <textarea class="form-input" id="disqualifyNotes" rows="3" placeholder="Optional notes..."></textarea>
+            </div>
         </div>
         <div class="modal-footer">
-            <button class="btn-modal primary">
-                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="9" cy="7" r="4"></circle>
-                    <polyline points="16 11 18 13 22 9"></polyline>
-                </svg>
-                Update Eligibility
+            <button type="button" class="btn-modal danger" onclick="confirmDisqualify()" style="background: #ef4444;">
+                Confirm Disqualification
             </button>
-            <button class="btn-modal secondary">
-                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M22 2L11 13"></path>
-                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                </svg>
-                Send SMS
-            </button>
-            <button class="btn-modal secondary">
-                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                    <circle cx="12" cy="12" r="3"></circle>
-                </svg>
-                Full Profile
+            <button type="button" class="btn-modal secondary" onclick="closeDisqualifyModal()">
+                Cancel
             </button>
         </div>
     </div>
@@ -784,34 +1027,106 @@
             </button>
         </div>
         <div class="modal-body">
-            <form id="addApplicantForm">
+            <form id="addApplicantForm" method="post" action="{% url 'intake:walkin_register' %}">
+                {% csrf_token %}
                 <div class="form-group">
                     <label class="form-label">Intake Channel</label>
                     <div class="channel-selector">
-                        <button type="button" class="channel-btn active" onclick="selectChannel('C')">
-                            <span class="channel-btn-label">Channel C</span>
-                            <span class="channel-btn-sublabel">Walk-in</span>
-                        </button>
-                        <button type="button" class="channel-btn" onclick="selectChannel('B')">
-                            <span class="channel-btn-label">Channel B</span>
-                            <span class="channel-btn-sublabel">Danger Zone</span>
-                        </button>
-                        <button type="button" class="channel-btn" onclick="selectChannel('A')">
+                        <button type="button" class="channel-btn" data-channel="landowner" onclick="selectChannel('landowner')">
                             <span class="channel-btn-label">Channel A</span>
                             <span class="channel-btn-sublabel">Landowner</span>
                         </button>
+                        <button type="button" class="channel-btn" data-channel="danger_zone" onclick="selectChannel('danger_zone')">
+                            <span class="channel-btn-label">Channel B</span>
+                            <span class="channel-btn-sublabel">Danger Zone</span>
+                        </button>
+                        <button type="button" class="channel-btn active" data-channel="walk_in" onclick="selectChannel('walk_in')">
+                            <span class="channel-btn-label">Channel C</span>
+                            <span class="channel-btn-sublabel">Walk-in</span>
+                        </button>
                     </div>
-                    <input type="hidden" id="channelInput" name="channel" value="C">
+                    <input type="hidden" id="channelInput" name="channel" value="walk_in">
                 </div>
 
-                <div class="form-grid">
+                <!-- Channel A: Landowner Fields -->
+                <div id="landownerFields" style="display: none;">
+                    <div class="info-note" style="background: #dbeafe; border-color: #93c5fd; margin-bottom: 1rem;">
+                        <p class="info-note-text" style="color: #1e40af;">
+                            <strong>📋 Landowner Walk-in Submission</strong><br>
+                            Enter landowner details and the list of informal settlers residing on their property.
+                        </p>
+                    </div>
+                    
+                    <!-- Landowner Information Section -->
+                    <div style="margin-bottom: 1rem;">
+                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.025em;">Landowner Information</h4>
+                        <div class="form-grid">
+                            <div class="form-group" style="grid-column: span 2;">
+                                <label class="form-label">Full Name *</label>
+                                <input type="text" class="form-input" placeholder="Enter landowner's full name" name="landowner_name" required>
+                            </div>
+                            <div class="form-group" style="grid-column: span 2;">
+                                <label class="form-label">Property Address *</label>
+                                <textarea class="form-input" rows="2" placeholder="Complete address of the property where informal settlers are residing (include barangay)" name="property_address" required></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- ISF Records Section -->
+                    <div style="border-top: 1px solid #e2e8f0; padding-top: 1rem;">
+                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.025em;">Informal Settlers on Property</h4>
+                        
+                        <div id="isfRecordsContainer">
+                            <div class="isf-record-entry" data-isf-index="1" style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 1rem; border-radius: 0.5rem; margin-bottom: 0.75rem;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                                    <span style="font-weight: 600; color: #1e293b; font-size: 0.875rem;">ISF #1</span>
+                                </div>
+                                <div class="form-grid">
+                                    <div class="form-group" style="grid-column: span 2;">
+                                        <label class="form-label">Full Name *</label>
+                                        <input type="text" class="form-input" placeholder="Juan Dela Cruz" name="isf_name[]" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Household Members *</label>
+                                        <input type="number" class="form-input" placeholder="5" name="isf_household[]" min="1" value="1" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Monthly Income (₱) *</label>
+                                        <input type="number" class="form-input" placeholder="8000" name="isf_income[]" min="0" step="0.01" required>
+                                    </div>
+                                    <div class="form-group" style="grid-column: span 2;">
+                                        <label class="form-label">Years Residing *</label>
+                                        <input type="number" class="form-input" placeholder="3" name="isf_years[]" min="0" required>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button type="button" class="btn-modal secondary" style="width: 100%; padding: 0.75rem; margin-top: 0.5rem; border: 2px dashed #cbd5e1; background: transparent; color: #64748b;" onclick="addISFRecord()">
+                            <svg style="width: 1rem; height: 1rem; margin-right: 0.5rem; vertical-align: middle;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            Add Another ISF
+                        </button>
+                    </div>
+                    
+                    <div class="info-note" style="margin-top: 1rem;">
+                        <p class="info-note-text">
+                            Each ISF will receive an SMS with their reference number. Landowner submissions go to the <strong>Priority Queue</strong>.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Channel B/C: Walk-in Applicant Fields -->
+                <div class="form-grid" id="formFields">
                     <div class="form-group">
-                        <label class="form-label">Full Name</label>
-                        <input type="text" class="form-input" placeholder="Last, First, Middle" name="fullName" required>
+                        <label class="form-label">Full Name *</label>
+                        <input type="text" class="form-input" placeholder="Last, First, Middle" name="full_name">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Barangay</label>
-                        <select class="form-select" name="barangay" required>
+                        <label class="form-label">Barangay *</label>
+                        <select class="form-select" name="barangay">
                             <option value="">Select barangay...</option>
                             {% for barangay in barangays %}
                             <option value="{{ barangay }}">{{ barangay }}</option>
@@ -819,43 +1134,62 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Monthly Income (₱)</label>
-                        <input type="number" class="form-input" placeholder="e.g. 8500" name="monthlyIncome" required>
+                        <label class="form-label">Monthly Income (₱) *</label>
+                        <input type="number" class="form-input" placeholder="e.g. 8500" name="monthly_income" min="0" step="0.01">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Household Size</label>
-                        <input type="number" class="form-input" placeholder="No. of members" name="householdSize" required>
+                        <label class="form-label">Years Residing *</label>
+                        <input type="number" class="form-input" placeholder="Years at current address" name="years_residing" min="0">
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Years Residing</label>
-                        <input type="number" class="form-input" placeholder="Years at current address" name="yearsResiding" required>
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label class="form-label">Current Address *</label>
+                        <input type="text" class="form-input" placeholder="Current residential address" name="current_address">
                     </div>
-                    <div class="form-group">
+                    <div class="form-group" style="grid-column: span 2;">
                         <label class="form-label">Contact Number</label>
-                        <input type="tel" class="form-input" placeholder="09XX-XXX-XXXX" name="contactNumber" required>
+                        <input type="tel" class="form-input" placeholder="09XX-XXX-XXXX" name="phone_number">
+                        <span class="help-text">For SMS notifications</span>
                     </div>
                 </div>
 
                 <div class="form-group" id="dangerZoneGroup" style="display: none;">
-                    <label class="form-label">Declared Danger Zone Type</label>
-                    <select class="form-select" name="dangerZoneType">
+                    <label class="form-label">Danger Zone Type *</label>
+                    <select class="form-select" name="danger_zone_type">
                         <option value="">Select type...</option>
-                        <option>Riverbank</option>
-                        <option>Riverside</option>
-                        <option>Flood-prone area</option>
-                        <option>Other danger zone</option>
+                        <option value="riverside">Riverside / Riverbank</option>
+                        <option value="flood_prone">Flood-Prone Area</option>
+                        <option value="landslide">Landslide-Prone Area</option>
+                        <option value="coastal">Coastal / Near Shoreline</option>
+                        <option value="railroad">Near Railroad Tracks</option>
+                        <option value="road_right_of_way">Road Right of Way</option>
+                        <option value="other">Other Danger Zone</option>
                     </select>
                 </div>
+                
+                <div class="form-group" id="dangerZoneLocationGroup" style="display: none;">
+                    <label class="form-label">Danger Zone Location Details *</label>
+                    <input type="text" class="form-input" placeholder="Describe the specific danger zone location..." name="danger_zone_location">
+                    <span class="help-text">For CDRRMO verification</span>
+                </div>
 
-                <div class="info-note">
+                <div class="info-note" id="regularNote">
                     <p class="info-note-text">
                         System will automatically assign a reference number and send SMS to the applicant upon saving.
+                    </p>
+                </div>
+                
+                <div class="info-note" id="cdrrmoNote" style="display: none; background: #fef3c7; border-color: #fcd34d;">
+                    <p class="info-note-text" style="color: #92400e;">
+                        ⚠️ Danger zone applicants will be marked as <strong>"Pending CDRRMO"</strong> until certified by CDRRMO.
                     </p>
                 </div>
             </form>
         </div>
         <div class="modal-footer">
-            <button type="submit" form="addApplicantForm" class="btn-modal primary">
+            <button type="submit" form="addApplicantForm" class="btn-modal primary" id="submitBtn">
+                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M5 13l4 4L19 7"/>
+                </svg>
                 Save & Run Eligibility Check
             </button>
             <button type="button" class="btn-modal secondary" onclick="closeAddModal()">
@@ -893,112 +1227,166 @@
         });
     }
 
-    // Detail Modal
-    function openDetailModal(index) {
-        const applicant = applicantsData[index];
-        const modal = document.getElementById('detailModal');
-        document.getElementById('detailName').textContent = applicant.fullName;
-        document.getElementById('detailReference').textContent = applicant.referenceNumber + ' · Reg. ' + applicant.dateRegistered;
-
-        let bodyHTML = '';
-
-        // Flags
-        if (applicant.isCdrrmoFlagged) {
-            bodyHTML += `
-                <div class="modal-section">
-                    <div class="info-box warning">
-                        <p class="info-box-label">⚠️ CDRRMO Certification Alert</p>
-                        <p class="info-box-text">CDRRMO certification pending for more than 14 days — flag for follow-up</p>
-                    </div>
-                </div>
-            `;
-        }
-
-        if (applicant.signatoryRoutingDelayed) {
-            bodyHTML += `
-                <div class="modal-section">
-                    <div class="info-box danger">
-                        <p class="info-box-label">⚠️ Routing Delay</p>
-                        <p class="info-box-text">Signatory routing delayed more than 3 days — stalled at: <strong>${applicant.signatoryRoutingDelayedAt || 'Unknown'}</strong></p>
-                    </div>
-                </div>
-            `;
-        }
-
-        // Basic Info
+    // ====== REVIEW MODAL ======
+    let currentApplicant = null;
+    let isEditMode = false;
+    
+    function openReviewModal(index) {
+        currentApplicant = applicantsData[index];
+        const modal = document.getElementById('reviewModal');
+        
+        // Set header info
+        document.getElementById('reviewName').textContent = currentApplicant.fullName;
+        document.getElementById('reviewReference').textContent = currentApplicant.referenceNumber + ' · Reg. ' + currentApplicant.dateRegistered;
+        document.getElementById('reviewApplicantId').value = currentApplicant.applicantId || currentApplicant.id;
+        document.getElementById('reviewChannel').value = currentApplicant.channel;
+        
+        // Channel labels
         const channelLabels = {
-            'A': 'Channel A — Landowner Submission',
+            'A': 'Channel A — Landowner',
             'B': 'Channel B — Danger Zone',
-            'C': 'Channel C — Regular Walk-in'
+            'C': 'Channel C — Walk-in'
         };
-
-        bodyHTML += `
-            <div class="modal-section">
-                <div class="info-grid">
-                    <div class="info-item">
-                        <label>Channel</label>
-                        <div class="value">${channelLabels[applicant.channel]}</div>
+        
+        // Show appropriate section based on channel
+        if (currentApplicant.channel === 'A') {
+            document.getElementById('landownerReviewSection').style.display = 'block';
+            document.getElementById('walkinReviewSection').style.display = 'none';
+            
+            // Populate landowner info
+            document.getElementById('landownerInfo').innerHTML = `
+                <strong>Landowner:</strong> ${currentApplicant.landownerName || 'N/A'}<br>
+                <strong>Property:</strong> ${currentApplicant.propertyAddress || currentApplicant.barangay}
+            `;
+            
+            // Populate ISF list (this would need submission data)
+            populateISFList(currentApplicant);
+        } else {
+            document.getElementById('landownerReviewSection').style.display = 'none';
+            document.getElementById('walkinReviewSection').style.display = 'block';
+            
+            // Set badges
+            document.getElementById('reviewChannelBadge').textContent = channelLabels[currentApplicant.channel];
+            document.getElementById('reviewChannelBadge').className = 'status-badge status-' + (currentApplicant.channel === 'B' ? 'warning' : 'info');
+            
+            document.getElementById('reviewEligibilityBadge').textContent = currentApplicant.eligibilityStatus;
+            const eligClass = currentApplicant.eligibilityStatus === 'Eligible' ? 'success' : 
+                              currentApplicant.eligibilityStatus === 'Disqualified' ? 'danger' : 'warning';
+            document.getElementById('reviewEligibilityBadge').className = 'status-badge status-' + eligClass;
+            
+            if (currentApplicant.queueType && currentApplicant.queueType !== 'None') {
+                document.getElementById('reviewQueueBadge').style.display = 'inline-flex';
+                document.getElementById('reviewQueueBadge').textContent = currentApplicant.queueType + (currentApplicant.queuePosition ? ' #' + currentApplicant.queuePosition : '');
+                document.getElementById('reviewQueueBadge').className = 'status-badge status-info';
+            } else {
+                document.getElementById('reviewQueueBadge').style.display = 'none';
+            }
+            
+            // Populate form fields
+            document.getElementById('reviewFullName').value = currentApplicant.fullName || '';
+            document.getElementById('reviewBarangay').value = currentApplicant.barangay || '';
+            document.getElementById('reviewIncome').value = currentApplicant.monthlyIncome || '';
+            document.getElementById('reviewHousehold').value = currentApplicant.householdSize || '';
+            document.getElementById('reviewYears').value = currentApplicant.yearsResiding || '';
+            document.getElementById('reviewPhone').value = currentApplicant.phoneNumber || '';
+            document.getElementById('reviewAddress').value = currentApplicant.currentAddress || '';
+            
+            // CDRRMO section for Channel B
+            if (currentApplicant.channel === 'B') {
+                document.getElementById('cdrrmoSection').style.display = 'block';
+                document.getElementById('cdrrmoDetails').innerHTML = `
+                    <strong>Declared Location:</strong> ${currentApplicant.dangerZoneType || 'Not specified'}<br>
+                    <strong>Status:</strong> ${currentApplicant.cdrrmoStatus || 'Pending'}
+                `;
+            } else {
+                document.getElementById('cdrrmoSection').style.display = 'none';
+            }
+            
+            // Populate eligibility checks
+            populateEligibilityChecks(currentApplicant);
+            
+            // Populate document checklist
+            populateDocumentChecklist(currentApplicant);
+            
+            // Lot assignment
+            if (currentApplicant.lotAssignment) {
+                document.getElementById('lotAssignmentSection').style.display = 'block';
+                document.getElementById('lotDetails').innerHTML = `
+                    <strong>Block ${currentApplicant.lotAssignment.block}, Lot ${currentApplicant.lotAssignment.lot}</strong> — ${currentApplicant.lotAssignment.site}<br>
+                    Awarded: ${currentApplicant.lotAssignment.dateAwarded}
+                    ${currentApplicant.electricityStatus ? '<br>Electricity: ' + currentApplicant.electricityStatus : ''}
+                `;
+            } else {
+                document.getElementById('lotAssignmentSection').style.display = 'none';
+            }
+        }
+        
+        // Show/hide action buttons based on status
+        updateActionButtons(currentApplicant);
+        
+        // Reset edit mode
+        isEditMode = false;
+        updateEditModeUI();
+        
+        modal.classList.add('active');
+    }
+    
+    function populateISFList(applicant) {
+        const container = document.getElementById('isfListContainer');
+        // For now show current applicant as ISF
+        // In real implementation, fetch all ISFs from the submission
+        container.innerHTML = `
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 1rem; border-radius: 0.5rem; margin-bottom: 0.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: start;">
+                    <div>
+                        <strong>${applicant.fullName}</strong>
+                        <div style="font-size: 0.75rem; color: #64748b;">
+                            ${applicant.referenceNumber} · ₱${applicant.monthlyIncome?.toLocaleString() || 0}/mo · ${applicant.householdSize || 1} members
+                        </div>
                     </div>
-                    <div class="info-item">
-                        <label>Eligibility</label>
-                        <div class="value">${applicant.eligibilityStatus}</div>
-                    </div>
-                    <div class="info-item">
-                        <label>Barangay</label>
-                        <div class="value">${applicant.barangay}</div>
-                    </div>
-                    <div class="info-item">
-                        <label>Queue</label>
-                        <div class="value">${applicant.queueType}${applicant.queuePosition ? ' #' + applicant.queuePosition : ''}</div>
-                    </div>
-                    <div class="info-item">
-                        <label>Monthly Income</label>
-                        <div class="value">₱${applicant.monthlyIncome.toLocaleString()}</div>
-                    </div>
-                    <div class="info-item">
-                        <label>Household Size</label>
-                        <div class="value">${applicant.householdSize} members</div>
-                    </div>
-                    <div class="info-item">
-                        <label>Years Residing</label>
-                        <div class="value">${applicant.yearsResiding} years</div>
-                    </div>
-                    <div class="info-item">
-                        <label>Application Stage</label>
-                        <div class="value">${applicant.applicationStage}</div>
-                    </div>
+                    <span class="status-badge status-${applicant.eligibilityStatus === 'Eligible' ? 'success' : applicant.eligibilityStatus === 'Disqualified' ? 'danger' : 'warning'}">${applicant.eligibilityStatus}</span>
                 </div>
             </div>
         `;
-
-        // Disqualification
-        if (applicant.disqualificationReason) {
-            bodyHTML += `
-                <div class="modal-section">
-                    <div class="info-box danger">
-                        <p class="info-box-label">Disqualification Reason</p>
-                        <p class="info-box-text">${applicant.disqualificationReason}</p>
-                    </div>
-                </div>
-            `;
-        }
-
-        // Danger Zone
-        if (applicant.channel === 'B' && applicant.dangerZoneType) {
-            bodyHTML += `
-                <div class="modal-section">
-                    <label style="font-size: 0.625rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; display: block;">CDRRMO Status</label>
-                    <div class="info-box warning">
-                        <p class="info-box-text">
-                            <strong>Declared:</strong> ${applicant.dangerZoneType}<br>
-                            <strong>CDRRMO:</strong> ${applicant.cdrrmoStatus || 'Pending'}
-                        </p>
-                    </div>
-                </div>
-            `;
-        }
-
-        // Documents
+    }
+    
+    function populateEligibilityChecks(applicant) {
+        const container = document.getElementById('eligibilityChecks');
+        const income = applicant.monthlyIncome || 0;
+        const incomePass = income <= 10000;
+        
+        container.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: ${incomePass ? '#dcfce7' : '#fee2e2'}; border-radius: 0.375rem;">
+                <svg style="width: 1rem; height: 1rem; color: ${incomePass ? '#16a34a' : '#dc2626'};" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    ${incomePass ? '<polyline points="20 6 9 17 4 12"></polyline>' : '<line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>'}
+                </svg>
+                <span style="font-size: 0.8125rem;">Monthly income ≤ ₱10,000 <strong>(₱${income.toLocaleString()})</strong></span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: #dcfce7; border-radius: 0.375rem;">
+                <svg style="width: 1rem; height: 1rem; color: #16a34a;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span style="font-size: 0.8125rem;">No property ownership in Talisay City</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: #dcfce7; border-radius: 0.375rem;">
+                <svg style="width: 1rem; height: 1rem; color: #16a34a;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span style="font-size: 0.8125rem;">Not on blacklist</span>
+            </div>
+            ${applicant.channel === 'B' ? `
+            <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: ${applicant.cdrrmoStatus === 'Certified' ? '#dcfce7' : '#fef3c7'}; border-radius: 0.375rem;">
+                <svg style="width: 1rem; height: 1rem; color: ${applicant.cdrrmoStatus === 'Certified' ? '#16a34a' : '#d97706'};" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    ${applicant.cdrrmoStatus === 'Certified' ? '<polyline points="20 6 9 17 4 12"></polyline>' : '<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>'}
+                </svg>
+                <span style="font-size: 0.8125rem;">CDRRMO Certification: <strong>${applicant.cdrrmoStatus || 'Pending'}</strong></span>
+            </div>
+            ` : ''}
+        `;
+    }
+    
+    function populateDocumentChecklist(applicant) {
+        const container = document.getElementById('documentChecklist');
         const docs = [
             { key: 'barangayCertResidency', label: 'Brgy. Certificate of Residency' },
             { key: 'barangayCertIndigency', label: 'Brgy. Certificate of Indigency' },
@@ -1008,79 +1396,290 @@
             { key: 'picture2x2', label: '2x2 Picture' },
             { key: 'sketchHouseLocation', label: 'Sketch of House Location' }
         ];
-
-        bodyHTML += `
-            <div class="modal-section">
-                <label style="font-size: 0.625rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; display: block;">Document Checklist</label>
-                <div class="document-grid">
-        `;
-
+        
+        let html = '';
         docs.forEach(doc => {
-            const checked = applicant.documents[doc.key];
-            const iconSVG = checked
-                ? '<svg class="document-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>'
-                : '<svg class="document-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>';
-            bodyHTML += `
-                <div class="document-item ${checked ? 'complete' : 'incomplete'}">
-                    ${iconSVG}
+            const checked = applicant.documents?.[doc.key] || false;
+            html += `
+                <label class="document-item ${checked ? 'complete' : 'incomplete'}" style="cursor: ${isEditMode ? 'pointer' : 'default'};">
+                    <input type="checkbox" name="doc_${doc.key}" ${checked ? 'checked' : ''} ${isEditMode ? '' : 'disabled'} style="display: none;">
+                    <svg class="document-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        ${checked 
+                            ? '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>'
+                            : '<circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>'}
+                    </svg>
                     ${doc.label}
-                </div>
+                </label>
             `;
         });
-
-        bodyHTML += `</div></div>`;
-
-        // Lot Assignment
-        if (applicant.lotAssignment) {
-            bodyHTML += `
-                <div class="modal-section">
-                    <div class="info-box success">
-                        <p class="info-box-label">Lot Assignment</p>
-                        <p class="info-box-text">
-                            Block ${applicant.lotAssignment.block}, Lot ${applicant.lotAssignment.lot} — ${applicant.lotAssignment.site}<br>
-                            <strong>Awarded:</strong> ${applicant.lotAssignment.dateAwarded}
-                            ${applicant.electricityStatus ? '<br><strong>Electricity:</strong> ' + applicant.electricityStatus : ''}
-                        </p>
-                    </div>
-                </div>
-            `;
-        }
-
-        document.getElementById('detailBody').innerHTML = bodyHTML;
-        modal.classList.add('active');
+        container.innerHTML = html;
     }
-
-    function closeDetailModal() {
-        document.getElementById('detailModal').classList.remove('active');
+    
+    function updateActionButtons(applicant) {
+        const btnMarkEligible = document.getElementById('btnMarkEligible');
+        const btnDisqualify = document.getElementById('btnDisqualify');
+        const reviewActions = document.getElementById('reviewActions');
+        
+        // Show action buttons only for pending status
+        if (applicant.eligibilityStatus === 'Pending' || applicant.eligibilityStatus === 'Pending CDRRMO') {
+            reviewActions.style.display = 'flex';
+            
+            // For Channel B pending CDRRMO, disable mark eligible
+            if (applicant.eligibilityStatus === 'Pending CDRRMO' && applicant.cdrrmoStatus !== 'Certified') {
+                btnMarkEligible.disabled = true;
+                btnMarkEligible.title = 'Awaiting CDRRMO certification';
+            } else {
+                btnMarkEligible.disabled = false;
+                btnMarkEligible.title = '';
+            }
+        } else {
+            reviewActions.style.display = 'none';
+        }
+    }
+    
+    function closeReviewModal() {
+        document.getElementById('reviewModal').classList.remove('active');
+        currentApplicant = null;
+        isEditMode = false;
+    }
+    
+    function toggleEditMode() {
+        isEditMode = !isEditMode;
+        updateEditModeUI();
+    }
+    
+    function updateEditModeUI() {
+        const fields = ['reviewFullName', 'reviewIncome', 'reviewHousehold', 'reviewYears', 'reviewPhone', 'reviewAddress'];
+        const selectFields = ['reviewBarangay'];
+        
+        fields.forEach(id => {
+            document.getElementById(id).readOnly = !isEditMode;
+        });
+        
+        selectFields.forEach(id => {
+            document.getElementById(id).disabled = !isEditMode;
+        });
+        
+        document.getElementById('editToggleText').textContent = isEditMode ? 'Cancel Edit' : 'Edit';
+        document.getElementById('editActions').style.display = isEditMode ? 'flex' : 'none';
+        document.getElementById('reviewActions').style.display = isEditMode ? 'none' : 'flex';
+        
+        // Update document checklist interactivity
+        if (currentApplicant) {
+            populateDocumentChecklist(currentApplicant);
+        }
+    }
+    
+    function cancelEdit() {
+        isEditMode = false;
+        updateEditModeUI();
+        // Reset form values
+        if (currentApplicant) {
+            document.getElementById('reviewFullName').value = currentApplicant.fullName || '';
+            document.getElementById('reviewBarangay').value = currentApplicant.barangay || '';
+            document.getElementById('reviewIncome').value = currentApplicant.monthlyIncome || '';
+            document.getElementById('reviewHousehold').value = currentApplicant.householdSize || '';
+            document.getElementById('reviewYears').value = currentApplicant.yearsResiding || '';
+            document.getElementById('reviewPhone').value = currentApplicant.phoneNumber || '';
+            document.getElementById('reviewAddress').value = currentApplicant.currentAddress || '';
+        }
+    }
+    
+    function markEligible() {
+        if (!currentApplicant) return;
+        
+        // Submit via AJAX or form
+        const formData = new FormData();
+        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+        formData.append('applicant_id', currentApplicant.applicantId || currentApplicant.id);
+        formData.append('action', 'mark_eligible');
+        
+        fetch('{% url "intake:update_eligibility" %}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('✓ Applicant marked as eligible and added to queue.');
+                location.reload();
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            alert('Error: ' + error.message);
+        });
+    }
+    
+    function showDisqualifyReason() {
+        document.getElementById('disqualifyModal').classList.add('active');
+    }
+    
+    function closeDisqualifyModal() {
+        document.getElementById('disqualifyModal').classList.remove('active');
+    }
+    
+    function confirmDisqualify() {
+        if (!currentApplicant) return;
+        
+        const reason = document.getElementById('disqualifyReason').value;
+        const notes = document.getElementById('disqualifyNotes').value;
+        
+        if (!reason) {
+            alert('Please select a reason for disqualification.');
+            return;
+        }
+        
+        const formData = new FormData();
+        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+        formData.append('applicant_id', currentApplicant.applicantId || currentApplicant.id);
+        formData.append('action', 'disqualify');
+        formData.append('reason', reason);
+        formData.append('notes', notes);
+        
+        fetch('{% url "intake:update_eligibility" %}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Applicant disqualified.');
+                location.reload();
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            alert('Error: ' + error.message);
+        });
     }
 
     // Add Modal
     function openAddModal() {
         document.getElementById('addModal').classList.add('active');
+        // Reset to default channel (walk_in)
+        selectChannel('walk_in');
     }
 
     function closeAddModal() {
         document.getElementById('addModal').classList.remove('active');
         document.getElementById('addApplicantForm').reset();
-        selectChannel('C');
+        selectChannel('walk_in');
     }
 
     function selectChannel(channel) {
-        document.querySelectorAll('.channel-btn').forEach(btn => btn.classList.remove('active'));
-        event.currentTarget.classList.add('active');
+        // Update button states
+        document.querySelectorAll('.channel-btn').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.channel === channel) {
+                btn.classList.add('active');
+            }
+        });
+        
+        // Update hidden input
         document.getElementById('channelInput').value = channel;
         
-        // Show/hide danger zone field
+        // Get all the elements
+        const landownerFields = document.getElementById('landownerFields');
+        const formFields = document.getElementById('formFields');
         const dangerZoneGroup = document.getElementById('dangerZoneGroup');
-        dangerZoneGroup.style.display = channel === 'B' ? 'block' : 'none';
+        const dangerZoneLocationGroup = document.getElementById('dangerZoneLocationGroup');
+        const cdrrmoNote = document.getElementById('cdrrmoNote');
+        const regularNote = document.getElementById('regularNote');
+        const submitBtn = document.getElementById('submitBtn');
+        
+        if (channel === 'landowner') {
+            // Channel A: Show landowner form, hide walk-in form
+            landownerFields.style.display = 'block';
+            formFields.style.display = 'none';
+            dangerZoneGroup.style.display = 'none';
+            dangerZoneLocationGroup.style.display = 'none';
+            cdrrmoNote.style.display = 'none';
+            regularNote.style.display = 'none';
+            submitBtn.disabled = false;
+        } else if (channel === 'danger_zone') {
+            // Channel B: Show danger zone fields
+            landownerFields.style.display = 'none';
+            formFields.style.display = 'grid';
+            dangerZoneGroup.style.display = 'block';
+            dangerZoneLocationGroup.style.display = 'block';
+            cdrrmoNote.style.display = 'block';
+            regularNote.style.display = 'none';
+            submitBtn.disabled = false;
+        } else {
+            // Channel C (walk_in): Regular walk-in form
+            landownerFields.style.display = 'none';
+            formFields.style.display = 'grid';
+            dangerZoneGroup.style.display = 'none';
+            dangerZoneLocationGroup.style.display = 'none';
+            cdrrmoNote.style.display = 'none';
+            regularNote.style.display = 'block';
+            submitBtn.disabled = false;
+        }
     }
 
-    // Form submission (placeholder - implement backend)
-    document.getElementById('addApplicantForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        alert('Form submission would be handled here. Implement Django backend to process new applicant registration.');
-        closeAddModal();
-    });
+    // Add another ISF record entry for Channel A
+    let isfCount = 1;
+    function addISFRecord() {
+        isfCount++;
+        const container = document.getElementById('isfRecordsContainer');
+        const newEntry = document.createElement('div');
+        newEntry.className = 'isf-record-entry';
+        newEntry.dataset.isfIndex = isfCount;
+        newEntry.style.cssText = 'background: #f8fafc; border: 1px solid #e2e8f0; padding: 1rem; border-radius: 0.5rem; margin-bottom: 0.75rem;';
+        newEntry.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                <span style="font-weight: 600; color: #1e293b; font-size: 0.875rem;">ISF #${isfCount}</span>
+                <button type="button" onclick="removeISFRecord(this)" style="background: none; border: none; cursor: pointer; color: #ef4444; font-size: 0.75rem; display: flex; align-items: center; gap: 0.25rem;">
+                    <svg style="width: 0.875rem; height: 0.875rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                    Remove
+                </button>
+            </div>
+            <div class="form-grid">
+                <div class="form-group" style="grid-column: span 2;">
+                    <label class="form-label">Full Name *</label>
+                    <input type="text" class="form-input" placeholder="Juan Dela Cruz" name="isf_name[]" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Household Members *</label>
+                    <input type="number" class="form-input" placeholder="5" name="isf_household[]" min="1" value="1" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Monthly Income (₱) *</label>
+                    <input type="number" class="form-input" placeholder="8000" name="isf_income[]" min="0" step="0.01" required>
+                </div>
+                <div class="form-group" style="grid-column: span 2;">
+                    <label class="form-label">Years Residing *</label>
+                    <input type="number" class="form-input" placeholder="3" name="isf_years[]" min="0" required>
+                </div>
+            </div>
+        `;
+        container.appendChild(newEntry);
+    }
+    
+    function removeISFRecord(button) {
+        const entry = button.closest('.isf-record-entry');
+        const container = document.getElementById('isfRecordsContainer');
+        
+        // Don't remove if it's the only one
+        if (container.querySelectorAll('.isf-record-entry').length > 1) {
+            entry.remove();
+            // Renumber remaining entries
+            const entries = container.querySelectorAll('.isf-record-entry');
+            entries.forEach((e, index) => {
+                e.dataset.isfIndex = index + 1;
+                e.querySelector('span').textContent = `ISF #${index + 1}`;
+            });
+            isfCount = entries.length;
+        } else {
+            alert('At least one ISF record is required.');
+        }
+    }
 
     // Pass applicant data as JSON for onclick handler
     function escapeHtml(text) {

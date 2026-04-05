@@ -1,5 +1,5 @@
 from django import forms
-from .models import LandownerSubmission, ISFRecord, HouseholdMember
+from .models import LandownerSubmission, ISFRecord, HouseholdMember, Applicant
 
 
 # Talisay City barangays (official 27 barangays)
@@ -219,3 +219,128 @@ class HouseholdMemberForm(forms.ModelForm):
             'date_of_birth': 'Date of Birth',
             'sex': 'Sex',
         }
+
+
+# ============================================================
+# Channel B/C Walk-in Registration Forms
+# ============================================================
+
+DANGER_ZONE_TYPES = [
+    ('', '-- Select Danger Zone Type --'),
+    ('riverside', 'Riverside / Riverbank'),
+    ('flood_prone', 'Flood-Prone Area'),
+    ('landslide', 'Landslide-Prone Area'),
+    ('coastal', 'Coastal / Near Shoreline'),
+    ('railroad', 'Near Railroad Tracks'),
+    ('road_right_of_way', 'Road Right of Way'),
+    ('other', 'Other Danger Zone'),
+]
+
+
+class WalkInApplicantForm(forms.ModelForm):
+    """
+    Registration form for Channel B (Danger Zone) and Channel C (Walk-in) applicants.
+    Used at the THA office during walk-in registration.
+    """
+    barangay = forms.ChoiceField(
+        choices=BARANGAY_CHOICES,
+        required=True,
+        label="Barangay",
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+    
+    channel = forms.ChoiceField(
+        choices=[
+            ('', '-- Select Channel --'),
+            ('danger_zone', 'Channel B — Danger Zone (Priority)'),
+            ('walk_in', 'Channel C — Regular Walk-in'),
+        ],
+        required=True,
+        label="Application Channel",
+        widget=forms.Select(attrs={'class': 'form-select', 'id': 'channel-select'})
+    )
+    
+    # Danger zone specific fields (shown only for Channel B)
+    danger_zone_type = forms.ChoiceField(
+        choices=DANGER_ZONE_TYPES,
+        required=False,
+        label="Danger Zone Type",
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+    
+    danger_zone_location = forms.CharField(
+        required=False,
+        label="Danger Zone Location Details",
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'rows': 2,
+            'placeholder': 'Describe the specific danger zone location...'
+        })
+    )
+    
+    class Meta:
+        model = Applicant
+        fields = [
+            'full_name',
+            'phone_number',
+            'current_address',
+            'monthly_income',
+            'years_residing',
+        ]
+        widgets = {
+            'full_name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Full name (Last Name, First Name Middle Name)',
+                'autofocus': True,
+            }),
+            'phone_number': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': '09XX XXX XXXX',
+            }),
+            'current_address': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 2,
+                'placeholder': 'Current residential address',
+            }),
+            'monthly_income': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Monthly household income',
+                'min': 0,
+                'step': '0.01',
+            }),
+            'years_residing': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Years at current location',
+                'min': 0,
+            }),
+        }
+        labels = {
+            'full_name': 'Full Name',
+            'phone_number': 'Contact Number (for SMS)',
+            'current_address': 'Current Address',
+            'monthly_income': 'Monthly Income (₱)',
+            'years_residing': 'Years Residing at Location',
+        }
+    
+    def clean_monthly_income(self):
+        """Validate income is non-negative."""
+        income = self.cleaned_data.get('monthly_income')
+        if income and income < 0:
+            raise forms.ValidationError('Monthly income cannot be negative.')
+        return income
+    
+    def clean(self):
+        """Cross-field validation."""
+        cleaned_data = super().clean()
+        channel = cleaned_data.get('channel')
+        danger_zone_type = cleaned_data.get('danger_zone_type')
+        danger_zone_location = cleaned_data.get('danger_zone_location')
+        
+        # If Channel B (danger zone), require danger zone details
+        if channel == 'danger_zone':
+            if not danger_zone_type:
+                self.add_error('danger_zone_type', 'Please specify the danger zone type.')
+            if not danger_zone_location:
+                self.add_error('danger_zone_location', 'Please describe the danger zone location.')
+        
+        return cleaned_data

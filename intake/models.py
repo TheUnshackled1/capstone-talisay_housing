@@ -137,7 +137,7 @@ class LandownerSubmission(models.Model):
     landowner_phone = models.CharField(max_length=20, blank=True, verbose_name="Contact Number")
     landowner_email = models.EmailField(blank=True, verbose_name="Email Address")
     property_address = models.TextField(verbose_name="Property Address")
-    barangay = models.CharField(max_length=100, verbose_name="Barangay")
+    barangay = models.CharField(max_length=100, blank=True, verbose_name="Barangay")
     
     # Metadata
     submitted_at = models.DateTimeField(auto_now_add=True)
@@ -151,6 +151,16 @@ class LandownerSubmission(models.Model):
     )
     reviewed_at = models.DateTimeField(null=True, blank=True)
     notes = models.TextField(blank=True, verbose_name="Staff Notes")
+    
+    # Track if submitted by staff (walk-in landowner) vs online portal
+    submitted_by_staff = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='staff_submissions',
+        verbose_name="Submitted by Staff"
+    )
 
     class Meta:
         ordering = ['-submitted_at']

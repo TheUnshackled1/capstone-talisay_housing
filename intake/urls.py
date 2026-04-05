@@ -11,7 +11,16 @@ urlpatterns = [
     # Consolidated view for all intake channels (replaces old submission_list)
     path('staff/applicants/', views.applicants_list, name='applicants_list'),
     
-    # Individual review pages (kept for specific ISF review workflow)
+    # Walk-in registration (Channel B/C)
+    path('staff/register/', views.walkin_register, name='walkin_register'),
+    
+    # Update eligibility (AJAX endpoint for modal)
+    path('staff/update-eligibility/', views.update_eligibility, name='update_eligibility'),
+    
+    # Channel A review workflow (Landowner submissions)
     path('staff/submissions/<uuid:submission_id>/', views.submission_review, name='submission_review'),
     path('staff/isf/<uuid:isf_id>/review/', views.isf_review, name='isf_review'),
+    
+    # Channel B/C review workflow (Walk-in and Danger Zone)
+    path('staff/walkin/<uuid:applicant_id>/review/', views.walkin_review, name='walkin_review'),
 ]
