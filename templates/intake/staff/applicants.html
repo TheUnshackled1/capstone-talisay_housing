@@ -633,6 +633,77 @@
 {% endblock %}
 
 {% block content %}
+<!-- Messages Display -->
+{% if messages %}
+<div style="position: fixed; top: 1rem; right: 1rem; z-index: 9999; max-width: 400px;">
+    {% for message in messages %}
+    <div style="
+        padding: 1rem 1.25rem;
+        margin-bottom: 0.5rem;
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        {% if message.tags == 'success' %}
+        background: #dcfce7;
+        border: 1px solid #86efac;
+        color: #166534;
+        {% elif message.tags == 'error' %}
+        background: #fee2e2;
+        border: 1px solid #fca5a5;
+        color: #991b1b;
+        {% elif message.tags == 'warning' %}
+        background: #fef3c7;
+        border: 1px solid #fcd34d;
+        color: #92400e;
+        {% else %}
+        background: #dbeafe;
+        border: 1px solid #93c5fd;
+        color: #1e40af;
+        {% endif %}
+    ">
+        {% if message.tags == 'success' %}
+        <svg style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; margin-top: 0.125rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+            <polyline points="22 4 12 14.01 9 11.01"/>
+        </svg>
+        {% elif message.tags == 'error' %}
+        <svg style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; margin-top: 0.125rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="15" y1="9" x2="9" y2="15"/>
+            <line x1="9" y1="9" x2="15" y2="15"/>
+        </svg>
+        {% elif message.tags == 'warning' %}
+        <svg style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; margin-top: 0.125rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+        {% else %}
+        <svg style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; margin-top: 0.125rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="16" x2="12" y2="12"/>
+            <line x1="12" y1="8" x2="12.01" y2="8"/>
+        </svg>
+        {% endif %}
+        <span>{{ message }}</span>
+    </div>
+    {% endfor %}
+</div>
+<script>
+    // Auto-hide messages after 5 seconds
+    setTimeout(function() {
+        document.querySelectorAll('[style*="position: fixed"][style*="top: 1rem"]').forEach(el => {
+            el.style.transition = 'opacity 0.5s';
+            el.style.opacity = '0';
+            setTimeout(() => el.remove(), 500);
+        });
+    }, 5000);
+</script>
+{% endif %}
+
 <div class="applicants-container">
     <!-- Header -->
     <div class="page-header">
@@ -915,13 +986,13 @@
                                 <label class="form-label">Danger Zone Type</label>
                                 <select class="form-select" id="reviewDangerType" name="danger_zone_type" disabled>
                                     <option value="">Select type...</option>
-                                    <option value="flood_prone">Flood-prone Area</option>
-                                    <option value="landslide">Landslide-prone Area</option>
-                                    <option value="storm_surge">Storm Surge Zone</option>
-                                    <option value="river_bank">Near River Bank</option>
-                                    <option value="cliff_edge">Near Cliff/Steep Slope</option>
-                                    <option value="coastal">Coastal Erosion Zone</option>
-                                    <option value="other">Other Hazard Area</option>
+                                    <option value="riverside">Riverside / Riverbank</option>
+                                    <option value="flood_prone">Flood-Prone Area</option>
+                                    <option value="landslide">Landslide-Prone Area</option>
+                                    <option value="coastal">Coastal / Near Shoreline</option>
+                                    <option value="railroad">Near Railroad Tracks</option>
+                                    <option value="road_right_of_way">Road Right of Way</option>
+                                    <option value="other">Other Danger Zone</option>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -1172,11 +1243,11 @@
                         <div class="form-grid">
                             <div class="form-group" style="grid-column: span 2;">
                                 <label class="form-label">Full Name *</label>
-                                <input type="text" class="form-input" placeholder="Enter landowner's full name" name="landowner_name" required>
+                                <input type="text" class="form-input" placeholder="Enter landowner's full name" name="landowner_name" id="landownerName">
                             </div>
                             <div class="form-group" style="grid-column: span 2;">
                                 <label class="form-label">Property Address *</label>
-                                <textarea class="form-input" rows="2" placeholder="Complete address of the property where informal settlers are residing (include barangay)" name="property_address" required></textarea>
+                                <textarea class="form-input" rows="2" placeholder="Complete address of the property where informal settlers are residing (include barangay)" name="property_address" id="propertyAddress"></textarea>
                             </div>
                         </div>
                     </div>
@@ -1193,19 +1264,19 @@
                                 <div class="form-grid">
                                     <div class="form-group" style="grid-column: span 2;">
                                         <label class="form-label">Full Name *</label>
-                                        <input type="text" class="form-input" placeholder="Juan Dela Cruz" name="isf_name[]" required>
+                                        <input type="text" class="form-input isf-required" placeholder="Juan Dela Cruz" name="isf_name[]">
                                     </div>
                                     <div class="form-group">
                                         <label class="form-label">Household Members *</label>
-                                        <input type="number" class="form-input" placeholder="5" name="isf_household[]" min="1" value="1" required>
+                                        <input type="number" class="form-input isf-required" placeholder="5" name="isf_household[]" min="1" value="1">
                                     </div>
                                     <div class="form-group">
                                         <label class="form-label">Monthly Income (₱) *</label>
-                                        <input type="number" class="form-input" placeholder="8000" name="isf_income[]" min="0" step="0.01" required>
+                                        <input type="number" class="form-input isf-required" placeholder="8000" name="isf_income[]" min="0" step="0.01">
                                     </div>
                                     <div class="form-group" style="grid-column: span 2;">
                                         <label class="form-label">Years Residing *</label>
-                                        <input type="number" class="form-input" placeholder="3" name="isf_years[]" min="0" required>
+                                        <input type="number" class="form-input isf-required" placeholder="3" name="isf_years[]" min="0">
                                     </div>
                                 </div>
                             </div>
@@ -1231,11 +1302,11 @@
                 <div class="form-grid" id="formFields">
                     <div class="form-group">
                         <label class="form-label">Full Name *</label>
-                        <input type="text" class="form-input" placeholder="Last, First, Middle" name="full_name">
+                        <input type="text" class="form-input" placeholder="Last, First, Middle" name="full_name" id="walkinFullName" required>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Barangay *</label>
-                        <select class="form-select" name="barangay">
+                        <select class="form-select" name="barangay" id="walkinBarangay" required>
                             <option value="">Select barangay...</option>
                             {% for barangay in barangays %}
                             <option value="{{ barangay }}">{{ barangay }}</option>
@@ -1244,26 +1315,30 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label">Monthly Income (₱) *</label>
-                        <input type="number" class="form-input" placeholder="e.g. 8500" name="monthly_income" min="0" step="0.01">
+                        <input type="number" class="form-input" placeholder="e.g. 8500" name="monthly_income" id="walkinIncome" min="0" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Household Size *</label>
+                        <input type="number" class="form-input" placeholder="No. of members" name="household_size" id="walkinHousehold" min="1" value="1" required>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Years Residing *</label>
-                        <input type="number" class="form-input" placeholder="Years at current address" name="years_residing" min="0">
+                        <input type="number" class="form-input" placeholder="Years at current address" name="years_residing" id="walkinYears" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Contact Number</label>
+                        <input type="tel" class="form-input" placeholder="09XX-XXX-XXXX" name="phone_number" id="walkinPhone">
+                        <span class="help-text">For SMS notifications</span>
                     </div>
                     <div class="form-group" style="grid-column: span 2;">
                         <label class="form-label">Current Address *</label>
-                        <input type="text" class="form-input" placeholder="Current residential address" name="current_address">
-                    </div>
-                    <div class="form-group" style="grid-column: span 2;">
-                        <label class="form-label">Contact Number</label>
-                        <input type="tel" class="form-input" placeholder="09XX-XXX-XXXX" name="phone_number">
-                        <span class="help-text">For SMS notifications</span>
+                        <input type="text" class="form-input" placeholder="Current residential address" name="current_address" id="walkinAddress" required>
                     </div>
                 </div>
 
                 <div class="form-group" id="dangerZoneGroup" style="display: none;">
                     <label class="form-label">Danger Zone Type *</label>
-                    <select class="form-select" name="danger_zone_type">
+                    <select class="form-select" name="danger_zone_type" id="dangerZoneType">
                         <option value="">Select type...</option>
                         <option value="riverside">Riverside / Riverbank</option>
                         <option value="flood_prone">Flood-Prone Area</option>
@@ -1277,7 +1352,7 @@
                 
                 <div class="form-group" id="dangerZoneLocationGroup" style="display: none;">
                     <label class="form-label">Danger Zone Location Details *</label>
-                    <input type="text" class="form-input" placeholder="Describe the specific danger zone location..." name="danger_zone_location">
+                    <input type="text" class="form-input" placeholder="Describe the specific danger zone location..." name="danger_zone_location" id="dangerZoneLocation">
                     <span class="help-text">For CDRRMO verification</span>
                 </div>
 
@@ -2058,6 +2133,16 @@
         const cdrrmoNote = document.getElementById('cdrrmoNote');
         const regularNote = document.getElementById('regularNote');
         const submitBtn = document.getElementById('submitBtn');
+        const dangerZoneType = document.getElementById('dangerZoneType');
+        const dangerZoneLocation = document.getElementById('dangerZoneLocation');
+        
+        // Channel A (landowner) fields
+        const landownerName = document.getElementById('landownerName');
+        const propertyAddress = document.getElementById('propertyAddress');
+        const isfRequiredFields = document.querySelectorAll('.isf-required');
+        
+        // Channel B/C (walk-in) fields
+        const walkinFields = ['walkinFullName', 'walkinBarangay', 'walkinIncome', 'walkinHousehold', 'walkinYears', 'walkinAddress'];
         
         if (channel === 'landowner') {
             // Channel A: Show landowner form, hide walk-in form
@@ -2068,6 +2153,19 @@
             cdrrmoNote.style.display = 'none';
             regularNote.style.display = 'none';
             submitBtn.disabled = false;
+            
+            // Add required to Channel A fields
+            if (landownerName) landownerName.setAttribute('required', 'required');
+            if (propertyAddress) propertyAddress.setAttribute('required', 'required');
+            isfRequiredFields.forEach(el => el.setAttribute('required', 'required'));
+            
+            // Remove required from walk-in fields
+            walkinFields.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.removeAttribute('required');
+            });
+            if (dangerZoneType) dangerZoneType.removeAttribute('required');
+            if (dangerZoneLocation) dangerZoneLocation.removeAttribute('required');
         } else if (channel === 'danger_zone') {
             // Channel B: Show danger zone fields
             landownerFields.style.display = 'none';
@@ -2077,6 +2175,19 @@
             cdrrmoNote.style.display = 'block';
             regularNote.style.display = 'none';
             submitBtn.disabled = false;
+            
+            // Remove required from Channel A fields
+            if (landownerName) landownerName.removeAttribute('required');
+            if (propertyAddress) propertyAddress.removeAttribute('required');
+            isfRequiredFields.forEach(el => el.removeAttribute('required'));
+            
+            // Add required to walk-in and danger zone fields
+            walkinFields.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.setAttribute('required', 'required');
+            });
+            if (dangerZoneType) dangerZoneType.setAttribute('required', 'required');
+            if (dangerZoneLocation) dangerZoneLocation.setAttribute('required', 'required');
         } else {
             // Channel C (walk_in): Regular walk-in form
             landownerFields.style.display = 'none';
@@ -2086,6 +2197,19 @@
             cdrrmoNote.style.display = 'none';
             regularNote.style.display = 'block';
             submitBtn.disabled = false;
+            
+            // Remove required from Channel A fields
+            if (landownerName) landownerName.removeAttribute('required');
+            if (propertyAddress) propertyAddress.removeAttribute('required');
+            isfRequiredFields.forEach(el => el.removeAttribute('required'));
+            
+            // Add required to walk-in fields, remove from danger zone
+            walkinFields.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.setAttribute('required', 'required');
+            });
+            if (dangerZoneType) dangerZoneType.removeAttribute('required');
+            if (dangerZoneLocation) dangerZoneLocation.removeAttribute('required');
         }
     }
 

@@ -347,6 +347,11 @@ class Applicant(models.Model):
         verbose_name="Monthly Household Income (₱)",
         validators=[MinValueValidator(0)]
     )
+    household_size = models.PositiveIntegerField(
+        default=1,
+        verbose_name="Declared Household Size",
+        help_text="Number of household members as declared during registration"
+    )
     
     # Channel and Status
     channel = models.CharField(max_length=20, choices=CHANNEL_CHOICES)
@@ -426,8 +431,10 @@ class Applicant(models.Model):
     
     @property
     def household_member_count(self):
-        """Return total household members including applicant."""
-        return self.household_members.count() + 1
+        """Return total household members - use declared size if no members registered yet."""
+        actual_count = self.household_members.count() + 1
+        # Return declared size if larger (members not yet added individually)
+        return max(actual_count, self.household_size or 1)
 
 
 class HouseholdMember(models.Model):

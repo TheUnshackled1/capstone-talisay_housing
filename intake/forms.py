@@ -270,9 +270,8 @@ class WalkInApplicantForm(forms.ModelForm):
     
     channel = forms.ChoiceField(
         choices=[
-            ('', '-- Select Channel --'),
-            ('danger_zone', 'Channel B — Danger Zone (Priority)'),
             ('walk_in', 'Channel C — Regular Walk-in'),
+            ('danger_zone', 'Channel B — Danger Zone (Priority)'),
         ],
         required=True,
         label="Application Channel",
@@ -304,6 +303,7 @@ class WalkInApplicantForm(forms.ModelForm):
             'phone_number',
             'current_address',
             'monthly_income',
+            'household_size',
             'years_residing',
         ]
         widgets = {
@@ -326,6 +326,11 @@ class WalkInApplicantForm(forms.ModelForm):
                 'placeholder': 'Monthly household income',
                 'min': 0,
                 'step': '0.01',
+            }),
+            'household_size': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Number of household members',
+                'min': 1,
             }),
             'years_residing': forms.NumberInput(attrs={
                 'class': 'form-control',

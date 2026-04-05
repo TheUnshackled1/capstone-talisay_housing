@@ -475,23 +475,26 @@ def walkin_register(request):
             
             # Create applicant
             channel = form.cleaned_data['channel']
+            danger_zone_type = form.cleaned_data.get('danger_zone_type', '') if channel == 'danger_zone' else ''
+            danger_zone_location = form.cleaned_data.get('danger_zone_location', '') if channel == 'danger_zone' else ''
+            
             applicant = Applicant.objects.create(
                 full_name=full_name,
                 phone_number=phone_number,
                 barangay=barangay,
                 current_address=form.cleaned_data['current_address'],
                 monthly_income=form.cleaned_data['monthly_income'],
+                household_size=form.cleaned_data.get('household_size', 1) or 1,
                 years_residing=form.cleaned_data['years_residing'],
                 channel=channel,
                 status='pending_cdrrmo' if channel == 'danger_zone' else 'pending',
+                danger_zone_type=danger_zone_type,
+                danger_zone_location=danger_zone_location,
                 registered_by=request.user,
             )
             
             # For Channel B (danger zone), create CDRRMO certification request
             if channel == 'danger_zone':
-                danger_zone_type = form.cleaned_data.get('danger_zone_type', '')
-                danger_zone_location = form.cleaned_data.get('danger_zone_location', '')
-                
                 CDRRMOCertification.objects.create(
                     applicant=applicant,
                     declared_location=f"{dict(form.fields['danger_zone_type'].choices).get(danger_zone_type, danger_zone_type)}: {danger_zone_location}",
@@ -1057,7 +1060,8 @@ def applicants_list(request):
     total_applicants = len(applicants)
     priority_count = len([a for a in applicants if a['queueType'] == 'Priority'])
     walkin_count = len([a for a in applicants if a['queueType'] == 'Walk-in'])
-    pending_cdrrmo = len([a for a in applicants if a.get('cdrrmoStatus') == 'Pending CDRRMO Visit'])
+    # Count Channel B applicants awaiting CDRRMO certification
+    pending_cdrrmo = len([a for a in applicants if a.get('eligibilityStatus') == 'Pending CDRRMO' or a.get('cdrrmoStatus') == 'Pending CDRRMO Visit'])
     
     context = {
         'page_title': 'ISF Recording Management',
