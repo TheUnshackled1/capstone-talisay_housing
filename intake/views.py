@@ -544,10 +544,112 @@ def update_eligibility(request):
     
     applicant_id = request.POST.get('applicant_id')
     action = request.POST.get('action')
+    channel = request.POST.get('channel', '')
     
     if not applicant_id or not action:
         return JsonResponse({'success': False, 'error': 'Missing applicant_id or action'})
     
+    # Handle Channel A (ISFRecord) separately
+    if channel == 'A':
+        try:
+            isf = ISFRecord.objects.get(id=applicant_id)
+        except ISFRecord.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'ISF record not found'})
+        
+        if action == 'mark_eligible':
+            # Check eligibility criteria
+            if isf.monthly_income > 10000:
+                return JsonResponse({
+                    'success': False, 
+                    'error': f'Income ₱{isf.monthly_income:,.2f} exceeds ₱10,000 limit'
+                })
+            
+            # Mark ISF as eligible
+            isf.status = 'eligible'
+            isf.eligibility_checked_by = request.user
+            isf.eligibility_checked_at = timezone.now()
+            isf.save()
+            
+            # Create/convert to Applicant and add to Priority Queue
+            if not isf.converted_to_applicant:
+                applicant = Applicant.objects.create(
+                    full_name=isf.full_name,
+                    phone_number=isf.phone_number or '',
+                    barangay=isf.barangay,
+                    monthly_income=isf.monthly_income,
+                    household_size=isf.household_members,
+                    years_residing=isf.years_residing,
+                    channel='landowner',
+                    status='eligible',
+                    reference_number=isf.reference_number,
+                    eligibility_checked_by=request.user,
+                    eligibility_checked_at=timezone.now()
+                )
+                isf.converted_to_applicant = True
+                isf.applicant_profile = applicant
+                isf.save()
+                
+                # Add to Priority Queue
+                last_position = QueueEntry.objects.filter(
+                    queue_type='priority',
+                    status='active'
+                ).order_by('-position').values_list('position', flat=True).first() or 0
+                
+                QueueEntry.objects.create(
+                    applicant=applicant,
+                    queue_type='priority',
+                    position=last_position + 1,
+                    status='active',
+                    added_by=request.user,
+                )
+                
+                # Send SMS if phone number available
+                if applicant.phone_number:
+                    message = f"Congratulations! You are ELIGIBLE for housing assistance. You are now in the Priority Queue (Position #{last_position + 1}). Reference: {applicant.reference_number}"
+                    send_sms(applicant.phone_number, message, 'eligibility', applicant=applicant)
+                
+                return JsonResponse({
+                    'success': True,
+                    'message': f'ISF marked as eligible. Added to Priority Queue at position #{last_position + 1}'
+                })
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'ISF already converted to applicant'
+            })
+        
+        elif action == 'disqualify':
+            reason = request.POST.get('reason', '')
+            notes = request.POST.get('notes', '')
+            
+            reason_labels = {
+                'income_exceeds': 'Income exceeds ₱10,000 limit',
+                'property_owner': 'Owns property in Talisay City',
+                'blacklisted': 'On blacklist',
+                'incomplete_docs': 'Incomplete documents',
+                'false_info': 'False information provided',
+                'other': notes or 'Other reason'
+            }
+            
+            isf.status = 'disqualified'
+            isf.disqualification_reason = reason_labels.get(reason, reason)
+            isf.eligibility_checked_by = request.user
+            isf.eligibility_checked_at = timezone.now()
+            isf.save()
+            
+            # Send SMS if phone available
+            if isf.phone_number:
+                message = f"We regret to inform you that your housing application has been DISQUALIFIED. Reason: {isf.disqualification_reason}. Reference: {isf.reference_number}. Please visit THA office for more information."
+                send_sms(isf.phone_number, message, 'eligibility')
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'ISF disqualified. Reason: {isf.disqualification_reason}'
+            })
+        
+        return JsonResponse({'success': False, 'error': f'Unknown action: {action}'})
+    
+    # Channel B/C: Handle Applicant
     try:
         applicant = Applicant.objects.get(id=applicant_id)
     except Applicant.DoesNotExist:
@@ -640,6 +742,132 @@ def update_eligibility(request):
         })
     
     return JsonResponse({'success': False, 'error': f'Unknown action: {action}'})
+
+
+@login_required
+def update_applicant(request):
+    """
+    AJAX endpoint to update applicant data (edit mode in review modal).
+    Handles both Channel A (ISF records) and Channel B/C (Applicants).
+    
+    ACCESS CONTROL:
+    ✅ Jocel (fourth_member) - Primary data editor
+    ✅ Joie (second_member) - Supervisor oversight
+    """
+    from django.http import JsonResponse
+    from decimal import Decimal
+    
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'POST required'}, status=405)
+    
+    allowed_positions = ['fourth_member', 'second_member', 'oic', 'head']
+    if request.user.position not in allowed_positions:
+        return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
+    
+    applicant_id = request.POST.get('applicant_id')
+    channel = request.POST.get('channel')
+    
+    if not applicant_id:
+        return JsonResponse({'success': False, 'error': 'Missing applicant_id'})
+    
+    try:
+        if channel == 'A':
+            # Update Channel A: ISF Record
+            isf = ISFRecord.objects.get(id=applicant_id)
+            
+            # Update ISF fields
+            isf_name = request.POST.get('isf_name', '').strip()
+            isf_income = request.POST.get('isf_income')
+            isf_household = request.POST.get('isf_household')
+            isf_years = request.POST.get('isf_years')
+            isf_barangay = request.POST.get('isf_barangay', '').strip()
+            
+            if isf_name:
+                isf.full_name = isf_name
+            if isf_income:
+                isf.monthly_income = Decimal(isf_income)
+            if isf_household:
+                isf.household_members = int(isf_household)
+            if isf_years:
+                isf.years_residing = int(isf_years)
+            if isf_barangay:
+                try:
+                    brgy = Barangay.objects.get(name=isf_barangay)
+                    isf.barangay = brgy
+                except Barangay.DoesNotExist:
+                    pass
+            
+            isf.save()
+            
+            # Also update landowner info if provided
+            submission_id = request.POST.get('submission_id')
+            if submission_id:
+                try:
+                    submission = LandownerSubmission.objects.get(id=submission_id)
+                    lo_name = request.POST.get('landowner_name', '').strip()
+                    lo_phone = request.POST.get('landowner_phone', '').strip()
+                    prop_addr = request.POST.get('property_address', '').strip()
+                    
+                    if lo_name:
+                        submission.landowner_name = lo_name
+                    if lo_phone:
+                        submission.landowner_phone = lo_phone
+                    if prop_addr:
+                        submission.property_address = prop_addr
+                    
+                    submission.save()
+                except LandownerSubmission.DoesNotExist:
+                    pass
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'ISF record updated successfully'
+            })
+        
+        else:
+            # Update Channel B/C: Applicant
+            applicant = Applicant.objects.get(id=applicant_id)
+            
+            full_name = request.POST.get('full_name', '').strip()
+            barangay_name = request.POST.get('barangay', '').strip()
+            monthly_income = request.POST.get('monthly_income')
+            household_size = request.POST.get('household_size')
+            years_residing = request.POST.get('years_residing')
+            phone_number = request.POST.get('phone_number', '').strip()
+            current_address = request.POST.get('current_address', '').strip()
+            
+            if full_name:
+                applicant.full_name = full_name
+            if barangay_name:
+                try:
+                    brgy = Barangay.objects.get(name=barangay_name)
+                    applicant.barangay = brgy
+                except Barangay.DoesNotExist:
+                    pass
+            if monthly_income:
+                applicant.monthly_income = Decimal(monthly_income)
+            if household_size:
+                applicant.household_size = int(household_size)
+            if years_residing:
+                applicant.years_residing = int(years_residing)
+            if phone_number:
+                applicant.phone_number = phone_number
+            if current_address:
+                applicant.current_address = current_address
+            
+            applicant.save()
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Applicant updated successfully'
+            })
+    
+    except ISFRecord.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'ISF record not found'})
+    except Applicant.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Applicant not found'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
 
 
 @login_required

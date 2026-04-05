@@ -821,20 +821,42 @@
             {% csrf_token %}
             <input type="hidden" id="reviewApplicantId" name="applicant_id" value="">
             <input type="hidden" id="reviewChannel" name="channel" value="">
+            <input type="hidden" id="reviewSubmissionId" name="submission_id" value="">
             
             <div class="modal-body" id="reviewBody">
                 <!-- Channel A: Landowner Submission View -->
                 <div id="landownerReviewSection" style="display: none;">
                     <div class="info-note" style="background: #dbeafe; border-color: #93c5fd; margin-bottom: 1rem;">
                         <p class="info-note-text" style="color: #1e40af;">
-                            <strong>📋 Channel A — Landowner Submission</strong><br>
-                            <span id="landownerInfo"></span>
+                            <strong>📋 Channel A — Landowner Submission</strong>
                         </p>
                     </div>
                     
-                    <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">ISF Records from this Submission</h4>
-                    <div id="isfListContainer">
-                        <!-- ISF cards populated by JavaScript -->
+                    <!-- Landowner Information (Editable) -->
+                    <div style="margin-bottom: 1rem;">
+                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">Landowner Information</h4>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">Landowner Name</label>
+                                <input type="text" class="form-input" id="reviewLandownerName" name="landowner_name" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Contact Number</label>
+                                <input type="tel" class="form-input" id="reviewLandownerPhone" name="landowner_phone" readonly>
+                            </div>
+                            <div class="form-group" style="grid-column: span 2;">
+                                <label class="form-label">Property Address</label>
+                                <textarea class="form-input" id="reviewPropertyAddress" name="property_address" rows="2" readonly></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- ISF Records Section -->
+                    <div style="border-top: 1px solid #e2e8f0; padding-top: 1rem;">
+                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">ISF Records from this Submission</h4>
+                        <div id="isfListContainer">
+                            <!-- ISF cards populated by JavaScript -->
+                        </div>
                     </div>
                 </div>
                 
@@ -1252,12 +1274,12 @@
         if (currentApplicant.channel === 'A') {
             document.getElementById('landownerReviewSection').style.display = 'block';
             document.getElementById('walkinReviewSection').style.display = 'none';
+            document.getElementById('reviewSubmissionId').value = currentApplicant.submissionId || '';
             
-            // Populate landowner info
-            document.getElementById('landownerInfo').innerHTML = `
-                <strong>Landowner:</strong> ${currentApplicant.landownerName || 'N/A'}<br>
-                <strong>Property:</strong> ${currentApplicant.propertyAddress || currentApplicant.barangay}
-            `;
+            // Populate landowner info fields
+            document.getElementById('reviewLandownerName').value = currentApplicant.landownerName || '';
+            document.getElementById('reviewLandownerPhone').value = currentApplicant.landownerPhone || '';
+            document.getElementById('reviewPropertyAddress').value = currentApplicant.propertyAddress || '';
             
             // Populate ISF list (this would need submission data)
             populateISFList(currentApplicant);
@@ -1333,21 +1355,129 @@
     
     function populateISFList(applicant) {
         const container = document.getElementById('isfListContainer');
-        // For now show current applicant as ISF
-        // In real implementation, fetch all ISFs from the submission
+        const isfId = applicant.id || applicant.applicantId;
+        const statusClass = applicant.eligibilityStatus === 'Eligible' ? 'success' : 
+                           applicant.eligibilityStatus === 'Disqualified' ? 'danger' : 'warning';
+        
+        // For Channel A, show editable ISF card
         container.innerHTML = `
-            <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 1rem; border-radius: 0.5rem; margin-bottom: 0.5rem;">
-                <div style="display: flex; justify-content: space-between; align-items: start;">
+            <div class="isf-review-card" data-isf-id="${isfId}" style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 1rem; border-radius: 0.5rem; margin-bottom: 0.75rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
                     <div>
-                        <strong>${applicant.fullName}</strong>
-                        <div style="font-size: 0.75rem; color: #64748b;">
-                            ${applicant.referenceNumber} · ₱${applicant.monthlyIncome?.toLocaleString() || 0}/mo · ${applicant.householdSize || 1} members
-                        </div>
+                        <span style="font-weight: 600; color: #1e293b;">ISF #1</span>
+                        <span style="font-size: 0.75rem; color: #64748b; margin-left: 0.5rem;">${applicant.referenceNumber}</span>
                     </div>
-                    <span class="status-badge status-${applicant.eligibilityStatus === 'Eligible' ? 'success' : applicant.eligibilityStatus === 'Disqualified' ? 'danger' : 'warning'}">${applicant.eligibilityStatus}</span>
+                    <span class="status-badge status-${statusClass}">${applicant.eligibilityStatus}</span>
+                </div>
+                
+                <div class="form-grid">
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label class="form-label">Full Name</label>
+                        <input type="text" class="form-input isf-field" name="isf_name_${isfId}" value="${applicant.fullName || ''}" ${isEditMode ? '' : 'readonly'}>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Monthly Income (₱)</label>
+                        <input type="number" class="form-input isf-field" name="isf_income_${isfId}" value="${applicant.monthlyIncome || 0}" min="0" step="0.01" ${isEditMode ? '' : 'readonly'}>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Household Members</label>
+                        <input type="number" class="form-input isf-field" name="isf_household_${isfId}" value="${applicant.householdSize || 1}" min="1" ${isEditMode ? '' : 'readonly'}>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Years Residing</label>
+                        <input type="number" class="form-input isf-field" name="isf_years_${isfId}" value="${applicant.yearsResiding || 0}" min="0" ${isEditMode ? '' : 'readonly'}>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Barangay</label>
+                        <input type="text" class="form-input isf-field" name="isf_barangay_${isfId}" value="${applicant.barangay || ''}" ${isEditMode ? '' : 'readonly'}>
+                    </div>
+                </div>
+                
+                <!-- Eligibility Check for this ISF -->
+                <div style="border-top: 1px solid #e2e8f0; margin-top: 0.75rem; padding-top: 0.75rem;">
+                    <div style="font-size: 0.75rem; font-weight: 600; color: #475569; margin-bottom: 0.5rem;">Eligibility Check</div>
+                    <div style="display: grid; gap: 0.25rem;">
+                        ${generateEligibilityCheckHTML(applicant)}
+                    </div>
+                </div>
+                
+                <!-- Action buttons for this ISF -->
+                <div style="border-top: 1px solid #e2e8f0; margin-top: 0.75rem; padding-top: 0.75rem; display: flex; gap: 0.5rem;" id="isfActions_${isfId}">
+                    ${applicant.eligibilityStatus === 'Pending' ? `
+                        <button type="button" class="btn-modal success" style="padding: 0.375rem 0.75rem; font-size: 0.75rem;" onclick="markISFEligible('${isfId}')">
+                            <svg style="width: 0.875rem; height: 0.875rem; margin-right: 0.25rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            Mark Eligible
+                        </button>
+                        <button type="button" class="btn-modal danger" style="padding: 0.375rem 0.75rem; font-size: 0.75rem;" onclick="showDisqualifyReason()">
+                            <svg style="width: 0.875rem; height: 0.875rem; margin-right: 0.25rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="15" y1="9" x2="9" y2="15"></line>
+                                <line x1="9" y1="9" x2="15" y2="15"></line>
+                            </svg>
+                            Disqualify
+                        </button>
+                    ` : `
+                        <span style="font-size: 0.75rem; color: #64748b;">
+                            ${applicant.eligibilityStatus === 'Eligible' ? '✓ Added to Priority Queue' : '✗ Disqualified'}
+                        </span>
+                    `}
                 </div>
             </div>
         `;
+    }
+    
+    function generateEligibilityCheckHTML(applicant) {
+        const income = applicant.monthlyIncome || 0;
+        const incomePass = income <= 10000;
+        
+        return `
+            <div style="display: flex; align-items: center; gap: 0.375rem; font-size: 0.75rem;">
+                <svg style="width: 0.875rem; height: 0.875rem; color: ${incomePass ? '#16a34a' : '#dc2626'};" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    ${incomePass ? '<polyline points="20 6 9 17 4 12"></polyline>' : '<line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>'}
+                </svg>
+                <span>Income ≤ ₱10,000 (₱${income.toLocaleString()})</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.375rem; font-size: 0.75rem;">
+                <svg style="width: 0.875rem; height: 0.875rem; color: #16a34a;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span>No property ownership</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.375rem; font-size: 0.75rem;">
+                <svg style="width: 0.875rem; height: 0.875rem; color: #16a34a;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span>Not blacklisted</span>
+            </div>
+        `;
+    }
+    
+    function markISFEligible(isfId) {
+        // Use the same endpoint as walkin
+        const formData = new FormData();
+        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+        formData.append('applicant_id', isfId);
+        formData.append('action', 'mark_eligible');
+        formData.append('channel', 'A');
+        
+        fetch('{% url "intake:update_eligibility" %}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('✓ ISF marked as eligible and added to Priority Queue.');
+                location.reload();
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            alert('Error: ' + error.message);
+        });
     }
     
     function populateEligibilityChecks(applicant) {
@@ -1449,24 +1579,52 @@
     }
     
     function updateEditModeUI() {
-        const fields = ['reviewFullName', 'reviewIncome', 'reviewHousehold', 'reviewYears', 'reviewPhone', 'reviewAddress'];
+        // Channel B/C fields
+        const walkinFields = ['reviewFullName', 'reviewIncome', 'reviewHousehold', 'reviewYears', 'reviewPhone', 'reviewAddress'];
         const selectFields = ['reviewBarangay'];
         
-        fields.forEach(id => {
-            document.getElementById(id).readOnly = !isEditMode;
+        // Channel A landowner fields
+        const landownerFields = ['reviewLandownerName', 'reviewLandownerPhone', 'reviewPropertyAddress'];
+        
+        // Update Channel B/C fields
+        walkinFields.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.readOnly = !isEditMode;
         });
         
         selectFields.forEach(id => {
-            document.getElementById(id).disabled = !isEditMode;
+            const el = document.getElementById(id);
+            if (el) el.disabled = !isEditMode;
+        });
+        
+        // Update Channel A landowner fields
+        landownerFields.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.readOnly = !isEditMode;
+        });
+        
+        // Update Channel A ISF fields
+        document.querySelectorAll('.isf-field').forEach(field => {
+            field.readOnly = !isEditMode;
         });
         
         document.getElementById('editToggleText').textContent = isEditMode ? 'Cancel Edit' : 'Edit';
         document.getElementById('editActions').style.display = isEditMode ? 'flex' : 'none';
-        document.getElementById('reviewActions').style.display = isEditMode ? 'none' : 'flex';
+        
+        // For Channel A, hide review actions (use ISF-level buttons instead)
+        if (currentApplicant && currentApplicant.channel === 'A') {
+            document.getElementById('reviewActions').style.display = 'none';
+        } else {
+            document.getElementById('reviewActions').style.display = isEditMode ? 'none' : 'flex';
+        }
         
         // Update document checklist interactivity
         if (currentApplicant) {
             populateDocumentChecklist(currentApplicant);
+            // Re-populate ISF list to update readonly state
+            if (currentApplicant.channel === 'A') {
+                populateISFList(currentApplicant);
+            }
         }
     }
     
@@ -1555,6 +1713,69 @@
             alert('Error: ' + error.message);
         });
     }
+    
+    // Save Changes for Review Modal
+    function saveReviewChanges(event) {
+        event.preventDefault();
+        
+        if (!currentApplicant) return;
+        
+        const formData = new FormData();
+        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+        formData.append('applicant_id', currentApplicant.applicantId || currentApplicant.id);
+        formData.append('channel', currentApplicant.channel);
+        formData.append('action', 'update');
+        
+        if (currentApplicant.channel === 'A') {
+            // Channel A: Include landowner + ISF data
+            formData.append('submission_id', document.getElementById('reviewSubmissionId').value);
+            formData.append('landowner_name', document.getElementById('reviewLandownerName').value);
+            formData.append('landowner_phone', document.getElementById('reviewLandownerPhone').value);
+            formData.append('property_address', document.getElementById('reviewPropertyAddress').value);
+            
+            // Get ISF field data
+            const isfId = currentApplicant.applicantId || currentApplicant.id;
+            formData.append('isf_name', document.querySelector(`[name="isf_name_${isfId}"]`)?.value || '');
+            formData.append('isf_income', document.querySelector(`[name="isf_income_${isfId}"]`)?.value || '');
+            formData.append('isf_household', document.querySelector(`[name="isf_household_${isfId}"]`)?.value || '');
+            formData.append('isf_years', document.querySelector(`[name="isf_years_${isfId}"]`)?.value || '');
+            formData.append('isf_barangay', document.querySelector(`[name="isf_barangay_${isfId}"]`)?.value || '');
+        } else {
+            // Channel B/C: Individual applicant data
+            formData.append('full_name', document.getElementById('reviewFullName').value);
+            formData.append('barangay', document.getElementById('reviewBarangay').value);
+            formData.append('monthly_income', document.getElementById('reviewIncome').value);
+            formData.append('household_size', document.getElementById('reviewHousehold').value);
+            formData.append('years_residing', document.getElementById('reviewYears').value);
+            formData.append('phone_number', document.getElementById('reviewPhone').value);
+            formData.append('current_address', document.getElementById('reviewAddress').value);
+        }
+        
+        // Include document checklist
+        document.querySelectorAll('#documentChecklist input[type="checkbox"]').forEach(cb => {
+            formData.append(cb.name, cb.checked);
+        });
+        
+        fetch('{% url "intake:update_applicant" %}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('✓ Changes saved successfully.');
+                location.reload();
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            alert('Error: ' + error.message);
+        });
+    }
+    
+    // Attach form submit handler
+    document.getElementById('reviewForm').addEventListener('submit', saveReviewChanges);
 
     // Add Modal
     function openAddModal() {

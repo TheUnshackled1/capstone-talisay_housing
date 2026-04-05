@@ -17,6 +17,9 @@ urlpatterns = [
     # Update eligibility (AJAX endpoint for modal)
     path('staff/update-eligibility/', views.update_eligibility, name='update_eligibility'),
     
+    # Update applicant data (AJAX endpoint for edit mode)
+    path('staff/update-applicant/', views.update_applicant, name='update_applicant'),
+    
     # Channel A review workflow (Landowner submissions)
     path('staff/submissions/<uuid:submission_id>/', views.submission_review, name='submission_review'),
     path('staff/isf/<uuid:isf_id>/review/', views.isf_review, name='isf_review'),
