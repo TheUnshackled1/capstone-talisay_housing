@@ -625,8 +625,8 @@
         cursor: pointer;
     }
     
-    .btn-review-landowner { color: #1e40af; border-color: #93c5fd; }
-    .btn-review-landowner:hover { background: #dbeafe; }
+    .btn-review-landowner { color: #166534; border-color: #86efac; }
+    .btn-review-landowner:hover { background: #dcfce7; }
     .btn-review-walkin { color: #166534; border-color: #86efac; }
     .btn-review-walkin:hover { background: #dcfce7; }
 </style>
@@ -855,17 +855,13 @@
                 </td>
                 <td>
                     <!-- Review button - opens modal -->
-                    <button type="button" onclick="openReviewModal({{ forloop.counter0 }})" class="btn-review {% if applicant.channel == 'A' %}btn-review-landowner{% else %}btn-review-walkin{% endif %}">
+                    <button type="button" onclick="openReviewModal({{ forloop.counter0 }})" class="btn-review btn-review-walkin">
                         <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            {% if applicant.channel == 'A' %}
-                            <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                            {% else %}
                             <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
                             <circle cx="9" cy="7" r="4"></circle>
                             <polyline points="16 11 18 13 22 9"></polyline>
-                            {% endif %}
                         </svg>
-                        {% if applicant.channel == 'A' %}Review ISFs{% else %}Review{% endif %}
+                        Review
                     </button>
                 </td>
             </tr>
@@ -897,38 +893,89 @@
             <input type="hidden" id="reviewSubmissionId" name="submission_id" value="">
             
             <div class="modal-body" id="reviewBody">
-                <!-- Channel A: Landowner Submission View (Compact) -->
+                <!-- Channel A: Landowner Submission View -->
                 <div id="landownerReviewSection" style="display: none;">
-                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.75rem;">
+                    <!-- Status Badges Row -->
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;">
                         <span class="status-badge status-info">Channel A — Landowner</span>
                         <span class="status-badge" id="reviewEligibilityBadgeA"></span>
+                        <span class="status-badge" id="reviewQueueBadgeA" style="display: none;"></span>
                     </div>
                     
-                    <!-- Compact Landowner Info -->
-                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 0.75rem; margin-bottom: 0.75rem;">
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.8125rem;">
-                            <div>
-                                <span style="color: #64748b;">Landowner:</span>
-                                <input type="text" class="form-input" id="reviewLandownerName" name="landowner_name" readonly style="padding: 0.25rem 0.5rem; font-size: 0.8125rem; margin-top: 0.25rem;">
+                    <!-- Editable Fields for Channel A - ISF Information -->
+                    <div class="form-grid" style="margin-bottom: 1rem;">
+                        <div class="form-group" style="grid-column: span 2;">
+                            <label class="form-label">Full Name</label>
+                            <input type="text" class="form-input" id="reviewFullNameA" name="full_name_a" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Barangay</label>
+                            <select class="form-select" id="reviewBarangayA" name="barangay_a" disabled>
+                                <option value="">Select barangay...</option>
+                                {% for brgy in barangays %}
+                                <option value="{{ brgy }}">{{ brgy }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Monthly Income (₱)</label>
+                            <input type="number" class="form-input" id="reviewIncomeA" name="monthly_income_a" min="0" step="0.01" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Household Size</label>
+                            <input type="number" class="form-input" id="reviewHouseholdA" name="household_size_a" min="1" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Years Residing</label>
+                            <input type="number" class="form-input" id="reviewYearsA" name="years_residing_a" min="0" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Contact Number</label>
+                            <input type="tel" class="form-input" id="reviewPhoneA" name="phone_number_a" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Current Address</label>
+                            <input type="text" class="form-input" id="reviewAddressA" name="current_address_a" readonly>
+                        </div>
+                    </div>
+                    
+                    <!-- Landowner Information Section -->
+                    <div style="border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-bottom: 1rem;">
+                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">Landowner Information</h4>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">Landowner Name</label>
+                                <input type="text" class="form-input" id="reviewLandownerName" name="landowner_name" readonly>
                             </div>
-                            <div>
-                                <span style="color: #64748b;">Phone:</span>
-                                <input type="tel" class="form-input" id="reviewLandownerPhone" name="landowner_phone" readonly style="padding: 0.25rem 0.5rem; font-size: 0.8125rem; margin-top: 0.25rem;">
+                            <div class="form-group">
+                                <label class="form-label">Landowner Phone</label>
+                                <input type="tel" class="form-input" id="reviewLandownerPhone" name="landowner_phone" readonly>
                             </div>
-                            <div>
-                                <span style="color: #64748b;">Property:</span>
-                                <input type="text" class="form-input" id="reviewPropertyAddress" name="property_address" readonly style="padding: 0.25rem 0.5rem; font-size: 0.8125rem; margin-top: 0.25rem;">
+                            <div class="form-group">
+                                <label class="form-label">Property Address</label>
+                                <input type="text" class="form-input" id="reviewPropertyAddress" name="property_address" readonly>
                             </div>
-                            <div>
-                                <span style="color: #64748b;">Barangay:</span>
-                                <input type="text" class="form-input" id="reviewSubmissionBarangay" name="submission_barangay" readonly style="padding: 0.25rem 0.5rem; font-size: 0.8125rem; margin-top: 0.25rem;">
+                            <div class="form-group">
+                                <label class="form-label">Submission Barangay</label>
+                                <input type="text" class="form-input" id="reviewSubmissionBarangay" name="submission_barangay" readonly>
                             </div>
                         </div>
                     </div>
                     
-                    <!-- Compact ISF Records -->
-                    <div id="isfListContainer">
-                        <!-- ISF cards populated by JavaScript -->
+                    <!-- Eligibility Check Section -->
+                    <div style="border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-bottom: 1rem;">
+                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">Eligibility Check</h4>
+                        <div id="eligibilityChecksA" style="display: grid; gap: 0.5rem;">
+                            <!-- Populated by JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <!-- Document Checklist -->
+                    <div style="border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-bottom: 1rem;">
+                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">Document Checklist</h4>
+                        <div class="document-grid" id="documentChecklistA">
+                            <!-- Populated by JavaScript -->
+                        </div>
                     </div>
                 </div>
                 
@@ -1453,14 +1500,36 @@
                               currentApplicant.eligibilityStatus === 'Disqualified' ? 'danger' : 'warning';
             eligBadgeA.className = 'status-badge status-' + eligClassA;
             
+            // Queue badge for Channel A
+            const queueBadgeA = document.getElementById('reviewQueueBadgeA');
+            if (currentApplicant.queueType && currentApplicant.queueType !== 'None') {
+                queueBadgeA.style.display = 'inline-flex';
+                queueBadgeA.textContent = currentApplicant.queueType + (currentApplicant.queuePosition ? ' #' + currentApplicant.queuePosition : '');
+                queueBadgeA.className = 'status-badge status-info';
+            } else {
+                queueBadgeA.style.display = 'none';
+            }
+            
+            // Populate ISF info fields (main applicant data)
+            document.getElementById('reviewFullNameA').value = currentApplicant.fullName || '';
+            document.getElementById('reviewBarangayA').value = currentApplicant.barangay || '';
+            document.getElementById('reviewIncomeA').value = currentApplicant.monthlyIncome || '';
+            document.getElementById('reviewHouseholdA').value = currentApplicant.householdSize || '';
+            document.getElementById('reviewYearsA').value = currentApplicant.yearsResiding || '';
+            document.getElementById('reviewPhoneA').value = currentApplicant.phoneNumber || '';
+            document.getElementById('reviewAddressA').value = currentApplicant.propertyAddress || '';
+            
             // Populate landowner info fields
             document.getElementById('reviewLandownerName').value = currentApplicant.landownerName || '';
             document.getElementById('reviewLandownerPhone').value = currentApplicant.landownerPhone || '';
             document.getElementById('reviewPropertyAddress').value = currentApplicant.propertyAddress || '';
             document.getElementById('reviewSubmissionBarangay').value = currentApplicant.submissionBarangay || currentApplicant.barangay || '';
             
-            // Populate ISF list
-            populateISFList(currentApplicant);
+            // Populate eligibility checks for Channel A
+            populateEligibilityChecksA(currentApplicant);
+            
+            // Populate document checklist for Channel A
+            populateDocumentChecklistA(currentApplicant);
         } else if (currentApplicant.channel === 'C') {
             // Channel C: Regular Walk-in
             document.getElementById('walkinReviewSection').style.display = 'block';
@@ -1802,6 +1871,71 @@
             html += `
                 <label class="document-item ${checked ? 'complete' : 'incomplete'}" style="cursor: ${isEditMode ? 'pointer' : 'default'};">
                     <input type="checkbox" name="doc_b_${doc.key}" ${checked ? 'checked' : ''} ${isEditMode ? '' : 'disabled'} style="display: none;">
+                    <svg class="document-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        ${checked 
+                            ? '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>'
+                            : '<circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>'}
+                    </svg>
+                    ${doc.label}
+                </label>
+            `;
+        });
+        container.innerHTML = html;
+    }
+    
+    // Channel A specific eligibility checks
+    function populateEligibilityChecksA(applicant) {
+        const container = document.getElementById('eligibilityChecksA');
+        const income = applicant.monthlyIncome || 0;
+        const incomePass = income <= 10000;
+        
+        container.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: ${incomePass ? '#dcfce7' : '#fee2e2'}; border-radius: 0.375rem;">
+                <svg style="width: 1rem; height: 1rem; color: ${incomePass ? '#16a34a' : '#dc2626'};" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    ${incomePass ? '<polyline points="20 6 9 17 4 12"></polyline>' : '<line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>'}
+                </svg>
+                <span style="font-size: 0.8125rem;">Monthly income ≤ ₱10,000 <strong>(₱${income.toLocaleString()})</strong></span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: #dcfce7; border-radius: 0.375rem;">
+                <svg style="width: 1rem; height: 1rem; color: #16a34a;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span style="font-size: 0.8125rem;">No property ownership in Talisay City</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: #dcfce7; border-radius: 0.375rem;">
+                <svg style="width: 1rem; height: 1rem; color: #16a34a;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span style="font-size: 0.8125rem;">Not on blacklist</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: #dbeafe; border-radius: 0.375rem;">
+                <svg style="width: 1rem; height: 1rem; color: #2563eb;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span style="font-size: 0.8125rem;">Landowner Endorsed — Priority Queue</span>
+            </div>
+        `;
+    }
+    
+    // Channel A specific document checklist
+    function populateDocumentChecklistA(applicant) {
+        const container = document.getElementById('documentChecklistA');
+        const docs = [
+            { key: 'barangayCertResidency', label: 'Brgy. Certificate of Residency' },
+            { key: 'barangayCertIndigency', label: 'Brgy. Certificate of Indigency' },
+            { key: 'cedula', label: 'Cedula' },
+            { key: 'policeClearance', label: 'Police Clearance' },
+            { key: 'certNoProperty', label: 'Certificate of No Property' },
+            { key: 'picture2x2', label: '2x2 Picture' },
+            { key: 'sketchHouseLocation', label: 'Sketch of House Location' }
+        ];
+        
+        let html = '';
+        docs.forEach(doc => {
+            const checked = applicant.documents?.[doc.key] || false;
+            html += `
+                <label class="document-item ${checked ? 'complete' : 'incomplete'}" style="cursor: ${isEditMode ? 'pointer' : 'default'};">
+                    <input type="checkbox" name="doc_a_${doc.key}" ${checked ? 'checked' : ''} ${isEditMode ? '' : 'disabled'} style="display: none;">
                     <svg class="document-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         ${checked 
                             ? '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>'
