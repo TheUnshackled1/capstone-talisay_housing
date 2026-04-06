@@ -478,6 +478,15 @@ def walkin_register(request):
             danger_zone_type = form.cleaned_data.get('danger_zone_type', '') if channel == 'danger_zone' else ''
             danger_zone_location = form.cleaned_data.get('danger_zone_location', '') if channel == 'danger_zone' else ''
             
+            # Get document checklist values from form
+            doc_brgy_residency = request.POST.get('doc_brgy_residency') == 'true'
+            doc_brgy_indigency = request.POST.get('doc_brgy_indigency') == 'true'
+            doc_cedula = request.POST.get('doc_cedula') == 'true'
+            doc_police_clearance = request.POST.get('doc_police_clearance') == 'true'
+            doc_no_property = request.POST.get('doc_no_property') == 'true'
+            doc_2x2_picture = request.POST.get('doc_2x2_picture') == 'true'
+            doc_sketch_location = request.POST.get('doc_sketch_location') == 'true'
+            
             applicant = Applicant.objects.create(
                 full_name=full_name,
                 phone_number=phone_number,
@@ -491,6 +500,13 @@ def walkin_register(request):
                 danger_zone_type=danger_zone_type,
                 danger_zone_location=danger_zone_location,
                 registered_by=request.user,
+                doc_brgy_residency=doc_brgy_residency,
+                doc_brgy_indigency=doc_brgy_indigency,
+                doc_cedula=doc_cedula,
+                doc_police_clearance=doc_police_clearance,
+                doc_no_property=doc_no_property,
+                doc_2x2_picture=doc_2x2_picture,
+                doc_sketch_location=doc_sketch_location,
             )
             
             # For Channel B (danger zone), create CDRRMO certification request
