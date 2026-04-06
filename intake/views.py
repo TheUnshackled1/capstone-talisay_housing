@@ -921,11 +921,33 @@ def update_applicant(request):
             if channel == 'B':
                 danger_zone_type = request.POST.get('danger_zone_type', '').strip()
                 danger_zone_location = request.POST.get('danger_zone_location', '').strip()
+                cdrrmo_status = request.POST.get('cdrrmo_status', '').strip()
+                cdrrmo_notes = request.POST.get('cdrrmo_notes', '').strip()
                 
                 if danger_zone_type:
                     applicant.danger_zone_type = danger_zone_type
                 if danger_zone_location:
                     applicant.danger_zone_location = danger_zone_location
+                
+                # Update CDRRMO certification status
+                if cdrrmo_status and cdrrmo_status in ['certified', 'not_certified']:
+                    try:
+                        cert = applicant.cdrrmo_certification
+                        cert.status = cdrrmo_status
+                        cert.result_recorded_by = request.user
+                        cert.certified_at = timezone.now()
+                        if cdrrmo_notes:
+                            cert.certification_notes = cdrrmo_notes
+                        cert.save()
+                        
+                        # Update applicant status based on CDRRMO result
+                        if cdrrmo_status == 'certified':
+                            applicant.status = 'pending'  # Ready for eligibility check
+                        elif cdrrmo_status == 'not_certified':
+                            applicant.status = 'pending'  # Move to walk-in queue instead
+                            applicant.channel = 'walk_in'  # Downgrade to regular walk-in
+                    except CDRRMOCertification.DoesNotExist:
+                        pass
             
             # Update document checklist
             applicant.doc_brgy_residency = request.POST.get('doc_brgy_residency') == 'true'
