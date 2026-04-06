@@ -1935,10 +1935,15 @@
         });
     }
     
+    function isCdrrmoCertified(status) {
+        return Boolean(status) && status.toLowerCase().startsWith('certified');
+    }
+
     function populateEligibilityChecks(applicant) {
         const container = document.getElementById('eligibilityChecks');
         const income = applicant.monthlyIncome || 0;
         const incomePass = income <= 10000;
+        const cdrrmoPass = isCdrrmoCertified(applicant.cdrrmoStatus);
         
         container.innerHTML = `
             <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: ${incomePass ? '#dcfce7' : '#fee2e2'}; border-radius: 0.375rem;">
@@ -1960,9 +1965,9 @@
                 <span style="font-size: 0.8125rem;">Not on blacklist</span>
             </div>
             ${applicant.channel === 'B' ? `
-            <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: ${applicant.cdrrmoStatus === 'Certified' ? '#dcfce7' : '#fef3c7'}; border-radius: 0.375rem;">
-                <svg style="width: 1rem; height: 1rem; color: ${applicant.cdrrmoStatus === 'Certified' ? '#16a34a' : '#d97706'};" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    ${applicant.cdrrmoStatus === 'Certified' ? '<polyline points="20 6 9 17 4 12"></polyline>' : '<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>'}
+            <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: ${cdrrmoPass ? '#dcfce7' : '#fef3c7'}; border-radius: 0.375rem;">
+                <svg style="width: 1rem; height: 1rem; color: ${cdrrmoPass ? '#16a34a' : '#d97706'};" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    ${cdrrmoPass ? '<polyline points="20 6 9 17 4 12"></polyline>' : '<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>'}
                 </svg>
                 <span style="font-size: 0.8125rem;">CDRRMO Certification: <strong>${applicant.cdrrmoStatus || 'Pending'}</strong></span>
             </div>
@@ -2098,7 +2103,7 @@
         const container = document.getElementById('eligibilityChecksB');
         const income = applicant.monthlyIncome || 0;
         const incomePass = income <= 10000;
-        const cdrrmoPass = applicant.cdrrmoStatus === 'Certified';
+        const cdrrmoPass = isCdrrmoCertified(applicant.cdrrmoStatus);
         
         container.innerHTML = `
             <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: ${incomePass ? '#dcfce7' : '#fee2e2'}; border-radius: 0.375rem;">
@@ -2234,7 +2239,7 @@
             reviewActions.style.display = 'flex';
             
             // For Channel B pending CDRRMO, disable mark eligible
-            if (applicant.eligibilityStatus === 'Pending CDRRMO' && applicant.cdrrmoStatus !== 'Certified') {
+            if (applicant.eligibilityStatus === 'Pending CDRRMO' && !isCdrrmoCertified(applicant.cdrrmoStatus)) {
                 btnMarkEligible.disabled = true;
                 btnMarkEligible.title = 'Awaiting CDRRMO certification';
             } else {

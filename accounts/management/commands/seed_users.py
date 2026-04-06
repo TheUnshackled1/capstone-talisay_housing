@@ -43,7 +43,7 @@ class Command(BaseCommand):
                 'position': 'third_member',
             },
             {
-                'username': 'jocel.cuaysing',
+                'username': '       ',
                 'email': 'jocel.cuaysing@talisayhousing.gov.ph',
                 'first_name': 'Jocel',
                 'last_name': 'Cuaysing',
