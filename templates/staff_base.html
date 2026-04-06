@@ -33,7 +33,7 @@
         </div>
 
         <nav class="sidebar-nav">
-            <!-- Main Section -->
+            <!-- Main Section - All Users -->
             <div class="nav-section">
                 <div class="nav-section-title">Main</div>
                 <a href="{% url 'accounts:dashboard' %}" class="nav-link {% block nav_dashboard %}{% endblock %}">
@@ -50,6 +50,9 @@
             <!-- Modules Section -->
             <div class="nav-section">
                 <div class="nav-section-title">Modules</div>
+                
+                <!-- Applicant Intake - Second & Fourth Members -->
+                {% if user.position == 'second_member' or user.position == 'fourth_member' %}
                 <a href="{% url 'intake:applicants_list' %}" class="nav-link {% block nav_applicants %}{% endblock %}">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
@@ -58,6 +61,9 @@
                     </svg>
                     <span>Applicant Intake</span>
                 </a>
+                {% endif %}
+                
+                <!-- Applications - All Staff -->
                 <a href="#" class="nav-link {% block nav_applications %}{% endblock %}">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -67,12 +73,16 @@
                     </svg>
                     <span>Applications</span>
                 </a>
+                
+                <!-- Documents - All Staff -->
                 <a href="#" class="nav-link {% block nav_documents %}{% endblock %}">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
                     </svg>
                     <span>Documents</span>
                 </a>
+                
+                <!-- Housing Units - All Staff -->
                 <a href="#" class="nav-link {% block nav_units %}{% endblock %}">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
@@ -80,6 +90,8 @@
                     </svg>
                     <span>Housing Units</span>
                 </a>
+                
+                <!-- Cases - All Staff -->
                 <a href="#" class="nav-link {% block nav_cases %}{% endblock %}">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
@@ -88,7 +100,7 @@
                 </a>
             </div>
 
-            <!-- Reports Section -->
+            <!-- Reports Section - All Users -->
             <div class="nav-section">
                 <div class="nav-section-title">Reports</div>
                 <a href="#" class="nav-link {% block nav_analytics %}{% endblock %}">
@@ -101,8 +113,8 @@
                 </a>
             </div>
 
-            <!-- Admin Section (Superusers Only) -->
-            {% if user.is_superuser %}
+            <!-- Admin Section - Second Member and Superusers Only -->
+            {% if user.is_superuser or user.position == 'second_member' %}
             <div class="nav-section">
                 <div class="nav-section-title">Admin</div>
                 <a href="{% url 'admin:index' %}" class="nav-link" target="_blank">
