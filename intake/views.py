@@ -1165,12 +1165,14 @@ def applicants_list(request):
         cdrrmo_status = None
         danger_zone_type = None
         is_cdrrmo_flagged = False
+        cdrrmo_days_pending = 0
         if app.channel == 'danger_zone':
             try:
                 cert = app.cdrrmo_certification
                 cdrrmo_status = cert.get_status_display()
                 danger_zone_type = cert.declared_location
                 is_cdrrmo_flagged = cert.status == 'pending' and cert.is_overdue
+                cdrrmo_days_pending = cert.days_pending if cert.status == 'pending' else 0
             except CDRRMOCertification.DoesNotExist:
                 cdrrmo_status = 'Not Requested'
         
@@ -1197,6 +1199,7 @@ def applicants_list(request):
             'queuePosition': queue_position,
             'cdrrmoStatus': cdrrmo_status,
             'isCdrrmoFlagged': is_cdrrmo_flagged,
+            'cdrrmoDaysPending': cdrrmo_days_pending,
             'signatoryRoutingDelayed': False,  # TODO: Link to Module 2
             'disqualificationReason': app.disqualification_reason or None,
             # Staff who handled this record
@@ -1237,6 +1240,9 @@ def applicants_list(request):
     # Count Channel B applicants awaiting CDRRMO certification
     pending_cdrrmo = len([a for a in applicants if a.get('eligibilityStatus') == 'Pending CDRRMO' or a.get('cdrrmoStatus') == 'Pending CDRRMO Visit'])
     
+    # Count CDRRMO overdue (pending > 14 days)
+    cdrrmo_overdue = len([a for a in applicants if a.get('isCdrrmoFlagged')])
+    
     context = {
         'page_title': 'ISF Recording Management',
         'user_position': request.user.position,
@@ -1247,7 +1253,8 @@ def applicants_list(request):
             'total': total_applicants,
             'priority': priority_count,
             'walkin': walkin_count,
-            'pending_cdrrmo': pending_cdrrmo
+            'pending_cdrrmo': pending_cdrrmo,
+            'cdrrmo_overdue': cdrrmo_overdue
         }
     }
     

@@ -768,15 +768,19 @@
 
     <!-- CDRRMO Alert -->
     {% if stats.pending_cdrrmo > 0 %}
-    <div class="alert-banner">
-        <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <div class="alert-banner" {% if stats.cdrrmo_overdue > 0 %}style="background: #fef2f2; border-color: #fca5a5;"{% endif %}>
+        <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" {% if stats.cdrrmo_overdue > 0 %}style="color: #dc2626;"{% endif %}>
             <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
             <line x1="12" y1="9" x2="12" y2="13"></line>
             <line x1="12" y1="17" x2="12.01" y2="17"></line>
         </svg>
-        <p class="alert-text">
-            <strong>{{ stats.pending_cdrrmo }}</strong> applicant{{ stats.pending_cdrrmo|pluralize }} pending CDRRMO certification. 
+        <p class="alert-text" {% if stats.cdrrmo_overdue > 0 %}style="color: #dc2626;"{% endif %}>
+            <strong>{{ stats.pending_cdrrmo }}</strong> applicant{{ stats.pending_cdrrmo|pluralize }} pending CDRRMO certification.
+            {% if stats.cdrrmo_overdue > 0 %}
+            <span style="font-weight: 700;">⚠️ {{ stats.cdrrmo_overdue }} overdue (>14 days) — follow up required!</span>
+            {% else %}
             Follow up required to prevent delays.
+            {% endif %}
         </p>
     </div>
     {% endif %}
@@ -808,6 +812,7 @@
             <option value="Disqualified">Disqualified</option>
             <option value="Pending">Pending</option>
             <option value="Pending CDRRMO">Pending CDRRMO</option>
+            <option value="CDRRMO Overdue">⚠️ CDRRMO Overdue (>14 days)</option>
         </select>
     </div>
 
@@ -833,6 +838,7 @@
             <tr 
                 data-channel="{{ applicant.channel }}" 
                 data-status="{{ applicant.eligibilityStatus }}"
+                data-cdrrmo-overdue="{{ applicant.isCdrrmoFlagged|yesno:'true,false' }}"
                 data-searchable="{{ applicant.fullName|lower }} {{ applicant.referenceNumber|lower }} {{ applicant.barangay|lower }}"
             >
                 <td style="font-weight: 700; color: #1e293b;">{{ forloop.counter }}</td>
@@ -856,6 +862,11 @@
                         <span class="badge status-disqualified">Disqualified</span>
                     {% elif applicant.eligibilityStatus == 'Pending CDRRMO' %}
                         <span class="badge status-pending-cdrrmo">Pending CDRRMO</span>
+                        {% if applicant.isCdrrmoFlagged %}
+                            <span class="badge cdrrmo-overdue" style="background: #fef2f2; color: #dc2626; border: 1px solid #fca5a5; margin-left: 0.25rem; font-size: 0.5625rem;" title="Pending for {{ applicant.cdrrmoDaysPending }} days (>14 days)">
+                                ⚠️ {{ applicant.cdrrmoDaysPending }}d
+                            </span>
+                        {% endif %}
                     {% else %}
                         <span class="badge status-pending">Pending</span>
                     {% endif %}
@@ -1566,11 +1577,19 @@
         rows.forEach(row => {
             const channel = row.dataset.channel;
             const status = row.dataset.status;
+            const cdrrmoOverdue = row.dataset.cdrrmoOverdue === 'true';
             const searchable = row.dataset.searchable;
 
             const matchSearch = searchValue === '' || searchable.includes(searchValue);
             const matchChannel = channelFilter === 'all' || channel === channelFilter;
-            const matchStatus = statusFilter === 'all' || status === statusFilter;
+            
+            // Handle special "CDRRMO Overdue" filter
+            let matchStatus;
+            if (statusFilter === 'CDRRMO Overdue') {
+                matchStatus = cdrrmoOverdue;
+            } else {
+                matchStatus = statusFilter === 'all' || status === statusFilter;
+            }
 
             if (matchSearch && matchChannel && matchStatus) {
                 row.style.display = '';
@@ -1742,11 +1761,27 @@
                 cdrrmoBox.style.borderColor = '#86efac';
                 cdrrmoText.style.color = '#166534';
                 cdrrmoText.innerHTML = `<strong>✓ CDRRMO Certified</strong><br>Applicant has been verified as residing in a danger zone.`;
+            } else if (currentApplicant.cdrrmoStatus === 'Not Certified') {
+                cdrrmoBox.style.background = '#fee2e2';
+                cdrrmoBox.style.borderColor = '#fca5a5';
+                cdrrmoText.style.color = '#991b1b';
+                cdrrmoText.innerHTML = `<strong>✗ CDRRMO Not Certified</strong><br>Applicant's location was not certified as a danger zone.`;
             } else {
-                cdrrmoBox.style.background = '#fef3c7';
-                cdrrmoBox.style.borderColor = '#fcd34d';
-                cdrrmoText.style.color = '#92400e';
-                cdrrmoText.innerHTML = `<strong>⚠️ Pending CDRRMO Certification</strong><br>Applicant must be certified by CDRRMO before eligibility can be determined.`;
+                // Pending status - check for overdue
+                const daysPending = currentApplicant.cdrrmoDaysPending || 0;
+                const isOverdue = currentApplicant.isCdrrmoFlagged;
+                
+                if (isOverdue) {
+                    cdrrmoBox.style.background = '#fef2f2';
+                    cdrrmoBox.style.borderColor = '#fca5a5';
+                    cdrrmoText.style.color = '#dc2626';
+                    cdrrmoText.innerHTML = `<strong>⚠️ OVERDUE: Pending ${daysPending} days</strong><br>CDRRMO certification has been pending for more than 14 days. Follow-up required.`;
+                } else {
+                    cdrrmoBox.style.background = '#fef3c7';
+                    cdrrmoBox.style.borderColor = '#fcd34d';
+                    cdrrmoText.style.color = '#92400e';
+                    cdrrmoText.innerHTML = `<strong>⏳ Pending CDRRMO Certification</strong> (${daysPending} days)<br>Applicant must be certified by CDRRMO before eligibility can be determined.`;
+                }
             }
             
             // Populate eligibility checks for Channel B
