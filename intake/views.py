@@ -1048,13 +1048,17 @@ def applicants_list(request):
             'isCdrrmoFlagged': False,
             'signatoryRoutingDelayed': False,
             'disqualificationReason': isf.disqualification_reason or None,
+            # Staff who handled this record
+            'handledBy': isf.eligibility_checked_by.get_full_name() if isf.eligibility_checked_by else 'Landowner Portal',
+            'handledByPosition': isf.eligibility_checked_by.get_position_display_short() if isf.eligibility_checked_by else 'Public',
+            'handledByInitials': (isf.eligibility_checked_by.first_name[:1] + isf.eligibility_checked_by.last_name[:1]).upper() if isf.eligibility_checked_by else 'LP',
         })
     
     # ====== CHANNEL B & C: Walk-in Applicants ======
     # Get all direct applicants (Channel B: danger_zone, Channel C: walk_in)
     walk_in_applicants = Applicant.objects.filter(
         channel__in=['danger_zone', 'walk_in']
-    ).select_related('barangay', 'eligibility_checked_by').prefetch_related(
+    ).select_related('barangay', 'eligibility_checked_by', 'registered_by').prefetch_related(
         Prefetch(
             'queue_entries',
             queryset=QueueEntry.objects.filter(status='active'),
@@ -1107,7 +1111,7 @@ def applicants_list(request):
             'applicantId': str(app.id),  # For Channel B/C review
             'barangay': app.barangay.name if app.barangay else 'Unknown',
             'monthlyIncome': float(app.monthly_income),
-            'householdSize': app.household_member_count,
+            'householdSize': app.household_size,
             'yearsResiding': app.years_residing,
             'phoneNumber': app.phone_number or '',
             'currentAddress': app.current_address or '',
@@ -1121,6 +1125,10 @@ def applicants_list(request):
             'isCdrrmoFlagged': is_cdrrmo_flagged,
             'signatoryRoutingDelayed': False,  # TODO: Link to Module 2
             'disqualificationReason': app.disqualification_reason or None,
+            # Staff who handled this record
+            'handledBy': app.registered_by.get_full_name() if app.registered_by else 'Unknown',
+            'handledByPosition': app.registered_by.get_position_display_short() if app.registered_by else '',
+            'handledByInitials': (app.registered_by.first_name[:1] + app.registered_by.last_name[:1]).upper() if app.registered_by else '??',
         })
     
     # Sort all applicants by dateRegistered (FIFO - oldest first)

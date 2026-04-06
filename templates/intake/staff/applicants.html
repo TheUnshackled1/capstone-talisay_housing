@@ -178,13 +178,14 @@
     }
 
     .applicants-table th {
-        padding: 0.75rem;
+        padding: 0.625rem 0.5rem;
         text-align: left;
         font-size: 0.625rem;
         font-weight: 600;
         color: #64748b;
         text-transform: uppercase;
         letter-spacing: 0.05em;
+        white-space: nowrap;
     }
 
     .applicants-table tbody tr {
@@ -201,10 +202,35 @@
     }
 
     .applicants-table td {
-        padding: 0.75rem;
-        font-size: 0.75rem;
+        padding: 0.5rem;
+        font-size: 0.6875rem;
         color: #334155;
+        vertical-align: middle;
     }
+
+    /* Column widths - percentage based to fit container */
+    .applicants-table th:nth-child(1),
+    .applicants-table td:nth-child(1) { width: 3%; text-align: center; } /* # */
+    .applicants-table th:nth-child(2),
+    .applicants-table td:nth-child(2) { width: 10%; } /* Transaction # */
+    .applicants-table th:nth-child(3),
+    .applicants-table td:nth-child(3) { width: 8%; } /* Date & Time */
+    .applicants-table th:nth-child(4),
+    .applicants-table td:nth-child(4) { width: 10%; } /* Reference # */
+    .applicants-table th:nth-child(5),
+    .applicants-table td:nth-child(5) { width: 14%; } /* Full Name */
+    .applicants-table th:nth-child(6),
+    .applicants-table td:nth-child(6) { width: 13%; } /* Channel */
+    .applicants-table th:nth-child(7),
+    .applicants-table td:nth-child(7) { width: 9%; } /* Eligibility */
+    .applicants-table th:nth-child(8),
+    .applicants-table td:nth-child(8) { width: 8%; } /* Queue */
+    .applicants-table th:nth-child(9),
+    .applicants-table td:nth-child(9) { width: 13%; } /* Staff Handled */
+    .applicants-table th:nth-child(10),
+    .applicants-table td:nth-child(10) { width: 4%; text-align: center; } /* Flags */
+    .applicants-table th:nth-child(11),
+    .applicants-table td:nth-child(11) { width: 8%; } /* Action */
 
     .btn-review {
         display: inline-flex;
@@ -245,9 +271,9 @@
 
     .badge {
         display: inline-block;
-        padding: 0.125rem 0.5rem;
+        padding: 0.125rem 0.375rem;
         border-radius: 9999px;
-        font-size: 0.75rem;
+        font-size: 0.625rem;
         font-weight: 500;
         white-space: nowrap;
     }
@@ -264,15 +290,15 @@
     .badge.queue-priority { background: #f3e8ff; color: #6b21a8; }
     .badge.queue-walkin { background: #dbeafe; color: #1e40af; }
     .badge.queue-standby { background: #ccfbf1; color: #115e59; }
+    .badge.queue-pending { background: #fef3c7; color: #92400e; }
     .badge.queue-none { background: #f1f5f9; color: #64748b; }
 
     .flag-icon {
         display: inline-block;
-        width: 1rem;
-        height: 1rem;
+        width: 0.875rem;
+        height: 0.875rem;
         color: #d97706;
         vertical-align: middle;
-        margin-left: 0.25rem;
     }
 
     /* Modal Styles */
@@ -789,7 +815,7 @@
     <table class="applicants-table">
         <thead>
             <tr>
-                <th style="width: 50px;">#</th>
+                <th>#</th>
                 <th>Transaction #</th>
                 <th>Date & Time</th>
                 <th>Reference #</th>
@@ -797,6 +823,7 @@
                 <th>Channel</th>
                 <th>Eligibility</th>
                 <th>Queue</th>
+                <th>Staff Handled</th>
                 <th>Flags</th>
                 <th>Action</th>
             </tr>
@@ -808,7 +835,7 @@
                 data-status="{{ applicant.eligibilityStatus }}"
                 data-searchable="{{ applicant.fullName|lower }} {{ applicant.referenceNumber|lower }} {{ applicant.barangay|lower }}"
             >
-                <td style="font-weight: 700; color: #1e293b; text-align: center;">{{ forloop.counter }}</td>
+                <td style="font-weight: 700; color: #1e293b;">{{ forloop.counter }}</td>
                 <td style="font-weight: 600; color: #1d4ed8;">#{{ applicant.id }}</td>
                 <td style="font-size: 0.6875rem; color: #64748b;">{{ applicant.dateTime }}</td>
                 <td>{{ applicant.referenceNumber }}</td>
@@ -840,9 +867,25 @@
                         <span class="badge queue-walkin">Walk-in {% if applicant.queuePosition %}#{{ applicant.queuePosition }}{% endif %}</span>
                     {% elif applicant.queueType == 'Standby' %}
                         <span class="badge queue-standby">Standby</span>
+                    {% elif applicant.eligibilityStatus == 'Pending' or applicant.eligibilityStatus == 'Pending CDRRMO' %}
+                        <span class="badge queue-pending">Awaiting</span>
+                    {% elif applicant.eligibilityStatus == 'Disqualified' %}
+                        <span class="badge" style="background: #fee2e2; color: #991b1b;">N/A</span>
                     {% else %}
                         <span class="badge queue-none">—</span>
                     {% endif %}
+                </td>
+                <td>
+                    <!-- Staff who handled this transaction -->
+                    <div style="display: flex; align-items: center; gap: 0.375rem;">
+                        <div style="width: 22px; height: 22px; border-radius: 50%; background: {% if applicant.handledByPosition == '2nd Member' %}#3b82f6{% elif applicant.handledByPosition == '4th Member' %}#10b981{% else %}#94a3b8{% endif %}; color: white; display: flex; align-items: center; justify-content: center; font-size: 0.5625rem; font-weight: 600; flex-shrink: 0;">
+                            {{ applicant.handledByInitials }}
+                        </div>
+                        <div style="display: flex; flex-direction: column; min-width: 0;">
+                            <span style="font-size: 0.625rem; font-weight: 500; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ applicant.handledBy }}</span>
+                            <span style="font-size: 0.5625rem; color: #64748b;">{{ applicant.handledByPosition }}</span>
+                        </div>
+                    </div>
                 </td>
                 <td>
                     {% if applicant.isCdrrmoFlagged or applicant.signatoryRoutingDelayed %}
