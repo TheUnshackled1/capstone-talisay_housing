@@ -779,11 +779,35 @@ def update_applicant(request):
     
     applicant_id = request.POST.get('applicant_id')
     channel = request.POST.get('channel')
+    action = request.POST.get('action', 'update')
     
     if not applicant_id:
         return JsonResponse({'success': False, 'error': 'Missing applicant_id'})
     
+    # Document field mapping
+    doc_fields = [
+        'doc_brgy_residency', 'doc_brgy_indigency', 'doc_cedula',
+        'doc_police_clearance', 'doc_no_property', 'doc_2x2_picture', 'doc_sketch_location'
+    ]
+    
     try:
+        # Handle single document update (auto-save)
+        if action == 'update_doc':
+            if channel == 'A':
+                isf = ISFRecord.objects.get(id=applicant_id)
+                for field in doc_fields:
+                    if field in request.POST:
+                        setattr(isf, field, request.POST.get(field) == 'true')
+                isf.save()
+                return JsonResponse({'success': True, 'message': 'Document status updated'})
+            else:
+                applicant = Applicant.objects.get(id=applicant_id)
+                for field in doc_fields:
+                    if field in request.POST:
+                        setattr(applicant, field, request.POST.get(field) == 'true')
+                applicant.save()
+                return JsonResponse({'success': True, 'message': 'Document status updated'})
+        
         if channel == 'A':
             # Update Channel A: ISF Record
             isf = ISFRecord.objects.get(id=applicant_id)
@@ -804,11 +828,17 @@ def update_applicant(request):
             if isf_years:
                 isf.years_residing = int(isf_years)
             if isf_barangay:
-                try:
-                    brgy = Barangay.objects.get(name=isf_barangay)
-                    isf.barangay = brgy
-                except Barangay.DoesNotExist:
-                    pass
+                # ISFRecord.barangay is a CharField, just assign the string value
+                isf.barangay = isf_barangay
+            
+            # Update document checklist
+            isf.doc_brgy_residency = request.POST.get('doc_brgy_residency') == 'true'
+            isf.doc_brgy_indigency = request.POST.get('doc_brgy_indigency') == 'true'
+            isf.doc_cedula = request.POST.get('doc_cedula') == 'true'
+            isf.doc_police_clearance = request.POST.get('doc_police_clearance') == 'true'
+            isf.doc_no_property = request.POST.get('doc_no_property') == 'true'
+            isf.doc_2x2_picture = request.POST.get('doc_2x2_picture') == 'true'
+            isf.doc_sketch_location = request.POST.get('doc_sketch_location') == 'true'
             
             isf.save()
             
@@ -880,6 +910,15 @@ def update_applicant(request):
                     applicant.danger_zone_type = danger_zone_type
                 if danger_zone_location:
                     applicant.danger_zone_location = danger_zone_location
+            
+            # Update document checklist
+            applicant.doc_brgy_residency = request.POST.get('doc_brgy_residency') == 'true'
+            applicant.doc_brgy_indigency = request.POST.get('doc_brgy_indigency') == 'true'
+            applicant.doc_cedula = request.POST.get('doc_cedula') == 'true'
+            applicant.doc_police_clearance = request.POST.get('doc_police_clearance') == 'true'
+            applicant.doc_no_property = request.POST.get('doc_no_property') == 'true'
+            applicant.doc_2x2_picture = request.POST.get('doc_2x2_picture') == 'true'
+            applicant.doc_sketch_location = request.POST.get('doc_sketch_location') == 'true'
             
             applicant.save()
             
@@ -1052,6 +1091,25 @@ def applicants_list(request):
             'handledBy': isf.eligibility_checked_by.get_full_name() if isf.eligibility_checked_by else 'Landowner Portal',
             'handledByPosition': isf.eligibility_checked_by.get_position_display_short() if isf.eligibility_checked_by else 'Public',
             'handledByInitials': (isf.eligibility_checked_by.first_name[:1] + isf.eligibility_checked_by.last_name[:1]).upper() if isf.eligibility_checked_by else 'LP',
+            # Document checklist count (7 documents)
+            'docsCount': sum([
+                isf.doc_brgy_residency,
+                isf.doc_brgy_indigency,
+                isf.doc_cedula,
+                isf.doc_police_clearance,
+                isf.doc_no_property,
+                isf.doc_2x2_picture,
+                isf.doc_sketch_location,
+            ]),
+            'docsTotal': 7,
+            # Individual document states for modal checkboxes
+            'docBrgyResidency': isf.doc_brgy_residency,
+            'docBrgyIndigency': isf.doc_brgy_indigency,
+            'docCedula': isf.doc_cedula,
+            'docPoliceClearance': isf.doc_police_clearance,
+            'docNoProperty': isf.doc_no_property,
+            'doc2x2Picture': isf.doc_2x2_picture,
+            'docSketchLocation': isf.doc_sketch_location,
         })
     
     # ====== CHANNEL B & C: Walk-in Applicants ======
@@ -1129,6 +1187,25 @@ def applicants_list(request):
             'handledBy': app.registered_by.get_full_name() if app.registered_by else 'Unknown',
             'handledByPosition': app.registered_by.get_position_display_short() if app.registered_by else '',
             'handledByInitials': (app.registered_by.first_name[:1] + app.registered_by.last_name[:1]).upper() if app.registered_by else '??',
+            # Document checklist count (7 documents)
+            'docsCount': sum([
+                app.doc_brgy_residency,
+                app.doc_brgy_indigency,
+                app.doc_cedula,
+                app.doc_police_clearance,
+                app.doc_no_property,
+                app.doc_2x2_picture,
+                app.doc_sketch_location,
+            ]),
+            'docsTotal': 7,
+            # Individual document states for modal checkboxes
+            'docBrgyResidency': app.doc_brgy_residency,
+            'docBrgyIndigency': app.doc_brgy_indigency,
+            'docCedula': app.doc_cedula,
+            'docPoliceClearance': app.doc_police_clearance,
+            'docNoProperty': app.doc_no_property,
+            'doc2x2Picture': app.doc_2x2_picture,
+            'docSketchLocation': app.doc_sketch_location,
         })
     
     # Sort all applicants by dateRegistered (FIFO - oldest first)

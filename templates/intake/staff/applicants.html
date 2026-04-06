@@ -824,7 +824,7 @@
                 <th>Eligibility</th>
                 <th>Queue</th>
                 <th>Staff Handled</th>
-                <th>Flags</th>
+                <th>Docs</th>
                 <th>Action</th>
             </tr>
         </thead>
@@ -888,13 +888,25 @@
                     </div>
                 </td>
                 <td>
-                    {% if applicant.isCdrrmoFlagged or applicant.signatoryRoutingDelayed %}
-                        <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                            <line x1="12" y1="9" x2="12" y2="13"></line>
-                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                        </svg>
-                    {% endif %}
+                    <!-- Document completion progress -->
+                    <div style="display: flex; align-items: center; gap: 0.25rem;">
+                        {% if applicant.docsCount == 7 %}
+                            <span style="display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.125rem 0.375rem; background: #dcfce7; color: #166534; border-radius: 9999px; font-size: 0.625rem; font-weight: 600;">
+                                <svg style="width: 0.75rem; height: 0.75rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                                7/7
+                            </span>
+                        {% elif applicant.docsCount >= 4 %}
+                            <span style="padding: 0.125rem 0.375rem; background: #fef3c7; color: #92400e; border-radius: 9999px; font-size: 0.625rem; font-weight: 600;">
+                                {{ applicant.docsCount }}/7
+                            </span>
+                        {% else %}
+                            <span style="padding: 0.125rem 0.375rem; background: #fee2e2; color: #991b1b; border-radius: 9999px; font-size: 0.625rem; font-weight: 600;">
+                                {{ applicant.docsCount }}/7
+                            </span>
+                        {% endif %}
+                    </div>
                 </td>
                 <td>
                     <!-- Review button - opens modal -->
@@ -1852,21 +1864,21 @@
     function populateDocumentChecklist(applicant) {
         const container = document.getElementById('documentChecklist');
         const docs = [
-            { key: 'barangayCertResidency', label: 'Brgy. Certificate of Residency' },
-            { key: 'barangayCertIndigency', label: 'Brgy. Certificate of Indigency' },
-            { key: 'cedula', label: 'Cedula' },
-            { key: 'policeClearance', label: 'Police Clearance' },
-            { key: 'certNoProperty', label: 'Certificate of No Property' },
-            { key: 'picture2x2', label: '2x2 Picture' },
-            { key: 'sketchHouseLocation', label: 'Sketch of House Location' }
+            { key: 'docBrgyResidency', dbKey: 'doc_brgy_residency', label: 'Brgy. Certificate of Residency' },
+            { key: 'docBrgyIndigency', dbKey: 'doc_brgy_indigency', label: 'Brgy. Certificate of Indigency' },
+            { key: 'docCedula', dbKey: 'doc_cedula', label: 'Cedula' },
+            { key: 'docPoliceClearance', dbKey: 'doc_police_clearance', label: 'Police Clearance' },
+            { key: 'docNoProperty', dbKey: 'doc_no_property', label: 'Certificate of No Property' },
+            { key: 'doc2x2Picture', dbKey: 'doc_2x2_picture', label: '2x2 Picture' },
+            { key: 'docSketchLocation', dbKey: 'doc_sketch_location', label: 'Sketch of House Location' }
         ];
         
         let html = '';
         docs.forEach(doc => {
-            const checked = applicant.documents?.[doc.key] || false;
+            const checked = applicant[doc.key] || false;
             html += `
-                <label class="document-item ${checked ? 'complete' : 'incomplete'}" style="cursor: ${isEditMode ? 'pointer' : 'default'};">
-                    <input type="checkbox" name="doc_${doc.key}" ${checked ? 'checked' : ''} ${isEditMode ? '' : 'disabled'} style="display: none;">
+                <label class="document-item ${checked ? 'complete' : 'incomplete'}" style="cursor: ${isEditMode ? 'pointer' : 'default'};" ${isEditMode ? `onclick="toggleAndSaveDoc(this, '${doc.dbKey}')"` : ''}>
+                    <input type="checkbox" name="${doc.dbKey}" ${checked ? 'checked' : ''} ${isEditMode ? '' : 'disabled'} style="display: none;">
                     <svg class="document-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         ${checked 
                             ? '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>'
@@ -1877,6 +1889,99 @@
             `;
         });
         container.innerHTML = html;
+    }
+    
+    // Toggle document checkbox and auto-save
+    function toggleAndSaveDoc(label, docKey) {
+        const checkbox = label.querySelector('input[type="checkbox"]');
+        if (!checkbox) return;
+        
+        // Toggle checkbox
+        checkbox.checked = !checkbox.checked;
+        label.classList.toggle('complete', checkbox.checked);
+        label.classList.toggle('incomplete', !checkbox.checked);
+        
+        // Update icon
+        const svg = label.querySelector('svg');
+        if (checkbox.checked) {
+            svg.innerHTML = '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>';
+        } else {
+            svg.innerHTML = '<circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>';
+        }
+        
+        // Auto-save to database
+        saveDocumentStatus(docKey, checkbox.checked);
+    }
+    
+    // Save single document status to database
+    function saveDocumentStatus(docKey, isChecked) {
+        if (!currentApplicant) return;
+        
+        const formData = new FormData();
+        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+        formData.append('applicant_id', currentApplicant.applicantId || currentApplicant.id);
+        formData.append('channel', currentApplicant.channel);
+        formData.append('action', 'update_doc');
+        formData.append(docKey, isChecked);
+        
+        if (currentApplicant.channel === 'A') {
+            formData.append('submission_id', currentApplicant.submissionId);
+        }
+        
+        fetch('{% url "intake:update_applicant" %}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update local data
+                const keyMap = {
+                    'doc_brgy_residency': 'docBrgyResidency',
+                    'doc_brgy_indigency': 'docBrgyIndigency',
+                    'doc_cedula': 'docCedula',
+                    'doc_police_clearance': 'docPoliceClearance',
+                    'doc_no_property': 'docNoProperty',
+                    'doc_2x2_picture': 'doc2x2Picture',
+                    'doc_sketch_location': 'docSketchLocation'
+                };
+                if (keyMap[docKey]) {
+                    currentApplicant[keyMap[docKey]] = isChecked;
+                    // Recalculate docs count
+                    currentApplicant.docsCount = [
+                        currentApplicant.docBrgyResidency,
+                        currentApplicant.docBrgyIndigency,
+                        currentApplicant.docCedula,
+                        currentApplicant.docPoliceClearance,
+                        currentApplicant.docNoProperty,
+                        currentApplicant.doc2x2Picture,
+                        currentApplicant.docSketchLocation
+                    ].filter(Boolean).length;
+                }
+                console.log('Document saved:', docKey, isChecked);
+            } else {
+                console.error('Error saving document:', data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    }
+    
+    // Legacy toggle function (kept for backward compatibility)
+    function toggleDocCheckbox(label) {
+        const checkbox = label.querySelector('input[type="checkbox"]');
+        if (checkbox && !checkbox.disabled) {
+            checkbox.checked = !checkbox.checked;
+            label.classList.toggle('complete', checkbox.checked);
+            label.classList.toggle('incomplete', !checkbox.checked);
+            const svg = label.querySelector('svg');
+            if (checkbox.checked) {
+                svg.innerHTML = '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>';
+            } else {
+                svg.innerHTML = '<circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>';
+            }
+        }
     }
     
     // Channel B specific eligibility checks (includes CDRRMO)
@@ -1918,22 +2023,21 @@
     function populateDocumentChecklistB(applicant) {
         const container = document.getElementById('documentChecklistB');
         const docs = [
-            { key: 'barangayCertResidency', label: 'Brgy. Certificate of Residency' },
-            { key: 'barangayCertIndigency', label: 'Brgy. Certificate of Indigency' },
-            { key: 'cedula', label: 'Cedula' },
-            { key: 'policeClearance', label: 'Police Clearance' },
-            { key: 'certNoProperty', label: 'Certificate of No Property' },
-            { key: 'picture2x2', label: '2x2 Picture' },
-            { key: 'sketchHouseLocation', label: 'Sketch of House Location' },
-            { key: 'cdrmoCert', label: 'CDRRMO Certification' }
+            { key: 'docBrgyResidency', dbKey: 'doc_brgy_residency', label: 'Brgy. Certificate of Residency' },
+            { key: 'docBrgyIndigency', dbKey: 'doc_brgy_indigency', label: 'Brgy. Certificate of Indigency' },
+            { key: 'docCedula', dbKey: 'doc_cedula', label: 'Cedula' },
+            { key: 'docPoliceClearance', dbKey: 'doc_police_clearance', label: 'Police Clearance' },
+            { key: 'docNoProperty', dbKey: 'doc_no_property', label: 'Certificate of No Property' },
+            { key: 'doc2x2Picture', dbKey: 'doc_2x2_picture', label: '2x2 Picture' },
+            { key: 'docSketchLocation', dbKey: 'doc_sketch_location', label: 'Sketch of House Location' }
         ];
         
         let html = '';
         docs.forEach(doc => {
-            const checked = applicant.documents?.[doc.key] || false;
+            const checked = applicant[doc.key] || false;
             html += `
-                <label class="document-item ${checked ? 'complete' : 'incomplete'}" style="cursor: ${isEditMode ? 'pointer' : 'default'};">
-                    <input type="checkbox" name="doc_b_${doc.key}" ${checked ? 'checked' : ''} ${isEditMode ? '' : 'disabled'} style="display: none;">
+                <label class="document-item ${checked ? 'complete' : 'incomplete'}" style="cursor: ${isEditMode ? 'pointer' : 'default'};" ${isEditMode ? `onclick="toggleAndSaveDoc(this, '${doc.dbKey}')"` : ''}>
+                    <input type="checkbox" name="${doc.dbKey}" ${checked ? 'checked' : ''} ${isEditMode ? '' : 'disabled'} style="display: none;">
                     <svg class="document-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         ${checked 
                             ? '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>'
@@ -1984,21 +2088,21 @@
     function populateDocumentChecklistA(applicant) {
         const container = document.getElementById('documentChecklistA');
         const docs = [
-            { key: 'barangayCertResidency', label: 'Brgy. Certificate of Residency' },
-            { key: 'barangayCertIndigency', label: 'Brgy. Certificate of Indigency' },
-            { key: 'cedula', label: 'Cedula' },
-            { key: 'policeClearance', label: 'Police Clearance' },
-            { key: 'certNoProperty', label: 'Certificate of No Property' },
-            { key: 'picture2x2', label: '2x2 Picture' },
-            { key: 'sketchHouseLocation', label: 'Sketch of House Location' }
+            { key: 'docBrgyResidency', dbKey: 'doc_brgy_residency', label: 'Brgy. Certificate of Residency' },
+            { key: 'docBrgyIndigency', dbKey: 'doc_brgy_indigency', label: 'Brgy. Certificate of Indigency' },
+            { key: 'docCedula', dbKey: 'doc_cedula', label: 'Cedula' },
+            { key: 'docPoliceClearance', dbKey: 'doc_police_clearance', label: 'Police Clearance' },
+            { key: 'docNoProperty', dbKey: 'doc_no_property', label: 'Certificate of No Property' },
+            { key: 'doc2x2Picture', dbKey: 'doc_2x2_picture', label: '2x2 Picture' },
+            { key: 'docSketchLocation', dbKey: 'doc_sketch_location', label: 'Sketch of House Location' }
         ];
         
         let html = '';
         docs.forEach(doc => {
-            const checked = applicant.documents?.[doc.key] || false;
+            const checked = applicant[doc.key] || false;
             html += `
-                <label class="document-item ${checked ? 'complete' : 'incomplete'}" style="cursor: ${isEditMode ? 'pointer' : 'default'};">
-                    <input type="checkbox" name="doc_a_${doc.key}" ${checked ? 'checked' : ''} ${isEditMode ? '' : 'disabled'} style="display: none;">
+                <label class="document-item ${checked ? 'complete' : 'incomplete'}" style="cursor: ${isEditMode ? 'pointer' : 'default'};" ${isEditMode ? `onclick="toggleAndSaveDoc(this, '${doc.dbKey}')"` : ''}>
+                    <input type="checkbox" name="${doc.dbKey}" ${checked ? 'checked' : ''} ${isEditMode ? '' : 'disabled'} style="display: none;">
                     <svg class="document-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         ${checked 
                             ? '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>'
@@ -2257,6 +2361,11 @@
             formData.append('isf_household', document.getElementById('reviewHouseholdA').value);
             formData.append('isf_years', document.getElementById('reviewYearsA').value);
             formData.append('isf_barangay', document.getElementById('reviewBarangayA').value);
+            
+            // Include Channel A document checklist
+            document.querySelectorAll('#documentChecklistA input[type="checkbox"]').forEach(cb => {
+                formData.append(cb.name, cb.checked);
+            });
             
         } else if (currentApplicant.channel === 'B') {
             // Channel B: Danger Zone applicant data
