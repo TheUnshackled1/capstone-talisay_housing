@@ -1,6 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
+from django.http import JsonResponse
 from django.utils import timezone
 from django.db.models import Q, Prefetch
 from .models import LandownerSubmission, ISFRecord, Applicant, Barangay, QueueEntry, CDRRMOCertification
@@ -1047,6 +1049,59 @@ def delete_applicant(request):
 
 
 @login_required
+@require_POST
+def resend_sms(request):
+    """
+    Resend SMS notification to applicant.
+    Accessible to: Second Member (Joie), Fourth Member (Jocel)
+    """
+    allowed_positions = ['second_member', 'fourth_member']
+    if request.user.position not in allowed_positions:
+        return JsonResponse({'success': False, 'error': 'Access denied'})
+    
+    channel = request.POST.get('channel')
+    record_id = request.POST.get('id')
+    sms_type = request.POST.get('sms_type', 'registration')  # 'registration' or 'eligibility'
+    
+    if not channel or not record_id:
+        return JsonResponse({'success': False, 'error': 'Missing channel or id'})
+    
+    try:
+        if channel == 'A':
+            record = ISFRecord.objects.get(id=record_id)
+            if not record.phone_number:
+                return JsonResponse({'success': False, 'error': 'No phone number on record'})
+            
+            if sms_type == 'registration':
+                record.registration_sms_sent = False  # Reset to trigger resend
+                record.send_registration_sms()
+            else:
+                record.eligibility_sms_sent = False
+                record.send_eligibility_sms(eligible=record.status == 'eligible')
+        else:
+            record = Applicant.objects.get(id=record_id)
+            if not record.phone_number:
+                return JsonResponse({'success': False, 'error': 'No phone number on record'})
+            
+            if sms_type == 'registration':
+                record.registration_sms_sent = False
+                record.send_registration_sms()
+            else:
+                record.eligibility_sms_sent = False
+                record.send_eligibility_sms(eligible=record.status == 'eligible')
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'{sms_type.title()} SMS resent successfully'
+        })
+        
+    except (ISFRecord.DoesNotExist, Applicant.DoesNotExist):
+        return JsonResponse({'success': False, 'error': 'Record not found'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
+@login_required
 def applicants_list(request):
     """
     Module 1: ISF Recording Management - Applicant Intake
@@ -1148,6 +1203,10 @@ def applicants_list(request):
             'docNoProperty': isf.doc_no_property,
             'doc2x2Picture': isf.doc_2x2_picture,
             'docSketchLocation': isf.doc_sketch_location,
+            # SMS status
+            'registrationSmsSent': isf.registration_sms_sent,
+            'eligibilitySmsSent': isf.eligibility_sms_sent,
+            'hasPhone': bool(isf.phone_number),
         })
     
     # ====== CHANNEL B & C: Walk-in Applicants ======
@@ -1247,6 +1306,10 @@ def applicants_list(request):
             'docNoProperty': app.doc_no_property,
             'doc2x2Picture': app.doc_2x2_picture,
             'docSketchLocation': app.doc_sketch_location,
+            # SMS status
+            'registrationSmsSent': app.registration_sms_sent,
+            'eligibilitySmsSent': app.eligibility_sms_sent,
+            'hasPhone': bool(app.phone_number),
         })
     
     # Sort all applicants by dateRegistered (FIFO - oldest first)

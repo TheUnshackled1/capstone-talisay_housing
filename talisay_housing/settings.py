@@ -137,3 +137,13 @@ AUTH_USER_MODEL = 'accounts.User'
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'dashboard'
 LOGOUT_REDIRECT_URL = 'home'
+
+# =============================================================================
+# SMS Configuration (Semaphore)
+# =============================================================================
+# Sign up at https://semaphore.co to get your API key (50 free SMS)
+# Set SMS_ENABLED = True and add your API key to enable real SMS sending
+
+SMS_ENABLED = False  # Set to True to enable real SMS sending
+SEMAPHORE_API_KEY = ''  # Your Semaphore API key (get from semaphore.co)
+SEMAPHORE_SENDER_NAME = 'THA'  # Sender name (max 11 chars, requires approval)

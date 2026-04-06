@@ -4,13 +4,34 @@ Utility functions for the intake module.
 """
 from django.conf import settings
 import logging
+import requests
 
 logger = logging.getLogger(__name__)
 
 
+def format_phone_number(phone_number):
+    """
+    Format Philippine phone number for SMS API.
+    Converts various formats to 09XXXXXXXXX format.
+    """
+    phone = phone_number.strip().replace(' ', '').replace('-', '')
+    
+    # Remove +63 prefix
+    if phone.startswith('+63'):
+        phone = '0' + phone[3:]
+    # Remove 63 prefix (without +)
+    elif phone.startswith('63') and len(phone) == 12:
+        phone = '0' + phone[2:]
+    # Add 0 prefix if starts with 9
+    elif phone.startswith('9') and len(phone) == 10:
+        phone = '0' + phone
+    
+    return phone
+
+
 def send_sms(phone_number, message, trigger_event, applicant=None, isf_record=None):
     """
-    Send SMS notification and log to database.
+    Send SMS notification via Semaphore API and log to database.
     
     Args:
         phone_number: Recipient phone number
@@ -28,33 +49,82 @@ def send_sms(phone_number, message, trigger_event, applicant=None, isf_record=No
         logger.warning("Cannot send SMS: missing phone number or message")
         return False
     
-    # Clean phone number
-    phone_number = phone_number.strip()
+    # Format phone number
+    phone_number = format_phone_number(phone_number)
+    
+    # Validate phone number format (Philippine mobile: 09XXXXXXXXX)
+    if not phone_number.startswith('09') or len(phone_number) != 11:
+        logger.warning(f"Invalid phone number format: {phone_number}")
+        return False
+    
+    # Get Semaphore API key from settings
+    api_key = getattr(settings, 'SEMAPHORE_API_KEY', None)
+    sender_name = getattr(settings, 'SEMAPHORE_SENDER_NAME', 'SEMAPHORE')
+    sms_enabled = getattr(settings, 'SMS_ENABLED', False)
     
     try:
-        # TODO: Integrate with actual SMS provider (e.g., Semaphore, Twilio)
-        # For now, just log the SMS
-        
-        # Create SMS log record
+        # Create SMS log record first (pending status)
         sms_log = SMSLog.objects.create(
             recipient_phone=phone_number,
             message_content=message,
             trigger_event=trigger_event,
             applicant=applicant,
             isf_record=isf_record,
-            status='sent'  # In production, would be 'pending' until confirmed
+            status='pending'
         )
         
-        logger.info(f"SMS logged: {trigger_event} to {phone_number}")
-        print(f"\n{'='*60}")
-        print(f"SMS NOTIFICATION")
-        print(f"{'='*60}")
-        print(f"To: {phone_number}")
-        print(f"Event: {trigger_event}")
-        print(f"Message: {message}")
-        print(f"{'='*60}\n")
+        if sms_enabled and api_key:
+            # Send via Semaphore API
+            response = requests.post(
+                'https://api.semaphore.co/api/v4/messages',
+                data={
+                    'apikey': api_key,
+                    'number': phone_number,
+                    'message': message,
+                    'sendername': sender_name
+                },
+                timeout=30
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                sms_log.status = 'sent'
+                sms_log.save(update_fields=['status'])
+                logger.info(f"SMS sent via Semaphore: {trigger_event} to {phone_number}")
+                return True
+            else:
+                error_msg = f"Semaphore API error: {response.status_code} - {response.text}"
+                sms_log.status = 'failed'
+                sms_log.error_message = error_msg
+                sms_log.save(update_fields=['status', 'error_message'])
+                logger.error(error_msg)
+                return False
+        else:
+            # Development mode - just log to console
+            sms_log.status = 'sent'
+            sms_log.save(update_fields=['status'])
+            
+            logger.info(f"SMS logged (dev mode): {trigger_event} to {phone_number}")
+            print(f"\n{'='*60}")
+            print(f"📱 SMS NOTIFICATION {'(DEV MODE - Not actually sent)' if not sms_enabled else ''}")
+            print(f"{'='*60}")
+            print(f"To: {phone_number}")
+            print(f"Event: {trigger_event}")
+            print(f"Message: {message}")
+            print(f"{'='*60}\n")
+            
+            return True
         
-        return True
+    except requests.exceptions.RequestException as e:
+        error_msg = f"Network error sending SMS: {str(e)}"
+        logger.error(error_msg)
+        
+        # Update log with error
+        SMSLog.objects.filter(id=sms_log.id).update(
+            status='failed',
+            error_message=error_msg
+        )
+        return False
         
     except Exception as e:
         logger.error(f"Failed to send SMS: {str(e)}")

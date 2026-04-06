@@ -748,21 +748,56 @@
 
     <!-- Stats Grid -->
     <div class="stats-grid">
-        <div class="stat-card">
-            <p class="stat-label">Total Applicants</p>
-            <p class="stat-value blue">{{ stats.total }}</p>
+        <div class="stat-card" style="display: flex; align-items: center; gap: 0.75rem;">
+            <div style="width: 40px; height: 40px; background: #dbeafe; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center;">
+                <svg style="width: 20px; height: 20px; color: #2563eb;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+            </div>
+            <div>
+                <p class="stat-label">Total Applicants</p>
+                <p class="stat-value blue">{{ stats.total }}</p>
+            </div>
         </div>
-        <div class="stat-card">
-            <p class="stat-label">Priority Queue</p>
-            <p class="stat-value purple">{{ stats.priority }}</p>
+        <div class="stat-card" style="display: flex; align-items: center; gap: 0.75rem;">
+            <div style="width: 40px; height: 40px; background: #f3e8ff; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center;">
+                <svg style="width: 20px; height: 20px; color: #7c3aed;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                </svg>
+            </div>
+            <div>
+                <p class="stat-label">Priority Queue</p>
+                <p class="stat-value purple">{{ stats.priority }}</p>
+            </div>
         </div>
-        <div class="stat-card">
-            <p class="stat-label">Walk-in Queue</p>
-            <p class="stat-value teal">{{ stats.walkin }}</p>
+        <div class="stat-card" style="display: flex; align-items: center; gap: 0.75rem;">
+            <div style="width: 40px; height: 40px; background: #ccfbf1; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center;">
+                <svg style="width: 20px; height: 20px; color: #0d9488;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+            </div>
+            <div>
+                <p class="stat-label">Walk-in Queue</p>
+                <p class="stat-value teal">{{ stats.walkin }}</p>
+            </div>
         </div>
-        <div class="stat-card alert">
-            <p class="stat-label">Pending CDRRMO</p>
-            <p class="stat-value amber">{{ stats.pending_cdrrmo }}</p>
+        <div class="stat-card alert" style="display: flex; align-items: center; gap: 0.75rem;">
+            <div style="width: 40px; height: 40px; background: #fef3c7; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center;">
+                <svg style="width: 20px; height: 20px; color: #d97706;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+            </div>
+            <div>
+                <p class="stat-label">Pending CDRRMO</p>
+                <p class="stat-value amber">{{ stats.pending_cdrrmo }}</p>
+            </div>
         </div>
     </div>
 
@@ -814,6 +849,20 @@
             <option value="Pending CDRRMO">Pending CDRRMO</option>
             <option value="CDRRMO Overdue">⚠️ CDRRMO Overdue (>14 days)</option>
         </select>
+        <select class="filter-select" id="filterBarangay" onchange="filterTable()">
+            <option value="all">All Barangays</option>
+            {% for brgy in barangays %}
+            <option value="{{ brgy }}">{{ brgy }}</option>
+            {% endfor %}
+        </select>
+        <button type="button" onclick="exportToCSV()" class="btn-export" style="display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.5rem 0.75rem; background: #10b981; color: white; border: none; border-radius: 0.5rem; font-size: 0.75rem; font-weight: 500; cursor: pointer; white-space: nowrap;">
+            <svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Export CSV
+        </button>
     </div>
 
     <!-- Table -->
@@ -830,6 +879,7 @@
                 <th>Queue</th>
                 <th>Staff Handled</th>
                 <th>Docs</th>
+                <th>SMS</th>
                 <th>Action</th>
             </tr>
         </thead>
@@ -838,6 +888,7 @@
             <tr 
                 data-channel="{{ applicant.channel }}" 
                 data-status="{{ applicant.eligibilityStatus }}"
+                data-barangay="{{ applicant.barangay }}"
                 data-cdrrmo-overdue="{{ applicant.isCdrrmoFlagged|yesno:'true,false' }}"
                 data-searchable="{{ applicant.fullName|lower }} {{ applicant.referenceNumber|lower }} {{ applicant.barangay|lower }}"
             >
@@ -918,6 +969,24 @@
                             </span>
                         {% endif %}
                     </div>
+                </td>
+                <td>
+                    <!-- SMS Status -->
+                    {% if applicant.hasPhone %}
+                        {% if applicant.registrationSmsSent %}
+                            <span style="display: inline-flex; align-items: center; gap: 0.125rem; padding: 0.125rem 0.375rem; background: #dcfce7; color: #166534; border-radius: 9999px; font-size: 0.5625rem; font-weight: 500;">
+                                ✓ Sent
+                            </span>
+                        {% else %}
+                            <span style="display: inline-flex; align-items: center; gap: 0.125rem; padding: 0.125rem 0.375rem; background: #fee2e2; color: #991b1b; border-radius: 9999px; font-size: 0.5625rem; font-weight: 500;">
+                                ✗ Not Sent
+                            </span>
+                        {% endif %}
+                    {% else %}
+                        <span style="padding: 0.125rem 0.375rem; background: #f1f5f9; color: #64748b; border-radius: 9999px; font-size: 0.5625rem;">
+                            No Phone
+                        </span>
+                    {% endif %}
                 </td>
                 <td>
                     <!-- Review button - opens modal -->
@@ -1227,6 +1296,14 @@
                         <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">Lot Assignment</h4>
                         <div class="info-note" style="background: #dcfce7; border-color: #86efac;">
                             <p class="info-note-text" style="color: #166534;" id="lotDetails"></p>
+                        </div>
+                    </div>
+                    
+                    <!-- SMS Notification Status -->
+                    <div style="border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-top: 1rem;">
+                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">SMS Notifications</h4>
+                        <div id="smsStatusSection" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                            <!-- Populated by JavaScript -->
                         </div>
                     </div>
                 </div>
@@ -1588,17 +1665,20 @@
         const searchValue = document.getElementById('searchInput').value.toLowerCase();
         const channelFilter = document.getElementById('filterChannel').value;
         const statusFilter = document.getElementById('filterStatus').value;
+        const barangayFilter = document.getElementById('filterBarangay').value;
         const rows = document.querySelectorAll('#applicantsTableBody tr');
         
         let visibleCount = 0;
         rows.forEach(row => {
             const channel = row.dataset.channel;
             const status = row.dataset.status;
+            const barangay = row.dataset.barangay;
             const cdrrmoOverdue = row.dataset.cdrrmoOverdue === 'true';
             const searchable = row.dataset.searchable;
 
             const matchSearch = searchValue === '' || searchable.includes(searchValue);
             const matchChannel = channelFilter === 'all' || channel === channelFilter;
+            const matchBarangay = barangayFilter === 'all' || barangay === barangayFilter;
             
             // Handle special "CDRRMO Overdue" filter
             let matchStatus;
@@ -1608,7 +1688,7 @@
                 matchStatus = statusFilter === 'all' || status === statusFilter;
             }
 
-            if (matchSearch && matchChannel && matchStatus) {
+            if (matchSearch && matchChannel && matchStatus && matchBarangay) {
                 row.style.display = '';
                 visibleCount++;
                 // Update row number
@@ -1808,6 +1888,9 @@
             populateDocumentChecklistB(currentApplicant);
         }
         
+        // Populate SMS status section
+        populateSmsStatus(currentApplicant);
+        
         // Show/hide action buttons based on status
         updateActionButtons(currentApplicant);
         
@@ -1820,6 +1903,98 @@
             console.error('Error opening review modal:', error);
             alert('Error opening modal: ' + error.message);
         }
+    }
+    
+    function populateSmsStatus(applicant) {
+        const container = document.getElementById('smsStatusSection');
+        if (!container) return;
+        
+        const hasPhone = applicant.hasPhone;
+        const regSent = applicant.registrationSmsSent;
+        const eligSent = applicant.eligibilitySmsSent;
+        const channel = applicant.channel;
+        
+        let html = '';
+        
+        if (!hasPhone) {
+            html = `
+                <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: #f1f5f9; border-radius: 0.375rem;">
+                    <span style="color: #64748b; font-size: 0.8125rem;">📵 No phone number on record. SMS notifications cannot be sent.</span>
+                </div>
+            `;
+        } else {
+            html = `
+                <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.5rem; background: ${regSent ? '#dcfce7' : '#fee2e2'}; border-radius: 0.375rem;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span style="font-size: 1rem;">${regSent ? '✓' : '✗'}</span>
+                        <span style="font-size: 0.8125rem; color: ${regSent ? '#166534' : '#991b1b'};">
+                            Registration SMS ${regSent ? 'Sent' : 'Not Sent'}
+                        </span>
+                    </div>
+                    <button type="button" onclick="resendSms('registration')" class="btn-modal" style="padding: 0.25rem 0.5rem; font-size: 0.6875rem; background: #e2e8f0; color: #475569;">
+                        📤 Resend
+                    </button>
+                </div>
+                <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.5rem; background: ${eligSent ? '#dcfce7' : '#fef3c7'}; border-radius: 0.375rem;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span style="font-size: 1rem;">${eligSent ? '✓' : '⏳'}</span>
+                        <span style="font-size: 0.8125rem; color: ${eligSent ? '#166534' : '#92400e'};">
+                            Eligibility SMS ${eligSent ? 'Sent' : 'Pending (sent on eligibility decision)'}
+                        </span>
+                    </div>
+                    ${applicant.eligibilityStatus !== 'Pending' && applicant.eligibilityStatus !== 'Pending CDRRMO' ? `
+                    <button type="button" onclick="resendSms('eligibility')" class="btn-modal" style="padding: 0.25rem 0.5rem; font-size: 0.6875rem; background: #e2e8f0; color: #475569;">
+                        📤 Resend
+                    </button>
+                    ` : ''}
+                </div>
+            `;
+        }
+        
+        container.innerHTML = html;
+    }
+    
+    function resendSms(smsType) {
+        if (!currentApplicant) {
+            alert('No applicant selected');
+            return;
+        }
+        
+        if (!confirm(`Are you sure you want to resend the ${smsType} SMS notification?`)) {
+            return;
+        }
+        
+        const formData = new FormData();
+        formData.append('channel', currentApplicant.channel);
+        formData.append('id', currentApplicant.channel === 'A' ? currentApplicant.id : currentApplicant.applicantId);
+        formData.append('sms_type', smsType);
+        
+        fetch('{% url "intake:resend_sms" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                // Update local state
+                if (smsType === 'registration') {
+                    currentApplicant.registrationSmsSent = true;
+                } else {
+                    currentApplicant.eligibilitySmsSent = true;
+                }
+                populateSmsStatus(currentApplicant);
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Network error. Please try again.');
+        });
     }
     
     function populateISFList(applicant) {
@@ -2883,6 +3058,87 @@
             "'": '&#039;'
         };
         return text.replace(/[&<>"']/g, m => map[m]);
+    }
+    
+    // Export to CSV
+    function exportToCSV() {
+        const channelFilter = document.getElementById('filterChannel').value;
+        const statusFilter = document.getElementById('filterStatus').value;
+        const barangayFilter = document.getElementById('filterBarangay').value;
+        
+        // Filter applicants based on current filters
+        let filteredData = applicantsData.filter(app => {
+            const matchChannel = channelFilter === 'all' || app.channel === channelFilter;
+            const matchBarangay = barangayFilter === 'all' || app.barangay === barangayFilter;
+            let matchStatus;
+            if (statusFilter === 'CDRRMO Overdue') {
+                matchStatus = app.isCdrrmoFlagged;
+            } else {
+                matchStatus = statusFilter === 'all' || app.eligibilityStatus === statusFilter;
+            }
+            return matchChannel && matchStatus && matchBarangay;
+        });
+        
+        if (filteredData.length === 0) {
+            alert('No data to export with current filters.');
+            return;
+        }
+        
+        // CSV header
+        const headers = [
+            'Reference #',
+            'Full Name',
+            'Channel',
+            'Barangay',
+            'Monthly Income',
+            'Household Size',
+            'Years Residing',
+            'Phone Number',
+            'Current Address',
+            'Eligibility Status',
+            'Queue Type',
+            'Queue Position',
+            'Documents Submitted',
+            'Registration Date',
+            'Handled By'
+        ];
+        
+        // CSV rows
+        const rows = filteredData.map(app => [
+            app.referenceNumber || '',
+            app.fullName || '',
+            app.channel === 'A' ? 'Channel A - Landowner' : 
+                app.channel === 'B' ? 'Channel B - Danger Zone' : 'Channel C - Walk-in',
+            app.barangay || '',
+            app.monthlyIncome || '',
+            app.householdSize || '',
+            app.yearsResiding || '',
+            app.phoneNumber || '',
+            (app.currentAddress || '').replace(/,/g, ';'),
+            app.eligibilityStatus || '',
+            app.queueType || 'N/A',
+            app.queuePosition || '',
+            `${app.docsCount || 0}/7`,
+            app.dateRegistered || '',
+            app.handledBy || ''
+        ]);
+        
+        // Build CSV content
+        let csvContent = headers.join(',') + '\n';
+        rows.forEach(row => {
+            csvContent += row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + '\n';
+        });
+        
+        // Download
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', `ISF_Applicants_${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
 </script>
 {% endblock %}

@@ -23,6 +23,9 @@ urlpatterns = [
     # Delete applicant (AJAX endpoint)
     path('staff/delete-applicant/', views.delete_applicant, name='delete_applicant'),
     
+    # Resend SMS notification (AJAX endpoint)
+    path('staff/resend-sms/', views.resend_sms, name='resend_sms'),
+    
     # Channel A review workflow (Landowner submissions)
     path('staff/submissions/<uuid:submission_id>/', views.submission_review, name='submission_review'),
     path('staff/isf/<uuid:isf_id>/review/', views.isf_review, name='isf_review'),

@@ -420,6 +420,10 @@ class Applicant(models.Model):
     doc_2x2_picture = models.BooleanField(default=False, verbose_name="2x2 Picture")
     doc_sketch_location = models.BooleanField(default=False, verbose_name="Sketch of House Location")
     
+    # SMS tracking
+    registration_sms_sent = models.BooleanField(default=False, verbose_name="Registration SMS Sent")
+    eligibility_sms_sent = models.BooleanField(default=False, verbose_name="Eligibility SMS Sent")
+    
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -453,6 +457,35 @@ class Applicant(models.Model):
         actual_count = self.household_members.count() + 1
         # Return declared size if larger (members not yet added individually)
         return max(actual_count, self.household_size or 1)
+    
+    def send_registration_sms(self):
+        """Send SMS notification that applicant was registered."""
+        from .utils import send_sms
+        if not self.phone_number:
+            return False
+        channel_name = 'Danger Zone' if self.channel == 'danger_zone' else 'Walk-in'
+        message = f"Your housing application has been registered. Reference: {self.reference_number}. Channel: {channel_name}. Please wait for eligibility review."
+        if send_sms(self.phone_number, message, 'registration', applicant=self):
+            self.registration_sms_sent = True
+            self.save(update_fields=['registration_sms_sent'])
+            return True
+        return False
+    
+    def send_eligibility_sms(self, eligible=True):
+        """Send SMS notification of eligibility result."""
+        from .utils import send_sms
+        if not self.phone_number:
+            return False
+        if eligible:
+            message = f"Congratulations! You passed eligibility. Please visit the Talisay Housing Authority office to submit your 7 requirements. Reference: {self.reference_number}"
+        else:
+            message = f"Your housing application could not be processed. Reason: {self.disqualification_reason or 'See office for details'}. Reference: {self.reference_number}"
+        
+        if send_sms(self.phone_number, message, 'eligibility_result', applicant=self):
+            self.eligibility_sms_sent = True
+            self.save(update_fields=['eligibility_sms_sent'])
+            return True
+        return False
 
 
 class HouseholdMember(models.Model):
