@@ -1759,31 +1759,40 @@
                 'C': 'Channel C — Walk-in'
             };
             
-            // Hide all sections first
-            document.getElementById('landownerReviewSection').style.display = 'none';
-            document.getElementById('dangerZoneReviewSection').style.display = 'none';
-            document.getElementById('walkinReviewSection').style.display = 'none';
+            // Hide all sections first (with null checks)
+            const landownerSection = document.getElementById('landownerReviewSection');
+            const dangerZoneSection = document.getElementById('dangerZoneReviewSection');
+            const walkinSection = document.getElementById('walkinReviewSection');
+            
+            if (landownerSection) landownerSection.style.display = 'none';
+            if (dangerZoneSection) dangerZoneSection.style.display = 'none';
+            if (walkinSection) walkinSection.style.display = 'none';
             
             // Show appropriate section based on channel
             if (currentApplicant.channel === 'A') {
-                document.getElementById('landownerReviewSection').style.display = 'block';
-                document.getElementById('reviewSubmissionId').value = currentApplicant.submissionId || '';
+                if (landownerSection) landownerSection.style.display = 'block';
+                const reviewSubmissionIdEl = document.getElementById('reviewSubmissionId');
+                if (reviewSubmissionIdEl) reviewSubmissionIdEl.value = currentApplicant.submissionId || '';
                 
                 // Set eligibility badge for Channel A
                 const eligBadgeA = document.getElementById('reviewEligibilityBadgeA');
-                eligBadgeA.textContent = currentApplicant.eligibilityStatus;
-                const eligClassA = currentApplicant.eligibilityStatus === 'Eligible' ? 'success' : 
-                                  currentApplicant.eligibilityStatus === 'Disqualified' ? 'danger' : 'warning';
-                eligBadgeA.className = 'status-badge status-' + eligClassA;
+                if (eligBadgeA) {
+                    eligBadgeA.textContent = currentApplicant.eligibilityStatus;
+                    const eligClassA = currentApplicant.eligibilityStatus === 'Eligible' ? 'success' : 
+                                      currentApplicant.eligibilityStatus === 'Disqualified' ? 'danger' : 'warning';
+                    eligBadgeA.className = 'status-badge status-' + eligClassA;
+                }
                 
                 // Queue badge for Channel A
                 const queueBadgeA = document.getElementById('reviewQueueBadgeA');
-                if (currentApplicant.queueType && currentApplicant.queueType !== 'None') {
-                    queueBadgeA.style.display = 'inline-flex';
-                    queueBadgeA.textContent = currentApplicant.queueType + (currentApplicant.queuePosition ? ' #' + currentApplicant.queuePosition : '');
-                    queueBadgeA.className = 'status-badge status-info';
-                } else {
-                    queueBadgeA.style.display = 'none';
+                if (queueBadgeA) {
+                    if (currentApplicant.queueType && currentApplicant.queueType !== 'None') {
+                        queueBadgeA.style.display = 'inline-flex';
+                        queueBadgeA.textContent = currentApplicant.queueType + (currentApplicant.queuePosition ? ' #' + currentApplicant.queuePosition : '');
+                        queueBadgeA.className = 'status-badge status-info';
+                    } else {
+                        queueBadgeA.style.display = 'none';
+                    }
                 }
                 
                 // Populate ISF info fields (main applicant data)
@@ -1807,118 +1816,156 @@
                 // Populate document checklist for Channel A
                 populateDocumentChecklistA(currentApplicant);
             } else if (currentApplicant.channel === 'C') {
-            // Channel C: Regular Walk-in
-            document.getElementById('walkinReviewSection').style.display = 'block';
-            
-            document.getElementById('reviewEligibilityBadge').textContent = currentApplicant.eligibilityStatus;
-            const eligClass = currentApplicant.eligibilityStatus === 'Eligible' ? 'success' : 
-                              currentApplicant.eligibilityStatus === 'Disqualified' ? 'danger' : 'warning';
-            document.getElementById('reviewEligibilityBadge').className = 'status-badge status-' + eligClass;
-            
-            if (currentApplicant.queueType && currentApplicant.queueType !== 'None') {
-                document.getElementById('reviewQueueBadge').style.display = 'inline-flex';
-                document.getElementById('reviewQueueBadge').textContent = currentApplicant.queueType + (currentApplicant.queuePosition ? ' #' + currentApplicant.queuePosition : '');
-                document.getElementById('reviewQueueBadge').className = 'status-badge status-info';
-            } else {
-                document.getElementById('reviewQueueBadge').style.display = 'none';
-            }
-            
-            // Populate Channel C form fields
-            document.getElementById('reviewFullName').value = currentApplicant.fullName || '';
-            document.getElementById('reviewBarangay').value = currentApplicant.barangay || '';
-            document.getElementById('reviewIncome').value = currentApplicant.monthlyIncome || '';
-            document.getElementById('reviewHousehold').value = currentApplicant.householdSize || '';
-            document.getElementById('reviewYears').value = currentApplicant.yearsResiding || '';
-            document.getElementById('reviewPhone').value = currentApplicant.phoneNumber || '';
-            document.getElementById('reviewAddress').value = currentApplicant.currentAddress || '';
-            
-            // Populate eligibility checks
-            populateEligibilityChecks(currentApplicant);
-            
-            // Populate document checklist
-            populateDocumentChecklist(currentApplicant);
-            
-            // Lot assignment
-            if (currentApplicant.lotAssignment) {
-                document.getElementById('lotAssignmentSection').style.display = 'block';
-                document.getElementById('lotDetails').innerHTML = `
-                    <strong>Block ${currentApplicant.lotAssignment.block}, Lot ${currentApplicant.lotAssignment.lot}</strong> — ${currentApplicant.lotAssignment.site}<br>
-                    Awarded: ${currentApplicant.lotAssignment.dateAwarded}
-                    ${currentApplicant.electricityStatus ? '<br>Electricity: ' + currentApplicant.electricityStatus : ''}
-                `;
-            } else {
-                document.getElementById('lotAssignmentSection').style.display = 'none';
-            }
-        } else if (currentApplicant.channel === 'B') {
-            // Channel B: Danger Zone
-            document.getElementById('landownerReviewSection').style.display = 'none';
-            document.getElementById('dangerZoneReviewSection').style.display = 'block';
-            document.getElementById('walkinReviewSection').style.display = 'none';
-            
-            // Set eligibility badge
-            document.getElementById('reviewEligibilityBadgeB').textContent = currentApplicant.eligibilityStatus;
-            const eligClassB = currentApplicant.eligibilityStatus === 'Eligible' ? 'success' : 
-                              currentApplicant.eligibilityStatus === 'Disqualified' ? 'danger' : 'warning';
-            document.getElementById('reviewEligibilityBadgeB').className = 'status-badge status-' + eligClassB;
-            
-            if (currentApplicant.queueType && currentApplicant.queueType !== 'None') {
-                document.getElementById('reviewQueueBadgeB').style.display = 'inline-flex';
-                document.getElementById('reviewQueueBadgeB').textContent = currentApplicant.queueType + (currentApplicant.queuePosition ? ' #' + currentApplicant.queuePosition : '');
-                document.getElementById('reviewQueueBadgeB').className = 'status-badge status-info';
-            } else {
-                document.getElementById('reviewQueueBadgeB').style.display = 'none';
-            }
-            
-            // Populate Channel B form fields
-            document.getElementById('reviewFullNameB').value = currentApplicant.fullName || '';
-            document.getElementById('reviewBarangayB').value = currentApplicant.barangay || '';
-            document.getElementById('reviewIncomeB').value = currentApplicant.monthlyIncome || '';
-            document.getElementById('reviewHouseholdB').value = currentApplicant.householdSize || '';
-            document.getElementById('reviewYearsB').value = currentApplicant.yearsResiding || '';
-            document.getElementById('reviewPhoneB').value = currentApplicant.phoneNumber || '';
-            document.getElementById('reviewAddressB').value = currentApplicant.currentAddress || '';
-            
-            // Danger zone specific fields
-            document.getElementById('reviewDangerType').value = currentApplicant.dangerZoneType || '';
-            document.getElementById('reviewDangerLocation').value = currentApplicant.dangerZoneLocation || '';
-            
-            // CDRRMO status
-            const cdrrmoBox = document.getElementById('cdrrmoStatusBox');
-            const cdrrmoText = document.getElementById('cdrrmoStatusText');
-            if (currentApplicant.cdrrmoStatus === 'Certified - Danger Zone' || currentApplicant.cdrrmoStatus === 'Certified') {
-                cdrrmoBox.style.background = '#dcfce7';
-                cdrrmoBox.style.borderColor = '#86efac';
-                cdrrmoText.style.color = '#166534';
-                cdrrmoText.innerHTML = `<strong>✓ CDRRMO Certified</strong><br>Applicant has been verified as residing in a danger zone.`;
-            } else if (currentApplicant.cdrrmoStatus === 'Not Certified' || currentApplicant.cdrrmoStatus === 'Not Certified - Not Danger Zone') {
-                cdrrmoBox.style.background = '#fee2e2';
-                cdrrmoBox.style.borderColor = '#fca5a5';
-                cdrrmoText.style.color = '#991b1b';
-                cdrrmoText.innerHTML = `<strong>✗ CDRRMO Not Certified</strong><br>Applicant's location was not certified as a danger zone.`;
-            } else {
-                // Pending status - check for overdue
-                const daysPending = currentApplicant.cdrrmoDaysPending || 0;
-                const isOverdue = currentApplicant.isCdrrmoFlagged;
+                // Channel C: Regular Walk-in
+                if (walkinSection) walkinSection.style.display = 'block';
                 
-                if (isOverdue) {
-                    cdrrmoBox.style.background = '#fef2f2';
-                    cdrrmoBox.style.borderColor = '#fca5a5';
-                    cdrrmoText.style.color = '#dc2626';
-                    cdrrmoText.innerHTML = `<strong>⚠️ OVERDUE: Pending ${daysPending} days</strong><br>CDRRMO certification has been pending for more than 14 days. Follow-up required.`;
-                } else {
-                    cdrrmoBox.style.background = '#fef3c7';
-                    cdrrmoBox.style.borderColor = '#fcd34d';
-                    cdrrmoText.style.color = '#92400e';
-                    cdrrmoText.innerHTML = `<strong>⏳ Pending CDRRMO Certification</strong> (${daysPending} days)<br>Applicant must be certified by CDRRMO before eligibility can be determined.`;
+                const eligBadge = document.getElementById('reviewEligibilityBadge');
+                if (eligBadge) {
+                    eligBadge.textContent = currentApplicant.eligibilityStatus;
+                    const eligClass = currentApplicant.eligibilityStatus === 'Eligible' ? 'success' : 
+                                      currentApplicant.eligibilityStatus === 'Disqualified' ? 'danger' : 'warning';
+                    eligBadge.className = 'status-badge status-' + eligClass;
                 }
+                
+                const queueBadge = document.getElementById('reviewQueueBadge');
+                if (queueBadge) {
+                    if (currentApplicant.queueType && currentApplicant.queueType !== 'None') {
+                        queueBadge.style.display = 'inline-flex';
+                        queueBadge.textContent = currentApplicant.queueType + (currentApplicant.queuePosition ? ' #' + currentApplicant.queuePosition : '');
+                        queueBadge.className = 'status-badge status-info';
+                    } else {
+                        queueBadge.style.display = 'none';
+                    }
+                }
+                
+                // Populate Channel C form fields (with null checks)
+                const fullNameEl = document.getElementById('reviewFullName');
+                const barangayEl = document.getElementById('reviewBarangay');
+                const incomeEl = document.getElementById('reviewIncome');
+                const householdEl = document.getElementById('reviewHousehold');
+                const yearsEl = document.getElementById('reviewYears');
+                const phoneEl = document.getElementById('reviewPhone');
+                const addressEl = document.getElementById('reviewAddress');
+                
+                if (fullNameEl) fullNameEl.value = currentApplicant.fullName || '';
+                if (barangayEl) barangayEl.value = currentApplicant.barangay || '';
+                if (incomeEl) incomeEl.value = currentApplicant.monthlyIncome || '';
+                if (householdEl) householdEl.value = currentApplicant.householdSize || '';
+                if (yearsEl) yearsEl.value = currentApplicant.yearsResiding || '';
+                if (phoneEl) phoneEl.value = currentApplicant.phoneNumber || '';
+                if (addressEl) addressEl.value = currentApplicant.currentAddress || '';
+                
+                // Populate eligibility checks
+                populateEligibilityChecks(currentApplicant);
+                
+                // Populate document checklist
+                populateDocumentChecklist(currentApplicant);
+                
+                // Lot assignment
+                const lotSection = document.getElementById('lotAssignmentSection');
+                const lotDetails = document.getElementById('lotDetails');
+                if (lotSection && lotDetails) {
+                    if (currentApplicant.lotAssignment) {
+                        lotSection.style.display = 'block';
+                        lotDetails.innerHTML = `
+                            <strong>Block ${currentApplicant.lotAssignment.block}, Lot ${currentApplicant.lotAssignment.lot}</strong> — ${currentApplicant.lotAssignment.site}<br>
+                            Awarded: ${currentApplicant.lotAssignment.dateAwarded}
+                            ${currentApplicant.electricityStatus ? '<br>Electricity: ' + currentApplicant.electricityStatus : ''}
+                        `;
+                    } else {
+                        lotSection.style.display = 'none';
+                    }
+                }
+            } else if (currentApplicant.channel === 'B') {
+                // Channel B: Danger Zone
+                if (landownerSection) landownerSection.style.display = 'none';
+                if (dangerZoneSection) dangerZoneSection.style.display = 'block';
+                if (walkinSection) walkinSection.style.display = 'none';
+                
+                // Set eligibility badge
+                const eligBadgeB = document.getElementById('reviewEligibilityBadgeB');
+                if (eligBadgeB) {
+                    eligBadgeB.textContent = currentApplicant.eligibilityStatus;
+                    const eligClassB = currentApplicant.eligibilityStatus === 'Eligible' ? 'success' : 
+                                      currentApplicant.eligibilityStatus === 'Disqualified' ? 'danger' : 'warning';
+                    eligBadgeB.className = 'status-badge status-' + eligClassB;
+                }
+                
+                const queueBadgeB = document.getElementById('reviewQueueBadgeB');
+                if (queueBadgeB) {
+                    if (currentApplicant.queueType && currentApplicant.queueType !== 'None') {
+                        queueBadgeB.style.display = 'inline-flex';
+                        queueBadgeB.textContent = currentApplicant.queueType + (currentApplicant.queuePosition ? ' #' + currentApplicant.queuePosition : '');
+                        queueBadgeB.className = 'status-badge status-info';
+                    } else {
+                        queueBadgeB.style.display = 'none';
+                    }
+                }
+                
+                // Populate Channel B form fields (with null checks)
+                const fullNameBEl = document.getElementById('reviewFullNameB');
+                const barangayBEl = document.getElementById('reviewBarangayB');
+                const incomeBEl = document.getElementById('reviewIncomeB');
+                const householdBEl = document.getElementById('reviewHouseholdB');
+                const yearsBEl = document.getElementById('reviewYearsB');
+                const phoneBEl = document.getElementById('reviewPhoneB');
+                const addressBEl = document.getElementById('reviewAddressB');
+                const dangerTypeEl = document.getElementById('reviewDangerType');
+                const dangerLocEl = document.getElementById('reviewDangerLocation');
+                
+                if (fullNameBEl) fullNameBEl.value = currentApplicant.fullName || '';
+                if (barangayBEl) barangayBEl.value = currentApplicant.barangay || '';
+                if (incomeBEl) incomeBEl.value = currentApplicant.monthlyIncome || '';
+                if (householdBEl) householdBEl.value = currentApplicant.householdSize || '';
+                if (yearsBEl) yearsBEl.value = currentApplicant.yearsResiding || '';
+                if (phoneBEl) phoneBEl.value = currentApplicant.phoneNumber || '';
+                if (addressBEl) addressBEl.value = currentApplicant.currentAddress || '';
+                if (dangerTypeEl) dangerTypeEl.value = currentApplicant.dangerZoneType || '';
+                if (dangerLocEl) dangerLocEl.value = currentApplicant.dangerZoneLocation || '';
+                
+                // CDRRMO status (with null checks)
+                const cdrrmoBox = document.getElementById('cdrrmoStatusBox');
+                const cdrrmoText = document.getElementById('cdrrmoStatusText');
+                if (cdrrmoBox && cdrrmoText) {
+                    if (currentApplicant.cdrrmoStatus === 'Certified - Danger Zone' || currentApplicant.cdrrmoStatus === 'Certified') {
+                        cdrrmoBox.style.background = '#dcfce7';
+                        cdrrmoBox.style.borderColor = '#86efac';
+                        cdrrmoText.style.color = '#166534';
+                        cdrrmoText.innerHTML = `<strong>✓ CDRRMO Certified</strong><br>Applicant has been verified as residing in a danger zone.`;
+                    } else if (currentApplicant.cdrrmoStatus === 'Not Certified' || currentApplicant.cdrrmoStatus === 'Not Certified - Not Danger Zone') {
+                        cdrrmoBox.style.background = '#fee2e2';
+                        cdrrmoBox.style.borderColor = '#fca5a5';
+                        cdrrmoText.style.color = '#991b1b';
+                        cdrrmoText.innerHTML = `<strong>✗ CDRRMO Not Certified</strong><br>Applicant's location was not certified as a danger zone.`;
+                    } else {
+                        // Pending status - check for overdue
+                        const daysPending = currentApplicant.cdrrmoDaysPending || 0;
+                        const isOverdue = currentApplicant.isCdrrmoFlagged;
+                        
+                        if (isOverdue) {
+                            cdrrmoBox.style.background = '#fef2f2';
+                            cdrrmoBox.style.borderColor = '#fca5a5';
+                            cdrrmoText.style.color = '#dc2626';
+                            cdrrmoText.innerHTML = `<strong>⚠️ OVERDUE: Pending ${daysPending} days</strong><br>CDRRMO certification has been pending for more than 14 days. Follow-up required.`;
+                        } else {
+                            cdrrmoBox.style.background = '#fef3c7';
+                            cdrrmoBox.style.borderColor = '#fcd34d';
+                            cdrrmoText.style.color = '#92400e';
+                            cdrrmoText.innerHTML = `<strong>⏳ Pending CDRRMO Certification</strong> (${daysPending} days)<br>Applicant must be certified by CDRRMO before eligibility can be determined.`;
+                        }
+                    }
+                }
+                
+                // Populate eligibility checks for Channel B
+                populateEligibilityChecksB(currentApplicant);
+                
+                // Populate document checklist for Channel B
+                populateDocumentChecklistB(currentApplicant);
+            } else {
+                // Unknown channel - show Channel C section as fallback with error message
+                console.warn('Unknown channel:', currentApplicant.channel);
+                if (walkinSection) walkinSection.style.display = 'block';
             }
-            
-            // Populate eligibility checks for Channel B
-            populateEligibilityChecksB(currentApplicant);
-            
-            // Populate document checklist for Channel B
-            populateDocumentChecklistB(currentApplicant);
-        }
         
         // Populate SMS status section
         populateSmsStatus(currentApplicant);
@@ -2599,20 +2646,22 @@
                 const cdrrmoText = document.getElementById('cdrrmoStatusText');
                 const cdrrmoActionsBox = document.getElementById('cdrrmoActionsBox');
                 
-                if (newStatus === 'certified') {
-                    cdrrmoBox.style.background = '#dcfce7';
-                    cdrrmoBox.style.borderColor = '#86efac';
-                    cdrrmoText.style.color = '#166534';
-                    cdrrmoText.innerHTML = `<strong>✓ CDRRMO Certified</strong><br>Applicant has been verified as residing in a danger zone.`;
-                } else {
-                    cdrrmoBox.style.background = '#fee2e2';
-                    cdrrmoBox.style.borderColor = '#fca5a5';
-                    cdrrmoText.style.color = '#991b1b';
-                    cdrrmoText.innerHTML = `<strong>✗ CDRRMO Not Certified</strong><br>Applicant's location was not certified as a danger zone. Moved to Walk-in Queue.`;
+                if (cdrrmoBox && cdrrmoText) {
+                    if (newStatus === 'certified') {
+                        cdrrmoBox.style.background = '#dcfce7';
+                        cdrrmoBox.style.borderColor = '#86efac';
+                        cdrrmoText.style.color = '#166534';
+                        cdrrmoText.innerHTML = `<strong>✓ CDRRMO Certified</strong><br>Applicant has been verified as residing in a danger zone.`;
+                    } else {
+                        cdrrmoBox.style.background = '#fee2e2';
+                        cdrrmoBox.style.borderColor = '#fca5a5';
+                        cdrrmoText.style.color = '#991b1b';
+                        cdrrmoText.innerHTML = `<strong>✗ CDRRMO Not Certified</strong><br>Applicant's location was not certified as a danger zone. Moved to Walk-in Queue.`;
+                    }
                 }
                 
                 // Hide action buttons
-                cdrrmoActionsBox.style.display = 'none';
+                if (cdrrmoActionsBox) cdrrmoActionsBox.style.display = 'none';
                 
                 alert(`CDRRMO status updated to ${statusText}. Page will reload to reflect changes.`);
                 location.reload();
@@ -2629,41 +2678,72 @@
     function cancelEdit() {
         isEditMode = false;
         updateEditModeUI();
-        // Reset form values based on channel
+        // Reset form values based on channel (with null checks)
         if (currentApplicant) {
             if (currentApplicant.channel === 'A') {
                 // Reset landowner fields
-                document.getElementById('reviewLandownerName').value = currentApplicant.landownerName || '';
-                document.getElementById('reviewLandownerPhone').value = currentApplicant.landownerPhone || '';
-                document.getElementById('reviewPropertyAddress').value = currentApplicant.propertyAddress || '';
-                document.getElementById('reviewSubmissionBarangay').value = currentApplicant.submissionBarangay || currentApplicant.barangay || '';
+                const landownerNameEl = document.getElementById('reviewLandownerName');
+                const landownerPhoneEl = document.getElementById('reviewLandownerPhone');
+                const propertyAddressEl = document.getElementById('reviewPropertyAddress');
+                const submissionBarangayEl = document.getElementById('reviewSubmissionBarangay');
+                
+                if (landownerNameEl) landownerNameEl.value = currentApplicant.landownerName || '';
+                if (landownerPhoneEl) landownerPhoneEl.value = currentApplicant.landownerPhone || '';
+                if (propertyAddressEl) propertyAddressEl.value = currentApplicant.propertyAddress || '';
+                if (submissionBarangayEl) submissionBarangayEl.value = currentApplicant.submissionBarangay || currentApplicant.barangay || '';
                 
                 // Reset ISF fields (redesigned modal)
-                document.getElementById('reviewFullNameA').value = currentApplicant.fullName || '';
-                document.getElementById('reviewBarangayA').value = currentApplicant.barangay || '';
-                document.getElementById('reviewIncomeA').value = currentApplicant.monthlyIncome || '';
-                document.getElementById('reviewHouseholdA').value = currentApplicant.householdSize || '';
-                document.getElementById('reviewYearsA').value = currentApplicant.yearsResiding || '';
-                document.getElementById('reviewPhoneA').value = currentApplicant.phoneNumber || '';
-                document.getElementById('reviewAddressA').value = currentApplicant.propertyAddress || '';
+                const fullNameAEl = document.getElementById('reviewFullNameA');
+                const barangayAEl = document.getElementById('reviewBarangayA');
+                const incomeAEl = document.getElementById('reviewIncomeA');
+                const householdAEl = document.getElementById('reviewHouseholdA');
+                const yearsAEl = document.getElementById('reviewYearsA');
+                const phoneAEl = document.getElementById('reviewPhoneA');
+                const addressAEl = document.getElementById('reviewAddressA');
+                
+                if (fullNameAEl) fullNameAEl.value = currentApplicant.fullName || '';
+                if (barangayAEl) barangayAEl.value = currentApplicant.barangay || '';
+                if (incomeAEl) incomeAEl.value = currentApplicant.monthlyIncome || '';
+                if (householdAEl) householdAEl.value = currentApplicant.householdSize || '';
+                if (yearsAEl) yearsAEl.value = currentApplicant.yearsResiding || '';
+                if (phoneAEl) phoneAEl.value = currentApplicant.phoneNumber || '';
+                if (addressAEl) addressAEl.value = currentApplicant.propertyAddress || '';
             } else if (currentApplicant.channel === 'B') {
-                document.getElementById('reviewFullNameB').value = currentApplicant.fullName || '';
-                document.getElementById('reviewBarangayB').value = currentApplicant.barangay || '';
-                document.getElementById('reviewIncomeB').value = currentApplicant.monthlyIncome || '';
-                document.getElementById('reviewHouseholdB').value = currentApplicant.householdSize || '';
-                document.getElementById('reviewYearsB').value = currentApplicant.yearsResiding || '';
-                document.getElementById('reviewPhoneB').value = currentApplicant.phoneNumber || '';
-                document.getElementById('reviewAddressB').value = currentApplicant.currentAddress || '';
-                document.getElementById('reviewDangerType').value = currentApplicant.dangerZoneType || '';
-                document.getElementById('reviewDangerLocation').value = currentApplicant.dangerZoneLocation || '';
+                const fullNameBEl = document.getElementById('reviewFullNameB');
+                const barangayBEl = document.getElementById('reviewBarangayB');
+                const incomeBEl = document.getElementById('reviewIncomeB');
+                const householdBEl = document.getElementById('reviewHouseholdB');
+                const yearsBEl = document.getElementById('reviewYearsB');
+                const phoneBEl = document.getElementById('reviewPhoneB');
+                const addressBEl = document.getElementById('reviewAddressB');
+                const dangerTypeEl = document.getElementById('reviewDangerType');
+                const dangerLocEl = document.getElementById('reviewDangerLocation');
+                
+                if (fullNameBEl) fullNameBEl.value = currentApplicant.fullName || '';
+                if (barangayBEl) barangayBEl.value = currentApplicant.barangay || '';
+                if (incomeBEl) incomeBEl.value = currentApplicant.monthlyIncome || '';
+                if (householdBEl) householdBEl.value = currentApplicant.householdSize || '';
+                if (yearsBEl) yearsBEl.value = currentApplicant.yearsResiding || '';
+                if (phoneBEl) phoneBEl.value = currentApplicant.phoneNumber || '';
+                if (addressBEl) addressBEl.value = currentApplicant.currentAddress || '';
+                if (dangerTypeEl) dangerTypeEl.value = currentApplicant.dangerZoneType || '';
+                if (dangerLocEl) dangerLocEl.value = currentApplicant.dangerZoneLocation || '';
             } else {
-                document.getElementById('reviewFullName').value = currentApplicant.fullName || '';
-                document.getElementById('reviewBarangay').value = currentApplicant.barangay || '';
-                document.getElementById('reviewIncome').value = currentApplicant.monthlyIncome || '';
-                document.getElementById('reviewHousehold').value = currentApplicant.householdSize || '';
-                document.getElementById('reviewYears').value = currentApplicant.yearsResiding || '';
-                document.getElementById('reviewPhone').value = currentApplicant.phoneNumber || '';
-                document.getElementById('reviewAddress').value = currentApplicant.currentAddress || '';
+                const fullNameEl = document.getElementById('reviewFullName');
+                const barangayEl = document.getElementById('reviewBarangay');
+                const incomeEl = document.getElementById('reviewIncome');
+                const householdEl = document.getElementById('reviewHousehold');
+                const yearsEl = document.getElementById('reviewYears');
+                const phoneEl = document.getElementById('reviewPhone');
+                const addressEl = document.getElementById('reviewAddress');
+                
+                if (fullNameEl) fullNameEl.value = currentApplicant.fullName || '';
+                if (barangayEl) barangayEl.value = currentApplicant.barangay || '';
+                if (incomeEl) incomeEl.value = currentApplicant.monthlyIncome || '';
+                if (householdEl) householdEl.value = currentApplicant.householdSize || '';
+                if (yearsEl) yearsEl.value = currentApplicant.yearsResiding || '';
+                if (phoneEl) phoneEl.value = currentApplicant.phoneNumber || '';
+                if (addressEl) addressEl.value = currentApplicant.currentAddress || '';
             }
         }
     }
