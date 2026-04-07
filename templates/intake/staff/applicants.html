@@ -820,6 +820,25 @@
     </div>
     {% endif %}
 
+    <!-- Access Role Info Banner -->
+    {% if not can_modify %}
+    <div style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border: 1px solid #93c5fd; border-radius: 0.75rem; padding: 1rem 1.25rem; margin-bottom: 1rem; display: flex; align-items: flex-start; gap: 0.75rem;">
+        <div style="width: 36px; height: 36px; background: #2563eb; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <svg style="width: 18px; height: 18px; color: white;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+        </div>
+        <div>
+            <h4 style="margin: 0 0 0.25rem 0; font-weight: 600; color: #1e40af; font-size: 0.875rem;">Field Verification Access</h4>
+            <p style="margin: 0; color: #1e3a8a; font-size: 0.8125rem; line-height: 1.4;">
+                You can <strong>view applicants</strong> for census and field verification. 
+                <strong>Jocel</strong> or <strong>Joie</strong> can mark eligibility, edit records, and manage applicant data.
+            </p>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Controls -->
     <div class="controls-bar">
         <div class="search-box">
@@ -1310,7 +1329,8 @@
             </div>
             
             <div class="modal-footer" style="position: sticky; bottom: 0; background: white; border-top: 1px solid #e2e8f0;">
-                <!-- Edit Mode Toggle -->
+                {% if can_modify %}
+                <!-- Edit Mode Toggle - Only for Jocel/Joie -->
                 <button type="button" class="btn-modal secondary" id="btnEditToggle" onclick="toggleEditMode()">
                     <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
@@ -1319,7 +1339,7 @@
                     <span id="editToggleText">Edit</span>
                 </button>
                 
-                <!-- Action Buttons -->
+                <!-- Action Buttons - Only for Jocel/Joie -->
                 <div id="reviewActions">
                     <button type="button" class="btn-modal success" id="btnMarkEligible" onclick="markEligible()" style="background: #10b981;">
                         <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1352,17 +1372,28 @@
                     </button>
                 </div>
                 
-                <button type="button" class="btn-modal secondary" onclick="closeReviewModal()">
-                    Close
-                </button>
-                
-                <!-- Delete Button -->
-                <button type="button" class="btn-modal danger" onclick="confirmDelete()" style="background: #dc2626; margin-left: auto;">
+                <!-- Delete Button - Only for Jocel/Joie -->
+                <button type="button" class="btn-modal danger" id="btnDelete" onclick="confirmDelete()" style="background: #dc2626; margin-left: auto;">
                     <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <polyline points="3 6 5 6 21 6"></polyline>
                         <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                     </svg>
                     Delete
+                </button>
+                {% else %}
+                <!-- Read-Only Notice for Field Team -->
+                <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: #fef3c7; border-radius: 0.5rem; color: #92400e; font-size: 0.875rem;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    View Only — You can view for verification but not modify records
+                </div>
+                {% endif %}
+                
+                <button type="button" class="btn-modal secondary" onclick="closeReviewModal()">
+                    Close
                 </button>
             </div>
         </form>
@@ -1659,6 +1690,7 @@
 <script>
     // Store applicants data in JavaScript
     const applicantsData = {{ applicants_json|safe }};
+    const canModify = {{ can_modify|yesno:"true,false" }};
 
     // Table filtering
     function filterTable() {

@@ -1114,10 +1114,16 @@ def applicants_list(request):
     
     Displays in FIFO order (oldest first by registration date).
     """
-    allowed_positions = ['second_member', 'fourth_member']
+    # Staff who can view applicants list:
+    # - Jocel (fourth_member) & Joie (second_member): Full access - can review, edit, mark eligibility
+    # - Jay (third_member) & Field Team: Read access - can view for verification, add notes
+    allowed_positions = ['second_member', 'fourth_member', 'third_member', 'field']
     if request.user.position not in allowed_positions:
-        messages.error(request, 'Access denied. This module is for Second and Fourth Members only.')
+        messages.error(request, 'Access denied. This module is for authorized staff only.')
         return redirect('accounts:dashboard')
+    
+    # Determine if user has full access (can modify) or read-only (field verification)
+    can_modify = request.user.position in ['second_member', 'fourth_member']
     
     # Build unified applicants list from multiple sources
     applicants = []
@@ -1331,6 +1337,7 @@ def applicants_list(request):
     context = {
         'page_title': 'ISF Recording Management',
         'user_position': request.user.position,
+        'can_modify': can_modify,  # True for Jocel/Joie, False for Field Team
         'applicants': applicants,
         'applicants_json': json.dumps(applicants),
         'barangays': barangays,

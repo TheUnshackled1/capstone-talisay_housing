@@ -1,0 +1,47 @@
+┌─────────────────────────────────────────────────────────────────┐
+│                         MODULE 1 FLOW                           │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  CHANNEL A          CHANNEL B           CHANNEL C               │
+│  (Landowner)        (Danger Zone)       (Walk-in)               │
+│      │                   │                   │                  │
+│      ▼                   ▼                   ▼                  │
+│  Public Form         Jay/Field          Jay/Field               │
+│      │              registers           registers               │
+│      ▼                   │                   │                  │
+│  ISFRecord              │                   │                  │
+│      │                   ▼                   ▼                  │
+│      │              Applicant           Applicant               │
+│      │              (danger=Y)          (danger=N)              │
+│      │                   │                   │                  │
+│      │                   ▼                   │                  │
+│      │              CDRRMO Flag              │                  │
+│      │              (Pending)                │                  │
+│      │                   │                   │                  │
+│      └───────────────────┼───────────────────┘                  │
+│                          ▼                                      │
+│              ┌───────────────────────┐                          │
+│              │   Jocel/Joie Review   │                          │
+│              │   - Eligibility Check │                          │
+│              │   - Income ≤ ₱10k     │                          │
+│              │   - No property       │                          │
+│              │   - Not blacklisted   │                          │
+│              └───────────────────────┘                          │
+│                          │                                      │
+│              ┌───────────┴───────────┐                          │
+│              ▼                       ▼                          │
+│          ELIGIBLE              DISQUALIFIED                     │
+│              │                       │                          │
+│              ▼                       ▼                          │
+│       Queue Entry              SMS: Reason                      │
+│       (Priority/Walk-in)       (End of line)                    │
+│              │                                                  │
+│              ▼                                                  │
+│         SMS: "Passed eligibility"                               │
+│              │                                                  │
+│              ▼                                                  │
+│      ══════════════════════                                     │
+│      ║   TO MODULE 2    ║                                       │
+│      ══════════════════════                                     │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
