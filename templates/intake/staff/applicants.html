@@ -1694,10 +1694,15 @@
 
     // Table filtering
     function filterTable() {
-        const searchValue = document.getElementById('searchInput').value.toLowerCase();
-        const channelFilter = document.getElementById('filterChannel').value;
-        const statusFilter = document.getElementById('filterStatus').value;
-        const barangayFilter = document.getElementById('filterBarangay').value;
+        const searchInputEl = document.getElementById('searchInput');
+        const channelFilterEl = document.getElementById('filterChannel');
+        const statusFilterEl = document.getElementById('filterStatus');
+        const barangayFilterEl = document.getElementById('filterBarangay');
+        
+        const searchValue = searchInputEl ? searchInputEl.value.toLowerCase() : '';
+        const channelFilter = channelFilterEl ? channelFilterEl.value : 'all';
+        const statusFilter = statusFilterEl ? statusFilterEl.value : 'all';
+        const barangayFilter = barangayFilterEl ? barangayFilterEl.value : 'all';
         const rows = document.querySelectorAll('#applicantsTableBody tr');
         
         let visibleCount = 0;
@@ -1708,7 +1713,7 @@
             const cdrrmoOverdue = row.dataset.cdrrmoOverdue === 'true';
             const searchable = row.dataset.searchable;
 
-            const matchSearch = searchValue === '' || searchable.includes(searchValue);
+            const matchSearch = searchValue === '' || (searchable && searchable.includes(searchValue));
             const matchChannel = channelFilter === 'all' || channel === channelFilter;
             const matchBarangay = barangayFilter === 'all' || barangay === barangayFilter;
             
@@ -1724,7 +1729,8 @@
                 row.style.display = '';
                 visibleCount++;
                 // Update row number
-                row.querySelector('td:first-child').textContent = visibleCount;
+                const firstTd = row.querySelector('td:first-child');
+                if (firstTd) firstTd.textContent = visibleCount;
             } else {
                 row.style.display = 'none';
             }
@@ -1745,12 +1751,22 @@
             }
             
             const modal = document.getElementById('reviewModal');
+            if (!modal) {
+                console.error('Review modal element not found');
+                alert('Error: Modal not found in page.');
+                return;
+            }
             
-            // Set header info
-            document.getElementById('reviewName').textContent = currentApplicant.fullName;
-            document.getElementById('reviewReference').textContent = currentApplicant.referenceNumber + ' · Reg. ' + currentApplicant.dateRegistered;
-            document.getElementById('reviewApplicantId').value = currentApplicant.applicantId || currentApplicant.id;
-            document.getElementById('reviewChannel').value = currentApplicant.channel;
+            // Set header info (with null checks)
+            const reviewNameEl = document.getElementById('reviewName');
+            const reviewRefEl = document.getElementById('reviewReference');
+            const reviewApplicantIdEl = document.getElementById('reviewApplicantId');
+            const reviewChannelEl = document.getElementById('reviewChannel');
+            
+            if (reviewNameEl) reviewNameEl.textContent = currentApplicant.fullName;
+            if (reviewRefEl) reviewRefEl.textContent = currentApplicant.referenceNumber + ' · Reg. ' + currentApplicant.dateRegistered;
+            if (reviewApplicantIdEl) reviewApplicantIdEl.value = currentApplicant.applicantId || currentApplicant.id;
+            if (reviewChannelEl) reviewChannelEl.value = currentApplicant.channel;
             
             // Channel labels
             const channelLabels = {
@@ -1795,20 +1811,33 @@
                     }
                 }
                 
-                // Populate ISF info fields (main applicant data)
-                document.getElementById('reviewFullNameA').value = currentApplicant.fullName || '';
-                document.getElementById('reviewBarangayA').value = currentApplicant.barangay || '';
-                document.getElementById('reviewIncomeA').value = currentApplicant.monthlyIncome || '';
-                document.getElementById('reviewHouseholdA').value = currentApplicant.householdSize || '';
-                document.getElementById('reviewYearsA').value = currentApplicant.yearsResiding || '';
-                document.getElementById('reviewPhoneA').value = currentApplicant.phoneNumber || '';
-                document.getElementById('reviewAddressA').value = currentApplicant.propertyAddress || '';
+                // Populate ISF info fields (main applicant data) - with null checks
+                const fullNameAEl = document.getElementById('reviewFullNameA');
+                const barangayAEl = document.getElementById('reviewBarangayA');
+                const incomeAEl = document.getElementById('reviewIncomeA');
+                const householdAEl = document.getElementById('reviewHouseholdA');
+                const yearsAEl = document.getElementById('reviewYearsA');
+                const phoneAEl = document.getElementById('reviewPhoneA');
+                const addressAEl = document.getElementById('reviewAddressA');
                 
-                // Populate landowner info fields
-                document.getElementById('reviewLandownerName').value = currentApplicant.landownerName || '';
-                document.getElementById('reviewLandownerPhone').value = currentApplicant.landownerPhone || '';
-                document.getElementById('reviewPropertyAddress').value = currentApplicant.propertyAddress || '';
-                document.getElementById('reviewSubmissionBarangay').value = currentApplicant.submissionBarangay || currentApplicant.barangay || '';
+                if (fullNameAEl) fullNameAEl.value = currentApplicant.fullName || '';
+                if (barangayAEl) barangayAEl.value = currentApplicant.barangay || '';
+                if (incomeAEl) incomeAEl.value = currentApplicant.monthlyIncome || '';
+                if (householdAEl) householdAEl.value = currentApplicant.householdSize || '';
+                if (yearsAEl) yearsAEl.value = currentApplicant.yearsResiding || '';
+                if (phoneAEl) phoneAEl.value = currentApplicant.phoneNumber || '';
+                if (addressAEl) addressAEl.value = currentApplicant.propertyAddress || '';
+                
+                // Populate landowner info fields - with null checks
+                const landownerNameEl = document.getElementById('reviewLandownerName');
+                const landownerPhoneEl = document.getElementById('reviewLandownerPhone');
+                const propertyAddressEl = document.getElementById('reviewPropertyAddress');
+                const submissionBarangayEl = document.getElementById('reviewSubmissionBarangay');
+                
+                if (landownerNameEl) landownerNameEl.value = currentApplicant.landownerName || '';
+                if (landownerPhoneEl) landownerPhoneEl.value = currentApplicant.landownerPhone || '';
+                if (propertyAddressEl) propertyAddressEl.value = currentApplicant.propertyAddress || '';
+                if (submissionBarangayEl) submissionBarangayEl.value = currentApplicant.submissionBarangay || currentApplicant.barangay || '';
                 
                 // Populate eligibility checks for Channel A
                 populateEligibilityChecksA(currentApplicant);
@@ -1980,7 +2009,9 @@
         modal.classList.add('active');
         } catch (error) {
             console.error('Error opening review modal:', error);
-            alert('Error opening modal: ' + error.message);
+            console.error('Stack trace:', error.stack);
+            console.error('Current applicant data:', currentApplicant);
+            alert('Error opening modal: ' + error.message + '\n\nCheck browser console (F12) for details.');
         }
     }
     
@@ -2195,6 +2226,8 @@
 
     function populateEligibilityChecks(applicant) {
         const container = document.getElementById('eligibilityChecks');
+        if (!container) return;
+        
         const income = applicant.monthlyIncome || 0;
         const incomePass = income <= 10000;
         const cdrrmoPass = isCdrrmoCertified(applicant.cdrrmoStatus);
@@ -2231,6 +2264,8 @@
     
     function populateDocumentChecklist(applicant) {
         const container = document.getElementById('documentChecklist');
+        if (!container) return;
+        
         const docs = [
             { key: 'docBrgyResidency', dbKey: 'doc_brgy_residency', label: 'Brgy. Certificate of Residency' },
             { key: 'docBrgyIndigency', dbKey: 'doc_brgy_indigency', label: 'Brgy. Certificate of Indigency' },
@@ -2355,6 +2390,8 @@
     // Channel B specific eligibility checks (includes CDRRMO)
     function populateEligibilityChecksB(applicant) {
         const container = document.getElementById('eligibilityChecksB');
+        if (!container) return;
+        
         const income = applicant.monthlyIncome || 0;
         const incomePass = income <= 10000;
         const cdrrmoPass = isCdrrmoCertified(applicant.cdrrmoStatus);
@@ -2390,6 +2427,8 @@
     // Channel B specific document checklist
     function populateDocumentChecklistB(applicant) {
         const container = document.getElementById('documentChecklistB');
+        if (!container) return;
+        
         const docs = [
             { key: 'docBrgyResidency', dbKey: 'doc_brgy_residency', label: 'Brgy. Certificate of Residency' },
             { key: 'docBrgyIndigency', dbKey: 'doc_brgy_indigency', label: 'Brgy. Certificate of Indigency' },
@@ -2421,6 +2460,8 @@
     // Channel A specific eligibility checks
     function populateEligibilityChecksA(applicant) {
         const container = document.getElementById('eligibilityChecksA');
+        if (!container) return;
+        
         const income = applicant.monthlyIncome || 0;
         const incomePass = income <= 10000;
         
@@ -2455,6 +2496,8 @@
     // Channel A specific document checklist
     function populateDocumentChecklistA(applicant) {
         const container = document.getElementById('documentChecklistA');
+        if (!container) return;
+        
         const docs = [
             { key: 'docBrgyResidency', dbKey: 'doc_brgy_residency', label: 'Brgy. Certificate of Residency' },
             { key: 'docBrgyIndigency', dbKey: 'doc_brgy_indigency', label: 'Brgy. Certificate of Indigency' },
@@ -2488,17 +2531,22 @@
         const btnDisqualify = document.getElementById('btnDisqualify');
         const reviewActions = document.getElementById('reviewActions');
         
+        // Return early if elements don't exist (read-only users)
+        if (!reviewActions) return;
+        
         // Show action buttons only for pending status
         if (applicant.eligibilityStatus === 'Pending' || applicant.eligibilityStatus === 'Pending CDRRMO') {
             reviewActions.style.display = 'flex';
             
             // For Channel B pending CDRRMO, disable mark eligible
-            if (applicant.eligibilityStatus === 'Pending CDRRMO' && !isCdrrmoCertified(applicant.cdrrmoStatus)) {
-                btnMarkEligible.disabled = true;
-                btnMarkEligible.title = 'Awaiting CDRRMO certification';
-            } else {
-                btnMarkEligible.disabled = false;
-                btnMarkEligible.title = '';
+            if (btnMarkEligible) {
+                if (applicant.eligibilityStatus === 'Pending CDRRMO' && !isCdrrmoCertified(applicant.cdrrmoStatus)) {
+                    btnMarkEligible.disabled = true;
+                    btnMarkEligible.title = 'Awaiting CDRRMO certification';
+                } else {
+                    btnMarkEligible.disabled = false;
+                    btnMarkEligible.title = '';
+                }
             }
         } else {
             reviewActions.style.display = 'none';
@@ -2506,7 +2554,8 @@
     }
     
     function closeReviewModal() {
-        document.getElementById('reviewModal').classList.remove('active');
+        const modal = document.getElementById('reviewModal');
+        if (modal) modal.classList.remove('active');
         currentApplicant = null;
         isEditMode = false;
     }
@@ -2571,11 +2620,16 @@
             if (el) el.disabled = !isEditMode;
         });
         
-        document.getElementById('editToggleText').textContent = isEditMode ? 'Cancel Edit' : 'Edit';
-        document.getElementById('editActions').style.display = isEditMode ? 'flex' : 'none';
+        // These elements only exist for users with can_modify permission
+        const editToggleText = document.getElementById('editToggleText');
+        const editActions = document.getElementById('editActions');
+        const reviewActions = document.getElementById('reviewActions');
+        
+        if (editToggleText) editToggleText.textContent = isEditMode ? 'Cancel Edit' : 'Edit';
+        if (editActions) editActions.style.display = isEditMode ? 'flex' : 'none';
         
         // Show review actions for all channels when not in edit mode
-        document.getElementById('reviewActions').style.display = isEditMode ? 'none' : 'flex';
+        if (reviewActions) reviewActions.style.display = isEditMode ? 'none' : 'flex';
         
         // Show/hide CDRRMO action buttons for Channel B
         const cdrrmoActionsBox = document.getElementById('cdrrmoActionsBox');
@@ -2776,18 +2830,23 @@
     }
     
     function showDisqualifyReason() {
-        document.getElementById('disqualifyModal').classList.add('active');
+        const modal = document.getElementById('disqualifyModal');
+        if (modal) modal.classList.add('active');
     }
     
     function closeDisqualifyModal() {
-        document.getElementById('disqualifyModal').classList.remove('active');
+        const modal = document.getElementById('disqualifyModal');
+        if (modal) modal.classList.remove('active');
     }
     
     function confirmDisqualify() {
         if (!currentApplicant) return;
         
-        const reason = document.getElementById('disqualifyReason').value;
-        const notes = document.getElementById('disqualifyNotes').value;
+        const reasonEl = document.getElementById('disqualifyReason');
+        const notesEl = document.getElementById('disqualifyNotes');
+        
+        const reason = reasonEl ? reasonEl.value : '';
+        const notes = notesEl ? notesEl.value : '';
         
         if (!reason) {
             alert('Please select a reason for disqualification.');
@@ -2946,15 +3005,18 @@
 
     // Add Modal
     function openAddModal() {
-        document.getElementById('addModal').classList.add('active');
+        const modal = document.getElementById('addModal');
+        if (modal) modal.classList.add('active');
         // Reset to default channel (walk_in)
         selectChannel('walk_in');
         resetRegDocChecklist();
     }
 
     function closeAddModal() {
-        document.getElementById('addModal').classList.remove('active');
-        document.getElementById('addApplicantForm').reset();
+        const modal = document.getElementById('addModal');
+        const form = document.getElementById('addApplicantForm');
+        if (modal) modal.classList.remove('active');
+        if (form) form.reset();
         selectChannel('walk_in');
         resetRegDocChecklist();
     }
@@ -2969,7 +3031,8 @@
         });
         
         // Update hidden input
-        document.getElementById('channelInput').value = channel;
+        const channelInput = document.getElementById('channelInput');
+        if (channelInput) channelInput.value = channel;
         
         // Get all the elements
         const landownerFields = document.getElementById('landownerFields');
@@ -3174,9 +3237,13 @@
     
     // Export to CSV
     function exportToCSV() {
-        const channelFilter = document.getElementById('filterChannel').value;
-        const statusFilter = document.getElementById('filterStatus').value;
-        const barangayFilter = document.getElementById('filterBarangay').value;
+        const channelFilterEl = document.getElementById('filterChannel');
+        const statusFilterEl = document.getElementById('filterStatus');
+        const barangayFilterEl = document.getElementById('filterBarangay');
+        
+        const channelFilter = channelFilterEl ? channelFilterEl.value : 'all';
+        const statusFilter = statusFilterEl ? statusFilterEl.value : 'all';
+        const barangayFilter = barangayFilterEl ? barangayFilterEl.value : 'all';
         
         // Filter applicants based on current filters
         let filteredData = applicantsData.filter(app => {
