@@ -1,0 +1,355 @@
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                    MODULE 1: INTAKE MANAGEMENT                                      │
+│                              Informal Settler Recording Management                                  │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                     │
+│   CHANNEL A              CHANNEL B                    CHANNEL C                                     │
+│   (Landowner Portal)     (Danger Zone Walk-in)        (Regular Walk-in)                             │
+│        │                       │                            │                                       │
+│        ▼                       ▼                            ▼                                       │
+│   ┌──────────┐          ┌───────────────┐            ┌───────────────┐                              │
+│   │ PUBLIC   │          │ Jay/Jocel/    │            │ Jay/Jocel/    │                              │
+│   │ FORM     │          │ Field Login   │            │ Field Login   │                              │
+│   │ (No Auth)│          │ tha2026       │            │ tha2026       │                              │
+│   └────┬─────┘          └───────┬───────┘            └───────┬───────┘                              │
+│        │                        │                            │                                       │
+│        ▼                        ▼                            ▼                                       │
+│   /intake/               /intake/staff/               /intake/staff/                                │
+│   landowner-             register/                    register/                                     │
+│   submission/                  │                            │                                       │
+│        │                       │                            │                                       │
+│        ▼                       ▼                            ▼                                       │
+│   ┌──────────┐          ┌───────────────┐            ┌───────────────┐                              │
+│   │Landowner │          │  Applicant    │            │  Applicant    │                              │
+│   │Submission│          │  (Channel B)  │            │  (Channel C)  │                              │
+│   │LS-XXXXXX │          │  APP-XXXXXX   │            │  APP-XXXXXX   │                              │
+│   └────┬─────┘          └───────┬───────┘            └───────┬───────┘                              │
+│        │                        │                            │                                       │
+│        ▼                        │                            │                                       │
+│   ┌──────────┐                  │                            │                                       │
+│   │ISFRecord │                  ▼                            │                                       │
+│   │ISF-XXXXXX│          ┌───────────────┐                    │                                       │
+│   │(multiple)│          │   CDRRMO      │                    │                                       │
+│   └────┬─────┘          │Certification  │                    │                                       │
+│        │                │ Status:       │                    │                                       │
+│        │                │ - pending     │                    │                                       │
+│        │                │ - certified   │                    │                                       │
+│        │                │ - not_certified                    │                                       │
+│        │                └───────┬───────┘                    │                                       │
+│        │                        │                            │                                       │
+│   ┌────┴────────────────────────┴────────────────────────────┴────┐                                 │
+│   │                    📱 SMS: Registration Notification          │                                 │
+│   │        "You have been registered. Reference: XXX-XXXXXX"      │                                 │
+│   └───────────────────────────────┬───────────────────────────────┘                                 │
+│                                   │                                                                 │
+│                                   ▼                                                                 │
+│                    ╔══════════════════════════════════╗                                             │
+│                    ║      JOCEL or JOIE LOGIN         ║                                             │
+│                    ║  jocel.cuaysing / joie.tingson   ║                                             │
+│                    ║  Dashboard: /dashboard/xxx/      ║                                             │
+│                    ║  → Click "Applicants List"       ║                                             │
+│                    ╚══════════════════════════════════╝                                             │
+│                                   │                                                                 │
+│                                   ▼                                                                 │
+│                    ┌──────────────────────────────────┐                                             │
+│                    │   /intake/staff/applicants/      │                                             │
+│                    │   Unified Intake Dashboard       │                                             │
+│                    │   ───────────────────────────────│                                             │
+│                    │   • Shows all 3 channels         │                                             │
+│                    │   • FIFO order (oldest first)    │                                             │
+│                    │   • Filter by channel/barangay   │                                             │
+│                    │   • Click row → Modal opens      │                                             │
+│                    └────────────────┬─────────────────┘                                             │
+│                                     │                                                               │
+│                                     ▼                                                               │
+│                    ┌──────────────────────────────────┐                                             │
+│                    │      ELIGIBILITY REVIEW          │                                             │
+│                    ├──────────────────────────────────┤                                             │
+│                    │ ✓ Blacklist Check (auto)         │                                             │
+│                    │ ✓ Property Ownership (manual)    │                                             │
+│                    │ ✓ Income ≤ ₱10,000 (auto)        │                                             │
+│                    │ ✓ CDRRMO Certified (Channel B)   │                                             │
+│                    │ □ Update 7-Document Checklist    │                                             │
+│                    └────────────────┬─────────────────┘                                             │
+│                                     │                                                               │
+│                    ┌────────────────┴────────────────┐                                              │
+│                    ▼                                 ▼                                              │
+│         ┌──────────────────┐              ┌──────────────────┐                                      │
+│         │    ✅ ELIGIBLE    │              │  ❌ DISQUALIFIED  │                                      │
+│         └────────┬─────────┘              └────────┬─────────┘                                      │
+│                  │                                 │                                                │
+│                  ▼                                 ▼                                                │
+│         ┌──────────────────┐              ┌──────────────────┐                                      │
+│         │  Queue Entry     │              │  Reason Recorded │                                      │
+│         │  Created         │              │  - income        │                                      │
+│         │                  │              │  - property      │                                      │
+│         │  Channel A/B:    │              │  - blacklist     │                                      │
+│         │  → Priority Queue│              │  - cdrrmo        │                                      │
+│         │                  │              │                  │                                      │
+│         │  Channel C:      │              └────────┬─────────┘                                      │
+│         │  → Walk-in Queue │                       │                                                │
+│         └────────┬─────────┘                       │                                                │
+│                  │                                 │                                                │
+│                  ▼                                 ▼                                                │
+│         ┌──────────────────┐              ┌──────────────────┐                                      │
+│         │ 📱 SMS:          │              │ 📱 SMS:          │                                      │
+│         │ "Congratulations!│              │ "Application     │                                      │
+│         │  You are ELIGIBLE│              │  could not be    │                                      │
+│         │  Visit THA to    │              │  processed.      │                                      │
+│         │  submit 7 docs"  │              │  Reason: [XXX]"  │                                      │
+│         └────────┬─────────┘              └──────────────────┘                                      │
+│                  │                                 │                                                │
+│                  │                                 │                                                │
+│                  ▼                                 ▼                                                │
+│         ╔══════════════════╗              ┌──────────────────┐                                      │
+│         ║   TO MODULE 2    ║              │    END OF LINE   │                                      │
+│         ║ (Requirements)   ║              │  (May re-apply)  │                                      │
+│         ╚══════════════════╝              └──────────────────┘                                      │
+│                                                                                                     │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                      USER LOGIN REFERENCE                                           │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                     │
+│   ┌─────────────────────────────────────────────────────────────────────────────────────────────┐   │
+│   │  ROLE              USERNAME              DASHBOARD                    MODULE 1 ACCESS       │   │
+│   ├─────────────────────────────────────────────────────────────────────────────────────────────┤   │
+│   │  Head              arthur.maramba       /dashboard/head/             👁️ View Only          │   │
+│   │  OIC               victor.fregil        /dashboard/oic/              👁️ View Only          │   │
+│   │  Second Member     joie.tingson         /dashboard/second-member/    ✏️ Full Access         │   │
+│   │  Third Member      jay.olvido           /dashboard/third-member/     📝 Register+View       │   │
+│   │  Fourth Member     jocel.cuaysing       /dashboard/fourth-member/    ✏️ Full Access         │   │
+│   │  Fifth Member      laarni.hellera       /dashboard/fifth-member/     👁️ View Only          │   │
+│   │  Field             paul.betila          /dashboard/field/            📝 Register+View       │   │
+│   │  Field             roberto.dreyfus      /dashboard/field/            📝 Register+View       │   │
+│   │  Field             nonoy.field          /dashboard/field/            📝 Register+View       │   │
+│   │  Landowner         (No login)           /intake/landowner-submission/ 📤 Submit Only        │   │
+│   └─────────────────────────────────────────────────────────────────────────────────────────────┘   │
+│                                                                                                     │
+│   🔑 ALL PASSWORDS: tha2026                                                                         │
+│                                                                                                     │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                   CHANNEL B: CDRRMO WORKFLOW                                        │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                     │
+│   Applicant claims         Staff registers              CDRRMO visits               Staff records   │
+│   danger zone             (Jay/Jocel/Field)             (outside system)            result          │
+│        │                        │                             │                         │           │
+│        ▼                        ▼                             ▼                         ▼           │
+│   ┌─────────┐            ┌────────────┐              ┌────────────────┐         ┌────────────┐      │
+│   │ Walk-in │───────────▶│ Applicant  │─────────────▶│ Physical Visit │────────▶│ Jocel      │      │
+│   │ at THA  │            │ Created    │              │ to Location    │         │ Updates    │      │
+│   │ Office  │            │ status:    │              │                │         │ CDRRMO     │      │
+│   └─────────┘            │ pending_   │              │ Paper cert     │         │ Status     │      │
+│                          │ cdrrmo     │              │ returned to    │         │            │      │
+│                          │            │              │ THA            │         │            │      │
+│                          │ CDRRMO     │              │                │         │            │      │
+│                          │ Cert:      │              │                │         │            │      │
+│                          │ pending    │              └────────────────┘         └─────┬──────┘      │
+│                          └────────────┘                                               │             │
+│                                                                                       │             │
+│                                                        ┌──────────────────────────────┴──────┐      │
+│                                                        │                                     │      │
+│                                                        ▼                                     ▼      │
+│                                               ┌──────────────┐                      ┌──────────────┐│
+│                                               │  CERTIFIED   │                      │NOT CERTIFIED ││
+│                                               │              │                      │              ││
+│                                               │ Continue as  │                      │ Downgrade to ││
+│                                               │ Channel B    │                      │ Channel C    ││
+│                                               │              │                      │              ││
+│                                               │ → Priority   │                      │ → Walk-in    ││
+│                                               │   Queue      │                      │   Queue      ││
+│                                               └──────────────┘                      └──────────────┘│
+│                                                                                                     │
+│   ⏰ AUTO-FLAG: If CDRRMO pending > 14 days → "OVERDUE" badge shown in dashboard                    │
+│                                                                                                     │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                       QUEUE SYSTEM                                                  │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                     │
+│   ╔═══════════════════════════════════════════════════════════════════════════════════════════╗     │
+│   ║  🔴 PRIORITY QUEUE (Served First)                                                         ║     │
+│   ╠═══════════════════════════════════════════════════════════════════════════════════════════╣     │
+│   ║  Position 1: [Channel A ISF]  ← Landowner-endorsed                                        ║     │
+│   ║  Position 2: [Channel B]      ← CDRRMO certified danger zone                              ║     │
+│   ║  Position 3: [Channel A ISF]  ← Landowner-endorsed                                        ║     │
+│   ║  ...                                                                                      ║     │
+│   ╚═══════════════════════════════════════════════════════════════════════════════════════════╝     │
+│                                          │                                                          │
+│                                          │ Served first. When empty:                                │
+│                                          ▼                                                          │
+│   ╔═══════════════════════════════════════════════════════════════════════════════════════════╗     │
+│   ║  🟡 WALK-IN FIFO QUEUE (Served Second)                                                    ║     │
+│   ╠═══════════════════════════════════════════════════════════════════════════════════════════╣     │
+│   ║  Position 1: [Channel C]      ← Regular walk-in                                           ║     │
+│   ║  Position 2: [Channel B→C]    ← Downgraded (CDRRMO not certified)                         ║     │
+│   ║  Position 3: [Channel C]      ← Regular walk-in                                           ║     │
+│   ║  ...                                                                                      ║     │
+│   ╚═══════════════════════════════════════════════════════════════════════════════════════════╝     │
+│                                                                                                     │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                 7 REQUIRED DOCUMENTS CHECKLIST                                      │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                     │
+│   Tracked during Module 1 (optional) → Required for Module 2 (gate)                                 │
+│                                                                                                     │
+│   ┌────┬────────────────────────────────────┬─────────────────────┐                                 │
+│   │ #  │ Document                           │ Source              │                                 │
+│   ├────┼────────────────────────────────────┼─────────────────────┤                                 │
+│   │ 1  │ Brgy. Certificate of Residency     │ Barangay Hall       │                                 │
+│   │ 2  │ Brgy. Certificate of Indigency     │ Barangay Hall       │                                 │
+│   │ 3  │ Cedula (Community Tax Certificate) │ City Hall/Barangay  │                                 │
+│   │ 4  │ Police Clearance                   │ Police Station      │                                 │
+│   │ 5  │ Certificate of No Property         │ Assessor's Office   │                                 │
+│   │ 6  │ 2x2 Picture                        │ Photo Studio        │                                 │
+│   │ 7  │ Sketch of House Location           │ Applicant           │                                 │
+│   └────┴────────────────────────────────────┴─────────────────────┘                                 │
+│                                                                                                     │
+│   📋 Status shown in dashboard: "3/7 documents" (count of checked items)                            │
+│                                                                                                     │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                    📱 SMS NOTIFICATIONS                                             │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                     │
+│   TRIGGER                          MESSAGE                                                          │
+│   ─────────────────────────────────────────────────────────────────────────────────────────────     │
+│   ISF Registered (Channel A)       "Your name was submitted for housing assistance.                 │
+│                                     Reference: ISF-XXXXXX. Keep this for follow-up."                │
+│                                                                                                     │
+│   Applicant Registered (B/C)       "You have been registered for housing assistance.                │
+│                                     Reference: APP-XXXXXX. Keep this for follow-up."                │
+│                                                                                                     │
+│   Eligibility PASSED               "Congratulations! You are ELIGIBLE for housing assistance.       │
+│                                     Please visit THA office to submit your 7 requirements.          │
+│                                     Reference: APP-XXXXXX"                                          │
+│                                                                                                     │
+│   Eligibility FAILED               "Your application could not be processed.                        │
+│                                     Reason: [income/property/blacklist/cdrrmo].                     │
+│                                     Reference: APP-XXXXXX"                                          │
+│                                                                                                     │
+│   CDRRMO Certified                 "Your location has been certified as danger zone.                │
+│                                     You are on the priority list. Reference: APP-XXXXXX"            │
+│                                                                                                     │
+│   CDRRMO Not Certified             "Your location was not certified as danger zone.                 │
+│                                     You are placed on the regular waiting list.                     │
+│                                     Queue number: XX"                                               │
+│                                                                                                     │
+│   🔧 Provider: Semaphore API (Philippine SMS Gateway)                                               │
+│   📊 Logs: All SMS tracked in SMSLog table (audit trail)                                            │
+│   🔄 Resend: Staff can resend via button in applicant modal                                         │
+│                                                                                                     │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                    URL ROUTES REFERENCE                                             │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                     │
+│   PUBLIC ROUTES (No Authentication)                                                                 │
+│   ────────────────────────────────────────────────────────────────────────────────────────────      │
+│   GET/POST  /intake/landowner-submission/     → Channel A landowner portal                          │
+│                                                                                                     │
+│   STAFF ROUTES (Login Required)                                                                     │
+│   ────────────────────────────────────────────────────────────────────────────────────────────      │
+│   GET       /intake/staff/applicants/         → Unified intake dashboard                            │
+│   GET/POST  /intake/staff/register/           → Walk-in registration (Channel A/B/C)                │
+│   POST      /intake/staff/update-eligibility/ → Mark eligible/disqualified (AJAX)                   │
+│   POST      /intake/staff/update-applicant/   → Edit applicant data (AJAX)                          │
+│   POST      /intake/staff/delete-applicant/   → Delete applicant (AJAX)                             │
+│   POST      /intake/staff/resend-sms/         → Resend SMS notification                             │
+│                                                                                                     │
+│   DASHBOARD ROUTES                                                                                  │
+│   ────────────────────────────────────────────────────────────────────────────────────────────      │
+│   GET       /dashboard/head/                  → Arthur Maramba                                      │
+│   GET       /dashboard/oic/                   → Victor Fregil                                       │
+│   GET       /dashboard/second-member/         → Joie Tingson                                        │
+│   GET       /dashboard/third-member/          → Jay Olvido                                          │
+│   GET       /dashboard/fourth-member/         → Jocel Cuaysing                                      │
+│   GET       /dashboard/fifth-member/          → Laarni Hellera                                      │
+│   GET       /dashboard/field/                 → Paul, Roberto, Nonoy                                │
+│                                                                                                     │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                               ✅ MODULE 1 → MODULE 2 HANDOFF                                        │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                     │
+│   Eligible applicants ready for Module 2:                                                           │
+│                                                                                                     │
+│   ┌─────────────────────────────────────────────────────────────────────────────────────────────┐   │
+│   │                                                                                             │   │
+│   │   Applicant Profile                                                                         │   │
+│   │   ├── Reference: APP-XXXXXXXX                                                               │   │
+│   │   ├── Status: "eligible"                                                                    │   │
+│   │   ├── Channel: landowner / danger_zone / walk_in                                            │   │
+│   │   ├── Queue: Priority (position X) or Walk-in (position Y)                                  │   │
+│   │   ├── Documents: 0-7 verified (tracking started)                                            │   │
+│   │   ├── SMS: Registration + Eligibility sent                                                  │   │
+│   │   └── Ready for: 7 Requirements Gate → Application Form                                     │   │
+│   │                                                                                             │   │
+│   └─────────────────────────────────────────────────────────────────────────────────────────────┘   │
+│                                                                                                     │
+│                                          │                                                          │
+│                                          ▼                                                          │
+│   ╔═════════════════════════════════════════════════════════════════════════════════════════════╗   │
+│   ║                              MODULE 2: HOUSING APPLICATION                                  ║   │
+│   ╠═════════════════════════════════════════════════════════════════════════════════════════════╣   │
+│   ║  Stage 1: Seven Requirements Gate (all 7 docs verified)                                     ║   │
+│   ║  Stage 2: Application Form Generation                                                       ║   │
+│   ║  Stage 3: Signatory Routing (Jay → OIC Victor → Head Arthur)                                ║   │
+│   ║  Stage 4: Standby Queue                                                                     ║   │
+│   ║  Stage 5: Lot Awarding                                                                      ║   │
+│   ║  Stage 6: Electricity Connection Tracking                                                   ║   │
+│   ╚═════════════════════════════════════════════════════════════════════════════════════════════╝   │
+│                                                                                                     │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                    📊 IMPLEMENTATION STATUS                                         │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                     │
+│   ✅ COMPLETE (95%)                                                                                 │
+│   ──────────────────────────────────────────────────────────────────────────────────────────────    │
+│   ✅ Channel A: Landowner Portal (public form, ISF records, SMS)                                    │
+│   ✅ Channel B: Danger Zone (CDRRMO workflow, 14-day flagging)                                      │
+│   ✅ Channel C: Regular Walk-in (direct registration, eligibility)                                  │
+│   ✅ Eligibility Checks: Income ≤₱10k, Blacklist, Property, CDRRMO                                  │
+│   ✅ Queue System: Priority + Walk-in FIFO                                                          │
+│   ✅ SMS Notifications: Semaphore API, resend capability                                            │
+│   ✅ Document Checklist: 7 documents tracked                                                        │
+│   ✅ Access Control: Role-based permissions                                                         │
+│   ✅ Dashboard: Unified intake view with filters                                                    │
+│                                                                                                     │
+│   ⚠️ PARTIAL                                                                                        │
+│   ──────────────────────────────────────────────────────────────────────────────────────────────    │
+│   ⚠️ CDRRMO integration (manual only, no automated notification)                                    │
+│   ⚠️ Property verification (manual check, no database integration)                                  │
+│                                                                                                     │
+│   ❌ NOT IMPLEMENTED (Low Priority)                                                                 │
+│   ──────────────────────────────────────────────────────────────────────────────────────────────    │
+│   ❌ Duplicate applicant detection                                                                  │
+│   ❌ Bulk eligibility processing                                                                    │
+│   ❌ Pagination for large lists                                                                     │
+│   ❌ Age/residency minimum checks                                                                   │
+│                                                                                                     │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+Document generated: April 7, 2026
+Module 1 Status: READY FOR MODULE 2
