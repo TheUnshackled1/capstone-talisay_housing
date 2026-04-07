@@ -144,6 +144,6 @@ LOGOUT_REDIRECT_URL = 'home'
 # Sign up at https://semaphore.co to get your API key (50 free SMS)
 # Set SMS_ENABLED = True and add your API key to enable real SMS sending
 
-SMS_ENABLED = False  # Set to True to enable real SMS sending
-SEMAPHORE_API_KEY = ''  # Your Semaphore API key (get from semaphore.co)
-SEMAPHORE_SENDER_NAME = 'THA'  # Sender name (max 11 chars, requires approval)
+SMS_ENABLED = True  # Real SMS sending is now ENABLED
+SEMAPHORE_API_KEY = 'c3f15974a138c3c7aabef97f481781f5'
+SEMAPHORE_SENDER_NAME = 'SEMAPHORE'  # Default sender (custom sender requires approval)
