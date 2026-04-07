@@ -569,9 +569,10 @@ def update_eligibility(request):
     if request.method != 'POST':
         return JsonResponse({'success': False, 'error': 'POST required'}, status=405)
     
-    allowed_positions = ['fourth_member', 'second_member', 'oic', 'head']
+    # Only Jocel and Joie can mark eligibility (operational staff)
+    allowed_positions = ['fourth_member', 'second_member']
     if request.user.position not in allowed_positions:
-        return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
+        return JsonResponse({'success': False, 'error': 'Permission denied. Only Jocel or Joie can mark eligibility.'}, status=403)
     
     applicant_id = request.POST.get('applicant_id')
     action = request.POST.get('action')
@@ -791,9 +792,10 @@ def update_applicant(request):
     if request.method != 'POST':
         return JsonResponse({'success': False, 'error': 'POST required'}, status=405)
     
-    allowed_positions = ['fourth_member', 'second_member', 'oic', 'head']
+    # Only Jocel and Joie can edit applicant data (operational staff)
+    allowed_positions = ['fourth_member', 'second_member']
     if request.user.position not in allowed_positions:
-        return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
+        return JsonResponse({'success': False, 'error': 'Permission denied. Only Jocel or Joie can edit applicant data.'}, status=403)
     
     applicant_id = request.POST.get('applicant_id')
     channel = request.POST.get('channel')
@@ -991,9 +993,10 @@ def delete_applicant(request):
     if request.method != 'POST':
         return JsonResponse({'success': False, 'error': 'POST required'}, status=405)
     
-    allowed_positions = ['fourth_member', 'second_member', 'oic', 'head']
+    # Only Jocel and Joie can delete applicants (operational staff)
+    allowed_positions = ['fourth_member', 'second_member']
     if request.user.position not in allowed_positions:
-        return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
+        return JsonResponse({'success': False, 'error': 'Permission denied. Only Jocel or Joie can delete records.'}, status=403)
     
     applicant_id = request.POST.get('applicant_id')
     channel = request.POST.get('channel')
@@ -1116,13 +1119,14 @@ def applicants_list(request):
     """
     # Staff who can view applicants list:
     # - Jocel (fourth_member) & Joie (second_member): Full access - can review, edit, mark eligibility
-    # - Jay (third_member) & Field Team: Read access - can view for verification, add notes
-    allowed_positions = ['second_member', 'fourth_member', 'third_member', 'field']
+    # - Jay (third_member) & Field Team: Read access - can view for verification
+    # - OIC & Head: View only - oversight access
+    allowed_positions = ['second_member', 'fourth_member', 'third_member', 'field', 'oic', 'head']
     if request.user.position not in allowed_positions:
         messages.error(request, 'Access denied. This module is for authorized staff only.')
         return redirect('accounts:dashboard')
     
-    # Determine if user has full access (can modify) or read-only (field verification)
+    # Determine if user has full access (can modify) or read-only (field/oversight)
     can_modify = request.user.position in ['second_member', 'fourth_member']
     
     # Build unified applicants list from multiple sources

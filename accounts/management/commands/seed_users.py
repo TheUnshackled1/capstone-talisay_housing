@@ -56,6 +56,28 @@ class Command(BaseCommand):
                 'last_name': 'Hellera',
                 'position': 'fifth_member',
             },
+            # Ronda / Field Personnel
+            {
+                'username': 'paul.betila',
+                'email': 'paul.betila@talisayhousing.gov.ph',
+                'first_name': 'Paul Martin',
+                'last_name': 'Betila',
+                'position': 'field',
+            },
+            {
+                'username': 'roberto.dreyfus',
+                'email': 'roberto.dreyfus@talisayhousing.gov.ph',
+                'first_name': 'Roberto',
+                'last_name': 'Dreyfus',
+                'position': 'field',
+            },
+            {
+                'username': 'nonoy.field',
+                'email': 'nonoy@talisayhousing.gov.ph',
+                'first_name': 'Nonoy',
+                'last_name': '',
+                'position': 'field',
+            },
         ]
 
         created_count = 0
