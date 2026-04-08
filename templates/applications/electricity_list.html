@@ -1,0 +1,668 @@
+{% extends 'staff_base.html' %}
+{% load static %}
+
+{% block title %}Electricity Tracking - Module 2{% endblock %}
+
+{% block nav_applications %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Page Header */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+}
+
+.page-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0;
+}
+
+.page-subtitle {
+    font-size: 0.875rem;
+    color: #64748b;
+    margin-top: 0.25rem;
+}
+
+/* Status Cards */
+.status-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+    .status-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .status-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.status-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1rem;
+    border: 1px solid #e2e8f0;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+}
+
+.status-card:hover {
+    border-color: #60a5fa;
+    background: #f8fafc;
+}
+
+.status-card.active {
+    border-color: #3b82f6;
+    background: #eff6ff;
+}
+
+.status-card .count {
+    font-size: 1.75rem;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.status-card .label {
+    font-size: 0.6875rem;
+    color: #64748b;
+    margin-top: 0.25rem;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.status-card.pending .count { color: #94a3b8; }
+.status-card.applied .count { color: #3b82f6; }
+.status-card.scheduled .count { color: #8b5cf6; }
+.status-card.completed .count { color: #0ea5e9; }
+.status-card.connected .count { color: #10b981; }
+.status-card.issues .count { color: #ef4444; }
+
+/* Overdue Alert */
+.overdue-alert {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.overdue-alert svg {
+    color: #ef4444;
+    flex-shrink: 0;
+}
+
+.overdue-alert p {
+    font-size: 0.875rem;
+    color: #991b1b;
+    margin: 0;
+}
+
+.overdue-alert strong {
+    color: #dc2626;
+}
+
+/* Table Container */
+.table-container {
+    background: white;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+}
+
+.electricity-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.electricity-table thead {
+    background: #f8fafc;
+}
+
+.electricity-table th {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.electricity-table td {
+    padding: 0.75rem 1rem;
+    font-size: 0.8125rem;
+    color: #334155;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+}
+
+.electricity-table tbody tr:hover {
+    background: #f8fafc;
+}
+
+/* Applicant Cell */
+.applicant-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.applicant-name {
+    font-weight: 500;
+    color: #1e293b;
+}
+
+.applicant-ref {
+    font-size: 0.6875rem;
+    color: #94a3b8;
+    font-family: ui-monospace, monospace;
+}
+
+/* Status Badge */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.625rem;
+    border-radius: 9999px;
+    font-size: 0.6875rem;
+    font-weight: 500;
+}
+
+.status-badge.pending { background: #f1f5f9; color: #64748b; }
+.status-badge.applied { background: #dbeafe; color: #2563eb; }
+.status-badge.inspection_scheduled { background: #ede9fe; color: #7c3aed; }
+.status-badge.inspection_completed { background: #e0f2fe; color: #0284c7; }
+.status-badge.connected { background: #dcfce7; color: #16a34a; }
+.status-badge.issues { background: #fee2e2; color: #dc2626; }
+
+/* Overdue Flag */
+.overdue-flag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.125rem 0.375rem;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 4px;
+    font-size: 0.625rem;
+    color: #dc2626;
+    margin-left: 0.5rem;
+}
+
+/* Action Button */
+.btn-update {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.375rem 0.75rem;
+    background: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.6875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-update:hover {
+    background: #2563eb;
+}
+
+/* Modal Styles */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 50;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-overlay.active {
+    display: flex;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 32rem;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.modal-header {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.modal-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0;
+}
+
+.modal-subtitle {
+    font-size: 0.8125rem;
+    color: #64748b;
+    margin-top: 0.25rem;
+}
+
+.btn-close {
+    background: none;
+    border: none;
+    padding: 0.25rem;
+    cursor: pointer;
+    color: #94a3b8;
+}
+
+.btn-close:hover {
+    color: #64748b;
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 0.375rem;
+}
+
+.form-select, .form-input {
+    width: 100%;
+    padding: 0.625rem 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    transition: border-color 0.2s;
+}
+
+.form-select:focus, .form-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-textarea {
+    width: 100%;
+    padding: 0.625rem 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    min-height: 80px;
+    resize: vertical;
+}
+
+.modal-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+.btn-cancel {
+    padding: 0.5rem 1rem;
+    background: white;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 0.8125rem;
+    color: #374151;
+    cursor: pointer;
+}
+
+.btn-cancel:hover {
+    background: #f9fafb;
+}
+
+.btn-save {
+    padding: 0.5rem 1rem;
+    background: #3b82f6;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.8125rem;
+    color: white;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.btn-save:hover {
+    background: #2563eb;
+}
+
+/* Back Link */
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.8125rem;
+    color: #64748b;
+    text-decoration: none;
+    margin-bottom: 1rem;
+}
+
+.back-link:hover {
+    color: #3b82f6;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="padding: 1.5rem;">
+    <!-- Back Link -->
+    <a href="{% url 'applications:applications_list' %}" class="back-link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        Back to Applications
+    </a>
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Electricity Connection Tracking</h1>
+            <p class="page-subtitle">Module 2 Stage 6 — Coordinating with Negros Power for awarded units</p>
+        </div>
+    </div>
+
+    <!-- Status Cards -->
+    <div class="status-grid">
+        <a href="?status=pending" class="status-card pending {% if filter_status == 'pending' %}active{% endif %}">
+            <div class="count">{{ status_counts.pending }}</div>
+            <div class="label">Pending</div>
+        </a>
+        <a href="?status=applied" class="status-card applied {% if filter_status == 'applied' %}active{% endif %}">
+            <div class="count">{{ status_counts.applied }}</div>
+            <div class="label">Applied</div>
+        </a>
+        <a href="?status=inspection_scheduled" class="status-card scheduled {% if filter_status == 'inspection_scheduled' %}active{% endif %}">
+            <div class="count">{{ status_counts.inspection_scheduled }}</div>
+            <div class="label">Inspection Scheduled</div>
+        </a>
+        <a href="?status=inspection_completed" class="status-card completed {% if filter_status == 'inspection_completed' %}active{% endif %}">
+            <div class="count">{{ status_counts.inspection_completed }}</div>
+            <div class="label">Inspection Done</div>
+        </a>
+        <a href="?status=connected" class="status-card connected {% if filter_status == 'connected' %}active{% endif %}">
+            <div class="count">{{ status_counts.connected }}</div>
+            <div class="label">Connected</div>
+        </a>
+        <a href="?status=issues" class="status-card issues {% if filter_status == 'issues' %}active{% endif %}">
+            <div class="count">{{ status_counts.issues }}</div>
+            <div class="label">Issues</div>
+        </a>
+    </div>
+
+    <!-- Overdue Alert -->
+    {% if overdue_count > 0 %}
+    <div class="overdue-alert">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+        <p><strong>{{ overdue_count }}</strong> connection{{ overdue_count|pluralize }} overdue (>30 days since lot awarded). Follow up with Negros Power required.</p>
+    </div>
+    {% endif %}
+
+    <!-- Connections Table -->
+    <div class="table-container">
+        <table class="electricity-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Applicant</th>
+                    <th>Lot/Site</th>
+                    <th>Status</th>
+                    <th>Negros Power Ref</th>
+                    <th>Inspection Date</th>
+                    <th>Meter #</th>
+                    <th>Days Since Award</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for conn in connections %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>
+                        <div class="applicant-info">
+                            <span class="applicant-name">{{ conn.application.applicant.full_name }}</span>
+                            <span class="applicant-ref">{{ conn.application.application_number }}</span>
+                        </div>
+                    </td>
+                    <td>
+                        {% if conn.application.lot_awarding %}
+                            Lot {{ conn.application.lot_awarding.lot_number }}
+                            {% if conn.application.lot_awarding.site_name %}
+                                <br><small style="color: #64748b;">{{ conn.application.lot_awarding.site_name }}</small>
+                            {% endif %}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="status-badge {{ conn.status }}">
+                            {{ conn.get_status_display }}
+                        </span>
+                        {% if conn.is_overdue %}
+                        <span class="overdue-flag">
+                            ⚠️ {{ conn.days_pending }}d overdue
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td>{{ conn.negros_power_reference|default:"—" }}</td>
+                    <td>{{ conn.inspection_date|date:"M d, Y"|default:"—" }}</td>
+                    <td>{{ conn.meter_number|default:"—" }}</td>
+                    <td>
+                        {% if conn.status != 'connected' %}
+                            {{ conn.days_pending }} days
+                        {% else %}
+                            <span style="color: #10b981;">✓ Complete</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <button type="button" class="btn-update" onclick="openUpdateModal('{{ conn.id }}', '{{ conn.status }}', '{{ conn.negros_power_reference }}', '{{ conn.meter_number }}', '{{ conn.application.applicant.full_name }}')">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                            </svg>
+                            Update
+                        </button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9" style="text-align: center; padding: 2rem; color: #64748b;">
+                        No electricity connections to track. Connections appear here after lots are awarded.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Update Modal -->
+<div class="modal-overlay" id="updateModal">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <div>
+                <h2 class="modal-title">Update Electricity Status</h2>
+                <p class="modal-subtitle" id="modalApplicantName"></p>
+            </div>
+            <button class="btn-close" onclick="closeUpdateModal()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+        </div>
+        <form id="updateForm" method="post" action="{% url 'applications:update_electricity' %}">
+            {% csrf_token %}
+            <input type="hidden" name="connection_id" id="connectionId">
+            
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Status</label>
+                    <select class="form-select" name="status" id="statusSelect" onchange="toggleFields()">
+                        <option value="pending">Pending - Not Yet Applied</option>
+                        <option value="applied">Applied to Negros Power</option>
+                        <option value="inspection_scheduled">Inspection Scheduled</option>
+                        <option value="inspection_completed">Inspection Completed</option>
+                        <option value="connected">Electricity Connected</option>
+                        <option value="issues">Issues - Requires Follow-up</option>
+                    </select>
+                </div>
+                
+                <div class="form-group" id="negroPowerRefGroup" style="display: none;">
+                    <label class="form-label">Negros Power Reference #</label>
+                    <input type="text" class="form-input" name="negros_power_reference" id="negrosPowerRef" placeholder="e.g., NP-2026-123456">
+                </div>
+                
+                <div class="form-group" id="inspectionDateGroup" style="display: none;">
+                    <label class="form-label">Inspection Date</label>
+                    <input type="date" class="form-input" name="inspection_date" id="inspectionDate">
+                </div>
+                
+                <div class="form-group" id="inspectionResultGroup" style="display: none;">
+                    <label class="form-label">Inspection Result</label>
+                    <textarea class="form-textarea" name="inspection_result" placeholder="Notes from inspection..."></textarea>
+                </div>
+                
+                <div class="form-group" id="meterNumberGroup" style="display: none;">
+                    <label class="form-label">Meter Number</label>
+                    <input type="text" class="form-input" name="meter_number" id="meterNumber" placeholder="e.g., 12345678">
+                </div>
+                
+                <div class="form-group" id="issueDescGroup" style="display: none;">
+                    <label class="form-label">Issue Description</label>
+                    <textarea class="form-textarea" name="issue_description" placeholder="Describe the issue..."></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Notes</label>
+                    <textarea class="form-textarea" name="notes" placeholder="Additional notes..."></textarea>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button type="button" class="btn-cancel" onclick="closeUpdateModal()">Cancel</button>
+                <button type="submit" class="btn-save">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function openUpdateModal(connectionId, currentStatus, negroPowerRef, meterNumber, applicantName) {
+    document.getElementById('connectionId').value = connectionId;
+    document.getElementById('statusSelect').value = currentStatus;
+    document.getElementById('negrosPowerRef').value = negroPowerRef || '';
+    document.getElementById('meterNumber').value = meterNumber || '';
+    document.getElementById('modalApplicantName').textContent = applicantName;
+    
+    toggleFields();
+    document.getElementById('updateModal').classList.add('active');
+}
+
+function closeUpdateModal() {
+    document.getElementById('updateModal').classList.remove('active');
+}
+
+function toggleFields() {
+    const status = document.getElementById('statusSelect').value;
+    
+    // Hide all conditional fields
+    document.getElementById('negroPowerRefGroup').style.display = 'none';
+    document.getElementById('inspectionDateGroup').style.display = 'none';
+    document.getElementById('inspectionResultGroup').style.display = 'none';
+    document.getElementById('meterNumberGroup').style.display = 'none';
+    document.getElementById('issueDescGroup').style.display = 'none';
+    
+    // Show relevant fields based on status
+    if (status === 'applied') {
+        document.getElementById('negroPowerRefGroup').style.display = 'block';
+    } else if (status === 'inspection_scheduled') {
+        document.getElementById('negroPowerRefGroup').style.display = 'block';
+        document.getElementById('inspectionDateGroup').style.display = 'block';
+    } else if (status === 'inspection_completed') {
+        document.getElementById('negroPowerRefGroup').style.display = 'block';
+        document.getElementById('inspectionResultGroup').style.display = 'block';
+    } else if (status === 'connected') {
+        document.getElementById('negroPowerRefGroup').style.display = 'block';
+        document.getElementById('meterNumberGroup').style.display = 'block';
+    } else if (status === 'issues') {
+        document.getElementById('negroPowerRefGroup').style.display = 'block';
+        document.getElementById('issueDescGroup').style.display = 'block';
+    }
+}
+
+// Close modal on overlay click
+document.getElementById('updateModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeUpdateModal();
+    }
+});
+
+// Handle form submission via AJAX
+document.getElementById('updateForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    
+    fetch(this.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            closeUpdateModal();
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        alert('Error: ' + error);
+    });
+});
+</script>
+{% endblock %}

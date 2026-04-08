@@ -286,3 +286,125 @@ class FacilitatedService(models.Model):
     
     def __str__(self):
         return f"{self.application.application_number} - {self.get_service_type_display()}"
+
+
+class ElectricityConnection(models.Model):
+    """
+    Tracks electricity connection status for awarded units.
+    Managed by Joie (2nd Member) and Laarni (5th Member).
+    Coordination with Negros Power.
+    """
+    STATUS_CHOICES = [
+        ('pending', 'Pending - Not Yet Applied'),
+        ('applied', 'Applied to Negros Power'),
+        ('inspection_scheduled', 'Inspection Scheduled'),
+        ('inspection_completed', 'Inspection Completed'),
+        ('connected', 'Electricity Connected'),
+        ('issues', 'Issues - Requires Follow-up'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    application = models.OneToOneField(
+        Application,
+        on_delete=models.CASCADE,
+        related_name='electricity_connection'
+    )
+    
+    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='pending')
+    
+    # Application to Negros Power
+    applied_at = models.DateTimeField(null=True, blank=True)
+    applied_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='electricity_applications'
+    )
+    negros_power_reference = models.CharField(max_length=50, blank=True)
+    
+    # Inspection tracking
+    inspection_date = models.DateField(null=True, blank=True)
+    inspection_result = models.TextField(blank=True)
+    
+    # Connection completion
+    connected_at = models.DateTimeField(null=True, blank=True)
+    meter_number = models.CharField(max_length=50, blank=True)
+    
+    # Issue tracking
+    issue_description = models.TextField(blank=True)
+    issue_resolved_at = models.DateTimeField(null=True, blank=True)
+    
+    notes = models.TextField(blank=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Electricity Connection"
+        verbose_name_plural = "Electricity Connections"
+    
+    def __str__(self):
+        return f"{self.application.application_number} - {self.get_status_display()}"
+    
+    @property
+    def days_pending(self):
+        """Days since lot was awarded without electricity connection."""
+        if self.status == 'connected':
+            return 0
+        if self.application.status == 'awarded':
+            from django.utils import timezone
+            award_date = self.application.updated_at
+            return (timezone.now() - award_date).days
+        return 0
+    
+    @property
+    def is_overdue(self):
+        """Flag if pending > 30 days (per office policy)."""
+        return self.days_pending > 30
+
+
+class LotAwarding(models.Model):
+    """
+    Records lot awarding details.
+    Managed by Jocel (4th Member).
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    application = models.OneToOneField(
+        Application,
+        on_delete=models.CASCADE,
+        related_name='lot_awarding'
+    )
+    
+    # Lot details
+    lot_number = models.CharField(max_length=50)
+    block_number = models.CharField(max_length=50, blank=True)
+    site_name = models.CharField(max_length=100, blank=True, help_text="e.g., GK Cabatangan")
+    
+    # Awarding ceremony
+    awarded_at = models.DateTimeField(auto_now_add=True)
+    awarded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='lots_awarded'
+    )
+    
+    # Contract signing
+    contract_signed = models.BooleanField(default=False)
+    contract_signed_at = models.DateTimeField(null=True, blank=True)
+    
+    # Key turnover
+    keys_turned_over = models.BooleanField(default=False)
+    keys_turned_over_at = models.DateTimeField(null=True, blank=True)
+    
+    notes = models.TextField(blank=True)
+    
+    class Meta:
+        ordering = ['-awarded_at']
+        verbose_name = "Lot Awarding"
+        verbose_name_plural = "Lot Awardings"
+    
+    def __str__(self):
+        return f"{self.application.application_number} - Lot {self.lot_number}"
