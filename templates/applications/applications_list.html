@@ -1,0 +1,1310 @@
+{% extends 'staff_base.html' %}
+{% load static %}
+
+{% block title %}Applications - Module 2{% endblock %}
+
+{% block nav_applications %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Stage Summary Cards - Matching Figma */
+.stages-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+@media (max-width: 1024px) {
+    .stages-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .stages-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.stage-card {
+    background: white;
+    border-radius: 12px;
+    padding: 0.625rem;
+    border: 1px solid #e2e8f0;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.stage-card:hover {
+    border-color: #60a5fa;
+    background: #f8fafc;
+}
+
+.stage-card.active {
+    border-color: #60a5fa;
+    background: #eff6ff;
+}
+
+.stage-card .stage-count {
+    font-size: 1.5rem;
+    font-weight: 400;
+    color: #1e293b;
+    line-height: 1.2;
+}
+
+.stage-card .stage-title {
+    font-size: 0.5625rem;
+    color: #64748b;
+    margin-top: 0.25rem;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+/* Routing Delay Alert - Red style matching Figma */
+.routing-alert {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.routing-alert-icon {
+    color: #ef4444;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.routing-alert-content {
+    flex: 1;
+}
+
+.routing-alert-content p {
+    font-size: 0.75rem;
+    color: #991b1b;
+    margin: 0;
+}
+
+.routing-alert-content .alert-label {
+    font-weight: 600;
+    color: #dc2626;
+}
+
+.routing-alert-content h4 {
+    font-weight: 600;
+    color: #92400e;
+    margin-bottom: 0.25rem;
+}
+
+.routing-alert-content p {
+    font-size: 0.875rem;
+    color: #b45309;
+    margin: 0;
+}
+
+/* Filter Bar - Matching Figma */
+.filter-bar {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.search-box {
+    flex: 1;
+    min-width: 200px;
+    position: relative;
+}
+
+.search-box input {
+    width: 100%;
+    padding: 0.5rem 0.75rem 0.5rem 2rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    background: white;
+    transition: all 0.2s;
+}
+
+.search-box input:focus {
+    outline: none;
+    border-color: #60a5fa;
+}
+
+.search-box input::placeholder {
+    color: #94a3b8;
+}
+
+.search-box .search-icon {
+    position: absolute;
+    left: 0.625rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    font-size: 0.875rem;
+}
+
+.filter-select {
+    padding: 0.5rem 2rem 0.5rem 0.75rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    background: white;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.5rem center;
+    background-repeat: no-repeat;
+    background-size: 1rem;
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: #60a5fa;
+}
+
+/* Applications Table - Matching Figma */
+.applications-table-container {
+    background: white;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.applications-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.applications-table thead {
+    background: #f8fafc;
+}
+
+.applications-table th {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    font-size: 0.625rem;
+    font-weight: 500;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid #e2e8f0;
+    white-space: nowrap;
+}
+
+.applications-table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+}
+
+.applications-table tbody tr {
+    transition: background 0.15s;
+}
+
+.applications-table tbody tr:hover {
+    background: #f8fafc;
+}
+
+.applications-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Applicant Cell */
+.applicant-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.applicant-name {
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: #1e293b;
+}
+
+.applicant-ref {
+    font-size: 0.625rem;
+    color: #94a3b8;
+    font-family: ui-monospace, monospace;
+}
+
+.routing-delayed-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-top: 0.125rem;
+    font-size: 0.5625rem;
+    color: #dc2626;
+}
+
+/* Queue Badge - Matching Figma purple style */
+.queue-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.125rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.625rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.queue-badge.priority {
+    background: #f3e8ff;
+    color: #7c3aed;
+}
+
+.queue-badge.walkin {
+    background: #f3e8ff;
+    color: #7c3aed;
+}
+
+.queue-badge.standby {
+    background: #dcfce7;
+    color: #16a34a;
+}
+
+/* Document Progress - Matching Figma */
+.doc-progress {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+.doc-progress-bar {
+    width: 5rem;
+    height: 0.375rem;
+    background: #e2e8f0;
+    border-radius: 9999px;
+    overflow: hidden;
+}
+
+.doc-progress-fill {
+    height: 100%;
+    background: #3b82f6;
+    border-radius: 9999px;
+    transition: width 0.3s ease;
+}
+
+.doc-progress-text {
+    font-size: 0.625rem;
+    color: #64748b;
+    white-space: nowrap;
+}
+
+.doc-complete-check {
+    color: #22c55e;
+    font-size: 0.75rem;
+}
+
+/* Form Status - Matching Figma */
+.form-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.625rem;
+}
+
+.form-status.pending {
+    color: #94a3b8;
+}
+
+.form-status.can-generate {
+    color: #94a3b8;
+}
+
+.form-status.generated {
+    color: #16a34a;
+}
+
+.form-status .check-icon {
+    color: #22c55e;
+}
+
+/* Routing Status - Matching Figma text style */
+.routing-status {
+    font-size: 0.625rem;
+}
+
+.routing-status.completed {
+    color: #16a34a;
+}
+
+.routing-status.in-progress {
+    color: #3b82f6;
+}
+
+.routing-status.not-started {
+    color: #94a3b8;
+}
+
+/* Stage Badge - Matching Figma colors */
+.stage-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.125rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.625rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.stage-badge.eligibility {
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+.stage-badge.document-gathering {
+    background: #fef3c7;
+    color: #d97706;
+}
+
+.stage-badge.form-released {
+    background: #dbeafe;
+    color: #2563eb;
+}
+
+.stage-badge.signatory-routing {
+    background: #ede9fe;
+    color: #7c3aed;
+}
+
+.stage-badge.fully-approved {
+    background: #ccfbf1;
+    color: #0d9488;
+}
+
+.stage-badge.lot-awarded {
+    background: #dcfce7;
+    color: #16a34a;
+}
+
+/* Action Buttons - Matching Figma */
+.action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.375rem 0.625rem;
+    border-radius: 8px;
+    font-size: 0.625rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    border: none;
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+.action-btn:hover {
+    background: #eff6ff;
+    color: #3b82f6;
+}
+
+.action-btn .eye-icon {
+    width: 0.75rem;
+    height: 0.75rem;
+}
+
+/* Table Footer */
+.table-footer {
+    padding: 0.75rem 1rem;
+    border-top: 1px solid #f1f5f9;
+    background: #f8fafc;
+}
+
+.table-footer p {
+    font-size: 0.6875rem;
+    color: #64748b;
+    margin: 0;
+}
+
+/* Modal Styles */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s;
+}
+
+.modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 800px;
+    max-height: 90vh;
+    overflow-y: auto;
+    transform: translateY(20px);
+    transition: transform 0.2s;
+}
+
+.modal-overlay.active .modal-content {
+    transform: translateY(0);
+}
+
+.modal-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.modal-header h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0;
+}
+
+.modal-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: none;
+    background: #f3f4f6;
+    color: #6b7280;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    transition: all 0.2s;
+}
+
+.modal-close:hover {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+/* Progress Bar */
+.progress-tracker {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    position: relative;
+}
+
+.progress-tracker::before {
+    content: '';
+    position: absolute;
+    top: 16px;
+    left: 32px;
+    right: 32px;
+    height: 3px;
+    background: #e5e7eb;
+    z-index: 0;
+}
+
+.progress-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    position: relative;
+    z-index: 1;
+}
+
+.progress-step-circle {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #6b7280;
+}
+
+.progress-step.completed .progress-step-circle {
+    background: #22c55e;
+    color: white;
+}
+
+.progress-step.current .progress-step-circle {
+    background: #2563eb;
+    color: white;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2);
+}
+
+.progress-step-label {
+    font-size: 0.75rem;
+    color: #6b7280;
+    text-align: center;
+    max-width: 80px;
+}
+
+/* Document Checklist Grid */
+.document-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.75rem;
+}
+
+.document-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem;
+    background: #f9fafb;
+    border-radius: 10px;
+    border: 1px solid #e5e7eb;
+    transition: all 0.2s;
+}
+
+.document-item.verified {
+    background: #f0fdf4;
+    border-color: #86efac;
+}
+
+.document-checkbox {
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+    border: 2px solid #d1d5db;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.document-checkbox.checked {
+    background: #22c55e;
+    border-color: #22c55e;
+    color: white;
+}
+
+.document-label {
+    font-size: 0.875rem;
+    color: #374151;
+}
+
+/* Signatory Timeline */
+.signatory-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.timeline-item {
+    display: flex;
+    gap: 1rem;
+    position: relative;
+}
+
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 36px;
+    bottom: -16px;
+    width: 2px;
+    background: #e5e7eb;
+}
+
+.timeline-item:last-child::before {
+    display: none;
+}
+
+.timeline-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #f3f4f6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    z-index: 1;
+}
+
+.timeline-icon.completed {
+    background: #22c55e;
+    color: white;
+}
+
+.timeline-icon.pending {
+    background: #e5e7eb;
+    color: #9ca3af;
+}
+
+.timeline-icon.delayed {
+    background: #fbbf24;
+    color: white;
+}
+
+.timeline-content {
+    flex: 1;
+    padding-bottom: 1rem;
+}
+
+.timeline-content h4 {
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 0.25rem;
+}
+
+.timeline-content p {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin: 0;
+}
+
+.timeline-content .delayed-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    background: #fef3c7;
+    color: #b45309;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    margin-top: 0.5rem;
+}
+
+/* Section Headings in Modal */
+.section-heading {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.section-heading .count {
+    background: #e5e7eb;
+    padding: 0.125rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #6b7280;
+}
+
+/* Generate Form Button */
+.generate-form-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    background: linear-gradient(to right, #2563eb, #3b82f6);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.generate-form-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.generate-form-btn:disabled {
+    background: #d1d5db;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Empty State - Matching Figma */
+.empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+}
+
+.empty-state-icon {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 0.75rem;
+    background: #f1f5f9;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    color: #94a3b8;
+}
+
+.empty-state h3 {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #64748b;
+    margin-bottom: 0.25rem;
+}
+
+.empty-state p {
+    color: #94a3b8;
+    font-size: 0.75rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .stages-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .filter-bar {
+        flex-direction: column;
+    }
+    
+    .search-box {
+        width: 100%;
+    }
+    
+    .applications-table {
+        display: block;
+        overflow-x: auto;
+    }
+    
+    .modal-content {
+        width: 100%;
+        max-height: 100vh;
+        border-radius: 0;
+    }
+}
+</style>
+{% endblock %}
+
+{% block page_title %}Housing Application & Evaluation{% endblock %}
+{% block page_description %}<p class="page-subtitle">Module 2 — Document checklist, signatory routing, standby queue, lot awarding</p>{% endblock %}
+
+{% block content %}
+<!-- Stage Summary Cards - Matching Figma layout -->
+<div class="stages-grid">
+    <div class="stage-card {% if filter_stage == 'eligibility' %}active{% endif %}" 
+         onclick="filterByStage('eligibility')">
+        <div class="stage-count">{{ stage_counts.eligibility|default:0 }}</div>
+        <div class="stage-title">Eligibility</div>
+    </div>
+    <div class="stage-card {% if filter_stage == 'document_gathering' %}active{% endif %}" 
+         onclick="filterByStage('document_gathering')">
+        <div class="stage-count">{{ stage_counts.document_gathering|default:0 }}</div>
+        <div class="stage-title">Document Gathering</div>
+    </div>
+    <div class="stage-card {% if filter_stage == 'form_released' %}active{% endif %}" 
+         onclick="filterByStage('form_released')">
+        <div class="stage-count">{{ stage_counts.form_released|default:0 }}</div>
+        <div class="stage-title">Form Released</div>
+    </div>
+    <div class="stage-card {% if filter_stage == 'signatory_routing' %}active{% endif %}" 
+         onclick="filterByStage('signatory_routing')">
+        <div class="stage-count">{{ stage_counts.signatory_routing|default:0 }}</div>
+        <div class="stage-title">Signatory Routing</div>
+    </div>
+    <div class="stage-card {% if filter_stage == 'fully_approved' %}active{% endif %}" 
+         onclick="filterByStage('fully_approved')">
+        <div class="stage-count">{{ stage_counts.fully_approved|default:0 }}</div>
+        <div class="stage-title">Fully Approved</div>
+    </div>
+    <div class="stage-card {% if filter_stage == 'lot_awarded' %}active{% endif %}" 
+         onclick="filterByStage('lot_awarded')">
+        <div class="stage-count">{{ stage_counts.lot_awarded|default:0 }}</div>
+        <div class="stage-title">Lot Awarded</div>
+    </div>
+</div>
+
+<!-- Routing Delay Alert -->
+{% if delayed_routings %}
+<div class="routing-alert">
+    <span class="routing-alert-icon">⚠</span>
+    <div class="routing-alert-content">
+        <p><span class="alert-label">Routing delay detected:</span> {{ delayed_routings.count }} application(s) stalled for more than 3 days.</p>
+    </div>
+</div>
+{% endif %}
+
+<!-- Filter Bar -->
+<div class="filter-bar">
+    <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="searchInput" placeholder="Search by name or reference number..." 
+               value="{{ search }}" onkeyup="handleSearch(event)">
+    </div>
+    <select class="filter-select" id="stageFilter" onchange="handleStageChange()">
+        <option value="all" {% if filter_stage == 'all' %}selected{% endif %}>All Stages</option>
+        <option value="eligibility" {% if filter_stage == 'eligibility' %}selected{% endif %}>Eligibility</option>
+        <option value="document_gathering" {% if filter_stage == 'document_gathering' %}selected{% endif %}>Document Gathering</option>
+        <option value="form_released" {% if filter_stage == 'form_released' %}selected{% endif %}>Form Released</option>
+        <option value="signatory_routing" {% if filter_stage == 'signatory_routing' %}selected{% endif %}>Signatory Routing</option>
+        <option value="fully_approved" {% if filter_stage == 'fully_approved' %}selected{% endif %}>Fully Approved</option>
+        <option value="lot_awarded" {% if filter_stage == 'lot_awarded' %}selected{% endif %}>Lot Awarded</option>
+    </select>
+</div>
+
+<!-- Applications Table -->
+<div class="applications-table-container">
+    {% if applicants_data %}
+    <div style="overflow-x: auto;">
+    <table class="applications-table">
+        <thead>
+            <tr>
+                <th>Applicant</th>
+                <th>Queue</th>
+                <th>Docs (Group A)</th>
+                <th>Form</th>
+                <th>Routing</th>
+                <th>Stage</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for data in applicants_data %}
+            <tr data-applicant-id="{{ data.applicant.id }}">
+                <td>
+                    <div class="applicant-cell">
+                        <span class="applicant-name">{{ data.applicant.full_name }}</span>
+                        <span class="applicant-ref">{{ data.applicant.reference_number }}</span>
+                        {% if data.is_delayed %}
+                        <div class="routing-delayed-indicator">
+                            <span>⚠</span> Routing delayed
+                        </div>
+                        {% endif %}
+                    </div>
+                </td>
+                <td>
+                    {% if data.applicant.channel == 'landowner' or data.applicant.channel == 'danger_zone' %}
+                    <span class="queue-badge priority">Priority #{{ forloop.counter }}</span>
+                    {% else %}
+                    <span class="queue-badge walkin">Walk-in #{{ forloop.counter }}</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="doc-progress">
+                        <div class="doc-progress-bar">
+                            <div class="doc-progress-fill" style="width: {% widthratio data.group_a_verified 7 100 %}%"></div>
+                        </div>
+                        <span class="doc-progress-text">{{ data.group_a_verified }}/7</span>
+                        {% if data.group_a_verified >= 7 %}
+                        <span class="doc-complete-check">✓</span>
+                        {% endif %}
+                    </div>
+                </td>
+                <td>
+                    {% if data.form_generated %}
+                    <span class="form-status generated"><span class="check-icon">✓</span> Generated</span>
+                    {% elif data.can_generate_form %}
+                    <span class="form-status can-generate">Ready to generate</span>
+                    {% else %}
+                    <span class="form-status pending">Locked</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if data.routing_status == 'Completed' %}
+                    <span class="routing-status completed">Completed</span>
+                    {% elif data.routing_status == 'In Progress' %}
+                    <span class="routing-status in-progress">In Progress</span>
+                    {% else %}
+                    <span class="routing-status not-started">Not Started</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% with stage_slug=data.current_stage|lower|slugify %}
+                    <span class="stage-badge {{ stage_slug }}">{{ data.current_stage }}</span>
+                    {% endwith %}
+                </td>
+                <td>
+                    <button class="action-btn" onclick="openApplicationModal('{{ data.applicant.id }}', '{{ data.applicant.full_name }}', '{{ data.applicant.reference_number }}', {{ data.group_a_verified }}, '{{ data.current_stage }}')">
+                        <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                        View
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+    <div class="table-footer">
+        <p>Showing {{ applicants_data|length }} eligible applicant{{ applicants_data|length|pluralize }}</p>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-state-icon">📋</div>
+        <h3>No Applications Found</h3>
+        <p>{% if search %}No results match your search "{{ search }}"{% elif filter_stage != 'all' %}No applicants in this stage{% else %}No eligible applicants yet. Applicants must be marked as "Eligible" in Module 1 first.{% endif %}</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Application Detail Modal -->
+<div class="modal-overlay" id="applicationModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div>
+                <h2 id="modalApplicantName">Loading...</h2>
+                <p style="font-size: 0.875rem; color: #6b7280; margin: 0.25rem 0 0 0;">
+                    <span id="modalRefNumber"></span>
+                </p>
+            </div>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <!-- Progress Tracker -->
+            <div class="progress-tracker" id="progressTracker">
+                <div class="progress-step" data-step="1">
+                    <div class="progress-step-circle">1</div>
+                    <span class="progress-step-label">Eligibility</span>
+                </div>
+                <div class="progress-step" data-step="2">
+                    <div class="progress-step-circle">2</div>
+                    <span class="progress-step-label">Documents</span>
+                </div>
+                <div class="progress-step" data-step="3">
+                    <div class="progress-step-circle">3</div>
+                    <span class="progress-step-label">Form</span>
+                </div>
+                <div class="progress-step" data-step="4">
+                    <div class="progress-step-circle">4</div>
+                    <span class="progress-step-label">Routing</span>
+                </div>
+                <div class="progress-step" data-step="5">
+                    <div class="progress-step-circle">5</div>
+                    <span class="progress-step-label">Approved</span>
+                </div>
+                <div class="progress-step" data-step="6">
+                    <div class="progress-step-circle">6</div>
+                    <span class="progress-step-label">Awarded</span>
+                </div>
+            </div>
+
+            <!-- Document Checklist Section -->
+            <div class="section-heading">
+                📄 Group A Requirements (7 Mandatory)
+                <span class="count" id="groupACount">0/7</span>
+            </div>
+            <div class="document-grid" id="documentGrid">
+                {% for req in group_a_requirements %}
+                <div class="document-item" data-requirement="{{ req.code }}">
+                    <div class="document-checkbox" onclick="toggleRequirement(this, '{{ req.code }}')">
+                        <span style="display: none;">✓</span>
+                    </div>
+                    <span class="document-label">{{ req.name }}</span>
+                </div>
+                {% empty %}
+                <!-- Fallback requirements if none in database -->
+                <div class="document-item" data-requirement="brgy_residency">
+                    <div class="document-checkbox" onclick="toggleRequirement(this, 'brgy_residency')">
+                        <span style="display: none;">✓</span>
+                    </div>
+                    <span class="document-label">Brgy. Certificate of Residency</span>
+                </div>
+                <div class="document-item" data-requirement="brgy_indigency">
+                    <div class="document-checkbox" onclick="toggleRequirement(this, 'brgy_indigency')">
+                        <span style="display: none;">✓</span>
+                    </div>
+                    <span class="document-label">Brgy. Certificate of Indigency</span>
+                </div>
+                <div class="document-item" data-requirement="cedula">
+                    <div class="document-checkbox" onclick="toggleRequirement(this, 'cedula')">
+                        <span style="display: none;">✓</span>
+                    </div>
+                    <span class="document-label">Cedula</span>
+                </div>
+                <div class="document-item" data-requirement="police_clearance">
+                    <div class="document-checkbox" onclick="toggleRequirement(this, 'police_clearance')">
+                        <span style="display: none;">✓</span>
+                    </div>
+                    <span class="document-label">Police Clearance</span>
+                </div>
+                <div class="document-item" data-requirement="no_property">
+                    <div class="document-checkbox" onclick="toggleRequirement(this, 'no_property')">
+                        <span style="display: none;">✓</span>
+                    </div>
+                    <span class="document-label">Certificate of No Property</span>
+                </div>
+                <div class="document-item" data-requirement="photo_2x2">
+                    <div class="document-checkbox" onclick="toggleRequirement(this, 'photo_2x2')">
+                        <span style="display: none;">✓</span>
+                    </div>
+                    <span class="document-label">2x2 Picture</span>
+                </div>
+                <div class="document-item" data-requirement="sketch">
+                    <div class="document-checkbox" onclick="toggleRequirement(this, 'sketch')">
+                        <span style="display: none;">✓</span>
+                    </div>
+                    <span class="document-label">Sketch of House Location</span>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Generate Form Button -->
+            <div style="margin: 2rem 0; text-align: center;">
+                <button class="generate-form-btn" id="generateFormBtn" disabled onclick="generateForm()">
+                    📝 Generate Application Form
+                </button>
+                <p style="font-size: 0.75rem; color: #6b7280; margin-top: 0.5rem;" id="formStatusText">
+                    Complete all 7 requirements to enable form generation
+                </p>
+            </div>
+
+            <!-- Signatory Routing Timeline -->
+            <div class="section-heading">
+                ✍️ Signatory Routing
+            </div>
+            <div class="signatory-timeline" id="signatoryTimeline">
+                <div class="timeline-item" data-step="received">
+                    <div class="timeline-icon pending">📨</div>
+                    <div class="timeline-content">
+                        <h4>Received by Jay (Third Member)</h4>
+                        <p>Application form received for processing</p>
+                    </div>
+                </div>
+                <div class="timeline-item" data-step="forwarded_oic">
+                    <div class="timeline-icon pending">➡️</div>
+                    <div class="timeline-content">
+                        <h4>Forwarded to OIC</h4>
+                        <p>Sent to Victor Fregil (OIC) for review</p>
+                    </div>
+                </div>
+                <div class="timeline-item" data-step="signed_oic">
+                    <div class="timeline-icon pending">✍️</div>
+                    <div class="timeline-content">
+                        <h4>Signed by OIC</h4>
+                        <p>Victor Fregil (OIC) approval</p>
+                    </div>
+                </div>
+                <div class="timeline-item" data-step="forwarded_head">
+                    <div class="timeline-icon pending">➡️</div>
+                    <div class="timeline-content">
+                        <h4>Forwarded to Head</h4>
+                        <p>Sent to Arthur Maramba (Head) for final approval</p>
+                    </div>
+                </div>
+                <div class="timeline-item" data-step="signed_head">
+                    <div class="timeline-icon pending">✅</div>
+                    <div class="timeline-content">
+                        <h4>Signed by Head</h4>
+                        <p>Arthur Maramba (Head) final signature</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Current applicant being viewed
+    let currentApplicantId = null;
+    let currentApplicationId = null;
+
+    // Filter functions
+    function filterByStage(stage) {
+        window.location.href = `?stage=${stage}`;
+    }
+
+    function handleStageChange() {
+        const stage = document.getElementById('stageFilter').value;
+        filterByStage(stage);
+    }
+
+    let searchTimeout;
+    function handleSearch(event) {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            const search = event.target.value;
+            const stage = document.getElementById('stageFilter').value;
+            window.location.href = `?stage=${stage}&search=${encodeURIComponent(search)}`;
+        }, 500);
+    }
+
+    // Modal functions
+    function openApplicationModal(applicantId, name, refNumber, verifiedCount, currentStage) {
+        currentApplicantId = applicantId;
+        const modal = document.getElementById('applicationModal');
+        modal.classList.add('active');
+        
+        // Set applicant info
+        document.getElementById('modalApplicantName').textContent = name;
+        document.getElementById('modalRefNumber').textContent = refNumber;
+        
+        // Reset and load state
+        resetModalState();
+        updateGroupACount();
+        updateProgressTrackerFromStage(currentStage);
+    }
+
+    function closeModal() {
+        document.getElementById('applicationModal').classList.remove('active');
+        currentApplicantId = null;
+        currentApplicationId = null;
+    }
+
+    // Close modal on escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeModal();
+    });
+
+    // Close modal on overlay click
+    document.getElementById('applicationModal').addEventListener('click', (e) => {
+        if (e.target.classList.contains('modal-overlay')) closeModal();
+    });
+
+    function resetModalState() {
+        // Reset all checkboxes
+        document.querySelectorAll('.document-checkbox').forEach(cb => {
+            cb.classList.remove('checked');
+            cb.querySelector('span').style.display = 'none';
+        });
+        document.querySelectorAll('.document-item').forEach(item => {
+            item.classList.remove('verified');
+        });
+        
+        // Reset timeline
+        document.querySelectorAll('.timeline-icon').forEach(icon => {
+            icon.classList.remove('completed');
+            icon.classList.add('pending');
+        });
+        
+        // Reset progress tracker
+        document.querySelectorAll('.progress-step').forEach(step => {
+            step.classList.remove('completed', 'current');
+        });
+        
+        // Update button state
+        updateFormButton();
+    }
+
+    function toggleRequirement(checkbox, requirementCode) {
+        const isChecked = checkbox.classList.toggle('checked');
+        checkbox.querySelector('span').style.display = isChecked ? 'block' : 'none';
+        checkbox.closest('.document-item').classList.toggle('verified', isChecked);
+        
+        updateGroupACount();
+        updateFormButton();
+        
+        // Save to server
+        saveRequirementStatus(requirementCode, isChecked ? 'verified' : 'pending');
+    }
+
+    function updateGroupACount() {
+        const verified = document.querySelectorAll('.document-grid .document-checkbox.checked').length;
+        document.getElementById('groupACount').textContent = `${verified}/7`;
+    }
+
+    function updateFormButton() {
+        const verified = document.querySelectorAll('.document-grid .document-checkbox.checked').length;
+        const btn = document.getElementById('generateFormBtn');
+        const text = document.getElementById('formStatusText');
+        
+        if (verified >= 7) {
+            btn.disabled = false;
+            text.textContent = 'All requirements verified. Ready to generate form!';
+            text.style.color = '#166534';
+        } else {
+            btn.disabled = true;
+            text.textContent = `${7 - verified} more requirement(s) needed to generate form`;
+            text.style.color = '#6b7280';
+        }
+    }
+
+    function updateProgressTrackerFromStage(currentStage) {
+        const stageMap = {
+            'Eligibility': 1,
+            'Document Gathering': 2,
+            'Form Released': 3,
+            'Signatory Routing': 4,
+            'Fully Approved': 5,
+            'Lot Awarded': 6
+        };
+        
+        const currentStep = stageMap[currentStage] || 1;
+        
+        document.querySelectorAll('.progress-step').forEach((step, index) => {
+            const stepNum = index + 1;
+            step.classList.remove('completed', 'current');
+            
+            if (stepNum < currentStep) {
+                step.classList.add('completed');
+            } else if (stepNum === currentStep) {
+                step.classList.add('current');
+            }
+        });
+    }
+
+    async function saveRequirementStatus(requirementCode, status) {
+        try {
+            const formData = new FormData();
+            formData.append('applicant_id', currentApplicantId);
+            formData.append('requirement_code', requirementCode);
+            formData.append('status', status);
+            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+            
+            await fetch('{% url "applications:update_requirement" %}', {
+                method: 'POST',
+                body: formData
+            });
+        } catch (error) {
+            console.error('Error saving requirement:', error);
+        }
+    }
+
+    async function generateForm() {
+        if (!currentApplicantId) return;
+        
+        const btn = document.getElementById('generateFormBtn');
+        btn.disabled = true;
+        btn.textContent = '⏳ Generating...';
+        
+        try {
+            const response = await fetch(`/applications/staff/generate-form/${currentApplicantId}/`);
+            const data = await response.json();
+            
+            if (data.success) {
+                btn.textContent = '✅ Form Generated!';
+                document.getElementById('formStatusText').textContent = `Application #${data.application_number}`;
+                updateProgressTrackerFromStage('Form Released');
+                
+                // Refresh the page to show updated status
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                alert(data.error || 'Failed to generate form');
+                btn.textContent = '📝 Generate Application Form';
+                btn.disabled = false;
+            }
+        } catch (error) {
+            console.error('Error generating form:', error);
+            btn.textContent = '📝 Generate Application Form';
+            btn.disabled = false;
+        }
+    }
+
+    // Initialize page
+    document.addEventListener('DOMContentLoaded', () => {
+        // Nothing special needed on load
+    });
+</script>
+{% endblock %}
