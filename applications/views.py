@@ -761,7 +761,7 @@ def electricity_list(request):
         return redirect('applications:applications_list')
     
     connections = ElectricityConnection.objects.select_related(
-        'application', 'application__applicant', 'applied_by'
+        'application', 'application__applicant', 'application__lot_awarding', 'applied_by'
     ).order_by('-created_at')
     
     # Status counts
