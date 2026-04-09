@@ -50,22 +50,49 @@
 
 .status-card {
     background: white;
-    border-radius: 12px;
-    padding: 1rem;
+    border-radius: 0.75rem;
+    padding: 0.75rem;
     border: 1px solid #e2e8f0;
     cursor: pointer;
     transition: all 0.2s;
-    text-align: center;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .status-card:hover {
-    border-color: #60a5fa;
+    border-color: #bfdbfe;
     background: #f8fafc;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
 }
 
 .status-card.active {
-    border-color: #3b82f6;
-    background: #eff6ff;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.1);
+}
+
+.status-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.status-icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.status-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 0;
 }
 
 .status-card .count {
@@ -75,19 +102,33 @@
 }
 
 .status-card .label {
-    font-size: 0.6875rem;
+    font-size: 0.625rem;
     color: #64748b;
     margin-top: 0.25rem;
     text-transform: uppercase;
-    letter-spacing: 0.025em;
+    letter-spacing: 0.05em;
 }
 
-.status-card.pending .count { color: #94a3b8; }
-.status-card.applied .count { color: #3b82f6; }
-.status-card.scheduled .count { color: #8b5cf6; }
-.status-card.completed .count { color: #0ea5e9; }
-.status-card.connected .count { color: #10b981; }
-.status-card.issues .count { color: #ef4444; }
+.status-card.pending .status-icon { background: #f1f5f9; color: #64748b; }
+.status-card.applied .status-icon { background: #dbeafe; color: #2563eb; }
+.status-card.scheduled .status-icon { background: #ede9fe; color: #7c3aed; }
+.status-card.completed .status-icon { background: #e0f2fe; color: #0284c7; }
+.status-card.connected .status-icon { background: #dcfce7; color: #16a34a; }
+.status-card.issues .status-icon { background: #fee2e2; color: #dc2626; }
+
+.status-card.pending .count { color: #64748b; }
+.status-card.applied .count { color: #2563eb; }
+.status-card.scheduled .count { color: #7c3aed; }
+.status-card.completed .count { color: #0284c7; }
+.status-card.connected .count { color: #16a34a; }
+.status-card.issues .count { color: #dc2626; }
+
+.status-card.pending.active { border-color: #cbd5e1; background: #f8fafc; }
+.status-card.applied.active { border-color: #93c5fd; background: #eff6ff; }
+.status-card.scheduled.active { border-color: #c4b5fd; background: #f5f3ff; }
+.status-card.completed.active { border-color: #bae6fd; background: #f0f9ff; }
+.status-card.connected.active { border-color: #86efac; background: #f0fdf4; }
+.status-card.issues.active { border-color: #fecaca; background: #fef2f2; }
 
 /* Overdue Alert */
 .overdue-alert {
@@ -210,19 +251,20 @@
     display: inline-flex;
     align-items: center;
     gap: 0.25rem;
-    padding: 0.375rem 0.75rem;
-    background: #3b82f6;
+    padding: 0.5rem 0.75rem;
+    background: #1d4ed8;
     color: white;
     border: none;
-    border-radius: 8px;
+    border-radius: 0.5rem;
     font-size: 0.6875rem;
     font-weight: 500;
     cursor: pointer;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
     transition: background 0.2s;
 }
 
 .btn-update:hover {
-    background: #2563eb;
+    background: #1e40af;
 }
 
 /* Modal Styles */
@@ -399,28 +441,80 @@
     <!-- Status Cards -->
     <div class="status-grid">
         <a href="?status=pending" class="status-card pending {% if filter_status == 'pending' %}active{% endif %}">
-            <div class="count">{{ status_counts.pending }}</div>
-            <div class="label">Pending</div>
+            <div class="status-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="9"></circle>
+                    <path d="M12 7v5l3 3"></path>
+                </svg>
+            </div>
+            <div class="status-meta">
+                <div class="count">{{ status_counts.pending }}</div>
+                <div class="label">Pending</div>
+            </div>
         </a>
         <a href="?status=applied" class="status-card applied {% if filter_status == 'applied' %}active{% endif %}">
-            <div class="count">{{ status_counts.applied }}</div>
-            <div class="label">Applied</div>
+            <div class="status-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                </svg>
+            </div>
+            <div class="status-meta">
+                <div class="count">{{ status_counts.applied }}</div>
+                <div class="label">Applied</div>
+            </div>
         </a>
         <a href="?status=inspection_scheduled" class="status-card scheduled {% if filter_status == 'inspection_scheduled' %}active{% endif %}">
-            <div class="count">{{ status_counts.inspection_scheduled }}</div>
-            <div class="label">Inspection Scheduled</div>
+            <div class="status-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+            </div>
+            <div class="status-meta">
+                <div class="count">{{ status_counts.inspection_scheduled }}</div>
+                <div class="label">Inspection Scheduled</div>
+            </div>
         </a>
         <a href="?status=inspection_completed" class="status-card completed {% if filter_status == 'inspection_completed' %}active{% endif %}">
-            <div class="count">{{ status_counts.inspection_completed }}</div>
-            <div class="label">Inspection Done</div>
+            <div class="status-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="9"></circle>
+                    <path d="M9 12l2 2 4-4"></path>
+                </svg>
+            </div>
+            <div class="status-meta">
+                <div class="count">{{ status_counts.inspection_completed }}</div>
+                <div class="label">Inspection Done</div>
+            </div>
         </a>
         <a href="?status=connected" class="status-card connected {% if filter_status == 'connected' %}active{% endif %}">
-            <div class="count">{{ status_counts.connected }}</div>
-            <div class="label">Connected</div>
+            <div class="status-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="13 2 3 14 11 14 9 22 21 10 13 10"></polygon>
+                </svg>
+            </div>
+            <div class="status-meta">
+                <div class="count">{{ status_counts.connected }}</div>
+                <div class="label">Connected</div>
+            </div>
         </a>
         <a href="?status=issues" class="status-card issues {% if filter_status == 'issues' %}active{% endif %}">
-            <div class="count">{{ status_counts.issues }}</div>
-            <div class="label">Issues</div>
+            <div class="status-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+            </div>
+            <div class="status-meta">
+                <div class="count">{{ status_counts.issues }}</div>
+                <div class="label">Issues</div>
+            </div>
         </a>
     </div>
 
@@ -535,7 +629,7 @@
             
             <div class="modal-body">
                 <div class="form-group">
-                    <label class="form-label">Status</label>
+                    <label class="form-label" for="statusSelect">Status</label>
                     <select class="form-select" name="status" id="statusSelect" onchange="toggleFields()">
                         <option value="pending">Pending - Not Yet Applied</option>
                         <option value="applied">Applied to Negros Power</option>
@@ -546,34 +640,34 @@
                     </select>
                 </div>
                 
-                <div class="form-group" id="negroPowerRefGroup" style="display: none;">
-                    <label class="form-label">Negros Power Reference #</label>
+                <div class="form-group" id="negrosPowerRefGroup" style="display: none;">
+                    <label class="form-label" for="negrosPowerRef">Negros Power Reference #</label>
                     <input type="text" class="form-input" name="negros_power_reference" id="negrosPowerRef" placeholder="e.g., NP-2026-123456">
                 </div>
                 
                 <div class="form-group" id="inspectionDateGroup" style="display: none;">
-                    <label class="form-label">Inspection Date</label>
+                    <label class="form-label" for="inspectionDate">Inspection Date</label>
                     <input type="date" class="form-input" name="inspection_date" id="inspectionDate">
                 </div>
                 
                 <div class="form-group" id="inspectionResultGroup" style="display: none;">
-                    <label class="form-label">Inspection Result</label>
-                    <textarea class="form-textarea" name="inspection_result" placeholder="Notes from inspection..."></textarea>
+                    <label class="form-label" for="inspectionResult">Inspection Result</label>
+                    <textarea class="form-textarea" name="inspection_result" id="inspectionResult" placeholder="Notes from inspection..."></textarea>
                 </div>
                 
                 <div class="form-group" id="meterNumberGroup" style="display: none;">
-                    <label class="form-label">Meter Number</label>
+                    <label class="form-label" for="meterNumber">Meter Number</label>
                     <input type="text" class="form-input" name="meter_number" id="meterNumber" placeholder="e.g., 12345678">
                 </div>
                 
                 <div class="form-group" id="issueDescGroup" style="display: none;">
-                    <label class="form-label">Issue Description</label>
-                    <textarea class="form-textarea" name="issue_description" placeholder="Describe the issue..."></textarea>
+                    <label class="form-label" for="issueDescription">Issue Description</label>
+                    <textarea class="form-textarea" name="issue_description" id="issueDescription" placeholder="Describe the issue..."></textarea>
                 </div>
                 
                 <div class="form-group">
-                    <label class="form-label">Notes</label>
-                    <textarea class="form-textarea" name="notes" placeholder="Additional notes..."></textarea>
+                    <label class="form-label" for="notesField">Notes</label>
+                    <textarea class="form-textarea" name="notes" id="notesField" placeholder="Additional notes..."></textarea>
                 </div>
             </div>
             
@@ -607,7 +701,7 @@ function toggleFields() {
     const status = document.getElementById('statusSelect').value;
     
     // Hide all conditional fields
-    document.getElementById('negroPowerRefGroup').style.display = 'none';
+    document.getElementById('negrosPowerRefGroup').style.display = 'none';
     document.getElementById('inspectionDateGroup').style.display = 'none';
     document.getElementById('inspectionResultGroup').style.display = 'none';
     document.getElementById('meterNumberGroup').style.display = 'none';
@@ -615,18 +709,18 @@ function toggleFields() {
     
     // Show relevant fields based on status
     if (status === 'applied') {
-        document.getElementById('negroPowerRefGroup').style.display = 'block';
+        document.getElementById('negrosPowerRefGroup').style.display = 'block';
     } else if (status === 'inspection_scheduled') {
-        document.getElementById('negroPowerRefGroup').style.display = 'block';
+        document.getElementById('negrosPowerRefGroup').style.display = 'block';
         document.getElementById('inspectionDateGroup').style.display = 'block';
     } else if (status === 'inspection_completed') {
-        document.getElementById('negroPowerRefGroup').style.display = 'block';
+        document.getElementById('negrosPowerRefGroup').style.display = 'block';
         document.getElementById('inspectionResultGroup').style.display = 'block';
     } else if (status === 'connected') {
-        document.getElementById('negroPowerRefGroup').style.display = 'block';
+        document.getElementById('negrosPowerRefGroup').style.display = 'block';
         document.getElementById('meterNumberGroup').style.display = 'block';
     } else if (status === 'issues') {
-        document.getElementById('negroPowerRefGroup').style.display = 'block';
+        document.getElementById('negrosPowerRefGroup').style.display = 'block';
         document.getElementById('issueDescGroup').style.display = 'block';
     }
 }
