@@ -1,0 +1,241 @@
+# SEMAPHORE SMS TESTING - QUICK START CARD
+
+## 🚀 START HERE (Right Now - 2 Minutes)
+
+### Step 1: Open Terminal
+```bash
+cd c:\Users\jtcor\Documents\capstone
+```
+
+### Step 2: Run This Command (Replace with YOUR phone number in 09XX format)
+```bash
+python manage.py test_sms --phone "09171234567"
+```
+
+### Step 3: Check Your Phone
+- Wait 30 seconds to 1 minute
+- Look for SMS from "SEMAPHORE"
+- If you see it → **SMS WORKS! ✅**
+
+---
+
+## 📊 Understanding the Test Output
+
+```
+======================================================================
+SEMAPHORE SMS INTEGRATION TEST
+======================================================================
+
+📋 Configuration Check:
+  SMS_ENABLED: ✓ True                          👈 Must be True
+  SEMAPHORE_API_KEY: ✓ ***81f5                 👈 Key is set
+  SEMAPHORE_SENDER_NAME: ✓ SEMAPHORE           👈 Sender name
+
+📱 Phone Validation:
+  Input: 09171234567
+  Formatted: 09171234567                       👈 Same = OK
+  ✓ Phone number valid
+
+📤 Sending Test SMS...
+  To: 09171234567
+  Message: Test SMS from Talisay Housing System...
+
+✅ SMS send request successful!                 👈 Good sign!
+
+📋 SMS Log Entry:
+  SMS ID: 550e8400-e29b-41d4-a716-446655440000
+  Status: sent                                  👈 Status should be "sent"
+  Trigger Event: test_sms_command
+  Sent At: 2026-04-10 14:55:23.123456+00:00
+```
+
+### ✅ Success Criteria:
+- [ ] Configuration Check shows all ✓
+- [ ] Phone number validation shows ✓
+- [ ] Output says "✅ SMS send request successful!"
+- [ ] SMS Log Status shows "sent"
+- [ ] **SMS ARRIVES ON YOUR PHONE**
+
+---
+
+## ❌ If SMS Doesn't Arrive
+
+**Check this in order:**
+
+### 1️⃣ Check Semaphore Account
+- Go to: https://semaphore.co
+- Log in
+- Check "SMS Balance" (should be > 0)
+- Check "Account Status" (should be active)
+- ✅ If numbers look good → Continue to #2
+
+### 2️⃣ Check Your Phone Number
+```bash
+# Try with your phone number in different formats:
+
+# Format 1: Standard (09XXXXXXXXX)
+python manage.py test_sms --phone "09171234567"
+
+# Format 2: International (+639XXXXXXXXX)
+python manage.py test_sms --phone "+639171234567"
+
+# Format 3: Just digits (639XXXXXXXXX)
+python manage.py test_sms --phone "639171234567"
+
+# Format 4: Without leading 0 (9XXXXXXXXX)
+python manage.py test_sms --phone "9171234567"
+```
+- ✅ If works in any format → SMS is OK, move to #3
+
+### 3️⃣ Check if Free Tier Whitelisting is Required
+- Log into Semaphore: https://semaphore.co
+- Look for "Whitelisted Numbers" or "Verified Numbers"
+- If red warning: You need to verify/whitelist your phone number
+- Add phone number to whitelist
+- Try test command again
+- ✅ If SMS arrives → SMS is now working!
+
+### 4️⃣ Check SMSLog for Errors
+- Go to: http://localhost:8000/admin/intake/smslog/
+- Find your failed SMS (Status: "failed")
+- Click it
+- Look at "error_message" field
+- Common errors:
+  - `"401 Unauthorized"` → API key is wrong
+  - `"402 Payment Required"` → Semaphore balance is 0
+  - `"400 Bad Request"` → Phone number is malformed
+
+---
+
+## 📱 Testing Different Scenarios
+
+### Scenario 1: Basic SMS (You Just Did This ✓)
+```bash
+python manage.py test_sms --phone "09171234567"
+```
+
+### Scenario 2: Custom Message
+```bash
+python manage.py test_sms --phone "09171234567" --message "My custom message here"
+```
+
+### Scenario 3: Landowner Registration (Real Workflow)
+1. Go to: http://localhost:8000/intake/landowner-form/
+2. Fill in:
+   - Landowner Name: Test Owner
+   - Phone: 09171234567
+   - Email: test@example.com
+   - Property Address: Test, Cabatangan
+   - Barangay: Cabatangan
+3. Add ISF:
+   - Name: Applicant Name
+   - Household: 4
+   - Income: 8000
+   - Years: 3
+4. Submit
+5. Check phone for SMS with reference number
+
+---
+
+## 📋 View All SMS Logs
+
+**Django Admin:**
+```
+http://localhost:8000/admin/intake/smslog/
+```
+
+**In Admin, you can:**
+- ✓ See all SMS sent (sent/failed)
+- ✓ Search by phone number
+- ✓ Filter by status (sent, failed, pending)
+- ✓ Filter by trigger event (registration, eligibility, etc.)
+- ✓ View full message text
+- ✓ See error message if failed
+- ✓ View timestamp
+
+---
+
+## 🔧 Settings Location
+
+If you need to change settings:
+
+**File:** `talisay_housing/settings.py`
+**Lines:** 147-149
+
+```python
+SMS_ENABLED = True                                    # Must be True
+SEMAPHORE_API_KEY = 'c3f15974a138c3c7aabef97f481781f5'  # Your API key
+SEMAPHORE_SENDER_NAME = 'SEMAPHORE'                   # Sender name
+```
+
+**After changing settings:**
+```bash
+# Restart Django server
+python manage.py runserver
+```
+
+---
+
+## ✅ Testing Checklist
+
+After you verify SMS works, check these boxes:
+
+```
+Configuration
+□ SMS_ENABLED = True
+□ SEMAPHORE_API_KEY is set
+□ Django server restarted
+
+Test SMS
+□ Command runs: python manage.py test_sms --phone "09171234567"
+□ Output shows "✅ SMS send request successful!"
+□ SMS arrives on phone within 1 minute
+□ SMSLog shows status "sent"
+
+Landowner Registration Flow
+□ Can submit landowner form (http://localhost:8000/intake/landowner-form/)
+□ Applicant receives SMS with reference number
+□ Reference number is in the SMS
+
+Admin Dashboard
+□ Can view SMS logs: /admin/intake/smslog/
+□ Can filter by phone, status, event type
+□ SMS content matches what was sent
+
+All Tests Pass
+□ Ready to move to Module 2 testing
+```
+
+---
+
+## 🆘 Need Help?
+
+**Common Issues:**
+
+| Problem | Solution |
+|---------|----------|
+| SMS doesn't arrive | Check Semaphore balance at https://semaphore.co |
+| "Invalid phone format" error | Use format: 09XXXXXXXXX (11 digits) |
+| "API key not configured" | Check settings.py line 148, restart Django |
+| "401 Unauthorized" | Check API key is correct, hasn't expired |
+| "402 Payment Required" | Check Semaphore account balance is > 0 |
+| Can't find SMSLog in admin | Go to /admin/intake/smslog/ |
+
+---
+
+## 🎯 Next Steps (After SMS Works)
+
+1. ✅ Test a few different phone numbers
+2. ✅ Test the landowner registration workflow
+3. ✅ View SMS logs in Django admin
+4. ✅ Screenshot successful SMS and logs
+5. ✅ Document any API key issues
+6. ✅ Move to Module 2 testing
+
+---
+
+**Time to test**: ~5 minutes
+**Expected outcome**: SMS arrives on your phone
+**Success criteria**: See message from "SEMAPHORE"
+
+**Let me know when you're ready to start testing!**
