@@ -1441,6 +1441,121 @@
     </div>
 </div>
 
+<!-- ISF Review Modal -->
+<div class="modal-overlay" id="isfReviewModal" onclick="closeISFModal()" style="z-index: 1002;">
+    <div class="modal-content" style="max-width: 48rem; max-height: 90vh; overflow-y: auto;" onclick="event.stopPropagation()">
+        <div class="modal-header" style="position: sticky; top: 0; background: white; z-index: 10;">
+            <div>
+                <h2 class="modal-title">Review ISF Application</h2>
+                <p class="modal-subtitle" id="isfRefNumber"></p>
+            </div>
+            <button class="btn-close" onclick="closeISFModal()">
+                <svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+
+        <div class="modal-body">
+            <!-- ISF Information Display -->
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1.5rem;">
+                <div style="background: #f8fafc; padding: 1rem; border-radius: 0.5rem; border: 1px solid #e2e8f0;">
+                    <div class="form-label">Full Name</div>
+                    <div id="isfFullName" style="font-size: 0.875rem; font-weight: 500; color: #1e293b; margin-top: 0.25rem;"></div>
+                </div>
+                <div style="background: #f8fafc; padding: 1rem; border-radius: 0.5rem; border: 1px solid #e2e8f0;">
+                    <div class="form-label">Household Members</div>
+                    <div id="isfHousehold" style="font-size: 0.875rem; font-weight: 500; color: #1e293b; margin-top: 0.25rem;"></div>
+                </div>
+                <div style="background: #f8fafc; padding: 1rem; border-radius: 0.5rem; border: 1px solid #e2e8f0;">
+                    <div class="form-label">Monthly Income</div>
+                    <div id="isfIncome" style="font-size: 0.875rem; font-weight: 500; color: #1e293b; margin-top: 0.25rem;"></div>
+                </div>
+                <div style="background: #f8fafc; padding: 1rem; border-radius: 0.5rem; border: 1px solid #e2e8f0;">
+                    <div class="form-label">Years Residing</div>
+                    <div id="isfYears" style="font-size: 0.875rem; font-weight: 500; color: #1e293b; margin-top: 0.25rem;"></div>
+                </div>
+            </div>
+
+            <!-- Income Warning -->
+            <div id="isfIncomeWarning" style="display: none; background: #fee2e2; border: 1px solid #fecaca; border-radius: 0.5rem; padding: 1rem; margin-bottom: 1.5rem;">
+                <div style="display: flex; gap: 0.5rem; align-items: flex-start;">
+                    <span style="font-size: 1.25rem; flex-shrink: 0;">⚠️</span>
+                    <div>
+                        <div style="font-weight: 500; color: #991b1b; margin-bottom: 0.25rem;">INCOME EXCEEDS LIMIT</div>
+                        <div style="font-size: 0.875rem; color: #991b1b;">Monthly income exceeds the ₱10,000.00 eligibility threshold. This ISF must be disqualified.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Eligibility Form -->
+            <form id="isfReviewForm" style="display: flex; flex-direction: column; gap: 1rem;">
+                {% csrf_token %}
+                <input type="hidden" id="isfId" name="isf_id">
+
+                <!-- Contact Number -->
+                <div class="form-group">
+                    <label class="form-label">Contact Number (for SMS) *</label>
+                    <input type="tel" id="isfPhoneNumber" name="phone_number" class="form-input" placeholder="09XX XXX XXXX" value="" style="width: 100%; padding: 0.625rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.875rem;">
+                    <div class="form-help" style="font-size: 0.75rem; color: #64748b; margin-top: 0.25rem;">Required to send SMS notification</div>
+                </div>
+
+                <!-- Barangay -->
+                <div class="form-group">
+                    <label class="form-label">Barangay *</label>
+                    <select id="isfBarangay" name="barangay" class="form-select" style="width: 100%; padding: 0.625rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.875rem;">
+                        <option value="">-- Select Barangay --</option>
+                        {% for brgy in barangays %}
+                        <option value="{{ brgy }}">{{ brgy }}</option>
+                        {% endfor %}
+                    </select>
+                    <div class="form-help" style="font-size: 0.75rem; color: #64748b; margin-top: 0.25rem;">Extract from property address</div>
+                </div>
+
+                <!-- Property Ownership -->
+                <div class="form-group">
+                    <label class="form-label">Property Ownership Verification *</label>
+                    <select id="isfPropertyOwnership" name="has_property_in_talisay" class="form-select" style="width: 100%; padding: 0.625rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.875rem;">
+                        <option value="">-- Select --</option>
+                        <option value="no">No Property Ownership ✓</option>
+                        <option value="yes">Owns Property (Disqualified)</option>
+                    </select>
+                    <div class="form-help" style="font-size: 0.75rem; color: #64748b; margin-top: 0.25rem;">Verify against Assessor's Office records</div>
+                </div>
+
+                <!-- Disqualification Reason (Hidden) -->
+                <div class="form-group" id="isfDisqualifyGroup" style="display: none;">
+                    <label class="form-label">Disqualification Reason *</label>
+                    <textarea id="isfDisqualifyReason" name="disqualification_reason" class="form-input" rows="3" placeholder="Reason for disqualification..." style="width: 100%; padding: 0.625rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.875rem;"></textarea>
+                </div>
+
+                <!-- Eligibility Criteria -->
+                <div style="background: #fef3c7; border: 1px solid #fcd34d; border-radius: 0.5rem; padding: 1rem; margin-bottom: 0.5rem;">
+                    <div style="font-weight: 500; color: #92400e; margin-bottom: 0.5rem;">📌 Eligibility Criteria:</div>
+                    <ul style="margin: 0; padding-left: 1.5rem; font-size: 0.875rem; color: #92400e;">
+                        <li>No property ownership in Talisay City</li>
+                        <li>Monthly income ≤ ₱10,000</li>
+                        <li>Not on the blacklist</li>
+                    </ul>
+                </div>
+            </form>
+        </div>
+
+        <div class="modal-footer" style="position: sticky; bottom: 0; background: white; border-top: 1px solid #e2e8f0;">
+            <button type="button" class="btn-modal success" id="isfApproveBtn" onclick="submitISFReview('eligible')" style="background: #10b981;">
+                ✓ Mark as Eligible
+            </button>
+            <button type="button" class="btn-modal danger" id="isfDisqualifyBtn" onclick="toggleISFDisqualify()" style="background: #ef4444;">
+                ✕ Mark as Disqualified
+            </button>
+            <button type="button" class="btn-modal secondary" onclick="closeISFModal()">
+                Cancel
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- Add Applicant Modal -->
 <div class="modal-overlay" id="addModal" onclick="closeAddModal()">
     <div class="modal-content" style="max-width: 36rem;" onclick="event.stopPropagation()">
@@ -2804,13 +2919,20 @@
     
     function markEligible() {
         if (!currentApplicant) return;
-        
-        // Submit via AJAX or form
+
+        // For Channel A: Open ISF Review Modal
+        if (currentApplicant.channel === 'A') {
+            populateISFModal(currentApplicant);
+            document.getElementById('isfReviewModal').classList.add('active');
+            return;
+        }
+
+        // For Channel B/C: Use AJAX to mark eligible
         const formData = new FormData();
         formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
         formData.append('applicant_id', currentApplicant.applicantId || currentApplicant.id);
         formData.append('action', 'mark_eligible');
-        
+
         fetch('{% url "intake:update_eligibility" %}', {
             method: 'POST',
             body: formData
@@ -2830,6 +2952,21 @@
     }
     
     function showDisqualifyReason() {
+        if (!currentApplicant) return;
+
+        // For Channel A: Open ISF Review Modal
+        if (currentApplicant.channel === 'A') {
+            populateISFModal(currentApplicant);
+            document.getElementById('isfReviewModal').classList.add('active');
+            // Auto-toggle to disqualify mode
+            const group = document.getElementById('isfDisqualifyGroup');
+            if (group.style.display === 'none') {
+                toggleISFDisqualify();
+            }
+            return;
+        }
+
+        // For Channel B/C: Show disqualify modal
         const modal = document.getElementById('disqualifyModal');
         if (modal) modal.classList.add('active');
     }
@@ -3319,5 +3456,136 @@
         link.click();
         document.body.removeChild(link);
     }
+
+    // ============================================================================
+    // ISF REVIEW MODAL FUNCTIONS
+    // ============================================================================
+
+    let currentISFData = null;
+
+    function loadISFData(applicantData) {
+        // Load ISF data into the modal (direct data loading, no AJAX needed)
+        if (!applicantData) {
+            alert('Error: No applicant data available');
+            return;
+        }
+        populateISFModal(applicantData);
+        document.getElementById('isfReviewModal').classList.add('active');
+    }
+
+    function populateISFModal(data) {
+        // Populate ISF modal fields with data
+        document.getElementById('isfId').value = data.applicantId || data.id;
+        document.getElementById('isfRefNumber').textContent = (data.referenceNumber || '') + ' · Reg. ' + (data.dateRegistered || '');
+        document.getElementById('isfFullName').textContent = data.fullName || '';
+        document.getElementById('isfHousehold').textContent = (data.householdSize || 0) + ' members';
+        document.getElementById('isfIncome').textContent = '₱' + (parseFloat(data.monthlyIncome || 0).toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+        document.getElementById('isfYears').textContent = (data.yearsResiding || 0) + ' years';
+        document.getElementById('isfPhoneNumber').value = data.phoneNumber || '';
+        document.getElementById('isfBarangay').value = data.barangay || '';
+        document.getElementById('isfPropertyOwnership').value = '';
+
+        // Show income warning if exceeds limit
+        const incomeWarning = document.getElementById('isfIncomeWarning');
+        if (parseFloat(data.monthlyIncome || 0) > 10000) {
+            incomeWarning.style.display = 'flex';
+        } else {
+            incomeWarning.style.display = 'none';
+        }
+
+        // Reset disqualify section
+        document.getElementById('isfDisqualifyGroup').style.display = 'none';
+        document.getElementById('isfDisqualifyReason').value = '';
+        document.getElementById('isfApproveBtn').textContent = '✓ Mark as Eligible';
+        document.getElementById('isfDisqualifyBtn').textContent = '✕ Mark as Disqualified';
+    }
+
+    function closeISFModal() {
+        document.getElementById('isfReviewModal').classList.remove('active');
+        currentISFData = null;
+    }
+
+    function toggleISFDisqualify() {
+        const group = document.getElementById('isfDisqualifyGroup');
+        if (group.style.display === 'none') {
+            group.style.display = 'block';
+            document.getElementById('isfApproveBtn').textContent = 'Back to Eligible Check';
+            document.getElementById('isfApproveBtn').style.background = '#64748b';
+            document.getElementById('isfDisqualifyBtn').textContent = 'Confirm Disqualification';
+        } else {
+            group.style.display = 'none';
+            document.getElementById('isfApproveBtn').textContent = '✓ Mark as Eligible';
+            document.getElementById('isfApproveBtn').style.background = '#10b981';
+            document.getElementById('isfDisqualifyBtn').textContent = '✕ Mark as Disqualified';
+        }
+    }
+
+    function submitISFReview(action) {
+        const isfId = document.getElementById('isfId').value;
+        const phoneNumber = document.getElementById('isfPhoneNumber').value;
+        const barangay = document.getElementById('isfBarangay').value;
+        const propertyOwnership = document.getElementById('isfPropertyOwnership').value;
+        const disqualifyGroup = document.getElementById('isfDisqualifyGroup');
+
+        // Validation
+        if (!phoneNumber) {
+            alert('Contact number is required');
+            return;
+        }
+        if (!barangay) {
+            alert('Barangay is required');
+            return;
+        }
+        if (!propertyOwnership) {
+            alert('Property ownership verification is required');
+            return;
+        }
+
+        // If disqualifying, check reason
+        if (disqualifyGroup.style.display !== 'none') {
+            const reason = document.getElementById('isfDisqualifyReason').value;
+            if (!reason) {
+                alert('Disqualification reason is required');
+                return;
+            }
+        }
+
+        // Submit form via AJAX
+        const formData = new FormData();
+        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+        formData.append('phone_number', phoneNumber);
+        formData.append('barangay', barangay);
+        formData.append('has_property_in_talisay', propertyOwnership);
+        formData.append('action', 'submit');
+
+        if (disqualifyGroup.style.display !== 'none') {
+            formData.append('disqualification_reason', document.getElementById('isfDisqualifyReason').value);
+            formData.append('status', 'disqualified');
+        } else {
+            formData.append('status', 'eligible');
+        }
+
+        fetch(`/intake/staff/isf/${isfId}/review/`, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message || 'ISF processed successfully');
+                closeISFModal();
+                location.reload();
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            alert('Error submitting form: ' + error.message);
+        });
+    }
+
 </script>
 {% endblock %}

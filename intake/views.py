@@ -130,49 +130,76 @@ def submission_review(request, submission_id):
 def isf_review(request, isf_id):
     """
     Staff view: Review individual ISF record.
-    
+
     ACCESS CONTROL - Hierarchical Model:
     ✅ Jocel (fourth_member) - Primary reviewer, performs eligibility checks
     ✅ Joie (second_member) - Supervisor/oversight, quality control
     ✅ Victor (oic) - Management oversight
     ✅ Arthur (head) - Executive oversight
-    
+
     Benefits:
     - Quality control and cross-checking of eligibility decisions
     - Backup coverage when primary reviewer is unavailable
     - Management visibility into workload and decision-making
     """
+    from django.http import JsonResponse
+
     # Hierarchical access: Primary reviewer + Supervisor + Management
     if not request.user.position in ['fourth_member', 'second_member', 'oic', 'head']:
         messages.error(request, 'You do not have permission to access this page.')
         return redirect('accounts:dashboard')
-    
+
     isf_record = get_object_or_404(ISFRecord, id=isf_id)
-    
+
     # Check if already converted to applicant
     if isf_record.converted_to_applicant:
         messages.warning(request, 'This ISF has already been converted to an applicant profile.')
         return redirect('intake:submission_review', submission_id=isf_record.submission.id)
-    
+
     if request.method == 'POST':
         form = ISFReviewForm(request.POST, instance=isf_record)
-        
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.POST.get('action')
+
         if form.is_valid():
+            # Check if user manually selected 'disqualified' status
+            user_selected_status = form.cleaned_data.get('status')
+            if user_selected_status == 'disqualified':
+                # User manually disqualified - save and send SMS
+                isf_record.status = 'disqualified'
+                isf_record.disqualification_reason = form.cleaned_data.get('disqualification_reason', '')
+                isf_record.phone_number = form.cleaned_data.get('phone_number', '')
+                isf_record.eligibility_checked_by = request.user
+                isf_record.eligibility_checked_at = timezone.now()
+                isf_record.save()
+
+                # Send disqualification SMS
+                if isf_record.phone_number:
+                    isf_record.send_eligibility_sms(eligible=False)
+
+                msg = f'✕ {isf_record.full_name} marked as DISQUALIFIED.'
+                if is_ajax:
+                    return JsonResponse({'success': True, 'message': msg, 'status': 'disqualified'})
+                messages.warning(request, msg)
+                return redirect('intake:submission_review', submission_id=isf_record.submission.id)
+
             # Check blacklist first
             is_blacklisted, blacklist_entry = check_blacklist(
                 full_name=isf_record.full_name,
                 phone_number=form.cleaned_data.get('phone_number')
             )
-            
+
             if is_blacklisted:
-                messages.error(request, f'⚠️ BLACKLISTED: {blacklist_entry.full_name} - Reason: {blacklist_entry.get_reason_display()}')
+                msg = f'⚠️ BLACKLISTED: {blacklist_entry.full_name} - Reason: {blacklist_entry.get_reason_display()}'
                 isf_record.status = 'disqualified'
                 isf_record.disqualification_reason = f'Blacklisted: {blacklist_entry.notes}'
                 isf_record.eligibility_checked_by = request.user
                 isf_record.eligibility_checked_at = timezone.now()
                 isf_record.save()
+                if is_ajax:
+                    return JsonResponse({'success': False, 'error': msg})
+                messages.error(request, msg)
                 return redirect('intake:submission_review', submission_id=isf_record.submission.id)
-            
+
             # Check property ownership
             has_property = form.cleaned_data.get('has_property_in_talisay')
             if has_property == 'yes':
@@ -182,14 +209,17 @@ def isf_review(request, isf_id):
                 isf_record.eligibility_checked_by = request.user
                 isf_record.eligibility_checked_at = timezone.now()
                 isf_record.save()
-                
+
                 # Send disqualification SMS if phone provided
                 if isf_record.phone_number:
                     isf_record.send_eligibility_sms(eligible=False)
-                
-                messages.warning(request, f'Marked as disqualified: {isf_record.full_name}')
+
+                msg = f'Marked as disqualified: {isf_record.full_name}'
+                if is_ajax:
+                    return JsonResponse({'success': False, 'error': msg})
+                messages.warning(request, msg)
                 return redirect('intake:submission_review', submission_id=isf_record.submission.id)
-            
+
             # Check income eligibility
             if not isf_record.is_income_eligible:
                 isf_record.status = 'disqualified'
@@ -198,39 +228,52 @@ def isf_review(request, isf_id):
                 isf_record.eligibility_checked_by = request.user
                 isf_record.eligibility_checked_at = timezone.now()
                 isf_record.save()
-                
+
                 if isf_record.phone_number:
                     isf_record.send_eligibility_sms(eligible=False)
-                
-                messages.warning(request, f'Marked as disqualified: {isf_record.full_name}')
+
+                msg = f'Marked as disqualified: {isf_record.full_name}'
+                if is_ajax:
+                    return JsonResponse({'success': False, 'error': msg})
+                messages.warning(request, msg)
                 return redirect('intake:submission_review', submission_id=isf_record.submission.id)
-            
+
             # ELIGIBLE - Save updates and convert to Applicant
             isf_record = form.save(commit=False)
             isf_record.eligibility_checked_by = request.user
             isf_record.eligibility_checked_at = timezone.now()
             isf_record.save()
-            
+
             # Extract barangay
             barangay_name = form.cleaned_data.get('barangay')
-            
+
             # Create Applicant profile and add to Priority Queue
             applicant = create_applicant_from_isf(isf_record, request.user)
-            
+
             if applicant:
                 # Update barangay if needed
                 barangay, _ = Barangay.objects.get_or_create(name=barangay_name)
                 applicant.barangay = barangay
                 applicant.save()
-                
-                messages.success(request, f'✓ {isf_record.full_name} marked as ELIGIBLE and added to Priority Queue!')
+
+                msg = f'✓ {isf_record.full_name} marked as ELIGIBLE and added to Priority Queue!'
+                if is_ajax:
+                    return JsonResponse({'success': True, 'message': msg, 'status': 'eligible', 'applicantId': str(applicant.id)})
+                messages.success(request, msg)
             else:
-                messages.error(request, 'Failed to create applicant profile. Please try again.')
-            
+                msg = 'Failed to create applicant profile. Please try again.'
+                if is_ajax:
+                    return JsonResponse({'success': False, 'error': msg})
+                messages.error(request, msg)
+
             return redirect('intake:submission_review', submission_id=isf_record.submission.id)
+        else:
+            # Form validation failed
+            if is_ajax:
+                return JsonResponse({'success': False, 'error': 'Form validation failed. Please fill all required fields.'})
     else:
         form = ISFReviewForm(instance=isf_record)
-    
+
     return render(request, 'intake/staff/isf_review.html', {
         'isf_record': isf_record,
         'form': form,
