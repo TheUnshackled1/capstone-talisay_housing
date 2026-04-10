@@ -422,6 +422,64 @@ def dashboard_oic(request):
             'is_exceeding_sla': avg_turnaround > 3 if completed_count > 0 else False,
         })
 
+    # ==================== MODULE 6: COMPLIANCE RATE ANALYTICS (M4/M6) ====================
+    # Calculate overall compliance metrics
+    complied_count = ComplianceNotice.objects.filter(status='complied').count()
+    escalated_count = ComplianceNotice.objects.filter(status='escalated').count()
+    active_count = ComplianceNotice.objects.filter(status='active').count()
+    cancelled_count = ComplianceNotice.objects.filter(status='cancelled').count()
+
+    # Total notices (all statuses)
+    total_notices = complied_count + escalated_count + active_count + cancelled_count
+
+    # Calculate compliance rate: complied / (complied + escalated)
+    # Only count resolved cases (complied + escalated), NOT active
+    resolved_count = complied_count + escalated_count
+    if resolved_count > 0:
+        compliance_rate = int((complied_count / resolved_count) * 100)
+        escalation_rate = int((escalated_count / resolved_count) * 100)
+    else:
+        compliance_rate = 0
+        escalation_rate = 0
+
+    # Calculate average resolution time for complied notices
+    from django.db.models import F
+    from datetime import timedelta as td
+
+    complied_notices = ComplianceNotice.objects.filter(
+        status='complied',
+        resolved_at__isnull=False
+    ).select_related('lot_award__application__applicant')
+
+    resolution_times = []
+    for notice in complied_notices:
+        if notice.resolved_at and notice.issued_at:
+            resolution_days = (notice.resolved_at - notice.issued_at).days
+            resolution_times.append(resolution_days)
+
+    if resolution_times:
+        avg_resolution_days = int(sum(resolution_times) / len(resolution_times))
+        fastest_resolution = min(resolution_times)
+        slowest_resolution = max(resolution_times)
+    else:
+        avg_resolution_days = 0
+        fastest_resolution = 0
+        slowest_resolution = 0
+
+    # Compliance performance rating
+    if compliance_rate >= 90:
+        compliance_rating = '🟢 EXCELLENT'
+        compliance_color = '#10b981'
+    elif compliance_rate >= 75:
+        compliance_rating = '🟡 GOOD'
+        compliance_color = '#f59e0b'
+    elif compliance_rate >= 50:
+        compliance_rating = '⚠️ FAIR'
+        compliance_color = '#f59e0b'
+    else:
+        compliance_rating = '🔴 POOR'
+        compliance_color = '#ef4444'
+
     context = {
         'page_title': 'OIC Dashboard',
         'user_position': 'oic',
@@ -442,6 +500,21 @@ def dashboard_oic(request):
 
         # ========== MODULE 6: SIGNATORY TURNAROUND TIME (PHASE 1 #4) ==========
         'turnaround_analytics': turnaround_analytics,
+
+        # ========== MODULE 6: COMPLIANCE RATE ANALYTICS (PHASE 1 #5) ==========
+        'compliance_rate': compliance_rate,
+        'escalation_rate': escalation_rate,
+        'compliance_rating': compliance_rating,
+        'compliance_color': compliance_color,
+        'complied_count': complied_count,
+        'escalated_count': escalated_count,
+        'active_count': active_count,
+        'cancelled_count': cancelled_count,
+        'total_notices': total_notices,
+        'resolved_count': resolved_count,
+        'avg_resolution_days': avg_resolution_days,
+        'fastest_resolution': fastest_resolution,
+        'slowest_resolution': slowest_resolution,
 
         # ========== MODULE 1: SYSTEM HEALTH METRICS ==========
         'total_in_queue': total_in_queue,

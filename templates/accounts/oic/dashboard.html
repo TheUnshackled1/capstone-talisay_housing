@@ -341,6 +341,107 @@ Responsibilities:
     </div>
 </div>
 
+<!-- ===== MODULE 6: COMPLIANCE RATE ANALYTICS (PHASE 1 #5) ===== -->
+
+<!-- Compliance Rate Widget -->
+<div class="card scroll-animate" style="border-top: 4px solid #ec4899;">
+    <div class="card-header">
+        <h3 class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 12l2 2 4-4"/>
+                <path d="M7.835 4.697a3.42 3.42 0 0 0-1.946 3.28c0 .896.297 1.755.82 2.438A5.998 5.998 0 0 1 12 5c.366 0 .723.044 1.066.128"/>
+                <path d="M15.666 3.888N"/>
+            </svg>
+            Compliance Rate (M4/M6)
+        </h3>
+        <span class="badge" style="background-color: {{ compliance_color }}; color: white;">
+            {{ compliance_rating }}
+        </span>
+    </div>
+    <div class="card-body">
+        {% if total_notices > 0 %}
+            <!-- Main Metrics -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                <!-- Compliance Rate -->
+                <div style="padding: 1rem; background: #f0fdf4; border: 2px solid #dcfce7; border-radius: 0.5rem; text-align: center;">
+                    <div style="font-size: 2.25rem; font-weight: bold; color: #15803d;">{{ compliance_rate }}%</div>
+                    <div style="font-size: 0.875rem; color: #4b5563; margin-top: 0.5rem;">Compliance Rate</div>
+                    <div style="font-size: 0.75rem; color: #9ca3af; margin-top: 0.25rem;">{{ complied_count }} of {{ resolved_count }} resolved</div>
+                </div>
+
+                <!-- Escalation Rate -->
+                <div style="padding: 1rem; background: {% if escalation_rate > 30 %}#fef3c7{% else %}#f3f4f6{% endif %}; border: 2px solid {% if escalation_rate > 30 %}#fcd34d{% else %}#e5e7eb{% endif %}; border-radius: 0.5rem; text-align: center;">
+                    <div style="font-size: 2.25rem; font-weight: bold; color: {% if escalation_rate > 30 %}#92400e{% else %}#4b5563{% endif %};">{{ escalation_rate }}%</div>
+                    <div style="font-size: 0.875rem; color: #4b5563; margin-top: 0.5rem;">Escalation Rate</div>
+                    <div style="font-size: 0.75rem; color: #9ca3af; margin-top: 0.25rem;">{{ escalated_count }} notices escalated</div>
+                </div>
+            </div>
+
+            <!-- Status Breakdown -->
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid #e5e7eb;">
+                <!-- Complied -->
+                <div style="text-align: center; padding: 0.75rem; background: #d1fae5; border-radius: 0.375rem;">
+                    <div style="font-size: 1.5rem; font-weight: bold; color: #065f46;">{{ complied_count }}</div>
+                    <div style="font-size: 0.75rem; color: #047857; margin-top: 0.25rem; font-weight: 500;">Complied</div>
+                </div>
+
+                <!-- Escalated -->
+                <div style="text-align: center; padding: 0.75rem; background: #fee2e2; border-radius: 0.375rem;">
+                    <div style="font-size: 1.5rem; font-weight: bold; color: #991b1b;">{{ escalated_count }}</div>
+                    <div style="font-size: 0.75rem; color: #b91c1c; margin-top: 0.25rem; font-weight: 500;">Escalated</div>
+                </div>
+
+                <!-- Active -->
+                <div style="text-align: center; padding: 0.75rem; background: #fef3c7; border-radius: 0.375rem;">
+                    <div style="font-size: 1.5rem; font-weight: bold; color: #92400e;">{{ active_count }}</div>
+                    <div style="font-size: 0.75rem; color: #b45309; margin-top: 0.25rem; font-weight: 500;">Active</div>
+                </div>
+
+                <!-- Cancelled -->
+                <div style="text-align: center; padding: 0.75rem; background: #e5e7eb; border-radius: 0.375rem;">
+                    <div style="font-size: 1.5rem; font-weight: bold; color: #4b5563;">{{ cancelled_count }}</div>
+                    <div style="font-size: 0.75rem; color: #6b7280; margin-top: 0.25rem; font-weight: 500;">Cancelled</div>
+                </div>
+            </div>
+
+            <!-- Resolution Metrics -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+                <!-- Average Resolution Time -->
+                <div style="padding: 0.75rem; background: #f3f4f6; border-radius: 0.375rem; text-align: center;">
+                    <div style="font-size: 0.75rem; color: #6b7280; font-weight: 600; text-transform: uppercase;">Avg Resolution</div>
+                    <div style="font-size: 1.5rem; font-weight: bold; color: #1f2937; margin-top: 0.25rem;">{{ avg_resolution_days }}</div>
+                    <div style="font-size: 0.75rem; color: #9ca3af; margin-top: 0.125rem;">days</div>
+                </div>
+
+                <!-- Fastest Resolution -->
+                <div style="padding: 0.75rem; background: #d1fae5; border-radius: 0.375rem; text-align: center;">
+                    <div style="font-size: 0.75rem; color: #065f46; font-weight: 600; text-transform: uppercase;">Fastest</div>
+                    <div style="font-size: 1.5rem; font-weight: bold; color: #065f46; margin-top: 0.25rem;">{{ fastest_resolution }}</div>
+                    <div style="font-size: 0.75rem; color: #047857; margin-top: 0.125rem;">days</div>
+                </div>
+
+                <!-- Slowest Resolution -->
+                <div style="padding: 0.75rem; background: #fee2e2; border-radius: 0.375rem; text-align: center;">
+                    <div style="font-size: 0.75rem; color: #991b1b; font-weight: 600; text-transform: uppercase;">Slowest</div>
+                    <div style="font-size: 1.5rem; font-weight: bold; color: #991b1b; margin-top: 0.25rem;">{{ slowest_resolution }}</div>
+                    <div style="font-size: 0.75rem; color: #b91c1c; margin-top: 0.125rem;">days</div>
+                </div>
+            </div>
+
+        {% else %}
+            <!-- No Compliance Data -->
+            <div style="text-align: center; padding: 2rem 0; color: #94a3b8;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width: 3rem; height: 3rem; margin: 0 auto 0.75rem; color: #cbd5e1;">
+                    <path d="M9 12l2 2 4-4"/>
+                    <circle cx="12" cy="12" r="9"/>
+                </svg>
+                <p style="font-weight: 500; color: #94a3b8;">No compliance notices yet</p>
+                <p style="font-size: 0.875rem; color: #cbd5e1; margin-top: 0.5rem;">Compliance metrics will appear as notices are issued and resolved</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
 <!-- ===== MODULE 1: SYSTEM HEALTH MONITORING (Informational) ===== -->
 
 <!-- System Health Notice -->
