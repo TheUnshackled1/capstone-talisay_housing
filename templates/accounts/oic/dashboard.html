@@ -1,10 +1,158 @@
 {% comment %}
 Dashboard Widgets for OIC (Victor M. Fregil)
 Responsibilities:
+- M1: System oversight & health monitoring
 - M2: OIC signatory step
 - M4: Compliance decisions
 - M5: Escalated complaint decisions
 {% endcomment %}
+
+<!-- ===== MODULE 1: SYSTEM OVERSIGHT ===== -->
+
+<!-- Queue Overview Widget -->
+<div class="card scroll-animate">
+    <div class="card-header">
+        <h3 class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+            </svg>
+            Queue Status Overview
+        </h3>
+    </div>
+    <div class="card-body">
+        <div class="grid grid-cols-3 gap-4">
+            <div class="text-center">
+                <div style="font-size: 2rem; font-weight: bold; color: #2563eb;">{{ total_in_queue|default:0 }}</div>
+                <div style="font-size: 0.875rem; color: #64748b;">Total in Queue</div>
+            </div>
+            <div class="text-center border-l border-r border-slate-200">
+                <div style="font-size: 2rem; font-weight: bold; color: #9333ea;">{{ priority_queue_count|default:0 }}</div>
+                <div style="font-size: 0.875rem; color: #64748b;">Priority Queue</div>
+            </div>
+            <div class="text-center">
+                <div style="font-size: 2rem; font-weight: bold; color: #0d9488;">{{ walkin_queue_count|default:0 }}</div>
+                <div style="font-size: 0.875rem; color: #64748b;">Walk-in FIFO</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SMS Delivery Status Widget -->
+<div class="card scroll-animate scroll-delay-1">
+    <div class="card-header">
+        <h3 class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+            SMS Delivery Status
+        </h3>
+        <span class="badge" style="background-color: {% if sms_success_rate >= 90 %}#10b981{% else %}#ef4444{% endif %};">{{ sms_success_rate|default:0 }}% Success</span>
+    </div>
+    <div class="card-body">
+        <div class="space-y-3">
+            <div class="flex justify-between items-center">
+                <span style="font-size: 0.875rem; color: #475569;">Total Sent</span>
+                <span style="font-weight: 600; color: #1e293b;">{{ sms_sent|default:0 }}</span>
+            </div>
+            <div class="flex justify-between items-center">
+                <span style="font-size: 0.875rem; color: #64748b;">Failed</span>
+                <span style="font-weight: 600; color: #ef4444;">{{ sms_failed|default:0 }}</span>
+            </div>
+            <div class="flex justify-between items-center">
+                <span style="font-size: 0.875rem; color: #64748b;">Pending</span>
+                <span style="font-weight: 600; color: #f59e0b;">{{ sms_pending|default:0 }}</span>
+            </div>
+            <div style="height: 1px; background-color: #e2e8f0; margin: 0.5rem 0;"></div>
+            <div class="flex justify-between items-center">
+                <span style="font-size: 0.875rem; font-weight: 600; color: #334155;">Total SMS</span>
+                <span style="font-weight: bold; color: #1e293b; font-size: 1.125rem;">{{ sms_total|default:0 }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Failed SMS Alerts Widget -->
+<div class="card scroll-animate scroll-delay-2">
+    <div class="card-header">
+        <h3 class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            Failed SMS Alerts (Last 10)
+        </h3>
+        <span class="badge badge-danger">{{ failed_sms|length|default:0 }}</span>
+    </div>
+    <div class="card-body">
+        {% if failed_sms %}
+            <ul style="list-style: none; padding: 0; margin: 0;">
+                {% for sms in failed_sms %}
+                <li style="padding: 0.75rem 0; border-bottom: 1px solid #e2e8f0; font-size: 0.875rem;">
+                    <div style="font-weight: 500; color: #1e293b;">{{ sms.recipient_phone }}</div>
+                    <div style="color: #64748b; font-size: 0.8125rem; margin-top: 0.25rem;">{{ sms.trigger_event|title }} • {{ sms.sent_at|date:"M d, g:i A" }}</div>
+                </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <div style="text-align: center; padding: 2rem 0; color: #94a3b8;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width: 3rem; height: 3rem; margin: 0 auto 0.75rem;">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                    <polyline points="22 4 12 14.01 9 11.01"/>
+                </svg>
+                <p>All SMS delivered successfully</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- CDRRMO & Blacklist Critical Alerts Widget -->
+<div class="card scroll-animate scroll-delay-3">
+    <div class="card-header">
+        <h3 class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3.05h16.94a2 2 0 0 0 1.71-3.05L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            Critical Alerts
+        </h3>
+    </div>
+    <div class="card-body">
+        <div class="space-y-2">
+            {% if overdue_cdrrmo > 0 %}
+            <div style="background: #fee2e2; border: 1px solid #fecaca; padding: 0.75rem; border-radius: 0.5rem;">
+                <div style="font-weight: 600; color: #991b1b; font-size: 0.875rem;">⚠️ CDRRMO Overdue</div>
+                <div style="font-size: 2rem; font-weight: bold; color: #dc2626;">{{ overdue_cdrrmo }}</div>
+                <div style="font-size: 0.75rem; color: #991b1b;">Certifications pending >14 days</div>
+            </div>
+            {% endif %}
+
+            {% if blacklist_count > 0 %}
+            <div style="background: #f3e8ff; border: 1px solid #e9d5ff; padding: 0.75rem; border-radius: 0.5rem;">
+                <div style="font-weight: 600; color: #6b21a8; font-size: 0.875rem;">🚫 Blacklist Summary</div>
+                <div style="font-size: 2rem; font-weight: bold; color: #7e22ce;">{{ blacklist_count }}</div>
+                <div style="font-size: 0.75rem; color: #6b21a8;">Total blacklisted beneficiaries</div>
+            </div>
+            {% endif %}
+
+            {% if pending_cdrrmo > 0 %}
+            <div style="background: #fef3c7; border: 1px solid #fcd34d; padding: 0.75rem; border-radius: 0.5rem;">
+                <div style="font-weight: 600; color: #92400e; font-size: 0.875rem;">⏳ Pending CDRRMO</div>
+                <div style="font-size: 2rem; font-weight: bold; color: #d97706;">{{ pending_cdrrmo }}</div>
+                <div style="font-size: 0.75rem; color: #92400e;">Awaiting danger zone certification</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Separator -->
+<div style="margin: 2rem 0; border-top: 2px solid #e2e8f0;"></div>
+
+<!-- ===== MODULE 2+: OIC SIGNATORY & COMPLIANCE ===== -->
 
 <!-- Pending OIC Approval Widget -->
 <div class="card scroll-animate">
