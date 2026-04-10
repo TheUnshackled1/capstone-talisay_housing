@@ -3,6 +3,9 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .forms import LoginForm
+from intake.models import Applicant, QueueEntry, CDRRMOCertification, Blacklist
+from django.utils import timezone
+from django.db.models import Q
 import json
 
 
@@ -228,30 +231,81 @@ def dashboard_fourth_member(request):
     if request.user.position != 'fourth_member':
         messages.error(request, 'Access denied. This dashboard is for the Fourth Member position only.')
         return redirect('accounts:dashboard')
-    
+
+    # QUERY: Priority Queue (active, ordered by position)
+    priority_queue = QueueEntry.objects.filter(
+        queue_type='priority',
+        status='active'
+    ).select_related('applicant').order_by('position')
+
+    # QUERY: Walk-in Queue (active, ordered by position)
+    walkin_queue = QueueEntry.objects.filter(
+        queue_type='walk_in',
+        status='active'
+    ).select_related('applicant').order_by('position')
+
+    # QUERY: Pending CDRRMO (danger zone applicants awaiting certification)
+    pending_cdrrmo = CDRRMOCertification.objects.filter(
+        status='pending'
+    ).select_related('applicant')
+
+    # QUERY: Applicants with incomplete requirements
+    # (status is 'requirements' or eligible but missing documents)
+    incomplete_requirements = Applicant.objects.filter(
+        status__in=['eligible', 'requirements']
+    ).select_related('barangay')
+
+    # Count incomplete docs per applicant
+    incomplete_count = 0
+    for app in incomplete_requirements:
+        docs_complete = all([
+            app.doc_brgy_residency,
+            app.doc_brgy_indigency,
+            app.doc_cedula,
+            app.doc_police_clearance,
+            app.doc_no_property,
+            app.doc_2x2_picture,
+            app.doc_sketch_location
+        ])
+        if not docs_complete:
+            incomplete_count += 1
+
+    # QUERY: Blacklist count
+    blacklist_count = Blacklist.objects.count()
+
+    # QUERY: Standby queue (fully approved, awaiting lot assignment)
+    standby_queue = Applicant.objects.filter(
+        status='standby'
+    ).select_related('barangay')
+
     context = {
         'page_title': 'Fourth Member Dashboard',
         'user_position': 'fourth_member',
-        'queue_today': 0,  # TODO: Applicants in queue today
-        'incomplete_requirements': 0,  # TODO: Applicants with incomplete requirements
-        'documents_filed': 0,  # TODO: Documents filed this month
-        'lots_for_awarding': 0,  # TODO: Vacant units available for awarding
-        'priority_queue': [],  # TODO: Priority queue applicants
-        'walkin_queue': [],  # TODO: Walk-in queue applicants
-        'pending_cdrrmo': [],  # TODO: Applicants pending CDRRMO certification
-        'requirements_checklist': [],  # TODO: Applicants with partial requirements
-        'standby_queue': [],  # TODO: Fully approved applicants on standby
-        'available_lots': [],  # TODO: Vacant lots ready for awarding
-        'blacklist_count': 0,  # TODO: Total blacklisted beneficiaries
-        'repossessed_count': 0,  # TODO: Repossessed units count
-        'awaiting_reaward': 0,  # TODO: Units awaiting re-award after repossession
+        'queue_today': priority_queue.count() + walkin_queue.count(),
+        'incomplete_requirements': incomplete_count,
+        'documents_filed': 0,  # TODO: Query from document upload model (future)
+        'lots_for_awarding': 0,  # TODO: Query from housing units model (future)
+        'priority_queue': priority_queue[:5],  # Top 5 for display
+        'walkin_queue': walkin_queue[:5],  # Top 5 for display
+        'pending_cdrrmo': pending_cdrrmo,
+        'requirements_checklist': incomplete_requirements[:10],  # Top 10 incomplete
+        'standby_queue': standby_queue,
+        'available_lots': [],  # TODO: Query from housing units model (future)
+        'blacklist_count': blacklist_count,
+        'repossessed_count': 0,  # TODO: Query from applications module
+        'awaiting_reaward': 0,  # TODO: Query from applications module
     }
-    
+
     # Calculate ready_to_award (min of available lots and standby queue)
-    standby_count = len(context['standby_queue']) if context['standby_queue'] else 0
-    available_count = len(context['available_lots']) if context['available_lots'] else 0
-    context['ready_to_award'] = min(standby_count, available_count)
-    
+    standby_count = standby_queue.count()
+    available_count = len(context['available_lots'])
+    context['ready_to_award'] = min(standby_count, available_count) if available_count > 0 else 0
+
+    # Add total counts for display
+    context['priority_queue_total'] = priority_queue.count()
+    context['walkin_queue_total'] = walkin_queue.count()
+    context['pending_cdrrmo_total'] = pending_cdrrmo.count()
+
     return render(request, 'accounts/dashboard.html', context)
 
 
