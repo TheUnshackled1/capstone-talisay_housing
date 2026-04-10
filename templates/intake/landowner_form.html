@@ -342,7 +342,7 @@
             
             <div class="form-group">
                 <label class="form-label">Monthly Income (₱) <span class="required">*</span></label>
-                <input type="number" class="form-control isf-income" min="0" step="0.01" required placeholder="8000">
+                <input type="text" class="form-control isf-income" inputmode="decimal" pattern="[0-9,]*" required placeholder="8000">
             </div>
         </div>
         
@@ -381,7 +381,28 @@ window.addEventListener('DOMContentLoaded', function() {
             this.value = this.value.replace(/\D/g, '').slice(0, 11);
         });
     }
+
+    // Attach income formatting to all existing income fields
+    document.querySelectorAll('.isf-income').forEach(attachIncomeFormatter);
 });
+
+// Format income field with thousands separator on blur
+function attachIncomeFormatter(input) {
+    input.addEventListener('blur', function() {
+        if (this.value === '' || this.value === '0') return;
+
+        const numValue = parseFloat(this.value.replace(/,/g, ''));
+        if (!isNaN(numValue) && numValue > 0) {
+            // Store raw value for form submission
+            this.dataset.rawValue = numValue;
+            // Display formatted
+            this.value = numValue.toLocaleString('en-PH', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 2
+            });
+        }
+    });
+}
 
 function addISF() {
     isfCount++;
@@ -396,6 +417,12 @@ function addISF() {
             // Limit to 11 digits - silently
             this.value = this.value.replace(/\D/g, '').slice(0, 11);
         });
+    }
+
+    // Attach income formatter to the new ISF income field
+    const incomeInput = clone.querySelector('.isf-income');
+    if (incomeInput) {
+        attachIncomeFormatter(incomeInput);
     }
 
     document.getElementById('isf-container').appendChild(clone);
@@ -470,7 +497,7 @@ document.getElementById('landowner-form').addEventListener('submit', function(e)
             phone_number: phone.replace(/\D/g, ''), // Store as digits only
             barangay: barangay || '',
             household_members: members,
-            monthly_income: income,
+            monthly_income: parseFloat(income.replace(/,/g, '')), // Remove commas before storing
             years_residing: years,
         });
     });

@@ -1547,7 +1547,7 @@
                     <!-- Editable Monthly Income -->
                     <div class="form-group">
                         <label class="form-label">Monthly Income (₱) *</label>
-                        <input type="number" id="isfEditIncome" class="form-input" step="0.01" min="0" placeholder="0.00" style="width: 100%; padding: 0.625rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.875rem;">
+                        <input type="text" id="isfEditIncome" class="form-input" inputmode="decimal" pattern="[0-9,]*" placeholder="0.00" style="width: 100%; padding: 0.625rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.875rem;">
                     </div>
 
                     <!-- Editable Household Members -->
@@ -1682,7 +1682,7 @@
                                     </div>
                                     <div class="form-group">
                                         <label class="form-label">Monthly Income (₱) *</label>
-                                        <input type="number" class="form-input isf-required" placeholder="8000" name="isf_income[]" min="0" step="0.01">
+                                        <input type="text" class="form-input isf-required" inputmode="decimal" placeholder="8000" name="isf_income[]" pattern="[0-9,]*">
                                     </div>
                                     <div class="form-group">
                                         <label class="form-label">Years Residing *</label>
@@ -1730,7 +1730,7 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label">Monthly Income (₱) *</label>
-                        <input type="number" class="form-input" placeholder="e.g. 8500" name="monthly_income" id="walkinIncome" min="0" step="0.01" required>
+                        <input type="text" class="form-input" inputmode="decimal" pattern="[0-9,]*" placeholder="e.g. 8500" name="monthly_income" id="walkinIncome" required>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Household Size *</label>
@@ -1859,6 +1859,28 @@
     // Store applicants data in JavaScript
     const applicantsData = {{ applicants_json|safe }};
     const canModify = {{ can_modify|yesno:"true,false" }};
+
+    // Format income field with thousands separator on blur
+    function attachIncomeFormatter(input) {
+        input.addEventListener('blur', function() {
+            if (this.value === '' || this.value === '0') return;
+
+            const numValue = parseFloat(this.value.replace(/,/g, ''));
+            if (!isNaN(numValue) && numValue > 0) {
+                // Display formatted with thousands separator
+                this.value = numValue.toLocaleString('en-PH', {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 2
+                });
+            }
+        });
+    }
+
+    // Initialize income formatters on page load
+    window.addEventListener('DOMContentLoaded', function() {
+        // Attach to all income inputs in modals
+        document.querySelectorAll('.form-input[name*="income"], input[id*="Income"]').forEach(attachIncomeFormatter);
+    });
 
     // Table filtering
     function filterTable() {
@@ -3217,10 +3239,27 @@
         event.preventDefault();
         const form = document.getElementById('addApplicantForm');
         const channel = document.getElementById('channelInput').value;
+
+        // Remove commas from income fields before creating FormData
+        const incomeFields = form.querySelectorAll('input[name*="income"]');
+        incomeFields.forEach(field => {
+            field.value = field.value.replace(/,/g, '');
+        });
+
         const formData = new FormData(form);
 
         // Validate phone numbers before submitting
         if (channel === 'landowner') {
+            // Validate landowner phone if provided
+            const landownerPhone = document.getElementById('landownerPhoneWalkin');
+            if (landownerPhone && landownerPhone.value) {
+                const phoneClean = landownerPhone.value.replace(/\D/g, '');
+                if (phoneClean.length !== 11 || !phoneClean.startsWith('09')) {
+                    alert('Invalid landowner phone format.\nRequired: 09XXXXXXXXXX (11 digits)');
+                    return;
+                }
+            }
+
             // Validate all ISF phone numbers (if provided)
             const isfPhones = form.querySelectorAll('input[name="isf_phone[]"]');
             for (let phone of isfPhones) {
@@ -3409,7 +3448,7 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">Monthly Income (₱) *</label>
-                    <input type="number" class="form-input" placeholder="8000" name="isf_income[]" min="0" step="0.01" required>
+                    <input type="text" class="form-input" inputmode="decimal" pattern="[0-9,]*" placeholder="8000" name="isf_income[]" required>
                 </div>
                 <div class="form-group" style="grid-column: span 2;">
                     <label class="form-label">Years Residing *</label>
@@ -3861,6 +3900,11 @@
     function submitFieldEdit(fieldName, newValue, editReason) {
         const isfId = document.getElementById('isfId').value;
 
+        // Remove commas from income before sending
+        if (fieldName === 'monthly_income') {
+            newValue = newValue.replace(/,/g, '');
+        }
+
         const formData = new FormData();
         formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
         formData.append('field_name', fieldName);
@@ -3904,6 +3948,14 @@
         const walkinPhoneInput = document.getElementById('walkinPhone');
         if (walkinPhoneInput) {
             walkinPhoneInput.addEventListener('input', function() {
+                this.value = this.value.replace(/\D/g, '').slice(0, 11);
+            });
+        }
+
+        // Landowner Phone in Channel A Modal - landownerPhoneWalkin
+        const landownerPhoneWalkin = document.getElementById('landownerPhoneWalkin');
+        if (landownerPhoneWalkin) {
+            landownerPhoneWalkin.addEventListener('input', function() {
                 this.value = this.value.replace(/\D/g, '').slice(0, 11);
             });
         }
