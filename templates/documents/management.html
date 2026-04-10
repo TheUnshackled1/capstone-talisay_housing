@@ -1,863 +1,793 @@
+{% extends 'staff_base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document Management | THA Staff Portal</title>
-    <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}">
-    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
 
-    <style>
-        /* ========================================
-           UTILITY CLASSES (Tailwind-inspired)
-           ======================================== */
+{% block nav_documents %}active{% endblock %}
 
-        /* Spacing Utilities */
-        .p-6 { padding: 1.5rem; }
-        .p-3 { padding: 0.75rem; }
-        .px-2 { padding-left: 0.5rem; padding-right: 0.5rem; }
-        .px-3 { padding-left: 0.75rem; padding-right: 0.75rem; }
-        .px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
-        .py-0\.5 { padding-top: 0.125rem; padding-bottom: 0.125rem; }
-        .py-1\.5 { padding-top: 0.375rem; padding-bottom: 0.375rem; }
-        .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
-        .py-4 { padding-top: 1rem; padding-bottom: 1rem; }
-        .py-8 { padding-top: 2rem; padding-bottom: 2rem; }
+{% block title %}Document Management | THA Staff Portal{% endblock %}
 
-        .m-0 { margin: 0; }
-        .mx-auto { margin: 0 auto; }
-        .mb-3 { margin-bottom: 0.75rem; }
-        .mt-0\.5 { margin-top: 0.125rem; }
-        .mt-1 { margin-top: 0.25rem; }
-        .mt-2 { margin-top: 0.5rem; }
+{% block page_title %}Document Management{% endblock %}
+{% block page_description %}<p style="color: #64748b; font-size: 0.875rem; margin: 0.25rem 0 0 0;">Module 3 — Complete document history per applicant · Physical documents remain official hard copy</p>{% endblock %}
 
-        .gap-2 { gap: 0.5rem; }
-        .gap-4 { gap: 1rem; }
-        .space-y-2 > * + * { margin-top: 0.5rem; }
-        .space-y-3 > * + * { margin-top: 0.75rem; }
-        .space-y-5 > * + * { margin-top: 1.25rem; }
-        .space-y-6 > * + * { margin-top: 1.5rem; }
+{% block extra_css %}
+<style>
+    /* ========================================
+       UTILITY CLASSES (Tailwind-inspired)
+       ======================================== */
 
-        /* Layout Utilities */
-        .flex { display: flex; }
-        .flex-1 { flex: 1; }
-        .flex-wrap { flex-wrap: wrap; }
-        .flex-shrink-0 { flex-shrink: 0; }
-        .items-center { align-items: center; }
-        .items-start { align-items: flex-start; }
-        .justify-between { justify-content: space-between; }
-        .w-full { width: 100%; }
-        .relative { position: relative; }
-        .absolute { position: absolute; }
-        .top-1\/2 { top: 50%; }
-        .left-3 { left: 0.75rem; }
-        .whitespace-nowrap { white-space: nowrap; }
-        .overflow-hidden { overflow: hidden; }
-        .min-h-\[400px\] { min-height: 400px; }
+    /* Spacing Utilities */
+    .p-6 { padding: 1.5rem; }
+    .p-3 { padding: 0.75rem; }
+    .px-2 { padding-left: 0.5rem; padding-right: 0.5rem; }
+    .px-3 { padding-left: 0.75rem; padding-right: 0.75rem; }
+    .px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
+    .py-0\.5 { padding-top: 0.125rem; padding-bottom: 0.125rem; }
+    .py-1\.5 { padding-top: 0.375rem; padding-bottom: 0.375rem; }
+    .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+    .py-4 { padding-top: 1rem; padding-bottom: 1rem; }
+    .py-8 { padding-top: 2rem; padding-bottom: 2rem; }
 
-        /* Typography */
-        .text-xs { font-size: 0.75rem; line-height: 1rem; }
-        .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
-        .text-base { font-size: 1rem; line-height: 1.5rem; }
-        .font-medium { font-weight: 500; }
-        .font-600 { font-weight: 600; }
+    .m-0 { margin: 0; }
+    .mx-auto { margin: 0 auto; }
+    .mb-3 { margin-bottom: 0.75rem; }
+    .mt-0\.5 { margin-top: 0.125rem; }
+    .mt-1 { margin-top: 0.25rem; }
+    .mt-2 { margin-top: 0.5rem; }
 
-        h1 {
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin: 0;
-            color: #0f172a;
-        }
+    .gap-2 { gap: 0.5rem; }
+    .gap-4 { gap: 1rem; }
+    .space-y-2 > * + * { margin-top: 0.5rem; }
+    .space-y-3 > * + * { margin-top: 0.75rem; }
+    .space-y-5 > * + * { margin-top: 1.25rem; }
+    .space-y-6 > * + * { margin-top: 1.5rem; }
 
-        h2 {
-            font-size: 1.125rem;
-            font-weight: 600;
-            margin: 0;
-            color: #0f172a;
-        }
+    /* Layout Utilities */
+    .flex { display: flex; }
+    .flex-1 { flex: 1; }
+    .flex-wrap { flex-wrap: wrap; }
+    .flex-shrink-0 { flex-shrink: 0; }
+    .items-center { align-items: center; }
+    .items-start { align-items: flex-start; }
+    .justify-between { justify-content: space-between; }
+    .w-full { width: 100%; }
+    .relative { position: relative; }
+    .absolute { position: absolute; }
+    .top-1\/2 { top: 50%; }
+    .left-3 { left: 0.75rem; }
+    .whitespace-nowrap { white-space: nowrap; }
+    .overflow-hidden { overflow: hidden; }
+    .min-h-\[400px\] { min-height: 400px; }
 
-        p { margin: 0; }
+    /* Typography */
+    .text-xs { font-size: 0.75rem; line-height: 1rem; }
+    .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+    .text-base { font-size: 1rem; line-height: 1.5rem; }
+    .font-medium { font-weight: 500; }
+    .font-600 { font-weight: 600; }
 
-        /* ========================================
-           COLOR PALETTE (from Housing Services)
-           ======================================== */
+    h1 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin: 0;
+        color: #0f172a;
+    }
 
-        /* Slate Colors (primary text/UI) */
-        .text-slate-900 { color: #0f172a; }
-        .text-slate-800 { color: #1e293b; }
-        .text-slate-700 { color: #334155; }
-        .text-slate-600 { color: #475569; }
-        .text-slate-500 { color: #64748b; }
-        .text-slate-400 { color: #cbd5e1; }
+    h2 {
+        font-size: 1.125rem;
+        font-weight: 600;
+        margin: 0;
+        color: #0f172a;
+    }
 
-        /* Background Slate */
-        .bg-white { background-color: #ffffff; }
-        .bg-slate-50 { background-color: #f8fafc; }
-        .bg-slate-100 { background-color: #f1f5f9; }
+    p { margin: 0; }
 
-        /* Status Colors */
-        .text-green-600 { color: #16a34a; }
-        .text-red-500 { color: #ef4444; }
-        .text-blue-600 { color: #2563eb; }
-        .text-blue-700 { color: #1d4ed8; }
-        .text-teal-600 { color: #0d9488; }
-        .text-white { color: #ffffff; }
+    /* ========================================
+       COLOR PALETTE (from Housing Services)
+       ======================================== */
 
-        /* Background Status */
-        .bg-blue-50 { background-color: #eff6ff; }
-        .bg-blue-100 { background-color: #dbeafe; }
-        .bg-blue-600 { background-color: #2563eb; }
-        .bg-blue-700 { background-color: #1d4ed8; }
-        .bg-green-50 { background-color: #f0fdf4; }
-        .bg-green-100 { background-color: #dcfce7; }
-        .bg-green-500 { background-color: #22c55e; }
-        .bg-amber-500 { background-color: #f59e0b; }
-        .bg-teal-100 { background-color: #ccfbf1; }
-        .bg-purple-100 { background-color: #f3e8ff; }
+    /* Slate Colors (primary text/UI) */
+    .text-slate-900 { color: #0f172a; }
+    .text-slate-800 { color: #1e293b; }
+    .text-slate-700 { color: #334155; }
+    .text-slate-600 { color: #475569; }
+    .text-slate-500 { color: #64748b; }
+    .text-slate-400 { color: #cbd5e1; }
 
-        /* ========================================
-           BORDER & SIZING
-           ======================================== */
+    /* Background Slate */
+    .bg-white { background-color: #ffffff; }
+    .bg-slate-50 { background-color: #f8fafc; }
+    .bg-slate-100 { background-color: #f1f5f9; }
 
-        .border { border: 1px solid #e2e8f0; }
-        .border-b { border-bottom: 1px solid #e2e8f0; }
-        .border-slate-200 { border-color: #e2e8f0; }
-        .border-blue-400 { border-color: #60a5fa; }
-        .border-green-200 { border-color: #bbf7d0; }
+    /* Status Colors */
+    .text-green-600 { color: #16a34a; }
+    .text-red-500 { color: #ef4444; }
+    .text-blue-600 { color: #2563eb; }
+    .text-blue-700 { color: #1d4ed8; }
+    .text-teal-600 { color: #0d9488; }
+    .text-white { color: #ffffff; }
 
-        .rounded-lg { border-radius: 0.5rem; }
-        .rounded-xl { border-radius: 0.75rem; }
-        .rounded-full { border-radius: 9999px; }
+    /* Background Status */
+    .bg-blue-50 { background-color: #eff6ff; }
+    .bg-blue-100 { background-color: #dbeafe; }
+    .bg-blue-600 { background-color: #2563eb; }
+    .bg-blue-700 { background-color: #1d4ed8; }
+    .bg-green-50 { background-color: #f0fdf4; }
+    .bg-green-100 { background-color: #dcfce7; }
+    .bg-green-500 { background-color: #22c55e; }
+    .bg-amber-500 { background-color: #f59e0b; }
+    .bg-teal-100 { background-color: #ccfbf1; }
+    .bg-purple-100 { background-color: #f3e8ff; }
 
-        .shadow-sm { box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); }
-        .transition-all { transition: all 150ms; }
+    /* ========================================
+       BORDER & SIZING
+       ======================================== */
 
-        /* ========================================
-           DOCUMENT MANAGEMENT SPECIFIC
-           ======================================== */
+    .border { border: 1px solid #e2e8f0; }
+    .border-b { border-bottom: 1px solid #e2e8f0; }
+    .border-slate-200 { border-color: #e2e8f0; }
+    .border-blue-400 { border-color: #60a5fa; }
+    .border-green-200 { border-color: #bbf7d0; }
 
-        .main-content { margin-left: 280px; }
-        @media (max-width: 768px) {
-            .main-content { margin-left: 0; }
-        }
+    .rounded-lg { border-radius: 0.5rem; }
+    .rounded-xl { border-radius: 0.75rem; }
+    .rounded-full { border-radius: 9999px; }
 
-        /* Document Grid Layout */
+    .shadow-sm { box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); }
+    .transition-all { transition: all 150ms; }
+
+    /* ========================================
+       DOCUMENT MANAGEMENT SPECIFIC
+       ======================================== */
+
+    /* Document Grid Layout */
+    .doc-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    @media (min-width: 1024px) {
         .doc-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 1rem;
+            grid-template-columns: 320px 1fr;
         }
+    }
 
-        @media (min-width: 1024px) {
-            .doc-grid {
-                grid-template-columns: 320px 1fr;
-            }
-        }
+    /* Search Input */
+    .doc-search-input {
+        display: block;
+        width: 100%;
+        padding: 0.5rem 0.75rem 0.5rem 2rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        background: white;
+        color: #0f172a;
+        transition: all 150ms;
+    }
 
-        /* Search Input */
-        .doc-search-input {
-            display: block;
-            width: 100%;
-            padding: 0.5rem 0.75rem 0.5rem 2rem;
-            border: 1px solid #e2e8f0;
-            border-radius: 0.5rem;
-            font-size: 0.75rem;
-            background: white;
-            color: #0f172a;
-            transition: all 150ms;
-        }
+    .doc-search-input::placeholder {
+        color: #cbd5e1;
+    }
 
-        .doc-search-input::placeholder {
-            color: #cbd5e1;
-        }
+    .doc-search-input:focus {
+        outline: none;
+        border-color: #2563eb;
+        background: #f8fafc;
+    }
 
-        .doc-search-input:focus {
-            outline: none;
-            border-color: #2563eb;
-            background: #f8fafc;
-        }
+    /* Applicant Button */
+    .doc-applicant-btn {
+        width: 100%;
+        text-align: left;
+        padding: 1rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.75rem;
+        background: white;
+        cursor: pointer;
+        transition: all 150ms;
+        color: #334155;
+    }
 
-        /* Applicant Button */
-        .doc-applicant-btn {
-            width: 100%;
-            text-align: left;
-            padding: 1rem;
-            border: 1px solid #e2e8f0;
-            border-radius: 0.75rem;
-            background: white;
-            cursor: pointer;
-            transition: all 150ms;
-            color: #334155;
-        }
+    .doc-applicant-btn:hover {
+        background: #f8fafc;
+        border-color: #cbd5e1;
+    }
 
-        .doc-applicant-btn:hover {
-            background: #f8fafc;
-            border-color: #cbd5e1;
-        }
+    .doc-applicant-btn.active {
+        border-color: #2563eb;
+        background: #eff6ff;
+        color: #0f172a;
+        font-weight: 500;
+    }
 
-        .doc-applicant-btn.active {
-            border-color: #2563eb;
-            background: #eff6ff;
-            color: #0f172a;
-            font-weight: 500;
-        }
+    /* Progress Bar */
+    .doc-progress-bar {
+        height: 0.375rem;
+        background: #e2e8f0;
+        border-radius: 9999px;
+        overflow: hidden;
+        margin-top: 0.5rem;
+    }
 
-        /* Progress Bar */
-        .doc-progress-bar {
-            height: 0.375rem;
-            background: #e2e8f0;
-            border-radius: 9999px;
-            overflow: hidden;
-            margin-top: 0.5rem;
-        }
+    .doc-progress-fill {
+        height: 100%;
+        border-radius: 9999px;
+        transition: width 300ms ease-out;
+    }
 
-        .doc-progress-fill {
-            height: 100%;
-            border-radius: 9999px;
-            transition: width 300ms ease-out;
-        }
+    .doc-progress-fill.bg-green-500 { background-color: #22c55e; }
+    .doc-progress-fill.bg-blue-500 { background-color: #3b82f6; }
+    .doc-progress-fill.bg-amber-500 { background-color: #f59e0b; }
 
-        .doc-progress-fill.bg-green-500 { background-color: #22c55e; }
-        .doc-progress-fill.bg-blue-500 { background-color: #3b82f6; }
-        .doc-progress-fill.bg-amber-500 { background-color: #f59e0b; }
+    /* Filter Buttons */
+    .filter-btn {
+        padding: 0.375rem 1rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.5rem;
+        background: white;
+        color: #475569;
+        font-size: 0.75rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 150ms;
+    }
 
-        /* Filter Buttons */
-        .filter-btn {
-            padding: 0.375rem 1rem;
-            border: 1px solid #e2e8f0;
-            border-radius: 0.5rem;
-            background: white;
-            color: #475569;
-            font-size: 0.75rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 150ms;
-        }
+    .filter-btn:hover {
+        background: #f8fafc;
+        border-color: #cbd5e1;
+    }
 
-        .filter-btn:hover {
-            background: #f8fafc;
-            border-color: #cbd5e1;
-        }
+    .filter-btn.active {
+        border-color: #2563eb;
+        background-color: #eff6ff;
+        color: #1d4ed8;
+        font-weight: 600;
+    }
 
-        .filter-btn.active {
-            border-color: #2563eb;
-            background-color: #eff6ff;
-            color: #1d4ed8;
-            font-weight: 600;
-        }
+    /* Document Item */
+    .doc-item {
+        padding: 1rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.5rem;
+        background: white;
+        transition: all 150ms;
+    }
 
-        /* Document Item */
-        .doc-item {
-            padding: 1rem;
-            border: 1px solid #e2e8f0;
-            border-radius: 0.5rem;
-            background: white;
-            transition: all 150ms;
-        }
+    .doc-item:hover {
+        border-color: #cbd5e1;
+        background: #f8fafc;
+    }
 
-        .doc-item:hover {
-            border-color: #cbd5e1;
-            background: #f8fafc;
-        }
+    .doc-item.uploaded {
+        border-color: #bbf7d0;
+        background-color: #f0fdf4;
+    }
 
-        .doc-item.uploaded {
-            border-color: #bbf7d0;
-            background-color: #f0fdf4;
-        }
+    /* File Input */
+    .file-input-wrapper {
+        position: relative;
+        overflow: hidden;
+        display: inline-block;
+    }
 
-        /* File Input */
-        .file-input-wrapper {
-            position: relative;
-            overflow: hidden;
-            display: inline-block;
-        }
+    .file-input-wrapper input[type=file] {
+        position: absolute;
+        left: -9999px;
+    }
 
-        .file-input-wrapper input[type=file] {
-            position: absolute;
-            left: -9999px;
-        }
+    /* Upload Status */
+    .upload-status {
+        font-size: 0.75rem;
+        margin-top: 0.25rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        display: inline-block;
+    }
 
-        /* Upload Status */
-        .upload-status {
-            font-size: 0.75rem;
-            margin-top: 0.25rem;
-            padding: 0.25rem 0.5rem;
-            border-radius: 0.25rem;
-            display: inline-block;
-        }
+    .upload-status.success {
+        background-color: #dcfce7;
+        color: #166534;
+    }
 
-        .upload-status.success {
-            background-color: #dcfce7;
-            color: #166534;
-        }
+    .upload-status.error {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
 
-        .upload-status.error {
-            background-color: #fee2e2;
-            color: #991b1b;
-        }
+    .upload-status.loading {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
 
-        .upload-status.loading {
-            background-color: #fef3c7;
-            color: #92400e;
-        }
+    /* ========================================
+       BUTTON STYLES
+       ======================================== */
 
-        /* ========================================
-           BUTTON STYLES
-           ======================================== */
+    .btn-primary {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.375rem 0.75rem;
+        font-size: 0.75rem;
+        font-weight: 500;
+        border-radius: 0.5rem;
+        border: none;
+        background: #2563eb;
+        color: white;
+        cursor: pointer;
+        transition: all 150ms;
+    }
 
-        .btn-primary {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.375rem;
-            padding: 0.375rem 0.75rem;
-            font-size: 0.75rem;
-            font-weight: 500;
-            border-radius: 0.5rem;
-            border: none;
-            background: #2563eb;
-            color: white;
-            cursor: pointer;
-            transition: all 150ms;
-        }
+    .btn-primary:hover {
+        background: #1d4ed8;
+    }
 
-        .btn-primary:hover {
-            background: #1d4ed8;
-        }
+    .btn-secondary {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.375rem 0.75rem;
+        font-size: 0.75rem;
+        font-weight: 500;
+        border-radius: 0.5rem;
+        border: 1px solid #e2e8f0;
+        background: white;
+        color: #475569;
+        cursor: pointer;
+        transition: all 150ms;
+    }
 
-        .btn-secondary {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.375rem;
-            padding: 0.375rem 0.75rem;
-            font-size: 0.75rem;
-            font-weight: 500;
-            border-radius: 0.5rem;
-            border: 1px solid #e2e8f0;
-            background: white;
-            color: #475569;
-            cursor: pointer;
-            transition: all 150ms;
-        }
+    .btn-secondary:hover {
+        background: #f8fafc;
+        border-color: #cbd5e1;
+    }
 
-        .btn-secondary:hover {
-            background: #f8fafc;
-            border-color: #cbd5e1;
-        }
+    /* ========================================
+       DOCUMENT DETAIL PANEL
+       ======================================== */
 
-        /* ========================================
-           DOCUMENT DETAIL PANEL
-           ======================================== */
+    .doc-detail-panel {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.75rem;
+        box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+        overflow: hidden;
+    }
 
-        .doc-detail-panel {
-            background: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 0.75rem;
-            box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-            overflow: hidden;
-        }
+    .doc-detail-header {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #e2e8f0;
+        background: #f8fafc;
+    }
 
-        .doc-detail-header {
-            padding: 1rem 1.5rem;
-            border-bottom: 1px solid #e2e8f0;
-            background: #f8fafc;
-        }
+    .doc-detail-content {
+        padding: 1.5rem;
+    }
 
-        .doc-detail-content {
-            padding: 1.5rem;
-        }
+    .doc-group {
+        margin-bottom: 1.5rem;
+    }
 
-        .doc-group {
-            margin-bottom: 1.5rem;
-        }
+    .doc-group:last-child {
+        margin-bottom: 0;
+    }
 
-        .doc-group:last-child {
-            margin-bottom: 0;
-        }
+    .doc-group-label {
+        font-size: 0.75rem;
+        padding: 0.375rem 0.75rem;
+        border-radius: 9999px;
+        display: inline-block;
+        margin-bottom: 0.75rem;
+    }
 
-        .doc-group-label {
-            font-size: 0.75rem;
-            padding: 0.375rem 0.75rem;
-            border-radius: 9999px;
-            display: inline-block;
-            margin-bottom: 0.75rem;
-        }
+    .doc-group-label.group-a {
+        background-color: #dbeafe;
+        color: #1d4ed8;
+    }
 
-        .doc-group-label.group-a {
-            background-color: #dbeafe;
-            color: #1d4ed8;
-        }
+    .doc-group-label.group-b {
+        background-color: #ccfbf1;
+        color: #0d9488;
+    }
 
-        .doc-group-label.group-b {
-            background-color: #ccfbf1;
-            color: #0d9488;
-        }
+    .doc-group-label.group-c {
+        background-color: #f3e8ff;
+        color: #7e22ce;
+    }
+</style>
+{% endblock %}
 
-        .doc-group-label.group-c {
-            background-color: #f3e8ff;
-            color: #7e22ce;
-        }
-    </style>
-</head>
-<body>
-    <!-- Sidebar Overlay -->
-    <div class="sidebar-overlay" id="sidebarOverlay"></div>
-
-    <!-- Sidebar Navigation -->
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <div class="sidebar-logo">
-                <div class="logo-circle">
-                    <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M3 21h18M5 21V7l8-4 8 4v14M9 21v-6h6v6"/>
-                    </svg>
-                </div>
-                <div class="logo-text">
-                    <div class="logo-title">THA Portal</div>
-                    <div class="logo-subtitle">Housing Information System</div>
-                </div>
+{% block content %}
+<div class="p-6 space-y-5">
+    <!-- Filters: Group & Status -->
+    <div class="space-y-4">
+        <!-- Group Filter -->
+        <div>
+            <p class="text-xs text-slate-600 font-medium mb-2">Filter by Document Group</p>
+            <div class="flex flex-wrap gap-2">
+                <button class="filter-btn active" data-filter="all">
+                    All Groups
+                </button>
+                <button class="filter-btn" data-filter="A">
+                    Group A
+                </button>
+                <button class="filter-btn" data-filter="B">
+                    Group B
+                </button>
+                <button class="filter-btn" data-filter="C">
+                    Group C
+                </button>
             </div>
         </div>
 
-        <nav class="sidebar-nav">
-            <div class="nav-section">
-                <div class="nav-section-title">Main</div>
-                <a href="{% url 'accounts:dashboard' %}" class="nav-link">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="3" y="3" width="7" height="7" rx="1"/>
-                        <rect x="14" y="3" width="7" height="7" rx="1"/>
-                        <rect x="14" y="14" width="7" height="7" rx="1"/>
-                        <rect x="3" y="14" width="7" height="7" rx="1"/>
-                    </svg>
-                    <span>Dashboard</span>
-                </a>
-            </div>
-
-            <div class="nav-section">
-                <div class="nav-section-title">Modules</div>
-                <a href="{% url 'intake:applicants_list' %}" class="nav-link">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
-                    </svg>
-                    <span>Applicant Intake</span>
-                </a>
-                <a href="{% url 'applications:applications_list' %}" class="nav-link">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
-                    </svg>
-                    <span>Applications</span>
-                </a>
-                <a href="{% url 'documents:management' %}" class="nav-link active">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-                    </svg>
-                    <span>Documents</span>
-                </a>
-            </div>
-        </nav>
-    </aside>
-
-    <!-- Main Content -->
-    <div class="main-content">
-        <div class="p-6 space-y-5">
-            <!-- Header -->
-            <div class="flex items-center justify-between">
-                <div>
-                    <h1>Document Management</h1>
-                    <p class="text-sm text-slate-500 mt-0.5">Module 3 — Complete document history per applicant · Physical documents remain official hard copy</p>
-                </div>
-            </div>
-
-            <!-- Filters: Group & Status -->
-            <div class="space-y-4">
-                <!-- Group Filter -->
-                <div>
-                    <p class="text-xs text-slate-600 font-medium mb-2">Filter by Document Group</p>
-                    <div class="flex flex-wrap gap-2">
-                        <button class="filter-btn active" data-filter="all">
-                            All Groups
-                        </button>
-                        <button class="filter-btn" data-filter="A">
-                            Group A
-                        </button>
-                        <button class="filter-btn" data-filter="B">
-                            Group B
-                        </button>
-                        <button class="filter-btn" data-filter="C">
-                            Group C
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Status Filter -->
-                <div>
-                    <p class="text-xs text-slate-600 font-medium mb-2">Filter by Applicant Status</p>
-                    <select id="statusFilter" class="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white text-xs text-slate-700 cursor-pointer transition-all focus:outline-none focus:border-blue-400">
-                        {% for status_code, status_label in applicant_statuses %}
-                        <option value="{{ status_code }}" {% if status_code == status_filter %}selected{% endif %}>{{ status_label }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-            </div>
-
-            <!-- Two-Column Layout -->
-            <div class="doc-grid">
-                <!-- Left: Applicants List -->
-                <div class="flex-shrink-0 space-y-3">
-                    <!-- Search -->
-                    <div class="relative">
-                        <svg style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); width: 0.875rem; height: 0.875rem; color: #cbd5e1;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="11" cy="11" r="8"></circle>
-                            <path d="m21 21-4.35-4.35"></path>
-                        </svg>
-                        <input
-                            id="searchInput"
-                            class="doc-search-input"
-                            type="text"
-                            placeholder="Search by name, ref. no., or block/lot..."
-                            value="{{ search_query }}"
-                        />
-                    </div>
-
-                    <!-- Applicants List -->
-                    <div id="applicantsList" class="space-y-1.5">
-                        {% for applicant in applicants %}
-                        <button
-                            class="doc-applicant-btn"
-                            data-applicant-id="{{ applicant.id }}"
-                            data-full-name="{{ applicant.full_name }}"
-                            data-reference="{{ applicant.reference_number }}"
-                            data-barangay="{{ applicant.barangay }}"
-                            data-status="{{ applicant.status }}"
-                            {% if applicant.lot_assignment %}
-                            data-block="{{ applicant.lot_assignment.block }}"
-                            data-lot="{{ applicant.lot_assignment.lot }}"
-                            {% endif %}
-                        >
-                            <div class="flex items-center justify-between gap-2">
-                                <div style="min-width: 0; flex: 1;">
-                                    <p class="text-xs font-medium text-slate-800" style="margin: 0;">{{ applicant.full_name }}</p>
-                                    <p class="text-xs text-slate-500 mt-0.5" style="margin: 0; font-family: monospace;">{{ applicant.reference_number }}</p>
-                                    {% if applicant.lot_assignment %}
-                                    <p class="text-xs text-teal-600 mt-0.5" style="margin: 0;">Block {{ applicant.lot_assignment.block }}, Lot {{ applicant.lot_assignment.lot }}</p>
-                                    {% endif %}
-                                </div>
-                                <span class="text-xs text-slate-500 whitespace-nowrap mt-0.5" style="font-weight: 500;">{{ applicant.doc_count }}/{{ applicant.total_docs }}</span>
-                            </div>
-                            <div class="doc-progress-bar">
-                                <div class="doc-progress-fill" style="width: {{ applicant.doc_percentage }}%; background: {% if applicant.doc_percentage == 100 %}#22c55e{% elif applicant.doc_percentage > 50 %}#2563eb{% else %}#f59e0b{% endif %};"></div>
-                            </div>
-                        </button>
-                        {% empty %}
-                        <div style="padding: 2rem 0; text-align: center; color: #cbd5e1;">
-                            <p class="text-sm">No applicants found</p>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-
-                <!-- Right: Document Details -->
-                <div id="detailsPanel" class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden" style="display: none;">
-                    <!-- Header -->
-                    <div class="px-6 py-4 border-b bg-slate-50 flex items-start justify-between">
-                        <div>
-                            <h2 class="text-slate-900" id="selectedName" style="margin: 0; font-size: 1rem; font-weight: 600;"></h2>
-                            <p class="text-xs text-slate-500 mt-0.5" id="selectedInfo" style="margin: 0;"></p>
-                        </div>
-                    </div>
-
-                    <!-- Document Groups -->
-                    <div class="p-6 space-y-6" id="docGroupsContainer">
-                        {% for group_key, group_data in doc_groups.items %}
-                        <div class="doc-group" data-group="{{ group_key }}">
-                            <div class="flex items-center gap-2 mb-3">
-                                <span class="text-xs px-3 py-1.5 rounded-full {{ group_data.color_bg }} {{ group_data.color_text }}" style="font-weight: 500;">{{ group_data.label }}</span>
-                            </div>
-                            <div class="space-y-2">
-                                {% for doc_key, doc_label in group_data.documents %}
-                                <div class="doc-item flex items-center justify-between" data-doc-type="{{ doc_key }}">
-                                    <div class="flex items-start gap-3" style="flex: 1; min-width: 0;">
-                                        <svg class="doc-icon" style="width: 1rem; height: 1rem; color: #cbd5e1; flex-shrink: 0; margin-top: 0.125rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                            <circle cx="12" cy="12" r="10"></circle>
-                                            <polyline points="8 12 11 15 16 10"></polyline>
-                                        </svg>
-                                        <div style="min-width: 0; flex: 1;">
-                                            <p class="text-xs text-slate-700 font-medium" style="margin: 0;">{{ doc_label }}</p>
-                                            <p class="text-xs text-red-500 mt-0.5 upload-msg" style="margin: 0;">Not uploaded</p>
-                                            <div class="upload-status" style="display: none;"></div>
-                                        </div>
-                                    </div>
-                                    <div class="flex items-center gap-2" style="flex-shrink: 0; margin-left: 1rem;">
-                                        <button class="file-upload-btn px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-600 hover:bg-slate-50 transition-all" style="cursor: pointer; font-weight: 500;" data-doc-type="{{ doc_key }}">
-                                            <svg style="display: inline; width: 0.75rem; height: 0.75rem; margin-right: 0.25rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                                <polyline points="17 8 12 3 7 8"></polyline>
-                                                <line x1="12" y1="3" x2="12" y2="15"></line>
-                                            </svg>
-                                            Upload
-                                        </button>
-                                        <button class="mark-present-btn px-3 py-1.5 rounded-lg bg-blue-600 text-xs text-white hover:bg-blue-700 transition-all" style="cursor: pointer; display: none; font-weight: 500;" data-doc-type="{{ doc_key }}">
-                                            <svg style="display: inline; width: 0.75rem; height: 0.75rem; margin-right: 0.25rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                <polyline points="20 6 9 17 4 12"></polyline>
-                                            </svg>
-                                            Mark Present
-                                        </button>
-                                    </div>
-                                </div>
-                                {% endfor %}
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-
-                <!-- Empty State -->
-                <div id="emptyState" class="flex-1 bg-white rounded-xl border border-slate-200 shadow-sm flex items-center justify-center" style="min-height: 400px;">
-                    <div class="text-center" style="color: #cbd5e1;">
-                        <svg style="width: 3rem; height: 3rem; margin: 0 auto 0.75rem; opacity: 0.3;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-                        </svg>
-                        <p class="text-sm">Select an applicant to view their documents</p>
-                        <p class="text-xs mt-1">Search by name, reference number, or block/lot</p>
-                    </div>
-                </div>
-            </div>
+        <!-- Status Filter -->
+        <div>
+            <p class="text-xs text-slate-600 font-medium mb-2">Filter by Applicant Status</p>
+            <select id="statusFilter" class="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white text-xs text-slate-700 cursor-pointer transition-all focus:outline-none focus:border-blue-400">
+                {% for status_code, status_label in applicant_statuses %}
+                <option value="{{ status_code }}" {% if status_code == status_filter %}selected{% endif %}>{{ status_label }}</option>
+                {% endfor %}
+            </select>
         </div>
     </div>
 
-    <!-- Hidden file inputs for each document type -->
-    <input type="file" id="fileInputTemplate" style="display: none;">
+    <!-- Two-Column Layout -->
+    <div class="doc-grid">
+        <!-- Left: Applicants List -->
+        <div class="flex-shrink-0 space-y-3">
+            <!-- Search -->
+            <div class="relative">
+                <svg style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); width: 0.875rem; height: 0.875rem; color: #cbd5e1;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.35-4.35"></path>
+                </svg>
+                <input
+                    id="searchInput"
+                    class="doc-search-input"
+                    type="text"
+                    placeholder="Search by name, ref. no., or block/lot..."
+                    value="{{ search_query }}"
+                />
+            </div>
 
-    <script>
-        const applicantButtons = document.querySelectorAll('.doc-applicant-btn');
-        const detailsPanel = document.getElementById('detailsPanel');
-        const emptyState = document.getElementById('emptyState');
-        const selectedName = document.getElementById('selectedName');
-        const selectedInfo = document.getElementById('selectedInfo');
-        const filterButtons = document.querySelectorAll('.filter-btn');
-        const searchInput = document.getElementById('searchInput');
-        const statusFilter = document.getElementById('statusFilter');
-        let selectedApplicantId = null;
+            <!-- Applicants List -->
+            <div id="applicantsList" class="space-y-1.5">
+                {% for applicant in applicants %}
+                <button
+                    class="doc-applicant-btn"
+                    data-applicant-id="{{ applicant.id }}"
+                    data-full-name="{{ applicant.full_name }}"
+                    data-reference="{{ applicant.reference_number }}"
+                    data-barangay="{{ applicant.barangay }}"
+                    data-status="{{ applicant.status }}"
+                    {% if applicant.lot_assignment %}
+                    data-block="{{ applicant.lot_assignment.block }}"
+                    data-lot="{{ applicant.lot_assignment.lot }}"
+                    {% endif %}
+                >
+                    <div class="flex items-center justify-between gap-2">
+                        <div style="min-width: 0; flex: 1;">
+                            <p class="text-xs font-medium text-slate-800" style="margin: 0;">{{ applicant.full_name }}</p>
+                            <p class="text-xs text-slate-500 mt-0.5" style="margin: 0; font-family: monospace;">{{ applicant.reference_number }}</p>
+                            {% if applicant.lot_assignment %}
+                            <p class="text-xs text-teal-600 mt-0.5" style="margin: 0;">Block {{ applicant.lot_assignment.block }}, Lot {{ applicant.lot_assignment.lot }}</p>
+                            {% endif %}
+                        </div>
+                        <span class="text-xs text-slate-500 whitespace-nowrap mt-0.5" style="font-weight: 500;">{{ applicant.doc_count }}/{{ applicant.total_docs }}</span>
+                    </div>
+                    <div class="doc-progress-bar">
+                        <div class="doc-progress-fill" style="width: {{ applicant.doc_percentage }}%; background: {% if applicant.doc_percentage == 100 %}#22c55e{% elif applicant.doc_percentage > 50 %}#2563eb{% else %}#f59e0b{% endif %};"></div>
+                    </div>
+                </button>
+                {% empty %}
+                <div style="padding: 2rem 0; text-align: center; color: #cbd5e1;">
+                    <p class="text-sm">No applicants found</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
 
-        // Get CSRF token from cookie
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
+        <!-- Right: Document Details -->
+        <div id="detailsPanel" class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden" style="display: none;">
+            <!-- Header -->
+            <div class="px-6 py-4 border-b bg-slate-50 flex items-start justify-between">
+                <div>
+                    <h2 class="text-slate-900" id="selectedName" style="margin: 0; font-size: 1rem; font-weight: 600;"></h2>
+                    <p class="text-xs text-slate-500 mt-0.5" id="selectedInfo" style="margin: 0;"></p>
+                </div>
+            </div>
+
+            <!-- Document Groups -->
+            <div class="p-6 space-y-6" id="docGroupsContainer">
+                {% for group_key, group_data in doc_groups.items %}
+                <div class="doc-group" data-group="{{ group_key }}">
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="text-xs px-3 py-1.5 rounded-full {{ group_data.color_bg }} {{ group_data.color_text }}" style="font-weight: 500;">{{ group_data.label }}</span>
+                    </div>
+                    <div class="space-y-2">
+                        {% for doc_key, doc_label in group_data.documents %}
+                        <div class="doc-item flex items-center justify-between" data-doc-type="{{ doc_key }}">
+                            <div class="flex items-start gap-3" style="flex: 1; min-width: 0;">
+                                <svg class="doc-icon" style="width: 1rem; height: 1rem; color: #cbd5e1; flex-shrink: 0; margin-top: 0.125rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <polyline points="8 12 11 15 16 10"></polyline>
+                                </svg>
+                                <div style="min-width: 0; flex: 1;">
+                                    <p class="text-xs text-slate-700 font-medium" style="margin: 0;">{{ doc_label }}</p>
+                                    <p class="text-xs text-red-500 mt-0.5 upload-msg" style="margin: 0;">Not uploaded</p>
+                                    <div class="upload-status" style="display: none;"></div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2" style="flex-shrink: 0; margin-left: 1rem;">
+                                <button class="file-upload-btn px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-600 hover:bg-slate-50 transition-all" style="cursor: pointer; font-weight: 500;" data-doc-type="{{ doc_key }}">
+                                    <svg style="display: inline; width: 0.75rem; height: 0.75rem; margin-right: 0.25rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="17 8 12 3 7 8"></polyline>
+                                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                                    </svg>
+                                    Upload
+                                </button>
+                                <button class="mark-present-btn px-3 py-1.5 rounded-lg bg-blue-600 text-xs text-white hover:bg-blue-700 transition-all" style="cursor: pointer; display: none; font-weight: 500;" data-doc-type="{{ doc_key }}">
+                                    <svg style="display: inline; width: 0.75rem; height: 0.75rem; margin-right: 0.25rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="20 6 9 17 4 12"></polyline>
+                                    </svg>
+                                    Mark Present
+                                </button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="flex-1 bg-white rounded-xl border border-slate-200 shadow-sm flex items-center justify-center" style="min-height: 400px;">
+            <div class="text-center" style="color: #cbd5e1;">
+                <svg style="width: 3rem; height: 3rem; margin: 0 auto 0.75rem; opacity: 0.3;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                </svg>
+                <p class="text-sm">Select an applicant to view their documents</p>
+                <p class="text-xs mt-1">Search by name, reference number, or block/lot</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden file inputs for each document type -->
+<input type="file" id="fileInputTemplate" style="display: none;">
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const applicantButtons = document.querySelectorAll('.doc-applicant-btn');
+    const detailsPanel = document.getElementById('detailsPanel');
+    const emptyState = document.getElementById('emptyState');
+    const selectedName = document.getElementById('selectedName');
+    const selectedInfo = document.getElementById('selectedInfo');
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    const searchInput = document.getElementById('searchInput');
+    const statusFilter = document.getElementById('statusFilter');
+    let selectedApplicantId = null;
+
+    // Get CSRF token from cookie
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
                 }
             }
-            return cookieValue;
         }
+        return cookieValue;
+    }
 
-        const csrftoken = getCookie('csrftoken');
+    const csrftoken = getCookie('csrftoken');
 
-        // Applicant selection handler
-        applicantButtons.forEach(btn => {
-            btn.addEventListener('click', function() {
-                applicantButtons.forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
+    // Applicant selection handler
+    applicantButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            applicantButtons.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
 
-                const fullName = this.dataset.fullName;
-                const reference = this.dataset.reference;
-                const block = this.dataset.block;
-                const lot = this.dataset.lot;
+            const fullName = this.dataset.fullName;
+            const reference = this.dataset.reference;
+            const block = this.dataset.block;
+            const lot = this.dataset.lot;
 
-                selectedApplicantId = this.dataset.applicantId;
+            selectedApplicantId = this.dataset.applicantId;
 
-                selectedName.textContent = fullName;
-                let infoText = reference;
-                if (block && lot) {
-                    infoText += ` · Block ${block}, Lot ${lot}`;
-                }
-                selectedInfo.textContent = infoText;
+            selectedName.textContent = fullName;
+            let infoText = reference;
+            if (block && lot) {
+                infoText += ` · Block ${block}, Lot ${lot}`;
+            }
+            selectedInfo.textContent = infoText;
 
-                detailsPanel.style.display = 'block';
-                emptyState.style.display = 'none';
+            detailsPanel.style.display = 'block';
+            emptyState.style.display = 'none';
 
-                // Load existing documents
-                loadApplicantDocuments(selectedApplicantId);
-            });
+            // Load existing documents
+            loadApplicantDocuments(selectedApplicantId);
         });
+    });
 
-        // Load applicant documents via AJAX
-        function loadApplicantDocuments(applicantId) {
-            fetch(`{% url 'documents:get_documents' %}?applicant_id=${applicantId}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        updateDocumentDisplay(data.documents);
-                    }
-                })
-                .catch(error => console.error('Error loading documents:', error));
-        }
-
-        // Update document display based on loaded documents
-        function updateDocumentDisplay(documents) {
-            const docItems = document.querySelectorAll('.doc-item');
-            docItems.forEach(item => {
-                const docType = item.dataset.docType;
-                const hasDoc = documents[docType];
-                const uploadMsg = item.querySelector('.upload-msg');
-                const uploadStatus = item.querySelector('.upload-status');
-                const markPresentBtn = item.querySelector('.mark-present-btn');
-                const uploadBtn = item.querySelector('.file-upload-btn');
-
-                if (hasDoc) {
-                    item.classList.add('uploaded');
-                    uploadMsg.style.display = 'none';
-                    uploadStatus.style.display = 'inline-block';
-                    uploadStatus.textContent = `✓ ${hasDoc.file_name} (${hasDoc.file_size})`;
-                    uploadStatus.className = 'upload-status success';
-                    markPresentBtn.style.display = 'none';
-                    uploadBtn.textContent = 'Replace';
-                    uploadBtn.innerHTML = '<svg style="width: 0.75rem; height: 0.75rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg> Replace';
-                } else {
-                    item.classList.remove('uploaded');
-                    uploadMsg.style.display = 'block';
-                    uploadMsg.textContent = 'Not uploaded';
-                    uploadStatus.style.display = 'none';
-                    markPresentBtn.style.display = 'inline-block';
-                    uploadBtn.textContent = 'Upload';
-                    uploadBtn.innerHTML = '<svg style="width: 0.75rem; height: 0.75rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg> Upload';
-                }
-            });
-        }
-
-        // File upload button handler
-        document.querySelectorAll('.file-upload-btn').forEach(btn => {
-            btn.addEventListener('click', function(e) {
-                e.preventDefault();
-                const docType = this.dataset.docType;
-                const fileInput = document.createElement('input');
-                fileInput.type = 'file';
-                fileInput.accept = '.pdf,.jpg,.jpeg,.png,.doc,.docx';
-                fileInput.addEventListener('change', function(event) {
-                    if (this.files.length > 0) {
-                        uploadDocument(selectedApplicantId, docType, this.files[0]);
-                    }
-                });
-                fileInput.click();
-            });
-        });
-
-        // Upload document via AJAX
-        function uploadDocument(applicantId, docType, file) {
-            const formData = new FormData();
-            formData.append('applicant_id', applicantId);
-            formData.append('doc_type', docType);
-            formData.append('file', file);
-
-            const docItem = document.querySelector(`.doc-item[data-doc-type="${docType}"]`);
-            const uploadStatus = docItem.querySelector('.upload-status');
-            const uploadMsg = docItem.querySelector('.upload-msg');
-
-            uploadStatus.className = 'upload-status loading';
-            uploadStatus.textContent = 'Uploading...';
-            uploadStatus.style.display = 'inline-block';
-            uploadMsg.style.display = 'none';
-
-            fetch('{% url "documents:upload" %}', {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': csrftoken,
-                },
-                body: formData
-            })
+    // Load applicant documents via AJAX
+    function loadApplicantDocuments(applicantId) {
+        fetch(`{% url 'documents:get_documents' %}?applicant_id=${applicantId}`)
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    uploadStatus.className = 'upload-status success';
-                    uploadStatus.textContent = `✓ ${data.file_name} (${data.file_size})`;
-                    docItem.classList.add('uploaded');
-                    docItem.querySelector('.mark-present-btn').style.display = 'none';
-                    docItem.querySelector('.file-upload-btn').textContent = 'Replace';
-                } else {
-                    uploadStatus.className = 'upload-status error';
-                    uploadStatus.textContent = `Error: ${data.error}`;
+                    updateDocumentDisplay(data.documents);
                 }
             })
-            .catch(error => {
-                uploadStatus.className = 'upload-status error';
-                uploadStatus.textContent = 'Upload failed';
-                console.error('Upload error:', error);
-            });
-        }
+            .catch(error => console.error('Error loading documents:', error));
+    }
 
-        // Mark document present handler
-        document.querySelectorAll('.mark-present-btn').forEach(btn => {
-            btn.addEventListener('click', function(e) {
-                e.preventDefault();
-                const docType = this.dataset.docType;
-                markDocumentPresent(selectedApplicantId, docType);
-            });
+    // Update document display based on loaded documents
+    function updateDocumentDisplay(documents) {
+        const docItems = document.querySelectorAll('.doc-item');
+        docItems.forEach(item => {
+            const docType = item.dataset.docType;
+            const hasDoc = documents[docType];
+            const uploadMsg = item.querySelector('.upload-msg');
+            const uploadStatus = item.querySelector('.upload-status');
+            const markPresentBtn = item.querySelector('.mark-present-btn');
+            const uploadBtn = item.querySelector('.file-upload-btn');
+
+            if (hasDoc) {
+                item.classList.add('uploaded');
+                uploadMsg.style.display = 'none';
+                uploadStatus.style.display = 'inline-block';
+                uploadStatus.textContent = `✓ ${hasDoc.file_name} (${hasDoc.file_size})`;
+                uploadStatus.className = 'upload-status success';
+                markPresentBtn.style.display = 'none';
+                uploadBtn.textContent = 'Replace';
+                uploadBtn.innerHTML = '<svg style="width: 0.75rem; height: 0.75rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg> Replace';
+            } else {
+                item.classList.remove('uploaded');
+                uploadMsg.style.display = 'block';
+                uploadMsg.textContent = 'Not uploaded';
+                uploadStatus.style.display = 'none';
+                markPresentBtn.style.display = 'inline-block';
+                uploadBtn.textContent = 'Upload';
+                uploadBtn.innerHTML = '<svg style="width: 0.75rem; height: 0.75rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg> Upload';
+            }
         });
+    }
 
-        // Mark document present via AJAX
-        function markDocumentPresent(applicantId, docType) {
-            const formData = new FormData();
-            formData.append('applicant_id', applicantId);
-            formData.append('doc_type', docType);
-
-            const docItem = document.querySelector(`.doc-item[data-doc-type="${docType}"]`);
-            const uploadStatus = docItem.querySelector('.upload-status');
-            const uploadMsg = docItem.querySelector('.upload-msg');
-
-            uploadStatus.className = 'upload-status loading';
-            uploadStatus.textContent = 'Marking...';
-            uploadStatus.style.display = 'inline-block';
-            uploadMsg.style.display = 'none';
-
-            fetch('{% url "documents:mark_present" %}', {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': csrftoken,
-                },
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    uploadStatus.className = 'upload-status success';
-                    uploadStatus.textContent = '✓ Verified by staff';
-                    docItem.classList.add('uploaded');
-                    docItem.querySelector('.mark-present-btn').style.display = 'none';
-                } else {
-                    uploadStatus.className = 'upload-status error';
-                    uploadStatus.textContent = `Error: ${data.error}`;
+    // File upload button handler
+    document.querySelectorAll('.file-upload-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const docType = this.dataset.docType;
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = '.pdf,.jpg,.jpeg,.png,.doc,.docx';
+            fileInput.addEventListener('change', function(event) {
+                if (this.files.length > 0) {
+                    uploadDocument(selectedApplicantId, docType, this.files[0]);
                 }
-            })
-            .catch(error => {
+            });
+            fileInput.click();
+        });
+    });
+
+    // Upload document via AJAX
+    function uploadDocument(applicantId, docType, file) {
+        const formData = new FormData();
+        formData.append('applicant_id', applicantId);
+        formData.append('doc_type', docType);
+        formData.append('file', file);
+
+        const docItem = document.querySelector(`.doc-item[data-doc-type="${docType}"]`);
+        const uploadStatus = docItem.querySelector('.upload-status');
+        const uploadMsg = docItem.querySelector('.upload-msg');
+
+        uploadStatus.className = 'upload-status loading';
+        uploadStatus.textContent = 'Uploading...';
+        uploadStatus.style.display = 'inline-block';
+        uploadMsg.style.display = 'none';
+
+        fetch('{% url "documents:upload" %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken,
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                uploadStatus.className = 'upload-status success';
+                uploadStatus.textContent = `✓ ${data.file_name} (${data.file_size})`;
+                docItem.classList.add('uploaded');
+                docItem.querySelector('.mark-present-btn').style.display = 'none';
+                docItem.querySelector('.file-upload-btn').textContent = 'Replace';
+            } else {
                 uploadStatus.className = 'upload-status error';
-                uploadStatus.textContent = 'Failed to mark';
-                console.error('Error:', error);
-            });
-        }
-
-        // Filter buttons
-        filterButtons.forEach(btn => {
-            btn.addEventListener('click', function() {
-                filterButtons.forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-            });
+                uploadStatus.textContent = `Error: ${data.error}`;
+            }
+        })
+        .catch(error => {
+            uploadStatus.className = 'upload-status error';
+            uploadStatus.textContent = 'Upload failed';
+            console.error('Upload error:', error);
         });
+    }
 
-        // Status filter
-        statusFilter.addEventListener('change', function() {
-            const url = new URL(window.location);
-            url.searchParams.set('status', this.value);
-            window.location = url.toString();
+    // Mark document present handler
+    document.querySelectorAll('.mark-present-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const docType = this.dataset.docType;
+            markDocumentPresent(selectedApplicantId, docType);
         });
+    });
 
-        // Initialize with first applicant
-        if (applicantButtons.length > 0) {
-            applicantButtons[0].click();
-        }
-    </script>
-</body>
-</html>
+    // Mark document present via AJAX
+    function markDocumentPresent(applicantId, docType) {
+        const formData = new FormData();
+        formData.append('applicant_id', applicantId);
+        formData.append('doc_type', docType);
+
+        const docItem = document.querySelector(`.doc-item[data-doc-type="${docType}"]`);
+        const uploadStatus = docItem.querySelector('.upload-status');
+        const uploadMsg = docItem.querySelector('.upload-msg');
+
+        uploadStatus.className = 'upload-status loading';
+        uploadStatus.textContent = 'Marking...';
+        uploadStatus.style.display = 'inline-block';
+        uploadMsg.style.display = 'none';
+
+        fetch('{% url "documents:mark_present" %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken,
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                uploadStatus.className = 'upload-status success';
+                uploadStatus.textContent = '✓ Verified by staff';
+                docItem.classList.add('uploaded');
+                docItem.querySelector('.mark-present-btn').style.display = 'none';
+            } else {
+                uploadStatus.className = 'upload-status error';
+                uploadStatus.textContent = `Error: ${data.error}`;
+            }
+        })
+        .catch(error => {
+            uploadStatus.className = 'upload-status error';
+            uploadStatus.textContent = 'Failed to mark';
+            console.error('Error:', error);
+        });
+    }
+
+    // Filter buttons
+    filterButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            filterButtons.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+
+    // Status filter
+    statusFilter.addEventListener('change', function() {
+        const url = new URL(window.location);
+        url.searchParams.set('status', this.value);
+        window.location = url.toString();
+    });
+
+    // Initialize with first applicant
+    if (applicantButtons.length > 0) {
+        applicantButtons[0].click();
+    }
+</script>
+{% endblock %}
