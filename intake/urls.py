@@ -16,6 +16,7 @@ urlpatterns = [
     # AJAX endpoints for modal operations
     path('staff/update-eligibility/', views.update_eligibility, name='update_eligibility'),
     path('staff/update-applicant/', views.update_applicant, name='update_applicant'),
+    path('staff/update-cdrrmo-certification/', views.update_cdrrmo_certification, name='update_cdrrmo_certification'),
     path('staff/delete-applicant/', views.delete_applicant, name='delete_applicant'),
     path('staff/resend-sms/', views.resend_sms, name='resend_sms'),
     path('staff/register-landowner-walkin/', views.register_landowner_walkin, name='register_landowner_walkin'),

@@ -119,7 +119,7 @@ def isf_review(request, isf_id):
     # Check if already converted to applicant
     if isf_record.converted_to_applicant:
         messages.warning(request, 'This ISF has already been converted to an applicant profile.')
-        return redirect('intake:submission_review', submission_id=isf_record.submission.id)
+        return redirect('intake:applicants_list')
 
     if request.method == 'POST':
         form = ISFReviewForm(request.POST, instance=isf_record)
@@ -145,7 +145,7 @@ def isf_review(request, isf_id):
                 if is_ajax:
                     return JsonResponse({'success': True, 'message': msg, 'status': 'disqualified'})
                 messages.warning(request, msg)
-                return redirect('intake:submission_review', submission_id=isf_record.submission.id)
+                return redirect('intake:applicants_list')
 
             # Check blacklist first
             is_blacklisted, blacklist_entry = check_blacklist(
@@ -163,7 +163,7 @@ def isf_review(request, isf_id):
                 if is_ajax:
                     return JsonResponse({'success': False, 'error': msg})
                 messages.error(request, msg)
-                return redirect('intake:submission_review', submission_id=isf_record.submission.id)
+                return redirect('intake:applicants_list')
 
             # Check property ownership
             has_property = form.cleaned_data.get('has_property_in_talisay')
@@ -183,7 +183,7 @@ def isf_review(request, isf_id):
                 if is_ajax:
                     return JsonResponse({'success': False, 'error': msg})
                 messages.warning(request, msg)
-                return redirect('intake:submission_review', submission_id=isf_record.submission.id)
+                return redirect('intake:applicants_list')
 
             # Check income eligibility
             if not isf_record.is_income_eligible:
@@ -201,7 +201,7 @@ def isf_review(request, isf_id):
                 if is_ajax:
                     return JsonResponse({'success': False, 'error': msg})
                 messages.warning(request, msg)
-                return redirect('intake:submission_review', submission_id=isf_record.submission.id)
+                return redirect('intake:applicants_list')
 
             # ELIGIBLE - Save updates and convert to Applicant
             isf_record = form.save(commit=False)
@@ -231,7 +231,7 @@ def isf_review(request, isf_id):
                     return JsonResponse({'success': False, 'error': msg})
                 messages.error(request, msg)
 
-            return redirect('intake:submission_review', submission_id=isf_record.submission.id)
+            return redirect('intake:applicants_list')
         else:
             # Form validation failed
             if is_ajax:
@@ -841,6 +841,124 @@ def update_applicant(request):
 
 
 @login_required
+@require_POST
+def update_cdrrmo_certification(request):
+    """
+    Dedicated endpoint for CDRRMO certification decision workflow.
+
+    Channel B applicants must be certified by CDRRMO as danger zone (or not).
+    This endpoint records the CDRRMO officer's decision and determines queue placement.
+
+    ACCESS CONTROL:
+    ✅ Jocel (fourth_member) - Primary decision maker
+    ✅ Joie (second_member) - Supervisor oversight
+
+    Workflow:
+    1. Jocel reviews Channel B applicant (walk-in with danger zone claim)
+    2. Jocel coordinates with CDRRMO office (manual process)
+    3. CDRRMO officer visits location and certifies YES/NO
+    4. Jocel records decision here with notes
+    5. System automatically:
+       - If CERTIFIED: Adds to Priority Queue (high priority)
+       - If NOT CERTIFIED: Moves to Walk-in FIFO Queue (penalty for false claim)
+       - Send SMS with final queue placement
+    """
+    from decimal import Decimal
+
+    # Permission check
+    allowed_positions = ['fourth_member', 'second_member', 'oic', 'head']
+    if request.user.position not in allowed_positions:
+        return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
+
+    try:
+        applicant_id = request.POST.get('applicant_id')
+        decision = request.POST.get('decision')  # 'certified' or 'not_certified'
+        notes = request.POST.get('notes', '').strip()
+
+        if not applicant_id or not decision:
+            return JsonResponse({'success': False, 'error': 'Missing applicant_id or decision'})
+
+        if decision not in ['certified', 'not_certified']:
+            return JsonResponse({'success': False, 'error': 'Invalid decision. Must be "certified" or "not_certified"'})
+
+        # Get applicant
+        applicant = Applicant.objects.get(id=applicant_id)
+
+        # Check if CDRRMO certification exists
+        if not hasattr(applicant, 'cdrrmo_certification'):
+            return JsonResponse({'success': False, 'error': 'This applicant is not awaiting CDRRMO certification (not Channel B)'})
+
+        cert = applicant.cdrrmo_certification
+
+        # Check if already decided
+        if cert.status != 'pending':
+            return JsonResponse({'success': False, 'error': f'CDRRMO decision already made: {cert.get_status_display()}'})
+
+        # Record decision
+        cert.status = decision
+        cert.result_recorded_by = request.user
+        cert.certified_at = timezone.now()
+        if notes:
+            cert.certification_notes = notes
+        cert.save()
+
+        # Update applicant status and queue placement
+        if decision == 'certified':
+            # CDRRMO certified as danger zone → Priority Queue
+            applicant.status = 'eligible'
+            applicant.save()
+
+            # Create queue entry (priority)
+            queue_entry = QueueEntry.objects.create(
+                applicant=applicant,
+                queue_type='priority',
+                status='active',
+                position=QueueEntry.objects.filter(queue_type='priority', status='active').count() + 1
+            )
+
+            message = f'✅ {applicant.full_name} CERTIFIED as danger zone. Added to Priority Queue (Position {queue_entry.position}).'
+
+            # Send SMS: Certified
+            if applicant.phone_number:
+                sms_msg = f'Your location has been verified as a danger zone. You are assigned Priority Queue Position {queue_entry.position}. Please visit THA office for next steps.'
+                send_sms(applicant.phone_number, sms_msg, 'cdrrmo_certified', applicant.id)
+
+        else:  # not_certified
+            # CDRRMO NOT certified → Walk-in FIFO Queue (penalty)
+            applicant.status = 'eligible'
+            applicant.channel = 'C'  # Downgrade to regular walk-in
+            applicant.save()
+
+            # Create queue entry (walk-in FIFO)
+            queue_entry = QueueEntry.objects.create(
+                applicant=applicant,
+                queue_type='walkin',
+                status='active',
+                position=QueueEntry.objects.filter(queue_type='walkin', status='active').count() + 1
+            )
+
+            message = f'❌ {applicant.full_name} NOT CERTIFIED. Moved to Walk-in FIFO Queue (Position {queue_entry.position}).'
+
+            # Send SMS: Not certified
+            if applicant.phone_number:
+                sms_msg = f'Your location claim could not be verified as a danger zone. You have been placed in Walk-in FIFO Queue Position {queue_entry.position}. Please visit THA office.'
+                send_sms(applicant.phone_number, sms_msg, 'cdrrmo_not_certified', applicant.id)
+
+        return JsonResponse({
+            'success': True,
+            'message': message,
+            'queue_type': queue_entry.queue_type,
+            'queue_position': queue_entry.position,
+            'decision': decision
+        })
+
+    except Applicant.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Applicant not found'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': f'Error updating CDRRMO certification: {str(e)}'})
+
+
+@login_required
 def delete_applicant(request):
     """
     AJAX endpoint to delete an applicant.
@@ -1376,9 +1494,11 @@ def walkin_register(request):
 
     # For Channel B, create CDRRMO certification
     if channel_val == 'danger_zone':
+        # Build declared location string (simple version)
+        declared_location = f"{danger_zone_type}: {danger_zone_location}" if danger_zone_location else danger_zone_type
         CDRRMOCertification.objects.create(
             applicant=applicant,
-            declared_location=f"{dict(form.fields['danger_zone_type'].choices).get(danger_zone_type, danger_zone_type)}: {danger_zone_location}",
+            declared_location=declared_location,
             status='pending',
             requested_by=request.user,
         )
