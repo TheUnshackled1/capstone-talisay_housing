@@ -686,7 +686,7 @@ def dashboard_second_member(request):
     # ==================== MODULE 2: ELECTRICITY CONNECTIONS (M2) ====================
     # Electricity connection tracking
     electricity_connections = ElectricityConnection.objects.filter(
-        status__in=['pending', 'docs_submitted_at', 'coordinating', 'approved']
+        status__in=['pending', 'initiated', 'in_progress', 'approved', 'completed']
     ).select_related('lot_award__application__applicant', 'lot_award__unit').order_by('-updated_at')
 
     electricity_tracking = []

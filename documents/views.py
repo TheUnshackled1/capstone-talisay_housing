@@ -1,9 +1,12 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.http import JsonResponse
 from django.db.models import Q
+from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
+import json
 from intake.models import Applicant
+from units.models import LotAward
 from documents.models import Document
 
 
@@ -18,19 +21,61 @@ def document_management(request):
         return redirect('accounts:dashboard')
 
     search_query = request.GET.get('search', '').strip()
+    status_filter = request.GET.get('status', 'all').strip()
 
-    # Get all applicants, optionally filtered by search
-    applicants = Applicant.objects.all().prefetch_related('documents')
+    # Get all applicants
+    applicants_qs = Applicant.objects.prefetch_related('application__lot_awards__unit', 'documents').all()
 
+    # Filter by status
+    if status_filter != 'all' and status_filter:
+        applicants_qs = applicants_qs.filter(status=status_filter)
+
+    # Filter by search query
     if search_query:
-        applicants = applicants.filter(
+        applicants_qs = applicants_qs.filter(
             Q(full_name__icontains=search_query) |
             Q(reference_number__icontains=search_query) |
-            Q(applicant_lot_award__unit__block_number__icontains=search_query) |
-            Q(applicant_lot_award__unit__lot_number__icontains=search_query)
+            Q(application__lot_awards__unit__block_number__icontains=search_query) |
+            Q(application__lot_awards__unit__lot_number__icontains=search_query)
         ).distinct()
 
-    # Document groups and types
+    # Prepare applicants with lot info and document count
+    applicants_list = []
+    for applicant in applicants_qs:
+        # Count uploaded documents
+        doc_count = applicant.documents.count()
+        total_docs = 15  # Total possible documents
+
+        # Get lot assignment if exists
+        lot_info = None
+        try:
+            if hasattr(applicant, 'application') and applicant.application:
+                lot_award = applicant.application.lot_awards.filter(unit__isnull=False).first()
+                if lot_award and lot_award.unit:
+                    lot_info = {
+                        'block': str(lot_award.unit.block_number) if lot_award.unit.block_number else 'N/A',
+                        'lot': str(lot_award.unit.lot_number) if lot_award.unit.lot_number else 'N/A',
+                        'site': 'GK Cabatangan'
+                    }
+        except:
+            lot_info = None
+
+        applicants_list.append({
+            'id': str(applicant.id),
+            'full_name': applicant.full_name,
+            'reference_number': applicant.reference_number,
+            'status': applicant.status,
+            'status_display': applicant.get_status_display() if hasattr(applicant, 'get_status_display') else applicant.status,
+            'barangay': applicant.barangay.name if applicant.barangay else 'N/A',
+            'monthly_income': applicant.monthly_income or 0,
+            'household_members': applicant.household_members or 0,
+            'lot_assignment': lot_info,
+            'doc_count': doc_count,
+            'total_docs': total_docs,
+            'doc_percentage': int((doc_count / total_docs) * 100) if total_docs > 0 else 0,
+        })
+
+    # Document group definitions
     doc_groups = {
         'A': {
             'label': 'Group A — Applicant Requirements',
@@ -70,31 +115,151 @@ def document_management(request):
         }
     }
 
-    # Get selected applicant from session or parameter
-    selected_applicant_id = request.GET.get('applicant_id') or request.session.get('selected_applicant_id')
-    selected_applicant = None
-    applicant_documents = {}
-
-    if selected_applicant_id:
-        try:
-            selected_applicant = Applicant.objects.prefetch_related('documents').get(id=selected_applicant_id)
-            request.session['selected_applicant_id'] = selected_applicant_id
-
-            # Get documents by type for selected applicant
-            for doc in selected_applicant.documents.all():
-                applicant_documents[doc.document_type] = {
-                    'document': doc,
-                    'exists': True
-                }
-        except Applicant.DoesNotExist:
-            selected_applicant = None
-
     context = {
-        'applicants': applicants,
-        'selected_applicant': selected_applicant,
-        'applicant_documents': applicant_documents,
+        'page_title': 'Document Management',
+        'user_position': request.user.position,
+        'applicants': applicants_list,
         'doc_groups': doc_groups,
         'search_query': search_query,
+        'status_filter': status_filter,
+        'applicant_statuses': [
+            ('all', 'All Applicants'),
+            ('registered', 'Registered'),
+            ('eligible', 'Eligible'),
+            ('disqualified', 'Disqualified'),
+            ('pending_cdrrmo', 'Pending CDRRMO'),
+            ('in_queue', 'In Queue'),
+            ('standby', 'On Standby'),
+            ('awarded', 'Awarded'),
+        ],
     }
 
     return render(request, 'documents/management.html', context)
+
+
+@login_required
+@require_http_methods(["POST"])
+def upload_document(request):
+    """
+    AJAX endpoint to upload a document for an applicant.
+    Returns JSON response with upload status.
+    """
+    if not request.user.is_staff:
+        return JsonResponse({'success': False, 'error': 'Access denied'}, status=403)
+
+    try:
+        applicant_id = request.POST.get('applicant_id')
+        doc_type = request.POST.get('doc_type')
+        file = request.FILES.get('file')
+
+        if not all([applicant_id, doc_type, file]):
+            return JsonResponse({'success': False, 'error': 'Missing required fields'}, status=400)
+
+        # Get applicant
+        applicant = Applicant.objects.get(id=applicant_id)
+
+        # Check if document of this type already exists
+        existing_doc = Document.objects.filter(applicant=applicant, document_type=doc_type).first()
+
+        # Create or update document
+        doc, created = Document.objects.update_or_create(
+            applicant=applicant,
+            document_type=doc_type,
+            defaults={
+                'title': f"{applicant.full_name} - {dict(Document.DOCUMENT_TYPE_CHOICES).get(doc_type, doc_type)}",
+                'file': file,
+                'file_name': file.name,
+                'file_size': file.size,
+                'mime_type': file.content_type,
+                'uploaded_by': request.user,
+            }
+        )
+
+        return JsonResponse({
+            'success': True,
+            'message': f"Document {'updated' if not created else 'uploaded'} successfully",
+            'document_id': str(doc.id),
+            'file_name': doc.file_name,
+            'file_size': doc.file_size_display,
+        })
+
+    except Applicant.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Applicant not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
+
+@login_required
+@require_http_methods(["POST"])
+def mark_document_present(request):
+    """
+    Mark a specific document type as present (verified) for an applicant.
+    """
+    if not request.user.is_staff:
+        return JsonResponse({'success': False, 'error': 'Access denied'}, status=403)
+
+    try:
+        applicant_id = request.POST.get('applicant_id')
+        doc_type = request.POST.get('doc_type')
+
+        if not all([applicant_id, doc_type]):
+            return JsonResponse({'success': False, 'error': 'Missing required fields'}, status=400)
+
+        # Get applicant
+        applicant = Applicant.objects.get(id=applicant_id)
+
+        # Create document record without file (marked as verified by staff)
+        doc, created = Document.objects.get_or_create(
+            applicant=applicant,
+            document_type=doc_type,
+            defaults={
+                'title': f"{applicant.full_name} - {dict(Document.DOCUMENT_TYPE_CHOICES).get(doc_type, doc_type)}",
+                'file_name': 'verified_by_staff',
+                'file_size': 0,
+                'uploaded_by': request.user,
+            }
+        )
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Document marked as present',
+            'document_id': str(doc.id),
+        })
+
+    except Applicant.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Applicant not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
+
+@login_required
+@require_http_methods(["GET"])
+def get_applicant_documents(request):
+    """
+    Get all documents for an applicant as JSON.
+    """
+    try:
+        applicant_id = request.GET.get('applicant_id')
+        applicant = Applicant.objects.prefetch_related('documents').get(id=applicant_id)
+
+        # Build document dict by type
+        docs_by_type = {}
+        for doc in applicant.documents.all():
+            docs_by_type[doc.document_type] = {
+                'id': str(doc.id),
+                'file_name': doc.file_name,
+                'file_size': doc.file_size_display,
+                'uploaded_at': doc.uploaded_at.isoformat(),
+                'uploaded_by': doc.uploaded_by.get_full_name() if doc.uploaded_by else 'Unknown',
+                'url': doc.file.url if doc.file else None,
+            }
+
+        return JsonResponse({
+            'success': True,
+            'documents': docs_by_type,
+        })
+
+    except Applicant.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Applicant not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=400)
