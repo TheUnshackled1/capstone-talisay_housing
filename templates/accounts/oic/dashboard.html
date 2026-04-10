@@ -703,34 +703,63 @@ Responsibilities:
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
             </svg>
-            Escalated Cases
+            Escalated Cases (M5)
         </h3>
-        <span class="badge badge-danger">{{ escalated_cases|length|default:0 }}</span>
+        <span class="badge" style="background-color: {% if stale_cases_count > 0 %}#ef4444{% elif urgent_cases_count > 0 %}#f59e0b{% else %}#10b981{% endif %};">
+            {{ escalated_complaints|default:0 }} Case{{ escalated_complaints|pluralize }}
+        </span>
     </div>
     <div class="card-body">
-        {% if escalated_cases %}
-            <ul class="case-list">
-                {% for case in escalated_cases %}
-                <li class="case-item">
-                    <div class="case-number">Case #{{ case.case_number }}</div>
-                    <div class="case-content">
-                        <div class="case-title">{{ case.complaint_type_display }}</div>
-                        <div class="case-complainant">{{ case.complainant_name }}</div>
-                        <div class="case-meta">
-                            <span class="case-date">Escalated {{ case.escalated_date }}</span>
-                            <span class="case-days">{{ case.days_open }} days open</span>
-                        </div>
+        {% if escalated_complaints > 0 %}
+            <!-- Summary Stats -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; margin-bottom: 1.5rem;">
+                <div style="background: #f0f9ff; padding: 0.75rem; border-radius: 0.5rem; border-left: 3px solid #3b82f6;">
+                    <div style="font-size: 0.75rem; color: #1e40af; font-weight: 600; text-transform: uppercase;">Total Pending</div>
+                    <div style="font-size: 1.5rem; font-weight: bold; color: #1e40af; margin-top: 0.25rem;">{{ escalated_complaints }}</div>
+                </div>
+                {% if urgent_cases_count > 0 %}
+                <div style="background: #fef3c7; padding: 0.75rem; border-radius: 0.5rem; border-left: 3px solid #f59e0b;">
+                    <div style="font-size: 0.75rem; color: #92400e; font-weight: 600; text-transform: uppercase;">⚠️ Urgent (7+ days)</div>
+                    <div style="font-size: 1.5rem; font-weight: bold; color: #b45309; margin-top: 0.25rem;">{{ urgent_cases_count }}</div>
+                </div>
+                {% endif %}
+                {% if stale_cases_count > 0 %}
+                <div style="background: #fee2e2; padding: 0.75rem; border-radius: 0.5rem; border-left: 3px solid #ef4444;">
+                    <div style="font-size: 0.75rem; color: #991b1b; font-weight: 600; text-transform: uppercase;">🔴 Stale (14+ days)</div>
+                    <div style="font-size: 1.5rem; font-weight: bold; color: #dc2626; margin-top: 0.25rem;">{{ stale_cases_count }}</div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Cases List -->
+            <div style="max-height: 450px; overflow-y: auto;">
+                {% for item in escalated_cases %}
+                <div style="padding: 0.875rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600; color: #1e293b; font-size: 0.9375rem;">{{ item.case_number }}</div>
+                        <div style="color: #64748b; font-size: 0.8125rem; margin-top: 0.25rem;">{{ item.case_type }}</div>
+                        <div style="color: #94a3b8; font-size: 0.75rem; margin-top: 0.25rem;">{{ item.complainant }} {{ item.subject|default:"" }}</div>
+                        <div style="color: #cbd5e1; font-size: 0.75rem; margin-top: 0.25rem;">{{ item.description_snippet }}</div>
                     </div>
-                    <a href="#" class="btn btn-sm btn-primary">Review</a>
-                </li>
+                    <div style="text-align: right; margin-left: 1rem; min-width: 120px;">
+                        <span style="display: inline-block; background-color: {% if item.is_stale %}#fee2e2{% elif item.is_urgent %}#fef3c7{% else %}#dbeafe{% endif %}; padding: 0.35rem 0.75rem; border-radius: 0.25rem; font-weight: 600; font-size: 0.75rem; margin-bottom: 0.5rem;">
+                            {% if item.is_stale %}🔴 {{ item.days_open }} DAYS{% elif item.is_urgent %}⚠️ {{ item.days_open }} days{% else %}{{ item.days_open }} days{% endif %}
+                        </span>
+                        <div style="font-size: 0.75rem; color: #64748b; margin-top: 0.25rem;">{{ item.status_display }}</div>
+                    </div>
+                </div>
                 {% endfor %}
-            </ul>
+            </div>
+
+            <!-- Action Button -->
+            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e2e8f0;">
+                <a href="#" style="display: inline-block; background-color: #3b82f6; color: white; padding: 0.5rem 1rem; border-radius: 0.375rem; text-decoration: none; font-size: 0.875rem; font-weight: 500;">
+                    Review & Decide Cases
+                </a>
+            </div>
         {% else %}
-            <div class="empty-state-sm">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                </svg>
-                <p>No escalated cases</p>
+            <div style="text-align: center; padding: 2rem 0;">
+                <p style="color: #10b981; font-weight: 500;">✅ No escalated cases awaiting decision</p>
             </div>
         {% endif %}
     </div>

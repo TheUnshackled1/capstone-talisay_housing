@@ -6,6 +6,9 @@ from django.utils import timezone
 from datetime import timedelta
 from .forms import LoginForm
 from intake.models import Applicant, QueueEntry, CDRRMOCertification, SMSLog, Blacklist
+from cases.models import Case
+from applications.models import Application, SignatoryRouting, RequirementSubmission
+from units.models import ComplianceNotice, HousingUnit, ElectricityConnection
 import json
 
 
@@ -108,13 +111,15 @@ def dashboard_head(request):
     Responsibilities: M1 (applicant oversight), M2 (final signatory), M6 (receives reports)
 
     MODULE 1: Applicant Intake Breakdown, Eligibility Metrics, Queue Status, Critical Alerts
+    MODULE 2: Applications Awaiting Head Signature
+    MODULE 6: System Overview & Reports
     """
     # Verify user has correct position
     if request.user.position != 'head':
         messages.error(request, 'Access denied. This dashboard is for the Head position only.')
         return redirect('accounts:dashboard')
 
-    # MODULE 1: Intake and eligibility metrics
+    # ==================== MODULE 1: INTAKE AND ELIGIBILITY METRICS ====================
     # Total applicants
     total_applicants = Applicant.objects.count()
 
@@ -148,11 +153,60 @@ def dashboard_head(request):
     seven_days_ago = timezone.now() - timedelta(days=7)
     sms_failed_recent = SMSLog.objects.filter(status='failed', sent_at__gte=seven_days_ago).count()
 
+    # ==================== MODULE 2: APPLICATIONS AWAITING HEAD SIGNATURE ====================
+    # Applications awaiting head signature (status='forwarded_head')
+    pending_head_signature_applications = Application.objects.filter(
+        status='head_signed'  # Applications that reached head signature step
+    ).exclude(
+        routing_steps__step='signed_head'  # But don't have the signed_head step yet
+    ).select_related('applicant').prefetch_related('routing_steps').distinct()
+
+    # Actually, better approach: applications in 'head_signed' status awaiting final sign-off
+    # Or where last routing step is 'forwarded_head'
+    pending_head_applications = []
+    pending_head_applications_qs = Application.objects.filter(
+        status='head_signed',
+    ).select_related('applicant').prefetch_related('routing_steps')
+
+    for app in pending_head_applications_qs:
+        last_routing = app.routing_steps.exclude(step='signed_head').order_by('-action_at').first()
+        if last_routing:
+            days_waiting = last_routing.days_since_action
+            pending_head_applications.append({
+                'applicant_name': app.applicant.full_name,
+                'reference': app.application_number,
+                'forwarded_date': last_routing.action_at,
+                'days_waiting': days_waiting,
+            })
+
+    awaiting_head_signature_count = len(pending_head_applications)
+
+    # ==================== MODULE 6: SYSTEM OVERVIEW & REPORTS ====================
+    # Total housing units
+    total_housing_units = HousingUnit.objects.count()
+
+    # Occupancy rate calculation
+    occupied_units = HousingUnit.objects.filter(occupancy_status='occupied').count()
+    if total_housing_units > 0:
+        occupancy_rate = int((occupied_units / total_housing_units) * 100)
+    else:
+        occupancy_rate = 0
+
+    # Approved this month
+    this_month_start = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    approved_this_month = Application.objects.filter(
+        status='awarded',
+        updated_at__gte=this_month_start
+    ).count()
+
+    # Recent reports (mock - in real system would come from Reports model)
+    recent_reports = []
+
     context = {
         'page_title': 'Head Dashboard',
         'user_position': 'head',
 
-        # MODULE 1 Metrics
+        # ========== MODULE 1: INTAKE METRICS ==========
         'total_applicants': total_applicants,
         'channel_a': channel_a,
         'channel_b': channel_b,
@@ -166,12 +220,15 @@ def dashboard_head(request):
         'blacklist_count': blacklist_count,
         'sms_failed_recent': sms_failed_recent,
 
-        # Legacy M2+ placeholders
-        'awaiting_signature': 0,  # TODO: Applications pending head signature (M2)
-        'housing_units': 0,  # TODO: Total units at GK Cabatangan
-        'monthly_reports': 0,  # TODO: Reports generated this month (M6)
-        'pending_approvals': [],  # TODO: Applications awaiting final signature
-        'recent_reports': [],  # TODO: Recently generated analytics reports
+        # ========== MODULE 2: APPLICATIONS AWAITING SIGNATURE ==========
+        'pending_approvals': pending_head_applications,
+        'awaiting_signature': awaiting_head_signature_count,
+
+        # ========== MODULE 6: SYSTEM OVERVIEW & REPORTS ==========
+        'housing_units': total_housing_units,
+        'occupancy_rate': occupancy_rate,
+        'approved_this_month': approved_this_month,
+        'recent_reports': recent_reports,
     }
     return render(request, 'accounts/dashboard.html', context)
 
@@ -480,6 +537,48 @@ def dashboard_oic(request):
         compliance_rating = '🔴 POOR'
         compliance_color = '#ef4444'
 
+    # ==================== MODULE 5: ESCALATED CASES (M5) ====================
+    # Cases awaiting OIC decision (open, investigation, pending_decision, referred)
+    escalated_cases_queryset = Case.objects.filter(
+        status__in=['open', 'investigation', 'pending_decision', 'referred']
+    ).order_by('-received_at').select_related('received_by', 'complainant_applicant', 'related_unit', 'subject_applicant')
+
+    # Enrich with statistics
+    escalated_cases_with_stats = []
+    stale_cases_count = 0  # Cases open > 14 days
+    urgent_cases_count = 0  # Cases open > 7 days
+    case_type_distribution = {}  # Count by case type
+
+    for case in escalated_cases_queryset:
+        days_open = case.days_open
+        is_stale = case.is_stale  # > 14 days
+        is_urgent = days_open > 7  # > 7 days
+
+        # Track type distribution
+        case_type = case.get_case_type_display()
+        case_type_distribution[case_type] = case_type_distribution.get(case_type, 0) + 1
+
+        escalated_cases_with_stats.append({
+            'case': case,
+            'case_number': case.case_number,
+            'case_type': case_type,
+            'status_display': case.get_status_display(),
+            'complainant': case.complainant_name,
+            'subject': case.subject_name or (case.subject_applicant.full_name if case.subject_applicant else 'N/A'),
+            'days_open': days_open,
+            'is_stale': is_stale,
+            'is_urgent': is_urgent,
+            'received_at': case.received_at,
+            'description_snippet': case.initial_description[:100] + '...' if len(case.initial_description) > 100 else case.initial_description,
+        })
+
+        if is_stale:
+            stale_cases_count += 1
+        if is_urgent:
+            urgent_cases_count += 1
+
+    total_escalated_cases = len(escalated_cases_with_stats)
+
     context = {
         'page_title': 'OIC Dashboard',
         'user_position': 'oic',
@@ -534,8 +633,11 @@ def dashboard_oic(request):
 
         # ========== PLACEHOLDERS FOR FUTURE MODULES ==========
         'awaiting_signature': pending_signature_count,  # M2 (updated from TODO)
-        'escalated_complaints': 0,  # TODO: Complaints escalated to OIC (M5)
-        'escalated_cases': [],  # M5 (TODO)
+        'escalated_complaints': total_escalated_cases,  # M5 (escalated cases awaiting OIC)
+        'escalated_cases': escalated_cases_with_stats,  # M5 (detailed list)
+        'stale_cases_count': stale_cases_count,  # M5 (cases open > 14 days)
+        'urgent_cases_count': urgent_cases_count,  # M5 (cases open > 7 days)
+        'case_type_distribution': case_type_distribution,  # M5 (breakdown by case type)
     }
     return render(request, 'accounts/dashboard.html', context)
 
@@ -549,42 +651,139 @@ def dashboard_second_member(request):
     if request.user.position != 'second_member':
         messages.error(request, 'Access denied. This dashboard is for the Second Member position only.')
         return redirect('accounts:dashboard')
-    
+
+    # ==================== MODULE 4: COMPLIANCE NOTICES (M4) ====================
+    # Active compliance notices awaiting decision or response
+    pending_notices = ComplianceNotice.objects.filter(
+        status='active'
+    ).select_related('lot_award__application__applicant', 'unit').order_by('issued_at')
+
+    # Enrich with details for display
+    notices_to_prepare = []
+    urgent_notices_count = 0
+
+    for notice in pending_notices:
+        is_approaching_deadline = notice.is_approaching_deadline  # <= 5 days
+        is_overdue = notice.is_overdue
+
+        notices_to_prepare.append({
+            'type': notice.get_notice_type_display(),
+            'type_code': notice.notice_type,
+            'beneficiary': notice.lot_award.application.applicant.full_name if notice.lot_award else 'N/A',
+            'block': notice.unit.block if notice.unit else 'N/A',
+            'lot': notice.unit.lot if notice.unit else 'N/A',
+            'deadline': notice.deadline,
+            'days_remaining': notice.days_remaining,
+            'is_approaching': is_approaching_deadline,
+            'is_overdue': is_overdue,
+        })
+
+        if is_approaching_deadline or is_overdue:
+            urgent_notices_count += 1
+
+    pending_notices_count = len(notices_to_prepare)
+
+    # ==================== MODULE 2: ELECTRICITY CONNECTIONS (M2) ====================
+    # Electricity connection tracking
+    electricity_connections = ElectricityConnection.objects.filter(
+        status__in=['pending', 'docs_submitted_at', 'coordinating', 'approved']
+    ).select_related('lot_award__application__applicant', 'lot_award__unit').order_by('-updated_at')
+
+    electricity_tracking = []
+    for conn in electricity_connections:
+        # Calculate progress: pending=25%, in_progress=75%, completed=100%
+        progress_map = {
+            'pending': 25,
+            'in_progress': 75,
+            'completed': 100,
+        }
+        progress = progress_map.get(conn.status, 0)
+
+        electricity_tracking.append({
+            'beneficiary': conn.lot_award.application.applicant.full_name,
+            'block': conn.lot_award.unit.block,
+            'lot': conn.lot_award.unit.lot,
+            'status': conn.status,
+            'status_display': conn.get_status_display(),
+            'progress': progress,
+            'last_updated': conn.updated_at,
+        })
+
+    electricity_pending_count = len(electricity_tracking)
+
+    # ==================== MODULE 3: DOCUMENT OVERSIGHT (M3) ====================
+    # Track incomplete requirement submissions
+    incomplete_requirements = RequirementSubmission.objects.filter(
+        status='incomplete'
+    ).select_related('applicant').order_by('submitted_at')
+
+    doc_completeness_alerts = []
+    for req in incomplete_requirements:
+        missing_docs = []
+        # Check which requirements are missing
+        applicant_reqs = RequirementSubmission.objects.filter(
+            applicant=req.applicant
+        )
+        doc_completeness_alerts.append({
+            'applicant_name': req.applicant.full_name,
+            'reference': req.applicant.id,  # Use applicant ID as reference
+            'missing_docs': f"{applicant_reqs.count()} requirements pending",
+        })
+
+    incomplete_docs_count = len(doc_completeness_alerts[:10])  # Limit to 10
+
+    # ==================== MODULE 6: UPCOMING REPORTS (Reports for Full Disclosure Portal) ====================
+    # Track reports due this month
+    reports_to_generate = []
+    # Standard monthly reports due: 1st (Compliance Summary), 15th (Mid-month Status), 28th (Monthly Closing)
+    from datetime import date
+    today = date.today()
+
+    if today.day < 1:
+        reports_to_generate.append({
+            'title': 'Monthly Compliance Summary',
+            'due_date': today.replace(day=1),
+            'status': 'DUE TODAY',
+        })
+    if today.day < 15:
+        reports_to_generate.append({
+            'title': 'Mid-Month Status Report',
+            'due_date': today.replace(day=15),
+            'status': 'UPCOMING',
+        })
+    reports_to_generate.append({
+        'title': 'Monthly Closing Report',
+        'due_date': today.replace(day=28),
+        'status': 'UPCOMING' if today.day < 28 else 'DUE TODAY',
+    })
+
+    # ==================== SYSTEM TOTALS ====================
+    total_applicants = Applicant.objects.count()
+
     context = {
         'page_title': 'Second Member Dashboard',
         'user_position': 'second_member',
-        # Original second member stats
-        'total_applicants': 0,  # TODO: Total applicants
-        'pending_notices': 0,  # TODO: Compliance notices to prepare
-        'electricity_pending': 0,  # TODO: Electricity connections pending
-        'incomplete_docs': 0,  # TODO: Profiles with incomplete documents
-        # Added fourth member stats
-        'queue_today': 0,  # TODO: Applicants in queue today
-        'incomplete_requirements': 0,  # TODO: Applicants with incomplete requirements
-        'documents_filed': 0,  # TODO: Documents filed this month
-        'lots_for_awarding': 0,  # TODO: Vacant units available for awarding
-        # Widget data
-        'notices_to_prepare': [],  # TODO: List of notices to prepare
-        'electricity_tracking': [],  # TODO: Electricity connection tracking items
-        'doc_completeness_alerts': [],  # TODO: Profiles needing document attention
-        'reports_to_generate': [],  # TODO: Reports due for Full Disclosure Portal
-        # Added fourth member widget data
-        'priority_queue': [],  # TODO: Priority queue applicants
-        'walkin_queue': [],  # TODO: Walk-in queue applicants
-        'pending_cdrrmo': [],  # TODO: Applicants pending CDRRMO certification
-        'requirements_checklist': [],  # TODO: Applicants with partial requirements
-        'standby_queue': [],  # TODO: Fully approved applicants on standby
-        'available_lots': [],  # TODO: Vacant lots ready for awarding
-        'blacklist_count': 0,  # TODO: Total blacklisted beneficiaries
-        'repossessed_count': 0,  # TODO: Repossessed units count
-        'awaiting_reaward': 0,  # TODO: Units awaiting re-award after repossession
+
+        # ========== MODULE 4: COMPLIANCE NOTICES (M4) ==========
+        'pending_notices': pending_notices_count,
+        'urgent_notices': urgent_notices_count,
+        'notices_to_prepare': notices_to_prepare,
+
+        # ========== MODULE 2: ELECTRICITY CONNECTIONS (M2) ==========
+        'electricity_pending': electricity_pending_count,
+        'electricity_tracking': electricity_tracking,
+
+        # ========== MODULE 3: DOCUMENT OVERSIGHT (M3) ==========
+        'incomplete_docs': incomplete_docs_count,
+        'doc_completeness_alerts': doc_completeness_alerts[:10],  # Limit to 10
+
+        # ========== MODULE 6: REPORTS (M6) ==========
+        'reports_to_generate': reports_to_generate,
+
+        # ========== SYSTEM OVERVIEW ==========
+        'total_applicants': total_applicants,
     }
-    
-    # Calculate ready_to_award (min of available lots and standby queue)
-    standby_count = len(context['standby_queue']) if context['standby_queue'] else 0
-    available_count = len(context['available_lots']) if context['available_lots'] else 0
-    context['ready_to_award'] = min(standby_count, available_count)
-    
+
     return render(request, 'accounts/dashboard.html', context)
 
 
@@ -694,24 +893,112 @@ def dashboard_caretaker(request):
 
 
 @login_required
+@login_required
+@login_required
 def dashboard_field(request):
     """
     Dashboard for Field Personnel (Ronda - Paul Betila, Roberto Dreyfus, Nonoy)
-    Responsibilities: Census, field verification, site inspection, complaint logging
+    Responsibilities: Module 1 - Channel B Danger Zone Field Verification
     """
     if request.user.position not in ['ronda', 'field']:
         messages.error(request, 'Access denied. This dashboard is for Field Personnel only.')
         return redirect('accounts:dashboard')
-    
-    context = {
-        'page_title': 'Field Personnel Dashboard',
-        'user_position': request.user.position,
-        'registered_applicants': 0,  # TODO: Total registered
-        'pending_applications': 0,  # TODO: Applications pending
-        'housing_units': 0,  # TODO: Total units
-        'open_cases': 0,  # TODO: Open complaint cases
+
+    # ==================== MODULE 1: CHANNEL B FIELD VERIFICATION ====================
+    # Pending danger zone verifications
+    pending_certifications = CDRRMOCertification.objects.filter(
+        status='pending'
+    ).select_related('applicant').order_by('-requested_at')
+
+    pending_verifications = []
+    for cert in pending_certifications:
+        days_pending = (timezone.now() - cert.requested_at).days
+        pending_verifications.append({
+            'applicant': cert.applicant,
+            'applicant_name': cert.applicant.full_name,
+            'address': cert.applicant.address,
+            'barangay': cert.applicant.barangay,
+            'phone': cert.applicant.phone_number,
+            'household_members': cert.applicant.household_members,
+            'monthly_income': cert.applicant.monthly_income,
+            'created_at': cert.requested_at,
+            'days_pending': days_pending,
+        })
+
+    total_pending = len(pending_verifications)
+
+    # Certified vs Not Certified tallies
+    certified_count = CDRRMOCertification.objects.filter(
+        status='certified'
+    ).count()
+
+    not_certified_count = CDRRMOCertification.objects.filter(
+        status='not_certified'
+    ).count()
+
+    # Aging verifications (pending > 7 days)
+    seven_days_ago = timezone.now() - timedelta(days=7)
+    aging_certifications = CDRRMOCertification.objects.filter(
+        status='pending',
+        requested_at__lt=seven_days_ago
+    ).select_related('applicant').order_by('-requested_at')
+
+    aging_verifications = []
+    for cert in aging_certifications:
+        aging_verifications.append({
+            'applicant': cert.applicant,
+            'days_pending': (timezone.now() - cert.requested_at).days,
+        })
+
+    aging_count = len(aging_verifications)
+
+    # Team workload (assuming 3 field team members)
+    FIELD_TEAM_SIZE = 3
+    avg_per_member = int(total_pending / FIELD_TEAM_SIZE) if total_pending > 0 else 0
+
+    # Completed today (verifications completed today)
+    today = timezone.now().date()
+    completed_today = CDRRMOCertification.objects.filter(
+        status__in=['certified', 'not_certified'],
+        updated_at__date=today
+    ).count()
+
+    team_workload = {
+        'pending': total_pending,
+        'avg_per_member': avg_per_member,
+        'completed_today': completed_today,
     }
-    return render(request, 'accounts/dashboard.html', context)
+
+    # Success rate (verified as danger zone / total processed)
+    total_processed = certified_count + not_certified_count
+    if total_processed > 0:
+        verified_percentage = int((certified_count / total_processed) * 100)
+    else:
+        verified_percentage = 0
+
+    context = {
+        'page_title': 'Field Verification Dashboard',
+        'user_position': request.user.position,
+
+        # ========== MODULE 1: VERIFICATION METRICS ==========
+        'total_pending': total_pending,
+        'certified_count': certified_count,
+        'not_certified_count': not_certified_count,
+
+        # ========== TEAM WORKLOAD ==========
+        'team_workload': team_workload,
+
+        # ========== AGING VERIFICATIONS ==========
+        'aging_verifications': aging_verifications,
+        'aging_count': aging_count,
+
+        # ========== PENDING VERIFICATIONS LIST ==========
+        'pending_verifications': pending_verifications,
+
+        # ========== VERIFICATION SUMMARY ==========
+        'verified_percentage': verified_percentage,
+    }
+    return render(request, 'accounts/field/dashboard.html', context)
 
 
 # Legacy view for backward compatibility - now just redirects
