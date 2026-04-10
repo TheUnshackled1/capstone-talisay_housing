@@ -1497,8 +1497,8 @@
                 <!-- Contact Number -->
                 <div class="form-group">
                     <label class="form-label">Contact Number (for SMS) *</label>
-                    <input type="tel" id="isfPhoneNumber" name="phone_number" class="form-input" placeholder="09XX XXX XXXX" value="" style="width: 100%; padding: 0.625rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.875rem;">
-                    <div class="form-help" style="font-size: 0.75rem; color: #64748b; margin-top: 0.25rem;">Required to send SMS notification</div>
+                    <input type="tel" id="isfPhoneNumber" name="phone_number" class="form-input ph-phone" placeholder="09XXXXXXXXXX" pattern="09[0-9]{9}" style="width: 100%; padding: 0.625rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.875rem;">
+                    <div class="form-help" style="font-size: 0.75rem; color: #64748b; margin-top: 0.25rem;">Required: 11 digits (09XXXXXXXXXX)</div>
                 </div>
 
                 <!-- Barangay -->
@@ -1654,6 +1654,11 @@
                                 <label class="form-label">Property Address *</label>
                                 <textarea class="form-input" rows="2" placeholder="Complete address of the property where informal settlers are residing (include barangay)" name="property_address" id="propertyAddress"></textarea>
                             </div>
+                            <div class="form-group" style="grid-column: span 2;">
+                                <label class="form-label">Contact Number</label>
+                                <input type="tel" class="form-input ph-phone" placeholder="09XXXXXXXXXX" pattern="09[0-9]{9}" name="landowner_phone" id="landownerPhoneWalkin">
+                                <div class="form-help" style="font-size: 0.75rem; color: #64748b; margin-top: 0.25rem;">11 digits: 09XXXXXXXXXX (optional)</div>
+                            </div>
                         </div>
                     </div>
                     
@@ -1679,9 +1684,14 @@
                                         <label class="form-label">Monthly Income (₱) *</label>
                                         <input type="number" class="form-input isf-required" placeholder="8000" name="isf_income[]" min="0" step="0.01">
                                     </div>
-                                    <div class="form-group" style="grid-column: span 2;">
+                                    <div class="form-group">
                                         <label class="form-label">Years Residing *</label>
                                         <input type="number" class="form-input isf-required" placeholder="3" name="isf_years[]" min="0">
+                                    </div>
+                                    <div class="form-group" style="grid-column: span 2;">
+                                        <label class="form-label">Contact Number</label>
+                                        <input type="tel" class="form-input ph-phone" placeholder="09XXXXXXXXXX" pattern="09[0-9]{9}" name="isf_phone[]">
+                                        <div class="form-help" style="font-size: 0.75rem; color: #64748b; margin-top: 0.25rem;">11 digits: 09XXXXXXXXXX (optional)</div>
                                     </div>
                                 </div>
                             </div>
@@ -1732,8 +1742,8 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label">Contact Number</label>
-                        <input type="tel" class="form-input" placeholder="09XX-XXX-XXXX" name="phone_number" id="walkinPhone">
-                        <span class="help-text">For SMS notifications</span>
+                        <input type="tel" class="form-input ph-phone" placeholder="09XXXXXXXXXX" pattern="09[0-9]{9}" name="phone_number" id="walkinPhone">
+                        <span class="help-text">11 digits: 09XXXXXXXXXX (optional)</span>
                     </div>
                     <div class="form-group" style="grid-column: span 2;">
                         <label class="form-label">Current Address *</label>
@@ -3209,6 +3219,31 @@
         const channel = document.getElementById('channelInput').value;
         const formData = new FormData(form);
 
+        // Validate phone numbers before submitting
+        if (channel === 'landowner') {
+            // Validate all ISF phone numbers (if provided)
+            const isfPhones = form.querySelectorAll('input[name="isf_phone[]"]');
+            for (let phone of isfPhones) {
+                if (phone.value) {
+                    const phoneClean = phone.value.replace(/\D/g, '');
+                    if (phoneClean.length !== 11 || !phoneClean.startsWith('09')) {
+                        alert('Invalid phone format in ISF records.\nRequired: 09XXXXXXXXXX (11 digits)');
+                        return;
+                    }
+                }
+            }
+        } else if (channel === 'walk_in' || channel === 'danger_zone') {
+            // Validate walk-in phone if provided
+            const walkinPhone = document.getElementById('walkinPhone');
+            if (walkinPhone && walkinPhone.value) {
+                const phoneClean = walkinPhone.value.replace(/\D/g, '');
+                if (phoneClean.length !== 11 || !phoneClean.startsWith('09')) {
+                    alert('Invalid phone format.\nRequired: 09XXXXXXXXXX (11 digits)');
+                    return;
+                }
+            }
+        }
+
         // Determine endpoint based on channel
         let endpoint = '{% url "intake:applicants_list" %}';
         if (channel === 'landowner') {
@@ -3379,6 +3414,11 @@
                 <div class="form-group" style="grid-column: span 2;">
                     <label class="form-label">Years Residing *</label>
                     <input type="number" class="form-input" placeholder="3" name="isf_years[]" min="0" required>
+                </div>
+                <div class="form-group" style="grid-column: span 2;">
+                    <label class="form-label">Contact Number</label>
+                    <input type="tel" class="form-input ph-phone" placeholder="09XXXXXXXXXX" pattern="09[0-9]{9}" name="isf_phone[]">
+                    <div class="form-help" style="font-size: 0.75rem; color: #64748b; margin-top: 0.25rem;">11 digits: 09XXXXXXXXXX (optional)</div>
                 </div>
             </div>
         `;
@@ -3695,6 +3735,14 @@
             alert('Contact number is required');
             return;
         }
+
+        // Validate Philippine phone format (11 digits, starts with 09)
+        const phoneClean = phoneNumber.replace(/\D/g, '');
+        if (phoneClean.length !== 11 || !phoneClean.startsWith('09')) {
+            alert('Invalid phone format. Required: 09XXXXXXXXXX (11 digits)');
+            return;
+        }
+
         if (!barangay) {
             alert('Barangay is required');
             return;
@@ -3716,7 +3764,7 @@
         // Submit form via AJAX
         const formData = new FormData();
         formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
-        formData.append('phone_number', phoneNumber);
+        formData.append('phone_number', phoneClean); // Send digits only
         formData.append('barangay', barangay);
         formData.append('has_property_in_talisay', propertyOwnership);
         formData.append('action', 'submit');
@@ -3841,6 +3889,45 @@
             alert('Error updating data: ' + error.message);
         });
     }
+
+    // Philippine phone validation - limit to 11 digits, silently
+    function initializePhoneInputs() {
+        // Field 6: ISF Review Modal - isfPhoneNumber
+        const isfPhoneInput = document.getElementById('isfPhoneNumber');
+        if (isfPhoneInput) {
+            isfPhoneInput.addEventListener('input', function() {
+                this.value = this.value.replace(/\D/g, '').slice(0, 11);
+            });
+        }
+
+        // Field 8: Channel C Walk-in Modal - walkinPhone
+        const walkinPhoneInput = document.getElementById('walkinPhone');
+        if (walkinPhoneInput) {
+            walkinPhoneInput.addEventListener('input', function() {
+                this.value = this.value.replace(/\D/g, '').slice(0, 11);
+            });
+        }
+
+        // Field 7 & 9: ISF phone fields (Channel A modals) - isf_phone[]
+        document.querySelectorAll('input[name="isf_phone[]"]').forEach(input => {
+            input.addEventListener('input', function() {
+                this.value = this.value.replace(/\D/g, '').slice(0, 11);
+            });
+        });
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        initializePhoneInputs();
+    });
+
+    // Re-initialize phone inputs when new ISF records are added
+    const originalAddISFRecord = addISFRecord;
+    window.addISFRecord = function() {
+        originalAddISFRecord();
+        // Reinitialize after adding new record
+        setTimeout(initializePhoneInputs, 100);
+    };
 
 </script>
 {% endblock %}

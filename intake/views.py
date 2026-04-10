@@ -313,7 +313,8 @@ def register_landowner_walkin(request):
                     years_residing=years,
                     barangay=submission.barangay or '',
                     phone_number='',  # No phone for walk-in at registration
-                    status='pending'
+                    status='pending',
+                    submitted_by_staff=request.user  # Track the staff member who submitted
                 )
 
                 created_count += 1
@@ -1053,9 +1054,13 @@ def applicants_list(request):
             'signatoryRoutingDelayed': False,
             'disqualificationReason': isf.disqualification_reason or None,
             # Staff who handled this record
-            'handledBy': isf.eligibility_checked_by.get_full_name() if isf.eligibility_checked_by else 'Landowner Portal',
-            'handledByPosition': isf.eligibility_checked_by.get_position_display_short() if isf.eligibility_checked_by else 'Public',
-            'handledByInitials': (isf.eligibility_checked_by.first_name[:1] + isf.eligibility_checked_by.last_name[:1]).upper() if isf.eligibility_checked_by else 'LP',
+            # Priority: submitted_by_staff (if staff entered) → eligibility_checked_by (if reviewed) → Landowner Portal (public)
+            'handledBy': (isf.submitted_by_staff.get_full_name() if isf.submitted_by_staff else
+                         (isf.eligibility_checked_by.get_full_name() if isf.eligibility_checked_by else 'Landowner Portal')),
+            'handledByPosition': (isf.submitted_by_staff.get_position_display_short() if isf.submitted_by_staff else
+                                 (isf.eligibility_checked_by.get_position_display_short() if isf.eligibility_checked_by else 'Public')),
+            'handledByInitials': ((isf.submitted_by_staff.first_name[:1] + isf.submitted_by_staff.last_name[:1]).upper() if isf.submitted_by_staff else
+                                 ((isf.eligibility_checked_by.first_name[:1] + isf.eligibility_checked_by.last_name[:1]).upper() if isf.eligibility_checked_by else 'LP')),
             # Document checklist count (7 documents)
             'docsCount': sum([
                 isf.doc_brgy_residency,

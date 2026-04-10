@@ -1,5 +1,26 @@
 from django import forms
 from .models import LandownerSubmission, ISFRecord, HouseholdMember, Applicant
+from django.core.exceptions import ValidationError
+import re
+
+
+def validate_philippine_phone(value):
+    """
+    Validates Philippine phone number format.
+    Accepts: 09XXXXXXXXXX (11 digits, starts with 09)
+    """
+    if not value:  # Allow empty (optional fields)
+        return
+
+    # Clean to digits only
+    clean = re.sub(r'\D', '', str(value))
+
+    # Check length and format
+    if len(clean) != 11 or not clean.startswith('09'):
+        raise ValidationError(
+            'Invalid Philippine phone number. Required format: 09XXXXXXXXXX (11 digits)',
+            code='invalid_ph_phone'
+        )
 
 
 # Talisay City barangays (official 27 barangays)
@@ -48,7 +69,15 @@ class LandownerSubmissionForm(forms.ModelForm):
         label="Barangay",
         widget=forms.Select(attrs={'class': 'form-select'})
     )
-    
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Add Philippine phone validator to landowner_phone field
+        if 'landowner_phone' in self.fields:
+            self.fields['landowner_phone'].validators.append(validate_philippine_phone)
+            # Show help text
+            self.fields['landowner_phone'].help_text = 'Format: 09XXXXXXXXXX (11 digits, optional)'
+
     class Meta:
         model = LandownerSubmission
         fields = [
@@ -64,8 +93,10 @@ class LandownerSubmissionForm(forms.ModelForm):
                 'class': 'form-control',
             }),
             'landowner_phone': forms.TextInput(attrs={
-                'placeholder': '09XX-XXX-XXXX',
-                'class': 'form-control',
+                'placeholder': '09XXXXXXXXXX',
+                'class': 'form-control ph-phone',
+                'pattern': '09[0-9]{9}',
+                'type': 'tel',
             }),
             'landowner_email': forms.EmailInput(attrs={
                 'placeholder': 'email@example.com',
@@ -162,7 +193,7 @@ class ISFReviewForm(forms.ModelForm):
         help_text="Extract from property address",
         widget=forms.Select(attrs={'class': 'form-select'})
     )
-    
+
     has_property_in_talisay = forms.ChoiceField(
         choices=[
             ('', '-- Select --'),
@@ -174,7 +205,13 @@ class ISFReviewForm(forms.ModelForm):
         help_text="Verified against Assessor's Office records",
         widget=forms.Select(attrs={'class': 'form-select'})
     )
-    
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Add Philippine phone validator to phone_number field
+        if 'phone_number' in self.fields:
+            self.fields['phone_number'].validators.append(validate_philippine_phone)
+
     class Meta:
         model = ISFRecord
         fields = [
@@ -184,8 +221,9 @@ class ISFReviewForm(forms.ModelForm):
         ]
         widgets = {
             'phone_number': forms.TextInput(attrs={
-                'placeholder': '09XX XXX XXXX',
+                'placeholder': '09XXXXXXXXXX',
                 'class': 'form-control',
+                'pattern': '09[0-9]{9}',
             }),
             'status': forms.Select(attrs={
                 'class': 'form-select',
@@ -295,7 +333,13 @@ class WalkInApplicantForm(forms.ModelForm):
             'placeholder': 'Describe the specific danger zone location...'
         })
     )
-    
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Add Philippine phone validator to phone_number field
+        if 'phone_number' in self.fields:
+            self.fields['phone_number'].validators.append(validate_philippine_phone)
+
     class Meta:
         model = Applicant
         fields = [
@@ -314,7 +358,8 @@ class WalkInApplicantForm(forms.ModelForm):
             }),
             'phone_number': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': '09XX XXX XXXX',
+                'placeholder': '09XXXXXXXXXX',
+                'pattern': '09[0-9]{9}',
             }),
             'current_address': forms.Textarea(attrs={
                 'class': 'form-control',

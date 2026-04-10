@@ -275,6 +275,7 @@
             <div class="form-group">
                 <label class="form-label">Contact Number</label>
                 {{ form.landowner_phone }}
+                <div style="font-size: 0.75rem; color: #64748b; margin-top: 0.25rem;">11 digits: 09XXXXXXXXXX (optional)</div>
             </div>
             <div class="form-group">
                 <label class="form-label">Email Address</label>
@@ -323,10 +324,6 @@
         
         <div class="form-row">
             <div class="form-group">
-                <label class="form-label">Contact Number</label>
-                <input type="tel" class="form-control isf-phone" placeholder="09XX-XXX-XXXX">
-            </div>
-            <div class="form-group">
                 <label class="form-label">Barangay</label>
                 <select class="form-select isf-barangay">
                     <option value="">Select barangay...</option>
@@ -353,15 +350,37 @@
             <label class="form-label">Years Residing <span class="required">*</span></label>
             <input type="number" class="form-control isf-years" min="0" step="0.5" required placeholder="3">
         </div>
+
+        <div class="form-group">
+            <label class="form-label">Contact Number</label>
+            <input type="tel" class="form-control isf-phone ph-phone" placeholder="09XXXXXXXXXX" pattern="09[0-9]{9}">
+            <div style="font-size: 0.75rem; color: #64748b; margin-top: 0.25rem;">11 digits: 09XXXXXXXXXX (optional)</div>
+        </div>
     </div>
 </template>
 
 <script>
 let isfCount = 0;
 
+// Validate Philippine phone number (11 digits, starts with 09)
+function validatePhoneNumber(phone) {
+    if (!phone) return true; // Allow empty (optional field)
+    const clean = phone.replace(/\D/g, '');
+    return clean.length === 11 && clean.startsWith('09');
+}
+
 // Add first ISF on load
 window.addEventListener('DOMContentLoaded', function() {
     addISF();
+
+    // Attach phone input validation to landowner phone field
+    const landownerPhoneInput = document.querySelector('input[name="landowner_phone"]');
+    if (landownerPhoneInput) {
+        landownerPhoneInput.addEventListener('input', function() {
+            // Limit to 11 digits - silently
+            this.value = this.value.replace(/\D/g, '').slice(0, 11);
+        });
+    }
 });
 
 function addISF() {
@@ -369,6 +388,16 @@ function addISF() {
     const template = document.getElementById('isf-template');
     const clone = template.content.cloneNode(true);
     clone.querySelector('.num').textContent = isfCount;
+
+    // Attach phone validation to the new ISF phone field
+    const phoneInput = clone.querySelector('.isf-phone');
+    if (phoneInput) {
+        phoneInput.addEventListener('input', function() {
+            // Limit to 11 digits - silently
+            this.value = this.value.replace(/\D/g, '').slice(0, 11);
+        });
+    }
+
     document.getElementById('isf-container').appendChild(clone);
 }
 
@@ -389,19 +418,65 @@ function removeISF(btn) {
 // Collect data on submit
 document.getElementById('landowner-form').addEventListener('submit', function(e) {
     e.preventDefault();
-    
+
     const isfData = [];
+    let isValid = true;
+
     document.querySelectorAll('.isf-card').forEach(card => {
+        const fullName = card.querySelector('.isf-name').value.trim();
+        const phone = card.querySelector('.isf-phone').value.trim();
+        const barangay = card.querySelector('.isf-barangay').value;
+        const members = card.querySelector('.isf-members').value;
+        const income = card.querySelector('.isf-income').value;
+        const years = card.querySelector('.isf-years').value;
+
+        // Validate full name
+        if (!fullName) {
+            alert('⚠️ Full Name is required for all ISF records');
+            isValid = false;
+            return;
+        }
+
+        // Validate phone if provided (must be 11 digits, digits only)
+        if (phone) {
+            const phoneClean = phone.replace(/\D/g, ''); // Remove non-digits
+            if (phoneClean.length !== 11 || !phoneClean.startsWith('09')) {
+                alert(`⚠️ Invalid phone number for ${fullName}.\nFormat: 09XXXXXXXXXX (11 digits, starts with 09)`);
+                isValid = false;
+                return;
+            }
+        }
+
+        // Validate landowner phone
+        const landownerPhone = document.querySelector('input[name="landowner_phone"]').value.trim();
+        if (landownerPhone) {
+            const landownerPhoneClean = landownerPhone.replace(/\D/g, '');
+            if (landownerPhoneClean.length !== 11 || !landownerPhoneClean.startsWith('09')) {
+                alert('⚠️ Invalid landowner phone number.\nFormat: 09XXXXXXXXXX (11 digits, starts with 09)');
+                isValid = false;
+                return;
+            }
+        }
+
+        // Validate required fields
+        if (!members || !income || !years) {
+            alert(`⚠️ Please fill all required fields for ${fullName}`);
+            isValid = false;
+            return;
+        }
+
         isfData.push({
-            full_name: card.querySelector('.isf-name').value,
-            phone_number: card.querySelector('.isf-phone').value || '',
-            barangay: card.querySelector('.isf-barangay').value || '',
-            household_members: card.querySelector('.isf-members').value,
-            monthly_income: card.querySelector('.isf-income').value,
-            years_residing: card.querySelector('.isf-years').value,
+            full_name: fullName,
+            phone_number: phone.replace(/\D/g, ''), // Store as digits only
+            barangay: barangay || '',
+            household_members: members,
+            monthly_income: income,
+            years_residing: years,
         });
     });
-    
+
+    if (!isValid) return;
+
     document.getElementById('isf_data').value = JSON.stringify(isfData);
     this.submit();
 });

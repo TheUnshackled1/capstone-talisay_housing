@@ -229,7 +229,18 @@ class ISFRecord(models.Model):
         related_name='checked_isf_records'
     )
     eligibility_checked_at = models.DateTimeField(null=True, blank=True)
-    
+
+    # Track if staff submitted this (vs public form)
+    submitted_by_staff = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='submitted_isf_records',
+        verbose_name="Submitted by Staff",
+        help_text="Staff member who entered this ISF data (walk-in). Null if from public portal."
+    )
+
     # Link to created Applicant (when converted)
     converted_to_applicant = models.BooleanField(default=False)
     applicant_created_at = models.DateTimeField(null=True, blank=True)
