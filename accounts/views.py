@@ -105,23 +105,91 @@ def dashboard_redirect(request):
 def dashboard_head(request):
     """
     Dashboard for Head / First Member (Arthur Maramba)
-    Responsibilities: M2 (final signatory), M6 (receives reports)
+    Responsibilities: M1 (executive summary), M2 (final signatory), M6 (receives reports)
     """
     # Verify user has correct position
     if request.user.position != 'head':
         messages.error(request, 'Access denied. This dashboard is for the Head position only.')
         return redirect('accounts:dashboard')
-    
+
+    # ===== MODULE 1 QUERIES (EXECUTIVE SUMMARY) =====
+
+    # QUERY: Total applicants and channel breakdown
+    total_applicants = Applicant.objects.count()
+    channel_a = Applicant.objects.filter(channel='landowner').count()
+    channel_b = Applicant.objects.filter(channel='danger_zone').count()
+    channel_c = Applicant.objects.filter(channel='walk_in').count()
+
+    # QUERY: Eligibility pass rate
+    eligible_count = Applicant.objects.filter(status='eligible').count()
+    disqualified_count = Applicant.objects.filter(status='disqualified').count()
+    eligibility_pass_rate = 0
+    if total_applicants > 0:
+        eligibility_pass_rate = (eligible_count / total_applicants) * 100
+
+    # QUERY: Queue status breakdown
+    priority_count = QueueEntry.objects.filter(queue_type='priority', status='active').count()
+    walkin_count = QueueEntry.objects.filter(queue_type='walk_in', status='active').count()
+
+    # QUERY: Critical alerts
+    from intake.models import SMSLog
+    from datetime import timedelta
+
+    # CDRRMO overdue (>14 days pending)
+    cutoff_date = timezone.now() - timedelta(days=14)
+    overdue_cdrrmo = CDRRMOCertification.objects.filter(
+        status='pending',
+        requested_at__lt=cutoff_date
+    ).count()
+
+    # Recent blacklist additions
+    blacklist_count = Blacklist.objects.count()
+    recent_blacklist_count = Blacklist.objects.filter(
+        blacklisted_at__gte=timezone.now() - timedelta(days=30)
+    ).count()
+
+    # SMS failures in last 7 days
+    sms_failed_recent = SMSLog.objects.filter(
+        status='failed',
+        sent_at__gte=timezone.now() - timedelta(days=7)
+    ).count()
+
     context = {
         'page_title': 'Head Dashboard',
         'user_position': 'head',
-        'total_applicants': 0,  # TODO: Query from intake module
+
+        # ===== MODULE 1: EXECUTIVE SUMMARY =====
+        'total_applicants': total_applicants,
+
+        # Channel breakdown
+        'channel_a': channel_a,
+        'channel_b': channel_b,
+        'channel_c': channel_c,
+
+        # Eligibility metrics
+        'eligible_count': eligible_count,
+        'disqualified_count': disqualified_count,
+        'eligibility_pass_rate': round(eligibility_pass_rate, 2),
+
+        # Queue metrics
+        'priority_queue_count': priority_count,
+        'walkin_queue_count': walkin_count,
+        'total_in_queue': priority_count + walkin_count,
+
+        # ===== CRITICAL ALERTS =====
+        'overdue_cdrrmo': overdue_cdrrmo,
+        'blacklist_count': blacklist_count,
+        'recent_blacklist': recent_blacklist_count,
+        'sms_failed_recent': sms_failed_recent,
+
+        # ===== MODULE 2+ (FUTURE) =====
         'awaiting_signature': 0,  # TODO: Applications pending head signature
         'housing_units': 0,  # TODO: Total units at GK Cabatangan
         'monthly_reports': 0,  # TODO: Reports generated this month
         'pending_approvals': [],  # TODO: Applications awaiting final signature
         'recent_reports': [],  # TODO: Recently generated analytics reports
     }
+
     return render(request, 'accounts/dashboard.html', context)
 
 
@@ -129,23 +197,88 @@ def dashboard_head(request):
 def dashboard_oic(request):
     """
     Dashboard for OIC-THA (Victor Fregil)
-    Responsibilities: M2 (OIC signatory), M4 (compliance), M5 (escalated complaints)
+    Responsibilities: M1 (system oversight), M2 (OIC signatory), M4 (compliance), M5 (escalated complaints)
     """
     if request.user.position != 'oic':
         messages.error(request, 'Access denied. This dashboard is for the OIC position only.')
         return redirect('accounts:dashboard')
-    
+
+    # ===== MODULE 1 QUERIES (SYSTEM OVERSIGHT) =====
+
+    # QUERY: Total applicants in system (all channels A/B/C)
+    total_applicants = Applicant.objects.count()
+
+    # QUERY: All active queue entries (priority + walk-in)
+    active_queue = QueueEntry.objects.filter(status='active').select_related('applicant')
+    priority_count = active_queue.filter(queue_type='priority').count()
+    walkin_count = active_queue.filter(queue_type='walk_in').count()
+
+    # QUERY: SMS Delivery Status
+    from intake.models import SMSLog
+    sms_total = SMSLog.objects.count()
+    sms_sent = SMSLog.objects.filter(status='sent').count()
+    sms_failed = SMSLog.objects.filter(status='failed').count()
+    sms_pending = SMSLog.objects.filter(status='pending').count()
+
+    # Calculate SMS success rate
+    sms_success_rate = 0
+    if sms_total > 0:
+        sms_success_rate = (sms_sent / sms_total) * 100
+
+    # QUERY: Recent failed SMS (last 10)
+    failed_sms = SMSLog.objects.filter(status='failed').order_by('-sent_at')[:10]
+
+    # QUERY: Pending CDRRMO certifications (danger zone)
+    pending_cdrrmo = CDRRMOCertification.objects.filter(status='pending').count()
+
+    # QUERY: Overdue CDRRMO (>14 days pending)
+    from django.utils import timezone
+    from datetime import timedelta
+    cutoff_date = timezone.now() - timedelta(days=14)
+    overdue_cdrrmo = CDRRMOCertification.objects.filter(
+        status='pending',
+        requested_at__lt=cutoff_date
+    ).count()
+
+    # QUERY: Blacklist count (critical alert)
+    blacklist_count = Blacklist.objects.count()
+
+    # QUERY: Recent blacklist additions (last 5)
+    recent_blacklist = Blacklist.objects.order_by('-blacklisted_at')[:5]
+
     context = {
         'page_title': 'OIC Dashboard',
         'user_position': 'oic',
-        'total_applicants': 0,  # TODO: Total in system
-        'awaiting_signature': 0,  # TODO: Applications pending OIC signature
-        'compliance_cases': 0,  # TODO: Active compliance cases
-        'escalated_complaints': 0,  # TODO: Complaints escalated to OIC
+
+        # ===== MODULE 1: SYSTEM OVERVIEW =====
+        'total_applicants': total_applicants,
+        'priority_queue_count': priority_count,
+        'walkin_queue_count': walkin_count,
+        'total_in_queue': priority_count + walkin_count,
+
+        # ===== SMS DELIVERY STATUS =====
+        'sms_total': sms_total,
+        'sms_sent': sms_sent,
+        'sms_failed': sms_failed,
+        'sms_pending': sms_pending,
+        'sms_success_rate': round(sms_success_rate, 2),
+
+        # ===== CRITICAL ALERTS =====
+        'pending_cdrrmo': pending_cdrrmo,
+        'overdue_cdrrmo': overdue_cdrrmo,
+        'blacklist_count': blacklist_count,
+        'recent_blacklist': recent_blacklist,
+        'failed_sms': failed_sms,
+
+        # ===== MODULE 2+ (FUTURE) =====
+        'awaiting_signature': 0,  # TODO: Applications pending OIC signature (Module 2)
+        'compliance_cases': 0,  # TODO: Active compliance cases (Module 4)
+        'escalated_complaints': 0,  # TODO: Escalated complaints (Module 5)
         'pending_oic_approvals': [],  # TODO: Applications at OIC step
-        'pending_compliance_decisions': [],  # TODO: Compliance cases needing decision
-        'escalated_cases': [],  # TODO: Complaint cases escalated to OIC
+        'pending_compliance_decisions': [],  # TODO: Compliance cases
+        'escalated_cases': [],  # TODO: Escalated cases
     }
+
     return render(request, 'accounts/dashboard.html', context)
 
 
@@ -154,46 +287,109 @@ def dashboard_second_member(request):
     """
     Dashboard for Second Member (Lourynie Joie V. Tingson)
     Responsibilities: M2 (notices, electricity), M3 (docs), M4 (compliance), M6 (reports)
+    Also supervises Module 1 intake with Fourth Member
     """
     if request.user.position != 'second_member':
         messages.error(request, 'Access denied. This dashboard is for the Second Member position only.')
         return redirect('accounts:dashboard')
-    
+
+    # ===== MODULE 1 QUERIES (SHARED WITH FOURTH MEMBER) =====
+
+    # QUERY: Total applicants in system
+    total_applicants = Applicant.objects.count()
+
+    # QUERY: Priority Queue (active, ordered by position)
+    priority_queue = QueueEntry.objects.filter(
+        queue_type='priority',
+        status='active'
+    ).select_related('applicant').order_by('position')
+
+    # QUERY: Walk-in Queue (active, ordered by position)
+    walkin_queue = QueueEntry.objects.filter(
+        queue_type='walk_in',
+        status='active'
+    ).select_related('applicant').order_by('position')
+
+    # QUERY: Pending CDRRMO (danger zone applicants awaiting certification)
+    pending_cdrrmo = CDRRMOCertification.objects.filter(
+        status='pending'
+    ).select_related('applicant')
+
+    # QUERY: Applicants with incomplete documents
+    incomplete_requirements = Applicant.objects.filter(
+        status__in=['eligible', 'requirements']
+    ).select_related('barangay')
+
+    # Count incomplete docs per applicant
+    incomplete_count = 0
+    incomplete_docs_list = []
+    for app in incomplete_requirements:
+        docs_complete = all([
+            app.doc_brgy_residency,
+            app.doc_brgy_indigency,
+            app.doc_cedula,
+            app.doc_police_clearance,
+            app.doc_no_property,
+            app.doc_2x2_picture,
+            app.doc_sketch_location
+        ])
+        if not docs_complete:
+            incomplete_count += 1
+            incomplete_docs_list.append(app)
+
+    # QUERY: Blacklist count
+    blacklist_count = Blacklist.objects.count()
+
+    # QUERY: Standby queue (fully approved, awaiting lot assignment)
+    standby_queue = Applicant.objects.filter(
+        status='standby'
+    ).select_related('barangay')
+
+    # ===== MODULE 2+ QUERIES (M2: NOTICES, ELECTRICITY, etc.) =====
+    # TODO: Add electricity connection tracking queries when electricity model is created
+
     context = {
         'page_title': 'Second Member Dashboard',
         'user_position': 'second_member',
-        # Original second member stats
-        'total_applicants': 0,  # TODO: Total applicants
-        'pending_notices': 0,  # TODO: Compliance notices to prepare
-        'electricity_pending': 0,  # TODO: Electricity connections pending
-        'incomplete_docs': 0,  # TODO: Profiles with incomplete documents
-        # Added fourth member stats
-        'queue_today': 0,  # TODO: Applicants in queue today
-        'incomplete_requirements': 0,  # TODO: Applicants with incomplete requirements
-        'documents_filed': 0,  # TODO: Documents filed this month
-        'lots_for_awarding': 0,  # TODO: Vacant units available for awarding
-        # Widget data
-        'notices_to_prepare': [],  # TODO: List of notices to prepare
-        'electricity_tracking': [],  # TODO: Electricity connection tracking items
-        'doc_completeness_alerts': [],  # TODO: Profiles needing document attention
-        'reports_to_generate': [],  # TODO: Reports due for Full Disclosure Portal
-        # Added fourth member widget data
-        'priority_queue': [],  # TODO: Priority queue applicants
-        'walkin_queue': [],  # TODO: Walk-in queue applicants
-        'pending_cdrrmo': [],  # TODO: Applicants pending CDRRMO certification
-        'requirements_checklist': [],  # TODO: Applicants with partial requirements
-        'standby_queue': [],  # TODO: Fully approved applicants on standby
-        'available_lots': [],  # TODO: Vacant lots ready for awarding
-        'blacklist_count': 0,  # TODO: Total blacklisted beneficiaries
-        'repossessed_count': 0,  # TODO: Repossessed units count
-        'awaiting_reaward': 0,  # TODO: Units awaiting re-award after repossession
+
+        # ===== TOTALS & COUNTS =====
+        'total_applicants': total_applicants,
+        'queue_today': priority_queue.count() + walkin_queue.count(),
+        'incomplete_requirements': incomplete_count,
+        'incomplete_docs': incomplete_count,  # Same as incomplete_requirements for Module 1
+        'pending_notices': 0,  # TODO: Compliance notices (future)
+        'electricity_pending': 0,  # TODO: Electricity connections (future)
+        'documents_filed': 0,  # TODO: Documents filed this month (future)
+        'lots_for_awarding': 0,  # TODO: Vacant units (future)
+
+        # ===== QUEUE DATA =====
+        'priority_queue': priority_queue[:5],  # Top 5 for display
+        'walkin_queue': walkin_queue[:5],  # Top 5 for display
+        'pending_cdrrmo': pending_cdrrmo,
+        'requirements_checklist': incomplete_docs_list[:10],  # Top 10 with incomplete docs
+        'standby_queue': standby_queue,
+        'available_lots': [],  # TODO: Housing units (future)
+        'blacklist_count': blacklist_count,
+        'repossessed_count': 0,  # TODO: Applications module
+        'awaiting_reaward': 0,  # TODO: Applications module
+
+        # ===== FUTURE WIDGETS (M2, M3, M4, M6) =====
+        'notices_to_prepare': [],  # TODO: Compliance notices list
+        'electricity_tracking': [],  # TODO: Electricity connection tracking
+        'doc_completeness_alerts': incomplete_docs_list[:5],  # Reuse incomplete docs for now
+        'reports_to_generate': [],  # TODO: Full Disclosure Portal reports
     }
-    
+
     # Calculate ready_to_award (min of available lots and standby queue)
-    standby_count = len(context['standby_queue']) if context['standby_queue'] else 0
-    available_count = len(context['available_lots']) if context['available_lots'] else 0
-    context['ready_to_award'] = min(standby_count, available_count)
-    
+    standby_count = standby_queue.count()
+    available_count = len(context['available_lots'])
+    context['ready_to_award'] = min(standby_count, available_count) if available_count > 0 else 0
+
+    # Add total counts for display
+    context['priority_queue_total'] = priority_queue.count()
+    context['walkin_queue_total'] = walkin_queue.count()
+    context['pending_cdrrmo_total'] = pending_cdrrmo.count()
+
     return render(request, 'accounts/dashboard.html', context)
 
 
@@ -257,6 +453,7 @@ def dashboard_fourth_member(request):
 
     # Count incomplete docs per applicant
     incomplete_count = 0
+    incomplete_docs_list = []
     for app in incomplete_requirements:
         docs_complete = all([
             app.doc_brgy_residency,
@@ -269,6 +466,19 @@ def dashboard_fourth_member(request):
         ])
         if not docs_complete:
             incomplete_count += 1
+            # Calculate document completion percentage and count
+            docs_submitted = sum([
+                app.doc_brgy_residency,
+                app.doc_brgy_indigency,
+                app.doc_cedula,
+                app.doc_police_clearance,
+                app.doc_no_property,
+                app.doc_2x2_picture,
+                app.doc_sketch_location
+            ])
+            app.completion_percent = int((docs_submitted / 7) * 100)
+            app.docs_count = docs_submitted
+            incomplete_docs_list.append(app)
 
     # QUERY: Blacklist count
     blacklist_count = Blacklist.objects.count()
@@ -288,7 +498,7 @@ def dashboard_fourth_member(request):
         'priority_queue': priority_queue[:5],  # Top 5 for display
         'walkin_queue': walkin_queue[:5],  # Top 5 for display
         'pending_cdrrmo': pending_cdrrmo,
-        'requirements_checklist': incomplete_requirements[:10],  # Top 10 incomplete
+        'requirements_checklist': incomplete_docs_list[:10],  # Top 10 incomplete
         'standby_queue': standby_queue,
         'available_lots': [],  # TODO: Query from housing units model (future)
         'blacklist_count': blacklist_count,
