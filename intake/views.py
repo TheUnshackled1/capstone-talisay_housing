@@ -5,7 +5,7 @@ from django.views.decorators.http import require_POST
 from django.http import JsonResponse
 from django.utils import timezone
 from django.db.models import Q, Prefetch
-from .models import LandownerSubmission, ISFRecord, Applicant, Barangay, QueueEntry, CDRRMOCertification
+from .models import LandownerSubmission, ISFRecord, Applicant, Barangay, QueueEntry, CDRRMOCertification, ISFEditAudit
 from .forms import (
     LandownerSubmissionForm, 
     ISFRecordForm, 
@@ -91,41 +91,6 @@ def landowner_form(request):
 
 
 @login_required
-def submission_review(request, submission_id):
-    """
-    Staff view: Review a specific landowner submission.
-    
-    ACCESS CONTROL - Hierarchical Model:
-    ✅ Jocel (fourth_member) - Primary reviewer, adds phone numbers, runs eligibility
-    ✅ Joie (second_member) - Supervisor/oversight, can review Jocel's work
-    ✅ Victor (oic) - Management oversight
-    ✅ Arthur (head) - Executive oversight
-    """
-    # Hierarchical access: Primary reviewer + Supervisor + Management
-    if not request.user.position in ['fourth_member', 'second_member', 'oic', 'head']:
-        messages.error(request, 'You do not have permission to access this page.')
-        return redirect('accounts:dashboard')
-    
-    submission = get_object_or_404(
-        LandownerSubmission.objects.prefetch_related('isf_records'),
-        id=submission_id
-    )
-    
-    # Mark as reviewed if first time opening
-    if submission.status == 'pending':
-        submission.status = 'reviewed'
-        submission.reviewed_by = request.user
-        submission.reviewed_at = timezone.now()
-        submission.save()
-    
-    isf_records = submission.isf_records.all()
-    
-    return render(request, 'intake/staff/submission_review.html', {
-        'submission': submission,
-        'isf_records': isf_records,
-    })
-
-
 @login_required
 def isf_review(request, isf_id):
     """
@@ -274,326 +239,180 @@ def isf_review(request, isf_id):
     else:
         form = ISFReviewForm(instance=isf_record)
 
-    return render(request, 'intake/staff/isf_review.html', {
-        'isf_record': isf_record,
-        'form': form,
-        'submission': isf_record.submission,
-    })
+    # No longer render separate template - redirect to applicants list
+    # (ISF review is now handled entirely via modal in applicants page)
+    return redirect('intake:applicants_list')
 
 
 @login_required
-def walkin_review(request, applicant_id):
+def register_landowner_walkin(request):
     """
-    Staff view: Review walk-in or danger zone applicant (Channel B/C).
-    
-    ACCESS CONTROL - Hierarchical Model:
-    ✅ Jocel (fourth_member) - Primary reviewer, performs eligibility checks
-    ✅ Joie (second_member) - Supervisor/oversight, quality control
-    ✅ Victor (oic) - Management oversight
-    ✅ Arthur (head) - Executive oversight
-    """
-    from .utils import send_sms
-    from .models import QueueEntry
-    
-    # Hierarchical access: Primary reviewer + Supervisor + Management
-    if not request.user.position in ['fourth_member', 'second_member', 'oic', 'head']:
-        messages.error(request, 'You do not have permission to access this page.')
-        return redirect('accounts:dashboard')
-    
-    # Get the applicant
-    applicant = get_object_or_404(Applicant, id=applicant_id)
-    
-    # Only allow Channel B/C applicants
-    if applicant.channel not in ['danger_zone', 'walk_in']:
-        messages.error(request, 'This review page is for walk-in and danger zone applicants only.')
-        return redirect('intake:applicants_list')
-    
-    if request.method == 'POST':
-        action = request.POST.get('action')
-        
-        if action == 'eligible':
-            # Mark as eligible
-            applicant.status = 'eligible'
-            applicant.eligibility_checked_by = request.user
-            applicant.eligibility_checked_at = timezone.now()
-            applicant.save()
-            
-            # Determine queue type based on channel
-            queue_type = 'priority' if applicant.channel == 'danger_zone' else 'walk_in'
-            
-            # Get next position in appropriate queue
-            last_position = QueueEntry.objects.filter(
-                queue_type=queue_type,
-                status='active'
-            ).order_by('-position').first()
-            
-            next_position = (last_position.position + 1) if last_position else 1
-            
-            # Add to queue
-            QueueEntry.objects.create(
-                applicant=applicant,
-                queue_type=queue_type,
-                position=next_position,
-                status='active',
-                added_by=request.user
-            )
-            
-            # Send SMS notification
-            if applicant.phone_number:
-                message = f"You passed eligibility. Please visit the Talisay Housing Authority office to submit your 7 requirements. Reference: {applicant.reference_number}"
-                send_sms(applicant.phone_number, message, 'eligibility_passed', applicant=applicant)
-            
-            messages.success(request, f'✓ {applicant.full_name} marked as ELIGIBLE and added to {queue_type.replace("_", " ").title()} Queue!')
-            return redirect('intake:applicants_list')
-            
-        elif action == 'disqualify':
-            reason = request.POST.get('disqualification_reason', '')
-            applicant.status = 'disqualified'
-            applicant.disqualification_reason = reason
-            applicant.eligibility_checked_by = request.user
-            applicant.eligibility_checked_at = timezone.now()
-            applicant.save()
-            
-            # Send SMS notification
-            if applicant.phone_number:
-                message = f"Your housing application could not be processed. Reason: {reason or 'See office for details'}. Reference: {applicant.reference_number}"
-                send_sms(applicant.phone_number, message, 'eligibility_failed', applicant=applicant)
-            
-            messages.warning(request, f'✕ {applicant.full_name} marked as DISQUALIFIED.')
-            return redirect('intake:applicants_list')
-    
-    # Get barangays for dropdown
-    barangays = Barangay.objects.all().order_by('name')
-    
-    return render(request, 'intake/staff/walkin_review.html', {
-        'applicant': applicant,
-        'barangays': barangays,
-    })
+    AJAX endpoint to register a landowner walk-in submission with ISF records.
+    Channel A: Staff enters landowner and ISF data on behalf of walk-in landowner.
 
+    Accepts POST with:
+    - landowner_name, property_address
+    - isf_name[], isf_household[], isf_income[], isf_years[] (array of ISF records)
 
-@login_required
-def walkin_register(request):
+    Creates:
+    1. LandownerSubmission (submitted_by_staff=user)
+    2. ISFRecord(s) linked to submission
+    3. Sends registration SMS to each ISF if phone_number provided
     """
-    Staff view: Register applicants from all channels.
-    
-    Channel A: Landowner walk-in → Creates LandownerSubmission + ISFRecords → Priority Queue
-    Channel B: Danger Zone Walk-in → Pending CDRRMO certification → Priority Queue
-    Channel C: Regular Walk-in → Direct eligibility check → Walk-in FIFO Queue
-    
-    ACCESS CONTROL:
-    ✅ Jay (third_member) - Primary registration (census/field verification)
-    ✅ Jocel (fourth_member) - Registration backup
-    ✅ Paul/Roberto (field) - Field registration
-    ✅ Joie (second_member) - Supervisor oversight
-    """
-    allowed_positions = ['third_member', 'fourth_member', 'field', 'second_member']
-    if request.user.position not in allowed_positions:
-        messages.error(request, 'You do not have permission to register applicants.')
-        return redirect('accounts:dashboard')
-    
-    barangays = Barangay.objects.filter(is_active=True).order_by('name')
-    
-    if request.method == 'POST':
-        channel = request.POST.get('channel', 'walk_in')
-        
-        # ====== CHANNEL A: Landowner Walk-in ======
-        if channel == 'landowner':
-            landowner_name = request.POST.get('landowner_name', '').strip()
-            landowner_email = request.POST.get('landowner_email', '').strip()
-            landowner_phone = request.POST.get('landowner_phone', '').strip()
-            property_address = request.POST.get('property_address', '').strip()
-            
-            # Get ISF data from form arrays
-            isf_names = request.POST.getlist('isf_name[]')
-            isf_incomes = request.POST.getlist('isf_income[]')
-            isf_households = request.POST.getlist('isf_household[]')
-            isf_years = request.POST.getlist('isf_years[]')
-            
-            # Validation
-            if not landowner_name:
-                messages.error(request, 'Landowner name is required.')
-                return redirect('intake:applicants_list')
-            
-            if not property_address:
-                messages.error(request, 'Property address is required.')
-                return redirect('intake:applicants_list')
-            
-            # Filter out empty ISF entries
-            valid_isfs = []
-            for i, name in enumerate(isf_names):
-                if name and name.strip():
-                    try:
-                        income = float(isf_incomes[i]) if i < len(isf_incomes) and isf_incomes[i] else 0
-                    except (ValueError, TypeError):
-                        income = 0
-                    try:
-                        household = int(isf_households[i]) if i < len(isf_households) and isf_households[i] else 1
-                    except (ValueError, TypeError):
-                        household = 1
-                    try:
-                        years = int(isf_years[i]) if i < len(isf_years) and isf_years[i] else 0
-                    except (ValueError, TypeError):
-                        years = 0
-                    
-                    valid_isfs.append({
-                        'name': name.strip(),
-                        'income': income,
-                        'household': household,
-                        'years': years
-                    })
-            
-            if not valid_isfs:
-                messages.error(request, 'At least one ISF record is required.')
-                return redirect('intake:applicants_list')
-            
-            # Create landowner submission
-            submission = LandownerSubmission.objects.create(
-                landowner_name=landowner_name,
-                landowner_email=landowner_email or None,
-                landowner_phone=landowner_phone or None,
-                property_address=property_address,
-                status='pending',
-                submitted_by_staff=request.user,
-            )
-            
-            # Create ISF records
-            created_count = 0
-            blacklisted_count = 0
-            for isf in valid_isfs:
-                # Check blacklist
-                is_blacklisted, _ = check_blacklist(isf['name'], '')
-                
-                if is_blacklisted:
-                    blacklisted_count += 1
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'POST required'}, status=405)
+
+    # Permission check
+    if request.user.position not in ['second_member', 'fourth_member']:
+        return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
+
+    # Get data
+    landowner_name = request.POST.get('landowner_name', '').strip()
+    property_address = request.POST.get('property_address', '').strip()
+
+    # Get ISF arrays
+    isf_names = request.POST.getlist('isf_name[]')
+    isf_households = request.POST.getlist('isf_household[]')
+    isf_incomes = request.POST.getlist('isf_income[]')
+    isf_years = request.POST.getlist('isf_years[]')
+
+    # Validation
+    if not landowner_name or not property_address:
+        return JsonResponse({'success': False, 'error': 'Landowner name and property address required'})
+
+    if not isf_names or len(isf_names) == 0:
+        return JsonResponse({'success': False, 'error': 'At least one ISF record required'})
+
+    try:
+        # Create LandownerSubmission
+        submission = LandownerSubmission.objects.create(
+            landowner_name=landowner_name,
+            property_address=property_address,
+            barangay='',  # Will be extracted from address if needed
+            submitted_by_staff=request.user,  # Track that staff entered this
+            status='pending'
+        )
+
+        # Create ISF records
+        created_count = 0
+        for i in range(len(isf_names)):
+            try:
+                isf_name = isf_names[i].strip()
+                household = int(isf_households[i]) if i < len(isf_households) else 1
+                income = float(isf_incomes[i]) if i < len(isf_incomes) else 0
+                years = int(isf_years[i]) if i < len(isf_years) else 0
+
+                if not isf_name:
                     continue
-                
-                ISFRecord.objects.create(
+
+                isf = ISFRecord.objects.create(
                     submission=submission,
-                    full_name=isf['name'],
-                    monthly_income=isf['income'],
-                    household_member_count=isf['household'],
-                    years_residing=isf['years'],
-                    status='pending',
+                    full_name=isf_name,
+                    household_members=household,
+                    monthly_income=income,
+                    years_residing=years,
+                    barangay=submission.barangay or '',
+                    phone_number='',  # No phone for walk-in at registration
+                    status='pending'
                 )
+
                 created_count += 1
-            
-            # Send SMS to landowner
-            if landowner_phone:
-                message = f"Your ISF submission has been received. Reference: {submission.reference_number}. {created_count} ISF records registered."
-                send_sms(landowner_phone, message, 'registration')
-            
-            if blacklisted_count > 0:
-                messages.warning(
-                    request,
-                    f'✓ Landowner submission created. {created_count} ISF records registered. '
-                    f'{blacklisted_count} blacklisted applicants skipped. Reference: {submission.reference_number}'
-                )
-            else:
-                messages.success(
-                    request,
-                    f'✓ Landowner submission created with {created_count} ISF records. '
-                    f'Reference: {submission.reference_number}'
-                )
-            
-            return redirect('intake:applicants_list')
-        
-        # ====== CHANNEL B & C: Walk-in Applicants ======
-        form = WalkInApplicantForm(request.POST)
-        
-        if form.is_valid():
-            # Get barangay instance
-            barangay_name = form.cleaned_data['barangay']
-            barangay, _ = Barangay.objects.get_or_create(name=barangay_name)
-            
-            # Check blacklist before proceeding
-            full_name = form.cleaned_data['full_name']
-            phone_number = form.cleaned_data.get('phone_number', '')
-            is_blacklisted, blacklist_entry = check_blacklist(full_name, phone_number)
-            
-            if is_blacklisted:
-                messages.error(
-                    request,
-                    f'⚠️ BLACKLISTED: {full_name} is on the blacklist. '
-                    f'Reason: {blacklist_entry.get_reason_display()}. Registration denied.'
-                )
-                return redirect('intake:applicants_list')
-            
-            # Create applicant
-            channel = form.cleaned_data['channel']
-            danger_zone_type = form.cleaned_data.get('danger_zone_type', '') if channel == 'danger_zone' else ''
-            danger_zone_location = form.cleaned_data.get('danger_zone_location', '') if channel == 'danger_zone' else ''
-            
-            # Get document checklist values from form
-            doc_brgy_residency = request.POST.get('doc_brgy_residency') == 'true'
-            doc_brgy_indigency = request.POST.get('doc_brgy_indigency') == 'true'
-            doc_cedula = request.POST.get('doc_cedula') == 'true'
-            doc_police_clearance = request.POST.get('doc_police_clearance') == 'true'
-            doc_no_property = request.POST.get('doc_no_property') == 'true'
-            doc_2x2_picture = request.POST.get('doc_2x2_picture') == 'true'
-            doc_sketch_location = request.POST.get('doc_sketch_location') == 'true'
-            
-            applicant = Applicant.objects.create(
-                full_name=full_name,
-                phone_number=phone_number,
-                barangay=barangay,
-                current_address=form.cleaned_data['current_address'],
-                monthly_income=form.cleaned_data['monthly_income'],
-                household_size=form.cleaned_data.get('household_size', 1) or 1,
-                years_residing=form.cleaned_data['years_residing'],
-                channel=channel,
-                status='pending_cdrrmo' if channel == 'danger_zone' else 'pending',
-                danger_zone_type=danger_zone_type,
-                danger_zone_location=danger_zone_location,
-                registered_by=request.user,
-                doc_brgy_residency=doc_brgy_residency,
-                doc_brgy_indigency=doc_brgy_indigency,
-                doc_cedula=doc_cedula,
-                doc_police_clearance=doc_police_clearance,
-                doc_no_property=doc_no_property,
-                doc_2x2_picture=doc_2x2_picture,
-                doc_sketch_location=doc_sketch_location,
-            )
-            
-            # For Channel B (danger zone), create CDRRMO certification request
-            if channel == 'danger_zone':
-                CDRRMOCertification.objects.create(
-                    applicant=applicant,
-                    declared_location=f"{dict(form.fields['danger_zone_type'].choices).get(danger_zone_type, danger_zone_type)}: {danger_zone_location}",
-                    status='pending',
-                    requested_by=request.user,
-                )
-                
-                messages.success(
-                    request,
-                    f'✓ {applicant.full_name} registered as DANGER ZONE applicant. '
-                    f'Reference: {applicant.reference_number}. Awaiting CDRRMO certification.'
-                )
-            else:
-                messages.success(
-                    request,
-                    f'✓ {applicant.full_name} registered as WALK-IN applicant. '
-                    f'Reference: {applicant.reference_number}. Ready for eligibility review.'
-                )
-            
-            # Send SMS confirmation
-            if phone_number:
-                message = f"You have been registered for housing assistance. Reference: {applicant.reference_number}. Please keep this for follow-up."
-                send_sms(phone_number, message, 'registration', applicant=applicant)
-            
-            return redirect('intake:applicants_list')
-        else:
-            # Form validation failed
-            for field, errors in form.errors.items():
-                for error in errors:
-                    messages.error(request, f'{field}: {error}')
-            return redirect('intake:applicants_list')
-    
-    # GET request - render standalone form
-    form = WalkInApplicantForm()
-    return render(request, 'intake/staff/walkin_register.html', {
-        'form': form,
-        'barangays': barangays,
-    })
+            except (ValueError, TypeError) as e:
+                # Skip invalid ISF entry
+                continue
+
+        if created_count == 0:
+            submission.delete()
+            return JsonResponse({'success': False, 'error': 'No valid ISF records created'})
+
+        return JsonResponse({
+            'success': True,
+            'message': f'Registered {created_count} ISF record(s) from {landowner_name}. Submission reference: {submission.reference_number}',
+            'submissionId': str(submission.id),
+            'reference': submission.reference_number
+        })
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': f'Error creating submission: {str(e)}'})
+
+
+@login_required
+def edit_isf_record(request, isf_id):
+    """
+    AJAX endpoint to edit ISF record data with staff audit trail.
+
+    Editable fields:
+    - monthly_income
+    - household_members
+    - years_residing
+    - phone_number
+    - barangay
+
+    Locked fields (cannot edit):
+    - full_name
+    - landowner information
+
+    Access: Only if ISF status is 'pending' (not yet decided)
+    """
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'POST required'}, status=405)
+
+    # Permission check
+    if request.user.position not in ['fourth_member', 'second_member', 'oic', 'head']:
+        return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
+
+    try:
+        isf_record = ISFRecord.objects.get(id=isf_id)
+    except ISFRecord.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'ISF record not found'})
+
+    # Block editing if already decided
+    if isf_record.status != 'pending':
+        return JsonResponse({'success': False, 'error': 'Cannot edit ISF after eligibility decision made'})
+
+    # Get fields to edit
+    field_name = request.POST.get('field_name')
+    new_value = request.POST.get('new_value')
+    edit_reason = request.POST.get('edit_reason')
+
+    if not all([field_name, new_value, edit_reason]):
+        return JsonResponse({'success': False, 'error': 'Missing required fields'})
+
+    # Validate field_name
+    editable_fields = ['monthly_income', 'household_members', 'years_residing', 'phone_number', 'barangay']
+    if field_name not in editable_fields:
+        return JsonResponse({'success': False, 'error': 'Invalid field'})
+
+    # Get original value as string
+    original_value = str(getattr(isf_record, field_name, ''))
+
+    # Update the field
+    try:
+        if field_name == 'monthly_income':
+            new_value = float(new_value)
+        elif field_name == 'household_members' or field_name == 'years_residing':
+            new_value = int(new_value)
+
+        setattr(isf_record, field_name, new_value)
+        isf_record.has_been_edited = True
+        isf_record.save()
+
+        # Create audit entry
+        ISFEditAudit.objects.create(
+            isf_record=isf_record,
+            field_name=field_name,
+            original_value=original_value,
+            new_value=str(new_value),
+            edit_reason=edit_reason,
+            edited_by=request.user
+        )
+
+        return JsonResponse({
+            'success': True,
+            'message': f'{field_name.replace("_", " ").title()} updated successfully'
+        })
+    except (ValueError, TypeError) as e:
+        return JsonResponse({'success': False, 'error': f'Invalid value for {field_name}'})
 
 
 @login_required
@@ -1396,5 +1215,178 @@ def applicants_list(request):
             'cdrrmo_overdue': cdrrmo_overdue
         }
     }
-    
+
     return render(request, 'intake/staff/applicants.html', context)
+
+
+@login_required
+def walkin_register(request):
+    """
+    Handle applicant registration from the modal form.
+
+    Channel A: Landowner walk-in → Creates LandownerSubmission + ISFRecords
+    Channel B: Danger Zone Walk-in → Creates Applicant + CDRRMO certification
+    Channel C: Regular Walk-in → Creates Applicant
+    """
+    from .utils import send_sms
+
+    allowed_positions = ['third_member', 'fourth_member', 'field', 'second_member']
+    if request.user.position not in allowed_positions:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
+        messages.error(request, 'You do not have permission to register applicants.')
+        return redirect('accounts:dashboard')
+
+    if request.method != 'POST':
+        return redirect('intake:applicants_list')
+
+    channel = request.POST.get('channel', 'walk_in')
+
+    # ====== CHANNEL A: Landowner Walk-in ======
+    if channel == 'landowner':
+        landowner_name = request.POST.get('landowner_name', '').strip()
+        property_address = request.POST.get('property_address', '').strip()
+
+        if not landowner_name or not property_address:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'error': 'Landowner name and property address are required'})
+            messages.error(request, 'Landowner name and property address are required.')
+            return redirect('intake:applicants_list')
+
+        # Get ISF data from form arrays
+        isf_names = request.POST.getlist('isf_name[]')
+        isf_incomes = request.POST.getlist('isf_income[]')
+        isf_households = request.POST.getlist('isf_household[]')
+        isf_years = request.POST.getlist('isf_years[]')
+
+        # Filter out empty ISF entries
+        valid_isfs = []
+        for i, name in enumerate(isf_names):
+            if name and name.strip():
+                try:
+                    income = float(isf_incomes[i]) if i < len(isf_incomes) and isf_incomes[i] else 0
+                except (ValueError, TypeError):
+                    income = 0
+                try:
+                    household = int(isf_households[i]) if i < len(isf_households) and isf_households[i] else 1
+                except (ValueError, TypeError):
+                    household = 1
+                try:
+                    years = int(isf_years[i]) if i < len(isf_years) and isf_years[i] else 0
+                except (ValueError, TypeError):
+                    years = 0
+
+                valid_isfs.append({
+                    'name': name.strip(),
+                    'income': income,
+                    'household': household,
+                    'years': years
+                })
+
+        if not valid_isfs:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'error': 'At least one ISF record is required'})
+            messages.error(request, 'At least one ISF record is required.')
+            return redirect('intake:applicants_list')
+
+        # Create landowner submission
+        submission = LandownerSubmission.objects.create(
+            landowner_name=landowner_name,
+            property_address=property_address,
+            status='pending',
+            submitted_by_staff=request.user,
+        )
+
+        # Create ISF records
+        created_count = 0
+        blacklisted_count = 0
+        for isf in valid_isfs:
+            is_blacklisted, _ = check_blacklist(isf['name'], '')
+            if is_blacklisted:
+                blacklisted_count += 1
+                continue
+
+            ISFRecord.objects.create(
+                submission=submission,
+                full_name=isf['name'],
+                monthly_income=isf['income'],
+                household_members=isf['household'],
+                years_residing=isf['years'],
+                status='pending',
+            )
+            created_count += 1
+
+        msg = f'Landowner submission created with {created_count} ISF records. Reference: {submission.reference_number}'
+
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': True, 'message': msg})
+
+        messages.success(request, f'✓ {msg}')
+        return redirect('intake:applicants_list')
+
+    # ====== CHANNEL B & C: Walk-in Applicants ======
+    form = WalkInApplicantForm(request.POST)
+
+    if not form.is_valid():
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'error': 'Form validation failed'})
+        messages.error(request, 'Please fill all required fields.')
+        return redirect('intake:applicants_list')
+
+    # Get barangay instance
+    barangay_name = form.cleaned_data['barangay']
+    barangay, _ = Barangay.objects.get_or_create(name=barangay_name)
+
+    # Check blacklist
+    full_name = form.cleaned_data['full_name']
+    phone_number = form.cleaned_data.get('phone_number', '')
+    is_blacklisted, blacklist_entry = check_blacklist(full_name, phone_number)
+
+    if is_blacklisted:
+        msg = f'Applicant is blacklisted. Registration denied.'
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'error': msg})
+        messages.error(request, msg)
+        return redirect('intake:applicants_list')
+
+    # Create applicant
+    channel_val = form.cleaned_data['channel']
+    danger_zone_type = form.cleaned_data.get('danger_zone_type', '') if channel_val == 'danger_zone' else ''
+    danger_zone_location = form.cleaned_data.get('danger_zone_location', '') if channel_val == 'danger_zone' else ''
+
+    applicant = Applicant.objects.create(
+        full_name=full_name,
+        phone_number=phone_number,
+        barangay=barangay,
+        current_address=form.cleaned_data['current_address'],
+        monthly_income=form.cleaned_data['monthly_income'],
+        household_size=form.cleaned_data.get('household_size', 1) or 1,
+        years_residing=form.cleaned_data['years_residing'],
+        channel=channel_val,
+        status='pending_cdrrmo' if channel_val == 'danger_zone' else 'pending',
+        danger_zone_type=danger_zone_type,
+        danger_zone_location=danger_zone_location,
+        registered_by=request.user,
+    )
+
+    # For Channel B, create CDRRMO certification
+    if channel_val == 'danger_zone':
+        CDRRMOCertification.objects.create(
+            applicant=applicant,
+            declared_location=f"{dict(form.fields['danger_zone_type'].choices).get(danger_zone_type, danger_zone_type)}: {danger_zone_location}",
+            status='pending',
+            requested_by=request.user,
+        )
+        msg = f'{applicant.full_name} registered as Danger Zone applicant. Reference: {applicant.reference_number}'
+    else:
+        msg = f'{applicant.full_name} registered as Walk-in applicant. Reference: {applicant.reference_number}'
+
+    # Send SMS
+    if phone_number:
+        send_sms(phone_number, f"Registered for housing assistance. Reference: {applicant.reference_number}", 'registration', applicant=applicant)
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({'success': True, 'message': msg})
+
+    messages.success(request, f'✓ {msg}')
+    return redirect('intake:applicants_list')

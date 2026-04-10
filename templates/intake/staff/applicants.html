@@ -1539,10 +1539,53 @@
                         <li>Not on the blacklist</li>
                     </ul>
                 </div>
+
+                <!-- Edit Mode Section (Hidden by default) -->
+                <div id="isfEditSection" style="display: none; border: 2px dashed #6366f1; border-radius: 0.5rem; padding: 1rem; background: #f0f4ff; margin-top: 1rem;">
+                    <div style="font-weight: 500; color: #4f46e5; margin-bottom: 1rem;">✎ Edit ISF Data</div>
+
+                    <!-- Editable Monthly Income -->
+                    <div class="form-group">
+                        <label class="form-label">Monthly Income (₱) *</label>
+                        <input type="number" id="isfEditIncome" class="form-input" step="0.01" min="0" placeholder="0.00" style="width: 100%; padding: 0.625rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.875rem;">
+                    </div>
+
+                    <!-- Editable Household Members -->
+                    <div class="form-group">
+                        <label class="form-label">Household Members *</label>
+                        <input type="number" id="isfEditHousehold" class="form-input" min="1" placeholder="0" style="width: 100%; padding: 0.625rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.875rem;">
+                    </div>
+
+                    <!-- Editable Years Residing -->
+                    <div class="form-group">
+                        <label class="form-label">Years Residing *</label>
+                        <input type="number" id="isfEditYears" class="form-input" min="0" placeholder="0" style="width: 100%; padding: 0.625rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.875rem;">
+                    </div>
+
+                    <!-- Edit Reason -->
+                    <div class="form-group">
+                        <label class="form-label">Reason for Edit *</label>
+                        <textarea id="isfEditReason" class="form-input" rows="2" placeholder="e.g., Staff data entry error - verified with applicant" style="width: 100%; padding: 0.625rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.875rem;"></textarea>
+                        <div class="form-help" style="font-size: 0.75rem; color: #64748b; margin-top: 0.25rem;">Document why this data was corrected</div>
+                    </div>
+
+                    <!-- Edit Mode Buttons -->
+                    <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+                        <button type="button" class="btn-modal" onclick="submitISFEdit()" style="background: #6366f1; flex: 1;">
+                            Save Changes
+                        </button>
+                        <button type="button" class="btn-modal secondary" onclick="toggleISFEditMode()" style="flex: 1;">
+                            Cancel Edit
+                        </button>
+                    </div>
+                </div>
             </form>
         </div>
 
         <div class="modal-footer" style="position: sticky; bottom: 0; background: white; border-top: 1px solid #e2e8f0;">
+            <button type="button" class="btn-modal" id="isfEditBtn" onclick="toggleISFEditMode()" style="background: #6366f1; display: none;">
+                ✎ Edit Information
+            </button>
             <button type="button" class="btn-modal success" id="isfApproveBtn" onclick="submitISFReview('eligible')" style="background: #10b981;">
                 ✓ Mark as Eligible
             </button>
@@ -1569,7 +1612,7 @@
             </button>
         </div>
         <div class="modal-body">
-            <form id="addApplicantForm" method="post" action="{% url 'intake:walkin_register' %}">
+            <form id="addApplicantForm" method="post" onsubmit="submitAddApplicant(event)">
                 {% csrf_token %}
                 <div class="form-group">
                     <label class="form-label">Intake Channel</label>
@@ -2922,6 +2965,7 @@
 
         // For Channel A: Open ISF Review Modal
         if (currentApplicant.channel === 'A') {
+            currentISFData = currentApplicant;
             populateISFModal(currentApplicant);
             document.getElementById('isfReviewModal').classList.add('active');
             return;
@@ -2956,6 +3000,7 @@
 
         // For Channel A: Open ISF Review Modal
         if (currentApplicant.channel === 'A') {
+            currentISFData = currentApplicant;
             populateISFModal(currentApplicant);
             document.getElementById('isfReviewModal').classList.add('active');
             // Auto-toggle to disqualify mode
@@ -3156,6 +3201,41 @@
         if (form) form.reset();
         selectChannel('walk_in');
         resetRegDocChecklist();
+    }
+
+    function submitAddApplicant(event) {
+        event.preventDefault();
+        const form = document.getElementById('addApplicantForm');
+        const channel = document.getElementById('channelInput').value;
+        const formData = new FormData(form);
+
+        // Determine endpoint based on channel
+        let endpoint = '{% url "intake:applicants_list" %}';
+        if (channel === 'landowner') {
+            endpoint = '{% url "intake:register_landowner_walkin" %}';
+        }
+
+        // Submit form to appropriate endpoint
+        fetch(endpoint, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message || 'Applicant registered successfully');
+                closeAddModal();
+                location.reload();
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            alert('Error: ' + error.message);
+        });
     }
 
     function selectChannel(channel) {
@@ -3469,6 +3549,7 @@
             alert('Error: No applicant data available');
             return;
         }
+        currentISFData = applicantData;
         populateISFModal(applicantData);
         document.getElementById('isfReviewModal').classList.add('active');
     }
@@ -3498,25 +3579,101 @@
         document.getElementById('isfDisqualifyReason').value = '';
         document.getElementById('isfApproveBtn').textContent = '✓ Mark as Eligible';
         document.getElementById('isfDisqualifyBtn').textContent = '✕ Mark as Disqualified';
+
+        // Show Edit button only if ISF is still pending (not yet decided)
+        const editBtn = document.getElementById('isfEditBtn');
+        if (data.status === 'pending' || data.status === 'Pending Review') {
+            editBtn.style.display = 'inline-block';
+        } else {
+            editBtn.style.display = 'none';
+        }
+
+        // Check eligibility and update button state
+        checkISFEligibility(data);
+
+        // Add listener to property ownership dropdown to re-check on change
+        document.getElementById('isfPropertyOwnership').onchange = function() {
+            checkISFEligibility(data);
+        };
+    }
+
+    function checkISFEligibility(data) {
+        // Check all eligibility criteria
+        const eligibilityChecks = {
+            income: parseFloat(data.monthlyIncome || 0) <= 10000,
+            property: document.getElementById('isfPropertyOwnership').value === 'no',
+            propertySelected: document.getElementById('isfPropertyOwnership').value !== ''
+        };
+
+        // Determine if Mark as Eligible button should be enabled
+        const canMarkEligible = eligibilityChecks.income && eligibilityChecks.propertySelected;
+
+        // Update button state
+        const approveBtn = document.getElementById('isfApproveBtn');
+        if (canMarkEligible && eligibilityChecks.property) {
+            approveBtn.disabled = false;
+            approveBtn.style.opacity = '1';
+            approveBtn.style.cursor = 'pointer';
+            approveBtn.title = 'All criteria passed - Click to mark as eligible';
+        } else {
+            approveBtn.disabled = true;
+            approveBtn.style.opacity = '0.5';
+            approveBtn.style.cursor = 'not-allowed';
+
+            // Set tooltip message
+            let reasons = [];
+            if (!eligibilityChecks.income) {
+                reasons.push('Income exceeds ₱10,000 limit');
+            }
+            if (!eligibilityChecks.property && eligibilityChecks.propertySelected) {
+                reasons.push('Owns property in Talisay City');
+            }
+            if (!eligibilityChecks.propertySelected) {
+                reasons.push('Please verify property ownership');
+            }
+            approveBtn.title = 'Cannot mark eligible: ' + reasons.join(', ');
+        }
     }
 
     function closeISFModal() {
         document.getElementById('isfReviewModal').classList.remove('active');
+        // Reset edit mode
+        const editSection = document.getElementById('isfEditSection');
+        if (editSection) {
+            editSection.style.display = 'none';
+        }
+        const editBtn = document.getElementById('isfEditBtn');
+        if (editBtn) {
+            editBtn.textContent = '✎ Edit Information';
+        }
         currentISFData = null;
     }
 
     function toggleISFDisqualify() {
         const group = document.getElementById('isfDisqualifyGroup');
+        const approveBtn = document.getElementById('isfApproveBtn');
+        const disqualifyBtn = document.getElementById('isfDisqualifyBtn');
+
         if (group.style.display === 'none') {
+            // Switching TO disqualify mode
             group.style.display = 'block';
-            document.getElementById('isfApproveBtn').textContent = 'Back to Eligible Check';
-            document.getElementById('isfApproveBtn').style.background = '#64748b';
-            document.getElementById('isfDisqualifyBtn').textContent = 'Confirm Disqualification';
+            approveBtn.textContent = 'Back to Eligible Check';
+            approveBtn.style.background = '#64748b';
+            approveBtn.disabled = false;
+            approveBtn.style.opacity = '1';
+            approveBtn.style.cursor = 'pointer';
+            approveBtn.title = 'Click to cancel disqualification';
+            disqualifyBtn.textContent = 'Confirm Disqualification';
         } else {
+            // Switching BACK to eligible mode
             group.style.display = 'none';
-            document.getElementById('isfApproveBtn').textContent = '✓ Mark as Eligible';
-            document.getElementById('isfApproveBtn').style.background = '#10b981';
-            document.getElementById('isfDisqualifyBtn').textContent = '✕ Mark as Disqualified';
+            approveBtn.textContent = '✓ Mark as Eligible';
+            approveBtn.style.background = '#10b981';
+            disqualifyBtn.textContent = '✕ Mark as Disqualified';
+            // Re-check eligibility after switching back
+            if (currentISFData) {
+                checkISFEligibility(currentISFData);
+            }
         }
     }
 
@@ -3526,6 +3683,12 @@
         const barangay = document.getElementById('isfBarangay').value;
         const propertyOwnership = document.getElementById('isfPropertyOwnership').value;
         const disqualifyGroup = document.getElementById('isfDisqualifyGroup');
+
+        // Prevent submission if Mark as Eligible button is disabled
+        if (action === 'eligible' && document.getElementById('isfApproveBtn').disabled) {
+            alert('This applicant does not meet eligibility criteria. Please mark as disqualified or address the issues.');
+            return;
+        }
 
         // Validation
         if (!phoneNumber) {
@@ -3584,6 +3747,98 @@
         })
         .catch(error => {
             alert('Error submitting form: ' + error.message);
+        });
+    }
+
+    function toggleISFEditMode() {
+        const editSection = document.getElementById('isfEditSection');
+        const editBtn = document.getElementById('isfEditBtn');
+        const approveBtn = document.getElementById('isfApproveBtn');
+        const disqualifyBtn = document.getElementById('isfDisqualifyBtn');
+
+        if (editSection.style.display === 'none') {
+            // Entering edit mode
+            editSection.style.display = 'block';
+            editBtn.textContent = '✕ Cancel Edit';
+            approveBtn.style.display = 'none';
+            disqualifyBtn.style.display = 'none';
+
+            // Pre-fill with current values
+            if (currentISFData) {
+                document.getElementById('isfEditIncome').value = currentISFData.monthly_income || '';
+                document.getElementById('isfEditHousehold').value = currentISFData.household_members || '';
+                document.getElementById('isfEditYears').value = currentISFData.years_residing || '';
+                document.getElementById('isfEditReason').value = '';
+            }
+        } else {
+            // Exiting edit mode
+            editSection.style.display = 'none';
+            editBtn.textContent = '✎ Edit Information';
+            approveBtn.style.display = 'block';
+            disqualifyBtn.style.display = 'block';
+            // Clear edit fields
+            document.getElementById('isfEditIncome').value = '';
+            document.getElementById('isfEditHousehold').value = '';
+            document.getElementById('isfEditYears').value = '';
+            document.getElementById('isfEditReason').value = '';
+        }
+    }
+
+    function submitISFEdit() {
+        const isfId = document.getElementById('isfId').value;
+        const income = document.getElementById('isfEditIncome').value;
+        const household = document.getElementById('isfEditHousehold').value;
+        const years = document.getElementById('isfEditYears').value;
+        const reason = document.getElementById('isfEditReason').value;
+
+        // Validation
+        if (!reason.trim()) {
+            alert('Reason for edit is required');
+            return;
+        }
+
+        // For now, we'll submit income edit (could be extended for other fields)
+        if (income && income !== currentISFData.monthly_income) {
+            submitFieldEdit('monthly_income', income, reason);
+        } else if (household && household !== currentISFData.household_members) {
+            submitFieldEdit('household_members', household, reason);
+        } else if (years && years !== currentISFData.years_residing) {
+            submitFieldEdit('years_residing', years, reason);
+        } else {
+            alert('No changes detected');
+            return;
+        }
+    }
+
+    function submitFieldEdit(fieldName, newValue, editReason) {
+        const isfId = document.getElementById('isfId').value;
+
+        const formData = new FormData();
+        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+        formData.append('field_name', fieldName);
+        formData.append('new_value', newValue);
+        formData.append('edit_reason', editReason);
+
+        fetch(`/intake/staff/isf/${isfId}/edit/`, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message || 'Data updated successfully');
+                // Update currentISFData
+                currentISFData[fieldName] = newValue;
+                // Re-check eligibility after edit
+                checkISFEligibility(currentISFData);
+                // Exit edit mode
+                toggleISFEditMode();
+            } else {
+                alert('Error: ' + (data.error || 'Failed to update'));
+            }
+        })
+        .catch(error => {
+            alert('Error updating data: ' + error.message);
         });
     }
 

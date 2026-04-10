@@ -237,7 +237,14 @@ class ISFRecord(models.Model):
     # SMS tracking
     registration_sms_sent = models.BooleanField(default=False)
     eligibility_sms_sent = models.BooleanField(default=False)
-    
+
+    # Edit tracking
+    has_been_edited = models.BooleanField(
+        default=False,
+        verbose_name="Has Been Edited by Staff",
+        help_text="Track if staff corrected any data after initial submission"
+    )
+
     # Document Checklist (7 required documents)
     doc_brgy_residency = models.BooleanField(default=False, verbose_name="Brgy. Certificate of Residency")
     doc_brgy_indigency = models.BooleanField(default=False, verbose_name="Brgy. Certificate of Indigency")
@@ -654,3 +661,47 @@ class QueueEntry(models.Model):
     
     def __str__(self):
         return f"{self.get_queue_type_display()} #{self.position} - {self.applicant.full_name}"
+
+
+class ISFEditAudit(models.Model):
+    """
+    Audit trail for all ISF record edits.
+    Tracks every data correction made by staff.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    isf_record = models.ForeignKey(
+        ISFRecord,
+        on_delete=models.CASCADE,
+        related_name='edit_audits'
+    )
+
+    # Field that was edited
+    field_name = models.CharField(
+        max_length=50,
+        help_text="Field edited: monthly_income, household_members, years_residing, phone_number, barangay"
+    )
+    original_value = models.TextField()
+    new_value = models.TextField()
+
+    # Reason for edit
+    edit_reason = models.TextField(
+        verbose_name="Reason for Edit",
+        help_text="Why this data correction was necessary"
+    )
+
+    # Staff tracking
+    edited_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='isf_edits'
+    )
+    edited_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-edited_at']
+        verbose_name = "ISF Edit Audit"
+        verbose_name_plural = "ISF Edit Audits"
+
+    def __str__(self):
+        return f"{self.isf_record.reference_number} - {self.field_name} edited by {self.edited_by}"

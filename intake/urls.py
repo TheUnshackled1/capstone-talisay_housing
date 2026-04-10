@@ -6,30 +6,21 @@ app_name = 'intake'
 urlpatterns = [
     # Public landowner portal
     path('landowner-submission/', views.landowner_form, name='landowner_form'),
-    
-    # Staff applicants management (Joie - Second Member, Jocel - Fourth Member)
-    # Consolidated view for all intake channels (replaces old submission_list)
+
+    # Staff applicants management (consolidated modal-based interface)
     path('staff/applicants/', views.applicants_list, name='applicants_list'),
-    
-    # Walk-in registration (Channel B/C)
+
+    # Applicant registration from modal
     path('staff/register/', views.walkin_register, name='walkin_register'),
-    
-    # Update eligibility (AJAX endpoint for modal)
+
+    # AJAX endpoints for modal operations
     path('staff/update-eligibility/', views.update_eligibility, name='update_eligibility'),
-    
-    # Update applicant data (AJAX endpoint for edit mode)
     path('staff/update-applicant/', views.update_applicant, name='update_applicant'),
-    
-    # Delete applicant (AJAX endpoint)
     path('staff/delete-applicant/', views.delete_applicant, name='delete_applicant'),
-    
-    # Resend SMS notification (AJAX endpoint)
     path('staff/resend-sms/', views.resend_sms, name='resend_sms'),
-    
-    # Channel A review workflow (Landowner submissions)
-    path('staff/submissions/<uuid:submission_id>/', views.submission_review, name='submission_review'),
+    path('staff/register-landowner-walkin/', views.register_landowner_walkin, name='register_landowner_walkin'),
+
+    # ISF review endpoint (AJAX POST for modal)
     path('staff/isf/<uuid:isf_id>/review/', views.isf_review, name='isf_review'),
-    
-    # Channel B/C review workflow (Walk-in and Danger Zone)
-    path('staff/walkin/<uuid:applicant_id>/review/', views.walkin_review, name='walkin_review'),
+    path('staff/isf/<uuid:isf_id>/edit/', views.edit_isf_record, name='edit_isf_record'),
 ]
