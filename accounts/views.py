@@ -182,13 +182,53 @@ def dashboard_oic(request):
     Dashboard for OIC-THA (Victor Fregil)
     Responsibilities: M1 (queue oversight), M2 (OIC signatory), M4 (compliance), M5 (escalated complaints)
 
-    MODULE 1: Queue Overview, SMS Delivery Status, Critical Alerts
+    PHASE 1 Implementation:
+    - M2 (OIC Signatory): Pending signature tracking with >3 day delay flags
+    - M4 (Compliance): Awaiting decision count
+    - M5 (Escalated Cases): Escalated to OIC count
+    - M6 (Analytics): Pipeline, turnaround time, compliance rates
     """
     if request.user.position != 'oic':
         messages.error(request, 'Access denied. This dashboard is for the OIC position only.')
         return redirect('accounts:dashboard')
 
-    # MODULE 1: Queue and SMS metrics
+    # ==================== MODULE 2: OIC SIGNATORY (PRIORITY) ====================
+    from applications.models import Application, SignatoryRouting
+
+    # Applications awaiting OIC signature
+    pending_signature_applications = Application.objects.filter(
+        status='routing'
+    ).select_related('applicant').prefetch_related(
+        'routing_steps'
+    )
+
+    # Enrich with routing information and days waiting
+    pending_sigs_with_days = []
+    for app in pending_signature_applications:
+        last_routing = app.routing_steps.filter(
+            step='forwarded_oic'
+        ).order_by('-action_at').first()
+
+        if last_routing:
+            days_waiting = last_routing.days_since_action
+            is_overdue = days_waiting > 3
+            pending_sigs_with_days.append({
+                'application': app,
+                'reference': app.application_number,
+                'applicant_name': app.applicant.full_name,
+                'days_waiting': days_waiting,
+                'is_overdue': is_overdue,
+                'forwarded_at': last_routing.action_at,
+            })
+
+    # Sort by oldest first (longest waiting)
+    pending_sigs_with_days.sort(key=lambda x: x['days_waiting'], reverse=True)
+
+    # Count overdue signatures
+    overdue_signatures = sum(1 for item in pending_sigs_with_days if item['is_overdue'])
+    pending_signature_count = len(pending_sigs_with_days)
+
+    # ==================== MODULE 1: QUEUE & SMS METRICS ====================
     # Queue counts
     priority_queue_count = QueueEntry.objects.filter(queue_type='priority', status='active').count()
     walkin_queue_count = QueueEntry.objects.filter(queue_type='walkin', status='active').count()
@@ -209,6 +249,40 @@ def dashboard_oic(request):
     # Failed SMS alerts (last 10)
     failed_sms_list = SMSLog.objects.filter(status='failed').order_by('-sent_at')[:10]
 
+    # ==================== MODULE 4: COMPLIANCE DECISIONS ====================
+    from units.models import ComplianceNotice
+
+    # Active compliance notices awaiting OIC decision
+    active_compliance_notices = ComplianceNotice.objects.filter(
+        status='active'
+    ).select_related('lot_award__application__applicant', 'unit').order_by('deadline')
+
+    # Enrich with decision tracking
+    pending_compliance_decisions = []
+    urgent_compliance_count = 0  # Approaching deadline (<= 5 days)
+
+    for notice in active_compliance_notices:
+        is_approaching = notice.is_approaching_deadline
+        is_overdue = notice.is_overdue
+
+        pending_compliance_decisions.append({
+            'notice': notice,
+            'applicant_name': notice.lot_award.application.applicant.full_name,
+            'unit_display': str(notice.unit),
+            'notice_type': notice.get_notice_type_display(),
+            'days_remaining': notice.days_remaining,
+            'is_approaching_deadline': is_approaching,
+            'is_overdue': is_overdue,
+            'deadline': notice.deadline,
+            'reason': notice.reason,
+        })
+
+        if is_approaching or is_overdue:
+            urgent_compliance_count += 1
+
+    compliance_decision_count = len(pending_compliance_decisions)
+
+    # ==================== CDRRMO & BLACKLIST ====================
     # CDRRMO metrics
     pending_cdrrmo = CDRRMOCertification.objects.filter(status='pending').count()
     overdue_threshold = timezone.now() - timedelta(days=14)
@@ -221,11 +295,155 @@ def dashboard_oic(request):
     # Total applicants
     total_applicants = Applicant.objects.count()
 
+    # ==================== MODULE 6: APPLICATION PIPELINE FUNNEL (M2/M6) ====================
+    # Application pipeline stages with counts and conversion rates
+    pipeline_stages = [
+        ('draft', 'Form Generated'),
+        ('completed', 'Applicant Signed'),
+        ('routing', 'Signatory Routing'),
+        ('oic_signed', 'OIC Approved'),
+        ('head_signed', 'Head Approved'),
+        ('standby', 'On Standby'),
+        ('awarded', 'Lot Awarded'),
+    ]
+
+    # Get counts for each stage
+    stage_counts = {}
+    for status, label in pipeline_stages:
+        stage_counts[status] = Application.objects.filter(status=status).count()
+
+    # Calculate conversion rates
+    funnel_data = []
+    total_applications = sum(stage_counts.values())
+
+    for i, (status, label) in enumerate(pipeline_stages):
+        count = stage_counts[status]
+
+        # Percentage of total applications
+        pct_of_total = int((count / total_applications * 100)) if total_applications > 0 else 0
+
+        # Conversion rate from previous stage
+        conversion_rate = None
+        if i > 0 and funnel_data:
+            prev_count = funnel_data[i-1]['count']
+            conversion_rate = int((count / prev_count * 100)) if prev_count > 0 else 0
+
+        funnel_data.append({
+            'status': status,
+            'label': label,
+            'count': count,
+            'pct_of_total': pct_of_total,
+            'conversion_rate': conversion_rate,
+            'position': i,
+        })
+
+    # ==================== MODULE 6: SIGNATORY TURNAROUND TIME (M2/M6) ====================
+    # Signatory routing step definitions
+    routing_steps_definitions = [
+        ('received', 'Received by Jay', 'third_member', None),  # First step, no previous
+        ('forwarded_oic', 'Forwarded to Victor', 'oic', 'received'),  # Previous step: received
+        ('signed_oic', 'Victor Approves', 'oic', 'forwarded_oic'),  # Previous step: forwarded_oic
+        ('forwarded_head', 'Forwarded to Arthur', 'head', 'signed_oic'),  # Previous step: signed_oic
+        ('signed_head', 'Arthur Completes', 'head', 'forwarded_head'),  # Previous step: forwarded_head
+    ]
+
+    # Calculate turnaround time for each routing step
+    turnaround_analytics = []
+
+    for step_code, step_label, responsible_role, prev_step_code in routing_steps_definitions:
+        # Get all completed routing steps for this step
+        completed_steps = SignatoryRouting.objects.filter(
+            step=step_code
+        ).select_related('application', 'action_by').order_by('action_at')
+
+        # Get currently pending at this step (forwarded but not yet completed)
+        if step_code == 'received':
+            # First step: applications with routing status but no 'received' step yet
+            pending_at_step = 0
+            overdue_at_step = 0
+        else:
+            # Other steps: applications that have completed previous step but not this one
+            apps_with_prev_step = Application.objects.filter(
+                routing_steps__step=prev_step_code
+            ).distinct()
+            apps_with_current_step = Application.objects.filter(
+                routing_steps__step=step_code
+            ).distinct()
+            pending_apps = apps_with_prev_step.exclude(
+                id__in=apps_with_current_step.values_list('id', flat=True)
+            )
+            pending_at_step = pending_apps.count()
+
+            # Count overdue at this step (pending > 3 days)
+            overdue_at_step = 0
+            for app in pending_apps:
+                last_prev = app.routing_steps.filter(
+                    step=prev_step_code
+                ).order_by('-action_at').first()
+                if last_prev and last_prev.is_delayed:
+                    overdue_at_step += 1
+
+        # Calculate turnaround time metrics for completed steps
+        turnaround_times = []
+        for routing in completed_steps:
+            if prev_step_code:
+                # Find previous step for this application
+                prev_routing = routing.application.routing_steps.filter(
+                    step=prev_step_code
+                ).order_by('-action_at').first()
+
+                if prev_routing:
+                    turnaround_days = (routing.action_at - prev_routing.action_at).days
+                    turnaround_times.append(turnaround_days)
+
+        # Calculate statistics
+        if turnaround_times:
+            avg_turnaround = int(sum(turnaround_times) / len(turnaround_times))
+            max_turnaround = max(turnaround_times)
+            min_turnaround = min(turnaround_times)
+            completed_count = len(turnaround_times)
+        else:
+            avg_turnaround = 0
+            max_turnaround = 0
+            min_turnaround = 0
+            completed_count = 0
+
+        turnaround_analytics.append({
+            'step_code': step_code,
+            'step_label': step_label,
+            'responsible_role': responsible_role,
+            'avg_turnaround': avg_turnaround,
+            'max_turnaround': max_turnaround,
+            'min_turnaround': min_turnaround,
+            'completed_count': completed_count,
+            'pending_count': pending_at_step,
+            'overdue_count': overdue_at_step,
+            'sla_target': 3,  # 3-day SLA
+            'is_exceeding_sla': avg_turnaround > 3 if completed_count > 0 else False,
+        })
+
     context = {
         'page_title': 'OIC Dashboard',
         'user_position': 'oic',
 
-        # MODULE 1 Metrics
+        # ========== MODULE 2: OIC SIGNATORY (PHASE 1) ==========
+        'pending_signature_count': pending_signature_count,
+        'overdue_signatures': overdue_signatures,
+        'pending_sigs_with_days': pending_sigs_with_days,  # Enhanced list with days waiting
+
+        # ========== MODULE 4: COMPLIANCE DECISIONS (PHASE 1) ==========
+        'compliance_decision_count': compliance_decision_count,
+        'urgent_compliance_count': urgent_compliance_count,
+        'pending_compliance_decisions': pending_compliance_decisions,
+
+        # ========== MODULE 6: APPLICATION PIPELINE FUNNEL (PHASE 1 #3) ==========
+        'funnel_data': funnel_data,
+        'total_applications': total_applications,
+
+        # ========== MODULE 6: SIGNATORY TURNAROUND TIME (PHASE 1 #4) ==========
+        'turnaround_analytics': turnaround_analytics,
+
+        # ========== MODULE 1: SYSTEM HEALTH METRICS ==========
         'total_in_queue': total_in_queue,
         'priority_queue_count': priority_queue_count,
         'walkin_queue_count': walkin_queue_count,
@@ -241,13 +459,10 @@ def dashboard_oic(request):
         'recent_blacklist': recent_blacklist,
         'total_applicants': total_applicants,
 
-        # Legacy M2+ placeholders
-        'awaiting_signature': 0,  # TODO: Applications pending OIC signature (M2)
-        'compliance_cases': 0,  # TODO: Active compliance cases (M4)
+        # ========== PLACEHOLDERS FOR FUTURE MODULES ==========
+        'awaiting_signature': pending_signature_count,  # M2 (updated from TODO)
         'escalated_complaints': 0,  # TODO: Complaints escalated to OIC (M5)
-        'pending_oic_approvals': [],
-        'pending_compliance_decisions': [],
-        'escalated_cases': [],
+        'escalated_cases': [],  # M5 (TODO)
     }
     return render(request, 'accounts/dashboard.html', context)
 
