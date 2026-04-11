@@ -884,7 +884,7 @@ def supporting_services_coordinator(request):
     """
 
     # Authorization: Fourth Member / Records Officer / Jocel only
-    if not hasattr(request.user, 'position') or request.user.position != 'fourth_member':
+    if request.user.position not in ['fourth_member']:
         return render(request, 'common/access_denied.html',
                       {'message': 'Only the Records Officer can access this function.'}, status=403)
 
