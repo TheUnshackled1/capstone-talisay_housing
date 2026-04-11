@@ -13,4 +13,9 @@ urlpatterns = [
     # Occupancy Report Form (UI #22 - Week 2 Day 3-4)
     path('occupancy-report/', views.occupancy_report_form, name='occupancy_report_form'),
     path('occupancy-report/submit/', views.submit_occupancy_report, name='submit_occupancy_report'),
+
+    # Occupancy Review Form (UI #23 - Week 2 Day 5)
+    path('occupancy-review/', views.occupancy_review_list, name='occupancy_review_list'),
+    path('occupancy-review/<uuid:report_id>/', views.occupancy_review_detail, name='occupancy_review_detail'),
+    path('occupancy-review/submit/', views.submit_occupancy_review, name='submit_occupancy_review'),
 ]

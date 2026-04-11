@@ -494,3 +494,164 @@ def submit_occupancy_report(request):
     except Exception as e:
         return JsonResponse({'success': False, 'error': f'Error: {str(e)}'})
 
+
+# =============================================================================
+# UI #23: OCCUPANCY REVIEW FORM (Process 8 - Week 2 Day 5)
+# =============================================================================
+
+@login_required
+def occupancy_review_list(request):
+    """
+    UI #23: Occupancy Review List
+    Process 8: Occupancy Validation - Field team perspective
+
+    Actor: Field Team (Paul, Roberto, Nonoy)
+    Purpose: Review and confirm/flag caretaker occupancy reports
+
+    GET: Display all pending occupancy reports awaiting field team confirmation
+    """
+
+    # Get all reports with status='submitted' (awaiting review)
+    pending_reports = (
+        OccupancyReport.objects
+        .filter(status='submitted')
+        .select_related('site', 'submitted_by')
+        .prefetch_related('details__unit')
+        .order_by('-report_week_start')
+    )
+
+    # Get recent completed reviews (for reference)
+    confirmed_reports = (
+        OccupancyReport.objects
+        .filter(status__in=['confirmed', 'discrepancy'])
+        .select_related('site', 'reviewed_by')
+        .order_by('-reviewed_at')[:15]
+    )
+
+    context = {
+        'pending_reports': pending_reports,
+        'confirmed_reports': confirmed_reports,
+        'pending_count': pending_reports.count(),
+        'confirmed_count': confirmed_reports.count(),
+    }
+
+    return render(request, 'units/occupancy_review_list.html', context)
+
+
+@login_required
+def occupancy_review_detail(request, report_id):
+    """
+    Display detailed review form for a specific occupancy report
+    """
+
+    try:
+        report = OccupancyReport.objects.get(id=report_id)
+    except OccupancyReport.DoesNotExist:
+        return render(request, 'common/error.html',
+                      {'error': 'Report not found'}, status=404)
+
+    # Verify status is 'submitted' (not already reviewed)
+    if report.status != 'submitted':
+        return render(request, 'common/error.html',
+                      {'error': f'This report has already been {report.status}. Cannot review again.'}, status=400)
+
+    # Get all unit details for this report
+    details = report.details.select_related('unit').order_by('unit__block_number', 'unit__lot_number')
+
+    # Format week display
+    week_display = f"{report.report_week_start.strftime('%b %d')} - {report.report_week_end.strftime('%b %d, %Y')}"
+
+    context = {
+        'report': report,
+        'details': details,
+        'week_display': week_display,
+        'detail_count': details.count(),
+    }
+
+    return render(request, 'units/occupancy_review_detail.html', context)
+
+
+@login_required
+@require_POST
+def submit_occupancy_review(request):
+    """
+    Handle AJAX POST to confirm or flag occupancy report
+
+    Expected POST data (JSON):
+    - report_id: OccupancyReport ID
+    - action: 'confirm' or 'flag_discrepancy'
+    - confirmed_occupied: count (if confirm)
+    - confirmed_vacant: count (if confirm)
+    - discrepancy_notes: notes (if flag)
+    """
+    try:
+        data = json.loads(request.body)
+
+        report_id = data.get('report_id')
+        action = data.get('action')
+        confirmed_occupied = data.get('confirmed_occupied')
+        confirmed_vacant = data.get('confirmed_vacant')
+        discrepancy_notes = data.get('discrepancy_notes', '')
+
+        # Validate
+        if not all([report_id, action]):
+            return JsonResponse({'success': False, 'error': 'Missing required fields'})
+
+        # Get report
+        report = OccupancyReport.objects.get(id=report_id)
+
+        # Verify status is 'submitted'
+        if report.status != 'submitted':
+            return JsonResponse({
+                'success': False,
+                'error': f'Report already {report.status}. Cannot review.'
+            })
+
+        # Update based on action
+        if action == 'confirm':
+            if not all([confirmed_occupied is not None, confirmed_vacant is not None]):
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Please provide confirmed occupied and vacant counts'
+                })
+
+            report.status = 'confirmed'
+            report.confirmed_occupied = confirmed_occupied
+            report.confirmed_vacant = confirmed_vacant
+            report.reviewed_by = request.user
+            report.reviewed_at = timezone.now()
+            message = f'✓ Report confirmed for {report.site.name}'
+
+        elif action == 'flag_discrepancy':
+            if not discrepancy_notes:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Please provide discrepancy notes'
+                })
+
+            report.status = 'discrepancy'
+            report.discrepancy_notes = discrepancy_notes
+            report.reviewed_by = request.user
+            report.reviewed_at = timezone.now()
+            message = f'⚠️ Discrepancy flagged for {report.site.name}'
+
+        else:
+            return JsonResponse({'success': False, 'error': 'Invalid action'})
+
+        report.save()
+
+        return JsonResponse({
+            'success': True,
+            'message': message,
+            'new_status': report.status,
+            'timestamp': timezone.now().isoformat(),
+        })
+
+    except OccupancyReport.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Report not found'})
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'Invalid JSON'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+

@@ -1,0 +1,868 @@
+{% extends 'staff_base.html' %}
+{% load static %}
+
+{% block title %}Review Occupancy Report - Talisay Housing Authority{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+
+<!-- Page Header -->
+<div class="page-header" style="background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-700) 100%);">
+    <div class="page-header-content">
+        <div class="header-icon">📋</div>
+        <div class="header-text">
+            <h1>Review Occupancy Report</h1>
+            <p>{{ report.site.name }} • Week of {{ week_display }}</p>
+        </div>
+    </div>
+</div>
+
+<!-- Main Container -->
+<div class="container-main">
+    <!-- Caretaker's Report Card -->
+    <div class="form-section">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">📝 Caretaker's Report</h3>
+            </div>
+            <div class="card-body">
+                <div class="report-info-grid">
+                    <div class="info-group">
+                        <span class="info-label">Submitted by:</span>
+                        <span class="info-value">{{ report.submitted_by.get_full_name }}</span>
+                    </div>
+                    <div class="info-group">
+                        <span class="info-label">Submitted at:</span>
+                        <span class="info-value">{{ report.submitted_at|date:"M d, Y \a\t H:i" }}</span>
+                    </div>
+                    <div class="info-group">
+                        <span class="info-label">Reporting Site:</span>
+                        <span class="info-value">{{ report.site.name }}</span>
+                    </div>
+                    <div class="info-group">
+                        <span class="info-label">Report Period:</span>
+                        <span class="info-value">{{ week_display }}</span>
+                    </div>
+                </div>
+
+                {% if report.notes %}
+                <div class="notes-section">
+                    <h4>Caretaker's Observations</h4>
+                    <div class="notes-content">
+                        {{ report.notes }}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Statistics -->
+    <div class="form-section">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">📊 Report Summary</h3>
+            </div>
+            <div class="card-body">
+                <div class="summary-grid">
+                    <div class="summary-box">
+                        <div class="summary-number" style="color: var(--green-600);">🟢 {{ report.reported_occupied }}</div>
+                        <div class="summary-label">Occupied Units</div>
+                        <div class="summary-total">of {{ detail_count }} total</div>
+                    </div>
+                    <div class="summary-box">
+                        <div class="summary-number" style="color: var(--amber-600);">🟡 {{ report.reported_vacant }}</div>
+                        <div class="summary-label">Vacant Units</div>
+                        <div class="summary-total">of {{ detail_count }} total</div>
+                    </div>
+                    <div class="summary-box">
+                        <div class="summary-number" style="color: var(--red-600);">🔴 {{ report.reported_concerns }}</div>
+                        <div class="summary-label">Units with Concerns</div>
+                        <div class="summary-total">of {{ detail_count }} total</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Per-Unit Details -->
+    <div class="form-section">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">🏘️ Unit-by-Unit Details</h3>
+            </div>
+            <div class="card-body">
+                <div class="table-wrapper">
+                    <table class="review-table">
+                        <thead>
+                            <tr>
+                                <th>Block</th>
+                                <th>Lot</th>
+                                <th>Status Reported</th>
+                                <th>Occupant Name</th>
+                                <th>Caretaker Comments</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for detail in details %}
+                            <tr class="row-status-{{ detail.status }}">
+                                <td class="cell-block">{{ detail.unit.block_number }}</td>
+                                <td class="cell-lot">{{ detail.unit.lot_number }}</td>
+                                <td class="cell-status">
+                                    {% if detail.status == 'occupied' %}
+                                    <span class="badge-status status-occupied">🟢 Occupied</span>
+                                    {% elif detail.status == 'unoccupied' %}
+                                    <span class="badge-status status-vacant">🟡 Unoccupied</span>
+                                    {% else %}
+                                    <span class="badge-status status-concern">🔴 Concern</span>
+                                    {% endif %}
+                                </td>
+                                <td class="cell-occupant">{{ detail.occupant_name|default:"—" }}</td>
+                                <td class="cell-comments">{{ detail.comments|default:"—" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Field Team Decision Section -->
+    <div class="form-section">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">✅ Your Decision</h3>
+            </div>
+            <div class="card-body">
+                <div class="decision-section">
+                    <div class="decision-option" id="confirmOption">
+                        <input type="radio" name="decision" id="decisionConfirm" value="confirm" onchange="showDecisionForm()" checked>
+                        <label for="decisionConfirm">
+                            <span class="option-title">✓ Approve Report</span>
+                            <span class="option-description">The reported occupancy status matches your field observations</span>
+                        </label>
+                    </div>
+
+                    <div class="decision-option" id="flagOption">
+                        <input type="radio" name="decision" id="decisionFlag" value="flag_discrepancy" onchange="showDecisionForm()">
+                        <label for="decisionFlag">
+                            <span class="option-title">⚠️ Flag Discrepancy</span>
+                            <span class="option-description">The reported status does not match your field observations</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Confirm Form (shown by default) -->
+                <div id="confirmForm" class="decision-form" style="display: block;">
+                    <div class="form-section-inner">
+                        <h4>Confirm Occupancy Counts</h4>
+                        <p class="form-hint">Please verify the counts match your field observations</p>
+
+                        <div class="form-group">
+                            <label class="form-label">Confirmed Occupied Units</label>
+                            <input type="number" id="confirmedOccupied" class="form-input" min="0" max="999"
+                                   value="{{ report.reported_occupied }}" placeholder="Number of occupied units">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Confirmed Vacant Units</label>
+                            <input type="number" id="confirmedVacant" class="form-input" min="0" max="999"
+                                   value="{{ report.reported_vacant }}" placeholder="Number of vacant units">
+                        </div>
+
+                        <p class="form-note">Total: <strong id="totalUnitsConfirm">{{ detail_count }}</strong> units</p>
+                    </div>
+                </div>
+
+                <!-- Discrepancy Form (hidden by default) -->
+                <div id="flagForm" class="decision-form" style="display: none;">
+                    <div class="form-section-inner">
+                        <h4>Describe Discrepancy</h4>
+                        <p class="form-hint">Explain the differences between reported and actual occupancy status</p>
+
+                        <div class="form-group">
+                            <label class="form-label">Discrepancy Notes</label>
+                            <textarea id="discrepancyNotes" class="form-textarea" rows="4"
+                                      placeholder="Describe what was different from the caretaker's report...&#10;Example: Unit A5 reported vacant but was actually occupied. Unit B3 had concerning living conditions."></textarea>
+                            <span class="form-help" id="discrepancyCharCount">0/500 characters</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="form-section">
+        <div class="button-group">
+            <button id="submitBtn" class="btn btn-primary btn-large" onclick="submitReview()">
+                <span>📤 Submit Review</span>
+            </button>
+            <a href="{% url 'units:occupancy_review_list' %}" class="btn btn-secondary btn-large">
+                <span>← Back to List</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="modal-overlay" id="confirmModal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">⚠️ Confirm Review Submission</h2>
+        </div>
+        <div class="modal-body">
+            <p>Submit review for <strong>{{ report.site.name }}</strong>?</p>
+            <p style="margin: 1rem 0 0; font-size: 0.9rem; color: var(--gray-600);">
+                Week of <strong>{{ week_display }}</strong>
+            </p>
+
+            <div id="confirmationSummary" style="margin-top: 1.5rem; padding: 1rem; background: var(--gray-50); border-radius: 8px;">
+                <!-- Filled by JavaScript -->
+            </div>
+
+            <p style="margin-top: 1.5rem; font-size: 0.875rem; color: var(--gray-600);">
+                This report will be locked and cannot be edited again.
+            </p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeConfirmModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="confirmSubmit()">✓ Confirm & Submit</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Notification -->
+<div id="toast" class="toast"></div>
+
+<!-- ===================================================================
+     STYLES - THA DESIGN SYSTEM COMPLIANCE
+     =================================================================== -->
+<style>
+/* Page Header */
+.page-header {
+    padding: 2rem 1.5rem;
+    color: white;
+    margin-bottom: 2rem;
+    border-radius: 0;
+}
+
+.page-header-content {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.header-icon {
+    font-size: 3rem;
+    line-height: 1;
+}
+
+.header-text h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.header-text p {
+    font-size: 1rem;
+    opacity: 0.95;
+    margin: 0.5rem 0 0;
+}
+
+/* Container */
+.container-main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem 2rem;
+}
+
+/* Sections */
+.form-section {
+    margin-bottom: 1.5rem;
+}
+
+/* Report Info Grid */
+.report-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.info-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.info-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--gray-600);
+    letter-spacing: 0.5px;
+}
+
+.info-value {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--gray-900);
+}
+
+.notes-section {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--gray-200);
+}
+
+.notes-section h4 {
+    margin: 0 0 0.5rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--gray-900);
+}
+
+.notes-content {
+    padding: 1rem;
+    background: var(--gray-50);
+    border-radius: 8px;
+    color: var(--gray-700);
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+/* Summary Grid */
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+}
+
+.summary-box {
+    text-align: center;
+    padding: 1.5rem;
+    background: var(--gray-50);
+    border-radius: 8px;
+    border: 1px solid var(--gray-200);
+}
+
+.summary-number {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+}
+
+.summary-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--gray-700);
+}
+
+.summary-total {
+    font-size: 0.75rem;
+    color: var(--gray-600);
+    margin-top: 0.25rem;
+}
+
+/* Table */
+.table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.review-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.review-table th {
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: var(--gray-700);
+    background: var(--gray-50);
+    border-bottom: 2px solid var(--gray-200);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.review-table td {
+    padding: 0.875rem 1rem;
+    border-bottom: 1px solid var(--gray-200);
+    font-size: 0.875rem;
+}
+
+.review-table tr:hover {
+    background: var(--gray-50);
+}
+
+.row-status-occupied {
+    background: rgba(34, 197, 94, 0.05);
+    border-left: 3px solid var(--green-500);
+}
+
+.row-status-unoccupied {
+    background: rgba(245, 158, 11, 0.05);
+    border-left: 3px solid var(--amber-500);
+}
+
+.row-status-concern {
+    background: rgba(239, 68, 68, 0.05);
+    border-left: 3px solid var(--red-500);
+}
+
+.badge-status {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.375rem 0.75rem;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.status-occupied {
+    background: var(--green-100);
+    color: var(--green-600);
+}
+
+.status-vacant {
+    background: var(--amber-100);
+    color: var(--amber-600);
+}
+
+.status-concern {
+    background: var(--red-100);
+    color: var(--red-600);
+}
+
+/* Decision Section */
+.decision-section {
+    display: grid;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.decision-option {
+    position: relative;
+    padding: 1.25rem;
+    border: 2px solid var(--gray-200);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+}
+
+.decision-option input[type="radio"] {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    cursor: pointer;
+}
+
+.decision-option label {
+    display: block;
+    margin-left: 2rem;
+    cursor: pointer;
+}
+
+.decision-option input[type="radio"]:checked + label {
+    font-weight: 600;
+}
+
+.decision-option input[type="radio"]:checked ~ .decision-option {
+    border-color: var(--primary-600);
+    background: var(--primary-50);
+}
+
+.decision-option:has(input[type="radio"]:checked) {
+    border-color: var(--primary-600);
+    background: var(--primary-50);
+}
+
+.option-title {
+    display: block;
+    font-weight: 600;
+    color: var(--gray-900);
+    margin-bottom: 0.25rem;
+}
+
+.option-description {
+    display: block;
+    font-size: 0.875rem;
+    color: var(--gray-600);
+}
+
+/* Decision Forms */
+.decision-form {
+    margin-top: 1.5rem;
+    padding: 1.5rem;
+    background: var(--gray-50);
+    border-radius: 8px;
+    border: 1px solid var(--gray-200);
+}
+
+.form-section-inner h4 {
+    margin: 0 0 0.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--gray-900);
+}
+
+.form-hint {
+    font-size: 0.875rem;
+    color: var(--gray-600);
+    margin: 0 0 1rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group:last-child {
+    margin-bottom: 0;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: var(--gray-700);
+    font-size: 0.875rem;
+}
+
+.form-input,
+.form-textarea {
+    width: 100%;
+    padding: 0.625rem 0.875rem;
+    border: 1px solid var(--gray-300);
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.875rem;
+    transition: all var(--transition-normal);
+}
+
+.form-input:focus,
+.form-textarea:focus {
+    outline: none;
+    border-color: var(--primary-600);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.form-textarea {
+    resize: vertical;
+}
+
+.form-help {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--gray-600);
+    margin-top: 0.25rem;
+}
+
+.form-note {
+    font-size: 0.875rem;
+    color: var(--gray-600);
+    margin-top: 0.75rem;
+}
+
+/* Button Group */
+.button-group {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.btn-large {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+}
+
+/* Modal */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(15, 36, 71, 0.5);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    max-width: 500px;
+    width: 90%;
+}
+
+.modal-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--gray-100);
+}
+
+.modal-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--gray-900);
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.modal-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--gray-100);
+    background: var(--gray-50);
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+}
+
+/* Toast */
+.toast {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    background: white;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    display: none;
+    z-index: 2000;
+}
+
+.toast.success {
+    background: var(--green-50);
+    color: var(--green-600);
+    border-left: 4px solid var(--green-500);
+}
+
+.toast.error {
+    background: var(--red-50);
+    color: var(--red-600);
+    border-left: 4px solid var(--red-500);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .page-header-content {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .header-text h1 {
+        font-size: 1.5rem;
+    }
+
+    .report-info-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .summary-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .button-group {
+        flex-direction: column;
+    }
+
+    .modal-content {
+        width: 95%;
+    }
+
+    .toast {
+        right: 1rem;
+        left: 1rem;
+        bottom: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .decision-option label {
+        margin-left: 0;
+    }
+
+    .decision-option {
+        padding-left: 3rem;
+    }
+}
+</style>
+
+<!-- ===================================================================
+     JAVASCRIPT - Form Interactivity
+     =================================================================== -->
+<script>
+const CSRFToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+// Show appropriate form based on decision
+function showDecisionForm() {
+    const decision = document.querySelector('input[name="decision"]:checked').value;
+    const confirmForm = document.getElementById('confirmForm');
+    const flagForm = document.getElementById('flagForm');
+
+    if (decision === 'confirm') {
+        confirmForm.style.display = 'block';
+        flagForm.style.display = 'none';
+    } else {
+        confirmForm.style.display = 'none';
+        flagForm.style.display = 'block';
+        setupDiscrepancyCounter();
+    }
+}
+
+// Character counter for discrepancy notes
+function setupDiscrepancyCounter() {
+    const textarea = document.getElementById('discrepancyNotes');
+    const counter = document.getElementById('discrepancyCharCount');
+
+    function updateCounter() {
+        const count = textarea.value.length;
+        counter.textContent = count + '/500 characters';
+    }
+
+    textarea.addEventListener('input', updateCounter);
+    textarea.addEventListener('keydown', function(e) {
+        if (this.value.length >= 500 && e.key !== 'Backspace' && e.key !== 'Delete') {
+            e.preventDefault();
+        }
+    });
+}
+
+// Update total units calculation
+document.getElementById('confirmedOccupied').addEventListener('input', updateTotalUnits);
+document.getElementById('confirmedVacant').addEventListener('input', updateTotalUnits);
+
+function updateTotalUnits() {
+    const occupied = parseInt(document.getElementById('confirmedOccupied').value) || 0;
+    const vacant = parseInt(document.getElementById('confirmedVacant').value) || 0;
+    document.getElementById('totalUnitsConfirm').textContent = occupied + vacant;
+}
+
+// Submit review
+function submitReview() {
+    const decision = document.querySelector('input[name="decision"]:checked').value;
+    let isValid = true;
+    let summary = '';
+
+    if (decision === 'confirm') {
+        const occupied = document.getElementById('confirmedOccupied').value;
+        const vacant = document.getElementById('confirmedVacant').value;
+
+        if (!occupied || !vacant) {
+            showToast('⚠️ Please enter confirmed occupancy counts', 'error');
+            return;
+        }
+
+        summary = `
+            <p><strong>Decision:</strong> ✓ Approve Report</p>
+            <p style="margin-top: 0.75rem;"><strong>Confirmed Counts:</strong></p>
+            <ul style="margin: 0.5rem 0 0; padding-left: 1.5rem;">
+                <li>Occupied: ${occupied} units</li>
+                <li>Vacant: ${vacant} units</li>
+            </ul>
+        `;
+    } else {
+        const notes = document.getElementById('discrepancyNotes').value;
+
+        if (!notes) {
+            showToast('⚠️ Please provide discrepancy notes', 'error');
+            return;
+        }
+
+        summary = `
+            <p><strong>Decision:</strong> ⚠️ Flag Discrepancy</p>
+            <p style="margin-top: 0.75rem;"><strong>Notes:</strong></p>
+            <div style="margin-top: 0.5rem; padding: 0.75rem; background: white; border-radius: 4px; border-left: 3px solid var(--red-500); font-size: 0.9rem;">
+                ${notes.substring(0, 200)}${notes.length > 200 ? '...' : ''}
+            </div>
+        `;
+    }
+
+    document.getElementById('confirmationSummary').innerHTML = summary;
+    document.getElementById('confirmModal').style.display = 'flex';
+}
+
+// Confirm submission
+function confirmSubmit() {
+    const decision = document.querySelector('input[name="decision"]:checked').value;
+
+    let payload = {
+        report_id: '{{ report.id }}',
+        action: decision
+    };
+
+    if (decision === 'confirm') {
+        payload.confirmed_occupied = parseInt(document.getElementById('confirmedOccupied').value);
+        payload.confirmed_vacant = parseInt(document.getElementById('confirmedVacant').value);
+    } else {
+        payload.discrepancy_notes = document.getElementById('discrepancyNotes').value;
+    }
+
+    fetch('{% url "units:submit_occupancy_review" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': CSRFToken
+        },
+        body: JSON.stringify(payload)
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            showToast('✓ ' + data.message, 'success');
+            closeConfirmModal();
+            setTimeout(() => {
+                window.location.href = '{% url "units:occupancy_review_list" %}';
+            }, 1500);
+        } else {
+            showToast('✗ ' + data.error, 'error');
+            closeConfirmModal();
+        }
+    })
+    .catch(err => {
+        showToast('✗ Error: ' + err.message, 'error');
+        closeConfirmModal();
+    });
+}
+
+// Modal controls
+function closeConfirmModal() {
+    document.getElementById('confirmModal').style.display = 'none';
+}
+
+document.getElementById('confirmModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeConfirmModal();
+    }
+});
+
+// Toast notification
+function showToast(message, type = 'info') {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.className = 'toast ' + type;
+    toast.style.display = 'block';
+
+    setTimeout(() => {
+        toast.style.display = 'none';
+    }, 3000);
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    showDecisionForm();
+});
+</script>
+
+{% endblock %}

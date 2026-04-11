@@ -1,0 +1,451 @@
+{% extends 'staff_base.html' %}
+{% load static %}
+
+{% block title %}Occupancy Review - Field Team - Talisay Housing Authority{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+
+<!-- Page Header -->
+<div class="page-header" style="background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-700) 100%);">
+    <div class="page-header-content">
+        <div class="header-icon">✅</div>
+        <div class="header-text">
+            <h1>Occupancy Review Dashboard</h1>
+            <p>Review and confirm weekly caretaker occupancy reports</p>
+        </div>
+    </div>
+</div>
+
+<!-- Main Container -->
+<div class="container-main">
+    <!-- Statistics Section -->
+    <div class="stats-section">
+        <div class="card">
+            <div class="card-body">
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-number" style="color: var(--amber-600);">{{ pending_count }}</div>
+                        <div class="stat-label">⏳ Pending Review</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" style="color: var(--green-600);">{{ confirmed_count }}</div>
+                        <div class="stat-label">✓ Confirmed</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Reports Section -->
+    <div class="reports-section">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">📋 Pending Reports (Awaiting Review)</h3>
+            </div>
+            <div class="card-body">
+                {% if pending_reports %}
+                <div class="reports-list">
+                    {% for report in pending_reports %}
+                    <div class="report-card report-status-pending">
+                        <div class="report-header">
+                            <div class="report-info">
+                                <h4 class="report-title">{{ report.site.name }}</h4>
+                                <p class="report-dates">📅 {{ report.report_week_start|date:"M d" }} - {{ report.report_week_end|date:"M d, Y" }}</p>
+                            </div>
+                            <span class="badge badge-warning">Pending</span>
+                        </div>
+
+                        <div class="report-details">
+                            <div class="detail-row">
+                                <span class="detail-label">Submitted by:</span>
+                                <span class="detail-value">{{ report.submitted_by.get_full_name }}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Submitted at:</span>
+                                <span class="detail-value">{{ report.submitted_at|date:"M d, Y \a\t H:i" }}</span>
+                            </div>
+                        </div>
+
+                        <div class="report-summary">
+                            <div class="summary-item">
+                                <span class="summary-count" style="color: var(--green-600);">🟢 {{ report.reported_occupied }}</span>
+                                <span class="summary-label">Occupied</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="summary-count" style="color: var(--amber-600);">🟡 {{ report.reported_vacant }}</span>
+                                <span class="summary-label">Vacant</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="summary-count" style="color: var(--red-600);">🔴 {{ report.reported_concerns }}</span>
+                                <span class="summary-label">Concerns</span>
+                            </div>
+                        </div>
+
+                        <div class="report-footer">
+                            <a href="{% url 'units:occupancy_review_detail' report.id %}" class="btn btn-primary">
+                                <span>Review Report →</span>
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">✅</div>
+                    <p class="empty-message">No pending reports to review</p>
+                    <p class="empty-hint">All submitted occupancy reports have been reviewed</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Reviewed Reports Section -->
+    {% if confirmed_reports %}
+    <div class="reports-section">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">📊 Recently Reviewed Reports</h3>
+            </div>
+            <div class="card-body">
+                <div class="reports-list confirmed-list">
+                    {% for report in confirmed_reports %}
+                    <div class="report-card report-status-reviewed">
+                        <div class="report-header">
+                            <div class="report-info">
+                                <h4 class="report-title">{{ report.site.name }}</h4>
+                                <p class="report-dates">📅 {{ report.report_week_start|date:"M d" }} - {{ report.report_week_end|date:"M d, Y" }}</p>
+                            </div>
+                            {% if report.status == 'confirmed' %}
+                            <span class="badge badge-success">✓ Confirmed</span>
+                            {% else %}
+                            <span class="badge badge-danger">⚠️ Discrepancy</span>
+                            {% endif %}
+                        </div>
+
+                        <div class="report-details">
+                            <div class="detail-row">
+                                <span class="detail-label">Reviewed by:</span>
+                                <span class="detail-value">{{ report.reviewed_by.get_full_name }}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Reviewed at:</span>
+                                <span class="detail-value">{{ report.reviewed_at|date:"M d, Y \a\t H:i" }}</span>
+                            </div>
+                        </div>
+
+                        {% if report.confirmed_occupied is not None %}
+                        <div class="report-summary">
+                            <div class="summary-item">
+                                <span class="summary-count" style="color: var(--green-600);">🟢 {{ report.confirmed_occupied }}</span>
+                                <span class="summary-label">Confirmed Occupied</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="summary-count" style="color: var(--amber-600);">🟡 {{ report.confirmed_vacant }}</span>
+                                <span class="summary-label">Confirmed Vacant</span>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- ===================================================================
+     STYLES - THA DESIGN SYSTEM COMPLIANCE
+     =================================================================== -->
+<style>
+/* Page Header */
+.page-header {
+    padding: 2rem 1.5rem;
+    color: white;
+    margin-bottom: 2rem;
+    border-radius: 0;
+}
+
+.page-header-content {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.header-icon {
+    font-size: 3rem;
+    line-height: 1;
+}
+
+.header-text h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.header-text p {
+    font-size: 1rem;
+    opacity: 0.95;
+    margin: 0.5rem 0 0;
+}
+
+/* Container */
+.container-main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem 2rem;
+}
+
+/* Statistics Section */
+.stats-section {
+    margin-bottom: 2rem;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1.5rem;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 1.5rem;
+    background: var(--gray-50);
+    border-radius: 8px;
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: var(--gray-600);
+    font-weight: 500;
+}
+
+/* Reports Section */
+.reports-section {
+    margin-bottom: 2rem;
+}
+
+.reports-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1.5rem;
+}
+
+.report-card {
+    background: white;
+    border-radius: 12px;
+    border-left: 4px solid;
+    overflow: hidden;
+    transition: all var(--transition-normal);
+}
+
+.report-status-pending {
+    border-left-color: var(--amber-500);
+    background: rgba(245, 158, 11, 0.02);
+}
+
+.report-status-pending:hover {
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+    transform: translateY(-2px);
+}
+
+.report-status-reviewed {
+    border-left-color: var(--gray-400);
+    opacity: 0.7;
+}
+
+.report-header {
+    padding: 1.25rem;
+    border-bottom: 1px solid var(--gray-100);
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.report-info {
+    flex: 1;
+}
+
+.report-title {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--gray-900);
+}
+
+.report-dates {
+    margin: 0.5rem 0 0;
+    font-size: 0.875rem;
+    color: var(--gray-600);
+}
+
+.report-details {
+    padding: 1rem 1.25rem;
+    background: var(--gray-50);
+    font-size: 0.875rem;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+.detail-row:last-child {
+    margin-bottom: 0;
+}
+
+.detail-label {
+    font-weight: 500;
+    color: var(--gray-700);
+}
+
+.detail-value {
+    color: var(--gray-900);
+}
+
+.report-summary {
+    padding: 1rem 1.25rem;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    text-align: center;
+    border-bottom: 1px solid var(--gray-100);
+}
+
+.summary-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.summary-count {
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.summary-label {
+    font-size: 0.75rem;
+    color: var(--gray-600);
+}
+
+.report-footer {
+    padding: 1rem 1.25rem;
+    display: flex;
+    gap: 0.75rem;
+}
+
+.report-footer .btn {
+    flex: 1;
+    text-align: center;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+}
+
+.empty-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.empty-message {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--gray-900);
+    margin: 0;
+}
+
+.empty-hint {
+    font-size: 0.875rem;
+    color: var(--gray-600);
+    margin: 0.5rem 0 0;
+}
+
+/* Confirmed List (grayed out) */
+.confirmed-list .report-card {
+    opacity: 0.7;
+}
+
+/* Badges */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.375rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.badge-warning {
+    background: var(--amber-100);
+    color: var(--amber-600);
+}
+
+.badge-success {
+    background: var(--green-100);
+    color: var(--green-600);
+}
+
+.badge-danger {
+    background: var(--red-100);
+    color: var(--red-600);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .page-header-content {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+
+    .header-text h1 {
+        font-size: 1.5rem;
+    }
+
+    .reports-list {
+        grid-template-columns: 1fr;
+    }
+
+    .report-summary {
+        grid-template-columns: 1fr 1fr 1fr;
+    }
+
+    .report-header {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 480px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .report-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .report-details {
+        font-size: 0.8rem;
+    }
+}
+</style>
+
+{% endblock %}
