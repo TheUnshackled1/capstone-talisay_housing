@@ -1,0 +1,908 @@
+{% extends 'applications/base.html' %}
+{% load static %}
+
+{% block title %}Supporting Services Coordinator - Notarial & Engineering Tracking{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-title">
+        <h1>Supporting Services Coordinator</h1>
+        <p class="subtitle">Track notarial services and engineering assessment completion</p>
+    </div>
+</div>
+
+<div class="container-main">
+    <!-- Statistics Section -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">📋</div>
+            <div class="stat-info">
+                <div class="stat-label">Total Applications</div>
+                <div class="stat-value">{{ total_applications }}</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">⏳</div>
+            <div class="stat-info">
+                <div class="stat-label">Pending Services</div>
+                <div class="stat-value">{{ both_pending|length }}</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">✓</div>
+            <div class="stat-info">
+                <div class="stat-label">Ready to Route</div>
+                <div class="stat-value">{{ ready_to_route|length }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs-container">
+        <button class="tab-btn active" data-tab="all-apps">
+            All Applications ({{ applications|length }})
+        </button>
+        <button class="tab-btn" data-tab="pending-notarial">
+            Pending Notarial ({{ pending_notarial|length }})
+        </button>
+        <button class="tab-btn" data-tab="pending-engineering">
+            Pending Engineering ({{ pending_engineering|length }})
+        </button>
+        <button class="tab-btn" data-tab="ready-to-route">
+            Ready to Route ({{ ready_to_route|length }})
+        </button>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="tab-content">
+
+        <!-- ALL APPLICATIONS TAB -->
+        <div id="all-apps" class="tab-pane active">
+            {% if applications %}
+            <div class="applications-grid">
+                {% for app in applications %}
+                <div class="app-card" data-app-id="{{ app.id }}">
+                    <!-- Header with Status -->
+                    <div class="app-card-header">
+                        <div class="app-info">
+                            <h3 class="app-number">{{ app.application_number }}</h3>
+                            <p class="app-applicant">{{ app.applicant.first_name }} {{ app.applicant.last_name }}</p>
+                            <p class="app-reference">Ref: {{ app.applicant.reference_number }}</p>
+                        </div>
+                        <div class="app-status-badge">
+                            {% if app.notarial_completed and app.engineering_completed %}
+                            <span class="badge badge-success">✓ Ready to Route</span>
+                            {% elif app.notarial_completed or app.engineering_completed %}
+                            <span class="badge badge-warning">⏳ In Progress</span>
+                            {% else %}
+                            <span class="badge badge-pending">⋯ Pending</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Service Status Grid -->
+                    <div class="services-grid">
+                        <!-- Notarial Services Box -->
+                        <div class="service-box {% if app.notarial_completed %}complete{% endif %}">
+                            <div class="service-header">
+                                <span class="service-name">Notarial Services</span>
+                                {% if app.notarial_completed %}
+                                <span class="service-status-badge complete">✓ Complete</span>
+                                {% else %}
+                                <span class="service-status-badge pending">⋯ Pending</span>
+                                {% endif %}
+                            </div>
+
+                            <div class="service-timestamp">
+                                {% if app.notarial_completed_at %}
+                                Completed: {{ app.notarial_completed_at|date:"M d, Y H:i" }}
+                                {% else %}
+                                Not yet completed
+                                {% endif %}
+                            </div>
+
+                            <div class="service-actions">
+                                {% if app.notarial_completed %}
+                                <button class="btn btn-sm btn-outline" onclick="toggleService('{{ app.id }}', 'notarial', 'reset')">
+                                    ↺ Reset
+                                </button>
+                                {% else %}
+                                <button class="btn btn-sm btn-primary" onclick="toggleService('{{ app.id }}', 'notarial', 'complete')">
+                                    ✓ Mark Complete
+                                </button>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Engineering Assessment Box -->
+                        <div class="service-box {% if app.engineering_completed %}complete{% endif %}">
+                            <div class="service-header">
+                                <span class="service-name">Engineering Assessment</span>
+                                {% if app.engineering_completed %}
+                                <span class="service-status-badge complete">✓ Complete</span>
+                                {% else %}
+                                <span class="service-status-badge pending">⋯ Pending</span>
+                                {% endif %}
+                            </div>
+
+                            <div class="service-timestamp">
+                                {% if app.engineering_completed_at %}
+                                Completed: {{ app.engineering_completed_at|date:"M d, Y H:i" }}
+                                {% else %}
+                                Not yet completed
+                                {% endif %}
+                            </div>
+
+                            <div class="service-actions">
+                                {% if app.engineering_completed %}
+                                <button class="btn btn-sm btn-outline" onclick="toggleService('{{ app.id }}', 'engineering', 'reset')">
+                                    ↺ Reset
+                                </button>
+                                {% else %}
+                                <button class="btn btn-sm btn-primary" onclick="toggleService('{{ app.id }}', 'engineering', 'complete')">
+                                    ✓ Mark Complete
+                                </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Footer Actions -->
+                    <div class="app-card-footer">
+                        {% if app.notarial_completed and app.engineering_completed %}
+                        <button class="btn btn-success btn-block" onclick="sendToRouting('{{ app.id }}', '{{ app.application_number }}')">
+                            → Forward to Signatory Routing
+                        </button>
+                        {% else %}
+                        <button class="btn btn-disabled btn-block" disabled title="Mark both services as complete to proceed">
+                            → Forward to Signatory Routing (Complete services first)
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <p>✓ No applications pending. All completed applications have their services tracked.</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- PENDING NOTARIAL TAB -->
+        <div id="pending-notarial" class="tab-pane">
+            {% if pending_notarial %}
+            <div class="applications-grid">
+                {% for app in pending_notarial %}
+                <div class="app-card" data-app-id="{{ app.id }}">
+                    <div class="app-card-header">
+                        <div class="app-info">
+                            <h3 class="app-number">{{ app.application_number }}</h3>
+                            <p class="app-applicant">{{ app.applicant.first_name }} {{ app.applicant.last_name }}</p>
+                        </div>
+                        <span class="badge badge-pending">⏳ Notarial Pending</span>
+                    </div>
+
+                    <div class="service-box">
+                        <div class="service-header">
+                            <span class="service-name">Notarial Services</span>
+                            <span class="service-status-badge pending">⋯ Pending</span>
+                        </div>
+                        <button class="btn btn-primary" onclick="toggleService('{{ app.id }}', 'notarial', 'complete')">
+                            ✓ Mark Complete
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <p>✓ All notarial services have been marked complete.</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- PENDING ENGINEERING TAB -->
+        <div id="pending-engineering" class="tab-pane">
+            {% if pending_engineering %}
+            <div class="applications-grid">
+                {% for app in pending_engineering %}
+                <div class="app-card" data-app-id="{{ app.id }}">
+                    <div class="app-card-header">
+                        <div class="app-info">
+                            <h3 class="app-number">{{ app.application_number }}</h3>
+                            <p class="app-applicant">{{ app.applicant.first_name }} {{ app.applicant.last_name }}</p>
+                        </div>
+                        <span class="badge badge-pending">⏳ Engineering Pending</span>
+                    </div>
+
+                    <div class="service-box">
+                        <div class="service-header">
+                            <span class="service-name">Engineering Assessment</span>
+                            <span class="service-status-badge pending">⋯ Pending</span>
+                        </div>
+                        <button class="btn btn-primary" onclick="toggleService('{{ app.id }}', 'engineering', 'complete')">
+                            ✓ Mark Complete
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <p>✓ All engineering assessments have been marked complete.</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- READY TO ROUTE TAB -->
+        <div id="ready-to-route" class="tab-pane">
+            {% if ready_to_route %}
+            <div class="applications-grid">
+                {% for app in ready_to_route %}
+                <div class="app-card app-card-complete" data-app-id="{{ app.id }}">
+                    <div class="app-card-header">
+                        <div class="app-info">
+                            <h3 class="app-number">{{ app.application_number }}</h3>
+                            <p class="app-applicant">{{ app.applicant.first_name }} {{ app.applicant.last_name }}</p>
+                        </div>
+                        <span class="badge badge-success">✓ Ready to Route</span>
+                    </div>
+
+                    <div class="services-complete">
+                        <div class="complete-item">✓ Notarial Services</div>
+                        <div class="complete-item">✓ Engineering Assessment</div>
+                    </div>
+
+                    <div class="app-card-footer">
+                        <button class="btn btn-success btn-block" onclick="sendToRouting('{{ app.id }}', '{{ app.application_number }}')">
+                            → Forward to Signatory Routing
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <p>No applications ready to route yet. Complete all services first.</p>
+            </div>
+            {% endif %}
+        </div>
+
+    </div>
+</div>
+
+<!-- Toast Notification -->
+<div id="toast" class="toast"></div>
+
+<!-- Confirm Modal -->
+<div id="confirmModal" class="modal-overlay">
+    <div class="modal-content">
+        <h3 id="confirmTitle">Confirm Action</h3>
+        <p id="confirmMessage">Are you sure?</p>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closeConfirm()">Cancel</button>
+            <button class="btn btn-primary" id="confirmBtn" onclick="executeConfirm()">Confirm</button>
+        </div>
+    </div>
+</div>
+
+<style>
+:root {
+    --primary: #1f2937;
+    --accent: #3b82f6;
+    --success: #10b981;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --pending: #9ca3af;
+    --bg-light: #f9fafb;
+    --border: #e5e7eb;
+}
+
+.page-header {
+    background: linear-gradient(135deg, var(--primary) 0%, #111827 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+}
+
+.page-title h1 {
+    margin: 0;
+    font-size: 2em;
+    font-weight: 700;
+}
+
+.page-title .subtitle {
+    margin: 0.5rem 0 0 0;
+    opacity: 0.9;
+    font-size: 1rem;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.stat-icon {
+    font-size: 2.5rem;
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-bottom: 0.25rem;
+}
+
+.stat-value {
+    font-size: 1.875rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+/* TABS */
+.tabs-container {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+}
+
+.tab-btn {
+    padding: 1rem;
+    border: none;
+    background: none;
+    color: #6b7280;
+    cursor: pointer;
+    font-weight: 500;
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s;
+    font-size: 0.95rem;
+}
+
+.tab-btn:hover {
+    color: var(--primary);
+    background: var(--bg-light);
+}
+
+.tab-btn.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+}
+
+.tab-content {
+    background: white;
+    border-radius: 8px;
+}
+
+.tab-pane {
+    display: none;
+}
+
+.tab-pane.active {
+    display: block;
+}
+
+/* APPLICATION CARDS */
+.applications-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    gap: 1.5rem;
+    padding: 1.5rem;
+}
+
+.app-card {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    background: white;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    transition: all 0.3s;
+}
+
+.app-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.app-card.app-card-complete {
+    border-color: var(--success);
+    background: linear-gradient(135deg, rgba(16,185,129,0.05) 0%, rgba(16,185,129,0.02) 100%);
+}
+
+.app-card-header {
+    padding: 1.25rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.app-info h3 {
+    margin: 0 0 0.25rem 0;
+    font-size: 1.125rem;
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.app-info p {
+    margin: 0.25rem 0;
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+.app-status-badge {
+    flex-shrink: 0;
+}
+
+.badge {
+    display: inline-block;
+    padding: 0.375rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.badge-success {
+    background: rgba(16,185,129,0.1);
+    color: var(--success);
+}
+
+.badge-warning {
+    background: rgba(245,158,11,0.1);
+    color: var(--warning);
+}
+
+.badge-pending {
+    background: rgba(156,163,175,0.1);
+    color: var(--pending);
+}
+
+/* SERVICES GRID */
+.services-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    padding: 1.25rem;
+    border-bottom: 1px solid var(--border);
+}
+
+@media (max-width: 600px) {
+    .services-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.service-box {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1rem;
+    transition: all 0.3s;
+}
+
+.service-box.complete {
+    border-color: var(--success);
+    background: rgba(16,185,129,0.05);
+}
+
+.service-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.service-name {
+    font-weight: 600;
+    color: var(--primary);
+    font-size: 0.95rem;
+}
+
+.service-status-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.service-status-badge.complete {
+    background: rgba(16,185,129,0.1);
+    color: var(--success);
+}
+
+.service-status-badge.pending {
+    background: rgba(156,163,175,0.1);
+    color: var(--pending);
+}
+
+.service-timestamp {
+    font-size: 0.8rem;
+    color: #6b7280;
+    margin-bottom: 0.75rem;
+}
+
+.service-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* BUTTONS */
+.btn {
+    padding: 0.5rem 1rem;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 0.875rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.btn:disabled,
+.btn-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: var(--pending);
+    color: white;
+    border-color: var(--pending);
+}
+
+.btn-primary {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: #2563eb;
+    border-color: #2563eb;
+}
+
+.btn-success {
+    background: var(--success);
+    color: white;
+    border-color: var(--success);
+}
+
+.btn-success:hover:not(:disabled) {
+    background: #059669;
+}
+
+.btn-outline {
+    background: white;
+    color: var(--primary);
+    border-color: var(--border);
+}
+
+.btn-outline:hover:not(:disabled) {
+    background: var(--bg-light);
+    border-color: var(--primary);
+}
+
+.btn-sm {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.8rem;
+}
+
+.btn-block {
+    width: 100%;
+}
+
+/* CARD FOOTER */
+.app-card-footer {
+    padding: 1rem 1.25rem;
+    background: var(--bg-light);
+}
+
+.services-complete {
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.complete-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--success);
+    font-weight: 500;
+}
+
+/* EMPTY STATE */
+.empty-state {
+    padding: 3rem 1.5rem;
+    text-align: center;
+    color: #6b7280;
+}
+
+.empty-state p {
+    margin: 0;
+    font-size: 1rem;
+}
+
+/* TOAST NOTIFICATION */
+.toast {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    padding: 1rem 1.5rem;
+    background: var(--primary);
+    color: white;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    opacity: 0;
+    transform: translateY(100%);
+    transition: all 0.3s;
+    max-width: 400px;
+    z-index: 1000;
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.toast.success {
+    background: var(--success);
+}
+
+.toast.error {
+    background: var(--danger);
+}
+
+/* MODAL */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-overlay.show {
+    display: flex;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 8px;
+    padding: 2rem;
+    max-width: 400px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+}
+
+.modal-content h3 {
+    margin: 0 0 1rem 0;
+    font-size: 1.25rem;
+    color: var(--primary);
+}
+
+.modal-content p {
+    margin: 0 0 1.5rem 0;
+    color: #6b7280;
+}
+
+.modal-footer {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+}
+
+@media (max-width: 768px) {
+    .applications-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .services-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .tabs-container {
+        gap: 0.25rem;
+    }
+
+    .tab-btn {
+        padding: 0.75rem;
+        font-size: 0.85rem;
+    }
+}
+</style>
+
+<script>
+const CSRFToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
+                  document.querySelector('meta[name="csrf-token"]')?.content;
+
+let confirmAction = null;
+
+// Tab switching
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const tabId = btn.dataset.tab;
+
+        // Deactivate all tabs
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+
+        // Activate selected tab
+        btn.classList.add('active');
+        document.getElementById(tabId).classList.add('active');
+    });
+});
+
+// Toggle Service Completion
+function toggleService(applicationId, serviceType, action) {
+    const payload = new FormData();
+    payload.append('application_id', applicationId);
+    payload.append('service_type', serviceType);
+    payload.append('action', action);
+    payload.append('csrfmiddlewaretoken', CSRFToken);
+
+    fetch(`{% url 'applications:process_service' %}`, {
+        method: 'POST',
+        body: payload,
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            showToast(data.message, 'success');
+            updateCardDisplay(applicationId, data);
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast(data.error || 'Error updating service', 'error');
+        }
+    })
+    .catch(err => showToast('Network error: ' + err.message, 'error'));
+}
+
+// Send to Signatory Routing
+function sendToRouting(applicationId, appNumber) {
+    confirmAction = () => {
+        const payload = new FormData();
+        payload.append('application_id', applicationId);
+        payload.append('csrfmiddlewaretoken', CSRFToken);
+
+        fetch(`{% url 'applications:send_to_routing' %}`, {
+            method: 'POST',
+            body: payload,
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message, 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showToast(data.error || 'Error forwarding application', 'error');
+            }
+        })
+        .catch(err => showToast('Network error: ' + err.message, 'error'));
+
+        closeConfirm();
+    };
+
+    showConfirm(
+        'Forward to Signatory Routing?',
+        `Application ${appNumber} will be forwarded to OIC and Head for signature.`,
+        'Forward'
+    );
+}
+
+// Toast Notification
+function showToast(message, type = 'info') {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.className = `toast show ${type}`;
+    setTimeout(() => toast.classList.remove('show'), 4000);
+}
+
+// Confirmation Modal
+function showConfirm(title, message, confirmText = 'Confirm') {
+    const modal = document.getElementById('confirmModal');
+    document.getElementById('confirmTitle').textContent = title;
+    document.getElementById('confirmMessage').textContent = message;
+    document.getElementById('confirmBtn').textContent = confirmText;
+    modal.classList.add('show');
+}
+
+function closeConfirm() {
+    document.getElementById('confirmModal').classList.remove('show');
+    confirmAction = null;
+}
+
+function executeConfirm() {
+    if (confirmAction) confirmAction();
+}
+
+// Update Card Display
+function updateCardDisplay(applicationId, data) {
+    const card = document.querySelector(`[data-app-id="${applicationId}"]`);
+    if (!card) return;
+
+    const notarialBox = card.querySelectorAll('.service-box')[0];
+    const engineeringBox = card.querySelectorAll('.service-box')[1];
+
+    // Update Notarial
+    if (data.notarial_completed) {
+        notarialBox.classList.add('complete');
+        notarialBox.querySelector('.service-status-badge').textContent = '✓ Complete';
+        notarialBox.querySelector('button').textContent = '↺ Reset';
+        notarialBox.querySelector('button').onclick = function() {
+            toggleService(applicationId, 'notarial', 'reset');
+        };
+    } else {
+        notarialBox.classList.remove('complete');
+        notarialBox.querySelector('.service-status-badge').textContent = '⋯ Pending';
+        notarialBox.querySelector('button').textContent = '✓ Mark Complete';
+        notarialBox.querySelector('button').onclick = function() {
+            toggleService(applicationId, 'notarial', 'complete');
+        };
+    }
+
+    // Update Engineering
+    if (data.engineering_completed) {
+        engineeringBox.classList.add('complete');
+        engineeringBox.querySelector('.service-status-badge').textContent = '✓ Complete';
+        engineeringBox.querySelector('button').textContent = '↺ Reset';
+        engineeringBox.querySelector('button').onclick = function() {
+            toggleService(applicationId, 'engineering', 'reset');
+        };
+    } else {
+        engineeringBox.classList.remove('complete');
+        engineeringBox.querySelector('.service-status-badge').textContent = '⋯ Pending';
+        engineeringBox.querySelector('button').textContent = '✓ Mark Complete';
+        engineeringBox.querySelector('button').onclick = function() {
+            toggleService(applicationId, 'engineering', 'complete');
+        };
+    }
+
+    // Update overall status badge
+    const statusBadge = card.querySelector('.app-status-badge .badge');
+    if (data.both_complete) {
+        statusBadge.className = 'badge badge-success';
+        statusBadge.textContent = '✓ Ready to Route';
+        card.classList.add('app-card-complete');
+    } else if (data.notarial_completed || data.engineering_completed) {
+        statusBadge.className = 'badge badge-warning';
+        statusBadge.textContent = '⏳ In Progress';
+        card.classList.remove('app-card-complete');
+    } else {
+        statusBadge.className = 'badge badge-pending';
+        statusBadge.textContent = '⋯ Pending';
+        card.classList.remove('app-card-complete');
+    }
+}
+
+// Close modal on background click
+document.getElementById('confirmModal').addEventListener('click', (e) => {
+    if (e.target.id === 'confirmModal') closeConfirm();
+});
+</script>
+{% endblock %}

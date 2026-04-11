@@ -1,0 +1,926 @@
+{% extends 'units/base.html' %}
+{% load static %}
+
+{% block title %}Compliance Notice Issuance - Housing Authority Management{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-title">
+        <h1>Compliance Notice Issuance</h1>
+        <p class="subtitle">Issue occupancy compliance notices to beneficiaries (30-day, 10-day, or custom)</p>
+    </div>
+</div>
+
+<div class="container-main">
+    <!-- Statistics Section -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">🏠</div>
+            <div class="stat-info">
+                <div class="stat-label">Occupied Units</div>
+                <div class="stat-value">{{ total_occupied }}</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">⚠️</div>
+            <div class="stat-info">
+                <div class="stat-label">Notice Templates</div>
+                <div class="stat-value">3</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="form-sections">
+        <!-- Section 1: Select Unit -->
+        <div class="form-section">
+            <h2>1. Select Unit & Beneficiary</h2>
+            <div class="form-group">
+                <label for="unitSelect">Select Unit to Issue Notice</label>
+                <select id="unitSelect" class="form-control">
+                    <option value="">-- Choose a Unit --</option>
+                    {% for site_name, units in units_by_site.items %}
+                    <optgroup label="{{ site_name }}">
+                        {% for unit in units %}
+                        {% with award=unit.lot_awards.all.0 %}
+                        {% if award %}
+                        <option value="{{ unit.id }}" data-applicant="{{ award.application.applicant.full_name }}" data-phone="{{ award.application.applicant.phone_number }}">
+                            Block {{ unit.block_number }}, Lot {{ unit.lot_number }} - {{ award.application.applicant.full_name }}
+                        </option>
+                        {% endif %}
+                        {% endwith %}
+                        {% endfor %}
+                    </optgroup>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Selected Unit Info Card -->
+            <div id="unitInfoCard" class="info-card" style="display: none;">
+                <div class="info-row">
+                    <span class="label">Unit:</span>
+                    <span class="value" id="unitInfo">--</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Beneficiary:</span>
+                    <span class="value" id="beneficiaryInfo">--</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Phone:</span>
+                    <span class="value" id="phoneInfo">--</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 2: Notice Type -->
+        <div class="form-section">
+            <h2>2. Notice Type & Deadline</h2>
+
+            <div class="notice-templates">
+                <!-- Template 1: 30-Day Reminder -->
+                <div class="template-card" onclick="selectTemplate('reminder_30')">
+                    <div class="template-header">
+                        <input type="radio" name="noticeType" value="reminder_30" id="type_reminder_30">
+                        <label for="type_reminder_30" class="template-label">30-Day Reminder Notice</label>
+                    </div>
+                    <div class="template-description">
+                        <p>Standard initial notice for occupancy compliance</p>
+                        <p class="details">
+                            ⏰ <strong>Deadline:</strong> 30 days from issuance<br>
+                            📋 <strong>Purpose:</strong> Initial reminder for compliance requirements
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Template 2: 10-Day Final -->
+                <div class="template-card" onclick="selectTemplate('final_10')">
+                    <div class="template-header">
+                        <input type="radio" name="noticeType" value="final_10" id="type_final_10">
+                        <label for="type_final_10" class="template-label">10-Day Final Notice</label>
+                    </div>
+                    <div class="template-description">
+                        <p>Final notice before escalation/repossession</p>
+                        <p class="details">
+                            ⏰ <strong>Deadline:</strong> 10 days from issuance<br>
+                            📋 <strong>Purpose:</strong> Final warning - compliance required or face repossession
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Template 3: Custom -->
+                <div class="template-card" onclick="selectTemplate('custom')">
+                    <div class="template-header">
+                        <input type="radio" name="noticeType" value="custom" id="type_custom">
+                        <label for="type_custom" class="template-label">Custom Notice Period</label>
+                    </div>
+                    <div class="template-description">
+                        <p>Define custom compliance period</p>
+                        <p class="details">
+                            ⏰ <strong>Deadline:</strong> Custom days from issuance<br>
+                            📋 <strong>Purpose:</strong> Special circumstances or specific compliance issues
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Custom Days Input (shown only for custom)   -->
+            <div id="customDaysGroup" class="form-group" style="display: none; margin-top: 1.5rem;">
+                <label for="customDays">Days to Comply</label>
+                <div class="input-with-help">
+                    <input type="number" id="customDays" class="form-control" value="30" min="1" max="365">
+                    <p class="help-text">Number of days before deadline (1-365 days)</p>
+                </div>
+            </div>
+
+            <!-- Deadline Display -->
+            <div id="deadlineCard" class="deadline-card" style="display: none;">
+                <div class="deadline-info">
+                    <span class="label">📅 Calculated Deadline:</span>
+                    <span class="deadline-date" id="deadlineDate">--</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 3: Reason & Details -->
+        <div class="form-section">
+            <h2>3. Reason & Details</h2>
+
+            <div class="form-group">
+                <label for="reason">Reason for Notice *</label>
+                <textarea id="reason" class="form-control" rows="4" placeholder="e.g., Failure to pay monthly amortization, Property not properly maintained, Unauthorized alterations detected..."></textarea>
+                <p class="help-text">Describe the specific compliance issue</p>
+            </div>
+
+            <!-- Optional: Compliance Requirements Checklist -->
+            <div class="form-group">
+                <label>Common Compliance Issues (select all that apply):</label>
+                <div class="checkbox-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" value="electricity_unpaid" onchange="updateReason()">
+                        Electricity bills not paid
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" value="maintenance_issue" onchange="updateReason()">
+                        Property maintenance issue
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" value="docs_incomplete" onchange="updateReason()">
+                        Documentation incomplete
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" value="unauthorized_work" onchange="updateReason()">
+                        Unauthorized structural work
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" value="subletting" onchange="updateReason()">
+                        Suspected subletting/unauthorized occupancy
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" value="other" onchange="updateReason()">
+                        Other (describe in reason above)
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 4: Preview & Submit -->
+        <div class="form-section">
+            <h2>4. Preview Notice</h2>
+
+            <!-- Notice Preview -->
+            <div id="noticePreview" class="notice-preview" style="display: none;">
+                <div class="preview-header">
+                    <h3>COMPLIANCE NOTICE PREVIEW</h3>
+                    <span class="notice-type-badge" id="noticeTypeBadge">--</span>
+                </div>
+
+                <div class="preview-content">
+                    <p class="preview-field">
+                        <strong>Issued to:</strong> <span id="previewBeneficiary">--</span>
+                    </p>
+                    <p class="preview-field">
+                        <strong>Unit:</strong> <span id="previewUnit">--</span>
+                    </p>
+                    <p class="preview-field">
+                        <strong>Notice Type:</strong> <span id="previewType">--</span>
+                    </p>
+                    <p class="preview-field">
+                        <strong>Deadline:</strong> <span id="previewDeadline">--</span>
+                    </p>
+                    <p class="preview-field">
+                        <strong>Reason:</strong>
+                    </p>
+                    <p class="preview-reason" id="previewReason">--</p>
+
+                    <div class="preview-footer">
+                        <p>A compliance notice has been issued and SMS notification will be sent to the beneficiary.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <button type="button" class="btn btn-outline" onclick="resetForm()">← Reset Form</button>
+                <button type="button" class="btn btn-primary" onclick="previewNotice()" id="previewBtn" disabled>
+                    👁️ Preview Notice
+                </button>
+                <button type="button" class="btn btn-success" onclick="submitNotice()" id="submitBtn" style="display: none;">
+                    ✓ Issue Notice & Send SMS
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Notification -->
+<div id="toast" class="toast"></div>
+
+<!-- Confirm Modal -->
+<div id="confirmModal" class="modal-overlay">
+    <div class="modal-content">
+        <h3>Confirm Compliance Notice</h3>
+        <p id="confirmMessage">Are you sure you want to issue this compliance notice?</p>
+        <p class="warning-text">The beneficiary will immediately receive an SMS notification.</p>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closeConfirm()">Cancel</button>
+            <button class="btn btn-danger" onclick="executeConfirm()">Issue Notice</button>
+        </div>
+    </div>
+</div>
+
+<style>
+:root {
+    --primary: #1f2937;
+    --accent: #3b82f6;
+    --success: #10b981;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --bg-light: #f9fafb;
+    --border: #e5e7eb;
+}
+
+.page-header {
+    background: linear-gradient(135deg, var(--primary) 0%, #111827 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+}
+
+.page-title h1 {
+    margin: 0;
+    font-size: 2em;
+    font-weight: 700;
+}
+
+.page-title .subtitle {
+    margin: 0.5rem 0 0 0;
+    opacity: 0.9;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.stat-icon {
+    font-size: 2.5rem;
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+.stat-value {
+    font-size: 1.875rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+/* FORM SECTIONS */
+.form-sections {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.form-section {
+    padding: 2rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.form-section:last-child {
+    border-bottom: none;
+}
+
+.form-section h2 {
+    margin: 0 0 1.5rem 0;
+    font-size: 1.25rem;
+    color: var(--primary);
+}
+
+/* FORM ELEMENTS */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group:last-child {
+    margin-bottom: 0;
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: all 0.3s;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.help-text {
+    margin: 0.5rem 0 0 0;
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+/* INFO CARD */
+.info-card {
+    background: linear-gradient(135deg, rgba(59,130,246,0.05) 0%, rgba(59,130,246,0.02) 100%);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: 6px;
+    padding: 1.25rem;
+    margin-top: 1rem;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+}
+
+.info-row:last-child {
+    margin-bottom: 0;
+}
+
+.info-row .label {
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.info-row .value {
+    color: #6b7280;
+}
+
+/* NOTICE TEMPLATES */
+.notice-templates {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.template-card {
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    padding: 1.25rem;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.template-card:hover {
+    border-color: var(--accent);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+}
+
+.template-card input[type="radio"]:checked {
+    border-color: var(--accent);
+    background: var(--accent);
+}
+
+.template-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.template-label {
+    margin: 0;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.template-description {
+    margin: 0;
+}
+
+.template-description p {
+    margin: 0 0 0.5rem 0;
+    font-size: 0.9rem;
+    color: #6b7280;
+}
+
+.template-description .details {
+    background: var(--bg-light);
+    padding: 0.75rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    line-height: 1.6;
+}
+
+/* CHECKBOXES */
+.checkbox-group {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-top: 0.75rem;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    font-weight: normal;
+    margin: 0;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+/* DEADLINE CARD */
+.deadline-card {
+    background: linear-gradient(135deg, rgba(16,185,129,0.05) 0%, rgba(16,185,129,0.02) 100%);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    border-radius: 6px;
+    padding: 1.25rem;
+}
+
+.deadline-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.deadline-date {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--success);
+}
+
+/* NOTICE PREVIEW */
+.notice-preview {
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.preview-header {
+    background: var(--primary);
+    color: white;
+    padding: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.preview-header h3 {
+    margin: 0;
+    font-size: 1.125rem;
+}
+
+.notice-type-badge {
+    background: rgba(255,255,255,0.2);
+    padding: 0.375rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.preview-content {
+    padding: 1.5rem;
+    background: var(--bg-light);
+}
+
+.preview-field {
+    margin: 0.75rem 0;
+}
+
+.preview-field strong {
+    display: inline-block;
+    min-width: 100px;
+    color: var(--primary);
+}
+
+.preview-reason {
+    background: white;
+    border-left: 3px solid var(--accent);
+    padding: 1rem;
+    margin: 1rem 0;
+    border-radius: 4px;
+}
+
+.preview-footer {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+    color: #6b7280;
+    font-size: 0.9rem;
+}
+
+/* BUTTONS */
+.action-buttons {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+    flex-wrap: wrap;
+}
+
+.btn {
+    padding: 0.75rem 1.5rem;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 0.95rem;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-primary {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: #2563eb;
+}
+
+.btn-success {
+    background: var(--success);
+    color: white;
+    border-color: var(--success);
+}
+
+.btn-success:hover:not(:disabled) {
+    background: #059669;
+}
+
+.btn-danger {
+    background: var(--danger);
+    color: white;
+    border-color: var(--danger);
+}
+
+.btn-danger:hover {
+    background: #dc2626;
+}
+
+.btn-outline {
+    background: white;
+    color: var(--primary);
+    border-color: var(--border);
+}
+
+.btn-outline:hover {
+    background: var(--bg-light);
+}
+
+/* TOAST */
+.toast {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    padding: 1rem 1.5rem;
+    background: var(--primary);
+    color: white;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    opacity: 0;
+    transform: translateY(100%);
+    transition: all 0.3s;
+    z-index: 1000;
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.toast.success {
+    background: var(--success);
+}
+
+.toast.error {
+    background: var(--danger);
+}
+
+/* MODAL */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+}
+
+.modal-overlay.show {
+    display: flex;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 8px;
+    padding: 2rem;
+    max-width: 500px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+}
+
+.modal-content h3 {
+    margin: 0 0 1rem 0;
+    color: var(--primary);
+}
+
+.warning-text {
+    background: rgba(245,158,11,0.1);
+    border-left: 3px solid var(--warning);
+    padding: 0.75rem 1rem;
+    border-radius: 4px;
+    color: #92400e;
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+}
+
+.modal-footer {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+}
+
+@media (max-width: 768px) {
+    .action-buttons {
+        flex-direction: column;
+    }
+
+    .btn {
+        width: 100%;
+    }
+
+    .notice-templates {
+        grid-template-columns: 1fr;
+    }
+
+    .info-row {
+        flex-direction: column;
+    }
+
+    .preview-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+}
+</style>
+
+<script>
+const CSRFToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
+                  document.querySelector('meta[name="csrf-token"]')?.content;
+
+let selectedUnit = null;
+let confirmAction = null;
+
+// Unit selection
+document.getElementById('unitSelect').addEventListener('change', function() {
+    selectedUnit = this.value;
+    const option = this.options[this.selectedIndex];
+
+    if (selectedUnit) {
+        const applicant = option.dataset.applicant;
+        const phone = option.dataset.phone;
+
+        document.getElementById('unitInfo').textContent = option.textContent;
+        document.getElementById('beneficiaryInfo').textContent = applicant;
+        document.getElementById('phoneInfo').textContent = phone;
+        document.getElementById('unitInfoCard').style.display = 'block';
+        document.getElementById('previewBtn').disabled = false;
+    } else {
+        document.getElementById('unitInfoCard').style.display = 'none';
+        document.getElementById('previewBtn').disabled = true;
+    }
+});
+
+// Template selection
+function selectTemplate(typeValue) {
+    document.getElementById('type_' + typeValue).checked = true;
+    updateDeadline();
+
+    // Show/hide custom days input
+    if (typeValue === 'custom') {
+        document.getElementById('customDaysGroup').style.display = 'block';
+    } else {
+        document.getElementById('customDaysGroup').style.display = 'none';
+    }
+}
+
+// Update deadline
+function updateDeadline() {
+    const noticeType = document.querySelector('input[name="noticeType"]:checked')?.value;
+    if (!noticeType) return;
+
+    let days = 0;
+    if (noticeType === 'reminder_30') days = 30;
+    else if (noticeType === 'final_10') days = 10;
+    else if (noticeType === 'custom') {
+        days = parseInt(document.getElementById('customDays').value) || 30;
+    }
+
+    const deadline = new Date();
+    deadline.setDate(deadline.getDate() + days);
+
+    const dateStr = deadline.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    document.getElementById('deadlineDate').textContent = dateStr;
+    document.getElementById('deadlineCard').style.display = 'block';
+}
+
+// Custom days change
+document.getElementById('customDays')?.addEventListener('change', updateDeadline);
+
+// Update reason with checkboxes
+function updateReason() {
+    const selected = Array.from(document.querySelectorAll('.checkbox-group input:checked'))
+        .map(cb => {
+            const labelText = cb.parentElement.textContent.trim();
+            return '- ' + labelText;
+        });
+
+    if (selected.length > 0 && document.getElementById('reason').value === '') {
+        document.getElementById('reason').value = selected.join('\n');
+    }
+}
+
+// Preview notice
+function previewNotice() {
+    const noticeType = document.querySelector('input[name="noticeType"]:checked')?.value;
+    const reason = document.getElementById('reason').value;
+
+    if (!selectedUnit || !noticeType || !reason) {
+        showToast('Please fill in all required fields', 'error');
+        return;
+    }
+
+    const unitOption = document.querySelector(`#unitSelect option[value="${selectedUnit}"]`);
+    const applicant = unitOption.dataset.applicant;
+
+    const typeLabels = {
+        'reminder_30': '30-Day Reminder Notice',
+        'final_10': '10-Day Final Notice',
+        'custom': 'Custom Notice',
+    };
+
+    const noticeLabel = typeLabels[noticeType];
+    const deadline = document.getElementById('deadlineDate').textContent;
+
+    document.getElementById('previewBeneficiary').textContent = applicant;
+    document.getElementById('previewUnit').textContent = unitOption.textContent;
+    document.getElementById('previewType').textContent = noticeLabel;
+    document.getElementById('previewDeadline').textContent = deadline;
+    document.getElementById('previewReason').textContent = reason;
+    document.getElementById('noticeTypeBadge').textContent = noticeLabel;
+
+    document.getElementById('noticePreview').style.display = 'block';
+    document.getElementById('previewBtn').style.display = 'none';
+    document.getElementById('submitBtn').style.display = 'inline-block';
+
+    // Scroll to preview
+    setTimeout(() => {
+        document.getElementById('noticePreview').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 100);
+}
+
+// Submit notice
+function submitNotice() {
+    const unitOption = document.querySelector(`#unitSelect option[value="${selectedUnit}"]`);
+    showConfirm(
+        `Issue compliance notice to ${unitOption.dataset.applicant}?`,
+        'The beneficiary will immediately receive an SMS notification with the notice details and deadline.'
+    );
+}
+
+// Submit form
+function executeConfirm() {
+    const noticeType = document.querySelector('input[name="noticeType"]:checked').value;
+    const customDays = document.getElementById('customDays').value;
+    const reason = document.getElementById('reason').value;
+
+    const payload = new FormData();
+    payload.append('unit_id', selectedUnit);
+    payload.append('notice_type', noticeType);
+    payload.append('reason', reason);
+    payload.append('custom_days', customDays);
+    payload.append('csrfmiddlewaretoken', CSRFToken);
+
+    fetch(`{% url 'units:process_compliance_notice' %}`, {
+        method: 'POST',
+        body: payload,
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            showToast(data.message, 'success');
+            setTimeout(() => {
+                resetForm();
+                location.reload();
+            }, 1500);
+        } else {
+            showToast(data.error || 'Error issuing notice', 'error');
+        }
+        closeConfirm();
+    })
+    .catch(err => {
+        showToast('Network error: ' + err.message, 'error');
+        closeConfirm();
+    });
+}
+
+// Reset form
+function resetForm() {
+    document.getElementById('unitSelect').value = '';
+    document.querySelectorAll('input[name="noticeType"]').forEach(r => r.checked = false);
+    document.getElementById('reason').value = '';
+    document.querySelectorAll('.checkbox-group input').forEach(cb => cb.checked = false);
+    document.getElementById('customDays').value = '30';
+    document.getElementById('unitInfoCard').style.display = 'none';
+    document.getElementById('noticePreview').style.display = 'none';
+    document.getElementById('previewBtn').style.display = 'inline-block';
+    document.getElementById('submitBtn').style.display = 'none';
+    document.getElementById('previewBtn').disabled = true;
+    selectedUnit = null;
+}
+
+// Toast
+function showToast(message, type = 'info') {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.className = `toast show ${type}`;
+    setTimeout(() => toast.classList.remove('show'), 4000);
+}
+
+// Confirmation modal
+function showConfirm(title, message) {
+    document.querySelector('.modal-content h3').textContent = title;
+    document.getElementById('confirmMessage').textContent = message;
+    document.getElementById('confirmModal').classList.add('show');
+}
+
+function closeConfirm() {
+    document.getElementById('confirmModal').classList.remove('show');
+}
+
+// Close modal on background click
+document.getElementById('confirmModal').addEventListener('click', (e) => {
+    if (e.target.id === 'confirmModal') closeConfirm();
+});
+</script>
+{% endblock %}

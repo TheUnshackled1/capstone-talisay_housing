@@ -1,15 +1,16 @@
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import require_http_methods
+from django.views.decorators.http import require_http_methods, require_POST
 from django.db import transaction
 from django.utils import timezone
 from django.contrib import messages
+from datetime import timedelta
 
 from intake.models import QueueEntry, Applicant
 from intake.utils import send_sms
 from applications.models import Application
-from units.models import HousingUnit, LotAward, RelocationSite
+from units.models import HousingUnit, LotAward, RelocationSite, ComplianceNotice
 
 
 @login_required
@@ -153,5 +154,155 @@ def process_lot_awards(request):
 
     except json.JSONDecodeError:
         return JsonResponse({'success': False, 'error': 'Invalid JSON data'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
+# =============================================================================
+# UI #25: COMPLIANCE NOTICE ISSUANCE FORM (Week 2)
+# =============================================================================
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def compliance_notice_issuance(request):
+    """
+    UI #25: Compliance Notice Issuance Form
+    Process 8: Occupancy Validation & Compliance - Issue notices to beneficiaries
+
+    Actor: Any staff (typically 2nd Member/Joie for supervision)
+    Purpose: Issue 30-day reminders, 10-day final notices, or custom compliance notices
+             for occupancy (electricity, documentation, property maintenance, etc.)
+
+    GET: Display form with occupied units and notice templates
+    POST: Create compliance notice and send SMS notification
+    """
+
+    if request.method == 'POST':
+        return process_compliance_notice(request)
+
+    # GET: Prepare form data
+    # Get all occupied housing units with their beneficiary info
+    occupied_units = (
+        HousingUnit.objects
+        .filter(status='occupied')
+        .select_related('site')
+        .prefetch_related('lot_awards__application__applicant')
+        .order_by('site__name', 'block_number', 'lot_number')
+    )
+
+    # Get unit groups by site
+    units_by_site = {}
+    for unit in occupied_units:
+        site_name = unit.site.name
+        if site_name not in units_by_site:
+            units_by_site[site_name] = []
+        units_by_site[site_name].append(unit)
+
+    # Notice type choices
+    notice_types = [
+        ('reminder_30', '30-Day Reminder Notice'),
+        ('final_10', '10-Day Final Notice'),
+        ('custom', 'Custom Notice Period'),
+    ]
+
+    context = {
+        'occupied_units': occupied_units,
+        'units_by_site': units_by_site,
+        'notice_types': notice_types,
+        'total_occupied': occupied_units.count(),
+    }
+
+    return render(request, 'units/compliance_notice_issuance.html', context)
+
+
+@login_required
+@require_POST
+def process_compliance_notice(request):
+    """
+    Handle POST request to issue compliance notice.
+
+    Expected POST data:
+    - unit_id: HousingUnit ID
+    - notice_type: 'reminder_30', 'final_10', or 'custom'
+    - reason: Text describing reason for notice
+    - days_granted: (for custom) Number of days to comply
+    - custom_period: (for custom) Description of custom period
+    """
+    try:
+        unit_id = request.POST.get('unit_id')
+        notice_type = request.POST.get('notice_type')
+        reason = request.POST.get('reason')
+        custom_days = request.POST.get('custom_days', '30')
+
+        # Validate inputs
+        if not all([unit_id, notice_type, reason]):
+            return JsonResponse({'success': False, 'error': 'Missing required fields'})
+
+        # Get unit and lot award
+        unit = HousingUnit.objects.get(id=unit_id)
+        lot_award = unit.lot_awards.filter(status='active').first()
+
+        if not lot_award:
+            return JsonResponse({'success': False, 'error': 'No active lot award for this unit'})
+
+        # Determine days_granted based on notice type
+        if notice_type == 'reminder_30':
+            days_granted = 30
+        elif notice_type == 'final_10':
+            days_granted = 10
+        elif notice_type == 'custom':
+            try:
+                days_granted = int(custom_days)
+            except ValueError:
+                days_granted = 30
+        else:
+            return JsonResponse({'success': False, 'error': 'Invalid notice type'})
+
+        # Calculate deadline
+        deadline = (timezone.now() + timedelta(days=days_granted)).date()
+
+        # Create compliance notice
+        compliance_notice = ComplianceNotice.objects.create(
+            lot_award=lot_award,
+            unit=unit,
+            notice_type=notice_type,
+            reason=reason,
+            days_granted=days_granted,
+            deadline=deadline,
+            issued_by=request.user,
+            status='active',
+        )
+
+        # Get beneficiary info for SMS
+        applicant = lot_award.application.applicant
+        beneficiary_name = applicant.full_name
+        phone_number = applicant.phone_number
+
+        # Send SMS notification
+        if phone_number:
+            notice_label = dict(ComplianceNotice._meta.get_field('notice_type').choices)[notice_type]
+            sms_message = (
+                f"⚠️ COMPLIANCE NOTICE\n"
+                f"Notice Type: {notice_label}\n"
+                f"Unit: Block {unit.block_number}, Lot {unit.lot_number}\n"
+                f"Reason: {reason}\n"
+                f"Deadline: {deadline.strftime('%B %d, %Y')}\n"
+                f"Please contact THA office immediately.\n"
+                f"Talisay Housing Authority"
+            )
+            send_sms(phone_number, sms_message, 'compliance_notice', applicant=applicant)
+
+        return JsonResponse({
+            'success': True,
+            'message': f'{notice_label} issued to {beneficiary_name}',
+            'notice_id': str(compliance_notice.id),
+            'notice_type': notice_type,
+            'deadline': deadline.strftime('%Y-%m-%d'),
+            'days_granted': days_granted,
+            'beneficiary': beneficiary_name,
+        })
+
+    except HousingUnit.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Unit not found'})
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
