@@ -1,0 +1,446 @@
+{% extends 'staff_base.html' %}
+{% load static %}
+
+{% block title %}Case Management - THA{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+
+<!-- Page Header -->
+<div style="padding: 1.5rem; background: white; border-bottom: 1px solid var(--gray-200); display: flex; justify-content: space-between; align-items: baseline; gap: 2rem;">
+    <div>
+        <h1 style="margin: 0 0 0.5rem; font-size: 1.75rem; font-weight: 700; color: var(--gray-900);">Case Management</h1>
+        <p style="margin: 0; font-size: 0.875rem; color: var(--gray-600);">Module 5 — Every complaint gets a case record · No verbal-only handling</p>
+    </div>
+    <button onclick="openNewCaseModal()" style="padding: 0.625rem 1.25rem; background: var(--primary-600); color: white; border: none; border-radius: 8px; font-size: 0.875rem; font-weight: 600; cursor: pointer; white-space: nowrap;">
+        ➕ Log New Case
+    </button>
+</div>
+
+<!-- Main Container -->
+<div style="padding: 2rem 1.5rem; background: #f9fafb; min-height: 100vh;">
+    <!-- Status Summary Cards -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+        <div style="background: #fffbeb; border: 2px solid #fcd34d; border-radius: 12px; padding: 1.5rem; text-align: center; cursor: pointer;">
+            <div style="font-size: 2.5rem; font-weight: 700; color: #d97706; margin-bottom: 0.5rem;">{{ status_counts.open }}</div>
+            <div style="font-size: 0.875rem; color: var(--gray-600); font-weight: 500;">Open</div>
+        </div>
+
+        <div style="background: #ede9fe; border: 2px solid #e9d5ff; border-radius: 12px; padding: 1.5rem; text-align: center; cursor: pointer;">
+            <div style="font-size: 2.5rem; font-weight: 700; color: #a855f7; margin-bottom: 0.5rem;">{{ status_counts.referred }}</div>
+            <div style="font-size: 0.875rem; color: var(--gray-600); font-weight: 500;">Referred</div>
+        </div>
+
+        <div style="background: #f0fdf4; border: 2px solid #bbf7d0; border-radius: 12px; padding: 1.5rem; text-align: center; cursor: pointer;">
+            <div style="font-size: 2.5rem; font-weight: 700; color: #16a34a; margin-bottom: 0.5rem;">{{ status_counts.resolved }}</div>
+            <div style="font-size: 0.875rem; color: var(--gray-600); font-weight: 500;">Resolved</div>
+        </div>
+    </div>
+
+    <!-- Search & Filter -->
+    <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; align-items: center;">
+        <div style="position: relative; flex: 1; min-width: 250px;">
+            <svg style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--gray-400); pointer-events: none;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.35-4.35"></path>
+            </svg>
+            <input type="text" id="searchInput" placeholder="Search by complainant, case number, or description..." style="width: 100%; padding: 0.75rem 0.75rem 0.75rem 2.5rem; border: 1px solid var(--gray-300); border-radius: 8px; font-size: 0.875rem;">
+        </div>
+
+        <select id="typeFilter" style="padding: 0.75rem; border: 1px solid var(--gray-300); border-radius: 8px; font-size: 0.875rem; background: white; cursor: pointer;">
+            <option value="all">All Types</option>
+            {% for code, label in case_type_choices %}
+            <option value="{{ code }}">{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <!-- Cases List (Horizontal Items) -->
+    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+        {% for case in cases %}
+        <div class="case-item" onclick="openCaseModal('{{ case.id }}')" data-case-id="{{ case.id }}" data-status="{{ case.status }}" data-type="{{ case.case_type }}" style="background: white; border-left: 4px solid {% if case.status == 'open' %}#f59e0b{% elif case.status == 'investigation' %}#3b82f6{% elif case.status == 'referred' %}#a855f7{% elif case.status == 'pending_decision' %}#ea580c{% elif case.status == 'resolved' %}#22c55e{% else %}#6b7280{% endif %}; padding: 1rem 1.25rem; border-radius: 8px; display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; cursor: pointer; transition: all 150ms ease; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <div style="flex: 1; min-width: 0;">
+                <!-- Badges Row -->
+                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; align-items: center;">
+                    <span style="font-size: 0.75rem; font-family: monospace; color: var(--gray-600); font-weight: 500;">{{ case.case_number }}</span>
+
+                    <!-- Status Badge -->
+                    <span style="display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;
+                        {% if case.status == 'open' %}background: rgba(245, 158, 11, 0.15); color: #b45309;{% endif %}
+                        {% if case.status == 'investigation' %}background: rgba(59, 130, 246, 0.15); color: #1e40af;{% endif %}
+                        {% if case.status == 'referred' %}background: rgba(168, 85, 247, 0.15); color: #6b21a8;{% endif %}
+                        {% if case.status == 'pending_decision' %}background: rgba(234, 88, 12, 0.15); color: #92400e;{% endif %}
+                        {% if case.status == 'resolved' %}background: rgba(34, 197, 94, 0.15); color: #15803d;{% endif %}
+                        {% if case.status == 'closed' %}background: rgba(75, 85, 99, 0.15); color: #374151;{% endif %}
+                    ">
+                        <span style="width: 5px; height: 5px; border-radius: 50%; display: inline-block;
+                            {% if case.status == 'open' %}background: #f59e0b;{% endif %}
+                            {% if case.status == 'investigation' %}background: #3b82f6;{% endif %}
+                            {% if case.status == 'referred' %}background: #a855f7;{% endif %}
+                            {% if case.status == 'pending_decision' %}background: #ea580c;{% endif %}
+                            {% if case.status == 'resolved' %}background: #22c55e;{% endif %}
+                            {% if case.status == 'closed' %}background: #6b7280;{% endif %}
+                        "></span>
+                        {{ case.get_status_display }}
+                    </span>
+
+                    <!-- Type Badge -->
+                    <span style="display: inline-flex; padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;
+                        {% if case.case_type == 'boundary' %}background: rgba(168, 85, 247, 0.15); color: #6b21a8;{% endif %}
+                        {% if case.case_type == 'structural' %}background: rgba(239, 68, 68, 0.15); color: #991b1b;{% endif %}
+                        {% if case.case_type == 'interpersonal' %}background: rgba(234, 88, 12, 0.15); color: #92400e;{% endif %}
+                        {% if case.case_type == 'illegal_transfer' %}background: rgba(59, 130, 246, 0.15); color: #1e40af;{% endif %}
+                        {% if case.case_type == 'unauthorized' %}background: rgba(168, 85, 247, 0.15); color: #6b21a8;{% endif %}
+                        {% if case.case_type == 'damage' %}background: rgba(239, 68, 68, 0.15); color: #991b1b;{% endif %}
+                        {% if case.case_type == 'noise' %}background: rgba(234, 88, 12, 0.15); color: #92400e;{% endif %}
+                        {% if case.case_type == 'other' %}background: rgba(75, 85, 99, 0.15); color: #374151;{% endif %}
+                    ">
+                        {{ case.get_case_type_display }}
+                    </span>
+                </div>
+
+                <!-- Complainant Name -->
+                <p style="margin: 0 0 0.25rem; font-size: 0.95rem; font-weight: 600; color: var(--gray-900);">{{ case.complainant_name }}</p>
+
+                <!-- Description -->
+                <p style="margin: 0 0 0.5rem; font-size: 0.85rem; color: var(--gray-700); line-height: 1.3;">{{ case.initial_description|truncatewords:20 }}</p>
+
+                <!-- Meta Info Row -->
+                <div style="display: flex; flex-wrap: wrap; gap: 1rem; font-size: 0.75rem; color: var(--gray-600);">
+                    <span>📅 Filed: {{ case.received_at|date:"M d, Y" }}</span>
+                    <span>Handler: {{ case.received_by.get_full_name|default:"Unassigned" }}</span>
+                    {% if case.referred_to %}
+                    <span style="color: var(--purple-600); font-weight: 500;">→ {{ case.referred_to }}</span>
+                    {% endif %}
+                    {% if case.status == 'resolved' and case.resolved_at %}
+                    <span style="color: var(--green-600); font-weight: 500;">✓ Resolved: {{ case.resolved_at|date:"M d, Y" }}</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- View Button -->
+            <button style="padding: 0.4rem 0.75rem; background: var(--gray-100); color: var(--gray-700); border: none; border-radius: 6px; font-size: 0.75rem; cursor: pointer; transition: all 150ms ease; white-space: nowrap; flex-shrink: 0;">
+                👁️ View
+            </button>
+        </div>
+        {% empty %}
+        <div style="text-align: center; padding: 3rem 2rem; background: white; border-radius: 12px;">
+            <div style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;">📂</div>
+            <p style="font-size: 1rem; color: var(--gray-600); margin: 0;">No cases match your search</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Case Detail Modal -->
+<div id="caseModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 1rem;" onclick="closeCaseModal(event)">
+    <div onclick="event.stopPropagation();" style="background: white; border-radius: 16px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); max-width: 650px; width: 100%; max-height: 90vh; overflow-y: auto; display: flex; flex-direction: column;">
+        <!-- Modal Header -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; padding: 1.5rem; border-bottom: 1px solid var(--gray-200); gap: 1rem;">
+            <div>
+                <h2 id="modalCaseNumber" style="margin: 0; font-size: 1.25rem; font-weight: 600;"></h2>
+                <p id="modalCaseDate" style="font-size: 0.75rem; color: var(--gray-600); margin: 0.5rem 0 0;"></p>
+            </div>
+            <button onclick="closeCaseModal()" style="padding: 0; background: transparent; border: none; color: var(--gray-500); font-size: 1.5rem; cursor: pointer; line-height: 1;">✕</button>
+        </div>
+
+        <!-- Modal Body -->
+        <div style="flex: 1; padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; overflow-y: auto;">
+            <!-- Complainant & Type Info -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div>
+                    <p style="font-size: 0.75rem; font-weight: 600; color: var(--gray-600); text-transform: uppercase; margin: 0 0 0.5rem;">Complainant</p>
+                    <p id="modalComplainantName" style="font-size: 0.9rem; color: var(--gray-900); margin: 0; font-weight: 500;"></p>
+                    <p id="modalComplainantPhone" style="font-size: 0.75rem; color: var(--gray-600); margin: 0;"></p>
+                </div>
+                <div>
+                    <p style="font-size: 0.75rem; font-weight: 600; color: var(--gray-600); text-transform: uppercase; margin: 0 0 0.5rem;">Complaint Type</p>
+                    <span id="modalComplaintType"></span>
+                </div>
+            </div>
+
+            <!-- Subject (if exists) -->
+            <div id="subjectSection" style="display: none;">
+                <p style="font-size: 0.75rem; font-weight: 600; color: var(--gray-600); text-transform: uppercase; margin: 0 0 0.5rem;">Subject/Respondent</p>
+                <p id="modalSubjectName" style="font-size: 0.9rem; color: var(--gray-900); margin: 0;"></p>
+            </div>
+
+            <!-- Description -->
+            <div>
+                <p style="font-size: 0.75rem; font-weight: 600; color: var(--gray-600); text-transform: uppercase; margin: 0 0 0.75rem;">Description</p>
+                <div style="background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 10px; padding: 1rem;">
+                    <p id="modalDescription" style="font-size: 0.9rem; color: var(--gray-900); margin: 0; line-height: 1.5;"></p>
+                </div>
+            </div>
+
+            <!-- Investigation Info (if exists) -->
+            <div id="investigationSection" style="display: none;">
+                <p style="font-size: 0.75rem; font-weight: 600; color: var(--gray-600); text-transform: uppercase; margin: 0 0 0.75rem;">Investigation</p>
+                <div style="background: rgba(59, 130, 246, 0.05); border: 1px solid #93c5fd; border-radius: 10px; padding: 1rem;">
+                    <p id="modalInvestigationNotes" style="font-size: 0.9rem; color: var(--gray-900); margin: 0 0 0.5rem; line-height: 1.5;"></p>
+                    <p id="modalInvestigatedBy" style="font-size: 0.75rem; color: var(--gray-600); margin: 0;"></p>
+                </div>
+            </div>
+
+            <!-- Referral Info (if exists) -->
+            <div id="referralSection" style="display: none;">
+                <p style="font-size: 0.75rem; font-weight: 600; color: var(--gray-600); text-transform: uppercase; margin: 0 0 0.75rem;">Referral</p>
+                <div style="background: rgba(168, 85, 247, 0.05); border: 1px solid #e9d5ff; border-radius: 10px; padding: 1rem;">
+                    <p id="modalReferredTo" style="font-size: 0.9rem; color: var(--gray-900); margin: 0 0 0.5rem; font-weight: 500;"></p>
+                    <p id="modalReferralNotes" style="font-size: 0.9rem; color: var(--gray-900); margin: 0 0 0.5rem; line-height: 1.5;"></p>
+                    <p id="modalReferralDate" style="font-size: 0.75rem; color: var(--gray-600); margin: 0;"></p>
+                </div>
+            </div>
+
+            <!-- Resolution Info (if exists) -->
+            <div id="resolutionSection" style="display: none;">
+                <p style="font-size: 0.75rem; font-weight: 600; color: var(--gray-600); text-transform: uppercase; margin: 0 0 0.75rem;">Resolution</p>
+                <div style="background: rgba(34, 197, 94, 0.05); border: 1px solid #bbf7d0; border-radius: 10px; padding: 1rem;">
+                    <p id="modalResolutionNotes" style="font-size: 0.9rem; color: var(--gray-900); margin: 0 0 0.5rem; line-height: 1.5;"></p>
+                    <p id="modalResolvedDate" style="font-size: 0.75rem; color: var(--gray-600); margin: 0;"></p>
+                </div>
+            </div>
+
+            <!-- Case Notes Timeline (if exists) -->
+            <div id="notesSection" style="display: none;">
+                <p style="font-size: 0.75rem; font-weight: 600; color: var(--gray-600); text-transform: uppercase; margin: 0 0 0.75rem;">Case Notes</p>
+                <div id="notesList" style="display: flex; flex-direction: column; gap: 0.75rem;"></div>
+            </div>
+
+            <!-- Update Form (for open cases) -->
+            <div id="updateFormSection" style="display: none; background: var(--blue-50); border: 1px solid #bfdbfe; border-radius: 10px; padding: 1rem; flex-direction: column; gap: 1rem;">
+                <p style="font-size: 0.75rem; font-weight: 600; color: var(--gray-700); text-transform: uppercase; margin: 0;">Update Case</p>
+
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <label style="font-size: 0.75rem; font-weight: 600; color: var(--gray-700); text-transform: uppercase;">Add Note</label>
+                    <textarea id="updateNote" style="padding: 0.625rem; border: 1px solid var(--gray-300); border-radius: 8px; font-size: 0.875rem; font-family: inherit; resize: vertical; min-height: 80px;" placeholder="Record findings or decisions..."></textarea>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <label style="font-size: 0.75rem; font-weight: 600; color: var(--gray-700); text-transform: uppercase;">Change Status</label>
+                    <select id="newStatus" style="padding: 0.625rem; border: 1px solid var(--gray-300); border-radius: 8px; font-size: 0.875rem;">
+                        <option value="">— Keep Current —</option>
+                        <option value="investigation">Investigation</option>
+                        <option value="referred">Referred</option>
+                        <option value="pending_decision">Pending Decision</option>
+                        <option value="resolved">Resolved</option>
+                        <option value="closed">Closed</option>
+                    </select>
+                </div>
+
+                <div style="display: flex; gap: 0.75rem;">
+                    <button onclick="saveUpdate()" style="flex: 1; padding: 0.625rem 1rem; background: var(--primary-600); color: white; border: none; border-radius: 8px; font-size: 0.875rem; font-weight: 600; cursor: pointer;">✓ Save</button>
+                    <button onclick="closeCaseModal()" style="flex: 1; padding: 0.625rem 1rem; background: var(--gray-200); color: var(--gray-900); border: none; border-radius: 8px; font-size: 0.875rem; font-weight: 600; cursor: pointer;">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div style="padding: 1rem 1.5rem; border-top: 1px solid var(--gray-200); background: var(--gray-50); display: flex; gap: 0.75rem; flex-wrap: wrap;">
+            <button onclick="printCaseRecord()" style="padding: 0.625rem 1.25rem; background: var(--gray-200); color: var(--gray-700); border: none; border-radius: 8px; font-size: 0.875rem; font-weight: 600; cursor: pointer;">📄 Print</button>
+        </div>
+    </div>
+</div>
+
+<!-- New Case Modal -->
+<div id="newCaseModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 1rem;" onclick="closeNewCaseModal(event)">
+    <div onclick="event.stopPropagation();" style="background: white; border-radius: 16px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto; display: flex; flex-direction: column;">
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 1.5rem; border-bottom: 1px solid var(--gray-200);">
+            <h2 style="margin: 0; font-size: 1.25rem; font-weight: 600;">Log New Case</h2>
+            <button onclick="closeNewCaseModal()" style="padding: 0; background: transparent; border: none; color: var(--gray-500); font-size: 1.5rem; cursor: pointer;">✕</button>
+        </div>
+
+        <div style="flex: 1; padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; overflow-y: auto;">
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                <label style="font-size: 0.75rem; font-weight: 600; color: var(--gray-700); text-transform: uppercase;">Complainant Name *</label>
+                <input type="text" id="newComplainantName" style="padding: 0.625rem; border: 1px solid var(--gray-300); border-radius: 8px; font-size: 0.875rem;" placeholder="Full name">
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                <label style="font-size: 0.75rem; font-weight: 600; color: var(--gray-700); text-transform: uppercase;">Phone (optional)</label>
+                <input type="tel" id="newComplainantPhone" style="padding: 0.625rem; border: 1px solid var(--gray-300); border-radius: 8px; font-size: 0.875rem;" placeholder="Contact number">
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                <label style="font-size: 0.75rem; font-weight: 600; color: var(--gray-700); text-transform: uppercase;">Complaint Type *</label>
+                <select id="newCaseType" style="padding: 0.625rem; border: 1px solid var(--gray-300); border-radius: 8px; font-size: 0.875rem;">
+                    <option value="">— Select —</option>
+                    {% for code, label in case_type_choices %}
+                    <option value="{{ code }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                <label style="font-size: 0.75rem; font-weight: 600; color: var(--gray-700); text-transform: uppercase;">Received At</label>
+                <select id="newReceivedAt" style="padding: 0.625rem; border: 1px solid var(--gray-300); border-radius: 8px; font-size: 0.875rem;">
+                    <option value="office">THA Office</option>
+                    <option value="onsite">On-site</option>
+                </select>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                <label style="font-size: 0.75rem; font-weight: 600; color: var(--gray-700); text-transform: uppercase;">Subject Name (optional)</label>
+                <input type="text" id="newSubjectName" style="padding: 0.625rem; border: 1px solid var(--gray-300); border-radius: 8px; font-size: 0.875rem;" placeholder="Person against complaint">
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                <label style="font-size: 0.75rem; font-weight: 600; color: var(--gray-700); text-transform: uppercase;">Description *</label>
+                <textarea id="newDescription" style="padding: 0.625rem; border: 1px solid var(--gray-300); border-radius: 8px; font-size: 0.875rem; resize: vertical; min-height: 100px;" placeholder="Describe the complaint..."></textarea>
+            </div>
+
+            <div style="background: #dbeafe; border: 1px solid #93c5fd; border-radius: 8px; padding: 0.75rem;">
+                <p style="font-size: 0.75rem; color: #1e40af; margin: 0; line-height: 1.4;">Every complaint gets a case number and remains in the system until resolved.</p>
+            </div>
+        </div>
+
+        <div style="padding: 1rem 1.5rem; border-top: 1px solid var(--gray-200); background: var(--gray-50); display: flex; gap: 0.75rem;">
+            <button onclick="createNewCase()" style="flex: 1; padding: 0.625rem 1rem; background: var(--primary-600); color: white; border: none; border-radius: 8px; font-size: 0.875rem; font-weight: 600; cursor: pointer;">Log Case</button>
+            <button onclick="closeNewCaseModal()" style="flex: 1; padding: 0.625rem 1rem; background: white; color: var(--gray-700); border: 1px solid var(--gray-300); border-radius: 8px; font-size: 0.875rem; font-weight: 600; cursor: pointer;">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript -->
+<script>
+let currentCaseId = null;
+
+function openCaseModal(caseId) {
+    currentCaseId = caseId;
+    fetch(`/cases/${caseId}/details/`)
+        .then(r => r.json())
+        .then(d => {
+            if (d.success) populateCaseModal(d.case);
+            else alert('Error: ' + d.error);
+        });
+}
+
+function populateCaseModal(c) {
+    document.getElementById('modalCaseNumber').textContent = c.case_number;
+    document.getElementById('modalCaseDate').textContent = `Filed: ${new Date(c.received_at).toLocaleDateString()} · Received by: ${c.received_by}`;
+    document.getElementById('modalComplainantName').textContent = c.complainant_name;
+    document.getElementById('modalComplainantPhone').textContent = c.complainant_phone || 'No phone';
+    document.getElementById('modalDescription').textContent = c.initial_description;
+    document.getElementById('modalComplaintType').textContent = c.case_type_display;
+
+    if (c.subject_name) {
+        document.getElementById('subjectSection').style.display = 'block';
+        document.getElementById('modalSubjectName').textContent = c.subject_name;
+    }
+
+    if (c.investigation_notes) {
+        document.getElementById('investigationSection').style.display = 'block';
+        document.getElementById('modalInvestigationNotes').textContent = c.investigation_notes;
+        document.getElementById('modalInvestigatedBy').textContent = `Investigated by: ${c.investigated_by}`;
+    }
+
+    if (c.referred_to) {
+        document.getElementById('referralSection').style.display = 'block';
+        document.getElementById('modalReferredTo').textContent = `Referred to: ${c.referred_to}`;
+        document.getElementById('modalReferralNotes').textContent = c.referral_notes;
+        document.getElementById('modalReferralDate').textContent = `Referred: ${new Date(c.referred_at).toLocaleDateString()}`;
+    }
+
+    if (c.resolution_notes) {
+        document.getElementById('resolutionSection').style.display = 'block';
+        document.getElementById('modalResolutionNotes').textContent = c.resolution_notes;
+        document.getElementById('modalResolvedDate').textContent = `Resolved: ${new Date(c.resolved_at).toLocaleDateString()}`;
+    }
+
+    if (c.notes && c.notes.length > 0) {
+        document.getElementById('notesSection').style.display = 'block';
+        document.getElementById('notesList').innerHTML = c.notes.map(n => `
+            <div style="background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 8px; padding: 0.75rem;">
+                <p style="margin: 0 0 0.25rem; color: var(--gray-900); font-weight: 500; font-size: 0.85rem;">${n.created_by}</p>
+                <p style="margin: 0 0 0.25rem; color: var(--gray-900); font-size: 0.85rem; line-height: 1.4;">${n.note}</p>
+                <p style="margin: 0; font-size: 0.75rem; color: var(--gray-600);">${new Date(n.created_at).toLocaleString()}</p>
+            </div>
+        `).join('');
+    }
+
+    if (!['resolved', 'closed'].includes(c.status)) {
+        document.getElementById('updateFormSection').style.display = 'flex';
+    }
+
+    document.getElementById('caseModal').style.display = 'flex';
+}
+
+function closeCaseModal(e) {
+    if (e && e.target.id !== 'caseModal') return;
+    document.getElementById('caseModal').style.display = 'none';
+}
+
+function openNewCaseModal() {
+    document.getElementById('newCaseModal').style.display = 'flex';
+}
+
+function closeNewCaseModal(e) {
+    if (e && e.target.id !== 'newCaseModal') return;
+    document.getElementById('newCaseModal').style.display = 'none';
+}
+
+function createNewCase() {
+    const data = {
+        complainant_name: document.getElementById('newComplainantName').value,
+        complainant_phone: document.getElementById('newComplainantPhone').value,
+        case_type: document.getElementById('newCaseType').value,
+        received_at_location: document.getElementById('newReceivedAt').value,
+        initial_description: document.getElementById('newDescription').value,
+        subject_name: document.getElementById('newSubjectName').value,
+    };
+
+    if (!data.complainant_name || !data.case_type || !data.initial_description) {
+        alert('Fill required fields');
+        return;
+    }
+
+    fetch('/cases/create/', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value},
+        body: JSON.stringify(data)
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (d.success) {
+            alert(d.message);
+            closeNewCaseModal();
+            location.reload();
+        } else alert('Error: ' + d.error);
+    });
+}
+
+function saveUpdate() {
+    const note = document.getElementById('updateNote').value.trim();
+    if (!note) {
+        alert('Add a note');
+        return;
+    }
+
+    fetch('/cases/update/', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value},
+        body: JSON.stringify({case_id: currentCaseId, action: 'add_note', note})
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (d.success) {
+            alert('✓ Updated');
+            closeCaseModal();
+            location.reload();
+        } else alert('Error: ' + d.error);
+    });
+}
+
+function printCaseRecord() {
+    window.print();
+}
+
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+        closeCaseModal();
+        closeNewCaseModal();
+    }
+});
+</script>
+
+{% endblock %}

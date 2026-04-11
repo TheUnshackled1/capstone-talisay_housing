@@ -23,4 +23,11 @@ urlpatterns = [
     path('housing-units/', views.housing_units_monitoring, name='housing_units_monitoring'),
     path('housing-units/<uuid:unit_id>/details/', views.get_unit_details, name='get_unit_details'),
     path('housing-units/issue-notice/', views.issue_compliance_notice, name='issue_compliance_notice'),
+
+    # Case Management (Module 5)
+    path('cases/', views.case_management, name='case_management'),
+    path('cases/<uuid:case_id>/details/', views.get_case_details, name='get_case_details'),
+    path('cases/create/', views.create_case, name='create_case'),
+    path('cases/update/', views.update_case, name='update_case'),
 ]
+

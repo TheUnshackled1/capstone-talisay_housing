@@ -1,793 +1,315 @@
 {% extends 'staff_base.html' %}
 {% load static %}
 
-{% block nav_documents %}active{% endblock %}
-
-{% block title %}Document Management | THA Staff Portal{% endblock %}
-
-{% block page_title %}Document Management{% endblock %}
-{% block page_description %}<p style="color: #64748b; font-size: 0.875rem; margin: 0.25rem 0 0 0;">Module 3 — Complete document history per applicant · Physical documents remain official hard copy</p>{% endblock %}
-
-{% block extra_css %}
-<style>
-    /* ========================================
-       UTILITY CLASSES (Tailwind-inspired)
-       ======================================== */
-
-    /* Spacing Utilities */
-    .p-6 { padding: 1.5rem; }
-    .p-3 { padding: 0.75rem; }
-    .px-2 { padding-left: 0.5rem; padding-right: 0.5rem; }
-    .px-3 { padding-left: 0.75rem; padding-right: 0.75rem; }
-    .px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
-    .py-0\.5 { padding-top: 0.125rem; padding-bottom: 0.125rem; }
-    .py-1\.5 { padding-top: 0.375rem; padding-bottom: 0.375rem; }
-    .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
-    .py-4 { padding-top: 1rem; padding-bottom: 1rem; }
-    .py-8 { padding-top: 2rem; padding-bottom: 2rem; }
-
-    .m-0 { margin: 0; }
-    .mx-auto { margin: 0 auto; }
-    .mb-3 { margin-bottom: 0.75rem; }
-    .mt-0\.5 { margin-top: 0.125rem; }
-    .mt-1 { margin-top: 0.25rem; }
-    .mt-2 { margin-top: 0.5rem; }
-
-    .gap-2 { gap: 0.5rem; }
-    .gap-4 { gap: 1rem; }
-    .space-y-2 > * + * { margin-top: 0.5rem; }
-    .space-y-3 > * + * { margin-top: 0.75rem; }
-    .space-y-5 > * + * { margin-top: 1.25rem; }
-    .space-y-6 > * + * { margin-top: 1.5rem; }
-
-    /* Layout Utilities */
-    .flex { display: flex; }
-    .flex-1 { flex: 1; }
-    .flex-wrap { flex-wrap: wrap; }
-    .flex-shrink-0 { flex-shrink: 0; }
-    .items-center { align-items: center; }
-    .items-start { align-items: flex-start; }
-    .justify-between { justify-content: space-between; }
-    .w-full { width: 100%; }
-    .relative { position: relative; }
-    .absolute { position: absolute; }
-    .top-1\/2 { top: 50%; }
-    .left-3 { left: 0.75rem; }
-    .whitespace-nowrap { white-space: nowrap; }
-    .overflow-hidden { overflow: hidden; }
-    .min-h-\[400px\] { min-height: 400px; }
-
-    /* Typography */
-    .text-xs { font-size: 0.75rem; line-height: 1rem; }
-    .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
-    .text-base { font-size: 1rem; line-height: 1.5rem; }
-    .font-medium { font-weight: 500; }
-    .font-600 { font-weight: 600; }
-
-    h1 {
-        font-size: 1.5rem;
-        font-weight: 600;
-        margin: 0;
-        color: #0f172a;
-    }
-
-    h2 {
-        font-size: 1.125rem;
-        font-weight: 600;
-        margin: 0;
-        color: #0f172a;
-    }
-
-    p { margin: 0; }
-
-    /* ========================================
-       COLOR PALETTE (from Housing Services)
-       ======================================== */
-
-    /* Slate Colors (primary text/UI) */
-    .text-slate-900 { color: #0f172a; }
-    .text-slate-800 { color: #1e293b; }
-    .text-slate-700 { color: #334155; }
-    .text-slate-600 { color: #475569; }
-    .text-slate-500 { color: #64748b; }
-    .text-slate-400 { color: #cbd5e1; }
-
-    /* Background Slate */
-    .bg-white { background-color: #ffffff; }
-    .bg-slate-50 { background-color: #f8fafc; }
-    .bg-slate-100 { background-color: #f1f5f9; }
-
-    /* Status Colors */
-    .text-green-600 { color: #16a34a; }
-    .text-red-500 { color: #ef4444; }
-    .text-blue-600 { color: #2563eb; }
-    .text-blue-700 { color: #1d4ed8; }
-    .text-teal-600 { color: #0d9488; }
-    .text-white { color: #ffffff; }
-
-    /* Background Status */
-    .bg-blue-50 { background-color: #eff6ff; }
-    .bg-blue-100 { background-color: #dbeafe; }
-    .bg-blue-600 { background-color: #2563eb; }
-    .bg-blue-700 { background-color: #1d4ed8; }
-    .bg-green-50 { background-color: #f0fdf4; }
-    .bg-green-100 { background-color: #dcfce7; }
-    .bg-green-500 { background-color: #22c55e; }
-    .bg-amber-500 { background-color: #f59e0b; }
-    .bg-teal-100 { background-color: #ccfbf1; }
-    .bg-purple-100 { background-color: #f3e8ff; }
-
-    /* ========================================
-       BORDER & SIZING
-       ======================================== */
-
-    .border { border: 1px solid #e2e8f0; }
-    .border-b { border-bottom: 1px solid #e2e8f0; }
-    .border-slate-200 { border-color: #e2e8f0; }
-    .border-blue-400 { border-color: #60a5fa; }
-    .border-green-200 { border-color: #bbf7d0; }
-
-    .rounded-lg { border-radius: 0.5rem; }
-    .rounded-xl { border-radius: 0.75rem; }
-    .rounded-full { border-radius: 9999px; }
-
-    .shadow-sm { box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); }
-    .transition-all { transition: all 150ms; }
-
-    /* ========================================
-       DOCUMENT MANAGEMENT SPECIFIC
-       ======================================== */
-
-    /* Document Grid Layout */
-    .doc-grid {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 1rem;
-    }
-
-    @media (min-width: 1024px) {
-        .doc-grid {
-            grid-template-columns: 320px 1fr;
-        }
-    }
-
-    /* Search Input */
-    .doc-search-input {
-        display: block;
-        width: 100%;
-        padding: 0.5rem 0.75rem 0.5rem 2rem;
-        border: 1px solid #e2e8f0;
-        border-radius: 0.5rem;
-        font-size: 0.75rem;
-        background: white;
-        color: #0f172a;
-        transition: all 150ms;
-    }
-
-    .doc-search-input::placeholder {
-        color: #cbd5e1;
-    }
-
-    .doc-search-input:focus {
-        outline: none;
-        border-color: #2563eb;
-        background: #f8fafc;
-    }
-
-    /* Applicant Button */
-    .doc-applicant-btn {
-        width: 100%;
-        text-align: left;
-        padding: 1rem;
-        border: 1px solid #e2e8f0;
-        border-radius: 0.75rem;
-        background: white;
-        cursor: pointer;
-        transition: all 150ms;
-        color: #334155;
-    }
-
-    .doc-applicant-btn:hover {
-        background: #f8fafc;
-        border-color: #cbd5e1;
-    }
-
-    .doc-applicant-btn.active {
-        border-color: #2563eb;
-        background: #eff6ff;
-        color: #0f172a;
-        font-weight: 500;
-    }
-
-    /* Progress Bar */
-    .doc-progress-bar {
-        height: 0.375rem;
-        background: #e2e8f0;
-        border-radius: 9999px;
-        overflow: hidden;
-        margin-top: 0.5rem;
-    }
-
-    .doc-progress-fill {
-        height: 100%;
-        border-radius: 9999px;
-        transition: width 300ms ease-out;
-    }
-
-    .doc-progress-fill.bg-green-500 { background-color: #22c55e; }
-    .doc-progress-fill.bg-blue-500 { background-color: #3b82f6; }
-    .doc-progress-fill.bg-amber-500 { background-color: #f59e0b; }
-
-    /* Filter Buttons */
-    .filter-btn {
-        padding: 0.375rem 1rem;
-        border: 1px solid #e2e8f0;
-        border-radius: 0.5rem;
-        background: white;
-        color: #475569;
-        font-size: 0.75rem;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 150ms;
-    }
-
-    .filter-btn:hover {
-        background: #f8fafc;
-        border-color: #cbd5e1;
-    }
-
-    .filter-btn.active {
-        border-color: #2563eb;
-        background-color: #eff6ff;
-        color: #1d4ed8;
-        font-weight: 600;
-    }
-
-    /* Document Item */
-    .doc-item {
-        padding: 1rem;
-        border: 1px solid #e2e8f0;
-        border-radius: 0.5rem;
-        background: white;
-        transition: all 150ms;
-    }
-
-    .doc-item:hover {
-        border-color: #cbd5e1;
-        background: #f8fafc;
-    }
-
-    .doc-item.uploaded {
-        border-color: #bbf7d0;
-        background-color: #f0fdf4;
-    }
-
-    /* File Input */
-    .file-input-wrapper {
-        position: relative;
-        overflow: hidden;
-        display: inline-block;
-    }
-
-    .file-input-wrapper input[type=file] {
-        position: absolute;
-        left: -9999px;
-    }
-
-    /* Upload Status */
-    .upload-status {
-        font-size: 0.75rem;
-        margin-top: 0.25rem;
-        padding: 0.25rem 0.5rem;
-        border-radius: 0.25rem;
-        display: inline-block;
-    }
-
-    .upload-status.success {
-        background-color: #dcfce7;
-        color: #166534;
-    }
-
-    .upload-status.error {
-        background-color: #fee2e2;
-        color: #991b1b;
-    }
-
-    .upload-status.loading {
-        background-color: #fef3c7;
-        color: #92400e;
-    }
-
-    /* ========================================
-       BUTTON STYLES
-       ======================================== */
-
-    .btn-primary {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.375rem;
-        padding: 0.375rem 0.75rem;
-        font-size: 0.75rem;
-        font-weight: 500;
-        border-radius: 0.5rem;
-        border: none;
-        background: #2563eb;
-        color: white;
-        cursor: pointer;
-        transition: all 150ms;
-    }
-
-    .btn-primary:hover {
-        background: #1d4ed8;
-    }
-
-    .btn-secondary {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.375rem;
-        padding: 0.375rem 0.75rem;
-        font-size: 0.75rem;
-        font-weight: 500;
-        border-radius: 0.5rem;
-        border: 1px solid #e2e8f0;
-        background: white;
-        color: #475569;
-        cursor: pointer;
-        transition: all 150ms;
-    }
-
-    .btn-secondary:hover {
-        background: #f8fafc;
-        border-color: #cbd5e1;
-    }
-
-    /* ========================================
-       DOCUMENT DETAIL PANEL
-       ======================================== */
-
-    .doc-detail-panel {
-        background: white;
-        border: 1px solid #e2e8f0;
-        border-radius: 0.75rem;
-        box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-        overflow: hidden;
-    }
-
-    .doc-detail-header {
-        padding: 1rem 1.5rem;
-        border-bottom: 1px solid #e2e8f0;
-        background: #f8fafc;
-    }
-
-    .doc-detail-content {
-        padding: 1.5rem;
-    }
-
-    .doc-group {
-        margin-bottom: 1.5rem;
-    }
-
-    .doc-group:last-child {
-        margin-bottom: 0;
-    }
-
-    .doc-group-label {
-        font-size: 0.75rem;
-        padding: 0.375rem 0.75rem;
-        border-radius: 9999px;
-        display: inline-block;
-        margin-bottom: 0.75rem;
-    }
-
-    .doc-group-label.group-a {
-        background-color: #dbeafe;
-        color: #1d4ed8;
-    }
-
-    .doc-group-label.group-b {
-        background-color: #ccfbf1;
-        color: #0d9488;
-    }
-
-    .doc-group-label.group-c {
-        background-color: #f3e8ff;
-        color: #7e22ce;
-    }
-</style>
-{% endblock %}
+{% block title %}Document Management - THA{% endblock %}
 
 {% block content %}
-<div class="p-6 space-y-5">
-    <!-- Filters: Group & Status -->
-    <div class="space-y-4">
-        <!-- Group Filter -->
-        <div>
-            <p class="text-xs text-slate-600 font-medium mb-2">Filter by Document Group</p>
-            <div class="flex flex-wrap gap-2">
-                <button class="filter-btn active" data-filter="all">
-                    All Groups
-                </button>
-                <button class="filter-btn" data-filter="A">
-                    Group A
-                </button>
-                <button class="filter-btn" data-filter="B">
-                    Group B
-                </button>
-                <button class="filter-btn" data-filter="C">
-                    Group C
-                </button>
-            </div>
+{% csrf_token %}
+
+<!-- Page Header -->
+<div style="padding: 1.5rem; background: white; border-bottom: 1px solid var(--gray-200); display: flex; justify-content: space-between; align-items: baseline; gap: 2rem;">
+    <div>
+        <h1 style="margin: 0 0 0.5rem; font-size: 1.75rem; font-weight: 700; color: var(--gray-900);">Document Management</h1>
+        <p style="margin: 0; font-size: 0.875rem; color: var(--gray-600);">Module 3 — Complete document history per applicant · Physical documents remain official hard copy</p>
+    </div>
+    <button onclick="openUploadModal()" style="padding: 0.625rem 1.25rem; background: var(--primary-600); color: white; border: none; border-radius: 8px; font-size: 0.875rem; font-weight: 600; cursor: pointer; white-space: nowrap;">
+        ⬆️ Upload Document
+    </button>
+</div>
+
+<!-- Main Container -->
+<div style="padding: 2rem 1.5rem; background: #f9fafb; min-height: 100vh;">
+    <!-- Stats Cards -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+        <div style="background: #eff6ff; border: 2px solid #bfdbfe; border-radius: 12px; padding: 1.5rem; text-align: center;">
+            <div style="font-size: 2.5rem; font-weight: 700; color: #2563eb; margin-bottom: 0.5rem;">{{ total_documents }}</div>
+            <div style="font-size: 0.875rem; color: var(--gray-600); font-weight: 500;">Total Documents</div>
         </div>
 
-        <!-- Status Filter -->
-        <div>
-            <p class="text-xs text-slate-600 font-medium mb-2">Filter by Applicant Status</p>
-            <select id="statusFilter" class="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white text-xs text-slate-700 cursor-pointer transition-all focus:outline-none focus:border-blue-400">
-                {% for status_code, status_label in applicant_statuses %}
-                <option value="{{ status_code }}" {% if status_code == status_filter %}selected{% endif %}>{{ status_label }}</option>
-                {% endfor %}
-            </select>
+        <div style="background: #fef3c7; border: 2px solid #fde68a; border-radius: 12px; padding: 1.5rem; text-align: center;">
+            <div style="font-size: 2.5rem; font-weight: 700; color: #d97706; margin-bottom: 0.5rem;">{{ total_applicants }}</div>
+            <div style="font-size: 0.875rem; color: var(--gray-600); font-weight: 500;">Applicants</div>
+        </div>
+
+        <div style="background: #dcfce7; border: 2px solid #bbf7d0; border-radius: 12px; padding: 1.5rem; text-align: center;">
+            <div style="font-size: 2.5rem; font-weight: 700; color: #16a34a; margin-bottom: 0.5rem;">{{ total_size_gb|default:"0" }}</div>
+            <div style="font-size: 0.875rem; color: var(--gray-600); font-weight: 500;">Storage (GB)</div>
         </div>
     </div>
 
-    <!-- Two-Column Layout -->
-    <div class="doc-grid">
-        <!-- Left: Applicants List -->
-        <div class="flex-shrink-0 space-y-3">
-            <!-- Search -->
-            <div class="relative">
-                <svg style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); width: 0.875rem; height: 0.875rem; color: #cbd5e1;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="11" cy="11" r="8"></circle>
-                    <path d="m21 21-4.35-4.35"></path>
-                </svg>
-                <input
-                    id="searchInput"
-                    class="doc-search-input"
-                    type="text"
-                    placeholder="Search by name, ref. no., or block/lot..."
-                    value="{{ search_query }}"
-                />
+    <!-- Search & Filter -->
+    <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; align-items: center; flex-wrap: wrap;">
+        <div style="position: relative; flex: 1; min-width: 250px;">
+            <svg style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--gray-400); pointer-events: none;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.35-4.35"></path>
+            </svg>
+            <input type="text" id="searchInput" placeholder="Search by applicant name or document type..." style="width: 100%; padding: 0.75rem 0.75rem 0.75rem 2.5rem; border: 1px solid var(--gray-300); border-radius: 8px; font-size: 0.875rem;">
+        </div>
+
+        <select id="typeFilter" style="padding: 0.75rem; border: 1px solid var(--gray-300); border-radius: 8px; font-size: 0.875rem; background: white; cursor: pointer;">
+            <option value="all">All Types</option>
+            <optgroup label="Applicant Requirements">
+                <option value="barangay_residency">Barangay Certificate of Residency</option>
+                <option value="barangay_indigency">Barangay Certificate of Indigency</option>
+                <option value="cedula">Cedula (Community Tax Certificate)</option>
+                <option value="police_clearance">Police Clearance</option>
+                <option value="no_property">Certificate of No Property</option>
+                <option value="photo_2x2">2x2 Picture</option>
+                <option value="house_sketch">Sketch of House Location</option>
+            </optgroup>
+            <optgroup label="Office-Generated">
+                <option value="application_form">Application Form</option>
+                <option value="notarized_docs">Notarized Documents</option>
+                <option value="engineering_assessment">Engineering Assessment</option>
+                <option value="signed_application">Signed Application (Head-Approved)</option>
+            </optgroup>
+            <optgroup label="Post-Award">
+                <option value="lot_award">Lot Award Document</option>
+                <option value="electricity_app">Electricity Connection Application</option>
+                <option value="cdrrmo_cert">CDRRMO Certification</option>
+                <option value="explanation_letter">Explanation Letter</option>
+            </optgroup>
+        </select>
+    </div>
+
+    <!-- Documents List -->
+    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+        {% for doc in documents %}
+        <div class="doc-item" data-type="{{ doc.document_type }}" style="background: white; border-left: 4px solid #3b82f6; padding: 1rem 1.25rem; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; gap: 1rem; line-height: 1.4; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <div style="flex: 1; min-width: 0;">
+                <!-- Left Section -->
+                <div style="display: flex; gap: 0.75rem; align-items: flex-start; margin-bottom: 0.5rem;">
+                    <!-- File Icon -->
+                    <span style="font-size: 1.5rem; flex-shrink: 0;">
+                        {% if doc.mime_type|upper contains 'PDF' %}📄{% elif doc.mime_type|upper contains 'IMAGE' %}🖼️{% elif doc.mime_type|upper contains 'WORD' %}📝{% elif doc.mime_type|upper contains 'SHEET' %}📊{% else %}📎{% endif %}
+                    </span>
+
+                    <!-- Document Info -->
+                    <div style="flex: 1; min-width: 0;">
+                        <!-- File Name & Type -->
+                        <p style="margin: 0 0 0.25rem; font-size: 0.95rem; font-weight: 600; color: var(--gray-900); word-break: break-word;">{{ doc.file_name }}</p>
+
+                        <!-- Type Label -->
+                        <span style="display: inline-flex; padding: 0.2rem 0.5rem; background: #dbeafe; color: #1e40af; border-radius: 4px; font-size: 0.7rem; font-weight: 600; margin-bottom: 0.5rem;">
+                            {{ doc.get_document_type_display }}
+                        </span>
+
+                        <!-- Applicant & Meta -->
+                        <p style="margin: 0; font-size: 0.8rem; color: var(--gray-600);">
+                            <strong>{{ doc.applicant.full_name }}</strong> ·
+                            {% if doc.title %}{{ doc.title }} · {% endif %}
+                            {{ doc.file_size_display }} ·
+                            Uploaded {{ doc.uploaded_at|date:"M d, Y" }}
+                        </p>
+                    </div>
+                </div>
             </div>
 
-            <!-- Applicants List -->
-            <div id="applicantsList" class="space-y-1.5">
-                {% for applicant in applicants %}
-                <button
-                    class="doc-applicant-btn"
-                    data-applicant-id="{{ applicant.id }}"
-                    data-full-name="{{ applicant.full_name }}"
-                    data-reference="{{ applicant.reference_number }}"
-                    data-barangay="{{ applicant.barangay }}"
-                    data-status="{{ applicant.status }}"
-                    {% if applicant.lot_assignment %}
-                    data-block="{{ applicant.lot_assignment.block }}"
-                    data-lot="{{ applicant.lot_assignment.lot }}"
-                    {% endif %}
-                >
-                    <div class="flex items-center justify-between gap-2">
-                        <div style="min-width: 0; flex: 1;">
-                            <p class="text-xs font-medium text-slate-800" style="margin: 0;">{{ applicant.full_name }}</p>
-                            <p class="text-xs text-slate-500 mt-0.5" style="margin: 0; font-family: monospace;">{{ applicant.reference_number }}</p>
-                            {% if applicant.lot_assignment %}
-                            <p class="text-xs text-teal-600 mt-0.5" style="margin: 0;">Block {{ applicant.lot_assignment.block }}, Lot {{ applicant.lot_assignment.lot }}</p>
-                            {% endif %}
-                        </div>
-                        <span class="text-xs text-slate-500 whitespace-nowrap mt-0.5" style="font-weight: 500;">{{ applicant.doc_count }}/{{ applicant.total_docs }}</span>
-                    </div>
-                    <div class="doc-progress-bar">
-                        <div class="doc-progress-fill" style="width: {{ applicant.doc_percentage }}%; background: {% if applicant.doc_percentage == 100 %}#22c55e{% elif applicant.doc_percentage > 50 %}#2563eb{% else %}#f59e0b{% endif %};"></div>
-                    </div>
+            <!-- Right Section (Buttons) -->
+            <div style="display: flex; gap: 0.5rem; flex-shrink: 0;">
+                <a href="{{ doc.file.url }}" target="_blank" style="padding: 0.4rem 0.75rem; background: var(--primary-600); color: white; border: none; border-radius: 6px; font-size: 0.75rem; cursor: pointer; text-decoration: none; font-weight: 600;">
+                    📥 Download
+                </a>
+                <button onclick="deleteDocument('{{ doc.id }}')" style="padding: 0.4rem 0.75rem; background: var(--red-100); color: var(--red-700); border: none; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-weight: 600;">
+                    🗑️ Delete
                 </button>
-                {% empty %}
-                <div style="padding: 2rem 0; text-align: center; color: #cbd5e1;">
-                    <p class="text-sm">No applicants found</p>
-                </div>
-                {% endfor %}
             </div>
         </div>
+        {% empty %}
+        <div style="text-align: center; padding: 3rem 2rem; background: white; border-radius: 12px;">
+            <div style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;">📂</div>
+            <p style="font-size: 1rem; color: var(--gray-600); margin: 0;">No documents found</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
 
-        <!-- Right: Document Details -->
-        <div id="detailsPanel" class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden" style="display: none;">
-            <!-- Header -->
-            <div class="px-6 py-4 border-b bg-slate-50 flex items-start justify-between">
-                <div>
-                    <h2 class="text-slate-900" id="selectedName" style="margin: 0; font-size: 1rem; font-weight: 600;"></h2>
-                    <p class="text-xs text-slate-500 mt-0.5" id="selectedInfo" style="margin: 0;"></p>
-                </div>
-            </div>
+<!-- Upload Document Modal -->
+<div id="uploadModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 1rem;" onclick="closeUploadModal(event)">
+    <div onclick="event.stopPropagation();" style="background: white; border-radius: 16px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto; display: flex; flex-direction: column;">
+        <!-- Modal Header -->
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 1.5rem; border-bottom: 1px solid var(--gray-200);">
+            <h2 style="margin: 0; font-size: 1.25rem; font-weight: 600;">Upload Document</h2>
+            <button onclick="closeUploadModal()" style="padding: 0; background: transparent; border: none; color: var(--gray-500); font-size: 1.5rem; cursor: pointer;">✕</button>
+        </div>
 
-            <!-- Document Groups -->
-            <div class="p-6 space-y-6" id="docGroupsContainer">
-                {% for group_key, group_data in doc_groups.items %}
-                <div class="doc-group" data-group="{{ group_key }}">
-                    <div class="flex items-center gap-2 mb-3">
-                        <span class="text-xs px-3 py-1.5 rounded-full {{ group_data.color_bg }} {{ group_data.color_text }}" style="font-weight: 500;">{{ group_data.label }}</span>
-                    </div>
-                    <div class="space-y-2">
-                        {% for doc_key, doc_label in group_data.documents %}
-                        <div class="doc-item flex items-center justify-between" data-doc-type="{{ doc_key }}">
-                            <div class="flex items-start gap-3" style="flex: 1; min-width: 0;">
-                                <svg class="doc-icon" style="width: 1rem; height: 1rem; color: #cbd5e1; flex-shrink: 0; margin-top: 0.125rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <circle cx="12" cy="12" r="10"></circle>
-                                    <polyline points="8 12 11 15 16 10"></polyline>
-                                </svg>
-                                <div style="min-width: 0; flex: 1;">
-                                    <p class="text-xs text-slate-700 font-medium" style="margin: 0;">{{ doc_label }}</p>
-                                    <p class="text-xs text-red-500 mt-0.5 upload-msg" style="margin: 0;">Not uploaded</p>
-                                    <div class="upload-status" style="display: none;"></div>
-                                </div>
-                            </div>
-                            <div class="flex items-center gap-2" style="flex-shrink: 0; margin-left: 1rem;">
-                                <button class="file-upload-btn px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-600 hover:bg-slate-50 transition-all" style="cursor: pointer; font-weight: 500;" data-doc-type="{{ doc_key }}">
-                                    <svg style="display: inline; width: 0.75rem; height: 0.75rem; margin-right: 0.25rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                        <polyline points="17 8 12 3 7 8"></polyline>
-                                        <line x1="12" y1="3" x2="12" y2="15"></line>
-                                    </svg>
-                                    Upload
-                                </button>
-                                <button class="mark-present-btn px-3 py-1.5 rounded-lg bg-blue-600 text-xs text-white hover:bg-blue-700 transition-all" style="cursor: pointer; display: none; font-weight: 500;" data-doc-type="{{ doc_key }}">
-                                    <svg style="display: inline; width: 0.75rem; height: 0.75rem; margin-right: 0.25rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <polyline points="20 6 9 17 4 12"></polyline>
-                                    </svg>
-                                    Mark Present
-                                </button>
-                            </div>
-                        </div>
+        <!-- Modal Body -->
+        <div style="flex: 1; padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; overflow-y: auto;">
+            <form id="uploadForm" enctype="multipart/form-data" method="POST" style="display: flex; flex-direction: column; gap: 1rem;">
+                {% csrf_token %}
+
+                <!-- Applicant Selection -->
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <label style="font-size: 0.75rem; font-weight: 600; color: var(--gray-700); text-transform: uppercase;">Select Applicant *</label>
+                    <input type="text" id="applicantSearch" placeholder="Search applicant..." style="padding: 0.625rem; border: 1px solid var(--gray-300); border-radius: 8px; font-size: 0.875rem;">
+                    <select id="applicantSelect" name="applicant" required style="padding: 0.625rem; border: 1px solid var(--gray-300); border-radius: 8px; font-size: 0.875rem;">
+                        <option value="">— Select Applicant —</option>
+                        {% for applicant in applicants %}
+                        <option value="{{ applicant.id }}">{{ applicant.full_name }}</option>
                         {% endfor %}
-                    </div>
+                    </select>
                 </div>
-                {% endfor %}
+
+                <!-- Document Type -->
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <label style="font-size: 0.75rem; font-weight: 600; color: var(--gray-700); text-transform: uppercase;">Document Type *</label>
+                    <select name="document_type" required style="padding: 0.625rem; border: 1px solid var(--gray-300); border-radius: 8px; font-size: 0.875rem;">
+                        <option value="">— Select Type —</option>
+                        <optgroup label="Applicant Requirements">
+                            <option value="barangay_residency">Barangay Certificate of Residency</option>
+                            <option value="barangay_indigency">Barangay Certificate of Indigency</option>
+                            <option value="cedula">Cedula (Community Tax Certificate)</option>
+                            <option value="police_clearance">Police Clearance</option>
+                            <option value="no_property">Certificate of No Property</option>
+                            <option value="photo_2x2">2x2 Picture</option>
+                            <option value="house_sketch">Sketch of House Location</option>
+                        </optgroup>
+                        <optgroup label="Office-Generated">
+                            <option value="application_form">Application Form</option>
+                            <option value="notarized_docs">Notarized Documents</option>
+                            <option value="engineering_assessment">Engineering Assessment</option>
+                            <option value="signed_application">Signed Application (Head-Approved)</option>
+                        </optgroup>
+                        <optgroup label="Post-Award">
+                            <option value="lot_award">Lot Award Document</option>
+                            <option value="electricity_app">Electricity Connection Application</option>
+                            <option value="cdrrmo_cert">CDRRMO Certification</option>
+                            <option value="explanation_letter">Explanation Letter</option>
+                        </optgroup>
+                    </select>
+                </div>
+
+                <!-- Title (Optional) -->
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <label style="font-size: 0.75rem; font-weight: 600; color: var(--gray-700); text-transform: uppercase;">Title (Optional)</label>
+                    <input type="text" name="title" placeholder="e.g., Certified Copy, Original" style="padding: 0.625rem; border: 1px solid var(--gray-300); border-radius: 8px; font-size: 0.875rem;">
+                </div>
+
+                <!-- File Upload -->
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <label style="font-size: 0.75rem; font-weight: 600; color: var(--gray-700); text-transform: uppercase;">Upload File *</label>
+                    <div style="border: 2px dashed var(--gray-300); border-radius: 8px; padding: 2rem; text-align: center; cursor: pointer; transition: all 150ms ease; background: var(--gray-50);">
+                        <input type="file" id="fileInput" name="file" required style="display: none;">
+                        <div onclick="document.getElementById('fileInput').click()">
+                            <div style="font-size: 2rem; margin-bottom: 0.5rem;">📤</div>
+                            <p style="margin: 0 0 0.5rem; font-size: 0.9rem; font-weight: 500; color: var(--gray-900);">Click to upload or drag & drop</p>
+                            <p style="margin: 0; font-size: 0.75rem; color: var(--gray-600);">PDF, Images, Word, Excel (max 10MB)</p>
+                        </div>
+                    </div>
+                    <p id="fileName" style="margin: 0.5rem 0 0; font-size: 0.8rem; color: var(--gray-600);"></p>
+                </div>
+
+                <!-- Notes (Optional) -->
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <label style="font-size: 0.75rem; font-weight: 600; color: var(--gray-700); text-transform: uppercase;">Notes (Optional)</label>
+                    <textarea name="notes" placeholder="Additional notes about this document..." style="padding: 0.625rem; border: 1px solid var(--gray-300); border-radius: 8px; font-size: 0.875rem; resize: vertical; min-height: 80px;"></textarea>
+                </div>
+            </form>
+
+            <!-- Info Box -->
+            <div style="background: #dbeafe; border: 1px solid #93c5fd; border-radius: 8px; padding: 0.75rem;">
+                <p style="font-size: 0.75rem; color: #1e40af; margin: 0; line-height: 1.4;">Physical documents remain the official hard copy. This digital archive is for reference and tracking only.</p>
             </div>
         </div>
 
-        <!-- Empty State -->
-        <div id="emptyState" class="flex-1 bg-white rounded-xl border border-slate-200 shadow-sm flex items-center justify-center" style="min-height: 400px;">
-            <div class="text-center" style="color: #cbd5e1;">
-                <svg style="width: 3rem; height: 3rem; margin: 0 auto 0.75rem; opacity: 0.3;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-                </svg>
-                <p class="text-sm">Select an applicant to view their documents</p>
-                <p class="text-xs mt-1">Search by name, reference number, or block/lot</p>
-            </div>
+        <!-- Modal Footer -->
+        <div style="padding: 1rem 1.5rem; border-top: 1px solid var(--gray-200); background: var(--gray-50); display: flex; gap: 0.75rem;">
+            <button onclick="submitUpload()" style="flex: 1; padding: 0.625rem 1rem; background: var(--primary-600); color: white; border: none; border-radius: 8px; font-size: 0.875rem; font-weight: 600; cursor: pointer;">⬆️ Upload</button>
+            <button onclick="closeUploadModal()" style="flex: 1; padding: 0.625rem 1rem; background: white; color: var(--gray-700); border: 1px solid var(--gray-300); border-radius: 8px; font-size: 0.875rem; font-weight: 600; cursor: pointer;">Cancel</button>
         </div>
     </div>
 </div>
 
-<!-- Hidden file inputs for each document type -->
-<input type="file" id="fileInputTemplate" style="display: none;">
-{% endblock %}
-
-{% block extra_js %}
+<!-- JavaScript -->
 <script>
-    const applicantButtons = document.querySelectorAll('.doc-applicant-btn');
-    const detailsPanel = document.getElementById('detailsPanel');
-    const emptyState = document.getElementById('emptyState');
-    const selectedName = document.getElementById('selectedName');
-    const selectedInfo = document.getElementById('selectedInfo');
-    const filterButtons = document.querySelectorAll('.filter-btn');
-    const searchInput = document.getElementById('searchInput');
-    const statusFilter = document.getElementById('statusFilter');
-    let selectedApplicantId = null;
+function openUploadModal() {
+    document.getElementById('uploadModal').style.display = 'flex';
+}
 
-    // Get CSRF token from cookie
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
+function closeUploadModal(e) {
+    if (e && e.target.id !== 'uploadModal') return;
+    document.getElementById('uploadModal').style.display = 'none';
+    document.getElementById('uploadForm').reset();
+    document.getElementById('fileName').textContent = '';
+}
+
+function submitUpload() {
+    const form = document.getElementById('uploadForm');
+    if (!form.checkValidity()) {
+        alert('Please fill in all required fields');
+        return;
+    }
+
+    const formData = new FormData(form);
+    fetch('/documents/api/upload/', {
+        method: 'POST',
+        body: formData,
+        headers: {'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value}
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (d.success) {
+            alert('✓ Document uploaded');
+            closeUploadModal();
+            location.reload();
+        } else {
+            alert('Error: ' + (d.error || 'Upload failed'));
         }
-        return cookieValue;
-    }
+    })
+    .catch(e => alert('Error: ' + e));
+}
 
-    const csrftoken = getCookie('csrftoken');
+function deleteDocument(docId) {
+    if (!confirm('Delete this document?')) return;
 
-    // Applicant selection handler
-    applicantButtons.forEach(btn => {
-        btn.addEventListener('click', function() {
-            applicantButtons.forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-
-            const fullName = this.dataset.fullName;
-            const reference = this.dataset.reference;
-            const block = this.dataset.block;
-            const lot = this.dataset.lot;
-
-            selectedApplicantId = this.dataset.applicantId;
-
-            selectedName.textContent = fullName;
-            let infoText = reference;
-            if (block && lot) {
-                infoText += ` · Block ${block}, Lot ${lot}`;
-            }
-            selectedInfo.textContent = infoText;
-
-            detailsPanel.style.display = 'block';
-            emptyState.style.display = 'none';
-
-            // Load existing documents
-            loadApplicantDocuments(selectedApplicantId);
-        });
+    fetch(`/documents/${docId}/delete/`, {
+        method: 'POST',
+        headers: {'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value}
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (d.success) {
+            alert('✓ Document deleted');
+            location.reload();
+        } else {
+            alert('Error: ' + (d.error || 'Delete failed'));
+        }
     });
+}
 
-    // Load applicant documents via AJAX
-    function loadApplicantDocuments(applicantId) {
-        fetch(`{% url 'documents:get_documents' %}?applicant_id=${applicantId}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    updateDocumentDisplay(data.documents);
-                }
-            })
-            .catch(error => console.error('Error loading documents:', error));
+// File input change
+document.getElementById('fileInput')?.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+        document.getElementById('fileName').textContent = `📎 ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
     }
+});
 
-    // Update document display based on loaded documents
-    function updateDocumentDisplay(documents) {
-        const docItems = document.querySelectorAll('.doc-item');
-        docItems.forEach(item => {
-            const docType = item.dataset.docType;
-            const hasDoc = documents[docType];
-            const uploadMsg = item.querySelector('.upload-msg');
-            const uploadStatus = item.querySelector('.upload-status');
-            const markPresentBtn = item.querySelector('.mark-present-btn');
-            const uploadBtn = item.querySelector('.file-upload-btn');
-
-            if (hasDoc) {
-                item.classList.add('uploaded');
-                uploadMsg.style.display = 'none';
-                uploadStatus.style.display = 'inline-block';
-                uploadStatus.textContent = `✓ ${hasDoc.file_name} (${hasDoc.file_size})`;
-                uploadStatus.className = 'upload-status success';
-                markPresentBtn.style.display = 'none';
-                uploadBtn.textContent = 'Replace';
-                uploadBtn.innerHTML = '<svg style="width: 0.75rem; height: 0.75rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg> Replace';
-            } else {
-                item.classList.remove('uploaded');
-                uploadMsg.style.display = 'block';
-                uploadMsg.textContent = 'Not uploaded';
-                uploadStatus.style.display = 'none';
-                markPresentBtn.style.display = 'inline-block';
-                uploadBtn.textContent = 'Upload';
-                uploadBtn.innerHTML = '<svg style="width: 0.75rem; height: 0.75rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg> Upload';
-            }
-        });
-    }
-
-    // File upload button handler
-    document.querySelectorAll('.file-upload-btn').forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            e.preventDefault();
-            const docType = this.dataset.docType;
-            const fileInput = document.createElement('input');
-            fileInput.type = 'file';
-            fileInput.accept = '.pdf,.jpg,.jpeg,.png,.doc,.docx';
-            fileInput.addEventListener('change', function(event) {
-                if (this.files.length > 0) {
-                    uploadDocument(selectedApplicantId, docType, this.files[0]);
-                }
-            });
-            fileInput.click();
-        });
+// Search functionality
+document.getElementById('searchInput').addEventListener('input', (e) => {
+    const query = e.target.value.toLowerCase();
+    document.querySelectorAll('.doc-item').forEach(item => {
+        const text = item.textContent.toLowerCase();
+        item.style.display = text.includes(query) ? 'flex' : 'none';
     });
+});
 
-    // Upload document via AJAX
-    function uploadDocument(applicantId, docType, file) {
-        const formData = new FormData();
-        formData.append('applicant_id', applicantId);
-        formData.append('doc_type', docType);
-        formData.append('file', file);
-
-        const docItem = document.querySelector(`.doc-item[data-doc-type="${docType}"]`);
-        const uploadStatus = docItem.querySelector('.upload-status');
-        const uploadMsg = docItem.querySelector('.upload-msg');
-
-        uploadStatus.className = 'upload-status loading';
-        uploadStatus.textContent = 'Uploading...';
-        uploadStatus.style.display = 'inline-block';
-        uploadMsg.style.display = 'none';
-
-        fetch('{% url "documents:upload" %}', {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': csrftoken,
-            },
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                uploadStatus.className = 'upload-status success';
-                uploadStatus.textContent = `✓ ${data.file_name} (${data.file_size})`;
-                docItem.classList.add('uploaded');
-                docItem.querySelector('.mark-present-btn').style.display = 'none';
-                docItem.querySelector('.file-upload-btn').textContent = 'Replace';
-            } else {
-                uploadStatus.className = 'upload-status error';
-                uploadStatus.textContent = `Error: ${data.error}`;
-            }
-        })
-        .catch(error => {
-            uploadStatus.className = 'upload-status error';
-            uploadStatus.textContent = 'Upload failed';
-            console.error('Upload error:', error);
-        });
-    }
-
-    // Mark document present handler
-    document.querySelectorAll('.mark-present-btn').forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            e.preventDefault();
-            const docType = this.dataset.docType;
-            markDocumentPresent(selectedApplicantId, docType);
-        });
+// Filter functionality
+document.getElementById('typeFilter').addEventListener('change', (e) => {
+    const type = e.target.value;
+    document.querySelectorAll('.doc-item').forEach(item => {
+        if (type === 'all' || item.dataset.type === type) {
+            item.style.display = 'flex';
+        } else {
+            item.style.display = 'none';
+        }
     });
+});
 
-    // Mark document present via AJAX
-    function markDocumentPresent(applicantId, docType) {
-        const formData = new FormData();
-        formData.append('applicant_id', applicantId);
-        formData.append('doc_type', docType);
-
-        const docItem = document.querySelector(`.doc-item[data-doc-type="${docType}"]`);
-        const uploadStatus = docItem.querySelector('.upload-status');
-        const uploadMsg = docItem.querySelector('.upload-msg');
-
-        uploadStatus.className = 'upload-status loading';
-        uploadStatus.textContent = 'Marking...';
-        uploadStatus.style.display = 'inline-block';
-        uploadMsg.style.display = 'none';
-
-        fetch('{% url "documents:mark_present" %}', {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': csrftoken,
-            },
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                uploadStatus.className = 'upload-status success';
-                uploadStatus.textContent = '✓ Verified by staff';
-                docItem.classList.add('uploaded');
-                docItem.querySelector('.mark-present-btn').style.display = 'none';
-            } else {
-                uploadStatus.className = 'upload-status error';
-                uploadStatus.textContent = `Error: ${data.error}`;
-            }
-        })
-        .catch(error => {
-            uploadStatus.className = 'upload-status error';
-            uploadStatus.textContent = 'Failed to mark';
-            console.error('Error:', error);
-        });
-    }
-
-    // Filter buttons
-    filterButtons.forEach(btn => {
-        btn.addEventListener('click', function() {
-            filterButtons.forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-        });
-    });
-
-    // Status filter
-    statusFilter.addEventListener('change', function() {
-        const url = new URL(window.location);
-        url.searchParams.set('status', this.value);
-        window.location = url.toString();
-    });
-
-    // Initialize with first applicant
-    if (applicantButtons.length > 0) {
-        applicantButtons[0].click();
-    }
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeUploadModal();
+});
 </script>
+
 {% endblock %}

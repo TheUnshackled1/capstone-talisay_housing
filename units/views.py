@@ -13,7 +13,7 @@ from intake.utils import send_sms
 from applications.models import Application
 from units.models import (
     HousingUnit, LotAward, RelocationSite, ComplianceNotice,
-    OccupancyReport, OccupancyReportDetail
+    OccupancyReport, OccupancyReportDetail, CaseRecord, CaseUpdate, WeeklyReport
 )
 
 
@@ -880,3 +880,324 @@ def issue_compliance_notice(request):
             'success': False,
             'error': str(e)
         }, status=500)
+
+
+# ===================================================================
+# CASE MANAGEMENT (Module 5 - Case Management Dashboard)
+# ===================================================================
+
+@login_required
+def case_management(request):
+    """
+    Case Management Dashboard
+    Displays all case records with search, filtering, and status tracking
+
+    Actors: All staff
+    Purpose: Track complaints, disputes, and case resolutions
+    """
+
+    # Get all cases
+    cases = (
+        CaseRecord.objects
+        .select_related('handled_by', 'created_by')
+        .prefetch_related('updates')
+        .order_by('-date_received')
+    )
+
+    # Count by status
+    open_count = cases.filter(status='Open').count()
+    referred_count = cases.filter(status='Referred').count()
+    resolved_count = cases.filter(status='Resolved').count()
+
+    # Search and filter
+    search_query = request.GET.get('q', '').strip()
+    filter_status = request.GET.get('status', 'all')
+    filter_type = request.GET.get('type', 'all')
+
+    if search_query:
+        cases = cases.filter(
+            models.Q(complainant_name__icontains=search_query) |
+            models.Q(case_number__icontains=search_query) |
+            models.Q(description__icontains=search_query)
+        )
+
+    if filter_status != 'all':
+        cases = cases.filter(status=filter_status)
+
+    if filter_type != 'all':
+        cases = cases.filter(complaint_type=filter_type)
+
+    context = {
+        'cases': cases,
+        'open_count': open_count,
+        'referred_count': referred_count,
+        'resolved_count': resolved_count,
+        'search_query': search_query,
+        'filter_status': filter_status,
+        'filter_type': filter_type,
+    }
+
+    return render(request, 'units/case_management.html', context)
+
+
+@login_required
+@require_http_methods(["GET"])
+def get_case_details(request, case_id):
+    """
+    AJAX endpoint to fetch case details for modal display
+    Returns JSON with case info, updates, and timeline
+    """
+    try:
+        case = CaseRecord.objects.prefetch_related('updates').get(id=case_id)
+
+        # Prepare updates list
+        updates = [
+            {
+                'notes': update.notes,
+                'updated_by': update.updated_by.get_full_name() if update.updated_by else 'Unknown',
+                'updated_at': update.updated_at.isoformat(),
+            }
+            for update in case.updates.all()
+        ]
+
+        return JsonResponse({
+            'success': True,
+            'case': {
+                'id': str(case.id),
+                'case_number': case.case_number,
+                'status': case.status,
+                'date_received': case.date_received.isoformat(),
+                'complainant_name': case.complainant_name,
+                'complainant_id': case.complainant_id or '',
+                'complaint_type': case.complaint_type,
+                'description': case.description,
+                'handled_by': case.handled_by.get_full_name() if case.handled_by else 'Unassigned',
+                'referred_to': case.referred_to or None,
+                'referral_date': case.referral_date.isoformat() if case.referral_date else None,
+                'outcome': case.outcome or '',
+                'resolved_date': case.resolved_date.isoformat() if case.resolved_date else None,
+                'updates': updates,
+            }
+        })
+
+    except CaseRecord.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'Case not found'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+@login_required
+@require_POST
+def create_case(request):
+    """
+    AJAX endpoint to create a new case record
+
+    POST data:
+    - complainant_name: str
+    - complainant_id: str (optional)
+    - complaint_type: 'Boundary Dispute' | 'Structural Issue' | 'Interpersonal Conflict' | 'Other'
+    - date_received: date string (YYYY-MM-DD)
+    - description: str
+    - handled_by_user_id: UUID (user to assign as handler)
+    """
+    try:
+        data = json.loads(request.body)
+
+        complainant_name = data.get('complainant_name', '').strip()
+        complainant_id = data.get('complainant_id', '').strip()
+        complaint_type = data.get('complaint_type', '').strip()
+        date_received = data.get('date_received', '').strip()
+        description = data.get('description', '').strip()
+        handled_by_user_id = data.get('handled_by_user_id')
+
+        # Validate required fields
+        if not all([complainant_name, complaint_type, date_received, description]):
+            return JsonResponse({
+                'success': False,
+                'error': 'Missing required fields'
+            }, status=400)
+
+        if complaint_type not in ['Boundary Dispute', 'Structural Issue', 'Interpersonal Conflict', 'Other']:
+            return JsonResponse({
+                'success': False,
+                'error': 'Invalid complaint type'
+            }, status=400)
+
+        # Get handler user
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        handled_by = None
+        if handled_by_user_id:
+            try:
+                handled_by = User.objects.get(id=handled_by_user_id)
+            except User.DoesNotExist:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Handler user not found'
+                }, status=404)
+
+        # Create case
+        case = CaseRecord.objects.create(
+            complainant_name=complainant_name,
+            complainant_id=complainant_id,
+            complaint_type=complaint_type,
+            date_received=date_received,
+            description=description,
+            handled_by=handled_by,
+            created_by=request.user,
+        )
+
+        return JsonResponse({
+            'success': True,
+            'message': f'✓ Case {case.case_number} created successfully',
+            'case': {
+                'id': str(case.id),
+                'case_number': case.case_number,
+                'complainant_name': case.complainant_name,
+            }
+        })
+
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'success': False,
+            'error': 'Invalid JSON'
+        }, status=400)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+@login_required
+@require_POST
+def update_case(request):
+    """
+    AJAX endpoint to update case status, add notes, or resolve
+
+    POST data:
+    - case_id: UUID
+    - action: 'add_note' | 'change_status' | 'refer' | 'resolve'
+    - notes: str (for add_note)
+    - new_status: 'Open' | 'Referred' | 'Resolved' (for change_status)
+    - referred_to: str (for refer)
+    - outcome: str (for resolve)
+    """
+    try:
+        data = json.loads(request.body)
+
+        case_id = data.get('case_id')
+        action = data.get('action', '').strip()
+
+        # Get case
+        case = CaseRecord.objects.get(id=case_id)
+
+        if action == 'add_note':
+            notes = data.get('notes', '').strip()
+            if not notes:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Notes cannot be empty'
+                }, status=400)
+
+            # Create case update
+            CaseUpdate.objects.create(
+                case=case,
+                notes=notes,
+                updated_by=request.user,
+            )
+
+            return JsonResponse({
+                'success': True,
+                'message': '✓ Note added to case',
+                'case_number': case.case_number,
+            })
+
+        elif action == 'change_status':
+            new_status = data.get('new_status', '').strip()
+            if new_status not in ['Open', 'Referred', 'Resolved']:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Invalid status'
+                }, status=400)
+
+            case.status = new_status
+            case.save()
+
+            return JsonResponse({
+                'success': True,
+                'message': f'✓ Case status changed to {new_status}',
+                'case_number': case.case_number,
+                'new_status': new_status,
+            })
+
+        elif action == 'refer':
+            referred_to = data.get('referred_to', '').strip()
+            if not referred_to:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Referral target required'
+                }, status=400)
+
+            case.referred_to = referred_to
+            case.referral_date = timezone.now().date()
+            case.status = 'Referred'
+            case.save()
+
+            return JsonResponse({
+                'success': True,
+                'message': f'✓ Case referred to {referred_to}',
+                'case_number': case.case_number,
+                'new_status': 'Referred',
+            })
+
+        elif action == 'resolve':
+            outcome = data.get('outcome', '').strip()
+            if not outcome:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Outcome/resolution required'
+                }, status=400)
+
+            case.status = 'Resolved'
+            case.outcome = outcome
+            case.resolved_date = timezone.now().date()
+            case.save()
+
+            return JsonResponse({
+                'success': True,
+                'message': '✓ Case resolved and closed',
+                'case_number': case.case_number,
+                'new_status': 'Resolved',
+            })
+
+        else:
+            return JsonResponse({
+                'success': False,
+                'error': 'Invalid action'
+            }, status=400)
+
+    except CaseRecord.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'Case not found'
+        }, status=404)
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'success': False,
+            'error': 'Invalid JSON'
+        }, status=400)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+from django.db import models

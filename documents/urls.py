@@ -8,4 +8,5 @@ urlpatterns = [
     path('api/upload/', views.upload_document, name='upload'),
     path('api/mark-present/', views.mark_document_present, name='mark_present'),
     path('api/applicant-documents/', views.get_applicant_documents, name='get_documents'),
+    path('<uuid:doc_id>/delete/', views.delete_document, name='delete'),
 ]

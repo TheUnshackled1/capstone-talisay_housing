@@ -132,6 +132,11 @@ def document_management(request):
             ('standby', 'On Standby'),
             ('awarded', 'Awarded'),
         ],
+        # New template context variables
+        'documents': Document.objects.select_related('applicant').order_by('-uploaded_at'),
+        'total_documents': Document.objects.count(),
+        'total_applicants': Applicant.objects.filter(documents__isnull=False).distinct().count(),
+        'total_size_gb': round(sum(doc.file_size for doc in Document.objects.all()) / (1024*1024*1024), 2),
     }
 
     return render(request, 'documents/management.html', context)
@@ -263,3 +268,34 @@ def get_applicant_documents(request):
         return JsonResponse({'success': False, 'error': 'Applicant not found'}, status=404)
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
+
+@login_required
+@require_http_methods(["POST"])
+def delete_document(request, doc_id):
+    """
+    AJAX endpoint to delete a document.
+    Staff only - requires authentication.
+    """
+    if not request.user.is_staff:
+        return JsonResponse({'success': False, 'error': 'Access denied'}, status=403)
+
+    try:
+        doc = Document.objects.get(id=doc_id)
+
+        # Delete the file if it exists
+        if doc.file:
+            doc.file.delete(save=False)
+
+        # Delete the document record
+        doc.delete()
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Document deleted successfully'
+        })
+
+    except Document.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Document not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
