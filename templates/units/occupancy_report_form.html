@@ -1,0 +1,785 @@
+{% extends 'staff_base.html' %}
+{% load static %}
+
+{% block title %}Occupancy Report Form - Talisay Housing Authority{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+
+<!-- Page Header -->
+<div class="page-header" style="background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-700) 100%);">
+    <div class="page-header-content">
+        <div class="header-icon">📋</div>
+        <div class="header-text">
+            <h1>Weekly Occupancy Report</h1>
+            <p>Submit unit occupancy status for {{ site.name }}</p>
+        </div>
+    </div>
+</div>
+
+<!-- Main Container -->
+<div class="container-main">
+    <!-- Report Period Info - Card Style -->
+    <div class="info-section">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">📅 Reporting Period</h3>
+            </div>
+            <div class="card-body">
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">Reporting Site:</span>
+                        <span class="info-value">{{ site.name }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Week Starting:</span>
+                        <span class="info-value">{{ week_start|date:"Monday, F j, Y" }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Week Ending:</span>
+                        <span class="info-value">{{ week_end|date:"Friday, F j, Y" }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Total Units:</span>
+                        <span class="info-value badge badge-primary">{{ unit_count }} units</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Previous Week Summary (if exists) -->
+    {% if last_week_report %}
+    <div class="info-section">
+        <div class="card" style="background: var(--gray-50); border-left: 4px solid var(--primary-600);">
+            <div class="card-header">
+                <h3 class="card-title">📊 Previous Week Summary</h3>
+            </div>
+            <div class="card-body">
+                <div class="summary-grid">
+                    <div class="summary-item">
+                        <div class="summary-number" style="color: var(--green-600);">{{ last_week_report.reported_occupied }}</div>
+                        <div class="summary-label">Occupied</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-number" style="color: var(--amber-600);">{{ last_week_report.reported_vacant }}</div>
+                        <div class="summary-label">Vacant</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-number" style="color: var(--red-600);">{{ last_week_report.reported_concerns }}</div>
+                        <div class="summary-label">Concerns</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Error/Success Messages -->
+    <div id="messageContainer"></div>
+
+    <!-- Per-Unit Status Section -->
+    <div class="form-section">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">🏘️ Unit Status Report</h3>
+                <span class="card-subtitle">Select status for each unit at your site</span>
+            </div>
+            <div class="card-body">
+                <!-- Responsive Table -->
+                <div class="table-wrapper">
+                    <table class="status-table">
+                        <thead>
+                            <tr class="table-header">
+                                <th>Block</th>
+                                <th>Lot</th>
+                                <th>Address</th>
+                                <th>Status</th>
+                                <th>Occupant Name</th>
+                                <th>Comments</th>
+                            </tr>
+                        </thead>
+                        <tbody id="unitsTableBody">
+                            {% for unit in units %}
+                            <tr class="table-row" data-unit-id="{{ unit.id }}">
+                                <td class="cell-block">{{ unit.block_number }}</td>
+                                <td class="cell-lot">{{ unit.lot_number }}</td>
+                                <td class="cell-address">{{ unit.site_name|default:"N/A" }}</td>
+                                <td class="cell-status">
+                                    <select class="unit-status form-select" data-unit-id="{{ unit.id }}" onchange="updateUnitStatus(this)">
+                                        <option value="">-- Select --</option>
+                                        <option value="occupied">🟢 Occupied</option>
+                                        <option value="unoccupied">🟡 Unoccupied</option>
+                                        <option value="concern">🔴 Concern</option>
+                                    </select>
+                                </td>
+                                <td class="cell-occupant">
+                                    <input type="text" class="occupant-name form-input" placeholder="Name" />
+                                </td>
+                                <td class="cell-comments">
+                                    <textarea class="unit-comments form-textarea" placeholder="Notes..." rows="1"></textarea>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="empty-message">No units found for this site.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overall Comments Section -->
+    <div class="form-section">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">📝 Overall Observations</h3>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label class="form-label">General Comments</label>
+                    <textarea id="overall-comments" class="form-textarea"
+                              placeholder="Describe any maintenance issues, security concerns, or general observations..."
+                              rows="4" maxlength="500"></textarea>
+                    <span class="form-help" id="charCounter">0/500 characters</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="form-section">
+        <div class="button-group">
+            <button id="submit-btn" class="btn btn-primary btn-large" onclick="submitReport()" {% if not can_submit %}disabled{% endif %}>
+                <span>📤 Submit Report</span>
+            </button>
+            <button class="btn btn-secondary btn-large" onclick="resetForm()">
+                <span>↻ Clear Form</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="modal-overlay" id="confirmModal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">⚠️ Confirm Submission</h2>
+        </div>
+        <div class="modal-body">
+            <p>Submit occupancy report for <strong>{{ site.name }}</strong>?</p>
+            <p style="margin-top: 1rem; font-size: 0.9rem; color: var(--gray-600);">
+                Week of <strong>{{ week_start|date:"M d" }} - {{ week_end|date:"M d, Y" }}</strong>
+            </p>
+
+            <!-- Summary Statistics -->
+            <div class="summary-grid" style="margin-top: 1.5rem;">
+                <div class="summary-item">
+                    <div class="summary-number" style="color: var(--green-600);">
+                        <span id="confirm-occupied">0</span>
+                    </div>
+                    <div class="summary-label">🟢 Occupied</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-number" style="color: var(--amber-600);">
+                        <span id="confirm-vacant">0</span>
+                    </div>
+                    <div class="summary-label">🟡 Vacant</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-number" style="color: var(--red-600);">
+                        <span id="confirm-concerns">0</span>
+                    </div>
+                    <div class="summary-label">🔴 Concerns</div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeConfirmModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="confirmSubmit()">✓ Confirm & Submit</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Notification -->
+<div id="toast" class="toast"></div>
+
+<!-- ===================================================================
+     STYLES - THA DESIGN SYSTEM COMPLIANCE
+     =================================================================== -->
+<style>
+/* Page Header */
+.page-header {
+    padding: 2rem 1.5rem;
+    color: white;
+    margin-bottom: 2rem;
+    border-radius: 0;
+}
+
+.page-header-content {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.header-icon {
+    font-size: 3rem;
+    line-height: 1;
+}
+
+.header-text h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.header-text p {
+    font-size: 1rem;
+    opacity: 0.95;
+    margin: 0.5rem 0 0;
+}
+
+/* Container */
+.container-main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem 2rem;
+}
+
+/* Sections */
+.form-section,
+.info-section {
+    margin-bottom: 1.5rem;
+}
+
+/* Info Grid */
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.info-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--gray-600);
+    letter-spacing: 0.5px;
+}
+
+.info-value {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--gray-900);
+}
+
+/* Summary Grid */
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 1rem;
+    text-align: center;
+}
+
+.summary-item {
+    padding: 1rem;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid var(--gray-200);
+}
+
+.summary-number {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.summary-label {
+    font-size: 0.875rem;
+    color: var(--gray-600);
+    margin-top: 0.5rem;
+}
+
+/* Table Wrapper (Responsive) */
+.table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.status-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table-header th {
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: var(--gray-700);
+    background: var(--gray-50);
+    border-bottom: 2px solid var(--gray-200);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.table-row {
+    border-bottom: 1px solid var(--gray-200);
+    transition: background-color var(--transition-normal);
+}
+
+.table-row:hover {
+    background: var(--gray-50);
+}
+
+.table-row td {
+    padding: 0.875rem 1rem;
+    font-size: 0.875rem;
+}
+
+.table-row.status-occupied {
+    background: rgba(34, 197, 94, 0.05);
+    border-left: 3px solid var(--green-500);
+}
+
+.table-row.status-unoccupied {
+    background: rgba(245, 158, 11, 0.05);
+    border-left: 3px solid var(--amber-500);
+}
+
+.table-row.status-concern {
+    background: rgba(239, 68, 68, 0.05);
+    border-left: 3px solid var(--red-500);
+}
+
+.empty-message {
+    text-align: center;
+    color: var(--gray-500);
+    padding: 2rem 1rem;
+    font-style: italic;
+}
+
+/* Form Elements */
+.form-select,
+.form-input,
+.form-textarea {
+    border: 1px solid var(--gray-300);
+    border-radius: 8px;
+    padding: 0.625rem 0.875rem;
+    font-family: inherit;
+    font-size: 0.875rem;
+    transition: all var(--transition-normal);
+}
+
+.form-select:focus,
+.form-input:focus,
+.form-textarea:focus {
+    outline: none;
+    border-color: var(--primary-600);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.form-textarea {
+    resize: vertical;
+    min-height: 40px;
+}
+
+.form-help {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--gray-500);
+    margin-top: 0.25rem;
+}
+
+/* Card Subtitle */
+.card-subtitle {
+    font-size: 0.875rem;
+    color: var(--gray-600);
+    font-weight: normal;
+    margin-left: auto;
+}
+
+/* Button Group */
+.button-group {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.btn-large {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+}
+
+/* Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(15, 36, 71, 0.5);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn var(--transition-fast);
+}
+
+.modal-content {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    max-width: 500px;
+    width: 90%;
+}
+
+.modal-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--gray-100);
+}
+
+.modal-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--gray-900);
+}
+
+.modal-body {
+    padding: 1.5rem;
+    color: var(--gray-700);
+}
+
+.modal-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--gray-100);
+    background: var(--gray-50);
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    border-radius: 0 0 12px 12px;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Toast Notification */
+.toast {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    background: white;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    display: none;
+    z-index: 2000;
+    animation: slideUp var(--transition-normal);
+}
+
+.toast.success {
+    background: var(--green-50);
+    color: var(--green-600);
+    border-left: 4px solid var(--green-500);
+}
+
+.toast.error {
+    background: var(--red-50);
+    color: var(--red-600);
+    border-left: 4px solid var(--red-500);
+}
+
+.toast.info {
+    background: var(--primary-50);
+    color: var(--primary-600);
+    border-left: 4px solid var(--primary-500);
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .page-header {
+        padding: 1.5rem 1rem;
+    }
+
+    .page-header-content {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+
+    .header-text h1 {
+        font-size: 1.5rem;
+    }
+
+    .info-grid {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+
+    .summary-grid {
+        grid-template-columns: 1fr 1fr 1fr;
+    }
+
+    .table-wrapper {
+        margin: 0 -1.5rem;
+        padding: 0 1.5rem;
+    }
+
+    .button-group {
+        flex-direction: column;
+    }
+
+    .modal-content {
+        width: 95%;
+    }
+
+    .toast {
+        right: 1rem;
+        left: 1rem;
+        bottom: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .summary-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .table-row td {
+        padding: 0.75rem 0.5rem;
+        font-size: 0.8rem;
+    }
+
+    .form-select,
+    .form-input,
+    .form-textarea {
+        font-size: 16px; /* Prevents zoom on iOS */
+    }
+}
+</style>
+
+<!-- ===================================================================
+     JAVASCRIPT - Form Interactivity
+     =================================================================== -->
+<script>
+// Get CSRF token
+const CSRFToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+// Load initial data
+document.addEventListener('DOMContentLoaded', function() {
+    loadReportData();
+    setupCharCounter();
+});
+
+// Load previous week's data if available
+function loadReportData() {
+    {% if last_week_report %}
+    const lastReport = {{ last_week_report|safe }};
+    // Pre-fill with last week's data
+    {% endif %}
+}
+
+// Update unit status (color-code row)
+function updateUnitStatus(selectElement) {
+    const row = selectElement.closest('tr');
+    const status = selectElement.value;
+
+    // Remove previous status classes
+    row.classList.remove('status-occupied', 'status-unoccupied', 'status-concern');
+
+    // Add new status class
+    if (status === 'occupied') {
+        row.classList.add('status-occupied');
+    } else if (status === 'unoccupied') {
+        row.classList.add('status-unoccupied');
+    } else if (status === 'concern') {
+        row.classList.add('status-concern');
+    }
+}
+
+// Character counter for overall comments
+function setupCharCounter() {
+    const textarea = document.getElementById('overall-comments');
+    const counter = document.getElementById('charCounter');
+
+    textarea.addEventListener('input', function() {
+        const count = this.value.length;
+        counter.textContent = count + '/500 characters';
+    });
+}
+
+// Validate all units have status selected
+function validateForm() {
+    const selects = document.querySelectorAll('.unit-status');
+    let allSelected = true;
+
+    for (let select of selects) {
+        if (!select.value) {
+            select.style.borderColor = 'var(--red-500)';
+            allSelected = false;
+        } else {
+            select.style.borderColor = '';
+        }
+    }
+
+    if (!allSelected) {
+        showToast('⚠️ Please select status for all units', 'error');
+        return false;
+    }
+
+    return true;
+}
+
+// Prepare report data for submission
+function prepareReportData() {
+    const statuses = [];
+    const rows = document.querySelectorAll('#unitsTableBody tr');
+
+    rows.forEach(row => {
+        if (row.cells.length > 1) {  // Skip empty rows
+            const unitId = row.querySelector('.unit-status').dataset.unitId;
+            const status = row.querySelector('.unit-status').value;
+            const occupantName = row.querySelector('.occupant-name').value;
+            const comments = row.querySelector('.unit-comments').value;
+
+            statuses.push({
+                unit_id: unitId,
+                status: status,
+                occupant_name: occupantName,
+                comments: comments
+            });
+        }
+    });
+
+    return statuses;
+}
+
+// Show confirmation modal
+function submitReport() {
+    if (!validateForm()) return;
+
+    const statuses = prepareReportData();
+    const occupied = statuses.filter(u => u.status === 'occupied').length;
+    const vacant = statuses.filter(u => u.status === 'unoccupied').length;
+    const concerns = statuses.filter(u => u.status === 'concern').length;
+
+    // Update modal with summary
+    document.getElementById('confirm-occupied').textContent = occupied;
+    document.getElementById('confirm-vacant').textContent = vacant;
+    document.getElementById('confirm-concerns').textContent = concerns;
+
+    // Show modal
+    document.getElementById('confirmModal').style.display = 'flex';
+}
+
+// Confirm and submit via AJAX
+function confirmSubmit() {
+    const statuses = prepareReportData();
+    const notes = document.getElementById('overall-comments').value;
+
+    const payload = {
+        site_id: '{{ site.id }}',
+        report_week_start: '{{ week_start|date:"Y-m-d" }}',
+        unit_statuses: statuses,
+        notes: notes
+    };
+
+    // AJAX POST
+    fetch('{% url "units:submit_occupancy_report" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': CSRFToken
+        },
+        body: JSON.stringify(payload)
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            showToast('✓ ' + data.message, 'success');
+            closeConfirmModal();
+            setTimeout(() => {
+                location.reload();
+            }, 1500);
+        } else {
+            showToast('✗ ' + data.error, 'error');
+            closeConfirmModal();
+        }
+    })
+    .catch(err => {
+        showToast('✗ Error: ' + err.message, 'error');
+        closeConfirmModal();
+    });
+}
+
+// Close confirmation modal
+function closeConfirmModal() {
+    document.getElementById('confirmModal').style.display = 'none';
+}
+
+// Reset form
+function resetForm() {
+    if (confirm('Clear all entries?')) {
+        document.querySelectorAll('.unit-status').forEach(s => {
+            s.value = '';
+            s.style.borderColor = '';
+            s.closest('tr').classList.remove('status-occupied', 'status-unoccupied', 'status-concern');
+        });
+        document.querySelectorAll('.occupant-name').forEach(i => i.value = '');
+        document.querySelectorAll('.unit-comments').forEach(t => t.value = '');
+        document.getElementById('overall-comments').value = '';
+        document.getElementById('charCounter').textContent = '0/500 characters';
+        showToast('↻ Form cleared', 'info');
+    }
+}
+
+// Show toast notification
+function showToast(message, type = 'info') {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.className = 'toast ' + type;
+    toast.style.display = 'block';
+
+    setTimeout(() => {
+        toast.style.display = 'none';
+    }, 3000);
+}
+
+// Close modal on overlay click
+document.getElementById('confirmModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeConfirmModal();
+    }
+});
+</script>
+
+{% endblock %}

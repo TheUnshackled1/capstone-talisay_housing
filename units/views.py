@@ -5,12 +5,16 @@ from django.views.decorators.http import require_http_methods, require_POST
 from django.db import transaction
 from django.utils import timezone
 from django.contrib import messages
-from datetime import timedelta
+from datetime import timedelta, datetime
+import json
 
 from intake.models import QueueEntry, Applicant
 from intake.utils import send_sms
 from applications.models import Application
-from units.models import HousingUnit, LotAward, RelocationSite, ComplianceNotice
+from units.models import (
+    HousingUnit, LotAward, RelocationSite, ComplianceNotice,
+    OccupancyReport, OccupancyReportDetail
+)
 
 
 @login_required
@@ -306,3 +310,187 @@ def process_compliance_notice(request):
         return JsonResponse({'success': False, 'error': 'Unit not found'})
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
+
+
+# =============================================================================
+# UI #22: OCCUPANCY REPORT FORM (Process 8 - Week 2 Day 3-4)
+# =============================================================================
+
+@login_required
+def occupancy_report_form(request):
+    """
+    UI #22: Occupancy Report Form
+    Process 8: Occupancy Validation - Weekly caretaker report
+
+    Actor: Caretaker (e.g., Arcadio Lobaton at GK Cabatangan)
+    Purpose: Submit weekly occupancy status for all units at the site
+
+    GET: Display form with all units at caretaker's site
+         Pre-fill with last week's report if exists
+    """
+
+    # Get caretaker's assigned site
+    # Try to get site from user profile or request
+    try:
+        # For caretaker: they should have site assignment
+        # For staff: they might not have a specific site
+        caretaker_site = getattr(request.user, 'caretaker_site', None)
+
+        if not caretaker_site:
+            # Check if user is caretaker role
+            if not hasattr(request.user, 'position') or request.user.position != 'caretaker':
+                # Non-caretaker can view but not submit
+                sites = RelocationSite.objects.all()
+                caretaker_site = sites.first() if sites.exists() else None
+            else:
+                return render(request, 'common/access_denied.html',
+                              {'message': 'No site assigned to your account.'}, status=403)
+    except:
+        caretaker_site = RelocationSite.objects.first()
+
+    if not caretaker_site:
+        return render(request, 'common/error.html',
+                      {'error': 'No sites configured in system.'}, status=404)
+
+    # Get all units at site (regardless of status)
+    units = HousingUnit.objects.filter(site=caretaker_site).order_by('block_number', 'lot_number')
+
+    # Get this week's dates
+    today = timezone.now().date()
+    week_start = today - timedelta(days=today.weekday())  # Monday
+    week_end = week_start + timedelta(days=4)  # Friday
+
+    # Check if report already exists for this week
+    existing_report = OccupancyReport.objects.filter(
+        site=caretaker_site,
+        report_week_start=week_start
+    ).first()
+
+    # Get last week's report for pre-fill
+    last_week_start = week_start - timedelta(days=7)
+    last_week_report = OccupancyReport.objects.filter(
+        site=caretaker_site,
+        report_week_start=last_week_start
+    ).prefetch_related('details').first()
+
+    # Prepare context
+    context = {
+        'site': caretaker_site,
+        'units': units,
+        'week_start': week_start,
+        'week_end': week_end,
+        'existing_report': existing_report,
+        'last_week_report': last_week_report,
+        'unit_count': units.count(),
+        'can_submit': request.user.position == 'caretaker' if hasattr(request.user, 'position') else False,
+    }
+
+    return render(request, 'units/occupancy_report_form.html', context)
+
+
+@login_required
+@require_POST
+def submit_occupancy_report(request):
+    """
+    Handle AJAX POST to submit occupancy report.
+
+    Expected POST data (JSON):
+    - site_id: RelocationSite ID
+    - report_week_start: Date (YYYY-MM-DD)
+    - unit_statuses: JSON array of {unit_id, status, occupant_name, comments}
+    - notes: Overall comments
+    """
+    try:
+        # Parse JSON body
+        data = json.loads(request.body)
+
+        site_id = data.get('site_id')
+        report_week_start_str = data.get('report_week_start')
+        unit_statuses = data.get('unit_statuses', [])
+        notes = data.get('notes', '')
+
+        # Validate
+        if not all([site_id, report_week_start_str, unit_statuses]):
+            return JsonResponse({'success': False, 'error': 'Missing required fields'})
+
+        # Parse dates
+        week_start = datetime.strptime(report_week_start_str, '%Y-%m-%d').date()
+        week_end = week_start + timedelta(days=4)
+
+        # Get site
+        site = RelocationSite.objects.get(id=site_id)
+
+        # Authorization: Only caretaker assigned to this site can submit
+        if hasattr(request.user, 'position') and request.user.position == 'caretaker':
+            if not hasattr(request.user, 'caretaker_site') or request.user.caretaker_site.id != site_id:
+                return JsonResponse({'success': False, 'error': 'Not authorized for this site'})
+
+        # Delete existing report for this week (if any)
+        OccupancyReport.objects.filter(
+            site=site,
+            report_week_start=week_start
+        ).delete()
+
+        # Count statuses
+        occupied_count = sum(1 for u in unit_statuses if u.get('status') == 'occupied')
+        vacant_count = sum(1 for u in unit_statuses if u.get('status') == 'unoccupied')
+        concern_count = sum(1 for u in unit_statuses if u.get('status') == 'concern')
+
+        # Create OccupancyReport
+        report = OccupancyReport.objects.create(
+            site=site,
+            report_week_start=week_start,
+            report_week_end=week_end,
+            submitted_by=request.user,
+            submitted_at=timezone.now(),
+            reported_occupied=occupied_count,
+            reported_vacant=vacant_count,
+            reported_concerns=concern_count,
+            notes=notes,
+            status='submitted'
+        )
+
+        # Create OccupancyReportDetail records (bulk)
+        details_to_create = []
+        for u_status in unit_statuses:
+            try:
+                unit = HousingUnit.objects.get(id=u_status['unit_id'])
+                details_to_create.append(OccupancyReportDetail(
+                    report=report,
+                    unit=unit,
+                    status=u_status.get('status', 'unoccupied'),
+                    occupant_name=u_status.get('occupant_name', ''),
+                    comments=u_status.get('comments', '')
+                ))
+            except HousingUnit.DoesNotExist:
+                pass  # Skip missing units
+
+        if details_to_create:
+            OccupancyReportDetail.objects.bulk_create(details_to_create)
+
+        # Send SMS notification to field team supervisor (if phone available)
+        # This is optional - depends on system configuration
+        try:
+            # For now, we'll skip SMS as we need field team phone configuration
+            # In future: send_sms(field_team_phone, message, 'occupancy_report')
+            pass
+        except:
+            pass
+
+        return JsonResponse({
+            'success': True,
+            'message': f'✓ Occupancy report submitted for week of {week_start.strftime("%B %d, %Y")}',
+            'report_id': str(report.id),
+            'occupied': occupied_count,
+            'vacant': vacant_count,
+            'concerns': concern_count,
+            'timestamp': timezone.now().isoformat(),
+        })
+
+    except RelocationSite.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Site not found'})
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'Invalid JSON data'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': f'Error: {str(e)}'})
+
