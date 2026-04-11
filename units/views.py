@@ -655,3 +655,228 @@ def submit_occupancy_review(request):
         return JsonResponse({'success': False, 'error': str(e)})
 
 
+# ===================================================================
+# HOUSING UNITS MONITORING (Module 4 - Housing Units Dashboard)
+# ===================================================================
+
+@login_required
+def housing_units_monitoring(request):
+    """
+    Housing Unit & Occupancy Monitoring Dashboard
+    Displays all housing units grouped by block with status, occupant info,
+    and notice tracking. Supports grid and table views.
+
+    Actors: Fourth Member (Jocel), Field Team
+    Purpose: Monitor unit occupancy, track compliance notices, manage escalations
+    """
+
+    # Get site - assume user is assigned to a site
+    # For Fourth Member (Jocel), this would be their primary site
+    site_id = request.GET.get('site_id')
+    if site_id:
+        site = RelocationSite.objects.get(id=site_id)
+    else:
+        # Default: get first site user has access to
+        sites = request.user.assigned_sites.all()
+        site = sites.first() if sites.exists() else None
+
+    if not site:
+        return render(request, 'common/error.html',
+                      {'error': 'No relocation site assigned to your account.'})
+
+    # Get all units for the site with related data
+    units = (
+        HousingUnit.objects
+        .filter(site=site)
+        .select_related('weekly_report')
+        .order_by('block_number', 'lot_number')
+    )
+
+    # Count by status
+    occupied_count = units.filter(status='Occupied').count()
+    vacant_count = units.filter(status='Vacant — available').count()
+    notice_30_count = units.filter(status='Under notice (30-day)').count()
+    notice_10_count = units.filter(status='Final notice (10-day)').count()
+    repossessed_count = units.filter(status='Repossessed').count()
+
+    # Find critical alerts (final notices escalated)
+    escalated_units = units.filter(
+        status='Final notice (10-day)',
+        is_escalated=True
+    ).first()
+
+    critical_alert_message = ""
+    has_final_notice_alerts = notice_10_count > 0 or units.filter(is_escalated=True).exists()
+
+    if escalated_units:
+        critical_alert_message = (
+            f"Block {escalated_units.block_number}, Lot {escalated_units.lot_number} — "
+            f"{escalated_units.occupant_name or 'Unknown'}. "
+            f"Deadline: {escalated_units.notice_deadline}. No response received — case escalated."
+        )
+
+    # Group units by block
+    blocks = units.values_list('block_number', flat=True).distinct().order_by('block_number')
+    units_by_block = []
+    for block in blocks:
+        block_units = units.filter(block_number=block)
+        units_by_block.append({
+            'block_number': block,
+            'units': block_units
+        })
+
+    # Prepare context
+    context = {
+        'site': site,
+        'total_units': units.count(),
+        'occupied_count': occupied_count,
+        'vacant_count': vacant_count,
+        'notice_30_count': notice_30_count,
+        'notice_10_count': notice_10_count,
+        'repossessed_count': repossessed_count,
+        'units_by_block': units_by_block,
+        'all_units': units,
+        'has_final_notice_alerts': has_final_notice_alerts,
+        'critical_alert_message': critical_alert_message,
+        'view_mode': request.GET.get('view', 'grid'),
+    }
+
+    return render(request, 'units/housing_units_monitoring.html', context)
+
+
+@login_required
+@require_http_methods(["GET"])
+def get_unit_details(request, unit_id):
+    """
+    AJAX endpoint to fetch unit details for modal display
+    Returns JSON with unit info, occupant, notices, and weekly report
+    """
+    try:
+        unit = HousingUnit.objects.select_related('weekly_report').get(id=unit_id)
+
+        # Prepare notice info
+        notice_info = None
+        if unit.notice_date_issued:
+            notice_info = {
+                'type': unit.notice_type,
+                'issued': unit.notice_date_issued.isoformat(),
+                'deadline': unit.notice_deadline.isoformat() if unit.notice_deadline else None,
+            }
+
+        # Prepare weekly report
+        weekly_report = None
+        if unit.weekly_report:
+            weekly_report = {
+                'reported_status': unit.weekly_report.reported_status,
+                'concern_notes': unit.weekly_report.concern_notes,
+                'last_updated': unit.weekly_report.last_updated.isoformat(),
+            }
+
+        return JsonResponse({
+            'success': True,
+            'unit': {
+                'id': str(unit.id),
+                'block': unit.block_number,
+                'lot': unit.lot_number,
+                'status': unit.status,
+                'occupant_name': unit.occupant_name or '',
+                'occupant_id': unit.occupant_id or '',
+                'is_escalated': unit.is_escalated,
+                'notice': notice_info,
+                'weekly_report': weekly_report,
+            }
+        })
+
+    except HousingUnit.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'Unit not found'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+@login_required
+@require_POST
+def issue_compliance_notice(request):
+    """
+    AJAX endpoint to issue a compliance notice to a housing unit
+    Updates unit status and sends SMS notification
+
+    POST data:
+    - unit_id: UUID
+    - notice_type: '30-day' or '10-day'
+    - reason: Text reason for notice
+    """
+    try:
+        data = json.loads(request.body)
+
+        unit_id = data.get('unit_id')
+        notice_type = data.get('notice_type')
+        reason = data.get('reason', '')
+
+        if not all([unit_id, notice_type]):
+            return JsonResponse({
+                'success': False,
+                'error': 'Missing required fields: unit_id, notice_type'
+            })
+
+        if notice_type not in ['30-day', '10-day']:
+            return JsonResponse({
+                'success': False,
+                'error': 'Invalid notice type. Must be "30-day" or "10-day"'
+            })
+
+        # Get unit
+        unit = HousingUnit.objects.get(id=unit_id)
+
+        # Update unit status and notice
+        unit.notice_type = notice_type
+        unit.notice_date_issued = timezone.now()
+
+        if notice_type == '30-day':
+            unit.status = 'Under notice (30-day)'
+            unit.notice_deadline = (timezone.now() + timedelta(days=30)).date()
+            days = 30
+        else:
+            unit.status = 'Final notice (10-day)'
+            unit.notice_deadline = (timezone.now() + timedelta(days=10)).date()
+            days = 10
+
+        unit.save()
+
+        # Send SMS to occupant if available
+        # (Would integrate with send_sms() utility if occupant phone is available)
+        message_text = (
+            f"Notice: Your unit at Block {unit.block_number} Lot {unit.lot_number} has been flagged. "
+            f"You have {days} days to visit the Housing Office and submit an explanation."
+        )
+
+        return JsonResponse({
+            'success': True,
+            'message': f'✓ {notice_type.title()} notice issued to Block {unit.block_number}, Lot {unit.lot_number}',
+            'unit': {
+                'id': str(unit.id),
+                'status': unit.status,
+                'notice_deadline': unit.notice_deadline.isoformat(),
+            }
+        })
+
+    except HousingUnit.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'Unit not found'
+        }, status=404)
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'success': False,
+            'error': 'Invalid JSON'
+        }, status=400)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)

@@ -18,4 +18,9 @@ urlpatterns = [
     path('occupancy-review/', views.occupancy_review_list, name='occupancy_review_list'),
     path('occupancy-review/<uuid:report_id>/', views.occupancy_review_detail, name='occupancy_review_detail'),
     path('occupancy-review/submit/', views.submit_occupancy_review, name='submit_occupancy_review'),
+
+    # Housing Units Monitoring Dashboard (Module 4)
+    path('housing-units/', views.housing_units_monitoring, name='housing_units_monitoring'),
+    path('housing-units/<uuid:unit_id>/details/', views.get_unit_details, name='get_unit_details'),
+    path('housing-units/issue-notice/', views.issue_compliance_notice, name='issue_compliance_notice'),
 ]

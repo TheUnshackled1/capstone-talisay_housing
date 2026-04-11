@@ -1,0 +1,1462 @@
+{% extends 'staff_base.html' %}
+{% load static %}
+
+{% block title %}Housing Unit & Occupancy Monitoring - THA{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+
+<!-- Page Header -->
+<div class="page-header" style="background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-700) 100%);">
+    <div class="page-header-content">
+        <div class="header-icon">🏘️</div>
+        <div class="header-text">
+            <h1>Housing Unit & Occupancy Monitoring</h1>
+            <p>Module 4 — GK Cabatangan · {{ total_units }} total units · Weekly caretaker reports</p>
+        </div>
+    </div>
+    <div class="header-controls">
+        <div class="view-toggle">
+            <button class="view-btn {% if view_mode == 'grid' %}active{% endif %}" data-view="grid">Grid</button>
+            <button class="view-btn {% if view_mode == 'table' %}active{% endif %}" data-view="table">Table</button>
+        </div>
+    </div>
+</div>
+
+<!-- Main Container -->
+<div class="container-main">
+    <!-- Status Summary Cards -->
+    <div class="stats-section">
+        <div class="stats-grid">
+            <!-- Occupied -->
+            <button class="stat-card stat-card-occupied" data-filter="Occupied">
+                <div class="stat-number" style="color: var(--green-600);">{{ occupied_count }}</div>
+                <div class="stat-label">🟢 Occupied</div>
+            </button>
+
+            <!-- Vacant -->
+            <button class="stat-card stat-card-vacant" data-filter="Vacant — available">
+                <div class="stat-number" style="color: var(--blue-600);">{{ vacant_count }}</div>
+                <div class="stat-label">🔵 Vacant</div>
+            </button>
+
+            <!-- 30-day Notice -->
+            <button class="stat-card stat-card-notice30" data-filter="Under notice (30-day)">
+                <div class="stat-number" style="color: var(--amber-600);">{{ notice_30_count }}</div>
+                <div class="stat-label">🟡 30-day Notice</div>
+            </button>
+
+            <!-- Final Notice -->
+            <button class="stat-card stat-card-notice10" data-filter="Final notice (10-day)">
+                <div class="stat-number" style="color: var(--red-600);">{{ notice_10_count }}</div>
+                <div class="stat-label">🔴 Final Notice</div>
+            </button>
+
+            <!-- Repossessed -->
+            <button class="stat-card stat-card-repossessed" data-filter="Repossessed">
+                <div class="stat-number" style="color: var(--purple-600);">{{ repossessed_count }}</div>
+                <div class="stat-label">🟣 Repossessed</div>
+            </button>
+        </div>
+    </div>
+
+    <!-- Alerts Section -->
+    {% if has_final_notice_alerts %}
+    <div class="alert-section">
+        <div class="alert alert-danger">
+            <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 9v2m0 4v2m-6.773-9.226A9 9 0 1 1 21 12a8.95 8.95 0 0 1-6.227 8.226"/>
+            </svg>
+            <div class="alert-content">
+                <p class="alert-title">⚠️ Final notice deadline approaching</p>
+                <p class="alert-description">{{ critical_alert_message }}</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Filter Pills -->
+    <div class="filter-section">
+        <button class="filter-pill active" data-filter="all">All Units ({{ total_units }})</button>
+        <button class="filter-pill" data-filter="Occupied">Occupied ({{ occupied_count }})</button>
+        <button class="filter-pill" data-filter="Vacant — available">Vacant ({{ vacant_count }})</button>
+        <button class="filter-pill" data-filter="Under notice (30-day)">30-day Notice ({{ notice_30_count }})</button>
+        <button class="filter-pill" data-filter="Final notice (10-day)">Final Notice ({{ notice_10_count }})</button>
+        <button class="filter-pill" data-filter="Repossessed">Repossessed ({{ repossessed_count }})</button>
+    </div>
+
+    <!-- Grid View (Default) -->
+    <div id="gridView" class="grid-view">
+        {% for block_group in units_by_block %}
+        <div class="block-section">
+            <div class="block-header">
+                <div class="block-title-group">
+                    <svg class="block-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                        <polyline points="9 22 9 12 15 12 15 22"/>
+                    </svg>
+                    <h3>Block {{ block_group.block_number }}</h3>
+                    <span class="lot-count">({{ block_group.units|length }} lots)</span>
+                </div>
+            </div>
+
+            <div class="units-grid">
+                {% for unit in block_group.units %}
+                <div class="unit-card unit-status-{{ unit.status|lower|replace:' — '|replace:' ':'_'|replace:'(':''|replace:')':'' }}"
+                     data-unit-id="{{ unit.id }}"
+                     data-status="{{ unit.status }}"
+                     onclick="openUnitModal({{ unit.id }}, this)">
+
+                    {% if unit.is_escalated %}
+                    <div class="unit-escalation-badge">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                        </svg>
+                    </div>
+                    {% endif %}
+
+                    <div class="unit-card-header">
+                        <span class="unit-ref">B{{ unit.block }}·L{{ unit.lot }}</span>
+                        <span class="unit-status-dot {% if unit.status == 'Occupied' %}status-occupied{% elif 'vacant' in unit.status|lower %}status-vacant{% elif '30-day' in unit.status|lower %}status-notice30{% elif '10-day' in unit.status|lower %}status-notice10{% else %}status-repossessed{% endif %}"></span>
+                    </div>
+
+                    <p class="unit-occupant">{{ unit.occupant_name|default:"—" }}</p>
+
+                    <p class="unit-status {% if unit.status == 'Occupied' %}text-green-700{% elif 'vacant' in unit.status|lower %}text-blue-700{% elif '30-day' in unit.status|lower %}text-amber-700{% elif '10-day' in unit.status|lower %}text-red-700{% else %}text-purple-700{% endif %}">
+                        {{ unit.status }}
+                    </p>
+
+                    {% if unit.notice_deadline %}
+                    <p class="unit-deadline">Deadline: {{ unit.notice_deadline|date:"M d, Y" }}</p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% empty %}
+        <div class="empty-state">
+            <p>No units found</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Table View -->
+    <div id="tableView" class="table-view" style="display: none;">
+        <div class="table-container">
+            <table class="units-table">
+                <thead>
+                    <tr>
+                        <th>Block</th>
+                        <th>Lot</th>
+                        <th>Occupant</th>
+                        <th>Status</th>
+                        <th>Notice Deadline</th>
+                        <th>Caretaker Report</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for unit in all_units %}
+                    <tr class="unit-row unit-row-{{ unit.status|lower|replace:' — '|replace:' ':'_'|replace:'(':''|replace:')':'' }}" data-unit-id="{{ unit.id }}">
+                        <td class="cell-block">{{ unit.block }}</td>
+                        <td class="cell-lot">{{ unit.lot }}</td>
+                        <td class="cell-occupant">{{ unit.occupant_name|default:"—" }}</td>
+                        <td class="cell-status">
+                            <div class="status-badge {% if unit.status == 'Occupied' %}badge-occupied{% elif 'vacant' in unit.status|lower %}badge-vacant{% elif '30-day' in unit.status|lower %}badge-notice30{% elif '10-day' in unit.status|lower %}badge-notice10{% else %}badge-repossessed{% endif %}">
+                                <span class="status-dot"></span>
+                                <span class="status-text">{{ unit.status }}</span>
+                                {% if unit.is_escalated %}
+                                <svg class="escalation-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                                </svg>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="cell-deadline">{{ unit.notice_deadline|date:"M d, Y"|default:"—" }}</td>
+                        <td class="cell-report">
+                            {% if unit.weekly_report %}
+                            <div class="report-summary">
+                                <p class="report-status">{{ unit.weekly_report.reported_status }}</p>
+                                {% if unit.weekly_report.concern %}
+                                <p class="report-concern">{{ unit.weekly_report.concern }}</p>
+                                {% endif %}
+                            </div>
+                            {% else %}
+                            <p class="text-muted">—</p>
+                            {% endif %}
+                        </td>
+                        <td class="cell-actions">
+                            <button class="btn btn-sm btn-view" onclick="openUnitModal({{ unit.id }}, this)">
+                                👁️ View
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="legend-section">
+        <div class="legend-item">
+            <span class="legend-dot occupied"></span>
+            <span class="legend-label">Occupied</span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-dot vacant"></span>
+            <span class="legend-label">Vacant — available</span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-dot notice30"></span>
+            <span class="legend-label">Under notice (30-day)</span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-dot notice10"></span>
+            <span class="legend-label">Final notice (10-day)</span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-dot repossessed"></span>
+            <span class="legend-label">Repossessed</span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-escalation">⚠️</span>
+            <span class="legend-label">Escalated</span>
+        </div>
+    </div>
+</div>
+
+<!-- Unit Detail Modal -->
+<div id="unitModal" class="modal-overlay" style="display: none;" onclick="closeUnitModal(event)">
+    <div class="modal-content" onclick="event.stopPropagation();">
+        <!-- Modal Header -->
+        <div class="modal-header">
+            <div class="modal-header-left">
+                <div class="modal-icon" id="modalIcon"></div>
+                <div>
+                    <h2 id="modalTitle"></h2>
+                    <span id="modalStatusBadge" class="status-badge-modal"></span>
+                </div>
+            </div>
+            <button class="modal-close" onclick="closeUnitModal()">✕</button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="modal-body">
+            <!-- Escalation Alert -->
+            <div id="escalationAlert" class="alert alert-danger" style="display: none;">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                </svg>
+                <p>This case is <strong>escalated</strong> — deadline passed with no response from occupant.</p>
+            </div>
+
+            <!-- Occupant Info -->
+            <div id="occupantSection" class="info-section" style="display: none;">
+                <p class="section-label">Occupant</p>
+                <div class="info-card">
+                    <div class="info-row">
+                        <span class="info-icon">👤</span>
+                        <p id="occupantName"></p>
+                    </div>
+                    <p id="occupantId" class="info-subtext"></p>
+                </div>
+            </div>
+
+            <!-- Notice Info -->
+            <div id="noticeSection" class="info-section" style="display: none;">
+                <p class="section-label" id="noticeLabel"></p>
+                <div class="info-card notice-card">
+                    <div class="notice-grid">
+                        <div>
+                            <p class="notice-field-label">Date Issued</p>
+                            <p id="noticeIssued" class="notice-field-value"></p>
+                        </div>
+                        <div>
+                            <p class="notice-field-label">Deadline</p>
+                            <p id="noticeDeadline" class="notice-field-value"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Weekly Report -->
+            <div id="reportSection" class="info-section" style="display: none;">
+                <p class="section-label">Weekly Caretaker Report</p>
+                <div class="info-card">
+                    <div class="report-row">
+                        <span>Last updated</span>
+                        <span id="reportUpdated"></span>
+                    </div>
+                    <div class="report-row">
+                        <span>Reported status</span>
+                        <span id="reportStatus"></span>
+                    </div>
+                    <div id="reportConcern" style="display: none;">
+                        <p class="report-concern-label">Concern noted</p>
+                        <p id="reportConcernText"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Issue Notice Form -->
+            <div id="issueNoticeForm" class="issue-notice-section" style="display: none;">
+                <p class="section-label">Issue Compliance Notice</p>
+                <div class="form-group">
+                    <label class="form-label">Notice Type</label>
+                    <select id="noticeTypeSelect" class="form-select">
+                        <option value="">Select notice type...</option>
+                        <option value="30-day">30-day notice</option>
+                        <option value="10-day">10-day final notice</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Reason for Notice</label>
+                    <textarea id="noticeReason" class="form-textarea" placeholder="Describe the compliance issue..." rows="4"></textarea>
+                </div>
+                <p class="notice-info-text" id="noticeInfoText"></p>
+                <div class="form-actions">
+                    <button class="btn btn-amber" id="issueNoticeBtn">Issue Notice</button>
+                    <button class="btn btn-ghost" onclick="toggleNoticeForm(false)">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="modal-footer">
+            <button class="btn btn-primary" id="updateStatusBtn">👁️ Update Status</button>
+            <button class="btn btn-amber" id="issueNoticeLink" style="display: none;" onclick="toggleNoticeForm(true)">⚠️ Issue Notice</button>
+            <button class="btn btn-success" id="awardNextStandbyBtn" style="display: none;">✓ Award to Next Standby</button>
+            <button class="btn btn-secondary">📱 Send SMS</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===================================================================
+     STYLES - THA DESIGN SYSTEM COMPLIANCE
+     =================================================================== -->
+<style>
+/* Page Header */
+.page-header {
+    padding: 2rem 1.5rem;
+    color: white;
+    margin-bottom: 2rem;
+    border-radius: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.page-header-content {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex: 1;
+}
+
+.header-icon {
+    font-size: 3rem;
+    line-height: 1;
+}
+
+.header-text h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.header-text p {
+    font-size: 0.9rem;
+    opacity: 0.95;
+    margin: 0.5rem 0 0;
+}
+
+.header-controls {
+    display: flex;
+    gap: 1rem;
+}
+
+.view-toggle {
+    display: flex;
+    gap: 0.5rem;
+    background: rgba(255, 255, 255, 0.15);
+    padding: 0.25rem;
+    border-radius: 8px;
+}
+
+.view-btn {
+    padding: 0.5rem 1rem;
+    color: white;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 150ms ease;
+}
+
+.view-btn.active {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+.view-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Container */
+.container-main {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 1rem 2rem;
+}
+
+/* Status Summary Cards */
+.stats-section {
+    margin-bottom: 2rem;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+}
+
+.stat-card {
+    background: white;
+    border: 2px solid var(--gray-200);
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 150ms ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.stat-card.stat-card-occupied {
+    border-color: var(--green-300);
+    background: rgba(34, 197, 94, 0.05);
+}
+
+.stat-card.stat-card-vacant {
+    border-color: var(--blue-300);
+    background: rgba(59, 130, 246, 0.05);
+}
+
+.stat-card.stat-card-notice30 {
+    border-color: var(--amber-300);
+    background: rgba(245, 158, 11, 0.05);
+}
+
+.stat-card.stat-card-notice10 {
+    border-color: var(--red-300);
+    background: rgba(239, 68, 68, 0.05);
+}
+
+.stat-card.stat-card-repossessed {
+    border-color: var(--purple-300);
+    background: rgba(168, 85, 247, 0.05);
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: var(--gray-600);
+    font-weight: 500;
+}
+
+/* Alert Section */
+.alert-section {
+    margin-bottom: 1.5rem;
+}
+
+.alert {
+    padding: 1rem;
+    border-radius: 12px;
+    border: 1px solid;
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+}
+
+.alert.alert-danger {
+    background: rgba(239, 68, 68, 0.05);
+    border-color: var(--red-300);
+}
+
+.alert-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    color: var(--red-600);
+}
+
+.alert-content {
+    flex: 1;
+}
+
+.alert-title {
+    font-weight: 600;
+    color: var(--gray-900);
+    margin: 0 0 0.25rem;
+    font-size: 0.9rem;
+}
+
+.alert-description {
+    color: var(--gray-700);
+    font-size: 0.875rem;
+    margin: 0;
+}
+
+/* Filter Pills */
+.filter-section {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+    padding: 1rem 0;
+}
+
+.filter-pill {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--gray-300);
+    background: white;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    color: var(--gray-700);
+    cursor: pointer;
+    transition: all 150ms ease;
+}
+
+.filter-pill:hover {
+    background: var(--gray-50);
+}
+
+.filter-pill.active {
+    background: var(--primary-50);
+    border-color: var(--primary-400);
+    color: var(--primary-700);
+    font-weight: 500;
+}
+
+/* Grid View */
+.grid-view {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.block-section {
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.block-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--gray-100);
+    background: var(--gray-50);
+}
+
+.block-title-group {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.block-icon {
+    width: 20px;
+    height: 20px;
+    color: var(--primary-600);
+}
+
+.block-header h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--gray-900);
+}
+
+.lot-count {
+    font-size: 0.875rem;
+    color: var(--gray-500);
+    margin-left: auto;
+}
+
+.units-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 0.75rem;
+    padding: 1rem;
+}
+
+/* Unit Cards */
+.unit-card {
+    position: relative;
+    padding: 0.75rem;
+    border: 2px solid;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 150ms ease;
+    text-align: left;
+}
+
+.unit-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.unit-status-occupied {
+    border-color: var(--green-300);
+    background: rgba(34, 197, 94, 0.05);
+}
+
+.unit-status-vacant {
+    border-color: var(--blue-300);
+    background: rgba(59, 130, 246, 0.05);
+}
+
+.unit-status-under_notice_30_day {
+    border-color: var(--amber-300);
+    background: rgba(245, 158, 11, 0.05);
+}
+
+.unit-status-final_notice_10_day {
+    border-color: var(--red-300);
+    background: rgba(239, 68, 68, 0.05);
+}
+
+.unit-status-repossessed {
+    border-color: var(--purple-300);
+    background: rgba(168, 85, 247, 0.05);
+}
+
+.unit-escalation-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 20px;
+    height: 20px;
+    background: var(--red-500);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+.unit-escalation-badge svg {
+    width: 12px;
+    height: 12px;
+    color: white;
+}
+
+.unit-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.unit-ref {
+    font-size: 0.75rem;
+    color: var(--gray-600);
+    font-weight: 500;
+}
+
+.unit-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.unit-status-dot.status-occupied {
+    background: var(--green-500);
+}
+
+.unit-status-dot.status-vacant {
+    background: var(--blue-500);
+}
+
+.unit-status-dot.status-notice30 {
+    background: var(--amber-500);
+}
+
+.unit-status-dot.status-notice10 {
+    background: var(--red-500);
+}
+
+.unit-status-dot.status-repossessed {
+    background: var(--purple-500);
+}
+
+.unit-occupant {
+    font-size: 0.8rem;
+    color: var(--gray-900);
+    margin: 0 0 0.25rem;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 500;
+}
+
+.unit-status {
+    font-size: 0.75rem;
+    margin: 0.25rem 0;
+    font-weight: 500;
+}
+
+.unit-deadline {
+    font-size: 0.7rem;
+    color: var(--gray-600);
+    margin: 0.25rem 0 0;
+}
+
+/* Table View */
+.table-view {
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.table-container {
+    overflow-x: auto;
+}
+
+.units-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.units-table thead {
+    background: var(--gray-50);
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.units-table th {
+    padding: 1rem;
+    text-align: left;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--gray-700);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.units-table tbody tr {
+    border-bottom: 1px solid var(--gray-100);
+    transition: background-color 150ms ease;
+}
+
+.units-table tbody tr:hover {
+    background: var(--gray-50);
+}
+
+.units-table td {
+    padding: 1rem;
+    font-size: 0.875rem;
+    color: var(--gray-700);
+}
+
+.cell-block,
+.cell-lot {
+    font-weight: 500;
+    color: var(--gray-900);
+}
+
+.cell-status {
+    text-align: center;
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.status-badge.badge-occupied {
+    background: rgba(34, 197, 94, 0.1);
+    color: var(--green-700);
+}
+
+.status-badge.badge-vacant {
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--blue-700);
+}
+
+.status-badge.badge-notice30 {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--amber-700);
+}
+
+.status-badge.badge-notice10 {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--red-700);
+}
+
+.status-badge.badge-repossessed {
+    background: rgba(168, 85, 247, 0.1);
+    color: var(--purple-700);
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.badge-occupied .status-dot {
+    background: var(--green-500);
+}
+
+.badge-vacant .status-dot {
+    background: var(--blue-500);
+}
+
+.badge-notice30 .status-dot {
+    background: var(--amber-500);
+}
+
+.badge-notice10 .status-dot {
+    background: var(--red-500);
+}
+
+.badge-repossessed .status-dot {
+    background: var(--purple-500);
+}
+
+.escalation-icon {
+    width: 14px;
+    height: 14px;
+    color: var(--red-600);
+}
+
+.report-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.report-status {
+    margin: 0;
+    font-weight: 500;
+    color: var(--gray-900);
+}
+
+.report-concern {
+    margin: 0;
+    font-size: 0.75rem;
+    color: var(--amber-600);
+}
+
+.text-muted {
+    color: var(--gray-500);
+}
+
+.btn-view {
+    padding: 0.4rem 0.75rem;
+    background: var(--gray-100);
+    color: var(--gray-700);
+    border: none;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 150ms ease;
+}
+
+.btn-view:hover {
+    background: var(--primary-50);
+    color: var(--primary-700);
+}
+
+/* Legend */
+.legend-section {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+    padding: 1.5rem;
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: 12px;
+    margin-top: 2rem;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.legend-dot.occupied {
+    background: var(--green-500);
+}
+
+.legend-dot.vacant {
+    background: var(--blue-500);
+}
+
+.legend-dot.notice30 {
+    background: var(--amber-500);
+}
+
+.legend-dot.notice10 {
+    background: var(--red-500);
+}
+
+.legend-dot.repossessed {
+    background: var(--purple-500);
+}
+
+.legend-escalation {
+    font-size: 0.9rem;
+}
+
+.legend-label {
+    font-size: 0.85rem;
+    color: var(--gray-700);
+}
+
+/* Modal */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    max-width: 600px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--gray-200);
+    gap: 1rem;
+}
+
+.modal-header-left {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.modal-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--gray-900);
+}
+
+.status-badge-modal {
+    display: inline-block;
+    margin-top: 0.5rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.modal-close {
+    padding: 0.5rem;
+    background: none;
+    border: none;
+    color: var(--gray-500);
+    cursor: pointer;
+    font-size: 1.5rem;
+    line-height: 1;
+    transition: color 150ms ease;
+}
+
+.modal-close:hover {
+    color: var(--gray-700);
+}
+
+.modal-body {
+    flex: 1;
+    padding: 1.5rem;
+    space-y: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.info-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.section-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--gray-600);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0;
+}
+
+.info-card {
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: 10px;
+    padding: 1rem;
+}
+
+.info-card.notice-card {
+    background: rgba(245, 158, 11, 0.05);
+}
+
+.notice-card {
+    border-color: var(--amber-200);
+}
+
+.info-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+.info-icon {
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.info-row p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--gray-900);
+}
+
+.info-subtext {
+    margin-left: 1.95rem;
+    font-size: 0.75rem;
+    color: var(--gray-600);
+}
+
+.notice-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.notice-field-label {
+    margin: 0 0 0.25rem;
+    font-size: 0.75rem;
+    color: var(--gray-600);
+    text-transform: uppercase;
+    font-weight: 500;
+}
+
+.notice-field-value {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--gray-900);
+    font-weight: 500;
+}
+
+.report-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+.report-row span {
+    font-size: 0.85rem;
+}
+
+.report-row span:first-child {
+    color: var(--gray-600);
+}
+
+.report-row span:last-child {
+    color: var(--gray-900);
+    font-weight: 500;
+}
+
+.report-concern-label {
+    font-size: 0.75rem;
+    color: var(--gray-600);
+    margin: 0.75rem 0 0;
+    text-transform: uppercase;
+    font-weight: 500;
+}
+
+.report-concern-label + p {
+    margin: 0.25rem 0 0;
+    font-size: 0.85rem;
+    color: var(--gray-900);
+}
+
+.issue-notice-section {
+    background: rgba(245, 158, 11, 0.05);
+    border: 1px solid var(--amber-200);
+    border-radius: 10px;
+    padding: 1rem;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--gray-700);
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.form-select,
+.form-textarea {
+    width: 100%;
+    padding: 0.625rem 0.875rem;
+    border: 1px solid var(--gray-300);
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-family: inherit;
+    transition: all 150ms ease;
+}
+
+.form-select:focus,
+.form-textarea:focus {
+    outline: none;
+    border-color: var(--amber-400);
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+}
+
+.form-textarea {
+    resize: none;
+}
+
+.notice-info-text {
+    font-size: 0.8rem;
+    color: var(--amber-900);
+    margin: 0.75rem 0;
+    line-height: 1.4;
+}
+
+.form-actions {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.modal-footer {
+    display: flex;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--gray-200);
+    background: var(--gray-50);
+    flex-wrap: wrap;
+}
+
+/* Buttons */
+.btn {
+    padding: 0.625rem 1.25rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 150ms ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-sm {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.75rem;
+}
+
+.btn-primary {
+    background: var(--primary-600);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: var(--primary-700);
+    transform: translateY(-1px);
+}
+
+.btn-amber {
+    background: var(--amber-600);
+    color: white;
+}
+
+.btn-amber:hover {
+    background: var(--amber-700);
+}
+
+.btn-success {
+    background: var(--green-600);
+    color: white;
+}
+
+.btn-success:hover {
+    background: var(--green-700);
+}
+
+.btn-secondary {
+    background: var(--gray-200);
+    color: var(--gray-900);
+}
+
+.btn-secondary:hover {
+    background: var(--gray-300);
+}
+
+.btn-ghost {
+    background: transparent;
+    color: var(--gray-700);
+    border: 1px solid var(--gray-300);
+}
+
+.btn-ghost:hover {
+    background: var(--gray-50);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .header-controls {
+        width: 100%;
+        justify-content: flex-end;
+    }
+
+    .stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 0.75rem;
+    }
+
+    .units-grid {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 0.5rem;
+        padding: 0.75rem;
+    }
+
+    .legend-section {
+        gap: 1rem;
+    }
+
+    .modal-content {
+        border-radius: 12px;
+        max-height: 95vh;
+    }
+
+    .notice-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .modal-footer {
+        flex-direction: column;
+    }
+
+    .modal-footer .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .container-main {
+        padding: 0 0.75rem 1.5rem;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .stat-card {
+        padding: 1rem;
+    }
+
+    .stat-number {
+        font-size: 2rem;
+    }
+
+    .filter-section {
+        gap: 0.5rem;
+    }
+
+    .filter-pill {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.8rem;
+    }
+
+    .units-grid {
+        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    }
+
+    .units-table {
+        font-size: 0.75rem;
+    }
+
+    .units-table th,
+    .units-table td {
+        padding: 0.75rem 0.5rem;
+    }
+}
+</style>
+
+<!-- JavaScript -->
+<script>
+// Status configuration
+const statusConfig = {
+    "Occupied": { color: "text-green-700", bg: "bg-green-50", border: "border-green-300", dot: "bg-green-500" },
+    "Vacant — available": { color: "text-blue-700", bg: "bg-blue-50", border: "border-blue-300", dot: "bg-blue-500" },
+    "Under notice (30-day)": { color: "text-amber-700", bg: "bg-amber-50", border: "border-amber-400", dot: "bg-amber-500" },
+    "Final notice (10-day)": { color: "text-red-700", bg: "bg-red-50", border: "border-red-400", dot: "bg-red-500" },
+    "Repossessed": { color: "text-purple-700", bg: "bg-purple-50", border: "border-purple-400", dot: "bg-purple-500" }
+};
+
+let selectedUnit = null;
+
+// View mode toggle
+document.querySelectorAll('.view-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const mode = this.dataset.view;
+        document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+
+        const gridView = document.getElementById('gridView');
+        const tableView = document.getElementById('tableView');
+
+        if (mode === 'grid') {
+            gridView.style.display = 'flex';
+            tableView.style.display = 'none';
+        } else {
+            gridView.style.display = 'none';
+            tableView.style.display = 'block';
+        }
+    });
+});
+
+// Filter pills
+document.querySelectorAll('.filter-pill, .stat-card').forEach(pill => {
+    pill.addEventListener('click', function() {
+        const filter = this.dataset.filter;
+
+        // Update active pill
+        document.querySelectorAll('.filter-pill, .stat-card').forEach(p => p.classList.remove('active'));
+        if (this.classList.contains('filter-pill') || this.classList.contains('stat-card')) {
+            this.classList.add('active');
+        }
+
+        // Filter units
+        filterUnits(filter);
+    });
+});
+
+function filterUnits(status) {
+    const cards = document.querySelectorAll('.unit-card');
+    cards.forEach(card => {
+        if (status === 'all') {
+            card.style.display = 'block';
+        } else {
+            card.style.display = card.dataset.status === status ? 'block' : 'none';
+        }
+    });
+
+    const rows = document.querySelectorAll('.unit-row');
+    rows.forEach(row => {
+        // Filter logic for table rows
+        row.style.display = 'table-row';
+    });
+}
+
+// Modal functions
+function openUnitModal(unitId, element) {
+    const modal = document.getElementById('unitModal');
+
+    // Parse unit data from the card
+    const block = element.dataset.unitId;  // Would be replaced with actual data from server
+    const status = element.dataset.status;
+
+    // TODO: Fetch unit details from server via AJAX
+    // For now, this is a placeholder
+
+    modal.style.display = 'flex';
+}
+
+function closeUnitModal(event) {
+    if (event && event.target.id !== 'unitModal') return;
+    document.getElementById('unitModal').style.display = 'none';
+}
+
+function toggleNoticeForm(show) {
+    const form = document.getElementById('issueNoticeForm');
+    form.style.display = show ? 'block' : 'none';
+}
+
+// Close modal on escape
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        closeUnitModal();
+    }
+});
+</script>
+
+{% endblock %}

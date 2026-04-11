@@ -47,11 +47,11 @@ class RelocationSite(models.Model):
     
     @property
     def occupied_units_count(self):
-        return self.units.filter(status='occupied').count()
-    
+        return self.units.filter(status='Occupied').count()
+
     @property
     def vacant_units_count(self):
-        return self.units.filter(status='vacant').count()
+        return self.units.filter(status='Vacant — available').count()
 
 
 class HousingUnit(models.Model):
@@ -59,25 +59,30 @@ class HousingUnit(models.Model):
     Individual housing unit (block/lot) at a relocation site.
     """
     STATUS_CHOICES = [
-        ('vacant', 'Vacant - Available'),
-        ('occupied', 'Occupied'),
-        ('notice_30', 'Under Notice - 30 Days'),
-        ('notice_10', 'Under Notice - 10 Days (Final)'),
-        ('repossessed', 'Repossessed'),
+        ('Vacant — available', 'Vacant — available'),
+        ('Occupied', 'Occupied'),
+        ('Under notice (30-day)', 'Under notice (30-day)'),
+        ('Final notice (10-day)', 'Final notice (10-day)'),
+        ('Repossessed', 'Repossessed'),
         ('maintenance', 'Under Maintenance'),
     ]
-    
+
+    NOTICE_TYPE_CHOICES = [
+        ('30-day', '30-day notice'),
+        ('10-day', '10-day final notice'),
+    ]
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    
+
     site = models.ForeignKey(
         RelocationSite,
         on_delete=models.CASCADE,
         related_name='units'
     )
-    
+
     block_number = models.CharField(max_length=10)
     lot_number = models.CharField(max_length=10)
-    
+
     # Unit details
     area_sqm = models.DecimalField(
         max_digits=8,
@@ -86,12 +91,30 @@ class HousingUnit(models.Model):
         blank=True,
         verbose_name="Area (sq.m.)"
     )
-    
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='vacant')
-    
+
+    status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='Vacant — available')
+
+    # Occupancy tracking (for monitoring dashboard)
+    occupant_name = models.CharField(max_length=200, blank=True, null=True)
+    occupant_id = models.CharField(max_length=100, blank=True, null=True)
+
+    # Notice tracking
+    notice_type = models.CharField(
+        max_length=20,
+        choices=NOTICE_TYPE_CHOICES,
+        blank=True,
+        null=True
+    )
+    notice_date_issued = models.DateTimeField(null=True, blank=True)
+    notice_deadline = models.DateField(null=True, blank=True)
+
+    # Escalation flag
+    is_escalated = models.BooleanField(default=False)
+    escalation_reason = models.TextField(blank=True)
+
     # Location notes (helpful for field team)
     location_notes = models.TextField(blank=True)
-    
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -108,12 +131,52 @@ class HousingUnit(models.Model):
     
     def __str__(self):
         return f"{self.site.code} Block {self.block_number} Lot {self.lot_number}"
-    
+
     @property
     def current_occupant(self):
         """Return current active lot award if occupied."""
         active_award = self.lot_awards.filter(status='active').first()
         return active_award.application.applicant if active_award else None
+
+
+class WeeklyReport(models.Model):
+    """
+    Weekly occupancy report for a housing unit.
+    Submitted by caretaker, contains comfort status and any concerns.
+    """
+    REPORT_STATUS_CHOICES = [
+        ('Occupied', 'Occupied'),
+        ('Vacant', 'Vacant'),
+        ('Concern', 'Concern - Needs Follow-up'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    unit = models.OneToOneField(
+        HousingUnit,
+        on_delete=models.CASCADE,
+        related_name='weekly_report'
+    )
+
+    reported_status = models.CharField(max_length=50, choices=REPORT_STATUS_CHOICES)
+    concern_notes = models.TextField(blank=True)
+
+    last_updated = models.DateTimeField(auto_now=True)
+    reported_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='weekly_reports_submitted'
+    )
+
+    class Meta:
+        ordering = ['-last_updated']
+        verbose_name = "Weekly Report"
+        verbose_name_plural = "Weekly Reports"
+
+    def __str__(self):
+        return f"Weekly Report - {self.unit}"
 
 
 class LotAward(models.Model):
@@ -465,9 +528,9 @@ class OccupancyReportDetail(models.Model):
         ('unoccupied', 'Unoccupied'),
         ('concern', 'Concern Noted'),
     ]
-    
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    
+
     report = models.ForeignKey(
         OccupancyReport,
         on_delete=models.CASCADE,
@@ -478,10 +541,10 @@ class OccupancyReportDetail(models.Model):
         on_delete=models.CASCADE,
         related_name='occupancy_report_details'
     )
-    
+
     reported_status = models.CharField(max_length=20, choices=UNIT_STATUS_CHOICES)
     concern_notes = models.TextField(blank=True)
-    
+
     class Meta:
         ordering = ['report', 'unit']
         verbose_name = "Occupancy Report Detail"
@@ -492,6 +555,142 @@ class OccupancyReportDetail(models.Model):
                 name='unique_unit_per_report'
             )
         ]
-    
+
     def __str__(self):
         return f"{self.report} - {self.unit}"
+
+
+class CaseRecord(models.Model):
+    """
+    Case management records for housing-related complaints and disputes.
+    Module 5: Case Management
+    """
+    STATUS_CHOICES = [
+        ('Open', 'Open - Under Investigation'),
+        ('Referred', 'Referred - Escalated'),
+        ('Resolved', 'Resolved - Closed'),
+    ]
+
+    COMPLAINT_TYPE_CHOICES = [
+        ('Boundary Dispute', 'Boundary Dispute'),
+        ('Structural Issue', 'Structural Issue'),
+        ('Interpersonal Conflict', 'Interpersonal Conflict'),
+        ('Other', 'Other'),
+    ]
+
+    REFERRED_TO_CHOICES = [
+        ('City Engineering Office', 'City Engineering Office'),
+        ('Field Officer', 'Field Officer (Sir Russo)'),
+        ('Attorney', 'Attorney'),
+        ('Head (Arthur)', 'Head (Sir Arthur)'),
+        ('None', '— None —'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    # Case identification
+    case_number = models.CharField(max_length=50, unique=True, editable=False)
+    site = models.ForeignKey(
+        RelocationSite,
+        on_delete=models.CASCADE,
+        related_name='cases',
+        null=True,
+        blank=True
+    )
+
+    # Complainant info
+    complainant_name = models.CharField(max_length=200)
+    complainant_id = models.CharField(
+        max_length=100,
+        blank=True,
+        verbose_name="Beneficiary Profile Reference"
+    )
+
+    # Complaint details
+    complaint_type = models.CharField(max_length=50, choices=COMPLAINT_TYPE_CHOICES)
+    description = models.TextField()
+    date_received = models.DateField()
+
+    # Status tracking
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Open')
+
+    # Handler assignment
+    handled_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='cases_handled'
+    )
+
+    # Referral info (if escalated)
+    referred_to = models.CharField(
+        max_length=100,
+        choices=REFERRED_TO_CHOICES,
+        blank=True,
+        null=True
+    )
+    referral_date = models.DateField(null=True, blank=True)
+
+    # Resolution info
+    outcome = models.TextField(blank=True)
+    resolved_date = models.DateField(null=True, blank=True)
+
+    # Metadata
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='cases_created'
+    )
+
+    class Meta:
+        ordering = ['-date_received']
+        verbose_name = "Case Record"
+        verbose_name_plural = "Case Records"
+
+    def __str__(self):
+        return f"{self.case_number} - {self.complainant_name}"
+
+    def save(self, *args, **kwargs):
+        # Auto-generate case number if not set
+        if not self.case_number:
+            from django.utils import timezone
+            timestamp = timezone.now().strftime('%Y%m%d%H%M%S')
+            count = CaseRecord.objects.count() + 1
+            self.case_number = f"CASE-{timestamp}-{count:04d}"
+        super().save(*args, **kwargs)
+
+
+class CaseUpdate(models.Model):
+    """
+    Tracks updates/notes added to a case during investigation.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    case = models.ForeignKey(
+        CaseRecord,
+        on_delete=models.CASCADE,
+        related_name='updates'
+    )
+
+    notes = models.TextField()
+
+    # Who made this update
+    updated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='case_updates'
+    )
+
+    updated_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-updated_at']
+        verbose_name = "Case Update"
+        verbose_name_plural = "Case Updates"
+
+    def __str__(self):
+        return f"Update to {self.case.case_number}"
