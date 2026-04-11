@@ -866,33 +866,183 @@ def update_electricity(request):
 
 
 # =============================================================================
-# LEGACY ENDPOINT (for backwards compatibility)
+# UI #10: SUPPORTING SERVICES COORDINATOR (Day 5 Week 1)
 # =============================================================================
 
 @login_required
+def supporting_services_coordinator(request):
+    """
+    UI #10: Supporting Services Coordinator Form
+    Process 4: Approval Routing - Notarial & Engineering Tracking
+
+    Actor: Jocel (Fourth Member / Records Officer)
+    Purpose: Track completion of notarial services and engineering assessment
+             before forwarding application to signatory routing
+
+    GET: Display applications needing services completion
+    POST (AJAX): Mark service as complete
+    """
+
+    # Authorization: Fourth Member / Records Officer / Jocel only
+    if not hasattr(request.user, 'position') or request.user.position != 'fourth_member':
+        return render(request, 'common/access_denied.html',
+                      {'message': 'Only the Records Officer can access this function.'}, status=403)
+
+    if request.method == 'POST':
+        return process_service_completion(request)
+
+    # GET: Show applications that need services
+    applications = (
+        Application.objects
+        .filter(status='completed')  # After applicant sign, before routing
+        .select_related('applicant')
+        .order_by('-form_generated_at')
+    )
+
+    # Categorize by service completion status
+    pending_notarial = applications.filter(notarial_completed=False)
+    pending_engineering = applications.filter(engineering_completed=False)
+    both_pending = applications.filter(notarial_completed=False, engineering_completed=False)
+
+    # Ready to route (all services done)
+    ready_to_route = applications.filter(notarial_completed=True, engineering_completed=True)
+
+    context = {
+        'applications': applications,
+        'pending_notarial': pending_notarial,
+        'pending_engineering': pending_engineering,
+        'both_pending': both_pending,
+        'ready_to_route': ready_to_route,
+        'total_applications': applications.count(),
+    }
+
+    return render(request, 'applications/supporting_services.html', context)
+
+
+@login_required
 @require_POST
-def update_stage(request):
-    """Update application stage (AJAX) - Legacy endpoint."""
-    application_id = request.POST.get('application_id')
-    new_status = request.POST.get('status')
-    
+def process_service_completion(request):
+    """
+    Handle AJAX POST to mark notarial/engineering services as complete.
+
+    Expected POST data:
+    - application_id: Application ID
+    - service_type: 'notarial' or 'engineering'
+    - action: 'complete' or 'reset'
+    """
     try:
+        application_id = request.POST.get('application_id')
+        service_type = request.POST.get('service_type')  # 'notarial' or 'engineering'
+        action = request.POST.get('action', 'complete')  # 'complete' or 'reset'
+
         application = Application.objects.get(id=application_id)
-        application.status = new_status
-        
-        if new_status == 'standby':
-            application.standby_entered_at = timezone.now()
-            # Calculate standby position
-            last_position = Application.objects.filter(
-                status='standby'
-            ).exclude(id=application.id).aggregate(
-                max_pos=Max('standby_position')
-            )['max_pos'] or 0
-            application.standby_position = last_position + 1
-        
+
+        if service_type == 'notarial':
+            if action == 'complete':
+                application.notarial_completed = True
+                application.notarial_completed_at = timezone.now()
+                message = '✓ Notarial services marked as complete'
+            else:
+                application.notarial_completed = False
+                application.notarial_completed_at = None
+                message = '↺ Notarial services reset to pending'
+
+        elif service_type == 'engineering':
+            if action == 'complete':
+                application.engineering_completed = True
+                application.engineering_completed_at = timezone.now()
+                message = '✓ Engineering assessment marked as complete'
+            else:
+                application.engineering_completed = False
+                application.engineering_completed_at = None
+                message = '↺ Engineering assessment reset to pending'
+
+        else:
+            return JsonResponse({'success': False, 'error': 'Invalid service type'})
+
         application.save()
-        
-        return JsonResponse({'success': True})
+
+        # Check if both services are complete
+        both_complete = application.notarial_completed and application.engineering_completed
+
+        return JsonResponse({
+            'success': True,
+            'message': message,
+            'notarial_completed': application.notarial_completed,
+            'engineering_completed': application.engineering_completed,
+            'both_complete': both_complete,
+            'timestamp': timezone.now().strftime('%Y-%m-%d %H:%M'),
+        })
+
+    except Application.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Application not found'})
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
 
+
+@login_required
+@require_POST
+def send_to_signatory_routing(request):
+    """
+    Send application to signatory routing after all services are complete.
+
+    Expected POST data:
+    - application_id: Application ID to forward
+    """
+    try:
+        application_id = request.POST.get('application_id')
+        application = Application.objects.get(id=application_id)
+
+        # Verify both services are complete
+        if not application.notarial_completed or not application.engineering_completed:
+            return JsonResponse({
+                'success': False,
+                'error': 'Both notarial and engineering services must be marked complete'
+            })
+
+        # Already handle routing in existing code, update status
+        application.status = 'routing'
+        application.save()
+
+        # Create signatory routing records (if not exists)
+        # Typically: OIC → Head
+        SignatoryRouting.objects.get_or_create(
+            application=application,
+            signatory_role='oic',
+            defaults={
+                'order': 1,
+                'forwarded_by': request.user,
+                'forwarded_at': timezone.now(),
+            }
+        )
+
+        SignatoryRouting.objects.get_or_create(
+            application=application,
+            signatory_role='head',
+            defaults={
+                'order': 2,
+                'forwarded_by': request.user,
+            }
+        )
+
+        # Send SMS to applicant
+        applicant = application.applicant
+        if applicant.phone_number:
+            message = (
+                f"📋 APPLICATION UPDATE\n"
+                f"Your application ({application.application_number}) has been forwarded for final approval.\n"
+                f"You will be notified once approved.\n"
+                f"Thank you, Talisay Housing Authority"
+            )
+            send_sms(applicant.phone_number, message, 'sent_to_routing', applicant=applicant)
+
+        return JsonResponse({
+            'success': True,
+            'message': f'Application {application.application_number} forwarded to signatory routing',
+            'new_status': application.status,
+        })
+
+    except Application.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Application not found'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})

@@ -28,7 +28,12 @@ urlpatterns = [
     # Electricity tracking (Joie, Laarni)
     path('staff/electricity/', views.electricity_list, name='electricity_list'),
     path('staff/electricity/update/', views.update_electricity, name='update_electricity'),
-    
+
+    # Supporting Services Coordinator (Jocel - Day 5 Week 1)
+    path('staff/services/', views.supporting_services_coordinator, name='supporting_services'),
+    path('staff/services/complete/', views.process_service_completion, name='process_service'),
+    path('staff/services/routing/', views.send_to_signatory_routing, name='send_to_routing'),
+
     # Legacy endpoint (backwards compatibility)
     path('staff/update-stage/', views.update_stage, name='update_stage'),
 ]
