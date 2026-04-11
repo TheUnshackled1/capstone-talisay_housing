@@ -28,9 +28,9 @@ def lot_awarding_draw(request):
     """
 
     # Authorization check: Only Jocel (Fourth Member) can access
-    if not hasattr(request.user, 'role') or request.user.role.lower() not in ['fourth', 'fourth_member', 'jocel']:
+    if request.user.position not in ['fourth_member']:
         return render(request, 'common/access_denied.html',
-                      {'message': 'Only the Lot Coordinator can access this function.'}, status=403)
+                      {'message': 'Only the Lot Coordinator (Fourth Member) can access this function.'}, status=403)
 
     if request.method == 'POST':
         return process_lot_awards(request)

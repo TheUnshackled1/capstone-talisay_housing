@@ -286,6 +286,7 @@
 {% endblock %}
 
 {% block content %}
+{% csrf_token %}
 <div class="lot-awarding-container">
     <!-- Page Header -->
     <div class="page-header">
@@ -510,7 +511,7 @@ function confirmAllAwards() {
             if (result.success) {
                 alert(`✅ ${result.message}\n\nAwards created:\n${result.details.map(d => `${d.applicant_name} → ${d.unit} (${d.site})`).join('\n')}`);
                 // Redirect to dashboard
-                window.location.href = '{% url "dashboard:index" %}';
+                window.location.href = '{% url "accounts:dashboard" %}';
             } else {
                 alert(`❌ Error: ${result.error}`);
             }
