@@ -5,16 +5,32 @@ from django.views.decorators.http import require_POST
 from django.http import JsonResponse
 from django.utils import timezone
 from django.db.models import Q, Prefetch
+from functools import wraps
 from .models import LandownerSubmission, ISFRecord, Applicant, Barangay, QueueEntry, CDRRMOCertification, ISFEditAudit
 from .forms import (
-    LandownerSubmissionForm, 
-    ISFRecordForm, 
+    LandownerSubmissionForm,
+    ISFRecordForm,
     ISFReviewForm,
     HouseholdMemberForm,
     WalkInApplicantForm
 )
 from .utils import check_blacklist, create_applicant_from_isf, send_sms
 import json
+
+
+def verify_position(view_func):
+    """
+    Decorator to verify that URL position parameter matches logged-in user's position.
+    Security feature: prevents URL manipulation to access other roles' views.
+    """
+    @wraps(view_func)
+    def wrapper(request, position, *args, **kwargs):
+        # Check if position in URL matches user's actual position
+        if request.user.position != position:
+            messages.error(request, f'Access denied. You are logged in as {request.user.get_position_display()}, not {position.replace("_", " ")}.')
+            return redirect('accounts:dashboard')
+        return view_func(request, position, *args, **kwargs)
+    return wrapper
 
 
 
@@ -91,10 +107,12 @@ def landowner_form(request):
 
 
 @login_required
-@login_required
-def isf_review(request, isf_id):
+@verify_position
+def isf_review(request, position, isf_id):
     """
     Staff view: Review individual ISF record.
+
+    URL Route: /intake/staff/<position>/isf-review/<isf_id>/
 
     ACCESS CONTROL - Hierarchical Model:
     ✅ Jocel (fourth_member) - Primary reviewer, performs eligibility checks
@@ -245,10 +263,13 @@ def isf_review(request, isf_id):
 
 
 @login_required
-def register_landowner_walkin(request):
+@verify_position
+def register_landowner_walkin(request, position):
     """
     AJAX endpoint to register a landowner walk-in submission with ISF records.
     Channel A: Staff enters landowner and ISF data on behalf of walk-in landowner.
+
+    URL Route: /intake/staff/<position>/register-landowner-walkin/
 
     Accepts POST with:
     - landowner_name, property_address
@@ -338,9 +359,12 @@ def register_landowner_walkin(request):
 
 
 @login_required
-def edit_isf_record(request, isf_id):
+@verify_position
+def edit_isf_record(request, position, isf_id):
     """
     AJAX endpoint to edit ISF record data with staff audit trail.
+
+    URL Route: /intake/staff/<position>/edit-isf-record/<isf_id>/
 
     Editable fields:
     - monthly_income
@@ -417,11 +441,14 @@ def edit_isf_record(request, isf_id):
 
 
 @login_required
-def update_eligibility(request):
+@verify_position
+def update_eligibility(request, position):
     """
     AJAX endpoint to update applicant eligibility status.
     Used by the review modal for marking eligible or disqualifying applicants.
-    
+
+    URL Route: /intake/staff/<position>/update-eligibility/
+
     ACCESS CONTROL:
     ✅ Jocel (fourth_member) - Primary eligibility checker
     ✅ Joie (second_member) - Supervisor oversight
@@ -640,11 +667,14 @@ def update_eligibility(request):
 
 
 @login_required
-def update_applicant(request):
+@verify_position
+def update_applicant(request, position):
     """
     AJAX endpoint to update applicant data (edit mode in review modal).
     Handles both Channel A (ISF records) and Channel B/C (Applicants).
-    
+
+    URL Route: /intake/staff/<position>/update-applicant/
+
     ACCESS CONTROL:
     ✅ Jocel (fourth_member) - Primary data editor
     ✅ Joie (second_member) - Supervisor oversight
@@ -841,10 +871,13 @@ def update_applicant(request):
 
 
 @login_required
+@verify_position
 @require_POST
-def update_cdrrmo_certification(request):
+def update_cdrrmo_certification(request, position):
     """
     Dedicated endpoint for CDRRMO certification decision workflow.
+
+    URL Route: /intake/staff/<position>/update-cdrrmo-certification/
 
     Channel B applicants must be certified by CDRRMO as danger zone (or not).
     This endpoint records the CDRRMO officer's decision and determines queue placement.
@@ -959,11 +992,14 @@ def update_cdrrmo_certification(request):
 
 
 @login_required
-def delete_applicant(request):
+@verify_position
+def delete_applicant(request, position):
     """
     AJAX endpoint to delete an applicant.
     Handles both Channel A (ISF records) and Channel B/C (Applicants).
-    
+
+    URL Route: /intake/staff/<position>/delete-applicant/
+
     ACCESS CONTROL:
     ✅ Jocel (fourth_member) - Can delete applicants
     ✅ Joie (second_member) - Supervisor oversight
@@ -1033,10 +1069,14 @@ def delete_applicant(request):
 
 
 @login_required
+@verify_position
 @require_POST
-def resend_sms(request):
+def resend_sms(request, position):
     """
     Resend SMS notification to applicant.
+
+    URL Route: /intake/staff/<position>/resend-sms/
+
     Accessible to: Second Member (Joie), Fourth Member (Jocel)
     """
     allowed_positions = ['second_member', 'fourth_member']
@@ -1086,17 +1126,20 @@ def resend_sms(request):
 
 
 @login_required
-def applicants_list(request):
+@verify_position
+def applicants_list(request, position):
     """
     Module 1: ISF Recording Management - Applicant Intake
     Accessible to: Second Member (Joie), Fourth Member (Jocel)
     Unified view for all applicant intake channels:
-    
+
     Channel A (Landowner Portal) → Shows pending ISFRecords from LandownerSubmissions
     Channel B (Danger Zone) → Shows Applicants with channel='danger_zone'
     Channel C (Walk-in) → Shows Applicants with channel='walk_in'
-    
+
     Displays in FIFO order (oldest first by registration date).
+
+    URL Route: /intake/staff/<position>/applicants/
     """
     # Staff who can view applicants list:
     # - Jocel (fourth_member) & Joie (second_member): Full access - can review, edit, mark eligibility
@@ -1343,9 +1386,12 @@ def applicants_list(request):
 
 
 @login_required
-def walkin_register(request):
+@verify_position
+def walkin_register(request, position):
     """
     Handle applicant registration from the modal form.
+
+    URL Route: /intake/staff/<position>/walkin-register/
 
     Channel A: Landowner walk-in → Creates LandownerSubmission + ISFRecords
     Channel B: Danger Zone Walk-in → Creates Applicant + CDRRMO certification

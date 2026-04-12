@@ -5,12 +5,32 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.db.models import Count, Q, Prefetch, Max
 from django.utils import timezone
+from functools import wraps
 from intake.models import Applicant
 from intake.utils import send_sms
 from .models import (
-    Application, Requirement, RequirementSubmission, 
+    Application, Requirement, RequirementSubmission,
     SignatoryRouting, FacilitatedService, ElectricityConnection, LotAwarding
 )
+
+
+# =============================================================================
+# POSITION VERIFICATION DECORATOR
+# =============================================================================
+
+def verify_position(view_func):
+    """
+    Decorator to verify that URL position parameter matches logged-in user's position.
+    Security feature: prevents URL manipulation to access other roles' views.
+    """
+    @wraps(view_func)
+    def wrapper(request, position, *args, **kwargs):
+        # Check if position in URL matches user's actual position
+        if request.user.position != position:
+            messages.error(request, f'Access denied. You are logged in as {request.user.get_position_display()}, not {position.replace("_", " ")}.')
+            return redirect('accounts:dashboard')
+        return view_func(request, position, *args, **kwargs)
+    return wrapper
 
 
 # =============================================================================
@@ -100,11 +120,14 @@ def get_module2_permissions(user):
 # =============================================================================
 
 @login_required
-def applications_list(request):
+@verify_position
+def applications_list(request, position):
     """
     Module 2 - Housing Application & Evaluation
     Shows eligible applicants with document checklist progress, signatory routing, etc.
-    
+
+    URL: /applications/<position>/list/
+
     ACCESS CONTROL:
     ✅ Jocel (4th Member) - Full access: verify docs, generate forms, award lots
     ✅ Jay (3rd Member) - View + routing actions
@@ -303,10 +326,13 @@ def applications_list(request):
 # =============================================================================
 
 @login_required
-def application_detail(request, application_id):
+@verify_position
+def application_detail(request, position, application_id):
     """
     Get applicant/application detail for modal (AJAX).
-    
+
+    URL: /applications/<position>/detail/<application_id>/
+
     Accepts either an Applicant ID or Application ID and returns
     the relevant information for the modal display.
     """
@@ -389,11 +415,14 @@ def application_detail(request, application_id):
 # =============================================================================
 
 @login_required
+@verify_position
 @require_POST
-def update_requirement(request):
+def update_requirement(request, position):
     """
     Update requirement submission status (AJAX).
-    
+
+    URL: /applications/<position>/requirement/update/
+
     ACCESS CONTROL:
     ✅ Jocel (4th Member) - Primary document verifier
     ✅ Joie (2nd Member) - Supervisor backup
@@ -460,10 +489,13 @@ def update_requirement(request):
 # =============================================================================
 
 @login_required
-def generate_form(request, applicant_id):
+@verify_position
+def generate_form(request, position, applicant_id):
     """
     Generate application form for applicant.
-    
+
+    URL: /applications/<position>/form/generate/<applicant_id>/
+
     ACCESS CONTROL:
     ✅ Jocel (4th Member) - Primary
     ✅ Joie (2nd Member) - Supervisor backup
@@ -528,11 +560,14 @@ def generate_form(request, applicant_id):
 # =============================================================================
 
 @login_required
+@verify_position
 @require_POST
-def update_routing(request):
+def update_routing(request, position):
     """
     Update signatory routing step (AJAX).
-    
+
+    URL: /applications/<position>/routing/update/
+
     ACCESS CONTROL:
     - Jay (3rd Member): receive, forward_oic, forward_head
     - Victor (OIC): signed_oic
@@ -612,11 +647,14 @@ def update_routing(request):
 # =============================================================================
 
 @login_required
+@verify_position
 @require_POST
-def move_to_standby(request):
+def move_to_standby(request, position):
     """
     Move fully approved application to standby queue.
-    
+
+    URL: /applications/<position>/standby/
+
     ACCESS CONTROL:
     ✅ Jocel (4th Member) - Primary
     ✅ Joie (2nd Member) - Supervisor
@@ -666,11 +704,14 @@ def move_to_standby(request):
 # =============================================================================
 
 @login_required
+@verify_position
 @require_POST
-def award_lot(request):
+def award_lot(request, position):
     """
     Record lot awarding for an applicant.
-    
+
+    URL: /applications/<position>/lot/award/
+
     ACCESS CONTROL:
     ✅ Jocel (4th Member) - Primary lot awarding
     ✅ Joie (2nd Member) - Supervisor backup
@@ -747,10 +788,13 @@ def award_lot(request):
 # =============================================================================
 
 @login_required
-def electricity_list(request):
+@verify_position
+def electricity_list(request, position):
     """
     Electricity connection tracking view.
-    
+
+    URL: /applications/<position>/electricity/
+
     ACCESS CONTROL:
     ✅ Joie (2nd Member) - Primary
     ✅ Laarni (5th Member) - Support
@@ -794,11 +838,14 @@ def electricity_list(request):
 
 
 @login_required
+@verify_position
 @require_POST
-def update_electricity(request):
+def update_electricity(request, position):
     """
     Update electricity connection status.
-    
+
+    URL: /applications/<position>/electricity/update/
+
     ACCESS CONTROL:
     ✅ Joie (2nd Member) - Primary
     ✅ Laarni (5th Member) - Support
@@ -870,10 +917,13 @@ def update_electricity(request):
 # =============================================================================
 
 @login_required
-def supporting_services_coordinator(request):
+@verify_position
+def supporting_services_coordinator(request, position):
     """
     UI #10: Supporting Services Coordinator Form
     Process 4: Approval Routing - Notarial & Engineering Tracking
+
+    URL: /applications/<position>/supporting-services/
 
     Actor: Jocel (Fourth Member / Records Officer)
     Purpose: Track completion of notarial services and engineering assessment
@@ -920,10 +970,13 @@ def supporting_services_coordinator(request):
 
 
 @login_required
+@verify_position
 @require_POST
-def process_service_completion(request):
+def process_service_completion(request, position):
     """
     Handle AJAX POST to mark notarial/engineering services as complete.
+
+    URL: /applications/<position>/service/complete/
 
     Expected POST data:
     - application_id: Application ID
@@ -981,10 +1034,13 @@ def process_service_completion(request):
 
 
 @login_required
+@verify_position
 @require_POST
-def send_to_signatory_routing(request):
+def send_to_signatory_routing(request, position):
     """
     Send application to signatory routing after all services are complete.
+
+    URL: /applications/<position>/routing/send/
 
     Expected POST data:
     - application_id: Application ID to forward

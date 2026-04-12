@@ -20,14 +20,14 @@ urlpatterns = [
     path('occupancy-review/submit/', views.submit_occupancy_review, name='submit_occupancy_review'),
 
     # Housing Units Monitoring Dashboard (Module 4)
-    path('housing-units/', views.housing_units_monitoring, name='housing_units_monitoring'),
-    path('housing-units/<uuid:unit_id>/details/', views.get_unit_details, name='get_unit_details'),
-    path('housing-units/issue-notice/', views.issue_compliance_notice, name='issue_compliance_notice'),
+    path('housing-units/<str:position>/', views.housing_units_monitoring, name='housing_units_monitoring'),
+    path('housing-units/<str:position>/<uuid:unit_id>/details/', views.get_unit_details, name='get_unit_details'),
+    path('housing-units/<str:position>/issue-notice/', views.issue_compliance_notice, name='issue_compliance_notice'),
 
     # Case Management (Module 5)
-    path('cases/', views.case_management, name='case_management'),
-    path('cases/<uuid:case_id>/details/', views.get_case_details, name='get_case_details'),
-    path('cases/create/', views.create_case, name='create_case'),
-    path('cases/update/', views.update_case, name='update_case'),
+    path('cases/<str:position>/', views.case_management, name='case_management'),
+    path('cases/<str:position>/<uuid:case_id>/details/', views.get_case_details, name='get_case_details'),
+    path('cases/<str:position>/create/', views.create_case, name='create_case'),
+    path('cases/<str:position>/update/', views.update_case, name='update_case'),
 ]
 

@@ -4,17 +4,40 @@ from django.contrib import messages
 from django.db.models import Q
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
+from functools import wraps
 import json
 from intake.models import Applicant
 from units.models import LotAward
 from documents.models import Document
 
 
+# =============================================================================
+# POSITION VERIFICATION DECORATOR
+# =============================================================================
+
+def verify_position(view_func):
+    """
+    Decorator to verify that URL position parameter matches logged-in user's position.
+    Security feature: prevents URL manipulation to access other roles' views.
+    """
+    @wraps(view_func)
+    def wrapper(request, position, *args, **kwargs):
+        # Check if position in URL matches user's actual position
+        if request.user.position != position:
+            messages.error(request, f'Access denied. You are logged in as {request.user.get_position_display()}, not {position.replace("_", " ")}.')
+            return redirect('accounts:dashboard')
+        return view_func(request, position, *args, **kwargs)
+    return wrapper
+
+
 @login_required
-def document_management(request):
+@verify_position
+def document_management(request, position):
     """
     Module 3 - Document Management
     Search and manage documents for all applicants and beneficiaries.
+
+    URL: /documents/<position>/management/
     """
     if not request.user.is_staff:
         messages.error(request, 'Access denied. This page is for staff only.')
@@ -143,11 +166,14 @@ def document_management(request):
 
 
 @login_required
+@verify_position
 @require_http_methods(["POST"])
-def upload_document(request):
+def upload_document(request, position):
     """
     AJAX endpoint to upload a document for an applicant.
     Returns JSON response with upload status.
+
+    URL: /documents/<position>/upload/
     """
     if not request.user.is_staff:
         return JsonResponse({'success': False, 'error': 'Access denied'}, status=403)
@@ -195,10 +221,13 @@ def upload_document(request):
 
 
 @login_required
+@verify_position
 @require_http_methods(["POST"])
-def mark_document_present(request):
+def mark_document_present(request, position, doc_type=None):
     """
     Mark a specific document type as present (verified) for an applicant.
+
+    URL: /documents/<position>/mark-present/ or /documents/<position>/mark-present/<doc_type>/
     """
     if not request.user.is_staff:
         return JsonResponse({'success': False, 'error': 'Access denied'}, status=403)
@@ -238,10 +267,13 @@ def mark_document_present(request):
 
 
 @login_required
+@verify_position
 @require_http_methods(["GET"])
-def get_applicant_documents(request):
+def get_applicant_documents(request, position):
     """
     Get all documents for an applicant as JSON.
+
+    URL: /documents/<position>/applicant-documents/
     """
     try:
         applicant_id = request.GET.get('applicant_id')
@@ -271,11 +303,14 @@ def get_applicant_documents(request):
 
 
 @login_required
+@verify_position
 @require_http_methods(["POST"])
-def delete_document(request, doc_id):
+def delete_document(request, position, doc_id):
     """
     AJAX endpoint to delete a document.
     Staff only - requires authentication.
+
+    URL: /documents/<position>/delete/<doc_id>/
     """
     if not request.user.is_staff:
         return JsonResponse({'success': False, 'error': 'Access denied'}, status=403)

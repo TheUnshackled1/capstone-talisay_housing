@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods, require_POST
@@ -6,6 +6,7 @@ from django.db import transaction
 from django.utils import timezone
 from django.contrib import messages
 from datetime import timedelta, datetime
+from functools import wraps
 import json
 
 from intake.models import QueueEntry, Applicant
@@ -15,6 +16,26 @@ from units.models import (
     HousingUnit, LotAward, RelocationSite, ComplianceNotice,
     OccupancyReport, OccupancyReportDetail, CaseRecord, CaseUpdate, WeeklyReport
 )
+
+
+# =============================================================================
+# POSITION VERIFICATION DECORATOR
+# =============================================================================
+
+def verify_position(view_func):
+    """
+    Decorator to verify that URL position parameter matches logged-in user's position.
+    Security feature: prevents URL manipulation to access other roles' views.
+    """
+    @wraps(view_func)
+    def wrapper(request, position, *args, **kwargs):
+        # Check if position in URL matches user's actual position
+        if request.user.position != position:
+            messages.error(request, f'Access denied. You are logged in as {request.user.get_position_display()}, not {position.replace("_", " ")}.')
+            return redirect('accounts:dashboard')
+        return view_func(request, position, *args, **kwargs)
+    return wrapper
+
 
 
 @login_required
@@ -660,11 +681,14 @@ def submit_occupancy_review(request):
 # ===================================================================
 
 @login_required
-def housing_units_monitoring(request):
+@verify_position
+def housing_units_monitoring(request, position):
     """
     Housing Unit & Occupancy Monitoring Dashboard
     Displays all housing units grouped by block with status, occupant info,
     and notice tracking. Supports grid and table views.
+
+    URL: /units/<position>/housing-units/
 
     Actors: Fourth Member (Jocel), Field Team
     Purpose: Monitor unit occupancy, track compliance notices, manage escalations
@@ -754,11 +778,14 @@ def housing_units_monitoring(request):
 
 
 @login_required
+@verify_position
 @require_http_methods(["GET"])
-def get_unit_details(request, unit_id):
+def get_unit_details(request, position, unit_id):
     """
     AJAX endpoint to fetch unit details for modal display
     Returns JSON with unit info, occupant, notices, and weekly report
+
+    URL: /units/<position>/detail/<unit_id>/
     """
     try:
         unit = HousingUnit.objects.prefetch_related('weekly_report').get(id=unit_id)
@@ -812,11 +839,14 @@ def get_unit_details(request, unit_id):
 
 
 @login_required
+@verify_position
 @require_POST
-def issue_compliance_notice(request):
+def issue_compliance_notice(request, position):
     """
     AJAX endpoint to issue a compliance notice to a housing unit
     Updates unit status and sends SMS notification
+
+    URL: /units/<position>/notice/issue/
 
     POST data:
     - unit_id: UUID
@@ -899,10 +929,13 @@ def issue_compliance_notice(request):
 # ===================================================================
 
 @login_required
-def case_management(request):
+@verify_position
+def case_management(request, position):
     """
     Case Management Dashboard
     Displays all case records with search, filtering, and status tracking
+
+    URL: /units/<position>/cases/
 
     Actors: All staff
     Purpose: Track complaints, disputes, and case resolutions
@@ -953,11 +986,14 @@ def case_management(request):
 
 
 @login_required
+@verify_position
 @require_http_methods(["GET"])
-def get_case_details(request, case_id):
+def get_case_details(request, position, case_id):
     """
     AJAX endpoint to fetch case details for modal display
     Returns JSON with case info, updates, and timeline
+
+    URL: /units/<position>/case/<case_id>/
     """
     try:
         case = CaseRecord.objects.prefetch_related('updates').get(id=case_id)
@@ -1005,10 +1041,13 @@ def get_case_details(request, case_id):
 
 
 @login_required
+@verify_position
 @require_POST
-def create_case(request):
+def create_case(request, position):
     """
     AJAX endpoint to create a new case record
+
+    URL: /units/<position>/case/create/
 
     POST data:
     - complainant_name: str
@@ -1088,10 +1127,13 @@ def create_case(request):
 
 
 @login_required
+@verify_position
 @require_POST
-def update_case(request):
+def update_case(request, position):
     """
     AJAX endpoint to update case status, add notes, or resolve
+
+    URL: /units/<position>/case/update/
 
     POST data:
     - case_id: UUID
