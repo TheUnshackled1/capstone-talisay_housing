@@ -156,7 +156,7 @@
 </div>
 
 <!-- Unit Detail Modal -->
-<div id="unitModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 1rem;" onclick="closeUnitModal(event)">
+<div id="unitModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); align-items: center; justify-content: center; z-index: 1000; padding: 1rem;" onclick="closeUnitModal(event)">
     <div onclick="event.stopPropagation();" style="background: white; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); max-width: 500px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 1.5rem;">
         <!-- Close Button -->
         <button onclick="closeUnitModal()" style="position: absolute; top: 1rem; right: 1rem; background: transparent; border: none; font-size: 1.5rem; cursor: pointer; color: var(--gray-500);">✕</button>
@@ -269,9 +269,16 @@ function openUnitModal(unitId) {
                 const unit = data.unit;
                 document.getElementById('modalUnitTitle').textContent = `Block ${unit.block}, Lot ${unit.lot}`;
                 document.getElementById('modalUnitStatus').textContent = unit.status;
-                document.getElementById('modalOccupant').textContent = unit.occupant || '—';
-                document.getElementById('reportLastUpdated').textContent = unit.last_report_date || '—';
-                document.getElementById('reportedStatus').textContent = unit.reported_status || '—';
+                document.getElementById('modalOccupant').textContent = unit.occupant_name || '—';
+
+                // Get weekly report data if available
+                if (unit.weekly_report) {
+                    document.getElementById('reportLastUpdated').textContent = unit.weekly_report.last_updated || '—';
+                    document.getElementById('reportedStatus').textContent = unit.weekly_report.reported_status || '—';
+                } else {
+                    document.getElementById('reportLastUpdated').textContent = '—';
+                    document.getElementById('reportedStatus').textContent = '—';
+                }
 
                 if (unit.status.includes('Final')) {
                     document.getElementById('awardBtn').style.display = 'block';
@@ -280,7 +287,12 @@ function openUnitModal(unitId) {
                 }
 
                 document.getElementById('unitModal').style.display = 'flex';
+            } else {
+                console.error('Failed to fetch unit details:', data.error);
             }
+        })
+        .catch(err => {
+            console.error('Error fetching unit details:', err);
         });
 }
 

@@ -673,16 +673,24 @@ def housing_units_monitoring(request):
     # Get site - assume user is assigned to a site
     # For Fourth Member (Jocel), this would be their primary site
     site_id = request.GET.get('site_id')
+    site = None
+    all_sites = RelocationSite.objects.all()
+
     if site_id:
-        site = RelocationSite.objects.get(id=site_id)
+        site = RelocationSite.objects.filter(id=site_id).first()
     else:
         # Default: get first site user has access to
         sites = request.user.assigned_sites.all()
         site = sites.first() if sites.exists() else None
 
+    # If no assigned site, allow staff to view all sites
+    # If regular user with no assignment, show first available site
     if not site:
-        return render(request, 'common/error.html',
-                      {'error': 'No relocation site assigned to your account.'})
+        if all_sites.exists():
+            site = all_sites.first()
+        else:
+            return render(request, 'common/error.html',
+                          {'error': 'No relocation sites available in the system.'})
 
     # Get all units for the site with related data
     units = (
@@ -728,6 +736,7 @@ def housing_units_monitoring(request):
     # Prepare context
     context = {
         'site': site,
+        'all_sites': all_sites,
         'total_units': units.count(),
         'occupied_count': occupied_count,
         'vacant_count': vacant_count,

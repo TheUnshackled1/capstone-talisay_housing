@@ -27,7 +27,7 @@ def case_management_dashboard(request):
     # Get all cases with related data
     cases = (
         Case.objects
-        .select_related('received_by', 'investigated_by', 'decided_by', 'complained_applicant', 'subject_applicant', 'related_unit')
+        .select_related('received_by', 'investigated_by', 'decided_by', 'complainant_applicant', 'subject_applicant', 'related_unit')
         .prefetch_related('notes')
         .order_by('-received_at')
     )
