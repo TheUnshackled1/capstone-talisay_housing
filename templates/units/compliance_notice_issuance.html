@@ -862,7 +862,7 @@ function executeConfirm() {
     payload.append('custom_days', customDays);
     payload.append('csrfmiddlewaretoken', CSRFToken);
 
-    fetch(`{% url 'units:process_compliance_notice' %}`, {
+    fetch(`{% url 'units:process_compliance_notice' request.user.position %}`, {
         method: 'POST',
         body: payload,
     })

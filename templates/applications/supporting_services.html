@@ -767,7 +767,7 @@ function toggleService(applicationId, serviceType, action) {
     payload.append('action', action);
     payload.append('csrfmiddlewaretoken', CSRFToken);
 
-    fetch(`{% url 'applications:process_service' %}`, {
+    fetch(`{% url 'applications:process_service' request.user.position %}`, {
         method: 'POST',
         body: payload,
     })
@@ -791,7 +791,7 @@ function sendToRouting(applicationId, appNumber) {
         payload.append('application_id', applicationId);
         payload.append('csrfmiddlewaretoken', CSRFToken);
 
-        fetch(`{% url 'applications:send_to_routing' %}`, {
+        fetch(`{% url 'applications:send_to_routing' request.user.position %}`, {
             method: 'POST',
             body: payload,
         })

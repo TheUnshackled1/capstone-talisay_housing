@@ -1687,7 +1687,7 @@
             formData.append('status', status);
             formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
             
-            const response = await fetch('{% url "applications:update_requirement" %}', {
+            const response = await fetch('{% url "applications:update_requirement" request.user.position %}', {
                 method: 'POST',
                 body: formData
             });
@@ -1768,7 +1768,7 @@
             formData.append('step', step);
             formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
             
-            const response = await fetch('{% url "applications:update_routing" %}', {
+            const response = await fetch('{% url "applications:update_routing" request.user.position %}', {
                 method: 'POST',
                 body: formData
             });
@@ -1817,7 +1817,7 @@
         formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
         
         try {
-            const response = await fetch('{% url "applications:award_lot" %}', {
+            const response = await fetch('{% url "applications:award_lot" request.user.position %}', {
                 method: 'POST',
                 body: formData
             });

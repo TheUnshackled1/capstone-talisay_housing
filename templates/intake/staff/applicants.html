@@ -2540,7 +2540,7 @@
         formData.append('id', currentApplicant.channel === 'A' ? currentApplicant.id : currentApplicant.applicantId);
         formData.append('sms_type', smsType);
         
-        fetch('{% url "intake:resend_sms" %}', {
+        fetch('{% url "intake:resend_sms" request.user.position %}', {
             method: 'POST',
             body: formData,
             headers: {
@@ -2663,7 +2663,7 @@
         formData.append('action', 'mark_eligible');
         formData.append('channel', 'A');
         
-        fetch('{% url "intake:update_eligibility" %}', {
+        fetch('{% url "intake:update_eligibility" request.user.position %}', {
             method: 'POST',
             body: formData
         })
@@ -2792,7 +2792,7 @@
             formData.append('submission_id', currentApplicant.submissionId);
         }
         
-        fetch('{% url "intake:update_applicant" %}', {
+        fetch('{% url "intake:update_applicant" request.user.position %}', {
             method: 'POST',
             body: formData
         })
@@ -3137,7 +3137,7 @@
         formData.append('cdrrmo_notes', cdrrmoNotes);
         formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
         
-        fetch('{% url "intake:update_applicant" %}', {
+        fetch('{% url "intake:update_applicant" request.user.position %}', {
             method: 'POST',
             body: formData
         })
@@ -3280,7 +3280,7 @@
         formData.append('applicant_id', currentApplicant.applicantId || currentApplicant.id);
         formData.append('action', 'mark_eligible');
 
-        fetch('{% url "intake:update_eligibility" %}', {
+        fetch('{% url "intake:update_eligibility" request.user.position %}', {
             method: 'POST',
             body: formData
         })
@@ -3345,7 +3345,7 @@
         formData.append('reason', reason);
         formData.append('notes', notes);
         
-        fetch('{% url "intake:update_eligibility" %}', {
+        fetch('{% url "intake:update_eligibility" request.user.position %}', {
             method: 'POST',
             body: formData
         })
@@ -3428,7 +3428,7 @@
             });
         }
         
-        fetch('{% url "intake:update_applicant" %}', {
+        fetch('{% url "intake:update_applicant" request.user.position %}', {
             method: 'POST',
             body: formData
         })
@@ -3469,7 +3469,7 @@
             formData.append('submission_id', currentApplicant.submissionId);
         }
         
-        fetch('{% url "intake:delete_applicant" %}', {
+        fetch('{% url "intake:delete_applicant" request.user.position %}', {
             method: 'POST',
             body: formData
         })
@@ -4416,7 +4416,7 @@
         }
 
         // Submit via existing update_eligibility endpoint
-        fetch('{% url "intake:update_eligibility" %}', {
+        fetch('{% url "intake:update_eligibility" request.user.position %}', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',

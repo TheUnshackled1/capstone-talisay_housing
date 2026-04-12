@@ -809,7 +809,7 @@ function confirmSubmit() {
         payload.discrepancy_notes = document.getElementById('discrepancyNotes').value;
     }
 
-    fetch('{% url "units:submit_occupancy_review" %}', {
+    fetch('{% url "units:submit_occupancy_review" request.user.position %}', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

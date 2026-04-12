@@ -652,7 +652,7 @@ function submitEligibilityDecision(decision) {
     }
 
     // Submit via existing update_eligibility endpoint
-    fetch('{% url "intake:update_eligibility" %}', {
+    fetch('{% url "intake:update_eligibility" request.user.position %}', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',

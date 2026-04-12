@@ -39,8 +39,9 @@ def verify_position(view_func):
 
 
 @login_required
+@verify_position
 @require_http_methods(["GET", "POST"])
-def lot_awarding_draw(request):
+def lot_awarding_draw(request, position):
     """
     UI #16: Lot Awarding Draw - Split Screen Interface
     Process 6: Unit Awarding (Days 3-4 of Week 1)
@@ -50,6 +51,8 @@ def lot_awarding_draw(request):
 
     GET: Display form with standby queue and vacant units
     POST: Process lot awards and create assignment records
+
+    URL Route: /units/awarding-draw/<position>/
     """
 
     # Authorization check: Only Jocel (Fourth Member) can access
@@ -188,8 +191,9 @@ def process_lot_awards(request):
 # =============================================================================
 
 @login_required
+@verify_position
 @require_http_methods(["GET", "POST"])
-def compliance_notice_issuance(request):
+def compliance_notice_issuance(request, position):
     """
     UI #25: Compliance Notice Issuance Form
     Process 8: Occupancy Validation & Compliance - Issue notices to beneficiaries
@@ -200,6 +204,8 @@ def compliance_notice_issuance(request):
 
     GET: Display form with occupied units and notice templates
     POST: Create compliance notice and send SMS notification
+
+    URL Route: /units/compliance-notice/<position>/
     """
 
     if request.method == 'POST':
@@ -241,8 +247,9 @@ def compliance_notice_issuance(request):
 
 
 @login_required
+@verify_position
 @require_POST
-def process_compliance_notice(request):
+def process_compliance_notice(request, position):
     """
     Handle POST request to issue compliance notice.
 
@@ -252,6 +259,8 @@ def process_compliance_notice(request):
     - reason: Text describing reason for notice
     - days_granted: (for custom) Number of days to comply
     - custom_period: (for custom) Description of custom period
+
+    URL Route: /units/compliance-notice/process/<position>/
     """
     try:
         unit_id = request.POST.get('unit_id')
@@ -338,7 +347,8 @@ def process_compliance_notice(request):
 # =============================================================================
 
 @login_required
-def occupancy_report_form(request):
+@verify_position
+def occupancy_report_form(request, position):
     """
     UI #22: Occupancy Report Form
     Process 8: Occupancy Validation - Weekly caretaker report
@@ -348,6 +358,8 @@ def occupancy_report_form(request):
 
     GET: Display form with all units at caretaker's site
          Pre-fill with last week's report if exists
+
+    URL Route: /units/occupancy-report/<position>/
     """
 
     # Get caretaker's assigned site
@@ -410,8 +422,9 @@ def occupancy_report_form(request):
 
 
 @login_required
+@verify_position
 @require_POST
-def submit_occupancy_report(request):
+def submit_occupancy_report(request, position):
     """
     Handle AJAX POST to submit occupancy report.
 
@@ -420,6 +433,8 @@ def submit_occupancy_report(request):
     - report_week_start: Date (YYYY-MM-DD)
     - unit_statuses: JSON array of {unit_id, status, occupant_name, comments}
     - notes: Overall comments
+
+    URL Route: /units/occupancy-report/submit/<position>/
     """
     try:
         # Parse JSON body
@@ -521,7 +536,8 @@ def submit_occupancy_report(request):
 # =============================================================================
 
 @login_required
-def occupancy_review_list(request):
+@verify_position
+def occupancy_review_list(request, position):
     """
     UI #23: Occupancy Review List
     Process 8: Occupancy Validation - Field team perspective
@@ -530,6 +546,8 @@ def occupancy_review_list(request):
     Purpose: Review and confirm/flag caretaker occupancy reports
 
     GET: Display all pending occupancy reports awaiting field team confirmation
+
+    URL Route: /units/occupancy-review/<position>/
     """
 
     # Get all reports with status='submitted' (awaiting review)
@@ -560,9 +578,12 @@ def occupancy_review_list(request):
 
 
 @login_required
-def occupancy_review_detail(request, report_id):
+@verify_position
+def occupancy_review_detail(request, position, report_id):
     """
     Display detailed review form for a specific occupancy report
+
+    URL Route: /units/occupancy-review/<position>/<report_id>/
     """
 
     try:
@@ -593,8 +614,9 @@ def occupancy_review_detail(request, report_id):
 
 
 @login_required
+@verify_position
 @require_POST
-def submit_occupancy_review(request):
+def submit_occupancy_review(request, position):
     """
     Handle AJAX POST to confirm or flag occupancy report
 
@@ -604,6 +626,8 @@ def submit_occupancy_review(request):
     - confirmed_occupied: count (if confirm)
     - confirmed_vacant: count (if confirm)
     - discrepancy_notes: notes (if flag)
+
+    URL Route: /units/occupancy-review/submit/<position>/
     """
     try:
         data = json.loads(request.body)
