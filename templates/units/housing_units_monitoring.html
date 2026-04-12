@@ -22,27 +22,27 @@
 <div style="padding: 2rem 1.5rem; background: #f9fafb; min-height: 100vh;">
     <!-- Status Summary Cards -->
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
-        <div style="background: #f0fdf4; border: 2px solid #bbf7d0; border-radius: 12px; padding: 1.5rem; text-align: center; cursor: pointer;">
+        <div class="scroll-animate-scale scroll-delay-1" style="background: #f0fdf4; border: 2px solid #bbf7d0; border-radius: 12px; padding: 1.5rem; text-align: center; cursor: pointer;">
             <div style="font-size: 2.5rem; font-weight: 700; color: #16a34a; margin-bottom: 0.5rem;">{{ occupied_count }}</div>
             <div style="font-size: 0.875rem; color: var(--gray-600); font-weight: 500;">Occupied</div>
         </div>
 
-        <div style="background: #eff6ff; border: 2px solid #bfdbfe; border-radius: 12px; padding: 1.5rem; text-align: center; cursor: pointer;">
+        <div class="scroll-animate-scale scroll-delay-2" style="background: #eff6ff; border: 2px solid #bfdbfe; border-radius: 12px; padding: 1.5rem; text-align: center; cursor: pointer;">
             <div style="font-size: 2.5rem; font-weight: 700; color: #2563eb; margin-bottom: 0.5rem;">{{ vacant_count }}</div>
             <div style="font-size: 0.875rem; color: var(--gray-600); font-weight: 500;">Vacant</div>
         </div>
 
-        <div style="background: #fffbeb; border: 2px solid #fcd34d; border-radius: 12px; padding: 1.5rem; text-align: center; cursor: pointer;">
+        <div class="scroll-animate-scale scroll-delay-3" style="background: #fffbeb; border: 2px solid #fcd34d; border-radius: 12px; padding: 1.5rem; text-align: center; cursor: pointer;">
             <div style="font-size: 2.5rem; font-weight: 700; color: #d97706; margin-bottom: 0.5rem;">{{ notice_30_count }}</div>
             <div style="font-size: 0.875rem; color: var(--gray-600); font-weight: 500;">30-day Notice</div>
         </div>
 
-        <div style="background: #fef2f2; border: 2px solid #fecaca; border-radius: 12px; padding: 1.5rem; text-align: center; cursor: pointer;">
+        <div class="scroll-animate-scale scroll-delay-4" style="background: #fef2f2; border: 2px solid #fecaca; border-radius: 12px; padding: 1.5rem; text-align: center; cursor: pointer;">
             <div style="font-size: 2.5rem; font-weight: 700; color: #dc2626; margin-bottom: 0.5rem;">{{ notice_10_count }}</div>
             <div style="font-size: 0.875rem; color: var(--gray-600); font-weight: 500;">Final Notice</div>
         </div>
 
-        <div style="background: #f3e8ff; border: 2px solid #e9d5ff; border-radius: 12px; padding: 1.5rem; text-align: center; cursor: pointer;">
+        <div class="scroll-animate-scale scroll-delay-5" style="background: #f3e8ff; border: 2px solid #e9d5ff; border-radius: 12px; padding: 1.5rem; text-align: center; cursor: pointer;">
             <div style="font-size: 2.5rem; font-weight: 700; color: #a855f7; margin-bottom: 0.5rem;">{{ repossessed_count }}</div>
             <div style="font-size: 0.875rem; color: var(--gray-600); font-weight: 500;">Repossessed</div>
         </div>
@@ -83,7 +83,7 @@
             <!-- Units Grid -->
             <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem;">
                 {% for unit in units %}
-                <div class="unit-card" onclick="openUnitModal('{{ unit.id }}')" data-status="{{ unit.occupancy_status }}" style="background: {% if unit.occupancy_status == 'Occupied' %}#f0fdf4{% elif unit.occupancy_status == 'Vacant — available' %}#eff6ff{% elif unit.occupancy_status == 'Under notice (30-day)' %}#fffbeb{% elif unit.occupancy_status == 'Final notice (10-day)' %}#fef2f2{% else %}#f3e8ff{% endif %}; border-left: 4px solid {% if unit.occupancy_status == 'Occupied' %}#22c55e{% elif unit.occupancy_status == 'Vacant — available' %}#3b82f6{% elif unit.occupancy_status == 'Under notice (30-day)' %}#f59e0b{% elif unit.occupancy_status == 'Final notice (10-day)' %}#ef4444{% else %}#a855f7{% endif %}; border-radius: 8px; padding: 1rem; cursor: pointer; transition: all 150ms ease;">
+                <div class="unit-card scroll-animate-left" onclick="openUnitModal('{{ unit.id }}')" data-status="{{ unit.occupancy_status }}" style="background: {% if unit.occupancy_status == 'Occupied' %}#f0fdf4{% elif unit.occupancy_status == 'Vacant — available' %}#eff6ff{% elif unit.occupancy_status == 'Under notice (30-day)' %}#fffbeb{% elif unit.occupancy_status == 'Final notice (10-day)' %}#fef2f2{% else %}#f3e8ff{% endif %}; border-left: 4px solid {% if unit.occupancy_status == 'Occupied' %}#22c55e{% elif unit.occupancy_status == 'Vacant — available' %}#3b82f6{% elif unit.occupancy_status == 'Under notice (30-day)' %}#f59e0b{% elif unit.occupancy_status == 'Final notice (10-day)' %}#ef4444{% else %}#a855f7{% endif %}; border-radius: 8px; padding: 1rem; cursor: pointer; transition: all 150ms ease;">
                     <!-- Unit ID and Status Badge -->
                     <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.75rem;">
                         <span style="font-size: 0.8rem; font-weight: 600; color: var(--gray-900);">{{ unit.block_number }}-{{ unit.lot_number }}</span>
