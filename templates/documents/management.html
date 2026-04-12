@@ -128,12 +128,12 @@
 </div>
 
 <!-- Upload Document Modal -->
-<div id="uploadModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 1rem;" onclick="closeUploadModal(event)">
-    <div onclick="event.stopPropagation();" style="background: white; border-radius: 16px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto; display: flex; flex-direction: column;">
+<div id="uploadModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 1rem; flex-direction: column;" onclick="closeUploadModal(event)">
+    <div onclick="event.stopPropagation();" style="background: white; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto; display: flex; flex-direction: column;">
         <!-- Modal Header -->
-        <div style="display: flex; justify-content: space-between; align-items: center; padding: 1.5rem; border-bottom: 1px solid var(--gray-200);">
-            <h2 style="margin: 0; font-size: 1.25rem; font-weight: 600;">Upload Document</h2>
-            <button onclick="closeUploadModal()" style="padding: 0; background: transparent; border: none; color: var(--gray-500); font-size: 1.5rem; cursor: pointer;">✕</button>
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 1.5rem; border-bottom: 1px solid #e5e7eb;">
+            <h2 style="margin: 0; font-size: 1.25rem; font-weight: 600; color: #111827;">Upload Document</h2>
+            <button onclick="closeUploadModal()" style="padding: 0.25rem; background: transparent; border: none; color: #9ca3af; font-size: 1.5rem; cursor: pointer; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; transition: color 150ms ease;" onmouseover="this.style.color='#6b7280'" onmouseout="this.style.color='#9ca3af'" title="Close">✕</button>
         </div>
 
         <!-- Modal Body -->
@@ -143,9 +143,9 @@
 
                 <!-- Applicant Selection -->
                 <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                    <label style="font-size: 0.75rem; font-weight: 600; color: var(--gray-700); text-transform: uppercase;">Select Applicant *</label>
-                    <input type="text" id="applicantSearch" placeholder="Search applicant..." style="padding: 0.625rem; border: 1px solid var(--gray-300); border-radius: 8px; font-size: 0.875rem;">
-                    <select id="applicantSelect" name="applicant" required style="padding: 0.625rem; border: 1px solid var(--gray-300); border-radius: 8px; font-size: 0.875rem;">
+                    <label style="font-size: 0.75rem; font-weight: 600; color: #1f2937; text-transform: uppercase; letter-spacing: 0.05em;">Select Applicant *</label>
+                    <input type="text" id="applicantSearch" placeholder="Search applicant..." style="padding: 0.625rem; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.875rem; color: #111827;">
+                    <select id="applicantSelect" name="applicant" required style="padding: 0.625rem; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.875rem; color: #111827;">
                         <option value="">— Select Applicant —</option>
                         {% for applicant in applicants %}
                         <option value="{{ applicant.id }}">{{ applicant.full_name }}</option>
@@ -155,8 +155,8 @@
 
                 <!-- Document Type -->
                 <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                    <label style="font-size: 0.75rem; font-weight: 600; color: var(--gray-700); text-transform: uppercase;">Document Type *</label>
-                    <select name="document_type" required style="padding: 0.625rem; border: 1px solid var(--gray-300); border-radius: 8px; font-size: 0.875rem;">
+                    <label style="font-size: 0.75rem; font-weight: 600; color: #1f2937; text-transform: uppercase; letter-spacing: 0.05em;">Document Type *</label>
+                    <select name="document_type" required style="padding: 0.625rem; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.875rem; color: #111827;">
                         <option value="">— Select Type —</option>
                         <optgroup label="Applicant Requirements">
                             <option value="barangay_residency">Barangay Certificate of Residency</option>
@@ -184,41 +184,41 @@
 
                 <!-- Title (Optional) -->
                 <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                    <label style="font-size: 0.75rem; font-weight: 600; color: var(--gray-700); text-transform: uppercase;">Title (Optional)</label>
-                    <input type="text" name="title" placeholder="e.g., Certified Copy, Original" style="padding: 0.625rem; border: 1px solid var(--gray-300); border-radius: 8px; font-size: 0.875rem;">
+                    <label style="font-size: 0.75rem; font-weight: 600; color: #1f2937; text-transform: uppercase; letter-spacing: 0.05em;">Title (Optional)</label>
+                    <input type="text" name="title" placeholder="e.g., Certified Copy, Original" style="padding: 0.625rem; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.875rem; color: #111827;">
                 </div>
 
                 <!-- File Upload -->
                 <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                    <label style="font-size: 0.75rem; font-weight: 600; color: var(--gray-700); text-transform: uppercase;">Upload File *</label>
-                    <div style="border: 2px dashed var(--gray-300); border-radius: 8px; padding: 2rem; text-align: center; cursor: pointer; transition: all 150ms ease; background: var(--gray-50);">
+                    <label style="font-size: 0.75rem; font-weight: 600; color: #1f2937; text-transform: uppercase; letter-spacing: 0.05em;">Upload File *</label>
+                    <div style="border: 2px dashed #d1d5db; border-radius: 8px; padding: 2rem; text-align: center; cursor: pointer; transition: all 150ms ease; background: #f9fafb;" onmouseover="this.style.borderColor='#9ca3af'; this.style.backgroundColor='#f3f4f6'" onmouseout="this.style.borderColor='#d1d5db'; this.style.backgroundColor='#f9fafb'">
                         <input type="file" id="fileInput" name="file" required style="display: none;">
                         <div onclick="document.getElementById('fileInput').click()">
                             <div style="font-size: 2rem; margin-bottom: 0.5rem;">📤</div>
-                            <p style="margin: 0 0 0.5rem; font-size: 0.9rem; font-weight: 500; color: var(--gray-900);">Click to upload or drag & drop</p>
-                            <p style="margin: 0; font-size: 0.75rem; color: var(--gray-600);">PDF, Images, Word, Excel (max 10MB)</p>
+                            <p style="margin: 0 0 0.5rem; font-size: 0.9rem; font-weight: 500; color: #111827;">Click to upload or drag & drop</p>
+                            <p style="margin: 0; font-size: 0.75rem; color: #6b7280;">PDF, Images, Word, Excel (max 10MB)</p>
                         </div>
                     </div>
-                    <p id="fileName" style="margin: 0.5rem 0 0; font-size: 0.8rem; color: var(--gray-600);"></p>
+                    <p id="fileName" style="margin: 0.5rem 0 0; font-size: 0.8rem; color: #6b7280;"></p>
                 </div>
 
                 <!-- Notes (Optional) -->
                 <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                    <label style="font-size: 0.75rem; font-weight: 600; color: var(--gray-700); text-transform: uppercase;">Notes (Optional)</label>
-                    <textarea name="notes" placeholder="Additional notes about this document..." style="padding: 0.625rem; border: 1px solid var(--gray-300); border-radius: 8px; font-size: 0.875rem; resize: vertical; min-height: 80px;"></textarea>
+                    <label style="font-size: 0.75rem; font-weight: 600; color: #1f2937; text-transform: uppercase; letter-spacing: 0.05em;">Notes (Optional)</label>
+                    <textarea name="notes" placeholder="Additional notes about this document..." style="padding: 0.625rem; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.875rem; resize: vertical; min-height: 80px; color: #111827;"></textarea>
                 </div>
             </form>
 
             <!-- Info Box -->
             <div style="background: #dbeafe; border: 1px solid #93c5fd; border-radius: 8px; padding: 0.75rem;">
-                <p style="font-size: 0.75rem; color: #1e40af; margin: 0; line-height: 1.4;">Physical documents remain the official hard copy. This digital archive is for reference and tracking only.</p>
+                <p style="font-size: 0.75rem; color: #1d4ed8; margin: 0; line-height: 1.4;">Physical documents remain the official hard copy. This digital archive is for reference and tracking only.</p>
             </div>
         </div>
 
         <!-- Modal Footer -->
-        <div style="padding: 1rem 1.5rem; border-top: 1px solid var(--gray-200); background: var(--gray-50); display: flex; gap: 0.75rem;">
-            <button onclick="submitUpload()" style="flex: 1; padding: 0.625rem 1rem; background: var(--primary-600); color: white; border: none; border-radius: 8px; font-size: 0.875rem; font-weight: 600; cursor: pointer;">⬆️ Upload</button>
-            <button onclick="closeUploadModal()" style="flex: 1; padding: 0.625rem 1rem; background: white; color: var(--gray-700); border: 1px solid var(--gray-300); border-radius: 8px; font-size: 0.875rem; font-weight: 600; cursor: pointer;">Cancel</button>
+        <div style="padding: 1rem 1.5rem; border-top: 1px solid #e5e7eb; background: #f9fafb; display: flex; gap: 0.75rem;">
+            <button onclick="submitUpload()" style="flex: 1; padding: 0.6875rem 1rem; background: #2563eb; color: white; border: none; border-radius: 8px; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: background-color 150ms ease; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);" onmouseover="this.style.backgroundColor='#1d4ed8'" onmouseout="this.style.backgroundColor='#2563eb'">⬆️ Upload</button>
+            <button onclick="closeUploadModal()" style="flex: 1; padding: 0.6875rem 1rem; background: white; color: #374151; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: all 150ms ease;" onmouseover="this.style.backgroundColor='#f3f4f6'" onmouseout="this.style.backgroundColor='white'">Cancel</button>
         </div>
     </div>
 </div>
