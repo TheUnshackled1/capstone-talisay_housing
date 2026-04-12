@@ -4086,7 +4086,8 @@
             formData.append('status', 'eligible');
         }
 
-        fetch(`/intake/staff/isf/${isfId}/review/`, {
+        const position = '{{ request.user.position }}';
+        fetch(`/intake/staff/${position}/isf/${isfId}/review/`, {
             method: 'POST',
             body: formData,
             headers: {
@@ -4182,7 +4183,8 @@
         formData.append('new_value', newValue);
         formData.append('edit_reason', editReason);
 
-        fetch(`/intake/staff/isf/${isfId}/edit/`, {
+        const position = '{{ request.user.position }}';
+        fetch(`/intake/staff/${position}/isf/${isfId}/edit/`, {
             method: 'POST',
             body: formData
         })

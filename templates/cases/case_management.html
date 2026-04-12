@@ -307,7 +307,8 @@ let currentCaseId = null;
 
 function openCaseModal(caseId) {
     currentCaseId = caseId;
-    fetch(`/cases/${caseId}/details/`)
+    const position = '{{ request.user.position }}';
+    fetch(`/cases/${position}/${caseId}/details/`)
         .then(r => r.json())
         .then(d => {
             if (d.success) populateCaseModal(d.case);
@@ -394,7 +395,8 @@ function createNewCase() {
         return;
     }
 
-    fetch('/cases/create/', {
+    const position = '{{ request.user.position }}';
+    fetch(`/cases/${position}/create/`, {
         method: 'POST',
         headers: {'Content-Type': 'application/json', 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value},
         body: JSON.stringify(data)
@@ -416,7 +418,8 @@ function saveUpdate() {
         return;
     }
 
-    fetch('/cases/update/', {
+    const position = '{{ request.user.position }}';
+    fetch(`/cases/${position}/update/`, {
         method: 'POST',
         headers: {'Content-Type': 'application/json', 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value},
         body: JSON.stringify({case_id: currentCaseId, action: 'add_note', note})

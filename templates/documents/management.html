@@ -242,7 +242,8 @@ function submitUpload() {
     }
 
     const formData = new FormData(form);
-    fetch('/documents/api/upload/', {
+    const position = '{{ request.user.position }}';
+    fetch(`/documents/${position}/api/upload/`, {
         method: 'POST',
         body: formData,
         headers: {'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value}
@@ -263,7 +264,8 @@ function submitUpload() {
 function deleteDocument(docId) {
     if (!confirm('Delete this document?')) return;
 
-    fetch(`/documents/${docId}/delete/`, {
+    const position = '{{ request.user.position }}';
+    fetch(`/documents/${position}/${docId}/delete/`, {
         method: 'POST',
         headers: {'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value}
     })

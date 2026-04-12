@@ -258,7 +258,8 @@ function filterUnits(filter) {
 
 function openUnitModal(unitId) {
     currentUnitId = unitId;
-    fetch(`/units/housing-units/${unitId}/details/`)
+    const position = '{{ request.user.position }}';
+    fetch(`/units/housing-units/${position}/${unitId}/details/`)
         .then(r => r.json())
         .then(data => {
             if (data.success) {

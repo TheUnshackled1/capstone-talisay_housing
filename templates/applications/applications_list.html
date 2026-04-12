@@ -1465,6 +1465,7 @@
     let currentApplicantId = null;
     let currentApplicationId = null;
     const canVerifyDocs = {{ permissions.can_verify_documents|yesno:"true,false" }};
+    const position = '{{ request.user.position }}';
 
     // Filter functions
     function filterByStage(stage) {
@@ -1560,7 +1561,7 @@
 
     async function loadApplicantRequirements(applicantId) {
         try {
-            const response = await fetch(`/applications/staff/${applicantId}/`);
+            const response = await fetch(`/applications/staff/${position}/${applicantId}/`);
             const data = await response.json();
             
             if (data.requirements) {
@@ -1709,7 +1710,7 @@
         btn.textContent = '⏳ Generating...';
         
         try {
-            const response = await fetch(`/applications/staff/generate-form/${currentApplicantId}/`);
+            const response = await fetch(`/applications/staff/${position}/generate-form/${currentApplicantId}/`);
             const data = await response.json();
             
             if (data.success) {
@@ -1736,7 +1737,7 @@
         if (!confirm('Generate application form for this applicant?')) return;
         
         try {
-            const response = await fetch(`/applications/staff/generate-form/${applicantId}/`);
+            const response = await fetch(`/applications/staff/${position}/generate-form/${applicantId}/`);
             const data = await response.json();
             
             if (data.success) {
