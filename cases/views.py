@@ -1,12 +1,29 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods, require_POST
 from django.http import JsonResponse
 from django.db import models
 from django.utils import timezone
+from functools import wraps
 import json
 
 from .models import Case, CaseNote
+
+
+def verify_position(view_func):
+    """
+    Decorator to verify that URL position parameter matches logged-in user's position.
+    Security feature: prevents URL manipulation to access other roles' views.
+    """
+    @wraps(view_func)
+    def wrapper(request, position, *args, **kwargs):
+        # Check if position in URL matches user's actual position
+        if request.user.position != position:
+            from django.contrib import messages
+            messages.error(request, f'Access denied. You are logged in as {request.user.get_position_display()}, not {position.replace("_", " ")}.')
+            return redirect('accounts:dashboard', position=request.user.position)
+        return view_func(request, position, *args, **kwargs)
+    return wrapper
 
 
 # ===================================================================
@@ -15,10 +32,13 @@ from .models import Case, CaseNote
 
 @login_required
 @require_http_methods(["GET"])
-def case_management_dashboard(request):
+@verify_position
+def case_management_dashboard(request, position):
     """
     Case Management Dashboard
     Displays all cases with search, filtering, and status tracking
+
+    URL Route: /cases/<position>/
 
     Actors: All staff
     Purpose: Track complaints, disputes, and case resolutions
@@ -75,10 +95,13 @@ def case_management_dashboard(request):
 
 @login_required
 @require_http_methods(["GET"])
-def get_case_details(request, case_id):
+@verify_position
+def get_case_details(request, position, case_id):
     """
     AJAX endpoint to fetch case details for modal display
     Returns JSON with case info, notes, and timeline
+
+    URL Route: /cases/<position>/<case_id>/details/
     """
     try:
         case = Case.objects.prefetch_related('notes__created_by').get(id=case_id)
@@ -139,9 +162,12 @@ def get_case_details(request, case_id):
 
 @login_required
 @require_POST
-def create_case(request):
+@verify_position
+def create_case(request, position):
     """
     AJAX endpoint to log a new case
+
+    URL Route: /cases/<position>/create/
 
     POST data:
     - complainant_name: str
@@ -211,9 +237,12 @@ def create_case(request):
 
 @login_required
 @require_POST
-def update_case(request):
+@verify_position
+def update_case(request, position):
     """
     AJAX endpoint to update case status and add investigation notes
+
+    URL Route: /cases/<position>/update/
 
     POST data:
     - case_id: UUID
