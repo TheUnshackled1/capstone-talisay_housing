@@ -3555,9 +3555,9 @@
         }
 
         // Determine endpoint based on channel
-        let endpoint = '{% url "intake:applicants_list" %}';
+        let endpoint = '{% url "intake:walkin_register" request.user.position %}';
         if (channel === 'landowner') {
-            endpoint = '{% url "intake:register_landowner_walkin" %}';
+            endpoint = '{% url "intake:register_landowner_walkin" request.user.position %}';
         }
 
         // Submit form to appropriate endpoint

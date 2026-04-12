@@ -823,7 +823,7 @@ function confirmSubmit() {
             showToast('✓ ' + data.message, 'success');
             closeConfirmModal();
             setTimeout(() => {
-                window.location.href = '{% url "units:occupancy_review_list" %}';
+                window.location.href = '{% url "units:occupancy_review_list" request.user.position %}';
             }, 1500);
         } else {
             showToast('✗ ' + data.error, 'error');
