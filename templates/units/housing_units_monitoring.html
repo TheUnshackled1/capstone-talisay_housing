@@ -156,69 +156,65 @@
 </div>
 
 <!-- Unit Detail Modal -->
-<div id="unitModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); align-items: center; justify-content: center; z-index: 1000; padding: 1rem;" onclick="closeUnitModal(event)">
-    <div onclick="event.stopPropagation();" style="background: white; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); max-width: 500px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 1.5rem;">
-        <!-- Close Button -->
-        <button onclick="closeUnitModal()" style="position: absolute; top: 1rem; right: 1rem; background: transparent; border: none; font-size: 1.5rem; cursor: pointer; color: var(--gray-500);">✕</button>
-
-        <!-- Unit Header -->
-        <div style="margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--gray-200);">
-            <div style="display: flex; justify-content: space-between; align-items: start; gap: 1rem;">
-                <div>
-                    <h2 id="modalUnitTitle" style="margin: 0; font-size: 1.25rem; font-weight: 600;"></h2>
-                    <p id="modalUnitStatus" style="margin: 0.5rem 0 0; font-size: 0.875rem; color: var(--gray-600);"></p>
-                </div>
-                <span id="modalStatusBadge"></span>
+<div id="unitModal" class="unit-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); align-items: center; justify-content: center; z-index: 1000; padding: 1rem; flex-direction: column;">
+    <div class="unit-modal-content" onclick="event.stopPropagation();" style="background: white; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); max-width: 500px; width: 100%; max-height: 90vh; overflow-y: auto;">
+        <!-- Modal Header with Close Button -->
+        <div style="padding: 1.5rem; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: start;">
+            <div>
+                <h2 id="modalUnitTitle" style="margin: 0; font-size: 1.25rem; font-weight: 600; color: #111827;"></h2>
+                <p id="modalUnitStatus" style="margin: 0.5rem 0 0; font-size: 0.875rem; color: #6b7280;"></p>
             </div>
+            <button onclick="closeUnitModal()" style="background: transparent; border: none; font-size: 1.5rem; cursor: pointer; color: #9ca3af; padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;" title="Close">✕</button>
         </div>
 
-        <!-- Occupant Info -->
-        <div style="margin-bottom: 1.5rem;">
-            <p style="margin: 0 0 0.5rem; font-size: 0.75rem; font-weight: 600; color: var(--gray-600); text-transform: uppercase;">Occupant</p>
-            <p id="modalOccupant" style="margin: 0; font-size: 0.95rem; color: var(--gray-900); font-weight: 500;"></p>
-            <p id="modalOccupantProfile" style="margin: 0.25rem 0 0; font-size: 0.8rem; color: var(--gray-600);"></p>
-        </div>
+        <!-- Modal Body -->
+        <div style="padding: 1.5rem;">
+            <!-- Occupant Info -->
+            <div style="margin-bottom: 1.5rem;">
+                <p style="margin: 0 0 0.5rem; font-size: 0.75rem; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em;">Occupant</p>
+                <p id="modalOccupant" style="margin: 0; font-size: 0.95rem; color: #111827; font-weight: 500;">—</p>
+                <p id="modalOccupantProfile" style="margin: 0.25rem 0 0; font-size: 0.8rem; color: #6b7280;"></p>
+            </div>
 
-        <!-- Active Notices -->
-        <div id="activeNoticesSection" style="margin-bottom: 1.5rem; display: none;">
-            <div style="background: #fffbeb; border-left: 4px solid #f59e0b; border-radius: 6px; padding: 1rem;">
-                <p id="activeNoticesTitle" style="margin: 0 0 0.75rem; font-size: 0.8rem; font-weight: 600; color: #d97706; text-transform: uppercase;"></p>
+            <!-- Weekly Caretaker Report -->
+            <div id="reportSection" style="margin-bottom: 1.5rem; background: #f9fafb; border-radius: 8px; padding: 1rem;">
+                <p style="margin: 0 0 0.75rem; font-size: 0.75rem; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em;">Weekly Caretaker Report</p>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div>
+                        <p style="margin: 0; font-size: 0.75rem; color: #6b7280;">Last Updated</p>
+                        <p id="reportLastUpdated" style="margin: 0.25rem 0 0; font-weight: 500; color: #111827; font-size: 0.875rem;">—</p>
+                    </div>
+                    <div>
+                        <p style="margin: 0; font-size: 0.75rem; color: #6b7280;">Reported Status</p>
+                        <p id="reportedStatus" style="margin: 0.25rem 0 0; font-weight: 500; color: #111827; font-size: 0.875rem;">—</p>
+                    </div>
+                </div>
+                <div style="margin-top: 0.75rem; font-size: 0.85rem; color: #6b7280;">
+                    <p id="reportComments" style="margin: 0; max-height: 80px; overflow-y: auto;"></p>
+                </div>
+            </div>
+
+            <!-- Active Notices -->
+            <div id="activeNoticesSection" style="margin-bottom: 1.5rem; display: none; background: #fffbeb; border-left: 4px solid #f59e0b; border-radius: 6px; padding: 1rem;">
+                <p id="activeNoticesTitle" style="margin: 0 0 0.75rem; font-size: 0.75rem; font-weight: 600; color: #d97706; text-transform: uppercase; letter-spacing: 0.05em;"></p>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 0.85rem;">
                     <div>
-                        <p style="margin: 0; color: var(--gray-600);">Date Issued</p>
-                        <p id="notisDateIssued" style="margin: 0.25rem 0 0; font-weight: 500; color: var(--gray-900);"></p>
+                        <p style="margin: 0; color: #6b7280;">Date Issued</p>
+                        <p id="notisDateIssued" style="margin: 0.25rem 0 0; font-weight: 500; color: #111827;"></p>
                     </div>
                     <div>
-                        <p style="margin: 0; color: var(--gray-600);">Deadline</p>
-                        <p id="noticeDeadline" style="margin: 0.25rem 0 0; font-weight: 500; color: var(--gray-900);"></p>
+                        <p style="margin: 0; color: #6b7280;">Deadline</p>
+                        <p id="noticeDeadline" style="margin: 0.25rem 0 0; font-weight: 500; color: #111827;"></p>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Weekly Caretaker Report -->
-        <div id="reportSection" style="margin-bottom: 1.5rem;">
-            <p style="margin: 0 0 0.75rem; font-size: 0.75rem; font-weight: 600; color: var(--gray-600); text-transform: uppercase;">Weekly Caretaker Report</p>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 0.85rem;">
-                <div>
-                    <p style="margin: 0; color: var(--gray-600);">Last Updated</p>
-                    <p id="reportLastUpdated" style="margin: 0.25rem 0 0; font-weight: 500; color: var(--gray-900);">—</p>
-                </div>
-                <div>
-                    <p style="margin: 0; color: var(--gray-600);">Reported Status</p>
-                    <p id="reportedStatus" style="margin: 0.25rem 0 0; font-weight: 500; color: var(--gray-900);">—</p>
-                </div>
+            <!-- Action Buttons -->
+            <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
+                <button onclick="updateUnitStatus()" style="flex: 1; padding: 0.6875rem 1rem; background: #2563eb; color: white; border: none; border-radius: 8px; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: background-color 150ms ease; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);" onmouseover="this.style.backgroundColor='#1d4ed8'" onmouseout="this.style.backgroundColor='#2563eb'">⚙️ Update Status</button>
+                <button onclick="sendSMS()" style="flex: 1; padding: 0.6875rem 1rem; background: #e5e7eb; color: #374151; border: none; border-radius: 8px; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: background-color 150ms ease; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);" onmouseover="this.style.backgroundColor='#d1d5db'" onmouseout="this.style.backgroundColor='#e5e7eb'">💬 Send SMS</button>
+                <button id="awardBtn" onclick="awardToNextStandby()" style="display: none; flex: 1; padding: 0.6875rem 1rem; background: #16a34a; color: white; border: none; border-radius: 8px; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: background-color 150ms ease; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);" onmouseover="this.style.backgroundColor='#15803d'" onmouseout="this.style.backgroundColor='#16a34a'">✓ Award to Next Standby</button>
             </div>
-            <div style="margin-top: 0.75rem; font-size: 0.85rem; color: var(--gray-600);">
-                <p id="reportComments" style="margin: 0; max-height: 80px; overflow-y: auto;"></p>
-            </div>
-        </div>
-
-        <!-- Action Buttons -->
-        <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
-            <button onclick="updateUnitStatus()" style="flex: 1; padding: 0.625rem 1rem; background: var(--primary-600); color: white; border: none; border-radius: 8px; font-size: 0.875rem; font-weight: 600; cursor: pointer;">⚙️ Update Status</button>
-            <button onclick="sendSMS()" style="flex: 1; padding: 0.625rem 1rem; background: var(--gray-200); color: var(--gray-700); border: none; border-radius: 8px; font-size: 0.875rem; font-weight: 600; cursor: pointer;">💬 Send SMS</button>
-            <button id="awardBtn" onclick="awardToNextStandby()" style="display: none; flex: 1; padding: 0.625rem 1rem; background: var(--green-600); color: white; border: none; border-radius: 8px; font-size: 0.875rem; font-weight: 600; cursor: pointer;">✓ Award to Next Standby</button>
         </div>
     </div>
 </div>

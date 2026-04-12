@@ -761,7 +761,7 @@ def get_unit_details(request, unit_id):
     Returns JSON with unit info, occupant, notices, and weekly report
     """
     try:
-        unit = HousingUnit.objects.select_related('weekly_report').get(id=unit_id)
+        unit = HousingUnit.objects.prefetch_related('weekly_report').get(id=unit_id)
 
         # Prepare notice info
         notice_info = None
@@ -774,12 +774,15 @@ def get_unit_details(request, unit_id):
 
         # Prepare weekly report
         weekly_report = None
-        if unit.weekly_report:
-            weekly_report = {
-                'reported_status': unit.weekly_report.reported_status,
-                'concern_notes': unit.weekly_report.concern_notes,
-                'last_updated': unit.weekly_report.last_updated.isoformat(),
-            }
+        try:
+            if unit.weekly_report:
+                weekly_report = {
+                    'reported_status': unit.weekly_report.reported_status,
+                    'concern_notes': unit.weekly_report.concern_notes,
+                    'last_updated': unit.weekly_report.last_updated.isoformat(),
+                }
+        except HousingUnit.weekly_report.RelatedObjectDoesNotExist:
+            weekly_report = None
 
         return JsonResponse({
             'success': True,
