@@ -2217,6 +2217,7 @@ def oic_analytics_dashboard(request):
 
 
 @login_required
+@login_required
 def second_member_analytics_dashboard(request):
     """Second Member Analytics Dashboard - M2, M3, M4, M6 Overview"""
     if request.user.position != 'second_member':
@@ -2310,6 +2311,7 @@ def third_member_analytics_dashboard(request):
     return render(request, 'accounts/third_member/analytics.html', context)
 
 
+@login_required
 @login_required
 def fourth_member_analytics_dashboard(request):
     """Fourth Member Analytics Dashboard - M1, M2, M3, M4 Overview"""
