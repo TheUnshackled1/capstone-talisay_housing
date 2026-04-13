@@ -73,7 +73,7 @@
                ↓
         ┌──────────────────────────────────┐
         │ Blacklist Check                  │
-        │  ├─ Query: IS applicant in       │
+        │  ├─ Query: IS applicant in       │     
         │  │           blacklist?          │
         │  ├─ YES → disqualified           │
         │  └─ NO  → proceed to verify      │
