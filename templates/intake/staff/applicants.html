@@ -918,7 +918,11 @@
                 <td style="font-weight: 500;">{{ applicant.fullName }}</td>
                 <td>
                     {% if applicant.channel == 'A' %}
-                        <span class="badge channel-a">Channel A — Landowner</span>
+                        {% if applicant.channelSource == 'staff_entry' %}
+                            <span class="badge channel-a">Channel A — Staff Entry</span>
+                        {% else %}
+                            <span class="badge channel-a">Channel A — Landowner Portal</span>
+                        {% endif %}
                     {% elif applicant.channel == 'B' %}
                         <span class="badge channel-b">Channel B — Danger Zone</span>
                     {% else %}
@@ -1957,8 +1961,21 @@
             if (reviewRefEl) reviewRefEl.textContent = currentApplicant.referenceNumber + ' · Reg. ' + currentApplicant.dateRegistered;
             if (reviewApplicantIdEl) reviewApplicantIdEl.value = currentApplicant.applicantId || currentApplicant.id;
             if (reviewChannelEl) reviewChannelEl.value = currentApplicant.channel;
-            
-            // Channel labels
+
+            // Channel labels with differentiation for Channel A
+            function getChannelLabel(applicant) {
+                if (applicant.channel === 'A') {
+                    return applicant.channelSource === 'staff_entry'
+                        ? 'Channel A — Staff Entry'
+                        : 'Channel A — Landowner Portal';
+                } else if (applicant.channel === 'B') {
+                    return 'Channel B — Danger Zone';
+                } else if (applicant.channel === 'C') {
+                    return 'Channel C — Walk-in';
+                }
+                return 'Unknown Channel';
+            }
+
             const channelLabels = {
                 'A': 'Channel A — Landowner',
                 'B': 'Channel B — Danger Zone',
@@ -1979,7 +1996,13 @@
                 if (landownerSection) landownerSection.style.display = 'block';
                 const reviewSubmissionIdEl = document.getElementById('reviewSubmissionId');
                 if (reviewSubmissionIdEl) reviewSubmissionIdEl.value = currentApplicant.submissionId || '';
-                
+
+                // Set channel badge for Channel A (differentiate staff entry vs portal)
+                const channelBadgeA = landownerSection?.querySelector('.status-badge:first-of-type');
+                if (channelBadgeA) {
+                    channelBadgeA.textContent = getChannelLabel(currentApplicant);
+                }
+
                 // Set eligibility badge for Channel A
                 const eligBadgeA = document.getElementById('reviewEligibilityBadgeA');
                 if (eligBadgeA) {

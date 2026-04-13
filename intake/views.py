@@ -1194,6 +1194,7 @@ def applicants_list(request, position):
             'dateRegistered': isf.created_at.strftime('%Y-%m-%d'),
             'dateTime': isf.created_at.strftime('%Y-%m-%d %I:%M %p'),
             'channel': 'A',
+            'channelSource': 'staff_entry' if isf.submitted_by_staff else 'portal',  # Differentiate Channel A source
             'submissionId': str(isf.submission.id),  # For Channel A review
             'applicantId': None,
             'barangay': isf.barangay or isf.submission.barangay or '',  # ISF barangay or submission barangay
