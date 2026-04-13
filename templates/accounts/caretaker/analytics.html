@@ -1,0 +1,81 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics Dashboard - Caretaker | THA</title>
+    <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}">
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+    <style>
+        body { background: #f8fafc; }
+        .container { padding: 1.5rem; max-width: 1400px; margin: 0 auto; }
+        h1 { font-size: 1.5rem; font-weight: 600; color: #1e293b; margin: 0 0 0.5rem 0; }
+        .subtitle { color: #64748b; margin-bottom: 2rem; }
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+        .kpi { background: white; border: 1px solid #e2e8f0; border-top: 4px solid; border-radius: 0.75rem; padding: 1rem; }
+        .kpi-number { font-size: 2rem; font-weight: 700; margin: 0.5rem 0; }
+        .kpi-label { font-size: 0.875rem; color: #64748b; }
+        .widget { background: white; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1.5rem; margin-bottom: 1rem; }
+        .widget h3 { margin: 0 0 1rem 0; color: #1e293b; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Analytics Dashboard - Caretaker</h1>
+        <p class="subtitle">On-Site Housing Management - M4 Occupancy</p>
+
+        <div class="kpi-grid">
+            <div class="kpi" style="border-color: #2563eb;">
+                <div class="kpi-label">Occupied Units</div>
+                <div class="kpi-number" style="color: #2563eb;">{{ occupied|default:0 }}</div>
+            </div>
+            <div class="kpi" style="border-color: #0f766e;">
+                <div class="kpi-label">Vacant Units</div>
+                <div class="kpi-number" style="color: #0f766e;">{{ vacant|default:0 }}</div>
+            </div>
+            <div class="kpi" style="border-color: #16a34a;">
+                <div class="kpi-label">Occupancy Rate</div>
+                <div class="kpi-number" style="color: #16a34a;">{{ occupancy_rate|default:0 }}%</div>
+            </div>
+            <div class="kpi" style="border-color: #f59e0b;">
+                <div class="kpi-label">Issues Requiring Attention</div>
+                <div class="kpi-number" style="color: #f59e0b;">{{ issues|default:0 }}</div>
+            </div>
+        </div>
+
+        <div class="widget">
+            <h3>📋 Report Submissions (This Month)</h3>
+            <div style="text-align: center; padding: 2rem;">
+                <div style="font-size: 3rem; font-weight: 700; color: #2563eb;">{{ reports_submitted|default:0 }}</div>
+                <p style="color: #64748b; margin-top: 0.5rem;">Weekly occupancy reports submitted</p>
+            </div>
+        </div>
+
+        <div class="widget">
+            <h3>⚠️ Alerts & Maintenance</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                <div style="background: #fee2e2; padding: 1rem; border-radius: 0.5rem; border-left: 4px solid #dc2626;">
+                    <p style="margin: 0; font-size: 0.875rem; color: #991b1b; font-weight: 500;">Compliance Issues</p>
+                    <p style="margin: 0.5rem 0 0 0; font-size: 1.75rem; font-weight: 700; color: #dc2626;">{{ issues|default:0 }}</p>
+                </div>
+                <div style="background: #fef3c7; padding: 1rem; border-radius: 0.5rem; border-left: 4px solid #f59e0b;">
+                    <p style="margin: 0; font-size: 0.875rem; color: #92400e; font-weight: 500;">Maintenance Alerts</p>
+                    <p style="margin: 0.5rem 0 0 0; font-size: 1.75rem; font-weight: 700; color: #f59e0b;">{{ maintenance_alerts|default:0 }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="widget">
+            <h3>📍 Role: M4 Occupancy Monitoring</h3>
+            <p style="color: #64748b; margin: 0;">
+                As the on-site caretaker, you monitor daily occupancy, submit weekly reports, and alert the field team to any compliance issues.
+            </p>
+        </div>
+
+        <div style="text-align: center; padding: 1.5rem; color: #64748b; font-size: 0.875rem;">
+            <p>✅ Updated: <strong>{{ timestamp|date:"M d, Y g:i A" }}</strong></p>
+        </div>
+    </div>
+</body>
+</html>

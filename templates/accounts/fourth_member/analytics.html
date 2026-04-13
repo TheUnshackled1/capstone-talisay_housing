@@ -1,0 +1,88 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics Dashboard - Fourth Member | THA</title>
+    <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}">
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+    <style>
+        body { background: #f8fafc; }
+        .container { padding: 1.5rem; max-width: 1400px; margin: 0 auto; }
+        h1 { font-size: 1.5rem; font-weight: 600; color: #1e293b; margin: 0 0 0.5rem 0; }
+        .subtitle { color: #64748b; margin-bottom: 2rem; }
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+        .kpi { background: white; border: 1px solid #e2e8f0; border-top: 4px solid; border-radius: 0.75rem; padding: 1rem; }
+        .kpi-number { font-size: 2rem; font-weight: 700; margin: 0.5rem 0; }
+        .kpi-label { font-size: 0.875rem; color: #64748b; }
+        .widget { background: white; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1.5rem; margin-bottom: 1rem; }
+        .widget h3 { margin: 0 0 1rem 0; color: #1e293b; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Analytics Dashboard - Fourth Member</h1>
+        <p class="subtitle">Jocel O. Cuaysing - M1, M2, M3, M4 (Processing & Coordination)</p>
+
+        <div class="kpi-grid">
+            <div class="kpi" style="border-color: #2563eb;">
+                <div class="kpi-label">In Priority Queue</div>
+                <div class="kpi-number" style="color: #2563eb;">{{ priority_queue|default:0 }}</div>
+            </div>
+            <div class="kpi" style="border-color: #16a34a;">
+                <div class="kpi-label">Documents Filed</div>
+                <div class="kpi-number" style="color: #16a34a;">{{ documents_filed|default:0 }}</div>
+            </div>
+            <div class="kpi" style="border-color: #0f766e;">
+                <div class="kpi-label">Lot Awards Processed</div>
+                <div class="kpi-number" style="color: #0f766e;">{{ lot_awards|default:0 }}</div>
+            </div>
+            <div class="kpi" style="border-color: #f59e0b;">
+                <div class="kpi-label">Property Custodian Items</div>
+                <div class="kpi-number" style="color: #f59e0b;">{{ custodian_items|default:0 }}</div>
+            </div>
+        </div>
+
+        <div class="widget">
+            <h3>📋 Fourth Member Responsibilities</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                <div style="border-left: 4px solid #0369a1; padding-left: 1rem;">
+                    <strong>M1: Masterlist</strong><br/>
+                    <span style="font-size: 0.875rem; color: #64748b;">Queue management</span>
+                </div>
+                <div style="border-left: 4px solid #d97706; padding-left: 1rem;">
+                    <strong>M2: Requirements</strong><br/>
+                    <span style="font-size: 0.875rem; color: #64748b;">Checklist & eligibility</span>
+                </div>
+                <div style="border-left: 4px solid #7c3aed; padding-left: 1rem;">
+                    <strong>M3: Documents</strong><br/>
+                    <span style="font-size: 0.875rem; color: #64748b;">Filing & management</span>
+                </div>
+                <div style="border-left: 4px solid #059669; padding-left: 1rem;">
+                    <strong>M4: Property</strong><br/>
+                    <span style="font-size: 0.875rem; color: #64748b;">Custodian & records</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="widget">
+            <h3>📊 This Month</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                <div style="background: #f0fdf4; padding: 1rem; border-radius: 0.5rem; text-align: center;">
+                    <p style="margin: 0; font-size: 0.875rem; color: #15803d; font-weight: 500;">Processed</p>
+                    <p style="margin: 0.5rem 0 0 0; font-size: 1.75rem; font-weight: 700; color: #16a34a;">{{ processed|default:0 }}</p>
+                </div>
+                <div style="background: #f3e8ff; padding: 1rem; border-radius: 0.5rem; text-align: center;">
+                    <p style="margin: 0; font-size: 0.875rem; color: #5b21b6; font-weight: 500;">Pending</p>
+                    <p style="margin: 0.5rem 0 0 0; font-size: 1.75rem; font-weight: 700; color: #a855f7;">{{ pending|default:0 }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div style="text-align: center; padding: 1.5rem; color: #64748b; font-size: 0.875rem;">
+            <p>✅ Updated: <strong>{{ timestamp|date:"M d, Y g:i A" }}</strong></p>
+        </div>
+    </div>
+</body>
+</html>

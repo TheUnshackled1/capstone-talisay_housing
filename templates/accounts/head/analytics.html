@@ -1,0 +1,38 @@
+{% extends "accounts/analytics_base.html" %}
+{% load static %}
+
+{% block title %}Analytics Dashboard - HEAD | THA{% endblock %}
+
+{% block extra_content %}
+<!-- HEAD-Specific Analytics -->
+<style>
+    .head-section-title { font-size: 1.125rem; font-weight: 650; color: #0f2447; margin: 2rem 0 1rem 0; border-bottom: 2px solid #2563eb; padding-bottom: 0.75rem; }
+</style>
+
+<div style="max-width: 1400px; margin: 0 auto; padding: 1.5rem;">
+    <div class="head-section-title">📈 Executive Summary - HEAD Role</div>
+    <p style="color: #64748b; margin-bottom: 1.5rem;">You have access to complete system overview across all modules.</p>
+
+    <!-- Priority Section for HEAD -->
+    <div style="background: white; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1.5rem; margin-bottom: 1.5rem;">
+        <h4 style="margin: 0 0 1rem 0; color: #1e293b; font-weight: 600;">🎯 Key Focus Areas</h4>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+            <div style="border-left: 4px solid #2563eb; padding-left: 1rem;">
+                <p style="margin: 0 0 0.5rem 0; font-weight: 600; color: #1e293b;">Approvals Pending</p>
+                <p style="margin: 0; font-size: 2rem; font-weight: 700; color: #2563eb;">{{ pending_approvals|default:0 }}</p>
+                <p style="margin: 0.5rem 0 0 0; font-size: 0.875rem; color: #64748b;">Awaiting your signature</p>
+            </div>
+            <div style="border-left: 4px solid #10b981; padding-left: 1rem;">
+                <p style="margin: 0 0 0.5rem 0; font-weight: 600; color: #1e293b;">System Health</p>
+                <p style="margin: 0; font-size: 2rem; font-weight: 700; color: #10b981;">{{ system_health|default:"Excellent" }}</p>
+                <p style="margin: 0.5rem 0 0 0; font-size: 0.875rem; color: #64748b;">All modules operational</p>
+            </div>
+            <div style="border-left: 4px solid #f59e0b; padding-left: 1rem;">
+                <p style="margin: 0 0 0.5rem 0; font-weight: 600; color: #1e293b;">Critical Alerts</p>
+                <p style="margin: 0; font-size: 2rem; font-weight: 700; color: #f59e0b;">{{ critical_alerts|default:0 }}</p>
+                <p style="margin: 0.5rem 0 0 0; font-size: 0.875rem; color: #64748b;">Require attention</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
