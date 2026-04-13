@@ -216,35 +216,28 @@
             <!-- HEAD (Arthur Maramba) - M2 Final Signatory, M6 Reports -->
             <div class="nav-section">
                 <div class="nav-section-title">Oversight</div>
-                <a href="{% url 'intake:applicants_list' request.user.position %}" class="nav-link">
+                <a href="{% url 'accounts:head_applicants' %}" class="nav-link {% block nav_head_applicants %}{% endblock %}">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
                         <circle cx="9" cy="7" r="4"/>
                         <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
                     </svg>
-                    <span>View Applicants</span>
+                    <span>Applicants Overview</span>
                 </a>
             </div>
             <div class="nav-section">
                 <div class="nav-section-title">Applications (M2)</div>
-                <a href="#" class="nav-link">
+                <a href="{% url 'accounts:head_pending_sig' %}" class="nav-link {% block nav_head_pending_sig %}{% endblock %}">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M9 11l3 3L22 4"/>
                         <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
                     </svg>
-                    <span>Sign Applications</span>
-                </a>
-                <a href="#" class="nav-link">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"/>
-                        <polyline points="12 6 12 12 16 14"/>
-                    </svg>
-                    <span>Pending My Signature</span>
+                    <span>Pending Signatures</span>
                 </a>
             </div>
             <div class="nav-section">
-                <div class="nav-section-title">Reports (M6)</div>
-                <a href="#" class="nav-link">
+                <div class="nav-section-title">Analytics & Reports (M6)</div>
+                <a href="{% url 'accounts:head_analytics' %}" class="nav-link {% block nav_head_analytics %}{% endblock %}">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="18" y1="20" x2="18" y2="10"/>
                         <line x1="12" y1="20" x2="12" y2="4"/>
@@ -252,7 +245,7 @@
                     </svg>
                     <span>Analytics Dashboard</span>
                 </a>
-                <a href="#" class="nav-link">
+                <a href="{% url 'accounts:head_reports' %}" class="nav-link {% block nav_head_reports %}{% endblock %}">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                         <polyline points="14 2 14 8 20 8"/>
@@ -260,15 +253,6 @@
                         <line x1="16" y1="17" x2="8" y2="17"/>
                     </svg>
                     <span>Monthly Reports</span>
-                </a>
-                <a href="#" class="nav-link">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                        <line x1="16" y1="2" x2="16" y2="6"/>
-                        <line x1="8" y1="2" x2="8" y2="6"/>
-                        <line x1="3" y1="10" x2="21" y2="10"/>
-                    </svg>
-                    <span>System Overview</span>
                 </a>
             </div>
 
@@ -287,14 +271,7 @@
             </div>
             <div class="nav-section">
                 <div class="nav-section-title">Applications (M2)</div>
-                <a href="#" class="nav-link">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M9 11l3 3L22 4"/>
-                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
-                    </svg>
-                    <span>Sign Applications</span>
-                </a>
-                <a href="#" class="nav-link">
+                <a href="{% url 'cases:case_dashboard' request.user.position %}" class="nav-link">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="10"/>
                         <polyline points="12 6 12 12 16 14"/>
@@ -693,7 +670,7 @@
                             </svg>
                         </div>
                     </div>
-                    <div class="stat-value">—</div>
+                    <div class="stat-value">{{ total_applicants }}</div>
                     <div class="stat-label">Total Applicants</div>
                 </div>
 
@@ -706,7 +683,7 @@
                             </svg>
                         </div>
                     </div>
-                    <div class="stat-value">—</div>
+                    <div class="stat-value">{{ awaiting_signature }}</div>
                     <div class="stat-label">Awaiting Signature</div>
                 </div>
 
@@ -719,7 +696,7 @@
                             </svg>
                         </div>
                     </div>
-                    <div class="stat-value">—</div>
+                    <div class="stat-value">{{ housing_units }}</div>
                     <div class="stat-label">Housing Units</div>
                 </div>
 
@@ -733,7 +710,7 @@
                             </svg>
                         </div>
                     </div>
-                    <div class="stat-value">—</div>
+                    <div class="stat-value">{{ approved_this_month }}</div>
                     <div class="stat-label">Monthly Reports</div>
                 </div>
 
@@ -749,7 +726,7 @@
                             </svg>
                         </div>
                     </div>
-                    <div class="stat-value">—</div>
+                    <div class="stat-value">{{ total_applicants }}</div>
                     <div class="stat-label">Total Applicants</div>
                 </div>
 
@@ -762,8 +739,8 @@
                             </svg>
                         </div>
                     </div>
-                    <div class="stat-value">—</div>
-                    <div class="stat-label">Awaiting Signature</div>
+                    <div class="stat-value">{{ pending_notices }}</div>
+                    <div class="stat-label">Pending Notices</div>
                 </div>
 
                 <div class="stat-card amber scroll-animate-scale scroll-delay-3">
@@ -775,8 +752,8 @@
                             </svg>
                         </div>
                     </div>
-                    <div class="stat-value">—</div>
-                    <div class="stat-label">Housing Units</div>
+                    <div class="stat-value">{{ electricity_pending }}</div>
+                    <div class="stat-label">Electricity Connections</div>
                 </div>
 
                 <div class="stat-card purple scroll-animate-right scroll-delay-4">
@@ -789,8 +766,8 @@
                             </svg>
                         </div>
                     </div>
-                    <div class="stat-value">—</div>
-                    <div class="stat-label">Monthly Reports</div>
+                    <div class="stat-value">{{ incomplete_docs }}</div>
+                    <div class="stat-label">Incomplete Documents</div>
                 </div>
 
                 <!-- Joie: Second row - Queue/Work stats (same as Fourth Member) -->
@@ -805,8 +782,8 @@
                             </svg>
                         </div>
                     </div>
-                    <div class="stat-value">—</div>
-                    <div class="stat-label">Queue Today</div>
+                    <div class="stat-value">{{ urgent_notices }}</div>
+                    <div class="stat-label">Urgent Notices</div>
                 </div>
 
                 <div class="stat-card green scroll-animate-scale scroll-delay-2">
@@ -1078,7 +1055,7 @@
             <div class="quick-actions">
                 {% if user.position == 'head' %}
                 <!-- Head: Final signatory, Reports + View Intake -->
-                <a href="{% url 'intake:applicants_list' request.user.position %}" class="action-card scroll-animate-left scroll-delay-1">
+                <a href="{% url 'accounts:head_applicants' %}" class="action-card scroll-animate-left scroll-delay-1">
                     <div class="action-icon-wrapper">
                         <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
