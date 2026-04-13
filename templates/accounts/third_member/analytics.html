@@ -1,80 +1,82 @@
+{% extends "third_member_base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analytics Dashboard - Third Member | THA</title>
-    <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}">
-    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
-    <style>
-        body { background: #f8fafc; }
-        .container { padding: 1.5rem; max-width: 1400px; margin: 0 auto; }
-        h1 { font-size: 1.5rem; font-weight: 600; color: #1e293b; margin: 0 0 0.5rem 0; }
-        .subtitle { color: #64748b; margin-bottom: 2rem; }
-        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
-        .kpi { background: white; border: 1px solid #e2e8f0; border-top: 4px solid; border-radius: 0.75rem; padding: 1rem; }
-        .kpi-number { font-size: 2rem; font-weight: 700; margin: 0.5rem 0; }
-        .kpi-label { font-size: 0.875rem; color: #64748b; }
-        .widget { background: white; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1.5rem; margin-bottom: 1rem; }
-        .widget h3 { margin: 0 0 1rem 0; color: #1e293b; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>📊 Analytics Dashboard - Third Member</h1>
-        <p class="subtitle">Roland Jay S. Olvido - M1, M2 (Intake & Signatory)</p>
 
-        <div class="kpi-grid">
-            <div class="kpi" style="border-color: #2563eb;">
-                <div class="kpi-label">Documents in Routing</div>
-                <div class="kpi-number" style="color: #2563eb;">{{ routing_queue|default:0 }}</div>
-            </div>
-            <div class="kpi" style="border-color: #16a34a;">
-                <div class="kpi-label">Verified Applicants</div>
-                <div class="kpi-number" style="color: #16a34a;">{{ verified_count|default:0 }}</div>
-            </div>
-            <div class="kpi" style="border-color: #f59e0b;">
-                <div class="kpi-label">Applications Signed</div>
-                <div class="kpi-number" style="color: #f59e0b;">{{ signed_count|default:0 }}</div>
-            </div>
-            <div class="kpi" style="border-color: #0f766e;">
-                <div class="kpi-label">Total Applicants</div>
-                <div class="kpi-number" style="color: #0f766e;">{{ total_applicants|default:0 }}</div>
-            </div>
+{% block title %}Analytics Dashboard - Third Member | THA{% endblock %}
+
+{% block extra_css %}
+<style>
+    .analytics-section { padding: 2rem; max-width: 1400px; margin: 0 auto; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+    .kpi-card { background: white; border: 1px solid #e2e8f0; border-top: 4px solid; border-radius: 0.75rem; padding: 1rem; }
+    .kpi-label { font-size: 0.875rem; color: #64748b; }
+    .kpi-value { font-size: 2rem; font-weight: 700; margin: 0.5rem 0; }
+    .widget { background: white; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1.5rem; margin-bottom: 1rem; }
+    .widget h3 { margin: 0 0 1rem 0; color: #1e293b; }
+    .role-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+    .role-box { border-left: 4px solid; padding-left: 1rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="analytics-section">
+    <div style="margin-bottom: 2rem;">
+        <h1 style="font-size: 2rem; font-weight: 700; color: #1e293b; margin: 0;">📊 Analytics Dashboard - Third Member</h1>
+        <p style="color: #64748b; margin-top: 0.5rem;">Roland Jay S. Olvido - M1, M2 (Intake & Signatory)</p>
+    </div>
+
+    <!-- KPI Grid -->
+    <div class="kpi-grid">
+        <div class="kpi-card" style="border-color: #2563eb;">
+            <div class="kpi-label">Documents in Routing</div>
+            <div class="kpi-value" style="color: #2563eb;">{{ routing_queue|default:0 }}</div>
         </div>
-
-        <div class="widget">
-            <h3>👤 Third Member Role (M1, M2)</h3>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-                <div style="border-left: 4px solid #0369a1; padding-left: 1rem;">
-                    <strong>M1: Intake</strong><br/>
-                    <span style="font-size: 0.875rem; color: #64748b;">Census, verification, field checks</span>
-                </div>
-                <div style="border-left: 4px solid #d97706; padding-left: 1rem;">
-                    <strong>M2: Applications</strong><br/>
-                    <span style="font-size: 0.875rem; color: #64748b;">First signatory approval</span>
-                </div>
-            </div>
+        <div class="kpi-card" style="border-color: #16a34a;">
+            <div class="kpi-label">Verified Applicants</div>
+            <div class="kpi-value" style="color: #16a34a;">{{ verified_count|default:0 }}</div>
         </div>
-
-        <div class="widget">
-            <h3>📝 Signatory Status</h3>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-                <div style="background: #dbeafe; padding: 1rem; border-radius: 0.5rem; text-align: center;">
-                    <p style="margin: 0; font-size: 0.875rem; color: #1e40af; font-weight: 500;">Ready for OIC</p>
-                    <p style="margin: 0.5rem 0 0 0; font-size: 1.75rem; font-weight: 700; color: #2563eb;">{{ ready_oic|default:0 }}</p>
-                </div>
-                <div style="background: #fee2e2; padding: 1rem; border-radius: 0.5rem; text-align: center;">
-                    <p style="margin: 0; font-size: 0.875rem; color: #991b1b; font-weight: 500;">Overdue (>3 days)</p>
-                    <p style="margin: 0.5rem 0 0 0; font-size: 1.75rem; font-weight: 700; color: #dc2626;">{{ overdue|default:0 }}</p>
-                </div>
-            </div>
+        <div class="kpi-card" style="border-color: #f59e0b;">
+            <div class="kpi-label">Applications Signed</div>
+            <div class="kpi-value" style="color: #f59e0b;">{{ signed_count|default:0 }}</div>
         </div>
-
-        <div style="text-align: center; padding: 1.5rem; color: #64748b; font-size: 0.875rem;">
-            <p>✅ Updated: <strong>{{ timestamp|date:"M d, Y g:i A" }}</strong></p>
+        <div class="kpi-card" style="border-color: #0f766e;">
+            <div class="kpi-label">Total Applicants</div>
+            <div class="kpi-value" style="color: #0f766e;">{{ total_applicants|default:0 }}</div>
         </div>
     </div>
-</body>
-</html>
+
+    <!-- Third Member Role -->
+    <div class="widget">
+        <h3>👤 Third Member Role (M1, M2)</h3>
+        <div class="role-grid">
+            <div class="role-box" style="border-color: #0369a1;">
+                <strong>M1: Intake</strong><br/>
+                <span style="font-size: 0.875rem; color: #64748b;">Census, verification, field checks</span>
+            </div>
+            <div class="role-box" style="border-color: #d97706;">
+                <strong>M2: Applications</strong><br/>
+                <span style="font-size: 0.875rem; color: #64748b;">First signatory approval</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Signatory Status -->
+    <div class="widget">
+        <h3>📝 Signatory Status</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+            <div style="background: #dbeafe; padding: 1rem; border-radius: 0.5rem; text-align: center;">
+                <p style="margin: 0; font-size: 0.875rem; color: #1e40af; font-weight: 500;">Ready for OIC</p>
+                <p style="margin: 0.5rem 0 0 0; font-size: 1.75rem; font-weight: 700; color: #2563eb;">{{ ready_oic|default:0 }}</p>
+            </div>
+            <div style="background: #fee2e2; padding: 1rem; border-radius: 0.5rem; text-align: center;">
+                <p style="margin: 0; font-size: 0.875rem; color: #991b1b; font-weight: 500;">Overdue (>3 days)</p>
+                <p style="margin: 0.5rem 0 0 0; font-size: 1.75rem; font-weight: 700; color: #dc2626;">{{ overdue|default:0 }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div style="text-align: center; padding: 1.5rem; color: #64748b; font-size: 0.875rem;">
+        <p>✅ Updated: <strong>{{ timestamp|date:"M d, Y g:i A" }}</strong></p>
+    </div>
+</div>
+{% endblock %}

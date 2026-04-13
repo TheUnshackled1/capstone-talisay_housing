@@ -1,112 +1,101 @@
+{% extends "oic_base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analytics Dashboard - OIC | THA</title>
-    <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}">
-    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
-    <style>
-        body { background: #f8fafc; }
-        .analytics-container { padding: 1.5rem; max-width: 1400px; margin: 0 auto; }
-        .header { margin-bottom: 2rem; }
-        .header h1 { font-size: 1.5rem; font-weight: 600; color: #1e293b; margin: 0; }
-        .header p { color: #64748b; margin-top: 0.25rem; }
 
-        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
-        .kpi-card { background: white; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1rem; }
-        .kpi-value { font-size: 2rem; font-weight: 700; margin: 0.5rem 0 0 0; }
-        .kpi-label { font-size: 0.875rem; color: #64748b; }
+{% block title %}Analytics Dashboard - OIC | THA{% endblock %}
 
-        .widget { background: white; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1.5rem; margin-bottom: 1rem; }
-        .widget h3 { margin: 0 0 1rem 0; font-size: 1.125rem; color: #1e293b; }
+{% block extra_css %}
+<style>
+    .analytics-section { padding: 2rem; max-width: 1400px; margin: 0 auto; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+    .kpi-card { background: white; border: 1px solid #e2e8f0; border-top: 4px solid; border-radius: 0.75rem; padding: 1rem; }
+    .kpi-label { font-size: 0.875rem; color: #64748b; }
+    .kpi-value { font-size: 2rem; font-weight: 700; margin: 0.5rem 0; }
+    .widget { background: white; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1.5rem; margin-bottom: 1rem; }
+    .widget h3 { margin: 0 0 1rem 0; color: #1e293b; }
+    .status-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+    .status-box { border-left: 4px solid; padding-left: 1rem; }
+    .status-box.blue { border-color: #2563eb; }
+    .status-box.green { border-color: #16a34a; }
+    .status-box.amber { border-color: #f59e0b; }
+</style>
+{% endblock %}
 
-        .status-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
-        .status-box { border-left: 4px solid; padding-left: 1rem; }
-        .status-box.blue { border-color: #2563eb; }
-        .status-box.amber { border-color: #f59e0b; }
-        .status-box.green { border-color: #16a34a; }
-        .status-box.red { border-color: #dc2626; }
-    </style>
-</head>
-<body>
-    <div class="analytics-container">
-        <!-- Header -->
-        <div class="header">
-            <h1>📊 Analytics Dashboard - OIC</h1>
-            <p>Officer-in-Charge System Oversight</p>
+{% block content %}
+<div class="analytics-section">
+    <!-- Page Header -->
+    <div style="margin-bottom: 2rem;">
+        <h1 style="font-size: 2rem; font-weight: 700; color: #1e293b; margin: 0;">📊 Analytics Dashboard - OIC</h1>
+        <p style="color: #64748b; margin-top: 0.5rem;">Officer-in-Charge System Oversight</p>
+    </div>
+
+    <!-- KPI Grid -->
+    <div class="kpi-grid">
+        <div class="kpi-card" style="border-color: #2563eb;">
+            <div class="kpi-label">Pending Signatures</div>
+            <div class="kpi-value" style="color: #2563eb;">{{ pending_signatures|default:0 }}</div>
+            <div class="kpi-label">Awaiting your action</div>
         </div>
 
-        <!-- KPI Grid -->
-        <div class="kpi-grid">
-            <div class="kpi-card" style="border-top: 4px solid #2563eb;">
-                <div class="kpi-label">Pending Signatures</div>
-                <div class="kpi-value" style="color: #2563eb;">{{ pending_signatures|default:0 }}</div>
-                <div class="kpi-label">Awaiting your action</div>
-            </div>
-
-            <div class="kpi-card" style="border-top: 4px solid #a855f7;">
-                <div class="kpi-label">Open Cases (M5)</div>
-                <div class="kpi-value" style="color: #a855f7;">{{ open_cases|default:0 }}</div>
-                <div class="kpi-label">Escalations</div>
-            </div>
-
-            <div class="kpi-card" style="border-top: 4px solid #16a34a;">
-                <div class="kpi-label">Compliance Decisions</div>
-                <div class="kpi-value" style="color: #16a34a;">{{ compliance_decisions|default:0 }}</div>
-                <div class="kpi-label">This month</div>
-            </div>
-
-            <div class="kpi-card" style="border-top: 4px solid #f59e0b;">
-                <div class="kpi-label">Applications Signed</div>
-                <div class="kpi-value" style="color: #f59e0b;">{{ apps_signed|default:0 }}</div>
-                <div class="kpi-label">Forwarded to HEAD</div>
-            </div>
+        <div class="kpi-card" style="border-color: #a855f7;">
+            <div class="kpi-label">Open Cases (M5)</div>
+            <div class="kpi-value" style="color: #a855f7;">{{ open_cases|default:0 }}</div>
+            <div class="kpi-label">Escalations</div>
         </div>
 
-        <!-- OIC-Specific Overview -->
-        <div class="widget">
-            <h3>🎯 OIC Responsibilities (M2, M4, M5)</h3>
-            <div class="status-grid">
-                <div class="status-box blue">
-                    <strong>Module 2: Applications</strong><br/>
-                    <span style="font-size: 0.875rem; color: #64748b;">Signatory approval step</span>
-                </div>
-                <div class="status-box green">
-                    <strong>Module 4: Occupancy</strong><br/>
-                    <span style="font-size: 0.875rem; color: #64748b;">Compliance oversight</span>
-                </div>
-                <div class="status-box amber">
-                    <strong>Module 5: Cases</strong><br/>
-                    <span style="font-size: 0.875rem; color: #64748b;">Escalation decisions</span>
-                </div>
-            </div>
+        <div class="kpi-card" style="border-color: #16a34a;">
+            <div class="kpi-label">Compliance Decisions</div>
+            <div class="kpi-value" style="color: #16a34a;">{{ compliance_decisions|default:0 }}</div>
+            <div class="kpi-label">This month</div>
         </div>
 
-        <!-- Activity Summary -->
-        <div class="widget">
-            <h3>📈 This Month's Activity</h3>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
-                <div style="background: #dbeafe; padding: 1rem; border-radius: 0.5rem;">
-                    <p style="margin: 0; font-size: 0.875rem; color: #1e40af; font-weight: 500;">Applications Signed</p>
-                    <p style="margin: 0.5rem 0 0 0; font-size: 1.75rem; font-weight: 700; color: #2563eb;">{{ apps_signed_month|default:0 }}</p>
-                </div>
-                <div style="background: #f3e8ff; padding: 1rem; border-radius: 0.5rem;">
-                    <p style="margin: 0; font-size: 0.875rem; color: #5b21b6; font-weight: 500;">Cases Resolved</p>
-                    <p style="margin: 0.5rem 0 0 0; font-size: 1.75rem; font-weight: 700; color: #a855f7;">{{ cases_resolved|default:0 }}</p>
-                </div>
-                <div style="background: #dcfce7; padding: 1rem; border-radius: 0.5rem;">
-                    <p style="margin: 0; font-size: 0.875rem; color: #15803d; font-weight: 500;">Compliance Notices</p>
-                    <p style="margin: 0.5rem 0 0 0; font-size: 1.75rem; font-weight: 700; color: #16a34a;">{{ comp_notices|default:0 }}</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Footer -->
-        <div style="text-align: center; padding: 1.5rem; color: #64748b; font-size: 0.875rem;">
-            <p>✅ Real-time Analytics | Last updated: <strong>{{ timestamp|date:"M d, Y g:i A" }}</strong></p>
+        <div class="kpi-card" style="border-color: #f59e0b;">
+            <div class="kpi-label">Applications Signed</div>
+            <div class="kpi-value" style="color: #f59e0b;">{{ apps_signed|default:0 }}</div>
+            <div class="kpi-label">Forwarded to HEAD</div>
         </div>
     </div>
-</body>
-</html>
+
+    <!-- OIC-Specific Overview -->
+    <div class="widget">
+        <h3>🎯 OIC Responsibilities (M2, M4, M5)</h3>
+        <div class="status-grid">
+            <div class="status-box blue">
+                <strong>Module 2: Applications</strong><br/>
+                <span style="font-size: 0.875rem; color: #64748b;">Signatory approval step</span>
+            </div>
+            <div class="status-box green">
+                <strong>Module 4: Occupancy</strong><br/>
+                <span style="font-size: 0.875rem; color: #64748b;">Compliance oversight</span>
+            </div>
+            <div class="status-box amber">
+                <strong>Module 5: Cases</strong><br/>
+                <span style="font-size: 0.875rem; color: #64748b;">Escalation decisions</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Activity Summary -->
+    <div class="widget">
+        <h3>📈 This Month's Activity</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
+            <div style="background: #dbeafe; padding: 1rem; border-radius: 0.5rem;">
+                <p style="margin: 0; font-size: 0.875rem; color: #1e40af; font-weight: 500;">Applications Signed</p>
+                <p style="margin: 0.5rem 0 0 0; font-size: 1.75rem; font-weight: 700; color: #2563eb;">{{ apps_signed_month|default:0 }}</p>
+            </div>
+            <div style="background: #f3e8ff; padding: 1rem; border-radius: 0.5rem;">
+                <p style="margin: 0; font-size: 0.875rem; color: #5b21b6; font-weight: 500;">Cases Resolved</p>
+                <p style="margin: 0.5rem 0 0 0; font-size: 1.75rem; font-weight: 700; color: #a855f7;">{{ cases_resolved|default:0 }}</p>
+            </div>
+            <div style="background: #dcfce7; padding: 1rem; border-radius: 0.5rem;">
+                <p style="margin: 0; font-size: 0.875rem; color: #15803d; font-weight: 500;">Compliance Notices</p>
+                <p style="margin: 0.5rem 0 0 0; font-size: 1.75rem; font-weight: 700; color: #16a34a;">{{ comp_notices|default:0 }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div style="text-align: center; padding: 1.5rem; color: #64748b; font-size: 0.875rem;">
+        <p>✅ Real-time Analytics | Last updated: <strong>{{ timestamp|date:"M d, Y g:i A" }}</strong></p>
+    </div>
+</div>
+{% endblock %}

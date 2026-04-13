@@ -1,89 +1,90 @@
+{% extends "staff_base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analytics Dashboard - Second Member | THA</title>
-    <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}">
-    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
-    <style>
-        body { background: #f8fafc; }
-        .container { padding: 1.5rem; max-width: 1400px; margin: 0 auto; }
-        h1 { font-size: 1.5rem; font-weight: 600; color: #1e293b; margin: 0 0 0.5rem 0; }
-        .subtitle { color: #64748b; margin-bottom: 2rem; }
-        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
-        .kpi { background: white; border: 1px solid #e2e8f0; border-top: 4px solid; border-radius: 0.75rem; padding: 1rem; }
-        .kpi-number { font-size: 2rem; font-weight: 700; margin: 0.5rem 0; }
-        .kpi-label { font-size: 0.875rem; color: #64748b; }
-        .widget { background: white; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1.5rem; margin-bottom: 1rem; }
-        .widget h3 { margin: 0 0 1rem 0; color: #1e293b; }
-        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>📊 Analytics Dashboard - Second Member</h1>
-        <p class="subtitle">Lourynie Joie V. Tingson - M2, M3, M4, M6 Oversight</p>
 
-        <div class="kpi-grid">
-            <div class="kpi" style="border-color: #f59e0b;">
-                <div class="kpi-label">Notices to Prepare</div>
-                <div class="kpi-number" style="color: #f59e0b;">{{ pending_notices|default:0 }}</div>
-            </div>
-            <div class="kpi" style="border-color: #a855f7;">
-                <div class="kpi-label">Electricity Pending</div>
-                <div class="kpi-number" style="color: #a855f7;">{{ electricity_pending|default:0 }}</div>
-            </div>
-            <div class="kpi" style="border-color: #0f766e;">
-                <div class="kpi-label">Documents Incomplete</div>
-                <div class="kpi-number" style="color: #0f766e;">{{ incomplete_docs|default:0 }}</div>
-            </div>
-            <div class="kpi" style="border-color: #2563eb;">
-                <div class="kpi-label">Applications</div>
-                <div class="kpi-number" style="color: #2563eb;">{{ total_applications|default:0 }}</div>
-            </div>
+{% block title %}Analytics Dashboard - Second Member | THA{% endblock %}
+
+{% block extra_css %}
+<style>
+    .analytics-section { padding: 2rem; max-width: 1400px; margin: 0 auto; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+    .kpi-card { background: white; border: 1px solid #e2e8f0; border-top: 4px solid; border-radius: 0.75rem; padding: 1rem; }
+    .kpi-label { font-size: 0.875rem; color: #64748b; }
+    .kpi-value { font-size: 2rem; font-weight: 700; margin: 0.5rem 0; }
+    .widget { background: white; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1.5rem; margin-bottom: 1rem; }
+    .widget h3 { margin: 0 0 1rem 0; color: #1e293b; }
+    .responsibility-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+    .resp-box { border-left: 4px solid; padding-left: 1rem; }
+</style>
+{% endblock %}
+
+{% block page_content %}
+<div class="analytics-section">
+    <div style="margin-bottom: 2rem;">
+        <h1 style="font-size: 2rem; font-weight: 700; color: #1e293b; margin: 0;">📊 Analytics Dashboard</h1>
+        <p style="color: #64748b; margin-top: 0.5rem;">Lourynie Joie V. Tingson - Second Member (M2, M3, M4, M6)</p>
+    </div>
+
+    <!-- KPI Grid -->
+    <div class="kpi-grid">
+        <div class="kpi-card" style="border-color: #f59e0b;">
+            <div class="kpi-label">Notices to Prepare</div>
+            <div class="kpi-value" style="color: #f59e0b;">{{ pending_notices|default:0 }}</div>
         </div>
-
-        <div class="widget">
-            <h3>📋 Second Member Responsibilities</h3>
-            <div class="grid-2">
-                <div style="border-left: 4px solid #2563eb; padding-left: 1rem;">
-                    <strong>M2: Applications</strong><br/>
-                    <span style="font-size: 0.875rem; color: #64748b;">Coordinate requirements & routing</span>
-                </div>
-                <div style="border-left: 4px solid #0369a1; padding-left: 1rem;">
-                    <strong>M3: Documents</strong><br/>
-                    <span style="font-size: 0.875rem; color: #64748b;">File & manage documents</span>
-                </div>
-                <div style="border-left: 4px solid #16a34a; padding-left: 1rem;">
-                    <strong>M4: Occupancy</strong><br/>
-                    <span style="font-size: 0.875rem; color: #64748b;">Monitor & ensure compliance</span>
-                </div>
-                <div style="border-left: 4px solid #d97706; padding-left: 1rem;">
-                    <strong>M6: Analytics</strong><br/>
-                    <span style="font-size: 0.875rem; color: #64748b;">View reports & metrics</span>
-                </div>
-            </div>
+        <div class="kpi-card" style="border-color: #a855f7;">
+            <div class="kpi-label">Electricity Pending</div>
+            <div class="kpi-value" style="color: #a855f7;">{{ electricity_pending|default:0 }}</div>
         </div>
-
-        <div class="widget">
-            <h3>📈 Monthly Summary</h3>
-            <div class="grid-2">
-                <div style="background: #f0fdf4; padding: 1rem; border-radius: 0.5rem; text-align: center;">
-                    <p style="margin: 0; font-size: 0.875rem; color: #15803d; font-weight: 500;">Notices Issued</p>
-                    <p style="margin: 0.5rem 0 0 0; font-size: 1.75rem; font-weight: 700; color: #16a34a;">{{ notices_issued|default:0 }}</p>
-                </div>
-                <div style="background: #f3e8ff; padding: 1rem; border-radius: 0.5rem; text-align: center;">
-                    <p style="margin: 0; font-size: 0.875rem; color: #5b21b6; font-weight: 500;">Documents Filed</p>
-                    <p style="margin: 0.5rem 0 0 0; font-size: 1.75rem; font-weight: 700; color: #a855f7;">{{ docs_filed|default:0 }}</p>
-                </div>
-            </div>
+        <div class="kpi-card" style="border-color: #0f766e;">
+            <div class="kpi-label">Documents Incomplete</div>
+            <div class="kpi-value" style="color: #0f766e;">{{ incomplete_docs|default:0 }}</div>
         </div>
-
-        <div style="text-align: center; padding: 1.5rem; color: #64748b; font-size: 0.875rem;">
-            <p>✅ Updated: <strong>{{ timestamp|date:"M d, Y g:i A" }}</strong></p>
+        <div class="kpi-card" style="border-color: #2563eb;">
+            <div class="kpi-label">Total Applications</div>
+            <div class="kpi-value" style="color: #2563eb;">{{ total_applications|default:0 }}</div>
         </div>
     </div>
-</body>
-</html>
+
+    <!-- Second Member Responsibilities -->
+    <div class="widget">
+        <h3>📋 Second Member Responsibilities</h3>
+        <div class="responsibility-grid">
+            <div class="resp-box" style="border-color: #2563eb;">
+                <strong>M2: Applications</strong><br/>
+                <span style="font-size: 0.875rem; color: #64748b;">Coordinate requirements & routing</span>
+            </div>
+            <div class="resp-box" style="border-color: #0369a1;">
+                <strong>M3: Documents</strong><br/>
+                <span style="font-size: 0.875rem; color: #64748b;">File & manage documents</span>
+            </div>
+            <div class="resp-box" style="border-color: #16a34a;">
+                <strong>M4: Occupancy</strong><br/>
+                <span style="font-size: 0.875rem; color: #64748b;">Monitor & ensure compliance</span>
+            </div>
+            <div class="resp-box" style="border-color: #d97706;">
+                <strong>M6: Analytics</strong><br/>
+                <span style="font-size: 0.875rem; color: #64748b;">View reports & metrics</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Monthly Summary -->
+    <div class="widget">
+        <h3>📈 Monthly Summary</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+            <div style="background: #f0fdf4; padding: 1rem; border-radius: 0.5rem; text-align: center;">
+                <p style="margin: 0; font-size: 0.875rem; color: #15803d; font-weight: 500;">Notices Issued</p>
+                <p style="margin: 0.5rem 0 0 0; font-size: 1.75rem; font-weight: 700; color: #16a34a;">{{ notices_issued|default:0 }}</p>
+            </div>
+            <div style="background: #f3e8ff; padding: 1rem; border-radius: 0.5rem; text-align: center;">
+                <p style="margin: 0; font-size: 0.875rem; color: #5b21b6; font-weight: 500;">Documents Filed</p>
+                <p style="margin: 0.5rem 0 0 0; font-size: 1.75rem; font-weight: 700; color: #a855f7;">{{ docs_filed|default:0 }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div style="text-align: center; padding: 1.5rem; color: #64748b; font-size: 0.875rem;">
+        <p>✅ Updated: <strong>{{ timestamp|date:"M d, Y g:i A" }}</strong></p>
+    </div>
+</div>
+{% endblock %}

@@ -2141,8 +2141,8 @@ def head_analytics_dashboard(request):
 
     # Compliance notices
     compliance_notices_month = ComplianceNotice.objects.filter(
-        created_at__month=timezone.now().month,
-        created_at__year=timezone.now().year
+        issued_at__month=timezone.now().month,
+        issued_at__year=timezone.now().year
     ).count()
 
     context = {
@@ -2175,8 +2175,7 @@ def oic_analytics_dashboard(request):
 
     # Pending signatures (applications awaiting OIC signature)
     pending_signatures = SignatoryRouting.objects.filter(
-        signer_position='oic',
-        signed_at__isnull=True
+        step='forwarded_oic'
     ).count()
 
     # Open cases (M5 escalations)
@@ -2184,15 +2183,16 @@ def oic_analytics_dashboard(request):
 
     # Compliance decisions this month
     compliance_decisions = ComplianceNotice.objects.filter(
-        created_at__month=timezone.now().month,
-        created_at__year=timezone.now().year
+        resolved_at__isnull=False,
+        resolved_at__month=timezone.now().month,
+        resolved_at__year=timezone.now().year
     ).count()
 
     # Applications signed by OIC this month
     apps_signed = SignatoryRouting.objects.filter(
-        signer_position='oic',
-        signed_at__month=timezone.now().month,
-        signed_at__year=timezone.now().year
+        step='signed_oic',
+        action_at__month=timezone.now().month,
+        action_at__year=timezone.now().year
     ).count()
 
     # Cases resolved this month
@@ -2217,7 +2217,6 @@ def oic_analytics_dashboard(request):
 
 
 @login_required
-@login_required
 def second_member_analytics_dashboard(request):
     """Second Member Analytics Dashboard - M2, M3, M4, M6 Overview"""
     if request.user.position != 'second_member':
@@ -2240,8 +2239,8 @@ def second_member_analytics_dashboard(request):
 
     # Notices issued this month
     notices_issued = ComplianceNotice.objects.filter(
-        created_at__month=timezone.now().month,
-        created_at__year=timezone.now().year
+        issued_at__month=timezone.now().month,
+        issued_at__year=timezone.now().year
     ).count()
 
     context = {
@@ -2265,37 +2264,32 @@ def third_member_analytics_dashboard(request):
     if request.user.position != 'third_member':
         return redirect('accounts:dashboard')
 
-    # Documents in routing
+    # Documents in routing (awaiting third member)
     routing_queue = SignatoryRouting.objects.filter(
-        signer_position='third_member',
-        signed_at__isnull=True
+        step='received'
     ).count()
 
     # Verified applicants
     verified_count = Applicant.objects.filter(status='eligible').count()
 
-    # Applications signed
+    # Applications forwarded to OIC (completed by third member)
     signed_count = SignatoryRouting.objects.filter(
-        signer_position='third_member',
-        signed_at__isnull=False
+        step='forwarded_oic'
     ).count()
 
     # Total applicants
     total_applicants = Applicant.objects.count()
 
-    # Ready for OIC (signed by third member, awaiting OIC)
+    # Ready for OIC (awaiting OIC signature)
     ready_oic = SignatoryRouting.objects.filter(
-        signer_position='oic',
-        signed_at__isnull=True
+        step='forwarded_oic'
     ).count()
 
-    # Overdue (signed > 3 days ago but not forwarded)
+    # Overdue (received > 3 days ago but not yet forwarded)
     three_days_ago = timezone.now() - timedelta(days=3)
     overdue = SignatoryRouting.objects.filter(
-        signer_position='third_member',
-        signed_at__isnull=False,
-        signed_at__lt=three_days_ago,
-        forwarded_at__isnull=True
+        step='received',
+        action_at__lt=three_days_ago
     ).count()
 
     context = {
@@ -2311,7 +2305,6 @@ def third_member_analytics_dashboard(request):
     return render(request, 'accounts/third_member/analytics.html', context)
 
 
-@login_required
 @login_required
 def fourth_member_analytics_dashboard(request):
     """Fourth Member Analytics Dashboard - M1, M2, M3, M4 Overview"""
@@ -2359,20 +2352,16 @@ def fifth_member_analytics_dashboard(request):
     if request.user.position != 'fifth_member':
         return redirect('accounts:dashboard')
 
-    # Applications in routing
+    # Applications awaiting fifth member signature
     routing_apps = SignatoryRouting.objects.filter(
-        signer_position='fifth_member',
-        signed_at__isnull=True
+        step__in=['forwarded_oic', 'signed_oic']
     ).count()
 
     # Electricity being processed
     electricity_processing = ElectricityConnection.objects.filter(status='in_progress').count()
 
-    # Applications signed
-    apps_signed = SignatoryRouting.objects.filter(
-        signer_position='fifth_member',
-        signed_at__isnull=False
-    ).count()
+    # Applications signed by fifth member (not used in current model, use empty)
+    apps_signed = 0
 
     # Units monitored
     units_monitored = HousingUnit.objects.count()
@@ -2480,8 +2469,8 @@ def field_analytics_dashboard(request):
     # Escalations this month
     escalations_month = Case.objects.filter(
         status='referred',
-        created_at__month=timezone.now().month,
-        created_at__year=timezone.now().year
+        received_at__month=timezone.now().month,
+        received_at__year=timezone.now().year
     ).count()
 
     context = {

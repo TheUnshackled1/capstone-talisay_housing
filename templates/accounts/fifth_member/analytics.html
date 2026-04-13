@@ -1,80 +1,82 @@
+{% extends "staff_base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analytics Dashboard - Fifth Member | THA</title>
-    <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}">
-    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
-    <style>
-        body { background: #f8fafc; }
-        .container { padding: 1.5rem; max-width: 1400px; margin: 0 auto; }
-        h1 { font-size: 1.5rem; font-weight: 600; color: #1e293b; margin: 0 0 0.5rem 0; }
-        .subtitle { color: #64748b; margin-bottom: 2rem; }
-        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
-        .kpi { background: white; border: 1px solid #e2e8f0; border-top: 4px solid; border-radius: 0.75rem; padding: 1rem; }
-        .kpi-number { font-size: 2rem; font-weight: 700; margin: 0.5rem 0; }
-        .kpi-label { font-size: 0.875rem; color: #64748b; }
-        .widget { background: white; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1.5rem; margin-bottom: 1rem; }
-        .widget h3 { margin: 0 0 1rem 0; color: #1e293b; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>📊 Analytics Dashboard - Fifth Member</h1>
-        <p class="subtitle">Laarni Hellera - M2, M4 (Applications & Electricity)</p>
 
-        <div class="kpi-grid">
-            <div class="kpi" style="border-color: #2563eb;">
-                <div class="kpi-label">Applications in Queue</div>
-                <div class="kpi-number" style="color: #2563eb;">{{ routing_apps|default:0 }}</div>
-            </div>
-            <div class="kpi" style="border-color: #a855f7;">
-                <div class="kpi-label">Electricity Processing</div>
-                <div class="kpi-number" style="color: #a855f7;">{{ electricity_processing|default:0 }}</div>
-            </div>
-            <div class="kpi" style="border-color: #16a34a;">
-                <div class="kpi-label">Signed This Month</div>
-                <div class="kpi-number" style="color: #16a34a;">{{ apps_signed|default:0 }}</div>
-            </div>
-            <div class="kpi" style="border-color: #0f766e;">
-                <div class="kpi-label">Units Monitored</div>
-                <div class="kpi-number" style="color: #0f766e;">{{ units_monitored|default:0 }}</div>
-            </div>
+{% block title %}Analytics Dashboard - Fifth Member | THA{% endblock %}
+
+{% block nav_analytics %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+    .analytics-section { padding: 2rem; max-width: 1400px; margin: 0 auto; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+    .kpi-card { background: white; border: 1px solid #e2e8f0; border-top: 4px solid; border-radius: 0.75rem; padding: 1rem; }
+    .kpi-label { font-size: 0.875rem; color: #64748b; }
+    .kpi-value { font-size: 2rem; font-weight: 700; margin: 0.5rem 0; }
+    .widget { background: white; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1.5rem; margin-bottom: 1rem; }
+    .widget h3 { margin: 0 0 1rem 0; color: #1e293b; }
+</style>
+{% endblock %}
+
+{% block page_content %}
+<div class="analytics-section">
+    <div style="margin-bottom: 2rem;">
+        <h1 style="font-size: 2rem; font-weight: 700; color: #1e293b; margin: 0;">⚡ Electricity Tracking Dashboard</h1>
+        <p style="color: #64748b; margin-top: 0.5rem;">Laarni Hellera - Fifth Member (M2, M4 - Electricity)</p>
+    </div>
+
+    <!-- KPI Grid -->
+    <div class="kpi-grid">
+        <div class="kpi-card" style="border-color: #f59e0b;">
+            <div class="kpi-label">Connections Pending</div>
+            <div class="kpi-value" style="color: #f59e0b;">{{ pending_connections|default:0 }}</div>
         </div>
-
-        <div class="widget">
-            <h3>⚡ Electricity Status</h3>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-                <div style="background: #fee2e2; padding: 1rem; border-radius: 0.5rem; text-align: center;">
-                    <p style="margin: 0; font-size: 0.875rem; color: #991b1b; font-weight: 500;">Pending</p>
-                    <p style="margin: 0.5rem 0 0 0; font-size: 1.75rem; font-weight: 700; color: #dc2626;">{{ electricity_pending|default:0 }}</p>
-                </div>
-                <div style="background: #dcfce7; padding: 1rem; border-radius: 0.5rem; text-align: center;">
-                    <p style="margin: 0; font-size: 0.875rem; color: #15803d; font-weight: 500;">Completed</p>
-                    <p style="margin: 0.5rem 0 0 0; font-size: 1.75rem; font-weight: 700; color: #16a34a;">{{ electricity_completed|default:0 }}</p>
-                </div>
-            </div>
+        <div class="kpi-card" style="border-color: #2563eb;">
+            <div class="kpi-label">In Progress</div>
+            <div class="kpi-value" style="color: #2563eb;">{{ in_progress|default:0 }}</div>
         </div>
-
-        <div class="widget">
-            <h3>📈 Performance</h3>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-                <div style="border-left: 4px solid #2563eb; padding-left: 1rem;">
-                    <strong>Processed This Month</strong><br/>
-                    <span style="font-size: 1.75rem; font-weight: 700; color: #2563eb;">{{ processed|default:0 }}</span>
-                </div>
-                <div style="border-left: 4px solid #f59e0b; padding-left: 1rem;">
-                    <strong>Avg Processing Time</strong><br/>
-                    <span style="font-size: 1.75rem; font-weight: 700; color: #f59e0b;">{{ avg_time }}</span>
-                </div>
-            </div>
+        <div class="kpi-card" style="border-color: #16a34a;">
+            <div class="kpi-label">Completed</div>
+            <div class="kpi-value" style="color: #16a34a;">{{ completed_connections|default:0 }}</div>
         </div>
-
-        <div style="text-align: center; padding: 1.5rem; color: #64748b; font-size: 0.875rem;">
-            <p>✅ Updated: <strong>{{ timestamp|date:"M d, Y g:i A" }}</strong></p>
+        <div class="kpi-card" style="border-color: #a855f7;">
+            <div class="kpi-label">Applications</div>
+            <div class="kpi-value" style="color: #a855f7;">{{ total_applications|default:0 }}</div>
         </div>
     </div>
-</body>
-</html>
+
+    <!-- Electricity Tracking -->
+    <div class="widget">
+        <h3>⚡ Fifth Member Responsibilities</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+            <div style="border-left: 4px solid #d97706; padding-left: 1rem;">
+                <strong>M2: Electricity</strong><br/>
+                <span style="font-size: 0.875rem; color: #64748b;">Connection tracking & coordination</span>
+            </div>
+            <div style="border-left: 4px solid #0369a1; padding-left: 1rem;">
+                <strong>M4: Beneficiaries</strong><br/>
+                <span style="font-size: 0.875rem; color: #64748b;">Awarded applicant management</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Monthly Summary -->
+    <div class="widget">
+        <h3>📊 This Month</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+            <div style="background: #fef3c7; padding: 1rem; border-radius: 0.5rem; text-align: center;">
+                <p style="margin: 0; font-size: 0.875rem; color: #92400e; font-weight: 500;">Applied</p>
+                <p style="margin: 0.5rem 0 0 0; font-size: 1.75rem; font-weight: 700; color: #f59e0b;">{{ applications_this_month|default:0 }}</p>
+            </div>
+            <div style="background: #dcfce7; padding: 1rem; border-radius: 0.5rem; text-align: center;">
+                <p style="margin: 0; font-size: 0.875rem; color: #15803d; font-weight: 500;">Connected</p>
+                <p style="margin: 0.5rem 0 0 0; font-size: 1.75rem; font-weight: 700; color: #16a34a;">{{ connected_this_month|default:0 }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div style="text-align: center; padding: 1.5rem; color: #64748b; font-size: 0.875rem;">
+        <p>✅ Updated: <strong>{{ timestamp|date:"M d, Y g:i A" }}</strong></p>
+    </div>
+</div>
+{% endblock %}
