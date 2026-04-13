@@ -112,7 +112,8 @@
                 </a>
                 {% endif %}
 
-                <!-- Compliance Notices - All Staff (especially 2nd Member/Joie) -->
+                <!-- Compliance Notices - Only for specific roles (not second/fourth member) -->
+                {% if user.position not in 'second_member,fourth_member' %}
                 <a href="{% url 'units:compliance_notice_issuance' request.user.position %}" class="nav-link {% block nav_compliance %}{% endblock %}">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
@@ -121,8 +122,10 @@
                     </svg>
                     <span>Compliance Notices</span>
                 </a>
+                {% endif %}
 
-                <!-- Occupancy Reports - Caretaker & Field Team -->
+                <!-- Occupancy Reports - Caretaker & Field Team only -->
+                {% if user.position == 'caretaker' or user.position == 'field' or user.position == 'ronda' %}
                 <a href="{% url 'units:occupancy_report_form' request.user.position %}" class="nav-link {% block nav_occupancy %}{% endblock %}">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
@@ -130,14 +133,17 @@
                     </svg>
                     <span>Occupancy Reports</span>
                 </a>
+                {% endif %}
 
-                <!-- Occupancy Review - Field Team -->
+                <!-- Occupancy Review - Field Team only -->
+                {% if user.position == 'field' or user.position == 'ronda' %}
                 <a href="{% url 'units:occupancy_review_list' request.user.position %}" class="nav-link {% block nav_occupancy_review %}{% endblock %}">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <polyline points="20 6 9 17 4 12"/>
                     </svg>
                     <span>Occupancy Review</span>
                 </a>
+                {% endif %}
 
                 <!-- Cases - All Staff -->
                 <a href="{% url 'cases:case_dashboard' request.user.position %}" class="nav-link {% block nav_cases %}{% endblock %}">
