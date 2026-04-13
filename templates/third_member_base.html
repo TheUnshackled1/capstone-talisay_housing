@@ -1,0 +1,190 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="{% block meta_description %}THA Third Member Portal{% endblock %}">
+    <title>{% block title %}Third Member Portal{% endblock %} | THA</title>
+    <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}">
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+
+    <!-- Page-specific styles -->
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Sidebar Overlay for Mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <div class="logo-circle">
+                    <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 21h18M5 21V7l8-4 8 4v14M9 21v-6h6v6"/>
+                    </svg>
+                </div>
+                <div class="logo-text">
+                    <div class="logo-title">THA Portal</div>
+                    <div class="logo-subtitle">Housing Information System</div>
+                </div>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <!-- Main Section -->
+            <div class="nav-section">
+                <div class="nav-section-title">Main</div>
+                <a href="{% url 'accounts:dashboard' %}" class="nav-link {% block nav_dashboard %}{% endblock %}">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7" rx="1"/>
+                        <rect x="14" y="3" width="7" height="7" rx="1"/>
+                        <rect x="14" y="14" width="7" height="7" rx="1"/>
+                        <rect x="3" y="14" width="7" height="7" rx="1"/>
+                    </svg>
+                    <span>Dashboard</span>
+                </a>
+            </div>
+
+            <!-- Third Member-Specific Navigation -->
+            <!-- Intake (M1) -->
+            <div class="nav-section">
+                <div class="nav-section-title">Intake (M1)</div>
+                <a href="{% url 'accounts:third_member_applicants' %}" class="nav-link {% block nav_third_member_applicants %}{% endblock %}">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                        <circle cx="9" cy="7" r="4"/>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+                    </svg>
+                    <span>Applicants List</span>
+                </a>
+                <a href="#" class="nav-link {% block nav_third_member_census %}{% endblock %}">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                        <line x1="16" y1="13" x2="8" y2="13"/>
+                        <line x1="16" y1="17" x2="8" y2="17"/>
+                    </svg>
+                    <span>Census Records</span>
+                </a>
+                <a href="#" class="nav-link {% block nav_third_member_verification %}{% endblock %}">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                        <polyline points="22 4 12 14.01 9 11.01"/>
+                    </svg>
+                    <span>Field Verification</span>
+                </a>
+            </div>
+
+            <!-- Applications (M2) -->
+            <div class="nav-section">
+                <div class="nav-section-title">Applications (M2)</div>
+                <a href="#" class="nav-link {% block nav_third_member_routing %}{% endblock %}">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                    </svg>
+                    <span>Signatory Routing</span>
+                </a>
+                <a href="#" class="nav-link {% block nav_third_member_documents %}{% endblock %}">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                        <line x1="16" y1="13" x2="8" y2="13"/>
+                        <line x1="16" y1="17" x2="8" y2="17"/>
+                    </svg>
+                    <span>Route Documents</span>
+                </a>
+            </div>
+
+            <!-- Monitoring (M4) -->
+            <div class="nav-section">
+                <div class="nav-section-title">Monitoring (M4)</div>
+                <a href="#" class="nav-link {% block nav_third_member_inspection %}{% endblock %}">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                        <polyline points="9 22 9 12 15 12 15 22"/>
+                    </svg>
+                    <span>Unit Inspection</span>
+                </a>
+            </div>
+
+            <!-- Cases (M5) -->
+            <div class="nav-section">
+                <div class="nav-section-title">Cases (M5)</div>
+                <a href="#" class="nav-link {% block nav_third_member_investigation %}{% endblock %}">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    </svg>
+                    <span>Cases Under Investigation</span>
+                </a>
+            </div>
+        </nav>
+
+        <!-- Sidebar Footer -->
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <div class="user-avatar">
+                    {% if user.first_name %}
+                        {{ user.first_name|first }}{{ user.last_name|first }}
+                    {% else %}
+                        {{ user.username|first|upper }}
+                    {% endif %}
+                </div>
+                <div class="user-details">
+                    <div class="user-name">{{ user.get_full_name|default:user.username }}</div>
+                    <div class="user-role">{{ user.position|default:"Staff" }}</div>
+                </div>
+            </div>
+            <a href="{% url 'accounts:logout' %}" class="logout-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                    <polyline points="16 17 21 12 16 7"/>
+                    <line x1="21" y1="12" x2="9" y2="12"/>
+                </svg>
+                <span>Log Out</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Mobile Menu Toggle -->
+    <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <line x1="3" y1="12" x2="21" y2="12"/>
+            <line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+    </button>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Scripts -->
+    <script>
+        // Mobile menu toggle
+        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+        mobileMenuToggle?.addEventListener('click', () => {
+            sidebar?.classList.toggle('active');
+            sidebarOverlay?.classList.toggle('active');
+        });
+
+        sidebarOverlay?.addEventListener('click', () => {
+            sidebar?.classList.remove('active');
+            sidebarOverlay?.classList.remove('active');
+        });
+
+        // Close sidebar when a link is clicked
+        document.querySelectorAll('.sidebar-nav a').forEach(link => {
+            link.addEventListener('click', () => {
+                sidebar?.classList.remove('active');
+                sidebarOverlay?.classList.remove('active');
+            });
+        });
+    </script>
+</body>
+</html>

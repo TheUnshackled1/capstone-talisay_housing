@@ -7,10 +7,10 @@ urlpatterns = [
     # Authentication
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
-    
+
     # Main Dashboard (redirects to position-specific dashboard)
     path('dashboard/', views.dashboard_redirect, name='dashboard'),
-    
+
     # Position-Specific Dashboards
     path('dashboard/head/', views.dashboard_head, name='dashboard_head'),
     path('dashboard/oic/', views.dashboard_oic, name='dashboard_oic'),
@@ -20,4 +20,18 @@ urlpatterns = [
     path('dashboard/fifth-member/', views.dashboard_fifth_member, name='dashboard_fifth_member'),
     path('dashboard/caretaker/', views.dashboard_caretaker, name='dashboard_caretaker'),
     path('dashboard/field/', views.dashboard_field, name='dashboard_field'),
+
+    # HEAD-Specific Views
+    path('head/applicants/', views.head_applicants_overview, name='head_applicants'),
+    path('head/applications/pending/', views.head_pending_signature, name='head_pending_sig'),
+    path('head/analytics/', views.head_analytics_dashboard, name='head_analytics'),
+    path('head/reports/', views.head_monthly_reports, name='head_reports'),
+
+    # OIC-Specific Views
+    path('oic/applicants/', views.oic_applicants_overview, name='oic_applicants'),
+    path('oic/applications/pending/', views.oic_pending_signature, name='oic_pending_sig'),
+
+    # Third Member-Specific Views
+    path('third-member/applicants/', views.third_member_applicants_overview, name='third_member_applicants'),
 ]
+

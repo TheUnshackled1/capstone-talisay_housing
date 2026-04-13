@@ -260,7 +260,7 @@
             <!-- OIC (Victor Fregil) - M2 OIC Signatory, M4 Compliance, M5 Escalated Cases -->
             <div class="nav-section">
                 <div class="nav-section-title">Oversight</div>
-                <a href="{% url 'intake:applicants_list' request.user.position %}" class="nav-link">
+                <a href="{% url 'accounts:oic_applicants' %}" class="nav-link">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
                         <circle cx="9" cy="7" r="4"/>
@@ -271,7 +271,7 @@
             </div>
             <div class="nav-section">
                 <div class="nav-section-title">Applications (M2)</div>
-                <a href="{% url 'cases:case_dashboard' request.user.position %}" class="nav-link">
+                <a href="{% url 'accounts:oic_pending_sig' %}" class="nav-link">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="10"/>
                         <polyline points="12 6 12 12 16 14"/>
@@ -319,7 +319,7 @@
             <!-- THIRD MEMBER (Jay Olvido) - M1 Census/Verification, M2 Signatory Routing, M4 Inspection, M5 Investigation -->
             <div class="nav-section">
                 <div class="nav-section-title">Intake (M1)</div>
-                <a href="{% url 'intake:applicants_list' request.user.position %}" class="nav-link">
+                <a href="{% url 'accounts:third_member_applicants' %}" class="nav-link">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
                         <circle cx="9" cy="7" r="4"/>
@@ -1113,7 +1113,7 @@
 
                 {% elif user.position == 'oic' %}
                 <!-- OIC: Signatory, Compliance, Escalated Cases + View Intake -->
-                <a href="{% url 'intake:applicants_list' request.user.position %}" class="action-card scroll-animate-left scroll-delay-1">
+                <a href="{% url 'accounts:oic_applicants' %}" class="action-card scroll-animate-left scroll-delay-1">
                     <div class="action-icon-wrapper">
                         <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
@@ -1127,7 +1127,7 @@
                     </div>
                 </a>
 
-                <a href="#" class="action-card scroll-animate scroll-delay-2">
+                <a href="{% url 'accounts:oic_pending_sig' %}" class="action-card scroll-animate scroll-delay-2">
                     <div class="action-icon-wrapper">
                         <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>

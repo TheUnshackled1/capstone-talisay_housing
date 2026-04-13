@@ -537,6 +537,17 @@ def dashboard_oic(request):
         compliance_rating = '🔴 POOR'
         compliance_color = '#ef4444'
 
+    # ==================== SHARED DASHBOARD STATS ====================
+    # Total housing units (for dashboard stat cards)
+    total_housing_units = HousingUnit.objects.count()
+
+    # Approved this month (for dashboard stat cards)
+    this_month_start = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    approved_this_month = Application.objects.filter(
+        status='awarded',
+        updated_at__gte=this_month_start
+    ).count()
+
     # ==================== MODULE 5: ESCALATED CASES (M5) ====================
     # Cases awaiting OIC decision (open, investigation, pending_decision, referred)
     escalated_cases_queryset = Case.objects.filter(
@@ -633,6 +644,8 @@ def dashboard_oic(request):
 
         # ========== PLACEHOLDERS FOR FUTURE MODULES ==========
         'awaiting_signature': pending_signature_count,  # M2 (updated from TODO)
+        'housing_units': total_housing_units,  # Shared stat card
+        'approved_this_month': approved_this_month,  # Shared stat card
         'escalated_complaints': total_escalated_cases,  # M5 (escalated cases awaiting OIC)
         'escalated_cases': escalated_cases_with_stats,  # M5 (detailed list)
         'stale_cases_count': stale_cases_count,  # M5 (cases open > 14 days)
@@ -760,6 +773,22 @@ def dashboard_second_member(request):
     # ==================== SYSTEM TOTALS ====================
     total_applicants = Applicant.objects.count()
 
+    # Shared stat card data (for dashboard headers)
+    # Applications awaiting signature (any pending signature status)
+    awaiting_head_signature = Application.objects.filter(
+        status='head_signed'
+    ).count()
+
+    # Total housing units
+    total_housing_units = HousingUnit.objects.count()
+
+    # Approved this month
+    this_month_start = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    approved_this_month = Application.objects.filter(
+        status='awarded',
+        updated_at__gte=this_month_start
+    ).count()
+
     context = {
         'page_title': 'Second Member Dashboard',
         'user_position': 'second_member',
@@ -782,6 +811,9 @@ def dashboard_second_member(request):
 
         # ========== SYSTEM OVERVIEW ==========
         'total_applicants': total_applicants,
+        'awaiting_signature': awaiting_head_signature,  # Shared stat card
+        'housing_units': total_housing_units,  # Shared stat card
+        'approved_this_month': approved_this_month,  # Shared stat card
     }
 
     return render(request, 'accounts/dashboard.html', context)
@@ -796,10 +828,24 @@ def dashboard_third_member(request):
     if request.user.position != 'third_member':
         messages.error(request, 'Access denied. This dashboard is for the Third Member position only.')
         return redirect('accounts:dashboard')
-    
+
+    # Shared stat card data
+    total_applicants = Applicant.objects.count()
+    awaiting_head_signature = Application.objects.filter(status='head_signed').count()
+    total_housing_units = HousingUnit.objects.count()
+    this_month_start = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    approved_this_month = Application.objects.filter(
+        status='awarded',
+        updated_at__gte=this_month_start
+    ).count()
+
     context = {
         'page_title': 'Third Member Dashboard',
         'user_position': 'third_member',
+        'total_applicants': total_applicants,  # Shared stat card
+        'awaiting_signature': awaiting_head_signature,  # Shared stat card
+        'housing_units': total_housing_units,  # Shared stat card
+        'approved_this_month': approved_this_month,  # Shared stat card
         'census_records': 0,  # TODO: Total census records
         'pending_verification': 0,  # TODO: Applicants awaiting field verification
         'site_inspections': 0,  # TODO: Inspections scheduled/due
@@ -821,10 +867,24 @@ def dashboard_fourth_member(request):
     if request.user.position != 'fourth_member':
         messages.error(request, 'Access denied. This dashboard is for the Fourth Member position only.')
         return redirect('accounts:dashboard')
-    
+
+    # Shared stat card data
+    total_applicants = Applicant.objects.count()
+    awaiting_head_signature = Application.objects.filter(status='head_signed').count()
+    total_housing_units = HousingUnit.objects.count()
+    this_month_start = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    approved_this_month = Application.objects.filter(
+        status='awarded',
+        updated_at__gte=this_month_start
+    ).count()
+
     context = {
         'page_title': 'Fourth Member Dashboard',
         'user_position': 'fourth_member',
+        'total_applicants': total_applicants,  # Shared stat card
+        'awaiting_signature': awaiting_head_signature,  # Shared stat card
+        'housing_units': total_housing_units,  # Shared stat card
+        'approved_this_month': approved_this_month,  # Shared stat card
         'queue_today': 0,  # TODO: Applicants in queue today
         'incomplete_requirements': 0,  # TODO: Applicants with incomplete requirements
         'documents_filed': 0,  # TODO: Documents filed this month
@@ -839,12 +899,12 @@ def dashboard_fourth_member(request):
         'repossessed_count': 0,  # TODO: Repossessed units count
         'awaiting_reaward': 0,  # TODO: Units awaiting re-award after repossession
     }
-    
+
     # Calculate ready_to_award (min of available lots and standby queue)
     standby_count = len(context['standby_queue']) if context['standby_queue'] else 0
     available_count = len(context['available_lots']) if context['available_lots'] else 0
     context['ready_to_award'] = min(standby_count, available_count)
-    
+
     return render(request, 'accounts/dashboard.html', context)
 
 
@@ -857,10 +917,24 @@ def dashboard_fifth_member(request):
     if request.user.position != 'fifth_member':
         messages.error(request, 'Access denied. This dashboard is for the Fifth Member position only.')
         return redirect('accounts:dashboard')
-    
+
+    # Shared stat card data
+    total_applicants = Applicant.objects.count()
+    awaiting_head_signature = Application.objects.filter(status='head_signed').count()
+    total_housing_units = HousingUnit.objects.count()
+    this_month_start = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    approved_this_month = Application.objects.filter(
+        status='awarded',
+        updated_at__gte=this_month_start
+    ).count()
+
     context = {
         'page_title': 'Fifth Member Dashboard',
         'user_position': 'fifth_member',
+        'total_applicants': total_applicants,  # Shared stat card
+        'awaiting_signature': awaiting_head_signature,  # Shared stat card
+        'housing_units': total_housing_units,  # Shared stat card
+        'approved_this_month': approved_this_month,  # Shared stat card
         'pending_connections': 0,  # TODO: Electricity connections pending
         'connected_this_month': 0,  # TODO: Connections completed this month
         'awaiting_negros_power': 0,  # TODO: Applications with Negros Power
@@ -1245,3 +1319,902 @@ def applicants_list(request):
     }
     
     return render(request, 'accounts/applicants.html', context)
+
+
+# ==================== HEAD-SPECIFIC VIEWS (ARTHUR MARAMBA) ====================
+
+@login_required
+def head_applicants_overview(request):
+    """
+    HEAD-specific: Overview of applicant intake with summary stats AND full applicants table.
+    URL: /head/applicants/
+    """
+    # Verify position
+    if request.user.position != 'head':
+        messages.error(request, 'Access denied. This view is for the Head position only.')
+        return redirect('accounts:dashboard', position='head')
+
+    # Total applicants
+    total_applicants = Applicant.objects.count()
+
+    # Channel breakdown
+    channel_a = Applicant.objects.filter(channel='A').count()
+    channel_b = Applicant.objects.filter(channel='B').count()
+    channel_c = Applicant.objects.filter(channel='C').count()
+
+    # Eligibility breakdown
+    eligible_count = Applicant.objects.filter(status='eligible').count()
+    disqualified_count = Applicant.objects.filter(status='disqualified').count()
+    pending_count = Applicant.objects.filter(status='under_review').count()
+
+    # Calculate pass rate
+    if total_applicants > 0:
+        eligibility_pass_rate = int((eligible_count / total_applicants) * 100)
+    else:
+        eligibility_pass_rate = 0
+
+    # Queue breakdown
+    priority_queue_count = QueueEntry.objects.filter(queue_type='priority', status='active').count()
+    walkin_queue_count = QueueEntry.objects.filter(queue_type='walkin', status='active').count()
+
+    # Critical alerts
+    overdue_threshold = timezone.now() - timedelta(days=14)
+    overdue_cdrrmo_qs = CDRRMOCertification.objects.filter(
+        status='pending',
+        requested_at__lt=overdue_threshold
+    ).select_related('applicant').order_by('requested_at')
+    overdue_cdrrmo_count = overdue_cdrrmo_qs.count()
+
+    # Build overdue CDRRMO details list
+    overdue_cdrrmo_details = []
+    for cert in overdue_cdrrmo_qs[:10]:  # Limit to top 10
+        days_overdue = (timezone.now() - cert.requested_at).days
+        overdue_cdrrmo_details.append({
+            'applicant_name': cert.applicant.full_name,
+            'days_overdue': days_overdue,
+            'requested_at': cert.requested_at
+        })
+
+    # Blacklist count
+    blacklist_count = Blacklist.objects.count()
+
+    # SMS failures (last 7 days)
+    seven_days_ago = timezone.now() - timedelta(days=7)
+    sms_failed_recent = SMSLog.objects.filter(status='failed', sent_at__gte=seven_days_ago).count()
+
+    # Get full ISF submissions list (like 2nd member intake view) - showing transaction history
+    from intake.models import ISFRecord
+
+    isf_records = ISFRecord.objects.select_related(
+        'submitted_by_staff',
+        'eligibility_checked_by'
+    ).order_by('-created_at')
+
+    # Pre-fetch all converted applicants for reference matching
+    all_applicants = {app.reference_number: app for app in Applicant.objects.select_related(
+        'registered_by',
+        'eligibility_checked_by'
+    )}
+
+    applicants_data = []
+    for record in isf_records:
+        # Try to find the corresponding applicant
+        applicant = all_applicants.get(record.reference_number)
+        reference_number = applicant.reference_number if applicant else record.reference_number
+        full_name = applicant.full_name if applicant else record.full_name
+
+        # Get queue info from applicant
+        queue_type = '—'
+        if applicant:
+            queue_entry = applicant.queue_entries.filter(status='active').first()
+            queue_type = queue_entry.get_queue_type_display() if queue_entry else '—'
+
+        # Get documentation progress
+        docs_progress = '0/7'
+        if applicant:
+            verified_requirements = applicant.requirement_submissions.filter(status='verified').count()
+            total_requirements = applicant.requirement_submissions.count()
+            docs_progress = f"{verified_requirements}/{total_requirements}" if total_requirements > 0 else "0/7"
+        else:
+            # For ISF records, count completed doc fields
+            doc_count = sum([
+                record.doc_brgy_residency,
+                record.doc_brgy_indigency,
+                record.doc_cedula,
+                record.doc_police_clearance,
+                record.doc_no_property,
+                record.doc_2x2_picture,
+                record.doc_sketch_location
+            ])
+            docs_progress = f"{doc_count}/7"
+
+        # Get staff who handled it - prioritize ISFRecord's eligibility_checked_by, then Applicant's
+        if record.eligibility_checked_by:
+            staff_user = record.eligibility_checked_by
+        elif applicant:
+            staff_user = applicant.eligibility_checked_by or applicant.registered_by
+        else:
+            staff_user = None
+
+        staff_name = staff_user.get_full_name() if staff_user else '—'
+        staff_position = staff_user.position if staff_user else '—'
+        staff_initials = f"{staff_user.first_name[0]}{staff_user.last_name[0]}".upper() if staff_user else '—'
+
+        # SMS status
+        sms_sent = record.registration_sms_sent or record.eligibility_sms_sent
+
+        # Channel from applicant if exists, otherwise default to Landowner
+        channel_display = applicant.get_channel_display() if applicant and applicant.channel else 'Channel A — Landowner'
+
+        applicants_data.append({
+            'id': str(record.id),
+            'transaction_id': str(record.id),
+            'reference_number': reference_number,
+            'full_name': full_name,
+            'channel': channel_display,
+            'eligibility': applicant.get_status_display() if applicant else record.get_status_display(),
+            'queue_type': queue_type,
+            'created_at': record.created_at,
+            'docs_progress': docs_progress,
+            'barangay': applicant.barangay.name if applicant and applicant.barangay else record.barangay or '—',
+            'staff_name': staff_name,
+            'staff_position': staff_position,
+            'staff_initials': staff_initials,
+            'sms_sent': sms_sent
+        })
+
+    context = {
+        'page_title': 'Applicant Intake Overview',
+        'user_position': request.user.position,
+        'total_applicants': total_applicants,
+        'channel_breakdown': {
+            'a': channel_a,
+            'b': channel_b,
+            'c': channel_c
+        },
+        'eligibility_breakdown': {
+            'eligible': eligible_count,
+            'disqualified': disqualified_count,
+            'pending': pending_count
+        },
+        'eligibility_pass_rate': eligibility_pass_rate,
+        'queue_breakdown': {
+            'priority': priority_queue_count,
+            'walkin': walkin_queue_count
+        },
+        'critical_alerts': {
+            'overdue_cdrrmo': overdue_cdrrmo_count,
+            'blacklist': blacklist_count,
+            'sms_failed': sms_failed_recent
+        },
+        'overdue_cdrrmo_details': overdue_cdrrmo_details,
+        'applicants': applicants_data
+    }
+
+    return render(request, 'accounts/head/applicants_overview.html', context)
+
+
+@login_required
+def head_pending_signature(request):
+    """
+    HEAD-specific: Applications awaiting HEAD's final signature.
+    URL: /head/applications/pending/
+    """
+    # Verify position
+    if request.user.position != 'head':
+        messages.error(request, 'Access denied. This view is for the Head position only.')
+        return redirect('accounts:dashboard', position='head')
+
+    # Get applications awaiting head signature
+    # Status should be 'head_signed' (awaiting final approval)
+    pending_applications = Application.objects.filter(
+        status='head_signed'
+    ).select_related('applicant', 'form_generated_by').prefetch_related('routing_steps').order_by('created_at')
+
+    # Build detailed list with days pending
+    pending_apps_list = []
+    for app in pending_applications:
+        # Get the last routing step to determine when forwarded to head
+        last_routing = app.routing_steps.filter(
+            step__in=['forwarded_head', 'signed_oic']
+        ).order_by('-action_at').first()
+
+        if last_routing:
+            days_pending = (timezone.now() - last_routing.action_at).days
+        else:
+            days_pending = (timezone.now() - app.created_at).days
+
+        pending_apps_list.append({
+            'application_number': app.application_number,
+            'applicant_name': app.applicant.full_name,
+            'status': app.get_status_display(),
+            'received_date': app.created_at,
+            'days_pending': days_pending,
+            'received_by': app.form_generated_by.get_full_name() if app.form_generated_by else 'N/A',
+            'application_id': str(app.id)
+        })
+
+    # Sort by days_pending descending
+    pending_apps_list.sort(key=lambda x: x['days_pending'], reverse=True)
+
+    # Count statistics
+    total_pending = len(pending_apps_list)
+    urgent_count = len([app for app in pending_apps_list if app['days_pending'] >= 7])
+
+    context = {
+        'page_title': 'Applications Pending Head Signature',
+        'user_position': request.user.position,
+        'pending_applications': pending_apps_list,
+        'total_pending': total_pending,
+        'urgent_count': urgent_count
+    }
+
+    return render(request, 'accounts/head/pending_signature.html', context)
+
+
+@login_required
+def head_analytics_dashboard(request):
+    """
+    HEAD-specific: System-wide performance metrics and analytics.
+    URL: /head/analytics/
+    """
+    # Verify position
+    if request.user.position != 'head':
+        messages.error(request, 'Access denied. This view is for the Head position only.')
+        return redirect('accounts:dashboard', position='head')
+
+    from django.db.models import Count, Q
+
+    # Aggregate counts
+    total_applications = Application.objects.count()
+    total_awarded = Application.objects.filter(status='awarded').count()
+    total_rejected = Applicant.objects.filter(status='disqualified').count()
+
+    # Calculate approval and rejection rates
+    if total_applications > 0:
+        approval_rate = int((total_awarded / total_applications) * 100) if total_awarded else 0
+        rejection_rate = int((total_rejected / total_applications) * 100) if total_rejected else 0
+    else:
+        approval_rate = 0
+        rejection_rate = 0
+
+    # Average processing days
+    awarded_apps = Application.objects.filter(status='awarded').exclude(fully_approved_at__isnull=True)
+    if awarded_apps.exists():
+        total_days = 0
+        count = 0
+        for app in awarded_apps:
+            if app.created_at and app.fully_approved_at:
+                days = (app.fully_approved_at - app.created_at).days
+                total_days += days
+                count += 1
+        average_processing_days = int(total_days / count) if count > 0 else 0
+    else:
+        average_processing_days = 0
+
+    # Monthly trends (last 6 months)
+    monthly_trends = []
+    now = timezone.now()
+    for i in range(5, -1, -1):  # Last 6 months
+        month_date = (now - timedelta(days=30*i)).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        next_month = (month_date + timedelta(days=32)).replace(day=1)
+
+        received_count = Application.objects.filter(
+            created_at__gte=month_date,
+            created_at__lt=next_month
+        ).count()
+
+        approved_count = Application.objects.filter(
+            status='awarded',
+            created_at__gte=month_date,
+            created_at__lt=next_month
+        ).count()
+
+        rejected_count = Applicant.objects.filter(
+            status='disqualified',
+            created_at__gte=month_date,
+            created_at__lt=next_month
+        ).count()
+
+        monthly_trends.append({
+            'month': month_date.strftime('%b %Y'),
+            'received': received_count,
+            'approved': approved_count,
+            'rejected': rejected_count
+        })
+
+    # Processing pipeline breakdown
+    in_intake = Applicant.objects.filter(status='under_review').count()
+    pending_eligibility = Applicant.objects.filter(status='pending_eligibility').count()
+    in_approval = Application.objects.filter(status__in=['routing', 'oic_signed', 'head_signed']).count()
+    awarded = Application.objects.filter(status='awarded').count()
+    rejected = Applicant.objects.filter(status='disqualified').count()
+
+    pipeline_breakdown = {
+        'intake': in_intake,
+        'eligibility': pending_eligibility,
+        'approval': in_approval,
+        'awarded': awarded,
+        'rejected': rejected
+    }
+
+    # Services completion rate
+    notarial_completed = Application.objects.filter(notarial_completed=True).count()
+    engineering_completed = Application.objects.filter(engineering_completed=True).count()
+    total_services_needed = total_applications * 2  # Each applicant needs both services
+
+    if total_services_needed > 0:
+        completed_services = notarial_completed + engineering_completed
+        services_completion_rate = int((completed_services / total_services_needed) * 100)
+    else:
+        services_completion_rate = 0
+
+    context = {
+        'page_title': 'System Analytics Dashboard',
+        'user_position': request.user.position,
+        'total_applications': total_applications,
+        'total_awarded': total_awarded,
+        'total_rejected': total_rejected,
+        'approval_rate': approval_rate,
+        'rejection_rate': rejection_rate,
+        'average_processing_days': average_processing_days,
+        'monthly_trends': monthly_trends,
+        'pipeline_breakdown': pipeline_breakdown,
+        'services_completion_rate': services_completion_rate
+    }
+
+    return render(request, 'accounts/head/analytics_dashboard.html', context)
+
+
+@login_required
+def head_monthly_reports(request):
+    """
+    HEAD-specific: Monthly compliance and performance reports.
+    URL: /head/reports/?month=YYYY-MM
+    """
+    # Verify position
+    if request.user.position != 'head':
+        messages.error(request, 'Access denied. This view is for the Head position only.')
+        return redirect('accounts:dashboard', position='head')
+
+    # Parse month from query params (default to current month)
+    month_param = request.GET.get('month', timezone.now().strftime('%Y-%m'))
+    try:
+        report_month = timezone.now().strptime(month_param, '%Y-%m')
+        month_display = report_month.strftime('%B %Y')
+    except (ValueError, AttributeError):
+        report_month = timezone.now().replace(day=1)
+        month_display = report_month.strftime('%B %Y')
+        month_param = report_month.strftime('%Y-%m')
+
+    # Define month boundaries
+    month_start = report_month.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    next_month = (month_start + timedelta(days=32)).replace(day=1)
+
+    # Applications for month
+    applications_received = Application.objects.filter(
+        created_at__gte=month_start,
+        created_at__lt=next_month
+    ).count()
+
+    applications_approved = Application.objects.filter(
+        status='awarded',
+        created_at__gte=month_start,
+        created_at__lt=next_month
+    ).count()
+
+    applications_rejected = Applicant.objects.filter(
+        status='disqualified',
+        created_at__gte=month_start,
+        created_at__lt=next_month
+    ).count()
+
+    applications_pending = Application.objects.exclude(status='awarded').filter(
+        created_at__gte=month_start,
+        created_at__lt=next_month
+    ).count()
+
+    # Housing units for month
+    total_units = HousingUnit.objects.count()
+    occupied_units = HousingUnit.objects.filter(occupancy_status='occupied').count()
+    vacant_units = HousingUnit.objects.filter(occupancy_status='vacant').count()
+    under_notice_units = HousingUnit.objects.filter(occupancy_status__in=['30_day_notice', 'final_notice']).count()
+
+    # Cases for month
+    cases_open = Case.objects.filter(
+        status='open',
+        created_at__gte=month_start,
+        created_at__lt=next_month
+    ).count()
+
+    cases_investigation = Case.objects.filter(
+        status='investigation',
+        created_at__gte=month_start,
+        created_at__lt=next_month
+    ).count()
+
+    cases_referred = Case.objects.filter(
+        status='referred',
+        created_at__gte=month_start,
+        created_at__lt=next_month
+    ).count()
+
+    cases_resolved = Case.objects.filter(
+        status='resolved',
+        created_at__gte=month_start,
+        created_at__lt=next_month
+    ).count()
+
+    # Queue status
+    priority_queue = QueueEntry.objects.filter(queue_type='priority', status='active').count()
+    walkin_queue = QueueEntry.objects.filter(queue_type='walkin', status='active').count()
+
+    # Compliance notices issued
+    compliance_notices = ComplianceNotice.objects.filter(
+        issued_at__gte=month_start,
+        issued_at__lt=next_month
+    ).count()
+
+    # Electricity connections
+    electricity_requested = ElectricityConnection.objects.filter(
+        created_at__gte=month_start,
+        created_at__lt=next_month
+    ).count()
+
+    electricity_approved = ElectricityConnection.objects.filter(
+        status='approved',
+        created_at__gte=month_start,
+        created_at__lt=next_month
+    ).count()
+
+    # Get available months (last 12 months)
+    available_months = []
+    now = timezone.now()
+    for i in range(11, -1, -1):
+        month_date = (now - timedelta(days=30*i)).replace(day=1)
+        available_months.append({
+            'value': month_date.strftime('%Y-%m'),
+            'label': month_date.strftime('%B %Y')
+        })
+
+    context = {
+        'page_title': 'Monthly Reports',
+        'user_position': request.user.position,
+        'month_display': month_display,
+        'month_param': month_param,
+        'applications': {
+            'received': applications_received,
+            'approved': applications_approved,
+            'rejected': applications_rejected,
+            'pending': applications_pending
+        },
+        'housing_units': {
+            'total': total_units,
+            'occupied': occupied_units,
+            'vacant': vacant_units,
+            'under_notice': under_notice_units
+        },
+        'cases': {
+            'open': cases_open,
+            'investigation': cases_investigation,
+            'referred': cases_referred,
+            'resolved': cases_resolved
+        },
+        'queue': {
+            'priority': priority_queue,
+            'walkin': walkin_queue
+        },
+        'compliance_notices': compliance_notices,
+        'electricity': {
+            'requested': electricity_requested,
+            'approved': electricity_approved
+        },
+        'available_months': available_months
+    }
+
+    return render(request, 'accounts/head/monthly_reports.html', context)
+
+
+# ==================== OIC-SPECIFIC VIEWS ====================
+
+@login_required
+def oic_applicants_overview(request):
+    """
+    OIC-specific: Overview of applicant intake with summary stats AND full applicants table.
+    URL: /oic/applicants/
+    OIC has read-only access to all applicants for oversight purposes.
+    """
+    # Verify position
+    if request.user.position != 'oic':
+        messages.error(request, 'Access denied. This view is for the OIC position only.')
+        return redirect('accounts:dashboard')
+
+    # Total applicants
+    total_applicants = Applicant.objects.count()
+
+    # Channel breakdown
+    channel_a = Applicant.objects.filter(channel='A').count()
+    channel_b = Applicant.objects.filter(channel='B').count()
+    channel_c = Applicant.objects.filter(channel='C').count()
+
+    # Eligibility breakdown
+    eligible_count = Applicant.objects.filter(status='eligible').count()
+    disqualified_count = Applicant.objects.filter(status='disqualified').count()
+    pending_count = Applicant.objects.filter(status='under_review').count()
+
+    # Calculate pass rate
+    if total_applicants > 0:
+        eligibility_pass_rate = int((eligible_count / total_applicants) * 100)
+    else:
+        eligibility_pass_rate = 0
+
+    # Queue breakdown
+    priority_queue_count = QueueEntry.objects.filter(queue_type='priority', status='active').count()
+    walkin_queue_count = QueueEntry.objects.filter(queue_type='walkin', status='active').count()
+
+    # Critical alerts
+    overdue_threshold = timezone.now() - timedelta(days=14)
+    overdue_cdrrmo_qs = CDRRMOCertification.objects.filter(
+        status='pending',
+        requested_at__lt=overdue_threshold
+    ).select_related('applicant').order_by('requested_at')
+    overdue_cdrrmo_count = overdue_cdrrmo_qs.count()
+
+    # Build overdue CDRRMO details list
+    overdue_cdrrmo_details = []
+    for cert in overdue_cdrrmo_qs[:10]:  # Limit to top 10
+        days_overdue = (timezone.now() - cert.requested_at).days
+        overdue_cdrrmo_details.append({
+            'applicant_name': cert.applicant.full_name,
+            'days_overdue': days_overdue,
+            'requested_at': cert.requested_at
+        })
+
+    # Blacklist count
+    blacklist_count = Blacklist.objects.count()
+
+    # SMS failures (last 7 days)
+    seven_days_ago = timezone.now() - timedelta(days=7)
+    sms_failed_recent = SMSLog.objects.filter(status='failed', sent_at__gte=seven_days_ago).count()
+
+    # Get full ISF submissions list
+    from intake.models import ISFRecord
+
+    isf_records = ISFRecord.objects.select_related(
+        'submitted_by_staff',
+        'eligibility_checked_by'
+    ).order_by('-created_at')
+
+    # Pre-fetch all converted applicants for reference matching
+    all_applicants = {app.reference_number: app for app in Applicant.objects.select_related(
+        'registered_by',
+        'eligibility_checked_by'
+    )}
+
+    applicants_data = []
+    for record in isf_records:
+        # Try to find the corresponding applicant
+        applicant = all_applicants.get(record.reference_number)
+        reference_number = applicant.reference_number if applicant else record.reference_number
+        full_name = applicant.full_name if applicant else record.full_name
+
+        # Get queue info from applicant
+        queue_type = '—'
+        if applicant:
+            queue_entry = applicant.queue_entries.filter(status='active').first()
+            queue_type = queue_entry.get_queue_type_display() if queue_entry else '—'
+
+        # Get documentation progress
+        docs_progress = '0/7'
+        if applicant:
+            verified_requirements = applicant.requirement_submissions.filter(status='verified').count()
+            total_requirements = applicant.requirement_submissions.count()
+            docs_progress = f"{verified_requirements}/{total_requirements}" if total_requirements > 0 else "0/7"
+        else:
+            # For ISF records, count completed doc fields
+            doc_count = sum([
+                record.doc_brgy_residency,
+                record.doc_brgy_indigency,
+                record.doc_cedula,
+                record.doc_police_clearance,
+                record.doc_no_property,
+                record.doc_2x2_picture,
+                record.doc_sketch_location
+            ])
+            docs_progress = f"{doc_count}/7"
+
+        # Get staff who handled it
+        if record.eligibility_checked_by:
+            staff_user = record.eligibility_checked_by
+        elif applicant:
+            staff_user = applicant.eligibility_checked_by or applicant.registered_by
+        else:
+            staff_user = None
+
+        staff_name = staff_user.get_full_name() if staff_user else '—'
+        staff_position = staff_user.position if staff_user else '—'
+        staff_initials = f"{staff_user.first_name[0]}{staff_user.last_name[0]}".upper() if staff_user else '—'
+
+        # SMS status
+        sms_sent = record.registration_sms_sent or record.eligibility_sms_sent
+
+        # Channel from applicant if exists, otherwise default to Landowner
+        channel_display = applicant.get_channel_display() if applicant and applicant.channel else 'Channel A — Landowner'
+
+        applicants_data.append({
+            'id': str(record.id),
+            'transaction_id': str(record.id),
+            'reference_number': reference_number,
+            'full_name': full_name,
+            'channel': channel_display,
+            'eligibility': applicant.get_status_display() if applicant else record.get_status_display(),
+            'queue_type': queue_type,
+            'created_at': record.created_at,
+            'docs_progress': docs_progress,
+            'barangay': applicant.barangay.name if applicant and applicant.barangay else record.barangay or '—',
+            'staff_name': staff_name,
+            'staff_position': staff_position,
+            'staff_initials': staff_initials,
+            'sms_sent': sms_sent
+        })
+
+    context = {
+        'page_title': 'Applicant Intake Overview',
+        'user_position': request.user.position,
+        'total_applicants': total_applicants,
+        'channel_breakdown': {
+            'a': channel_a,
+            'b': channel_b,
+            'c': channel_c
+        },
+        'eligibility_breakdown': {
+            'eligible': eligible_count,
+            'disqualified': disqualified_count,
+            'pending': pending_count
+        },
+        'eligibility_pass_rate': eligibility_pass_rate,
+        'queue_breakdown': {
+            'priority': priority_queue_count,
+            'walkin': walkin_queue_count
+        },
+        'critical_alerts': {
+            'overdue_cdrrmo': overdue_cdrrmo_count,
+            'blacklist': blacklist_count,
+            'sms_failed': sms_failed_recent
+        },
+        'overdue_cdrrmo_details': overdue_cdrrmo_details,
+        'applicants': applicants_data
+    }
+
+    return render(request, 'accounts/oic/applicants_overview.html', context)
+
+
+@login_required
+def oic_pending_signature(request):
+    """
+    OIC-specific: Applications awaiting OIC's signature.
+    URL: /oic/applications/pending/
+    """
+    # Verify position
+    if request.user.position != 'oic':
+        messages.error(request, 'Access denied. This view is for the OIC position only.')
+        return redirect('accounts:dashboard')
+
+    # Get applications awaiting OIC signature
+    # Status should be 'routing' (awaiting OIC step) or 'oic_signed' (awaiting final step from head)
+    pending_applications = Application.objects.filter(
+        status='routing'
+    ).select_related('applicant', 'form_generated_by').prefetch_related('routing_steps').order_by('created_at')
+
+    # Build detailed list with days pending
+    pending_apps_list = []
+    for app in pending_applications:
+        # Get the last routing step to determine when forwarded to OIC
+        last_routing = app.routing_steps.filter(
+            step='forwarded_oic'
+        ).order_by('-action_at').first()
+
+        if last_routing:
+            days_pending = (timezone.now() - last_routing.action_at).days
+        else:
+            days_pending = (timezone.now() - app.created_at).days
+
+        pending_apps_list.append({
+            'application_number': app.application_number,
+            'applicant_name': app.applicant.full_name,
+            'status': app.get_status_display(),
+            'received_date': app.created_at,
+            'days_pending': days_pending,
+            'received_by': app.form_generated_by.get_full_name() if app.form_generated_by else 'N/A',
+            'application_id': str(app.id)
+        })
+
+    # Sort by days_pending descending
+    pending_apps_list.sort(key=lambda x: x['days_pending'], reverse=True)
+
+    # Count statistics
+    total_pending = len(pending_apps_list)
+    urgent_count = len([app for app in pending_apps_list if app['days_pending'] >= 7])
+
+    context = {
+        'page_title': 'Applications Pending OIC Signature',
+        'user_position': request.user.position,
+        'pending_applications': pending_apps_list,
+        'total_pending': total_pending,
+        'urgent_count': urgent_count
+    }
+
+    return render(request, 'accounts/oic/pending_signature.html', context)
+
+
+@login_required
+def third_member_applicants_overview(request):
+    """
+    Third Member-specific: Overview of applicant intake with summary stats AND full applicants table.
+    URL: /third-member/applicants/
+    Third Member has access to all applicants for census and verification purposes.
+    """
+    # Verify position
+    if request.user.position != 'third_member':
+        messages.error(request, 'Access denied. This view is for the Third Member position only.')
+        return redirect('accounts:dashboard')
+
+    # Total applicants
+    total_applicants = Applicant.objects.count()
+
+    # Channel breakdown
+    channel_a = Applicant.objects.filter(channel='A').count()
+    channel_b = Applicant.objects.filter(channel='B').count()
+    channel_c = Applicant.objects.filter(channel='C').count()
+
+    # Eligibility breakdown
+    eligible_count = Applicant.objects.filter(status='eligible').count()
+    disqualified_count = Applicant.objects.filter(status='disqualified').count()
+    pending_count = Applicant.objects.filter(status='under_review').count()
+
+    # Calculate pass rate
+    if total_applicants > 0:
+        eligibility_pass_rate = int((eligible_count / total_applicants) * 100)
+    else:
+        eligibility_pass_rate = 0
+
+    # Queue breakdown
+    priority_queue_count = QueueEntry.objects.filter(queue_type='priority', status='active').count()
+    walkin_queue_count = QueueEntry.objects.filter(queue_type='walkin', status='active').count()
+
+    # Critical alerts
+    overdue_threshold = timezone.now() - timedelta(days=14)
+    overdue_cdrrmo_qs = CDRRMOCertification.objects.filter(
+        status='pending',
+        requested_at__lt=overdue_threshold
+    ).select_related('applicant').order_by('requested_at')
+    overdue_cdrrmo_count = overdue_cdrrmo_qs.count()
+
+    # Build overdue CDRRMO details list
+    overdue_cdrrmo_details = []
+    for cert in overdue_cdrrmo_qs[:10]:  # Limit to top 10
+        days_overdue = (timezone.now() - cert.requested_at).days
+        overdue_cdrrmo_details.append({
+            'applicant_name': cert.applicant.full_name,
+            'days_overdue': days_overdue,
+            'requested_at': cert.requested_at
+        })
+
+    # Blacklist count
+    blacklist_count = Blacklist.objects.count()
+
+    # SMS failures (last 7 days)
+    seven_days_ago = timezone.now() - timedelta(days=7)
+    sms_failed_recent = SMSLog.objects.filter(status='failed', sent_at__gte=seven_days_ago).count()
+
+    # Get full ISF submissions list
+    from intake.models import ISFRecord
+
+    isf_records = ISFRecord.objects.select_related(
+        'submitted_by_staff',
+        'eligibility_checked_by'
+    ).order_by('-created_at')
+
+    # Pre-fetch all converted applicants for reference matching
+    all_applicants = {app.reference_number: app for app in Applicant.objects.select_related(
+        'registered_by',
+        'eligibility_checked_by'
+    )}
+
+    applicants_data = []
+    for record in isf_records:
+        # Try to find the corresponding applicant
+        applicant = all_applicants.get(record.reference_number)
+        reference_number = applicant.reference_number if applicant else record.reference_number
+        full_name = applicant.full_name if applicant else record.full_name
+
+        # Get queue info from applicant
+        queue_type = '—'
+        if applicant:
+            queue_entry = applicant.queue_entries.filter(status='active').first()
+            queue_type = queue_entry.get_queue_type_display() if queue_entry else '—'
+
+        # Get documentation progress
+        docs_progress = '0/7'
+        if applicant:
+            verified_requirements = applicant.requirement_submissions.filter(status='verified').count()
+            total_requirements = applicant.requirement_submissions.count()
+            docs_progress = f"{verified_requirements}/{total_requirements}" if total_requirements > 0 else "0/7"
+        else:
+            # For ISF records, count completed doc fields
+            doc_count = sum([
+                record.doc_brgy_residency,
+                record.doc_brgy_indigency,
+                record.doc_cedula,
+                record.doc_police_clearance,
+                record.doc_no_property,
+                record.doc_2x2_picture,
+                record.doc_sketch_location
+            ])
+            docs_progress = f"{doc_count}/7"
+
+        # Get staff who handled it
+        if record.eligibility_checked_by:
+            staff_user = record.eligibility_checked_by
+        elif applicant:
+            staff_user = applicant.eligibility_checked_by or applicant.registered_by
+        else:
+            staff_user = None
+
+        staff_name = staff_user.get_full_name() if staff_user else '—'
+        staff_position = staff_user.position if staff_user else '—'
+        staff_initials = f"{staff_user.first_name[0]}{staff_user.last_name[0]}".upper() if staff_user else '—'
+
+        # SMS status
+        sms_sent = record.registration_sms_sent or record.eligibility_sms_sent
+
+        # Channel from applicant if exists, otherwise default to Landowner
+        channel_display = applicant.get_channel_display() if applicant and applicant.channel else 'Channel A — Landowner'
+
+        applicants_data.append({
+            'id': str(record.id),
+            'transaction_id': str(record.id),
+            'reference_number': reference_number,
+            'full_name': full_name,
+            'channel': channel_display,
+            'eligibility': applicant.get_status_display() if applicant else record.get_status_display(),
+            'queue_type': queue_type,
+            'created_at': record.created_at,
+            'docs_progress': docs_progress,
+            'barangay': applicant.barangay.name if applicant and applicant.barangay else record.barangay or '—',
+            'staff_name': staff_name,
+            'staff_position': staff_position,
+            'staff_initials': staff_initials,
+            'sms_sent': sms_sent
+        })
+
+    context = {
+        'page_title': 'Applicant Intake Overview',
+        'user_position': request.user.position,
+        'total_applicants': total_applicants,
+        'channel_breakdown': {
+            'a': channel_a,
+            'b': channel_b,
+            'c': channel_c
+        },
+        'eligibility_breakdown': {
+            'eligible': eligible_count,
+            'disqualified': disqualified_count,
+            'pending': pending_count
+        },
+        'eligibility_pass_rate': eligibility_pass_rate,
+        'queue_breakdown': {
+            'priority': priority_queue_count,
+            'walkin': walkin_queue_count
+        },
+        'critical_alerts': {
+            'overdue_cdrrmo': overdue_cdrrmo_count,
+            'blacklist': blacklist_count,
+            'sms_failed': sms_failed_recent
+        },
+        'overdue_cdrrmo_details': overdue_cdrrmo_details,
+        'applicants': applicants_data
+    }
+
+    return render(request, 'accounts/third_member/applicants_overview.html', context)
+
