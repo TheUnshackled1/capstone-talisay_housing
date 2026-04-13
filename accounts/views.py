@@ -186,7 +186,7 @@ def dashboard_head(request):
     total_housing_units = HousingUnit.objects.count()
 
     # Occupancy rate calculation
-    occupied_units = HousingUnit.objects.filter(occupancy_status='occupied').count()
+    occupied_units = HousingUnit.objects.filter(status='Occupied').count()
     if total_housing_units > 0:
         occupancy_rate = int((occupied_units / total_housing_units) * 100)
     else:

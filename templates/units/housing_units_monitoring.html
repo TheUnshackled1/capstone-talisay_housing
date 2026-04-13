@@ -83,17 +83,17 @@
             <!-- Units Grid -->
             <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem;">
                 {% for unit in units %}
-                <div class="unit-card scroll-animate-left" onclick="openUnitModal('{{ unit.id }}')" data-status="{{ unit.occupancy_status }}" style="background: {% if unit.occupancy_status == 'Occupied' %}#f0fdf4{% elif unit.occupancy_status == 'Vacant — available' %}#eff6ff{% elif unit.occupancy_status == 'Under notice (30-day)' %}#fffbeb{% elif unit.occupancy_status == 'Final notice (10-day)' %}#fef2f2{% else %}#f3e8ff{% endif %}; border-left: 4px solid {% if unit.occupancy_status == 'Occupied' %}#22c55e{% elif unit.occupancy_status == 'Vacant — available' %}#3b82f6{% elif unit.occupancy_status == 'Under notice (30-day)' %}#f59e0b{% elif unit.occupancy_status == 'Final notice (10-day)' %}#ef4444{% else %}#a855f7{% endif %}; border-radius: 8px; padding: 1rem; cursor: pointer; transition: all 150ms ease;">
+                <div class="unit-card scroll-animate-left" onclick="openUnitModal('{{ unit.id }}')" data-status="{{ unit.status }}" style="background: {% if unit.status == 'Occupied' %}#f0fdf4{% elif unit.status == 'Vacant — available' %}#eff6ff{% elif unit.status == 'Under notice (30-day)' %}#fffbeb{% elif unit.status == 'Final notice (10-day)' %}#fef2f2{% else %}#f3e8ff{% endif %}; border-left: 4px solid {% if unit.status == 'Occupied' %}#22c55e{% elif unit.status == 'Vacant — available' %}#3b82f6{% elif unit.status == 'Under notice (30-day)' %}#f59e0b{% elif unit.status == 'Final notice (10-day)' %}#ef4444{% else %}#a855f7{% endif %}; border-radius: 8px; padding: 1rem; cursor: pointer; transition: all 150ms ease;">
                     <!-- Unit ID and Status Badge -->
                     <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.75rem;">
                         <span style="font-size: 0.8rem; font-weight: 600; color: var(--gray-900);">{{ unit.block_number }}-{{ unit.lot_number }}</span>
                         <span style="display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.2rem 0.6rem; background: white; border-radius: 12px; font-size: 0.7rem; font-weight: 600;
-                            {% if unit.occupancy_status == 'Occupied' %}color: #16a34a;{% elif unit.occupancy_status == 'Vacant — available' %}color: #2563eb;{% elif unit.occupancy_status == 'Under notice (30-day)' %}color: #d97706;{% elif unit.occupancy_status == 'Final notice (10-day)' %}color: #dc2626;{% else %}color: #a855f7;{% endif %}
+                            {% if unit.status == 'Occupied' %}color: #16a34a;{% elif unit.status == 'Vacant — available' %}color: #2563eb;{% elif unit.status == 'Under notice (30-day)' %}color: #d97706;{% elif unit.status == 'Final notice (10-day)' %}color: #dc2626;{% else %}color: #a855f7;{% endif %}
                         ">
                             <span style="width: 4px; height: 4px; border-radius: 50%; display: inline-block;
-                                {% if unit.occupancy_status == 'Occupied' %}background: #22c55e;{% elif unit.occupancy_status == 'Vacant — available' %}background: #3b82f6;{% elif unit.occupancy_status == 'Under notice (30-day)' %}background: #f59e0b;{% elif unit.occupancy_status == 'Final notice (10-day)' %}background: #ef4444;{% else %}background: #a855f7;{% endif %}
+                                {% if unit.status == 'Occupied' %}background: #22c55e;{% elif unit.status == 'Vacant — available' %}background: #3b82f6;{% elif unit.status == 'Under notice (30-day)' %}background: #f59e0b;{% elif unit.status == 'Final notice (10-day)' %}background: #ef4444;{% else %}background: #a855f7;{% endif %}
                             "></span>
-                            {% if unit.occupancy_status == 'Occupied' %}Occupied{% elif unit.occupancy_status == 'Vacant — available' %}Vacant{% elif unit.occupancy_status == 'Under notice (30-day)' %}30-Day{% elif unit.occupancy_status == 'Final notice (10-day)' %}Final{% else %}Repossessed{% endif %}
+                            {% if unit.status == 'Occupied' %}Occupied{% elif unit.status == 'Vacant — available' %}Vacant{% elif unit.status == 'Under notice (30-day)' %}30-Day{% elif unit.status == 'Final notice (10-day)' %}Final{% else %}Repossessed{% endif %}
                         </span>
                     </div>
 
@@ -101,7 +101,7 @@
                     <p style="margin: 0 0 0.5rem; font-size: 0.9rem; font-weight: 600; color: var(--gray-900);">{{ unit.current_occupant|default:"—" }}</p>
 
                     <!-- Unit Status Info -->
-                    <p style="margin: 0; font-size: 0.75rem; color: var(--gray-600);">{{ unit.get_occupancy_status_display }}</p>
+                    <p style="margin: 0; font-size: 0.75rem; color: var(--gray-600);">{{ unit.get_status_display }}</p>
                 </div>
                 {% endfor %}
             </div>
@@ -133,12 +133,12 @@
                             <td style="padding: 1rem;">{{ unit.current_occupant|default:"—" }}</td>
                             <td style="padding: 1rem;">
                                 <span style="display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.25rem 0.6rem; border-radius: 4px; font-weight: 500;
-                                    {% if unit.occupancy_status == 'Occupied' %}background: rgba(34, 197, 94, 0.15); color: #16a34a;{% elif unit.occupancy_status == 'Vacant — available' %}background: rgba(37, 99, 235, 0.15); color: #2563eb;{% elif unit.occupancy_status == 'Under notice (30-day)' %}background: rgba(245, 158, 11, 0.15); color: #d97706;{% elif unit.occupancy_status == 'Final notice (10-day)' %}background: rgba(239, 68, 68, 0.15); color: #dc2626;{% else %}background: rgba(168, 85, 247, 0.15); color: #a855f7;{% endif %}
+                                    {% if unit.status == 'Occupied' %}background: rgba(34, 197, 94, 0.15); color: #16a34a;{% elif unit.status == 'Vacant — available' %}background: rgba(37, 99, 235, 0.15); color: #2563eb;{% elif unit.status == 'Under notice (30-day)' %}background: rgba(245, 158, 11, 0.15); color: #d97706;{% elif unit.status == 'Final notice (10-day)' %}background: rgba(239, 68, 68, 0.15); color: #dc2626;{% else %}background: rgba(168, 85, 247, 0.15); color: #a855f7;{% endif %}
                                 ">
                                     <span style="width: 5px; height: 5px; border-radius: 50%; display: inline-block;
-                                        {% if unit.occupancy_status == 'Occupied' %}background: #22c55e;{% elif unit.occupancy_status == 'Vacant — available' %}background: #3b82f6;{% elif unit.occupancy_status == 'Under notice (30-day)' %}background: #f59e0b;{% elif unit.occupancy_status == 'Final notice (10-day)' %}background: #ef4444;{% else %}background: #a855f7;{% endif %}
+                                        {% if unit.status == 'Occupied' %}background: #22c55e;{% elif unit.status == 'Vacant — available' %}background: #3b82f6;{% elif unit.status == 'Under notice (30-day)' %}background: #f59e0b;{% elif unit.status == 'Final notice (10-day)' %}background: #ef4444;{% else %}background: #a855f7;{% endif %}
                                     "></span>
-                                    {{ unit.occupancy_status|default:"—" }}
+                                    {{ unit.status|default:"—" }}
                                 </span>
                             </td>
                             <td style="padding: 1rem;">—</td>
