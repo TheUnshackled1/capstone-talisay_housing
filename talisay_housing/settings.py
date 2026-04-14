@@ -152,7 +152,7 @@ SMS_ENABLED = True  # Real SMS sending is now ENABLED
 SMS_SERVICE = 'twilio'  # 'twilio' or 'semaphore'
 
 # Twilio Configuration
-TWILIO_ACCOUNT_SID = 'ACe90a6af0a068665ed4479c6d303'
+TWILIO_ACCOUNT_SID = 'ACe90a6af0a068665ed4479c6d303245e9'
 TWILIO_AUTH_TOKEN = '3f40cb567657bcacdbf5686e801e3cc2'
 TWILIO_PHONE_NUMBER = '+17126421042'  # Your Twilio phone number
 
