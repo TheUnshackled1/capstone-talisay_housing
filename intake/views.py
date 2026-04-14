@@ -965,9 +965,9 @@ def update_cdrrmo_certification(request, position):
             # Create queue entry (walk-in FIFO)
             queue_entry = QueueEntry.objects.create(
                 applicant=applicant,
-                queue_type='walkin',
+                queue_type='walk_in',
                 status='active',
-                position=QueueEntry.objects.filter(queue_type='walkin', status='active').count() + 1
+                position=QueueEntry.objects.filter(queue_type='walk_in', status='active').count() + 1
             )
 
             message = f'❌ {applicant.full_name} NOT CERTIFIED. Moved to Walk-in FIFO Queue (Position {queue_entry.position}).'
