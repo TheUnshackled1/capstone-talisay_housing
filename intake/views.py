@@ -1176,14 +1176,15 @@ def applicants_list(request, position):
         queue_position = None
         if isf.converted_to_applicant:
             try:
-                applicant_profile = isf.applicant_profile
-                queue_entry = QueueEntry.objects.filter(
-                    applicant=applicant_profile,
-                    status='active'
-                ).first()
-                if queue_entry:
-                    queue_type = 'Priority' if queue_entry.queue_type == 'priority' else 'Walk-in'
-                    queue_position = queue_entry.position
+                applicant_profile = Applicant.objects.filter(isf_record=isf).first()
+                if applicant_profile:
+                    queue_entry = QueueEntry.objects.filter(
+                        applicant=applicant_profile,
+                        status='active'
+                    ).first()
+                    if queue_entry:
+                        queue_type = 'Priority' if queue_entry.queue_type == 'priority' else 'Walk-in'
+                        queue_position = queue_entry.position
             except:
                 pass
         

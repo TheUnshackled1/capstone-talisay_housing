@@ -143,11 +143,19 @@ LOGIN_REDIRECT_URL = 'accounts:dashboard'
 LOGOUT_REDIRECT_URL = 'accounts:dashboard'
 
 # =============================================================================
-# SMS Configuration (Semaphore)
+# SMS Configuration (Twilio)
 # =============================================================================
-# Sign up at https://semaphore.co to get your API key (50 free SMS)
-# Set SMS_ENABLED = True and add your API key to enable real SMS sending
+# Twilio provides free trial credits for testing
+# Trial account can only send to verified phone numbers
 
 SMS_ENABLED = True  # Real SMS sending is now ENABLED
+SMS_SERVICE = 'twilio'  # 'twilio' or 'semaphore'
+
+# Twilio Configuration
+TWILIO_ACCOUNT_SID = 'ACe90a6af0a068665ed4479c6d303'
+TWILIO_AUTH_TOKEN = '3f40cb567657bcacdbf5686e801e3cc2'
+TWILIO_PHONE_NUMBER = '+17126421042'  # Your Twilio phone number
+
+# Legacy Semaphore Configuration (kept for reference/fallback)
 SEMAPHORE_API_KEY = 'c3f15974a138c3c7aabef97f481781f5'
-SEMAPHORE_SENDER_NAME = 'SEMAPHORE'  # Default sender (custom sender requires approval)
+SEMAPHORE_SENDER_NAME = 'SEMAPHORE'

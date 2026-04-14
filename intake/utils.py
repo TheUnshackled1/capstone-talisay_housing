@@ -31,37 +31,35 @@ def format_phone_number(phone_number):
 
 def send_sms(phone_number, message, trigger_event, applicant=None, isf_record=None):
     """
-    Send SMS notification via Semaphore API and log to database.
-    
+    Send SMS notification via Twilio or Semaphore API and log to database.
+
     Args:
         phone_number: Recipient phone number
         message: SMS message content
         trigger_event: Event that triggered SMS (registration, eligibility_passed, etc.)
         applicant: Applicant instance (optional)
         isf_record: ISFRecord instance (optional)
-    
+
     Returns:
         bool: True if SMS sent successfully, False otherwise
     """
     from .models import SMSLog
-    
+
     if not phone_number or not message:
         logger.warning("Cannot send SMS: missing phone number or message")
         return False
-    
+
     # Format phone number
     phone_number = format_phone_number(phone_number)
-    
+
     # Validate phone number format (Philippine mobile: 09XXXXXXXXX)
     if not phone_number.startswith('09') or len(phone_number) != 11:
         logger.warning(f"Invalid phone number format: {phone_number}")
         return False
-    
-    # Get Semaphore API key from settings
-    api_key = getattr(settings, 'SEMAPHORE_API_KEY', None)
-    sender_name = getattr(settings, 'SEMAPHORE_SENDER_NAME', 'SEMAPHORE')
+
+    sms_service = getattr(settings, 'SMS_SERVICE', 'semaphore')
     sms_enabled = getattr(settings, 'SMS_ENABLED', False)
-    
+
     try:
         # Create SMS log record first (pending status)
         sms_log = SMSLog.objects.create(
@@ -72,63 +70,43 @@ def send_sms(phone_number, message, trigger_event, applicant=None, isf_record=No
             isf_record=isf_record,
             status='pending'
         )
-        
-        if sms_enabled and api_key:
-            # Send via Semaphore API
-            response = requests.post(
-                'https://api.semaphore.co/api/v4/messages',
-                data={
-                    'apikey': api_key,
-                    'number': phone_number,
-                    'message': message,
-                    'sendername': sender_name
-                },
-                timeout=30
-            )
-            
-            if response.status_code == 200:
-                result = response.json()
-                sms_log.status = 'sent'
-                sms_log.save(update_fields=['status'])
-                logger.info(f"SMS sent via Semaphore: {trigger_event} to {phone_number}")
-                return True
+
+        if sms_enabled:
+            if sms_service == 'twilio':
+                # Send via Twilio
+                success = send_sms_twilio(phone_number, message, sms_log)
+                if success:
+                    logger.info(f"SMS sent via Twilio: {trigger_event} to {phone_number}")
+                    return True
+                else:
+                    return False
             else:
-                error_msg = f"Semaphore API error: {response.status_code} - {response.text}"
-                sms_log.status = 'failed'
-                sms_log.error_message = error_msg
-                sms_log.save(update_fields=['status', 'error_message'])
-                logger.error(error_msg)
-                return False
+                # Send via Semaphore API (default)
+                success = send_sms_semaphore(phone_number, message, sms_log)
+                if success:
+                    logger.info(f"SMS sent via Semaphore: {trigger_event} to {phone_number}")
+                    return True
+                else:
+                    return False
         else:
             # Development mode - just log to console
             sms_log.status = 'sent'
             sms_log.save(update_fields=['status'])
-            
+
             logger.info(f"SMS logged (dev mode): {trigger_event} to {phone_number}")
             print(f"\n{'='*60}")
-            print(f"📱 SMS NOTIFICATION {'(DEV MODE - Not actually sent)' if not sms_enabled else ''}")
+            print(f"SMS NOTIFICATION (DEV MODE - Not actually sent)")
             print(f"{'='*60}")
             print(f"To: {phone_number}")
             print(f"Event: {trigger_event}")
             print(f"Message: {message}")
             print(f"{'='*60}\n")
-            
+
             return True
-        
-    except requests.exceptions.RequestException as e:
-        error_msg = f"Network error sending SMS: {str(e)}"
-        logger.error(error_msg)
-        
-        # Update log with error
-        SMSLog.objects.filter(id=sms_log.id).update(
-            status='failed',
-            error_message=error_msg
-        )
-        return False
-        
+
     except Exception as e:
         logger.error(f"Failed to send SMS: {str(e)}")
-        
+
         # Log failed SMS
         SMSLog.objects.create(
             recipient_phone=phone_number,
@@ -139,7 +117,115 @@ def send_sms(phone_number, message, trigger_event, applicant=None, isf_record=No
             status='failed',
             error_message=str(e)
         )
-        
+
+        return False
+
+
+def send_sms_twilio(phone_number, message, sms_log):
+    """
+    Send SMS via Twilio API.
+
+    Args:
+        phone_number: Philippine mobile number (09XXXXXXXXX format)
+        message: SMS message content
+        sms_log: SMSLog instance to update
+
+    Returns:
+        bool: True if sent successfully, False otherwise
+    """
+    try:
+        from twilio.rest import Client
+
+        account_sid = getattr(settings, 'TWILIO_ACCOUNT_SID', None)
+        auth_token = getattr(settings, 'TWILIO_AUTH_TOKEN', None)
+        from_number = getattr(settings, 'TWILIO_PHONE_NUMBER', None)
+
+        if not account_sid or not auth_token or not from_number:
+            raise Exception("Twilio credentials not configured")
+
+        # Convert Philippine format to international format
+        # 09XXXXXXXXX -> +639XXXXXXXXX
+        to_number = '+63' + phone_number[1:]
+
+        client = Client(account_sid, auth_token)
+        msg = client.messages.create(
+            body=message,
+            from_=from_number,
+            to=to_number
+        )
+
+        # Update log with success
+        sms_log.status = 'sent'
+        sms_log.external_id = msg.sid
+        sms_log.save(update_fields=['status', 'external_id'])
+
+        return True
+
+    except Exception as e:
+        error_msg = f"Twilio error: {str(e)}"
+        logger.error(error_msg)
+        sms_log.status = 'failed'
+        sms_log.error_message = error_msg
+        sms_log.save(update_fields=['status', 'error_message'])
+        return False
+
+
+def send_sms_semaphore(phone_number, message, sms_log):
+    """
+    Send SMS via Semaphore API.
+
+    Args:
+        phone_number: Philippine mobile number (09XXXXXXXXX format)
+        message: SMS message content
+        sms_log: SMSLog instance to update
+
+    Returns:
+        bool: True if sent successfully, False otherwise
+    """
+    try:
+        api_key = getattr(settings, 'SEMAPHORE_API_KEY', None)
+        sender_name = getattr(settings, 'SEMAPHORE_SENDER_NAME', 'SEMAPHORE')
+
+        if not api_key:
+            raise Exception("Semaphore API key not configured")
+
+        response = requests.post(
+            'https://api.semaphore.co/api/v4/messages',
+            data={
+                'apikey': api_key,
+                'number': phone_number,
+                'message': message,
+                'sendername': sender_name
+            },
+            timeout=30
+        )
+
+        if response.status_code == 200:
+            sms_log.status = 'sent'
+            sms_log.save(update_fields=['status'])
+            return True
+        else:
+            error_msg = f"Semaphore API error: {response.status_code} - {response.text}"
+            logger.error(error_msg)
+            sms_log.status = 'failed'
+            sms_log.error_message = error_msg
+            sms_log.save(update_fields=['status', 'error_message'])
+            return False
+
+    except requests.exceptions.RequestException as e:
+        error_msg = f"Network error sending SMS: {str(e)}"
+        logger.error(error_msg)
+        sms_log.status = 'failed'
+        sms_log.error_message = error_msg
+        sms_log.save(update_fields=['status', 'error_message'])
+        return False
+
+    except Exception as e:
+        error_msg = f"Semaphore error: {str(e)}"
+        logger.error(error_msg)
+        sms_log.status = 'failed'
+        sms_log.error_message = error_msg
+        sms_log.save(update_fields=['status', 'error_message'])
         return False
 
 
