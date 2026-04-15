@@ -6,9 +6,8 @@ from django.http import JsonResponse
 from django.utils import timezone
 from django.db.models import Q, Prefetch
 from functools import wraps
-from .models import LandownerSubmission, ISFRecord, Applicant, Barangay, QueueEntry, CDRRMOCertification, ISFEditAudit
+from .models import ISFRecord, Applicant, Barangay, QueueEntry, CDRRMOCertification, ISFEditAudit
 from .forms import (
-    LandownerSubmissionForm,
     ISFRecordForm,
     ISFReviewForm,
     HouseholdMemberForm,
@@ -194,22 +193,10 @@ def isf_review(request, position, isf_id):
 @verify_position
 def register_landowner_walkin(request, position):
     """
-    AJAX endpoint to register a landowner walk-in submission with ISF records.
-    Channel A: Staff enters landowner and ISF data on behalf of walk-in landowner.
-
-    URL Route: /intake/staff/<position>/register-landowner-walkin/
-
-    Accepts POST with:
-    - landowner_name, property_address
-    - isf_name[], isf_household[], isf_income[], isf_years[] (array of ISF records)
-
-    Creates:
-    1. LandownerSubmission (submitted_by_staff=user)
-    2. ISFRecord(s) linked to submission
-    3. Sends registration SMS to each ISF if phone_number provided
+    DEPRECATED: Landowner submission flow has been removed.
+    This endpoint is no longer available.
     """
-    if request.method != 'POST':
-        return JsonResponse({'success': False, 'error': 'POST required'}, status=405)
+    return JsonResponse({'success': False, 'error': 'Landowner submission flow has been removed.'}, status=404)
 
     # Permission check
     if request.user.position not in ['second_member', 'fourth_member']:
@@ -1084,12 +1071,11 @@ def applicants_list(request, position):
     # Build unified applicants list from multiple sources
     applicants = []
     
-    # ====== CHANNEL A: Landowner Submissions (ISF Records) ======
-    # Get all ISF records with pending or reviewed status
-    isf_records = ISFRecord.objects.select_related(
-        'submission', 'eligibility_checked_by'
-    ).order_by('created_at')
-    
+    # ====== CHANNEL A: Landowner Submissions (REMOVED) ======
+    # Landowner submission flow has been removed
+    # Removed ISFRecord queries since LandownerSubmission model deleted
+    isf_records = []
+
     for isf in isf_records:
         # Determine eligibility status display
         if isf.status == 'pending':

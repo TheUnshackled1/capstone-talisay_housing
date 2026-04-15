@@ -1,5 +1,5 @@
 from django import forms
-from .models import LandownerSubmission, ISFRecord, HouseholdMember, Applicant
+from .models import ISFRecord, HouseholdMember, Applicant
 from django.core.exceptions import ValidationError
 import re
 
@@ -55,65 +55,6 @@ BARANGAY_CHOICES = [
     ('Zone 15 (Pob.)', 'Zone 15 (Pob.)'),
     ('Zone 16 (Pob.)', 'Zone 16 (Pob.)'),
 ]
-
-
-class LandownerSubmissionForm(forms.ModelForm):
-    """
-    Landowner submission form (enhanced).
-    Public form - no authentication required.
-    Collects: landowner name, phone, email, property address, barangay
-    """
-    barangay = forms.ChoiceField(
-        choices=BARANGAY_CHOICES,
-        required=False,
-        label="Barangay",
-        widget=forms.Select(attrs={'class': 'form-select'})
-    )
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Add Philippine phone validator to landowner_phone field
-        if 'landowner_phone' in self.fields:
-            self.fields['landowner_phone'].validators.append(validate_philippine_phone)
-            # Show help text
-            self.fields['landowner_phone'].help_text = 'Format: 09XXXXXXXXXX (11 digits, optional)'
-
-    class Meta:
-        model = LandownerSubmission
-        fields = [
-            'landowner_name',
-            'landowner_phone',
-            'landowner_email',
-            'property_address',
-        ]
-        widgets = {
-            'landowner_name': forms.TextInput(attrs={
-                'placeholder': 'Enter your full name',
-                'autofocus': True,
-                'class': 'form-control',
-            }),
-            'landowner_phone': forms.TextInput(attrs={
-                'placeholder': '09XXXXXXXXXX',
-                'class': 'form-control ph-phone',
-                'pattern': '09[0-9]{9}',
-                'type': 'tel',
-            }),
-            'landowner_email': forms.EmailInput(attrs={
-                'placeholder': 'email@example.com',
-                'class': 'form-control',
-            }),
-            'property_address': forms.Textarea(attrs={
-                'placeholder': 'Complete address of the property where informal settlers are residing',
-                'rows': 2,
-                'class': 'form-control',
-            }),
-        }
-        labels = {
-            'landowner_name': 'Full Name',
-            'landowner_phone': 'Contact Number',
-            'landowner_email': 'Email Address',
-            'property_address': 'Property Address',
-        }
 
 
 class ISFRecordForm(forms.ModelForm):

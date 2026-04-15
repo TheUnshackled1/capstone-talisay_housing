@@ -118,76 +118,10 @@ class Barangay(models.Model):
         return self.name
 
 
-class LandownerSubmission(models.Model):
-    """
-    Landowner submission containing one or more ISF records.
-    Channel A: Landowner submits ISF list via public web form.
-    """
-    STATUS_CHOICES = [
-        ('pending', 'Pending Review'),
-        ('reviewed', 'Reviewed'),
-        ('processed', 'Processed'),
-    ]
-
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    reference_number = models.CharField(max_length=20, unique=True, editable=False)
-    
-    # Landowner information
-    landowner_name = models.CharField(max_length=255, verbose_name="Landowner Full Name")
-    landowner_phone = models.CharField(max_length=20, blank=True, verbose_name="Contact Number")
-    landowner_email = models.EmailField(blank=True, verbose_name="Email Address")
-    property_address = models.TextField(verbose_name="Property Address")
-    barangay = models.CharField(max_length=100, blank=True, verbose_name="Barangay")
-    
-    # Metadata
-    submitted_at = models.DateTimeField(auto_now_add=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
-    reviewed_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='reviewed_submissions'
-    )
-    reviewed_at = models.DateTimeField(null=True, blank=True)
-    notes = models.TextField(blank=True, verbose_name="Staff Notes")
-    
-    # Track if submitted by staff (walk-in landowner) vs online portal
-    submitted_by_staff = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='staff_submissions',
-        verbose_name="Submitted by Staff"
-    )
-
-    class Meta:
-        ordering = ['-submitted_at']
-        verbose_name = "Landowner Submission"
-        verbose_name_plural = "Landowner Submissions"
-
-    def save(self, *args, **kwargs):
-        if not self.reference_number:
-            # Generate reference: LS-YYYYMMDD-XXXX
-            from django.utils import timezone
-            import random
-            date_str = timezone.now().strftime('%Y%m%d')
-            random_suffix = ''.join([str(random.randint(0, 9)) for _ in range(4)])
-            self.reference_number = f"LS-{date_str}-{random_suffix}"
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f"{self.reference_number} - {self.landowner_name}"
-
-    @property
-    def isf_count(self):
-        return self.isf_records.count()
-
 
 class ISFRecord(models.Model):
     """
-    Individual ISF (Informal Settler Family) record within a landowner submission.
+    Individual ISF (Informal Settler Family) record submitted via staff entry.
     This is the initial record - it gets converted to an Applicant profile after review.
     """
     STATUS_CHOICES = [
@@ -198,12 +132,7 @@ class ISFRecord(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     reference_number = models.CharField(max_length=20, unique=True, editable=False)
-    submission = models.ForeignKey(
-        LandownerSubmission,
-        on_delete=models.CASCADE,
-        related_name='isf_records'
-    )
-    
+
     # ISF Information
     full_name = models.CharField(max_length=255, verbose_name="Full Name")
     household_members = models.PositiveIntegerField(verbose_name="Number of Household Members")
