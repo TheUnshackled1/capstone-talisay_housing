@@ -1,5 +1,5 @@
 from django import forms
-from .models import ISFRecord, HouseholdMember, Applicant
+from .models import HouseholdMember, Applicant
 from django.core.exceptions import ValidationError
 import re
 

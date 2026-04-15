@@ -230,81 +230,81 @@ def update_applicant(request, position):
 
         # Update Applicant data
         applicant = Applicant.objects.get(id=applicant_id)
-            
-            full_name = request.POST.get('full_name', '').strip()
-            barangay_name = request.POST.get('barangay', '').strip()
-            monthly_income = request.POST.get('monthly_income')
-            household_size = request.POST.get('household_size')
-            years_residing = request.POST.get('years_residing')
-            phone_number = request.POST.get('phone_number', '').strip()
-            current_address = request.POST.get('current_address', '').strip()
-            
-            if full_name:
-                applicant.full_name = full_name
-            if barangay_name:
-                try:
-                    brgy = Barangay.objects.get(name=barangay_name)
-                    applicant.barangay = brgy
-                except Barangay.DoesNotExist:
-                    pass
-            if monthly_income:
-                applicant.monthly_income = Decimal(monthly_income)
-            if household_size:
-                applicant.household_size = int(household_size)
-            if years_residing:
-                applicant.years_residing = int(years_residing)
-            if phone_number:
-                applicant.phone_number = phone_number
-            if current_address:
-                applicant.current_address = current_address
-            
-            # Channel B specific: Danger zone fields
-            if channel == 'B':
-                danger_zone_type = request.POST.get('danger_zone_type', '').strip()
-                danger_zone_location = request.POST.get('danger_zone_location', '').strip()
-                cdrrmo_status = request.POST.get('cdrrmo_status', '').strip()
-                cdrrmo_notes = request.POST.get('cdrrmo_notes', '').strip()
-                
-                if danger_zone_type:
-                    applicant.danger_zone_type = danger_zone_type
-                if danger_zone_location:
-                    applicant.danger_zone_location = danger_zone_location
-                
-                # Update CDRRMO certification status
-                if cdrrmo_status and cdrrmo_status in ['certified', 'not_certified']:
-                    try:
-                        cert = applicant.cdrrmo_certification
-                        cert.status = cdrrmo_status
-                        cert.result_recorded_by = request.user
-                        cert.certified_at = timezone.now()
-                        if cdrrmo_notes:
-                            cert.certification_notes = cdrrmo_notes
-                        cert.save()
-                        
-                        # Update applicant status based on CDRRMO result
-                        if cdrrmo_status == 'certified':
-                            applicant.status = 'pending'  # Ready for eligibility check
-                        elif cdrrmo_status == 'not_certified':
-                            applicant.status = 'pending'  # Move to walk-in queue instead
-                            applicant.channel = 'walk_in'  # Downgrade to regular walk-in
-                    except CDRRMOCertification.DoesNotExist:
-                        pass
-            
-            # Update document checklist
-            applicant.doc_brgy_residency = request.POST.get('doc_brgy_residency') == 'true'
-            applicant.doc_brgy_indigency = request.POST.get('doc_brgy_indigency') == 'true'
-            applicant.doc_cedula = request.POST.get('doc_cedula') == 'true'
-            applicant.doc_police_clearance = request.POST.get('doc_police_clearance') == 'true'
-            applicant.doc_no_property = request.POST.get('doc_no_property') == 'true'
-            applicant.doc_2x2_picture = request.POST.get('doc_2x2_picture') == 'true'
-            applicant.doc_sketch_location = request.POST.get('doc_sketch_location') == 'true'
-            
-            applicant.save()
 
-            return JsonResponse({
-                'success': True,
-                'message': 'Applicant updated successfully'
-            })
+        full_name = request.POST.get('full_name', '').strip()
+        barangay_name = request.POST.get('barangay', '').strip()
+        monthly_income = request.POST.get('monthly_income')
+        household_size = request.POST.get('household_size')
+        years_residing = request.POST.get('years_residing')
+        phone_number = request.POST.get('phone_number', '').strip()
+        current_address = request.POST.get('current_address', '').strip()
+
+        if full_name:
+            applicant.full_name = full_name
+        if barangay_name:
+            try:
+                brgy = Barangay.objects.get(name=barangay_name)
+                applicant.barangay = brgy
+            except Barangay.DoesNotExist:
+                pass
+        if monthly_income:
+            applicant.monthly_income = Decimal(monthly_income)
+        if household_size:
+            applicant.household_size = int(household_size)
+        if years_residing:
+            applicant.years_residing = int(years_residing)
+        if phone_number:
+            applicant.phone_number = phone_number
+        if current_address:
+            applicant.current_address = current_address
+
+        # Channel B specific: Danger zone fields
+        if channel == 'B':
+            danger_zone_type = request.POST.get('danger_zone_type', '').strip()
+            danger_zone_location = request.POST.get('danger_zone_location', '').strip()
+            cdrrmo_status = request.POST.get('cdrrmo_status', '').strip()
+            cdrrmo_notes = request.POST.get('cdrrmo_notes', '').strip()
+
+            if danger_zone_type:
+                applicant.danger_zone_type = danger_zone_type
+            if danger_zone_location:
+                applicant.danger_zone_location = danger_zone_location
+
+            # Update CDRRMO certification status
+            if cdrrmo_status and cdrrmo_status in ['certified', 'not_certified']:
+                try:
+                    cert = applicant.cdrrmo_certification
+                    cert.status = cdrrmo_status
+                    cert.result_recorded_by = request.user
+                    cert.certified_at = timezone.now()
+                    if cdrrmo_notes:
+                        cert.certification_notes = cdrrmo_notes
+                    cert.save()
+
+                    # Update applicant status based on CDRRMO result
+                    if cdrrmo_status == 'certified':
+                        applicant.status = 'pending'  # Ready for eligibility check
+                    elif cdrrmo_status == 'not_certified':
+                        applicant.status = 'pending'  # Move to walk-in queue instead
+                        applicant.channel = 'walk_in'  # Downgrade to regular walk-in
+                except CDRRMOCertification.DoesNotExist:
+                    pass
+
+        # Update document checklist
+        applicant.doc_brgy_residency = request.POST.get('doc_brgy_residency') == 'true'
+        applicant.doc_brgy_indigency = request.POST.get('doc_brgy_indigency') == 'true'
+        applicant.doc_cedula = request.POST.get('doc_cedula') == 'true'
+        applicant.doc_police_clearance = request.POST.get('doc_police_clearance') == 'true'
+        applicant.doc_no_property = request.POST.get('doc_no_property') == 'true'
+        applicant.doc_2x2_picture = request.POST.get('doc_2x2_picture') == 'true'
+        applicant.doc_sketch_location = request.POST.get('doc_sketch_location') == 'true'
+
+        applicant.save()
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Applicant updated successfully'
+        })
 
     except Applicant.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Applicant not found'})
