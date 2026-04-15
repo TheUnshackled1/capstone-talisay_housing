@@ -4,9 +4,6 @@ from . import views
 app_name = 'intake'
 
 urlpatterns = [
-    # Public landowner portal
-    path('landowner-submission/', views.landowner_form, name='landowner_form'),
-
     # Staff applicants management (consolidated modal-based interface)
     # Role-based URL structure: /intake/staff/<position>/applicants/
     path('staff/<str:position>/applicants/', views.applicants_list, name='applicants_list'),

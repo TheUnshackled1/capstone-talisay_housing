@@ -30,6 +30,11 @@ urlpatterns = [
     # OIC-Specific Views
     path('oic/applicants/', views.oic_applicants_overview, name='oic_applicants'),
     path('oic/applications/pending/', views.oic_pending_signature, name='oic_pending_sig'),
+    path('oic/analytics/', views.head_analytics_dashboard, name='oic_analytics'),
+
+    # Second Member-Specific Views
+    path('second-member/analytics/', views.head_analytics_dashboard, name='second_member_analytics'),
+    path('second-member/reports/', views.head_monthly_reports, name='second_member_reports'),
 
     # Third Member-Specific Views
     path('third-member/applicants/', views.third_member_applicants_overview, name='third_member_applicants'),
