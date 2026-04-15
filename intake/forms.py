@@ -141,6 +141,19 @@ class WalkInApplicantForm(forms.ModelForm):
         })
     )
 
+    # Eligibility check required field
+    years_residing = forms.IntegerField(
+        required=True,
+        min_value=0,
+        label="Years Residing in Talisay",
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Number of years',
+            'min': 0,
+        }),
+        help_text="Required for eligibility check"
+    )
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Add Philippine phone validator to phone_number field
@@ -214,11 +227,6 @@ class WalkInApplicantForm(forms.ModelForm):
                 'class': 'form-control',
                 'placeholder': 'Number of household members',
                 'min': 1,
-            }),
-            'years_residing': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Years in Talisay',
-                'min': 0,
             }),
         }
         labels = {
