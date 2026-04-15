@@ -73,14 +73,6 @@ def get_module2_permissions(user):
             'can_award_lot': True,
             'role_description': 'Document Verification & Lot Awarding',
         })
-    elif position == 'third_member':
-        # Jay - Signatory routing
-        permissions.update({
-            'can_view': True,
-            'can_receive_routing': True,
-            'can_forward_routing': True,
-            'role_description': 'Signatory Routing',
-        })
     elif position == 'second_member':
         # Joie - Supervisor + Electricity
         permissions.update({
@@ -137,7 +129,7 @@ def applications_list(request, position):
     ✅ Arthur (Head) - View + Head signature
     """
     # Check access
-    allowed_positions = ['fourth_member', 'third_member', 'second_member', 'fifth_member', 'oic', 'head']
+    allowed_positions = ['fourth_member', 'second_member', 'fifth_member', 'oic', 'head']
     if request.user.position not in allowed_positions:
         messages.error(request, 'Access denied. Module 2 is for authorized staff only.')
         return redirect('accounts:dashboard')
@@ -579,17 +571,17 @@ def update_routing(request, position):
     
     # Validate step and check permission
     step_permissions = {
-        'received': ['third_member'],
-        'forwarded_oic': ['third_member'],
+        'received': ['fourth_member'],
+        'forwarded_oic': ['fourth_member'],
         'signed_oic': ['oic'],
-        'forwarded_head': ['third_member'],
+        'forwarded_head': ['fourth_member'],
         'signed_head': ['head'],
     }
-    
+
     allowed_positions = step_permissions.get(step, [])
     if request.user.position not in allowed_positions:
         position_names = {
-            'third_member': 'Jay (3rd Member)',
+            'fourth_member': 'Jocel (4th Member)',
             'oic': 'Victor (OIC)',
             'head': 'Arthur (Head)',
         }

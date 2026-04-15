@@ -542,9 +542,9 @@ def applicants_list(request, position):
     """
     # Staff who can view applicants list:
     # - Jocel (fourth_member) & Joie (second_member): Full access - can review, edit, mark eligibility
-    # - Jay (third_member) & Field Team: Read access - can view for verification
+    # - Ronda & Field Team: Read access - can view for verification
     # - OIC & Head: View only - oversight access
-    allowed_positions = ['second_member', 'fourth_member', 'third_member', 'field', 'oic', 'head']
+    allowed_positions = ['second_member', 'fourth_member', 'field', 'ronda', 'oic', 'head']
     if request.user.position not in allowed_positions:
         messages.error(request, 'Access denied. This module is for authorized staff only.')
         return redirect('accounts:dashboard')
@@ -798,7 +798,7 @@ def walkin_register(request, position):
     """
     from .utils import send_sms
 
-    allowed_positions = ['third_member', 'fourth_member', 'field', 'second_member']
+    allowed_positions = ['fourth_member', 'field', 'ronda', 'second_member']
     if request.user.position not in allowed_positions:
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)

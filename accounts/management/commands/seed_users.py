@@ -36,13 +36,6 @@ class Command(BaseCommand):
         # Regular staff (No admin access)
         staff_data = [
             {
-                'username': 'jay.olvido',
-                'email': 'jay.olvido@talisayhousing.gov.ph',
-                'first_name': 'Roland Jay',
-                'last_name': 'Olvido',
-                'position': 'third_member',
-            },
-            {
                 'username': 'jocel.cuaysing',
                 'email': 'jocel.cuaysing@talisayhousing.gov.ph',
                 'first_name': 'Jocel',
@@ -56,26 +49,34 @@ class Command(BaseCommand):
                 'last_name': 'Hellera',
                 'position': 'fifth_member',
             },
+            # Caretaker
+            {
+                'username': 'nonoy.caretaker',
+                'email': 'nonoy@talisayhousing.gov.ph',
+                'first_name': 'Nonoy',
+                'last_name': 'Cura',
+                'position': 'caretaker',
+            },
             # Ronda / Field Personnel
             {
                 'username': 'paul.betila',
                 'email': 'paul.betila@talisayhousing.gov.ph',
                 'first_name': 'Paul Martin',
                 'last_name': 'Betila',
-                'position': 'field',
+                'position': 'ronda',
             },
             {
                 'username': 'roberto.dreyfus',
                 'email': 'roberto.dreyfus@talisayhousing.gov.ph',
                 'first_name': 'Roberto',
                 'last_name': 'Dreyfus',
-                'position': 'field',
+                'position': 'ronda',
             },
             {
-                'username': 'nonoy.field',
-                'email': 'nonoy@talisayhousing.gov.ph',
-                'first_name': 'Nonoy',
-                'last_name': '',
+                'username': 'field.team',
+                'email': 'field@talisayhousing.gov.ph',
+                'first_name': 'Field',
+                'last_name': 'Team',
                 'position': 'field',
             },
         ]

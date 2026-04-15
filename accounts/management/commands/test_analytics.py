@@ -51,14 +51,6 @@ class Command(BaseCommand):
                     'notices_issued'
                 ]
             },
-            'third_member': {
-                'position': 'third_member',
-                'url_name': 'accounts:third_member_analytics',
-                'required_context': [
-                    'routing_queue', 'verified_count', 'signed_count',
-                    'total_applicants', 'overdue'
-                ]
-            },
             'fourth_member': {
                 'position': 'fourth_member',
                 'url_name': 'accounts:fourth_member_analytics',
