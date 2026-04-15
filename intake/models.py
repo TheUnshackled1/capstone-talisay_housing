@@ -118,13 +118,10 @@ class Applicant(models.Model):
     """
     Master beneficiary profile - the central entity for all modules.
 
-    Applicants come from two channels:
-    - Channel B: Walk-in claiming danger zone
-    - Channel C: Regular walk-in
+    Applicants: Channel B (Danger Zone Walk-in)
     """
     CHANNEL_CHOICES = [
         ('danger_zone', 'Channel B - Danger Zone Walk-in'),
-        ('walk_in', 'Channel C - Regular Walk-in'),
     ]
     
     STATUS_CHOICES = [
@@ -141,12 +138,24 @@ class Applicant(models.Model):
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     reference_number = models.CharField(max_length=20, unique=True, editable=False)
-    
+
     # Personal Information
     full_name = models.CharField(max_length=255, verbose_name="Full Name")
-    date_of_birth = models.DateField(null=True, blank=True)
-    phone_number = models.CharField(max_length=20, blank=True, verbose_name="Contact Number")
-    
+    sex = models.CharField(
+        max_length=1,
+        choices=[('M', 'Male'), ('F', 'Female')],
+        blank=True,
+        verbose_name="Sex"
+    )
+    age = models.PositiveIntegerField(null=True, blank=True, verbose_name="Age")
+    date_of_birth = models.DateField(null=True, blank=True, verbose_name="Date of Birth")
+    place_of_birth = models.CharField(max_length=255, blank=True, verbose_name="Place of Birth")
+    phone_number = models.CharField(max_length=20, blank=True, verbose_name="Applicant Contact Number")
+
+    # Spouse Information
+    spouse_name = models.CharField(max_length=255, blank=True, verbose_name="Name of Spouse")
+    spouse_phone = models.CharField(max_length=20, blank=True, verbose_name="Spouse Contact Number")
+
     # Address/Origin
     barangay = models.ForeignKey(
         Barangay,
@@ -157,7 +166,7 @@ class Applicant(models.Model):
     current_address = models.TextField(verbose_name="Current Address/Location")
     years_residing = models.PositiveIntegerField(
         default=0,
-        verbose_name="Years at Current Location"
+        verbose_name="Years Residing in Talisay"
     )
     
     # Household & Income
@@ -398,12 +407,11 @@ class CDRRMOCertification(models.Model):
 
 class QueueEntry(models.Model):
     """
-    Manages priority and walk-in FIFO queues.
+    Manages priority queue for danger zone applicants.
     Each applicant has one active queue entry at a time.
     """
     QUEUE_TYPE_CHOICES = [
-        ('priority', 'Priority Queue'),
-        ('walk_in', 'Walk-in FIFO Queue'),
+        ('priority', 'Priority Queue - Danger Zone'),
     ]
     
     STATUS_CHOICES = [

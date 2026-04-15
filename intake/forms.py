@@ -96,7 +96,7 @@ class HouseholdMemberForm(forms.ModelForm):
 
 
 # ============================================================
-# Channel B/C Walk-in Registration Forms
+# Channel B: Danger Zone Registration Form
 # ============================================================
 
 DANGER_ZONE_TYPES = [
@@ -113,8 +113,8 @@ DANGER_ZONE_TYPES = [
 
 class WalkInApplicantForm(forms.ModelForm):
     """
-    Registration form for Channel B (Danger Zone) and Channel C (Walk-in) applicants.
-    Used at the THA office during walk-in registration.
+    Registration form for Channel B (Danger Zone) applicants only.
+    Used at the THA office during danger zone walk-in registration.
     """
     barangay = forms.ChoiceField(
         choices=BARANGAY_CHOICES,
@@ -122,27 +122,17 @@ class WalkInApplicantForm(forms.ModelForm):
         label="Barangay",
         widget=forms.Select(attrs={'class': 'form-select'})
     )
-    
-    channel = forms.ChoiceField(
-        choices=[
-            ('walk_in', 'Channel C — Regular Walk-in'),
-            ('danger_zone', 'Channel B — Danger Zone (Priority)'),
-        ],
-        required=True,
-        label="Application Channel",
-        widget=forms.Select(attrs={'class': 'form-select', 'id': 'channel-select'})
-    )
-    
-    # Danger zone specific fields (shown only for Channel B)
+
+    # Danger zone specific fields (required for all applicants)
     danger_zone_type = forms.ChoiceField(
         choices=DANGER_ZONE_TYPES,
-        required=False,
+        required=True,
         label="Danger Zone Type",
         widget=forms.Select(attrs={'class': 'form-select'})
     )
-    
+
     danger_zone_location = forms.CharField(
-        required=False,
+        required=True,
         label="Danger Zone Location Details",
         widget=forms.Textarea(attrs={
             'class': 'form-control',
@@ -161,7 +151,13 @@ class WalkInApplicantForm(forms.ModelForm):
         model = Applicant
         fields = [
             'full_name',
+            'sex',
+            'age',
+            'date_of_birth',
+            'place_of_birth',
             'phone_number',
+            'spouse_name',
+            'spouse_phone',
             'current_address',
             'monthly_income',
             'household_size',
@@ -173,7 +169,32 @@ class WalkInApplicantForm(forms.ModelForm):
                 'placeholder': 'Full name (Last Name, First Name Middle Name)',
                 'autofocus': True,
             }),
+            'sex': forms.RadioSelect(attrs={
+                'class': 'form-radio',
+            }),
+            'age': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Age',
+                'min': 0,
+            }),
+            'date_of_birth': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date',
+            }),
+            'place_of_birth': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'City/Municipality, Province',
+            }),
             'phone_number': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': '09XXXXXXXXXX',
+                'pattern': '09[0-9]{9}',
+            }),
+            'spouse_name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Spouse full name',
+            }),
+            'spouse_phone': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': '09XXXXXXXXXX',
                 'pattern': '09[0-9]{9}',
@@ -196,37 +217,28 @@ class WalkInApplicantForm(forms.ModelForm):
             }),
             'years_residing': forms.NumberInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Years at current location',
+                'placeholder': 'Years in Talisay',
                 'min': 0,
             }),
         }
         labels = {
             'full_name': 'Full Name',
-            'phone_number': 'Contact Number (for SMS)',
+            'sex': 'Sex',
+            'age': 'Age',
+            'date_of_birth': 'Date of Birth',
+            'place_of_birth': 'Place of Birth',
+            'phone_number': 'Applicant Contact Number',
+            'spouse_name': 'Name of Spouse (if applicable)',
+            'spouse_phone': 'Spouse Contact Number',
             'current_address': 'Current Address',
             'monthly_income': 'Monthly Income (₱)',
-            'years_residing': 'Years Residing at Location',
+            'household_size': 'Household Size',
+            'years_residing': 'Years Residing in Talisay',
         }
-    
+
     def clean_monthly_income(self):
         """Validate income is non-negative."""
         income = self.cleaned_data.get('monthly_income')
         if income and income < 0:
             raise forms.ValidationError('Monthly income cannot be negative.')
         return income
-    
-    def clean(self):
-        """Cross-field validation."""
-        cleaned_data = super().clean()
-        channel = cleaned_data.get('channel')
-        danger_zone_type = cleaned_data.get('danger_zone_type')
-        danger_zone_location = cleaned_data.get('danger_zone_location')
-        
-        # If Channel B (danger zone), require danger zone details
-        if channel == 'danger_zone':
-            if not danger_zone_type:
-                self.add_error('danger_zone_type', 'Please specify the danger zone type.')
-            if not danger_zone_location:
-                self.add_error('danger_zone_location', 'Please describe the danger zone location.')
-        
-        return cleaned_data

@@ -320,7 +320,7 @@
         background: white;
         border-radius: 1rem;
         width: 100%;
-        max-width: 42rem;
+        max-width: 1200px;
         max-height: 90vh;
         overflow-y: auto;
         box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
@@ -1521,149 +1521,283 @@
                 </svg>
             </button>
         </div>
-        <div class="modal-body">
+        <div class="modal-body" style="max-height: 75vh; overflow-y: auto;">
+            <style>
+                .tha-form-header { background: linear-gradient(to right, #1e40af 0%, #1e3a8a 100%); color: white; padding: 1.5rem; margin: -1.5rem -1.5rem 1.5rem -1.5rem; text-align: center; border-bottom: 3px solid #fbbf24; }
+                .tha-seal { width: 50px; height: 50px; margin: 0 auto 0.5rem; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: #1e40af; }
+                .tha-form-header h2 { margin: 0; font-size: 1.1rem; font-weight: 700; letter-spacing: 1px; }
+                .tha-form-header p { margin: 0.25rem 0 0; font-size: 0.75rem; opacity: 0.9; }
+                .channel-selector-box { background: #f0f9ff; border: 1px solid #bfdbfe; padding: 1rem; border-radius: 6px; margin-bottom: 1.5rem; }
+                .channel-selector-box > label { display: block; font-weight: 600; font-size: 0.875rem; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; }
+                .channel-selector { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+                .channel-btn { padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 6px; background: white; cursor: pointer; font-weight: 600; transition: all 0.3s; }
+                .channel-btn:hover { border-color: #1e40af; background: #f0f9ff; }
+                .channel-btn.active { border-color: #1e40af; background: #1e40af; color: white; }
+                .section-label { font-weight: 700; font-size: 0.85rem; color: #1f2937; margin-bottom: 0.75rem; margin-top: 1.5rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.5rem; }
+                .form-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1rem; }
+                .form-row.full { grid-template-columns: 1fr; }
+                .danger-zone-box { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 1rem; border-radius: 4px; margin: 1rem 0; }
+                .danger-zone-box .section-label { color: #92400e; margin-top: 0; }
+                .document-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin-bottom: 1rem; }
+                .document-item { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; background: #f9fafb; border-radius: 4px; border: 1px solid #e5e7eb; cursor: pointer; transition: all 0.2s; }
+                .document-item:hover { background: #f0f9ff; border-color: #1e40af; }
+                .document-item input { cursor: pointer; margin: 0; }
+                .document-item.checked { background: #dbeafe; border-color: #1e40af; }
+                .document-item.complete { background: #dbeafe; border-color: #10b981; }
+                .document-item.incomplete { background: #f9fafb; border-color: #e5e7eb; }
+                .info-note { background: #dbeafe; border-left: 4px solid #1e40af; padding: 0.75rem 1rem; border-radius: 4px; margin-top: 1rem; font-size: 0.8125rem; color: #1e3a8a; }
+                .info-note p { margin: 0; }
+                .danger-warning { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 0.75rem 1rem; border-radius: 4px; margin-top: 1rem; font-size: 0.8125rem; color: #92400e; }
+                .danger-warning p { margin: 0; }
+                .help-text { font-size: 0.75rem; color: #6b7280; margin-top: 0.25rem; display: block; }
+                .form-input { text-transform: capitalize; }
+                @media (max-width: 640px) { .form-row { grid-template-columns: 1fr; } .channel-selector { grid-template-columns: 1fr; } .document-grid { grid-template-columns: 1fr; } }
+            </style>
+
             <form id="addApplicantForm" method="post" onsubmit="submitAddApplicant(event)">
                 {% csrf_token %}
-                <div class="form-group">
-                    <label class="form-label">Intake Channel</label>
-                    <div class="channel-selector">
-                        <button type="button" class="channel-btn" data-channel="danger_zone" onclick="selectChannel('danger_zone')">
-                            <span class="channel-btn-label">Channel B</span>
-                            <span class="channel-btn-sublabel">Danger Zone</span>
+
+                <!-- THA Header -->
+                <div class="tha-form-header">
+                    <div class="tha-seal">🏛️</div>
+                    <h2>APPLICATION FORM</h2>
+                    <p>Talisay City Housing Authority</p>
+                </div>
+
+                <!-- Intake Type -->
+                <input type="hidden" id="channelInput" name="channel" value="danger_zone">
+
+                <!-- SECTION A: APPLICATION IDENTITY -->
+                <div style="margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid #e5e7eb;">
+                    <div style="font-weight: 700; color: #1f2937; font-size: 0.9rem; margin-bottom: 1rem; text-transform: uppercase;">A. APPLICATION IDENTITY</div>
+
+                    <!-- Name (Last, First, Middle) -->
+                    <div class="form-row" style="grid-template-columns: repeat(3, 1fr);">
+                        <div class="form-group">
+                            <label class="form-label">Last Name <span style="color: #dc2626;">*</span></label>
+                            <input type="text" class="form-input" placeholder="Surname" name="last_name" id="lastName" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">First Name <span style="color: #dc2626;">*</span></label>
+                            <input type="text" class="form-input" placeholder="Given name" name="first_name" id="firstName" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Middle Name</label>
+                            <input type="text" class="form-input" placeholder="Middle name" name="middle_name" id="middleName">
+                        </div>
+                    </div>
+
+                    <!-- Sex & Age -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Sex <span style="color: #dc2626;">*</span></label>
+                            <div style="display: flex; gap: 1.5rem; margin-top: 0.5rem;">
+                                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 500; font-size: 0.75rem;">
+                                    <input type="radio" name="sex" id="sexMale" value="M" required style="cursor: pointer;">
+                                    <span>Male</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 500; font-size: 0.75rem;">
+                                    <input type="radio" name="sex" id="sexFemale" value="F" required style="cursor: pointer;">
+                                    <span>Female</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Age <span style="color: #dc2626;">*</span></label>
+                            <input type="number" class="form-input" placeholder="Age" name="age" id="age" min="0" required>
+                        </div>
+                    </div>
+
+                    <!-- Date of Birth & Place of Birth -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Date of Birth <span style="color: #dc2626;">*</span></label>
+                            <input type="date" class="form-input" name="date_of_birth" id="dateOfBirth" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Place of Birth</label>
+                            <input type="text" class="form-input" placeholder="City/Municipality, Province" name="place_of_birth" id="placeOfBirth">
+                        </div>
+                    </div>
+
+                    <!-- Present Address -->
+                    <div class="form-row full">
+                        <div class="form-group">
+                            <label class="form-label">Present Address <span style="color: #dc2626;">*</span></label>
+                            <input type="text" class="form-input" placeholder="Complete current residential address" name="current_address" id="presentAddress" required>
+                        </div>
+                    </div>
+
+                    <!-- Barangay & Applicant Contact Number -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Barangay <span style="color: #dc2626;">*</span></label>
+                            <select class="form-select" name="barangay" id="barangay" required>
+                                <option value="">Select barangay...</option>
+                                {% for barangay in barangays %}
+                                <option value="{{ barangay }}">{{ barangay }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Applicant Contact Number <span style="color: #dc2626;">*</span></label>
+                            <input type="tel" class="form-input ph-phone" placeholder="09XXXXXXXXXX" pattern="09[0-9]{9}" name="phone_number" id="phoneNumber" required>
+                            <span class="help-text">11 digits: 09XXXXXXXXXX</span>
+                        </div>
+                    </div>
+
+                    <!-- Name of Spouse & Spouse Contact No. -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Name of Spouse (if applicable)</label>
+                            <input type="text" class="form-input" placeholder="Spouse's full name" name="spouse_name" id="spouseName">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Spouse Contact Number</label>
+                            <input type="tel" class="form-input ph-phone" placeholder="09XXXXXXXXXX" pattern="09[0-9]{9}" name="spouse_phone" id="spousePhone">
+                            <span class="help-text">11 digits: 09XXXXXXXXXX</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION B: HOUSEHOLD MEMBERS -->
+                <div style="margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid #e5e7eb;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <div style="font-weight: 700; color: #1f2937; font-size: 0.9rem; text-transform: uppercase;">B. HOUSEHOLD MEMBERS</div>
+                        <button type="button" onclick="addHouseholdMember()" style="background: #1e40af; color: white; padding: 0.5rem 1rem; border: none; border-radius: 0.375rem; cursor: pointer; font-size: 0.875rem; font-weight: 600;">+ Add Member</button>
+                    </div>
+
+                    <!-- Household Members Container -->
+                    <div id="householdMembersContainer"></div>
+
+                    <div class="form-group" style="margin-top: 1rem;">
+                        <label class="form-label">Household Size <span style="color: #dc2626;">*</span></label>
+                        <input type="number" class="form-input" placeholder="Auto-calculated" name="household_size" id="householdSize" min="1" value="1" readonly style="background-color: #f3f4f6; cursor: not-allowed;">
+                    </div>
+                </div>
+
+                <!-- SECTION C: APPLICANTS FAMILY INCOME -->
+                <div style="margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid #e5e7eb;">
+                    <div style="font-weight: 700; color: #1f2937; font-size: 0.9rem; margin-bottom: 1rem; text-transform: uppercase;">C. APPLICANTS FAMILY INCOME</div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Occupation <span style="color: #dc2626;">*</span></label>
+                            <input type="text" class="form-input" placeholder="Job title or main occupation" name="occupation" id="occupation" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Status of Employment</label>
+                            <select class="form-select" name="employment_status" id="employmentStatus">
+                                <option value="">Select status...</option>
+                                <option value="employed">Employed</option>
+                                <option value="self-employed">Self-Employed</option>
+                                <option value="unemployed">Unemployed</option>
+                                <option value="retired">Retired</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Monthly Income (₱) <span style="color: #dc2626;">*</span></label>
+                            <input type="text" class="form-input" inputmode="decimal" pattern="[0-9,]*" placeholder="e.g. 8500" name="monthly_income" id="monthlyIncome" required>
+                            <span class="help-text">Gross monthly household income</span>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Years Residing in Talisay</label>
+                            <input type="number" class="form-input" placeholder="Number of years" name="years_talisay" id="yearsTalisay" min="0">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Danger Zone Question -->
+                <div style="margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid #e5e7eb; text-align: center;">
+                    <div style="font-weight: 700; color: #1f2937; font-size: 0.9rem; margin-bottom: 1rem; text-transform: uppercase;">Is the applicant in a danger zone?</div>
+                    <div style="display: flex; gap: 1rem; justify-content: center;">
+                        <button type="button" onclick="setDangerZone(true)" id="btnDangerZoneYes" style="background: white; border: 2px solid #1e40af; color: #1e40af; padding: 0.75rem 2rem; border-radius: 0.375rem; cursor: pointer; font-weight: 600; transition: all 0.3s;">
+                            Yes
                         </button>
-                        <button type="button" class="channel-btn active" data-channel="walk_in" onclick="selectChannel('walk_in')">
-                            <span class="channel-btn-label">Channel C</span>
-                            <span class="channel-btn-sublabel">Walk-in</span>
+                        <button type="button" onclick="setDangerZone(false)" id="btnDangerZoneNo" style="background: white; border: 2px solid #dc2626; color: #dc2626; padding: 0.75rem 2rem; border-radius: 0.375rem; cursor: pointer; font-weight: 600; transition: all 0.3s;">
+                            No
                         </button>
                     </div>
-                    <input type="hidden" id="channelInput" name="channel" value="walk_in">
+                    <input type="hidden" id="isDangerZone" name="is_danger_zone" value="">
                 </div>
 
-                <!-- Channel B/C: Walk-in Applicant Fields -->
-                <div class="form-grid" id="formFields">
-                    <div class="form-group">
-                        <label class="form-label">Full Name *</label>
-                        <input type="text" class="form-input" placeholder="Last, First, Middle" name="full_name" id="walkinFullName" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Barangay *</label>
-                        <select class="form-select" name="barangay" id="walkinBarangay" required>
-                            <option value="">Select barangay...</option>
-                            {% for barangay in barangays %}
-                            <option value="{{ barangay }}">{{ barangay }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Monthly Income (₱) *</label>
-                        <input type="text" class="form-input" inputmode="decimal" pattern="[0-9,]*" placeholder="e.g. 8500" name="monthly_income" id="walkinIncome" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Household Size *</label>
-                        <input type="number" class="form-input" placeholder="No. of members" name="household_size" id="walkinHousehold" min="1" value="1" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Years Residing *</label>
-                        <input type="number" class="form-input" placeholder="Years at current address" name="years_residing" id="walkinYears" min="0" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Contact Number</label>
-                        <input type="tel" class="form-input ph-phone" placeholder="09XXXXXXXXXX" pattern="09[0-9]{9}" name="phone_number" id="walkinPhone">
-                        <span class="help-text">11 digits: 09XXXXXXXXXX (optional)</span>
-                    </div>
-                    <div class="form-group" style="grid-column: span 2;">
-                        <label class="form-label">Current Address *</label>
-                        <input type="text" class="form-input" placeholder="Current residential address" name="current_address" id="walkinAddress" required>
+                <!-- Danger Zone Information (Hidden by default) -->
+                <div id="dangerZoneGroup" style="display: none;">
+                    <div class="danger-zone-box">
+
+                        <div class="form-row full">
+                            <div class="form-group">
+                                <label class="form-label">Danger Zone Type <span style="color: #dc2626;">*</span></label>
+                                <select class="form-select" name="danger_zone_type" id="dangerZoneType">
+                                    <option value="">Select type...</option>
+                                    <option value="riverside">Riverside / Riverbank</option>
+                                    <option value="flood_prone">Flood-Prone Area</option>
+                                    <option value="landslide">Landslide-Prone Area</option>
+                                    <option value="coastal">Coastal / Near Shoreline</option>
+                                    <option value="railroad">Near Railroad Tracks</option>
+                                    <option value="road_right_of_way">Road Right of Way</option>
+                                    <option value="other">Other Danger Zone</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row full">
+                            <div class="form-group">
+                                <label class="form-label">Danger Zone Location Details <span style="color: #dc2626;">*</span></label>
+                                <input type="text" class="form-input" placeholder="Describe the specific danger zone location..." name="danger_zone_location" id="dangerZoneLocation">
+                                <span class="help-text">For CDRRMO verification</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="form-group" id="dangerZoneGroup" style="display: none;">
-                    <label class="form-label">Danger Zone Type *</label>
-                    <select class="form-select" name="danger_zone_type" id="dangerZoneType">
-                        <option value="">Select type...</option>
-                        <option value="riverside">Riverside / Riverbank</option>
-                        <option value="flood_prone">Flood-Prone Area</option>
-                        <option value="landslide">Landslide-Prone Area</option>
-                        <option value="coastal">Coastal / Near Shoreline</option>
-                        <option value="railroad">Near Railroad Tracks</option>
-                        <option value="road_right_of_way">Road Right of Way</option>
-                        <option value="other">Other Danger Zone</option>
-                    </select>
-                </div>
-                
-                <div class="form-group" id="dangerZoneLocationGroup" style="display: none;">
-                    <label class="form-label">Danger Zone Location Details *</label>
-                    <input type="text" class="form-input" placeholder="Describe the specific danger zone location..." name="danger_zone_location" id="dangerZoneLocation">
-                    <span class="help-text">For CDRRMO verification</span>
+                <p style="font-size: 0.8125rem; color: #6b7280; margin-bottom: 1rem; margin-top: 1.5rem;">Document Checklist (Optional) - Check documents already submitted by the applicant:</p>
+
+                <div class="document-grid" id="docChecklistRegister">
+                    <label class="document-item incomplete" onclick="toggleRegDocCheckbox(this)">
+                        <input type="checkbox" name="doc_brgy_residency" value="true" style="display: none;">
+                        <svg style="width: 1rem; height: 1rem; flex-shrink: 0; color: #ef4444;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                        Brgy. Certificate of Residency
+                    </label>
+                    <label class="document-item incomplete" onclick="toggleRegDocCheckbox(this)">
+                        <input type="checkbox" name="doc_brgy_indigency" value="true" style="display: none;">
+                        <svg style="width: 1rem; height: 1rem; flex-shrink: 0; color: #ef4444;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                        Brgy. Certificate of Indigency
+                    </label>
+                    <label class="document-item incomplete" onclick="toggleRegDocCheckbox(this)">
+                        <input type="checkbox" name="doc_cedula" value="true" style="display: none;">
+                        <svg style="width: 1rem; height: 1rem; flex-shrink: 0; color: #ef4444;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                        Cedula
+                    </label>
+                    <label class="document-item incomplete" onclick="toggleRegDocCheckbox(this)">
+                        <input type="checkbox" name="doc_police_clearance" value="true" style="display: none;">
+                        <svg style="width: 1rem; height: 1rem; flex-shrink: 0; color: #ef4444;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                        Police Clearance
+                    </label>
+                    <label class="document-item incomplete" onclick="toggleRegDocCheckbox(this)">
+                        <input type="checkbox" name="doc_no_property" value="true" style="display: none;">
+                        <svg style="width: 1rem; height: 1rem; flex-shrink: 0; color: #ef4444;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                        Certificate of No Property
+                    </label>
+                    <label class="document-item incomplete" onclick="toggleRegDocCheckbox(this)">
+                        <input type="checkbox" name="doc_2x2_picture" value="true" style="display: none;">
+                        <svg style="width: 1rem; height: 1rem; flex-shrink: 0; color: #ef4444;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                        2x2 Picture
+                    </label>
+                    <label class="document-item incomplete" onclick="toggleRegDocCheckbox(this)">
+                        <input type="checkbox" name="doc_sketch_location" value="true" style="display: none;">
+                        <svg style="width: 1rem; height: 1rem; flex-shrink: 0; color: #ef4444;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                        Sketch of House Location
+                    </label>
                 </div>
 
-                <!-- Document Checklist for Registration -->
-                <div id="docChecklistRegister" style="border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-top: 1rem;">
-                    <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.025em;">Document Checklist (Optional)</h4>
-                    <p style="font-size: 0.75rem; color: #64748b; margin-bottom: 0.75rem;">Check documents already submitted by the applicant:</p>
-                    <div class="document-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem;">
-                        <label class="document-item incomplete" style="cursor: pointer; display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; border-radius: 0.375rem; font-size: 0.8125rem;" onclick="toggleRegDocCheckbox(this)">
-                            <input type="checkbox" name="doc_brgy_residency" value="true" style="display: none;">
-                            <svg class="document-icon" style="width: 1rem; height: 1rem; flex-shrink: 0; color: #ef4444;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>
-                            </svg>
-                            Brgy. Certificate of Residency
-                        </label>
-                        <label class="document-item incomplete" style="cursor: pointer; display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; border-radius: 0.375rem; font-size: 0.8125rem;" onclick="toggleRegDocCheckbox(this)">
-                            <input type="checkbox" name="doc_brgy_indigency" value="true" style="display: none;">
-                            <svg class="document-icon" style="width: 1rem; height: 1rem; flex-shrink: 0; color: #ef4444;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>
-                            </svg>
-                            Brgy. Certificate of Indigency
-                        </label>
-                        <label class="document-item incomplete" style="cursor: pointer; display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; border-radius: 0.375rem; font-size: 0.8125rem;" onclick="toggleRegDocCheckbox(this)">
-                            <input type="checkbox" name="doc_cedula" value="true" style="display: none;">
-                            <svg class="document-icon" style="width: 1rem; height: 1rem; flex-shrink: 0; color: #ef4444;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>
-                            </svg>
-                            Cedula
-                        </label>
-                        <label class="document-item incomplete" style="cursor: pointer; display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; border-radius: 0.375rem; font-size: 0.8125rem;" onclick="toggleRegDocCheckbox(this)">
-                            <input type="checkbox" name="doc_police_clearance" value="true" style="display: none;">
-                            <svg class="document-icon" style="width: 1rem; height: 1rem; flex-shrink: 0; color: #ef4444;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>
-                            </svg>
-                            Police Clearance
-                        </label>
-                        <label class="document-item incomplete" style="cursor: pointer; display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; border-radius: 0.375rem; font-size: 0.8125rem;" onclick="toggleRegDocCheckbox(this)">
-                            <input type="checkbox" name="doc_no_property" value="true" style="display: none;">
-                            <svg class="document-icon" style="width: 1rem; height: 1rem; flex-shrink: 0; color: #ef4444;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>
-                            </svg>
-                            Certificate of No Property
-                        </label>
-                        <label class="document-item incomplete" style="cursor: pointer; display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; border-radius: 0.375rem; font-size: 0.8125rem;" onclick="toggleRegDocCheckbox(this)">
-                            <input type="checkbox" name="doc_2x2_picture" value="true" style="display: none;">
-                            <svg class="document-icon" style="width: 1rem; height: 1rem; flex-shrink: 0; color: #ef4444;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>
-                            </svg>
-                            2x2 Picture
-                        </label>
-                        <label class="document-item incomplete" style="cursor: pointer; display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; border-radius: 0.375rem; font-size: 0.8125rem;" onclick="toggleRegDocCheckbox(this)">
-                            <input type="checkbox" name="doc_sketch_location" value="true" style="display: none;">
-                            <svg class="document-icon" style="width: 1rem; height: 1rem; flex-shrink: 0; color: #ef4444;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>
-                            </svg>
-                            Sketch of House Location
-                        </label>
-                    </div>
-                </div>
-
-                <div class="info-note" id="regularNote">
-                    <p class="info-note-text">
-                        System will automatically assign a reference number and send SMS to the applicant upon saving.
-                    </p>
-                </div>
-                
-                <div class="info-note" id="cdrrmoNote" style="display: none; background: #fef3c7; border-color: #fcd34d;">
-                    <p class="info-note-text" style="color: #92400e;">
-                        ⚠️ Danger zone applicants will be marked as <strong>"Pending CDRRMO"</strong> until certified by CDRRMO.
-                    </p>
+                <!-- Info Notes -->
+                <div class="danger-warning" id="cdrrmoNote">
+                    <p><strong>⚠️ CDRRMO Verification Required</strong><br>Danger zone applicants will be marked as <strong>"Pending CDRRMO Certification"</strong> until verified by the ronda team.</p>
+                    <p style="margin-top: 0.75rem; border-top: 1px solid #f59e0b; padding-top: 0.75rem;">System will automatically assign a reference number and send SMS to the applicant upon saving.</p>
                 </div>
             </form>
         </div>
@@ -2997,9 +3131,10 @@
     function openAddModal() {
         const modal = document.getElementById('addModal');
         if (modal) modal.classList.add('active');
-        // Reset to default channel (walk_in)
-        selectChannel('walk_in');
         resetRegDocChecklist();
+        // Initialize household members
+        householdMemberCount = 1;
+        renderHouseholdMembers();
     }
 
     function closeAddModal() {
@@ -3007,14 +3142,139 @@
         const form = document.getElementById('addApplicantForm');
         if (modal) modal.classList.remove('active');
         if (form) form.reset();
-        selectChannel('walk_in');
         resetRegDocChecklist();
+        // Reset danger zone selection
+        setDangerZone(null);
     }
+
+    function setDangerZone(isDanger) {
+        const dangerZoneGroup = document.getElementById('dangerZoneGroup');
+        const isDangerInput = document.getElementById('isDangerZone');
+        const btnYes = document.getElementById('btnDangerZoneYes');
+        const btnNo = document.getElementById('btnDangerZoneNo');
+        const dangerZoneType = document.getElementById('dangerZoneType');
+        const dangerZoneLocation = document.getElementById('dangerZoneLocation');
+
+        if (isDanger === true) {
+            // YES clicked
+            dangerZoneGroup.style.display = 'block';
+            isDangerInput.value = 'true';
+            btnYes.style.background = '#1e40af';
+            btnYes.style.color = 'white';
+            btnNo.style.background = 'white';
+            btnNo.style.color = '#dc2626';
+            // Set required
+            dangerZoneType.required = true;
+            dangerZoneLocation.required = true;
+        } else if (isDanger === false) {
+            // NO clicked
+            dangerZoneGroup.style.display = 'none';
+            isDangerInput.value = 'false';
+            btnYes.style.background = 'white';
+            btnYes.style.color = '#1e40af';
+            btnNo.style.background = '#dc2626';
+            btnNo.style.color = 'white';
+            // Clear and remove required
+            dangerZoneType.value = '';
+            dangerZoneLocation.value = '';
+            dangerZoneType.required = false;
+            dangerZoneLocation.required = false;
+        } else {
+            // Reset
+            dangerZoneGroup.style.display = 'none';
+            isDangerInput.value = '';
+            btnYes.style.background = 'white';
+            btnYes.style.color = '#1e40af';
+            btnNo.style.background = 'white';
+            btnNo.style.color = '#dc2626';
+            dangerZoneType.required = false;
+            dangerZoneLocation.required = false;
+        }
+    }
+
+    let householdMemberCount = 0;
+
+    function updateHouseholdSize() {
+        // Count filled household members (at least one field has data)
+        let filledCount = 0;
+        for (let i = 1; i <= householdMemberCount; i++) {
+            const nameInput = document.querySelector(`input[name="hh_member_${i}_name"]`);
+            if (nameInput && nameInput.value.trim()) {
+                filledCount++;
+            }
+        }
+        // Total = applicant (1) + filled members
+        const totalSize = 1 + filledCount;
+        document.getElementById('householdSize').value = totalSize;
+    }
+
+    function renderHouseholdMembers() {
+        const container = document.getElementById('householdMembersContainer');
+        container.innerHTML = '';
+
+        for (let i = 1; i <= householdMemberCount; i++) {
+            const memberDiv = document.createElement('div');
+            memberDiv.id = `hhMember${i}`;
+            memberDiv.className = 'form-row';
+            memberDiv.style.gridTemplateColumns = '1fr 1fr 0.6fr 1fr 0.8fr';
+            memberDiv.style.gap = '0.75rem';
+            memberDiv.style.marginBottom = '1rem';
+            memberDiv.style.alignItems = 'flex-end';
+            memberDiv.innerHTML = `
+                <div class="form-group">
+                    <label class="form-label">Name</label>
+                    <input type="text" class="form-input hh-member-field" placeholder="Full name" name="hh_member_${i}_name" onchange="updateHouseholdSize()">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Relationship To Applicant</label>
+                    <input type="text" class="form-input hh-member-field" placeholder="e.g., Spouse" name="hh_member_${i}_relationship" onchange="updateHouseholdSize()">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Age</label>
+                    <input type="number" class="form-input hh-member-field" placeholder="Age" name="hh_member_${i}_age" min="0" onchange="updateHouseholdSize()">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Civil Status</label>
+                    <input type="text" class="form-input hh-member-field" placeholder="e.g., Married" name="hh_member_${i}_status" onchange="updateHouseholdSize()">
+                </div>
+                <button type="button" onclick="deleteHouseholdMember(${i})" style="background: #ef4444; color: white; padding: 0.5rem 0.75rem; border: none; border-radius: 0.375rem; cursor: pointer; font-size: 0.75rem; font-weight: 600; white-space: nowrap; align-self: flex-end;">Delete</button>
+            `;
+            container.appendChild(memberDiv);
+        }
+        updateHouseholdSize();
+    }
+
+    function addHouseholdMember() {
+        householdMemberCount++;
+        renderHouseholdMembers();
+    }
+
+    function deleteHouseholdMember(index) {
+        if (householdMemberCount <= 1) {
+            alert('Must have at least one household member');
+            return;
+        }
+        householdMemberCount--;
+        renderHouseholdMembers();
+    }
+
 
     function submitAddApplicant(event) {
         event.preventDefault();
         const form = document.getElementById('addApplicantForm');
         const channel = document.getElementById('channelInput').value;
+
+        // Capitalize first letter function
+        const capitalizeFirst = (str) => {
+            if (!str) return str;
+            return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+        };
+
+        // Combine name fields into full_name
+        const lastName = capitalizeFirst(document.getElementById('lastName').value.trim());
+        const firstName = capitalizeFirst(document.getElementById('firstName').value.trim());
+        const middleName = capitalizeFirst(document.getElementById('middleName').value.trim());
+        const fullName = `${lastName}, ${firstName}${middleName ? ' ' + middleName : ''}`;
 
         // Remove commas from income fields before creating FormData
         const incomeFields = form.querySelectorAll('input[name*="income"]');
@@ -3024,45 +3284,79 @@
 
         const formData = new FormData(form);
 
-        // Validate phone numbers before submitting
-        if (channel === 'landowner') {
-            // Validate landowner phone if provided
-            const landownerPhone = document.getElementById('landownerPhoneWalkin');
-            if (landownerPhone && landownerPhone.value) {
-                const phoneClean = landownerPhone.value.replace(/\D/g, '');
-                if (phoneClean.length !== 11 || !phoneClean.startsWith('09')) {
-                    alert('Invalid landowner phone format.\nRequired: 09XXXXXXXXXX (11 digits)');
-                    return;
-                }
-            }
+        // Add combined full_name
+        formData.set('full_name', fullName);
 
-            // Validate all ISF phone numbers (if provided)
-            const isfPhones = form.querySelectorAll('input[name="isf_phone[]"]');
-            for (let phone of isfPhones) {
-                if (phone.value) {
-                    const phoneClean = phone.value.replace(/\D/g, '');
-                    if (phoneClean.length !== 11 || !phoneClean.startsWith('09')) {
-                        alert('Invalid phone format in ISF records.\nRequired: 09XXXXXXXXXX (11 digits)');
-                        return;
-                    }
-                }
+        // Capitalize text fields in formData
+        ['place_of_birth', 'current_address', 'spouse_name', 'occupation', 'danger_zone_location'].forEach(fieldName => {
+            if (formData.has(fieldName)) {
+                formData.set(fieldName, capitalizeFirst(formData.get(fieldName)));
             }
-        } else if (channel === 'walk_in' || channel === 'danger_zone') {
-            // Validate walk-in phone if provided
-            const walkinPhone = document.getElementById('walkinPhone');
-            if (walkinPhone && walkinPhone.value) {
-                const phoneClean = walkinPhone.value.replace(/\D/g, '');
-                if (phoneClean.length !== 11 || !phoneClean.startsWith('09')) {
-                    alert('Invalid phone format.\nRequired: 09XXXXXXXXXX (11 digits)');
-                    return;
-                }
+        });
+
+        // Validate phone number
+        const phoneNumber = document.getElementById('phoneNumber');
+        if (phoneNumber && phoneNumber.value) {
+            const phoneClean = phoneNumber.value.replace(/\D/g, '');
+            if (phoneClean.length !== 11 || !phoneClean.startsWith('09')) {
+                alert('Invalid phone format.\nRequired: 09XXXXXXXXXX (11 digits)');
+                return;
             }
         }
 
-        // Submit to walkin_register endpoint (all channels now use this)
+        // Validate household members - if any field is filled, all must be filled
+        for (let i = 1; i <= householdMemberCount; i++) {
+            const nameField = document.querySelector(`input[name="hh_member_${i}_name"]`);
+            const relationshipField = document.querySelector(`input[name="hh_member_${i}_relationship"]`);
+            const ageField = document.querySelector(`input[name="hh_member_${i}_age"]`);
+            const statusField = document.querySelector(`input[name="hh_member_${i}_status"]`);
+
+            const hasName = nameField && nameField.value.trim();
+            const hasRelationship = relationshipField && relationshipField.value.trim();
+            const hasAge = ageField && ageField.value.trim();
+            const hasStatus = statusField && statusField.value.trim();
+
+            const fieldsWithData = [hasName, hasRelationship, hasAge, hasStatus].filter(v => v).length;
+
+            // If any field has data, all must be filled
+            if (fieldsWithData > 0 && fieldsWithData < 4) {
+                alert(`Household Member ${i}: Either fill all fields or delete this member.`);
+                return;
+            }
+        }
+
+        // Validate danger zone selection and fields
+        const isDangerZoneVal = document.getElementById('isDangerZone').value;
+
+        if (!isDangerZoneVal) {
+            alert('Please select if the applicant is in a danger zone (Yes or No)');
+            return;
+        }
+
+        // Clear danger zone fields if applicant is NOT in danger zone
+        if (isDangerZoneVal === 'false') {
+            formData.set('danger_zone_type', '');
+            formData.set('danger_zone_location', '');
+        }
+
+        // If applicant is in danger zone, validate details
+        if (isDangerZoneVal === 'true') {
+            const dangerZoneType = document.getElementById('dangerZoneType').value;
+            const dangerZoneLocation = document.getElementById('dangerZoneLocation').value.trim();
+
+            if (!dangerZoneType) {
+                alert('Please select a danger zone type');
+                return;
+            }
+            if (!dangerZoneLocation) {
+                alert('Please enter danger zone location details');
+                return;
+            }
+        }
+
+        // Submit to walkin_register endpoint
         let endpoint = '{% url "intake:walkin_register" request.user.position %}';
 
-        // Submit form to appropriate endpoint
         fetch(endpoint, {
             method: 'POST',
             body: formData,
@@ -3073,7 +3367,7 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert(data.message || 'Applicant registered successfully');
+                alert('✓ ' + (data.message || 'Applicant registered successfully'));
                 closeAddModal();
                 location.reload();
             } else {
@@ -3088,66 +3382,51 @@
     function selectChannel(channel) {
         // Update button states
         document.querySelectorAll('.channel-btn').forEach(btn => {
-            btn.classList.remove('active');
-            if (btn.dataset.channel === channel) {
-                btn.classList.add('active');
-            }
+            btn.classList.toggle('active', btn.dataset.channel === channel);
         });
 
         // Update hidden input
         const channelInput = document.getElementById('channelInput');
         if (channelInput) channelInput.value = channel;
 
-        // Get all the elements
-        const formFields = document.getElementById('formFields');
+        // Get danger zone section
         const dangerZoneGroup = document.getElementById('dangerZoneGroup');
-        const dangerZoneLocationGroup = document.getElementById('dangerZoneLocationGroup');
-        const cdrrmoNote = document.getElementById('cdrrmoNote');
-        const regularNote = document.getElementById('regularNote');
-        const submitBtn = document.getElementById('submitBtn');
         const dangerZoneType = document.getElementById('dangerZoneType');
         const dangerZoneLocation = document.getElementById('dangerZoneLocation');
-        const docChecklistRegister = document.getElementById('docChecklistRegister');
-
-        // Channel B/C (walk-in) fields
-        const walkinFields = ['walkinFullName', 'walkinBarangay', 'walkinIncome', 'walkinHousehold', 'walkinYears', 'walkinAddress'];
+        const regularNote = document.getElementById('regularNote');
+        const cdrrmoNote = document.getElementById('cdrrmoNote');
 
         if (channel === 'danger_zone') {
-            // Channel B: Show danger zone fields and document checklist
-            formFields.style.display = 'grid';
-            dangerZoneGroup.style.display = 'block';
-            dangerZoneLocationGroup.style.display = 'block';
-            cdrrmoNote.style.display = 'block';
-            regularNote.style.display = 'none';
-            if (docChecklistRegister) docChecklistRegister.style.display = 'block';
-            submitBtn.disabled = false;
-
-            // Add required to walk-in and danger zone fields
-            walkinFields.forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.setAttribute('required', 'required');
-            });
-            if (dangerZoneType) dangerZoneType.setAttribute('required', 'required');
-            if (dangerZoneLocation) dangerZoneLocation.setAttribute('required', 'required');
+            // Show danger zone fields
+            if (dangerZoneGroup) dangerZoneGroup.style.display = 'block';
+            if (dangerZoneType) dangerZoneType.required = true;
+            if (dangerZoneLocation) dangerZoneLocation.required = true;
+            if (regularNote) regularNote.style.display = 'none';
+            if (cdrrmoNote) cdrrmoNote.style.display = 'block';
         } else {
-            // Channel C (walk_in): Regular walk-in form with document checklist
-            formFields.style.display = 'grid';
-            dangerZoneGroup.style.display = 'none';
-            dangerZoneLocationGroup.style.display = 'none';
-            cdrrmoNote.style.display = 'none';
-            regularNote.style.display = 'block';
-            if (docChecklistRegister) docChecklistRegister.style.display = 'block';
-            submitBtn.disabled = false;
-
-            // Add required to walk-in fields, remove from danger zone
-            walkinFields.forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.setAttribute('required', 'required');
-            });
-            if (dangerZoneType) dangerZoneType.removeAttribute('required');
-            if (dangerZoneLocation) dangerZoneLocation.removeAttribute('required');
+            // Hide danger zone fields
+            if (dangerZoneGroup) dangerZoneGroup.style.display = 'none';
+            if (dangerZoneType) dangerZoneType.required = false;
+            if (dangerZoneLocation) dangerZoneLocation.required = false;
+            if (regularNote) regularNote.style.display = 'block';
+            if (cdrrmoNote) cdrrmoNote.style.display = 'none';
         }
     }
+
+    // Document checkbox styling
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.document-item input').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                this.parentElement.classList.toggle('checked', this.checked);
+            });
+        });
+
+        // Attach income formatter to the new income field
+        const incomeInput = document.getElementById('monthlyIncome');
+        if (incomeInput) {
+            attachIncomeFormatter(incomeInput);
+        }
+    });
 
     // Add another ISF record entry for Channel A
     let isfCount = 1;
@@ -3218,20 +3497,19 @@
     // Toggle document checkbox in registration form
     function toggleRegDocCheckbox(label) {
         const checkbox = label.querySelector('input[type="checkbox"]');
-        const icon = label.querySelector('.document-icon');
-        
+        const svg = label.querySelector('svg');
         checkbox.checked = !checkbox.checked;
-        
+
         if (checkbox.checked) {
-            label.classList.remove('incomplete');
-            label.classList.add('complete');
-            icon.innerHTML = '<circle cx="12" cy="12" r="10"></circle><path d="M9 12l2 2 4-4"></path>';
-            icon.style.color = '#22c55e';
+            // Checked - show checkmark
+            label.classList.add('checked');
+            svg.innerHTML = '<polyline points="20 6 9 17 4 12"></polyline>';
+            svg.style.color = '#10b981';
         } else {
-            label.classList.remove('complete');
-            label.classList.add('incomplete');
-            icon.innerHTML = '<circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>';
-            icon.style.color = '#ef4444';
+            // Unchecked - show X
+            label.classList.remove('checked');
+            svg.innerHTML = '<circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>';
+            svg.style.color = '#ef4444';
         }
     }
     
@@ -3241,12 +3519,14 @@
         if (checklist) {
             checklist.querySelectorAll('.document-item').forEach(label => {
                 const checkbox = label.querySelector('input[type="checkbox"]');
-                const icon = label.querySelector('.document-icon');
+                const svg = label.querySelector('svg');
                 checkbox.checked = false;
-                label.classList.remove('complete');
-                label.classList.add('incomplete');
-                icon.innerHTML = '<circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>';
-                icon.style.color = '#ef4444';
+                label.classList.remove('checked');
+                label.classList.remove('incomplete');
+                if (svg) {
+                    svg.innerHTML = '<circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>';
+                    svg.style.color = '#ef4444';
+                }
             });
         }
     }

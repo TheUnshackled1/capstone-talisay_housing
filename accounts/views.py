@@ -26,7 +26,6 @@ def login_view(request):
         'head': 'Head / First Member',
         'oic': 'OIC-THA',
         'second_member': 'Second Member',
-        'third_member': 'Third Member',
         'fourth_member': 'Fourth Member',
         'fifth_member': 'Fifth Member',
         'caretaker': 'Caretaker',
@@ -91,7 +90,6 @@ def dashboard_redirect(request):
         'head': 'accounts:dashboard_head',
         'oic': 'accounts:dashboard_oic',
         'second_member': 'accounts:dashboard_second_member',
-        'third_member': 'accounts:dashboard_third_member',
         'fourth_member': 'accounts:dashboard_fourth_member',
         'fifth_member': 'accounts:dashboard_fifth_member',
         'caretaker': 'accounts:dashboard_caretaker',
@@ -820,44 +818,6 @@ def dashboard_second_member(request):
 
 
 @login_required
-def dashboard_third_member(request):
-    """
-    Dashboard for Third Member (Roland Jay S. Olvido)
-    Responsibilities: M1 (census, field verification), M2 (signatory routing), M4 (site inspection), M5 (violation investigation)
-    """
-    if request.user.position != 'third_member':
-        messages.error(request, 'Access denied. This dashboard is for the Third Member position only.')
-        return redirect('accounts:dashboard')
-
-    # Shared stat card data
-    total_applicants = Applicant.objects.count()
-    awaiting_head_signature = Application.objects.filter(status='head_signed').count()
-    total_housing_units = HousingUnit.objects.count()
-    this_month_start = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    approved_this_month = Application.objects.filter(
-        status='awarded',
-        updated_at__gte=this_month_start
-    ).count()
-
-    context = {
-        'page_title': 'Third Member Dashboard',
-        'user_position': 'third_member',
-        'total_applicants': total_applicants,  # Shared stat card
-        'awaiting_signature': awaiting_head_signature,  # Shared stat card
-        'housing_units': total_housing_units,  # Shared stat card
-        'approved_this_month': approved_this_month,  # Shared stat card
-        'census_records': 0,  # TODO: Total census records
-        'pending_verification': 0,  # TODO: Applicants awaiting field verification
-        'site_inspections': 0,  # TODO: Inspections scheduled/due
-        'open_investigations': 0,  # TODO: Active violation investigations
-        'routing_queue': [],  # TODO: Documents to route OIC→Head
-        'verification_queue': [],  # TODO: Applicants needing field verification
-        'inspection_schedule': [],  # TODO: Site inspections due
-        'active_investigations': [],  # TODO: Violation cases under investigation
-    }
-    return render(request, 'accounts/dashboard.html', context)
-
-
 @login_required
 def dashboard_fourth_member(request):
     """

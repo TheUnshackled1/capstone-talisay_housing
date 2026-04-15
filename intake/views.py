@@ -120,16 +120,16 @@ def update_eligibility(request, position):
         applicant.eligibility_checked_by = request.user
         applicant.eligibility_checked_at = timezone.now()
         applicant.save()
-        
-        # Add to appropriate queue
-        queue_type = 'priority' if applicant.channel in ['landowner', 'danger_zone'] else 'walk_in'
-        
+
+        # Add to priority queue (all applicants are danger zone)
+        queue_type = 'priority'
+
         # Get next position in queue
         last_position = QueueEntry.objects.filter(
             queue_type=queue_type,
             status='active'
         ).order_by('-position').values_list('position', flat=True).first() or 0
-        
+
         QueueEntry.objects.create(
             applicant=applicant,
             queue_type=queue_type,
@@ -285,8 +285,7 @@ def update_applicant(request, position):
                     if cdrrmo_status == 'certified':
                         applicant.status = 'pending'  # Ready for eligibility check
                     elif cdrrmo_status == 'not_certified':
-                        applicant.status = 'pending'  # Move to walk-in queue instead
-                        applicant.channel = 'walk_in'  # Downgrade to regular walk-in
+                        applicant.status = 'disqualified'  # Not verified as danger zone
                 except CDRRMOCertification.DoesNotExist:
                     pass
 
@@ -399,33 +398,24 @@ def update_cdrrmo_certification(request, position):
                 send_sms(applicant.phone_number, sms_msg, 'cdrrmo_certified', applicant.id)
 
         else:  # not_certified
-            # CDRRMO NOT certified → Walk-in FIFO Queue (penalty)
-            applicant.status = 'eligible'
-            applicant.channel = 'C'  # Downgrade to regular walk-in
+            # CDRRMO NOT certified → Disqualified
+            applicant.status = 'disqualified'
             applicant.save()
 
-            # Create queue entry (walk-in FIFO)
-            queue_entry = QueueEntry.objects.create(
-                applicant=applicant,
-                queue_type='walk_in',
-                status='active',
-                position=QueueEntry.objects.filter(queue_type='walk_in', status='active').count() + 1
-            )
-
-            message = f'❌ {applicant.full_name} NOT CERTIFIED. Moved to Walk-in FIFO Queue (Position {queue_entry.position}).'
+            message = f'❌ {applicant.full_name} NOT CERTIFIED. Applicant disqualified.'
 
             # Send SMS: Not certified
             if applicant.phone_number:
-                sms_msg = f'Your location claim could not be verified as a danger zone. You have been placed in Walk-in FIFO Queue Position {queue_entry.position}. Please visit THA office.'
+                sms_msg = f'Your location claim could not be verified as a danger zone. Your application has been disqualified. Please visit THA office for more information.'
                 send_sms(applicant.phone_number, sms_msg, 'cdrrmo_not_certified', applicant.id)
 
-        return JsonResponse({
-            'success': True,
-            'message': message,
-            'queue_type': queue_entry.queue_type,
-            'queue_position': queue_entry.position,
-            'decision': decision
-        })
+            return JsonResponse({
+                'success': True,
+                'message': message,
+                'decision': decision
+            })
+
+        queue_entry = None
 
     except Applicant.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Applicant not found'})
@@ -542,10 +532,9 @@ def applicants_list(request, position):
     """
     Module 1: Applicant Intake Management
     Accessible to: Second Member (Joie), Fourth Member (Jocel)
-    Unified view for walk-in applicant intake channels:
+    Unified view for danger zone applicant intake:
 
     Channel B (Danger Zone) → Shows Applicants with channel='danger_zone'
-    Channel C (Walk-in) → Shows Applicants with channel='walk_in'
 
     Displays in FIFO order (oldest first by registration date).
 
@@ -559,14 +548,14 @@ def applicants_list(request, position):
     if request.user.position not in allowed_positions:
         messages.error(request, 'Access denied. This module is for authorized staff only.')
         return redirect('accounts:dashboard')
-    
+
     # Determine if user has full access (can modify) or read-only (field/oversight)
     can_modify = request.user.position in ['second_member', 'fourth_member']
-    
-    # Build unified applicants list from multiple sources
+
+    # Build applicants list from danger zone channel only
     applicants = []
-    
-    # ====== CHANNEL A: Landowner Submissions (REMOVED) ======
+
+    # ====== CHANNEL B: Danger Zone Applicants ======
     # Landowner submission flow has been removed
     # Removed ISFRecord queries since LandownerSubmission model deleted
     isf_records = []
@@ -658,10 +647,10 @@ def applicants_list(request, position):
             'hasPhone': bool(isf.phone_number),
         })
     
-    # ====== CHANNEL B & C: Walk-in Applicants ======
-    # Get all direct applicants (Channel B: danger_zone, Channel C: walk_in)
+    # ====== CHANNEL B: Danger Zone Applicants ======
+    # Get all danger zone applicants
     walk_in_applicants = Applicant.objects.filter(
-        channel__in=['danger_zone', 'walk_in']
+        channel='danger_zone'
     ).select_related('barangay', 'eligibility_checked_by', 'registered_by').prefetch_related(
         Prefetch(
             'queue_entries',
@@ -669,7 +658,7 @@ def applicants_list(request, position):
             to_attr='active_queue'
         )
     ).order_by('created_at')
-    
+
     for app in walk_in_applicants:
         # Determine eligibility status display
         if app.status == 'pending':
@@ -682,16 +671,16 @@ def applicants_list(request, position):
             eligibility_status = 'Disqualified'
         else:
             eligibility_status = app.get_status_display()
-        
+
         # Get queue info
         queue_type = 'None'
         queue_position = None
         if app.active_queue:
             queue_entry = app.active_queue[0]
-            queue_type = 'Priority' if queue_entry.queue_type == 'priority' else 'Walk-in'
+            queue_type = 'Priority'
             queue_position = queue_entry.position
-        
-        # Get CDRRMO status for Channel B
+
+        # Get CDRRMO status for danger zone
         cdrrmo_status = None
         danger_zone_type = None
         is_cdrrmo_flagged = False
@@ -712,16 +701,16 @@ def applicants_list(request, position):
             'referenceNumber': app.reference_number,
             'dateRegistered': app.created_at.strftime('%Y-%m-%d'),
             'dateTime': app.created_at.strftime('%Y-%m-%d %I:%M %p'),
-            'channel': 'B' if app.channel == 'danger_zone' else 'C',
+            'channel': 'B',  # All applicants are Channel B (Danger Zone)
             'submissionId': None,
-            'applicantId': str(app.id),  # For Channel B/C review
+            'applicantId': str(app.id),
             'barangay': app.barangay.name if app.barangay else 'Unknown',
             'monthlyIncome': float(app.monthly_income),
             'householdSize': app.household_size,
             'yearsResiding': app.years_residing,
             'phoneNumber': app.phone_number or '',
             'currentAddress': app.current_address or '',
-            # Channel B specific - get from model or CDRRMO cert
+            # Danger Zone details
             'dangerZoneType': app.danger_zone_type if hasattr(app, 'danger_zone_type') and app.danger_zone_type else '',
             'dangerZoneLocation': app.danger_zone_location if hasattr(app, 'danger_zone_location') and app.danger_zone_location else (danger_zone_type or ''),
             'eligibilityStatus': eligibility_status,
@@ -801,12 +790,11 @@ def applicants_list(request, position):
 def walkin_register(request, position):
     """
     Handle applicant registration from the modal form.
-    Handles Channel B (Danger Zone) and Channel C (Walk-in) registrations.
+    Handles Channel B (Danger Zone) registrations only.
 
     URL Route: /intake/staff/<position>/walkin-register/
 
     Channel B: Danger Zone Walk-in → Creates Applicant + CDRRMO certification
-    Channel C: Regular Walk-in → Creates Applicant
     """
     from .utils import send_sms
 
@@ -820,9 +808,7 @@ def walkin_register(request, position):
     if request.method != 'POST':
         return redirect('intake:applicants_list')
 
-    channel = request.POST.get('channel', 'walk_in')
-
-    # ====== CHANNEL B & C: Walk-in Applicants ======
+    # ====== CHANNEL B: Danger Zone Applicants ======
     form = WalkInApplicantForm(request.POST)
 
     if not form.is_valid():
@@ -847,39 +833,41 @@ def walkin_register(request, position):
         messages.error(request, msg)
         return redirect('intake:applicants_list')
 
-    # Create applicant
-    channel_val = form.cleaned_data['channel']
-    danger_zone_type = form.cleaned_data.get('danger_zone_type', '') if channel_val == 'danger_zone' else ''
-    danger_zone_location = form.cleaned_data.get('danger_zone_location', '') if channel_val == 'danger_zone' else ''
+    # Create applicant (always danger_zone channel)
+    danger_zone_type = form.cleaned_data.get('danger_zone_type', '')
+    danger_zone_location = form.cleaned_data.get('danger_zone_location', '')
 
     applicant = Applicant.objects.create(
         full_name=full_name,
+        sex=form.cleaned_data.get('sex', ''),
+        age=form.cleaned_data.get('age'),
+        date_of_birth=form.cleaned_data.get('date_of_birth'),
+        place_of_birth=form.cleaned_data.get('place_of_birth', ''),
         phone_number=phone_number,
+        spouse_name=form.cleaned_data.get('spouse_name', ''),
+        spouse_phone=form.cleaned_data.get('spouse_phone', ''),
         barangay=barangay,
         current_address=form.cleaned_data['current_address'],
         monthly_income=form.cleaned_data['monthly_income'],
         household_size=form.cleaned_data.get('household_size', 1) or 1,
-        years_residing=form.cleaned_data['years_residing'],
-        channel=channel_val,
-        status='pending_cdrrmo' if channel_val == 'danger_zone' else 'pending',
+        years_residing=form.cleaned_data.get('years_residing', 0),
+        channel='danger_zone',
+        status='pending_cdrrmo',
         danger_zone_type=danger_zone_type,
         danger_zone_location=danger_zone_location,
         registered_by=request.user,
     )
 
-    # For Channel B, create CDRRMO certification
-    if channel_val == 'danger_zone':
-        # Build declared location string (simple version)
-        declared_location = f"{danger_zone_type}: {danger_zone_location}" if danger_zone_location else danger_zone_type
-        CDRRMOCertification.objects.create(
-            applicant=applicant,
-            declared_location=declared_location,
-            status='pending',
-            requested_by=request.user,
-        )
-        msg = f'{applicant.full_name} registered as Danger Zone applicant. Reference: {applicant.reference_number}'
-    else:
-        msg = f'{applicant.full_name} registered as Walk-in applicant. Reference: {applicant.reference_number}'
+    # Create CDRRMO certification for danger zone
+    declared_location = f"{danger_zone_type}: {danger_zone_location}" if danger_zone_location else danger_zone_type
+    CDRRMOCertification.objects.create(
+        applicant=applicant,
+        declared_location=declared_location,
+        status='pending',
+        requested_by=request.user,
+    )
+
+    msg = f'{applicant.full_name} registered as Danger Zone applicant. Reference: {applicant.reference_number}'
 
     # Send SMS
     if phone_number:
