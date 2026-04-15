@@ -38,5 +38,15 @@ urlpatterns = [
 
     # Third Member-Specific Views
     path('third-member/applicants/', views.third_member_applicants_overview, name='third_member_applicants'),
+    path('third-member/analytics/', views.head_analytics_dashboard, name='third_member_analytics'),
+    path('third-member/reports/', views.head_monthly_reports, name='third_member_reports'),
+
+    # Fourth Member-Specific Views
+    path('fourth-member/analytics/', views.head_analytics_dashboard, name='fourth_member_analytics'),
+    path('fourth-member/reports/', views.head_monthly_reports, name='fourth_member_reports'),
+
+    # Fifth Member-Specific Views
+    path('fifth-member/analytics/', views.head_analytics_dashboard, name='fifth_member_analytics'),
+    path('fifth-member/reports/', views.head_monthly_reports, name='fifth_member_reports'),
 ]
 
