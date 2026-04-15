@@ -1799,87 +1799,19 @@
             }
 
             const channelLabels = {
-                'A': 'Channel A — Landowner',
                 'B': 'Channel B — Danger Zone',
                 'C': 'Channel C — Walk-in'
             };
-            
+
             // Hide all sections first (with null checks)
-            const landownerSection = document.getElementById('landownerReviewSection');
             const dangerZoneSection = document.getElementById('dangerZoneReviewSection');
             const walkinSection = document.getElementById('walkinReviewSection');
-            
-            if (landownerSection) landownerSection.style.display = 'none';
+
             if (dangerZoneSection) dangerZoneSection.style.display = 'none';
             if (walkinSection) walkinSection.style.display = 'none';
-            
+
             // Show appropriate section based on channel
-            if (currentApplicant.channel === 'A') {
-                if (landownerSection) landownerSection.style.display = 'block';
-                const reviewSubmissionIdEl = document.getElementById('reviewSubmissionId');
-                if (reviewSubmissionIdEl) reviewSubmissionIdEl.value = currentApplicant.submissionId || '';
-
-                // Set channel badge for Channel A (differentiate staff entry vs portal)
-                const channelBadgeA = landownerSection?.querySelector('.status-badge:first-of-type');
-                if (channelBadgeA) {
-                    channelBadgeA.textContent = getChannelLabel(currentApplicant);
-                }
-
-                // Set eligibility badge for Channel A
-                const eligBadgeA = document.getElementById('reviewEligibilityBadgeA');
-                if (eligBadgeA) {
-                    eligBadgeA.textContent = currentApplicant.eligibilityStatus;
-                    const eligClassA = currentApplicant.eligibilityStatus === 'Eligible' ? 'success' : 
-                                      currentApplicant.eligibilityStatus === 'Disqualified' ? 'danger' : 'warning';
-                    eligBadgeA.className = 'status-badge status-' + eligClassA;
-                }
-                
-                // Queue badge for Channel A
-                const queueBadgeA = document.getElementById('reviewQueueBadgeA');
-                if (queueBadgeA) {
-                    if (currentApplicant.queueType && currentApplicant.queueType !== 'None') {
-                        queueBadgeA.style.display = 'inline-flex';
-                        queueBadgeA.textContent = currentApplicant.queueType + (currentApplicant.queuePosition ? ' #' + currentApplicant.queuePosition : '');
-                        queueBadgeA.className = 'status-badge status-info';
-                    } else {
-                        queueBadgeA.style.display = 'none';
-                    }
-                }
-                
-                // Populate ISF info fields (main applicant data) - with null checks
-                const fullNameAEl = document.getElementById('reviewFullNameA');
-                const barangayAEl = document.getElementById('reviewBarangayA');
-                const incomeAEl = document.getElementById('reviewIncomeA');
-                const householdAEl = document.getElementById('reviewHouseholdA');
-                const yearsAEl = document.getElementById('reviewYearsA');
-                const phoneAEl = document.getElementById('reviewPhoneA');
-                const addressAEl = document.getElementById('reviewAddressA');
-                
-                if (fullNameAEl) fullNameAEl.value = currentApplicant.fullName || '';
-                if (barangayAEl) barangayAEl.value = currentApplicant.barangay || '';
-                if (incomeAEl) incomeAEl.value = currentApplicant.monthlyIncome || '';
-                if (householdAEl) householdAEl.value = currentApplicant.householdSize || '';
-                if (yearsAEl) yearsAEl.value = currentApplicant.yearsResiding || '';
-                if (phoneAEl) phoneAEl.value = currentApplicant.phoneNumber || '';
-                if (addressAEl) addressAEl.value = currentApplicant.propertyAddress || '';
-                
-                // Populate landowner info fields - with null checks
-                const landownerNameEl = document.getElementById('reviewLandownerName');
-                const landownerPhoneEl = document.getElementById('reviewLandownerPhone');
-                const propertyAddressEl = document.getElementById('reviewPropertyAddress');
-                const submissionBarangayEl = document.getElementById('reviewSubmissionBarangay');
-                
-                if (landownerNameEl) landownerNameEl.value = currentApplicant.landownerName || '';
-                if (landownerPhoneEl) landownerPhoneEl.value = currentApplicant.landownerPhone || '';
-                if (propertyAddressEl) propertyAddressEl.value = currentApplicant.propertyAddress || '';
-                if (submissionBarangayEl) submissionBarangayEl.value = currentApplicant.submissionBarangay || currentApplicant.barangay || '';
-                
-                // Populate eligibility checks for Channel A
-                populateEligibilityChecksA(currentApplicant);
-                
-                // Populate document checklist for Channel A
-                populateDocumentChecklistA(currentApplicant);
-            } else if (currentApplicant.channel === 'C') {
+            if (currentApplicant.channel === 'C') {
                 // Channel C: Regular Walk-in
                 if (walkinSection) walkinSection.style.display = 'block';
                 
@@ -1942,7 +1874,6 @@
                 }
             } else if (currentApplicant.channel === 'B') {
                 // Channel B: Danger Zone
-                if (landownerSection) landownerSection.style.display = 'none';
                 if (dangerZoneSection) dangerZoneSection.style.display = 'block';
                 if (walkinSection) walkinSection.style.display = 'none';
                 
@@ -3165,13 +3096,12 @@
                 btn.classList.add('active');
             }
         });
-        
+
         // Update hidden input
         const channelInput = document.getElementById('channelInput');
         if (channelInput) channelInput.value = channel;
-        
+
         // Get all the elements
-        const landownerFields = document.getElementById('landownerFields');
         const formFields = document.getElementById('formFields');
         const dangerZoneGroup = document.getElementById('dangerZoneGroup');
         const dangerZoneLocationGroup = document.getElementById('dangerZoneLocationGroup');
@@ -3181,41 +3111,12 @@
         const dangerZoneType = document.getElementById('dangerZoneType');
         const dangerZoneLocation = document.getElementById('dangerZoneLocation');
         const docChecklistRegister = document.getElementById('docChecklistRegister');
-        
-        // Channel A (landowner) fields
-        const landownerName = document.getElementById('landownerName');
-        const propertyAddress = document.getElementById('propertyAddress');
-        const isfRequiredFields = document.querySelectorAll('.isf-required');
-        
+
         // Channel B/C (walk-in) fields
         const walkinFields = ['walkinFullName', 'walkinBarangay', 'walkinIncome', 'walkinHousehold', 'walkinYears', 'walkinAddress'];
-        
-        if (channel === 'landowner') {
-            // Channel A: Show landowner form, hide walk-in form and document checklist
-            landownerFields.style.display = 'block';
-            formFields.style.display = 'none';
-            dangerZoneGroup.style.display = 'none';
-            dangerZoneLocationGroup.style.display = 'none';
-            cdrrmoNote.style.display = 'none';
-            regularNote.style.display = 'none';
-            if (docChecklistRegister) docChecklistRegister.style.display = 'none';
-            submitBtn.disabled = false;
-            
-            // Add required to Channel A fields
-            if (landownerName) landownerName.setAttribute('required', 'required');
-            if (propertyAddress) propertyAddress.setAttribute('required', 'required');
-            isfRequiredFields.forEach(el => el.setAttribute('required', 'required'));
-            
-            // Remove required from walk-in fields
-            walkinFields.forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.removeAttribute('required');
-            });
-            if (dangerZoneType) dangerZoneType.removeAttribute('required');
-            if (dangerZoneLocation) dangerZoneLocation.removeAttribute('required');
-        } else if (channel === 'danger_zone') {
+
+        if (channel === 'danger_zone') {
             // Channel B: Show danger zone fields and document checklist
-            landownerFields.style.display = 'none';
             formFields.style.display = 'grid';
             dangerZoneGroup.style.display = 'block';
             dangerZoneLocationGroup.style.display = 'block';
@@ -3223,12 +3124,7 @@
             regularNote.style.display = 'none';
             if (docChecklistRegister) docChecklistRegister.style.display = 'block';
             submitBtn.disabled = false;
-            
-            // Remove required from Channel A fields
-            if (landownerName) landownerName.removeAttribute('required');
-            if (propertyAddress) propertyAddress.removeAttribute('required');
-            isfRequiredFields.forEach(el => el.removeAttribute('required'));
-            
+
             // Add required to walk-in and danger zone fields
             walkinFields.forEach(id => {
                 const el = document.getElementById(id);
@@ -3238,7 +3134,6 @@
             if (dangerZoneLocation) dangerZoneLocation.setAttribute('required', 'required');
         } else {
             // Channel C (walk_in): Regular walk-in form with document checklist
-            landownerFields.style.display = 'none';
             formFields.style.display = 'grid';
             dangerZoneGroup.style.display = 'none';
             dangerZoneLocationGroup.style.display = 'none';
@@ -3246,12 +3141,7 @@
             regularNote.style.display = 'block';
             if (docChecklistRegister) docChecklistRegister.style.display = 'block';
             submitBtn.disabled = false;
-            
-            // Remove required from Channel A fields
-            if (landownerName) landownerName.removeAttribute('required');
-            if (propertyAddress) propertyAddress.removeAttribute('required');
-            isfRequiredFields.forEach(el => el.removeAttribute('required'));
-            
+
             // Add required to walk-in fields, remove from danger zone
             walkinFields.forEach(id => {
                 const el = document.getElementById(id);
