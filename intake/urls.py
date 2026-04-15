@@ -17,9 +17,4 @@ urlpatterns = [
     path('staff/<str:position>/update-cdrrmo-certification/', views.update_cdrrmo_certification, name='update_cdrrmo_certification'),
     path('staff/<str:position>/delete-applicant/', views.delete_applicant, name='delete_applicant'),
     path('staff/<str:position>/resend-sms/', views.resend_sms, name='resend_sms'),
-    path('staff/<str:position>/register-landowner-walkin/', views.register_landowner_walkin, name='register_landowner_walkin'),
-
-    # ISF review endpoint (AJAX POST for modal)
-    path('staff/<str:position>/isf/<uuid:isf_id>/review/', views.isf_review, name='isf_review'),
-    path('staff/<str:position>/isf/<uuid:isf_id>/edit/', views.edit_isf_record, name='edit_isf_record'),
 ]

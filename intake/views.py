@@ -6,10 +6,8 @@ from django.http import JsonResponse
 from django.utils import timezone
 from django.db.models import Q, Prefetch
 from functools import wraps
-from .models import ISFRecord, Applicant, Barangay, QueueEntry, CDRRMOCertification, ISFEditAudit
+from .models import Applicant, Barangay, QueueEntry, CDRRMOCertification
 from .forms import (
-    ISFRecordForm,
-    ISFReviewForm,
     HouseholdMemberForm,
     WalkInApplicantForm
 )
@@ -36,157 +34,8 @@ def verify_position(view_func):
 @login_required
 @verify_position
 def isf_review(request, position, isf_id):
-    """
-    Staff view: Review individual ISF record.
-
-    URL Route: /intake/staff/<position>/isf-review/<isf_id>/
-
-    ACCESS CONTROL - Hierarchical Model:
-    ✅ Jocel (fourth_member) - Primary reviewer, performs eligibility checks
-    ✅ Joie (second_member) - Supervisor/oversight, quality control
-    ✅ Victor (oic) - Management oversight
-    ✅ Arthur (head) - Executive oversight
-
-    Benefits:
-    - Quality control and cross-checking of eligibility decisions
-    - Backup coverage when primary reviewer is unavailable
-    - Management visibility into workload and decision-making
-    """
-    from django.http import JsonResponse
-
-    # Hierarchical access: Primary reviewer + Supervisor + Management
-    if not request.user.position in ['fourth_member', 'second_member', 'oic', 'head']:
-        messages.error(request, 'You do not have permission to access this page.')
-        return redirect('accounts:dashboard')
-
-    isf_record = get_object_or_404(ISFRecord, id=isf_id)
-
-    # Check if already converted to applicant
-    if isf_record.converted_to_applicant:
-        messages.warning(request, 'This ISF has already been converted to an applicant profile.')
-        return redirect('intake:applicants_list')
-
-    if request.method == 'POST':
-        form = ISFReviewForm(request.POST, instance=isf_record)
-        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.POST.get('action')
-
-        if form.is_valid():
-            # Check if user manually selected 'disqualified' status
-            user_selected_status = form.cleaned_data.get('status')
-            if user_selected_status == 'disqualified':
-                # User manually disqualified - save and send SMS
-                isf_record.status = 'disqualified'
-                isf_record.disqualification_reason = form.cleaned_data.get('disqualification_reason', '')
-                isf_record.phone_number = form.cleaned_data.get('phone_number', '')
-                isf_record.eligibility_checked_by = request.user
-                isf_record.eligibility_checked_at = timezone.now()
-                isf_record.save()
-
-                # Send disqualification SMS
-                if isf_record.phone_number:
-                    isf_record.send_eligibility_sms(eligible=False)
-
-                msg = f'✕ {isf_record.full_name} marked as DISQUALIFIED.'
-                if is_ajax:
-                    return JsonResponse({'success': True, 'message': msg, 'status': 'disqualified'})
-                messages.warning(request, msg)
-                return redirect('intake:applicants_list')
-
-            # Check blacklist first
-            is_blacklisted, blacklist_entry = check_blacklist(
-                full_name=isf_record.full_name,
-                phone_number=form.cleaned_data.get('phone_number')
-            )
-
-            if is_blacklisted:
-                msg = f'⚠️ BLACKLISTED: {blacklist_entry.full_name} - Reason: {blacklist_entry.get_reason_display()}'
-                isf_record.status = 'disqualified'
-                isf_record.disqualification_reason = f'Blacklisted: {blacklist_entry.notes}'
-                isf_record.eligibility_checked_by = request.user
-                isf_record.eligibility_checked_at = timezone.now()
-                isf_record.save()
-                if is_ajax:
-                    return JsonResponse({'success': False, 'error': msg})
-                messages.error(request, msg)
-                return redirect('intake:applicants_list')
-
-            # Check property ownership
-            has_property = form.cleaned_data.get('has_property_in_talisay')
-            if has_property == 'yes':
-                isf_record.status = 'disqualified'
-                isf_record.disqualification_reason = 'Owns property in Talisay City'
-                isf_record.phone_number = form.cleaned_data.get('phone_number', '')
-                isf_record.eligibility_checked_by = request.user
-                isf_record.eligibility_checked_at = timezone.now()
-                isf_record.save()
-
-                # Send disqualification SMS if phone provided
-                if isf_record.phone_number:
-                    isf_record.send_eligibility_sms(eligible=False)
-
-                msg = f'Marked as disqualified: {isf_record.full_name}'
-                if is_ajax:
-                    return JsonResponse({'success': False, 'error': msg})
-                messages.warning(request, msg)
-                return redirect('intake:applicants_list')
-
-            # Check income eligibility
-            if not isf_record.is_income_eligible:
-                isf_record.status = 'disqualified'
-                isf_record.disqualification_reason = f'Monthly income (₱{isf_record.monthly_income}) exceeds ₱10,000 limit'
-                isf_record.phone_number = form.cleaned_data.get('phone_number', '')
-                isf_record.eligibility_checked_by = request.user
-                isf_record.eligibility_checked_at = timezone.now()
-                isf_record.save()
-
-                if isf_record.phone_number:
-                    isf_record.send_eligibility_sms(eligible=False)
-
-                msg = f'Marked as disqualified: {isf_record.full_name}'
-                if is_ajax:
-                    return JsonResponse({'success': False, 'error': msg})
-                messages.warning(request, msg)
-                return redirect('intake:applicants_list')
-
-            # ELIGIBLE - Save updates and convert to Applicant
-            isf_record = form.save(commit=False)
-            isf_record.eligibility_checked_by = request.user
-            isf_record.eligibility_checked_at = timezone.now()
-            isf_record.save()
-
-            # Extract barangay
-            barangay_name = form.cleaned_data.get('barangay')
-
-            # Create Applicant profile and add to Priority Queue
-            applicant = create_applicant_from_isf(isf_record, request.user)
-
-            if applicant:
-                # Update barangay if needed
-                barangay, _ = Barangay.objects.get_or_create(name=barangay_name)
-                applicant.barangay = barangay
-                applicant.save()
-
-                msg = f'✓ {isf_record.full_name} marked as ELIGIBLE and added to Priority Queue!'
-                if is_ajax:
-                    return JsonResponse({'success': True, 'message': msg, 'status': 'eligible', 'applicantId': str(applicant.id)})
-                messages.success(request, msg)
-            else:
-                msg = 'Failed to create applicant profile. Please try again.'
-                if is_ajax:
-                    return JsonResponse({'success': False, 'error': msg})
-                messages.error(request, msg)
-
-            return redirect('intake:applicants_list')
-        else:
-            # Form validation failed
-            if is_ajax:
-                return JsonResponse({'success': False, 'error': 'Form validation failed. Please fill all required fields.'})
-    else:
-        form = ISFReviewForm(instance=isf_record)
-
-    # No longer render separate template - redirect to applicants list
-    # (ISF review is now handled entirely via modal in applicants page)
-    return redirect('intake:applicants_list')
+    """DEPRECATED: Channel A (ISF Review) has been removed."""
+    return JsonResponse({'error': 'Channel A has been removed'}, status=404)
 
 
 @login_required
@@ -276,83 +125,8 @@ def register_landowner_walkin(request, position):
 @login_required
 @verify_position
 def edit_isf_record(request, position, isf_id):
-    """
-    AJAX endpoint to edit ISF record data with staff audit trail.
-
-    URL Route: /intake/staff/<position>/edit-isf-record/<isf_id>/
-
-    Editable fields:
-    - monthly_income
-    - household_members
-    - years_residing
-    - phone_number
-    - barangay
-
-    Locked fields (cannot edit):
-    - full_name
-    - landowner information
-
-    Access: Only if ISF status is 'pending' (not yet decided)
-    """
-    if request.method != 'POST':
-        return JsonResponse({'success': False, 'error': 'POST required'}, status=405)
-
-    # Permission check
-    if request.user.position not in ['fourth_member', 'second_member', 'oic', 'head']:
-        return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
-
-    try:
-        isf_record = ISFRecord.objects.get(id=isf_id)
-    except ISFRecord.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'ISF record not found'})
-
-    # Block editing if already decided
-    if isf_record.status != 'pending':
-        return JsonResponse({'success': False, 'error': 'Cannot edit ISF after eligibility decision made'})
-
-    # Get fields to edit
-    field_name = request.POST.get('field_name')
-    new_value = request.POST.get('new_value')
-    edit_reason = request.POST.get('edit_reason')
-
-    if not all([field_name, new_value, edit_reason]):
-        return JsonResponse({'success': False, 'error': 'Missing required fields'})
-
-    # Validate field_name
-    editable_fields = ['monthly_income', 'household_members', 'years_residing', 'phone_number', 'barangay']
-    if field_name not in editable_fields:
-        return JsonResponse({'success': False, 'error': 'Invalid field'})
-
-    # Get original value as string
-    original_value = str(getattr(isf_record, field_name, ''))
-
-    # Update the field
-    try:
-        if field_name == 'monthly_income':
-            new_value = float(new_value)
-        elif field_name == 'household_members' or field_name == 'years_residing':
-            new_value = int(new_value)
-
-        setattr(isf_record, field_name, new_value)
-        isf_record.has_been_edited = True
-        isf_record.save()
-
-        # Create audit entry
-        ISFEditAudit.objects.create(
-            isf_record=isf_record,
-            field_name=field_name,
-            original_value=original_value,
-            new_value=str(new_value),
-            edit_reason=edit_reason,
-            edited_by=request.user
-        )
-
-        return JsonResponse({
-            'success': True,
-            'message': f'{field_name.replace("_", " ").title()} updated successfully'
-        })
-    except (ValueError, TypeError) as e:
-        return JsonResponse({'success': False, 'error': f'Invalid value for {field_name}'})
+    """DEPRECATED: Channel A (Edit ISF) has been removed."""
+    return JsonResponse({'error': 'Channel A has been removed'}, status=404)
 
 
 @login_required
@@ -385,107 +159,7 @@ def update_eligibility(request, position):
     
     if not applicant_id or not action:
         return JsonResponse({'success': False, 'error': 'Missing applicant_id or action'})
-    
-    # Handle Channel A (ISFRecord) separately
-    if channel == 'A':
-        try:
-            isf = ISFRecord.objects.get(id=applicant_id)
-        except ISFRecord.DoesNotExist:
-            return JsonResponse({'success': False, 'error': 'ISF record not found'})
-        
-        if action == 'mark_eligible':
-            # Check eligibility criteria
-            if isf.monthly_income > 10000:
-                return JsonResponse({
-                    'success': False, 
-                    'error': f'Income ₱{isf.monthly_income:,.2f} exceeds ₱10,000 limit'
-                })
-            
-            # Mark ISF as eligible
-            isf.status = 'eligible'
-            isf.eligibility_checked_by = request.user
-            isf.eligibility_checked_at = timezone.now()
-            isf.save()
-            
-            # Create/convert to Applicant and add to Priority Queue
-            if not isf.converted_to_applicant:
-                applicant = Applicant.objects.create(
-                    full_name=isf.full_name,
-                    phone_number=isf.phone_number or '',
-                    barangay=isf.barangay,
-                    monthly_income=isf.monthly_income,
-                    household_size=isf.household_members,
-                    years_residing=isf.years_residing,
-                    channel='landowner',
-                    status='eligible',
-                    reference_number=isf.reference_number,
-                    eligibility_checked_by=request.user,
-                    eligibility_checked_at=timezone.now()
-                )
-                isf.converted_to_applicant = True
-                isf.applicant_profile = applicant
-                isf.save()
-                
-                # Add to Priority Queue
-                last_position = QueueEntry.objects.filter(
-                    queue_type='priority',
-                    status='active'
-                ).order_by('-position').values_list('position', flat=True).first() or 0
-                
-                QueueEntry.objects.create(
-                    applicant=applicant,
-                    queue_type='priority',
-                    position=last_position + 1,
-                    status='active',
-                    added_by=request.user,
-                )
-                
-                # Send SMS if phone number available
-                if applicant.phone_number:
-                    message = f"Congratulations! You are ELIGIBLE for housing assistance. You are now in the Priority Queue (Position #{last_position + 1}). Reference: {applicant.reference_number}"
-                    send_sms(applicant.phone_number, message, 'eligibility', applicant=applicant)
-                
-                return JsonResponse({
-                    'success': True,
-                    'message': f'ISF marked as eligible. Added to Priority Queue at position #{last_position + 1}'
-                })
-            
-            return JsonResponse({
-                'success': True,
-                'message': 'ISF already converted to applicant'
-            })
-        
-        elif action == 'disqualify':
-            reason = request.POST.get('reason', '')
-            notes = request.POST.get('notes', '')
-            
-            reason_labels = {
-                'income_exceeds': 'Income exceeds ₱10,000 limit',
-                'property_owner': 'Owns property in Talisay City',
-                'blacklisted': 'On blacklist',
-                'incomplete_docs': 'Incomplete documents',
-                'false_info': 'False information provided',
-                'other': notes or 'Other reason'
-            }
-            
-            isf.status = 'disqualified'
-            isf.disqualification_reason = reason_labels.get(reason, reason)
-            isf.eligibility_checked_by = request.user
-            isf.eligibility_checked_at = timezone.now()
-            isf.save()
-            
-            # Send SMS if phone available
-            if isf.phone_number:
-                message = f"We regret to inform you that your housing application has been DISQUALIFIED. Reason: {isf.disqualification_reason}. Reference: {isf.reference_number}. Please visit THA office for more information."
-                send_sms(isf.phone_number, message, 'eligibility')
-            
-            return JsonResponse({
-                'success': True,
-                'message': f'ISF disqualified. Reason: {isf.disqualification_reason}'
-            })
-        
-        return JsonResponse({'success': False, 'error': f'Unknown action: {action}'})
-    
+
     # Channel B/C: Handle Applicant
     try:
         applicant = Applicant.objects.get(id=applicant_id)
@@ -619,65 +293,17 @@ def update_applicant(request, position):
     ]
     
     try:
-        # Handle single document update (auto-save)
+        # Handle document update (auto-save)
         if action == 'update_doc':
-            if channel == 'A':
-                isf = ISFRecord.objects.get(id=applicant_id)
-                for field in doc_fields:
-                    if field in request.POST:
-                        setattr(isf, field, request.POST.get(field) == 'true')
-                isf.save()
-                return JsonResponse({'success': True, 'message': 'Document status updated'})
-            else:
-                applicant = Applicant.objects.get(id=applicant_id)
-                for field in doc_fields:
-                    if field in request.POST:
-                        setattr(applicant, field, request.POST.get(field) == 'true')
-                applicant.save()
-                return JsonResponse({'success': True, 'message': 'Document status updated'})
-        
-        if channel == 'A':
-            # Update Channel A: ISF Record
-            isf = ISFRecord.objects.get(id=applicant_id)
-            
-            # Update ISF fields
-            isf_name = request.POST.get('isf_name', '').strip()
-            isf_income = request.POST.get('isf_income')
-            isf_household = request.POST.get('isf_household')
-            isf_years = request.POST.get('isf_years')
-            isf_barangay = request.POST.get('isf_barangay', '').strip()
-            
-            if isf_name:
-                isf.full_name = isf_name
-            if isf_income:
-                isf.monthly_income = Decimal(isf_income)
-            if isf_household:
-                isf.household_members = int(isf_household)
-            if isf_years:
-                isf.years_residing = int(isf_years)
-            if isf_barangay:
-                # ISFRecord.barangay is a CharField, just assign the string value
-                isf.barangay = isf_barangay
-            
-            # Update document checklist
-            isf.doc_brgy_residency = request.POST.get('doc_brgy_residency') == 'true'
-            isf.doc_brgy_indigency = request.POST.get('doc_brgy_indigency') == 'true'
-            isf.doc_cedula = request.POST.get('doc_cedula') == 'true'
-            isf.doc_police_clearance = request.POST.get('doc_police_clearance') == 'true'
-            isf.doc_no_property = request.POST.get('doc_no_property') == 'true'
-            isf.doc_2x2_picture = request.POST.get('doc_2x2_picture') == 'true'
-            isf.doc_sketch_location = request.POST.get('doc_sketch_location') == 'true'
-
-            isf.save()
-
-            return JsonResponse({
-                'success': True,
-                'message': 'ISF record updated successfully'
-            })
-        
-        else:
-            # Update Channel B/C: Applicant
             applicant = Applicant.objects.get(id=applicant_id)
+            for field in doc_fields:
+                if field in request.POST:
+                    setattr(applicant, field, request.POST.get(field) == 'true')
+            applicant.save()
+            return JsonResponse({'success': True, 'message': 'Document status updated'})
+
+        # Update Applicant data
+        applicant = Applicant.objects.get(id=applicant_id)
             
             full_name = request.POST.get('full_name', '').strip()
             barangay_name = request.POST.get('barangay', '').strip()
