@@ -3059,11 +3059,8 @@
             }
         }
 
-        // Determine endpoint based on channel
+        // Submit to walkin_register endpoint (all channels now use this)
         let endpoint = '{% url "intake:walkin_register" request.user.position %}';
-        if (channel === 'landowner') {
-            endpoint = '{% url "intake:register_landowner_walkin" request.user.position %}';
-        }
 
         // Submit form to appropriate endpoint
         fetch(endpoint, {
