@@ -15,7 +15,6 @@ urlpatterns = [
     path('dashboard/head/', views.dashboard_head, name='dashboard_head'),
     path('dashboard/oic/', views.dashboard_oic, name='dashboard_oic'),
     path('dashboard/second-member/', views.dashboard_second_member, name='dashboard_second_member'),
-    path('dashboard/third-member/', views.dashboard_third_member, name='dashboard_third_member'),
     path('dashboard/fourth-member/', views.dashboard_fourth_member, name='dashboard_fourth_member'),
     path('dashboard/fifth-member/', views.dashboard_fifth_member, name='dashboard_fifth_member'),
     path('dashboard/caretaker/', views.dashboard_caretaker, name='dashboard_caretaker'),
@@ -35,11 +34,6 @@ urlpatterns = [
     # Second Member-Specific Views
     path('second-member/analytics/', views.head_analytics_dashboard, name='second_member_analytics'),
     path('second-member/reports/', views.head_monthly_reports, name='second_member_reports'),
-
-    # Third Member-Specific Views
-    path('third-member/applicants/', views.third_member_applicants_overview, name='third_member_applicants'),
-    path('third-member/analytics/', views.head_analytics_dashboard, name='third_member_analytics'),
-    path('third-member/reports/', views.head_monthly_reports, name='third_member_reports'),
 
     # Fourth Member-Specific Views
     path('fourth-member/analytics/', views.head_analytics_dashboard, name='fourth_member_analytics'),
