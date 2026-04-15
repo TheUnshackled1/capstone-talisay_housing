@@ -181,7 +181,7 @@ class SignatoryRouting(models.Model):
     Flags delays > 3 days at any step.
     """
     STEP_CHOICES = [
-        ('received', 'Received by Third Member'),
+        ('received', 'Received - Processing'),
         ('forwarded_oic', 'Forwarded to OIC'),
         ('signed_oic', 'Signed by OIC'),
         ('forwarded_head', 'Forwarded to Head'),
