@@ -1291,7 +1291,7 @@ def head_applicants_overview(request):
     # Verify position
     if request.user.position != 'head':
         messages.error(request, 'Access denied. This view is for the Head position only.')
-        return redirect('accounts:dashboard', position='head')
+        return redirect('accounts:dashboard')
 
     # Total applicants
     total_applicants = Applicant.objects.count()
@@ -1462,7 +1462,7 @@ def head_pending_signature(request):
     # Verify position
     if request.user.position != 'head':
         messages.error(request, 'Access denied. This view is for the Head position only.')
-        return redirect('accounts:dashboard', position='head')
+        return redirect('accounts:dashboard')
 
     # Get applications awaiting head signature
     # Status should be 'head_signed' (awaiting final approval)
@@ -1520,7 +1520,7 @@ def head_analytics_dashboard(request):
     # Verify position
     if request.user.position != 'head':
         messages.error(request, 'Access denied. This view is for the Head position only.')
-        return redirect('accounts:dashboard', position='head')
+        return redirect('accounts:dashboard')
 
     from django.db.models import Count, Q
 
@@ -1634,7 +1634,7 @@ def head_monthly_reports(request):
     # Verify position
     if request.user.position != 'head':
         messages.error(request, 'Access denied. This view is for the Head position only.')
-        return redirect('accounts:dashboard', position='head')
+        return redirect('accounts:dashboard')
 
     # Parse month from query params (default to current month)
     month_param = request.GET.get('month', timezone.now().strftime('%Y-%m'))

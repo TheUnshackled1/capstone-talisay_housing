@@ -661,10 +661,16 @@ def applicants_list(request, position):
 
     for app in walk_in_applicants:
         # Determine eligibility status display
-        if app.status == 'pending':
+        # For Channel B (Danger Zone): check if applicant actually selected "Yes" for danger zone
+        if app.channel == 'danger_zone' and app.status == 'pending_cdrrmo':
+            # Only show "Pending CDRRMO" if they have a danger_zone_type (selected Yes)
+            if app.danger_zone_type:
+                eligibility_status = 'Pending CDRRMO'
+            else:
+                # They selected "No" for danger zone - they're eligible to proceed
+                eligibility_status = 'Eligible'
+        elif app.status == 'pending':
             eligibility_status = 'Pending'
-        elif app.status == 'pending_cdrrmo':
-            eligibility_status = 'Pending CDRRMO'
         elif app.status == 'eligible':
             eligibility_status = 'Eligible'
         elif app.status == 'disqualified':
@@ -760,11 +766,11 @@ def applicants_list(request, position):
     total_applicants = len(applicants)
     priority_count = len([a for a in applicants if a['queueType'] == 'Priority'])
     walkin_count = len([a for a in applicants if a['queueType'] == 'Walk-in'])
-    # Count Channel B applicants awaiting CDRRMO certification
-    pending_cdrrmo = len([a for a in applicants if a.get('eligibilityStatus') == 'Pending CDRRMO' or a.get('cdrrmoStatus') == 'Pending CDRRMO Visit'])
+    # Count Channel B applicants awaiting CDRRMO certification (only those who selected Yes for danger zone)
+    pending_cdrrmo = len([a for a in applicants if a.get('eligibilityStatus') == 'Pending CDRRMO' and a.get('dangerZoneType')])
     
-    # Count CDRRMO overdue (pending > 14 days)
-    cdrrmo_overdue = len([a for a in applicants if a.get('isCdrrmoFlagged')])
+    # Count CDRRMO overdue (pending > 14 days, only for those in actual danger zones)
+    cdrrmo_overdue = len([a for a in applicants if a.get('isCdrrmoFlagged') and a.get('dangerZoneType')])
     
     context = {
         'page_title': 'ISF Recording Management',
@@ -811,9 +817,18 @@ def walkin_register(request, position):
     # ====== CHANNEL B: Danger Zone Applicants ======
     form = WalkInApplicantForm(request.POST)
 
+    # Get the danger zone answer (Yes/No from the form)
+    is_danger_zone_answer = request.POST.get('is_danger_zone', 'false') == 'true'
+
     if not form.is_valid():
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return JsonResponse({'success': False, 'error': 'Form validation failed'})
+            # Return detailed form errors for debugging
+            error_messages = []
+            for field, errors in form.errors.items():
+                for error in errors:
+                    error_messages.append(f"{field}: {error}")
+            error_text = " | ".join(error_messages) if error_messages else "Form validation failed"
+            return JsonResponse({'success': False, 'error': error_text})
         messages.error(request, 'Please fill all required fields.')
         return redirect('intake:applicants_list')
 
@@ -856,6 +871,14 @@ def walkin_register(request, position):
         danger_zone_type=danger_zone_type,
         danger_zone_location=danger_zone_location,
         registered_by=request.user,
+        # Document checklist
+        doc_brgy_residency=request.POST.get('doc_brgy_residency') == 'true',
+        doc_brgy_indigency=request.POST.get('doc_brgy_indigency') == 'true',
+        doc_cedula=request.POST.get('doc_cedula') == 'true',
+        doc_police_clearance=request.POST.get('doc_police_clearance') == 'true',
+        doc_no_property=request.POST.get('doc_no_property') == 'true',
+        doc_2x2_picture=request.POST.get('doc_2x2_picture') == 'true',
+        doc_sketch_location=request.POST.get('doc_sketch_location') == 'true',
     )
 
     # Create CDRRMO certification for danger zone
@@ -874,7 +897,53 @@ def walkin_register(request, position):
         send_sms(phone_number, f"Registered for housing assistance. Reference: {applicant.reference_number}", 'registration', applicant=applicant)
 
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        return JsonResponse({'success': True, 'message': msg})
+        from datetime import datetime
+
+        # Prepare document checklist
+        documents = {
+            'doc_brgy_residency': 'Brgy. Certificate of Residency',
+            'doc_brgy_indigency': 'Brgy. Certificate of Indigency',
+            'doc_cedula': 'Cedula',
+            'doc_police_clearance': 'Police Clearance',
+            'doc_no_property': 'Certificate of No Property',
+            'doc_2x2_picture': '2x2 Picture',
+            'doc_sketch_location': 'Sketch of House Location',
+        }
+
+        documents_submitted = {}
+        docs_count = 0
+        for field, label in documents.items():
+            is_checked = getattr(applicant, field, False)
+            documents_submitted[field] = {
+                'label': label,
+                'checked': is_checked
+            }
+            if is_checked:
+                docs_count += 1
+
+        return JsonResponse({
+            'success': True,
+            'message': msg,
+            'applicant': {
+                'id': str(applicant.id),
+                'fullName': applicant.full_name,
+                'referenceNumber': applicant.reference_number,
+                'dateRegistered': applicant.created_at.strftime('%Y-%m-%d'),
+                'channel': applicant.channel,
+                'status': applicant.status,
+                'barangay': applicant.barangay.name if applicant.barangay else '',
+                'monthlyIncome': float(applicant.monthly_income),
+                'householdSize': applicant.household_size,
+                'yearsResiding': applicant.years_residing,
+                'phoneNumber': applicant.phone_number,
+                'currentAddress': applicant.current_address,
+                'dangerZoneType': applicant.danger_zone_type,
+                'dangerZoneLocation': applicant.danger_zone_location,
+                'isInDangerZone': is_danger_zone_answer,  # Use the actual Yes/No answer
+                'documents': documents_submitted,
+                'docsCount': f"{docs_count}/7",
+            }
+        })
 
     messages.success(request, f'✓ {msg}')
     return redirect('intake:applicants_list')

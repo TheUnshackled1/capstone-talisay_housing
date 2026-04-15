@@ -123,16 +123,16 @@ class WalkInApplicantForm(forms.ModelForm):
         widget=forms.Select(attrs={'class': 'form-select'})
     )
 
-    # Danger zone specific fields (required for all applicants)
+    # Danger zone specific fields (optional - only required if applicant IS in danger zone)
     danger_zone_type = forms.ChoiceField(
         choices=DANGER_ZONE_TYPES,
-        required=True,
+        required=False,
         label="Danger Zone Type",
         widget=forms.Select(attrs={'class': 'form-select'})
     )
 
     danger_zone_location = forms.CharField(
-        required=True,
+        required=False,
         label="Danger Zone Location Details",
         widget=forms.Textarea(attrs={
             'class': 'form-control',
@@ -250,3 +250,22 @@ class WalkInApplicantForm(forms.ModelForm):
         if income and income < 0:
             raise forms.ValidationError('Monthly income cannot be negative.')
         return income
+
+    def clean(self):
+        """Custom validation for danger zone fields - only required if is_danger_zone=true."""
+        cleaned_data = super().clean()
+
+        # Check if is_danger_zone was in the original POST data
+        is_danger_zone = self.data.get('is_danger_zone', 'false')
+
+        # Only validate danger zone fields if applicant is in danger zone
+        if is_danger_zone == 'true':
+            danger_zone_type = cleaned_data.get('danger_zone_type')
+            danger_zone_location = cleaned_data.get('danger_zone_location')
+
+            if not danger_zone_type:
+                self.add_error('danger_zone_type', 'This field is required for danger zone applicants.')
+            if not danger_zone_location or not danger_zone_location.strip():
+                self.add_error('danger_zone_location', 'This field is required for danger zone applicants.')
+
+        return cleaned_data

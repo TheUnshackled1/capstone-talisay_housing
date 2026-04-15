@@ -42,5 +42,9 @@ urlpatterns = [
     # Fifth Member-Specific Views
     path('fifth-member/analytics/', views.head_analytics_dashboard, name='fifth_member_analytics'),
     path('fifth-member/reports/', views.head_monthly_reports, name='fifth_member_reports'),
+
+    # Caretaker & Field Analytics
+    path('caretaker/analytics/', views.head_analytics_dashboard, name='caretaker_analytics'),
+    path('field/analytics/', views.head_analytics_dashboard, name='field_analytics'),
 ]
 

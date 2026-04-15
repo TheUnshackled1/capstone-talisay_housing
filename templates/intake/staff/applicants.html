@@ -922,17 +922,21 @@
                     {% endif %}
                 </td>
                 <td>
-                    {% if applicant.eligibilityStatus == 'Eligible' %}
+                    {% if applicant.channel == 'B' %}
+                        {% if applicant.danger_zone_type %}
+                            <span class="badge status-pending-cdrrmo">Pending CDRRMO</span>
+                            {% if applicant.isCdrrmoFlagged %}
+                                <span class="badge cdrrmo-overdue" style="background: #fef2f2; color: #dc2626; border: 1px solid #fca5a5; margin-left: 0.25rem; font-size: 0.5625rem;" title="Pending for {{ applicant.cdrrmoDaysPending }} days (>14 days)">
+                                    ⚠️ {{ applicant.cdrrmoDaysPending }}d
+                                </span>
+                            {% endif %}
+                        {% else %}
+                            <span class="badge status-eligible">Eligible to Proceed</span>
+                        {% endif %}
+                    {% elif applicant.eligibilityStatus == 'Eligible' %}
                         <span class="badge status-eligible">Eligible</span>
                     {% elif applicant.eligibilityStatus == 'Disqualified' %}
                         <span class="badge status-disqualified">Disqualified</span>
-                    {% elif applicant.eligibilityStatus == 'Pending CDRRMO' %}
-                        <span class="badge status-pending-cdrrmo">Pending CDRRMO</span>
-                        {% if applicant.isCdrrmoFlagged %}
-                            <span class="badge cdrrmo-overdue" style="background: #fef2f2; color: #dc2626; border: 1px solid #fca5a5; margin-left: 0.25rem; font-size: 0.5625rem;" title="Pending for {{ applicant.cdrrmoDaysPending }} days (>14 days)">
-                                ⚠️ {{ applicant.cdrrmoDaysPending }}d
-                            </span>
-                        {% endif %}
                     {% else %}
                         <span class="badge status-pending">Pending</span>
                     {% endif %}
@@ -1046,8 +1050,8 @@
                 <!-- Channel B: Danger Zone Applicant View -->
                 <div id="dangerZoneReviewSection" style="display: none;">
                     <!-- Status Badges Row -->
-                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;">
-                        <span class="status-badge status-warning">Channel B — Danger Zone</span>
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; align-items: center;">
+                        <span class="status-badge status-info" id="reviewChannelBadge" style="background: #e0f2fe; color: #0369a1; border: 1px solid #0ea5e9;">Channel B — Danger Zone</span>
                         <span class="status-badge" id="reviewEligibilityBadgeB"></span>
                         <span class="status-badge" id="reviewQueueBadgeB" style="display: none;"></span>
                     </div>
@@ -1090,7 +1094,7 @@
                     </div>
                     
                     <!-- Danger Zone Specific Fields -->
-                    <div style="border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-bottom: 1rem;">
+                    <div class="danger-zone-info" style="border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-bottom: 1rem; display: none;">
                         <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">Danger Zone Information</h4>
                         <div class="form-grid">
                             <div class="form-group">
@@ -1112,9 +1116,17 @@
                             </div>
                         </div>
                     </div>
-                    
+
+                    <!-- Not in Danger Zone Message -->
+                    <div class="not-in-danger-zone-msg" style="display: none; background: #dcfce7; border: 1px solid #86efac; border-radius: 0.375rem; padding: 1rem; margin-bottom: 1rem;">
+                        <p style="color: #166534; font-size: 0.9rem; margin: 0;">
+                            <strong>✓ Not in Danger Zone</strong><br>
+                            Applicant is not located in a danger zone and does not require CDRRMO certification.
+                        </p>
+                    </div>
+
                     <!-- CDRRMO Certification Status -->
-                    <div style="border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-bottom: 1rem;">
+                    <div class="cdrrmo-certification-section" style="border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-bottom: 1rem; display: none;">
                         <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">CDRRMO Certification</h4>
                         <div id="cdrrmoStatusBox" class="info-note" style="background: #fef3c7; border-color: #fcd34d;">
                             <p class="info-note-text" style="color: #92400e;" id="cdrrmoStatusText">
@@ -2011,15 +2023,28 @@
                 if (dangerZoneSection) dangerZoneSection.style.display = 'block';
                 if (walkinSection) walkinSection.style.display = 'none';
                 
-                // Set eligibility badge
+                // Set eligibility badge based on danger zone status
                 const eligBadgeB = document.getElementById('reviewEligibilityBadgeB');
                 if (eligBadgeB) {
-                    eligBadgeB.textContent = currentApplicant.eligibilityStatus;
-                    const eligClassB = currentApplicant.eligibilityStatus === 'Eligible' ? 'success' : 
-                                      currentApplicant.eligibilityStatus === 'Disqualified' ? 'danger' : 'warning';
-                    eligBadgeB.className = 'status-badge status-' + eligClassB;
+                    if (currentApplicant.isInDangerZone) {
+                        eligBadgeB.className = 'status-badge status-warning';
+                        eligBadgeB.textContent = 'Pending CDRRMO';
+                    } else {
+                        eligBadgeB.className = 'status-badge status-success';
+                        eligBadgeB.textContent = 'Eligible to Proceed';
+                    }
                 }
-                
+
+                // Channel badge always shows Channel B — Danger Zone
+                const channelBadgeB = document.getElementById('reviewChannelBadge');
+                if (channelBadgeB) {
+                    channelBadgeB.className = 'status-badge status-info';
+                    channelBadgeB.style.background = '#e0f2fe';
+                    channelBadgeB.style.color = '#0369a1';
+                    channelBadgeB.style.border = '1px solid #0ea5e9';
+                    channelBadgeB.textContent = 'Channel B — Danger Zone';
+                }
+
                 const queueBadgeB = document.getElementById('reviewQueueBadgeB');
                 if (queueBadgeB) {
                     if (currentApplicant.queueType && currentApplicant.queueType !== 'None') {
@@ -2086,8 +2111,24 @@
                 }
                 
                 // Populate eligibility checks for Channel B
-                populateEligibilityChecksB(currentApplicant);
-                
+                const isInDangerZoneB = currentApplicant.dangerZoneType ? true : false;
+                populateEligibilityChecksB(currentApplicant, isInDangerZoneB);
+
+                // Show/hide danger zone sections based on whether applicant has danger zone data
+                const dangerZoneInfoSection = document.querySelector('.danger-zone-info');
+                const notInDangerZoneMsg = document.querySelector('.not-in-danger-zone-msg');
+                const cdrrmoSection = document.querySelector('.cdrrmo-certification-section');
+
+                if (isInDangerZoneB) {
+                    if (dangerZoneInfoSection) dangerZoneInfoSection.style.display = 'block';
+                    if (notInDangerZoneMsg) notInDangerZoneMsg.style.display = 'none';
+                    if (cdrrmoSection) cdrrmoSection.style.display = 'block';
+                } else {
+                    if (dangerZoneInfoSection) dangerZoneInfoSection.style.display = 'none';
+                    if (notInDangerZoneMsg) notInDangerZoneMsg.style.display = 'block';
+                    if (cdrrmoSection) cdrrmoSection.style.display = 'none';
+                }
+
                 // Populate document checklist for Channel B
                 populateDocumentChecklistB(currentApplicant);
             } else {
@@ -2487,16 +2528,16 @@
         }
     }
     
-    // Channel B specific eligibility checks (includes CDRRMO)
-    function populateEligibilityChecksB(applicant) {
+    // Channel B specific eligibility checks (includes CDRRMO only if in danger zone)
+    function populateEligibilityChecksB(applicant, isInDangerZone) {
         const container = document.getElementById('eligibilityChecksB');
         if (!container) return;
-        
+
         const income = applicant.monthlyIncome || 0;
         const incomePass = income <= 10000;
         const cdrrmoPass = isCdrrmoCertified(applicant.cdrrmoStatus);
-        
-        container.innerHTML = `
+
+        let html = `
             <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: ${incomePass ? '#dcfce7' : '#fee2e2'}; border-radius: 0.375rem;">
                 <svg style="width: 1rem; height: 1rem; color: ${incomePass ? '#16a34a' : '#dc2626'};" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     ${incomePass ? '<polyline points="20 6 9 17 4 12"></polyline>' : '<line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>'}
@@ -2515,13 +2556,21 @@
                 </svg>
                 <span style="font-size: 0.8125rem;">Not on blacklist</span>
             </div>
+        `;
+
+        // Only show CDRRMO check if applicant is in danger zone
+        if (isInDangerZone) {
+            html += `
             <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: ${cdrrmoPass ? '#dcfce7' : '#fef3c7'}; border-radius: 0.375rem;">
                 <svg style="width: 1rem; height: 1rem; color: ${cdrrmoPass ? '#16a34a' : '#d97706'};" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     ${cdrrmoPass ? '<polyline points="20 6 9 17 4 12"></polyline>' : '<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>'}
                 </svg>
                 <span style="font-size: 0.8125rem;">CDRRMO Certification: <strong>${applicant.cdrrmoStatus || 'Pending'}</strong></span>
             </div>
-        `;
+            `;
+        }
+
+        container.innerHTML = html;
     }
     
     // Channel B specific document checklist
@@ -3364,26 +3413,192 @@
         // Submit to walkin_register endpoint
         let endpoint = '{% url "intake:walkin_register" request.user.position %}';
 
+        // Get CSRF token from form
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
         fetch(endpoint, {
             method: 'POST',
             body: formData,
             headers: {
-                'X-Requested-With': 'XMLHttpRequest'
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': csrfToken
             }
         })
-        .then(response => response.json())
+        .then(response => {
+            // If not JSON, log the HTML for debugging
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                return response.text().then(text => {
+                    console.error('Server error HTML:', text);
+                    throw new Error('Server returned HTML instead of JSON. Check console for details.');
+                });
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
-                alert('✓ ' + (data.message || 'Applicant registered successfully'));
+                // Close the registration form modal
                 closeAddModal();
+
+                // Show success message
+                alert('✓ ' + (data.message || 'Applicant registered successfully'));
+
+                // Reload the page to refresh the applicants list
                 location.reload();
             } else {
-                alert('Error: ' + (data.error || 'Unknown error'));
+                // Show detailed error message
+                const errorMsg = data.error || 'Unknown error occurred';
+                alert('❌ Error: ' + errorMsg);
+                console.error('Form submission error:', errorMsg);
             }
         })
         .catch(error => {
-            alert('Error: ' + error.message);
+            alert('❌ Error: ' + error.message);
+            console.error('Fetch error:', error);
         });
+    }
+
+    function populateAndOpenReviewModal(applicant) {
+        /**
+         * Populate the review modal with newly registered applicant data and open it.
+         * Shows danger zone info only if applicant selected "Yes" for danger zone.
+         */
+        // Set header info
+        document.getElementById('reviewName').textContent = applicant.fullName;
+        document.getElementById('reviewReference').textContent = applicant.referenceNumber + ' · Reg. ' + applicant.dateRegistered;
+        document.getElementById('reviewApplicantId').value = applicant.id;
+        document.getElementById('reviewChannel').value = applicant.channel;
+
+        // Channel B (Danger Zone) specific fields
+        if (applicant.channel === 'danger_zone') {
+            document.getElementById('dangerZoneReviewSection').style.display = 'block';
+
+            // Basic info
+            document.getElementById('reviewFullNameB').value = applicant.fullName;
+            document.getElementById('reviewBarangayB').value = applicant.barangay;
+            document.getElementById('reviewIncomeB').value = applicant.monthlyIncome.toFixed(2);
+            document.getElementById('reviewHouseholdB').value = applicant.householdSize;
+            document.getElementById('reviewYearsB').value = applicant.yearsResiding;
+            document.getElementById('reviewPhoneB').value = applicant.phoneNumber;
+            document.getElementById('reviewAddressB').value = applicant.currentAddress;
+
+            // Update channel badge to show danger zone status based on Yes/No answer
+            const dangerZoneBadge = document.getElementById('reviewDangerZoneBadge');
+            const channelBadge = document.getElementById('reviewChannelBadge');
+            const eligibilityBadgeB = document.getElementById('reviewEligibilityBadgeB');
+
+            // Channel badge always shows Channel B — Danger Zone
+            if (channelBadge) {
+                channelBadge.className = 'status-badge status-info';
+                channelBadge.style.background = '#e0f2fe';
+                channelBadge.style.color = '#0369a1';
+                channelBadge.style.border = '1px solid #0ea5e9';
+                channelBadge.textContent = 'Channel B — Danger Zone';
+            }
+
+            // Eligibility badge based on Yes/No selection
+            if (eligibilityBadgeB) {
+                if (applicant.isInDangerZone) {
+                    eligibilityBadgeB.className = 'status-badge status-warning';
+                    eligibilityBadgeB.textContent = 'Pending CDRRMO';
+                } else {
+                    eligibilityBadgeB.className = 'status-badge status-success';
+                    eligibilityBadgeB.textContent = 'Eligible to Proceed';
+                }
+            }
+
+            // CONDITIONALLY show danger zone info section
+            const dangerZoneInfoSection = document.querySelector('.danger-zone-info');
+            const notInDangerZoneMsg = document.querySelector('.not-in-danger-zone-msg');
+
+            if (applicant.isInDangerZone) {
+                // User selected "Yes" - show danger zone details
+                if (dangerZoneInfoSection) dangerZoneInfoSection.style.display = 'block';
+                if (notInDangerZoneMsg) notInDangerZoneMsg.style.display = 'none';
+
+                document.getElementById('reviewDangerType').value = applicant.dangerZoneType || '';
+
+                // Set location field
+                const locationInput = document.querySelector('input[name="danger_zone_location"]');
+                if (locationInput) locationInput.value = applicant.dangerZoneLocation || '';
+
+                // Set status badge
+                const statusBadge = document.getElementById('reviewEligibilityBadgeB');
+                if (statusBadge) {
+                    statusBadge.className = 'status-badge status-warning';
+                    statusBadge.textContent = 'Pending CDRRMO';
+                }
+
+                // Show CDRRMO Certification section when "Yes" is selected
+                const cdrrmoSection = document.querySelector('.cdrrmo-certification-section');
+                if (cdrrmoSection) cdrrmoSection.style.display = 'block';
+            } else {
+                // User selected "No" - hide danger zone details, show message
+                if (dangerZoneInfoSection) dangerZoneInfoSection.style.display = 'none';
+                if (notInDangerZoneMsg) notInDangerZoneMsg.style.display = 'block';
+
+                // Set status badge
+                const statusBadge = document.getElementById('reviewEligibilityBadgeB');
+                if (statusBadge) {
+                    statusBadge.className = 'status-badge status-success';
+                    statusBadge.textContent = 'Eligible to Proceed';
+                }
+
+                // Hide CDRRMO Certification section when "No" is selected
+                const cdrrmoSection = document.querySelector('.cdrrmo-certification-section');
+                if (cdrrmoSection) cdrrmoSection.style.display = 'none';
+            }
+
+            // Populate Eligibility Checks (pass isInDangerZone flag)
+            populateEligibilityChecksB(applicant, applicant.isInDangerZone);
+        }
+
+        // Show the modal
+        const modal = document.getElementById('reviewModal');
+        if (modal) {
+            modal.style.display = 'flex';
+        }
+
+        // Populate Document Checklist
+        if (applicant.documents) {
+            const docChecklistB = document.getElementById('documentChecklistB');
+            if (docChecklistB) {
+                docChecklistB.innerHTML = ''; // Clear existing
+
+                Object.entries(applicant.documents).forEach(([fieldName, docData]) => {
+                    const isChecked = docData.checked;
+                    const label = docData.label;
+
+                    const docElement = document.createElement('div');
+                    docElement.className = `document-item ${isChecked ? 'complete' : 'incomplete'}`;
+                    docElement.style.cursor = 'default'; // Read-only in review
+
+                    const svgColor = isChecked ? '#10b981' : '#ef4444';
+                    const svgIcon = isChecked
+                        ? '<circle cx="12" cy="12" r="10"></circle><polyline points="16 12 12 8 8 12"></polyline><line x1="12" y1="16" x2="12" y2="8"></line>'
+                        : '<circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>';
+
+                    docElement.innerHTML = `
+                        <svg style="width: 1rem; height: 1rem; flex-shrink: 0; color: ${svgColor};" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            ${isChecked
+                                ? '<circle cx="12" cy="12" r="10"></circle><polyline points="16 9 12 13 8 11"></polyline>'
+                                : '<circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>'}
+                        </svg>
+                        ${label}
+                    `;
+
+                    docChecklistB.appendChild(docElement);
+                });
+
+                // Add document count header
+                if (applicant.docsCount) {
+                    const countElement = document.createElement('div');
+                    countElement.style.cssText = 'font-size: 0.875rem; color: #64748b; margin-bottom: 0.75rem; font-weight: 500;';
+                    countElement.textContent = `Docs ${applicant.docsCount}`;
+                    docChecklistB.parentElement.insertBefore(countElement, docChecklistB);
+                }
+            }
+        }
     }
 
     function selectChannel(channel) {

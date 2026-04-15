@@ -67,7 +67,6 @@ def send_sms(phone_number, message, trigger_event, applicant=None, isf_record=No
             message_content=message,
             trigger_event=trigger_event,
             applicant=applicant,
-            isf_record=isf_record,
             status='pending'
         )
 
