@@ -147,15 +147,18 @@ LOGOUT_REDIRECT_URL = 'accounts:dashboard'
 # =============================================================================
 # Twilio provides free trial credits for testing
 # Trial account can only send to verified phone numbers
+# Store credentials in .env file for security
 
-SMS_ENABLED = True  # Real SMS sending is now ENABLED
-SMS_SERVICE = 'twilio'  # 'twilio' or 'semaphore'
+import os
 
-# Twilio Configuration
-TWILIO_ACCOUNT_SID = 'ACe90a6af0a068665ed4479c6d303245e9'
-TWILIO_AUTH_TOKEN = '3f40cb567657bcacdbf5686e801e3cc2'
-TWILIO_PHONE_NUMBER = '+17126421042'  # Your Twilio phone number
+SMS_ENABLED = os.getenv('SMS_ENABLED', 'True') == 'True'
+SMS_SERVICE = os.getenv('SMS_SERVICE', 'twilio')
 
-# Legacy Semaphore Configuration (kept for reference/fallback)
-SEMAPHORE_API_KEY = 'c3f15974a138c3c7aabef97f481781f5'
+# Twilio Configuration (from environment variables)
+TWILIO_ACCOUNT_SID = os.getenv('TWILIO_ACCOUNT_SID', '')
+TWILIO_AUTH_TOKEN = os.getenv('TWILIO_AUTH_TOKEN', '')
+TWILIO_PHONE_NUMBER = os.getenv('TWILIO_PHONE_NUMBER', '')
+
+# Legacy Semaphore Configuration (from environment variables)
+SEMAPHORE_API_KEY = os.getenv('SEMAPHORE_API_KEY', '')
 SEMAPHORE_SENDER_NAME = 'SEMAPHORE'
