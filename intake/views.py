@@ -11,7 +11,7 @@ from .forms import (
     HouseholdMemberForm,
     WalkInApplicantForm
 )
-from .utils import check_blacklist, create_applicant_from_isf, send_sms
+from .utils import check_blacklist, send_sms
 import json
 
 
@@ -46,80 +46,6 @@ def register_landowner_walkin(request, position):
     This endpoint is no longer available.
     """
     return JsonResponse({'success': False, 'error': 'Landowner submission flow has been removed.'}, status=404)
-
-    # Permission check
-    if request.user.position not in ['second_member', 'fourth_member']:
-        return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
-
-    # Get data
-    landowner_name = request.POST.get('landowner_name', '').strip()
-    property_address = request.POST.get('property_address', '').strip()
-
-    # Get ISF arrays
-    isf_names = request.POST.getlist('isf_name[]')
-    isf_households = request.POST.getlist('isf_household[]')
-    isf_incomes = request.POST.getlist('isf_income[]')
-    isf_years = request.POST.getlist('isf_years[]')
-
-    # Validation
-    if not landowner_name or not property_address:
-        return JsonResponse({'success': False, 'error': 'Landowner name and property address required'})
-
-    if not isf_names or len(isf_names) == 0:
-        return JsonResponse({'success': False, 'error': 'At least one ISF record required'})
-
-    try:
-        # Create LandownerSubmission
-        submission = LandownerSubmission.objects.create(
-            landowner_name=landowner_name,
-            property_address=property_address,
-            barangay='',  # Will be extracted from address if needed
-            submitted_by_staff=request.user,  # Track that staff entered this
-            status='pending'
-        )
-
-        # Create ISF records
-        created_count = 0
-        for i in range(len(isf_names)):
-            try:
-                isf_name = isf_names[i].strip()
-                household = int(isf_households[i]) if i < len(isf_households) else 1
-                income = float(isf_incomes[i]) if i < len(isf_incomes) else 0
-                years = int(isf_years[i]) if i < len(isf_years) else 0
-
-                if not isf_name:
-                    continue
-
-                isf = ISFRecord.objects.create(
-                    submission=submission,
-                    full_name=isf_name,
-                    household_members=household,
-                    monthly_income=income,
-                    years_residing=years,
-                    barangay=submission.barangay or '',
-                    phone_number='',  # No phone for walk-in at registration
-                    status='pending',
-                    submitted_by_staff=request.user  # Track the staff member who submitted
-                )
-
-                created_count += 1
-            except (ValueError, TypeError) as e:
-                # Skip invalid ISF entry
-                continue
-
-        if created_count == 0:
-            submission.delete()
-            return JsonResponse({'success': False, 'error': 'No valid ISF records created'})
-
-        return JsonResponse({
-            'success': True,
-            'message': f'Registered {created_count} ISF record(s) from {landowner_name}. Submission reference: {submission.reference_number}',
-            'submissionId': str(submission.id),
-            'reference': submission.reference_number
-        })
-
-    except Exception as e:
-        return JsonResponse({'success': False, 'error': f'Error creating submission: {str(e)}'})
 
 
 @login_required
@@ -260,7 +186,7 @@ def update_eligibility(request, position):
 def update_applicant(request, position):
     """
     AJAX endpoint to update applicant data (edit mode in review modal).
-    Handles both Channel A (ISF records) and Channel B/C (Applicants).
+    Handles Channel B/C (Applicants) walk-in registrations.
 
     URL Route: /intake/staff/<position>/update-applicant/
 
@@ -374,14 +300,12 @@ def update_applicant(request, position):
             applicant.doc_sketch_location = request.POST.get('doc_sketch_location') == 'true'
             
             applicant.save()
-            
+
             return JsonResponse({
                 'success': True,
                 'message': 'Applicant updated successfully'
             })
-    
-    except ISFRecord.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'ISF record not found'})
+
     except Applicant.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Applicant not found'})
     except Exception as e:
@@ -514,7 +438,7 @@ def update_cdrrmo_certification(request, position):
 def delete_applicant(request, position):
     """
     AJAX endpoint to delete an applicant.
-    Handles both Channel A (ISF records) and Channel B/C (Applicants).
+    Handles Channel B/C (Applicants) walk-in registrations.
 
     URL Route: /intake/staff/<position>/delete-applicant/
 
@@ -540,46 +464,26 @@ def delete_applicant(request, position):
         return JsonResponse({'success': False, 'error': 'Missing applicant_id'})
     
     try:
-        if channel == 'A':
-            # Delete Channel A: ISF Record
-            isf = ISFRecord.objects.get(id=applicant_id)
-            isf_name = isf.full_name
-            isf_ref = isf.reference_number
-            
-            # If this ISF was converted to an applicant, also handle that
-            if isf.converted_to_applicant and hasattr(isf, 'applicant_profile'):
-                isf.applicant_profile.delete()
-            
-            isf.delete()
-            
-            return JsonResponse({
-                'success': True,
-                'message': f'ISF record "{isf_name}" ({isf_ref}) deleted successfully'
-            })
-            
-        else:
-            # Delete Channel B or C: Applicant
-            applicant = Applicant.objects.get(id=applicant_id)
-            app_name = applicant.full_name
-            app_ref = applicant.reference_number
-            
-            # Delete related objects (CDRRMO certification, queue entries, etc.)
-            if hasattr(applicant, 'cdrrmocertification'):
-                applicant.cdrrmocertification.delete()
-            
-            # Remove from queues
-            applicant.queue_entries.all().delete()
-            
-            # Delete the applicant
-            applicant.delete()
-            
-            return JsonResponse({
-                'success': True,
-                'message': f'Applicant "{app_name}" ({app_ref}) deleted successfully'
-            })
-            
-    except ISFRecord.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'ISF record not found'})
+        # Delete Channel B or C: Applicant
+        applicant = Applicant.objects.get(id=applicant_id)
+        app_name = applicant.full_name
+        app_ref = applicant.reference_number
+
+        # Delete related objects (CDRRMO certification, queue entries, etc.)
+        if hasattr(applicant, 'cdrrmocertification'):
+            applicant.cdrrmocertification.delete()
+
+        # Remove from queues
+        applicant.queue_entries.all().delete()
+
+        # Delete the applicant
+        applicant.delete()
+
+        return JsonResponse({
+            'success': True,
+            'message': f'Applicant "{app_name}" ({app_ref}) deleted successfully'
+        })
+
     except Applicant.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Applicant not found'})
     except Exception as e:
@@ -592,6 +496,7 @@ def delete_applicant(request, position):
 def resend_sms(request, position):
     """
     Resend SMS notification to applicant.
+    Handles Channel B/C (Applicants) walk-in registrations.
 
     URL Route: /intake/staff/<position>/resend-sms/
 
@@ -609,35 +514,23 @@ def resend_sms(request, position):
         return JsonResponse({'success': False, 'error': 'Missing channel or id'})
     
     try:
-        if channel == 'A':
-            record = ISFRecord.objects.get(id=record_id)
-            if not record.phone_number:
-                return JsonResponse({'success': False, 'error': 'No phone number on record'})
-            
-            if sms_type == 'registration':
-                record.registration_sms_sent = False  # Reset to trigger resend
-                record.send_registration_sms()
-            else:
-                record.eligibility_sms_sent = False
-                record.send_eligibility_sms(eligible=record.status == 'eligible')
+        record = Applicant.objects.get(id=record_id)
+        if not record.phone_number:
+            return JsonResponse({'success': False, 'error': 'No phone number on record'})
+
+        if sms_type == 'registration':
+            record.registration_sms_sent = False
+            record.send_registration_sms()
         else:
-            record = Applicant.objects.get(id=record_id)
-            if not record.phone_number:
-                return JsonResponse({'success': False, 'error': 'No phone number on record'})
-            
-            if sms_type == 'registration':
-                record.registration_sms_sent = False
-                record.send_registration_sms()
-            else:
-                record.eligibility_sms_sent = False
-                record.send_eligibility_sms(eligible=record.status == 'eligible')
-        
+            record.eligibility_sms_sent = False
+            record.send_eligibility_sms(eligible=record.status == 'eligible')
+
         return JsonResponse({
             'success': True,
             'message': f'{sms_type.title()} SMS resent successfully'
         })
-        
-    except (ISFRecord.DoesNotExist, Applicant.DoesNotExist):
+
+    except Applicant.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Record not found'})
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
@@ -647,11 +540,10 @@ def resend_sms(request, position):
 @verify_position
 def applicants_list(request, position):
     """
-    Module 1: ISF Recording Management - Applicant Intake
+    Module 1: Applicant Intake Management
     Accessible to: Second Member (Joie), Fourth Member (Jocel)
-    Unified view for all applicant intake channels:
+    Unified view for walk-in applicant intake channels:
 
-    Channel A (Landowner Portal) → Shows pending ISFRecords from LandownerSubmissions
     Channel B (Danger Zone) → Shows Applicants with channel='danger_zone'
     Channel C (Walk-in) → Shows Applicants with channel='walk_in'
 
@@ -909,10 +801,10 @@ def applicants_list(request, position):
 def walkin_register(request, position):
     """
     Handle applicant registration from the modal form.
+    Handles Channel B (Danger Zone) and Channel C (Walk-in) registrations.
 
     URL Route: /intake/staff/<position>/walkin-register/
 
-    Channel A: Landowner walk-in → Creates LandownerSubmission + ISFRecords
     Channel B: Danger Zone Walk-in → Creates Applicant + CDRRMO certification
     Channel C: Regular Walk-in → Creates Applicant
     """
@@ -929,88 +821,6 @@ def walkin_register(request, position):
         return redirect('intake:applicants_list')
 
     channel = request.POST.get('channel', 'walk_in')
-
-    # ====== CHANNEL A: Landowner Walk-in ======
-    if channel == 'landowner':
-        landowner_name = request.POST.get('landowner_name', '').strip()
-        property_address = request.POST.get('property_address', '').strip()
-
-        if not landowner_name or not property_address:
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                return JsonResponse({'success': False, 'error': 'Landowner name and property address are required'})
-            messages.error(request, 'Landowner name and property address are required.')
-            return redirect('intake:applicants_list')
-
-        # Get ISF data from form arrays
-        isf_names = request.POST.getlist('isf_name[]')
-        isf_incomes = request.POST.getlist('isf_income[]')
-        isf_households = request.POST.getlist('isf_household[]')
-        isf_years = request.POST.getlist('isf_years[]')
-
-        # Filter out empty ISF entries
-        valid_isfs = []
-        for i, name in enumerate(isf_names):
-            if name and name.strip():
-                try:
-                    income = float(isf_incomes[i]) if i < len(isf_incomes) and isf_incomes[i] else 0
-                except (ValueError, TypeError):
-                    income = 0
-                try:
-                    household = int(isf_households[i]) if i < len(isf_households) and isf_households[i] else 1
-                except (ValueError, TypeError):
-                    household = 1
-                try:
-                    years = int(isf_years[i]) if i < len(isf_years) and isf_years[i] else 0
-                except (ValueError, TypeError):
-                    years = 0
-
-                valid_isfs.append({
-                    'name': name.strip(),
-                    'income': income,
-                    'household': household,
-                    'years': years
-                })
-
-        if not valid_isfs:
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                return JsonResponse({'success': False, 'error': 'At least one ISF record is required'})
-            messages.error(request, 'At least one ISF record is required.')
-            return redirect('intake:applicants_list')
-
-        # Create landowner submission
-        submission = LandownerSubmission.objects.create(
-            landowner_name=landowner_name,
-            property_address=property_address,
-            status='pending',
-            submitted_by_staff=request.user,
-        )
-
-        # Create ISF records
-        created_count = 0
-        blacklisted_count = 0
-        for isf in valid_isfs:
-            is_blacklisted, _ = check_blacklist(isf['name'], '')
-            if is_blacklisted:
-                blacklisted_count += 1
-                continue
-
-            ISFRecord.objects.create(
-                submission=submission,
-                full_name=isf['name'],
-                monthly_income=isf['income'],
-                household_members=isf['household'],
-                years_residing=isf['years'],
-                status='pending',
-            )
-            created_count += 1
-
-        msg = f'Landowner submission created with {created_count} ISF records. Reference: {submission.reference_number}'
-
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return JsonResponse({'success': True, 'message': msg})
-
-        messages.success(request, f'✓ {msg}')
-        return redirect('intake:applicants_list')
 
     # ====== CHANNEL B & C: Walk-in Applicants ======
     form = WalkInApplicantForm(request.POST)

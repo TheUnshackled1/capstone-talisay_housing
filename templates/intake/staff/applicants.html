@@ -278,7 +278,6 @@
         white-space: nowrap;
     }
 
-    .badge.channel-a { background: #dbeafe; color: #1e40af; }
     .badge.channel-b { background: #fef3c7; color: #92400e; }
     .badge.channel-c { background: #ccfbf1; color: #115e59; }
 
@@ -735,7 +734,7 @@
     <div class="page-header">
         <div>
             <h1 class="page-title">ISF Recording Management</h1>
-            <p class="page-subtitle">Module 1 — All intake channels: Landowner, Danger Zone, Walk-in</p>
+            <p class="page-subtitle">Module 1 — All intake channels: Danger Zone, Walk-in</p>
         </div>
         <button class="btn-primary-add" onclick="openAddModal()">
             <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -856,7 +855,6 @@
         </div>
         <select class="filter-select" id="filterChannel" onchange="filterTable()">
             <option value="all">All Channels</option>
-            <option value="A">Channel A — Landowner</option>
             <option value="B">Channel B — Danger Zone</option>
             <option value="C">Channel C — Walk-in</option>
         </select>
@@ -917,13 +915,7 @@
                 <td>{{ applicant.referenceNumber }}</td>
                 <td style="font-weight: 500;">{{ applicant.fullName }}</td>
                 <td>
-                    {% if applicant.channel == 'A' %}
-                        {% if applicant.channelSource == 'staff_entry' %}
-                            <span class="badge channel-a">Channel A — Staff Entry</span>
-                        {% else %}
-                            <span class="badge channel-a">Channel A — Landowner Portal</span>
-                        {% endif %}
-                    {% elif applicant.channel == 'B' %}
+                    {% if applicant.channel == 'B' %}
                         <span class="badge channel-b">Channel B — Danger Zone</span>
                     {% else %}
                         <span class="badge channel-c">Channel C — Walk-in</span>
@@ -1051,92 +1043,6 @@
             <input type="hidden" id="reviewSubmissionId" name="submission_id" value="">
             
             <div class="modal-body" id="reviewBody">
-                <!-- Channel A: Landowner Submission View -->
-                <div id="landownerReviewSection" style="display: none;">
-                    <!-- Status Badges Row -->
-                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;">
-                        <span class="status-badge status-info">Channel A — Landowner</span>
-                        <span class="status-badge" id="reviewEligibilityBadgeA"></span>
-                        <span class="status-badge" id="reviewQueueBadgeA" style="display: none;"></span>
-                    </div>
-                    
-                    <!-- Editable Fields for Channel A - ISF Information -->
-                    <div class="form-grid" style="margin-bottom: 1rem;">
-                        <div class="form-group" style="grid-column: span 2;">
-                            <label class="form-label">Full Name</label>
-                            <input type="text" class="form-input" id="reviewFullNameA" name="full_name_a" readonly>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Barangay</label>
-                            <select class="form-select" id="reviewBarangayA" name="barangay_a" disabled>
-                                <option value="">Select barangay...</option>
-                                {% for brgy in barangays %}
-                                <option value="{{ brgy }}">{{ brgy }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Monthly Income (₱)</label>
-                            <input type="number" class="form-input" id="reviewIncomeA" name="monthly_income_a" min="0" step="0.01" readonly>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Household Size</label>
-                            <input type="number" class="form-input" id="reviewHouseholdA" name="household_size_a" min="1" readonly>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Years Residing</label>
-                            <input type="number" class="form-input" id="reviewYearsA" name="years_residing_a" min="0" readonly>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Contact Number</label>
-                            <input type="tel" class="form-input" id="reviewPhoneA" name="phone_number_a" readonly>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Current Address</label>
-                            <input type="text" class="form-input" id="reviewAddressA" name="current_address_a" readonly>
-                        </div>
-                    </div>
-                    
-                    <!-- Landowner Information Section -->
-                    <div style="border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-bottom: 1rem;">
-                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">Landowner Information</h4>
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label class="form-label">Landowner Name</label>
-                                <input type="text" class="form-input" id="reviewLandownerName" name="landowner_name" readonly>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Landowner Phone</label>
-                                <input type="tel" class="form-input" id="reviewLandownerPhone" name="landowner_phone" readonly>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Property Address</label>
-                                <input type="text" class="form-input" id="reviewPropertyAddress" name="property_address" readonly>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Submission Barangay</label>
-                                <input type="text" class="form-input" id="reviewSubmissionBarangay" name="submission_barangay" readonly>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Eligibility Check Section -->
-                    <div style="border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-bottom: 1rem;">
-                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">Eligibility Check</h4>
-                        <div id="eligibilityChecksA" style="display: grid; gap: 0.5rem;">
-                            <!-- Populated by JavaScript -->
-                        </div>
-                    </div>
-                    
-                    <!-- Document Checklist -->
-                    <div style="border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-bottom: 1rem;">
-                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">Document Checklist</h4>
-                        <div class="document-grid" id="documentChecklistA">
-                            <!-- Populated by JavaScript -->
-                        </div>
-                    </div>
-                </div>
-                
                 <!-- Channel B: Danger Zone Applicant View -->
                 <div id="dangerZoneReviewSection" style="display: none;">
                     <!-- Status Badges Row -->
@@ -1621,10 +1527,6 @@
                 <div class="form-group">
                     <label class="form-label">Intake Channel</label>
                     <div class="channel-selector">
-                        <button type="button" class="channel-btn" data-channel="landowner" onclick="selectChannel('landowner')">
-                            <span class="channel-btn-label">Channel A</span>
-                            <span class="channel-btn-sublabel">Landowner</span>
-                        </button>
                         <button type="button" class="channel-btn" data-channel="danger_zone" onclick="selectChannel('danger_zone')">
                             <span class="channel-btn-label">Channel B</span>
                             <span class="channel-btn-sublabel">Danger Zone</span>
@@ -1635,86 +1537,6 @@
                         </button>
                     </div>
                     <input type="hidden" id="channelInput" name="channel" value="walk_in">
-                </div>
-
-                <!-- Channel A: Landowner Fields -->
-                <div id="landownerFields" style="display: none;">
-                    <div class="info-note" style="background: #dbeafe; border-color: #93c5fd; margin-bottom: 1rem;">
-                        <p class="info-note-text" style="color: #1e40af;">
-                            <strong>📋 Landowner Walk-in Submission</strong><br>
-                            Enter landowner details and the list of informal settlers residing on their property.
-                        </p>
-                    </div>
-                    
-                    <!-- Landowner Information Section -->
-                    <div style="margin-bottom: 1rem;">
-                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.025em;">Landowner Information</h4>
-                        <div class="form-grid">
-                            <div class="form-group" style="grid-column: span 2;">
-                                <label class="form-label">Full Name *</label>
-                                <input type="text" class="form-input" placeholder="Enter landowner's full name" name="landowner_name" id="landownerName">
-                            </div>
-                            <div class="form-group" style="grid-column: span 2;">
-                                <label class="form-label">Property Address *</label>
-                                <textarea class="form-input" rows="2" placeholder="Complete address of the property where informal settlers are residing (include barangay)" name="property_address" id="propertyAddress"></textarea>
-                            </div>
-                            <div class="form-group" style="grid-column: span 2;">
-                                <label class="form-label">Contact Number</label>
-                                <input type="tel" class="form-input ph-phone" placeholder="09XXXXXXXXXX" pattern="09[0-9]{9}" name="landowner_phone" id="landownerPhoneWalkin">
-                                <div class="form-help" style="font-size: 0.75rem; color: #64748b; margin-top: 0.25rem;">11 digits: 09XXXXXXXXXX (optional)</div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- ISF Records Section -->
-                    <div style="border-top: 1px solid #e2e8f0; padding-top: 1rem;">
-                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.025em;">Informal Settlers on Property</h4>
-                        
-                        <div id="isfRecordsContainer">
-                            <div class="isf-record-entry" data-isf-index="1" style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 1rem; border-radius: 0.5rem; margin-bottom: 0.75rem;">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-                                    <span style="font-weight: 600; color: #1e293b; font-size: 0.875rem;">ISF #1</span>
-                                </div>
-                                <div class="form-grid">
-                                    <div class="form-group" style="grid-column: span 2;">
-                                        <label class="form-label">Full Name *</label>
-                                        <input type="text" class="form-input isf-required" placeholder="Juan Dela Cruz" name="isf_name[]">
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-label">Household Members *</label>
-                                        <input type="number" class="form-input isf-required" placeholder="5" name="isf_household[]" min="1" value="1">
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-label">Monthly Income (₱) *</label>
-                                        <input type="text" class="form-input isf-required" inputmode="decimal" placeholder="8000" name="isf_income[]" pattern="[0-9,]*">
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-label">Years Residing *</label>
-                                        <input type="number" class="form-input isf-required" placeholder="3" name="isf_years[]" min="0">
-                                    </div>
-                                    <div class="form-group" style="grid-column: span 2;">
-                                        <label class="form-label">Contact Number</label>
-                                        <input type="tel" class="form-input ph-phone" placeholder="09XXXXXXXXXX" pattern="09[0-9]{9}" name="isf_phone[]">
-                                        <div class="form-help" style="font-size: 0.75rem; color: #64748b; margin-top: 0.25rem;">11 digits: 09XXXXXXXXXX (optional)</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <button type="button" class="btn-modal secondary" style="width: 100%; padding: 0.75rem; margin-top: 0.5rem; border: 2px dashed #cbd5e1; background: transparent; color: #64748b;" onclick="addISFRecord()">
-                            <svg style="width: 1rem; height: 1rem; margin-right: 0.5rem; vertical-align: middle;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <line x1="12" y1="5" x2="12" y2="19"></line>
-                                <line x1="5" y1="12" x2="19" y2="12"></line>
-                            </svg>
-                            Add Another ISF
-                        </button>
-                    </div>
-                    
-                    <div class="info-note" style="margin-top: 1rem;">
-                        <p class="info-note-text">
-                            Each ISF will receive an SMS with their reference number. Landowner submissions go to the <strong>Priority Queue</strong>.
-                        </p>
-                    </div>
                 </div>
 
                 <!-- Channel B/C: Walk-in Applicant Fields -->
