@@ -667,32 +667,9 @@ def update_applicant(request, position):
             isf.doc_no_property = request.POST.get('doc_no_property') == 'true'
             isf.doc_2x2_picture = request.POST.get('doc_2x2_picture') == 'true'
             isf.doc_sketch_location = request.POST.get('doc_sketch_location') == 'true'
-            
+
             isf.save()
-            
-            # Also update landowner info if provided
-            submission_id = request.POST.get('submission_id')
-            if submission_id:
-                try:
-                    submission = LandownerSubmission.objects.get(id=submission_id)
-                    lo_name = request.POST.get('landowner_name', '').strip()
-                    lo_phone = request.POST.get('landowner_phone', '').strip()
-                    prop_addr = request.POST.get('property_address', '').strip()
-                    sub_barangay = request.POST.get('submission_barangay', '').strip()
-                    
-                    if lo_name:
-                        submission.landowner_name = lo_name
-                    if lo_phone:
-                        submission.landowner_phone = lo_phone
-                    if prop_addr:
-                        submission.property_address = prop_addr
-                    if sub_barangay:
-                        submission.barangay = sub_barangay
-                    
-                    submission.save()
-                except LandownerSubmission.DoesNotExist:
-                    pass
-            
+
             return JsonResponse({
                 'success': True,
                 'message': 'ISF record updated successfully'
