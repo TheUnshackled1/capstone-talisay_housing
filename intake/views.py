@@ -707,7 +707,7 @@ def applicants_list(request, position):
             'referenceNumber': app.reference_number,
             'dateRegistered': app.created_at.strftime('%Y-%m-%d'),
             'dateTime': app.created_at.strftime('%Y-%m-%d %I:%M %p'),
-            'channel': 'B',  # All applicants are Channel B (Danger Zone)
+            'channel': app.channel or 'C',  # Use actual channel from applicant (danger_zone=B, walk_in=C, etc.)
             'submissionId': None,
             'applicantId': str(app.id),
             'barangay': app.barangay.name if app.barangay else 'Unknown',

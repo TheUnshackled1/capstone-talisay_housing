@@ -34,6 +34,7 @@ class SMSLog(models.Model):
     # Status tracking
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     error_message = models.TextField(blank=True)
+    external_id = models.CharField(max_length=100, blank=True, help_text="Twilio message SID")
     sent_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:

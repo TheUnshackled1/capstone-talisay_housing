@@ -148,13 +148,14 @@ LOGOUT_REDIRECT_URL = 'accounts:dashboard'
 # Semaphore is a Philippine SMS service with free credits for new accounts
 # Free trial: 100 SMS credits on account creation
 
-SMS_ENABLED = False  # Dev Mode: SMS logs to console instead of sending real messages
-SMS_SERVICE = 'semaphore'  # 'twilio' or 'semaphore'
+SMS_ENABLED = True  # Real SMS sending is ENABLED
+SMS_SERVICE = 'twilio'  # 'twilio' or 'semaphore'
 
-# Twilio Configuration (Legacy - fallback)
+# Twilio Configuration (Active)
 TWILIO_ACCOUNT_SID = 'ACe90a6af0a068665ed4479c6d303245e9'
-TWILIO_AUTH_TOKEN = '73a9e097919f450b858f10f67b407e74'
+TWILIO_AUTH_TOKEN = '8f98a71c0f227237d59990cfa3c48844'
 TWILIO_PHONE_NUMBER = '+17126421042'  # Your Twilio phone number
+TWILIO_MESSAGING_SERVICE_SID = 'MGef6b27fa659a0bb41605875f7eddf476'  # Your Messaging Service
 
 # Semaphore Configuration (Active)
 SEMAPHORE_API_KEY = 'c3f15974a138c3c7aabef97f481781f5'

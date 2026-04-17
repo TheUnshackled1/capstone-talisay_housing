@@ -1599,7 +1599,7 @@
                         </div>
                     </div>
 
-                    <!-- Sex & Age -->
+                    <!-- Sex & Years Residing in Talisay -->
                     <div class="form-row">
                         <div class="form-group">
                             <label class="form-label">Sex <span style="color: #dc2626;">*</span></label>
@@ -1615,17 +1615,25 @@
                             </div>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Age <span style="color: #dc2626;">*</span></label>
-                            <input type="number" class="form-input" placeholder="Age" name="age" id="age" min="0" required>
+                            <label class="form-label">Years Residing in Talisay <span style="color: #dc2626;">*</span></label>
+                            <input type="number" class="form-input" placeholder="Number of years" name="years_residing" id="yearsResiding" min="0" required>
                         </div>
                     </div>
 
-                    <!-- Date of Birth & Place of Birth -->
+                    <!-- Date of Birth & Age (Integrated) -->
                     <div class="form-row">
                         <div class="form-group">
                             <label class="form-label">Date of Birth <span style="color: #dc2626;">*</span></label>
-                            <input type="date" class="form-input" name="date_of_birth" id="dateOfBirth" required>
+                            <input type="date" class="form-input" name="date_of_birth" id="dateOfBirth" onchange="calculateAge()" required>
                         </div>
+                        <div class="form-group">
+                            <label class="form-label">Age <span style="color: #dc2626;">*</span> (Auto-calculated)</label>
+                            <input type="number" class="form-input" placeholder="Auto-calculated" name="age" id="age" min="0" readonly style="background-color: #f3f4f6; cursor: not-allowed; font-weight: 600;">
+                        </div>
+                    </div>
+
+                    <!-- Place of Birth -->
+                    <div class="form-row full">
                         <div class="form-group">
                             <label class="form-label">Place of Birth</label>
                             <input type="text" class="form-input" placeholder="City/Municipality, Province" name="place_of_birth" id="placeOfBirth">
@@ -1714,10 +1722,6 @@
                             <label class="form-label">Monthly Income (₱) <span style="color: #dc2626;">*</span></label>
                             <input type="text" class="form-input" inputmode="decimal" pattern="[0-9,]*" placeholder="e.g. 8500" name="monthly_income" id="monthlyIncome" required>
                             <span class="help-text">Gross monthly household income</span>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Years Residing in Talisay <span style="color: #dc2626;">*</span></label>
-                            <input type="number" class="form-input" placeholder="Number of years" name="years_residing" id="yearsResiding" min="0" required>
                         </div>
                     </div>
                 </div>
@@ -3305,6 +3309,36 @@
         }
         householdMemberCount--;
         renderHouseholdMembers();
+    }
+
+
+    // Auto-calculate age from date of birth
+    function calculateAge() {
+        const dobInput = document.getElementById('dateOfBirth');
+        const ageInput = document.getElementById('age');
+
+        if (!dobInput.value) {
+            ageInput.value = '';
+            return;
+        }
+
+        const dob = new Date(dobInput.value);
+        const today = new Date();
+        let age = today.getFullYear() - dob.getFullYear();
+        const monthDiff = today.getMonth() - dob.getMonth();
+
+        // Adjust age if birthday hasn't occurred this year
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+            age--;
+        }
+
+        // Validate age (must be at least 18)
+        if (age < 0) {
+            ageInput.value = '';
+            console.warn('Invalid date of birth');
+        } else {
+            ageInput.value = age;
+        }
     }
 
 

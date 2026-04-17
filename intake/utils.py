@@ -122,7 +122,7 @@ def send_sms(phone_number, message, trigger_event, applicant=None, isf_record=No
 
 def send_sms_twilio(phone_number, message, sms_log):
     """
-    Send SMS via Twilio API.
+    Send SMS via Twilio API using Messaging Service.
 
     Args:
         phone_number: Philippine mobile number (09XXXXXXXXX format)
@@ -137,10 +137,10 @@ def send_sms_twilio(phone_number, message, sms_log):
 
         account_sid = getattr(settings, 'TWILIO_ACCOUNT_SID', None)
         auth_token = getattr(settings, 'TWILIO_AUTH_TOKEN', None)
-        from_number = getattr(settings, 'TWILIO_PHONE_NUMBER', None)
+        messaging_service_sid = getattr(settings, 'TWILIO_MESSAGING_SERVICE_SID', None)
 
-        if not account_sid or not auth_token or not from_number:
-            raise Exception("Twilio credentials not configured")
+        if not account_sid or not auth_token or not messaging_service_sid:
+            raise Exception("Twilio credentials not configured (need Account SID, Auth Token, and Messaging Service SID)")
 
         # Convert Philippine format to international format
         # 09XXXXXXXXX -> +639XXXXXXXXX
@@ -149,7 +149,7 @@ def send_sms_twilio(phone_number, message, sms_log):
         client = Client(account_sid, auth_token)
         msg = client.messages.create(
             body=message,
-            from_=from_number,
+            messaging_service_sid=messaging_service_sid,
             to=to_number
         )
 
