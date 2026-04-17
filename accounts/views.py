@@ -938,9 +938,19 @@ def dashboard_field(request):
         return redirect('accounts:dashboard')
 
     # ==================== MODULE 1: CHANNEL B FIELD VERIFICATION ====================
-    # Only pending danger zone verifications (status='pending' in CDRRMOCertification)
+    # Only pending danger zone verifications that are income eligible
+    # Filter:
+    # 1. CDRRMOCertification status='pending' (needs field verification)
+    # 2. Applicant claimed danger zone (danger_zone_type is not empty)
+    # 3. Applicant is income eligible (monthly_income <= 10,000)
+    # 4. Applicant status is eligible or pending_cdrrmo (already cleared eligibility check)
     pending_certifications = CDRRMOCertification.objects.filter(
-        status='pending'
+        status='pending',
+        applicant__danger_zone_type__isnull=False,  # Claimed danger zone
+        applicant__monthly_income__lte=10000,  # Income eligible
+        applicant__status__in=['eligible', 'pending_cdrrmo', 'requirements']  # Passed eligibility
+    ).exclude(
+        applicant__danger_zone_type=''  # Empty string means not claimed
     ).select_related('applicant', 'applicant__registered_by').order_by('-requested_at')
 
     pending_verifications = []
@@ -976,7 +986,7 @@ def dashboard_field(request):
             'danger_zone_type': cert.applicant.danger_zone_type,
             'danger_zone_location': cert.applicant.danger_zone_location,
             'channel': 'Channel B — Danger Zone',
-            'eligibility': 'Pending CDRRMO',
+            'eligibility': 'Eligible to Proceed',  # All showing in this view are eligible
             'queue_position': queue_position,
             'staff_handled': cert.applicant.registered_by.get_full_name() if cert.applicant.registered_by else '—',
             'staff_position': cert.applicant.registered_by.get_position_display() if cert.applicant.registered_by else '—',

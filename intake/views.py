@@ -587,27 +587,36 @@ def update_cdrrmo_status(request, position):
                 applicant.status = 'eligible'
                 queue_type = 'Priority'
                 msg_outcome = 'moved to Priority Queue'
+
+                # Create priority queue entry
+                last_priority_entry = QueueEntry.objects.filter(
+                    queue_type='priority'
+                ).order_by('-position').first()
+                next_position = (last_priority_entry.position + 1) if last_priority_entry else 1
+
+                QueueEntry.objects.update_or_create(
+                    applicant=applicant,
+                    defaults={
+                        'queue_type': 'priority',
+                        'position': next_position,
+                        'status': 'active',
+                        'added_by': request.user
+                    }
+                )
             else:
-                # Not in danger zone - mark eligible anyway but walk-in queue
+                # Not in danger zone - mark eligible anyway but NOT added to priority queue
                 applicant.status = 'eligible'
                 queue_type = 'Walk-in'
-                msg_outcome = 'moved to Walk-in Queue (not in danger zone)'
+                msg_outcome = 'moved to Walk-in FIFO (not in danger zone)'
+
+                # Remove from priority queue if exists
+                QueueEntry.objects.filter(applicant=applicant).delete()
 
             # Save applicant
             applicant.save()
 
-            # Create or update queue entry
-            QueueEntry.objects.update_or_create(
-                applicant=applicant,
-                defaults={
-                    'queue_type': queue_type,
-                    'status': 'pending',
-                    'assigned_at': timezone.now()
-                }
-            )
-
-            # Update CDRRMO cert with staff approval
-            cert.status = f'{ronda_finding}_approved'
+            # Update CDRRMO cert - keep status as set by ronda team
+            # Don't change the status, just mark as processed by staff
             cert.save()
 
             # Send SMS to applicant
@@ -625,13 +634,16 @@ def update_cdrrmo_status(request, position):
         else:  # decision == 'rejected'
             # Staff rejected ronda team's finding - disqualify applicant
             applicant.status = 'disqualified'
-            applicant.disqualification_reason = f'CDRRMO verification disputed by staff. Ronda finding: {ronda_finding}. Staff assessment: insufficient evidence.'
+            applicant.disqualification_reason = f'CDRRMO verification disputed by staff. Ronda finding: {ronda_finding}. Staff assessment: insufficient grounds for acceptance.'
             applicant.eligibility_checked_by = request.user
             applicant.eligibility_checked_at = timezone.now()
             applicant.save()
 
-            # Update CDRRMO cert with staff rejection
-            cert.status = 'rejected'
+            # Remove from queue if exists
+            QueueEntry.objects.filter(applicant=applicant).delete()
+
+            # CDRRMO status stays as set by ronda team - don't modify
+            # Staff rejection is recorded in applicant.status=disqualified
             cert.save()
 
             # Send SMS to applicant
