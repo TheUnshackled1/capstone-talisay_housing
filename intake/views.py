@@ -647,11 +647,11 @@ def applicants_list(request, position):
             'hasPhone': bool(isf.phone_number),
         })
     
-    # ====== CHANNEL B: Danger Zone Applicants ======
-    # Get all danger zone applicants
-    walk_in_applicants = Applicant.objects.filter(
-        channel='danger_zone'
-    ).select_related('barangay', 'eligibility_checked_by', 'registered_by').prefetch_related(
+    # ====== CHANNEL B: Danger Zone Applicants + ALL OTHER APPLICANTS ======
+    # Get ALL applicants (danger zone, walk-in, etc.)
+    walk_in_applicants = Applicant.objects.all().select_related(
+        'barangay', 'eligibility_checked_by', 'registered_by'
+    ).prefetch_related(
         Prefetch(
             'queue_entries',
             queryset=QueueEntry.objects.filter(status='active'),

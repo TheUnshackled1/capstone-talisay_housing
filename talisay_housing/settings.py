@@ -143,22 +143,19 @@ LOGIN_REDIRECT_URL = 'accounts:dashboard'
 LOGOUT_REDIRECT_URL = 'accounts:dashboard'
 
 # =============================================================================
-# SMS Configuration (Twilio)
+# SMS Configuration (Semaphore)
 # =============================================================================
-# Twilio provides free trial credits for testing
-# Trial account can only send to verified phone numbers
-# Store credentials in .env file for security
+# Semaphore is a Philippine SMS service with free credits for new accounts
+# Free trial: 100 SMS credits on account creation
 
-import os
+SMS_ENABLED = False  # Dev Mode: SMS logs to console instead of sending real messages
+SMS_SERVICE = 'semaphore'  # 'twilio' or 'semaphore'
 
-SMS_ENABLED = os.getenv('SMS_ENABLED', 'True') == 'True'
-SMS_SERVICE = os.getenv('SMS_SERVICE', 'twilio')
+# Twilio Configuration (Legacy - fallback)
+TWILIO_ACCOUNT_SID = 'ACe90a6af0a068665ed4479c6d303245e9'
+TWILIO_AUTH_TOKEN = '73a9e097919f450b858f10f67b407e74'
+TWILIO_PHONE_NUMBER = '+17126421042'  # Your Twilio phone number
 
-# Twilio Configuration (from environment variables)
-TWILIO_ACCOUNT_SID = os.getenv('TWILIO_ACCOUNT_SID', '')
-TWILIO_AUTH_TOKEN = os.getenv('TWILIO_AUTH_TOKEN', '')
-TWILIO_PHONE_NUMBER = os.getenv('TWILIO_PHONE_NUMBER', '')
-
-# Legacy Semaphore Configuration (from environment variables)
-SEMAPHORE_API_KEY = os.getenv('SEMAPHORE_API_KEY', '')
-SEMAPHORE_SENDER_NAME = 'SEMAPHORE'
+# Semaphore Configuration (Active)
+SEMAPHORE_API_KEY = 'c3f15974a138c3c7aabef97f481781f5'
+SEMAPHORE_SENDER_NAME = 'THA'
