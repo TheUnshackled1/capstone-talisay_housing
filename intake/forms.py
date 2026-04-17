@@ -1,5 +1,5 @@
 from django import forms
-from .models import LandownerSubmission, ISFRecord, HouseholdMember, Applicant
+from .models import HouseholdMember, Applicant
 from django.core.exceptions import ValidationError
 import re
 
@@ -57,189 +57,6 @@ BARANGAY_CHOICES = [
 ]
 
 
-class LandownerSubmissionForm(forms.ModelForm):
-    """
-    Landowner submission form (enhanced).
-    Public form - no authentication required.
-    Collects: landowner name, phone, email, property address, barangay
-    """
-    barangay = forms.ChoiceField(
-        choices=BARANGAY_CHOICES,
-        required=False,
-        label="Barangay",
-        widget=forms.Select(attrs={'class': 'form-select'})
-    )
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Add Philippine phone validator to landowner_phone field
-        if 'landowner_phone' in self.fields:
-            self.fields['landowner_phone'].validators.append(validate_philippine_phone)
-            # Show help text
-            self.fields['landowner_phone'].help_text = 'Format: 09XXXXXXXXXX (11 digits, optional)'
-
-    class Meta:
-        model = LandownerSubmission
-        fields = [
-            'landowner_name',
-            'landowner_phone',
-            'landowner_email',
-            'property_address',
-        ]
-        widgets = {
-            'landowner_name': forms.TextInput(attrs={
-                'placeholder': 'Enter your full name',
-                'autofocus': True,
-                'class': 'form-control',
-            }),
-            'landowner_phone': forms.TextInput(attrs={
-                'placeholder': '09XXXXXXXXXX',
-                'class': 'form-control ph-phone',
-                'pattern': '09[0-9]{9}',
-                'type': 'tel',
-            }),
-            'landowner_email': forms.EmailInput(attrs={
-                'placeholder': 'email@example.com',
-                'class': 'form-control',
-            }),
-            'property_address': forms.Textarea(attrs={
-                'placeholder': 'Complete address of the property where informal settlers are residing',
-                'rows': 2,
-                'class': 'form-control',
-            }),
-        }
-        labels = {
-            'landowner_name': 'Full Name',
-            'landowner_phone': 'Contact Number',
-            'landowner_email': 'Email Address',
-            'property_address': 'Property Address',
-        }
-
-
-class ISFRecordForm(forms.ModelForm):
-    """
-    Minimal ISF form (spec-compliant).
-    Used dynamically in the landowner form.
-    Only 4 fields: name, household count, income, years residing
-    """
-    class Meta:
-        model = ISFRecord
-        fields = [
-            'full_name',
-            'household_members',
-            'monthly_income',
-            'years_residing',
-        ]
-        widgets = {
-            'full_name': forms.TextInput(attrs={
-                'placeholder': 'Full name of informal settler',
-                'class': 'form-control',
-            }),
-            'household_members': forms.NumberInput(attrs={
-                'placeholder': 'Number of people in household',
-                'min': 1,
-                'max': 20,
-                'class': 'form-control',
-            }),
-            'monthly_income': forms.NumberInput(attrs={
-                'placeholder': 'Monthly household income',
-                'min': 0,
-                'step': '0.01',
-                'class': 'form-control',
-            }),
-            'years_residing': forms.NumberInput(attrs={
-                'placeholder': 'Years living on this property',
-                'min': 0,
-                'max': 100,
-                'class': 'form-control',
-            }),
-        }
-        labels = {
-            'full_name': 'Full Name',
-            'household_members': 'Number of Household Members',
-            'monthly_income': 'Monthly Income (₱)',
-            'years_residing': 'Years Residing on Property',
-        }
-
-
-class ISFEligibilityForm(forms.ModelForm):
-    """
-    Staff form for checking ISF eligibility.
-    Used by Jocel to review and mark applicants.
-    """
-    class Meta:
-        model = ISFRecord
-        fields = ['status', 'disqualification_reason']
-        widgets = {
-            'status': forms.Select(attrs={
-                'class': 'form-select',
-            }),
-            'disqualification_reason': forms.Textarea(attrs={
-                'placeholder': 'If disqualified, enter reason here...',
-                'rows': 3,
-            }),
-        }
-
-
-class ISFReviewForm(forms.ModelForm):
-    """
-    Enhanced form for Jocel to add missing information during review.
-    Adds: phone number, barangay extraction, property ownership check.
-    """
-    barangay = forms.ChoiceField(
-        choices=BARANGAY_CHOICES,
-        required=True,
-        label="Barangay",
-        help_text="Extract from property address",
-        widget=forms.Select(attrs={'class': 'form-select'})
-    )
-
-    has_property_in_talisay = forms.ChoiceField(
-        choices=[
-            ('', '-- Select --'),
-            ('no', 'No Property Ownership ✓'),
-            ('yes', 'Owns Property (Disqualified)'),
-        ],
-        required=True,
-        label="Property Ownership Verification",
-        help_text="Verified against Assessor's Office records",
-        widget=forms.Select(attrs={'class': 'form-select'})
-    )
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Add Philippine phone validator to phone_number field
-        if 'phone_number' in self.fields:
-            self.fields['phone_number'].validators.append(validate_philippine_phone)
-
-    class Meta:
-        model = ISFRecord
-        fields = [
-            'phone_number',
-            'status',
-            'disqualification_reason',
-        ]
-        widgets = {
-            'phone_number': forms.TextInput(attrs={
-                'placeholder': '09XXXXXXXXXX',
-                'class': 'form-control',
-                'pattern': '09[0-9]{9}',
-            }),
-            'status': forms.Select(attrs={
-                'class': 'form-select',
-            }),
-            'disqualification_reason': forms.Textarea(attrs={
-                'placeholder': 'Required if marking as disqualified',
-                'rows': 3,
-                'class': 'form-control',
-            }),
-        }
-        labels = {
-            'phone_number': 'Contact Number (for SMS)',
-            'status': 'Eligibility Status',
-            'disqualification_reason': 'Disqualification Reason',
-        }
-
 
 class HouseholdMemberForm(forms.ModelForm):
     """
@@ -279,7 +96,7 @@ class HouseholdMemberForm(forms.ModelForm):
 
 
 # ============================================================
-# Channel B/C Walk-in Registration Forms
+# Channel B: Danger Zone Registration Form
 # ============================================================
 
 DANGER_ZONE_TYPES = [
@@ -296,8 +113,8 @@ DANGER_ZONE_TYPES = [
 
 class WalkInApplicantForm(forms.ModelForm):
     """
-    Registration form for Channel B (Danger Zone) and Channel C (Walk-in) applicants.
-    Used at the THA office during walk-in registration.
+    Registration form for Channel B (Danger Zone) applicants only.
+    Used at the THA office during danger zone walk-in registration.
     """
     barangay = forms.ChoiceField(
         choices=BARANGAY_CHOICES,
@@ -305,25 +122,15 @@ class WalkInApplicantForm(forms.ModelForm):
         label="Barangay",
         widget=forms.Select(attrs={'class': 'form-select'})
     )
-    
-    channel = forms.ChoiceField(
-        choices=[
-            ('walk_in', 'Channel C — Regular Walk-in'),
-            ('danger_zone', 'Channel B — Danger Zone (Priority)'),
-        ],
-        required=True,
-        label="Application Channel",
-        widget=forms.Select(attrs={'class': 'form-select', 'id': 'channel-select'})
-    )
-    
-    # Danger zone specific fields (shown only for Channel B)
+
+    # Danger zone specific fields (optional - only required if applicant IS in danger zone)
     danger_zone_type = forms.ChoiceField(
         choices=DANGER_ZONE_TYPES,
         required=False,
         label="Danger Zone Type",
         widget=forms.Select(attrs={'class': 'form-select'})
     )
-    
+
     danger_zone_location = forms.CharField(
         required=False,
         label="Danger Zone Location Details",
@@ -332,6 +139,19 @@ class WalkInApplicantForm(forms.ModelForm):
             'rows': 2,
             'placeholder': 'Describe the specific danger zone location...'
         })
+    )
+
+    # Eligibility check required field
+    years_residing = forms.IntegerField(
+        required=True,
+        min_value=0,
+        label="Years Residing in Talisay",
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Number of years',
+            'min': 0,
+        }),
+        help_text="Required for eligibility check"
     )
 
     def __init__(self, *args, **kwargs):
@@ -344,11 +164,19 @@ class WalkInApplicantForm(forms.ModelForm):
         model = Applicant
         fields = [
             'full_name',
+            'sex',
+            'age',
+            'date_of_birth',
+            'place_of_birth',
             'phone_number',
+            'spouse_name',
+            'spouse_phone',
             'current_address',
             'monthly_income',
             'household_size',
             'years_residing',
+            'occupation',
+            'employment_status',
         ]
         widgets = {
             'full_name': forms.TextInput(attrs={
@@ -356,7 +184,32 @@ class WalkInApplicantForm(forms.ModelForm):
                 'placeholder': 'Full name (Last Name, First Name Middle Name)',
                 'autofocus': True,
             }),
+            'sex': forms.RadioSelect(attrs={
+                'class': 'form-radio',
+            }),
+            'age': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Age',
+                'min': 0,
+            }),
+            'date_of_birth': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date',
+            }),
+            'place_of_birth': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'City/Municipality, Province',
+            }),
             'phone_number': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': '09XXXXXXXXXX',
+                'pattern': '09[0-9]{9}',
+            }),
+            'spouse_name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Spouse full name',
+            }),
+            'spouse_phone': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': '09XXXXXXXXXX',
                 'pattern': '09[0-9]{9}',
@@ -377,39 +230,53 @@ class WalkInApplicantForm(forms.ModelForm):
                 'placeholder': 'Number of household members',
                 'min': 1,
             }),
-            'years_residing': forms.NumberInput(attrs={
+            'occupation': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Years at current location',
-                'min': 0,
+                'placeholder': 'Occupation/job title',
+            }),
+            'employment_status': forms.Select(attrs={
+                'class': 'form-select',
             }),
         }
         labels = {
             'full_name': 'Full Name',
-            'phone_number': 'Contact Number (for SMS)',
+            'sex': 'Sex',
+            'age': 'Age',
+            'date_of_birth': 'Date of Birth',
+            'place_of_birth': 'Place of Birth',
+            'phone_number': 'Applicant Contact Number',
+            'spouse_name': 'Name of Spouse (if applicable)',
+            'spouse_phone': 'Spouse Contact Number',
             'current_address': 'Current Address',
             'monthly_income': 'Monthly Income (₱)',
-            'years_residing': 'Years Residing at Location',
+            'household_size': 'Household Size',
+            'years_residing': 'Years Residing in Talisay',
+            'occupation': 'Occupation',
+            'employment_status': 'Status of Employment',
         }
-    
+
     def clean_monthly_income(self):
         """Validate income is non-negative."""
         income = self.cleaned_data.get('monthly_income')
         if income and income < 0:
             raise forms.ValidationError('Monthly income cannot be negative.')
         return income
-    
+
     def clean(self):
-        """Cross-field validation."""
+        """Custom validation for danger zone fields - only required if is_danger_zone=true."""
         cleaned_data = super().clean()
-        channel = cleaned_data.get('channel')
-        danger_zone_type = cleaned_data.get('danger_zone_type')
-        danger_zone_location = cleaned_data.get('danger_zone_location')
-        
-        # If Channel B (danger zone), require danger zone details
-        if channel == 'danger_zone':
+
+        # Check if is_danger_zone was in the original POST data
+        is_danger_zone = self.data.get('is_danger_zone', 'false')
+
+        # Only validate danger zone fields if applicant is in danger zone
+        if is_danger_zone == 'true':
+            danger_zone_type = cleaned_data.get('danger_zone_type')
+            danger_zone_location = cleaned_data.get('danger_zone_location')
+
             if not danger_zone_type:
-                self.add_error('danger_zone_type', 'Please specify the danger zone type.')
-            if not danger_zone_location:
-                self.add_error('danger_zone_location', 'Please describe the danger zone location.')
-        
+                self.add_error('danger_zone_type', 'This field is required for danger zone applicants.')
+            if not danger_zone_location or not danger_zone_location.strip():
+                self.add_error('danger_zone_location', 'This field is required for danger zone applicants.')
+
         return cleaned_data

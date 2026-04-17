@@ -30,17 +30,11 @@ class SMSLog(models.Model):
         blank=True,
         related_name='sms_logs'
     )
-    isf_record = models.ForeignKey(
-        'ISFRecord',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='sms_logs'
-    )
-    
+
     # Status tracking
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     error_message = models.TextField(blank=True)
+    external_id = models.CharField(max_length=100, blank=True, help_text="Twilio message SID")
     sent_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
@@ -118,220 +112,17 @@ class Barangay(models.Model):
         return self.name
 
 
-class LandownerSubmission(models.Model):
-    """
-    Landowner submission containing one or more ISF records.
-    Channel A: Landowner submits ISF list via public web form.
-    """
-    STATUS_CHOICES = [
-        ('pending', 'Pending Review'),
-        ('reviewed', 'Reviewed'),
-        ('processed', 'Processed'),
-    ]
 
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    reference_number = models.CharField(max_length=20, unique=True, editable=False)
-    
-    # Landowner information
-    landowner_name = models.CharField(max_length=255, verbose_name="Landowner Full Name")
-    landowner_phone = models.CharField(max_length=20, blank=True, verbose_name="Contact Number")
-    landowner_email = models.EmailField(blank=True, verbose_name="Email Address")
-    property_address = models.TextField(verbose_name="Property Address")
-    barangay = models.CharField(max_length=100, blank=True, verbose_name="Barangay")
-    
-    # Metadata
-    submitted_at = models.DateTimeField(auto_now_add=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
-    reviewed_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='reviewed_submissions'
-    )
-    reviewed_at = models.DateTimeField(null=True, blank=True)
-    notes = models.TextField(blank=True, verbose_name="Staff Notes")
-    
-    # Track if submitted by staff (walk-in landowner) vs online portal
-    submitted_by_staff = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='staff_submissions',
-        verbose_name="Submitted by Staff"
-    )
-
-    class Meta:
-        ordering = ['-submitted_at']
-        verbose_name = "Landowner Submission"
-        verbose_name_plural = "Landowner Submissions"
-
-    def save(self, *args, **kwargs):
-        if not self.reference_number:
-            # Generate reference: LS-YYYYMMDD-XXXX
-            from django.utils import timezone
-            import random
-            date_str = timezone.now().strftime('%Y%m%d')
-            random_suffix = ''.join([str(random.randint(0, 9)) for _ in range(4)])
-            self.reference_number = f"LS-{date_str}-{random_suffix}"
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f"{self.reference_number} - {self.landowner_name}"
-
-    @property
-    def isf_count(self):
-        return self.isf_records.count()
-
-
-class ISFRecord(models.Model):
-    """
-    Individual ISF (Informal Settler Family) record within a landowner submission.
-    This is the initial record - it gets converted to an Applicant profile after review.
-    """
-    STATUS_CHOICES = [
-        ('pending', 'Pending Review'),
-        ('eligible', 'Eligible - Converted to Applicant'),
-        ('disqualified', 'Disqualified'),
-    ]
-
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    reference_number = models.CharField(max_length=20, unique=True, editable=False)
-    submission = models.ForeignKey(
-        LandownerSubmission,
-        on_delete=models.CASCADE,
-        related_name='isf_records'
-    )
-    
-    # ISF Information
-    full_name = models.CharField(max_length=255, verbose_name="Full Name")
-    household_members = models.PositiveIntegerField(verbose_name="Number of Household Members")
-    monthly_income = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        verbose_name="Monthly Income (₱)"
-    )
-    years_residing = models.PositiveIntegerField(verbose_name="Years Residing on Property")
-    barangay = models.CharField(max_length=100, blank=True, verbose_name="Barangay")
-    
-    # Contact (optional, for SMS notifications)
-    phone_number = models.CharField(max_length=20, blank=True, verbose_name="Contact Number")
-    
-    # Eligibility tracking
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
-    disqualification_reason = models.TextField(blank=True)
-    eligibility_checked_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='checked_isf_records'
-    )
-    eligibility_checked_at = models.DateTimeField(null=True, blank=True)
-
-    # Track if staff submitted this (vs public form)
-    submitted_by_staff = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='submitted_isf_records',
-        verbose_name="Submitted by Staff",
-        help_text="Staff member who entered this ISF data (walk-in). Null if from public portal."
-    )
-
-    # Link to created Applicant (when converted)
-    converted_to_applicant = models.BooleanField(default=False)
-    applicant_created_at = models.DateTimeField(null=True, blank=True)
-    
-    # SMS tracking
-    registration_sms_sent = models.BooleanField(default=False)
-    eligibility_sms_sent = models.BooleanField(default=False)
-
-    # Edit tracking
-    has_been_edited = models.BooleanField(
-        default=False,
-        verbose_name="Has Been Edited by Staff",
-        help_text="Track if staff corrected any data after initial submission"
-    )
-
-    # Document Checklist (7 required documents)
-    doc_brgy_residency = models.BooleanField(default=False, verbose_name="Brgy. Certificate of Residency")
-    doc_brgy_indigency = models.BooleanField(default=False, verbose_name="Brgy. Certificate of Indigency")
-    doc_cedula = models.BooleanField(default=False, verbose_name="Cedula")
-    doc_police_clearance = models.BooleanField(default=False, verbose_name="Police Clearance")
-    doc_no_property = models.BooleanField(default=False, verbose_name="Certificate of No Property")
-    doc_2x2_picture = models.BooleanField(default=False, verbose_name="2x2 Picture")
-    doc_sketch_location = models.BooleanField(default=False, verbose_name="Sketch of House Location")
-    
-    # Metadata
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        ordering = ['created_at']
-        verbose_name = "ISF Record"
-        verbose_name_plural = "ISF Records"
-
-    def save(self, *args, **kwargs):
-        if not self.reference_number:
-            # Generate reference: ISF-YYYYMMDD-XXXX
-            from django.utils import timezone
-            import random
-            date_str = timezone.now().strftime('%Y%m%d')
-            random_suffix = ''.join([str(random.randint(0, 9)) for _ in range(4)])
-            self.reference_number = f"ISF-{date_str}-{random_suffix}"
-        
-        # Send registration SMS after first save
-        is_new = self._state.adding
-        super().save(*args, **kwargs)
-        
-        if is_new and not self.registration_sms_sent and self.phone_number:
-            self.send_registration_sms()
-    
-    def __str__(self):
-        return f"{self.reference_number} - {self.full_name}"
-
-    @property
-    def is_income_eligible(self):
-        """Check if monthly income is within ₱10,000 threshold."""
-        return self.monthly_income <= 10000
-    
-    def send_registration_sms(self):
-        """Send SMS notification that ISF was registered via landowner."""
-        from .utils import send_sms
-        message = f"Your name has been submitted for housing assistance by your landowner. Reference: {self.reference_number}. Keep this for follow-up."
-        if send_sms(self.phone_number, message, 'registration', isf_record=self):
-            self.registration_sms_sent = True
-            self.save(update_fields=['registration_sms_sent'])
-    
-    def send_eligibility_sms(self, eligible=True):
-        """Send SMS notification of eligibility result."""
-        from .utils import send_sms
-        if eligible:
-            message = f"You passed eligibility. Please visit the Talisay Housing Authority office to submit your 7 requirements. Reference: {self.reference_number}"
-        else:
-            message = f"Your housing application could not be processed. Reason: {self.disqualification_reason or 'See office for details'}. Reference: {self.reference_number}"
-        
-        if send_sms(self.phone_number, message, 'eligibility_result', isf_record=self):
-            self.eligibility_sms_sent = True
-            self.save(update_fields=['eligibility_sms_sent'])
 
 
 class Applicant(models.Model):
     """
     Master beneficiary profile - the central entity for all modules.
-    
-    Applicants come from three channels:
-    - Channel A: Landowner submission (linked via isf_record)
-    - Channel B: Walk-in claiming danger zone
-    - Channel C: Regular walk-in
+
+    Applicants: Channel B (Danger Zone Walk-in)
     """
     CHANNEL_CHOICES = [
-        ('landowner', 'Channel A - Landowner Submission'),
         ('danger_zone', 'Channel B - Danger Zone Walk-in'),
-        ('walk_in', 'Channel C - Regular Walk-in'),
     ]
     
     STATUS_CHOICES = [
@@ -348,12 +139,24 @@ class Applicant(models.Model):
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     reference_number = models.CharField(max_length=20, unique=True, editable=False)
-    
+
     # Personal Information
     full_name = models.CharField(max_length=255, verbose_name="Full Name")
-    date_of_birth = models.DateField(null=True, blank=True)
-    phone_number = models.CharField(max_length=20, blank=True, verbose_name="Contact Number")
-    
+    sex = models.CharField(
+        max_length=1,
+        choices=[('M', 'Male'), ('F', 'Female')],
+        blank=True,
+        verbose_name="Sex"
+    )
+    age = models.PositiveIntegerField(null=True, blank=True, verbose_name="Age")
+    date_of_birth = models.DateField(null=True, blank=True, verbose_name="Date of Birth")
+    place_of_birth = models.CharField(max_length=255, blank=True, verbose_name="Place of Birth")
+    phone_number = models.CharField(max_length=20, blank=True, verbose_name="Applicant Contact Number")
+
+    # Spouse Information
+    spouse_name = models.CharField(max_length=255, blank=True, verbose_name="Name of Spouse")
+    spouse_phone = models.CharField(max_length=20, blank=True, verbose_name="Spouse Contact Number")
+
     # Address/Origin
     barangay = models.ForeignKey(
         Barangay,
@@ -364,7 +167,7 @@ class Applicant(models.Model):
     current_address = models.TextField(verbose_name="Current Address/Location")
     years_residing = models.PositiveIntegerField(
         default=0,
-        verbose_name="Years at Current Location"
+        verbose_name="Years Residing in Talisay"
     )
     
     # Household & Income
@@ -378,6 +181,19 @@ class Applicant(models.Model):
         default=1,
         verbose_name="Declared Household Size",
         help_text="Number of household members as declared during registration"
+    )
+    occupation = models.CharField(max_length=255, blank=True, verbose_name="Occupation")
+    employment_status = models.CharField(
+        max_length=50,
+        blank=True,
+        verbose_name="Status of Employment",
+        choices=[
+            ('employed', 'Employed'),
+            ('self_employed', 'Self-Employed'),
+            ('unemployed', 'Unemployed'),
+            ('retired', 'Retired'),
+            ('other', 'Other'),
+        ]
     )
     
     # Channel and Status
@@ -396,17 +212,7 @@ class Applicant(models.Model):
         blank=True,
         verbose_name="Specific Danger Zone Location"
     )
-    
-    # Link to Channel A source (if applicable)
-    isf_record = models.OneToOneField(
-        ISFRecord,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='applicant_profile',
-        help_text="Links to original ISF record if from landowner submission"
-    )
-    
+
     # Eligibility tracking
     has_property_in_talisay = models.BooleanField(
         default=False,
@@ -437,7 +243,21 @@ class Applicant(models.Model):
     doc_no_property = models.BooleanField(default=False, verbose_name="Certificate of No Property")
     doc_2x2_picture = models.BooleanField(default=False, verbose_name="2x2 Picture")
     doc_sketch_location = models.BooleanField(default=False, verbose_name="Sketch of House Location")
-    
+
+    # Document submission deadline tracking
+    document_deadline = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="Document Submission Deadline",
+        help_text="Deadline by which all 7 documents must be submitted"
+    )
+    documents_submitted_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="Documents Completed Date",
+        help_text="When all 7 documents were completed"
+    )
+
     # SMS tracking
     registration_sms_sent = models.BooleanField(default=False, verbose_name="Registration SMS Sent")
     eligibility_sms_sent = models.BooleanField(default=False, verbose_name="Eligibility SMS Sent")
@@ -615,12 +435,11 @@ class CDRRMOCertification(models.Model):
 
 class QueueEntry(models.Model):
     """
-    Manages priority and walk-in FIFO queues.
+    Manages priority queue for danger zone applicants.
     Each applicant has one active queue entry at a time.
     """
     QUEUE_TYPE_CHOICES = [
-        ('priority', 'Priority Queue'),
-        ('walk_in', 'Walk-in FIFO Queue'),
+        ('priority', 'Priority Queue - Danger Zone'),
     ]
     
     STATUS_CHOICES = [
@@ -672,47 +491,3 @@ class QueueEntry(models.Model):
     
     def __str__(self):
         return f"{self.get_queue_type_display()} #{self.position} - {self.applicant.full_name}"
-
-
-class ISFEditAudit(models.Model):
-    """
-    Audit trail for all ISF record edits.
-    Tracks every data correction made by staff.
-    """
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    isf_record = models.ForeignKey(
-        ISFRecord,
-        on_delete=models.CASCADE,
-        related_name='edit_audits'
-    )
-
-    # Field that was edited
-    field_name = models.CharField(
-        max_length=50,
-        help_text="Field edited: monthly_income, household_members, years_residing, phone_number, barangay"
-    )
-    original_value = models.TextField()
-    new_value = models.TextField()
-
-    # Reason for edit
-    edit_reason = models.TextField(
-        verbose_name="Reason for Edit",
-        help_text="Why this data correction was necessary"
-    )
-
-    # Staff tracking
-    edited_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        related_name='isf_edits'
-    )
-    edited_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        ordering = ['-edited_at']
-        verbose_name = "ISF Edit Audit"
-        verbose_name_plural = "ISF Edit Audits"
-
-    def __str__(self):
-        return f"{self.isf_record.reference_number} - {self.field_name} edited by {self.edited_by}"

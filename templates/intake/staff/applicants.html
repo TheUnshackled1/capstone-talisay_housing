@@ -278,7 +278,6 @@
         white-space: nowrap;
     }
 
-    .badge.channel-a { background: #dbeafe; color: #1e40af; }
     .badge.channel-b { background: #fef3c7; color: #92400e; }
     .badge.channel-c { background: #ccfbf1; color: #115e59; }
 
@@ -321,7 +320,7 @@
         background: white;
         border-radius: 1rem;
         width: 100%;
-        max-width: 42rem;
+        max-width: 1200px;
         max-height: 90vh;
         overflow-y: auto;
         box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
@@ -539,6 +538,63 @@
         border-color: #3b82f6;
     }
 
+    /* Fieldset Organization Styles */
+    .form-fieldset {
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #e5e7eb;
+    }
+
+    .form-fieldset-header {
+        font-weight: 700;
+        color: #1f2937;
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+        text-transform: uppercase;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .form-fieldset-header:hover {
+        color: #1d4ed8;
+    }
+
+    .fieldset-toggle-icon {
+        display: inline-block;
+        transition: transform 0.3s;
+        font-size: 0.8rem;
+    }
+
+    .form-fieldset-header.collapsed .fieldset-toggle-icon {
+        transform: rotate(-90deg);
+    }
+
+    .form-fieldset-content {
+        max-height: 1000px;
+        overflow: hidden;
+        transition: max-height 0.3s ease;
+    }
+
+    .form-fieldset-content.collapsed {
+        max-height: 0;
+        display: none;
+    }
+
+    .form-fieldset.always-open .form-fieldset-header {
+        cursor: default;
+    }
+
+    .form-fieldset.always-open .form-fieldset-header:hover {
+        color: #1f2937;
+    }
+
+    .form-fieldset.always-open .fieldset-toggle-icon {
+        display: none;
+    }
+
     .channel-selector {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
@@ -735,7 +791,7 @@
     <div class="page-header">
         <div>
             <h1 class="page-title">ISF Recording Management</h1>
-            <p class="page-subtitle">Module 1 — All intake channels: Landowner, Danger Zone, Walk-in</p>
+            <p class="page-subtitle">Module 1 — All intake channels: Danger Zone, Walk-in</p>
         </div>
         <button class="btn-primary-add" onclick="openAddModal()">
             <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -856,7 +912,6 @@
         </div>
         <select class="filter-select" id="filterChannel" onchange="filterTable()">
             <option value="all">All Channels</option>
-            <option value="A">Channel A — Landowner</option>
             <option value="B">Channel B — Danger Zone</option>
             <option value="C">Channel C — Walk-in</option>
         </select>
@@ -917,30 +972,28 @@
                 <td>{{ applicant.referenceNumber }}</td>
                 <td style="font-weight: 500;">{{ applicant.fullName }}</td>
                 <td>
-                    {% if applicant.channel == 'A' %}
-                        {% if applicant.channelSource == 'staff_entry' %}
-                            <span class="badge channel-a">Channel A — Staff Entry</span>
-                        {% else %}
-                            <span class="badge channel-a">Channel A — Landowner Portal</span>
-                        {% endif %}
-                    {% elif applicant.channel == 'B' %}
+                    {% if applicant.channel == 'B' %}
                         <span class="badge channel-b">Channel B — Danger Zone</span>
                     {% else %}
                         <span class="badge channel-c">Channel C — Walk-in</span>
                     {% endif %}
                 </td>
                 <td>
-                    {% if applicant.eligibilityStatus == 'Eligible' %}
+                    {% if applicant.channel == 'B' %}
+                        {% if applicant.danger_zone_type %}
+                            <span class="badge status-pending-cdrrmo">Pending CDRRMO</span>
+                            {% if applicant.isCdrrmoFlagged %}
+                                <span class="badge cdrrmo-overdue" style="background: #fef2f2; color: #dc2626; border: 1px solid #fca5a5; margin-left: 0.25rem; font-size: 0.5625rem;" title="Pending for {{ applicant.cdrrmoDaysPending }} days (>14 days)">
+                                    ⚠️ {{ applicant.cdrrmoDaysPending }}d
+                                </span>
+                            {% endif %}
+                        {% else %}
+                            <span class="badge status-eligible">Eligible to Proceed</span>
+                        {% endif %}
+                    {% elif applicant.eligibilityStatus == 'Eligible' %}
                         <span class="badge status-eligible">Eligible</span>
                     {% elif applicant.eligibilityStatus == 'Disqualified' %}
                         <span class="badge status-disqualified">Disqualified</span>
-                    {% elif applicant.eligibilityStatus == 'Pending CDRRMO' %}
-                        <span class="badge status-pending-cdrrmo">Pending CDRRMO</span>
-                        {% if applicant.isCdrrmoFlagged %}
-                            <span class="badge cdrrmo-overdue" style="background: #fef2f2; color: #dc2626; border: 1px solid #fca5a5; margin-left: 0.25rem; font-size: 0.5625rem;" title="Pending for {{ applicant.cdrrmoDaysPending }} days (>14 days)">
-                                ⚠️ {{ applicant.cdrrmoDaysPending }}d
-                            </span>
-                        {% endif %}
                     {% else %}
                         <span class="badge status-pending">Pending</span>
                     {% endif %}
@@ -1051,97 +1104,11 @@
             <input type="hidden" id="reviewSubmissionId" name="submission_id" value="">
             
             <div class="modal-body" id="reviewBody">
-                <!-- Channel A: Landowner Submission View -->
-                <div id="landownerReviewSection" style="display: none;">
-                    <!-- Status Badges Row -->
-                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;">
-                        <span class="status-badge status-info">Channel A — Landowner</span>
-                        <span class="status-badge" id="reviewEligibilityBadgeA"></span>
-                        <span class="status-badge" id="reviewQueueBadgeA" style="display: none;"></span>
-                    </div>
-                    
-                    <!-- Editable Fields for Channel A - ISF Information -->
-                    <div class="form-grid" style="margin-bottom: 1rem;">
-                        <div class="form-group" style="grid-column: span 2;">
-                            <label class="form-label">Full Name</label>
-                            <input type="text" class="form-input" id="reviewFullNameA" name="full_name_a" readonly>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Barangay</label>
-                            <select class="form-select" id="reviewBarangayA" name="barangay_a" disabled>
-                                <option value="">Select barangay...</option>
-                                {% for brgy in barangays %}
-                                <option value="{{ brgy }}">{{ brgy }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Monthly Income (₱)</label>
-                            <input type="number" class="form-input" id="reviewIncomeA" name="monthly_income_a" min="0" step="0.01" readonly>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Household Size</label>
-                            <input type="number" class="form-input" id="reviewHouseholdA" name="household_size_a" min="1" readonly>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Years Residing</label>
-                            <input type="number" class="form-input" id="reviewYearsA" name="years_residing_a" min="0" readonly>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Contact Number</label>
-                            <input type="tel" class="form-input" id="reviewPhoneA" name="phone_number_a" readonly>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Current Address</label>
-                            <input type="text" class="form-input" id="reviewAddressA" name="current_address_a" readonly>
-                        </div>
-                    </div>
-                    
-                    <!-- Landowner Information Section -->
-                    <div style="border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-bottom: 1rem;">
-                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">Landowner Information</h4>
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label class="form-label">Landowner Name</label>
-                                <input type="text" class="form-input" id="reviewLandownerName" name="landowner_name" readonly>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Landowner Phone</label>
-                                <input type="tel" class="form-input" id="reviewLandownerPhone" name="landowner_phone" readonly>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Property Address</label>
-                                <input type="text" class="form-input" id="reviewPropertyAddress" name="property_address" readonly>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Submission Barangay</label>
-                                <input type="text" class="form-input" id="reviewSubmissionBarangay" name="submission_barangay" readonly>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Eligibility Check Section -->
-                    <div style="border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-bottom: 1rem;">
-                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">Eligibility Check</h4>
-                        <div id="eligibilityChecksA" style="display: grid; gap: 0.5rem;">
-                            <!-- Populated by JavaScript -->
-                        </div>
-                    </div>
-                    
-                    <!-- Document Checklist -->
-                    <div style="border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-bottom: 1rem;">
-                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">Document Checklist</h4>
-                        <div class="document-grid" id="documentChecklistA">
-                            <!-- Populated by JavaScript -->
-                        </div>
-                    </div>
-                </div>
-                
                 <!-- Channel B: Danger Zone Applicant View -->
                 <div id="dangerZoneReviewSection" style="display: none;">
                     <!-- Status Badges Row -->
-                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;">
-                        <span class="status-badge status-warning">Channel B — Danger Zone</span>
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; align-items: center;">
+                        <span class="status-badge status-info" id="reviewChannelBadge" style="background: #e0f2fe; color: #0369a1; border: 1px solid #0ea5e9;">Channel B — Danger Zone</span>
                         <span class="status-badge" id="reviewEligibilityBadgeB"></span>
                         <span class="status-badge" id="reviewQueueBadgeB" style="display: none;"></span>
                     </div>
@@ -1184,7 +1151,7 @@
                     </div>
                     
                     <!-- Danger Zone Specific Fields -->
-                    <div style="border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-bottom: 1rem;">
+                    <div class="danger-zone-info" style="border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-bottom: 1rem; display: none;">
                         <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">Danger Zone Information</h4>
                         <div class="form-grid">
                             <div class="form-group">
@@ -1206,31 +1173,82 @@
                             </div>
                         </div>
                     </div>
-                    
+
+                    <!-- Not in Danger Zone Message -->
+                    <div class="not-in-danger-zone-msg" style="display: none; background: #dcfce7; border: 1px solid #86efac; border-radius: 0.375rem; padding: 1rem; margin-bottom: 1rem;">
+                        <p style="color: #166534; font-size: 0.9rem; margin: 0;">
+                            <strong>✓ Not in Danger Zone</strong><br>
+                            Applicant is not located in a danger zone and does not require CDRRMO certification.
+                        </p>
+                    </div>
+
                     <!-- CDRRMO Certification Status -->
-                    <div style="border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-bottom: 1rem;">
-                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">CDRRMO Certification</h4>
-                        <div id="cdrrmoStatusBox" class="info-note" style="background: #fef3c7; border-color: #fcd34d;">
-                            <p class="info-note-text" style="color: #92400e;" id="cdrrmoStatusText">
-                                <strong>⚠️ Pending CDRRMO Certification</strong><br>
-                                Applicant must be certified by CDRRMO before eligibility can be determined.
+                    <div class="cdrrmo-certification-section" style="border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-bottom: 1rem; display: none;">
+                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">⚠️ CDRRMO Field Verification</h4>
+
+                        <!-- Declared Danger Zone Info -->
+                        <div style="background: #eff6ff; border-left: 4px solid #0369a1; padding: 0.75rem; margin-bottom: 0.75rem; border-radius: 0.375rem;">
+                            <p style="font-size: 0.75rem; color: #0369a1; margin: 0;"><strong>Declared Location:</strong></p>
+                            <p id="cdrrmoDeclarationType" style="font-size: 0.875rem; color: #1e40af; margin: 0.25rem 0 0 0; font-weight: 500;">—</p>
+                            <p id="cdrrmoDecLocation" style="font-size: 0.875rem; color: #1e40af; margin: 0.25rem 0 0 0;">—</p>
+                        </div>
+
+                        <!-- Current Verification Status -->
+                        <div id="cdrrmoStatusBox" class="info-note" style="background: #fef3c7; border-color: #fcd34d; margin-bottom: 0.75rem;">
+                            <p class="info-note-text" style="color: #92400e; margin: 0;" id="cdrrmoStatusText">
+                                <strong>⏳ Pending Field Verification</strong><br>
+                                <span style="font-size: 0.7rem;">Awaiting ronda team to visit and verify the danger zone claim.</span>
                             </p>
                         </div>
-                        
-                        <!-- CDRRMO Action Buttons (shown in edit mode when pending) -->
-                        <div id="cdrrmoActionsBox" style="display: none; margin-top: 0.75rem;">
-                            <p style="font-size: 0.75rem; color: #64748b; margin-bottom: 0.5rem;">When CDRRMO sends the certificate, update the status:</p>
-                            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                                <button type="button" onclick="updateCdrrmoStatus('certified')" class="btn-modal" style="background: #dcfce7; color: #166534; border: 1px solid #86efac; padding: 0.5rem 0.75rem; font-size: 0.75rem;">
-                                    ✓ Mark as Certified
+
+                        <!-- Ronda Team Result (shown when verified) -->
+                        <div id="rondaTeamResultBox" style="display: none; background: #f0fdf4; border: 1px solid #86efac; border-radius: 0.375rem; padding: 0.75rem; margin-bottom: 0.75rem;">
+                            <p style="font-size: 0.75rem; color: #16a34a; margin: 0 0 0.5rem 0;"><strong>✓ Ronda Team Verification:</strong></p>
+                            <div style="background: white; border: 1px solid #dcfce7; border-radius: 0.375rem; padding: 0.75rem;">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.75rem;">
+                                    <div>
+                                        <label style="font-size: 0.625rem; color: #64748b; font-weight: 600;">Verified By:</label>
+                                        <p id="rondaVerifiedBy" style="font-size: 0.875rem; color: #1f2937; margin: 0.25rem 0 0 0; font-weight: 500;">—</p>
+                                    </div>
+                                    <div>
+                                        <label style="font-size: 0.625rem; color: #64748b; font-weight: 600;">Date Verified:</label>
+                                        <p id="rondaVerifiedDate" style="font-size: 0.875rem; color: #1f2937; margin: 0.25rem 0 0 0;">—</p>
+                                    </div>
+                                </div>
+                                <div style="margin-bottom: 0.75rem;">
+                                    <label style="font-size: 0.625rem; color: #64748b; font-weight: 600;">Ronda Finding:</label>
+                                    <div id="rondaDecision" style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                                        <span id="rondaCertifiedBadge" style="display: none; background: #dcfce7; color: #166534; padding: 0.375rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600;">✓ Certified - Danger Zone Confirmed</span>
+                                        <span id="rondaNotCertifiedBadge" style="display: none; background: #fee2e2; color: #991b1b; padding: 0.375rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600;">✗ Not Certified - FALSE ALARM</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label style="font-size: 0.625rem; color: #64748b; font-weight: 600;">Ronda Notes:</label>
+                                    <p id="rondaNotes" style="font-size: 0.875rem; color: #1f2937; margin: 0.25rem 0 0 0; font-style: italic; border-left: 3px solid #86efac; padding-left: 0.75rem;">—</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Staff Action: Approve/Reject (shown when ronda team has submitted) -->
+                        <div id="staffApprovalBox" style="display: none; border: 1px solid #dbeafe; background: #f0f9ff; border-radius: 0.375rem; padding: 0.75rem;">
+                            <p style="font-size: 0.75rem; color: #0369a1; margin: 0 0 0.75rem 0; font-weight: 600;">Staff Decision on Ronda Finding:</p>
+
+                            <div id="cdrrmoActionsBox" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                <button type="button" onclick="approveCdrrmo()" class="btn-modal" style="background: #dcfce7; color: #166534; border: 1px solid #86efac; padding: 0.5rem 0.75rem; font-size: 0.75rem; flex: 1; min-width: 150px;">
+                                    ✓ Approve - Danger Zone Verified
                                 </button>
-                                <button type="button" onclick="updateCdrrmoStatus('not_certified')" class="btn-modal" style="background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; padding: 0.5rem 0.75rem; font-size: 0.75rem;">
-                                    ✗ Mark as Not Certified
+                                <button type="button" onclick="rejectCdrrmo()" class="btn-modal" style="background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; padding: 0.5rem 0.75rem; font-size: 0.75rem; flex: 1; min-width: 150px;">
+                                    ✗ Reject - Ronda Finding Invalid
                                 </button>
                             </div>
-                            <div style="margin-top: 0.5rem;">
-                                <label style="font-size: 0.75rem; color: #64748b;">CDRRMO Notes (optional):</label>
-                                <input type="text" id="cdrrmoNotes" class="form-input" placeholder="e.g. Certificate received 2026-04-06" style="font-size: 0.75rem; padding: 0.375rem;">
+
+                            <div style="margin-top: 0.75rem;">
+                                <label style="font-size: 0.75rem; color: #64748b; font-weight: 600; display: block; margin-bottom: 0.375rem;">Staff Notes (Optional):</label>
+                                <input type="text" id="staffCdrrmoNotes" class="form-input" placeholder="e.g., Confirmed with barangay, coordinates sent to housing office" style="font-size: 0.75rem; padding: 0.375rem;">
+                            </div>
+
+                            <div style="margin-top: 0.75rem; background: white; border: 1px solid #cbd5e1; border-radius: 0.375rem; padding: 0.75rem;">
+                                <p style="font-size: 0.75rem; color: #64748b; margin: 0;"><strong>After Approval:</strong> Applicant will be marked eligible and moved to Priority Queue (if certified) or Walk-in Queue (if false alarm).</p>
                             </div>
                         </div>
                     </div>
@@ -1245,7 +1263,14 @@
                     
                     <!-- Document Checklist -->
                     <div style="border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-bottom: 1rem;">
-                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">Document Checklist</h4>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                            <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; text-transform: uppercase; margin: 0;">Document Checklist</h4>
+                            <span id="docCountIndicatorB" style="font-size: 0.75rem; font-weight: 600; padding: 0.25rem 0.75rem; border-radius: 0.25rem; background: #fee2e2; color: #991b1b;">0/7 Documents</span>
+                        </div>
+                        <div id="docWarningMessageB" style="display: none; background: #fef3c7; border: 1px solid #fcd34d; border-radius: 0.375rem; padding: 0.75rem; margin-bottom: 0.75rem; font-size: 0.875rem; color: #92400e;">
+                            <strong>⚠️ Incomplete Documents</strong><br>
+                            <span id="missingDocCountB">Missing 7 documents</span> — Applicant must submit before proceeding to "Eligible" status
+                        </div>
                         <div class="document-grid" id="documentChecklistB">
                             <!-- Populated by JavaScript -->
                         </div>
@@ -1261,40 +1286,108 @@
                         <span class="status-badge" id="reviewQueueBadge" style="display: none;"></span>
                     </div>
                     
-                    <!-- Editable Fields for Channel C -->
-                    <div class="form-grid" style="margin-bottom: 1rem;">
-                        <div class="form-group" style="grid-column: span 2;">
-                            <label class="form-label">Full Name</label>
-                            <input type="text" class="form-input" id="reviewFullName" name="full_name" readonly>
+                    <!-- Section A: APPLICATION IDENTITY -->
+                    <div style="border-bottom: 2px solid #e2e8f0; padding-bottom: 1rem; margin-bottom: 1rem;">
+                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">A. APPLICATION IDENTITY</h4>
+                        <div class="form-grid" style="margin-bottom: 1rem;">
+                            <div class="form-group">
+                                <label class="form-label">Last Name</label>
+                                <input type="text" class="form-input" id="reviewLastName" name="last_name" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">First Name</label>
+                                <input type="text" class="form-input" id="reviewFirstName" name="first_name" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Middle Name</label>
+                                <input type="text" class="form-input" id="reviewMiddleName" name="middle_name" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Sex</label>
+                                <input type="text" class="form-input" id="reviewSex" name="sex" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Age</label>
+                                <input type="number" class="form-input" id="reviewAge" name="age" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Date of Birth</label>
+                                <input type="date" class="form-input" id="reviewDateOfBirth" name="date_of_birth" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Place of Birth</label>
+                                <input type="text" class="form-input" id="reviewPlaceOfBirth" name="place_of_birth" readonly>
+                            </div>
+                            <div class="form-group" style="grid-column: span 2;">
+                                <label class="form-label">Present Address</label>
+                                <input type="text" class="form-input" id="reviewAddress" name="current_address" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Barangay</label>
+                                <select class="form-select" id="reviewBarangay" name="barangay" disabled>
+                                    <option value="">Select barangay...</option>
+                                    {% for brgy in barangays %}
+                                    <option value="{{ brgy }}">{{ brgy }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Applicant Contact Number</label>
+                                <input type="tel" class="form-input" id="reviewPhone" name="phone_number" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Years Residing in Talisay</label>
+                                <input type="number" class="form-input" id="reviewYears" name="years_residing" min="0" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Name of Spouse</label>
+                                <input type="text" class="form-input" id="reviewSpouseName" name="spouse_name" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Spouse Contact Number</label>
+                                <input type="tel" class="form-input" id="reviewSpousePhone" name="spouse_phone" readonly>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">Barangay</label>
-                            <select class="form-select" id="reviewBarangay" name="barangay" disabled>
-                                <option value="">Select barangay...</option>
-                                {% for brgy in barangays %}
-                                <option value="{{ brgy }}">{{ brgy }}</option>
-                                {% endfor %}
-                            </select>
+                    </div>
+
+                    <!-- Section B: HOUSEHOLD MEMBERS -->
+                    <div style="border-bottom: 2px solid #e2e8f0; padding-bottom: 1rem; margin-bottom: 1rem;">
+                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">B. HOUSEHOLD MEMBERS</h4>
+                        <div id="reviewHouseholdList" style="margin-bottom: 0.75rem;">
+                            <!-- Populated by JavaScript -->
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">Monthly Income (₱)</label>
-                            <input type="number" class="form-input" id="reviewIncome" name="monthly_income" min="0" step="0.01" readonly>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">Household Size</label>
+                                <input type="number" class="form-input" id="reviewHousehold" name="household_size" min="1" readonly>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">Household Size</label>
-                            <input type="number" class="form-input" id="reviewHousehold" name="household_size" min="1" readonly>
+                    </div>
+
+                    <!-- Section C: FAMILY INCOME -->
+                    <div style="border-bottom: 2px solid #e2e8f0; padding-bottom: 1rem; margin-bottom: 1rem;">
+                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">C. APPLICANTS FAMILY INCOME</h4>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">Occupation</label>
+                                <input type="text" class="form-input" id="reviewOccupation" name="occupation" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Status of Employment</label>
+                                <input type="text" class="form-input" id="reviewEmploymentStatus" name="employment_status" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Monthly Income (₱)</label>
+                                <input type="number" class="form-input" id="reviewIncome" name="monthly_income" min="0" step="0.01" readonly>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">Years Residing</label>
-                            <input type="number" class="form-input" id="reviewYears" name="years_residing" min="0" readonly>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Contact Number</label>
-                            <input type="tel" class="form-input" id="reviewPhone" name="phone_number" readonly>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Current Address</label>
-                            <input type="text" class="form-input" id="reviewAddress" name="current_address" readonly>
+                    </div>
+
+                    <!-- Danger Zone Status -->
+                    <div style="border-bottom: 2px solid #e2e8f0; padding-bottom: 1rem; margin-bottom: 1rem;">
+                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">Is the applicant in a danger zone?</h4>
+                        <div style="padding: 0.75rem; background: #f3f4f6; border-radius: 0.375rem;">
+                            <p id="reviewDangerZoneStatus" style="margin: 0; font-size: 0.875rem;">-</p>
                         </div>
                     </div>
                     
@@ -1308,7 +1401,14 @@
                     
                     <!-- Document Checklist -->
                     <div style="border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-bottom: 1rem;">
-                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">Document Checklist</h4>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                            <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; text-transform: uppercase; margin: 0;">Document Checklist</h4>
+                            <span id="docCountIndicator" style="font-size: 0.75rem; font-weight: 600; padding: 0.25rem 0.75rem; border-radius: 0.25rem; background: #fee2e2; color: #991b1b;">0/7 Documents</span>
+                        </div>
+                        <div id="docWarningMessage" style="display: none; background: #fef3c7; border: 1px solid #fcd34d; border-radius: 0.375rem; padding: 0.75rem; margin-bottom: 0.75rem; font-size: 0.875rem; color: #92400e;">
+                            <strong>⚠️ Incomplete Documents</strong><br>
+                            <span id="missingDocCount">Missing 7 documents</span> — Applicant must submit before proceeding to "Eligible" status
+                        </div>
                         <div class="document-grid" id="documentChecklist">
                             <!-- Populated by JavaScript -->
                         </div>
@@ -1345,7 +1445,7 @@
                 
                 <!-- Action Buttons - Only for Jocel/Joie -->
                 <div id="reviewActions">
-                    <button type="button" class="btn-modal success" id="btnMarkEligible" onclick="markEligible()" style="background: #10b981;">
+                    <button type="button" class="btn-modal success" id="btnMarkEligible" onclick="checkDocumentsBeforeMarkEligible()" style="background: #10b981;">
                         <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <polyline points="20 6 9 17 4 12"></polyline>
                         </svg>
@@ -1401,6 +1501,57 @@
                 </button>
             </div>
         </form>
+    </div>
+</div>
+
+<!-- Document Deadline Modal -->
+<div class="modal-overlay" id="deadlineModal" onclick="closeDeadlineModal()" style="z-index: 1001;">
+    <div class="modal-content" style="max-width: 28rem;" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <h2 class="modal-title">Set Document Submission Deadline</h2>
+            <button class="btn-close" onclick="closeDeadlineModal()">
+                <svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+
+        <div class="modal-body">
+            <div style="background: #fef3c7; border: 1px solid #fcd34d; border-radius: 0.375rem; padding: 1rem; margin-bottom: 1rem;">
+                <strong>⚠️ Incomplete Documents</strong><br>
+                <span id="deadlineWarningMsg" style="font-size: 0.875rem; color: #92400e;">Missing documents detected</span>
+            </div>
+
+            <p style="font-size: 0.875rem; margin-bottom: 1rem;">
+                The applicant has <strong id="missingDocCountModal">0</strong> incomplete documents.
+                Please set a deadline for document submission. The applicant will be notified via SMS.
+            </p>
+
+            <div class="form-group" style="margin-bottom: 1rem;">
+                <label class="form-label">Due Date</label>
+                <input type="date" id="deadlineDate" class="form-input" required>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 1rem;">
+                <label class="form-label">Due Time</label>
+                <input type="time" id="deadlineTime" class="form-input" value="17:00" required>
+            </div>
+
+            <div style="background: #f3f4f6; border-radius: 0.375rem; padding: 0.75rem; margin-bottom: 1rem; font-size: 0.875rem;">
+                <strong>Status will be set to:</strong> "Submitting Requirements"<br>
+                <strong>Applicant will be notified:</strong> Via SMS with deadline
+            </div>
+        </div>
+
+        <div class="modal-footer" style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+            <button type="button" class="btn-modal secondary" onclick="closeDeadlineModal()">
+                Cancel
+            </button>
+            <button type="button" class="btn-modal warning" onclick="setDocumentDeadline()" style="background: #f59e0b;">
+                Set Deadline & Notify Applicant
+            </button>
+        </div>
     </div>
 </div>
 
@@ -1615,233 +1766,303 @@
                 </svg>
             </button>
         </div>
-        <div class="modal-body">
+        <div class="modal-body" style="max-height: 75vh; overflow-y: auto;">
+            <style>
+                .tha-form-header { background: linear-gradient(to right, #1e40af 0%, #1e3a8a 100%); color: white; padding: 1.5rem; margin: -1.5rem -1.5rem 1.5rem -1.5rem; text-align: center; border-bottom: 3px solid #fbbf24; }
+                .tha-seal { width: 50px; height: 50px; margin: 0 auto 0.5rem; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: #1e40af; }
+                .tha-form-header h2 { margin: 0; font-size: 1.1rem; font-weight: 700; letter-spacing: 1px; }
+                .tha-form-header p { margin: 0.25rem 0 0; font-size: 0.75rem; opacity: 0.9; }
+                .channel-selector-box { background: #f0f9ff; border: 1px solid #bfdbfe; padding: 1rem; border-radius: 6px; margin-bottom: 1.5rem; }
+                .channel-selector-box > label { display: block; font-weight: 600; font-size: 0.875rem; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; }
+                .channel-selector { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+                .channel-btn { padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 6px; background: white; cursor: pointer; font-weight: 600; transition: all 0.3s; }
+                .channel-btn:hover { border-color: #1e40af; background: #f0f9ff; }
+                .channel-btn.active { border-color: #1e40af; background: #1e40af; color: white; }
+                .section-label { font-weight: 700; font-size: 0.85rem; color: #1f2937; margin-bottom: 0.75rem; margin-top: 1.5rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.5rem; }
+                .form-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1rem; }
+                .form-row.full { grid-template-columns: 1fr; }
+                .danger-zone-box { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 1rem; border-radius: 4px; margin: 1rem 0; }
+                .danger-zone-box .section-label { color: #92400e; margin-top: 0; }
+                .document-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin-bottom: 1rem; }
+                .document-item { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; background: #f9fafb; border-radius: 4px; border: 1px solid #e5e7eb; cursor: pointer; transition: all 0.2s; }
+                .document-item:hover { background: #f0f9ff; border-color: #1e40af; }
+                .document-item input { cursor: pointer; margin: 0; }
+                .document-item.checked { background: #dbeafe; border-color: #1e40af; }
+                .document-item.complete { background: #dbeafe; border-color: #10b981; }
+                .document-item.incomplete { background: #f9fafb; border-color: #e5e7eb; }
+                .info-note { background: #dbeafe; border-left: 4px solid #1e40af; padding: 0.75rem 1rem; border-radius: 4px; margin-top: 1rem; font-size: 0.8125rem; color: #1e3a8a; }
+                .info-note p { margin: 0; }
+                .danger-warning { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 0.75rem 1rem; border-radius: 4px; margin-top: 1rem; font-size: 0.8125rem; color: #92400e; }
+                .danger-warning p { margin: 0; }
+                .help-text { font-size: 0.75rem; color: #6b7280; margin-top: 0.25rem; display: block; }
+                .form-input { text-transform: capitalize; }
+                @media (max-width: 640px) { .form-row { grid-template-columns: 1fr; } .channel-selector { grid-template-columns: 1fr; } .document-grid { grid-template-columns: 1fr; } }
+            </style>
+
             <form id="addApplicantForm" method="post" onsubmit="submitAddApplicant(event)">
                 {% csrf_token %}
-                <div class="form-group">
-                    <label class="form-label">Intake Channel</label>
-                    <div class="channel-selector">
-                        <button type="button" class="channel-btn" data-channel="landowner" onclick="selectChannel('landowner')">
-                            <span class="channel-btn-label">Channel A</span>
-                            <span class="channel-btn-sublabel">Landowner</span>
-                        </button>
-                        <button type="button" class="channel-btn" data-channel="danger_zone" onclick="selectChannel('danger_zone')">
-                            <span class="channel-btn-label">Channel B</span>
-                            <span class="channel-btn-sublabel">Danger Zone</span>
-                        </button>
-                        <button type="button" class="channel-btn active" data-channel="walk_in" onclick="selectChannel('walk_in')">
-                            <span class="channel-btn-label">Channel C</span>
-                            <span class="channel-btn-sublabel">Walk-in</span>
-                        </button>
-                    </div>
-                    <input type="hidden" id="channelInput" name="channel" value="walk_in">
+
+                <!-- THA Header -->
+                <div class="tha-form-header">
+                    <div class="tha-seal">🏛️</div>
+                    <h2>APPLICATION FORM</h2>
+                    <p>Talisay City Housing Authority</p>
                 </div>
 
-                <!-- Channel A: Landowner Fields -->
-                <div id="landownerFields" style="display: none;">
-                    <div class="info-note" style="background: #dbeafe; border-color: #93c5fd; margin-bottom: 1rem;">
-                        <p class="info-note-text" style="color: #1e40af;">
-                            <strong>📋 Landowner Walk-in Submission</strong><br>
-                            Enter landowner details and the list of informal settlers residing on their property.
-                        </p>
-                    </div>
-                    
-                    <!-- Landowner Information Section -->
-                    <div style="margin-bottom: 1rem;">
-                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.025em;">Landowner Information</h4>
-                        <div class="form-grid">
-                            <div class="form-group" style="grid-column: span 2;">
-                                <label class="form-label">Full Name *</label>
-                                <input type="text" class="form-input" placeholder="Enter landowner's full name" name="landowner_name" id="landownerName">
-                            </div>
-                            <div class="form-group" style="grid-column: span 2;">
-                                <label class="form-label">Property Address *</label>
-                                <textarea class="form-input" rows="2" placeholder="Complete address of the property where informal settlers are residing (include barangay)" name="property_address" id="propertyAddress"></textarea>
-                            </div>
-                            <div class="form-group" style="grid-column: span 2;">
-                                <label class="form-label">Contact Number</label>
-                                <input type="tel" class="form-input ph-phone" placeholder="09XXXXXXXXXX" pattern="09[0-9]{9}" name="landowner_phone" id="landownerPhoneWalkin">
-                                <div class="form-help" style="font-size: 0.75rem; color: #64748b; margin-top: 0.25rem;">11 digits: 09XXXXXXXXXX (optional)</div>
-                            </div>
+                <!-- Intake Type -->
+                <input type="hidden" id="channelInput" name="channel" value="danger_zone">
+
+                <!-- SECTION A: APPLICATION IDENTITY -->
+                <div style="margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid #e5e7eb;">
+                    <div style="font-weight: 700; color: #1f2937; font-size: 0.9rem; margin-bottom: 1rem; text-transform: uppercase;">📋 A. APPLICATION IDENTITY</div>
+
+                    <!-- Name (Last, First, Middle) -->
+                    <div class="form-row" style="grid-template-columns: repeat(3, 1fr);">
+                        <div class="form-group">
+                            <label class="form-label">Last Name <span style="color: #dc2626;">*</span></label>
+                            <input type="text" class="form-input" placeholder="Surname" name="last_name" id="lastName" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">First Name <span style="color: #dc2626;">*</span></label>
+                            <input type="text" class="form-input" placeholder="Given name" name="first_name" id="firstName" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Middle Name</label>
+                            <input type="text" class="form-input" placeholder="Middle name" name="middle_name" id="middleName">
                         </div>
                     </div>
-                    
-                    <!-- ISF Records Section -->
-                    <div style="border-top: 1px solid #e2e8f0; padding-top: 1rem;">
-                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.025em;">Informal Settlers on Property</h4>
-                        
-                        <div id="isfRecordsContainer">
-                            <div class="isf-record-entry" data-isf-index="1" style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 1rem; border-radius: 0.5rem; margin-bottom: 0.75rem;">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-                                    <span style="font-weight: 600; color: #1e293b; font-size: 0.875rem;">ISF #1</span>
-                                </div>
-                                <div class="form-grid">
-                                    <div class="form-group" style="grid-column: span 2;">
-                                        <label class="form-label">Full Name *</label>
-                                        <input type="text" class="form-input isf-required" placeholder="Juan Dela Cruz" name="isf_name[]">
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-label">Household Members *</label>
-                                        <input type="number" class="form-input isf-required" placeholder="5" name="isf_household[]" min="1" value="1">
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-label">Monthly Income (₱) *</label>
-                                        <input type="text" class="form-input isf-required" inputmode="decimal" placeholder="8000" name="isf_income[]" pattern="[0-9,]*">
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-label">Years Residing *</label>
-                                        <input type="number" class="form-input isf-required" placeholder="3" name="isf_years[]" min="0">
-                                    </div>
-                                    <div class="form-group" style="grid-column: span 2;">
-                                        <label class="form-label">Contact Number</label>
-                                        <input type="tel" class="form-input ph-phone" placeholder="09XXXXXXXXXX" pattern="09[0-9]{9}" name="isf_phone[]">
-                                        <div class="form-help" style="font-size: 0.75rem; color: #64748b; margin-top: 0.25rem;">11 digits: 09XXXXXXXXXX (optional)</div>
-                                    </div>
+
+                    <!-- Sex & Years Residing in Talisay -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Sex <span style="color: #dc2626;">*</span></label>
+                            <div style="display: flex; gap: 1.5rem; margin-top: 0.5rem;">
+                                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 500; font-size: 0.75rem;">
+                                    <input type="radio" name="sex" id="sexMale" value="M" required style="cursor: pointer;">
+                                    <span>Male</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 500; font-size: 0.75rem;">
+                                    <input type="radio" name="sex" id="sexFemale" value="F" required style="cursor: pointer;">
+                                    <span>Female</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Years Residing in Talisay <span style="color: #dc2626;">*</span></label>
+                            <input type="number" class="form-input" placeholder="Number of years" name="years_residing" id="yearsResiding" min="0" required>
+                        </div>
+                    </div>
+
+                    <!-- Date of Birth & Age (Integrated) -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Date of Birth <span style="color: #dc2626;">*</span></label>
+                            <input type="date" class="form-input" name="date_of_birth" id="dateOfBirth" onchange="calculateAge()" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Age <span style="color: #dc2626;">*</span> (Auto-calculated)</label>
+                            <input type="number" class="form-input" placeholder="Auto-calculated" name="age" id="age" min="0" readonly style="background-color: #f3f4f6; cursor: not-allowed; font-weight: 600;">
+                        </div>
+                    </div>
+
+                    <!-- Place of Birth (Collapsible) -->
+                    <div class="form-fieldset" style="border: none; margin-bottom: 1rem; padding: 0;">
+                        <div class="form-fieldset-header" onclick="toggleFieldset(this)">
+                            <span class="fieldset-toggle-icon">▶</span>
+                            <span>📍 Place of Birth (Optional)</span>
+                        </div>
+                        <div class="form-fieldset-content">
+                            <div class="form-row full">
+                                <div class="form-group">
+                                    <label class="form-label">Place of Birth</label>
+                                    <input type="text" class="form-input" placeholder="City/Municipality, Province" name="place_of_birth" id="placeOfBirth">
                                 </div>
                             </div>
                         </div>
-                        
-                        <button type="button" class="btn-modal secondary" style="width: 100%; padding: 0.75rem; margin-top: 0.5rem; border: 2px dashed #cbd5e1; background: transparent; color: #64748b;" onclick="addISFRecord()">
-                            <svg style="width: 1rem; height: 1rem; margin-right: 0.5rem; vertical-align: middle;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <line x1="12" y1="5" x2="12" y2="19"></line>
-                                <line x1="5" y1="12" x2="19" y2="12"></line>
-                            </svg>
-                            Add Another ISF
+                    </div>
+
+                    <!-- Present Address -->
+                    <div class="form-row full">
+                        <div class="form-group">
+                            <label class="form-label">Present Address <span style="color: #dc2626;">*</span></label>
+                            <input type="text" class="form-input" placeholder="Complete current residential address" name="current_address" id="presentAddress" required>
+                        </div>
+                    </div>
+
+                    <!-- Barangay & Applicant Contact Number -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Barangay <span style="color: #dc2626;">*</span></label>
+                            <select class="form-select" name="barangay" id="barangay" required>
+                                <option value="">Select barangay...</option>
+                                {% for barangay in barangays %}
+                                <option value="{{ barangay }}">{{ barangay }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Applicant Contact Number <span style="color: #dc2626;">*</span></label>
+                            <input type="tel" class="form-input ph-phone" placeholder="09XXXXXXXXXX" pattern="09[0-9]{9}" name="phone_number" id="phoneNumber" required>
+                            <span class="help-text">11 digits: 09XXXXXXXXXX</span>
+                        </div>
+                    </div>
+
+                    <!-- Name of Spouse & Spouse Contact No. -->
+                    <div class="form-fieldset" style="border: none; margin-bottom: 0; padding-bottom: 0;">
+                        <div class="form-fieldset-header" onclick="toggleFieldset(this)">
+                            <span class="fieldset-toggle-icon">▶</span>
+                            <span>👥 Spouse Information (Optional)</span>
+                        </div>
+                        <div class="form-fieldset-content">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Name of Spouse (if applicable)</label>
+                                    <input type="text" class="form-input" placeholder="Spouse's full name" name="spouse_name" id="spouseName">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Spouse Contact Number</label>
+                                    <input type="tel" class="form-input ph-phone" placeholder="09XXXXXXXXXX" pattern="09[0-9]{9}" name="spouse_phone" id="spousePhone">
+                                    <span class="help-text">11 digits: 09XXXXXXXXXX</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION B: HOUSEHOLD MEMBERS -->
+                <div style="margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid #e5e7eb;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <div style="font-weight: 700; color: #1f2937; font-size: 0.9rem; text-transform: uppercase;">👥 B. HOUSEHOLD MEMBERS</div>
+                        <button type="button" onclick="addHouseholdMember()" style="background: #1e40af; color: white; padding: 0.5rem 1rem; border: none; border-radius: 0.375rem; cursor: pointer; font-size: 0.875rem; font-weight: 600;">+ Add Member</button>
+                    </div>
+
+                    <!-- Household Members Container -->
+                    <div id="householdMembersContainer"></div>
+
+                    <div class="form-group" style="margin-top: 1rem;">
+                        <label class="form-label">Household Size <span style="color: #dc2626;">*</span></label>
+                        <input type="number" class="form-input" placeholder="Auto-calculated" name="household_size" id="householdSize" min="1" value="1" readonly style="background-color: #f3f4f6; cursor: not-allowed;">
+                    </div>
+                </div>
+
+                <!-- SECTION C: APPLICANTS FAMILY INCOME -->
+                <div style="margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid #e5e7eb;">
+                    <div style="font-weight: 700; color: #1f2937; font-size: 0.9rem; margin-bottom: 1rem; text-transform: uppercase;">💰 C. APPLICANTS FAMILY INCOME</div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Occupation <span style="color: #dc2626;">*</span></label>
+                            <input type="text" class="form-input" placeholder="Job title or main occupation" name="occupation" id="occupation" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Status of Employment</label>
+                            <select class="form-select" name="employment_status" id="employmentStatus">
+                                <option value="">Select status...</option>
+                                <option value="employed">Employed</option>
+                                <option value="self-employed">Self-Employed</option>
+                                <option value="unemployed">Unemployed</option>
+                                <option value="retired">Retired</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Monthly Income (₱) <span style="color: #dc2626;">*</span></label>
+                            <input type="text" class="form-input" inputmode="decimal" pattern="[0-9,]*" placeholder="e.g. 8500" name="monthly_income" id="monthlyIncome" required>
+                            <span class="help-text">Gross monthly household income</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Danger Zone Question -->
+                <div style="margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid #e5e7eb; text-align: center;">
+                    <div style="font-weight: 700; color: #1f2937; font-size: 0.9rem; margin-bottom: 1rem; text-transform: uppercase;">Is the applicant in a danger zone?</div>
+                    <div style="display: flex; gap: 1rem; justify-content: center;">
+                        <button type="button" onclick="setDangerZone(true)" id="btnDangerZoneYes" style="background: white; border: 2px solid #1e40af; color: #1e40af; padding: 0.75rem 2rem; border-radius: 0.375rem; cursor: pointer; font-weight: 600; transition: all 0.3s;">
+                            Yes
+                        </button>
+                        <button type="button" onclick="setDangerZone(false)" id="btnDangerZoneNo" style="background: white; border: 2px solid #dc2626; color: #dc2626; padding: 0.75rem 2rem; border-radius: 0.375rem; cursor: pointer; font-weight: 600; transition: all 0.3s;">
+                            No
                         </button>
                     </div>
-                    
-                    <div class="info-note" style="margin-top: 1rem;">
-                        <p class="info-note-text">
-                            Each ISF will receive an SMS with their reference number. Landowner submissions go to the <strong>Priority Queue</strong>.
-                        </p>
+                    <input type="hidden" id="isDangerZone" name="is_danger_zone" value="">
+                </div>
+
+                <!-- Danger Zone Information (Hidden by default) -->
+                <div id="dangerZoneGroup" style="display: none;">
+                    <div class="danger-zone-box">
+
+                        <div class="form-row full">
+                            <div class="form-group">
+                                <label class="form-label">Danger Zone Type <span style="color: #dc2626;">*</span></label>
+                                <select class="form-select" name="danger_zone_type" id="dangerZoneType">
+                                    <option value="">Select type...</option>
+                                    <option value="riverside">Riverside / Riverbank</option>
+                                    <option value="flood_prone">Flood-Prone Area</option>
+                                    <option value="landslide">Landslide-Prone Area</option>
+                                    <option value="coastal">Coastal / Near Shoreline</option>
+                                    <option value="railroad">Near Railroad Tracks</option>
+                                    <option value="road_right_of_way">Road Right of Way</option>
+                                    <option value="other">Other Danger Zone</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row full">
+                            <div class="form-group">
+                                <label class="form-label">Danger Zone Location Details <span style="color: #dc2626;">*</span></label>
+                                <input type="text" class="form-input" placeholder="Describe the specific danger zone location..." name="danger_zone_location" id="dangerZoneLocation">
+                                <span class="help-text">For CDRRMO verification</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Channel B/C: Walk-in Applicant Fields -->
-                <div class="form-grid" id="formFields">
-                    <div class="form-group">
-                        <label class="form-label">Full Name *</label>
-                        <input type="text" class="form-input" placeholder="Last, First, Middle" name="full_name" id="walkinFullName" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Barangay *</label>
-                        <select class="form-select" name="barangay" id="walkinBarangay" required>
-                            <option value="">Select barangay...</option>
-                            {% for barangay in barangays %}
-                            <option value="{{ barangay }}">{{ barangay }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Monthly Income (₱) *</label>
-                        <input type="text" class="form-input" inputmode="decimal" pattern="[0-9,]*" placeholder="e.g. 8500" name="monthly_income" id="walkinIncome" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Household Size *</label>
-                        <input type="number" class="form-input" placeholder="No. of members" name="household_size" id="walkinHousehold" min="1" value="1" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Years Residing *</label>
-                        <input type="number" class="form-input" placeholder="Years at current address" name="years_residing" id="walkinYears" min="0" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Contact Number</label>
-                        <input type="tel" class="form-input ph-phone" placeholder="09XXXXXXXXXX" pattern="09[0-9]{9}" name="phone_number" id="walkinPhone">
-                        <span class="help-text">11 digits: 09XXXXXXXXXX (optional)</span>
-                    </div>
-                    <div class="form-group" style="grid-column: span 2;">
-                        <label class="form-label">Current Address *</label>
-                        <input type="text" class="form-input" placeholder="Current residential address" name="current_address" id="walkinAddress" required>
-                    </div>
+                <p style="font-size: 0.8125rem; color: #6b7280; margin-bottom: 1rem; margin-top: 1.5rem; font-weight: 600; text-transform: uppercase;">📄 Document Checklist (Optional) - Check documents already submitted by the applicant:</p>
+
+                <div class="document-grid" id="docChecklistRegister">
+                    <label class="document-item incomplete" onclick="toggleRegDocCheckbox(this)">
+                        <input type="checkbox" name="doc_brgy_residency" value="true" style="display: none;">
+                        <svg style="width: 1rem; height: 1rem; flex-shrink: 0; color: #ef4444;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                        Brgy. Certificate of Residency
+                    </label>
+                    <label class="document-item incomplete" onclick="toggleRegDocCheckbox(this)">
+                        <input type="checkbox" name="doc_brgy_indigency" value="true" style="display: none;">
+                        <svg style="width: 1rem; height: 1rem; flex-shrink: 0; color: #ef4444;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                        Brgy. Certificate of Indigency
+                    </label>
+                    <label class="document-item incomplete" onclick="toggleRegDocCheckbox(this)">
+                        <input type="checkbox" name="doc_cedula" value="true" style="display: none;">
+                        <svg style="width: 1rem; height: 1rem; flex-shrink: 0; color: #ef4444;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                        Cedula
+                    </label>
+                    <label class="document-item incomplete" onclick="toggleRegDocCheckbox(this)">
+                        <input type="checkbox" name="doc_police_clearance" value="true" style="display: none;">
+                        <svg style="width: 1rem; height: 1rem; flex-shrink: 0; color: #ef4444;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                        Police Clearance
+                    </label>
+                    <label class="document-item incomplete" onclick="toggleRegDocCheckbox(this)">
+                        <input type="checkbox" name="doc_no_property" value="true" style="display: none;">
+                        <svg style="width: 1rem; height: 1rem; flex-shrink: 0; color: #ef4444;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                        Certificate of No Property
+                    </label>
+                    <label class="document-item incomplete" onclick="toggleRegDocCheckbox(this)">
+                        <input type="checkbox" name="doc_2x2_picture" value="true" style="display: none;">
+                        <svg style="width: 1rem; height: 1rem; flex-shrink: 0; color: #ef4444;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                        2x2 Picture
+                    </label>
+                    <label class="document-item incomplete" onclick="toggleRegDocCheckbox(this)">
+                        <input type="checkbox" name="doc_sketch_location" value="true" style="display: none;">
+                        <svg style="width: 1rem; height: 1rem; flex-shrink: 0; color: #ef4444;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                        Sketch of House Location
+                    </label>
                 </div>
 
-                <div class="form-group" id="dangerZoneGroup" style="display: none;">
-                    <label class="form-label">Danger Zone Type *</label>
-                    <select class="form-select" name="danger_zone_type" id="dangerZoneType">
-                        <option value="">Select type...</option>
-                        <option value="riverside">Riverside / Riverbank</option>
-                        <option value="flood_prone">Flood-Prone Area</option>
-                        <option value="landslide">Landslide-Prone Area</option>
-                        <option value="coastal">Coastal / Near Shoreline</option>
-                        <option value="railroad">Near Railroad Tracks</option>
-                        <option value="road_right_of_way">Road Right of Way</option>
-                        <option value="other">Other Danger Zone</option>
-                    </select>
-                </div>
-                
-                <div class="form-group" id="dangerZoneLocationGroup" style="display: none;">
-                    <label class="form-label">Danger Zone Location Details *</label>
-                    <input type="text" class="form-input" placeholder="Describe the specific danger zone location..." name="danger_zone_location" id="dangerZoneLocation">
-                    <span class="help-text">For CDRRMO verification</span>
-                </div>
-
-                <!-- Document Checklist for Registration -->
-                <div id="docChecklistRegister" style="border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-top: 1rem;">
-                    <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.025em;">Document Checklist (Optional)</h4>
-                    <p style="font-size: 0.75rem; color: #64748b; margin-bottom: 0.75rem;">Check documents already submitted by the applicant:</p>
-                    <div class="document-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem;">
-                        <label class="document-item incomplete" style="cursor: pointer; display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; border-radius: 0.375rem; font-size: 0.8125rem;" onclick="toggleRegDocCheckbox(this)">
-                            <input type="checkbox" name="doc_brgy_residency" value="true" style="display: none;">
-                            <svg class="document-icon" style="width: 1rem; height: 1rem; flex-shrink: 0; color: #ef4444;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>
-                            </svg>
-                            Brgy. Certificate of Residency
-                        </label>
-                        <label class="document-item incomplete" style="cursor: pointer; display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; border-radius: 0.375rem; font-size: 0.8125rem;" onclick="toggleRegDocCheckbox(this)">
-                            <input type="checkbox" name="doc_brgy_indigency" value="true" style="display: none;">
-                            <svg class="document-icon" style="width: 1rem; height: 1rem; flex-shrink: 0; color: #ef4444;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>
-                            </svg>
-                            Brgy. Certificate of Indigency
-                        </label>
-                        <label class="document-item incomplete" style="cursor: pointer; display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; border-radius: 0.375rem; font-size: 0.8125rem;" onclick="toggleRegDocCheckbox(this)">
-                            <input type="checkbox" name="doc_cedula" value="true" style="display: none;">
-                            <svg class="document-icon" style="width: 1rem; height: 1rem; flex-shrink: 0; color: #ef4444;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>
-                            </svg>
-                            Cedula
-                        </label>
-                        <label class="document-item incomplete" style="cursor: pointer; display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; border-radius: 0.375rem; font-size: 0.8125rem;" onclick="toggleRegDocCheckbox(this)">
-                            <input type="checkbox" name="doc_police_clearance" value="true" style="display: none;">
-                            <svg class="document-icon" style="width: 1rem; height: 1rem; flex-shrink: 0; color: #ef4444;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>
-                            </svg>
-                            Police Clearance
-                        </label>
-                        <label class="document-item incomplete" style="cursor: pointer; display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; border-radius: 0.375rem; font-size: 0.8125rem;" onclick="toggleRegDocCheckbox(this)">
-                            <input type="checkbox" name="doc_no_property" value="true" style="display: none;">
-                            <svg class="document-icon" style="width: 1rem; height: 1rem; flex-shrink: 0; color: #ef4444;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>
-                            </svg>
-                            Certificate of No Property
-                        </label>
-                        <label class="document-item incomplete" style="cursor: pointer; display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; border-radius: 0.375rem; font-size: 0.8125rem;" onclick="toggleRegDocCheckbox(this)">
-                            <input type="checkbox" name="doc_2x2_picture" value="true" style="display: none;">
-                            <svg class="document-icon" style="width: 1rem; height: 1rem; flex-shrink: 0; color: #ef4444;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>
-                            </svg>
-                            2x2 Picture
-                        </label>
-                        <label class="document-item incomplete" style="cursor: pointer; display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; border-radius: 0.375rem; font-size: 0.8125rem;" onclick="toggleRegDocCheckbox(this)">
-                            <input type="checkbox" name="doc_sketch_location" value="true" style="display: none;">
-                            <svg class="document-icon" style="width: 1rem; height: 1rem; flex-shrink: 0; color: #ef4444;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>
-                            </svg>
-                            Sketch of House Location
-                        </label>
-                    </div>
-                </div>
-
-                <div class="info-note" id="regularNote">
-                    <p class="info-note-text">
-                        System will automatically assign a reference number and send SMS to the applicant upon saving.
-                    </p>
-                </div>
-                
-                <div class="info-note" id="cdrrmoNote" style="display: none; background: #fef3c7; border-color: #fcd34d;">
-                    <p class="info-note-text" style="color: #92400e;">
-                        ⚠️ Danger zone applicants will be marked as <strong>"Pending CDRRMO"</strong> until certified by CDRRMO.
-                    </p>
+                <!-- Info Notes -->
+                <div class="danger-warning" id="cdrrmoNote">
+                    <p><strong>⚠️ CDRRMO Verification Required</strong><br>Danger zone applicants will be marked as <strong>"Pending CDRRMO Certification"</strong> until verified by the ronda team.</p>
+                    <p style="margin-top: 0.75rem; border-top: 1px solid #f59e0b; padding-top: 0.75rem;">System will automatically assign a reference number and send SMS to the applicant upon saving.</p>
                 </div>
             </form>
         </div>
@@ -1878,6 +2099,16 @@
                 });
             }
         });
+    }
+
+    // Toggle collapsible fieldsets
+    function toggleFieldset(header) {
+        const fieldset = header.closest('.form-fieldset');
+        if (fieldset.classList.contains('always-open')) return; // Don't toggle if always-open
+
+        const content = fieldset.querySelector('.form-fieldset-content');
+        header.classList.toggle('collapsed');
+        content.classList.toggle('collapsed');
     }
 
     // Initialize income formatters on page load
@@ -1977,87 +2208,19 @@
             }
 
             const channelLabels = {
-                'A': 'Channel A — Landowner',
                 'B': 'Channel B — Danger Zone',
                 'C': 'Channel C — Walk-in'
             };
-            
+
             // Hide all sections first (with null checks)
-            const landownerSection = document.getElementById('landownerReviewSection');
             const dangerZoneSection = document.getElementById('dangerZoneReviewSection');
             const walkinSection = document.getElementById('walkinReviewSection');
-            
-            if (landownerSection) landownerSection.style.display = 'none';
+
             if (dangerZoneSection) dangerZoneSection.style.display = 'none';
             if (walkinSection) walkinSection.style.display = 'none';
-            
+
             // Show appropriate section based on channel
-            if (currentApplicant.channel === 'A') {
-                if (landownerSection) landownerSection.style.display = 'block';
-                const reviewSubmissionIdEl = document.getElementById('reviewSubmissionId');
-                if (reviewSubmissionIdEl) reviewSubmissionIdEl.value = currentApplicant.submissionId || '';
-
-                // Set channel badge for Channel A (differentiate staff entry vs portal)
-                const channelBadgeA = landownerSection?.querySelector('.status-badge:first-of-type');
-                if (channelBadgeA) {
-                    channelBadgeA.textContent = getChannelLabel(currentApplicant);
-                }
-
-                // Set eligibility badge for Channel A
-                const eligBadgeA = document.getElementById('reviewEligibilityBadgeA');
-                if (eligBadgeA) {
-                    eligBadgeA.textContent = currentApplicant.eligibilityStatus;
-                    const eligClassA = currentApplicant.eligibilityStatus === 'Eligible' ? 'success' : 
-                                      currentApplicant.eligibilityStatus === 'Disqualified' ? 'danger' : 'warning';
-                    eligBadgeA.className = 'status-badge status-' + eligClassA;
-                }
-                
-                // Queue badge for Channel A
-                const queueBadgeA = document.getElementById('reviewQueueBadgeA');
-                if (queueBadgeA) {
-                    if (currentApplicant.queueType && currentApplicant.queueType !== 'None') {
-                        queueBadgeA.style.display = 'inline-flex';
-                        queueBadgeA.textContent = currentApplicant.queueType + (currentApplicant.queuePosition ? ' #' + currentApplicant.queuePosition : '');
-                        queueBadgeA.className = 'status-badge status-info';
-                    } else {
-                        queueBadgeA.style.display = 'none';
-                    }
-                }
-                
-                // Populate ISF info fields (main applicant data) - with null checks
-                const fullNameAEl = document.getElementById('reviewFullNameA');
-                const barangayAEl = document.getElementById('reviewBarangayA');
-                const incomeAEl = document.getElementById('reviewIncomeA');
-                const householdAEl = document.getElementById('reviewHouseholdA');
-                const yearsAEl = document.getElementById('reviewYearsA');
-                const phoneAEl = document.getElementById('reviewPhoneA');
-                const addressAEl = document.getElementById('reviewAddressA');
-                
-                if (fullNameAEl) fullNameAEl.value = currentApplicant.fullName || '';
-                if (barangayAEl) barangayAEl.value = currentApplicant.barangay || '';
-                if (incomeAEl) incomeAEl.value = currentApplicant.monthlyIncome || '';
-                if (householdAEl) householdAEl.value = currentApplicant.householdSize || '';
-                if (yearsAEl) yearsAEl.value = currentApplicant.yearsResiding || '';
-                if (phoneAEl) phoneAEl.value = currentApplicant.phoneNumber || '';
-                if (addressAEl) addressAEl.value = currentApplicant.propertyAddress || '';
-                
-                // Populate landowner info fields - with null checks
-                const landownerNameEl = document.getElementById('reviewLandownerName');
-                const landownerPhoneEl = document.getElementById('reviewLandownerPhone');
-                const propertyAddressEl = document.getElementById('reviewPropertyAddress');
-                const submissionBarangayEl = document.getElementById('reviewSubmissionBarangay');
-                
-                if (landownerNameEl) landownerNameEl.value = currentApplicant.landownerName || '';
-                if (landownerPhoneEl) landownerPhoneEl.value = currentApplicant.landownerPhone || '';
-                if (propertyAddressEl) propertyAddressEl.value = currentApplicant.propertyAddress || '';
-                if (submissionBarangayEl) submissionBarangayEl.value = currentApplicant.submissionBarangay || currentApplicant.barangay || '';
-                
-                // Populate eligibility checks for Channel A
-                populateEligibilityChecksA(currentApplicant);
-                
-                // Populate document checklist for Channel A
-                populateDocumentChecklistA(currentApplicant);
-            } else if (currentApplicant.channel === 'C') {
+            if (currentApplicant.channel === 'C') {
                 // Channel C: Regular Walk-in
                 if (walkinSection) walkinSection.style.display = 'block';
                 
@@ -2081,22 +2244,84 @@
                 }
                 
                 // Populate Channel C form fields (with null checks)
-                const fullNameEl = document.getElementById('reviewFullName');
+                const sexEl = document.getElementById('reviewSex');
+                const ageEl = document.getElementById('reviewAge');
+                const dobEl = document.getElementById('reviewDateOfBirth');
+                const pobEl = document.getElementById('reviewPlaceOfBirth');
                 const barangayEl = document.getElementById('reviewBarangay');
                 const incomeEl = document.getElementById('reviewIncome');
                 const householdEl = document.getElementById('reviewHousehold');
                 const yearsEl = document.getElementById('reviewYears');
                 const phoneEl = document.getElementById('reviewPhone');
                 const addressEl = document.getElementById('reviewAddress');
-                
-                if (fullNameEl) fullNameEl.value = currentApplicant.fullName || '';
+                const spouseNameEl = document.getElementById('reviewSpouseName');
+                const spousePhoneEl = document.getElementById('reviewSpousePhone');
+                const dangerZoneStatusEl = document.getElementById('reviewDangerZoneStatus');
+                const occupationEl = document.getElementById('reviewOccupation');
+                const employmentStatusEl = document.getElementById('reviewEmploymentStatus');
+
+                // Parse fullName into Last, First, Middle
+                const lastNameEl = document.getElementById('reviewLastName');
+                const firstNameEl = document.getElementById('reviewFirstName');
+                const middleNameEl = document.getElementById('reviewMiddleName');
+
+                if (lastNameEl || firstNameEl || middleNameEl) {
+                    // Format: "Last Name, First Name Middle Name"
+                    let lastName = '', firstName = '', middleName = '';
+                    if (currentApplicant.fullName) {
+                        const parts = currentApplicant.fullName.split(',').map(p => p.trim());
+                        lastName = parts[0] || '';
+                        const restParts = (parts[1] || '').split(' ');
+                        firstName = restParts[0] || '';
+                        middleName = restParts.slice(1).join(' ') || '';
+                    }
+                    if (lastNameEl) lastNameEl.value = lastName;
+                    if (firstNameEl) firstNameEl.value = firstName;
+                    if (middleNameEl) middleNameEl.value = middleName;
+                }
+
+                // Populate all fields
+                if (sexEl) sexEl.value = currentApplicant.sex || '';
+                if (ageEl) ageEl.value = currentApplicant.age || '';
+                if (dobEl) dobEl.value = currentApplicant.dateOfBirth || '';
+                if (pobEl) pobEl.value = currentApplicant.placeOfBirth || '';
                 if (barangayEl) barangayEl.value = currentApplicant.barangay || '';
                 if (incomeEl) incomeEl.value = currentApplicant.monthlyIncome || '';
                 if (householdEl) householdEl.value = currentApplicant.householdSize || '';
                 if (yearsEl) yearsEl.value = currentApplicant.yearsResiding || '';
                 if (phoneEl) phoneEl.value = currentApplicant.phoneNumber || '';
                 if (addressEl) addressEl.value = currentApplicant.currentAddress || '';
-                
+                if (spouseNameEl) spouseNameEl.value = currentApplicant.spouseName || '';
+                if (spousePhoneEl) spousePhoneEl.value = currentApplicant.spousePhone || '';
+                if (occupationEl) occupationEl.value = currentApplicant.occupation || '';
+                if (employmentStatusEl) employmentStatusEl.value = currentApplicant.employmentStatus || '';
+
+                // Populate danger zone status
+                if (dangerZoneStatusEl) {
+                    dangerZoneStatusEl.textContent = currentApplicant.isInDangerZone ? '✓ Yes — In Danger Zone' : '✓ No — Not in Danger Zone';
+                    dangerZoneStatusEl.style.color = currentApplicant.isInDangerZone ? '#dc2626' : '#10b981';
+                }
+
+                // Populate household members list
+                const householdListEl = document.getElementById('reviewHouseholdList');
+                if (householdListEl && currentApplicant.householdMembers && currentApplicant.householdMembers.length > 0) {
+                    let membersHTML = '<div style="display: grid; gap: 0.75rem;">';
+                    currentApplicant.householdMembers.forEach((member, idx) => {
+                        membersHTML += `
+                            <div style="padding: 0.75rem; background: #f9fafb; border-left: 3px solid #3b82f6; border-radius: 0.375rem;">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.875rem;">
+                                    <div><strong>Name:</strong> ${member.name || '-'}</div>
+                                    <div><strong>Relationship:</strong> ${member.relationship || '-'}</div>
+                                    <div><strong>Age:</strong> ${member.age || '-'}</div>
+                                    <div><strong>Civil Status:</strong> ${member.civilStatus || '-'}</div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    membersHTML += '</div>';
+                    householdListEl.innerHTML = membersHTML;
+                }
+
                 // Populate eligibility checks
                 populateEligibilityChecks(currentApplicant);
                 
@@ -2120,19 +2345,31 @@
                 }
             } else if (currentApplicant.channel === 'B') {
                 // Channel B: Danger Zone
-                if (landownerSection) landownerSection.style.display = 'none';
                 if (dangerZoneSection) dangerZoneSection.style.display = 'block';
                 if (walkinSection) walkinSection.style.display = 'none';
                 
-                // Set eligibility badge
+                // Set eligibility badge based on danger zone status
                 const eligBadgeB = document.getElementById('reviewEligibilityBadgeB');
                 if (eligBadgeB) {
-                    eligBadgeB.textContent = currentApplicant.eligibilityStatus;
-                    const eligClassB = currentApplicant.eligibilityStatus === 'Eligible' ? 'success' : 
-                                      currentApplicant.eligibilityStatus === 'Disqualified' ? 'danger' : 'warning';
-                    eligBadgeB.className = 'status-badge status-' + eligClassB;
+                    if (currentApplicant.isInDangerZone) {
+                        eligBadgeB.className = 'status-badge status-warning';
+                        eligBadgeB.textContent = 'Pending CDRRMO';
+                    } else {
+                        eligBadgeB.className = 'status-badge status-success';
+                        eligBadgeB.textContent = 'Eligible to Proceed';
+                    }
                 }
-                
+
+                // Channel badge always shows Channel B — Danger Zone
+                const channelBadgeB = document.getElementById('reviewChannelBadge');
+                if (channelBadgeB) {
+                    channelBadgeB.className = 'status-badge status-info';
+                    channelBadgeB.style.background = '#e0f2fe';
+                    channelBadgeB.style.color = '#0369a1';
+                    channelBadgeB.style.border = '1px solid #0ea5e9';
+                    channelBadgeB.textContent = 'Channel B — Danger Zone';
+                }
+
                 const queueBadgeB = document.getElementById('reviewQueueBadgeB');
                 if (queueBadgeB) {
                     if (currentApplicant.queueType && currentApplicant.queueType !== 'None') {
@@ -2197,10 +2434,29 @@
                         }
                     }
                 }
-                
+
+                // Populate CDRRMO section with ronda team findings
+                populateCdrrmoSection(currentApplicant.applicantId || currentApplicant.id, currentApplicant);
+
                 // Populate eligibility checks for Channel B
-                populateEligibilityChecksB(currentApplicant);
-                
+                const isInDangerZoneB = currentApplicant.dangerZoneType ? true : false;
+                populateEligibilityChecksB(currentApplicant, isInDangerZoneB);
+
+                // Show/hide danger zone sections based on whether applicant has danger zone data
+                const dangerZoneInfoSection = document.querySelector('.danger-zone-info');
+                const notInDangerZoneMsg = document.querySelector('.not-in-danger-zone-msg');
+                const cdrrmoSection = document.querySelector('.cdrrmo-certification-section');
+
+                if (isInDangerZoneB) {
+                    if (dangerZoneInfoSection) dangerZoneInfoSection.style.display = 'block';
+                    if (notInDangerZoneMsg) notInDangerZoneMsg.style.display = 'none';
+                    if (cdrrmoSection) cdrrmoSection.style.display = 'block';
+                } else {
+                    if (dangerZoneInfoSection) dangerZoneInfoSection.style.display = 'none';
+                    if (notInDangerZoneMsg) notInDangerZoneMsg.style.display = 'block';
+                    if (cdrrmoSection) cdrrmoSection.style.display = 'none';
+                }
+
                 // Populate document checklist for Channel B
                 populateDocumentChecklistB(currentApplicant);
             } else {
@@ -2505,8 +2761,48 @@
             `;
         });
         container.innerHTML = html;
+
+        // Update document count indicator
+        updateDocumentCountIndicator(applicant);
     }
-    
+
+    function updateDocumentCountIndicator(applicant) {
+        // Count completed documents
+        const docCount = [
+            applicant.docBrgyResidency,
+            applicant.docBrgyIndigency,
+            applicant.docCedula,
+            applicant.docPoliceClearance,
+            applicant.docNoProperty,
+            applicant.doc2x2Picture,
+            applicant.docSketchLocation
+        ].filter(Boolean).length;
+
+        const totalDocs = 7;
+        const missingDocs = totalDocs - docCount;
+        const isComplete = docCount === totalDocs;
+
+        // Update indicator
+        const indicator = document.getElementById('docCountIndicator');
+        if (indicator) {
+            indicator.textContent = `${docCount}/${totalDocs} Documents`;
+            indicator.style.background = isComplete ? '#dcfce7' : '#fee2e2';
+            indicator.style.color = isComplete ? '#166534' : '#991b1b';
+        }
+
+        // Update warning message
+        const warningMsg = document.getElementById('docWarningMessage');
+        const missingCount = document.getElementById('missingDocCount');
+        if (warningMsg) {
+            if (!isComplete) {
+                warningMsg.style.display = 'block';
+                if (missingCount) missingCount.textContent = `Missing ${missingDocs} document${missingDocs !== 1 ? 's' : ''}`;
+            } else {
+                warningMsg.style.display = 'none';
+            }
+        }
+    }
+
     // Toggle document checkbox and auto-save
     function toggleAndSaveDoc(label, docKey) {
         const checkbox = label.querySelector('input[type="checkbox"]');
@@ -2575,6 +2871,13 @@
                     ].filter(Boolean).length;
                 }
                 console.log('Document saved:', docKey, isChecked);
+
+                // Refresh document count indicators
+                if (currentApplicant.channel === 'B') {
+                    updateDocumentCountIndicatorB(currentApplicant);
+                } else {
+                    updateDocumentCountIndicator(currentApplicant);
+                }
             } else {
                 console.error('Error saving document:', data.error);
             }
@@ -2600,16 +2903,16 @@
         }
     }
     
-    // Channel B specific eligibility checks (includes CDRRMO)
-    function populateEligibilityChecksB(applicant) {
+    // Channel B specific eligibility checks (includes CDRRMO only if in danger zone)
+    function populateEligibilityChecksB(applicant, isInDangerZone) {
         const container = document.getElementById('eligibilityChecksB');
         if (!container) return;
-        
+
         const income = applicant.monthlyIncome || 0;
         const incomePass = income <= 10000;
         const cdrrmoPass = isCdrrmoCertified(applicant.cdrrmoStatus);
-        
-        container.innerHTML = `
+
+        let html = `
             <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: ${incomePass ? '#dcfce7' : '#fee2e2'}; border-radius: 0.375rem;">
                 <svg style="width: 1rem; height: 1rem; color: ${incomePass ? '#16a34a' : '#dc2626'};" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     ${incomePass ? '<polyline points="20 6 9 17 4 12"></polyline>' : '<line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>'}
@@ -2628,13 +2931,21 @@
                 </svg>
                 <span style="font-size: 0.8125rem;">Not on blacklist</span>
             </div>
+        `;
+
+        // Only show CDRRMO check if applicant is in danger zone
+        if (isInDangerZone) {
+            html += `
             <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: ${cdrrmoPass ? '#dcfce7' : '#fef3c7'}; border-radius: 0.375rem;">
                 <svg style="width: 1rem; height: 1rem; color: ${cdrrmoPass ? '#16a34a' : '#d97706'};" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     ${cdrrmoPass ? '<polyline points="20 6 9 17 4 12"></polyline>' : '<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>'}
                 </svg>
                 <span style="font-size: 0.8125rem;">CDRRMO Certification: <strong>${applicant.cdrrmoStatus || 'Pending'}</strong></span>
             </div>
-        `;
+            `;
+        }
+
+        container.innerHTML = html;
     }
     
     // Channel B specific document checklist
@@ -2668,8 +2979,48 @@
             `;
         });
         container.innerHTML = html;
+
+        // Update document count indicator for Channel B
+        updateDocumentCountIndicatorB(applicant);
     }
-    
+
+    function updateDocumentCountIndicatorB(applicant) {
+        // Count completed documents
+        const docCount = [
+            applicant.docBrgyResidency,
+            applicant.docBrgyIndigency,
+            applicant.docCedula,
+            applicant.docPoliceClearance,
+            applicant.docNoProperty,
+            applicant.doc2x2Picture,
+            applicant.docSketchLocation
+        ].filter(Boolean).length;
+
+        const totalDocs = 7;
+        const missingDocs = totalDocs - docCount;
+        const isComplete = docCount === totalDocs;
+
+        // Update indicator
+        const indicator = document.getElementById('docCountIndicatorB');
+        if (indicator) {
+            indicator.textContent = `${docCount}/${totalDocs} Documents`;
+            indicator.style.background = isComplete ? '#dcfce7' : '#fee2e2';
+            indicator.style.color = isComplete ? '#166534' : '#991b1b';
+        }
+
+        // Update warning message
+        const warningMsg = document.getElementById('docWarningMessageB');
+        const missingCount = document.getElementById('missingDocCountB');
+        if (warningMsg) {
+            if (!isComplete) {
+                warningMsg.style.display = 'block';
+                if (missingCount) missingCount.textContent = `Missing ${missingDocs} document${missingDocs !== 1 ? 's' : ''}`;
+            } else {
+                warningMsg.style.display = 'none';
+            }
+        }
+    }
+
     // Channel A specific eligibility checks
     function populateEligibilityChecksA(applicant) {
         const container = document.getElementById('eligibilityChecksA');
@@ -3015,6 +3366,92 @@
         }
     }
     
+    function checkDocumentsBeforeMarkEligible() {
+        if (!currentApplicant) return;
+
+        // For Channel A: use ISF flow
+        if (currentApplicant.channel === 'A') {
+            markEligible();
+            return;
+        }
+
+        // For Channel B/C: Check if all 7 documents are complete
+        const docCount = [
+            currentApplicant.docBrgyResidency,
+            currentApplicant.docBrgyIndigency,
+            currentApplicant.docCedula,
+            currentApplicant.docPoliceClearance,
+            currentApplicant.docNoProperty,
+            currentApplicant.doc2x2Picture,
+            currentApplicant.docSketchLocation
+        ].filter(Boolean).length;
+
+        const isComplete = docCount === 7;
+
+        if (isComplete) {
+            // All documents complete - mark eligible immediately
+            markEligible();
+        } else {
+            // Documents incomplete - show deadline modal
+            const missingDocs = 7 - docCount;
+            document.getElementById('missingDocCountModal').textContent = missingDocs;
+            document.getElementById('deadlineWarningMsg').textContent = `Missing ${missingDocs} document${missingDocs !== 1 ? 's' : ''} — Must be submitted before marking eligible`;
+
+            // Set default deadline to 5 days from now
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 5);
+            document.getElementById('deadlineDate').value = tomorrow.toISOString().split('T')[0];
+            document.getElementById('deadlineTime').value = '17:00';
+
+            // Show modal
+            document.getElementById('deadlineModal').style.display = 'flex';
+        }
+    }
+
+    function closeDeadlineModal() {
+        document.getElementById('deadlineModal').style.display = 'none';
+    }
+
+    function setDocumentDeadline() {
+        if (!currentApplicant) return;
+
+        const deadlineDate = document.getElementById('deadlineDate').value;
+        const deadlineTime = document.getElementById('deadlineTime').value;
+
+        if (!deadlineDate || !deadlineTime) {
+            alert('Please select both date and time');
+            return;
+        }
+
+        // Combine date and time
+        const deadlineDateTime = `${deadlineDate}T${deadlineTime}`;
+
+        // Send to backend
+        const formData = new FormData();
+        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+        formData.append('applicant_id', currentApplicant.applicantId || currentApplicant.id);
+        formData.append('action', 'set_doc_deadline');
+        formData.append('document_deadline', deadlineDateTime);
+
+        fetch('{% url "intake:update_eligibility" request.user.position %}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                closeDeadlineModal();
+                alert('✓ Document deadline set. Applicant status changed to "Submitting Requirements" and will be notified via SMS.');
+                location.reload();
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            alert('Error: ' + error.message);
+        });
+    }
+
     function markEligible() {
         if (!currentApplicant) return;
 
@@ -3244,9 +3681,10 @@
     function openAddModal() {
         const modal = document.getElementById('addModal');
         if (modal) modal.classList.add('active');
-        // Reset to default channel (walk_in)
-        selectChannel('walk_in');
         resetRegDocChecklist();
+        // Initialize household members
+        householdMemberCount = 1;
+        renderHouseholdMembers();
     }
 
     function closeAddModal() {
@@ -3254,14 +3692,169 @@
         const form = document.getElementById('addApplicantForm');
         if (modal) modal.classList.remove('active');
         if (form) form.reset();
-        selectChannel('walk_in');
         resetRegDocChecklist();
+        // Reset danger zone selection
+        setDangerZone(null);
     }
+
+    function setDangerZone(isDanger) {
+        const dangerZoneGroup = document.getElementById('dangerZoneGroup');
+        const isDangerInput = document.getElementById('isDangerZone');
+        const btnYes = document.getElementById('btnDangerZoneYes');
+        const btnNo = document.getElementById('btnDangerZoneNo');
+        const dangerZoneType = document.getElementById('dangerZoneType');
+        const dangerZoneLocation = document.getElementById('dangerZoneLocation');
+
+        if (isDanger === true) {
+            // YES clicked
+            dangerZoneGroup.style.display = 'block';
+            isDangerInput.value = 'true';
+            btnYes.style.background = '#1e40af';
+            btnYes.style.color = 'white';
+            btnNo.style.background = 'white';
+            btnNo.style.color = '#dc2626';
+            // Set required
+            dangerZoneType.required = true;
+            dangerZoneLocation.required = true;
+        } else if (isDanger === false) {
+            // NO clicked
+            dangerZoneGroup.style.display = 'none';
+            isDangerInput.value = 'false';
+            btnYes.style.background = 'white';
+            btnYes.style.color = '#1e40af';
+            btnNo.style.background = '#dc2626';
+            btnNo.style.color = 'white';
+            // Clear and remove required
+            dangerZoneType.value = '';
+            dangerZoneLocation.value = '';
+            dangerZoneType.required = false;
+            dangerZoneLocation.required = false;
+        } else {
+            // Reset
+            dangerZoneGroup.style.display = 'none';
+            isDangerInput.value = '';
+            btnYes.style.background = 'white';
+            btnYes.style.color = '#1e40af';
+            btnNo.style.background = 'white';
+            btnNo.style.color = '#dc2626';
+            dangerZoneType.required = false;
+            dangerZoneLocation.required = false;
+        }
+    }
+
+    let householdMemberCount = 0;
+
+    function updateHouseholdSize() {
+        // Count filled household members (at least one field has data)
+        let filledCount = 0;
+        for (let i = 1; i <= householdMemberCount; i++) {
+            const nameInput = document.querySelector(`input[name="hh_member_${i}_name"]`);
+            if (nameInput && nameInput.value.trim()) {
+                filledCount++;
+            }
+        }
+        // Total = applicant (1) + filled members
+        const totalSize = 1 + filledCount;
+        document.getElementById('householdSize').value = totalSize;
+    }
+
+    function renderHouseholdMembers() {
+        const container = document.getElementById('householdMembersContainer');
+        container.innerHTML = '';
+
+        for (let i = 1; i <= householdMemberCount; i++) {
+            const memberDiv = document.createElement('div');
+            memberDiv.id = `hhMember${i}`;
+            memberDiv.className = 'form-row';
+            memberDiv.style.gridTemplateColumns = '1fr 1fr 0.6fr 1fr 0.8fr';
+            memberDiv.style.gap = '0.75rem';
+            memberDiv.style.marginBottom = '1rem';
+            memberDiv.style.alignItems = 'flex-end';
+            memberDiv.innerHTML = `
+                <div class="form-group">
+                    <label class="form-label">Name</label>
+                    <input type="text" class="form-input hh-member-field" placeholder="Full name" name="hh_member_${i}_name" onchange="updateHouseholdSize()">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Relationship To Applicant</label>
+                    <input type="text" class="form-input hh-member-field" placeholder="e.g., Spouse" name="hh_member_${i}_relationship" onchange="updateHouseholdSize()">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Age</label>
+                    <input type="number" class="form-input hh-member-field" placeholder="Age" name="hh_member_${i}_age" min="0" onchange="updateHouseholdSize()">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Civil Status</label>
+                    <input type="text" class="form-input hh-member-field" placeholder="e.g., Married" name="hh_member_${i}_status" onchange="updateHouseholdSize()">
+                </div>
+                <button type="button" onclick="deleteHouseholdMember(${i})" style="background: #ef4444; color: white; padding: 0.5rem 0.75rem; border: none; border-radius: 0.375rem; cursor: pointer; font-size: 0.75rem; font-weight: 600; white-space: nowrap; align-self: flex-end;">Delete</button>
+            `;
+            container.appendChild(memberDiv);
+        }
+        updateHouseholdSize();
+    }
+
+    function addHouseholdMember() {
+        householdMemberCount++;
+        renderHouseholdMembers();
+    }
+
+    function deleteHouseholdMember(index) {
+        if (householdMemberCount <= 1) {
+            alert('Must have at least one household member');
+            return;
+        }
+        householdMemberCount--;
+        renderHouseholdMembers();
+    }
+
+
+    // Auto-calculate age from date of birth
+    function calculateAge() {
+        const dobInput = document.getElementById('dateOfBirth');
+        const ageInput = document.getElementById('age');
+
+        if (!dobInput.value) {
+            ageInput.value = '';
+            return;
+        }
+
+        const dob = new Date(dobInput.value);
+        const today = new Date();
+        let age = today.getFullYear() - dob.getFullYear();
+        const monthDiff = today.getMonth() - dob.getMonth();
+
+        // Adjust age if birthday hasn't occurred this year
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+            age--;
+        }
+
+        // Validate age (must be at least 18)
+        if (age < 0) {
+            ageInput.value = '';
+            console.warn('Invalid date of birth');
+        } else {
+            ageInput.value = age;
+        }
+    }
+
 
     function submitAddApplicant(event) {
         event.preventDefault();
         const form = document.getElementById('addApplicantForm');
         const channel = document.getElementById('channelInput').value;
+
+        // Capitalize first letter function
+        const capitalizeFirst = (str) => {
+            if (!str) return str;
+            return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+        };
+
+        // Combine name fields into full_name
+        const lastName = capitalizeFirst(document.getElementById('lastName').value.trim());
+        const firstName = capitalizeFirst(document.getElementById('firstName').value.trim());
+        const middleName = capitalizeFirst(document.getElementById('middleName').value.trim());
+        const fullName = `${lastName}, ${firstName}${middleName ? ' ' + middleName : ''}`;
 
         // Remove commas from income fields before creating FormData
         const incomeFields = form.querySelectorAll('input[name*="income"]');
@@ -3271,174 +3864,322 @@
 
         const formData = new FormData(form);
 
-        // Validate phone numbers before submitting
-        if (channel === 'landowner') {
-            // Validate landowner phone if provided
-            const landownerPhone = document.getElementById('landownerPhoneWalkin');
-            if (landownerPhone && landownerPhone.value) {
-                const phoneClean = landownerPhone.value.replace(/\D/g, '');
-                if (phoneClean.length !== 11 || !phoneClean.startsWith('09')) {
-                    alert('Invalid landowner phone format.\nRequired: 09XXXXXXXXXX (11 digits)');
-                    return;
-                }
-            }
+        // Add combined full_name
+        formData.set('full_name', fullName);
 
-            // Validate all ISF phone numbers (if provided)
-            const isfPhones = form.querySelectorAll('input[name="isf_phone[]"]');
-            for (let phone of isfPhones) {
-                if (phone.value) {
-                    const phoneClean = phone.value.replace(/\D/g, '');
-                    if (phoneClean.length !== 11 || !phoneClean.startsWith('09')) {
-                        alert('Invalid phone format in ISF records.\nRequired: 09XXXXXXXXXX (11 digits)');
-                        return;
-                    }
-                }
+        // Capitalize text fields in formData
+        ['place_of_birth', 'current_address', 'spouse_name', 'occupation', 'danger_zone_location'].forEach(fieldName => {
+            if (formData.has(fieldName)) {
+                formData.set(fieldName, capitalizeFirst(formData.get(fieldName)));
             }
-        } else if (channel === 'walk_in' || channel === 'danger_zone') {
-            // Validate walk-in phone if provided
-            const walkinPhone = document.getElementById('walkinPhone');
-            if (walkinPhone && walkinPhone.value) {
-                const phoneClean = walkinPhone.value.replace(/\D/g, '');
-                if (phoneClean.length !== 11 || !phoneClean.startsWith('09')) {
-                    alert('Invalid phone format.\nRequired: 09XXXXXXXXXX (11 digits)');
-                    return;
-                }
+        });
+
+        // Validate phone number
+        const phoneNumber = document.getElementById('phoneNumber');
+        if (phoneNumber && phoneNumber.value) {
+            const phoneClean = phoneNumber.value.replace(/\D/g, '');
+            if (phoneClean.length !== 11 || !phoneClean.startsWith('09')) {
+                alert('Invalid phone format.\nRequired: 09XXXXXXXXXX (11 digits)');
+                return;
             }
         }
 
-        // Determine endpoint based on channel
+        // Validate years residing in Talisay (required for eligibility check)
+        const yearsResiding = document.getElementById('yearsResiding');
+        if (!yearsResiding || yearsResiding.value === '' || yearsResiding.value < 0) {
+            alert('Years Residing in Talisay is required for eligibility check.');
+            return;
+        }
+
+        // Validate household members - if any field is filled, all must be filled
+        for (let i = 1; i <= householdMemberCount; i++) {
+            const nameField = document.querySelector(`input[name="hh_member_${i}_name"]`);
+            const relationshipField = document.querySelector(`input[name="hh_member_${i}_relationship"]`);
+            const ageField = document.querySelector(`input[name="hh_member_${i}_age"]`);
+            const statusField = document.querySelector(`input[name="hh_member_${i}_status"]`);
+
+            const hasName = nameField && nameField.value.trim();
+            const hasRelationship = relationshipField && relationshipField.value.trim();
+            const hasAge = ageField && ageField.value.trim();
+            const hasStatus = statusField && statusField.value.trim();
+
+            const fieldsWithData = [hasName, hasRelationship, hasAge, hasStatus].filter(v => v).length;
+
+            // If any field has data, all must be filled
+            if (fieldsWithData > 0 && fieldsWithData < 4) {
+                alert(`Household Member ${i}: Either fill all fields or delete this member.`);
+                return;
+            }
+        }
+
+        // Validate danger zone selection and fields
+        const isDangerZoneVal = document.getElementById('isDangerZone').value;
+
+        if (!isDangerZoneVal) {
+            alert('Please select if the applicant is in a danger zone (Yes or No)');
+            return;
+        }
+
+        // Clear danger zone fields if applicant is NOT in danger zone
+        if (isDangerZoneVal === 'false') {
+            formData.set('danger_zone_type', '');
+            formData.set('danger_zone_location', '');
+        }
+
+        // If applicant is in danger zone, validate details
+        if (isDangerZoneVal === 'true') {
+            const dangerZoneType = document.getElementById('dangerZoneType').value;
+            const dangerZoneLocation = document.getElementById('dangerZoneLocation').value.trim();
+
+            if (!dangerZoneType) {
+                alert('Please select a danger zone type');
+                return;
+            }
+            if (!dangerZoneLocation) {
+                alert('Please enter danger zone location details');
+                return;
+            }
+        }
+
+        // Submit to walkin_register endpoint
         let endpoint = '{% url "intake:walkin_register" request.user.position %}';
-        if (channel === 'landowner') {
-            endpoint = '{% url "intake:register_landowner_walkin" request.user.position %}';
-        }
 
-        // Submit form to appropriate endpoint
+        // Get CSRF token from form
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
         fetch(endpoint, {
             method: 'POST',
             body: formData,
             headers: {
-                'X-Requested-With': 'XMLHttpRequest'
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': csrfToken
             }
         })
-        .then(response => response.json())
+        .then(response => {
+            // If not JSON, log the HTML for debugging
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                return response.text().then(text => {
+                    console.error('Server error HTML:', text);
+                    throw new Error('Server returned HTML instead of JSON. Check console for details.');
+                });
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
-                alert(data.message || 'Applicant registered successfully');
+                // Close the registration form modal
                 closeAddModal();
+
+                // Show success message
+                alert('✓ ' + (data.message || 'Applicant registered successfully'));
+
+                // Reload the page to refresh the applicants list
                 location.reload();
             } else {
-                alert('Error: ' + (data.error || 'Unknown error'));
+                // Show detailed error message
+                const errorMsg = data.error || 'Unknown error occurred';
+                alert('❌ Error: ' + errorMsg);
+                console.error('Form submission error:', errorMsg);
             }
         })
         .catch(error => {
-            alert('Error: ' + error.message);
+            alert('❌ Error: ' + error.message);
+            console.error('Fetch error:', error);
         });
+    }
+
+    function populateAndOpenReviewModal(applicant) {
+        /**
+         * Populate the review modal with newly registered applicant data and open it.
+         * Shows danger zone info only if applicant selected "Yes" for danger zone.
+         */
+        // Set header info
+        document.getElementById('reviewName').textContent = applicant.fullName;
+        document.getElementById('reviewReference').textContent = applicant.referenceNumber + ' · Reg. ' + applicant.dateRegistered;
+        document.getElementById('reviewApplicantId').value = applicant.id;
+        document.getElementById('reviewChannel').value = applicant.channel;
+
+        // Channel B (Danger Zone) specific fields
+        if (applicant.channel === 'danger_zone') {
+            document.getElementById('dangerZoneReviewSection').style.display = 'block';
+
+            // Basic info
+            document.getElementById('reviewFullNameB').value = applicant.fullName;
+            document.getElementById('reviewBarangayB').value = applicant.barangay;
+            document.getElementById('reviewIncomeB').value = applicant.monthlyIncome.toFixed(2);
+            document.getElementById('reviewHouseholdB').value = applicant.householdSize;
+            document.getElementById('reviewYearsB').value = applicant.yearsResiding;
+            document.getElementById('reviewPhoneB').value = applicant.phoneNumber;
+            document.getElementById('reviewAddressB').value = applicant.currentAddress;
+
+            // Update channel badge to show danger zone status based on Yes/No answer
+            const dangerZoneBadge = document.getElementById('reviewDangerZoneBadge');
+            const channelBadge = document.getElementById('reviewChannelBadge');
+            const eligibilityBadgeB = document.getElementById('reviewEligibilityBadgeB');
+
+            // Channel badge always shows Channel B — Danger Zone
+            if (channelBadge) {
+                channelBadge.className = 'status-badge status-info';
+                channelBadge.style.background = '#e0f2fe';
+                channelBadge.style.color = '#0369a1';
+                channelBadge.style.border = '1px solid #0ea5e9';
+                channelBadge.textContent = 'Channel B — Danger Zone';
+            }
+
+            // Eligibility badge based on Yes/No selection
+            if (eligibilityBadgeB) {
+                if (applicant.isInDangerZone) {
+                    eligibilityBadgeB.className = 'status-badge status-warning';
+                    eligibilityBadgeB.textContent = 'Pending CDRRMO';
+                } else {
+                    eligibilityBadgeB.className = 'status-badge status-success';
+                    eligibilityBadgeB.textContent = 'Eligible to Proceed';
+                }
+            }
+
+            // CONDITIONALLY show danger zone info section
+            const dangerZoneInfoSection = document.querySelector('.danger-zone-info');
+            const notInDangerZoneMsg = document.querySelector('.not-in-danger-zone-msg');
+
+            if (applicant.isInDangerZone) {
+                // User selected "Yes" - show danger zone details
+                if (dangerZoneInfoSection) dangerZoneInfoSection.style.display = 'block';
+                if (notInDangerZoneMsg) notInDangerZoneMsg.style.display = 'none';
+
+                document.getElementById('reviewDangerType').value = applicant.dangerZoneType || '';
+
+                // Set location field
+                const locationInput = document.querySelector('input[name="danger_zone_location"]');
+                if (locationInput) locationInput.value = applicant.dangerZoneLocation || '';
+
+                // Set status badge
+                const statusBadge = document.getElementById('reviewEligibilityBadgeB');
+                if (statusBadge) {
+                    statusBadge.className = 'status-badge status-warning';
+                    statusBadge.textContent = 'Pending CDRRMO';
+                }
+
+                // Show CDRRMO Certification section when "Yes" is selected
+                const cdrrmoSection = document.querySelector('.cdrrmo-certification-section');
+                if (cdrrmoSection) cdrrmoSection.style.display = 'block';
+            } else {
+                // User selected "No" - hide danger zone details, show message
+                if (dangerZoneInfoSection) dangerZoneInfoSection.style.display = 'none';
+                if (notInDangerZoneMsg) notInDangerZoneMsg.style.display = 'block';
+
+                // Set status badge
+                const statusBadge = document.getElementById('reviewEligibilityBadgeB');
+                if (statusBadge) {
+                    statusBadge.className = 'status-badge status-success';
+                    statusBadge.textContent = 'Eligible to Proceed';
+                }
+
+                // Hide CDRRMO Certification section when "No" is selected
+                const cdrrmoSection = document.querySelector('.cdrrmo-certification-section');
+                if (cdrrmoSection) cdrrmoSection.style.display = 'none';
+            }
+
+            // Populate Eligibility Checks (pass isInDangerZone flag)
+            populateEligibilityChecksB(applicant, applicant.isInDangerZone);
+        }
+
+        // Show the modal
+        const modal = document.getElementById('reviewModal');
+        if (modal) {
+            modal.style.display = 'flex';
+        }
+
+        // Populate Document Checklist
+        if (applicant.documents) {
+            const docChecklistB = document.getElementById('documentChecklistB');
+            if (docChecklistB) {
+                docChecklistB.innerHTML = ''; // Clear existing
+
+                Object.entries(applicant.documents).forEach(([fieldName, docData]) => {
+                    const isChecked = docData.checked;
+                    const label = docData.label;
+
+                    const docElement = document.createElement('div');
+                    docElement.className = `document-item ${isChecked ? 'complete' : 'incomplete'}`;
+                    docElement.style.cursor = 'default'; // Read-only in review
+
+                    const svgColor = isChecked ? '#10b981' : '#ef4444';
+                    const svgIcon = isChecked
+                        ? '<circle cx="12" cy="12" r="10"></circle><polyline points="16 12 12 8 8 12"></polyline><line x1="12" y1="16" x2="12" y2="8"></line>'
+                        : '<circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>';
+
+                    docElement.innerHTML = `
+                        <svg style="width: 1rem; height: 1rem; flex-shrink: 0; color: ${svgColor};" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            ${isChecked
+                                ? '<circle cx="12" cy="12" r="10"></circle><polyline points="16 9 12 13 8 11"></polyline>'
+                                : '<circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>'}
+                        </svg>
+                        ${label}
+                    `;
+
+                    docChecklistB.appendChild(docElement);
+                });
+
+                // Add document count header
+                if (applicant.docsCount) {
+                    const countElement = document.createElement('div');
+                    countElement.style.cssText = 'font-size: 0.875rem; color: #64748b; margin-bottom: 0.75rem; font-weight: 500;';
+                    countElement.textContent = `Docs ${applicant.docsCount}`;
+                    docChecklistB.parentElement.insertBefore(countElement, docChecklistB);
+                }
+            }
+        }
     }
 
     function selectChannel(channel) {
         // Update button states
         document.querySelectorAll('.channel-btn').forEach(btn => {
-            btn.classList.remove('active');
-            if (btn.dataset.channel === channel) {
-                btn.classList.add('active');
-            }
+            btn.classList.toggle('active', btn.dataset.channel === channel);
         });
-        
+
         // Update hidden input
         const channelInput = document.getElementById('channelInput');
         if (channelInput) channelInput.value = channel;
-        
-        // Get all the elements
-        const landownerFields = document.getElementById('landownerFields');
-        const formFields = document.getElementById('formFields');
+
+        // Get danger zone section
         const dangerZoneGroup = document.getElementById('dangerZoneGroup');
-        const dangerZoneLocationGroup = document.getElementById('dangerZoneLocationGroup');
-        const cdrrmoNote = document.getElementById('cdrrmoNote');
-        const regularNote = document.getElementById('regularNote');
-        const submitBtn = document.getElementById('submitBtn');
         const dangerZoneType = document.getElementById('dangerZoneType');
         const dangerZoneLocation = document.getElementById('dangerZoneLocation');
-        const docChecklistRegister = document.getElementById('docChecklistRegister');
-        
-        // Channel A (landowner) fields
-        const landownerName = document.getElementById('landownerName');
-        const propertyAddress = document.getElementById('propertyAddress');
-        const isfRequiredFields = document.querySelectorAll('.isf-required');
-        
-        // Channel B/C (walk-in) fields
-        const walkinFields = ['walkinFullName', 'walkinBarangay', 'walkinIncome', 'walkinHousehold', 'walkinYears', 'walkinAddress'];
-        
-        if (channel === 'landowner') {
-            // Channel A: Show landowner form, hide walk-in form and document checklist
-            landownerFields.style.display = 'block';
-            formFields.style.display = 'none';
-            dangerZoneGroup.style.display = 'none';
-            dangerZoneLocationGroup.style.display = 'none';
-            cdrrmoNote.style.display = 'none';
-            regularNote.style.display = 'none';
-            if (docChecklistRegister) docChecklistRegister.style.display = 'none';
-            submitBtn.disabled = false;
-            
-            // Add required to Channel A fields
-            if (landownerName) landownerName.setAttribute('required', 'required');
-            if (propertyAddress) propertyAddress.setAttribute('required', 'required');
-            isfRequiredFields.forEach(el => el.setAttribute('required', 'required'));
-            
-            // Remove required from walk-in fields
-            walkinFields.forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.removeAttribute('required');
-            });
-            if (dangerZoneType) dangerZoneType.removeAttribute('required');
-            if (dangerZoneLocation) dangerZoneLocation.removeAttribute('required');
-        } else if (channel === 'danger_zone') {
-            // Channel B: Show danger zone fields and document checklist
-            landownerFields.style.display = 'none';
-            formFields.style.display = 'grid';
-            dangerZoneGroup.style.display = 'block';
-            dangerZoneLocationGroup.style.display = 'block';
-            cdrrmoNote.style.display = 'block';
-            regularNote.style.display = 'none';
-            if (docChecklistRegister) docChecklistRegister.style.display = 'block';
-            submitBtn.disabled = false;
-            
-            // Remove required from Channel A fields
-            if (landownerName) landownerName.removeAttribute('required');
-            if (propertyAddress) propertyAddress.removeAttribute('required');
-            isfRequiredFields.forEach(el => el.removeAttribute('required'));
-            
-            // Add required to walk-in and danger zone fields
-            walkinFields.forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.setAttribute('required', 'required');
-            });
-            if (dangerZoneType) dangerZoneType.setAttribute('required', 'required');
-            if (dangerZoneLocation) dangerZoneLocation.setAttribute('required', 'required');
+        const regularNote = document.getElementById('regularNote');
+        const cdrrmoNote = document.getElementById('cdrrmoNote');
+
+        if (channel === 'danger_zone') {
+            // Show danger zone fields
+            if (dangerZoneGroup) dangerZoneGroup.style.display = 'block';
+            if (dangerZoneType) dangerZoneType.required = true;
+            if (dangerZoneLocation) dangerZoneLocation.required = true;
+            if (regularNote) regularNote.style.display = 'none';
+            if (cdrrmoNote) cdrrmoNote.style.display = 'block';
         } else {
-            // Channel C (walk_in): Regular walk-in form with document checklist
-            landownerFields.style.display = 'none';
-            formFields.style.display = 'grid';
-            dangerZoneGroup.style.display = 'none';
-            dangerZoneLocationGroup.style.display = 'none';
-            cdrrmoNote.style.display = 'none';
-            regularNote.style.display = 'block';
-            if (docChecklistRegister) docChecklistRegister.style.display = 'block';
-            submitBtn.disabled = false;
-            
-            // Remove required from Channel A fields
-            if (landownerName) landownerName.removeAttribute('required');
-            if (propertyAddress) propertyAddress.removeAttribute('required');
-            isfRequiredFields.forEach(el => el.removeAttribute('required'));
-            
-            // Add required to walk-in fields, remove from danger zone
-            walkinFields.forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.setAttribute('required', 'required');
-            });
-            if (dangerZoneType) dangerZoneType.removeAttribute('required');
-            if (dangerZoneLocation) dangerZoneLocation.removeAttribute('required');
+            // Hide danger zone fields
+            if (dangerZoneGroup) dangerZoneGroup.style.display = 'none';
+            if (dangerZoneType) dangerZoneType.required = false;
+            if (dangerZoneLocation) dangerZoneLocation.required = false;
+            if (regularNote) regularNote.style.display = 'block';
+            if (cdrrmoNote) cdrrmoNote.style.display = 'none';
         }
     }
+
+    // Document checkbox styling
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.document-item input').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                this.parentElement.classList.toggle('checked', this.checked);
+            });
+        });
+
+        // Attach income formatter to the new income field
+        const incomeInput = document.getElementById('monthlyIncome');
+        if (incomeInput) {
+            attachIncomeFormatter(incomeInput);
+        }
+    });
 
     // Add another ISF record entry for Channel A
     let isfCount = 1;
@@ -3509,20 +4250,19 @@
     // Toggle document checkbox in registration form
     function toggleRegDocCheckbox(label) {
         const checkbox = label.querySelector('input[type="checkbox"]');
-        const icon = label.querySelector('.document-icon');
-        
+        const svg = label.querySelector('svg');
         checkbox.checked = !checkbox.checked;
-        
+
         if (checkbox.checked) {
-            label.classList.remove('incomplete');
-            label.classList.add('complete');
-            icon.innerHTML = '<circle cx="12" cy="12" r="10"></circle><path d="M9 12l2 2 4-4"></path>';
-            icon.style.color = '#22c55e';
+            // Checked - show checkmark
+            label.classList.add('checked');
+            svg.innerHTML = '<polyline points="20 6 9 17 4 12"></polyline>';
+            svg.style.color = '#10b981';
         } else {
-            label.classList.remove('complete');
-            label.classList.add('incomplete');
-            icon.innerHTML = '<circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>';
-            icon.style.color = '#ef4444';
+            // Unchecked - show X
+            label.classList.remove('checked');
+            svg.innerHTML = '<circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>';
+            svg.style.color = '#ef4444';
         }
     }
     
@@ -3532,12 +4272,14 @@
         if (checklist) {
             checklist.querySelectorAll('.document-item').forEach(label => {
                 const checkbox = label.querySelector('input[type="checkbox"]');
-                const icon = label.querySelector('.document-icon');
+                const svg = label.querySelector('svg');
                 checkbox.checked = false;
-                label.classList.remove('complete');
-                label.classList.add('incomplete');
-                icon.innerHTML = '<circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>';
-                icon.style.color = '#ef4444';
+                label.classList.remove('checked');
+                label.classList.remove('incomplete');
+                if (svg) {
+                    svg.innerHTML = '<circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>';
+                    svg.style.color = '#ef4444';
+                }
             });
         }
     }
@@ -4003,6 +4745,136 @@
         // Reinitialize after adding new record
         setTimeout(initializePhoneInputs, 100);
     };
+
+    // ===== CDRRMO VERIFICATION FUNCTIONS =====
+    function approveCdrrmo() {
+        const staffNotes = document.getElementById('staffCdrrmoNotes').value;
+        const applicantId = document.getElementById('reviewApplicantId').value;
+
+        if (!applicantId) {
+            alert('Error: No applicant selected');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('applicant_id', applicantId);
+        formData.append('decision', 'approved');
+        formData.append('staff_notes', staffNotes);
+
+        fetch('/intake/staff/fourth_member/update-cdrrmo-status/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('✅ CDRRMO status approved!\n\nApplicant has been moved to Priority Queue.');
+                closeReviewModal();
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                alert('❌ Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Error: ' + error.message);
+        });
+    }
+
+    function rejectCdrrmo() {
+        const staffNotes = document.getElementById('staffCdrrmoNotes').value;
+        const applicantId = document.getElementById('reviewApplicantId').value;
+
+        if (!applicantId) {
+            alert('Error: No applicant selected');
+            return;
+        }
+
+        if (!confirm('Reject CDRRMO verification? This will mark the applicant as not in danger zone and move to Walk-in Queue.\n\nContinue?')) {
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('applicant_id', applicantId);
+        formData.append('decision', 'rejected');
+        formData.append('staff_notes', staffNotes);
+
+        fetch('/intake/staff/fourth_member/update-cdrrmo-status/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('❌ CDRRMO verification rejected.\n\nApplicant has been moved to Walk-in Queue (as not in danger zone).');
+                closeReviewModal();
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Error: ' + error.message);
+        });
+    }
+
+    // Function to populate CDRRMO section in modal
+    function populateCdrrmoSection(applicantId, applicantData) {
+        const cdrrmoSection = document.querySelector('.cdrrmo-certification-section');
+        if (!cdrrmoSection) return;
+
+        // Check if applicant has danger zone info
+        if (!applicantData.dangerZoneType) {
+            cdrrmoSection.style.display = 'none';
+            return;
+        }
+
+        cdrrmoSection.style.display = 'block';
+
+        // Set declared info
+        document.getElementById('cdrrmoDeclarationType').textContent = applicantData.dangerZoneType || 'Not specified';
+        document.getElementById('cdrrmoDecLocation').textContent = applicantData.dangerZoneLocation || 'Not specified';
+
+        // Check CDRRMO certification status
+        const cdrrmoStatus = applicantData.cdrrmo_status; // 'pending', 'certified', 'not_certified'
+        const rondaTeamResultBox = document.getElementById('rondaTeamResultBox');
+        const staffApprovalBox = document.getElementById('staffApprovalBox');
+        const cdrrmoStatusBox = document.getElementById('cdrrmoStatusBox');
+
+        if (cdrrmoStatus === 'pending') {
+            // Still pending - field team hasn't verified yet
+            cdrrmoStatusBox.style.display = 'block';
+            rondaTeamResultBox.style.display = 'none';
+            staffApprovalBox.style.display = 'none';
+            document.getElementById('cdrrmoStatusText').innerHTML = `
+                <strong>⏳ Pending Field Verification</strong><br>
+                <span style="font-size: 0.7rem;">Awaiting ronda team to visit and verify the danger zone claim.</span>
+            `;
+        } else if (cdrrmoStatus === 'certified' || cdrrmoStatus === 'not_certified') {
+            // Ronda team has submitted a finding - show it
+            cdrrmoStatusBox.style.display = 'none';
+            rondaTeamResultBox.style.display = 'block';
+            staffApprovalBox.style.display = 'block';
+
+            // Show ronda team's finding
+            document.getElementById('rondaVerifiedBy').textContent = applicantData.result_recorded_by_name || 'Field Team Member';
+            document.getElementById('rondaVerifiedDate').textContent = applicantData.certified_at ? new Date(applicantData.certified_at).toLocaleDateString() : '—';
+            document.getElementById('rondaNotes').textContent = applicantData.certification_notes || 'No notes provided';
+
+            if (cdrrmoStatus === 'certified') {
+                document.getElementById('rondaCertifiedBadge').style.display = 'inline-block';
+                document.getElementById('rondaNotCertifiedBadge').style.display = 'none';
+            } else {
+                document.getElementById('rondaCertifiedBadge').style.display = 'none';
+                document.getElementById('rondaNotCertifiedBadge').style.display = 'inline-block';
+            }
+        }
+    }
 
 </script>
 {% endblock %}

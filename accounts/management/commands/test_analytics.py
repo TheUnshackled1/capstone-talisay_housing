@@ -7,7 +7,7 @@ from django.urls import reverse
 from django.test import Client
 from django.contrib.auth import get_user_model
 from django.utils import timezone
-from intake.models import Applicant, ISFRecord, LandownerSubmission
+from intake.models import Applicant, ISFRecord
 from applications.models import Application, SignatoryRouting, ElectricityConnection
 from units.models import HousingUnit, ComplianceNotice
 from cases.models import Case
@@ -49,14 +49,6 @@ class Command(BaseCommand):
                 'required_context': [
                     'pending_notices', 'electricity_pending', 'total_applications',
                     'notices_issued'
-                ]
-            },
-            'third_member': {
-                'position': 'third_member',
-                'url_name': 'accounts:third_member_analytics',
-                'required_context': [
-                    'routing_queue', 'verified_count', 'signed_count',
-                    'total_applicants', 'overdue'
                 ]
             },
             'fourth_member': {

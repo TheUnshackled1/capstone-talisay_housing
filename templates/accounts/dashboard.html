@@ -315,89 +315,6 @@
                 </a>
             </div>
 
-            {% elif user.position == 'third_member' %}
-            <!-- THIRD MEMBER (Jay Olvido) - M1 Census/Verification, M2 Signatory Routing, M4 Inspection, M5 Investigation -->
-            <div class="nav-section">
-                <div class="nav-section-title">Intake (M1)</div>
-                <a href="{% url 'accounts:third_member_applicants' %}" class="nav-link">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                        <circle cx="9" cy="7" r="4"/>
-                        <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
-                    </svg>
-                    <span>Applicants List</span>
-                </a>
-                <a href="{% url 'applications:applications_list' request.user.position %}" class="nav-link">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                        <polyline points="14 2 14 8 20 8"/>
-                        <line x1="16" y1="13" x2="8" y2="13"/>
-                        <line x1="16" y1="17" x2="8" y2="17"/>
-                        <polyline points="10 9 9 9 8 9"/>
-                    </svg>
-                    <span>Census Records</span>
-                </a>
-                <a href="{% url 'accounts:dashboard_third_member' %}" class="nav-link">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                        <polyline points="22 4 12 14.01 9 11.01"/>
-                    </svg>
-                    <span>Field Verification</span>
-                </a>
-            </div>
-            <div class="nav-section">
-                <div class="nav-section-title">Applications (M2)</div>
-                <a href="{% url 'applications:update_routing' request.user.position %}" class="nav-link">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-                    </svg>
-                    <span>Signatory Routing</span>
-                </a>
-                <a href="{% url 'documents:management' request.user.position %}" class="nav-link">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                        <polyline points="14 2 14 8 20 8"/>
-                        <line x1="16" y1="13" x2="8" y2="13"/>
-                        <line x1="16" y1="17" x2="8" y2="17"/>
-                    </svg>
-                    <span>Route Documents</span>
-                </a>
-            </div>
-            <div class="nav-section">
-                <div class="nav-section-title">Monitoring (M4)</div>
-                <a href="{% url 'units:housing_units_monitoring' request.user.position %}" class="nav-link">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                        <circle cx="12" cy="12" r="3"/>
-                    </svg>
-                    <span>Site Inspection</span>
-                </a>
-                <a href="{% url 'units:compliance_notice_issuance' request.user.position %}" class="nav-link">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-                        <line x1="12" y1="9" x2="12" y2="13"/>
-                        <line x1="12" y1="17" x2="12.01" y2="17"/>
-                    </svg>
-                    <span>Enforcement Actions</span>
-                </a>
-            </div>
-            <div class="nav-section">
-                <div class="nav-section-title">Cases (M5)</div>
-                <a href="#" class="nav-link">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                    </svg>
-                    <span>All Cases</span>
-                </a>
-                <a href="#" class="nav-link">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="11" cy="11" r="8"/>
-                        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-                    </svg>
-                    <span>Investigate Cases</span>
-                </a>
-            </div>
-
             {% elif user.position == 'fifth_member' %}
             <!-- FIFTH MEMBER (Laarni Hellera) - M2 Electricity Connection Tracking -->
             <div class="nav-section">
@@ -556,8 +473,6 @@
                 <a href="{% url 'accounts:oic_analytics' %}" class="nav-link">
                 {% elif user.position == 'second_member' %}
                 <a href="{% url 'accounts:second_member_analytics' %}" class="nav-link">
-                {% elif user.position == 'third_member' %}
-                <a href="{% url 'accounts:third_member_analytics' %}" class="nav-link">
                 {% elif user.position == 'fourth_member' %}
                 <a href="{% url 'accounts:fourth_member_analytics' %}" class="nav-link">
                 {% elif user.position == 'fifth_member' %}
@@ -842,60 +757,6 @@
                     </div>
                     <div class="stat-value">—</div>
                     <div class="stat-label">Lots for Awarding</div>
-                </div>
-
-                {% elif user.position == 'third_member' %}
-                <!-- Jay Olvido - Census, Verification, Inspection, Cases -->
-                <div class="stat-card blue scroll-animate-left scroll-delay-1">
-                    <div class="stat-header">
-                        <div class="stat-icon-wrapper blue">
-                            <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                                <circle cx="9" cy="7" r="4"/>
-                                <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
-                            </svg>
-                        </div>
-                    </div>
-                    <div class="stat-value">—</div>
-                    <div class="stat-label">Census Records</div>
-                </div>
-
-                <div class="stat-card green scroll-animate-scale scroll-delay-2">
-                    <div class="stat-header">
-                        <div class="stat-icon-wrapper green">
-                            <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                                <polyline points="22 4 12 14.01 9 11.01"/>
-                            </svg>
-                        </div>
-                    </div>
-                    <div class="stat-value">—</div>
-                    <div class="stat-label">Pending Verification</div>
-                </div>
-
-                <div class="stat-card amber scroll-animate-scale scroll-delay-3">
-                    <div class="stat-header">
-                        <div class="stat-icon-wrapper amber">
-                            <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="10"/>
-                                <polyline points="12 6 12 12 16 14"/>
-                            </svg>
-                        </div>
-                    </div>
-                    <div class="stat-value">—</div>
-                    <div class="stat-label">Site Inspections</div>
-                </div>
-
-                <div class="stat-card purple scroll-animate-right scroll-delay-4">
-                    <div class="stat-header">
-                        <div class="stat-icon-wrapper purple">
-                            <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                            </svg>
-                        </div>
-                    </div>
-                    <div class="stat-value">—</div>
-                    <div class="stat-label">Open Investigations</div>
                 </div>
 
                 {% elif user.position == 'fourth_member' %}
@@ -1240,62 +1101,6 @@
                     </div>
                 </a>
 
-                {% elif user.position == 'third_member' %}
-                <!-- Jay: Census, Verification, Signatory Routing, Inspection, Investigation -->
-                <a href="{% url 'intake:applicants_list' request.user.position %}" class="action-card scroll-animate-left scroll-delay-1">
-                    <div class="action-icon-wrapper">
-                        <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                            <circle cx="9" cy="7" r="4"/>
-                            <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
-                        </svg>
-                    </div>
-                    <div class="action-text">
-                        <h4>Census Records</h4>
-                        <p>View applicant list</p>
-                    </div>
-                </a>
-
-                <a href="{% url 'intake:applicants_list' request.user.position %}" class="action-card scroll-animate scroll-delay-2">
-                    <div class="action-icon-wrapper">
-                        <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                            <circle cx="8.5" cy="7" r="4"/>
-                            <line x1="20" y1="8" x2="20" y2="14"/>
-                            <line x1="23" y1="11" x2="17" y2="11"/>
-                        </svg>
-                    </div>
-                    <div class="action-text">
-                        <h4>Register Applicant</h4>
-                        <p>Field registration</p>
-                    </div>
-                </a>
-
-                <a href="#" class="action-card scroll-animate scroll-delay-3">
-                    <div class="action-icon-wrapper">
-                        <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                            <polyline points="9 22 9 12 15 12 15 22"/>
-                        </svg>
-                    </div>
-                    <div class="action-text">
-                        <h4>Site Inspection</h4>
-                        <p>Unit enforcement (M4)</p>
-                    </div>
-                </a>
-
-                <a href="#" class="action-card scroll-animate-right scroll-delay-4">
-                    <div class="action-icon-wrapper">
-                        <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                        </svg>
-                    </div>
-                    <div class="action-text">
-                        <h4>Investigate Cases</h4>
-                        <p>Violation reports (M5)</p>
-                    </div>
-                </a>
-
                 {% elif user.position == 'fourth_member' %}
                 <!-- Jocel: Masterlist, Eligibility, Queue, Requirements, Filing, Property -->
                 <a href="{% url 'intake:applicants_list' request.user.position %}" class="action-card scroll-animate-left scroll-delay-1">
@@ -1480,10 +1285,7 @@
                 
                 {% elif user.position == 'second_member' %}
                     {% include 'accounts/second_member/dashboard.html' %}
-                
-                {% elif user.position == 'third_member' %}
-                    {% include 'accounts/third_member/dashboard.html' %}
-                
+
                 {% elif user.position == 'fourth_member' %}
                     {% include 'accounts/fourth_member/dashboard.html' %}
                 

@@ -114,7 +114,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = "UTC"
+TIME_ZONE = "Asia/Manila"
 
 USE_I18N = True
 
@@ -143,22 +143,24 @@ LOGIN_REDIRECT_URL = 'accounts:dashboard'
 LOGOUT_REDIRECT_URL = 'accounts:dashboard'
 
 # =============================================================================
-# SMS Configuration (Twilio)
+# SMS Configuration (httpSMS - FREE via Android Phone)
 # =============================================================================
-# Twilio provides free trial credits for testing
-# Trial account can only send to verified phone numbers
-# Store credentials in .env file for security
+# httpSMS uses your Android phone as SMS gateway - completely free!
+# Just keep the phone on with httpSMS app running
 
-import os
+SMS_ENABLED = True  # Real SMS sending is ENABLED
+SMS_SERVICE = 'httpsms'  # 'httpsms', 'twilio', or 'semaphore'
 
-SMS_ENABLED = os.getenv('SMS_ENABLED', 'True') == 'True'
-SMS_SERVICE = os.getenv('SMS_SERVICE', 'twilio')
+# httpSMS Configuration (ACTIVE - FREE)
+HTTPSMS_API_KEY = 'pk_aq3fcHBM5uPwQgI-l7x8qy1VKCMRXulIf05z0LvieKMxPO3DmsdWZ2UCY7lE_eJc'
+HTTPSMS_API_URL = 'https://api.httpsms.com'  # httpSMS API endpoint
 
-# Twilio Configuration (from environment variables)
-TWILIO_ACCOUNT_SID = os.getenv('TWILIO_ACCOUNT_SID', '')
-TWILIO_AUTH_TOKEN = os.getenv('TWILIO_AUTH_TOKEN', '')
-TWILIO_PHONE_NUMBER = os.getenv('TWILIO_PHONE_NUMBER', '')
+# Twilio Configuration (Backup - Paid)
+TWILIO_ACCOUNT_SID = 'ACe90a6af0a068665ed4479c6d303245e9'
+TWILIO_AUTH_TOKEN = '8f98a71c0f227237d59990cfa3c48844'
+TWILIO_PHONE_NUMBER = '+17126421042'
+TWILIO_MESSAGING_SERVICE_SID = 'MGef6b27fa659a0bb41605875f7eddf476'
 
-# Legacy Semaphore Configuration (from environment variables)
-SEMAPHORE_API_KEY = os.getenv('SEMAPHORE_API_KEY', '')
-SEMAPHORE_SENDER_NAME = 'SEMAPHORE'
+# Semaphore Configuration (Backup - Philippine)
+SEMAPHORE_API_KEY = 'c3f15974a138c3c7aabef97f481781f5'
+SEMAPHORE_SENDER_NAME = 'THA'

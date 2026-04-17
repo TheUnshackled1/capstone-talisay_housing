@@ -1,261 +1,1159 @@
+{% extends 'field_base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Field Verification Dashboard | THA Staff Portal</title>
-    <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}">
-    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
-    <link rel="stylesheet" href="{% static 'css/dashboard_widgets.css' %}">
-    <style>
-        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
-        .dashboard-header { margin-bottom: 30px; }
-        .dashboard-header h1 { font-size: 28px; font-weight: 700; color: #1f2937; margin: 0; }
-        .dashboard-header p { color: #6b7280; margin-top: 5px; }
-        .widgets-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px; }
-        .widget { background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
-        .widget-title { font-size: 14px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 15px 0; }
-        .metric-value { font-size: 32px; font-weight: 700; color: #1f2937; }
-        .metric-label { font-size: 12px; color: #9ca3af; margin-top: 5px; }
-        .alert-box { border-radius: 8px; padding: 15px; margin-bottom: 15px; display: flex; align-items: center; gap: 12px; }
-        .alert-red { background: #fee2e2; border-left: 4px solid #ef4444; }
-        .alert-red strong { color: #991b1b; }
-        .alert-amber { background: #fef3c7; border-left: 4px solid #f59e0b; }
-        .alert-amber strong { color: #92400e; }
-        .list-container { max-height: 400px; overflow-y: auto; }
-        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #f3f4f6; }
-        .list-item:last-child { border-bottom: none; }
-        .list-item-name { font-weight: 500; color: #1f2937; }
-        .list-item-meta { font-size: 12px; color: #9ca3af; margin-top: 3px; }
-        .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
-        .badge-pending { background: #fef3c7; color: #92400e; }
-        .badge-urgent { background: #fee2e2; color: #991b1b; }
-        .badge-green { background: #d1fae5; color: #065f46; }
-        .workload-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-        .workload-item { background: #f9fafb; padding: 12px; border-radius: 6px; text-align: center; }
-        .workload-value { font-size: 20px; font-weight: 700; color: #1f2937; }
-        .workload-label { font-size: 11px; color: #6b7280; margin-top: 3px; }
-        .section { margin-bottom: 30px; }
-        .section-title { font-size: 16px; font-weight: 700; color: #1f2937; margin-bottom: 15px; border-bottom: 2px solid #f3f4f6; padding-bottom: 10px; }
-        .nav-breadcrumb { color: #9ca3af; font-size: 12px; margin-bottom: 20px; }
-        .nav-breadcrumb a { color: #3b82f6; text-decoration: none; }
-        .nav-breadcrumb a:hover { text-decoration: underline; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <!-- Header -->
-        <div class="nav-breadcrumb">
-            <a href="{% url 'accounts:dashboard' %}">Dashboard</a> / Field Verification
-        </div>
 
-        <div class="dashboard-header">
+{% block nav_verification %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-container {
+        padding: 28px;
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    .dashboard-header {
+        margin-bottom: 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+
+    .dashboard-header h1 {
+        font-size: 32px;
+        font-weight: 800;
+        color: #1f2937;
+        margin: 0;
+    }
+
+    .dashboard-header p {
+        color: #6b7280;
+        margin-top: 6px;
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+    .dashboard-header-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+
+    .btn-action {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+        padding: 11px 18px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+    }
+
+    .btn-action:hover {
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        box-shadow: 0 6px 12px rgba(59, 130, 246, 0.4);
+        transform: translateY(-2px);
+    }
+
+    .btn-action:active {
+        transform: translateY(0);
+    }
+
+    @media print {
+        .dashboard-header-actions, .btn-export, .btn-action, .section-title, .modal-content, .workflow-section, .widgets-grid {
+            display: none !important;
+        }
+        .list-container {
+            max-height: none;
+        }
+        .pending-verifications-print {
+            display: block !important;
+        }
+    }
+
+    /* ===== SCROLL ANIMATIONS ===== */
+    @keyframes scrollFadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    @keyframes scrollSlideLeft {
+        from { opacity: 0; transform: translateX(-30px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes scrollSlideRight {
+        from { opacity: 0; transform: translateX(30px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes scrollScaleUp {
+        from { opacity: 0; transform: scale(0.95); }
+        to { opacity: 1; transform: scale(1); }
+    }
+
+    .scroll-animate {
+        animation: scrollFadeIn 0.6s ease-out forwards;
+        opacity: 0;
+    }
+
+    .scroll-animate-left {
+        animation: scrollSlideLeft 0.6s ease-out forwards;
+        opacity: 0;
+    }
+
+    .scroll-animate-right {
+        animation: scrollSlideRight 0.6s ease-out forwards;
+        opacity: 0;
+    }
+
+    .scroll-animate-scale {
+        animation: scrollScaleUp 0.6s ease-out forwards;
+        opacity: 0;
+    }
+
+    .scroll-delay-1 { animation-delay: 0.1s; }
+    .scroll-delay-2 { animation-delay: 0.2s; }
+    .scroll-delay-3 { animation-delay: 0.3s; }
+    .scroll-delay-4 { animation-delay: 0.4s; }
+
+    /* ===== ANIMATION STATES ===== */
+    .animate-in.scroll-animate {
+        animation: scrollFadeIn 0.6s ease-out forwards;
+    }
+
+    .animate-in.scroll-animate-left {
+        animation: scrollSlideLeft 0.6s ease-out forwards;
+    }
+
+    .animate-in.scroll-animate-right {
+        animation: scrollSlideRight 0.6s ease-out forwards;
+    }
+
+    .animate-in.scroll-animate-scale {
+        animation: scrollScaleUp 0.6s ease-out forwards;
+    }
+    .widgets-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 24px;
+        margin-bottom: 32px;
+    }
+
+    .widget {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+
+    .widget:hover {
+        box-shadow: 0 8px 16px rgba(0,0,0,0.12);
+        border-color: #d1d5db;
+        transform: translateY(-4px);
+    }
+
+    /* ===== STAT CARDS WITH COLOR VARIANTS ===== */
+    .stat-card {
+        background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+        border-left: 4px solid;
+        border-radius: 12px;
+        padding: 24px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+        text-align: left;
+    }
+
+    .stat-card.blue { border-color: #3b82f6; }
+    .stat-card.blue:hover { background: linear-gradient(135deg, #eff6ff 0%, #ffffff 100%); }
+
+    .stat-card.green { border-color: #10b981; }
+    .stat-card.green:hover { background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%); }
+
+    .stat-card.amber { border-color: #f59e0b; }
+    .stat-card.amber:hover { background: linear-gradient(135deg, #fffbeb 0%, #ffffff 100%); }
+
+    .stat-card.purple { border-color: #8b5cf6; }
+    .stat-card.purple:hover { background: linear-gradient(135deg, #faf5ff 0%, #ffffff 100%); }
+
+    .stat-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 12px 24px rgba(0,0,0,0.15);
+    }
+
+    .widget-title {
+        font-size: 13px;
+        font-weight: 700;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.7px;
+        margin: 0 0 16px 0;
+    }
+
+    .metric-value {
+        font-size: 38px;
+        font-weight: 800;
+        color: #1f2937;
+        transition: all 0.2s ease;
+        margin-bottom: 8px;
+    }
+
+    .stat-card:hover .metric-value {
+        color: #000;
+        font-size: 42px;
+    }
+
+    .metric-label {
+        font-size: 13px;
+        color: #9ca3af;
+        margin: 0;
+        font-weight: 500;
+    }
+
+    /* ===== ALERT ANIMATIONS ===== */
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .alert-box {
+        border-radius: 10px;
+        padding: 16px;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        animation: slideDown 0.3s ease-out;
+        transition: all 0.3s ease;
+        border-left: 4px solid;
+    }
+
+    .alert-box:hover {
+        box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
+    }
+
+    .alert-red {
+        background: linear-gradient(135deg, #fee2e2 0%, #ffffff 100%);
+        border-left-color: #ef4444;
+        border: 1px solid #fecaca;
+    }
+
+    .alert-red strong {
+        color: #991b1b;
+    }
+
+    .alert-amber {
+        background: linear-gradient(135deg, #fef3c7 0%, #ffffff 100%);
+        border-left-color: #f59e0b;
+        border: 1px solid #fde68a;
+    }
+
+    .alert-amber strong {
+        color: #92400e;
+    }
+
+    /* ===== LIST STYLING WITH HOVER EFFECTS ===== */
+    .list-container {
+        max-height: 600px;
+        overflow-y: auto;
+    }
+
+    .list-item {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 16px;
+        align-items: flex-start;
+        padding: 16px;
+        margin-bottom: 12px;
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        transition: all 0.2s ease;
+        border-left: 4px solid #f3f4f6;
+        cursor: pointer;
+    }
+
+    .list-item:hover {
+        background: linear-gradient(to right, #f9fafb 0%, #ffffff 100%);
+        border-color: #d1d5db;
+        border-left-color: #3b82f6;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        transform: translateX(4px);
+    }
+
+    .list-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .list-item-name {
+        font-weight: 600;
+        color: #1f2937;
+        transition: color 0.2s ease;
+        font-size: 15px;
+        margin-bottom: 6px;
+    }
+
+    .list-item:hover .list-item-name {
+        color: #2563eb;
+    }
+
+    .list-item-meta {
+        font-size: 13px;
+        color: #6b7280;
+        margin-bottom: 4px;
+        transition: color 0.2s ease;
+    }
+
+    .list-item:hover .list-item-meta {
+        color: #4b5563;
+    }
+
+    /* ===== BADGE STYLING ===== */
+    .badge {
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 700;
+        transition: all 0.2s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+    }
+
+    .badge-pending {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .badge-pending:hover {
+        background: #fcd34d;
+        transform: scale(1.08);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .badge-urgent {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .badge-urgent:hover {
+        background: #fca5a5;
+        transform: scale(1.08);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .badge-green {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .badge-green:hover {
+        background: #a7f3d0;
+        transform: scale(1.08);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    }
+
+    .workload-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
+    }
+
+    .workload-item {
+        background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
+        padding: 18px;
+        border-radius: 10px;
+        text-align: center;
+        border: 1px solid #f0f0f0;
+        transition: all 0.3s ease;
+    }
+
+    .workload-item:hover {
+        background: linear-gradient(135deg, #f0f0f0 0%, #ffffff 100%);
+        border-color: #e5e7eb;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+    }
+
+    .workload-value {
+        font-size: 28px;
+        font-weight: 800;
+        color: #1f2937;
+        margin-bottom: 6px;
+    }
+
+    .workload-label {
+        font-size: 12px;
+        color: #6b7280;
+        margin: 0;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .section {
+        margin-bottom: 32px;
+    }
+
+    .section-title {
+        font-size: 17px;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 18px;
+        border-bottom: 2px solid #e5e7eb;
+        padding-bottom: 12px;
+        letter-spacing: 0.3px;
+    }
+
+    .nav-breadcrumb {
+        color: #6b7280;
+        font-size: 13px;
+        margin-bottom: 24px;
+        font-weight: 500;
+    }
+
+    .nav-breadcrumb a {
+        color: #3b82f6;
+        text-decoration: none;
+        font-weight: 600;
+        transition: color 0.2s ease;
+    }
+
+    .nav-breadcrumb a:hover {
+        color: #2563eb;
+        text-decoration: underline;
+    }
+
+    /* ===== TABLE STYLING ===== */
+    table {
+        background: white;
+    }
+
+    table tbody tr {
+        transition: all 0.2s ease;
+    }
+
+    table tbody tr:hover {
+        background: linear-gradient(to right, #f0f9ff 0%, #ffffff 100%);
+        box-shadow: inset 0 0 8px rgba(59, 130, 246, 0.1);
+    }
+
+    table th {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    table td {
+        vertical-align: middle;
+    }
+
+    /* Responsive table scrolling */
+    @media (max-width: 1024px) {
+        table {
+            font-size: 12px;
+        }
+
+        table td, table th {
+            padding: 10px 8px;
+        }
+    }
+
+    @media (max-width: 768px) {
+        table {
+            font-size: 11px;
+        }
+
+        table td, table th {
+            padding: 8px 6px;
+        }
+    }
+
+    /* ===== TABLE BUTTON STYLING ===== */
+    .table-verify-btn {
+        background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+        color: white;
+        padding: 6px 14px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 12px;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 4px rgba(30, 64, 175, 0.3);
+    }
+
+    .table-verify-btn:hover {
+        background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 100%);
+        box-shadow: 0 6px 12px rgba(30, 64, 175, 0.4);
+        transform: translateY(-2px);
+    }
+
+    .table-verify-btn:active {
+        transform: translateY(0);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Header -->
+    <div class="nav-breadcrumb">
+        <a href="{% url 'accounts:dashboard' %}">Dashboard</a> / Field Verification
+    </div>
+
+    <div class="dashboard-header">
+        <div>
             <h1>🔍 Field Verification Dashboard</h1>
             <p>Module 1: Channel B Danger Zone Verification Workflow</p>
         </div>
-
-        <!-- MODULE 1: FIELD VERIFICATION METRICS -->
-        <div class="widgets-grid">
-            <!-- Pending Verifications -->
-            <div class="widget">
-                <p class="widget-title">📋 Pending Verifications</p>
-                <div class="metric-value">{{ total_pending }}</div>
-                <div class="metric-label">Awaiting field inspection</div>
-            </div>
-
-            <!-- Verified (Certified) -->
-            <div class="widget">
-                <p class="widget-title">✅ Verified - Danger Zone</p>
-                <div class="metric-value" style="color: #10b981;">{{ certified_count }}</div>
-                <div class="metric-label">Approved for priority queue</div>
-            </div>
-
-            <!-- Not Certified -->
-            <div class="widget">
-                <p class="widget-title">❌ Not Verified - False Alarm</p>
-                <div class="metric-value" style="color: #ef4444;">{{ not_certified_count }}</div>
-                <div class="metric-label">Moved to walk-in FIFO queue</div>
-            </div>
-        </div>
-
-        <!-- TEAM WORKLOAD STATUS -->
-        <div class="section">
-            <div class="section-title">👥 Team Workload Distribution</div>
-            <div class="widget">
-                <div class="workload-grid">
-                    <div class="workload-item">
-                        <div class="workload-value">{{ team_workload.pending }}</div>
-                        <div class="workload-label">Total Pending</div>
-                    </div>
-                    <div class="workload-item">
-                        <div class="workload-value">{{ team_workload.avg_per_member }}</div>
-                        <div class="workload-label">Avg per Member</div>
-                    </div>
-                    <div class="workload-item">
-                        <div class="workload-value">{{ team_workload.completed_today }}</div>
-                        <div class="workload-label">Completed Today</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- CRITICAL ALERTS -->
-        {% if aging_verifications %}
-        <div class="section">
-            <div class="section-title">⚠️ Aging Verifications Alert</div>
-            <div class="widget">
-                <div class="alert-box alert-amber">
-                    <strong>⏰ {{ aging_verifications|length }} verification(s) pending >7 days</strong>
-                    <span>Risk of escalation at 14 days. Priority review needed.</span>
-                </div>
-                <div class="list-container">
-                    {% for cert in aging_verifications %}
-                    <div class="list-item">
-                        <div>
-                            <div class="list-item-name">{{ cert.applicant.full_name }}</div>
-                            <div class="list-item-meta">
-                                📍 {{ cert.applicant.address }}
-                                {% with days=cert.days_pending %}
-                                • {{ days }} days pending
-                                {% endwith %}
-                            </div>
-                        </div>
-                        <span class="badge badge-urgent">URGENT</span>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-        </div>
-        {% endif %}
-
-        <!-- PENDING VERIFICATIONS LIST -->
-        <div class="section">
-            <div class="section-title">📝 Pending Verifications (Ready for Field Visit)</div>
-            <div class="widget">
-                {% if pending_verifications %}
-                <div class="list-container">
-                    {% for cert in pending_verifications %}
-                    <div class="list-item">
-                        <div style="flex: 1;">
-                            <div class="list-item-name">{{ cert.applicant.full_name }}</div>
-                            <div class="list-item-meta">
-                                📍 {{ cert.applicant.address }}
-                                {% if cert.applicant.barangay %}
-                                    • {{ cert.applicant.barangay.name }}
-                                {% endif %}
-                                📞 {{ cert.applicant.phone_number|default:"No phone" }}
-                            </div>
-                            <div class="list-item-meta" style="margin-top: 5px;">
-                                👥 Household: {{ cert.applicant.household_members }} members
-                                • 💰 Income: ₱{{ cert.applicant.monthly_income|floatformat:0|add:"0" }}
-                            </div>
-                        </div>
-                        <div style="text-align: right;">
-                            <span class="badge badge-pending">PENDING</span>
-                            <div style="margin-top: 8px; font-size: 12px; color: #9ca3af;">
-                                Submitted {{ cert.created_at|date:"M d, Y" }}
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-                {% else %}
-                <p style="text-align: center; color: #9ca3af; padding: 30px;">
-                    ✅ No pending verifications. All Channel B applicants have been processed.
-                </p>
-                {% endif %}
-            </div>
-        </div>
-
-        <!-- WORKFLOW GUIDE -->
-        <div class="section">
-            <div class="section-title">📚 Field Verification Workflow</div>
-            <div class="widget">
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
-                    <div style="padding: 15px; background: #f9fafb; border-radius: 6px; border-left: 4px solid #3b82f6;">
-                        <strong style="color: #1f2937;">Step 1: Visit Location</strong>
-                        <p style="font-size: 12px; color: #6b7280; margin-top: 8px;">
-                            Visit the applicant's address to verify danger zone status. Check living conditions, structural safety, and proximity to hazards.
-                        </p>
-                    </div>
-                    <div style="padding: 15px; background: #f9fafb; border-radius: 6px; border-left: 4px solid #10b981;">
-                        <strong style="color: #1f2937;">Step 2: Record Findings</strong>
-                        <p style="font-size: 12px; color: #6b7280; margin-top: 8px;">
-                            Document: Is it truly a danger zone? Living conditions observed? Income level reasonable? Take photos/notes.
-                        </p>
-                    </div>
-                    <div style="padding: 15px; background: #f9fafb; border-radius: 6px; border-left: 4px solid #f59e0b;">
-                        <strong style="color: #1f2937;">Step 3: Submit Assessment</strong>
-                        <p style="font-size: 12px; color: #6b7280; margin-top: 8px;">
-                            Tell Jocel: "I verified this is a danger zone" or "This appears to be false alarm." Assessment feeds into CDRRMO certification.
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- VERIFICATION SUMMARY STATS -->
-        <div class="section">
-            <div class="section-title">📊 Verification Summary</div>
-            <div class="widgets-grid">
-                <div class="widget">
-                    <p class="widget-title">Total Processed</p>
-                    <div class="metric-value">{{ certified_count|add:not_certified_count }}</div>
-                    <div class="metric-label">Danger zone verifications completed</div>
-                </div>
-                <div class="widget">
-                    <p class="widget-title">Success Rate</p>
-                    <div class="metric-value" style="color: #10b981;">
-                        {% if certified_count|add:not_certified_count > 0 %}
-                            {{ verified_percentage }}%
-                        {% else %}
-                            0%
-                        {% endif %}
-                    </div>
-                    <div class="metric-label">Verified as actual danger zones</div>
-                </div>
-                <div class="widget">
-                    <p class="widget-title">False Alarms</p>
-                    <div class="metric-value" style="color: #ef4444;">{{ not_certified_count }}</div>
-                    <div class="metric-label">Claims not sustained</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- INSTRUCTIONS -->
-        <div style="margin-top: 30px; padding: 20px; background: #ecfdf5; border: 1px solid #d1fae5; border-radius: 8px;">
-            <strong style="color: #065f46;">ℹ️ Important Information</strong>
-            <p style="font-size: 13px; color: #047857; margin-top: 8px; margin-bottom: 0;">
-                • <strong>Your Role:</strong> Verify if applicants are truly in danger zones. Your assessment determines if they get priority queue status.<br>
-                • <strong>Process:</strong> Visit location → Record findings → Report to Jocel (four_member by phone).<br>
-                • <strong>Outcome:</strong> If verified as danger zone → Priority Queue. If false alarm → Walk-in FIFO Queue (penalty).<br>
-                • <strong>Escalation:</strong> If pending >14 days → auto-moved to walk-in queue as safety net.
-            </p>
-        </div>
-
-        <!-- Analytics & Reports Widget (M6) - Coming Soon -->
-        <div class="section" style="margin-top: 30px;">
-            <div class="section-title">📊 Analytics & Reports</div>
-            <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 40px; text-align: center; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color: #cbd5e1; width: 48px; height: 48px; margin: 0 auto 20px; display: block;">
-                    <line x1="18" y1="20" x2="18" y2="10"/>
-                    <line x1="12" y1="20" x2="12" y2="4"/>
-                    <line x1="6" y1="20" x2="6" y2="14"/>
+        <div class="dashboard-header-actions">
+            <button onclick="printVerificationSheet()" class="btn-action" title="Print pending applicants list">
+                <svg style="width: 18px; height: 18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
                 </svg>
-                <p style="color: #94a3b8; font-size: 14px; margin-bottom: 20px;">Analytics dashboard coming soon</p>
-                <button disabled style="background-color: #cbd5e1; color: #475569; padding: 10px 20px; border-radius: 6px; border: none; cursor: not-allowed; font-size: 14px; font-weight: 500;">
-                    View Analytics (Coming Soon)
-                </button>
+                📋 Print List
+            </button>
+            <button onclick="location.reload()" class="btn-action refresh" title="Refresh data">
+                <svg style="width: 18px; height: 18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36M20.49 15a9 9 0 0 1-14.85 3.36"></path>
+                </svg>
+                🔄 Refresh
+            </button>
+            <button onclick="showMyVerifications()" class="btn-action my-work" title="View my verifications">
+                <svg style="width: 18px; height: 18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+                ✅ My Work
+            </button>
+        </div>
+    </div>
+
+    <!-- MODULE 1: FIELD VERIFICATION METRICS -->
+    <div class="widgets-grid">
+        <!-- Pending Verifications -->
+        <div class="widget scroll-animate scroll-delay-1">
+            <p class="widget-title">📋 Pending CDRRMO Verifications</p>
+            <div class="metric-value">{{ total_pending }}</div>
+            <div class="metric-label">Awaiting field inspection</div>
+            <div style="margin-top: 12px; font-size: 11px; color: #6b7280; padding: 8px; background: #f0f9ff; border-left: 2px solid #3b82f6; border-radius: 4px;">
+                Only applicants claiming danger zone status
+            </div>
+        </div>
+
+        <!-- Verified (Certified) -->
+        <div class="widget scroll-animate scroll-delay-2">
+            <p class="widget-title">✅ Verified - Danger Zone</p>
+            <div class="metric-value" style="color: #10b981;">{{ certified_count }}</div>
+            <div class="metric-label">Approved for priority queue</div>
+            <div style="margin-top: 12px; font-size: 11px; color: #6b7280; padding: 8px; background: #f0fdf4; border-left: 2px solid #10b981; border-radius: 4px;">
+                Ronda field team confirmed
+            </div>
+        </div>
+
+        <!-- Not Certified -->
+        <div class="widget scroll-animate scroll-delay-3">
+            <p class="widget-title">❌ Not Verified - False Alarm</p>
+            <div class="metric-value" style="color: #ef4444;">{{ not_certified_count }}</div>
+            <div class="metric-label">Moved to walk-in FIFO queue</div>
+            <div style="margin-top: 12px; font-size: 11px; color: #6b7280; padding: 8px; background: #fee2e2; border-left: 2px solid #ef4444; border-radius: 4px;">
+                Not in danger zone per verification
             </div>
         </div>
     </div>
 
-    <script>
+    <!-- CRITICAL ALERTS -->
+    {% if aging_verifications %}
+    <div class="section scroll-animate scroll-delay-2">
+        <div class="section-title">⚠️ Aging Verifications Alert</div>
+        <div class="widget">
+            <div class="alert-box alert-amber">
+                <strong>⏰ {{ aging_verifications|length }} verification(s) pending >7 days</strong>
+                <span>Risk of escalation at 14 days. Priority review needed.</span>
+            </div>
+            <div class="list-container">
+                {% for cert in aging_verifications %}
+                <div class="list-item">
+                    <div>
+                        <div class="list-item-name">{{ cert.applicant.full_name }}</div>
+                        <div class="list-item-meta">
+                            📍 {{ cert.applicant.current_address }}
+                            {% with days=cert.days_pending %}
+                            • {{ days }} days pending
+                            {% endwith %}
+                        </div>
+                    </div>
+                    <span class="badge badge-urgent">URGENT</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- PENDING VERIFICATIONS LIST -->
+    <div class="section scroll-animate-right scroll-delay-1">
+        <div class="section-title">📝 Pending Verifications (Ready for Field Visit)</div>
+        <div class="widget">
+            {% if pending_verifications %}
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                    <thead>
+                        <tr style="background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%); border-bottom: 2px solid #d1d5db;">
+                            <th style="padding: 14px 12px; text-align: left; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.4px;">#</th>
+                            <th style="padding: 14px 12px; text-align: left; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.4px;">Transaction #</th>
+                            <th style="padding: 14px 12px; text-align: left; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.4px;">Date & Time</th>
+                            <th style="padding: 14px 12px; text-align: left; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.4px;">Reference #</th>
+                            <th style="padding: 14px 12px; text-align: left; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.4px;">Full Name</th>
+                            <th style="padding: 14px 12px; text-align: left; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.4px;">Channel</th>
+                            <th style="padding: 14px 12px; text-align: left; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.4px;">Eligibility</th>
+                            <th style="padding: 14px 12px; text-align: left; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.4px;">Queue</th>
+                            <th style="padding: 14px 12px; text-align: left; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.4px;">Staff Handled</th>
+                            <th style="padding: 14px 12px; text-align: center; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.4px;">Docs</th>
+                            <th style="padding: 14px 12px; text-align: center; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.4px;">SMS</th>
+                            <th style="padding: 14px 12px; text-align: center; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.4px;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cert in pending_verifications %}
+                        <tr class="scroll-animate {% cycle "scroll-delay-1" "scroll-delay-2" "scroll-delay-3" "scroll-delay-4" %}" style="border-bottom: 1px solid #e5e7eb; transition: all 0.2s ease; background: white;">
+                            <td style="padding: 12px; color: #6b7280; font-weight: 600;">{{ forloop.counter }}</td>
+                            <td style="padding: 12px; color: #1f2937; font-family: monospace; font-size: 11px; max-width: 120px; word-break: break-all;">{{ cert.transaction_id }}</td>
+                            <td style="padding: 12px; color: #6b7280; font-size: 12px;">{{ cert.created_at|date:"M d, Y h:i A" }}</td>
+                            <td style="padding: 12px; color: #2563eb; font-weight: 600;">{{ cert.reference_number }}</td>
+                            <td style="padding: 12px; color: #1f2937; font-weight: 500;">{{ cert.applicant_name }}</td>
+                            <td style="padding: 12px; color: #6b7280;">
+                                <span style="background: #dbeafe; color: #0369a1; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 600;">{{ cert.channel }}</span>
+                            </td>
+                            <td style="padding: 12px;">
+                                <span style="background: #fef3c7; color: #92400e; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 600;">{{ cert.eligibility }}</span>
+                            </td>
+                            <td style="padding: 12px; color: #6b7280; text-align: center;">{{ cert.queue_position }}</td>
+                            <td style="padding: 12px; color: #6b7280; font-size: 12px;">{{ cert.staff_handled }}</td>
+                            <td style="padding: 12px; text-align: center; color: #1f2937; font-weight: 600;">
+                                <span style="background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%); color: #15803d; padding: 4px 10px; border-radius: 6px; border: 1px solid #dcfce7; display: inline-block;">{{ cert.doc_count }}/7</span>
+                            </td>
+                            <td style="padding: 12px; text-align: center; font-size: 12px;">
+                                <span style="{% if 'Sent' in cert.sms_status %}color: #059669;{% else %}color: #dc2626;{% endif %} font-weight: 600;">{{ cert.sms_status }}</span>
+                            </td>
+                            <td style="padding: 12px; text-align: center;">
+                                <button class="table-verify-btn" onclick="openVerificationModal('{{ cert.id }}', '{{ cert.applicant_name|escapejs }}', '{{ cert.address|escapejs }}', '{{ cert.danger_zone_type|escapejs }}', '{{ cert.danger_zone_location|escapejs }}')">
+                                    ✓ Verify
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p style="text-align: center; color: #9ca3af; padding: 40px; font-size: 14px;">
+                ✅ No pending verifications. All Channel B applicants have been processed.
+            </p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- WORKFLOW GUIDE -->
+    <div class="section scroll-animate-scale scroll-delay-2">
+        <div class="section-title">📚 Field Verification Workflow</div>
+        <div class="widget">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                <div style="padding: 18px; background: linear-gradient(135deg, #f0f9ff 0%, #ffffff 100%); border-radius: 10px; border-left: 4px solid #3b82f6; border: 1px solid #dbeafe; transition: all 0.3s ease;">
+                    <strong style="color: #1e40af; font-size: 15px; display: block; margin-bottom: 8px;">Step 1: Visit Location</strong>
+                    <p style="font-size: 13px; color: #1e3a8a; margin: 0; line-height: 1.5;">
+                        Visit the applicant's address to verify danger zone status. Check living conditions, structural safety, and proximity to hazards.
+                    </p>
+                </div>
+                <div style="padding: 18px; background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%); border-radius: 10px; border-left: 4px solid #10b981; border: 1px solid #dcfce7; transition: all 0.3s ease;">
+                    <strong style="color: #15803d; font-size: 15px; display: block; margin-bottom: 8px;">Step 2: Record Findings</strong>
+                    <p style="font-size: 13px; color: #166534; margin: 0; line-height: 1.5;">
+                        Document: Is it truly a danger zone? Living conditions observed? Income level reasonable? Take photos/notes.
+                    </p>
+                </div>
+                <div style="padding: 18px; background: linear-gradient(135deg, #fffbeb 0%, #ffffff 100%); border-radius: 10px; border-left: 4px solid #f59e0b; border: 1px solid #fef3c7; transition: all 0.3s ease;">
+                    <strong style="color: #92400e; font-size: 15px; display: block; margin-bottom: 8px;">Step 3: Submit Assessment</strong>
+                    <p style="font-size: 13px; color: #b45309; margin: 0; line-height: 1.5;">
+                        Click applicant name above → Select YES or NO → Jocelsees result in staff portal. Assessment feeds into CDRRMO certification.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- VERIFICATION SUMMARY STATS -->
+    <div class="section scroll-animate scroll-delay-3">
+        <div class="section-title">📊 Verification Summary</div>
+        <div class="widgets-grid scroll-animate-scale">
+            <div class="widget">
+                <p class="widget-title">Total Processed</p>
+                <div class="metric-value">{{ certified_count|add:not_certified_count }}</div>
+                <div class="metric-label">Danger zone verifications completed</div>
+            </div>
+            <div class="widget">
+                <p class="widget-title">Success Rate</p>
+                <div class="metric-value" style="color: #10b981;">
+                    {% if certified_count|add:not_certified_count > 0 %}
+                        {{ verified_percentage }}%
+                    {% else %}
+                        0%
+                    {% endif %}
+                </div>
+                <div class="metric-label">Verified as actual danger zones</div>
+            </div>
+            <div class="widget">
+                <p class="widget-title">False Alarms</p>
+                <div class="metric-value" style="color: #ef4444;">{{ not_certified_count }}</div>
+                <div class="metric-label">Claims not sustained</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- INSTRUCTIONS -->
+    <div class="scroll-animate-left scroll-delay-4" style="margin-top: 32px; padding: 20px; background: linear-gradient(135deg, #ecfdf5 0%, #ffffff 100%); border: 2px solid #d1fae5; border-radius: 12px; border-left: 4px solid #10b981;">
+        <strong style="color: #065f46; font-size: 16px; display: block; margin-bottom: 12px;">ℹ️ Important Information</strong>
+        <p style="font-size: 14px; color: #047857; margin: 0; line-height: 1.7;">
+            • <strong>Your Role:</strong> Verify if applicants are truly in danger zones. Your assessment determines if they get priority queue status.<br>
+            • <strong>Process:</strong> Click applicant → Select YES or NO → Submit.<br>
+            • <strong>Outcome:</strong> If verified as danger zone → Priority Queue. If false alarm → Walk-in FIFO Queue (penalty).<br>
+            • <strong>Escalation:</strong> If pending >14 days → auto-moved to walk-in queue as safety net.
+        </p>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+        document.addEventListener('DOMContentLoaded', function() {
+            initScrollAnimations();
+        });
+
+        /**
+         * Scroll Animations - Intersection Observer
+         */
+        function initScrollAnimations() {
+            // Check for reduced motion preference
+            const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+            if (prefersReducedMotion) {
+                // Just show everything immediately
+                document.querySelectorAll(
+                    '.scroll-animate, .scroll-animate-left, .scroll-animate-right, ' +
+                    '.scroll-animate-scale, .scroll-animate-fade, .scroll-animate-bounce, ' +
+                    '.scroll-animate-rotate, .scroll-animate-blur, .scroll-animate-card'
+                ).forEach(function(el) {
+                    el.classList.add('animate-in');
+                });
+                return;
+            }
+
+            // Select all elements with scroll animation classes
+            const animatedElements = document.querySelectorAll(
+                '.scroll-animate, .scroll-animate-left, .scroll-animate-right, ' +
+                '.scroll-animate-scale, .scroll-animate-fade, .scroll-animate-bounce, ' +
+                '.scroll-animate-rotate, .scroll-animate-blur, .scroll-animate-card'
+            );
+
+            // Create intersection observer
+            const observerOptions = {
+                root: null, // viewport
+                rootMargin: '0px 0px -50px 0px', // trigger slightly before element enters
+                threshold: 0.1 // 10% visible triggers animation
+            };
+
+            const scrollObserver = new IntersectionObserver(function(entries, observer) {
+                entries.forEach(function(entry) {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('animate-in');
+                        // Once animated, stop observing (one-time animation)
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+
+            // Observe each element
+            animatedElements.forEach(function(element) {
+                scrollObserver.observe(element);
+            });
+        }
+
         // Auto-refresh data every 5 minutes
         setTimeout(() => {
             location.reload();
         }, 5 * 60 * 1000);
-    </script>
-</body>
-</html>
+
+        // Field Verification Modal
+        function openVerificationModal(applicantId, applicantName, address, dangerZoneType, dangerZoneLocation) {
+            document.getElementById('verificationModalApplicantId').value = applicantId;
+            document.getElementById('verificationModalName').textContent = applicantName;
+            document.getElementById('verificationModalAddress').textContent = address;
+            document.getElementById('verificationModalDangerZone').textContent = dangerZoneType || 'Not specified';
+            document.getElementById('verificationModalLocation').textContent = dangerZoneLocation || 'Not specified';
+
+            // Show CDRRMO status if available (will be passed from backend data)
+            const cdrrmoStatusBox = document.getElementById('cdrrmoStatusBox');
+            const cdrrmoStatusText = document.getElementById('cdrrmoStatusText');
+            const cdrrmoDateText = document.getElementById('cdrrmoDateText');
+
+            // For now, if applicant has danger zone, show CDRRMO pending status
+            // In future, pull actual CDRRMO data from applicant record
+            if (dangerZoneType) {
+                cdrrmoStatusBox.style.display = 'block';
+                cdrrmoStatusText.textContent = '⏳ Pending - Awaiting Field Verification';
+                cdrrmoStatusText.style.color = '#92400e';
+                cdrrmoDateText.textContent = '—';
+            } else {
+                cdrrmoStatusBox.style.display = 'none';
+            }
+
+            document.getElementById('verificationModal').style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeVerificationModal() {
+            document.getElementById('verificationModal').style.display = 'none';
+            document.body.style.overflow = 'auto';
+            document.getElementById('verificationForm').reset();
+        }
+
+        function submitVerification(event) {
+            event.preventDefault();
+
+            const applicantId = document.getElementById('verificationModalApplicantId').value;
+            const verificationDecision = document.querySelector('input[name="verification_decision"]:checked');
+            const verificationNotes = document.getElementById('verificationNotes').value;
+
+            if (!verificationDecision) {
+                alert('Please select: Is this a danger zone?');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('applicant_id', applicantId);
+            formData.append('verification_decision', verificationDecision.value);
+            formData.append('verification_notes', verificationNotes);
+
+            // Extract position more reliably - use 'field' from the dashboard URL
+            const pathname = window.location.pathname;
+            let currentPosition = 'field';  // Default to field
+
+            // Try to extract from URL: /accounts/dashboard/field/ or /dashboard/field/
+            if (pathname.includes('/dashboard/field/')) {
+                currentPosition = 'field';
+            }
+
+            fetch(`/intake/staff/${currentPosition}/field-verify-cdrrmo/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
+                                 document.querySelector('input[name="_token"]')?.value ||
+                                 getCookie('csrftoken')
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('✅ ' + data.message + '\n\nVerification recorded successfully. Jocel will review this in the staff portal.');
+                    closeVerificationModal();
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    alert('❌ Error: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('❌ Connection error: ' + error);
+                console.error('Fetch error:', error);
+            });
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // Close modal when clicking outside
+        window.addEventListener('click', function(event) {
+            const modal = document.getElementById('verificationModal');
+            if (event.target === modal) {
+                closeVerificationModal();
+            }
+        });
+
+        // Print Verification Sheet - All pending applicants
+        function printVerificationSheet() {
+            const header = document.querySelector('.dashboard-header');
+            const actions = document.querySelector('.dashboard-header-actions');
+            const stats = document.querySelector('.widgets-grid');
+            const aging = document.querySelector('.section:has(.alert-box)');
+            const pending = document.querySelector('.section:has(.pending-verifications-print), .section:nth-child(5)');
+            const footer = document.querySelector('.modal-footer, .instructions');
+
+            // Hide elements during print
+            header.style.display = 'flex';
+            if (actions) actions.style.display = 'none';
+            if (stats) stats.style.display = 'none';
+            if (aging) aging.style.display = 'none';
+
+            // Trigger print
+            const printContent = document.body.innerHTML;
+            const newWindow = window.open('', '_blank');
+            newWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Field Verification List - THA</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 20px; }
+                        h1 { color: #1f2937; margin-bottom: 10px; }
+                        p { color: #6b7280; margin: 5px 0; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+                        th { background: #f3f4f6; font-weight: 600; }
+                        tr:nth-child(even) { background: #f9fafb; }
+                        .applicant-row { page-break-inside: avoid; }
+                        .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; }
+                        .badge-pending { background: #fef3c7; color: #92400e; }
+                        .instructions { margin-top: 20px; padding: 15px; background: #f3f4f6; border-radius: 6px; }
+                    </style>
+                </head>
+                <body>
+                    <h1>📋 Field Verification Sheet</h1>
+                    <p><strong>THA Field Team Verification List</strong></p>
+                    <p>Printed: ${new Date().toLocaleString()}</p>
+                    <p>Team Member: ${document.querySelector('.user-name')?.textContent || 'Field Team'}</p>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 5%;">#</th>
+                                <th style="width: 20%;">Name</th>
+                                <th style="width: 25%;">Address</th>
+                                <th style="width: 15%;">Phone</th>
+                                <th style="width: 20%;">Danger Zone</th>
+                                <th style="width: 15%;">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${Array.from(document.querySelectorAll('.list-item')).map((item, idx) => {
+                                const name = item.querySelector('.list-item-name')?.textContent || '';
+                                const meta = item.querySelectorAll('.list-item-meta');
+                                const address = meta[0]?.textContent.split('•')[0].trim().replace('📍 ', '') || '';
+                                const phone = meta[0]?.textContent.split('•')[2]?.trim().replace('📞 ', '') || '';
+                                const household = meta[1]?.textContent || '';
+                                return `
+                                    <tr class="applicant-row">
+                                        <td>${idx + 1}</td>
+                                        <td>${name}</td>
+                                        <td>${address}</td>
+                                        <td>${phone}</td>
+                                        <td>${household}</td>
+                                        <td><span class="badge badge-pending">PENDING</span></td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+
+                    <div class="instructions">
+                        <h3>Field Verification Instructions:</h3>
+                        <ol>
+                            <li><strong>Visit Each Location:</strong> Use this list to visit applicant addresses</li>
+                            <li><strong>Verify Status:</strong> Check if applicant is truly in danger zone</li>
+                            <li><strong>Record Decision:</strong> Back in the portal, click applicant → Select YES or NO</li>
+                            <li><strong>Submit Result:</strong> Your verification feeds to staff for review</li>
+                        </ol>
+                    </div>
+                </body>
+                </html>
+            `);
+            newWindow.document.close();
+            newWindow.print();
+        }
+
+        // Show "My Verifications Today"
+        function showMyVerifications() {
+            const stats = {
+                total: document.querySelector('[id*="total_pending"]')?.textContent || '?',
+                certified: document.querySelector('[style*="color: #10b981"]')?.nextElementSibling?.textContent || '0',
+                notCertified: document.querySelector('[style*="color: #ef4444"]')?.nextElementSibling?.textContent || '0'
+            };
+
+            alert(`📊 Today's Verification Summary:\n\n✅ Certified (Danger Zone): ${stats.certified}\n❌ Not Certified (False Alarm): ${stats.notCertified}\n\n📝 Keep submitting your findings!`);
+        }
+</script>
+
+    <!-- FIELD VERIFICATION MODAL -->
+    <div id="verificationModal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); overflow-y: auto; padding: 20px 0;">
+        <div style="background-color: white; margin: 40px auto; width: 90%; max-width: 700px; border-radius: 16px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2); overflow: hidden;">
+            <!-- Modal Header -->
+            <div style="background: linear-gradient(135deg, #1e40af 0%, #2563eb 50%, #1e3a8a 100%); color: white; padding: 32px 28px; border-bottom: 4px solid #1e40af;">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                    <span style="font-size: 2rem;">🔍</span>
+                    <div>
+                        <h2 style="margin: 0; font-size: 1.4rem; font-weight: 800; letter-spacing: -0.5px;">Field Verification</h2>
+                        <p style="margin: 4px 0 0 0; font-size: 0.85rem; opacity: 0.95; font-weight: 500;">Module 1: Channel B Danger Zone Verification</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Body with Scroll -->
+            <div style="padding: 32px; max-height: 70vh; overflow-y: auto;">
+                <input type="hidden" id="verificationModalApplicantId">
+
+                <!-- SECTION 1: APPLICANT'S CLAIM -->
+                <div style="margin-bottom: 28px; padding: 24px; background: linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%); border-left: 5px solid #0369a1; border-radius: 12px; border: 1px solid #bfdbfe;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 2px solid #93c5fd;">
+                        <span style="font-size: 1.3rem;">📋</span>
+                        <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #1e40af; letter-spacing: 0.3px;">APPLICANT'S CLAIM</h3>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
+                        <div style="background: white; padding: 16px; border-radius: 8px; border: 1px solid #dcfce7;">
+                            <label style="display: block; font-size: 0.7rem; font-weight: 700; color: #0369a1; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px;">👤 Full Name</label>
+                            <p id="verificationModalName" style="margin: 0; font-size: 1rem; font-weight: 600; color: #1f2937;"></p>
+                        </div>
+                        <div style="background: white; padding: 16px; border-radius: 8px; border: 1px solid #dcfce7;">
+                            <label style="display: block; font-size: 0.7rem; font-weight: 700; color: #0369a1; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px;">📍 Current Address</label>
+                            <p id="verificationModalAddress" style="margin: 0; font-size: 1rem; font-weight: 600; color: #1f2937;"></p>
+                        </div>
+                        <div style="background: white; padding: 16px; border-radius: 8px; border: 1px solid #dcfce7;">
+                            <label style="display: block; font-size: 0.7rem; font-weight: 700; color: #0369a1; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px;">⚠️ Danger Zone Type</label>
+                            <p id="verificationModalDangerZone" style="margin: 0; font-size: 1rem; font-weight: 600; color: #1f2937;"></p>
+                        </div>
+                        <div style="background: white; padding: 16px; border-radius: 8px; border: 1px solid #dcfce7;">
+                            <label style="display: block; font-size: 0.7rem; font-weight: 700; color: #0369a1; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px;">📌 Declared Location</label>
+                            <p id="verificationModalLocation" style="margin: 0; font-size: 1rem; font-weight: 600; color: #1f2937;"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 2: CDRRMO OFFICIAL CERTIFICATION -->
+                <div id="cdrrmoStatusBox" style="display: none; margin-bottom: 28px; padding: 24px; background: linear-gradient(135deg, #f0fdf4 0%, #f3fce8 100%); border-left: 5px solid #16a34a; border-radius: 12px; border: 1px solid #dcfce7;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 2px solid #a7f3d0;">
+                        <span style="font-size: 1.3rem;">🏛️</span>
+                        <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #15803d; letter-spacing: 0.3px;">CDRRMO CERTIFICATION</h3>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr; gap: 14px;">
+                        <div style="background: white; padding: 16px; border-radius: 8px; border: 1px solid #dcfce7;">
+                            <label style="display: block; font-size: 0.7rem; font-weight: 700; color: #16a34a; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px;">Government Status</label>
+                            <p id="cdrrmoStatusText" style="margin: 0; font-size: 1rem; font-weight: 600; color: #1f2937;">—</p>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                            <div style="background: white; padding: 16px; border-radius: 8px; border: 1px solid #dcfce7;">
+                                <label style="display: block; font-size: 0.7rem; font-weight: 700; color: #16a34a; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px;">📅 Date Verified</label>
+                                <p id="cdrrmoDateText" style="margin: 0; font-size: 1rem; font-weight: 600; color: #1f2937;">—</p>
+                            </div>
+                            <div style="background: white; padding: 16px; border-radius: 8px; border: 1px solid #dcfce7;">
+                                <label style="display: block; font-size: 0.7rem; font-weight: 700; color: #16a34a; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px;">🔖 Reference</label>
+                                <p id="cdrrmoRefText" style="margin: 0; font-size: 1rem; font-weight: 600; color: #1f2937;">THA-ISF</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DIVIDER -->
+                <div style="height: 2px; background: linear-gradient(to right, transparent, #e5e7eb, transparent); margin: 28px 0;"></div>
+
+                <!-- SECTION 3: RONDA FIELD VERIFICATION -->
+                <form id="verificationForm" onsubmit="submitVerification(event)">
+                    <div style="margin-bottom: 24px;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
+                            <span style="font-size: 1.3rem;">❓</span>
+                            <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #1f2937; letter-spacing: 0.3px;">YOUR FIELD VERIFICATION</h3>
+                        </div>
+                        <p style="margin: 0 0 20px 0; font-size: 0.9rem; color: #6b7280; line-height: 1.6;">Based on the applicant's claim and CDRRMO status above, physically verify: <strong style="color: #1f2937;">Is this applicant ACTUALLY in a danger zone?</strong></p>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+                            <label style="padding: 20px; border: 2.5px solid #e5e7eb; background: white; border-radius: 10px; cursor: pointer; text-align: center; transition: all 0.3s; display: flex; flex-direction: column; align-items: center;">
+                                <input type="radio" name="verification_decision" value="certified" style="margin-bottom: 12px; width: 18px; height: 18px; cursor: pointer;">
+                                <span style="font-size: 2rem; margin-bottom: 8px;">✅</span>
+                                <strong style="color: #10b981; font-size: 1rem; margin-bottom: 4px;">YES, Certified</strong>
+                                <p style="margin: 0; font-size: 0.8rem; color: #6b7280;">Applicant IS in danger zone</p>
+                            </label>
+                            <label style="padding: 20px; border: 2.5px solid #e5e7eb; background: white; border-radius: 10px; cursor: pointer; text-align: center; transition: all 0.3s; display: flex; flex-direction: column; align-items: center;">
+                                <input type="radio" name="verification_decision" value="not_certified" style="margin-bottom: 12px; width: 18px; height: 18px; cursor: pointer;">
+                                <span style="font-size: 2rem; margin-bottom: 8px;">❌</span>
+                                <strong style="color: #ef4444; font-size: 1rem; margin-bottom: 4px;">NO, Not Certified</strong>
+                                <p style="margin: 0; font-size: 0.8rem; color: #6b7280;">FALSE ALARM</p>
+                            </label>
+                        </div>
+
+                        <!-- Add hover effects with CSS -->
+                        <style>
+                            label[style*="display: grid"] label:hover {
+                                border-color: #3b82f6 !important;
+                                box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15) !important;
+                                transform: translateY(-2px);
+                            }
+                        </style>
+                    </div>
+
+                    <div style="margin-bottom: 24px;">
+                        <label for="verificationNotes" style="display: block; font-size: 0.75rem; font-weight: 700; color: #374151; text-transform: uppercase; margin-bottom: 10px; letter-spacing: 0.5px;">📝 Field Notes (Optional)</label>
+                        <textarea id="verificationNotes" name="verification_notes" placeholder="Document your findings: observations, conditions, hazards, etc..." style="width: 100%; padding: 14px; border: 1.5px solid #e5e7eb; border-radius: 8px; font-size: 0.9rem; font-family: inherit; resize: vertical; height: 90px; transition: all 0.2s;" onfocus="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 3px rgba(59,130,246,0.1)'"></textarea>
+                    </div>
+
+                    <div style="background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border: 2px solid #fcd34d; border-radius: 10px; padding: 16px; margin-bottom: 24px; font-size: 0.9rem; color: #92400e;">
+                        <div style="display: flex; gap: 12px;">
+                            <span style="font-size: 1.5rem;">⚠️</span>
+                            <div>
+                                <strong style="display: block; font-size: 1rem; margin-bottom: 6px;">Verification Workflow:</strong>
+                                <ol style="margin: 0; padding-left: 20px; font-size: 0.85rem; line-height: 1.6;">
+                                    <li>Review applicant's claimed danger zone details above</li>
+                                    <li>Check CDRRMO's official government certification</li>
+                                    <li>Based on your field visit: Select YES or NO</li>
+                                    <li>Jocel (staff) will review and make final decision</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <button type="submit" style="background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%); color: white; padding: 14px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 1rem; transition: all 0.3s; box-shadow: 0 4px 12px rgba(30, 64, 175, 0.2);">
+                            📤 Submit Verification
+                        </button>
+                        <button type="button" onclick="closeVerificationModal()" style="background: #f3f4f6; color: #374151; padding: 14px 20px; border: 2px solid #e5e7eb; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 1rem; transition: all 0.3s;">
+                            ✕ Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
