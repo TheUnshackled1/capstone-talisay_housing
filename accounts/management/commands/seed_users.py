@@ -89,7 +89,7 @@ class Command(BaseCommand):
         for user_data in superusers_data:
             username = user_data['username']
             if User.objects.filter(username=username).exists():
-                self.stdout.write(self.style.WARNING(f'  ⏭ "{username}" already exists'))
+                self.stdout.write(self.style.WARNING(f'  [SKIP] "{username}" already exists'))
                 skipped_count += 1
                 continue
 
@@ -103,7 +103,7 @@ class Command(BaseCommand):
                 is_staff=True,
                 is_superuser=True,
             )
-            self.stdout.write(self.style.SUCCESS(f'  ✓ {user.get_full_name()} ({username})'))
+            self.stdout.write(self.style.SUCCESS(f'  [OK] {user.get_full_name()} ({username})'))
             created_count += 1
 
         # Create regular staff
@@ -111,7 +111,7 @@ class Command(BaseCommand):
         for user_data in staff_data:
             username = user_data['username']
             if User.objects.filter(username=username).exists():
-                self.stdout.write(self.style.WARNING(f'  ⏭ "{username}" already exists'))
+                self.stdout.write(self.style.WARNING(f'  [SKIP] "{username}" already exists'))
                 skipped_count += 1
                 continue
 
@@ -125,7 +125,7 @@ class Command(BaseCommand):
                 is_staff=True,
                 is_superuser=False,
             )
-            self.stdout.write(self.style.SUCCESS(f'  ✓ {user.get_full_name()} ({username})'))
+            self.stdout.write(self.style.SUCCESS(f'  [OK] {user.get_full_name()} ({username})'))
             created_count += 1
 
         # Summary

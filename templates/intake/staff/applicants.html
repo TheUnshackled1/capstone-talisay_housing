@@ -538,6 +538,63 @@
         border-color: #3b82f6;
     }
 
+    /* Fieldset Organization Styles */
+    .form-fieldset {
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #e5e7eb;
+    }
+
+    .form-fieldset-header {
+        font-weight: 700;
+        color: #1f2937;
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+        text-transform: uppercase;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .form-fieldset-header:hover {
+        color: #1d4ed8;
+    }
+
+    .fieldset-toggle-icon {
+        display: inline-block;
+        transition: transform 0.3s;
+        font-size: 0.8rem;
+    }
+
+    .form-fieldset-header.collapsed .fieldset-toggle-icon {
+        transform: rotate(-90deg);
+    }
+
+    .form-fieldset-content {
+        max-height: 1000px;
+        overflow: hidden;
+        transition: max-height 0.3s ease;
+    }
+
+    .form-fieldset-content.collapsed {
+        max-height: 0;
+        display: none;
+    }
+
+    .form-fieldset.always-open .form-fieldset-header {
+        cursor: default;
+    }
+
+    .form-fieldset.always-open .form-fieldset-header:hover {
+        color: #1f2937;
+    }
+
+    .form-fieldset.always-open .fieldset-toggle-icon {
+        display: none;
+    }
+
     .channel-selector {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
@@ -1127,28 +1184,71 @@
 
                     <!-- CDRRMO Certification Status -->
                     <div class="cdrrmo-certification-section" style="border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-bottom: 1rem; display: none;">
-                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">CDRRMO Certification</h4>
-                        <div id="cdrrmoStatusBox" class="info-note" style="background: #fef3c7; border-color: #fcd34d;">
-                            <p class="info-note-text" style="color: #92400e;" id="cdrrmoStatusText">
-                                <strong>⚠️ Pending CDRRMO Certification</strong><br>
-                                Applicant must be certified by CDRRMO before eligibility can be determined.
+                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">⚠️ CDRRMO Field Verification</h4>
+
+                        <!-- Declared Danger Zone Info -->
+                        <div style="background: #eff6ff; border-left: 4px solid #0369a1; padding: 0.75rem; margin-bottom: 0.75rem; border-radius: 0.375rem;">
+                            <p style="font-size: 0.75rem; color: #0369a1; margin: 0;"><strong>Declared Location:</strong></p>
+                            <p id="cdrrmoDeclarationType" style="font-size: 0.875rem; color: #1e40af; margin: 0.25rem 0 0 0; font-weight: 500;">—</p>
+                            <p id="cdrrmoDecLocation" style="font-size: 0.875rem; color: #1e40af; margin: 0.25rem 0 0 0;">—</p>
+                        </div>
+
+                        <!-- Current Verification Status -->
+                        <div id="cdrrmoStatusBox" class="info-note" style="background: #fef3c7; border-color: #fcd34d; margin-bottom: 0.75rem;">
+                            <p class="info-note-text" style="color: #92400e; margin: 0;" id="cdrrmoStatusText">
+                                <strong>⏳ Pending Field Verification</strong><br>
+                                <span style="font-size: 0.7rem;">Awaiting ronda team to visit and verify the danger zone claim.</span>
                             </p>
                         </div>
-                        
-                        <!-- CDRRMO Action Buttons (shown in edit mode when pending) -->
-                        <div id="cdrrmoActionsBox" style="display: none; margin-top: 0.75rem;">
-                            <p style="font-size: 0.75rem; color: #64748b; margin-bottom: 0.5rem;">When CDRRMO sends the certificate, update the status:</p>
-                            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                                <button type="button" onclick="updateCdrrmoStatus('certified')" class="btn-modal" style="background: #dcfce7; color: #166534; border: 1px solid #86efac; padding: 0.5rem 0.75rem; font-size: 0.75rem;">
-                                    ✓ Mark as Certified
+
+                        <!-- Ronda Team Result (shown when verified) -->
+                        <div id="rondaTeamResultBox" style="display: none; background: #f0fdf4; border: 1px solid #86efac; border-radius: 0.375rem; padding: 0.75rem; margin-bottom: 0.75rem;">
+                            <p style="font-size: 0.75rem; color: #16a34a; margin: 0 0 0.5rem 0;"><strong>✓ Ronda Team Verification:</strong></p>
+                            <div style="background: white; border: 1px solid #dcfce7; border-radius: 0.375rem; padding: 0.75rem;">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.75rem;">
+                                    <div>
+                                        <label style="font-size: 0.625rem; color: #64748b; font-weight: 600;">Verified By:</label>
+                                        <p id="rondaVerifiedBy" style="font-size: 0.875rem; color: #1f2937; margin: 0.25rem 0 0 0; font-weight: 500;">—</p>
+                                    </div>
+                                    <div>
+                                        <label style="font-size: 0.625rem; color: #64748b; font-weight: 600;">Date Verified:</label>
+                                        <p id="rondaVerifiedDate" style="font-size: 0.875rem; color: #1f2937; margin: 0.25rem 0 0 0;">—</p>
+                                    </div>
+                                </div>
+                                <div style="margin-bottom: 0.75rem;">
+                                    <label style="font-size: 0.625rem; color: #64748b; font-weight: 600;">Ronda Finding:</label>
+                                    <div id="rondaDecision" style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                                        <span id="rondaCertifiedBadge" style="display: none; background: #dcfce7; color: #166534; padding: 0.375rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600;">✓ Certified - Danger Zone Confirmed</span>
+                                        <span id="rondaNotCertifiedBadge" style="display: none; background: #fee2e2; color: #991b1b; padding: 0.375rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600;">✗ Not Certified - FALSE ALARM</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label style="font-size: 0.625rem; color: #64748b; font-weight: 600;">Ronda Notes:</label>
+                                    <p id="rondaNotes" style="font-size: 0.875rem; color: #1f2937; margin: 0.25rem 0 0 0; font-style: italic; border-left: 3px solid #86efac; padding-left: 0.75rem;">—</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Staff Action: Approve/Reject (shown when ronda team has submitted) -->
+                        <div id="staffApprovalBox" style="display: none; border: 1px solid #dbeafe; background: #f0f9ff; border-radius: 0.375rem; padding: 0.75rem;">
+                            <p style="font-size: 0.75rem; color: #0369a1; margin: 0 0 0.75rem 0; font-weight: 600;">Staff Decision on Ronda Finding:</p>
+
+                            <div id="cdrrmoActionsBox" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                <button type="button" onclick="approveCdrrmo()" class="btn-modal" style="background: #dcfce7; color: #166534; border: 1px solid #86efac; padding: 0.5rem 0.75rem; font-size: 0.75rem; flex: 1; min-width: 150px;">
+                                    ✓ Approve - Danger Zone Verified
                                 </button>
-                                <button type="button" onclick="updateCdrrmoStatus('not_certified')" class="btn-modal" style="background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; padding: 0.5rem 0.75rem; font-size: 0.75rem;">
-                                    ✗ Mark as Not Certified
+                                <button type="button" onclick="rejectCdrrmo()" class="btn-modal" style="background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; padding: 0.5rem 0.75rem; font-size: 0.75rem; flex: 1; min-width: 150px;">
+                                    ✗ Reject - Ronda Finding Invalid
                                 </button>
                             </div>
-                            <div style="margin-top: 0.5rem;">
-                                <label style="font-size: 0.75rem; color: #64748b;">CDRRMO Notes (optional):</label>
-                                <input type="text" id="cdrrmoNotes" class="form-input" placeholder="e.g. Certificate received 2026-04-06" style="font-size: 0.75rem; padding: 0.375rem;">
+
+                            <div style="margin-top: 0.75rem;">
+                                <label style="font-size: 0.75rem; color: #64748b; font-weight: 600; display: block; margin-bottom: 0.375rem;">Staff Notes (Optional):</label>
+                                <input type="text" id="staffCdrrmoNotes" class="form-input" placeholder="e.g., Confirmed with barangay, coordinates sent to housing office" style="font-size: 0.75rem; padding: 0.375rem;">
+                            </div>
+
+                            <div style="margin-top: 0.75rem; background: white; border: 1px solid #cbd5e1; border-radius: 0.375rem; padding: 0.75rem;">
+                                <p style="font-size: 0.75rem; color: #64748b; margin: 0;"><strong>After Approval:</strong> Applicant will be marked eligible and moved to Priority Queue (if certified) or Walk-in Queue (if false alarm).</p>
                             </div>
                         </div>
                     </div>
@@ -1714,7 +1814,7 @@
 
                 <!-- SECTION A: APPLICATION IDENTITY -->
                 <div style="margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid #e5e7eb;">
-                    <div style="font-weight: 700; color: #1f2937; font-size: 0.9rem; margin-bottom: 1rem; text-transform: uppercase;">A. APPLICATION IDENTITY</div>
+                    <div style="font-weight: 700; color: #1f2937; font-size: 0.9rem; margin-bottom: 1rem; text-transform: uppercase;">📋 A. APPLICATION IDENTITY</div>
 
                     <!-- Name (Last, First, Middle) -->
                     <div class="form-row" style="grid-template-columns: repeat(3, 1fr);">
@@ -1765,11 +1865,19 @@
                         </div>
                     </div>
 
-                    <!-- Place of Birth -->
-                    <div class="form-row full">
-                        <div class="form-group">
-                            <label class="form-label">Place of Birth</label>
-                            <input type="text" class="form-input" placeholder="City/Municipality, Province" name="place_of_birth" id="placeOfBirth">
+                    <!-- Place of Birth (Collapsible) -->
+                    <div class="form-fieldset" style="border: none; margin-bottom: 1rem; padding: 0;">
+                        <div class="form-fieldset-header" onclick="toggleFieldset(this)">
+                            <span class="fieldset-toggle-icon">▶</span>
+                            <span>📍 Place of Birth (Optional)</span>
+                        </div>
+                        <div class="form-fieldset-content">
+                            <div class="form-row full">
+                                <div class="form-group">
+                                    <label class="form-label">Place of Birth</label>
+                                    <input type="text" class="form-input" placeholder="City/Municipality, Province" name="place_of_birth" id="placeOfBirth">
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -1800,15 +1908,23 @@
                     </div>
 
                     <!-- Name of Spouse & Spouse Contact No. -->
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">Name of Spouse (if applicable)</label>
-                            <input type="text" class="form-input" placeholder="Spouse's full name" name="spouse_name" id="spouseName">
+                    <div class="form-fieldset" style="border: none; margin-bottom: 0; padding-bottom: 0;">
+                        <div class="form-fieldset-header" onclick="toggleFieldset(this)">
+                            <span class="fieldset-toggle-icon">▶</span>
+                            <span>👥 Spouse Information (Optional)</span>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">Spouse Contact Number</label>
-                            <input type="tel" class="form-input ph-phone" placeholder="09XXXXXXXXXX" pattern="09[0-9]{9}" name="spouse_phone" id="spousePhone">
-                            <span class="help-text">11 digits: 09XXXXXXXXXX</span>
+                        <div class="form-fieldset-content">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Name of Spouse (if applicable)</label>
+                                    <input type="text" class="form-input" placeholder="Spouse's full name" name="spouse_name" id="spouseName">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Spouse Contact Number</label>
+                                    <input type="tel" class="form-input ph-phone" placeholder="09XXXXXXXXXX" pattern="09[0-9]{9}" name="spouse_phone" id="spousePhone">
+                                    <span class="help-text">11 digits: 09XXXXXXXXXX</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1816,7 +1932,7 @@
                 <!-- SECTION B: HOUSEHOLD MEMBERS -->
                 <div style="margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid #e5e7eb;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                        <div style="font-weight: 700; color: #1f2937; font-size: 0.9rem; text-transform: uppercase;">B. HOUSEHOLD MEMBERS</div>
+                        <div style="font-weight: 700; color: #1f2937; font-size: 0.9rem; text-transform: uppercase;">👥 B. HOUSEHOLD MEMBERS</div>
                         <button type="button" onclick="addHouseholdMember()" style="background: #1e40af; color: white; padding: 0.5rem 1rem; border: none; border-radius: 0.375rem; cursor: pointer; font-size: 0.875rem; font-weight: 600;">+ Add Member</button>
                     </div>
 
@@ -1831,7 +1947,7 @@
 
                 <!-- SECTION C: APPLICANTS FAMILY INCOME -->
                 <div style="margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid #e5e7eb;">
-                    <div style="font-weight: 700; color: #1f2937; font-size: 0.9rem; margin-bottom: 1rem; text-transform: uppercase;">C. APPLICANTS FAMILY INCOME</div>
+                    <div style="font-weight: 700; color: #1f2937; font-size: 0.9rem; margin-bottom: 1rem; text-transform: uppercase;">💰 C. APPLICANTS FAMILY INCOME</div>
 
                     <div class="form-row">
                         <div class="form-group">
@@ -1903,7 +2019,7 @@
                     </div>
                 </div>
 
-                <p style="font-size: 0.8125rem; color: #6b7280; margin-bottom: 1rem; margin-top: 1.5rem;">Document Checklist (Optional) - Check documents already submitted by the applicant:</p>
+                <p style="font-size: 0.8125rem; color: #6b7280; margin-bottom: 1rem; margin-top: 1.5rem; font-weight: 600; text-transform: uppercase;">📄 Document Checklist (Optional) - Check documents already submitted by the applicant:</p>
 
                 <div class="document-grid" id="docChecklistRegister">
                     <label class="document-item incomplete" onclick="toggleRegDocCheckbox(this)">
@@ -1983,6 +2099,16 @@
                 });
             }
         });
+    }
+
+    // Toggle collapsible fieldsets
+    function toggleFieldset(header) {
+        const fieldset = header.closest('.form-fieldset');
+        if (fieldset.classList.contains('always-open')) return; // Don't toggle if always-open
+
+        const content = fieldset.querySelector('.form-fieldset-content');
+        header.classList.toggle('collapsed');
+        content.classList.toggle('collapsed');
     }
 
     // Initialize income formatters on page load
@@ -2308,7 +2434,10 @@
                         }
                     }
                 }
-                
+
+                // Populate CDRRMO section with ronda team findings
+                populateCdrrmoSection(currentApplicant.applicantId || currentApplicant.id, currentApplicant);
+
                 // Populate eligibility checks for Channel B
                 const isInDangerZoneB = currentApplicant.dangerZoneType ? true : false;
                 populateEligibilityChecksB(currentApplicant, isInDangerZoneB);
@@ -4616,6 +4745,136 @@
         // Reinitialize after adding new record
         setTimeout(initializePhoneInputs, 100);
     };
+
+    // ===== CDRRMO VERIFICATION FUNCTIONS =====
+    function approveCdrrmo() {
+        const staffNotes = document.getElementById('staffCdrrmoNotes').value;
+        const applicantId = document.getElementById('reviewApplicantId').value;
+
+        if (!applicantId) {
+            alert('Error: No applicant selected');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('applicant_id', applicantId);
+        formData.append('decision', 'approved');
+        formData.append('staff_notes', staffNotes);
+
+        fetch('/intake/staff/fourth_member/update-cdrrmo-status/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('✅ CDRRMO status approved!\n\nApplicant has been moved to Priority Queue.');
+                closeReviewModal();
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                alert('❌ Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Error: ' + error.message);
+        });
+    }
+
+    function rejectCdrrmo() {
+        const staffNotes = document.getElementById('staffCdrrmoNotes').value;
+        const applicantId = document.getElementById('reviewApplicantId').value;
+
+        if (!applicantId) {
+            alert('Error: No applicant selected');
+            return;
+        }
+
+        if (!confirm('Reject CDRRMO verification? This will mark the applicant as not in danger zone and move to Walk-in Queue.\n\nContinue?')) {
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('applicant_id', applicantId);
+        formData.append('decision', 'rejected');
+        formData.append('staff_notes', staffNotes);
+
+        fetch('/intake/staff/fourth_member/update-cdrrmo-status/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('❌ CDRRMO verification rejected.\n\nApplicant has been moved to Walk-in Queue (as not in danger zone).');
+                closeReviewModal();
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Error: ' + error.message);
+        });
+    }
+
+    // Function to populate CDRRMO section in modal
+    function populateCdrrmoSection(applicantId, applicantData) {
+        const cdrrmoSection = document.querySelector('.cdrrmo-certification-section');
+        if (!cdrrmoSection) return;
+
+        // Check if applicant has danger zone info
+        if (!applicantData.danger_zone_type) {
+            cdrrmoSection.style.display = 'none';
+            return;
+        }
+
+        cdrrmoSection.style.display = 'block';
+
+        // Set declared info
+        document.getElementById('cdrrmoDeclarationType').textContent = applicantData.danger_zone_type || 'Not specified';
+        document.getElementById('cdrrmoDecLocation').textContent = applicantData.danger_zone_location || 'Not specified';
+
+        // Check CDRRMO certification status
+        const cdrrmoStatus = applicantData.cdrrmo_status; // 'pending', 'certified', 'not_certified'
+        const rondaTeamResultBox = document.getElementById('rondaTeamResultBox');
+        const staffApprovalBox = document.getElementById('staffApprovalBox');
+        const cdrrmoStatusBox = document.getElementById('cdrrmoStatusBox');
+
+        if (cdrrmoStatus === 'pending') {
+            // Still pending - field team hasn't verified yet
+            cdrrmoStatusBox.style.display = 'block';
+            rondaTeamResultBox.style.display = 'none';
+            staffApprovalBox.style.display = 'none';
+            document.getElementById('cdrrmoStatusText').innerHTML = `
+                <strong>⏳ Pending Field Verification</strong><br>
+                <span style="font-size: 0.7rem;">Awaiting ronda team to visit and verify the danger zone claim.</span>
+            `;
+        } else if (cdrrmoStatus === 'certified' || cdrrmoStatus === 'not_certified') {
+            // Ronda team has submitted a finding - show it
+            cdrrmoStatusBox.style.display = 'none';
+            rondaTeamResultBox.style.display = 'block';
+            staffApprovalBox.style.display = 'block';
+
+            // Show ronda team's finding
+            document.getElementById('rondaVerifiedBy').textContent = applicantData.result_recorded_by_name || 'Field Team Member';
+            document.getElementById('rondaVerifiedDate').textContent = applicantData.certified_at ? new Date(applicantData.certified_at).toLocaleDateString() : '—';
+            document.getElementById('rondaNotes').textContent = applicantData.certification_notes || 'No notes provided';
+
+            if (cdrrmoStatus === 'certified') {
+                document.getElementById('rondaCertifiedBadge').style.display = 'inline-block';
+                document.getElementById('rondaNotCertifiedBadge').style.display = 'none';
+            } else {
+                document.getElementById('rondaCertifiedBadge').style.display = 'none';
+                document.getElementById('rondaNotCertifiedBadge').style.display = 'inline-block';
+            }
+        }
+    }
 
 </script>
 {% endblock %}

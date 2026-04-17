@@ -448,6 +448,210 @@ def update_cdrrmo_certification(request, position):
 
 
 @login_required
+@require_POST
+def field_verify_cdrrmo(request, position):
+    """
+    AJAX endpoint for RONDA/FIELD TEAM to submit CDRRMO verification findings.
+
+    URL Route: /intake/staff/<position>/field-verify-cdrrmo/
+
+    Channel B applicants: Ronda team visits location and records findings:
+    - "Certified": Applicant IS in danger zone (confirmed)
+    - "Not Certified": FALSE ALARM - applicant is NOT in danger zone
+
+    ACCESS CONTROL:
+    ✅ ronda / field - Field personnel only
+
+    Workflow:
+    1. Field team opens pending verification from dashboard
+    2. Field team visits applicant's address
+    3. Field team submits finding: Certified YES or NO
+    4. System records finding with "verified_by" tracking
+    5. Staff (Jocel) sees verified status in review modal
+    6. Staff confirms and marks eligible or disqualifies
+    """
+
+    # Permission check - Only field/ronda personnel
+    if request.user.position not in ['ronda', 'field']:
+        return JsonResponse({'success': False, 'error': 'Permission denied. Only field personnel can verify.'}, status=403)
+
+    try:
+        applicant_id = request.POST.get('applicant_id')
+        verification_decision = request.POST.get('verification_decision')  # 'certified' or 'not_certified'
+        verification_notes = request.POST.get('verification_notes', '').strip()
+
+        if not applicant_id or not verification_decision:
+            return JsonResponse({'success': False, 'error': 'Missing applicant_id or verification_decision'})
+
+        if verification_decision not in ['certified', 'not_certified']:
+            return JsonResponse({'success': False, 'error': 'Invalid decision. Must be "certified" or "not_certified"'})
+
+        # Get applicant
+        applicant = Applicant.objects.get(id=applicant_id)
+
+        # Check if CDRRMO certification exists
+        if not hasattr(applicant, 'cdrrmo_certification'):
+            return JsonResponse({'success': False, 'error': 'This applicant is not awaiting CDRRMO verification'})
+
+        cert = applicant.cdrrmo_certification
+
+        # Update with field team verification
+        cert.status = verification_decision
+        cert.certified_at = timezone.now()
+        cert.result_recorded_by = request.user
+
+        if verification_notes:
+            cert.certification_notes = verification_notes
+
+        cert.save()
+
+        # Return success with updated status
+        return JsonResponse({
+            'success': True,
+            'message': f'Verification recorded as {"✓ Certified" if verification_decision == "certified" else "✗ Not Certified"}',
+            'certification_status': verification_decision,
+            'recorded_by': f'{request.user.first_name} {request.user.last_name}',
+            'recorded_at': timezone.now().isoformat()
+        })
+
+    except Applicant.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Applicant not found'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': f'Error recording verification: {str(e)}'})
+
+
+@login_required
+@verify_position
+def update_cdrrmo_status(request, position):
+    """
+    AJAX endpoint for STAFF to approve/reject ronda team's CDRRMO verification findings.
+
+    URL Route: /intake/staff/<position>/update-cdrrmo-status/
+
+    Workflow:
+    1. Ronda team submits field verification (certified or not_certified)
+    2. Staff opens applicant review modal
+    3. Staff sees ronda team's finding
+    4. Staff clicks: Approve or Reject
+    5. Based on decision:
+       - APPROVED + Certified → Eligible + Priority Queue
+       - APPROVED + Not Certified → Eligible via Walk-in + Walk-in Queue
+       - REJECTED → Disqualified (ronda finding overruled)
+
+    ACCESS CONTROL:
+    ✅ Jocel (fourth_member) - Primary processor
+    ✅ Joie (second_member) - Supervisor oversight
+    """
+
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'POST required'}, status=405)
+
+    # Only Jocel and Joie can approve CDRRMO (operational staff)
+    allowed_positions = ['fourth_member', 'second_member']
+    if request.user.position not in allowed_positions:
+        return JsonResponse({'success': False, 'error': 'Permission denied. Only Jocel or Joie can approve CDRRMO.'}, status=403)
+
+    try:
+        applicant_id = request.POST.get('applicant_id')
+        decision = request.POST.get('decision')  # 'approved' or 'rejected'
+        staff_notes = request.POST.get('staff_notes', '').strip()
+
+        if not applicant_id or not decision:
+            return JsonResponse({'success': False, 'error': 'Missing applicant_id or decision'})
+
+        if decision not in ['approved', 'rejected']:
+            return JsonResponse({'success': False, 'error': 'Invalid decision. Must be "approved" or "rejected"'})
+
+        # Get applicant
+        applicant = Applicant.objects.get(id=applicant_id)
+
+        # Check if CDRRMO certification exists and is pending staff approval
+        if not hasattr(applicant, 'cdrrmo_certification'):
+            return JsonResponse({'success': False, 'error': 'This applicant does not have CDRRMO record'})
+
+        cert = applicant.cdrrmo_certification
+        if cert.status == 'pending':
+            return JsonResponse({'success': False, 'error': 'Ronda team has not yet submitted verification'})
+
+        ronda_finding = cert.status  # 'certified' or 'not_certified'
+
+        # Process staff decision
+        if decision == 'approved':
+            # Staff approved ronda team's finding
+            # Update applicant eligibility based on ronda finding
+            applicant.eligibility_checked_by = request.user
+            applicant.eligibility_checked_at = timezone.now()
+
+            if ronda_finding == 'certified':
+                # Danger zone confirmed - mark eligible and priority queue
+                applicant.status = 'eligible'
+                queue_type = 'Priority'
+                msg_outcome = 'moved to Priority Queue'
+            else:
+                # Not in danger zone - mark eligible anyway but walk-in queue
+                applicant.status = 'eligible'
+                queue_type = 'Walk-in'
+                msg_outcome = 'moved to Walk-in Queue (not in danger zone)'
+
+            # Save applicant
+            applicant.save()
+
+            # Create or update queue entry
+            QueueEntry.objects.update_or_create(
+                applicant=applicant,
+                defaults={
+                    'queue_type': queue_type,
+                    'status': 'pending',
+                    'assigned_at': timezone.now()
+                }
+            )
+
+            # Update CDRRMO cert with staff approval
+            cert.status = f'{ronda_finding}_approved'
+            cert.save()
+
+            # Send SMS to applicant
+            if applicant.phone_number:
+                eligible_msg = f"✅ Great news! Your housing application passed eligibility. You have been added to {queue_type} Queue. Reference: {applicant.reference_number}. Please visit THA office for next steps."
+                send_sms(applicant.phone_number, eligible_msg, 'eligibility_passed', applicant=applicant)
+
+            return JsonResponse({
+                'success': True,
+                'message': f'CDRRMO approval confirmed! Applicant {msg_outcome}.',
+                'status': 'approved',
+                'queue_type': queue_type
+            })
+
+        else:  # decision == 'rejected'
+            # Staff rejected ronda team's finding - disqualify applicant
+            applicant.status = 'disqualified'
+            applicant.disqualification_reason = f'CDRRMO verification disputed by staff. Ronda finding: {ronda_finding}. Staff assessment: insufficient evidence.'
+            applicant.eligibility_checked_by = request.user
+            applicant.eligibility_checked_at = timezone.now()
+            applicant.save()
+
+            # Update CDRRMO cert with staff rejection
+            cert.status = 'rejected'
+            cert.save()
+
+            # Send SMS to applicant
+            if applicant.phone_number:
+                reject_msg = f"❌ Unfortunately, your housing application could not be processed at this time. Reason: Danger zone verification could not be confirmed. Reference: {applicant.reference_number}. Please visit THA office for appeals."
+                send_sms(applicant.phone_number, reject_msg, 'eligibility_fail', applicant=applicant)
+
+            return JsonResponse({
+                'success': True,
+                'message': 'CDRRMO verification rejected. Applicant has been disqualified.',
+                'status': 'rejected'
+            })
+
+    except Applicant.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Applicant not found'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': f'Error processing approval: {str(e)}'})
+
+
+@login_required
 @verify_position
 def delete_applicant(request, position):
     """
@@ -712,18 +916,27 @@ def applicants_list(request, position):
 
         # Get CDRRMO status for danger zone
         cdrrmo_status = None
+        cdrrmo_status_value = None  # actual status value: pending, certified, not_certified
         danger_zone_type = None
         is_cdrrmo_flagged = False
         cdrrmo_days_pending = 0
+        result_recorded_by_name = None
+        certified_at = None
+        certification_notes = None
         if app.channel == 'danger_zone':
             try:
                 cert = app.cdrrmo_certification
                 cdrrmo_status = cert.get_status_display()
+                cdrrmo_status_value = cert.status
                 danger_zone_type = cert.declared_location
                 is_cdrrmo_flagged = cert.status == 'pending' and cert.is_overdue
                 cdrrmo_days_pending = cert.days_pending if cert.status == 'pending' else 0
+                result_recorded_by_name = f'{cert.result_recorded_by.first_name} {cert.result_recorded_by.last_name}' if cert.result_recorded_by else None
+                certified_at = cert.certified_at.isoformat() if cert.certified_at else None
+                certification_notes = cert.certification_notes or None
             except CDRRMOCertification.DoesNotExist:
                 cdrrmo_status = 'Not Requested'
+                cdrrmo_status_value = None
         
         applicants.append({
             'id': str(app.id),
@@ -771,6 +984,10 @@ def applicants_list(request, position):
             'queueType': queue_type,
             'queuePosition': queue_position,
             'cdrrmoStatus': cdrrmo_status,
+            'cdrrmo_status': cdrrmo_status_value,  # Raw status value for JS: pending, certified, not_certified
+            'result_recorded_by_name': result_recorded_by_name,  # Who verified
+            'certified_at': certified_at,  # When verified
+            'certification_notes': certification_notes,  # Ronda team notes
             'isCdrrmoFlagged': is_cdrrmo_flagged,
             'cdrrmoDaysPending': cdrrmo_days_pending,
             'signatoryRoutingDelayed': False,  # TODO: Link to Module 2

@@ -938,27 +938,63 @@ def dashboard_field(request):
         return redirect('accounts:dashboard')
 
     # ==================== MODULE 1: CHANNEL B FIELD VERIFICATION ====================
-    # Pending danger zone verifications
+    # Only pending danger zone verifications (status='pending' in CDRRMOCertification)
     pending_certifications = CDRRMOCertification.objects.filter(
         status='pending'
-    ).select_related('applicant').order_by('-requested_at')
+    ).select_related('applicant', 'applicant__registered_by').order_by('-requested_at')
 
     pending_verifications = []
     for cert in pending_certifications:
         days_pending = (timezone.now() - cert.requested_at).days
+
+        # Calculate document count (7 required docs)
+        doc_count = sum([
+            cert.applicant.doc_brgy_residency,
+            cert.applicant.doc_brgy_indigency,
+            cert.applicant.doc_cedula,
+            cert.applicant.doc_police_clearance,
+            cert.applicant.doc_no_property,
+            cert.applicant.doc_2x2_picture,
+            cert.applicant.doc_sketch_location,
+        ])
+
+        # Get queue position if exists
+        queue_entry = cert.applicant.queue_entries.filter(status='active').first()
+        queue_position = queue_entry.position if queue_entry else '—'
+
         pending_verifications.append({
-            'applicant': cert.applicant,
+            'index': pending_certifications.filter(requested_at__gte=cert.requested_at).count(),
+            'id': cert.applicant.id,
+            'transaction_id': cert.id,
+            'reference_number': cert.applicant.reference_number,
             'applicant_name': cert.applicant.full_name,
-            'address': cert.applicant.address,
+            'address': cert.applicant.current_address,
             'barangay': cert.applicant.barangay,
             'phone': cert.applicant.phone_number,
             'household_members': cert.applicant.household_members,
             'monthly_income': cert.applicant.monthly_income,
+            'danger_zone_type': cert.applicant.danger_zone_type,
+            'danger_zone_location': cert.applicant.danger_zone_location,
+            'channel': 'Channel B — Danger Zone',
+            'eligibility': 'Pending CDRRMO',
+            'queue_position': queue_position,
+            'staff_handled': cert.applicant.registered_by.get_full_name() if cert.applicant.registered_by else '—',
+            'staff_position': cert.applicant.registered_by.get_position_display() if cert.applicant.registered_by else '—',
+            'doc_count': doc_count,
+            'sms_status': '✓ Sent' if cert.applicant.registration_sms_sent else '✗ Not Sent',
             'created_at': cert.requested_at,
             'days_pending': days_pending,
         })
 
     total_pending = len(pending_verifications)
+
+    # Breakdown by staff who registered them
+    staff_workload = {}
+    for cert in pending_verifications:
+        staff_name = cert['staff_handled']
+        if staff_name not in staff_workload:
+            staff_workload[staff_name] = 0
+        staff_workload[staff_name] += 1
 
     # Certified vs Not Certified tallies
     certified_count = CDRRMOCertification.objects.filter(
@@ -993,7 +1029,7 @@ def dashboard_field(request):
     today = timezone.now().date()
     completed_today = CDRRMOCertification.objects.filter(
         status__in=['certified', 'not_certified'],
-        updated_at__date=today
+        certified_at__date=today
     ).count()
 
     team_workload = {
@@ -1020,6 +1056,7 @@ def dashboard_field(request):
 
         # ========== TEAM WORKLOAD ==========
         'team_workload': team_workload,
+        'staff_workload': staff_workload,
 
         # ========== AGING VERIFICATIONS ==========
         'aging_verifications': aging_verifications,
