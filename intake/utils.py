@@ -157,9 +157,9 @@ def send_sms_httpsms(phone_number, message, sms_log):
             'to': to_number,
         }
 
-        # httpSMS uses API key in header as Bearer token
+        # httpSMS uses API key in x-api-key header
         headers = {
-            'Authorization': f'Bearer {api_key}',
+            'x-api-key': api_key,
             'Content-Type': 'application/json',
         }
 

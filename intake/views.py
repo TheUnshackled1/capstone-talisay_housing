@@ -100,8 +100,9 @@ def update_eligibility(request, position):
                 'error': f'Income ₱{applicant.monthly_income:,.2f} exceeds ₱10,000 limit'
             })
         
-        # For Channel B, check CDRRMO certification
-        if applicant.channel == 'danger_zone':
+        # For Channel B, check CDRRMO certification only if applicant is actually in a danger zone
+        if applicant.channel == 'danger_zone' and applicant.danger_zone_type:
+            # Only require CDRRMO if applicant declared they're in a danger zone
             try:
                 cert = applicant.cdrrmo_certification
                 if cert.status != 'certified':
@@ -707,16 +708,40 @@ def applicants_list(request, position):
             'referenceNumber': app.reference_number,
             'dateRegistered': app.created_at.strftime('%Y-%m-%d'),
             'dateTime': app.created_at.strftime('%Y-%m-%d %I:%M %p'),
-            'channel': app.channel or 'C',  # Use actual channel from applicant (danger_zone=B, walk_in=C, etc.)
+            'channel': 'B' if app.channel == 'danger_zone' else 'C',  # Map database channels to UI channels
             'submissionId': None,
             'applicantId': str(app.id),
+            # Section A: APPLICATION IDENTITY
+            'lastName': '',  # Not stored separately - use fullName
+            'firstName': '',  # Not stored separately - use fullName
+            'middleName': '',  # Not stored separately - use fullName
+            'sex': app.sex or '',
+            'age': app.age or 0,
+            'dateOfBirth': app.date_of_birth.isoformat() if app.date_of_birth else '',
+            'placeOfBirth': app.place_of_birth or '',
             'barangay': app.barangay.name if app.barangay else 'Unknown',
-            'monthlyIncome': float(app.monthly_income),
-            'householdSize': app.household_size,
-            'yearsResiding': app.years_residing,
             'phoneNumber': app.phone_number or '',
             'currentAddress': app.current_address or '',
+            'spouseName': app.spouse_name or '',
+            'spousePhone': app.spouse_phone or '',
+            # Section B: HOUSEHOLD MEMBERS
+            'householdSize': app.household_size,
+            'householdMembers': [
+                {
+                    'name': member.name or '',
+                    'relationship': member.relationship or '',
+                    'age': member.age or 0,
+                    'civilStatus': member.civil_status or ''
+                }
+                for member in app.household_members.all()
+            ],
+            # Section C: FAMILY INCOME
+            'monthlyIncome': float(app.monthly_income),
+            'yearsResiding': app.years_residing,
+            'occupation': app.occupation or '',
+            'employmentStatus': app.get_employment_status_display() if app.employment_status else '',
             # Danger Zone details
+            'isInDangerZone': app.channel == 'danger_zone' and bool(app.danger_zone_type),
             'dangerZoneType': app.danger_zone_type if hasattr(app, 'danger_zone_type') and app.danger_zone_type else '',
             'dangerZoneLocation': app.danger_zone_location if hasattr(app, 'danger_zone_location') and app.danger_zone_location else (danger_zone_type or ''),
             'eligibilityStatus': eligibility_status,
@@ -866,6 +891,8 @@ def walkin_register(request, position):
         monthly_income=form.cleaned_data['monthly_income'],
         household_size=form.cleaned_data.get('household_size', 1) or 1,
         years_residing=form.cleaned_data.get('years_residing', 0),
+        occupation=form.cleaned_data.get('occupation', ''),
+        employment_status=form.cleaned_data.get('employment_status', ''),
         channel='danger_zone',
         status='pending_cdrrmo',
         danger_zone_type=danger_zone_type,

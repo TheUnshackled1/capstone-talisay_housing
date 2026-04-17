@@ -1163,7 +1163,14 @@
                     
                     <!-- Document Checklist -->
                     <div style="border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-bottom: 1rem;">
-                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">Document Checklist</h4>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                            <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; text-transform: uppercase; margin: 0;">Document Checklist</h4>
+                            <span id="docCountIndicatorB" style="font-size: 0.75rem; font-weight: 600; padding: 0.25rem 0.75rem; border-radius: 0.25rem; background: #fee2e2; color: #991b1b;">0/7 Documents</span>
+                        </div>
+                        <div id="docWarningMessageB" style="display: none; background: #fef3c7; border: 1px solid #fcd34d; border-radius: 0.375rem; padding: 0.75rem; margin-bottom: 0.75rem; font-size: 0.875rem; color: #92400e;">
+                            <strong>⚠️ Incomplete Documents</strong><br>
+                            <span id="missingDocCountB">Missing 7 documents</span> — Applicant must submit before proceeding to "Eligible" status
+                        </div>
                         <div class="document-grid" id="documentChecklistB">
                             <!-- Populated by JavaScript -->
                         </div>
@@ -1179,40 +1186,108 @@
                         <span class="status-badge" id="reviewQueueBadge" style="display: none;"></span>
                     </div>
                     
-                    <!-- Editable Fields for Channel C -->
-                    <div class="form-grid" style="margin-bottom: 1rem;">
-                        <div class="form-group" style="grid-column: span 2;">
-                            <label class="form-label">Full Name</label>
-                            <input type="text" class="form-input" id="reviewFullName" name="full_name" readonly>
+                    <!-- Section A: APPLICATION IDENTITY -->
+                    <div style="border-bottom: 2px solid #e2e8f0; padding-bottom: 1rem; margin-bottom: 1rem;">
+                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">A. APPLICATION IDENTITY</h4>
+                        <div class="form-grid" style="margin-bottom: 1rem;">
+                            <div class="form-group">
+                                <label class="form-label">Last Name</label>
+                                <input type="text" class="form-input" id="reviewLastName" name="last_name" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">First Name</label>
+                                <input type="text" class="form-input" id="reviewFirstName" name="first_name" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Middle Name</label>
+                                <input type="text" class="form-input" id="reviewMiddleName" name="middle_name" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Sex</label>
+                                <input type="text" class="form-input" id="reviewSex" name="sex" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Age</label>
+                                <input type="number" class="form-input" id="reviewAge" name="age" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Date of Birth</label>
+                                <input type="date" class="form-input" id="reviewDateOfBirth" name="date_of_birth" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Place of Birth</label>
+                                <input type="text" class="form-input" id="reviewPlaceOfBirth" name="place_of_birth" readonly>
+                            </div>
+                            <div class="form-group" style="grid-column: span 2;">
+                                <label class="form-label">Present Address</label>
+                                <input type="text" class="form-input" id="reviewAddress" name="current_address" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Barangay</label>
+                                <select class="form-select" id="reviewBarangay" name="barangay" disabled>
+                                    <option value="">Select barangay...</option>
+                                    {% for brgy in barangays %}
+                                    <option value="{{ brgy }}">{{ brgy }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Applicant Contact Number</label>
+                                <input type="tel" class="form-input" id="reviewPhone" name="phone_number" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Years Residing in Talisay</label>
+                                <input type="number" class="form-input" id="reviewYears" name="years_residing" min="0" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Name of Spouse</label>
+                                <input type="text" class="form-input" id="reviewSpouseName" name="spouse_name" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Spouse Contact Number</label>
+                                <input type="tel" class="form-input" id="reviewSpousePhone" name="spouse_phone" readonly>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">Barangay</label>
-                            <select class="form-select" id="reviewBarangay" name="barangay" disabled>
-                                <option value="">Select barangay...</option>
-                                {% for brgy in barangays %}
-                                <option value="{{ brgy }}">{{ brgy }}</option>
-                                {% endfor %}
-                            </select>
+                    </div>
+
+                    <!-- Section B: HOUSEHOLD MEMBERS -->
+                    <div style="border-bottom: 2px solid #e2e8f0; padding-bottom: 1rem; margin-bottom: 1rem;">
+                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">B. HOUSEHOLD MEMBERS</h4>
+                        <div id="reviewHouseholdList" style="margin-bottom: 0.75rem;">
+                            <!-- Populated by JavaScript -->
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">Monthly Income (₱)</label>
-                            <input type="number" class="form-input" id="reviewIncome" name="monthly_income" min="0" step="0.01" readonly>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">Household Size</label>
+                                <input type="number" class="form-input" id="reviewHousehold" name="household_size" min="1" readonly>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">Household Size</label>
-                            <input type="number" class="form-input" id="reviewHousehold" name="household_size" min="1" readonly>
+                    </div>
+
+                    <!-- Section C: FAMILY INCOME -->
+                    <div style="border-bottom: 2px solid #e2e8f0; padding-bottom: 1rem; margin-bottom: 1rem;">
+                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">C. APPLICANTS FAMILY INCOME</h4>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">Occupation</label>
+                                <input type="text" class="form-input" id="reviewOccupation" name="occupation" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Status of Employment</label>
+                                <input type="text" class="form-input" id="reviewEmploymentStatus" name="employment_status" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Monthly Income (₱)</label>
+                                <input type="number" class="form-input" id="reviewIncome" name="monthly_income" min="0" step="0.01" readonly>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">Years Residing</label>
-                            <input type="number" class="form-input" id="reviewYears" name="years_residing" min="0" readonly>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Contact Number</label>
-                            <input type="tel" class="form-input" id="reviewPhone" name="phone_number" readonly>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Current Address</label>
-                            <input type="text" class="form-input" id="reviewAddress" name="current_address" readonly>
+                    </div>
+
+                    <!-- Danger Zone Status -->
+                    <div style="border-bottom: 2px solid #e2e8f0; padding-bottom: 1rem; margin-bottom: 1rem;">
+                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">Is the applicant in a danger zone?</h4>
+                        <div style="padding: 0.75rem; background: #f3f4f6; border-radius: 0.375rem;">
+                            <p id="reviewDangerZoneStatus" style="margin: 0; font-size: 0.875rem;">-</p>
                         </div>
                     </div>
                     
@@ -1226,7 +1301,14 @@
                     
                     <!-- Document Checklist -->
                     <div style="border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-bottom: 1rem;">
-                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">Document Checklist</h4>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                            <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; text-transform: uppercase; margin: 0;">Document Checklist</h4>
+                            <span id="docCountIndicator" style="font-size: 0.75rem; font-weight: 600; padding: 0.25rem 0.75rem; border-radius: 0.25rem; background: #fee2e2; color: #991b1b;">0/7 Documents</span>
+                        </div>
+                        <div id="docWarningMessage" style="display: none; background: #fef3c7; border: 1px solid #fcd34d; border-radius: 0.375rem; padding: 0.75rem; margin-bottom: 0.75rem; font-size: 0.875rem; color: #92400e;">
+                            <strong>⚠️ Incomplete Documents</strong><br>
+                            <span id="missingDocCount">Missing 7 documents</span> — Applicant must submit before proceeding to "Eligible" status
+                        </div>
                         <div class="document-grid" id="documentChecklist">
                             <!-- Populated by JavaScript -->
                         </div>
@@ -1985,22 +2067,84 @@
                 }
                 
                 // Populate Channel C form fields (with null checks)
-                const fullNameEl = document.getElementById('reviewFullName');
+                const sexEl = document.getElementById('reviewSex');
+                const ageEl = document.getElementById('reviewAge');
+                const dobEl = document.getElementById('reviewDateOfBirth');
+                const pobEl = document.getElementById('reviewPlaceOfBirth');
                 const barangayEl = document.getElementById('reviewBarangay');
                 const incomeEl = document.getElementById('reviewIncome');
                 const householdEl = document.getElementById('reviewHousehold');
                 const yearsEl = document.getElementById('reviewYears');
                 const phoneEl = document.getElementById('reviewPhone');
                 const addressEl = document.getElementById('reviewAddress');
-                
-                if (fullNameEl) fullNameEl.value = currentApplicant.fullName || '';
+                const spouseNameEl = document.getElementById('reviewSpouseName');
+                const spousePhoneEl = document.getElementById('reviewSpousePhone');
+                const dangerZoneStatusEl = document.getElementById('reviewDangerZoneStatus');
+                const occupationEl = document.getElementById('reviewOccupation');
+                const employmentStatusEl = document.getElementById('reviewEmploymentStatus');
+
+                // Parse fullName into Last, First, Middle
+                const lastNameEl = document.getElementById('reviewLastName');
+                const firstNameEl = document.getElementById('reviewFirstName');
+                const middleNameEl = document.getElementById('reviewMiddleName');
+
+                if (lastNameEl || firstNameEl || middleNameEl) {
+                    // Format: "Last Name, First Name Middle Name"
+                    let lastName = '', firstName = '', middleName = '';
+                    if (currentApplicant.fullName) {
+                        const parts = currentApplicant.fullName.split(',').map(p => p.trim());
+                        lastName = parts[0] || '';
+                        const restParts = (parts[1] || '').split(' ');
+                        firstName = restParts[0] || '';
+                        middleName = restParts.slice(1).join(' ') || '';
+                    }
+                    if (lastNameEl) lastNameEl.value = lastName;
+                    if (firstNameEl) firstNameEl.value = firstName;
+                    if (middleNameEl) middleNameEl.value = middleName;
+                }
+
+                // Populate all fields
+                if (sexEl) sexEl.value = currentApplicant.sex || '';
+                if (ageEl) ageEl.value = currentApplicant.age || '';
+                if (dobEl) dobEl.value = currentApplicant.dateOfBirth || '';
+                if (pobEl) pobEl.value = currentApplicant.placeOfBirth || '';
                 if (barangayEl) barangayEl.value = currentApplicant.barangay || '';
                 if (incomeEl) incomeEl.value = currentApplicant.monthlyIncome || '';
                 if (householdEl) householdEl.value = currentApplicant.householdSize || '';
                 if (yearsEl) yearsEl.value = currentApplicant.yearsResiding || '';
                 if (phoneEl) phoneEl.value = currentApplicant.phoneNumber || '';
                 if (addressEl) addressEl.value = currentApplicant.currentAddress || '';
-                
+                if (spouseNameEl) spouseNameEl.value = currentApplicant.spouseName || '';
+                if (spousePhoneEl) spousePhoneEl.value = currentApplicant.spousePhone || '';
+                if (occupationEl) occupationEl.value = currentApplicant.occupation || '';
+                if (employmentStatusEl) employmentStatusEl.value = currentApplicant.employmentStatus || '';
+
+                // Populate danger zone status
+                if (dangerZoneStatusEl) {
+                    dangerZoneStatusEl.textContent = currentApplicant.isInDangerZone ? '✓ Yes — In Danger Zone' : '✓ No — Not in Danger Zone';
+                    dangerZoneStatusEl.style.color = currentApplicant.isInDangerZone ? '#dc2626' : '#10b981';
+                }
+
+                // Populate household members list
+                const householdListEl = document.getElementById('reviewHouseholdList');
+                if (householdListEl && currentApplicant.householdMembers && currentApplicant.householdMembers.length > 0) {
+                    let membersHTML = '<div style="display: grid; gap: 0.75rem;">';
+                    currentApplicant.householdMembers.forEach((member, idx) => {
+                        membersHTML += `
+                            <div style="padding: 0.75rem; background: #f9fafb; border-left: 3px solid #3b82f6; border-radius: 0.375rem;">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.875rem;">
+                                    <div><strong>Name:</strong> ${member.name || '-'}</div>
+                                    <div><strong>Relationship:</strong> ${member.relationship || '-'}</div>
+                                    <div><strong>Age:</strong> ${member.age || '-'}</div>
+                                    <div><strong>Civil Status:</strong> ${member.civilStatus || '-'}</div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    membersHTML += '</div>';
+                    householdListEl.innerHTML = membersHTML;
+                }
+
                 // Populate eligibility checks
                 populateEligibilityChecks(currentApplicant);
                 
@@ -2437,8 +2581,48 @@
             `;
         });
         container.innerHTML = html;
+
+        // Update document count indicator
+        updateDocumentCountIndicator(applicant);
     }
-    
+
+    function updateDocumentCountIndicator(applicant) {
+        // Count completed documents
+        const docCount = [
+            applicant.docBrgyResidency,
+            applicant.docBrgyIndigency,
+            applicant.docCedula,
+            applicant.docPoliceClearance,
+            applicant.docNoProperty,
+            applicant.doc2x2Picture,
+            applicant.docSketchLocation
+        ].filter(Boolean).length;
+
+        const totalDocs = 7;
+        const missingDocs = totalDocs - docCount;
+        const isComplete = docCount === totalDocs;
+
+        // Update indicator
+        const indicator = document.getElementById('docCountIndicator');
+        if (indicator) {
+            indicator.textContent = `${docCount}/${totalDocs} Documents`;
+            indicator.style.background = isComplete ? '#dcfce7' : '#fee2e2';
+            indicator.style.color = isComplete ? '#166534' : '#991b1b';
+        }
+
+        // Update warning message
+        const warningMsg = document.getElementById('docWarningMessage');
+        const missingCount = document.getElementById('missingDocCount');
+        if (warningMsg) {
+            if (!isComplete) {
+                warningMsg.style.display = 'block';
+                if (missingCount) missingCount.textContent = `Missing ${missingDocs} document${missingDocs !== 1 ? 's' : ''}`;
+            } else {
+                warningMsg.style.display = 'none';
+            }
+        }
+    }
+
     // Toggle document checkbox and auto-save
     function toggleAndSaveDoc(label, docKey) {
         const checkbox = label.querySelector('input[type="checkbox"]');
@@ -2507,6 +2691,13 @@
                     ].filter(Boolean).length;
                 }
                 console.log('Document saved:', docKey, isChecked);
+
+                // Refresh document count indicators
+                if (currentApplicant.channel === 'B') {
+                    updateDocumentCountIndicatorB(currentApplicant);
+                } else {
+                    updateDocumentCountIndicator(currentApplicant);
+                }
             } else {
                 console.error('Error saving document:', data.error);
             }
@@ -2608,8 +2799,48 @@
             `;
         });
         container.innerHTML = html;
+
+        // Update document count indicator for Channel B
+        updateDocumentCountIndicatorB(applicant);
     }
-    
+
+    function updateDocumentCountIndicatorB(applicant) {
+        // Count completed documents
+        const docCount = [
+            applicant.docBrgyResidency,
+            applicant.docBrgyIndigency,
+            applicant.docCedula,
+            applicant.docPoliceClearance,
+            applicant.docNoProperty,
+            applicant.doc2x2Picture,
+            applicant.docSketchLocation
+        ].filter(Boolean).length;
+
+        const totalDocs = 7;
+        const missingDocs = totalDocs - docCount;
+        const isComplete = docCount === totalDocs;
+
+        // Update indicator
+        const indicator = document.getElementById('docCountIndicatorB');
+        if (indicator) {
+            indicator.textContent = `${docCount}/${totalDocs} Documents`;
+            indicator.style.background = isComplete ? '#dcfce7' : '#fee2e2';
+            indicator.style.color = isComplete ? '#166534' : '#991b1b';
+        }
+
+        // Update warning message
+        const warningMsg = document.getElementById('docWarningMessageB');
+        const missingCount = document.getElementById('missingDocCountB');
+        if (warningMsg) {
+            if (!isComplete) {
+                warningMsg.style.display = 'block';
+                if (missingCount) missingCount.textContent = `Missing ${missingDocs} document${missingDocs !== 1 ? 's' : ''}`;
+            } else {
+                warningMsg.style.display = 'none';
+            }
+        }
+    }
+
     // Channel A specific eligibility checks
     function populateEligibilityChecksA(applicant) {
         const container = document.getElementById('eligibilityChecksA');

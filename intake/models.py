@@ -182,6 +182,19 @@ class Applicant(models.Model):
         verbose_name="Declared Household Size",
         help_text="Number of household members as declared during registration"
     )
+    occupation = models.CharField(max_length=255, blank=True, verbose_name="Occupation")
+    employment_status = models.CharField(
+        max_length=50,
+        blank=True,
+        verbose_name="Status of Employment",
+        choices=[
+            ('employed', 'Employed'),
+            ('self_employed', 'Self-Employed'),
+            ('unemployed', 'Unemployed'),
+            ('retired', 'Retired'),
+            ('other', 'Other'),
+        ]
+    )
     
     # Channel and Status
     channel = models.CharField(max_length=20, choices=CHANNEL_CHOICES)

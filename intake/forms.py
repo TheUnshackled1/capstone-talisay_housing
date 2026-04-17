@@ -175,6 +175,8 @@ class WalkInApplicantForm(forms.ModelForm):
             'monthly_income',
             'household_size',
             'years_residing',
+            'occupation',
+            'employment_status',
         ]
         widgets = {
             'full_name': forms.TextInput(attrs={
@@ -228,6 +230,13 @@ class WalkInApplicantForm(forms.ModelForm):
                 'placeholder': 'Number of household members',
                 'min': 1,
             }),
+            'occupation': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Occupation/job title',
+            }),
+            'employment_status': forms.Select(attrs={
+                'class': 'form-select',
+            }),
         }
         labels = {
             'full_name': 'Full Name',
@@ -242,6 +251,8 @@ class WalkInApplicantForm(forms.ModelForm):
             'monthly_income': 'Monthly Income (₱)',
             'household_size': 'Household Size',
             'years_residing': 'Years Residing in Talisay',
+            'occupation': 'Occupation',
+            'employment_status': 'Status of Employment',
         }
 
     def clean_monthly_income(self):
