@@ -143,20 +143,24 @@ LOGIN_REDIRECT_URL = 'accounts:dashboard'
 LOGOUT_REDIRECT_URL = 'accounts:dashboard'
 
 # =============================================================================
-# SMS Configuration (Semaphore)
+# SMS Configuration (httpSMS - FREE via Android Phone)
 # =============================================================================
-# Semaphore is a Philippine SMS service with free credits for new accounts
-# Free trial: 100 SMS credits on account creation
+# httpSMS uses your Android phone as SMS gateway - completely free!
+# Just keep the phone on with httpSMS app running
 
 SMS_ENABLED = True  # Real SMS sending is ENABLED
-SMS_SERVICE = 'twilio'  # 'twilio' or 'semaphore'
+SMS_SERVICE = 'httpsms'  # 'httpsms', 'twilio', or 'semaphore'
 
-# Twilio Configuration (Active)
+# httpSMS Configuration (ACTIVE - FREE)
+HTTPSMS_API_KEY = 'pk_aq3fcHBM5uPwQgI-l7x8qy1VKCMRXulIf05z0LvieKMxPO3DmsdWZ2UCY7lE_eJc'
+HTTPSMS_API_URL = 'https://api.httpsms.com'  # httpSMS API endpoint
+
+# Twilio Configuration (Backup - Paid)
 TWILIO_ACCOUNT_SID = 'ACe90a6af0a068665ed4479c6d303245e9'
 TWILIO_AUTH_TOKEN = '8f98a71c0f227237d59990cfa3c48844'
-TWILIO_PHONE_NUMBER = '+17126421042'  # Your Twilio phone number
-TWILIO_MESSAGING_SERVICE_SID = 'MGef6b27fa659a0bb41605875f7eddf476'  # Your Messaging Service
+TWILIO_PHONE_NUMBER = '+17126421042'
+TWILIO_MESSAGING_SERVICE_SID = 'MGef6b27fa659a0bb41605875f7eddf476'
 
-# Semaphore Configuration (Active)
+# Semaphore Configuration (Backup - Philippine)
 SEMAPHORE_API_KEY = 'c3f15974a138c3c7aabef97f481781f5'
 SEMAPHORE_SENDER_NAME = 'THA'

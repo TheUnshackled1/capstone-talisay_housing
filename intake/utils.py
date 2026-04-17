@@ -71,7 +71,15 @@ def send_sms(phone_number, message, trigger_event, applicant=None, isf_record=No
         )
 
         if sms_enabled:
-            if sms_service == 'twilio':
+            if sms_service == 'httpsms':
+                # Send via httpSMS (FREE - Android Phone Gateway)
+                success = send_sms_httpsms(phone_number, message, sms_log)
+                if success:
+                    logger.info(f"SMS sent via httpSMS: {trigger_event} to {phone_number}")
+                    return True
+                else:
+                    return False
+            elif sms_service == 'twilio':
                 # Send via Twilio
                 success = send_sms_twilio(phone_number, message, sms_log)
                 if success:
@@ -117,6 +125,70 @@ def send_sms(phone_number, message, trigger_event, applicant=None, isf_record=No
             error_message=str(e)
         )
 
+        return False
+
+
+def send_sms_httpsms(phone_number, message, sms_log):
+    """
+    Send SMS via httpSMS API (FREE - uses Android phone as gateway).
+
+    Args:
+        phone_number: Philippine mobile number (09XXXXXXXXX format)
+        message: SMS message content
+        sms_log: SMSLog instance to update
+
+    Returns:
+        bool: True if sent successfully, False otherwise
+    """
+    try:
+        api_key = getattr(settings, 'HTTPSMS_API_KEY', None)
+        api_url = getattr(settings, 'HTTPSMS_API_URL', 'https://api.httpsms.com')
+
+        if not api_key:
+            raise Exception("httpSMS API key not configured")
+
+        # Convert Philippine format to international format for httpSMS
+        # 09XXXXXXXXX -> +639XXXXXXXXX
+        to_number = '+63' + phone_number[1:]
+
+        # httpSMS API endpoint: /v1/messages/send
+        payload = {
+            'content': message,
+            'to': to_number,
+        }
+
+        # httpSMS uses API key in header as Bearer token
+        headers = {
+            'Authorization': f'Bearer {api_key}',
+            'Content-Type': 'application/json',
+        }
+
+        response = requests.post(
+            f'{api_url}/v1/messages/send',
+            json=payload,
+            headers=headers,
+            timeout=10
+        )
+
+        if response.status_code in [200, 201]:
+            result = response.json()
+            # Update log with success
+            sms_log.status = 'sent'
+            sms_log.external_id = result.get('data', {}).get('id', 'httpsms-msg')
+            sms_log.save(update_fields=['status', 'external_id'])
+            return True
+        else:
+            error_msg = f"httpSMS error: HTTP {response.status_code}"
+            if response.text:
+                error_msg += f" - {response.text}"
+            raise Exception(error_msg)
+
+    except Exception as e:
+        error_msg = f"httpSMS error: {str(e)}"
+        logger.error(error_msg)
+        sms_log.status = 'failed'
+        sms_log.error_message = error_msg
+        sms_log.save(update_fields=['status', 'error_message'])
         return False
 
 
