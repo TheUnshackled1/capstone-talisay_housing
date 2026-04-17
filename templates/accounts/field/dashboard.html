@@ -975,16 +975,16 @@
                                 const address = meta[0]?.textContent.split('•')[0].trim().replace('📍 ', '') || '';
                                 const phone = meta[0]?.textContent.split('•')[2]?.trim().replace('📞 ', '') || '';
                                 const household = meta[1]?.textContent || '';
-                                return \`
+                                return `
                                     <tr class="applicant-row">
-                                        <td>\${idx + 1}</td>
-                                        <td>\${name}</td>
-                                        <td>\${address}</td>
-                                        <td>\${phone}</td>
-                                        <td>\${household}</td>
+                                        <td>${idx + 1}</td>
+                                        <td>${name}</td>
+                                        <td>${address}</td>
+                                        <td>${phone}</td>
+                                        <td>${household}</td>
                                         <td><span class="badge badge-pending">PENDING</span></td>
                                     </tr>
-                                \`;
+                                `;
                             }).join('')}
                         </tbody>
                     </table>
@@ -1013,113 +1013,147 @@
                 notCertified: document.querySelector('[style*="color: #ef4444"]')?.nextElementSibling?.textContent || '0'
             };
 
-            alert(\`📊 Today's Verification Summary:\n\n✅ Certified (Danger Zone): \${stats.certified}\n❌ Not Certified (False Alarm): \${stats.notCertified}\n\n📝 Keep submitting your findings!\`);
+            alert(`📊 Today's Verification Summary:\n\n✅ Certified (Danger Zone): ${stats.certified}\n❌ Not Certified (False Alarm): ${stats.notCertified}\n\n📝 Keep submitting your findings!`);
         }
+</script>
 
     <!-- FIELD VERIFICATION MODAL -->
-    <div id="verificationModal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5);">
-        <div style="background-color: white; margin: 5% auto; padding: 0; width: 90%; max-width: 600px; border-radius: 12px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3); overflow: hidden;">
+    <div id="verificationModal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); overflow-y: auto; padding: 20px 0;">
+        <div style="background-color: white; margin: 40px auto; width: 90%; max-width: 700px; border-radius: 16px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2); overflow: hidden;">
             <!-- Modal Header -->
-            <div style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); color: white; padding: 20px;">
-                <h2 style="margin: 0; font-size: 1.25rem; font-weight: 700;">🔍 Field Verification Form</h2>
-                <p style="margin: 5px 0 0 0; font-size: 0.875rem; opacity: 0.9;">Module 1: Channel B Danger Zone Verification</p>
+            <div style="background: linear-gradient(135deg, #1e40af 0%, #2563eb 50%, #1e3a8a 100%); color: white; padding: 32px 28px; border-bottom: 4px solid #1e40af;">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                    <span style="font-size: 2rem;">🔍</span>
+                    <div>
+                        <h2 style="margin: 0; font-size: 1.4rem; font-weight: 800; letter-spacing: -0.5px;">Field Verification</h2>
+                        <p style="margin: 4px 0 0 0; font-size: 0.85rem; opacity: 0.95; font-weight: 500;">Module 1: Channel B Danger Zone Verification</p>
+                    </div>
+                </div>
             </div>
 
-            <!-- Modal Body -->
-            <div style="padding: 20px;">
+            <!-- Modal Body with Scroll -->
+            <div style="padding: 32px; max-height: 70vh; overflow-y: auto;">
                 <input type="hidden" id="verificationModalApplicantId">
 
                 <!-- SECTION 1: APPLICANT'S CLAIM -->
-                <div style="margin-bottom: 20px; padding: 15px; background: #eff6ff; border-left: 4px solid #0369a1; border-radius: 6px;">
-                    <h3 style="margin: 0 0 15px 0; font-size: 0.95rem; font-weight: 600; color: #0369a1;">📋 APPLICANT'S CLAIM</h3>
-
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
-                        <div>
-                            <label style="display: block; font-size: 0.75rem; font-weight: 600; color: #0369a1; text-transform: uppercase; margin-bottom: 5px;">Full Name</label>
-                            <p id="verificationModalName" style="margin: 0; font-size: 0.95rem; font-weight: 500; color: #1f2937;"></p>
-                        </div>
-                        <div>
-                            <label style="display: block; font-size: 0.75rem; font-weight: 600; color: #0369a1; text-transform: uppercase; margin-bottom: 5px;">Current Address</label>
-                            <p id="verificationModalAddress" style="margin: 0; font-size: 0.95rem; font-weight: 500; color: #1f2937;"></p>
-                        </div>
+                <div style="margin-bottom: 28px; padding: 24px; background: linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%); border-left: 5px solid #0369a1; border-radius: 12px; border: 1px solid #bfdbfe;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 2px solid #93c5fd;">
+                        <span style="font-size: 1.3rem;">📋</span>
+                        <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #1e40af; letter-spacing: 0.3px;">APPLICANT'S CLAIM</h3>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                        <div>
-                            <label style="display: block; font-size: 0.75rem; font-weight: 600; color: #0369a1; text-transform: uppercase; margin-bottom: 5px;">Declared Danger Zone Type</label>
-                            <p id="verificationModalDangerZone" style="margin: 0; font-size: 0.95rem; font-weight: 500; color: #1f2937;"></p>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
+                        <div style="background: white; padding: 16px; border-radius: 8px; border: 1px solid #dcfce7;">
+                            <label style="display: block; font-size: 0.7rem; font-weight: 700; color: #0369a1; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px;">👤 Full Name</label>
+                            <p id="verificationModalName" style="margin: 0; font-size: 1rem; font-weight: 600; color: #1f2937;"></p>
                         </div>
-                        <div>
-                            <label style="display: block; font-size: 0.75rem; font-weight: 600; color: #0369a1; text-transform: uppercase; margin-bottom: 5px;">Declared Location</label>
-                            <p id="verificationModalLocation" style="margin: 0; font-size: 0.95rem; font-weight: 500; color: #1f2937;"></p>
+                        <div style="background: white; padding: 16px; border-radius: 8px; border: 1px solid #dcfce7;">
+                            <label style="display: block; font-size: 0.7rem; font-weight: 700; color: #0369a1; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px;">📍 Current Address</label>
+                            <p id="verificationModalAddress" style="margin: 0; font-size: 1rem; font-weight: 600; color: #1f2937;"></p>
                         </div>
-                    </div>
-                </div>
-
-                <!-- SECTION 2: CDRRMO OFFICIAL CERTIFICATION STATUS -->
-                <div id="cdrrmoStatusBox" style="display: none; margin-bottom: 20px; padding: 15px; border-left: 4px solid #10b981; background: #f0fdf4; border-radius: 6px;">
-                    <h3 style="margin: 0 0 15px 0; font-size: 0.95rem; font-weight: 600; color: #16a34a;">🏛️ CDRRMO OFFICIAL CERTIFICATION</h3>
-                    <div id="cdrrmoStatusContent" style="display: grid; gap: 10px;">
-                        <div>
-                            <label style="display: block; font-size: 0.75rem; font-weight: 600; color: #16a34a; text-transform: uppercase; margin-bottom: 3px;">Government Certification Status</label>
-                            <p id="cdrrmoStatusText" style="margin: 0; font-size: 0.95rem; font-weight: 500; color: #1f2937;">—</p>
+                        <div style="background: white; padding: 16px; border-radius: 8px; border: 1px solid #dcfce7;">
+                            <label style="display: block; font-size: 0.7rem; font-weight: 700; color: #0369a1; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px;">⚠️ Danger Zone Type</label>
+                            <p id="verificationModalDangerZone" style="margin: 0; font-size: 1rem; font-weight: 600; color: #1f2937;"></p>
                         </div>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                            <div>
-                                <label style="display: block; font-size: 0.75rem; font-weight: 600; color: #16a34a; text-transform: uppercase; margin-bottom: 3px;">Date Verified</label>
-                                <p id="cdrrmoDateText" style="margin: 0; font-size: 0.875rem; color: #1f2937;">—</p>
-                            </div>
-                            <div>
-                                <label style="display: block; font-size: 0.75rem; font-weight: 600; color: #16a34a; text-transform: uppercase; margin-bottom: 3px;">Reference</label>
-                                <p id="cdrrmoRefText" style="margin: 0; font-size: 0.875rem; color: #1f2937;">THA-ISF</p>
-                            </div>
+                        <div style="background: white; padding: 16px; border-radius: 8px; border: 1px solid #dcfce7;">
+                            <label style="display: block; font-size: 0.7rem; font-weight: 700; color: #0369a1; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px;">📌 Declared Location</label>
+                            <p id="verificationModalLocation" style="margin: 0; font-size: 1rem; font-weight: 600; color: #1f2937;"></p>
                         </div>
                     </div>
                 </div>
 
+                <!-- SECTION 2: CDRRMO OFFICIAL CERTIFICATION -->
+                <div id="cdrrmoStatusBox" style="display: none; margin-bottom: 28px; padding: 24px; background: linear-gradient(135deg, #f0fdf4 0%, #f3fce8 100%); border-left: 5px solid #16a34a; border-radius: 12px; border: 1px solid #dcfce7;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 2px solid #a7f3d0;">
+                        <span style="font-size: 1.3rem;">🏛️</span>
+                        <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #15803d; letter-spacing: 0.3px;">CDRRMO CERTIFICATION</h3>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr; gap: 14px;">
+                        <div style="background: white; padding: 16px; border-radius: 8px; border: 1px solid #dcfce7;">
+                            <label style="display: block; font-size: 0.7rem; font-weight: 700; color: #16a34a; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px;">Government Status</label>
+                            <p id="cdrrmoStatusText" style="margin: 0; font-size: 1rem; font-weight: 600; color: #1f2937;">—</p>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                            <div style="background: white; padding: 16px; border-radius: 8px; border: 1px solid #dcfce7;">
+                                <label style="display: block; font-size: 0.7rem; font-weight: 700; color: #16a34a; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px;">📅 Date Verified</label>
+                                <p id="cdrrmoDateText" style="margin: 0; font-size: 1rem; font-weight: 600; color: #1f2937;">—</p>
+                            </div>
+                            <div style="background: white; padding: 16px; border-radius: 8px; border: 1px solid #dcfce7;">
+                                <label style="display: block; font-size: 0.7rem; font-weight: 700; color: #16a34a; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px;">🔖 Reference</label>
+                                <p id="cdrrmoRefText" style="margin: 0; font-size: 1rem; font-weight: 600; color: #1f2937;">THA-ISF</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DIVIDER -->
+                <div style="height: 2px; background: linear-gradient(to right, transparent, #e5e7eb, transparent); margin: 28px 0;"></div>
+
+                <!-- SECTION 3: RONDA FIELD VERIFICATION -->
                 <form id="verificationForm" onsubmit="submitVerification(event)">
-                    <div style="margin-bottom: 20px;">
-                        <h3 style="margin: 0 0 15px 0; font-size: 1rem; font-weight: 600; color: #1f2937;">❓ RONDA FIELD VERIFICATION</h3>
-                        <p style="margin: 0 0 15px 0; font-size: 0.875rem; color: #6b7280;">Based on applicant's claim and CDRRMO status above, physically verify: Is applicant ACTUALLY in a danger zone?</p>
+                    <div style="margin-bottom: 24px;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
+                            <span style="font-size: 1.3rem;">❓</span>
+                            <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #1f2937; letter-spacing: 0.3px;">YOUR FIELD VERIFICATION</h3>
+                        </div>
+                        <p style="margin: 0 0 20px 0; font-size: 0.9rem; color: #6b7280; line-height: 1.6;">Based on the applicant's claim and CDRRMO status above, physically verify: <strong style="color: #1f2937;">Is this applicant ACTUALLY in a danger zone?</strong></p>
 
-                        <div style="display: flex; gap: 15px;">
-                            <label style="flex: 1; padding: 15px; border: 2px solid #e5e7eb; border-radius: 8px; cursor: pointer; text-align: center; transition: all 0.2s;">
-                                <input type="radio" name="verification_decision" value="certified" style="margin-right: 8px;">
-                                <strong style="color: #10b981;">✓ YES, Certified</strong>
-                                <p style="margin: 5px 0 0 0; font-size: 0.75rem; color: #6b7280;">Applicant IS in danger zone</p>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+                            <label style="padding: 20px; border: 2.5px solid #e5e7eb; background: white; border-radius: 10px; cursor: pointer; text-align: center; transition: all 0.3s; display: flex; flex-direction: column; align-items: center;">
+                                <input type="radio" name="verification_decision" value="certified" style="margin-bottom: 12px; width: 18px; height: 18px; cursor: pointer;">
+                                <span style="font-size: 2rem; margin-bottom: 8px;">✅</span>
+                                <strong style="color: #10b981; font-size: 1rem; margin-bottom: 4px;">YES, Certified</strong>
+                                <p style="margin: 0; font-size: 0.8rem; color: #6b7280;">Applicant IS in danger zone</p>
                             </label>
-                            <label style="flex: 1; padding: 15px; border: 2px solid #e5e7eb; border-radius: 8px; cursor: pointer; text-align: center; transition: all 0.2s;">
-                                <input type="radio" name="verification_decision" value="not_certified" style="margin-right: 8px;">
-                                <strong style="color: #ef4444;">✗ NO, Not Certified</strong>
-                                <p style="margin: 5px 0 0 0; font-size: 0.75rem; color: #6b7280;">FALSE ALARM - not in danger zone</p>
+                            <label style="padding: 20px; border: 2.5px solid #e5e7eb; background: white; border-radius: 10px; cursor: pointer; text-align: center; transition: all 0.3s; display: flex; flex-direction: column; align-items: center;">
+                                <input type="radio" name="verification_decision" value="not_certified" style="margin-bottom: 12px; width: 18px; height: 18px; cursor: pointer;">
+                                <span style="font-size: 2rem; margin-bottom: 8px;">❌</span>
+                                <strong style="color: #ef4444; font-size: 1rem; margin-bottom: 4px;">NO, Not Certified</strong>
+                                <p style="margin: 0; font-size: 0.8rem; color: #6b7280;">FALSE ALARM</p>
                             </label>
+                        </div>
+
+                        <!-- Add hover effects with CSS -->
+                        <style>
+                            label[style*="display: grid"] label:hover {
+                                border-color: #3b82f6 !important;
+                                box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15) !important;
+                                transform: translateY(-2px);
+                            }
+                        </style>
+                    </div>
+
+                    <div style="margin-bottom: 24px;">
+                        <label for="verificationNotes" style="display: block; font-size: 0.75rem; font-weight: 700; color: #374151; text-transform: uppercase; margin-bottom: 10px; letter-spacing: 0.5px;">📝 Field Notes (Optional)</label>
+                        <textarea id="verificationNotes" name="verification_notes" placeholder="Document your findings: observations, conditions, hazards, etc..." style="width: 100%; padding: 14px; border: 1.5px solid #e5e7eb; border-radius: 8px; font-size: 0.9rem; font-family: inherit; resize: vertical; height: 90px; transition: all 0.2s;" onfocus="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 3px rgba(59,130,246,0.1)'"></textarea>
+                    </div>
+
+                    <div style="background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border: 2px solid #fcd34d; border-radius: 10px; padding: 16px; margin-bottom: 24px; font-size: 0.9rem; color: #92400e;">
+                        <div style="display: flex; gap: 12px;">
+                            <span style="font-size: 1.5rem;">⚠️</span>
+                            <div>
+                                <strong style="display: block; font-size: 1rem; margin-bottom: 6px;">Verification Workflow:</strong>
+                                <ol style="margin: 0; padding-left: 20px; font-size: 0.85rem; line-height: 1.6;">
+                                    <li>Review applicant's claimed danger zone details above</li>
+                                    <li>Check CDRRMO's official government certification</li>
+                                    <li>Based on your field visit: Select YES or NO</li>
+                                    <li>Jocel (staff) will review and make final decision</li>
+                                </ol>
+                            </div>
                         </div>
                     </div>
 
-                    <div style="margin-bottom: 20px;">
-                        <label for="verificationNotes" style="display: block; font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 8px;">📝 Verification Notes (Optional)</label>
-                        <textarea id="verificationNotes" name="verification_notes" placeholder="e.g., Living near river, structural damage observed, living conditions verified..." style="width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 0.875rem; font-family: inherit; resize: vertical; height: 80px;"></textarea>
-                    </div>
-
-                    <div style="background: #fef3c7; border: 1px solid #fcd34d; border-radius: 6px; padding: 12px; margin-bottom: 20px; font-size: 0.875rem; color: #92400e;">
-                        <strong>⚠️ Verification Workflow:</strong><br>
-                        1️⃣ Review applicant's claim above<br>
-                        2️⃣ Check CDRRMO's official status (if certified)<br>
-                        3️⃣ Your field visit finding → Submit YES or NO<br>
-                        4️⃣ Jocel will review and approve/reject in staff portal
-                    </div>
-
-                    <div style="display: flex; gap: 10px;">
-                        <button type="submit" style="flex: 1; background: #1e40af; color: white; padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <button type="submit" style="background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%); color: white; padding: 14px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 1rem; transition: all 0.3s; box-shadow: 0 4px 12px rgba(30, 64, 175, 0.2);">
                             📤 Submit Verification
                         </button>
-                        <button type="button" onclick="closeVerificationModal()" style="flex: 1; background: #e5e7eb; color: #374151; padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem;">
-                            Cancel
+                        <button type="button" onclick="closeVerificationModal()" style="background: #f3f4f6; color: #374151; padding: 14px 20px; border: 2px solid #e5e7eb; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 1rem; transition: all 0.3s;">
+                            ✕ Cancel
                         </button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
-</script>
+
 {% endblock %}
