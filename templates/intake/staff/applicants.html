@@ -1345,7 +1345,7 @@
                 
                 <!-- Action Buttons - Only for Jocel/Joie -->
                 <div id="reviewActions">
-                    <button type="button" class="btn-modal success" id="btnMarkEligible" onclick="markEligible()" style="background: #10b981;">
+                    <button type="button" class="btn-modal success" id="btnMarkEligible" onclick="checkDocumentsBeforeMarkEligible()" style="background: #10b981;">
                         <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <polyline points="20 6 9 17 4 12"></polyline>
                         </svg>
@@ -1401,6 +1401,57 @@
                 </button>
             </div>
         </form>
+    </div>
+</div>
+
+<!-- Document Deadline Modal -->
+<div class="modal-overlay" id="deadlineModal" onclick="closeDeadlineModal()" style="z-index: 1001;">
+    <div class="modal-content" style="max-width: 28rem;" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <h2 class="modal-title">Set Document Submission Deadline</h2>
+            <button class="btn-close" onclick="closeDeadlineModal()">
+                <svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+
+        <div class="modal-body">
+            <div style="background: #fef3c7; border: 1px solid #fcd34d; border-radius: 0.375rem; padding: 1rem; margin-bottom: 1rem;">
+                <strong>⚠️ Incomplete Documents</strong><br>
+                <span id="deadlineWarningMsg" style="font-size: 0.875rem; color: #92400e;">Missing documents detected</span>
+            </div>
+
+            <p style="font-size: 0.875rem; margin-bottom: 1rem;">
+                The applicant has <strong id="missingDocCountModal">0</strong> incomplete documents.
+                Please set a deadline for document submission. The applicant will be notified via SMS.
+            </p>
+
+            <div class="form-group" style="margin-bottom: 1rem;">
+                <label class="form-label">Due Date</label>
+                <input type="date" id="deadlineDate" class="form-input" required>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 1rem;">
+                <label class="form-label">Due Time</label>
+                <input type="time" id="deadlineTime" class="form-input" value="17:00" required>
+            </div>
+
+            <div style="background: #f3f4f6; border-radius: 0.375rem; padding: 0.75rem; margin-bottom: 1rem; font-size: 0.875rem;">
+                <strong>Status will be set to:</strong> "Submitting Requirements"<br>
+                <strong>Applicant will be notified:</strong> Via SMS with deadline
+            </div>
+        </div>
+
+        <div class="modal-footer" style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+            <button type="button" class="btn-modal secondary" onclick="closeDeadlineModal()">
+                Cancel
+            </button>
+            <button type="button" class="btn-modal warning" onclick="setDocumentDeadline()" style="background: #f59e0b;">
+                Set Deadline & Notify Applicant
+            </button>
+        </div>
     </div>
 </div>
 
@@ -3186,6 +3237,92 @@
         }
     }
     
+    function checkDocumentsBeforeMarkEligible() {
+        if (!currentApplicant) return;
+
+        // For Channel A: use ISF flow
+        if (currentApplicant.channel === 'A') {
+            markEligible();
+            return;
+        }
+
+        // For Channel B/C: Check if all 7 documents are complete
+        const docCount = [
+            currentApplicant.docBrgyResidency,
+            currentApplicant.docBrgyIndigency,
+            currentApplicant.docCedula,
+            currentApplicant.docPoliceClearance,
+            currentApplicant.docNoProperty,
+            currentApplicant.doc2x2Picture,
+            currentApplicant.docSketchLocation
+        ].filter(Boolean).length;
+
+        const isComplete = docCount === 7;
+
+        if (isComplete) {
+            // All documents complete - mark eligible immediately
+            markEligible();
+        } else {
+            // Documents incomplete - show deadline modal
+            const missingDocs = 7 - docCount;
+            document.getElementById('missingDocCountModal').textContent = missingDocs;
+            document.getElementById('deadlineWarningMsg').textContent = `Missing ${missingDocs} document${missingDocs !== 1 ? 's' : ''} — Must be submitted before marking eligible`;
+
+            // Set default deadline to 5 days from now
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 5);
+            document.getElementById('deadlineDate').value = tomorrow.toISOString().split('T')[0];
+            document.getElementById('deadlineTime').value = '17:00';
+
+            // Show modal
+            document.getElementById('deadlineModal').style.display = 'flex';
+        }
+    }
+
+    function closeDeadlineModal() {
+        document.getElementById('deadlineModal').style.display = 'none';
+    }
+
+    function setDocumentDeadline() {
+        if (!currentApplicant) return;
+
+        const deadlineDate = document.getElementById('deadlineDate').value;
+        const deadlineTime = document.getElementById('deadlineTime').value;
+
+        if (!deadlineDate || !deadlineTime) {
+            alert('Please select both date and time');
+            return;
+        }
+
+        // Combine date and time
+        const deadlineDateTime = `${deadlineDate}T${deadlineTime}`;
+
+        // Send to backend
+        const formData = new FormData();
+        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+        formData.append('applicant_id', currentApplicant.applicantId || currentApplicant.id);
+        formData.append('action', 'set_doc_deadline');
+        formData.append('document_deadline', deadlineDateTime);
+
+        fetch('{% url "intake:update_eligibility" request.user.position %}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                closeDeadlineModal();
+                alert('✓ Document deadline set. Applicant status changed to "Submitting Requirements" and will be notified via SMS.');
+                location.reload();
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            alert('Error: ' + error.message);
+        });
+    }
+
     function markEligible() {
         if (!currentApplicant) return;
 

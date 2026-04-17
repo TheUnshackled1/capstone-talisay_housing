@@ -91,8 +91,31 @@ def update_eligibility(request, position):
         applicant = Applicant.objects.get(id=applicant_id)
     except Applicant.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Applicant not found'})
-    
-    if action == 'mark_eligible':
+
+    if action == 'set_doc_deadline':
+        # Set document submission deadline and change status to "Requirements"
+        from datetime import datetime
+        deadline_str = request.POST.get('document_deadline')
+
+        if not deadline_str:
+            return JsonResponse({'success': False, 'error': 'Deadline not provided'})
+
+        try:
+            # Parse ISO format: "2026-04-25T17:00"
+            deadline = datetime.fromisoformat(deadline_str)
+            applicant.document_deadline = deadline
+            applicant.status = 'requirements'  # Change to "Submitting Requirements"
+            applicant.eligibility_checked_by = request.user
+            applicant.eligibility_checked_at = timezone.now()
+            applicant.save()
+
+            # TODO: Send SMS notification to applicant with deadline
+
+            return JsonResponse({'success': True, 'message': 'Deadline set successfully'})
+        except ValueError:
+            return JsonResponse({'success': False, 'error': 'Invalid deadline format'})
+
+    elif action == 'mark_eligible':
         # Check eligibility criteria
         if applicant.monthly_income > 10000:
             return JsonResponse({

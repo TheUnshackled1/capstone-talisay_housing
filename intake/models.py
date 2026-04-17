@@ -243,7 +243,21 @@ class Applicant(models.Model):
     doc_no_property = models.BooleanField(default=False, verbose_name="Certificate of No Property")
     doc_2x2_picture = models.BooleanField(default=False, verbose_name="2x2 Picture")
     doc_sketch_location = models.BooleanField(default=False, verbose_name="Sketch of House Location")
-    
+
+    # Document submission deadline tracking
+    document_deadline = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="Document Submission Deadline",
+        help_text="Deadline by which all 7 documents must be submitted"
+    )
+    documents_submitted_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="Documents Completed Date",
+        help_text="When all 7 documents were completed"
+    )
+
     # SMS tracking
     registration_sms_sent = models.BooleanField(default=False, verbose_name="Registration SMS Sent")
     eligibility_sms_sent = models.BooleanField(default=False, verbose_name="Eligibility SMS Sent")
