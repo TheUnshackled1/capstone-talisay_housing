@@ -856,8 +856,14 @@
             formData.append('verification_decision', verificationDecision.value);
             formData.append('verification_notes', verificationNotes);
 
-            // Get user position from URL or form
-            const currentPosition = window.location.pathname.split('/')[3]; // /accounts/dashboard/field/... → field
+            // Extract position more reliably - use 'field' from the dashboard URL
+            const pathname = window.location.pathname;
+            let currentPosition = 'field';  // Default to field
+
+            // Try to extract from URL: /accounts/dashboard/field/ or /dashboard/field/
+            if (pathname.includes('/dashboard/field/')) {
+                currentPosition = 'field';
+            }
 
             fetch(`/intake/staff/${currentPosition}/field-verify-cdrrmo/`, {
                 method: 'POST',
@@ -880,6 +886,7 @@
             })
             .catch(error => {
                 alert('❌ Connection error: ' + error);
+                console.error('Fetch error:', error);
             });
         }
 
