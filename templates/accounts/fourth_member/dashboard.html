@@ -30,10 +30,10 @@ Responsibilities:
                         <div class="queue-name">{{ applicant.applicant.full_name }}</div>
                         <div class="queue-meta">
                             <span class="queue-tag tag-priority">{{ applicant.applicant.get_channel_display }}</span>
-                            <span class="queue-date">{{ applicant.applicant.created_at|date:"M d, Y" }}</span>
+                            <span class="queue-date">{{ applicant.entered_at|date:"M d, Y" }}</span>
                         </div>
                     </div>
-                    <a href="#" class="queue-action">Process</a>
+                    <a href="{% url 'intake:applicants_list' request.user.position %}" class="queue-action">Process</a>
                 </li>
                 {% endfor %}
             </ul>
@@ -78,10 +78,10 @@ Responsibilities:
                         <div class="queue-name">{{ applicant.applicant.full_name }}</div>
                         <div class="queue-meta">
                             <span class="queue-tag tag-walkin">Walk-in</span>
-                            <span class="queue-date">{{ applicant.applicant.created_at|date:"M d, Y" }}</span>
+                            <span class="queue-date">{{ applicant.entered_at|date:"M d, Y" }}</span>
                         </div>
                     </div>
-                    <a href="#" class="queue-action">View</a>
+                    <a href="{% url 'intake:applicants_list' request.user.position %}" class="queue-action">View</a>
                 </li>
                 {% endfor %}
             </ul>
@@ -130,7 +130,7 @@ Responsibilities:
                             {% endif %}
                         </div>
                     </div>
-                    <a href="#" class="pending-action">Follow Up</a>
+                    <a href="{% url 'intake:applicants_list' request.user.position %}" class="pending-action">Follow Up</a>
                 </li>
                 {% endfor %}
             </ul>
@@ -175,7 +175,7 @@ Responsibilities:
                         </div>
                         <div class="requirements-missing">Reference: {{ applicant.reference_number }}</div>
                     </div>
-                    <a href="/intake/staff/applicants/" class="requirements-action">Update</a>
+                    <a href="{% url 'intake:applicants_list' request.user.position %}" class="requirements-action">Update</a>
                 </li>
                 {% endfor %}
             </ul>

@@ -950,7 +950,7 @@ def dashboard_fourth_member(request):
         'approved_this_month': approved_this_month,
         'queue_today': queue_today,
         'incomplete_requirements': incomplete_requirements,
-        'documents_filed': pending_cdrrmo_count,
+        'pending_cdrrmo_stat': pending_cdrrmo_count,
         'lots_for_awarding': lots_for_awarding,
         'priority_queue': priority_queue,
         'walkin_queue': walkin_queue,
@@ -977,29 +977,66 @@ def dashboard_fifth_member(request):
         messages.error(request, 'Access denied. This dashboard is for the Fifth Member position only.')
         return redirect('accounts:dashboard')
 
-    # Shared stat card data
     total_applicants = Applicant.objects.count()
     awaiting_head_signature = Application.objects.filter(status='head_signed').count()
     total_housing_units = HousingUnit.objects.count()
     this_month_start = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     approved_this_month = Application.objects.filter(
         status='awarded',
-        updated_at__gte=this_month_start
+        updated_at__gte=this_month_start,
+    ).count()
+
+    qs_open = (
+        ElectricityConnection.objects.exclude(status='completed')
+        .select_related('lot_award__application__applicant', 'lot_award__unit')
+        .order_by('-updated_at')
+    )
+    electricity_queue = [_serialize_units_electricity_connection(c) for c in qs_open[:20]]
+    pending_connections = qs_open.count()
+    connected_this_month = ElectricityConnection.objects.filter(
+        status='completed',
+        completed_at__gte=this_month_start,
+    ).count()
+    awaiting_negros_power = ElectricityConnection.objects.filter(
+        status__in=['docs_submitted', 'coordinating'],
+    ).count()
+
+    negros_power_pending = []
+    for conn in (
+        ElectricityConnection.objects.filter(status__in=['docs_submitted', 'coordinating'])
+        .select_related('lot_award__application__applicant', 'lot_award__unit')
+        .order_by('updated_at')[:15]
+    ):
+        row = _serialize_units_electricity_connection(conn)
+        ref_dt = conn.docs_submitted_at or conn.updated_at
+        if ref_dt:
+            row['submitted_date'] = timezone.localdate(ref_dt).strftime('%b %d, %Y')
+            row['days_pending'] = max(0, (timezone.now() - ref_dt).days)
+        else:
+            row['submitted_date'] = '—'
+            row['days_pending'] = 0
+        negros_power_pending.append(row)
+
+    monthly_notices = ComplianceNotice.objects.filter(issued_at__gte=this_month_start).count()
+    docs_submitted = RequirementSubmission.objects.filter(
+        status='verified',
+        verified_at__gte=this_month_start,
     ).count()
 
     context = {
         'page_title': 'Fifth Member Dashboard',
         'user_position': 'fifth_member',
-        'total_applicants': total_applicants,  # Shared stat card
-        'awaiting_signature': awaiting_head_signature,  # Shared stat card
-        'housing_units': total_housing_units,  # Shared stat card
-        'approved_this_month': approved_this_month,  # Shared stat card
-        'pending_connections': 0,  # TODO: Electricity connections pending
-        'connected_this_month': 0,  # TODO: Connections completed this month
-        'awaiting_negros_power': 0,  # TODO: Applications with Negros Power
-        'monthly_notices': 0,  # TODO: Notices sent this month
-        'electricity_queue': [],  # TODO: Beneficiaries in electricity connection process
-        'negros_power_pending': [],  # TODO: Applications pending with Negros Power
+        'total_applicants': total_applicants,
+        'awaiting_signature': awaiting_head_signature,
+        'housing_units': total_housing_units,
+        'approved_this_month': approved_this_month,
+        'pending_connections': pending_connections,
+        'connected_this_month': connected_this_month,
+        'awaiting_negros_power': awaiting_negros_power,
+        'monthly_notices': monthly_notices,
+        'electricity_queue': electricity_queue,
+        'negros_power_pending': negros_power_pending,
+        'docs_submitted': docs_submitted,
     }
     return render(request, 'accounts/dashboard.html', context)
 
