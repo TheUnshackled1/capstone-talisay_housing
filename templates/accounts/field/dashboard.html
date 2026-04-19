@@ -6,9 +6,12 @@
 {% block extra_css %}
 <style>
     .dashboard-container {
-        padding: 28px;
+        padding: 28px 28px 40px;
         max-width: 1400px;
         margin: 0 auto;
+        background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 8%, transparent 32%);
+        min-height: calc(100vh - 2rem);
+        border-radius: 0;
     }
 
     .dashboard-header {
@@ -65,6 +68,21 @@
 
     .btn-action:active {
         transform: translateY(0);
+    }
+
+    .btn-action.refresh,
+    .btn-action.my-work {
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        color: #1e293b;
+        border: 1px solid #cbd5e1;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+    }
+
+    .btn-action.refresh:hover,
+    .btn-action.my-work:hover {
+        background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+        color: #0f172a;
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.1);
     }
 
     @media print {
@@ -149,21 +167,21 @@
     }
 
     .widget {
-        background: white;
-        border: 1px solid #e5e7eb;
-        border-radius: 12px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
         padding: 24px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.08);
-        transition: all 0.3s ease;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06), 0 4px 14px rgba(15, 23, 42, 0.04);
+        transition: box-shadow 0.25s ease, border-color 0.25s ease, transform 0.25s ease;
         display: flex;
         flex-direction: column;
         height: 100%;
     }
 
     .widget:hover {
-        box-shadow: 0 8px 16px rgba(0,0,0,0.12);
-        border-color: #d1d5db;
-        transform: translateY(-4px);
+        box-shadow: 0 4px 6px rgba(15, 23, 42, 0.05), 0 12px 28px rgba(30, 64, 175, 0.08);
+        border-color: #cbd5e1;
+        transform: translateY(-2px);
     }
 
     /* ===== STAT CARDS WITH COLOR VARIANTS ===== */
@@ -373,7 +391,6 @@
         transform: scale(1.08);
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
-    }
 
     .workload-grid {
         display: grid;
@@ -513,11 +530,168 @@
     .table-verify-btn:active {
         transform: translateY(0);
     }
+
+    /* CDRRMO certification panel — aligned grid */
+    .cdrrmo-cert-panel {
+        margin-bottom: 28px;
+        padding: 22px 24px;
+        background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+        border-left: 5px solid #16a34a;
+        border-radius: 12px;
+        border: 1px solid #bbf7d0;
+    }
+    .cdrrmo-cert-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 16px;
+        padding-bottom: 14px;
+        border-bottom: 2px solid #a7f3d0;
+    }
+    .cdrrmo-cert-header h3 {
+        margin: 0;
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #15803d;
+        letter-spacing: 0.3px;
+    }
+    .cdrrmo-cert-body {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    .cdrrmo-cert-cell {
+        background: #fff;
+        padding: 14px 16px;
+        border-radius: 10px;
+        border: 1px solid #d1fae5;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+    .cdrrmo-cert-cell label,
+    .cdrrmo-cert-cell .cdrrmo-cert-label {
+        display: block;
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: #15803d;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+        letter-spacing: 0.5px;
+    }
+    .cdrrmo-cert-cell p {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 600;
+        color: #1f2937;
+        line-height: 1.45;
+    }
+    .cdrrmo-cert-row2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+    @media (max-width: 520px) {
+        .cdrrmo-cert-row2 {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Field evidence (camera / gallery) */
+    .field-evidence-section {
+        margin-bottom: 24px;
+        padding: 18px;
+        border: 1px dashed #94a3b8;
+        border-radius: 12px;
+        background: #f8fafc;
+    }
+    .field-evidence-label {
+        display: block;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #334155;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+    }
+    .field-evidence-hint {
+        margin: 0 0 14px 0;
+        font-size: 0.85rem;
+        color: #64748b;
+        line-height: 1.5;
+    }
+    .field-evidence-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 12px;
+        align-items: center;
+    }
+    .field-evidence-file-btn {
+        display: inline-block;
+        padding: 8px 14px;
+        background: #fff;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #334155;
+        cursor: pointer;
+    }
+    .field-evidence-file-btn:hover {
+        border-color: #3b82f6;
+        color: #1e40af;
+    }
+    .field-evidence-strip {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 12px;
+        min-height: 0;
+    }
+    .field-evidence-thumb {
+        position: relative;
+        width: 76px;
+        height: 76px;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    .field-evidence-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+    .field-evidence-thumb-remove {
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        width: 22px;
+        height: 22px;
+        border: none;
+        border-radius: 50%;
+        background: rgba(15, 23, 42, 0.75);
+        color: #fff;
+        font-size: 12px;
+        line-height: 1;
+        cursor: pointer;
+        padding: 0;
+    }
+    .field-evidence-thumb-remove:hover {
+        background: #dc2626;
+    }
+    #fieldCameraVideo {
+        width: 100%;
+        max-height: 220px;
+        border-radius: 10px;
+        background: #0f172a;
+        margin-bottom: 10px;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="dashboard-container">
+<div class="dashboard-container" data-user-position="{{ request.user.position }}">
     <!-- Header -->
     <div class="nav-breadcrumb">
         <a href="{% url 'accounts:dashboard' %}">Dashboard</a> / Field Verification
@@ -660,7 +834,7 @@
                                 <span style="{% if 'Sent' in cert.sms_status %}color: #059669;{% else %}color: #dc2626;{% endif %} font-weight: 600;">{{ cert.sms_status }}</span>
                             </td>
                             <td style="padding: 12px; text-align: center;">
-                                <button class="table-verify-btn" onclick="openVerificationModal('{{ cert.id }}', '{{ cert.applicant_name|escapejs }}', '{{ cert.address|escapejs }}', '{{ cert.danger_zone_type|escapejs }}', '{{ cert.danger_zone_location|escapejs }}')">
+                                <button class="table-verify-btn" onclick="openVerificationModal('{{ cert.id }}', '{{ cert.applicant_name|escapejs }}', '{{ cert.address|escapejs }}', '{{ cert.danger_zone_type|escapejs }}', '{{ cert.danger_zone_location|escapejs }}', '{{ cert.reference_number|escapejs }}')">
                                     ✓ Verify
                                 </button>
                             </td>
@@ -697,7 +871,7 @@
                 <div style="padding: 18px; background: linear-gradient(135deg, #fffbeb 0%, #ffffff 100%); border-radius: 10px; border-left: 4px solid #f59e0b; border: 1px solid #fef3c7; transition: all 0.3s ease;">
                     <strong style="color: #92400e; font-size: 15px; display: block; margin-bottom: 8px;">Step 3: Submit Assessment</strong>
                     <p style="font-size: 13px; color: #b45309; margin: 0; line-height: 1.5;">
-                        Click applicant name above → Select YES or NO → Jocelsees result in staff portal. Assessment feeds into CDRRMO certification.
+                        Click <strong>Verify</strong> on a row → Select YES or NO → Submit. Jocel sees the result in Applicant Intake. Assessment feeds into CDRRMO certification.
                     </p>
                 </div>
             </div>
@@ -748,8 +922,24 @@
 
 {% block extra_js %}
 <script>
+        let fieldCameraStream = null;
+        const fieldEvidenceFiles = [];
+        const fieldEvidenceObjectUrls = [];
+
         document.addEventListener('DOMContentLoaded', function() {
             initScrollAnimations();
+            const startBtn = document.getElementById('fieldCameraStartBtn');
+            const capBtn = document.getElementById('fieldCameraCaptureBtn');
+            const stopBtn = document.getElementById('fieldCameraStopBtn');
+            const pickBtn = document.getElementById('fieldEvidenceFilePickBtn');
+            const fileInput = document.getElementById('fieldEvidenceFileInput');
+            if (startBtn) startBtn.addEventListener('click', startFieldCamera);
+            if (capBtn) capBtn.addEventListener('click', captureFieldPhoto);
+            if (stopBtn) stopBtn.addEventListener('click', stopFieldCamera);
+            if (pickBtn && fileInput) {
+                pickBtn.addEventListener('click', function() { fileInput.click(); });
+                fileInput.addEventListener('change', onFieldEvidenceFilesSelected);
+            }
         });
 
         /**
@@ -806,21 +996,152 @@
             location.reload();
         }, 5 * 60 * 1000);
 
+        function clearFieldEvidenceUI() {
+            fieldEvidenceObjectUrls.forEach(function(u) { try { URL.revokeObjectURL(u); } catch (e) {} });
+            fieldEvidenceObjectUrls.length = 0;
+            fieldEvidenceFiles.length = 0;
+            const strip = document.getElementById('fieldEvidenceStrip');
+            if (strip) strip.innerHTML = '';
+            const fi = document.getElementById('fieldEvidenceFileInput');
+            if (fi) fi.value = '';
+        }
+
+        function refreshEvidenceStrip() {
+            const strip = document.getElementById('fieldEvidenceStrip');
+            if (!strip) return;
+            strip.innerHTML = '';
+            fieldEvidenceObjectUrls.forEach(function(u) { try { URL.revokeObjectURL(u); } catch (e) {} });
+            fieldEvidenceObjectUrls.length = 0;
+            fieldEvidenceFiles.forEach(function(file, idx) {
+                const url = URL.createObjectURL(file);
+                fieldEvidenceObjectUrls.push(url);
+                const wrap = document.createElement('div');
+                wrap.className = 'field-evidence-thumb';
+                const img = document.createElement('img');
+                img.src = url;
+                img.alt = 'Evidence preview';
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'field-evidence-thumb-remove';
+                btn.setAttribute('aria-label', 'Remove photo');
+                btn.textContent = '×';
+                (function(removeIndex) {
+                    btn.addEventListener('click', function() { removeFieldEvidenceAt(removeIndex); });
+                })(idx);
+                wrap.appendChild(img);
+                wrap.appendChild(btn);
+                strip.appendChild(wrap);
+            });
+        }
+
+        function stopFieldCamera() {
+            if (fieldCameraStream) {
+                fieldCameraStream.getTracks().forEach(function(t) { t.stop(); });
+                fieldCameraStream = null;
+            }
+            const v = document.getElementById('fieldCameraVideo');
+            if (v) {
+                v.srcObject = null;
+                v.style.display = 'none';
+            }
+            const start = document.getElementById('fieldCameraStartBtn');
+            const cap = document.getElementById('fieldCameraCaptureBtn');
+            const stp = document.getElementById('fieldCameraStopBtn');
+            if (start) start.style.display = 'inline-block';
+            if (cap) cap.style.display = 'none';
+            if (stp) stp.style.display = 'none';
+        }
+
+        async function startFieldCamera() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                alert('Camera is not supported in this browser. Use "Upload from gallery" instead.');
+                return;
+            }
+            try {
+                fieldCameraStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: { ideal: 'environment' } },
+                    audio: false
+                });
+                const v = document.getElementById('fieldCameraVideo');
+                v.srcObject = fieldCameraStream;
+                v.style.display = 'block';
+                document.getElementById('fieldCameraStartBtn').style.display = 'none';
+                document.getElementById('fieldCameraCaptureBtn').style.display = 'inline-block';
+                document.getElementById('fieldCameraStopBtn').style.display = 'inline-block';
+            } catch (err) {
+                alert('Could not open camera: ' + (err && err.message ? err.message : 'permission denied') + '\n\nUse "Upload from gallery" or try HTTPS/localhost.');
+            }
+        }
+
+        function captureFieldPhoto() {
+            const v = document.getElementById('fieldCameraVideo');
+            const c = document.getElementById('fieldCameraCanvas');
+            if (!v || !c || !v.videoWidth) {
+                alert('Wait for the camera preview to appear, then capture again.');
+                return;
+            }
+            if (fieldEvidenceFiles.length >= 12) {
+                alert('Maximum 12 evidence photos.');
+                return;
+            }
+            c.width = v.videoWidth;
+            c.height = v.videoHeight;
+            c.getContext('2d').drawImage(v, 0, 0);
+            c.toBlob(function(blob) {
+                if (!blob) return;
+                const file = new File([blob], 'site-evidence-' + Date.now() + '.jpg', { type: 'image/jpeg' });
+                addFieldEvidenceFile(file);
+            }, 'image/jpeg', 0.88);
+        }
+
+        function addFieldEvidenceFile(file) {
+            if (fieldEvidenceFiles.length >= 12) {
+                alert('Maximum 12 evidence photos.');
+                return;
+            }
+            const maxBytes = 6 * 1024 * 1024;
+            if (file.size > maxBytes) {
+                alert('Each photo must be 6 MB or smaller: ' + (file.name || 'file'));
+                return;
+            }
+            fieldEvidenceFiles.push(file);
+            refreshEvidenceStrip();
+        }
+
+        function removeFieldEvidenceAt(index) {
+            if (index < 0 || index >= fieldEvidenceFiles.length) return;
+            fieldEvidenceFiles.splice(index, 1);
+            refreshEvidenceStrip();
+        }
+
+        function onFieldEvidenceFilesSelected(ev) {
+            const files = ev.target.files;
+            if (!files) return;
+            for (let i = 0; i < files.length; i++) {
+                if (fieldEvidenceFiles.length >= 12) break;
+                addFieldEvidenceFile(files[i]);
+            }
+            ev.target.value = '';
+        }
+
         // Field Verification Modal
-        function openVerificationModal(applicantId, applicantName, address, dangerZoneType, dangerZoneLocation) {
+        function openVerificationModal(applicantId, applicantName, address, dangerZoneType, dangerZoneLocation, referenceNumber) {
+            clearFieldEvidenceUI();
+            stopFieldCamera();
+
             document.getElementById('verificationModalApplicantId').value = applicantId;
             document.getElementById('verificationModalName').textContent = applicantName;
             document.getElementById('verificationModalAddress').textContent = address;
             document.getElementById('verificationModalDangerZone').textContent = dangerZoneType || 'Not specified';
             document.getElementById('verificationModalLocation').textContent = dangerZoneLocation || 'Not specified';
 
-            // Show CDRRMO status if available (will be passed from backend data)
             const cdrrmoStatusBox = document.getElementById('cdrrmoStatusBox');
             const cdrrmoStatusText = document.getElementById('cdrrmoStatusText');
             const cdrrmoDateText = document.getElementById('cdrrmoDateText');
+            const cdrrmoRefText = document.getElementById('cdrrmoRefText');
 
-            // For now, if applicant has danger zone, show CDRRMO pending status
-            // In future, pull actual CDRRMO data from applicant record
+            cdrrmoRefText.textContent = referenceNumber && referenceNumber.trim() ? referenceNumber.trim() : '—';
+
             if (dangerZoneType) {
                 cdrrmoStatusBox.style.display = 'block';
                 cdrrmoStatusText.textContent = '⏳ Pending - Awaiting Field Verification';
@@ -828,6 +1149,8 @@
                 cdrrmoDateText.textContent = '—';
             } else {
                 cdrrmoStatusBox.style.display = 'none';
+                cdrrmoStatusText.textContent = '—';
+                cdrrmoDateText.textContent = '—';
             }
 
             document.getElementById('verificationModal').style.display = 'block';
@@ -835,6 +1158,8 @@
         }
 
         function closeVerificationModal() {
+            stopFieldCamera();
+            clearFieldEvidenceUI();
             document.getElementById('verificationModal').style.display = 'none';
             document.body.style.overflow = 'auto';
             document.getElementById('verificationForm').reset();
@@ -856,15 +1181,12 @@
             formData.append('applicant_id', applicantId);
             formData.append('verification_decision', verificationDecision.value);
             formData.append('verification_notes', verificationNotes);
+            fieldEvidenceFiles.forEach(function(file) {
+                formData.append('evidence_photos', file, file.name);
+            });
 
-            // Extract position more reliably - use 'field' from the dashboard URL
-            const pathname = window.location.pathname;
-            let currentPosition = 'field';  // Default to field
-
-            // Try to extract from URL: /accounts/dashboard/field/ or /dashboard/field/
-            if (pathname.includes('/dashboard/field/')) {
-                currentPosition = 'field';
-            }
+            const dash = document.querySelector('.dashboard-container');
+            const currentPosition = (dash && dash.dataset.userPosition) ? dash.dataset.userPosition : 'field';
 
             fetch(`/intake/staff/${currentPosition}/field-verify-cdrrmo/`, {
                 method: 'POST',
@@ -878,7 +1200,10 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert('✅ ' + data.message + '\n\nVerification recorded successfully. Jocel will review this in the staff portal.');
+                    var photoMsg = (typeof data.photos_saved === 'number' && data.photos_saved > 0)
+                        ? ('\n\n📷 Saved ' + data.photos_saved + ' evidence photo(s).')
+                        : '';
+                    alert('✅ ' + data.message + photoMsg + '\n\nVerification recorded. Jocel can review photos in Admin or a future staff view.');
                     closeVerificationModal();
                     setTimeout(() => location.reload(), 1000);
                 } else {
@@ -1063,24 +1388,24 @@
                 </div>
 
                 <!-- SECTION 2: CDRRMO OFFICIAL CERTIFICATION -->
-                <div id="cdrrmoStatusBox" style="display: none; margin-bottom: 28px; padding: 24px; background: linear-gradient(135deg, #f0fdf4 0%, #f3fce8 100%); border-left: 5px solid #16a34a; border-radius: 12px; border: 1px solid #dcfce7;">
-                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 2px solid #a7f3d0;">
+                <div id="cdrrmoStatusBox" class="cdrrmo-cert-panel" style="display: none;">
+                    <div class="cdrrmo-cert-header">
                         <span style="font-size: 1.3rem;">🏛️</span>
-                        <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #15803d; letter-spacing: 0.3px;">CDRRMO CERTIFICATION</h3>
+                        <h3>CDRRMO CERTIFICATION</h3>
                     </div>
-                    <div style="display: grid; grid-template-columns: 1fr; gap: 14px;">
-                        <div style="background: white; padding: 16px; border-radius: 8px; border: 1px solid #dcfce7;">
-                            <label style="display: block; font-size: 0.7rem; font-weight: 700; color: #16a34a; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px;">Government Status</label>
-                            <p id="cdrrmoStatusText" style="margin: 0; font-size: 1rem; font-weight: 600; color: #1f2937;">—</p>
+                    <div class="cdrrmo-cert-body">
+                        <div class="cdrrmo-cert-cell">
+                            <span class="cdrrmo-cert-label">Government Status</span>
+                            <p id="cdrrmoStatusText">—</p>
                         </div>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
-                            <div style="background: white; padding: 16px; border-radius: 8px; border: 1px solid #dcfce7;">
-                                <label style="display: block; font-size: 0.7rem; font-weight: 700; color: #16a34a; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px;">📅 Date Verified</label>
-                                <p id="cdrrmoDateText" style="margin: 0; font-size: 1rem; font-weight: 600; color: #1f2937;">—</p>
+                        <div class="cdrrmo-cert-row2">
+                            <div class="cdrrmo-cert-cell">
+                                <span class="cdrrmo-cert-label">📅 Date Verified</span>
+                                <p id="cdrrmoDateText">—</p>
                             </div>
-                            <div style="background: white; padding: 16px; border-radius: 8px; border: 1px solid #dcfce7;">
-                                <label style="display: block; font-size: 0.7rem; font-weight: 700; color: #16a34a; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px;">🔖 Reference</label>
-                                <p id="cdrrmoRefText" style="margin: 0; font-size: 1rem; font-weight: 600; color: #1f2937;">THA-ISF</p>
+                            <div class="cdrrmo-cert-cell">
+                                <span class="cdrrmo-cert-label">🔖 Reference</span>
+                                <p id="cdrrmoRefText">—</p>
                             </div>
                         </div>
                     </div>
@@ -1121,6 +1446,21 @@
                                 transform: translateY(-2px);
                             }
                         </style>
+                    </div>
+
+                    <div class="field-evidence-section">
+                        <span class="field-evidence-label">📷 Site evidence (danger zone)</span>
+                        <p class="field-evidence-hint">Use your device camera or upload photos from your gallery. Images are stored with this verification (JPEG/PNG/WebP, up to 12 files, 6&nbsp;MB each). Requires HTTPS or localhost for camera access in most browsers.</p>
+                        <video id="fieldCameraVideo" playsinline autoplay muted style="display: none;"></video>
+                        <canvas id="fieldCameraCanvas" style="display: none;"></canvas>
+                        <div class="field-evidence-buttons">
+                            <button type="button" id="fieldCameraStartBtn" class="table-verify-btn">Open camera</button>
+                            <button type="button" id="fieldCameraCaptureBtn" class="table-verify-btn" style="display: none;">Capture photo</button>
+                            <button type="button" id="fieldCameraStopBtn" class="table-verify-btn" style="display: none; background: linear-gradient(135deg, #64748b 0%, #475569 100%);">Close camera</button>
+                        </div>
+                        <input type="file" id="fieldEvidenceFileInput" accept="image/jpeg,image/png,image/webp,image/*" multiple style="display: none;">
+                        <button type="button" class="field-evidence-file-btn" id="fieldEvidenceFilePickBtn">Upload from gallery</button>
+                        <div id="fieldEvidenceStrip" class="field-evidence-strip"></div>
                     </div>
 
                     <div style="margin-bottom: 24px;">

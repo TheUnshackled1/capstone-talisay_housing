@@ -91,7 +91,7 @@ def document_management(request, position):
             'status_display': applicant.get_status_display() if hasattr(applicant, 'get_status_display') else applicant.status,
             'barangay': applicant.barangay.name if applicant.barangay else 'N/A',
             'monthly_income': applicant.monthly_income or 0,
-            'household_members': applicant.household_members or 0,
+            'household_members': applicant.household_member_count,
             'lot_assignment': lot_info,
             'doc_count': doc_count,
             'total_docs': total_docs,

@@ -6,12 +6,13 @@ from django.db import transaction
 from django.utils import timezone
 from django.contrib import messages
 from datetime import timedelta, datetime
+from collections import OrderedDict
 from functools import wraps
 import json
 
 from intake.models import QueueEntry, Applicant
 from intake.utils import send_sms
-from applications.models import Application
+from applications.models import Application, ElectricityConnection
 from units.models import (
     HousingUnit, LotAward, RelocationSite, ComplianceNotice,
     OccupancyReport, OccupancyReportDetail, CaseRecord, CaseUpdate, WeeklyReport
@@ -75,7 +76,7 @@ def lot_awarding_draw(request, position):
     # Get all vacant housing units
     vacant_units = (
         HousingUnit.objects
-        .filter(status='vacant')
+        .filter(status='Vacant — available')
         .select_related('site')
         .order_by('site__name', 'block_number', 'lot_number')
     )
@@ -123,18 +124,22 @@ def process_lot_awards(request):
                 queue_entry = QueueEntry.objects.get(id=queue_entry_id)
                 applicant = queue_entry.applicant
 
-                # Get or create application for this applicant
+                # Get or create application for this applicant (model uses application_number + valid status values only)
                 application, created = Application.objects.get_or_create(
                     applicant=applicant,
                     defaults={
-                        'reference_number': f'APP-{timezone.now().strftime("%Y%m%d")}-{applicant.id}',
-                        'status': 'eligible',
-                        'submitted_by': request.user,
-                    }
+                        'form_generated_by': request.user,
+                        'status': 'awarded',
+                    },
                 )
+                if not created and application.status != 'awarded':
+                    application.status = 'awarded'
+                    application.save(update_fields=['status', 'updated_at'])
 
-                # Get unit
+                # Get unit (must match HousingUnit.STATUS_CHOICES)
                 unit = HousingUnit.objects.get(id=unit_id)
+                if unit.status != 'Vacant — available':
+                    continue
 
                 # Create LotAward
                 lot_award = LotAward.objects.create(
@@ -146,8 +151,16 @@ def process_lot_awards(request):
                 )
 
                 # Update unit status
-                unit.status = 'occupied'
-                unit.save()
+                unit.status = 'Occupied'
+                unit.save(update_fields=['status', 'updated_at'])
+
+                applicant.status = 'awarded'
+                applicant.save(update_fields=['status', 'updated_at'])
+
+                ElectricityConnection.objects.get_or_create(
+                    application=application,
+                    defaults={'status': 'pending'},
+                )
 
                 # Update queue entry status
                 queue_entry.status = 'completed'
@@ -215,7 +228,7 @@ def compliance_notice_issuance(request, position):
     # Get all occupied housing units with their beneficiary info
     occupied_units = (
         HousingUnit.objects
-        .filter(status='occupied')
+        .filter(status='Occupied')
         .select_related('site')
         .prefetch_related('lot_awards__application__applicant')
         .order_by('site__name', 'block_number', 'lot_number')
@@ -745,6 +758,7 @@ def housing_units_monitoring(request, position):
         HousingUnit.objects
         .filter(site=site)
         .select_related('weekly_report')
+        .prefetch_related('lot_awards__application__applicant')
         .order_by('block_number', 'lot_number')
     )
 
@@ -771,15 +785,11 @@ def housing_units_monitoring(request, position):
             f"Deadline: {escalated_units.notice_deadline}. No response received — case escalated."
         )
 
-    # Group units by block
+    # Group units by block (OrderedDict so template can use .items() like a dict)
     blocks = units.values_list('block_number', flat=True).distinct().order_by('block_number')
-    units_by_block = []
+    units_by_block = OrderedDict()
     for block in blocks:
-        block_units = units.filter(block_number=block)
-        units_by_block.append({
-            'block_number': block,
-            'units': block_units
-        })
+        units_by_block[block] = units.filter(block_number=block)
 
     # Prepare context
     context = {
@@ -795,6 +805,9 @@ def housing_units_monitoring(request, position):
         'all_units': units,
         'has_final_notice_alerts': has_final_notice_alerts,
         'critical_alert_message': critical_alert_message,
+        # Aliases for template compatibility
+        'has_escalation_alerts': has_final_notice_alerts,
+        'escalation_message': critical_alert_message,
         'view_mode': request.GET.get('view', 'grid'),
     }
 

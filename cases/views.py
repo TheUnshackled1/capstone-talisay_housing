@@ -21,7 +21,7 @@ def verify_position(view_func):
         if request.user.position != position:
             from django.contrib import messages
             messages.error(request, f'Access denied. You are logged in as {request.user.get_position_display()}, not {position.replace("_", " ")}.')
-            return redirect('accounts:dashboard', position=request.user.position)
+            return redirect('accounts:dashboard')
         return view_func(request, position, *args, **kwargs)
     return wrapper
 
