@@ -860,6 +860,8 @@ def applicants_list(request, position):
             'applicantId': None,
             'barangay': isf.barangay or isf.submission.barangay or '',  # ISF barangay or submission barangay
             'monthlyIncome': float(isf.monthly_income),
+            'incomeEligible': float(isf.monthly_income) <= 10000,
+            'incomeCeilingPeso': 10000,
             'householdSize': isf.household_members,
             'yearsResiding': isf.years_residing,
             'phoneNumber': isf.phone_number or '',
@@ -949,7 +951,12 @@ def applicants_list(request, position):
         queue_position = None
         if app.active_queue:
             queue_entry = app.active_queue[0]
-            queue_type = 'Priority'
+            qraw = (getattr(queue_entry, 'queue_type', None) or '').lower()
+            if qraw == 'walk_in' or qraw == 'walk-in':
+                queue_type = 'Walk-in'
+            else:
+                # Default / legacy: model uses 'priority' for danger-zone priority queue
+                queue_type = 'Priority'
             queue_position = queue_entry.position
 
         # Get CDRRMO status for danger zone
@@ -1018,6 +1025,9 @@ def applicants_list(request, position):
             ],
             # Section C: FAMILY INCOME
             'monthlyIncome': float(app.monthly_income),
+            # Aligns with Applicant.is_income_eligible and update_eligibility (≤ ₱10,000)
+            'incomeEligible': app.is_income_eligible,
+            'incomeCeilingPeso': 10000,
             'yearsResiding': app.years_residing,
             'occupation': app.occupation or '',
             'employmentStatus': app.get_employment_status_display() if app.employment_status else '',
@@ -1246,6 +1256,8 @@ def walkin_register(request, position):
                 'status': applicant.status,
                 'barangay': applicant.barangay.name if applicant.barangay else '',
                 'monthlyIncome': float(applicant.monthly_income),
+                'incomeEligible': applicant.is_income_eligible,
+                'incomeCeilingPeso': 10000,
                 'householdSize': applicant.household_size,
                 'yearsResiding': applicant.years_residing,
                 'phoneNumber': applicant.phone_number,

@@ -279,6 +279,10 @@
     }
 
     .badge.channel-b { background: #fef3c7; color: #92400e; }
+    /* Channel B: answered Yes — hazard / CDRRMO path */
+    .badge.channel-b-hazard { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+    /* Channel B: answered No — same intake desk, no hazard declaration */
+    .badge.channel-b-screening { background: #e0f2fe; color: #0369a1; border: 1px solid #7dd3fc; }
     .badge.channel-c { background: #ccfbf1; color: #115e59; }
 
     .badge.status-eligible { background: #dcfce7; color: #166534; }
@@ -912,7 +916,7 @@
         </div>
         <select class="filter-select" id="filterChannel" onchange="filterTable()">
             <option value="all">All Channels</option>
-            <option value="B">Channel B — Danger Zone</option>
+            <option value="B">Channel B — Walk-in (hazard pathway)</option>
             <option value="C">Channel C — Walk-in</option>
         </select>
         <select class="filter-select" id="filterStatus" onchange="filterTable()">
@@ -973,14 +977,18 @@
                 <td style="font-weight: 500;">{{ applicant.fullName }}</td>
                 <td>
                     {% if applicant.channel == 'B' %}
-                        <span class="badge channel-b">Channel B — Danger Zone</span>
+                        {% if applicant.dangerZoneType %}
+                            <span class="badge channel-b-hazard" title="Applicant declared they are in or near a hazard zone (Yes).">Channel B — Hazard (Yes)</span>
+                        {% else %}
+                            <span class="badge channel-b-screening" title="Same walk-in desk; applicant declared not in a hazard zone (No).">Channel B — No hazard (No)</span>
+                        {% endif %}
                     {% else %}
                         <span class="badge channel-c">Channel C — Walk-in</span>
                     {% endif %}
                 </td>
                 <td>
                     {% if applicant.channel == 'B' %}
-                        {% if applicant.danger_zone_type %}
+                        {% if applicant.dangerZoneType %}
                             <span class="badge status-pending-cdrrmo">Pending CDRRMO</span>
                             {% if applicant.isCdrrmoFlagged %}
                                 <span class="badge cdrrmo-overdue" style="background: #fef2f2; color: #dc2626; border: 1px solid #fca5a5; margin-left: 0.25rem; font-size: 0.5625rem;" title="Pending for {{ applicant.cdrrmoDaysPending }} days (>14 days)">
@@ -1010,7 +1018,7 @@
                     {% elif applicant.eligibilityStatus == 'Disqualified' %}
                         <span class="badge" style="background: #fee2e2; color: #991b1b;">N/A</span>
                     {% else %}
-                        <span class="badge queue-none">—</span>
+                        <span class="badge queue-none" title="No active Priority or Walk-in queue entry. Eligible applicants appear here until they are placed in a queue.">Not in queue</span>
                     {% endif %}
                 </td>
                 <td>
@@ -1108,7 +1116,7 @@
                 <div id="dangerZoneReviewSection" style="display: none;">
                     <!-- Status Badges Row -->
                     <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; align-items: center;">
-                        <span class="status-badge status-info" id="reviewChannelBadge" style="background: #e0f2fe; color: #0369a1; border: 1px solid #0ea5e9;">Channel B — Danger Zone</span>
+                        <span class="status-badge status-info" id="reviewChannelBadge" style="background: #e0f2fe; color: #0369a1; border: 1px solid #0ea5e9;">Channel B — Walk-in pathway</span>
                         <span class="status-badge" id="reviewEligibilityBadgeB"></span>
                         <span class="status-badge" id="reviewQueueBadgeB" style="display: none;"></span>
                     </div>
@@ -1225,6 +1233,11 @@
                                 <div>
                                     <label style="font-size: 0.625rem; color: #64748b; font-weight: 600;">Ronda Notes:</label>
                                     <p id="rondaNotes" style="font-size: 0.875rem; color: #1f2937; margin: 0.25rem 0 0 0; font-style: italic; border-left: 3px solid #86efac; padding-left: 0.75rem;">—</p>
+                                </div>
+                                <div id="rondaEvidencePhotosSection" style="display: none; margin-top: 0.75rem;">
+                                    <label style="font-size: 0.625rem; color: #64748b; font-weight: 600;">Field evidence (photos from Ronda):</label>
+                                    <div id="rondaEvidencePhotosStrip" style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.375rem;"></div>
+                                    <p id="rondaEvidencePhotosEmpty" style="display: none; font-size: 0.75rem; color: #64748b; margin: 0.375rem 0 0 0;">No field photos were uploaded with this verification.</p>
                                 </div>
                             </div>
                         </div>
@@ -2085,6 +2098,42 @@
     const applicantsData = {{ applicants_json|safe }};
     const canModify = {{ can_modify|yesno:"true,false" }};
 
+    /**
+     * Channel B is the walk-in intake desk for the hazard pathway; the Yes/No answer
+     * is stored on dangerZoneType (hazard category) and drives CDRRMO vs proceed.
+     */
+    function channelBDisplayLabel(applicant) {
+        if (!applicant) return 'Channel B — Walk-in pathway';
+        const ch = applicant.channel;
+        if (ch !== 'B' && ch !== 'danger_zone') return 'Channel B — Walk-in pathway';
+        const dz = applicant.dangerZoneType || applicant.danger_zone_type;
+        const declared = !!(dz && String(dz).trim());
+        return declared
+            ? 'Channel B — Hazard declared (Yes)'
+            : 'Channel B — Not in hazard zone (No)';
+    }
+
+    /** Module 1 income rule — must match `Applicant.is_income_eligible` / `update_eligibility` in intake/views.py */
+    const MODULE1_INCOME_CEILING = 10000;
+
+    function incomeCheckState(applicant) {
+        const income = Number(applicant.monthlyIncome) || 0;
+        const ceiling = Number(applicant.incomeCeilingPeso) > 0 ? Number(applicant.incomeCeilingPeso) : MODULE1_INCOME_CEILING;
+        const pass = typeof applicant.incomeEligible === 'boolean'
+            ? applicant.incomeEligible
+            : income <= ceiling;
+        return { income, ceiling, pass };
+    }
+
+    function incomeExceedsCeilingNoticeHtml(pass, income, ceiling) {
+        if (pass) return '';
+        const amt = '₱' + Number(income).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const cap = '₱' + Number(ceiling).toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+        return `<div style="margin-top:0.5rem;padding:0.625rem 0.75rem;background:#fef2f2;border:1px solid #fecaca;border-radius:0.375rem;font-size:0.8125rem;color:#991b1b;line-height:1.45;">
+            <strong>Note — Income exceeds ceiling:</strong> This ISF declared <strong>${amt}</strong> monthly household income, which is above the Module 1 limit of <strong>${cap}</strong>. Staff cannot mark them eligible until income is corrected (e.g. via Edit) or they are disqualified (e.g. reason “Income exceeds ₱10,000 limit”).
+        </div>`;
+    }
+
     // Format income field with thousands separator on blur
     function attachIncomeFormatter(input) {
         input.addEventListener('blur', function() {
@@ -2200,17 +2249,12 @@
                         ? 'Channel A — Staff Entry'
                         : 'Channel A — Landowner Portal';
                 } else if (applicant.channel === 'B') {
-                    return 'Channel B — Danger Zone';
+                    return channelBDisplayLabel(applicant);
                 } else if (applicant.channel === 'C') {
                     return 'Channel C — Walk-in';
                 }
                 return 'Unknown Channel';
             }
-
-            const channelLabels = {
-                'B': 'Channel B — Danger Zone',
-                'C': 'Channel C — Walk-in'
-            };
 
             // Hide all sections first (with null checks)
             const dangerZoneSection = document.getElementById('dangerZoneReviewSection');
@@ -2360,14 +2404,14 @@
                     }
                 }
 
-                // Channel badge always shows Channel B — Danger Zone
                 const channelBadgeB = document.getElementById('reviewChannelBadge');
                 if (channelBadgeB) {
                     channelBadgeB.className = 'status-badge status-info';
-                    channelBadgeB.style.background = '#e0f2fe';
-                    channelBadgeB.style.color = '#0369a1';
-                    channelBadgeB.style.border = '1px solid #0ea5e9';
-                    channelBadgeB.textContent = 'Channel B — Danger Zone';
+                    const declared = !!(currentApplicant.dangerZoneType && String(currentApplicant.dangerZoneType).trim());
+                    channelBadgeB.style.background = declared ? '#fef3c7' : '#e0f2fe';
+                    channelBadgeB.style.color = declared ? '#92400e' : '#0369a1';
+                    channelBadgeB.style.border = declared ? '1px solid #fcd34d' : '1px solid #0ea5e9';
+                    channelBadgeB.textContent = channelBDisplayLabel(currentApplicant);
                 }
 
                 const queueBadgeB = document.getElementById('reviewQueueBadgeB');
@@ -2377,7 +2421,12 @@
                         queueBadgeB.textContent = currentApplicant.queueType + (currentApplicant.queuePosition ? ' #' + currentApplicant.queuePosition : '');
                         queueBadgeB.className = 'status-badge status-info';
                     } else {
-                        queueBadgeB.style.display = 'none';
+                        queueBadgeB.style.display = 'inline-flex';
+                        queueBadgeB.className = 'status-badge';
+                        queueBadgeB.style.background = '#f1f5f9';
+                        queueBadgeB.style.color = '#64748b';
+                        queueBadgeB.style.border = '1px solid #e2e8f0';
+                        queueBadgeB.textContent = 'Not in queue';
                     }
                 }
                 
@@ -2697,16 +2746,19 @@
         const container = document.getElementById('eligibilityChecks');
         if (!container) return;
         
-        const income = applicant.monthlyIncome || 0;
-        const incomePass = income <= 10000;
+        const { income, ceiling, pass: incomePass } = incomeCheckState(applicant);
         const cdrrmoPass = isCdrrmoCertified(applicant.cdrrmoStatus);
+        const incomeNote = incomeExceedsCeilingNoticeHtml(incomePass, income, ceiling);
         
         container.innerHTML = `
+            <div style="display: flex; flex-direction: column;">
             <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: ${incomePass ? '#dcfce7' : '#fee2e2'}; border-radius: 0.375rem;">
                 <svg style="width: 1rem; height: 1rem; color: ${incomePass ? '#16a34a' : '#dc2626'};" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     ${incomePass ? '<polyline points="20 6 9 17 4 12"></polyline>' : '<line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>'}
                 </svg>
-                <span style="font-size: 0.8125rem;">Monthly income ≤ ₱10,000 <strong>(₱${income.toLocaleString()})</strong></span>
+                <span style="font-size: 0.8125rem;">Monthly household income ≤ ₱${ceiling.toLocaleString('en-PH')} <strong>(declared: ₱${income.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})</strong></span>
+            </div>
+            ${incomeNote}
             </div>
             <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: #dcfce7; border-radius: 0.375rem;">
                 <svg style="width: 1rem; height: 1rem; color: #16a34a;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -2908,16 +2960,19 @@
         const container = document.getElementById('eligibilityChecksB');
         if (!container) return;
 
-        const income = applicant.monthlyIncome || 0;
-        const incomePass = income <= 10000;
+        const { income, ceiling, pass: incomePass } = incomeCheckState(applicant);
         const cdrrmoPass = isCdrrmoCertified(applicant.cdrrmoStatus);
+        const incomeNote = incomeExceedsCeilingNoticeHtml(incomePass, income, ceiling);
 
         let html = `
+            <div style="display: flex; flex-direction: column;">
             <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: ${incomePass ? '#dcfce7' : '#fee2e2'}; border-radius: 0.375rem;">
                 <svg style="width: 1rem; height: 1rem; color: ${incomePass ? '#16a34a' : '#dc2626'};" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     ${incomePass ? '<polyline points="20 6 9 17 4 12"></polyline>' : '<line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>'}
                 </svg>
-                <span style="font-size: 0.8125rem;">Monthly income ≤ ₱10,000 <strong>(₱${income.toLocaleString()})</strong></span>
+                <span style="font-size: 0.8125rem;">Monthly household income ≤ ₱${ceiling.toLocaleString('en-PH')} <strong>(declared: ₱${income.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})</strong></span>
+            </div>
+            ${incomeNote}
             </div>
             <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: #dcfce7; border-radius: 0.375rem;">
                 <svg style="width: 1rem; height: 1rem; color: #16a34a;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -3026,15 +3081,18 @@
         const container = document.getElementById('eligibilityChecksA');
         if (!container) return;
         
-        const income = applicant.monthlyIncome || 0;
-        const incomePass = income <= 10000;
+        const { income, ceiling, pass: incomePass } = incomeCheckState(applicant);
+        const incomeNote = incomeExceedsCeilingNoticeHtml(incomePass, income, ceiling);
         
         container.innerHTML = `
+            <div style="display: flex; flex-direction: column;">
             <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: ${incomePass ? '#dcfce7' : '#fee2e2'}; border-radius: 0.375rem;">
                 <svg style="width: 1rem; height: 1rem; color: ${incomePass ? '#16a34a' : '#dc2626'};" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     ${incomePass ? '<polyline points="20 6 9 17 4 12"></polyline>' : '<line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>'}
                 </svg>
-                <span style="font-size: 0.8125rem;">Monthly income ≤ ₱10,000 <strong>(₱${income.toLocaleString()})</strong></span>
+                <span style="font-size: 0.8125rem;">Monthly household income ≤ ₱${ceiling.toLocaleString('en-PH')} <strong>(declared: ₱${income.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})</strong></span>
+            </div>
+            ${incomeNote}
             </div>
             <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: #dcfce7; border-radius: 0.375rem;">
                 <svg style="width: 1rem; height: 1rem; color: #16a34a;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -4000,8 +4058,8 @@
         document.getElementById('reviewApplicantId').value = applicant.id;
         document.getElementById('reviewChannel').value = applicant.channel;
 
-        // Channel B (Danger Zone) specific fields
-        if (applicant.channel === 'danger_zone') {
+        // Channel B (walk-in hazard pathway) — API may use 'B' or 'danger_zone'
+        if (applicant.channel === 'danger_zone' || applicant.channel === 'B') {
             document.getElementById('dangerZoneReviewSection').style.display = 'block';
 
             // Basic info
@@ -4013,18 +4071,18 @@
             document.getElementById('reviewPhoneB').value = applicant.phoneNumber;
             document.getElementById('reviewAddressB').value = applicant.currentAddress;
 
-            // Update channel badge to show danger zone status based on Yes/No answer
+            // Update channel badge from hazard Yes/No (dangerZoneType set when Yes)
             const dangerZoneBadge = document.getElementById('reviewDangerZoneBadge');
             const channelBadge = document.getElementById('reviewChannelBadge');
             const eligibilityBadgeB = document.getElementById('reviewEligibilityBadgeB');
 
-            // Channel badge always shows Channel B — Danger Zone
             if (channelBadge) {
                 channelBadge.className = 'status-badge status-info';
-                channelBadge.style.background = '#e0f2fe';
-                channelBadge.style.color = '#0369a1';
-                channelBadge.style.border = '1px solid #0ea5e9';
-                channelBadge.textContent = 'Channel B — Danger Zone';
+                const declared = !!(applicant.dangerZoneType || applicant.danger_zone_type);
+                channelBadge.style.background = declared ? '#fef3c7' : '#e0f2fe';
+                channelBadge.style.color = declared ? '#92400e' : '#0369a1';
+                channelBadge.style.border = declared ? '1px solid #fcd34d' : '1px solid #0ea5e9';
+                channelBadge.textContent = channelBDisplayLabel(applicant);
             }
 
             // Eligibility badge based on Yes/No selection
@@ -4347,8 +4405,8 @@
         const rows = filteredData.map(app => [
             app.referenceNumber || '',
             app.fullName || '',
-            app.channel === 'A' ? 'Channel A - Landowner' : 
-                app.channel === 'B' ? 'Channel B - Danger Zone' : 'Channel C - Walk-in',
+            app.channel === 'A' ? 'Channel A - Landowner' :
+                (app.channel === 'B' || app.channel === 'danger_zone') ? channelBDisplayLabel(app) : 'Channel C - Walk-in',
             app.barangay || '',
             app.monthlyIncome || '',
             app.householdSize || '',
@@ -4845,9 +4903,19 @@
         const rondaTeamResultBox = document.getElementById('rondaTeamResultBox');
         const staffApprovalBox = document.getElementById('staffApprovalBox');
         const cdrrmoStatusBox = document.getElementById('cdrrmoStatusBox');
+        const rondaEvidenceSection = document.getElementById('rondaEvidencePhotosSection');
+        const rondaEvidenceStrip = document.getElementById('rondaEvidencePhotosStrip');
+        const rondaEvidenceEmpty = document.getElementById('rondaEvidencePhotosEmpty');
+
+        function resetRondaEvidencePhotos() {
+            if (rondaEvidenceStrip) rondaEvidenceStrip.innerHTML = '';
+            if (rondaEvidenceSection) rondaEvidenceSection.style.display = 'none';
+            if (rondaEvidenceEmpty) rondaEvidenceEmpty.style.display = 'none';
+        }
 
         if (cdrrmoStatus === 'pending') {
             // Still pending - field team hasn't verified yet
+            resetRondaEvidencePhotos();
             cdrrmoStatusBox.style.display = 'block';
             rondaTeamResultBox.style.display = 'none';
             staffApprovalBox.style.display = 'none';
@@ -4873,6 +4941,34 @@
                 document.getElementById('rondaCertifiedBadge').style.display = 'none';
                 document.getElementById('rondaNotCertifiedBadge').style.display = 'inline-block';
             }
+
+            const photoUrls = Array.isArray(applicantData.ronda_evidence_photos) ? applicantData.ronda_evidence_photos : [];
+            if (rondaEvidenceSection && rondaEvidenceStrip) {
+                rondaEvidenceStrip.innerHTML = '';
+                rondaEvidenceSection.style.display = 'block';
+                if (photoUrls.length > 0) {
+                    if (rondaEvidenceEmpty) rondaEvidenceEmpty.style.display = 'none';
+                    photoUrls.forEach(function (url) {
+                        if (!url) return;
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.target = '_blank';
+                        a.rel = 'noopener noreferrer';
+                        a.title = 'Open full size';
+                        const img = document.createElement('img');
+                        img.src = url;
+                        img.alt = 'Field evidence captured by Ronda';
+                        img.loading = 'lazy';
+                        img.style.cssText = 'width: 96px; height: 96px; object-fit: cover; border-radius: 8px; border: 1px solid #dcfce7; display: block;';
+                        a.appendChild(img);
+                        rondaEvidenceStrip.appendChild(a);
+                    });
+                } else {
+                    if (rondaEvidenceEmpty) rondaEvidenceEmpty.style.display = 'block';
+                }
+            }
+        } else {
+            resetRondaEvidencePhotos();
         }
     }
 
