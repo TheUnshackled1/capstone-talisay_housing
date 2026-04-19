@@ -433,6 +433,36 @@ class CDRRMOCertification(models.Model):
         return self.days_pending > 14
 
 
+class FieldVerificationPhoto(models.Model):
+    """
+    On-site photos taken by field/ronda staff as evidence for danger-zone verification.
+    Stored when submitting field verification (Module 1, Channel B).
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    certification = models.ForeignKey(
+        CDRRMOCertification,
+        on_delete=models.CASCADE,
+        related_name='field_photos',
+    )
+    image = models.ImageField(upload_to='field_verification/%Y/%m/')
+    caption = models.CharField(max_length=200, blank=True)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    uploaded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='field_verification_photos',
+    )
+
+    class Meta:
+        ordering = ['-uploaded_at']
+        verbose_name = 'Field verification photo'
+        verbose_name_plural = 'Field verification photos'
+
+    def __str__(self):
+        return f'Photo for {self.certification.applicant.reference_number}'
+
+
 class QueueEntry(models.Model):
     """
     Manages priority queue for danger zone applicants.

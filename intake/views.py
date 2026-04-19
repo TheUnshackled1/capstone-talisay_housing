@@ -6,7 +6,7 @@ from django.http import JsonResponse
 from django.utils import timezone
 from django.db.models import Q, Prefetch
 from functools import wraps
-from .models import Applicant, Barangay, QueueEntry, CDRRMOCertification
+from .models import Applicant, Barangay, QueueEntry, CDRRMOCertification, FieldVerificationPhoto
 from .forms import (
     HouseholdMemberForm,
     WalkInApplicantForm
@@ -505,13 +505,35 @@ def field_verify_cdrrmo(request, position):
 
         cert.save()
 
+        # Optional on-site evidence photos (camera / gallery); validated server-side
+        photos = request.FILES.getlist('evidence_photos')
+        max_photos = 12
+        max_bytes = 6 * 1024 * 1024
+        allowed_types = {'image/jpeg', 'image/png', 'image/webp'}
+        photos_saved = 0
+
+        for upload in photos[:max_photos]:
+            if upload.size > max_bytes:
+                continue
+            ct = (upload.content_type or '').lower()
+            name = (upload.name or '').lower()
+            if ct not in allowed_types and not name.endswith(('.jpg', '.jpeg', '.png', '.webp')):
+                continue
+            FieldVerificationPhoto.objects.create(
+                certification=cert,
+                image=upload,
+                uploaded_by=request.user,
+            )
+            photos_saved += 1
+
         # Return success with updated status
         return JsonResponse({
             'success': True,
             'message': f'Verification recorded as {"✓ Certified" if verification_decision == "certified" else "✗ Not Certified"}',
             'certification_status': verification_decision,
             'recorded_by': f'{request.user.first_name} {request.user.last_name}',
-            'recorded_at': timezone.now().isoformat()
+            'recorded_at': timezone.now().isoformat(),
+            'photos_saved': photos_saved,
         })
 
     except Applicant.DoesNotExist:
@@ -890,13 +912,17 @@ def applicants_list(request, position):
     # ====== CHANNEL B: Danger Zone Applicants + ALL OTHER APPLICANTS ======
     # Get ALL applicants (danger zone, walk-in, etc.)
     walk_in_applicants = Applicant.objects.all().select_related(
-        'barangay', 'eligibility_checked_by', 'registered_by'
+        'barangay', 'eligibility_checked_by', 'registered_by', 'cdrrmo_certification'
     ).prefetch_related(
         Prefetch(
             'queue_entries',
             queryset=QueueEntry.objects.filter(status='active'),
-            to_attr='active_queue'
-        )
+            to_attr='active_queue',
+        ),
+        Prefetch(
+            'cdrrmo_certification__field_photos',
+            queryset=FieldVerificationPhoto.objects.order_by('uploaded_at'),
+        ),
     ).order_by('created_at')
 
     for app in walk_in_applicants:
@@ -935,6 +961,7 @@ def applicants_list(request, position):
         result_recorded_by_name = None
         certified_at = None
         certification_notes = None
+        ronda_evidence_photos = []
         if app.channel == 'danger_zone':
             try:
                 cert = app.cdrrmo_certification
@@ -946,6 +973,12 @@ def applicants_list(request, position):
                 result_recorded_by_name = f'{cert.result_recorded_by.first_name} {cert.result_recorded_by.last_name}' if cert.result_recorded_by else None
                 certified_at = cert.certified_at.isoformat() if cert.certified_at else None
                 certification_notes = cert.certification_notes or None
+                for ph in cert.field_photos.all():
+                    if ph.image:
+                        try:
+                            ronda_evidence_photos.append(request.build_absolute_uri(ph.image.url))
+                        except (ValueError, AttributeError):
+                            pass
             except CDRRMOCertification.DoesNotExist:
                 cdrrmo_status = 'Not Requested'
                 cdrrmo_status_value = None
@@ -1000,6 +1033,7 @@ def applicants_list(request, position):
             'result_recorded_by_name': result_recorded_by_name,  # Who verified
             'certified_at': certified_at,  # When verified
             'certification_notes': certification_notes,  # Ronda team notes
+            'ronda_evidence_photos': ronda_evidence_photos,  # Absolute URLs of field-captured evidence
             'isCdrrmoFlagged': is_cdrrmo_flagged,
             'cdrrmoDaysPending': cdrrmo_days_pending,
             'signatoryRoutingDelayed': False,  # TODO: Link to Module 2

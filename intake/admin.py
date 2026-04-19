@@ -1,5 +1,14 @@
 from django.contrib import admin
-from .models import SMSLog, Blacklist, Barangay, Applicant, HouseholdMember, CDRRMOCertification, QueueEntry
+from .models import (
+    SMSLog,
+    Blacklist,
+    Barangay,
+    Applicant,
+    HouseholdMember,
+    CDRRMOCertification,
+    FieldVerificationPhoto,
+    QueueEntry,
+)
 
 
 @admin.register(Applicant)
@@ -109,12 +118,19 @@ class SMSLogAdmin(admin.ModelAdmin):
     readonly_fields = ('sent_at',)
 
 
+class FieldVerificationPhotoInline(admin.TabularInline):
+    model = FieldVerificationPhoto
+    extra = 0
+    readonly_fields = ('uploaded_at', 'uploaded_by')
+
+
 @admin.register(CDRRMOCertification)
 class CDRRMOCertificationAdmin(admin.ModelAdmin):
     list_display = ('applicant', 'status', 'requested_at', 'certified_at')
     list_filter = ('status', 'requested_at')
     search_fields = ('applicant__full_name',)
     readonly_fields = ('requested_at', 'certified_at')
+    inlines = [FieldVerificationPhotoInline]
 
     fieldsets = (
         ('🏛️ CDRRMO CERTIFICATION', {

@@ -926,8 +926,6 @@ def dashboard_caretaker(request):
 
 
 @login_required
-@login_required
-@login_required
 def dashboard_field(request):
     """
     Dashboard for Field Personnel (Ronda - Paul Betila, Roberto Dreyfus, Nonoy)
@@ -981,7 +979,7 @@ def dashboard_field(request):
             'address': cert.applicant.current_address,
             'barangay': cert.applicant.barangay,
             'phone': cert.applicant.phone_number,
-            'household_members': cert.applicant.household_members,
+            'household_members': cert.applicant.household_member_count,
             'monthly_income': cert.applicant.monthly_income,
             'danger_zone_type': cert.applicant.danger_zone_type,
             'danger_zone_location': cert.applicant.danger_zone_location,

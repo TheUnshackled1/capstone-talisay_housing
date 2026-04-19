@@ -63,16 +63,16 @@
     <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.5rem;">
         <button class="filter-tab active" data-filter="all" onclick="filterUnits('all')" style="padding: 0.4rem 0.75rem; border: 1px solid var(--gray-300); background: white; border-radius: 20px; font-size: 0.8rem; cursor: pointer; font-weight: 500;">All Units ({{ total_units }})</button>
         <button class="filter-tab" data-filter="Occupied" onclick="filterUnits('Occupied')" style="padding: 0.4rem 0.75rem; border: 1px solid #bbf7d0; background: white; border-radius: 20px; font-size: 0.8rem; cursor: pointer;">Occupied ({{ occupied_count }})</button>
-        <button class="filter-tab" data-filter="Vacant" onclick="filterUnits('Vacant')" style="padding: 0.4rem 0.75rem; border: 1px solid #bfdbfe; background: white; border-radius: 20px; font-size: 0.8rem; cursor: pointer;">Vacant — available ({{ vacant_count }})</button>
-        <button class="filter-tab" data-filter="Notice30" onclick="filterUnits('Notice30')" style="padding: 0.4rem 0.75rem; border: 1px solid #fcd34d; background: white; border-radius: 20px; font-size: 0.8rem; cursor: pointer;">Under notice (30-day) (1)</button>
-        <button class="filter-tab" data-filter="Notice10" onclick="filterUnits('Notice10')" style="padding: 0.4rem 0.75rem; border: 1px solid #fecaca; background: white; border-radius: 20px; font-size: 0.8rem; cursor: pointer;">Final notice (10-day) (1)</button>
+        <button class="filter-tab" data-filter="Vacant — available" onclick="filterUnits('Vacant — available')" style="padding: 0.4rem 0.75rem; border: 1px solid #bfdbfe; background: white; border-radius: 20px; font-size: 0.8rem; cursor: pointer;">Vacant — available ({{ vacant_count }})</button>
+        <button class="filter-tab" data-filter="Under notice (30-day)" onclick="filterUnits('Under notice (30-day)')" style="padding: 0.4rem 0.75rem; border: 1px solid #fcd34d; background: white; border-radius: 20px; font-size: 0.8rem; cursor: pointer;">Under notice (30-day) ({{ notice_30_count }})</button>
+        <button class="filter-tab" data-filter="Final notice (10-day)" onclick="filterUnits('Final notice (10-day)')" style="padding: 0.4rem 0.75rem; border: 1px solid #fecaca; background: white; border-radius: 20px; font-size: 0.8rem; cursor: pointer;">Final notice (10-day) ({{ notice_10_count }})</button>
         <button class="filter-tab" data-filter="Repossessed" onclick="filterUnits('Repossessed')" style="padding: 0.4rem 0.75rem; border: 1px solid #e9d5ff; background: white; border-radius: 20px; font-size: 0.8rem; cursor: pointer;">Repossessed ({{ repossessed_count }})</button>
     </div>
 
     <!-- GRID VIEW -->
     <div id="gridView-content" style="display: grid;">
         {% for block, units in units_by_block.items %}
-        <div style="margin-bottom: 2rem;">
+        <div class="unit-block-section" style="margin-bottom: 2rem;">
             <!-- Block Header -->
             <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; padding: 0.75rem 0;">
                 <span style="font-size: 1.5rem;">🏛️</span>
@@ -98,7 +98,7 @@
                     </div>
 
                     <!-- Occupant Name -->
-                    <p style="margin: 0 0 0.5rem; font-size: 0.9rem; font-weight: 600; color: var(--gray-900);">{{ unit.current_occupant|default:"—" }}</p>
+                    <p style="margin: 0 0 0.5rem; font-size: 0.9rem; font-weight: 600; color: var(--gray-900);">{% if unit.current_occupant %}{{ unit.current_occupant.full_name }}{% elif unit.occupant_name %}{{ unit.occupant_name }}{% else %}—{% endif %}</p>
 
                     <!-- Unit Status Info -->
                     <p style="margin: 0; font-size: 0.75rem; color: var(--gray-600);">{{ unit.get_status_display }}</p>
@@ -127,10 +127,10 @@
                 <tbody>
                     {% for block, units in units_by_block.items %}
                         {% for unit in units %}
-                        <tr style="border-bottom: 1px solid var(--gray-100); hover:background: #f9fafb;">
+                        <tr class="unit-table-row" data-status="{{ unit.status }}" style="border-bottom: 1px solid var(--gray-100); hover:background: #f9fafb;">
                             <td style="padding: 1rem;">{{ block }}</td>
                             <td style="padding: 1rem;">{{ unit.lot_number }}</td>
-                            <td style="padding: 1rem;">{{ unit.current_occupant|default:"—" }}</td>
+                            <td style="padding: 1rem;">{% if unit.current_occupant %}{{ unit.current_occupant.full_name }}{% elif unit.occupant_name %}{{ unit.occupant_name }}{% else %}—{% endif %}</td>
                             <td style="padding: 1rem;">
                                 <span style="display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.25rem 0.6rem; border-radius: 4px; font-weight: 500;
                                     {% if unit.status == 'Occupied' %}background: rgba(34, 197, 94, 0.15); color: #16a34a;{% elif unit.status == 'Vacant — available' %}background: rgba(37, 99, 235, 0.15); color: #2563eb;{% elif unit.status == 'Under notice (30-day)' %}background: rgba(245, 158, 11, 0.15); color: #d97706;{% elif unit.status == 'Final notice (10-day)' %}background: rgba(239, 68, 68, 0.15); color: #dc2626;{% else %}background: rgba(168, 85, 247, 0.15); color: #a855f7;{% endif %}
@@ -142,7 +142,7 @@
                                 </span>
                             </td>
                             <td style="padding: 1rem;">—</td>
-                            <td style="padding: 1rem;">{{ unit.latest_report_status|default:"Unoccupied" }}</td>
+                            <td style="padding: 1rem;">{% if unit.weekly_report %}{{ unit.weekly_report.reported_status|default:"—" }}{% else %}—{% endif %}</td>
                             <td style="padding: 1rem; text-align: right;">
                                 <button onclick="openUnitModal('{{ unit.id }}'); event.stopPropagation();" style="padding: 0.4rem 0.75rem; background: var(--gray-100); color: var(--gray-700); border: none; border-radius: 6px; font-size: 0.75rem; cursor: pointer;">👁️ View</button>
                             </td>
@@ -232,13 +232,17 @@ function switchView(view) {
     if (view === 'grid') {
         gridView.style.display = 'grid';
         tableView.style.display = 'none';
-        gridBtn.style.background = var(--primary-600); gridBtn.style.color = 'white';
-        tableBtn.style.background = 'white'; tableBtn.style.color = var(--gray-700);
+        gridBtn.style.background = 'var(--primary-600)';
+        gridBtn.style.color = 'white';
+        tableBtn.style.background = 'white';
+        tableBtn.style.color = 'var(--gray-700)';
     } else {
         gridView.style.display = 'none';
         tableView.style.display = 'block';
-        tableBtn.style.background = var(--primary-600); tableBtn.style.color = 'white';
-        gridBtn.style.background = 'white'; gridBtn.style.color = var(--gray-700);
+        tableBtn.style.background = 'var(--primary-600)';
+        tableBtn.style.color = 'white';
+        gridBtn.style.background = 'white';
+        gridBtn.style.color = 'var(--gray-700)';
     }
 }
 
@@ -246,14 +250,35 @@ function filterUnits(filter) {
     const tabs = document.querySelectorAll('.filter-tab');
     tabs.forEach(t => {
         if (t.dataset.filter === filter) {
-            t.style.background = var(--primary-600);
+            t.style.background = 'var(--primary-600)';
             t.style.color = 'white';
         } else {
             t.style.background = 'white';
-            t.style.color = var(--gray-700);
+            t.style.color = 'var(--gray-700)';
         }
     });
-    // Implement filtering logic
+
+    const matchStatus = (status) => {
+        if (filter === 'all') return true;
+        return status === filter;
+    };
+
+    document.querySelectorAll('.unit-card').forEach(card => {
+        const st = card.getAttribute('data-status') || '';
+        card.style.display = matchStatus(st) ? '' : 'none';
+    });
+
+    document.querySelectorAll('.unit-table-row').forEach(row => {
+        const st = row.getAttribute('data-status') || '';
+        row.style.display = matchStatus(st) ? '' : 'none';
+    });
+
+    document.querySelectorAll('.unit-block-section').forEach(section => {
+        const anyVisible = Array.from(section.querySelectorAll('.unit-card')).some(
+            c => c.style.display !== 'none'
+        );
+        section.style.display = anyVisible ? '' : 'none';
+    });
 }
 
 function openUnitModal(unitId) {
