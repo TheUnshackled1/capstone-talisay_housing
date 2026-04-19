@@ -3,13 +3,66 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
-from datetime import timedelta
+from django.db.models import Q
+from datetime import timedelta, date
 from .forms import LoginForm
 from intake.models import Applicant, QueueEntry, CDRRMOCertification, SMSLog, Blacklist
 from cases.models import Case
 from applications.models import Application, SignatoryRouting, RequirementSubmission
 from units.models import ComplianceNotice, HousingUnit, ElectricityConnection
 import json
+
+
+def _applicant_missing_intake_doc_q():
+    """Any of the seven Module 1 intake checklist documents not yet marked received."""
+    return (
+        Q(doc_brgy_residency=False)
+        | Q(doc_brgy_indigency=False)
+        | Q(doc_cedula=False)
+        | Q(doc_police_clearance=False)
+        | Q(doc_no_property=False)
+        | Q(doc_2x2_picture=False)
+        | Q(doc_sketch_location=False)
+    )
+
+
+def _applicant_intake_docs_done_count(applicant):
+    keys = (
+        'doc_brgy_residency',
+        'doc_brgy_indigency',
+        'doc_cedula',
+        'doc_police_clearance',
+        'doc_no_property',
+        'doc_2x2_picture',
+        'doc_sketch_location',
+    )
+    return sum(1 for k in keys if getattr(applicant, k, False))
+
+
+def _serialize_units_electricity_connection(conn):
+    """units.ElectricityConnection → dict for dashboard templates (2nd / 5th member)."""
+    unit = conn.lot_award.unit
+    person = conn.lot_award.application.applicant
+    st = conn.status
+    progress_map = {
+        'pending': 25,
+        'docs_submitted': 45,
+        'coordinating': 65,
+        'approved': 90,
+        'completed': 100,
+    }
+    step_map = {'pending': 1, 'docs_submitted': 2, 'coordinating': 3, 'approved': 3, 'completed': 4}
+    return {
+        'beneficiary': person.full_name,
+        'beneficiary_name': person.full_name,
+        'block': unit.block_number,
+        'lot': unit.lot_number,
+        'status': st,
+        'status_display': conn.get_status_display(),
+        'progress': progress_map.get(st, 15),
+        'step': step_map.get(st, 1),
+        'last_updated': conn.updated_at,
+    }
 
 
 def login_view(request):
@@ -678,10 +731,12 @@ def dashboard_second_member(request):
 
         notices_to_prepare.append({
             'type': notice.get_notice_type_display(),
+            'type_display': notice.get_notice_type_display(),
             'type_code': notice.notice_type,
             'beneficiary': notice.lot_award.application.applicant.full_name if notice.lot_award else 'N/A',
-            'block': notice.unit.block if notice.unit else 'N/A',
-            'lot': notice.unit.lot if notice.unit else 'N/A',
+            'beneficiary_name': notice.lot_award.application.applicant.full_name if notice.lot_award else 'N/A',
+            'block': notice.unit.block_number if notice.unit else '—',
+            'lot': notice.unit.lot_number if notice.unit else '—',
             'deadline': notice.deadline,
             'days_remaining': notice.days_remaining,
             'is_approaching': is_approaching_deadline,
@@ -693,60 +748,36 @@ def dashboard_second_member(request):
 
     pending_notices_count = len(notices_to_prepare)
 
-    # ==================== MODULE 2: ELECTRICITY CONNECTIONS (M2) ====================
-    # Electricity connection tracking
-    electricity_connections = ElectricityConnection.objects.filter(
-        status__in=['pending', 'initiated', 'in_progress', 'approved', 'completed']
-    ).select_related('lot_award__application__applicant', 'lot_award__unit').order_by('-updated_at')
+    # ==================== MODULE 2: ELECTRICITY CONNECTIONS (M2) — units.ElectricityConnection ====================
+    electricity_connections = (
+        ElectricityConnection.objects.exclude(status='completed')
+        .select_related('lot_award__application__applicant', 'lot_award__unit')
+        .order_by('-updated_at')[:20]
+    )
+    electricity_tracking = [_serialize_units_electricity_connection(c) for c in electricity_connections]
+    electricity_pending_count = (
+        ElectricityConnection.objects.exclude(status='completed').count()
+    )
 
-    electricity_tracking = []
-    for conn in electricity_connections:
-        # Calculate progress: pending=25%, in_progress=75%, completed=100%
-        progress_map = {
-            'pending': 25,
-            'in_progress': 75,
-            'completed': 100,
-        }
-        progress = progress_map.get(conn.status, 0)
-
-        electricity_tracking.append({
-            'beneficiary': conn.lot_award.application.applicant.full_name,
-            'block': conn.lot_award.unit.block,
-            'lot': conn.lot_award.unit.lot,
-            'status': conn.status,
-            'status_display': conn.get_status_display(),
-            'progress': progress,
-            'last_updated': conn.updated_at,
-        })
-
-    electricity_pending_count = len(electricity_tracking)
-
-    # ==================== MODULE 3: DOCUMENT OVERSIGHT (M3) ====================
-    # Track incomplete requirement submissions
-    incomplete_requirements = RequirementSubmission.objects.filter(
-        status='incomplete'
-    ).select_related('applicant').order_by('submitted_at')
-
+    # ==================== MODULE 3: DOCUMENT OVERSIGHT (M3) — Module 1 seven-document checklist ====================
+    incomplete_module1_qs = (
+        Applicant.objects.filter(_applicant_missing_intake_doc_q())
+        .order_by('-updated_at')[:15]
+    )
     doc_completeness_alerts = []
-    for req in incomplete_requirements:
-        missing_docs = []
-        # Check which requirements are missing
-        applicant_reqs = RequirementSubmission.objects.filter(
-            applicant=req.applicant
-        )
+    for app in incomplete_module1_qs:
+        done = _applicant_intake_docs_done_count(app)
         doc_completeness_alerts.append({
-            'applicant_name': req.applicant.full_name,
-            'reference': req.applicant.id,  # Use applicant ID as reference
-            'missing_docs': f"{applicant_reqs.count()} requirements pending",
+            'applicant_name': app.full_name,
+            'reference': app.reference_number,
+            'missing_docs': f'{7 - done}/7 intake documents still pending',
         })
-
-    incomplete_docs_count = len(doc_completeness_alerts[:10])  # Limit to 10
+    incomplete_docs_count = Applicant.objects.filter(_applicant_missing_intake_doc_q()).count()
 
     # ==================== MODULE 6: UPCOMING REPORTS (Reports for Full Disclosure Portal) ====================
     # Track reports due this month
     reports_to_generate = []
     # Standard monthly reports due: 1st (Compliance Summary), 15th (Mid-month Status), 28th (Monthly Closing)
-    from datetime import date
     today = date.today()
 
     if today.day < 1:
@@ -786,6 +817,14 @@ def dashboard_second_member(request):
         updated_at__gte=this_month_start
     ).count()
 
+    intake_incomplete_module1 = Applicant.objects.filter(_applicant_missing_intake_doc_q()).count()
+    pending_cdrrmo_count = CDRRMOCertification.objects.filter(status='pending').count()
+    requirements_verified_month = RequirementSubmission.objects.filter(
+        status='verified',
+        verified_at__gte=this_month_start,
+    ).count()
+    vacant_units_award = HousingUnit.objects.filter(status='Vacant — available').count()
+
     context = {
         'page_title': 'Second Member Dashboard',
         'user_position': 'second_member',
@@ -811,12 +850,16 @@ def dashboard_second_member(request):
         'awaiting_signature': awaiting_head_signature,  # Shared stat card
         'housing_units': total_housing_units,  # Shared stat card
         'approved_this_month': approved_this_month,  # Shared stat card
+        # Second-row stat cards (aligned to Joie’s intake + oversight role)
+        'intake_incomplete_module1': intake_incomplete_module1,
+        'pending_cdrrmo_count': pending_cdrrmo_count,
+        'requirements_verified_month': requirements_verified_month,
+        'vacant_units_award': vacant_units_award,
     }
 
     return render(request, 'accounts/dashboard.html', context)
 
 
-@login_required
 @login_required
 def dashboard_fourth_member(request):
     """
@@ -827,42 +870,99 @@ def dashboard_fourth_member(request):
         messages.error(request, 'Access denied. This dashboard is for the Fourth Member position only.')
         return redirect('accounts:dashboard')
 
-    # Shared stat card data
     total_applicants = Applicant.objects.count()
     awaiting_head_signature = Application.objects.filter(status='head_signed').count()
     total_housing_units = HousingUnit.objects.count()
     this_month_start = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     approved_this_month = Application.objects.filter(
         status='awarded',
-        updated_at__gte=this_month_start
+        updated_at__gte=this_month_start,
     ).count()
+
+    today = timezone.localdate()
+    active_queue_today = QueueEntry.objects.filter(status='active', entered_at__date=today).count()
+    active_queue_total = QueueEntry.objects.filter(status='active').count()
+    queue_today = active_queue_today if active_queue_today else active_queue_total
+
+    incomplete_requirements = Applicant.objects.filter(_applicant_missing_intake_doc_q()).count()
+    pending_cdrrmo_count = CDRRMOCertification.objects.filter(status='pending').count()
+    vacant_units = HousingUnit.objects.filter(status='Vacant — available').select_related('site').order_by(
+        'site__code', 'block_number', 'lot_number'
+    )[:40]
+    available_lots = [
+        {
+            'block': u.block_number,
+            'lot': u.lot_number,
+            'site': u.site.code,
+            'label': str(u),
+        }
+        for u in vacant_units
+    ]
+    lots_for_awarding = len(available_lots)
+
+    priority_queue = list(
+        QueueEntry.objects.filter(status='active', queue_type='priority')
+        .select_related('applicant')
+        .order_by('position')[:25]
+    )
+    # Only `priority` exists in QUEUE_TYPE_CHOICES today; keep empty until walk-in queue is modeled.
+    walkin_queue = []
+
+    pending_cdrrmo = list(
+        CDRRMOCertification.objects.filter(status='pending')
+        .select_related('applicant')
+        .order_by('-requested_at')[:20]
+    )
+
+    requirements_checklist = []
+    for app in (
+        Applicant.objects.filter(_applicant_missing_intake_doc_q())
+        .order_by('-created_at')[:20]
+    ):
+        dc = _applicant_intake_docs_done_count(app)
+        requirements_checklist.append(
+            {
+                'full_name': app.full_name,
+                'reference_number': app.reference_number,
+                'docs_count': dc,
+                'completion_percent': int(round((dc / 7) * 100)),
+            }
+        )
+
+    standby_queue = list(
+        Application.objects.filter(status='standby').select_related('applicant').order_by('updated_at')[:40]
+    )
+
+    blacklist_count = Blacklist.objects.count()
+    repossessed_count = HousingUnit.objects.filter(status='Repossessed').count()
+    awaiting_reaward = Application.objects.filter(status='standby').count()
+
+    standby_count = len(standby_queue)
+    available_count = len(available_lots)
+    ready_to_award = min(standby_count, available_count)
 
     context = {
         'page_title': 'Fourth Member Dashboard',
         'user_position': 'fourth_member',
-        'total_applicants': total_applicants,  # Shared stat card
-        'awaiting_signature': awaiting_head_signature,  # Shared stat card
-        'housing_units': total_housing_units,  # Shared stat card
-        'approved_this_month': approved_this_month,  # Shared stat card
-        'queue_today': 0,  # TODO: Applicants in queue today
-        'incomplete_requirements': 0,  # TODO: Applicants with incomplete requirements
-        'documents_filed': 0,  # TODO: Documents filed this month
-        'lots_for_awarding': 0,  # TODO: Vacant units available for awarding
-        'priority_queue': [],  # TODO: Priority queue applicants
-        'walkin_queue': [],  # TODO: Walk-in queue applicants
-        'pending_cdrrmo': [],  # TODO: Applicants pending CDRRMO certification
-        'requirements_checklist': [],  # TODO: Applicants with partial requirements
-        'standby_queue': [],  # TODO: Fully approved applicants on standby
-        'available_lots': [],  # TODO: Vacant lots ready for awarding
-        'blacklist_count': 0,  # TODO: Total blacklisted beneficiaries
-        'repossessed_count': 0,  # TODO: Repossessed units count
-        'awaiting_reaward': 0,  # TODO: Units awaiting re-award after repossession
+        'total_applicants': total_applicants,
+        'awaiting_signature': awaiting_head_signature,
+        'housing_units': total_housing_units,
+        'approved_this_month': approved_this_month,
+        'queue_today': queue_today,
+        'incomplete_requirements': incomplete_requirements,
+        'documents_filed': pending_cdrrmo_count,
+        'lots_for_awarding': lots_for_awarding,
+        'priority_queue': priority_queue,
+        'walkin_queue': walkin_queue,
+        'pending_cdrrmo': pending_cdrrmo,
+        'requirements_checklist': requirements_checklist,
+        'standby_queue': standby_queue,
+        'available_lots': available_lots,
+        'blacklist_count': blacklist_count,
+        'repossessed_count': repossessed_count,
+        'awaiting_reaward': awaiting_reaward,
+        'ready_to_award': ready_to_award,
     }
-
-    # Calculate ready_to_award (min of available lots and standby queue)
-    standby_count = len(context['standby_queue']) if context['standby_queue'] else 0
-    available_count = len(context['available_lots']) if context['available_lots'] else 0
-    context['ready_to_award'] = min(standby_count, available_count)
 
     return render(request, 'accounts/dashboard.html', context)
 

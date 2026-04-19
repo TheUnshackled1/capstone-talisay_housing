@@ -2630,8 +2630,7 @@
         const isfId = applicant.id || applicant.applicantId;
         const statusClass = applicant.eligibilityStatus === 'Eligible' ? 'success' : 
                            applicant.eligibilityStatus === 'Disqualified' ? 'danger' : 'warning';
-        const income = applicant.monthlyIncome || 0;
-        const incomePass = income <= 10000;
+        const { income, pass: incomePass } = incomeCheckState(applicant);
         
         // Compact ISF card
         container.innerHTML = `
@@ -2687,15 +2686,18 @@
     }
     
     function generateEligibilityCheckHTML(applicant) {
-        const income = applicant.monthlyIncome || 0;
-        const incomePass = income <= 10000;
+        const { income, ceiling, pass: incomePass } = incomeCheckState(applicant);
+        const incomeWarn = incomePass ? '' : `<div style="font-size: 0.65rem; color: #991b1b; margin-top: 0.125rem; max-width: 14rem;">Exceeds ₱${ceiling.toLocaleString('en-PH')} ceiling — cannot mark eligible.</div>`;
         
         return `
+            <div style="display: flex; flex-direction: column;">
             <div style="display: flex; align-items: center; gap: 0.375rem; font-size: 0.75rem;">
                 <svg style="width: 0.875rem; height: 0.875rem; color: ${incomePass ? '#16a34a' : '#dc2626'};" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     ${incomePass ? '<polyline points="20 6 9 17 4 12"></polyline>' : '<line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>'}
                 </svg>
-                <span>Income ≤ ₱10,000 (₱${income.toLocaleString()})</span>
+                <span>Household income ≤ ₱${ceiling.toLocaleString('en-PH')} (declared: ₱${income.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})</span>
+            </div>
+            ${incomeWarn}
             </div>
             <div style="display: flex; align-items: center; gap: 0.375rem; font-size: 0.75rem;">
                 <svg style="width: 0.875rem; height: 0.875rem; color: #16a34a;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

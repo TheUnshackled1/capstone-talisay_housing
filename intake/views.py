@@ -14,6 +14,9 @@ from .forms import (
 from .utils import check_blacklist, send_sms
 import json
 
+# Module 1 income ceiling (₱) — keep in sync with `Applicant.is_income_eligible` in intake/models.py
+MODULE1_MONTHLY_INCOME_CEILING_PESO = 10000
+
 
 def verify_position(view_func):
     """
@@ -117,10 +120,14 @@ def update_eligibility(request, position):
 
     elif action == 'mark_eligible':
         # Check eligibility criteria
-        if applicant.monthly_income > 10000:
+        if applicant.monthly_income > MODULE1_MONTHLY_INCOME_CEILING_PESO:
             return JsonResponse({
-                'success': False, 
-                'error': f'Income ₱{applicant.monthly_income:,.2f} exceeds ₱10,000 limit'
+                'success': False,
+                'error': (
+                    f'Declared monthly household income ₱{applicant.monthly_income:,.2f} exceeds the '
+                    f'Module 1 ceiling of ₱{MODULE1_MONTHLY_INCOME_CEILING_PESO:,.0f}. '
+                    'Correct income via Edit or disqualify with reason “Income exceeds ₱10,000 limit”.'
+                ),
             })
         
         # For Channel B, check CDRRMO certification only if applicant is actually in a danger zone
@@ -860,8 +867,8 @@ def applicants_list(request, position):
             'applicantId': None,
             'barangay': isf.barangay or isf.submission.barangay or '',  # ISF barangay or submission barangay
             'monthlyIncome': float(isf.monthly_income),
-            'incomeEligible': float(isf.monthly_income) <= 10000,
-            'incomeCeilingPeso': 10000,
+            'incomeEligible': float(isf.monthly_income) <= MODULE1_MONTHLY_INCOME_CEILING_PESO,
+            'incomeCeilingPeso': MODULE1_MONTHLY_INCOME_CEILING_PESO,
             'householdSize': isf.household_members,
             'yearsResiding': isf.years_residing,
             'phoneNumber': isf.phone_number or '',
@@ -1027,7 +1034,7 @@ def applicants_list(request, position):
             'monthlyIncome': float(app.monthly_income),
             # Aligns with Applicant.is_income_eligible and update_eligibility (≤ ₱10,000)
             'incomeEligible': app.is_income_eligible,
-            'incomeCeilingPeso': 10000,
+            'incomeCeilingPeso': MODULE1_MONTHLY_INCOME_CEILING_PESO,
             'yearsResiding': app.years_residing,
             'occupation': app.occupation or '',
             'employmentStatus': app.get_employment_status_display() if app.employment_status else '',
@@ -1257,7 +1264,7 @@ def walkin_register(request, position):
                 'barangay': applicant.barangay.name if applicant.barangay else '',
                 'monthlyIncome': float(applicant.monthly_income),
                 'incomeEligible': applicant.is_income_eligible,
-                'incomeCeilingPeso': 10000,
+                'incomeCeilingPeso': MODULE1_MONTHLY_INCOME_CEILING_PESO,
                 'householdSize': applicant.household_size,
                 'yearsResiding': applicant.years_residing,
                 'phoneNumber': applicant.phone_number,

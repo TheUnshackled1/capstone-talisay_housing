@@ -286,8 +286,8 @@ class Applicant(models.Model):
     
     @property
     def is_income_eligible(self):
-        """Check if monthly income is within ₱10,000 threshold."""
-        return self.monthly_income <= 10000
+        """Monthly household income within Module 1 ceiling (see `MODULE1_MONTHLY_INCOME_CEILING_PESO` in intake/views.py)."""
+        return self.monthly_income <= 10000  # keep in sync with intake.views.MODULE1_MONTHLY_INCOME_CEILING_PESO
     
     @property
     def household_member_count(self):
