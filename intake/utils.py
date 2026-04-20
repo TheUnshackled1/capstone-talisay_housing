@@ -333,6 +333,47 @@ def check_blacklist(full_name, phone_number=None):
     return (False, None)
 
 
+def ensure_priority_queue_entry(applicant, added_by=None):
+    """
+    Ensure an applicant has one active Priority queue entry.
+
+    Returns:
+        tuple[QueueEntry, bool]: (entry, created)
+    """
+    from django.db import IntegrityError, transaction
+    from .models import QueueEntry
+
+    existing = applicant.queue_entries.filter(status='active').order_by('entered_at').first()
+    if existing:
+        return existing, False
+
+    for _ in range(3):
+        last_position = QueueEntry.objects.filter(
+            queue_type='priority',
+            status='active'
+        ).order_by('-position').values_list('position', flat=True).first() or 0
+
+        try:
+            with transaction.atomic():
+                entry = QueueEntry.objects.create(
+                    applicant=applicant,
+                    queue_type='priority',
+                    position=last_position + 1,
+                    status='active',
+                    added_by=added_by,
+                )
+            return entry, True
+        except IntegrityError:
+            # Retry when two staff actions race for same queue slot.
+            continue
+
+    entry = applicant.queue_entries.filter(status='active').order_by('entered_at').first()
+    if entry:
+        return entry, False
+
+    raise RuntimeError('Unable to allocate priority queue position')
+
+
 def create_applicant_from_isf(isf_record, checked_by_user):
     """
     Convert an eligible ISF record to a full Applicant profile.
@@ -345,7 +386,7 @@ def create_applicant_from_isf(isf_record, checked_by_user):
     Returns:
         Applicant instance or None if failed
     """
-    from .models import Applicant, Barangay, QueueEntry
+    from .models import Applicant, Barangay
     from django.utils import timezone
     
     try:
@@ -371,22 +412,8 @@ def create_applicant_from_isf(isf_record, checked_by_user):
             registered_by=checked_by_user
         )
         
-        # Get next position in priority queue
-        last_position = QueueEntry.objects.filter(
-            queue_type='priority',
-            status='active'
-        ).order_by('-position').first()
-        
-        next_position = (last_position.position + 1) if last_position else 1
-        
         # Add to priority queue
-        QueueEntry.objects.create(
-            applicant=applicant,
-            queue_type='priority',
-            position=next_position,
-            status='active',
-            added_by=checked_by_user
-        )
+        ensure_priority_queue_entry(applicant, added_by=checked_by_user)
         
         # Mark ISF record as converted
         isf_record.converted_to_applicant = True

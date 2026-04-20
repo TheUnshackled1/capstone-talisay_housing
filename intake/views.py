@@ -11,7 +11,7 @@ from .forms import (
     HouseholdMemberForm,
     WalkInApplicantForm
 )
-from .utils import check_blacklist, send_sms
+from .utils import check_blacklist, send_sms, ensure_priority_queue_entry
 import json
 
 # Module 1 income ceiling (₱) — keep in sync with `Applicant.is_income_eligible` in intake/models.py
@@ -152,32 +152,20 @@ def update_eligibility(request, position):
         applicant.eligibility_checked_at = timezone.now()
         applicant.save()
 
-        # Add to priority queue (all applicants are danger zone)
-        queue_type = 'priority'
-
-        # Get next position in queue
-        last_position = QueueEntry.objects.filter(
-            queue_type=queue_type,
-            status='active'
-        ).order_by('-position').values_list('position', flat=True).first() or 0
-
-        QueueEntry.objects.create(
-            applicant=applicant,
-            queue_type=queue_type,
-            position=last_position + 1,
-            status='active',
-            added_by=request.user,
-        )
+        queue_entry, _ = ensure_priority_queue_entry(applicant, added_by=request.user)
         
         # Send SMS notification
         if applicant.phone_number:
-            queue_name = 'Priority Queue' if queue_type == 'priority' else 'Walk-in Queue'
-            message = f"Congratulations! You are ELIGIBLE for housing assistance. You are now in the {queue_name} (Position #{last_position + 1}). Reference: {applicant.reference_number}"
+            message = (
+                "Congratulations! You are ELIGIBLE for housing assistance. "
+                f"You are now in the Priority Queue (Position #{queue_entry.position}). "
+                f"Reference: {applicant.reference_number}"
+            )
             send_sms(applicant.phone_number, message, 'eligibility', applicant=applicant)
         
         return JsonResponse({
             'success': True,
-            'message': f'Marked as eligible. Added to {queue_type.replace("_", "-").title()} Queue at position #{last_position + 1}'
+            'message': f'Marked as eligible. Added to Priority Queue at position #{queue_entry.position}'
         })
     
     elif action == 'disqualify':
@@ -413,13 +401,7 @@ def update_cdrrmo_certification(request, position):
             applicant.status = 'eligible'
             applicant.save()
 
-            # Create queue entry (priority)
-            queue_entry = QueueEntry.objects.create(
-                applicant=applicant,
-                queue_type='priority',
-                status='active',
-                position=QueueEntry.objects.filter(queue_type='priority', status='active').count() + 1
-            )
+            queue_entry, _ = ensure_priority_queue_entry(applicant, added_by=request.user)
 
             message = f'✅ {applicant.full_name} CERTIFIED as danger zone. Added to Priority Queue (Position {queue_entry.position}).'
 
@@ -617,29 +599,13 @@ def update_cdrrmo_status(request, position):
                 queue_type = 'Priority'
                 msg_outcome = 'moved to Priority Queue'
 
-                # Create priority queue entry
-                last_priority_entry = QueueEntry.objects.filter(
-                    queue_type='priority'
-                ).order_by('-position').first()
-                next_position = (last_priority_entry.position + 1) if last_priority_entry else 1
-
-                QueueEntry.objects.update_or_create(
-                    applicant=applicant,
-                    defaults={
-                        'queue_type': 'priority',
-                        'position': next_position,
-                        'status': 'active',
-                        'added_by': request.user
-                    }
-                )
+                queue_entry, _ = ensure_priority_queue_entry(applicant, added_by=request.user)
             else:
-                # Not in danger zone - mark eligible anyway but NOT added to priority queue
+                # Not in danger zone - still mark eligible and add to FIFO queue immediately.
                 applicant.status = 'eligible'
-                queue_type = 'Walk-in'
-                msg_outcome = 'moved to Walk-in FIFO (not in danger zone)'
-
-                # Remove from priority queue if exists
-                QueueEntry.objects.filter(applicant=applicant).delete()
+                queue_type = 'Priority'
+                queue_entry, _ = ensure_priority_queue_entry(applicant, added_by=request.user)
+                msg_outcome = 'marked eligible and added to queue'
 
             # Save applicant
             applicant.save()
@@ -650,7 +616,11 @@ def update_cdrrmo_status(request, position):
 
             # Send SMS to applicant
             if applicant.phone_number:
-                eligible_msg = f"✅ Great news! Your housing application passed eligibility. You have been added to {queue_type} Queue. Reference: {applicant.reference_number}. Please visit THA office for next steps."
+                eligible_msg = (
+                    "✅ Great news! Your housing application passed eligibility. "
+                    f"You are assigned Priority Queue Position {queue_entry.position}. "
+                    f"Reference: {applicant.reference_number}. Please visit THA office for next steps."
+                )
                 send_sms(applicant.phone_number, eligible_msg, 'eligibility_passed', applicant=applicant)
 
             return JsonResponse({

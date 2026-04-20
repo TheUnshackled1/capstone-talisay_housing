@@ -7,7 +7,7 @@ from django.db.models import Count, Q, Prefetch, Max
 from django.utils import timezone
 from functools import wraps
 from intake.models import Applicant, QueueEntry
-from intake.utils import send_sms, check_blacklist
+from intake.utils import send_sms, check_blacklist, ensure_priority_queue_entry
 from .models import (
     Application, Requirement, RequirementSubmission,
     SignatoryRouting, FacilitatedService, ElectricityConnection, LotAwarding
@@ -79,8 +79,10 @@ def get_module2_permissions(user):
             'can_view': True,
             'can_verify_documents': True,  # Supervisor can also verify
             'can_generate_form': True,
+            'can_receive_routing': True,  # Supervisor backup for signatory handoff
+            'can_forward_routing': True,  # Supervisor backup for signatory handoff
             'can_manage_electricity': True,
-            'role_description': 'Supervisor & Electricity Tracking',
+            'role_description': 'Supervisor, Routing Backup & Electricity Tracking',
         })
     elif position == 'fifth_member':
         # Laarni - Electricity only
@@ -259,7 +261,7 @@ def applications_list(request, position):
             user_actions.append('verify_docs')
         if permissions['can_generate_form'] and can_generate_form and not application:
             user_actions.append('generate_form')
-        if permissions['can_receive_routing'] and application and application.status == 'completed':
+        if permissions['can_receive_routing'] and application and application.status in ['draft', 'completed']:
             user_actions.append('receive_routing')
         if permissions['can_forward_routing'] and application and latest_routing_step == 'received':
             user_actions.append('forward_to_oic')
@@ -601,6 +603,18 @@ def generate_form(request, position, applicant_id):
             },
             status=400,
         )
+
+    # Module 1 should have placed every eligible applicant into FIFO queue.
+    # Self-heal older records so Module 2 can proceed without manual queue fixes.
+    if applicant.status in ['eligible', 'requirements', 'application']:
+        queue_entry, queue_created = ensure_priority_queue_entry(applicant, added_by=request.user)
+        if queue_created and applicant.phone_number:
+            msg = (
+                "Great news! Your housing application is now queued for processing. "
+                f"Priority Queue Position #{queue_entry.position}. "
+                f"Reference: {applicant.reference_number}"
+            )
+            send_sms(applicant.phone_number, msg, 'eligibility_passed', applicant=applicant)
     
     # Check if all Group A requirements are verified
     group_a_count = applicant.requirement_submissions.filter(
@@ -661,9 +675,8 @@ def update_routing(request, position):
     URL: /applications/<position>/routing/update/
 
     ACCESS CONTROL:
-    - Jay (3rd Member): receive, forward_oic, forward_head
-    - Victor (OIC): signed_oic
-    - Arthur (Head): signed_head
+    - Staff (Jocel 4th / Joie 2nd): marks physical-paper signatures/checkpoints
+    - OIC and Head may still update their own signature checkpoints
     """
     application_id = request.POST.get('application_id')
     step = request.POST.get('step')
@@ -671,17 +684,18 @@ def update_routing(request, position):
     
     # Validate step and check permission
     step_permissions = {
-        'received': ['fourth_member'],
-        'forwarded_oic': ['fourth_member'],
-        'signed_oic': ['oic'],
-        'forwarded_head': ['fourth_member'],
-        'signed_head': ['head'],
+        'received': ['fourth_member', 'second_member'],
+        'forwarded_oic': ['fourth_member', 'second_member'],
+        'signed_oic': ['fourth_member', 'second_member', 'oic'],
+        'forwarded_head': ['fourth_member', 'second_member'],
+        'signed_head': ['fourth_member', 'second_member', 'head'],
     }
 
     allowed_positions = step_permissions.get(step, [])
     if request.user.position not in allowed_positions:
         position_names = {
             'fourth_member': 'Jocel (4th Member)',
+            'second_member': 'Joie (2nd Member)',
             'oic': 'Victor (OIC)',
             'head': 'Arthur (Head)',
         }
@@ -693,6 +707,27 @@ def update_routing(request, position):
     
     try:
         application = Application.objects.select_related('applicant').get(id=application_id)
+
+        step_sequence = ['received', 'forwarded_oic', 'signed_oic', 'forwarded_head', 'signed_head']
+        if step not in step_sequence:
+            return JsonResponse({'success': False, 'error': 'Invalid routing step.'}, status=400)
+
+        completed_steps = set(application.routing_steps.values_list('step', flat=True))
+        if step in completed_steps:
+            return JsonResponse({
+                'success': True,
+                'new_status': application.status,
+                'message': f'Routing step "{step}" already recorded.'
+            })
+
+        step_index = step_sequence.index(step)
+        if step_index > 0:
+            previous_step = step_sequence[step_index - 1]
+            if previous_step not in completed_steps:
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Cannot mark "{step}" before "{previous_step}" is completed.'
+                }, status=400)
         
         # Create routing step
         SignatoryRouting.objects.create(

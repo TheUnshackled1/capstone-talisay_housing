@@ -1345,69 +1345,99 @@
             </p>
             {% endif %}
 
-            <!-- Signatory Routing Timeline -->
+            <!-- Section D Endorsement Checklist -->
             <div class="section-heading">
-                ✍️ Signatory Routing
+                ✍️ Section D — Endorsement Checklist
             </div>
             <div class="signatory-timeline" id="signatoryTimeline">
                 <div class="timeline-item" data-step="received">
                     <div class="timeline-icon pending">📨</div>
                     <div class="timeline-content">
-                        <h4>Received - Processing</h4>
-                        <p>Application form received for processing</p>
-                        {% if permissions.can_receive_routing %}
-                        <button class="timeline-action-btn" id="btn-received" onclick="quickRouting('received')" style="display: none;">
-                            Mark as Received
-                        </button>
-                        {% endif %}
+                        <h4>Received for Endorsement Processing</h4>
+                        <p>Staff validated that the physical form is ready for Section D endorsements.</p>
+                        <label style="display: inline-flex; align-items: center; gap: 0.45rem; margin-top: 0.4rem;">
+                            <input
+                                type="checkbox"
+                                id="chk-received"
+                                data-step-checkbox="received"
+                                data-can-check="{{ permissions.can_receive_routing|yesno:'true,false' }}"
+                                onchange="toggleRoutingStep('received', this)"
+                                disabled
+                            >
+                            Mark checked on paper
+                        </label>
                     </div>
                 </div>
                 <div class="timeline-item" data-step="forwarded_oic">
                     <div class="timeline-icon pending">➡️</div>
                     <div class="timeline-content">
-                        <h4>Forwarded to OIC</h4>
-                        <p>Sent to Victor Fregil (OIC) for review</p>
-                        {% if permissions.can_forward_routing %}
-                        <button class="timeline-action-btn" id="btn-forwarded_oic" onclick="quickRouting('forwarded_oic')" style="display: none;">
-                            Forward to OIC
-                        </button>
-                        {% endif %}
+                        <h4>D1 — Barangay Affairs Office endorsed</h4>
+                        <p>Signature completed by Barangay Affairs signatory (Section D).</p>
+                        <label style="display: inline-flex; align-items: center; gap: 0.45rem; margin-top: 0.4rem;">
+                            <input
+                                type="checkbox"
+                                id="chk-forwarded_oic"
+                                data-step-checkbox="forwarded_oic"
+                                data-can-check="{{ permissions.can_forward_routing|yesno:'true,false' }}"
+                                onchange="toggleRoutingStep('forwarded_oic', this)"
+                                disabled
+                            >
+                            Signature on paper confirmed
+                        </label>
                     </div>
                 </div>
                 <div class="timeline-item" data-step="signed_oic">
                     <div class="timeline-icon pending">✍️</div>
                     <div class="timeline-content">
-                        <h4>Signed by OIC</h4>
-                        <p>Victor Fregil (OIC) approval</p>
-                        {% if permissions.can_sign_oic %}
-                        <button class="timeline-action-btn" id="btn-signed_oic" onclick="quickRouting('signed_oic')" style="display: none;">
-                            Sign as OIC
-                        </button>
-                        {% endif %}
+                        <h4>D2 — Community Affairs Office endorsed</h4>
+                        <p>Signature completed by Community Affairs signatory (Section D).</p>
+                        <label style="display: inline-flex; align-items: center; gap: 0.45rem; margin-top: 0.4rem;">
+                            <input
+                                type="checkbox"
+                                id="chk-signed_oic"
+                                data-step-checkbox="signed_oic"
+                                data-can-check="{% if permissions.can_sign_oic or permissions.can_verify_documents %}true{% else %}false{% endif %}"
+                                onchange="toggleRoutingStep('signed_oic', this)"
+                                disabled
+                            >
+                            Signature on paper confirmed
+                        </label>
                     </div>
                 </div>
                 <div class="timeline-item" data-step="forwarded_head">
                     <div class="timeline-icon pending">➡️</div>
                     <div class="timeline-content">
-                        <h4>Forwarded to Head</h4>
-                        <p>Sent to Arthur Maramba (Head) for final approval</p>
-                        {% if permissions.can_forward_routing %}
-                        <button class="timeline-action-btn" id="btn-forwarded_head" onclick="quickRouting('forwarded_head')" style="display: none;">
-                            Forward to Head
-                        </button>
-                        {% endif %}
+                        <h4>D3 — City Social Welfare and Development (CSWDO) endorsed</h4>
+                        <p>Signature completed by CSWDO signatory (Section D).</p>
+                        <label style="display: inline-flex; align-items: center; gap: 0.45rem; margin-top: 0.4rem;">
+                            <input
+                                type="checkbox"
+                                id="chk-forwarded_head"
+                                data-step-checkbox="forwarded_head"
+                                data-can-check="{{ permissions.can_forward_routing|yesno:'true,false' }}"
+                                onchange="toggleRoutingStep('forwarded_head', this)"
+                                disabled
+                            >
+                            Signature on paper confirmed
+                        </label>
                     </div>
                 </div>
                 <div class="timeline-item" data-step="signed_head">
                     <div class="timeline-icon pending">✅</div>
                     <div class="timeline-content">
-                        <h4>Signed by Head</h4>
-                        <p>Arthur Maramba (Head) final signature</p>
-                        {% if permissions.can_sign_head %}
-                        <button class="timeline-action-btn" id="btn-signed_head" onclick="quickRouting('signed_head')" style="display: none;">
-                            Sign as Head (Final Approval)
-                        </button>
-                        {% endif %}
+                        <h4>D4 — Sangguniang Panlungsod Office endorsed</h4>
+                        <p>Signature completed by SP Office signatory (Section D). Completing this marks the form fully approved.</p>
+                        <label style="display: inline-flex; align-items: center; gap: 0.45rem; margin-top: 0.4rem;">
+                            <input
+                                type="checkbox"
+                                id="chk-signed_head"
+                                data-step-checkbox="signed_head"
+                                data-can-check="{% if permissions.can_sign_head or permissions.can_verify_documents %}true{% else %}false{% endif %}"
+                                onchange="toggleRoutingStep('signed_head', this)"
+                                disabled
+                            >
+                            Signature on paper confirmed
+                        </label>
                     </div>
                 </div>
             </div>
@@ -1614,6 +1644,9 @@
             window.__modalBlacklistBlocked = !!data.blacklist_blocked;
             window.__hasApplication = !!data.has_application;
             window.__applicationNumber = data.application_number || '';
+            if (data.has_application && data.id) {
+                currentApplicationId = data.id;
+            }
             const gate = document.getElementById('modalWorkflowGates');
             if (gate) {
                 gate.style.display = 'block';
@@ -1672,14 +1705,25 @@
             const item = document.querySelector(`[data-step="${step}"]`);
             if (item) {
                 const icon = item.querySelector('.timeline-icon');
+                const checkbox = item.querySelector(`[data-step-checkbox="${step}"]`);
                 if (completedSteps.has(step)) {
                     icon.classList.remove('pending');
                     icon.classList.add('completed');
+                    if (checkbox) {
+                        checkbox.checked = true;
+                        checkbox.disabled = true;
+                    }
+                } else {
+                    icon.classList.remove('completed');
+                    icon.classList.add('pending');
+                    if (checkbox) {
+                        checkbox.checked = false;
+                        checkbox.disabled = true;
+                    }
                 }
             }
         });
         
-        // Show the next action button based on latest step
         const nextStepMap = {
             null: 'received',
             'received': 'forwarded_oic',
@@ -1689,8 +1733,10 @@
         };
         const nextStep = nextStepMap[latestStep];
         if (nextStep) {
-            const btn = document.getElementById(`btn-${nextStep}`);
-            if (btn) btn.style.display = 'inline-block';
+            const checkbox = document.querySelector(`[data-step-checkbox="${nextStep}"]`);
+            if (checkbox && checkbox.dataset.canCheck === 'true') {
+                checkbox.disabled = false;
+            }
         }
     }
 
@@ -1868,14 +1914,14 @@
         }
     }
 
-    // Routing update from table button or modal
+    // Routing update from table button
     async function updateRouting(applicationId, step) {
         const stepLabels = {
-            'received': 'Mark as received',
-            'forwarded_oic': 'Forward to OIC',
-            'signed_oic': 'Sign as OIC',
-            'forwarded_head': 'Forward to Head',
-            'signed_head': 'Sign as Head (Final Approval)'
+            'received': 'Mark endorsement process as received',
+            'forwarded_oic': 'Check Barangay Affairs endorsement',
+            'signed_oic': 'Check Community Affairs endorsement',
+            'forwarded_head': 'Check CSWDO endorsement',
+            'signed_head': 'Check SP Office endorsement (complete Section D)'
         };
         
         if (!confirm(`${stepLabels[step]}?`)) return;
@@ -1903,13 +1949,50 @@
         }
     }
 
-    // Quick routing from modal timeline
-    async function quickRouting(step) {
+    // Checklist action from modal (Section D endorsements)
+    async function toggleRoutingStep(step, checkbox) {
+        if (!checkbox) return;
         if (!currentApplicationId) {
             alert('No application found. Form must be generated first.');
+            checkbox.checked = false;
             return;
         }
-        await updateRouting(currentApplicationId, step);
+        if (!checkbox.checked) {
+            // Keep immutable audit trail: once checked, it should not be unchecked.
+            checkbox.checked = true;
+            return;
+        }
+
+        checkbox.disabled = true;
+        try {
+            const formData = new FormData();
+            formData.append('application_id', currentApplicationId);
+            formData.append('step', step);
+            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+            const response = await fetch('{% url "applications:update_routing" request.user.position %}', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+
+            if (!data.success) {
+                checkbox.checked = false;
+                checkbox.disabled = false;
+                alert(data.error || 'Failed to update endorsement checklist');
+                return;
+            }
+
+            await loadApplicantRequirements(currentApplicantId);
+            if (data.new_status) {
+                const stage = mapApplicationStatusToProgressStage(data.new_status);
+                if (stage) updateProgressTrackerFromStage(stage);
+            }
+        } catch (error) {
+            checkbox.checked = false;
+            checkbox.disabled = false;
+            alert('Error: ' + error.message);
+        }
     }
 
     // Lot Awarding Modal
