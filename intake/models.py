@@ -1,7 +1,15 @@
 from django.db import models
 from django.conf import settings
-from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator, RegexValidator
 import uuid
+
+
+# Phone validators for Philippine numbers
+validate_philippine_phone = RegexValidator(
+    regex=r'^09\d{9}$',
+    message='Phone number must be in format 09XXXXXXXXXX (11 digits)',
+    code='invalid_phone'
+)
 
 
 class SMSLog(models.Model):
@@ -140,8 +148,14 @@ class Applicant(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     reference_number = models.CharField(max_length=20, unique=True, editable=False)
 
-    # Personal Information
-    full_name = models.CharField(max_length=255, verbose_name="Full Name")
+    # Personal Information - Name Fields (A. APPLICATION IDENTITY)
+    last_name = models.CharField(max_length=100, verbose_name="Last Name (Surname)", default="")
+    first_name = models.CharField(max_length=100, verbose_name="First Name (Given Name)", default="")
+    middle_name = models.CharField(max_length=100, blank=True, default="", verbose_name="Middle Name")
+
+    # Keep full_name for backward compatibility
+    full_name = models.CharField(max_length=255, verbose_name="Full Name", editable=False)
+
     sex = models.CharField(
         max_length=1,
         choices=[('M', 'Male'), ('F', 'Female')],
@@ -151,11 +165,23 @@ class Applicant(models.Model):
     age = models.PositiveIntegerField(null=True, blank=True, verbose_name="Age")
     date_of_birth = models.DateField(null=True, blank=True, verbose_name="Date of Birth")
     place_of_birth = models.CharField(max_length=255, blank=True, verbose_name="Place of Birth")
-    phone_number = models.CharField(max_length=20, blank=True, verbose_name="Applicant Contact Number")
+    phone_number = models.CharField(
+        max_length=20,
+        blank=True,
+        verbose_name="Applicant Contact Number",
+        validators=[validate_philippine_phone],
+        help_text="Format: 09XXXXXXXXXX (11 digits)"
+    )
 
     # Spouse Information
     spouse_name = models.CharField(max_length=255, blank=True, verbose_name="Name of Spouse")
-    spouse_phone = models.CharField(max_length=20, blank=True, verbose_name="Spouse Contact Number")
+    spouse_phone = models.CharField(
+        max_length=20,
+        blank=True,
+        verbose_name="Spouse Contact Number",
+        validators=[validate_philippine_phone],
+        help_text="Format: 09XXXXXXXXXX (11 digits)"
+    )
 
     # Address/Origin
     barangay = models.ForeignKey(
@@ -273,12 +299,18 @@ class Applicant(models.Model):
         verbose_name_plural = "Applicants"
     
     def save(self, *args, **kwargs):
+        # Generate reference number if new
         if not self.reference_number:
             from django.utils import timezone
             import random
             date_str = timezone.now().strftime('%Y%m%d')
             random_suffix = ''.join([str(random.randint(0, 9)) for _ in range(4)])
             self.reference_number = f"APP-{date_str}-{random_suffix}"
+
+        # Auto-generate full_name from components (last, first, middle)
+        name_parts = [self.first_name, self.middle_name, self.last_name]
+        self.full_name = ' '.join([part for part in name_parts if part]).strip()
+
         super().save(*args, **kwargs)
     
     def __str__(self):
@@ -286,8 +318,8 @@ class Applicant(models.Model):
     
     @property
     def is_income_eligible(self):
-        """Check if monthly income is within ₱10,000 threshold."""
-        return self.monthly_income <= 10000
+        """Monthly household income within Module 1 ceiling (see `MODULE1_MONTHLY_INCOME_CEILING_PESO` in intake/views.py)."""
+        return self.monthly_income <= 10000  # keep in sync with intake.views.MODULE1_MONTHLY_INCOME_CEILING_PESO
     
     @property
     def household_member_count(self):
@@ -339,30 +371,49 @@ class HouseholdMember(models.Model):
         ('grandchild', 'Grandchild'),
         ('other', 'Other Relative'),
     ]
-    
+
+    CIVIL_STATUS_CHOICES = [
+        ('single', 'Single'),
+        ('married', 'Married'),
+        ('widowed', 'Widowed'),
+        ('divorced', 'Divorced'),
+        ('separated', 'Separated'),
+        ('common_law', 'Common-law'),
+    ]
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     applicant = models.ForeignKey(
         Applicant,
         on_delete=models.CASCADE,
         related_name='household_members'
     )
-    
-    full_name = models.CharField(max_length=255)
-    relationship = models.CharField(max_length=20, choices=RELATIONSHIP_CHOICES)
-    date_of_birth = models.DateField(null=True, blank=True)
+
+    # B. HOUSEHOLD MEMBERS - Personal Information
+    full_name = models.CharField(max_length=100, verbose_name="Full Name")
+    relationship = models.CharField(max_length=20, choices=RELATIONSHIP_CHOICES, verbose_name="Relationship to Applicant")
+    age = models.PositiveIntegerField(default=0, verbose_name="Age", validators=[MaxValueValidator(120)])
+    date_of_birth = models.DateField(null=True, blank=True, verbose_name="Date of Birth")
     sex = models.CharField(
         max_length=1,
         choices=[('M', 'Male'), ('F', 'Female')],
-        blank=True
+        blank=True,
+        verbose_name="Sex"
     )
-    
+    civil_status = models.CharField(
+        max_length=20,
+        choices=CIVIL_STATUS_CHOICES,
+        blank=True,
+        default='single',
+        verbose_name="Civil Status"
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
-    
+
     class Meta:
         ordering = ['applicant', 'created_at']
         verbose_name = "Household Member"
         verbose_name_plural = "Household Members"
-    
+
     def __str__(self):
         return f"{self.full_name} ({self.get_relationship_display()}) - {self.applicant.full_name}"
 

@@ -14,6 +14,9 @@ from .forms import (
 from .utils import check_blacklist, send_sms
 import json
 
+# Module 1 income ceiling (₱) — keep in sync with `Applicant.is_income_eligible` in intake/models.py
+MODULE1_MONTHLY_INCOME_CEILING_PESO = 10000
+
 
 def verify_position(view_func):
     """
@@ -117,10 +120,14 @@ def update_eligibility(request, position):
 
     elif action == 'mark_eligible':
         # Check eligibility criteria
-        if applicant.monthly_income > 10000:
+        if applicant.monthly_income > MODULE1_MONTHLY_INCOME_CEILING_PESO:
             return JsonResponse({
-                'success': False, 
-                'error': f'Income ₱{applicant.monthly_income:,.2f} exceeds ₱10,000 limit'
+                'success': False,
+                'error': (
+                    f'Declared monthly household income ₱{applicant.monthly_income:,.2f} exceeds the '
+                    f'Module 1 ceiling of ₱{MODULE1_MONTHLY_INCOME_CEILING_PESO:,.0f}. '
+                    'Correct income via Edit or disqualify with reason “Income exceeds ₱10,000 limit”.'
+                ),
             })
         
         # For Channel B, check CDRRMO certification only if applicant is actually in a danger zone
@@ -813,7 +820,6 @@ def applicants_list(request, position):
 
     # Determine if user has full access (can modify) or read-only (field/oversight)
     can_modify = request.user.position in ['second_member', 'fourth_member']
-
     # Build applicants list from danger zone channel only
     applicants = []
 
@@ -860,8 +866,8 @@ def applicants_list(request, position):
             'applicantId': None,
             'barangay': isf.barangay or isf.submission.barangay or '',  # ISF barangay or submission barangay
             'monthlyIncome': float(isf.monthly_income),
-            'incomeEligible': float(isf.monthly_income) <= 10000,
-            'incomeCeilingPeso': 10000,
+            'incomeEligible': float(isf.monthly_income) <= MODULE1_MONTHLY_INCOME_CEILING_PESO,
+            'incomeCeilingPeso': MODULE1_MONTHLY_INCOME_CEILING_PESO,
             'householdSize': isf.household_members,
             'yearsResiding': isf.years_residing,
             'phoneNumber': isf.phone_number or '',
@@ -1000,9 +1006,9 @@ def applicants_list(request, position):
             'submissionId': None,
             'applicantId': str(app.id),
             # Section A: APPLICATION IDENTITY
-            'lastName': '',  # Not stored separately - use fullName
-            'firstName': '',  # Not stored separately - use fullName
-            'middleName': '',  # Not stored separately - use fullName
+            'lastName': app.last_name or '',
+            'firstName': app.first_name or '',
+            'middleName': app.middle_name or '',
             'sex': app.sex or '',
             'age': app.age or 0,
             'dateOfBirth': app.date_of_birth.isoformat() if app.date_of_birth else '',
@@ -1016,10 +1022,10 @@ def applicants_list(request, position):
             'householdSize': app.household_size,
             'householdMembers': [
                 {
-                    'name': member.name or '',
-                    'relationship': member.relationship or '',
+                    'name': member.full_name or '',
+                    'relationship': member.get_relationship_display() if hasattr(member, 'get_relationship_display') else (member.relationship or ''),
                     'age': member.age or 0,
-                    'civilStatus': member.civil_status or ''
+                    'civilStatus': member.get_civil_status_display() if hasattr(member, 'get_civil_status_display') else (member.civil_status or '')
                 }
                 for member in app.household_members.all()
             ],
@@ -1027,7 +1033,7 @@ def applicants_list(request, position):
             'monthlyIncome': float(app.monthly_income),
             # Aligns with Applicant.is_income_eligible and update_eligibility (≤ ₱10,000)
             'incomeEligible': app.is_income_eligible,
-            'incomeCeilingPeso': 10000,
+            'incomeCeilingPeso': MODULE1_MONTHLY_INCOME_CEILING_PESO,
             'yearsResiding': app.years_residing,
             'occupation': app.occupation or '',
             'employmentStatus': app.get_employment_status_display() if app.employment_status else '',
@@ -1108,7 +1114,6 @@ def applicants_list(request, position):
             'cdrrmo_overdue': cdrrmo_overdue
         }
     }
-
     return render(request, 'intake/staff/applicants.html', context)
 
 
@@ -1174,6 +1179,9 @@ def walkin_register(request, position):
     danger_zone_location = form.cleaned_data.get('danger_zone_location', '')
 
     applicant = Applicant.objects.create(
+        last_name=form.cleaned_data.get('last_name', ''),
+        first_name=form.cleaned_data.get('first_name', ''),
+        middle_name=form.cleaned_data.get('middle_name', ''),
         full_name=full_name,
         sex=form.cleaned_data.get('sex', ''),
         age=form.cleaned_data.get('age'),
@@ -1213,6 +1221,29 @@ def walkin_register(request, position):
         requested_by=request.user,
     )
 
+    # Process household members from form
+    for i in range(1, 51):  # Support up to 50 household members
+        name = request.POST.get(f'hh_member_{i}_name', '').strip()
+        relationship = request.POST.get(f'hh_member_{i}_relationship', '').strip()
+        age = request.POST.get(f'hh_member_{i}_age', '').strip()
+        civil_status = request.POST.get(f'hh_member_{i}_status', 'single').strip()
+
+        # Only create if at least name and relationship are provided
+        if name and relationship:
+            try:
+                age_int = int(age) if age else 0
+                from intake.models import HouseholdMember
+                HouseholdMember.objects.create(
+                    applicant=applicant,
+                    full_name=name,
+                    relationship=relationship,
+                    age=age_int,
+                    civil_status=civil_status
+                )
+            except (ValueError, TypeError):
+                # Skip invalid age values
+                pass
+
     msg = f'{applicant.full_name} registered as Danger Zone applicant. Reference: {applicant.reference_number}'
 
     # Send SMS
@@ -1250,6 +1281,9 @@ def walkin_register(request, position):
             'applicant': {
                 'id': str(applicant.id),
                 'fullName': applicant.full_name,
+                'lastName': applicant.last_name,
+                'firstName': applicant.first_name,
+                'middleName': applicant.middle_name,
                 'referenceNumber': applicant.reference_number,
                 'dateRegistered': applicant.created_at.strftime('%Y-%m-%d'),
                 'channel': applicant.channel,
@@ -1257,7 +1291,7 @@ def walkin_register(request, position):
                 'barangay': applicant.barangay.name if applicant.barangay else '',
                 'monthlyIncome': float(applicant.monthly_income),
                 'incomeEligible': applicant.is_income_eligible,
-                'incomeCeilingPeso': 10000,
+                'incomeCeilingPeso': MODULE1_MONTHLY_INCOME_CEILING_PESO,
                 'householdSize': applicant.household_size,
                 'yearsResiding': applicant.years_residing,
                 'phoneNumber': applicant.phone_number,

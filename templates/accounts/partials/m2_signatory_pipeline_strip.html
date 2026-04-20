@@ -1,0 +1,89 @@
+{% if m2_pipeline %}
+<style>
+    .m2-pipeline-wrap {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 1rem 1.25rem;
+        margin-bottom: 1.5rem;
+    }
+    .m2-pipeline-title {
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #64748b;
+        margin-bottom: 0.75rem;
+    }
+    .m2-pipeline-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        align-items: stretch;
+    }
+    .m2-pipeline-step {
+        flex: 1 1 120px;
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 0.5rem 0.65rem;
+        text-align: center;
+        min-width: 100px;
+    }
+    .m2-pipeline-step em {
+        display: block;
+        font-style: normal;
+        font-size: 1.35rem;
+        font-weight: 800;
+        color: #0f172a;
+        line-height: 1.2;
+    }
+    .m2-pipeline-step span {
+        font-size: 0.65rem;
+        color: #64748b;
+        font-weight: 600;
+        line-height: 1.25;
+    }
+    .m2-pipeline-step.current {
+        border-width: 2px;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.15);
+    }
+    .m2-pipeline-step.current em {
+        color: #1d4ed8;
+    }
+</style>
+<div class="m2-pipeline-wrap scroll-animate-scale">
+    <div class="m2-pipeline-title">Module 2 — Signatory pipeline (counts by current routing step)</div>
+    <div class="m2-pipeline-row">
+        <div class="m2-pipeline-step">
+            <em>{{ m2_pipeline.pre_routing }}</em>
+            <span>Form ready<br>(draft / applicant signed)</span>
+        </div>
+        <div class="m2-pipeline-step">
+            <em>{{ m2_pipeline.latest_received }}</em>
+            <span>Latest step:<br>Received</span>
+        </div>
+        <div class="m2-pipeline-step{% if m2_pipeline_role == 'oic' %} current{% endif %}">
+            <em>{{ m2_pipeline.latest_forwarded_oic }}</em>
+            <span>Latest step:<br>At OIC desk</span>
+        </div>
+        <div class="m2-pipeline-step">
+            <em>{{ m2_pipeline.latest_signed_oic }}</em>
+            <span>Latest step:<br>OIC signed</span>
+        </div>
+        <div class="m2-pipeline-step{% if m2_pipeline_role == 'head' %} current{% endif %}">
+            <em>{{ m2_pipeline.latest_forwarded_head }}</em>
+            <span>Latest step:<br>At Head desk</span>
+        </div>
+        <div class="m2-pipeline-step">
+            <em>{{ m2_pipeline.latest_signed_head }}</em>
+            <span>Latest step:<br>Head signed</span>
+        </div>
+        <div class="m2-pipeline-step">
+            <em>{{ m2_pipeline.fully_approved }}</em>
+            <span>Fully approved+<br>(head signed / standby / awarded)</span>
+        </div>
+    </div>
+</div>
+{% endif %}

@@ -3,13 +3,169 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
-from datetime import timedelta
+from django.db.models import Q, OuterRef, Subquery, Prefetch
+from datetime import timedelta, date
 from .forms import LoginForm
 from intake.models import Applicant, QueueEntry, CDRRMOCertification, SMSLog, Blacklist
 from cases.models import Case
 from applications.models import Application, SignatoryRouting, RequirementSubmission
 from units.models import ComplianceNotice, HousingUnit, ElectricityConnection
 import json
+
+
+def _applicant_missing_intake_doc_q():
+    """Any of the seven Module 1 intake checklist documents not yet marked received."""
+    return (
+        Q(doc_brgy_residency=False)
+        | Q(doc_brgy_indigency=False)
+        | Q(doc_cedula=False)
+        | Q(doc_police_clearance=False)
+        | Q(doc_no_property=False)
+        | Q(doc_2x2_picture=False)
+        | Q(doc_sketch_location=False)
+    )
+
+
+def _applicant_intake_docs_done_count(applicant):
+    keys = (
+        'doc_brgy_residency',
+        'doc_brgy_indigency',
+        'doc_cedula',
+        'doc_police_clearance',
+        'doc_no_property',
+        'doc_2x2_picture',
+        'doc_sketch_location',
+    )
+    return sum(1 for k in keys if getattr(applicant, k, False))
+
+
+def _applications_pending_signatory_step(step):
+    """
+    Applications whose most recent SignatoryRouting step equals `step`
+    (e.g. 'forwarded_oic' = awaiting OIC signature, 'forwarded_head' = awaiting Head).
+    """
+    latest_sq = (
+        SignatoryRouting.objects.filter(application_id=OuterRef('pk'))
+        .order_by('-action_at')
+        .values('step')[:1]
+    )
+    return (
+        Application.objects.annotate(_latest_routing_step=Subquery(latest_sq))
+        .filter(_latest_routing_step=step)
+        .select_related('applicant', 'form_generated_by')
+        .prefetch_related(
+            Prefetch(
+                'routing_steps',
+                queryset=SignatoryRouting.objects.order_by('action_at'),
+            )
+        )
+    )
+
+
+def _build_oversight_applicants_table_rows():
+    """
+    Rows for Head/OIC applicant intake overview (ISFRecord model was removed; use Applicant only).
+    """
+    applicants_qs = (
+        Applicant.objects.select_related('registered_by', 'eligibility_checked_by', 'barangay')
+        .prefetch_related('queue_entries', 'requirement_submissions__requirement')
+        .order_by('-created_at')
+    )
+    rows = []
+    for applicant in applicants_qs:
+        queue_entry = applicant.queue_entries.filter(status='active').first()
+        queue_type = queue_entry.get_queue_type_display() if queue_entry else '—'
+
+        group_a_verified = applicant.requirement_submissions.filter(
+            requirement__group='A',
+            status='verified',
+        ).count()
+        group_a_total = applicant.requirement_submissions.filter(
+            requirement__group='A',
+        ).count()
+        if group_a_total > 0:
+            docs_progress = f'{group_a_verified}/{group_a_total}'
+        else:
+            docs_progress = f'{_applicant_intake_docs_done_count(applicant)}/7'
+
+        staff_user = applicant.eligibility_checked_by or applicant.registered_by
+        staff_name = staff_user.get_full_name() if staff_user else '—'
+        staff_position = getattr(staff_user, 'position', None) or '—'
+        if staff_user and staff_user.first_name and staff_user.last_name:
+            staff_initials = f'{staff_user.first_name[0]}{staff_user.last_name[0]}'.upper()
+        else:
+            staff_initials = '—'
+
+        rows.append({
+            'id': str(applicant.id),
+            'transaction_id': str(applicant.id),
+            'reference_number': applicant.reference_number,
+            'full_name': applicant.full_name,
+            'channel': applicant.get_channel_display(),
+            'eligibility': applicant.get_status_display(),
+            'queue_type': queue_type,
+            'created_at': applicant.created_at,
+            'docs_progress': docs_progress,
+            'barangay': applicant.barangay.name if applicant.barangay else '—',
+            'staff_name': staff_name,
+            'staff_position': staff_position,
+            'staff_initials': staff_initials,
+            'sms_sent': applicant.registration_sms_sent or applicant.eligibility_sms_sent,
+        })
+    return rows
+
+
+def _m2_signatory_pipeline_counts():
+    """Counts for M2 signatory strip (OIC / Head pending pages)."""
+    latest_sq = (
+        SignatoryRouting.objects.filter(application_id=OuterRef('pk'))
+        .order_by('-action_at')
+        .values('step')[:1]
+    )
+    annotated = Application.objects.annotate(_latest=Subquery(latest_sq))
+
+    def _c(**filters):
+        return annotated.filter(**filters).count()
+
+    return {
+        'pre_routing': Application.objects.filter(
+            status__in=['draft', 'completed'],
+        ).count(),
+        'latest_received': _c(_latest='received'),
+        'latest_forwarded_oic': _c(_latest='forwarded_oic'),
+        'latest_signed_oic': _c(_latest='signed_oic'),
+        'latest_forwarded_head': _c(_latest='forwarded_head'),
+        'latest_signed_head': _c(_latest='signed_head'),
+        'fully_approved': Application.objects.filter(
+            status__in=['head_signed', 'standby', 'awarded'],
+        ).count(),
+    }
+
+
+def _serialize_units_electricity_connection(conn):
+    """units.ElectricityConnection → dict for dashboard templates (2nd / 5th member)."""
+    unit = conn.lot_award.unit
+    person = conn.lot_award.application.applicant
+    st = conn.status
+    progress_map = {
+        'pending': 25,
+        'docs_submitted': 45,
+        'coordinating': 65,
+        'approved': 90,
+        'completed': 100,
+    }
+    step_map = {'pending': 1, 'docs_submitted': 2, 'coordinating': 3, 'approved': 3, 'completed': 4}
+    return {
+        'beneficiary': person.full_name,
+        'beneficiary_name': person.full_name,
+        'block': unit.block_number,
+        'lot': unit.lot_number,
+        'status': st,
+        'status_display': conn.get_status_display(),
+        'progress': progress_map.get(st, 15),
+        'step': step_map.get(st, 1),
+        'last_updated': conn.updated_at,
+    }
 
 
 def login_view(request):
@@ -152,22 +308,13 @@ def dashboard_head(request):
     sms_failed_recent = SMSLog.objects.filter(status='failed', sent_at__gte=seven_days_ago).count()
 
     # ==================== MODULE 2: APPLICATIONS AWAITING HEAD SIGNATURE ====================
-    # Applications awaiting head signature (status='forwarded_head')
-    pending_head_signature_applications = Application.objects.filter(
-        status='head_signed'  # Applications that reached head signature step
-    ).exclude(
-        routing_steps__step='signed_head'  # But don't have the signed_head step yet
-    ).select_related('applicant').prefetch_related('routing_steps').distinct()
-
-    # Actually, better approach: applications in 'head_signed' status awaiting final sign-off
-    # Or where last routing step is 'forwarded_head'
     pending_head_applications = []
-    pending_head_applications_qs = Application.objects.filter(
-        status='head_signed',
-    ).select_related('applicant').prefetch_related('routing_steps')
+    pending_head_applications_qs = _applications_pending_signatory_step('forwarded_head').select_related(
+        'applicant'
+    ).prefetch_related('routing_steps')
 
     for app in pending_head_applications_qs:
-        last_routing = app.routing_steps.exclude(step='signed_head').order_by('-action_at').first()
+        last_routing = app.routing_steps.filter(step='forwarded_head').order_by('-action_at').first()
         if last_routing:
             days_waiting = last_routing.days_since_action
             pending_head_applications.append({
@@ -248,22 +395,16 @@ def dashboard_oic(request):
         return redirect('accounts:dashboard')
 
     # ==================== MODULE 2: OIC SIGNATORY (PRIORITY) ====================
-    from applications.models import Application, SignatoryRouting
+    from applications.models import Application
 
-    # Applications awaiting OIC signature
-    pending_signature_applications = Application.objects.filter(
-        status='routing'
-    ).select_related('applicant').prefetch_related(
-        'routing_steps'
-    )
+    # Applications whose latest routing step is "forwarded_oic" (awaiting OIC signature)
+    pending_signature_applications = _applications_pending_signatory_step('forwarded_oic').select_related(
+        'applicant'
+    ).prefetch_related('routing_steps')
 
-    # Enrich with routing information and days waiting
     pending_sigs_with_days = []
     for app in pending_signature_applications:
-        last_routing = app.routing_steps.filter(
-            step='forwarded_oic'
-        ).order_by('-action_at').first()
-
+        last_routing = app.routing_steps.filter(step='forwarded_oic').order_by('-action_at').first()
         if last_routing:
             days_waiting = last_routing.days_since_action
             is_overdue = days_waiting > 3
@@ -678,10 +819,12 @@ def dashboard_second_member(request):
 
         notices_to_prepare.append({
             'type': notice.get_notice_type_display(),
+            'type_display': notice.get_notice_type_display(),
             'type_code': notice.notice_type,
             'beneficiary': notice.lot_award.application.applicant.full_name if notice.lot_award else 'N/A',
-            'block': notice.unit.block if notice.unit else 'N/A',
-            'lot': notice.unit.lot if notice.unit else 'N/A',
+            'beneficiary_name': notice.lot_award.application.applicant.full_name if notice.lot_award else 'N/A',
+            'block': notice.unit.block_number if notice.unit else '—',
+            'lot': notice.unit.lot_number if notice.unit else '—',
             'deadline': notice.deadline,
             'days_remaining': notice.days_remaining,
             'is_approaching': is_approaching_deadline,
@@ -693,60 +836,36 @@ def dashboard_second_member(request):
 
     pending_notices_count = len(notices_to_prepare)
 
-    # ==================== MODULE 2: ELECTRICITY CONNECTIONS (M2) ====================
-    # Electricity connection tracking
-    electricity_connections = ElectricityConnection.objects.filter(
-        status__in=['pending', 'initiated', 'in_progress', 'approved', 'completed']
-    ).select_related('lot_award__application__applicant', 'lot_award__unit').order_by('-updated_at')
+    # ==================== MODULE 2: ELECTRICITY CONNECTIONS (M2) — units.ElectricityConnection ====================
+    electricity_connections = (
+        ElectricityConnection.objects.exclude(status='completed')
+        .select_related('lot_award__application__applicant', 'lot_award__unit')
+        .order_by('-updated_at')[:20]
+    )
+    electricity_tracking = [_serialize_units_electricity_connection(c) for c in electricity_connections]
+    electricity_pending_count = (
+        ElectricityConnection.objects.exclude(status='completed').count()
+    )
 
-    electricity_tracking = []
-    for conn in electricity_connections:
-        # Calculate progress: pending=25%, in_progress=75%, completed=100%
-        progress_map = {
-            'pending': 25,
-            'in_progress': 75,
-            'completed': 100,
-        }
-        progress = progress_map.get(conn.status, 0)
-
-        electricity_tracking.append({
-            'beneficiary': conn.lot_award.application.applicant.full_name,
-            'block': conn.lot_award.unit.block,
-            'lot': conn.lot_award.unit.lot,
-            'status': conn.status,
-            'status_display': conn.get_status_display(),
-            'progress': progress,
-            'last_updated': conn.updated_at,
-        })
-
-    electricity_pending_count = len(electricity_tracking)
-
-    # ==================== MODULE 3: DOCUMENT OVERSIGHT (M3) ====================
-    # Track incomplete requirement submissions
-    incomplete_requirements = RequirementSubmission.objects.filter(
-        status='incomplete'
-    ).select_related('applicant').order_by('submitted_at')
-
+    # ==================== MODULE 3: DOCUMENT OVERSIGHT (M3) — Module 1 seven-document checklist ====================
+    incomplete_module1_qs = (
+        Applicant.objects.filter(_applicant_missing_intake_doc_q())
+        .order_by('-updated_at')[:15]
+    )
     doc_completeness_alerts = []
-    for req in incomplete_requirements:
-        missing_docs = []
-        # Check which requirements are missing
-        applicant_reqs = RequirementSubmission.objects.filter(
-            applicant=req.applicant
-        )
+    for app in incomplete_module1_qs:
+        done = _applicant_intake_docs_done_count(app)
         doc_completeness_alerts.append({
-            'applicant_name': req.applicant.full_name,
-            'reference': req.applicant.id,  # Use applicant ID as reference
-            'missing_docs': f"{applicant_reqs.count()} requirements pending",
+            'applicant_name': app.full_name,
+            'reference': app.reference_number,
+            'missing_docs': f'{7 - done}/7 intake documents still pending',
         })
-
-    incomplete_docs_count = len(doc_completeness_alerts[:10])  # Limit to 10
+    incomplete_docs_count = Applicant.objects.filter(_applicant_missing_intake_doc_q()).count()
 
     # ==================== MODULE 6: UPCOMING REPORTS (Reports for Full Disclosure Portal) ====================
     # Track reports due this month
     reports_to_generate = []
     # Standard monthly reports due: 1st (Compliance Summary), 15th (Mid-month Status), 28th (Monthly Closing)
-    from datetime import date
     today = date.today()
 
     if today.day < 1:
@@ -786,6 +905,14 @@ def dashboard_second_member(request):
         updated_at__gte=this_month_start
     ).count()
 
+    intake_incomplete_module1 = Applicant.objects.filter(_applicant_missing_intake_doc_q()).count()
+    pending_cdrrmo_count = CDRRMOCertification.objects.filter(status='pending').count()
+    requirements_verified_month = RequirementSubmission.objects.filter(
+        status='verified',
+        verified_at__gte=this_month_start,
+    ).count()
+    vacant_units_award = HousingUnit.objects.filter(status='Vacant — available').count()
+
     context = {
         'page_title': 'Second Member Dashboard',
         'user_position': 'second_member',
@@ -811,12 +938,16 @@ def dashboard_second_member(request):
         'awaiting_signature': awaiting_head_signature,  # Shared stat card
         'housing_units': total_housing_units,  # Shared stat card
         'approved_this_month': approved_this_month,  # Shared stat card
+        # Second-row stat cards (aligned to Joie’s intake + oversight role)
+        'intake_incomplete_module1': intake_incomplete_module1,
+        'pending_cdrrmo_count': pending_cdrrmo_count,
+        'requirements_verified_month': requirements_verified_month,
+        'vacant_units_award': vacant_units_award,
     }
 
     return render(request, 'accounts/dashboard.html', context)
 
 
-@login_required
 @login_required
 def dashboard_fourth_member(request):
     """
@@ -827,42 +958,99 @@ def dashboard_fourth_member(request):
         messages.error(request, 'Access denied. This dashboard is for the Fourth Member position only.')
         return redirect('accounts:dashboard')
 
-    # Shared stat card data
     total_applicants = Applicant.objects.count()
     awaiting_head_signature = Application.objects.filter(status='head_signed').count()
     total_housing_units = HousingUnit.objects.count()
     this_month_start = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     approved_this_month = Application.objects.filter(
         status='awarded',
-        updated_at__gte=this_month_start
+        updated_at__gte=this_month_start,
     ).count()
+
+    today = timezone.localdate()
+    active_queue_today = QueueEntry.objects.filter(status='active', entered_at__date=today).count()
+    active_queue_total = QueueEntry.objects.filter(status='active').count()
+    queue_today = active_queue_today if active_queue_today else active_queue_total
+
+    incomplete_requirements = Applicant.objects.filter(_applicant_missing_intake_doc_q()).count()
+    pending_cdrrmo_count = CDRRMOCertification.objects.filter(status='pending').count()
+    vacant_units = HousingUnit.objects.filter(status='Vacant — available').select_related('site').order_by(
+        'site__code', 'block_number', 'lot_number'
+    )[:40]
+    available_lots = [
+        {
+            'block': u.block_number,
+            'lot': u.lot_number,
+            'site': u.site.code,
+            'label': str(u),
+        }
+        for u in vacant_units
+    ]
+    lots_for_awarding = len(available_lots)
+
+    priority_queue = list(
+        QueueEntry.objects.filter(status='active', queue_type='priority')
+        .select_related('applicant')
+        .order_by('position')[:25]
+    )
+    # Only `priority` exists in QUEUE_TYPE_CHOICES today; keep empty until walk-in queue is modeled.
+    walkin_queue = []
+
+    pending_cdrrmo = list(
+        CDRRMOCertification.objects.filter(status='pending')
+        .select_related('applicant')
+        .order_by('-requested_at')[:20]
+    )
+
+    requirements_checklist = []
+    for app in (
+        Applicant.objects.filter(_applicant_missing_intake_doc_q())
+        .order_by('-created_at')[:20]
+    ):
+        dc = _applicant_intake_docs_done_count(app)
+        requirements_checklist.append(
+            {
+                'full_name': app.full_name,
+                'reference_number': app.reference_number,
+                'docs_count': dc,
+                'completion_percent': int(round((dc / 7) * 100)),
+            }
+        )
+
+    standby_queue = list(
+        Application.objects.filter(status='standby').select_related('applicant').order_by('updated_at')[:40]
+    )
+
+    blacklist_count = Blacklist.objects.count()
+    repossessed_count = HousingUnit.objects.filter(status='Repossessed').count()
+    awaiting_reaward = Application.objects.filter(status='standby').count()
+
+    standby_count = len(standby_queue)
+    available_count = len(available_lots)
+    ready_to_award = min(standby_count, available_count)
 
     context = {
         'page_title': 'Fourth Member Dashboard',
         'user_position': 'fourth_member',
-        'total_applicants': total_applicants,  # Shared stat card
-        'awaiting_signature': awaiting_head_signature,  # Shared stat card
-        'housing_units': total_housing_units,  # Shared stat card
-        'approved_this_month': approved_this_month,  # Shared stat card
-        'queue_today': 0,  # TODO: Applicants in queue today
-        'incomplete_requirements': 0,  # TODO: Applicants with incomplete requirements
-        'documents_filed': 0,  # TODO: Documents filed this month
-        'lots_for_awarding': 0,  # TODO: Vacant units available for awarding
-        'priority_queue': [],  # TODO: Priority queue applicants
-        'walkin_queue': [],  # TODO: Walk-in queue applicants
-        'pending_cdrrmo': [],  # TODO: Applicants pending CDRRMO certification
-        'requirements_checklist': [],  # TODO: Applicants with partial requirements
-        'standby_queue': [],  # TODO: Fully approved applicants on standby
-        'available_lots': [],  # TODO: Vacant lots ready for awarding
-        'blacklist_count': 0,  # TODO: Total blacklisted beneficiaries
-        'repossessed_count': 0,  # TODO: Repossessed units count
-        'awaiting_reaward': 0,  # TODO: Units awaiting re-award after repossession
+        'total_applicants': total_applicants,
+        'awaiting_signature': awaiting_head_signature,
+        'housing_units': total_housing_units,
+        'approved_this_month': approved_this_month,
+        'queue_today': queue_today,
+        'incomplete_requirements': incomplete_requirements,
+        'pending_cdrrmo_stat': pending_cdrrmo_count,
+        'lots_for_awarding': lots_for_awarding,
+        'priority_queue': priority_queue,
+        'walkin_queue': walkin_queue,
+        'pending_cdrrmo': pending_cdrrmo,
+        'requirements_checklist': requirements_checklist,
+        'standby_queue': standby_queue,
+        'available_lots': available_lots,
+        'blacklist_count': blacklist_count,
+        'repossessed_count': repossessed_count,
+        'awaiting_reaward': awaiting_reaward,
+        'ready_to_award': ready_to_award,
     }
-
-    # Calculate ready_to_award (min of available lots and standby queue)
-    standby_count = len(context['standby_queue']) if context['standby_queue'] else 0
-    available_count = len(context['available_lots']) if context['available_lots'] else 0
-    context['ready_to_award'] = min(standby_count, available_count)
 
     return render(request, 'accounts/dashboard.html', context)
 
@@ -877,29 +1065,66 @@ def dashboard_fifth_member(request):
         messages.error(request, 'Access denied. This dashboard is for the Fifth Member position only.')
         return redirect('accounts:dashboard')
 
-    # Shared stat card data
     total_applicants = Applicant.objects.count()
     awaiting_head_signature = Application.objects.filter(status='head_signed').count()
     total_housing_units = HousingUnit.objects.count()
     this_month_start = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     approved_this_month = Application.objects.filter(
         status='awarded',
-        updated_at__gte=this_month_start
+        updated_at__gte=this_month_start,
+    ).count()
+
+    qs_open = (
+        ElectricityConnection.objects.exclude(status='completed')
+        .select_related('lot_award__application__applicant', 'lot_award__unit')
+        .order_by('-updated_at')
+    )
+    electricity_queue = [_serialize_units_electricity_connection(c) for c in qs_open[:20]]
+    pending_connections = qs_open.count()
+    connected_this_month = ElectricityConnection.objects.filter(
+        status='completed',
+        completed_at__gte=this_month_start,
+    ).count()
+    awaiting_negros_power = ElectricityConnection.objects.filter(
+        status__in=['docs_submitted', 'coordinating'],
+    ).count()
+
+    negros_power_pending = []
+    for conn in (
+        ElectricityConnection.objects.filter(status__in=['docs_submitted', 'coordinating'])
+        .select_related('lot_award__application__applicant', 'lot_award__unit')
+        .order_by('updated_at')[:15]
+    ):
+        row = _serialize_units_electricity_connection(conn)
+        ref_dt = conn.docs_submitted_at or conn.updated_at
+        if ref_dt:
+            row['submitted_date'] = timezone.localdate(ref_dt).strftime('%b %d, %Y')
+            row['days_pending'] = max(0, (timezone.now() - ref_dt).days)
+        else:
+            row['submitted_date'] = '—'
+            row['days_pending'] = 0
+        negros_power_pending.append(row)
+
+    monthly_notices = ComplianceNotice.objects.filter(issued_at__gte=this_month_start).count()
+    docs_submitted = RequirementSubmission.objects.filter(
+        status='verified',
+        verified_at__gte=this_month_start,
     ).count()
 
     context = {
         'page_title': 'Fifth Member Dashboard',
         'user_position': 'fifth_member',
-        'total_applicants': total_applicants,  # Shared stat card
-        'awaiting_signature': awaiting_head_signature,  # Shared stat card
-        'housing_units': total_housing_units,  # Shared stat card
-        'approved_this_month': approved_this_month,  # Shared stat card
-        'pending_connections': 0,  # TODO: Electricity connections pending
-        'connected_this_month': 0,  # TODO: Connections completed this month
-        'awaiting_negros_power': 0,  # TODO: Applications with Negros Power
-        'monthly_notices': 0,  # TODO: Notices sent this month
-        'electricity_queue': [],  # TODO: Beneficiaries in electricity connection process
-        'negros_power_pending': [],  # TODO: Applications pending with Negros Power
+        'total_applicants': total_applicants,
+        'awaiting_signature': awaiting_head_signature,
+        'housing_units': total_housing_units,
+        'approved_this_month': approved_this_month,
+        'pending_connections': pending_connections,
+        'connected_this_month': connected_this_month,
+        'awaiting_negros_power': awaiting_negros_power,
+        'monthly_notices': monthly_notices,
+        'electricity_queue': electricity_queue,
+        'negros_power_pending': negros_power_pending,
+        'docs_submitted': docs_submitted,
     }
     return render(request, 'accounts/dashboard.html', context)
 
@@ -1386,86 +1611,7 @@ def head_applicants_overview(request):
     seven_days_ago = timezone.now() - timedelta(days=7)
     sms_failed_recent = SMSLog.objects.filter(status='failed', sent_at__gte=seven_days_ago).count()
 
-    # Get full ISF submissions list (like 2nd member intake view) - showing transaction history
-    from intake.models import ISFRecord
-
-    isf_records = ISFRecord.objects.select_related(
-        'submitted_by_staff',
-        'eligibility_checked_by'
-    ).order_by('-created_at')
-
-    # Pre-fetch all converted applicants for reference matching
-    all_applicants = {app.reference_number: app for app in Applicant.objects.select_related(
-        'registered_by',
-        'eligibility_checked_by'
-    )}
-
-    applicants_data = []
-    for record in isf_records:
-        # Try to find the corresponding applicant
-        applicant = all_applicants.get(record.reference_number)
-        reference_number = applicant.reference_number if applicant else record.reference_number
-        full_name = applicant.full_name if applicant else record.full_name
-
-        # Get queue info from applicant
-        queue_type = '—'
-        if applicant:
-            queue_entry = applicant.queue_entries.filter(status='active').first()
-            queue_type = queue_entry.get_queue_type_display() if queue_entry else '—'
-
-        # Get documentation progress
-        docs_progress = '0/7'
-        if applicant:
-            verified_requirements = applicant.requirement_submissions.filter(status='verified').count()
-            total_requirements = applicant.requirement_submissions.count()
-            docs_progress = f"{verified_requirements}/{total_requirements}" if total_requirements > 0 else "0/7"
-        else:
-            # For ISF records, count completed doc fields
-            doc_count = sum([
-                record.doc_brgy_residency,
-                record.doc_brgy_indigency,
-                record.doc_cedula,
-                record.doc_police_clearance,
-                record.doc_no_property,
-                record.doc_2x2_picture,
-                record.doc_sketch_location
-            ])
-            docs_progress = f"{doc_count}/7"
-
-        # Get staff who handled it - prioritize ISFRecord's eligibility_checked_by, then Applicant's
-        if record.eligibility_checked_by:
-            staff_user = record.eligibility_checked_by
-        elif applicant:
-            staff_user = applicant.eligibility_checked_by or applicant.registered_by
-        else:
-            staff_user = None
-
-        staff_name = staff_user.get_full_name() if staff_user else '—'
-        staff_position = staff_user.position if staff_user else '—'
-        staff_initials = f"{staff_user.first_name[0]}{staff_user.last_name[0]}".upper() if staff_user else '—'
-
-        # SMS status
-        sms_sent = record.registration_sms_sent or record.eligibility_sms_sent
-
-        # Channel from applicant if exists, otherwise default to Landowner
-        channel_display = applicant.get_channel_display() if applicant and applicant.channel else 'Channel A — Landowner'
-
-        applicants_data.append({
-            'id': str(record.id),
-            'transaction_id': str(record.id),
-            'reference_number': reference_number,
-            'full_name': full_name,
-            'channel': channel_display,
-            'eligibility': applicant.get_status_display() if applicant else record.get_status_display(),
-            'queue_type': queue_type,
-            'created_at': record.created_at,
-            'docs_progress': docs_progress,
-            'barangay': applicant.barangay.name if applicant and applicant.barangay else record.barangay or '—',
-            'staff_name': staff_name,
-            'staff_position': staff_position,
-            'staff_initials': staff_initials,
-            'sms_sent': sms_sent
-        })
+    applicants_data = _build_oversight_applicants_table_rows()
 
     context = {
         'page_title': 'Applicant Intake Overview',
@@ -1509,20 +1655,12 @@ def head_pending_signature(request):
         messages.error(request, 'Access denied. This view is for the Head position only.')
         return redirect('accounts:dashboard')
 
-    # Get applications awaiting head signature
-    # Status should be 'head_signed' (awaiting final approval)
-    pending_applications = Application.objects.filter(
-        status='head_signed'
-    ).select_related('applicant', 'form_generated_by').prefetch_related('routing_steps').order_by('created_at')
+    # Awaiting Head: latest routing step must be "forwarded_head" (not yet signed_head).
+    pending_applications = _applications_pending_signatory_step('forwarded_head').order_by('created_at')
 
-    # Build detailed list with days pending
     pending_apps_list = []
     for app in pending_applications:
-        # Get the last routing step to determine when forwarded to head
-        last_routing = app.routing_steps.filter(
-            step__in=['forwarded_head', 'signed_oic']
-        ).order_by('-action_at').first()
-
+        last_routing = app.routing_steps.filter(step='forwarded_head').order_by('-action_at').first()
         if last_routing:
             days_pending = (timezone.now() - last_routing.action_at).days
         else:
@@ -1538,10 +1676,8 @@ def head_pending_signature(request):
             'application_id': str(app.id)
         })
 
-    # Sort by days_pending descending
     pending_apps_list.sort(key=lambda x: x['days_pending'], reverse=True)
 
-    # Count statistics
     total_pending = len(pending_apps_list)
     urgent_count = len([app for app in pending_apps_list if app['days_pending'] >= 7])
 
@@ -1550,7 +1686,9 @@ def head_pending_signature(request):
         'user_position': request.user.position,
         'pending_applications': pending_apps_list,
         'total_pending': total_pending,
-        'urgent_count': urgent_count
+        'urgent_count': urgent_count,
+        'm2_pipeline': _m2_signatory_pipeline_counts(),
+        'm2_pipeline_role': 'head',
     }
 
     return render(request, 'accounts/head/pending_signature.html', context)
@@ -1881,86 +2019,7 @@ def oic_applicants_overview(request):
     seven_days_ago = timezone.now() - timedelta(days=7)
     sms_failed_recent = SMSLog.objects.filter(status='failed', sent_at__gte=seven_days_ago).count()
 
-    # Get full ISF submissions list
-    from intake.models import ISFRecord
-
-    isf_records = ISFRecord.objects.select_related(
-        'submitted_by_staff',
-        'eligibility_checked_by'
-    ).order_by('-created_at')
-
-    # Pre-fetch all converted applicants for reference matching
-    all_applicants = {app.reference_number: app for app in Applicant.objects.select_related(
-        'registered_by',
-        'eligibility_checked_by'
-    )}
-
-    applicants_data = []
-    for record in isf_records:
-        # Try to find the corresponding applicant
-        applicant = all_applicants.get(record.reference_number)
-        reference_number = applicant.reference_number if applicant else record.reference_number
-        full_name = applicant.full_name if applicant else record.full_name
-
-        # Get queue info from applicant
-        queue_type = '—'
-        if applicant:
-            queue_entry = applicant.queue_entries.filter(status='active').first()
-            queue_type = queue_entry.get_queue_type_display() if queue_entry else '—'
-
-        # Get documentation progress
-        docs_progress = '0/7'
-        if applicant:
-            verified_requirements = applicant.requirement_submissions.filter(status='verified').count()
-            total_requirements = applicant.requirement_submissions.count()
-            docs_progress = f"{verified_requirements}/{total_requirements}" if total_requirements > 0 else "0/7"
-        else:
-            # For ISF records, count completed doc fields
-            doc_count = sum([
-                record.doc_brgy_residency,
-                record.doc_brgy_indigency,
-                record.doc_cedula,
-                record.doc_police_clearance,
-                record.doc_no_property,
-                record.doc_2x2_picture,
-                record.doc_sketch_location
-            ])
-            docs_progress = f"{doc_count}/7"
-
-        # Get staff who handled it
-        if record.eligibility_checked_by:
-            staff_user = record.eligibility_checked_by
-        elif applicant:
-            staff_user = applicant.eligibility_checked_by or applicant.registered_by
-        else:
-            staff_user = None
-
-        staff_name = staff_user.get_full_name() if staff_user else '—'
-        staff_position = staff_user.position if staff_user else '—'
-        staff_initials = f"{staff_user.first_name[0]}{staff_user.last_name[0]}".upper() if staff_user else '—'
-
-        # SMS status
-        sms_sent = record.registration_sms_sent or record.eligibility_sms_sent
-
-        # Channel from applicant if exists, otherwise default to Landowner
-        channel_display = applicant.get_channel_display() if applicant and applicant.channel else 'Channel A — Landowner'
-
-        applicants_data.append({
-            'id': str(record.id),
-            'transaction_id': str(record.id),
-            'reference_number': reference_number,
-            'full_name': full_name,
-            'channel': channel_display,
-            'eligibility': applicant.get_status_display() if applicant else record.get_status_display(),
-            'queue_type': queue_type,
-            'created_at': record.created_at,
-            'docs_progress': docs_progress,
-            'barangay': applicant.barangay.name if applicant and applicant.barangay else record.barangay or '—',
-            'staff_name': staff_name,
-            'staff_position': staff_position,
-            'staff_initials': staff_initials,
-            'sms_sent': sms_sent
-        })
+    applicants_data = _build_oversight_applicants_table_rows()
 
     context = {
         'page_title': 'Applicant Intake Overview',
@@ -2004,20 +2063,12 @@ def oic_pending_signature(request):
         messages.error(request, 'Access denied. This view is for the OIC position only.')
         return redirect('accounts:dashboard')
 
-    # Get applications awaiting OIC signature
-    # Status should be 'routing' (awaiting OIC step) or 'oic_signed' (awaiting final step from head)
-    pending_applications = Application.objects.filter(
-        status='routing'
-    ).select_related('applicant', 'form_generated_by').prefetch_related('routing_steps').order_by('created_at')
+    # Awaiting OIC: latest routing step must be "forwarded_oic" (not yet signed_oic).
+    pending_applications = _applications_pending_signatory_step('forwarded_oic').order_by('created_at')
 
-    # Build detailed list with days pending
     pending_apps_list = []
     for app in pending_applications:
-        # Get the last routing step to determine when forwarded to OIC
-        last_routing = app.routing_steps.filter(
-            step='forwarded_oic'
-        ).order_by('-action_at').first()
-
+        last_routing = app.routing_steps.filter(step='forwarded_oic').order_by('-action_at').first()
         if last_routing:
             days_pending = (timezone.now() - last_routing.action_at).days
         else:
@@ -2033,10 +2084,8 @@ def oic_pending_signature(request):
             'application_id': str(app.id)
         })
 
-    # Sort by days_pending descending
     pending_apps_list.sort(key=lambda x: x['days_pending'], reverse=True)
 
-    # Count statistics
     total_pending = len(pending_apps_list)
     urgent_count = len([app for app in pending_apps_list if app['days_pending'] >= 7])
 
@@ -2045,7 +2094,9 @@ def oic_pending_signature(request):
         'user_position': request.user.position,
         'pending_applications': pending_apps_list,
         'total_pending': total_pending,
-        'urgent_count': urgent_count
+        'urgent_count': urgent_count,
+        'm2_pipeline': _m2_signatory_pipeline_counts(),
+        'm2_pipeline_role': 'oic',
     }
 
     return render(request, 'accounts/oic/pending_signature.html', context)

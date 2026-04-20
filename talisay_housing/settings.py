@@ -31,6 +31,8 @@ ALLOWED_HOSTS = ['*']  # Allow all hosts for development/testing
 # Application definition
 
 INSTALLED_APPS = [
+    # Jazzmin admin (must be before django.contrib.admin)
+    "django_jazzmin",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -164,3 +166,76 @@ TWILIO_MESSAGING_SERVICE_SID = 'MGef6b27fa659a0bb41605875f7eddf476'
 # Semaphore Configuration (Backup - Philippine)
 SEMAPHORE_API_KEY = 'c3f15974a138c3c7aabef97f481781f5'
 SEMAPHORE_SENDER_NAME = 'THA'
+
+# =============================================================================
+# Jazzmin Admin Configuration
+# =============================================================================
+JAZZMIN_SETTINGS = {
+    # Title & branding
+    "site_title": "THA Admin",
+    "site_header": "Talisay City Housing Authority",
+    "site_brand": "IHSMS",
+    "welcome_sign": "Welcome to Talisay City Housing Authority Admin Panel",
+    "login_logo": None,
+
+    # UI customization
+    "show_ui_builder": True,  # Allow live UI customization
+    "navigation_expanded": True,
+    "hide_apps": [],
+    "hide_models": [],
+    "order_with_respect_to": [],
+
+    # Icons
+    "icons": {
+        "auth": "fas fa-users-cog",
+        "auth.user": "fas fa-user",
+        "auth.Group": "fas fa-users",
+        "intake": "fas fa-inbox",
+        "intake.Applicant": "fas fa-user-check",
+        "intake.Barangay": "fas fa-map-marker",
+        "intake.Blacklist": "fas fa-ban",
+        "intake.CDRRMOCertification": "fas fa-certificate",
+        "intake.HouseholdMember": "fas fa-users",
+        "intake.QueueEntry": "fas fa-list-ol",
+        "intake.SMSLog": "fas fa-sms",
+        "applications": "fas fa-file-alt",
+        "applications.Application": "fas fa-file-contract",
+        "applications.Requirement": "fas fa-checklist",
+        "applications.RequirementSubmission": "fas fa-check-circle",
+        "applications.SignatoryRoutingStep": "fas fa-route",
+        "documents": "fas fa-folder",
+        "documents.Document": "fas fa-file",
+        "units": "fas fa-building",
+        "units.HousingUnit": "fas fa-home",
+        "units.LotAward": "fas fa-home",
+        "units.OccupancyReport": "fas fa-chart-bar",
+        "cases": "fas fa-briefcase",
+        "cases.Case": "fas fa-gavel",
+        "accounts": "fas fa-lock",
+        "accounts.User": "fas fa-user-tie",
+    },
+
+    # Admin panel colors (AdminLTE theme)
+    "default_icon_parents": "fas fa-chevron-right",
+    "default_icon_children": "fas fa-arrow-right",
+
+    # Search configuration
+    "search_model": ["accounts.User", "intake.Applicant"],
+
+    # User menu
+    "usermenu_links": [
+        {"name": "Support", "url": "/admin/", "new_window": False},
+        {"name": "API", "url": "/api/", "new_window": False},
+    ],
+}
+
+JAZZMIN_UI_TWEAKS = {
+    "navbar_small": False,
+    "footer_small": False,
+    "body_small": False,
+    "brand_small": False,
+    "brand_colour": "navbar-navy",
+    "accent": "accent-primary",
+    "tooltip_class": "tooltip-lg",
+    "button_size_class": "btn-md",
+}

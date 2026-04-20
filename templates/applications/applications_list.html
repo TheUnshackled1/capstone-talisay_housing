@@ -939,6 +939,16 @@
 {% endblock %}
 
 {% block content %}
+<div class="module2-workflow-banner" style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:12px;padding:0.75rem 1rem;margin-bottom:1rem;font-size:0.75rem;color:#0c4a6e;line-height:1.55;">
+    <strong>Module 2 workflow</strong> (housing application &amp; evaluation, after Module 1):
+    <strong>2.1</strong> Blacklist check (master list) —
+    <strong>2.2</strong> Eligibility data (income ceiling, no property in Talisay, household size — from applicant profile) —
+    <strong>2.3</strong> Intake queue (Module 1 <code>QueueEntry</code>) —
+    <strong>2.4</strong> Seven requirements verified here —
+    <strong>2.5</strong> Form generated → signatory routing → standby / SMS.
+    Blacklisted applicants cannot verify documents or generate forms until resolved in Module 1.
+    <a href="{% url 'intake:applicants_list' request.user.position %}" style="color:#0369a1;font-weight:600;">Open Module 1</a>
+</div>
 <!-- Stage Summary Cards - Matching Figma layout -->
 <div class="stages-grid">
     <div class="stage-card eligibility scroll-animate-scale scroll-delay-1 {% if filter_stage == 'eligibility' %}active{% endif %}"
@@ -1075,6 +1085,13 @@
                     <div class="applicant-cell">
                         <span class="applicant-name">{{ data.applicant.full_name }}</span>
                         <span class="applicant-ref">{{ data.applicant.reference_number }}</span>
+                        {% if data.blacklist_blocked %}
+                        <span style="font-size:0.5625rem;color:#b91c1c;font-weight:600;">Blacklist — Module 2 blocked</span>
+                        {% elif not data.m1_income_eligible %}
+                        <span style="font-size:0.5625rem;color:#b45309;">Income over M1 ceiling — fix in Module 1</span>
+                        {% elif not data.m1_declares_no_property %}
+                        <span style="font-size:0.5625rem;color:#b45309;">Property in Talisay flagged</span>
+                        {% endif %}
                         {% if data.is_delayed %}
                         <div class="routing-delayed-indicator">
                             <span>⚠</span> Routing delayed
@@ -1083,10 +1100,10 @@
                     </div>
                 </td>
                 <td>
-                    {% if data.applicant.channel == 'landowner' or data.applicant.channel == 'danger_zone' %}
-                    <span class="queue-badge priority">Priority #{{ forloop.counter }}</span>
+                    {% if data.intake_queue_label != '—' %}
+                    <span class="queue-badge priority">{{ data.intake_queue_label }}</span>
                     {% else %}
-                    <span class="queue-badge walkin">Walk-in #{{ forloop.counter }}</span>
+                    <span class="queue-badge walkin" title="No active Module 1 queue entry">No queue</span>
                     {% endif %}
                 </td>
                 <td>
@@ -1206,6 +1223,7 @@
             <button class="modal-close" onclick="closeModal()">&times;</button>
         </div>
         <div class="modal-body">
+            <div id="modalWorkflowGates" style="display:none;margin-bottom:1rem;padding:0.75rem;border-radius:8px;font-size:0.75rem;line-height:1.45;"></div>
             <!-- Progress Tracker -->
             <div class="progress-tracker" id="progressTracker">
                 <div class="progress-step" data-step="1">
@@ -1465,7 +1483,19 @@
     let currentApplicantId = null;
     let currentApplicationId = null;
     const canVerifyDocs = {{ permissions.can_verify_documents|yesno:"true,false" }};
+    window.__modalBlacklistBlocked = false;
+    window.__hasApplication = false;
+    window.__applicationNumber = '';
     const position = '{{ request.user.position }}';
+
+    function mapApplicationStatusToProgressStage(status) {
+        if (!status) return null;
+        if (status === 'awarded') return 'Lot Awarded';
+        if (status === 'head_signed' || status === 'standby') return 'Fully Approved';
+        if (status === 'routing' || status === 'oic_signed') return 'Signatory Routing';
+        if (status === 'draft' || status === 'completed') return 'Form Released';
+        return null;
+    }
 
     // Filter functions
     function filterByStage(stage) {
@@ -1513,6 +1543,9 @@
         document.getElementById('applicationModal').classList.remove('active');
         currentApplicantId = null;
         currentApplicationId = null;
+        window.__modalBlacklistBlocked = false;
+        window.__hasApplication = false;
+        window.__applicationNumber = '';
     }
 
     // Close modal on escape key
@@ -1528,7 +1561,19 @@
         if (e.target.classList.contains('modal-overlay')) closeModal();
     });
 
+    function escapeHtml(s) {
+        if (s == null || s === '') return '';
+        const d = document.createElement('div');
+        d.textContent = s;
+        return d.innerHTML;
+    }
+
     function resetModalState() {
+        const g = document.getElementById('modalWorkflowGates');
+        if (g) {
+            g.style.display = 'none';
+            g.innerHTML = '';
+        }
         // Reset all checkboxes
         document.querySelectorAll('.document-checkbox').forEach(cb => {
             cb.classList.remove('checked');
@@ -1555,6 +1600,8 @@
             btn.style.display = 'none';
         });
         
+        window.__hasApplication = false;
+        window.__applicationNumber = '';
         // Update button state
         updateFormButton();
     }
@@ -1564,6 +1611,31 @@
             const response = await fetch(`/applications/staff/${position}/${applicantId}/`);
             const data = await response.json();
             
+            window.__modalBlacklistBlocked = !!data.blacklist_blocked;
+            window.__hasApplication = !!data.has_application;
+            window.__applicationNumber = data.application_number || '';
+            const gate = document.getElementById('modalWorkflowGates');
+            if (gate) {
+                gate.style.display = 'block';
+                const q = escapeHtml(data.intake_queue_label || '—');
+                const hh = data.household_size != null ? escapeHtml(String(data.household_size)) : '—';
+                const inc = data.m1_income_eligible ? 'Within income ceiling' : 'Over income ceiling (correct in M1)';
+                const prop = data.m1_declares_no_property ? 'No Talisay property (declared)' : 'Property in Talisay (declared)';
+                if (data.blacklist_blocked) {
+                    gate.style.background = '#fef2f2';
+                    gate.style.border = '1px solid #fecaca';
+                    gate.style.color = '#991b1b';
+                    gate.innerHTML = '<strong>2.1 Blacklist</strong> — Applicant matches master blacklist. ' +
+                        (data.blacklist_detail ? `<span style="display:block;margin-top:0.35rem;">${escapeHtml(data.blacklist_detail)}</span>` : '') +
+                        '<span style="display:block;margin-top:0.35rem;">Document verification and form generation are disabled until resolved in Module 1.</span>';
+                } else {
+                    gate.style.background = '#f8fafc';
+                    gate.style.border = '1px solid #e2e8f0';
+                    gate.style.color = '#334155';
+                    gate.innerHTML = `<strong>M1 snapshot (2.2–2.3)</strong> — Queue: <strong>${q}</strong> · Household size: <strong>${hh}</strong> · ${inc} · ${prop}.`;
+                }
+            }
+
             if (data.requirements) {
                 data.requirements.forEach(req => {
                     const item = document.querySelector(`[data-requirement="${req.code}"]`);
@@ -1577,6 +1649,11 @@
                 });
                 updateGroupACount();
                 updateFormButton();
+            }
+
+            const progressFromStatus = mapApplicationStatusToProgressStage(data.status);
+            if (progressFromStatus) {
+                updateProgressTrackerFromStage(progressFromStatus);
             }
             
             if (data.routing_steps) {
@@ -1619,6 +1696,14 @@
 
     function toggleRequirement(checkbox, requirementCode) {
         if (!canVerifyDocs) return;
+        if (window.__hasApplication) {
+            alert('Requirements are locked after the application form has been generated.');
+            return;
+        }
+        if (window.__modalBlacklistBlocked) {
+            alert('This applicant is on the blacklist. Resolve in Module 1 before verifying requirements (workflow 2.1).');
+            return;
+        }
         
         const isChecked = checkbox.classList.toggle('checked');
         const span = checkbox.querySelector('span');
@@ -1644,6 +1729,25 @@
         const text = document.getElementById('formStatusText');
         
         if (!btn || !text) return;
+
+        if (window.__modalBlacklistBlocked) {
+            btn.disabled = true;
+            btn.textContent = '📝 Generate Application Form';
+            text.textContent = 'Blacklist — form generation disabled until cleared in Module 1.';
+            text.style.color = '#b91c1c';
+            return;
+        }
+
+        if (window.__hasApplication) {
+            btn.disabled = true;
+            btn.textContent = '📝 Generate Application Form';
+            const num = window.__applicationNumber;
+            text.textContent = num
+                ? `Application form already generated (${num}).`
+                : 'Application form already generated.';
+            text.style.color = '#0369a1';
+            return;
+        }
         
         if (verified >= 7) {
             btn.disabled = false;
@@ -1696,6 +1800,9 @@
             
             if (!data.success) {
                 alert(data.error || 'Error saving requirement');
+                if (String(data.error || '').toLowerCase().includes('blacklist')) {
+                    location.reload();
+                }
             }
         } catch (error) {
             console.error('Error saving requirement:', error);
@@ -1704,6 +1811,10 @@
 
     async function generateForm() {
         if (!currentApplicantId) return;
+        if (window.__hasApplication) {
+            alert('Application form already generated.');
+            return;
+        }
         
         const btn = document.getElementById('generateFormBtn');
         btn.disabled = true;
@@ -1721,9 +1832,15 @@
                 // Refresh the page to show updated status
                 setTimeout(() => location.reload(), 1500);
             } else {
-                alert(data.error || 'Failed to generate form');
-                btn.textContent = '📝 Generate Application Form';
-                btn.disabled = false;
+                const err = data.error || 'Failed to generate form';
+                alert(err);
+                if (String(err).toLowerCase().includes('already generated')) {
+                    window.__hasApplication = true;
+                    updateFormButton();
+                } else {
+                    btn.textContent = '📝 Generate Application Form';
+                    btn.disabled = false;
+                }
             }
         } catch (error) {
             console.error('Error generating form:', error);
