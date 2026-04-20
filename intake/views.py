@@ -1133,7 +1133,17 @@ def walkin_register(request, position):
     barangay, _ = Barangay.objects.get_or_create(name=barangay_name)
 
     # Check blacklist
-    full_name = form.cleaned_data['full_name']
+    # WalkInApplicantForm currently posts split name fields; build a safe full name
+    # instead of hard-indexing a non-existent `full_name` key.
+    full_name = (form.cleaned_data.get('full_name') or '').strip()
+    if not full_name:
+        last_name = (form.cleaned_data.get('last_name') or '').strip()
+        first_name = (form.cleaned_data.get('first_name') or '').strip()
+        middle_name = (form.cleaned_data.get('middle_name') or '').strip()
+        if last_name and first_name:
+            full_name = f"{last_name}, {first_name}{(' ' + middle_name) if middle_name else ''}"
+        else:
+            full_name = "Unnamed Applicant"
     phone_number = form.cleaned_data.get('phone_number', '')
     is_blacklisted, blacklist_entry = check_blacklist(full_name, phone_number)
 

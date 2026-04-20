@@ -1122,6 +1122,7 @@
                         <div class="form-group">
                             <label class="form-label">Monthly Income (₱)</label>
                             <input type="number" class="form-input" id="reviewIncomeB" name="monthly_income_b" min="0" step="0.01" readonly>
+                            <span class="help-text" id="reviewIncomeDisplayB" aria-live="polite"></span>
                         </div>
                         <div class="form-group">
                             <label class="form-label">Household Size</label>
@@ -1361,6 +1362,7 @@
                             <div class="form-group">
                                 <label class="form-label">Monthly Income (₱)</label>
                                 <input type="number" class="form-input" id="reviewIncome" name="monthly_income" min="0" step="0.01" readonly>
+                                <span class="help-text" id="reviewIncomeDisplay" aria-live="polite"></span>
                             </div>
                         </div>
                     </div>
@@ -1936,8 +1938,9 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label class="form-label">Monthly Income (₱) <span style="color: #dc2626;">*</span></label>
-                            <input type="number" class="form-input" placeholder="e.g. 8500" name="monthly_income" id="monthlyIncome" min="0" step="0.01" required>
+                            <input type="number" class="form-input" placeholder="e.g. 8500" name="monthly_income" id="monthlyIncome" min="0" step="0.01" data-income-preview-id="monthlyIncomeFormattedPreview" required>
                             <span class="help-text">Gross monthly household income</span>
+                            <span class="help-text" id="monthlyIncomeFormattedPreview" aria-live="polite"></span>
                         </div>
                     </div>
                 </div>
@@ -2068,6 +2071,37 @@
                 });
             }
         });
+    }
+
+    // Keep number inputs strictly numeric (no commas) to avoid browser parse warnings.
+    function attachNumberIncomeSanitizer(input) {
+        const previewId = input.dataset.incomePreviewId;
+        const previewEl = previewId ? document.getElementById(previewId) : null;
+
+        const updatePreview = function(rawValue) {
+            if (!previewEl) return;
+            const parsed = Number.parseFloat(rawValue);
+            if (Number.isNaN(parsed) || rawValue === '') {
+                previewEl.textContent = '';
+                return;
+            }
+            previewEl.textContent = 'Display: ₱' + parsed.toLocaleString('en-PH', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 2
+            });
+        };
+
+        const sanitize = function() {
+            if (typeof this.value !== 'string') return;
+            const cleaned = this.value.replace(/,/g, '');
+            if (cleaned !== this.value) {
+                this.value = cleaned;
+            }
+            updatePreview(cleaned);
+        };
+        input.addEventListener('input', sanitize);
+        input.addEventListener('change', sanitize);
+        sanitize.call(input);
     }
 
     // Toggle collapsible fieldsets
@@ -2247,7 +2281,14 @@
                 if (dobEl) dobEl.value = currentApplicant.dateOfBirth || '';
                 if (pobEl) pobEl.value = currentApplicant.placeOfBirth || '';
                 if (barangayEl) barangayEl.value = currentApplicant.barangay || '';
-                if (incomeEl) incomeEl.value = currentApplicant.monthlyIncome || '';
+                if (incomeEl) incomeEl.value = String(currentApplicant.monthlyIncome || '').replace(/,/g, '');
+                const incomeDisplayEl = document.getElementById('reviewIncomeDisplay');
+                if (incomeDisplayEl) {
+                    const numericIncome = Number.parseFloat(String(currentApplicant.monthlyIncome || '').replace(/,/g, ''));
+                    incomeDisplayEl.textContent = Number.isNaN(numericIncome)
+                        ? ''
+                        : ('Display: ₱' + numericIncome.toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 2 }));
+                }
                 if (householdEl) householdEl.value = currentApplicant.householdSize || '';
                 if (yearsEl) yearsEl.value = currentApplicant.yearsResiding || '';
                 if (phoneEl) phoneEl.value = currentApplicant.phoneNumber || '';
@@ -2357,7 +2398,14 @@
                 
                 if (fullNameBEl) fullNameBEl.value = currentApplicant.fullName || '';
                 if (barangayBEl) barangayBEl.value = currentApplicant.barangay || '';
-                if (incomeBEl) incomeBEl.value = currentApplicant.monthlyIncome || '';
+                if (incomeBEl) incomeBEl.value = String(currentApplicant.monthlyIncome || '').replace(/,/g, '');
+                const incomeDisplayBEl = document.getElementById('reviewIncomeDisplayB');
+                if (incomeDisplayBEl) {
+                    const numericIncomeB = Number.parseFloat(String(currentApplicant.monthlyIncome || '').replace(/,/g, ''));
+                    incomeDisplayBEl.textContent = Number.isNaN(numericIncomeB)
+                        ? ''
+                        : ('Display: ₱' + numericIncomeB.toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 2 }));
+                }
                 if (householdBEl) householdBEl.value = currentApplicant.householdSize || '';
                 if (yearsBEl) yearsBEl.value = currentApplicant.yearsResiding || '';
                 if (phoneBEl) phoneBEl.value = currentApplicant.phoneNumber || '';
@@ -3121,7 +3169,7 @@
                 
                 if (fullNameAEl) fullNameAEl.value = currentApplicant.fullName || '';
                 if (barangayAEl) barangayAEl.value = currentApplicant.barangay || '';
-                if (incomeAEl) incomeAEl.value = currentApplicant.monthlyIncome || '';
+                if (incomeAEl) incomeAEl.value = String(currentApplicant.monthlyIncome || '').replace(/,/g, '');
                 if (householdAEl) householdAEl.value = currentApplicant.householdSize || '';
                 if (yearsAEl) yearsAEl.value = currentApplicant.yearsResiding || '';
                 if (phoneAEl) phoneAEl.value = currentApplicant.phoneNumber || '';
@@ -3139,7 +3187,7 @@
                 
                 if (fullNameBEl) fullNameBEl.value = currentApplicant.fullName || '';
                 if (barangayBEl) barangayBEl.value = currentApplicant.barangay || '';
-                if (incomeBEl) incomeBEl.value = currentApplicant.monthlyIncome || '';
+                if (incomeBEl) incomeBEl.value = String(currentApplicant.monthlyIncome || '').replace(/,/g, '');
                 if (householdBEl) householdBEl.value = currentApplicant.householdSize || '';
                 if (yearsBEl) yearsBEl.value = currentApplicant.yearsResiding || '';
                 if (phoneBEl) phoneBEl.value = currentApplicant.phoneNumber || '';
@@ -3157,7 +3205,7 @@
                 
                 if (fullNameEl) fullNameEl.value = currentApplicant.fullName || '';
                 if (barangayEl) barangayEl.value = currentApplicant.barangay || '';
-                if (incomeEl) incomeEl.value = currentApplicant.monthlyIncome || '';
+                if (incomeEl) incomeEl.value = String(currentApplicant.monthlyIncome || '').replace(/,/g, '');
                 if (householdEl) householdEl.value = currentApplicant.householdSize || '';
                 if (yearsEl) yearsEl.value = currentApplicant.yearsResiding || '';
                 if (phoneEl) phoneEl.value = currentApplicant.phoneNumber || '';
@@ -3770,7 +3818,14 @@
             // Basic info
             document.getElementById('reviewFullNameB').value = applicant.fullName;
             document.getElementById('reviewBarangayB').value = applicant.barangay;
-            document.getElementById('reviewIncomeB').value = applicant.monthlyIncome.toFixed(2);
+            document.getElementById('reviewIncomeB').value = Number(String(applicant.monthlyIncome || 0).replace(/,/g, '')).toFixed(2);
+            const previewBEl = document.getElementById('reviewIncomeDisplayB');
+            if (previewBEl) {
+                const previewNum = Number.parseFloat(String(applicant.monthlyIncome || '').replace(/,/g, ''));
+                previewBEl.textContent = Number.isNaN(previewNum)
+                    ? ''
+                    : ('Display: ₱' + previewNum.toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 2 }));
+            }
             document.getElementById('reviewHouseholdB').value = applicant.householdSize;
             document.getElementById('reviewYearsB').value = applicant.yearsResiding;
             document.getElementById('reviewPhoneB').value = applicant.phoneNumber;
@@ -3897,10 +3952,38 @@
             });
         });
 
-        // Attach income formatter to the new income field
+        const reviewIncome = document.getElementById('reviewIncome');
+        const reviewIncomeDisplay = document.getElementById('reviewIncomeDisplay');
+        if (reviewIncome && reviewIncomeDisplay) {
+            const syncReviewIncomeDisplay = function() {
+                const value = Number.parseFloat(String(reviewIncome.value || '').replace(/,/g, ''));
+                reviewIncomeDisplay.textContent = Number.isNaN(value)
+                    ? ''
+                    : ('Display: ₱' + value.toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 2 }));
+            };
+            reviewIncome.addEventListener('input', syncReviewIncomeDisplay);
+            reviewIncome.addEventListener('change', syncReviewIncomeDisplay);
+            syncReviewIncomeDisplay();
+        }
+
+        const reviewIncomeB = document.getElementById('reviewIncomeB');
+        const reviewIncomeDisplayB = document.getElementById('reviewIncomeDisplayB');
+        if (reviewIncomeB && reviewIncomeDisplayB) {
+            const syncReviewIncomeDisplayB = function() {
+                const value = Number.parseFloat(String(reviewIncomeB.value || '').replace(/,/g, ''));
+                reviewIncomeDisplayB.textContent = Number.isNaN(value)
+                    ? ''
+                    : ('Display: ₱' + value.toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 2 }));
+            };
+            reviewIncomeB.addEventListener('input', syncReviewIncomeDisplayB);
+            reviewIncomeB.addEventListener('change', syncReviewIncomeDisplayB);
+            syncReviewIncomeDisplayB();
+        }
+
+        // Ensure number income field never contains comma-separated values.
         const incomeInput = document.getElementById('monthlyIncome');
         if (incomeInput) {
-            attachIncomeFormatter(incomeInput);
+            attachNumberIncomeSanitizer(incomeInput);
         }
     });
 
