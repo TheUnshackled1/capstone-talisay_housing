@@ -32,7 +32,7 @@ ALLOWED_HOSTS = ['*']  # Allow all hosts for development/testing
 
 INSTALLED_APPS = [
     # Jazzmin admin (must be before django.contrib.admin)
-    "django_jazzmin",
+    "jazzmin",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -86,8 +86,12 @@ WSGI_APPLICATION = "talisay_housing.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "talisay_housing_db",
+        "USER": "postgres",
+        "PASSWORD": "1234",
+        "HOST": "localhost",
+        "PORT": "5432",
     }
 }
 
@@ -223,10 +227,7 @@ JAZZMIN_SETTINGS = {
     "search_model": ["accounts.User", "intake.Applicant"],
 
     # User menu
-    "usermenu_links": [
-        {"name": "Support", "url": "/admin/", "new_window": False},
-        {"name": "API", "url": "/api/", "new_window": False},
-    ],
+    "usermenu_links": [],
 }
 
 JAZZMIN_UI_TWEAKS = {
