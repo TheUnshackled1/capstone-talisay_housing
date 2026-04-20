@@ -1006,9 +1006,9 @@ def applicants_list(request, position):
             'submissionId': None,
             'applicantId': str(app.id),
             # Section A: APPLICATION IDENTITY
-            'lastName': '',  # Not stored separately - use fullName
-            'firstName': '',  # Not stored separately - use fullName
-            'middleName': '',  # Not stored separately - use fullName
+            'lastName': app.last_name or '',
+            'firstName': app.first_name or '',
+            'middleName': app.middle_name or '',
             'sex': app.sex or '',
             'age': app.age or 0,
             'dateOfBirth': app.date_of_birth.isoformat() if app.date_of_birth else '',
@@ -1022,10 +1022,10 @@ def applicants_list(request, position):
             'householdSize': app.household_size,
             'householdMembers': [
                 {
-                    'name': member.name or '',
-                    'relationship': member.relationship or '',
+                    'name': member.full_name or '',
+                    'relationship': member.get_relationship_display() if hasattr(member, 'get_relationship_display') else (member.relationship or ''),
                     'age': member.age or 0,
-                    'civilStatus': member.civil_status or ''
+                    'civilStatus': member.get_civil_status_display() if hasattr(member, 'get_civil_status_display') else (member.civil_status or '')
                 }
                 for member in app.household_members.all()
             ],
@@ -1179,6 +1179,9 @@ def walkin_register(request, position):
     danger_zone_location = form.cleaned_data.get('danger_zone_location', '')
 
     applicant = Applicant.objects.create(
+        last_name=form.cleaned_data.get('last_name', ''),
+        first_name=form.cleaned_data.get('first_name', ''),
+        middle_name=form.cleaned_data.get('middle_name', ''),
         full_name=full_name,
         sex=form.cleaned_data.get('sex', ''),
         age=form.cleaned_data.get('age'),
@@ -1218,6 +1221,29 @@ def walkin_register(request, position):
         requested_by=request.user,
     )
 
+    # Process household members from form
+    for i in range(1, 51):  # Support up to 50 household members
+        name = request.POST.get(f'hh_member_{i}_name', '').strip()
+        relationship = request.POST.get(f'hh_member_{i}_relationship', '').strip()
+        age = request.POST.get(f'hh_member_{i}_age', '').strip()
+        civil_status = request.POST.get(f'hh_member_{i}_status', 'single').strip()
+
+        # Only create if at least name and relationship are provided
+        if name and relationship:
+            try:
+                age_int = int(age) if age else 0
+                from intake.models import HouseholdMember
+                HouseholdMember.objects.create(
+                    applicant=applicant,
+                    full_name=name,
+                    relationship=relationship,
+                    age=age_int,
+                    civil_status=civil_status
+                )
+            except (ValueError, TypeError):
+                # Skip invalid age values
+                pass
+
     msg = f'{applicant.full_name} registered as Danger Zone applicant. Reference: {applicant.reference_number}'
 
     # Send SMS
@@ -1255,6 +1281,9 @@ def walkin_register(request, position):
             'applicant': {
                 'id': str(applicant.id),
                 'fullName': applicant.full_name,
+                'lastName': applicant.last_name,
+                'firstName': applicant.first_name,
+                'middleName': applicant.middle_name,
                 'referenceNumber': applicant.reference_number,
                 'dateRegistered': applicant.created_at.strftime('%Y-%m-%d'),
                 'channel': applicant.channel,

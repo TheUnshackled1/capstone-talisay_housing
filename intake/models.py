@@ -149,8 +149,8 @@ class Applicant(models.Model):
     reference_number = models.CharField(max_length=20, unique=True, editable=False)
 
     # Personal Information - Name Fields (A. APPLICATION IDENTITY)
-    last_name = models.CharField(max_length=100, verbose_name="Last Name (Surname)")
-    first_name = models.CharField(max_length=100, verbose_name="First Name (Given Name)")
+    last_name = models.CharField(max_length=100, verbose_name="Last Name (Surname)", default="")
+    first_name = models.CharField(max_length=100, verbose_name="First Name (Given Name)", default="")
     middle_name = models.CharField(max_length=100, blank=True, default="", verbose_name="Middle Name")
 
     # Keep full_name for backward compatibility
@@ -371,30 +371,49 @@ class HouseholdMember(models.Model):
         ('grandchild', 'Grandchild'),
         ('other', 'Other Relative'),
     ]
-    
+
+    CIVIL_STATUS_CHOICES = [
+        ('single', 'Single'),
+        ('married', 'Married'),
+        ('widowed', 'Widowed'),
+        ('divorced', 'Divorced'),
+        ('separated', 'Separated'),
+        ('common_law', 'Common-law'),
+    ]
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     applicant = models.ForeignKey(
         Applicant,
         on_delete=models.CASCADE,
         related_name='household_members'
     )
-    
-    full_name = models.CharField(max_length=255)
-    relationship = models.CharField(max_length=20, choices=RELATIONSHIP_CHOICES)
-    date_of_birth = models.DateField(null=True, blank=True)
+
+    # B. HOUSEHOLD MEMBERS - Personal Information
+    full_name = models.CharField(max_length=100, verbose_name="Full Name")
+    relationship = models.CharField(max_length=20, choices=RELATIONSHIP_CHOICES, verbose_name="Relationship to Applicant")
+    age = models.PositiveIntegerField(default=0, verbose_name="Age", validators=[MaxValueValidator(120)])
+    date_of_birth = models.DateField(null=True, blank=True, verbose_name="Date of Birth")
     sex = models.CharField(
         max_length=1,
         choices=[('M', 'Male'), ('F', 'Female')],
-        blank=True
+        blank=True,
+        verbose_name="Sex"
     )
-    
+    civil_status = models.CharField(
+        max_length=20,
+        choices=CIVIL_STATUS_CHOICES,
+        blank=True,
+        default='single',
+        verbose_name="Civil Status"
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
-    
+
     class Meta:
         ordering = ['applicant', 'created_at']
         verbose_name = "Household Member"
         verbose_name_plural = "Household Members"
-    
+
     def __str__(self):
         return f"{self.full_name} ({self.get_relationship_display()}) - {self.applicant.full_name}"
 
