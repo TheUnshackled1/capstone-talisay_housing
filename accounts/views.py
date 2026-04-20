@@ -3,7 +3,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
-from django.db.models import Q
+from django.db.models import Q, OuterRef, Subquery, Prefetch
 from datetime import timedelta, date
 from .forms import LoginForm
 from intake.models import Applicant, QueueEntry, CDRRMOCertification, SMSLog, Blacklist
@@ -37,6 +37,109 @@ def _applicant_intake_docs_done_count(applicant):
         'doc_sketch_location',
     )
     return sum(1 for k in keys if getattr(applicant, k, False))
+
+
+def _applications_pending_signatory_step(step):
+    """
+    Applications whose most recent SignatoryRouting step equals `step`
+    (e.g. 'forwarded_oic' = awaiting OIC signature, 'forwarded_head' = awaiting Head).
+    """
+    latest_sq = (
+        SignatoryRouting.objects.filter(application_id=OuterRef('pk'))
+        .order_by('-action_at')
+        .values('step')[:1]
+    )
+    return (
+        Application.objects.annotate(_latest_routing_step=Subquery(latest_sq))
+        .filter(_latest_routing_step=step)
+        .select_related('applicant', 'form_generated_by')
+        .prefetch_related(
+            Prefetch(
+                'routing_steps',
+                queryset=SignatoryRouting.objects.order_by('action_at'),
+            )
+        )
+    )
+
+
+def _build_oversight_applicants_table_rows():
+    """
+    Rows for Head/OIC applicant intake overview (ISFRecord model was removed; use Applicant only).
+    """
+    applicants_qs = (
+        Applicant.objects.select_related('registered_by', 'eligibility_checked_by', 'barangay')
+        .prefetch_related('queue_entries', 'requirement_submissions__requirement')
+        .order_by('-created_at')
+    )
+    rows = []
+    for applicant in applicants_qs:
+        queue_entry = applicant.queue_entries.filter(status='active').first()
+        queue_type = queue_entry.get_queue_type_display() if queue_entry else '—'
+
+        group_a_verified = applicant.requirement_submissions.filter(
+            requirement__group='A',
+            status='verified',
+        ).count()
+        group_a_total = applicant.requirement_submissions.filter(
+            requirement__group='A',
+        ).count()
+        if group_a_total > 0:
+            docs_progress = f'{group_a_verified}/{group_a_total}'
+        else:
+            docs_progress = f'{_applicant_intake_docs_done_count(applicant)}/7'
+
+        staff_user = applicant.eligibility_checked_by or applicant.registered_by
+        staff_name = staff_user.get_full_name() if staff_user else '—'
+        staff_position = getattr(staff_user, 'position', None) or '—'
+        if staff_user and staff_user.first_name and staff_user.last_name:
+            staff_initials = f'{staff_user.first_name[0]}{staff_user.last_name[0]}'.upper()
+        else:
+            staff_initials = '—'
+
+        rows.append({
+            'id': str(applicant.id),
+            'transaction_id': str(applicant.id),
+            'reference_number': applicant.reference_number,
+            'full_name': applicant.full_name,
+            'channel': applicant.get_channel_display(),
+            'eligibility': applicant.get_status_display(),
+            'queue_type': queue_type,
+            'created_at': applicant.created_at,
+            'docs_progress': docs_progress,
+            'barangay': applicant.barangay.name if applicant.barangay else '—',
+            'staff_name': staff_name,
+            'staff_position': staff_position,
+            'staff_initials': staff_initials,
+            'sms_sent': applicant.registration_sms_sent or applicant.eligibility_sms_sent,
+        })
+    return rows
+
+
+def _m2_signatory_pipeline_counts():
+    """Counts for M2 signatory strip (OIC / Head pending pages)."""
+    latest_sq = (
+        SignatoryRouting.objects.filter(application_id=OuterRef('pk'))
+        .order_by('-action_at')
+        .values('step')[:1]
+    )
+    annotated = Application.objects.annotate(_latest=Subquery(latest_sq))
+
+    def _c(**filters):
+        return annotated.filter(**filters).count()
+
+    return {
+        'pre_routing': Application.objects.filter(
+            status__in=['draft', 'completed'],
+        ).count(),
+        'latest_received': _c(_latest='received'),
+        'latest_forwarded_oic': _c(_latest='forwarded_oic'),
+        'latest_signed_oic': _c(_latest='signed_oic'),
+        'latest_forwarded_head': _c(_latest='forwarded_head'),
+        'latest_signed_head': _c(_latest='signed_head'),
+        'fully_approved': Application.objects.filter(
+            status__in=['head_signed', 'standby', 'awarded'],
+        ).count(),
+    }
 
 
 def _serialize_units_electricity_connection(conn):
@@ -205,22 +308,13 @@ def dashboard_head(request):
     sms_failed_recent = SMSLog.objects.filter(status='failed', sent_at__gte=seven_days_ago).count()
 
     # ==================== MODULE 2: APPLICATIONS AWAITING HEAD SIGNATURE ====================
-    # Applications awaiting head signature (status='forwarded_head')
-    pending_head_signature_applications = Application.objects.filter(
-        status='head_signed'  # Applications that reached head signature step
-    ).exclude(
-        routing_steps__step='signed_head'  # But don't have the signed_head step yet
-    ).select_related('applicant').prefetch_related('routing_steps').distinct()
-
-    # Actually, better approach: applications in 'head_signed' status awaiting final sign-off
-    # Or where last routing step is 'forwarded_head'
     pending_head_applications = []
-    pending_head_applications_qs = Application.objects.filter(
-        status='head_signed',
-    ).select_related('applicant').prefetch_related('routing_steps')
+    pending_head_applications_qs = _applications_pending_signatory_step('forwarded_head').select_related(
+        'applicant'
+    ).prefetch_related('routing_steps')
 
     for app in pending_head_applications_qs:
-        last_routing = app.routing_steps.exclude(step='signed_head').order_by('-action_at').first()
+        last_routing = app.routing_steps.filter(step='forwarded_head').order_by('-action_at').first()
         if last_routing:
             days_waiting = last_routing.days_since_action
             pending_head_applications.append({
@@ -301,22 +395,16 @@ def dashboard_oic(request):
         return redirect('accounts:dashboard')
 
     # ==================== MODULE 2: OIC SIGNATORY (PRIORITY) ====================
-    from applications.models import Application, SignatoryRouting
+    from applications.models import Application
 
-    # Applications awaiting OIC signature
-    pending_signature_applications = Application.objects.filter(
-        status='routing'
-    ).select_related('applicant').prefetch_related(
-        'routing_steps'
-    )
+    # Applications whose latest routing step is "forwarded_oic" (awaiting OIC signature)
+    pending_signature_applications = _applications_pending_signatory_step('forwarded_oic').select_related(
+        'applicant'
+    ).prefetch_related('routing_steps')
 
-    # Enrich with routing information and days waiting
     pending_sigs_with_days = []
     for app in pending_signature_applications:
-        last_routing = app.routing_steps.filter(
-            step='forwarded_oic'
-        ).order_by('-action_at').first()
-
+        last_routing = app.routing_steps.filter(step='forwarded_oic').order_by('-action_at').first()
         if last_routing:
             days_waiting = last_routing.days_since_action
             is_overdue = days_waiting > 3
@@ -1523,86 +1611,7 @@ def head_applicants_overview(request):
     seven_days_ago = timezone.now() - timedelta(days=7)
     sms_failed_recent = SMSLog.objects.filter(status='failed', sent_at__gte=seven_days_ago).count()
 
-    # Get full ISF submissions list (like 2nd member intake view) - showing transaction history
-    from intake.models import ISFRecord
-
-    isf_records = ISFRecord.objects.select_related(
-        'submitted_by_staff',
-        'eligibility_checked_by'
-    ).order_by('-created_at')
-
-    # Pre-fetch all converted applicants for reference matching
-    all_applicants = {app.reference_number: app for app in Applicant.objects.select_related(
-        'registered_by',
-        'eligibility_checked_by'
-    )}
-
-    applicants_data = []
-    for record in isf_records:
-        # Try to find the corresponding applicant
-        applicant = all_applicants.get(record.reference_number)
-        reference_number = applicant.reference_number if applicant else record.reference_number
-        full_name = applicant.full_name if applicant else record.full_name
-
-        # Get queue info from applicant
-        queue_type = '—'
-        if applicant:
-            queue_entry = applicant.queue_entries.filter(status='active').first()
-            queue_type = queue_entry.get_queue_type_display() if queue_entry else '—'
-
-        # Get documentation progress
-        docs_progress = '0/7'
-        if applicant:
-            verified_requirements = applicant.requirement_submissions.filter(status='verified').count()
-            total_requirements = applicant.requirement_submissions.count()
-            docs_progress = f"{verified_requirements}/{total_requirements}" if total_requirements > 0 else "0/7"
-        else:
-            # For ISF records, count completed doc fields
-            doc_count = sum([
-                record.doc_brgy_residency,
-                record.doc_brgy_indigency,
-                record.doc_cedula,
-                record.doc_police_clearance,
-                record.doc_no_property,
-                record.doc_2x2_picture,
-                record.doc_sketch_location
-            ])
-            docs_progress = f"{doc_count}/7"
-
-        # Get staff who handled it - prioritize ISFRecord's eligibility_checked_by, then Applicant's
-        if record.eligibility_checked_by:
-            staff_user = record.eligibility_checked_by
-        elif applicant:
-            staff_user = applicant.eligibility_checked_by or applicant.registered_by
-        else:
-            staff_user = None
-
-        staff_name = staff_user.get_full_name() if staff_user else '—'
-        staff_position = staff_user.position if staff_user else '—'
-        staff_initials = f"{staff_user.first_name[0]}{staff_user.last_name[0]}".upper() if staff_user else '—'
-
-        # SMS status
-        sms_sent = record.registration_sms_sent or record.eligibility_sms_sent
-
-        # Channel from applicant if exists, otherwise default to Landowner
-        channel_display = applicant.get_channel_display() if applicant and applicant.channel else 'Channel A — Landowner'
-
-        applicants_data.append({
-            'id': str(record.id),
-            'transaction_id': str(record.id),
-            'reference_number': reference_number,
-            'full_name': full_name,
-            'channel': channel_display,
-            'eligibility': applicant.get_status_display() if applicant else record.get_status_display(),
-            'queue_type': queue_type,
-            'created_at': record.created_at,
-            'docs_progress': docs_progress,
-            'barangay': applicant.barangay.name if applicant and applicant.barangay else record.barangay or '—',
-            'staff_name': staff_name,
-            'staff_position': staff_position,
-            'staff_initials': staff_initials,
-            'sms_sent': sms_sent
-        })
+    applicants_data = _build_oversight_applicants_table_rows()
 
     context = {
         'page_title': 'Applicant Intake Overview',
@@ -1646,20 +1655,12 @@ def head_pending_signature(request):
         messages.error(request, 'Access denied. This view is for the Head position only.')
         return redirect('accounts:dashboard')
 
-    # Get applications awaiting head signature
-    # Status should be 'head_signed' (awaiting final approval)
-    pending_applications = Application.objects.filter(
-        status='head_signed'
-    ).select_related('applicant', 'form_generated_by').prefetch_related('routing_steps').order_by('created_at')
+    # Awaiting Head: latest routing step must be "forwarded_head" (not yet signed_head).
+    pending_applications = _applications_pending_signatory_step('forwarded_head').order_by('created_at')
 
-    # Build detailed list with days pending
     pending_apps_list = []
     for app in pending_applications:
-        # Get the last routing step to determine when forwarded to head
-        last_routing = app.routing_steps.filter(
-            step__in=['forwarded_head', 'signed_oic']
-        ).order_by('-action_at').first()
-
+        last_routing = app.routing_steps.filter(step='forwarded_head').order_by('-action_at').first()
         if last_routing:
             days_pending = (timezone.now() - last_routing.action_at).days
         else:
@@ -1675,10 +1676,8 @@ def head_pending_signature(request):
             'application_id': str(app.id)
         })
 
-    # Sort by days_pending descending
     pending_apps_list.sort(key=lambda x: x['days_pending'], reverse=True)
 
-    # Count statistics
     total_pending = len(pending_apps_list)
     urgent_count = len([app for app in pending_apps_list if app['days_pending'] >= 7])
 
@@ -1687,7 +1686,9 @@ def head_pending_signature(request):
         'user_position': request.user.position,
         'pending_applications': pending_apps_list,
         'total_pending': total_pending,
-        'urgent_count': urgent_count
+        'urgent_count': urgent_count,
+        'm2_pipeline': _m2_signatory_pipeline_counts(),
+        'm2_pipeline_role': 'head',
     }
 
     return render(request, 'accounts/head/pending_signature.html', context)
@@ -2018,86 +2019,7 @@ def oic_applicants_overview(request):
     seven_days_ago = timezone.now() - timedelta(days=7)
     sms_failed_recent = SMSLog.objects.filter(status='failed', sent_at__gte=seven_days_ago).count()
 
-    # Get full ISF submissions list
-    from intake.models import ISFRecord
-
-    isf_records = ISFRecord.objects.select_related(
-        'submitted_by_staff',
-        'eligibility_checked_by'
-    ).order_by('-created_at')
-
-    # Pre-fetch all converted applicants for reference matching
-    all_applicants = {app.reference_number: app for app in Applicant.objects.select_related(
-        'registered_by',
-        'eligibility_checked_by'
-    )}
-
-    applicants_data = []
-    for record in isf_records:
-        # Try to find the corresponding applicant
-        applicant = all_applicants.get(record.reference_number)
-        reference_number = applicant.reference_number if applicant else record.reference_number
-        full_name = applicant.full_name if applicant else record.full_name
-
-        # Get queue info from applicant
-        queue_type = '—'
-        if applicant:
-            queue_entry = applicant.queue_entries.filter(status='active').first()
-            queue_type = queue_entry.get_queue_type_display() if queue_entry else '—'
-
-        # Get documentation progress
-        docs_progress = '0/7'
-        if applicant:
-            verified_requirements = applicant.requirement_submissions.filter(status='verified').count()
-            total_requirements = applicant.requirement_submissions.count()
-            docs_progress = f"{verified_requirements}/{total_requirements}" if total_requirements > 0 else "0/7"
-        else:
-            # For ISF records, count completed doc fields
-            doc_count = sum([
-                record.doc_brgy_residency,
-                record.doc_brgy_indigency,
-                record.doc_cedula,
-                record.doc_police_clearance,
-                record.doc_no_property,
-                record.doc_2x2_picture,
-                record.doc_sketch_location
-            ])
-            docs_progress = f"{doc_count}/7"
-
-        # Get staff who handled it
-        if record.eligibility_checked_by:
-            staff_user = record.eligibility_checked_by
-        elif applicant:
-            staff_user = applicant.eligibility_checked_by or applicant.registered_by
-        else:
-            staff_user = None
-
-        staff_name = staff_user.get_full_name() if staff_user else '—'
-        staff_position = staff_user.position if staff_user else '—'
-        staff_initials = f"{staff_user.first_name[0]}{staff_user.last_name[0]}".upper() if staff_user else '—'
-
-        # SMS status
-        sms_sent = record.registration_sms_sent or record.eligibility_sms_sent
-
-        # Channel from applicant if exists, otherwise default to Landowner
-        channel_display = applicant.get_channel_display() if applicant and applicant.channel else 'Channel A — Landowner'
-
-        applicants_data.append({
-            'id': str(record.id),
-            'transaction_id': str(record.id),
-            'reference_number': reference_number,
-            'full_name': full_name,
-            'channel': channel_display,
-            'eligibility': applicant.get_status_display() if applicant else record.get_status_display(),
-            'queue_type': queue_type,
-            'created_at': record.created_at,
-            'docs_progress': docs_progress,
-            'barangay': applicant.barangay.name if applicant and applicant.barangay else record.barangay or '—',
-            'staff_name': staff_name,
-            'staff_position': staff_position,
-            'staff_initials': staff_initials,
-            'sms_sent': sms_sent
-        })
+    applicants_data = _build_oversight_applicants_table_rows()
 
     context = {
         'page_title': 'Applicant Intake Overview',
@@ -2141,20 +2063,12 @@ def oic_pending_signature(request):
         messages.error(request, 'Access denied. This view is for the OIC position only.')
         return redirect('accounts:dashboard')
 
-    # Get applications awaiting OIC signature
-    # Status should be 'routing' (awaiting OIC step) or 'oic_signed' (awaiting final step from head)
-    pending_applications = Application.objects.filter(
-        status='routing'
-    ).select_related('applicant', 'form_generated_by').prefetch_related('routing_steps').order_by('created_at')
+    # Awaiting OIC: latest routing step must be "forwarded_oic" (not yet signed_oic).
+    pending_applications = _applications_pending_signatory_step('forwarded_oic').order_by('created_at')
 
-    # Build detailed list with days pending
     pending_apps_list = []
     for app in pending_applications:
-        # Get the last routing step to determine when forwarded to OIC
-        last_routing = app.routing_steps.filter(
-            step='forwarded_oic'
-        ).order_by('-action_at').first()
-
+        last_routing = app.routing_steps.filter(step='forwarded_oic').order_by('-action_at').first()
         if last_routing:
             days_pending = (timezone.now() - last_routing.action_at).days
         else:
@@ -2170,10 +2084,8 @@ def oic_pending_signature(request):
             'application_id': str(app.id)
         })
 
-    # Sort by days_pending descending
     pending_apps_list.sort(key=lambda x: x['days_pending'], reverse=True)
 
-    # Count statistics
     total_pending = len(pending_apps_list)
     urgent_count = len([app for app in pending_apps_list if app['days_pending'] >= 7])
 
@@ -2182,7 +2094,9 @@ def oic_pending_signature(request):
         'user_position': request.user.position,
         'pending_applications': pending_apps_list,
         'total_pending': total_pending,
-        'urgent_count': urgent_count
+        'urgent_count': urgent_count,
+        'm2_pipeline': _m2_signatory_pipeline_counts(),
+        'm2_pipeline_role': 'oic',
     }
 
     return render(request, 'accounts/oic/pending_signature.html', context)

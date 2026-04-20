@@ -6,8 +6,8 @@ from django.views.decorators.http import require_POST
 from django.db.models import Count, Q, Prefetch, Max
 from django.utils import timezone
 from functools import wraps
-from intake.models import Applicant
-from intake.utils import send_sms
+from intake.models import Applicant, QueueEntry
+from intake.utils import send_sms, check_blacklist
 from .models import (
     Application, Requirement, RequirementSubmission,
     SignatoryRouting, FacilitatedService, ElectricityConnection, LotAwarding
@@ -107,6 +107,17 @@ def get_module2_permissions(user):
     return permissions
 
 
+def _active_intake_queue_label(applicant):
+    """Human-readable label from Module 1 QueueEntry (D2 eligibility & queue)."""
+    entries = getattr(applicant, 'active_queue_entries', None) or []
+    if not entries:
+        return '—'
+    qe = entries[0]
+    if qe.queue_type == 'priority':
+        return f'Priority #{qe.position}'
+    return f'Queue #{qe.position}'
+
+
 # =============================================================================
 # MAIN APPLICATIONS LIST VIEW
 # =============================================================================
@@ -145,8 +156,13 @@ def applications_list(request, position):
         'requirement_submissions__requirement',
         Prefetch(
             'application__routing_steps',
-            queryset=SignatoryRouting.objects.order_by('action_at')
-        )
+            queryset=SignatoryRouting.objects.order_by('action_at'),
+        ),
+        Prefetch(
+            'queue_entries',
+            queryset=QueueEntry.objects.filter(status='active').order_by('position'),
+            to_attr='active_queue_entries',
+        ),
     ).order_by('-created_at')
     
     # Get all requirements for the checklist
@@ -257,12 +273,23 @@ def applications_list(request, position):
             user_actions.append('award_lot')
         if permissions['can_manage_electricity'] and application and application.status == 'awarded':
             user_actions.append('manage_electricity')
-        
+
+        # --- Module 2 workflow: 2.1 Blacklist (D1 applicant profile) ---
+        is_bl, bl_entry = check_blacklist(applicant.full_name, applicant.phone_number or None)
+        blacklist_blocked = bool(is_bl)
+        blacklist_detail = ''
+        if blacklist_blocked and bl_entry:
+            blacklist_detail = f'{bl_entry.get_reason_display()}'
+            if bl_entry.notes:
+                blacklist_detail += f' — {bl_entry.notes[:200]}'
+        if blacklist_blocked:
+            user_actions = [a for a in user_actions if a not in ('verify_docs', 'generate_form')]
+
         applicants_data.append({
             'applicant': applicant,
             'application': application,
             'group_a_verified': group_a_verified,
-            'can_generate_form': can_generate_form,
+            'can_generate_form': can_generate_form and application is None and not blacklist_blocked,
             'form_generated': application is not None,
             'current_stage': current_stage,
             'routing_status': routing_status,
@@ -270,6 +297,12 @@ def applications_list(request, position):
             'is_delayed': is_delayed,
             'delayed_at': delayed_at,
             'user_actions': user_actions,
+            'blacklist_blocked': blacklist_blocked,
+            'blacklist_detail': blacklist_detail,
+            'm1_income_eligible': applicant.is_income_eligible,
+            'm1_declares_no_property': not applicant.has_property_in_talisay,
+            'household_size': applicant.household_size,
+            'intake_queue_label': _active_intake_queue_label(applicant),
         })
     
     # Filter by stage if requested
@@ -335,7 +368,12 @@ def application_detail(request, position, application_id):
     try:
         applicant = Applicant.objects.prefetch_related(
             'requirement_submissions',
-            'requirement_submissions__requirement'
+            'requirement_submissions__requirement',
+            Prefetch(
+                'queue_entries',
+                queryset=QueueEntry.objects.filter(status='active').order_by('position'),
+                to_attr='active_queue_entries',
+            ),
         ).get(id=application_id)
         # Check if this applicant has an application
         application = getattr(applicant, 'application', None)
@@ -345,7 +383,12 @@ def application_detail(request, position, application_id):
             Application.objects.select_related('applicant').prefetch_related(
                 'routing_steps',
                 'applicant__requirement_submissions',
-                'applicant__requirement_submissions__requirement'
+                'applicant__requirement_submissions__requirement',
+                Prefetch(
+                    'applicant__queue_entries',
+                    queryset=QueueEntry.objects.filter(status='active').order_by('position'),
+                    to_attr='active_queue_entries',
+                ),
             ),
             id=application_id
         )
@@ -355,6 +398,13 @@ def application_detail(request, position, application_id):
     permissions = get_module2_permissions(request.user)
     
     # Build response data
+    is_bl, bl_entry = check_blacklist(applicant.full_name, applicant.phone_number or None)
+    bl_detail = ''
+    if is_bl and bl_entry:
+        bl_detail = bl_entry.get_reason_display()
+        if bl_entry.notes:
+            bl_detail += f' — {bl_entry.notes[:200]}'
+
     data = {
         'applicant_id': str(applicant.id),
         'applicant_name': applicant.full_name,
@@ -365,6 +415,12 @@ def application_detail(request, position, application_id):
         'latest_step': None,
         'has_application': application is not None,
         'permissions': permissions,
+        'blacklist_blocked': is_bl,
+        'blacklist_detail': bl_detail,
+        'm1_income_eligible': applicant.is_income_eligible,
+        'm1_declares_no_property': not applicant.has_property_in_talisay,
+        'household_size': applicant.household_size,
+        'intake_queue_label': _active_intake_queue_label(applicant),
     }
     
     if application:
@@ -433,6 +489,20 @@ def update_requirement(request, position):
     
     try:
         applicant = Applicant.objects.get(id=applicant_id)
+        is_bl, bl_entry = check_blacklist(applicant.full_name, applicant.phone_number or None)
+        if is_bl:
+            reason = bl_entry.get_reason_display() if bl_entry else 'Blacklist match'
+            return JsonResponse(
+                {
+                    'success': False,
+                    'error': (
+                        f'Blacklist (process 2.1): applicant matches master blacklist ({reason}). '
+                        'Disqualify in Module 1 and record remarks before verifying requirements.'
+                    ),
+                },
+                status=400,
+            )
+
         requirement = Requirement.objects.get(code=requirement_code)
         
         submission, created = RequirementSubmission.objects.get_or_create(
@@ -501,6 +571,36 @@ def generate_form(request, position, applicant_id):
         }, status=403)
     
     applicant = get_object_or_404(Applicant, id=applicant_id)
+
+    is_bl, bl_entry = check_blacklist(applicant.full_name, applicant.phone_number or None)
+    if is_bl:
+        reason = bl_entry.get_reason_display() if bl_entry else 'Blacklist match'
+        return JsonResponse(
+            {
+                'success': False,
+                'error': (
+                    f'Cannot generate form: blacklist match ({reason}). '
+                    'Resolve in applicant profile / Module 1 first.'
+                ),
+            },
+            status=400,
+        )
+    if not applicant.is_income_eligible:
+        return JsonResponse(
+            {
+                'success': False,
+                'error': 'Cannot generate form: declared income exceeds Module 1 ceiling. Correct income in Module 1.',
+            },
+            status=400,
+        )
+    if applicant.has_property_in_talisay:
+        return JsonResponse(
+            {
+                'success': False,
+                'error': 'Cannot generate form: applicant is flagged as owning property in Talisay City.',
+            },
+            status=400,
+        )
     
     # Check if all Group A requirements are verified
     group_a_count = applicant.requirement_submissions.filter(
@@ -681,6 +781,19 @@ def move_to_standby(request, position):
         application.standby_position = last_position + 1
         
         application.save()
+
+        if application.applicant.phone_number:
+            message = (
+                f"Your housing application {application.application_number} is now on the STANDBY queue "
+                f"(position #{application.standby_position}). You will be notified when a lot is ready for awarding. "
+                f"Reference: {application.applicant.reference_number}"
+            )
+            send_sms(
+                application.applicant.phone_number,
+                message,
+                'standby_queue',
+                applicant=application.applicant,
+            )
         
         return JsonResponse({
             'success': True,

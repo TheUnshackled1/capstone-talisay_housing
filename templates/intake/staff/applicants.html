@@ -228,9 +228,9 @@
     .applicants-table th:nth-child(9),
     .applicants-table td:nth-child(9) { width: 13%; } /* Staff Handled */
     .applicants-table th:nth-child(10),
-    .applicants-table td:nth-child(10) { width: 4%; text-align: center; } /* Flags */
+    .applicants-table td:nth-child(10) { width: 8%; } /* SMS */
     .applicants-table th:nth-child(11),
-    .applicants-table td:nth-child(11) { width: 8%; } /* Action */
+    .applicants-table td:nth-child(11) { width: 5%; text-align: center; } /* Action */
 
     .btn-review {
         display: inline-flex;
@@ -715,15 +715,8 @@
     .btn-review-landowner:hover { background: #dcfce7; }
     .btn-review-walkin { color: #166534; border-color: #86efac; }
     .btn-review-walkin:hover { background: #dcfce7; }
-</style>
-{% endblock %}
 
-{% block content %}
-<!-- Messages Display -->
-{% if messages %}
-<div style="position: fixed; top: 1rem; right: 1rem; z-index: 9999; max-width: 400px;">
-    {% for message in messages %}
-    <div style="
+    .message-card {
         padding: 1rem 1.25rem;
         margin-bottom: 0.5rem;
         border-radius: 0.5rem;
@@ -732,24 +725,36 @@
         display: flex;
         align-items: flex-start;
         gap: 0.75rem;
-        {% if message.tags == 'success' %}
-        background: #dcfce7;
-        border: 1px solid #86efac;
-        color: #166534;
-        {% elif message.tags == 'error' %}
-        background: #fee2e2;
-        border: 1px solid #fca5a5;
-        color: #991b1b;
-        {% elif message.tags == 'warning' %}
-        background: #fef3c7;
-        border: 1px solid #fcd34d;
-        color: #92400e;
-        {% else %}
-        background: #dbeafe;
-        border: 1px solid #93c5fd;
-        color: #1e40af;
-        {% endif %}
-    ">
+    }
+    .message-card.success { background: #dcfce7; border: 1px solid #86efac; color: #166534; }
+    .message-card.error { background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; }
+    .message-card.warning { background: #fef3c7; border: 1px solid #fcd34d; color: #92400e; }
+    .message-card.info { background: #dbeafe; border: 1px solid #93c5fd; color: #1e40af; }
+
+    .handled-by-avatar {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.5625rem;
+        font-weight: 600;
+        flex-shrink: 0;
+    }
+    .handled-by-avatar.second-member { background: #3b82f6; }
+    .handled-by-avatar.fourth-member { background: #10b981; }
+    .handled-by-avatar.other { background: #94a3b8; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Messages Display -->
+{% if messages %}
+<div style="position: fixed; top: 1rem; right: 1rem; z-index: 9999; max-width: 400px;">
+    {% for message in messages %}
+    <div class="message-card {% if message.tags == 'success' %}success{% elif message.tags == 'error' %}error{% elif message.tags == 'warning' %}warning{% else %}info{% endif %}">
         {% if message.tags == 'success' %}
         <svg style="width: 1.25rem; height: 1.25rem; flex-shrink: 0; margin-top: 0.125rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
@@ -956,7 +961,6 @@
                 <th>Eligibility</th>
                 <th>Queue</th>
                 <th>Staff Handled</th>
-                <th>Docs</th>
                 <th>SMS</th>
                 <th>Action</th>
             </tr>
@@ -1024,34 +1028,13 @@
                 <td>
                     <!-- Staff who handled this transaction -->
                     <div style="display: flex; align-items: center; gap: 0.375rem;">
-                        <div style="width: 22px; height: 22px; border-radius: 50%; background: {% if applicant.handledByPosition == '2nd Member' %}#3b82f6{% elif applicant.handledByPosition == '4th Member' %}#10b981{% else %}#94a3b8{% endif %}; color: white; display: flex; align-items: center; justify-content: center; font-size: 0.5625rem; font-weight: 600; flex-shrink: 0;">
+                        <div class="handled-by-avatar {% if applicant.handledByPosition == '2nd Member' %}second-member{% elif applicant.handledByPosition == '4th Member' %}fourth-member{% else %}other{% endif %}">
                             {{ applicant.handledByInitials }}
                         </div>
                         <div style="display: flex; flex-direction: column; min-width: 0;">
                             <span style="font-size: 0.625rem; font-weight: 500; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ applicant.handledBy }}</span>
                             <span style="font-size: 0.5625rem; color: #64748b;">{{ applicant.handledByPosition }}</span>
                         </div>
-                    </div>
-                </td>
-                <td>
-                    <!-- Document completion progress -->
-                    <div style="display: flex; align-items: center; gap: 0.25rem;">
-                        {% if applicant.docsCount == 7 %}
-                            <span style="display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.125rem 0.375rem; background: #dcfce7; color: #166534; border-radius: 9999px; font-size: 0.625rem; font-weight: 600;">
-                                <svg style="width: 0.75rem; height: 0.75rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                                7/7
-                            </span>
-                        {% elif applicant.docsCount >= 4 %}
-                            <span style="padding: 0.125rem 0.375rem; background: #fef3c7; color: #92400e; border-radius: 9999px; font-size: 0.625rem; font-weight: 600;">
-                                {{ applicant.docsCount }}/7
-                            </span>
-                        {% else %}
-                            <span style="padding: 0.125rem 0.375rem; background: #fee2e2; color: #991b1b; border-radius: 9999px; font-size: 0.625rem; font-weight: 600;">
-                                {{ applicant.docsCount }}/7
-                            </span>
-                        {% endif %}
                     </div>
                 </td>
                 <td>
@@ -1074,7 +1057,7 @@
                 </td>
                 <td>
                     <!-- Review button - opens modal -->
-                    <button type="button" onclick="openReviewModal({{ forloop.counter0 }})" class="btn-review btn-review-walkin">
+                    <button type="button" class="btn-review btn-review-walkin js-open-review" data-applicant-index="{{ forloop.counter0 }}">
                         <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
                             <circle cx="9" cy="7" r="4"></circle>
@@ -1274,20 +1257,6 @@
                         </div>
                     </div>
                     
-                    <!-- Document Checklist -->
-                    <div style="border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-bottom: 1rem;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-                            <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; text-transform: uppercase; margin: 0;">Document Checklist</h4>
-                            <span id="docCountIndicatorB" style="font-size: 0.75rem; font-weight: 600; padding: 0.25rem 0.75rem; border-radius: 0.25rem; background: #fee2e2; color: #991b1b;">0/7 Documents</span>
-                        </div>
-                        <div id="docWarningMessageB" style="display: none; background: #fef3c7; border: 1px solid #fcd34d; border-radius: 0.375rem; padding: 0.75rem; margin-bottom: 0.75rem; font-size: 0.875rem; color: #92400e;">
-                            <strong>⚠️ Incomplete Documents</strong><br>
-                            <span id="missingDocCountB">Missing 7 documents</span> — Applicant must submit before proceeding to "Eligible" status
-                        </div>
-                        <div class="document-grid" id="documentChecklistB">
-                            <!-- Populated by JavaScript -->
-                        </div>
-                    </div>
                 </div>
                 
                 <!-- Channel C: Regular Walk-in Applicant View -->
@@ -1412,21 +1381,6 @@
                         </div>
                     </div>
                     
-                    <!-- Document Checklist -->
-                    <div style="border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-bottom: 1rem;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-                            <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; text-transform: uppercase; margin: 0;">Document Checklist</h4>
-                            <span id="docCountIndicator" style="font-size: 0.75rem; font-weight: 600; padding: 0.25rem 0.75rem; border-radius: 0.25rem; background: #fee2e2; color: #991b1b;">0/7 Documents</span>
-                        </div>
-                        <div id="docWarningMessage" style="display: none; background: #fef3c7; border: 1px solid #fcd34d; border-radius: 0.375rem; padding: 0.75rem; margin-bottom: 0.75rem; font-size: 0.875rem; color: #92400e;">
-                            <strong>⚠️ Incomplete Documents</strong><br>
-                            <span id="missingDocCount">Missing 7 documents</span> — Applicant must submit before proceeding to "Eligible" status
-                        </div>
-                        <div class="document-grid" id="documentChecklist">
-                            <!-- Populated by JavaScript -->
-                        </div>
-                    </div>
-                    
                     <!-- Lot Assignment (if applicable) -->
                     <div id="lotAssignmentSection" style="display: none; border-top: 1px solid #e2e8f0; padding-top: 1rem;">
                         <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">Lot Assignment</h4>
@@ -1458,7 +1412,7 @@
                 
                 <!-- Action Buttons - Only for Jocel/Joie -->
                 <div id="reviewActions">
-                    <button type="button" class="btn-modal success" id="btnMarkEligible" onclick="checkDocumentsBeforeMarkEligible()" style="background: #10b981;">
+                    <button type="button" class="btn-modal success" id="btnMarkEligible" onclick="markEligible()" style="background: #10b981;">
                         <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <polyline points="20 6 9 17 4 12"></polyline>
                         </svg>
@@ -2032,46 +1986,6 @@
                     </div>
                 </div>
 
-                <p style="font-size: 0.8125rem; color: #6b7280; margin-bottom: 1rem; margin-top: 1.5rem; font-weight: 600; text-transform: uppercase;">📄 Document Checklist (Optional) - Check documents already submitted by the applicant:</p>
-
-                <div class="document-grid" id="docChecklistRegister">
-                    <label class="document-item incomplete" onclick="toggleRegDocCheckbox(this)">
-                        <input type="checkbox" name="doc_brgy_residency" value="true" style="display: none;">
-                        <svg style="width: 1rem; height: 1rem; flex-shrink: 0; color: #ef4444;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
-                        Brgy. Certificate of Residency
-                    </label>
-                    <label class="document-item incomplete" onclick="toggleRegDocCheckbox(this)">
-                        <input type="checkbox" name="doc_brgy_indigency" value="true" style="display: none;">
-                        <svg style="width: 1rem; height: 1rem; flex-shrink: 0; color: #ef4444;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
-                        Brgy. Certificate of Indigency
-                    </label>
-                    <label class="document-item incomplete" onclick="toggleRegDocCheckbox(this)">
-                        <input type="checkbox" name="doc_cedula" value="true" style="display: none;">
-                        <svg style="width: 1rem; height: 1rem; flex-shrink: 0; color: #ef4444;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
-                        Cedula
-                    </label>
-                    <label class="document-item incomplete" onclick="toggleRegDocCheckbox(this)">
-                        <input type="checkbox" name="doc_police_clearance" value="true" style="display: none;">
-                        <svg style="width: 1rem; height: 1rem; flex-shrink: 0; color: #ef4444;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
-                        Police Clearance
-                    </label>
-                    <label class="document-item incomplete" onclick="toggleRegDocCheckbox(this)">
-                        <input type="checkbox" name="doc_no_property" value="true" style="display: none;">
-                        <svg style="width: 1rem; height: 1rem; flex-shrink: 0; color: #ef4444;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
-                        Certificate of No Property
-                    </label>
-                    <label class="document-item incomplete" onclick="toggleRegDocCheckbox(this)">
-                        <input type="checkbox" name="doc_2x2_picture" value="true" style="display: none;">
-                        <svg style="width: 1rem; height: 1rem; flex-shrink: 0; color: #ef4444;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
-                        2x2 Picture
-                    </label>
-                    <label class="document-item incomplete" onclick="toggleRegDocCheckbox(this)">
-                        <input type="checkbox" name="doc_sketch_location" value="true" style="display: none;">
-                        <svg style="width: 1rem; height: 1rem; flex-shrink: 0; color: #ef4444;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
-                        Sketch of House Location
-                    </label>
-                </div>
-
                 <!-- Info Notes -->
                 <div class="danger-warning" id="cdrrmoNote">
                     <p><strong>⚠️ CDRRMO Verification Required</strong><br>Danger zone applicants will be marked as <strong>"Pending CDRRMO Certification"</strong> until verified by the ronda team.</p>
@@ -2093,10 +2007,15 @@
     </div>
 </div>
 
+<script id="applicantsDataJson" type="application/json">{{ applicants_json|safe }}</script>
+<input type="hidden" id="canModifyFlag" value="{{ can_modify|yesno:'true,false' }}">
 <script>
     // Store applicants data in JavaScript
-    const applicantsData = {{ applicants_json|safe }};
-    const canModify = {{ can_modify|yesno:"true,false" }};
+    const applicantsData = JSON.parse(document.getElementById('applicantsDataJson')?.textContent || '[]');
+    const canModify = (document.getElementById('canModifyFlag')?.value || 'false') === 'true';
+    // #region agent log
+    fetch('http://127.0.0.1:7528/ingest/cba6b122-1776-4a64-b3c1-1bc8bc37aa50',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'e5501d'},body:JSON.stringify({sessionId:'e5501d',runId:'lint-debug-1',hypothesisId:'H2-H3',location:'templates/intake/staff/applicants.html:2031',message:'script boot constants parsed',data:{applicantsType:typeof applicantsData,isArray:Array.isArray(applicantsData),applicantsLength:Array.isArray(applicantsData)?applicantsData.length:-1,canModifyType:typeof canModify},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
 
     /**
      * Channel B is the walk-in intake desk for the hazard pathway; the Yes/No answer
@@ -2164,6 +2083,15 @@
     window.addEventListener('DOMContentLoaded', function() {
         // Attach to all income inputs in modals
         document.querySelectorAll('.form-input[name*="income"], input[id*="Income"]').forEach(attachIncomeFormatter);
+        document.querySelectorAll('.js-open-review').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const idx = Number(this.dataset.applicantIndex);
+                if (!Number.isNaN(idx)) openReviewModal(idx);
+            });
+        });
+        // #region agent log
+        fetch('http://127.0.0.1:7528/ingest/cba6b122-1776-4a64-b3c1-1bc8bc37aa50',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'e5501d'},body:JSON.stringify({sessionId:'e5501d',runId:'lint-debug-1',hypothesisId:'H4-H5',location:'templates/intake/staff/applicants.html:2100',message:'DOMContentLoaded reached',data:{incomeInputsCount:document.querySelectorAll('.form-input[name*="income"], input[id*="Income"]').length},timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
     });
 
     // Table filtering
@@ -2218,6 +2146,9 @@
     function openReviewModal(index) {
         try {
             currentApplicant = applicantsData[index];
+            // #region agent log
+            fetch('http://127.0.0.1:7528/ingest/cba6b122-1776-4a64-b3c1-1bc8bc37aa50',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'e5501d'},body:JSON.stringify({sessionId:'e5501d',runId:'lint-debug-1',hypothesisId:'H2',location:'templates/intake/staff/applicants.html:2155',message:'openReviewModal invoked',data:{index:index,hasApplicant:!!currentApplicant},timestamp:Date.now()})}).catch(()=>{});
+            // #endregion
             if (!currentApplicant) {
                 console.error('No applicant data at index:', index);
                 alert('Error: No applicant data found.');
@@ -2369,9 +2300,6 @@
                 // Populate eligibility checks
                 populateEligibilityChecks(currentApplicant);
                 
-                // Populate document checklist
-                populateDocumentChecklist(currentApplicant);
-                
                 // Lot assignment
                 const lotSection = document.getElementById('lotAssignmentSection');
                 const lotDetails = document.getElementById('lotDetails');
@@ -2506,8 +2434,6 @@
                     if (cdrrmoSection) cdrrmoSection.style.display = 'none';
                 }
 
-                // Populate document checklist for Channel B
-                populateDocumentChecklistB(currentApplicant);
             } else {
                 // Unknown channel - show Channel C section as fallback with error message
                 console.warn('Unknown channel:', currentApplicant.channel);
@@ -2785,78 +2711,6 @@
         `;
     }
     
-    function populateDocumentChecklist(applicant) {
-        const container = document.getElementById('documentChecklist');
-        if (!container) return;
-        
-        const docs = [
-            { key: 'docBrgyResidency', dbKey: 'doc_brgy_residency', label: 'Brgy. Certificate of Residency' },
-            { key: 'docBrgyIndigency', dbKey: 'doc_brgy_indigency', label: 'Brgy. Certificate of Indigency' },
-            { key: 'docCedula', dbKey: 'doc_cedula', label: 'Cedula' },
-            { key: 'docPoliceClearance', dbKey: 'doc_police_clearance', label: 'Police Clearance' },
-            { key: 'docNoProperty', dbKey: 'doc_no_property', label: 'Certificate of No Property' },
-            { key: 'doc2x2Picture', dbKey: 'doc_2x2_picture', label: '2x2 Picture' },
-            { key: 'docSketchLocation', dbKey: 'doc_sketch_location', label: 'Sketch of House Location' }
-        ];
-        
-        let html = '';
-        docs.forEach(doc => {
-            const checked = applicant[doc.key] || false;
-            html += `
-                <label class="document-item ${checked ? 'complete' : 'incomplete'}" style="cursor: ${isEditMode ? 'pointer' : 'default'};" ${isEditMode ? `onclick="toggleAndSaveDoc(this, '${doc.dbKey}')"` : ''}>
-                    <input type="checkbox" name="${doc.dbKey}" ${checked ? 'checked' : ''} ${isEditMode ? '' : 'disabled'} style="display: none;">
-                    <svg class="document-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        ${checked 
-                            ? '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>'
-                            : '<circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>'}
-                    </svg>
-                    ${doc.label}
-                </label>
-            `;
-        });
-        container.innerHTML = html;
-
-        // Update document count indicator
-        updateDocumentCountIndicator(applicant);
-    }
-
-    function updateDocumentCountIndicator(applicant) {
-        // Count completed documents
-        const docCount = [
-            applicant.docBrgyResidency,
-            applicant.docBrgyIndigency,
-            applicant.docCedula,
-            applicant.docPoliceClearance,
-            applicant.docNoProperty,
-            applicant.doc2x2Picture,
-            applicant.docSketchLocation
-        ].filter(Boolean).length;
-
-        const totalDocs = 7;
-        const missingDocs = totalDocs - docCount;
-        const isComplete = docCount === totalDocs;
-
-        // Update indicator
-        const indicator = document.getElementById('docCountIndicator');
-        if (indicator) {
-            indicator.textContent = `${docCount}/${totalDocs} Documents`;
-            indicator.style.background = isComplete ? '#dcfce7' : '#fee2e2';
-            indicator.style.color = isComplete ? '#166534' : '#991b1b';
-        }
-
-        // Update warning message
-        const warningMsg = document.getElementById('docWarningMessage');
-        const missingCount = document.getElementById('missingDocCount');
-        if (warningMsg) {
-            if (!isComplete) {
-                warningMsg.style.display = 'block';
-                if (missingCount) missingCount.textContent = `Missing ${missingDocs} document${missingDocs !== 1 ? 's' : ''}`;
-            } else {
-                warningMsg.style.display = 'none';
-            }
-        }
-    }
-
     // Toggle document checkbox and auto-save
     function toggleAndSaveDoc(label, docKey) {
         const checkbox = label.querySelector('input[type="checkbox"]');
@@ -2925,13 +2779,6 @@
                     ].filter(Boolean).length;
                 }
                 console.log('Document saved:', docKey, isChecked);
-
-                // Refresh document count indicators
-                if (currentApplicant.channel === 'B') {
-                    updateDocumentCountIndicatorB(currentApplicant);
-                } else {
-                    updateDocumentCountIndicator(currentApplicant);
-                }
             } else {
                 console.error('Error saving document:', data.error);
             }
@@ -2939,22 +2786,6 @@
         .catch(error => {
             console.error('Error:', error);
         });
-    }
-    
-    // Legacy toggle function (kept for backward compatibility)
-    function toggleDocCheckbox(label) {
-        const checkbox = label.querySelector('input[type="checkbox"]');
-        if (checkbox && !checkbox.disabled) {
-            checkbox.checked = !checkbox.checked;
-            label.classList.toggle('complete', checkbox.checked);
-            label.classList.toggle('incomplete', !checkbox.checked);
-            const svg = label.querySelector('svg');
-            if (checkbox.checked) {
-                svg.innerHTML = '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>';
-            } else {
-                svg.innerHTML = '<circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>';
-            }
-        }
     }
     
     // Channel B specific eligibility checks (includes CDRRMO only if in danger zone)
@@ -3005,79 +2836,6 @@
         container.innerHTML = html;
     }
     
-    // Channel B specific document checklist
-    function populateDocumentChecklistB(applicant) {
-        const container = document.getElementById('documentChecklistB');
-        if (!container) return;
-        
-        const docs = [
-            { key: 'docBrgyResidency', dbKey: 'doc_brgy_residency', label: 'Brgy. Certificate of Residency' },
-            { key: 'docBrgyIndigency', dbKey: 'doc_brgy_indigency', label: 'Brgy. Certificate of Indigency' },
-            { key: 'docCedula', dbKey: 'doc_cedula', label: 'Cedula' },
-            { key: 'docPoliceClearance', dbKey: 'doc_police_clearance', label: 'Police Clearance' },
-            { key: 'docNoProperty', dbKey: 'doc_no_property', label: 'Certificate of No Property' },
-            { key: 'doc2x2Picture', dbKey: 'doc_2x2_picture', label: '2x2 Picture' },
-            { key: 'docSketchLocation', dbKey: 'doc_sketch_location', label: 'Sketch of House Location' }
-        ];
-        
-        let html = '';
-        docs.forEach(doc => {
-            const checked = applicant[doc.key] || false;
-            html += `
-                <label class="document-item ${checked ? 'complete' : 'incomplete'}" style="cursor: ${isEditMode ? 'pointer' : 'default'};" ${isEditMode ? `onclick="toggleAndSaveDoc(this, '${doc.dbKey}')"` : ''}>
-                    <input type="checkbox" name="${doc.dbKey}" ${checked ? 'checked' : ''} ${isEditMode ? '' : 'disabled'} style="display: none;">
-                    <svg class="document-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        ${checked 
-                            ? '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>'
-                            : '<circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>'}
-                    </svg>
-                    ${doc.label}
-                </label>
-            `;
-        });
-        container.innerHTML = html;
-
-        // Update document count indicator for Channel B
-        updateDocumentCountIndicatorB(applicant);
-    }
-
-    function updateDocumentCountIndicatorB(applicant) {
-        // Count completed documents
-        const docCount = [
-            applicant.docBrgyResidency,
-            applicant.docBrgyIndigency,
-            applicant.docCedula,
-            applicant.docPoliceClearance,
-            applicant.docNoProperty,
-            applicant.doc2x2Picture,
-            applicant.docSketchLocation
-        ].filter(Boolean).length;
-
-        const totalDocs = 7;
-        const missingDocs = totalDocs - docCount;
-        const isComplete = docCount === totalDocs;
-
-        // Update indicator
-        const indicator = document.getElementById('docCountIndicatorB');
-        if (indicator) {
-            indicator.textContent = `${docCount}/${totalDocs} Documents`;
-            indicator.style.background = isComplete ? '#dcfce7' : '#fee2e2';
-            indicator.style.color = isComplete ? '#166534' : '#991b1b';
-        }
-
-        // Update warning message
-        const warningMsg = document.getElementById('docWarningMessageB');
-        const missingCount = document.getElementById('missingDocCountB');
-        if (warningMsg) {
-            if (!isComplete) {
-                warningMsg.style.display = 'block';
-                if (missingCount) missingCount.textContent = `Missing ${missingDocs} document${missingDocs !== 1 ? 's' : ''}`;
-            } else {
-                warningMsg.style.display = 'none';
-            }
-        }
-    }
-
     // Channel A specific eligibility checks
     function populateEligibilityChecksA(applicant) {
         const container = document.getElementById('eligibilityChecksA');
@@ -3270,10 +3028,6 @@
             if (currentApplicant.channel === 'A') {
                 // Channel A uses static form fields - just update document checklist
                 populateDocumentChecklistA(currentApplicant);
-            } else if (currentApplicant.channel === 'B') {
-                populateDocumentChecklistB(currentApplicant);
-            } else {
-                populateDocumentChecklist(currentApplicant);
             }
         }
     }
@@ -3426,48 +3180,6 @@
         }
     }
     
-    function checkDocumentsBeforeMarkEligible() {
-        if (!currentApplicant) return;
-
-        // For Channel A: use ISF flow
-        if (currentApplicant.channel === 'A') {
-            markEligible();
-            return;
-        }
-
-        // For Channel B/C: Check if all 7 documents are complete
-        const docCount = [
-            currentApplicant.docBrgyResidency,
-            currentApplicant.docBrgyIndigency,
-            currentApplicant.docCedula,
-            currentApplicant.docPoliceClearance,
-            currentApplicant.docNoProperty,
-            currentApplicant.doc2x2Picture,
-            currentApplicant.docSketchLocation
-        ].filter(Boolean).length;
-
-        const isComplete = docCount === 7;
-
-        if (isComplete) {
-            // All documents complete - mark eligible immediately
-            markEligible();
-        } else {
-            // Documents incomplete - show deadline modal
-            const missingDocs = 7 - docCount;
-            document.getElementById('missingDocCountModal').textContent = missingDocs;
-            document.getElementById('deadlineWarningMsg').textContent = `Missing ${missingDocs} document${missingDocs !== 1 ? 's' : ''} — Must be submitted before marking eligible`;
-
-            // Set default deadline to 5 days from now
-            const tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 5);
-            document.getElementById('deadlineDate').value = tomorrow.toISOString().split('T')[0];
-            document.getElementById('deadlineTime').value = '17:00';
-
-            // Show modal
-            document.getElementById('deadlineModal').style.display = 'flex';
-        }
-    }
-
     function closeDeadlineModal() {
         document.getElementById('deadlineModal').style.display = 'none';
     }
@@ -3656,11 +3368,6 @@
             formData.append('danger_zone_type', document.getElementById('reviewDangerType').value);
             formData.append('danger_zone_location', document.getElementById('reviewDangerLocation').value);
             
-            // Include Channel B document checklist
-            document.querySelectorAll('#documentChecklistB input[type="checkbox"]').forEach(cb => {
-                formData.append(cb.name, cb.checked);
-            });
-            
         } else {
             // Channel C: Regular walk-in applicant data
             formData.append('full_name', document.getElementById('reviewFullName').value);
@@ -3671,10 +3378,6 @@
             formData.append('phone_number', document.getElementById('reviewPhone').value);
             formData.append('current_address', document.getElementById('reviewAddress').value);
             
-            // Include Channel C document checklist
-            document.querySelectorAll('#documentChecklist input[type="checkbox"]').forEach(cb => {
-                formData.append(cb.name, cb.checked);
-            });
         }
         
         fetch('{% url "intake:update_applicant" request.user.position %}', {
@@ -3740,8 +3443,10 @@
     // Add Modal
     function openAddModal() {
         const modal = document.getElementById('addModal');
+        // #region agent log
+        fetch('http://127.0.0.1:7528/ingest/cba6b122-1776-4a64-b3c1-1bc8bc37aa50',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'e5501d'},body:JSON.stringify({sessionId:'e5501d',runId:'lint-debug-1',hypothesisId:'H1',location:'templates/intake/staff/applicants.html:3452',message:'openAddModal invoked',data:{modalExists:!!modal},timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
         if (modal) modal.classList.add('active');
-        resetRegDocChecklist();
         // Initialize household members
         householdMemberCount = 1;
         renderHouseholdMembers();
@@ -3752,7 +3457,6 @@
         const form = document.getElementById('addApplicantForm');
         if (modal) modal.classList.remove('active');
         if (form) form.reset();
-        resetRegDocChecklist();
         // Reset danger zone selection
         setDangerZone(null);
     }
@@ -4150,46 +3854,6 @@
             modal.style.display = 'flex';
         }
 
-        // Populate Document Checklist
-        if (applicant.documents) {
-            const docChecklistB = document.getElementById('documentChecklistB');
-            if (docChecklistB) {
-                docChecklistB.innerHTML = ''; // Clear existing
-
-                Object.entries(applicant.documents).forEach(([fieldName, docData]) => {
-                    const isChecked = docData.checked;
-                    const label = docData.label;
-
-                    const docElement = document.createElement('div');
-                    docElement.className = `document-item ${isChecked ? 'complete' : 'incomplete'}`;
-                    docElement.style.cursor = 'default'; // Read-only in review
-
-                    const svgColor = isChecked ? '#10b981' : '#ef4444';
-                    const svgIcon = isChecked
-                        ? '<circle cx="12" cy="12" r="10"></circle><polyline points="16 12 12 8 8 12"></polyline><line x1="12" y1="16" x2="12" y2="8"></line>'
-                        : '<circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>';
-
-                    docElement.innerHTML = `
-                        <svg style="width: 1rem; height: 1rem; flex-shrink: 0; color: ${svgColor};" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            ${isChecked
-                                ? '<circle cx="12" cy="12" r="10"></circle><polyline points="16 9 12 13 8 11"></polyline>'
-                                : '<circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>'}
-                        </svg>
-                        ${label}
-                    `;
-
-                    docChecklistB.appendChild(docElement);
-                });
-
-                // Add document count header
-                if (applicant.docsCount) {
-                    const countElement = document.createElement('div');
-                    countElement.style.cssText = 'font-size: 0.875rem; color: #64748b; margin-bottom: 0.75rem; font-weight: 500;';
-                    countElement.textContent = `Docs ${applicant.docsCount}`;
-                    docChecklistB.parentElement.insertBefore(countElement, docChecklistB);
-                }
-            }
-        }
     }
 
     function selectChannel(channel) {
@@ -4307,43 +3971,6 @@
         }
     }
     
-    // Toggle document checkbox in registration form
-    function toggleRegDocCheckbox(label) {
-        const checkbox = label.querySelector('input[type="checkbox"]');
-        const svg = label.querySelector('svg');
-        checkbox.checked = !checkbox.checked;
-
-        if (checkbox.checked) {
-            // Checked - show checkmark
-            label.classList.add('checked');
-            svg.innerHTML = '<polyline points="20 6 9 17 4 12"></polyline>';
-            svg.style.color = '#10b981';
-        } else {
-            // Unchecked - show X
-            label.classList.remove('checked');
-            svg.innerHTML = '<circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>';
-            svg.style.color = '#ef4444';
-        }
-    }
-    
-    // Reset document checklist when modal opens
-    function resetRegDocChecklist() {
-        const checklist = document.getElementById('docChecklistRegister');
-        if (checklist) {
-            checklist.querySelectorAll('.document-item').forEach(label => {
-                const checkbox = label.querySelector('input[type="checkbox"]');
-                const svg = label.querySelector('svg');
-                checkbox.checked = false;
-                label.classList.remove('checked');
-                label.classList.remove('incomplete');
-                if (svg) {
-                    svg.innerHTML = '<circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>';
-                    svg.style.color = '#ef4444';
-                }
-            });
-        }
-    }
-
     // Pass applicant data as JSON for onclick handler
     function escapeHtml(text) {
         const map = {
