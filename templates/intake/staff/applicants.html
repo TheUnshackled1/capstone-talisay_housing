@@ -2050,14 +2050,18 @@
         </div>`;
     }
 
-    // Format income field with thousands separator on blur
+    // Format income field with thousands separator on blur (text inputs only)
     function attachIncomeFormatter(input) {
         input.addEventListener('blur', function() {
             if (this.value === '' || this.value === '0') return;
 
             const numValue = parseFloat(this.value.replace(/,/g, ''));
             if (!isNaN(numValue) && numValue > 0) {
-                // Display formatted with thousands separator
+                // Keep number inputs unformatted to avoid browser parse errors (e.g. "7,500")
+                if (this.type === 'number') {
+                    this.value = String(numValue);
+                    return;
+                }
                 this.value = numValue.toLocaleString('en-PH', {
                     minimumFractionDigits: 0,
                     maximumFractionDigits: 2
@@ -2078,8 +2082,8 @@
 
     // Initialize income formatters on page load
     window.addEventListener('DOMContentLoaded', function() {
-        // Attach to all income inputs in modals
-        document.querySelectorAll('.form-input[name*="income"], input[id*="Income"]').forEach(attachIncomeFormatter);
+        // Attach only to text-like income fields. Number inputs must stay plain numeric.
+        document.querySelectorAll('.form-input[name*="income"]:not([type="number"]), input[id*="Income"]:not([type="number"])').forEach(attachIncomeFormatter);
         document.querySelectorAll('.js-open-review').forEach(btn => {
             btn.addEventListener('click', function() {
                 const idx = Number(this.dataset.applicantIndex);
