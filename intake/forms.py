@@ -163,7 +163,9 @@ class WalkInApplicantForm(forms.ModelForm):
     class Meta:
         model = Applicant
         fields = [
-            'full_name',
+            'last_name',
+            'first_name',
+            'middle_name',
             'sex',
             'age',
             'date_of_birth',
@@ -179,10 +181,18 @@ class WalkInApplicantForm(forms.ModelForm):
             'employment_status',
         ]
         widgets = {
-            'full_name': forms.TextInput(attrs={
+            'last_name': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Full name (Last Name, First Name Middle Name)',
+                'placeholder': 'Surname',
                 'autofocus': True,
+            }),
+            'first_name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Given name',
+            }),
+            'middle_name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Middle name (optional)',
             }),
             'sex': forms.RadioSelect(attrs={
                 'class': 'form-radio',
