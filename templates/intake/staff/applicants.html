@@ -2013,9 +2013,6 @@
     // Store applicants data in JavaScript
     const applicantsData = JSON.parse(document.getElementById('applicantsDataJson')?.textContent || '[]');
     const canModify = (document.getElementById('canModifyFlag')?.value || 'false') === 'true';
-    // #region agent log
-    fetch('http://127.0.0.1:7528/ingest/cba6b122-1776-4a64-b3c1-1bc8bc37aa50',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'e5501d'},body:JSON.stringify({sessionId:'e5501d',runId:'lint-debug-1',hypothesisId:'H2-H3',location:'templates/intake/staff/applicants.html:2031',message:'script boot constants parsed',data:{applicantsType:typeof applicantsData,isArray:Array.isArray(applicantsData),applicantsLength:Array.isArray(applicantsData)?applicantsData.length:-1,canModifyType:typeof canModify},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
 
     /**
      * Channel B is the walk-in intake desk for the hazard pathway; the Yes/No answer
@@ -2089,9 +2086,6 @@
                 if (!Number.isNaN(idx)) openReviewModal(idx);
             });
         });
-        // #region agent log
-        fetch('http://127.0.0.1:7528/ingest/cba6b122-1776-4a64-b3c1-1bc8bc37aa50',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'e5501d'},body:JSON.stringify({sessionId:'e5501d',runId:'lint-debug-1',hypothesisId:'H4-H5',location:'templates/intake/staff/applicants.html:2100',message:'DOMContentLoaded reached',data:{incomeInputsCount:document.querySelectorAll('.form-input[name*="income"], input[id*="Income"]').length},timestamp:Date.now()})}).catch(()=>{});
-        // #endregion
     });
 
     // Table filtering
@@ -2146,9 +2140,6 @@
     function openReviewModal(index) {
         try {
             currentApplicant = applicantsData[index];
-            // #region agent log
-            fetch('http://127.0.0.1:7528/ingest/cba6b122-1776-4a64-b3c1-1bc8bc37aa50',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'e5501d'},body:JSON.stringify({sessionId:'e5501d',runId:'lint-debug-1',hypothesisId:'H2',location:'templates/intake/staff/applicants.html:2155',message:'openReviewModal invoked',data:{index:index,hasApplicant:!!currentApplicant},timestamp:Date.now()})}).catch(()=>{});
-            // #endregion
             if (!currentApplicant) {
                 console.error('No applicant data at index:', index);
                 alert('Error: No applicant data found.');
@@ -3443,9 +3434,6 @@
     // Add Modal
     function openAddModal() {
         const modal = document.getElementById('addModal');
-        // #region agent log
-        fetch('http://127.0.0.1:7528/ingest/cba6b122-1776-4a64-b3c1-1bc8bc37aa50',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'e5501d'},body:JSON.stringify({sessionId:'e5501d',runId:'lint-debug-1',hypothesisId:'H1',location:'templates/intake/staff/applicants.html:3452',message:'openAddModal invoked',data:{modalExists:!!modal},timestamp:Date.now()})}).catch(()=>{});
-        // #endregion
         if (modal) modal.classList.add('active');
         // Initialize household members
         householdMemberCount = 1;

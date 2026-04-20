@@ -820,25 +820,6 @@ def applicants_list(request, position):
 
     # Determine if user has full access (can modify) or read-only (field/oversight)
     can_modify = request.user.position in ['second_member', 'fourth_member']
-    # region agent log
-    try:
-        with open('debug-e5501d.log', 'a', encoding='utf-8') as _dbg:
-            _dbg.write(json.dumps({
-                'sessionId': 'e5501d',
-                'runId': 'lint-debug-2',
-                'hypothesisId': 'H4-H5',
-                'location': 'intake/views.py:824',
-                'message': 'applicants_list entered',
-                'data': {
-                    'position': request.user.position,
-                    'canModify': can_modify,
-                },
-                'timestamp': int(timezone.now().timestamp() * 1000),
-            }) + '\n')
-    except Exception:
-        pass
-    # endregion
-
     # Build applicants list from danger zone channel only
     applicants = []
 
@@ -1133,27 +1114,6 @@ def applicants_list(request, position):
             'cdrrmo_overdue': cdrrmo_overdue
         }
     }
-    # region agent log
-    try:
-        with open('debug-e5501d.log', 'a', encoding='utf-8') as _dbg:
-            _dbg.write(json.dumps({
-                'sessionId': 'e5501d',
-                'runId': 'lint-debug-2',
-                'hypothesisId': 'H2-H3',
-                'location': 'intake/views.py:1122',
-                'message': 'context assembled',
-                'data': {
-                    'applicantsCount': len(applicants),
-                    'applicantsJsonType': type(context.get('applicants_json')).__name__,
-                    'applicantsJsonLength': len(context.get('applicants_json') or ''),
-                    'canModifyType': type(context.get('can_modify')).__name__,
-                },
-                'timestamp': int(timezone.now().timestamp() * 1000),
-            }) + '\n')
-    except Exception:
-        pass
-    # endregion
-
     return render(request, 'intake/staff/applicants.html', context)
 
 
