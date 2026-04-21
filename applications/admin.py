@@ -1,5 +1,9 @@
 from django.contrib import admin
-from .models import Requirement, RequirementSubmission, Application, SignatoryRouting, FacilitatedService, ElectricityConnection, LotAwarding
+from .models import (
+    Requirement, RequirementSubmission, Application, SignatoryRouting,
+    FacilitatedService, ElectricityConnection, LotAwarding,
+    BlacklistProxy, CDRRMOCertificationProxy,
+)
 
 
 @admin.register(Requirement)
@@ -175,6 +179,47 @@ class LotAwardingAdmin(admin.ModelAdmin):
         }),
         ('📝 NOTES', {
             'fields': ('notes',),
+            'classes': ('collapse',),
+        }),
+    )
+
+
+@admin.register(BlacklistProxy)
+class BlacklistProxyAdmin(admin.ModelAdmin):
+    list_display = ('full_name', 'phone_number', 'reason', 'blacklisted_at', 'blacklisted_by')
+    list_filter = ('reason', 'blacklisted_at')
+    search_fields = ('full_name', 'phone_number', 'notes')
+    readonly_fields = ('id', 'blacklisted_at')
+    ordering = ('-blacklisted_at',)
+
+    fieldsets = (
+        ('⛔ MODULE 2 BLACKLIST GATE (2.1)', {
+            'fields': ('id', 'full_name', 'phone_number', 'reason', 'notes'),
+        }),
+        ('🔗 LINKS', {
+            'fields': ('applicant', 'blacklisted_by', 'blacklisted_at'),
+            'classes': ('collapse',),
+        }),
+    )
+
+
+@admin.register(CDRRMOCertificationProxy)
+class CDRRMOCertificationProxyAdmin(admin.ModelAdmin):
+    list_display = ('applicant', 'status', 'disposition_source', 'requested_at', 'certified_at')
+    list_filter = ('status', 'disposition_source', 'requested_at')
+    search_fields = ('applicant__reference_number', 'applicant__full_name', 'declared_location')
+    readonly_fields = ('id', 'requested_at', 'certified_at')
+    ordering = ('-requested_at',)
+
+    fieldsets = (
+        ('🧭 CDRRMO DISPOSITION (MODULE 2 VIEW)', {
+            'fields': ('id', 'applicant', 'status', 'disposition_source', 'declared_location'),
+        }),
+        ('📝 NOTES', {
+            'fields': ('certification_notes', 'office_intake_notes'),
+        }),
+        ('📅 TIMELINE', {
+            'fields': ('requested_at', 'certified_at'),
             'classes': ('collapse',),
         }),
     )

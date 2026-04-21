@@ -156,6 +156,27 @@
     background: #f0fdf4;
 }
 
+/* Two-card queue summary mode */
+.stages-grid.queue-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.stages-grid.queue-summary .stage-card {
+    cursor: default;
+}
+.stages-grid.queue-summary .stage-card:hover {
+    transform: none;
+}
+.stage-card.priority .stage-icon {
+    background: #ede9fe;
+    color: #7c3aed;
+}
+.stage-card.walk-in .stage-icon {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+.stage-card.priority .stage-count { color: #7c3aed; }
+.stage-card.walk-in .stage-count { color: #1d4ed8; }
+
 /* Primary CTA - match intake button */
 .btn-primary-add {
     display: inline-flex;
@@ -1040,7 +1061,7 @@
 
 {% block page_title %}Housing Application & Evaluation{% endblock %}
 {% block page_description %}
-<p class="page-subtitle">Module 2 — Document checklist, signatory routing, standby queue, lot awarding</p>
+<p class="page-subtitle">Blacklist Checking - Document checklist</p>
 <span class="role-badge" style="display: inline-flex; align-items: center; gap: 0.25rem; background: #eff6ff; color: #2563eb; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; margin-left: 0.5rem;">
     👤 {{ permissions.role_description }}
 </span>
@@ -1055,89 +1076,36 @@
     <strong>2.4</strong> Seven requirements verified here —
     <strong>2.5</strong> Form generated → signatory routing → standby / SMS.
     Blacklisted applicants cannot verify documents or generate forms until resolved in Module 1.
+    <span style="display:block;margin-top:0.35rem;padding-top:0.35rem;border-top:1px dashed #7dd3fc;">
+        <strong>Module 2 owned system checks:</strong> The Applications module enforces
+        <strong>2.1 blacklist gate first</strong>. If a match is detected, the workflow stops in this module and does not continue to
+        <strong>2.2 eligibility evaluation</strong> until the record is resolved in Module 1.
+    </span>
     <a href="{% url 'intake:applicants_list' request.user.position %}" style="color:#0369a1;font-weight:600;">Open Module 1</a>
 </div>
-<!-- Stage Summary Cards - Matching Figma layout -->
-<div class="stages-grid">
-    <div class="stage-card eligibility scroll-animate-scale scroll-delay-1 {% if filter_stage == 'eligibility' %}active{% endif %}"
-         onclick="filterByStage('eligibility')">
+<!-- Queue Summary Cards -->
+<div class="stages-grid queue-summary">
+    <div class="stage-card priority scroll-animate-scale scroll-delay-1">
         <div class="stage-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="9"></circle>
-                <path d="M9 12l2 2 4-4"></path>
+                <path d="M12 3l2.4 4.86 5.36.78-3.88 3.78.92 5.35L12 15.77 7.2 17.77l.92-5.35L4.24 8.64l5.36-.78L12 3z"></path>
             </svg>
         </div>
         <div class="stage-meta">
-            <div class="stage-count">{{ stage_counts.eligibility|default:0 }}</div>
-            <div class="stage-title">Eligibility</div>
+            <div class="stage-count">{{ queue_counts.priority|default:0 }}</div>
+            <div class="stage-title">Priority Queue</div>
         </div>
     </div>
-    <div class="stage-card document-gathering scroll-animate-scale scroll-delay-2 {% if filter_stage == 'document_gathering' %}active{% endif %}"
-         onclick="filterByStage('document_gathering')">
+    <div class="stage-card walk-in scroll-animate-scale scroll-delay-2">
         <div class="stage-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"></path>
+                <circle cx="12" cy="8" r="4"></circle>
+                <path d="M4 21a8 8 0 0 1 16 0"></path>
             </svg>
         </div>
         <div class="stage-meta">
-            <div class="stage-count">{{ stage_counts.document_gathering|default:0 }}</div>
-            <div class="stage-title">Document Gathering</div>
-        </div>
-    </div>
-    <div class="stage-card form-released scroll-animate-scale scroll-delay-3 {% if filter_stage == 'form_released' %}active{% endif %}"
-         onclick="filterByStage('form_released')">
-        <div class="stage-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                <polyline points="14 2 14 8 20 8"></polyline>
-                <line x1="16" y1="13" x2="8" y2="13"></line>
-                <line x1="16" y1="17" x2="8" y2="17"></line>
-            </svg>
-        </div>
-        <div class="stage-meta">
-            <div class="stage-count">{{ stage_counts.form_released|default:0 }}</div>
-            <div class="stage-title">Form Released</div>
-        </div>
-    </div>
-    <div class="stage-card signatory-routing scroll-animate-scale scroll-delay-4 {% if filter_stage == 'signatory_routing' %}active{% endif %}"
-         onclick="filterByStage('signatory_routing')">
-        <div class="stage-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="6" cy="6" r="2"></circle>
-                <circle cx="18" cy="18" r="2"></circle>
-                <path d="M8 6h4a4 4 0 0 1 4 4v4"></path>
-            </svg>
-        </div>
-        <div class="stage-meta">
-            <div class="stage-count">{{ stage_counts.signatory_routing|default:0 }}</div>
-            <div class="stage-title">Signatory Routing</div>
-        </div>
-    </div>
-    <div class="stage-card fully-approved scroll-animate-scale scroll-delay-5 {% if filter_stage == 'fully_approved' %}active{% endif %}"
-         onclick="filterByStage('fully_approved')">
-        <div class="stage-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M12 3l7 4v5c0 5-3 9-7 11-4-2-7-6-7-11V7l7-4z"></path>
-                <path d="M9 12l2 2 4-4"></path>
-            </svg>
-        </div>
-        <div class="stage-meta">
-            <div class="stage-count">{{ stage_counts.fully_approved|default:0 }}</div>
-            <div class="stage-title">Fully Approved</div>
-        </div>
-    </div>
-    <div class="stage-card lot-awarded scroll-animate-scale scroll-delay-6 {% if filter_stage == 'lot_awarded' %}active{% endif %}"
-         onclick="filterByStage('lot_awarded')">
-        <div class="stage-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M3 10l9-7 9 7"></path>
-                <path d="M5 10v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V10"></path>
-                <path d="M9 22V12h6v10"></path>
-            </svg>
-        </div>
-        <div class="stage-meta">
-            <div class="stage-count">{{ stage_counts.lot_awarded|default:0 }}</div>
-            <div class="stage-title">Lot Awarded</div>
+            <div class="stage-count">{{ queue_counts.walk_in|default:0 }}</div>
+            <div class="stage-title">Walk-in Queue</div>
         </div>
     </div>
 </div>
@@ -1505,7 +1473,7 @@
 
             <!-- Document Checklist Section -->
             {% if permissions.can_verify_documents %}
-            <div class="section-heading">
+            <div class="section-heading" id="groupAHeading">
                 Group A documentary requirements (7 mandatory)
                 <span class="count" id="groupACount">0/7</span>
             </div>
@@ -1566,7 +1534,7 @@
 
             <!-- Generate Form Button -->
             {% if permissions.can_generate_form %}
-            <div style="margin: 2rem 0; text-align: center;">
+            <div id="formGenerationSection" style="margin: 2rem 0; text-align: center;">
                 <button class="generate-form-btn" id="generateFormBtn" disabled onclick="generateForm()">
                     Generate application form
                 </button>
@@ -1596,102 +1564,6 @@
             </p>
             {% endif %}
 
-            <!-- Section D Endorsement Checklist -->
-            <div class="section-heading">
-                Section D — Endorsement checklist
-            </div>
-            <div class="signatory-timeline" id="signatoryTimeline">
-                <div class="timeline-item" data-step="received">
-                    <div class="timeline-icon pending">📨</div>
-                    <div class="timeline-content">
-                        <h4>Received for Endorsement Processing</h4>
-                        <p>Staff validated that the physical form is ready for Section D endorsements.</p>
-                        <label style="display: inline-flex; align-items: center; gap: 0.45rem; margin-top: 0.4rem;">
-                            <input
-                                type="checkbox"
-                                id="chk-received"
-                                data-step-checkbox="received"
-                                data-can-check="{{ permissions.can_receive_routing|yesno:'true,false' }}"
-                                onchange="toggleRoutingStep('received', this)"
-                                disabled
-                            >
-                            Confirm marked on hardcopy
-                        </label>
-                    </div>
-                </div>
-                <div class="timeline-item" data-step="forwarded_oic">
-                    <div class="timeline-icon pending">➡️</div>
-                    <div class="timeline-content">
-                        <h4>D1 — Barangay Affairs Office endorsed</h4>
-                        <p>Signature completed by Barangay Affairs signatory (Section D).</p>
-                        <label style="display: inline-flex; align-items: center; gap: 0.45rem; margin-top: 0.4rem;">
-                            <input
-                                type="checkbox"
-                                id="chk-forwarded_oic"
-                                data-step-checkbox="forwarded_oic"
-                                data-can-check="{{ permissions.can_forward_routing|yesno:'true,false' }}"
-                                onchange="toggleRoutingStep('forwarded_oic', this)"
-                                disabled
-                            >
-                            Confirm hardcopy signature
-                        </label>
-                    </div>
-                </div>
-                <div class="timeline-item" data-step="signed_oic">
-                    <div class="timeline-icon pending">✍️</div>
-                    <div class="timeline-content">
-                        <h4>D2 — Community Affairs Office endorsed</h4>
-                        <p>Signature completed by Community Affairs signatory (Section D).</p>
-                        <label style="display: inline-flex; align-items: center; gap: 0.45rem; margin-top: 0.4rem;">
-                            <input
-                                type="checkbox"
-                                id="chk-signed_oic"
-                                data-step-checkbox="signed_oic"
-                                data-can-check="{% if permissions.can_sign_oic or permissions.can_verify_documents %}true{% else %}false{% endif %}"
-                                onchange="toggleRoutingStep('signed_oic', this)"
-                                disabled
-                            >
-                            Confirm hardcopy signature
-                        </label>
-                    </div>
-                </div>
-                <div class="timeline-item" data-step="forwarded_head">
-                    <div class="timeline-icon pending">➡️</div>
-                    <div class="timeline-content">
-                        <h4>D3 — City Social Welfare and Development (CSWDO) endorsed</h4>
-                        <p>Signature completed by CSWDO signatory (Section D).</p>
-                        <label style="display: inline-flex; align-items: center; gap: 0.45rem; margin-top: 0.4rem;">
-                            <input
-                                type="checkbox"
-                                id="chk-forwarded_head"
-                                data-step-checkbox="forwarded_head"
-                                data-can-check="{{ permissions.can_forward_routing|yesno:'true,false' }}"
-                                onchange="toggleRoutingStep('forwarded_head', this)"
-                                disabled
-                            >
-                            Signature on paper confirmed
-                        </label>
-                    </div>
-                </div>
-                <div class="timeline-item" data-step="signed_head">
-                    <div class="timeline-icon pending">✅</div>
-                    <div class="timeline-content">
-                        <h4>D4 — Sangguniang Panlungsod Office endorsed</h4>
-                        <p>Signature completed by SP Office signatory (Section D). Completing this marks the form fully approved.</p>
-                        <label style="display: inline-flex; align-items: center; gap: 0.45rem; margin-top: 0.4rem;">
-                            <input
-                                type="checkbox"
-                                id="chk-signed_head"
-                                data-step-checkbox="signed_head"
-                                data-can-check="{% if permissions.can_sign_head or permissions.can_verify_documents %}true{% else %}false{% endif %}"
-                                onchange="toggleRoutingStep('signed_head', this)"
-                                disabled
-                            >
-                            Signature on paper confirmed
-                        </label>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 </div>
@@ -1920,8 +1792,22 @@
         
         window.__hasApplication = false;
         window.__applicationNumber = '';
+        applyBlacklistWorkflowGate(false);
         // Update button state
         updateFormButton();
+    }
+
+    function applyBlacklistWorkflowGate(isBlocked) {
+        const progressTracker = document.getElementById('progressTracker');
+        const groupAHeading = document.getElementById('groupAHeading');
+        const documentGrid = document.getElementById('documentGrid');
+        const formGenerationSection = document.getElementById('formGenerationSection');
+
+        const display = isBlocked ? 'none' : '';
+        if (progressTracker) progressTracker.style.display = display;
+        if (groupAHeading) groupAHeading.style.display = display;
+        if (documentGrid) documentGrid.style.display = display;
+        if (formGenerationSection) formGenerationSection.style.display = display;
     }
 
     function renderModule1Checklist(data) {
@@ -2069,6 +1955,7 @@
         const cdrrmoPendingInfo = document.getElementById('modalCdrrmoPendingInfo');
         const cdrrmoStatus = data.cdrrmo && data.cdrrmo.status ? data.cdrrmo.status : '';
         let workflowNote = '';
+        const blacklistBlocked = !!data.blacklist_blocked;
 
         // Improve status wording for Module 2 decisioning.
         if (status === 'pending_cdrrmo' && (cdrrmoStatus === 'certified' || cdrrmoStatus === 'not_certified')) {
@@ -2086,6 +1973,19 @@
             `<strong>Declared intake channel:</strong> ${escapeHtml(channel)}<br>` +
             `<strong>Current queue tag:</strong> ${escapeHtml(queueLabel)}` +
             workflowNote;
+
+        if (blacklistBlocked) {
+            evalStatus.innerHTML +=
+                '<br><strong style="color:#b91c1c;">Process 2.1 result:</strong> ' +
+                '<span style="color:#b91c1c;">Blacklist match detected. Module 2 workflow is halted for this applicant until resolved in Module 1.</span>';
+            if (evalActions) evalActions.style.display = 'none';
+            if (officeCdrrmoBox) officeCdrrmoBox.style.display = 'none';
+            if (cdrrmoPendingInfo) cdrrmoPendingInfo.style.display = 'none';
+            applyBlacklistWorkflowGate(true);
+            return;
+        } else {
+            applyBlacklistWorkflowGate(false);
+        }
 
         const canRecordOfficeReceipt =
             canVerifyDocs &&
@@ -2234,7 +2134,7 @@
                     gate.style.color = '#991b1b';
                     gate.innerHTML = '<strong>2.1 Blacklist</strong> — Applicant matches master blacklist. ' +
                         (data.blacklist_detail ? `<span style="display:block;margin-top:0.35rem;">${escapeHtml(data.blacklist_detail)}</span>` : '') +
-                        '<span style="display:block;margin-top:0.35rem;">Document verification and form generation are disabled until resolved in Module 1.</span>';
+                        '<span style="display:block;margin-top:0.35rem;">Module 2 workflow is halted at step 2.1. Resolve the blacklist issue in Module 1 before proceeding to 2.2 eligibility data and succeeding steps.</span>';
                 } else {
                     gate.style.background = '#f8fafc';
                     gate.style.border = '1px solid #e2e8f0';
@@ -2592,52 +2492,6 @@
                 alert(data.error || 'Failed to update routing');
             }
         } catch (error) {
-            alert('Error: ' + error.message);
-        }
-    }
-
-    // Checklist action from modal (Section D endorsements)
-    async function toggleRoutingStep(step, checkbox) {
-        if (!checkbox) return;
-        if (!currentApplicationId) {
-            alert('No application found. Form must be generated first.');
-            checkbox.checked = false;
-            return;
-        }
-        if (!checkbox.checked) {
-            // Keep immutable audit trail: once checked, it should not be unchecked.
-            checkbox.checked = true;
-            return;
-        }
-
-        checkbox.disabled = true;
-        try {
-            const formData = new FormData();
-            formData.append('application_id', currentApplicationId);
-            formData.append('step', step);
-            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
-
-            const response = await fetch('{% url "applications:update_routing" request.user.position %}', {
-                method: 'POST',
-                body: formData
-            });
-            const data = await response.json();
-
-            if (!data.success) {
-                checkbox.checked = false;
-                checkbox.disabled = false;
-                alert(data.error || 'Failed to update endorsement checklist');
-                return;
-            }
-
-            await loadApplicantRequirements(currentApplicantId);
-            if (data.new_status) {
-                const stage = mapApplicationStatusToProgressStage(data.new_status);
-                if (stage) updateProgressTrackerFromStage(stage);
-            }
-        } catch (error) {
-            checkbox.checked = false;
-            checkbox.disabled = false;
             alert('Error: ' + error.message);
         }
     }

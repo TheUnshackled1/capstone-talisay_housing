@@ -4,6 +4,8 @@
 {% block nav_applicants %}active{% endblock %}
 
 {% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_blue.css">
 <style>
     /* Applicants Page Styles */
     .applicants-container {
@@ -29,6 +31,53 @@
         font-size: 0.875rem;
         color: #64748b;
         margin-top: 0.25rem;
+    }
+
+    /* Modern DOB calendar appearance */
+    .dob-alt-input {
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 0.5rem;
+        padding-right: 2.25rem;
+        font-variant-numeric: tabular-nums;
+        letter-spacing: 0.01em;
+    }
+    .dob-alt-input:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        outline: none;
+    }
+    .flatpickr-calendar.tha-flatpickr {
+        border-radius: 0.85rem;
+        border: 1px solid #dbeafe;
+        box-shadow: 0 14px 30px rgba(15, 23, 42, 0.18);
+        overflow: hidden;
+    }
+    .flatpickr-calendar.tha-flatpickr .flatpickr-months {
+        background: #eff6ff;
+        border-bottom: 1px solid #dbeafe;
+    }
+    .flatpickr-calendar.tha-flatpickr .flatpickr-current-month {
+        padding-top: 0.3rem;
+    }
+    .flatpickr-calendar.tha-flatpickr .flatpickr-weekday {
+        color: #1e3a8a;
+        font-weight: 600;
+    }
+    .flatpickr-calendar.tha-flatpickr .flatpickr-day.selected,
+    .flatpickr-calendar.tha-flatpickr .flatpickr-day.startRange,
+    .flatpickr-calendar.tha-flatpickr .flatpickr-day.endRange {
+        background: #2563eb;
+        border-color: #2563eb;
+    }
+    .flatpickr-calendar.tha-flatpickr .flatpickr-monthDropdown-months {
+        max-height: 12rem !important;
+        overflow-y: auto !important;
+        overscroll-behavior: contain;
+        scrollbar-width: thin;
+    }
+    .flatpickr-calendar.tha-flatpickr .flatpickr-monthDropdown-month {
+        white-space: nowrap;
     }
 
     .btn-primary-add {
@@ -1093,7 +1142,7 @@
     <div class="modal-content tha-review-modal" style="max-width: 48rem; max-height: 90vh; overflow-y: auto;" onclick="event.stopPropagation()">
         <div class="modal-header" style="position: sticky; top: 0; background: white; z-index: 10;">
             <div>
-                <p class="tha-review-modal-kicker">Talisay City Housing Authority · Module 1 — Applicant record</p>
+                <p class="tha-review-modal-kicker">Talisay City Housing Authority Applicant record</p>
                 <h2 class="modal-title" id="reviewName"></h2>
                 <p class="modal-subtitle" id="reviewReference"></p>
             </div>
@@ -2023,6 +2072,13 @@
                         <div class="form-group">
                             <label class="form-label">Age <span style="color: #dc2626;">*</span> <span style="font-weight: 500; color: #64748b;">(computed)</span></label>
                             <input type="number" class="form-input" placeholder="From date of birth" name="age" id="age" min="0" readonly style="background-color: #f1f5f9; cursor: not-allowed; font-weight: 600;">
+                            <span class="help-text" id="ageEligibilityHint" style="display:none;"></span>
+                            <div id="overAgeOverrideWrap" style="display:none; margin-top:0.5rem; padding:0.5rem; border:1px solid #fcd34d; background:#fffbeb; border-radius:0.375rem;">
+                                <label style="display:flex; align-items:flex-start; gap:0.45rem; cursor:pointer; font-size:0.75rem; color:#92400e; line-height:1.35;">
+                                    <input type="checkbox" id="overAgeOverride" name="consider_overage" value="true" style="margin-top:0.1rem;">
+                                    <span>Applicant is above 55 years old. Staff consideration is required to proceed with this ISF registration.</span>
+                                </label>
+                            </div>
                         </div>
                     </div>
 
@@ -2046,7 +2102,8 @@
                     <div class="form-row full">
                         <div class="form-group">
                             <label class="form-label">Present address <span style="color: #dc2626;">*</span></label>
-                            <input type="text" class="form-input" placeholder="House no., street, sitio/purok, barangay, Talisay City" name="current_address" id="presentAddress" minlength="10" maxlength="500" required>
+                            <input type="text" class="form-input" placeholder="House no., street, sitio/purok, Talisay City" name="current_address" id="presentAddress" minlength="10" maxlength="500" required>
+                            <span class="help-text">Enter address details here. Select the barangay below so it is stored in a structured field.</span>
                         </div>
                     </div>
 
@@ -2060,6 +2117,7 @@
                                 <option value="{{ barangay }}">{{ barangay }}</option>
                                 {% endfor %}
                             </select>
+                            <span class="help-text">Select once here (no need to repeat barangay in the address text).</span>
                         </div>
                         <div class="form-group">
                             <label class="form-label">Applicant mobile number <span style="color: #dc2626;">*</span></label>
@@ -2204,6 +2262,7 @@
 
 <script id="applicantsDataJson" type="application/json">{{ applicants_json|safe }}</script>
 <input type="hidden" id="canModifyFlag" value="{{ can_modify|yesno:'true,false' }}">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>
     // Store applicants data in JavaScript
     const applicantsData = JSON.parse(document.getElementById('applicantsDataJson')?.textContent || '[]');
@@ -2333,6 +2392,7 @@
 
     // Initialize income formatters on page load
     window.addEventListener('DOMContentLoaded', function() {
+        initDobDatePicker();
         // Attach only to text-like income fields. Number inputs must stay plain numeric.
         document.querySelectorAll('.form-input[name*="income"]:not([type="number"]), input[id*="Income"]:not([type="number"])').forEach(attachIncomeFormatter);
         document.querySelectorAll('.js-open-review').forEach(btn => {
@@ -3633,6 +3693,7 @@
     function openAddModal() {
         const modal = document.getElementById('addModal');
         if (modal) modal.classList.add('active');
+        initDobDatePicker();
         // Initialize household members
         householdMemberCount = 1;
         renderHouseholdMembers();
@@ -3645,6 +3706,18 @@
         if (form) form.reset();
         // Reset danger zone selection
         setDangerZone(null);
+        const ageHint = document.getElementById('ageEligibilityHint');
+        const overAgeWrap = document.getElementById('overAgeOverrideWrap');
+        const overAgeOverride = document.getElementById('overAgeOverride');
+        if (ageHint) {
+            ageHint.style.display = 'none';
+            ageHint.textContent = '';
+        }
+        if (overAgeWrap) overAgeWrap.style.display = 'none';
+        if (overAgeOverride) {
+            overAgeOverride.checked = false;
+            overAgeOverride.required = false;
+        }
     }
 
     function setDangerZone(isDanger) {
@@ -3771,15 +3844,62 @@
         renderHouseholdMembers();
     }
 
+    function initDobDatePicker() {
+        const dobInput = document.getElementById('dateOfBirth');
+        if (!dobInput || typeof flatpickr === 'undefined') return;
+        if (dobInput._flatpickr) return;
+        flatpickr(dobInput, {
+            dateFormat: 'Y-m-d',      // backend-safe submit format
+            altInput: true,
+            altFormat: 'd/m/Y',       // requested display format
+            altInputClass: 'form-input dob-alt-input',
+            allowInput: true,
+            maxDate: 'today',
+            disableMobile: true,
+            monthSelectorType: 'dropdown',
+            animate: true,
+            clickOpens: true,
+            locale: {
+                firstDayOfWeek: 1
+            },
+            prevArrow: '<span style="font-size:1rem;line-height:1;">&#10094;</span>',
+            nextArrow: '<span style="font-size:1rem;line-height:1;">&#10095;</span>',
+            onReady: function(_, __, instance) {
+                if (instance.altInput) {
+                    instance.altInput.placeholder = 'DD/MM/YYYY';
+                    instance.altInput.setAttribute('aria-label', 'Date of birth');
+                }
+                if (instance.calendarContainer) {
+                    instance.calendarContainer.classList.add('tha-flatpickr');
+                }
+            },
+            onChange: function() {
+                calculateAge();
+            }
+        });
+    }
+
 
     // Auto-calculate age from date of birth
     function calculateAge() {
         const dobInput = document.getElementById('dateOfBirth');
         const ageInput = document.getElementById('age');
+        const ageHint = document.getElementById('ageEligibilityHint');
+        const overAgeWrap = document.getElementById('overAgeOverrideWrap');
+        const overAgeOverride = document.getElementById('overAgeOverride');
 
         if (!dobInput.value) {
             ageInput.value = '';
-            return;
+            if (ageHint) {
+                ageHint.style.display = 'none';
+                ageHint.textContent = '';
+            }
+            if (overAgeWrap) overAgeWrap.style.display = 'none';
+            if (overAgeOverride) {
+                overAgeOverride.checked = false;
+                overAgeOverride.required = false;
+            }
+            return null;
         }
 
         const dob = new Date(dobInput.value);
@@ -3796,9 +3916,52 @@
         if (age < 0) {
             ageInput.value = '';
             console.warn('Invalid date of birth');
+            if (ageHint) {
+                ageHint.style.display = 'block';
+                ageHint.style.color = '#b91c1c';
+                ageHint.textContent = 'Invalid date of birth. Please review the selected date.';
+            }
+            if (overAgeWrap) overAgeWrap.style.display = 'none';
+            if (overAgeOverride) {
+                overAgeOverride.checked = false;
+                overAgeOverride.required = false;
+            }
+            return null;
         } else {
             ageInput.value = age;
+            if (ageHint) {
+                ageHint.style.display = 'block';
+            }
+            if (age < 18) {
+                if (ageHint) {
+                    ageHint.style.color = '#b91c1c';
+                    ageHint.textContent = 'Registration is restricted to applicants aged 18 and above.';
+                }
+                if (overAgeWrap) overAgeWrap.style.display = 'none';
+                if (overAgeOverride) {
+                    overAgeOverride.checked = false;
+                    overAgeOverride.required = false;
+                }
+            } else if (age <= 55) {
+                if (ageHint) {
+                    ageHint.style.color = '#166534';
+                    ageHint.textContent = 'Eligible age range: 18 to 55 years old.';
+                }
+                if (overAgeWrap) overAgeWrap.style.display = 'none';
+                if (overAgeOverride) {
+                    overAgeOverride.checked = false;
+                    overAgeOverride.required = false;
+                }
+            } else {
+                if (ageHint) {
+                    ageHint.style.color = '#92400e';
+                    ageHint.textContent = 'Age is above 55. Staff consideration is required to proceed.';
+                }
+                if (overAgeWrap) overAgeWrap.style.display = 'block';
+                if (overAgeOverride) overAgeOverride.required = true;
+            }
         }
+        return age;
     }
 
 
@@ -3853,6 +4016,24 @@
             alert('Years Residing in Talisay is required for eligibility check.');
             return;
         }
+
+        // Validate applicant age policy: 18-55 by default; above 55 requires staff override.
+        const ageResult = calculateAge();
+        const computedAge = Number(ageResult);
+        if (ageResult == null || !Number.isFinite(computedAge)) {
+            alert('Date of birth is required to compute age.');
+            return;
+        }
+        if (computedAge < 18) {
+            alert('Applicant must be at least 18 years old.');
+            return;
+        }
+        const overAgeOverride = document.getElementById('overAgeOverride');
+        if (computedAge > 55 && (!overAgeOverride || !overAgeOverride.checked)) {
+            alert('Applicant is above 55. Please confirm staff consideration to proceed.');
+            return;
+        }
+        formData.set('consider_overage', (computedAge > 55 && overAgeOverride && overAgeOverride.checked) ? 'true' : 'false');
 
         // Validate household members - if any field is filled, all must be filled
         for (let i = 1; i <= householdMemberCount; i++) {

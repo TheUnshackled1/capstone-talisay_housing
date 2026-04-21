@@ -408,3 +408,68 @@ class LotAwarding(models.Model):
     
     def __str__(self):
         return f"{self.application.application_number} - Lot {self.lot_number}"
+
+
+# =============================================================================
+# MODULE 2 OWNERSHIP WRAPPERS (NO DB MOVE RISK)
+# =============================================================================
+
+class BlacklistProxy(models.Model):
+    """
+    Applications-app view of Module 1 blacklist records.
+    Uses the same underlying intake table via unmanaged mapping.
+    """
+    id = models.UUIDField(primary_key=True, editable=False)
+    full_name = models.CharField(max_length=255)
+    phone_number = models.CharField(max_length=20, blank=True)
+    reason = models.CharField(max_length=20)
+    notes = models.TextField(blank=True)
+    applicant = models.ForeignKey(
+        'intake.Applicant',
+        on_delete=models.DO_NOTHING,
+        null=True,
+        blank=True,
+        db_column='applicant_id',
+        related_name='+',
+    )
+    blacklisted_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.DO_NOTHING,
+        null=True,
+        db_column='blacklisted_by_id',
+        related_name='+',
+    )
+    blacklisted_at = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'intake_blacklist'
+        verbose_name = 'Blacklist (Module 2 view)'
+        verbose_name_plural = 'Blacklist (Module 2 view)'
+
+
+class CDRRMOCertificationProxy(models.Model):
+    """
+    Applications-app view of CDRRMO certification records.
+    Uses the same underlying intake table via unmanaged mapping.
+    """
+    id = models.UUIDField(primary_key=True, editable=False)
+    applicant = models.OneToOneField(
+        'intake.Applicant',
+        on_delete=models.DO_NOTHING,
+        db_column='applicant_id',
+        related_name='+',
+    )
+    status = models.CharField(max_length=20)
+    disposition_source = models.CharField(max_length=20)
+    declared_location = models.TextField()
+    requested_at = models.DateTimeField()
+    certified_at = models.DateTimeField(null=True, blank=True)
+    certification_notes = models.TextField(blank=True)
+    office_intake_notes = models.TextField(blank=True)
+
+    class Meta:
+        managed = False
+        db_table = 'intake_cdrrmocertification'
+        verbose_name = 'CDRRMO Certification (Module 2 view)'
+        verbose_name_plural = 'CDRRMO Certifications (Module 2 view)'

@@ -7,11 +7,13 @@ from django.db.models import Count, Q, Prefetch, Max
 from django.utils import timezone
 from functools import wraps
 from intake.models import Applicant, QueueEntry, CDRRMOCertification, FieldVerificationPhoto
-from intake.utils import send_sms, check_blacklist, ensure_priority_queue_entry
+from intake.utils import send_sms, ensure_priority_queue_entry
 from .models import (
     Application, Requirement, RequirementSubmission,
-    SignatoryRouting, FacilitatedService, ElectricityConnection, LotAwarding
+    SignatoryRouting, FacilitatedService, ElectricityConnection, LotAwarding,
+    CDRRMOCertificationProxy,
 )
+from .utils import check_blacklist_module2
 
 
 # =============================================================================
@@ -211,6 +213,12 @@ def applications_list(request, position):
         application__routing_steps__step='signed_head'
     ).select_related('application', 'application__applicant')
     
+    # Queue summary cards (Module 1 queue tags surfaced in Module 2)
+    queue_counts = {
+        'priority': 0,
+        'walk_in': 0,
+    }
+
     # Prepare applicant data with document counts
     applicants_data = []
     for applicant in applicants:
@@ -285,7 +293,7 @@ def applications_list(request, position):
             user_actions.append('manage_electricity')
 
         # --- Module 2 workflow: 2.1 Blacklist (D1 applicant profile) ---
-        is_bl, bl_entry = check_blacklist(applicant.full_name, applicant.phone_number or None)
+        is_bl, bl_entry = check_blacklist_module2(applicant.full_name, applicant.phone_number or None)
         blacklist_blocked = bool(is_bl)
         blacklist_detail = ''
         if blacklist_blocked and bl_entry:
@@ -294,6 +302,14 @@ def applications_list(request, position):
                 blacklist_detail += f' — {bl_entry.notes[:200]}'
         if blacklist_blocked:
             user_actions = [a for a in user_actions if a not in ('verify_docs', 'generate_form')]
+
+        intake_queue_label = _active_intake_queue_label(applicant)
+        active_entries = getattr(applicant, 'active_queue_entries', None) or []
+        if active_entries:
+            if active_entries[0].queue_type == 'priority':
+                queue_counts['priority'] += 1
+            else:
+                queue_counts['walk_in'] += 1
 
         applicants_data.append({
             'applicant': applicant,
@@ -315,7 +331,7 @@ def applications_list(request, position):
             'm1_income_eligible': applicant.is_income_eligible,
             'm1_declares_no_property': not applicant.has_property_in_talisay,
             'household_size': applicant.household_size,
-            'intake_queue_label': _active_intake_queue_label(applicant),
+            'intake_queue_label': intake_queue_label,
         })
     
     # Filter by stage if requested
@@ -345,6 +361,7 @@ def applications_list(request, position):
     context = {
         'applicants_data': applicants_data,
         'stage_counts': stage_counts,
+        'queue_counts': queue_counts,
         'requirements': requirements,
         'group_a_requirements': group_a_requirements,
         'group_b_requirements': group_b_requirements,
@@ -419,7 +436,7 @@ def application_detail(request, position, application_id):
     permissions = get_module2_permissions(request.user)
     
     # Build response data
-    is_bl, bl_entry = check_blacklist(applicant.full_name, applicant.phone_number or None)
+    is_bl, bl_entry = check_blacklist_module2(applicant.full_name, applicant.phone_number or None)
     bl_detail = ''
     if is_bl and bl_entry:
         bl_detail = bl_entry.get_reason_display()
@@ -498,9 +515,7 @@ def application_detail(request, position, application_id):
                 'status': None,
                 'status_display': 'Not Requested',
                 'disposition_source': 'pending',
-                'disposition_source_display': dict(CDRRMOCertification.DISPOSITION_SOURCE_CHOICES).get(
-                    'pending', 'No disposition recorded'
-                ),
+                'disposition_source_display': 'No disposition recorded',
                 'declared_location': '',
                 'recorded_by': '',
                 'recorded_at': None,
@@ -570,6 +585,18 @@ def evaluate_applicant(request, position):
         return JsonResponse({
             'success': False,
             'error': f'Cannot evaluate record with current status: {applicant.get_status_display()}',
+        }, status=400)
+
+    # Module 2 workflow step 2.1: automatic blacklist stop gate.
+    is_bl, bl_entry = check_blacklist_module2(applicant.full_name, applicant.phone_number or None)
+    if is_bl:
+        reason = bl_entry.get_reason_display() if bl_entry else 'Blacklist match'
+        return JsonResponse({
+            'success': False,
+            'error': (
+                f'Process 2.1 blocked: applicant matches blacklist ({reason}). '
+                'Resolve in Module 1 before continuing Module 2 eligibility evaluation.'
+            ),
         }, status=400)
 
     if action == 'mark_eligible':
@@ -683,7 +710,7 @@ def update_requirement(request, position):
 
     try:
         applicant = Applicant.objects.get(id=applicant_id)
-        is_bl, bl_entry = check_blacklist(applicant.full_name, applicant.phone_number or None)
+        is_bl, bl_entry = check_blacklist_module2(applicant.full_name, applicant.phone_number or None)
         if is_bl:
             reason = bl_entry.get_reason_display() if bl_entry else 'Blacklist match'
             return JsonResponse(
@@ -784,7 +811,7 @@ def generate_form(request, position, applicant_id):
     
     applicant = get_object_or_404(Applicant, id=applicant_id)
 
-    is_bl, bl_entry = check_blacklist(applicant.full_name, applicant.phone_number or None)
+    is_bl, bl_entry = check_blacklist_module2(applicant.full_name, applicant.phone_number or None)
     if is_bl:
         reason = bl_entry.get_reason_display() if bl_entry else 'Blacklist match'
         return JsonResponse(

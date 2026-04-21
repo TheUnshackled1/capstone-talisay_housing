@@ -1212,6 +1212,32 @@ def walkin_register(request, position):
         messages.error(request, 'Please fill all required fields.')
         return redirect(applicants_list_url)
 
+    # Age policy (server-side): 18-55 standard, >55 requires explicit staff consideration.
+    date_of_birth = form.cleaned_data.get('date_of_birth')
+    if not date_of_birth:
+        msg = 'Date of birth is required.'
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'error': msg})
+        messages.error(request, msg)
+        return redirect(applicants_list_url)
+    today = timezone.localdate()
+    computed_age = today.year - date_of_birth.year - (
+        (today.month, today.day) < (date_of_birth.month, date_of_birth.day)
+    )
+    if computed_age < 18:
+        msg = 'Applicant must be at least 18 years old.'
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'error': msg})
+        messages.error(request, msg)
+        return redirect(applicants_list_url)
+    staff_consideration_overage = str(request.POST.get('consider_overage', '')).lower() in {'1', 'true', 'yes', 'on'}
+    if computed_age > 55 and not staff_consideration_overage:
+        msg = 'Applicant is above 55 years old. Staff consideration must be confirmed to proceed.'
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'error': msg})
+        messages.error(request, msg)
+        return redirect(applicants_list_url)
+
     # Get barangay instance
     barangay_name = form.cleaned_data['barangay']
     barangay, _ = Barangay.objects.get_or_create(name=barangay_name)
@@ -1254,8 +1280,8 @@ def walkin_register(request, position):
         middle_name=form.cleaned_data.get('middle_name', ''),
         full_name=full_name,
         sex=form.cleaned_data.get('sex', ''),
-        age=form.cleaned_data.get('age'),
-        date_of_birth=form.cleaned_data.get('date_of_birth'),
+        age=computed_age,
+        date_of_birth=date_of_birth,
         place_of_birth=form.cleaned_data.get('place_of_birth', ''),
         phone_number=phone_number,
         spouse_name=form.cleaned_data.get('spouse_name', ''),
