@@ -156,7 +156,12 @@ def applications_list(request, position):
         status__in=['pending', 'pending_cdrrmo', 'eligible', 'requirements', 'application', 'standby', 'awarded']
     ).filter(
         Q(module2_handoff_at__isnull=False) | Q(application__isnull=False)
-    ).select_related('application', 'cdrrmo_certification').prefetch_related(
+    ).select_related(
+        'application',
+        'cdrrmo_certification',
+        'registered_by',
+        'module2_handoff_by',
+    ).prefetch_related(
         'requirement_submissions',
         'requirement_submissions__requirement',
         Prefetch(
@@ -480,6 +485,7 @@ def application_detail(request, position, application_id):
                 'status': cert.status,  # pending/certified/not_certified
                 'status_display': cert.get_status_display(),
                 'disposition_source': cert.disposition_source,
+                'disposition_source_display': cert.get_disposition_source_display(),
                 'declared_location': cert.declared_location or '',
                 'recorded_by': cert.result_recorded_by.get_full_name() if cert.result_recorded_by else '',
                 'recorded_at': cert.certified_at.isoformat() if cert.certified_at else None,
@@ -492,6 +498,9 @@ def application_detail(request, position, application_id):
                 'status': None,
                 'status_display': 'Not Requested',
                 'disposition_source': 'pending',
+                'disposition_source_display': dict(CDRRMOCertification.DISPOSITION_SOURCE_CHOICES).get(
+                    'pending', 'No disposition recorded'
+                ),
                 'declared_location': '',
                 'recorded_by': '',
                 'recorded_at': None,

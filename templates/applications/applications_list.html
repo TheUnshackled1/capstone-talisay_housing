@@ -315,6 +315,21 @@
     white-space: nowrap;
 }
 
+/* Channel badge (aligned with Module 1 applicant ledger) */
+.applications-table .badge {
+    display: inline-block;
+    padding: 0.125rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.5625rem;
+    font-weight: 600;
+    line-height: 1.35;
+}
+.applications-table .badge.channel-b-hazard {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fcd34d;
+}
+
 .applications-table td {
     padding: 0.75rem 1rem;
     border-bottom: 1px solid #f1f5f9;
@@ -331,6 +346,87 @@
 
 .applications-table tbody tr:last-child td {
     border-bottom: none;
+}
+
+/* Compact Module 2 ledger (few columns, stacked detail) */
+.applications-table.compact-table th,
+.applications-table.compact-table td {
+    padding: 0.55rem 0.65rem;
+    vertical-align: top;
+}
+.applications-table.compact-table th {
+    white-space: normal;
+    line-height: 1.35;
+    max-width: 14rem;
+}
+.applications-table.compact-table .col-num {
+    width: 2.25rem;
+    text-align: center;
+}
+.applications-table.compact-table .col-actions {
+    min-width: 9.5rem;
+}
+.applications-table.compact-table .m2-record-meta {
+    font-size: 0.625rem;
+    color: #64748b;
+    line-height: 1.4;
+    margin-top: 0.2rem;
+    font-family: ui-monospace, monospace;
+}
+.applications-table.compact-table .m2-txn-short {
+    color: #1d4ed8;
+    font-weight: 600;
+    cursor: default;
+}
+.applications-table.compact-table .m2-staff-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.35rem;
+    font-size: 0.625rem;
+    line-height: 1.35;
+}
+.applications-table.compact-table .m2-staff-avatar {
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 9999px;
+    background: #e0e7ff;
+    color: #3730a3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.5rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+.applications-table.compact-table .m2-sms-line {
+    font-size: 0.5625rem;
+    margin-top: 0.35rem;
+    color: #475569;
+}
+.applications-table.compact-table .m2-progress-stack {
+    display: grid;
+    gap: 0.35rem;
+    font-size: 0.625rem;
+    color: #334155;
+    min-width: 10.5rem;
+}
+.applications-table.compact-table .m2-progress-stack .m2-pl {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+}
+.applications-table.compact-table .m2-progress-stack .m2-pl-label {
+    flex: 0 0 4.5rem;
+    font-size: 0.5625rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #64748b;
+}
+.applications-table.compact-table .m2-progress-stack .doc-progress {
+    flex: 1;
+    min-width: 5rem;
 }
 
 /* Applicant Cell */
@@ -1077,26 +1173,31 @@
 <!-- Applications Table -->
 <div class="applications-table-container">
     {% if applicants_data %}
-    <div style="overflow-x: auto;">
-    <table class="applications-table">
+    <table class="applications-table compact-table">
         <thead>
             <tr>
-                <th>Applicant Record</th>
-                <th>Intake Queue Tag</th>
-                <th>Group A Compliance</th>
-                <th>Application Form</th>
-                <th>Routing Status</th>
-                <th>Process Stage</th>
-                <th>Actions</th>
+                <th class="col-num" title="Row number in this list">#</th>
+                <th title="Full name, reference #, transaction ID (short), and Module 1 encoding timestamp">Applicant record</th>
+                <th title="Intake channel and active Module 1 queue tag">Channel &amp; queue</th>
+                <th title="Module 1 encoding staff, Module 2 handoff when different, and SMS flags">Staff &amp; SMS</th>
+                <th title="Group A checklist, form, Section D routing, and process stage">Module 2 progress</th>
+                <th class="col-actions">Action</th>
             </tr>
         </thead>
         <tbody>
             {% for data in applicants_data %}
             <tr data-applicant-id="{{ data.applicant.id }}" class="scroll-animate-left">
+                <td class="col-num" style="font-weight:700;color:#1e293b;">{{ forloop.counter }}</td>
                 <td>
                     <div class="applicant-cell">
-                        <span class="applicant-name">{{ data.applicant.full_name }}</span>
-                        <span class="applicant-ref">{{ data.applicant.reference_number }}</span>
+                        <span class="applicant-name" style="font-weight:600;">{{ data.applicant.full_name }}</span>
+                        <div class="m2-record-meta">
+                            <span title="Reference #">{{ data.applicant.reference_number }}</span>
+                            <span aria-hidden="true"> · </span>
+                            <span class="m2-txn-short" title="Transaction # (full): {{ data.applicant.id }}">#{{ data.applicant.id.hex|slice:":8" }}…</span>
+                            <span aria-hidden="true"> · </span>
+                            <span title="Date &amp; time (Module 1 record created)">{{ data.applicant.created_at|date:"n/j/Y, P" }}</span>
+                        </div>
                         {% if data.blacklist_blocked %}
                         <span style="font-size:0.5625rem;color:#b91c1c;font-weight:600;">Blacklist — Module 2 blocked</span>
                         {% elif data.applicant_status == 'pending_cdrrmo' %}
@@ -1118,54 +1219,100 @@
                     </div>
                 </td>
                 <td>
-                    {% if data.intake_queue_label != '—' %}
-                    <span class="queue-badge priority">{{ data.intake_queue_label }}</span>
-                    {% else %}
-                    <span class="queue-badge walkin" title="No active Module 1 queue entry">No active queue tag</span>
-                    {% endif %}
+                    <div style="display:flex;flex-direction:column;gap:0.35rem;align-items:flex-start;">
+                        <span class="badge channel-b-hazard">{{ data.applicant.get_channel_display }}</span>
+                        <div>
+                            {% if data.intake_queue_label != '—' %}
+                            <span class="queue-badge priority">{{ data.intake_queue_label }}</span>
+                            {% else %}
+                            <span class="queue-badge walkin" title="No active Module 1 queue entry">No queue tag</span>
+                            {% endif %}
+                        </div>
+                    </div>
                 </td>
                 <td>
-                    <div class="doc-progress">
-                        <div class="doc-progress-bar">
-                            <div class="doc-progress-fill" style="width: {% widthratio data.group_a_verified 7 100 %}%"></div>
+                    {% with rb=data.applicant.registered_by %}
+                    {% if rb %}
+                    <div class="m2-staff-row">
+                        <div class="m2-staff-avatar">{{ rb.first_name|default:''|slice:':1'|upper }}{{ rb.last_name|default:''|slice:':1'|upper }}</div>
+                        <div style="min-width:0;">
+                            <div style="font-weight:500;color:#1e293b;">{{ rb.get_full_name }}</div>
+                            <div style="color:#64748b;">{{ rb.get_position_display }}</div>
+                            {% if data.applicant.module2_handoff_by_id and data.applicant.module2_handoff_by_id != rb.id %}
+                            <div style="color:#475569;margin-top:0.2rem;font-size:0.5625rem;" title="Proceed to Application &amp; Evaluation (Module 1)">
+                                <strong>M2 handoff:</strong> {{ data.applicant.module2_handoff_by.get_full_name }}
+                            </div>
+                            {% endif %}
                         </div>
-                        <span class="doc-progress-text">{{ data.group_a_verified }}/7</span>
-                        {% if data.group_a_verified >= 7 %}
-                        <span class="doc-complete-check">✓</span>
+                    </div>
+                    {% else %}
+                    <span style="font-size:0.625rem;color:#94a3b8;">—</span>
+                    {% endif %}
+                    {% endwith %}
+                    <div class="m2-sms-line">
+                        {% if data.applicant.phone_number %}
+                            <span title="Registration SMS">{% if data.applicant.registration_sms_sent %}Reg. ✓{% else %}Reg. ✗{% endif %}</span>
+                            <span aria-hidden="true"> · </span>
+                            <span title="Eligibility SMS">{% if data.applicant.eligibility_sms_sent %}Elig. ✓{% else %}Elig. —{% endif %}</span>
+                        {% else %}
+                            <span style="color:#94a3b8;">No phone</span>
                         {% endif %}
                     </div>
                 </td>
                 <td>
-                    {% if data.form_generated %}
-                    <span class="form-status generated"><span class="check-icon">✓</span> Generated</span>
-                    {% elif data.can_generate_form %}
-                    <span class="form-status can-generate">Ready for issuance</span>
-                    {% else %}
-                    <span class="form-status pending">Not yet available</span>
-                    {% endif %}
+                    <div class="m2-progress-stack">
+                        <div class="m2-pl">
+                            <span class="m2-pl-label">Group A</span>
+                            <div class="doc-progress">
+                                <div class="doc-progress-bar">
+                                    <div class="doc-progress-fill" style="width: {% widthratio data.group_a_verified 7 100 %}%"></div>
+                                </div>
+                                <span class="doc-progress-text">{{ data.group_a_verified }}/7</span>
+                                {% if data.group_a_verified >= 7 %}
+                                <span class="doc-complete-check">✓</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="m2-pl">
+                            <span class="m2-pl-label">Form</span>
+                            <span>
+                                {% if data.form_generated %}
+                                <span class="form-status generated"><span class="check-icon">✓</span> Generated</span>
+                                {% elif data.can_generate_form %}
+                                <span class="form-status can-generate">Ready</span>
+                                {% else %}
+                                <span class="form-status pending">Not yet available</span>
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="m2-pl">
+                            <span class="m2-pl-label">Routing</span>
+                            <span>
+                                {% if data.routing_status == 'Completed' %}
+                                <span class="routing-status completed">Completed</span>
+                                {% elif data.routing_status == 'In Progress' %}
+                                <span class="routing-status in-progress">In progress</span>
+                                {% else %}
+                                <span class="routing-status not-started">Pending</span>
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="m2-pl">
+                            <span class="m2-pl-label">Stage</span>
+                            {% with stage_slug=data.current_stage|lower|slugify %}
+                            <span class="stage-badge {{ stage_slug }}">
+                                {% if data.current_stage == 'Eligibility' %}Eligibility Evaluation
+                                {% elif data.current_stage == 'Document Gathering' %}Document Verification
+                                {% elif data.current_stage == 'Form Released' %}Form Issued
+                                {% elif data.current_stage == 'Signatory Routing' %}Section D Routing
+                                {% elif data.current_stage == 'Fully Approved' %}Fully Endorsed
+                                {% else %}{{ data.current_stage }}{% endif %}
+                            </span>
+                            {% endwith %}
+                        </div>
+                    </div>
                 </td>
-                <td>
-                    {% if data.routing_status == 'Completed' %}
-                    <span class="routing-status completed">Completed</span>
-                    {% elif data.routing_status == 'In Progress' %}
-                    <span class="routing-status in-progress">In Progress</span>
-                    {% else %}
-                    <span class="routing-status not-started">Pending</span>
-                    {% endif %}
-                </td>
-                <td>
-                    {% with stage_slug=data.current_stage|lower|slugify %}
-                    <span class="stage-badge {{ stage_slug }}">
-                        {% if data.current_stage == 'Eligibility' %}Eligibility Evaluation
-                        {% elif data.current_stage == 'Document Gathering' %}Document Verification
-                        {% elif data.current_stage == 'Form Released' %}Form Issued
-                        {% elif data.current_stage == 'Signatory Routing' %}Section D Routing
-                        {% elif data.current_stage == 'Fully Approved' %}Fully Endorsed
-                        {% else %}{{ data.current_stage }}{% endif %}
-                    </span>
-                    {% endwith %}
-                </td>
-                <td>
+                <td class="col-actions">
                     <div style="display: flex; gap: 0.25rem; flex-wrap: wrap;">
                         <button class="action-btn" onclick="openApplicationModal('{{ data.applicant.id }}', '{{ data.applicant.full_name }}', '{{ data.applicant.reference_number }}', {{ data.group_a_verified }}, '{{ data.current_stage }}', '{{ data.application.id|default:"" }}')">
                             <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1222,7 +1369,6 @@
             {% endfor %}
         </tbody>
     </table>
-    </div>
     <div class="table-footer">
         <p>Showing {{ applicants_data|length }} applicant record{{ applicants_data|length|pluralize }}</p>
     </div>
@@ -1325,7 +1471,7 @@
                 <div id="modalCdrrmoSummary" style="font-size:0.75rem;color:#334155;line-height:1.45;margin-bottom:0.5rem;"></div>
                 <div id="modalCdrrmoNotes" style="display:none;font-size:0.75rem;color:#334155;line-height:1.45;margin-bottom:0.5rem;padding:0.5rem;border:1px solid #cbd5e1;border-radius:6px;background:#fff;"></div>
                 <div id="modalCdrrmoPhotosWrap" style="display:none;">
-                    <div style="font-size:0.68rem;color:#64748b;margin-bottom:0.35rem;">Filed field evidence photographs</div>
+                    <div id="modalCdrrmoPhotosCaption" style="font-size:0.68rem;color:#64748b;margin-bottom:0.35rem;">Filed field evidence photographs</div>
                     <div id="modalCdrrmoPhotos" style="display:flex;flex-wrap:wrap;gap:0.45rem;"></div>
                 </div>
             </div>
@@ -1801,14 +1947,35 @@
             </div>`;
         };
 
+        const infoBullet = (htmlInner) =>
+            `<div style="display:flex;align-items:center;gap:.45rem;padding:.42rem .55rem;background:#e0f2fe;border-radius:6px;color:#075985;font-size:.75rem;">
+                <span style="font-weight:700;">•</span>
+                <span>${htmlInner}</span>
+            </div>`;
+
+        let tail =
+            infoBullet(`<strong>CDRRMO certification status:</strong> ${escapeHtml(cdrrmoStatus)}`);
+        if (data.channel === 'danger_zone' && data.cdrrmo) {
+            const tagDisp = data.cdrrmo.disposition_source_display
+                || (data.cdrrmo.disposition_source === 'office_intake'
+                    ? 'Official CDRRMO paperwork filed at THA intake'
+                    : (data.cdrrmo.disposition_source === 'field_unit'
+                        ? 'Field unit / Ronda on-site verification'
+                        : 'No disposition recorded'));
+            tail += infoBullet(`<strong>CDRRMO disposition tagging (Module 1):</strong> ${escapeHtml(tagDisp)}`);
+            const src = data.cdrrmo.disposition_source || 'pending';
+            if (src === 'field_unit') {
+                tail += infoBullet('<strong>Ronda field verification:</strong> On-site report and photographic evidence filed through the field dashboard (Module 1); detailed record appears below.');
+            } else if (src === 'office_intake') {
+                tail += infoBullet('<strong>Office intake filing:</strong> Disposition recorded from official CDRRMO paperwork received at THA intake (Module 1); detailed record appears below.');
+            }
+        }
+
         body.innerHTML =
             line(incomeOk, incomeText, 'warn') +
             line(noProperty, propertyText) +
             line(notBlacklisted, blacklistText) +
-            `<div style="display:flex;align-items:center;gap:.45rem;padding:.42rem .55rem;background:#e0f2fe;border-radius:6px;color:#075985;font-size:.75rem;">
-                <span style="font-weight:700;">•</span>
-                <span><strong>CDRRMO certification status:</strong> ${escapeHtml(cdrrmoStatus)}</span>
-            </div>`;
+            tail;
         box.style.display = 'block';
     }
 
@@ -1985,16 +2152,19 @@
         }
         box.style.display = 'block';
         const src = cdrrmo.disposition_source || 'pending';
-        const srcLabel = src === 'office_intake'
-            ? 'Official CDRRMO paperwork filed at THA intake'
-            : (src === 'field_unit' ? 'Field unit verification report (Ronda)' : 'Awaiting CDRRMO disposition');
+        const tagLine = escapeHtml(
+            cdrrmo.disposition_source_display
+            || (src === 'office_intake'
+                ? 'Official CDRRMO paperwork filed at THA intake'
+                : (src === 'field_unit' ? 'Field unit / Ronda on-site verification' : 'No disposition recorded'))
+        );
         const recBy = cdrrmo.recorded_by ? escapeHtml(cdrrmo.recorded_by) : '—';
         const recAt = cdrrmo.recorded_at ? escapeHtml(new Date(cdrrmo.recorded_at).toLocaleDateString()) : '—';
         const declared = escapeHtml(cdrrmo.declared_location || '—');
         summary.innerHTML =
-            `<strong>Status:</strong> ${escapeHtml(cdrrmo.status_display || '—')}<br>` +
+            `<strong>CDRRMO disposition tagging (Module 1):</strong> ${tagLine}<br>` +
+            `<strong>Certification outcome:</strong> ${escapeHtml(cdrrmo.status_display || '—')}<br>` +
             `<strong>Declared classification and situs:</strong> ${declared}<br>` +
-            `<strong>Source:</strong> ${escapeHtml(srcLabel)}<br>` +
             `<strong>Recorded by:</strong> ${recBy} &nbsp;|&nbsp; <strong>Date:</strong> ${recAt}`;
 
         const noteText = src === 'office_intake'
@@ -2002,7 +2172,10 @@
             : (cdrrmo.field_notes || '');
         if (noteText) {
             notes.style.display = 'block';
-            notes.innerHTML = `<strong>${src === 'office_intake' ? 'Intake receiving remarks' : 'Field unit remarks'}:</strong><br>${escapeHtml(noteText)}`;
+            const noteTitle = src === 'office_intake'
+                ? 'Receiving remarks — THA intake office (Module 1)'
+                : 'Ronda field unit — on-site verification remarks (Module 1)';
+            notes.innerHTML = `<strong>${noteTitle}</strong><br>${escapeHtml(noteText)}`;
         } else {
             notes.style.display = 'none';
             notes.innerHTML = '';
@@ -2010,6 +2183,12 @@
 
         photos.innerHTML = '';
         const urls = Array.isArray(cdrrmo.field_photos) ? cdrrmo.field_photos : [];
+        const photosCaption = document.querySelector('#modalCdrrmoPhotosCaption');
+        if (photosCaption) {
+            photosCaption.textContent = src === 'field_unit'
+                ? 'Ronda field unit — evidence photographs filed (Module 1)'
+                : 'Filed field evidence photographs';
+        }
         if (src === 'field_unit' && urls.length > 0) {
             photosWrap.style.display = 'block';
             urls.forEach((url) => {

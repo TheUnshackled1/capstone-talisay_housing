@@ -911,7 +911,7 @@
                 </svg>
             </div>
             <div>
-                <p class="stat-label">Pending CDRRMO</p>
+                <p class="stat-label">Pending CDRRMO verification</p>
                 <p class="stat-value amber">{{ stats.pending_cdrrmo }}</p>
             </div>
         </div>
@@ -926,7 +926,7 @@
             <line x1="12" y1="17" x2="12.01" y2="17"></line>
         </svg>
         <p class="alert-text" {% if stats.cdrrmo_overdue > 0 %}style="color: #dc2626;"{% endif %}>
-            <strong>{{ stats.pending_cdrrmo }}</strong> applicant{{ stats.pending_cdrrmo|pluralize }} pending CDRRMO certification.
+            <strong>{{ stats.pending_cdrrmo }}</strong> applicant{{ stats.pending_cdrrmo|pluralize }} with a hazard-area claim pending CDRRMO verification.
             {% if stats.cdrrmo_overdue > 0 %}
             <span style="font-weight: 700;">⚠️ {{ stats.cdrrmo_overdue }} overdue (>14 days) — follow up required!</span>
             {% else %}
@@ -979,8 +979,8 @@
             <option value="all">All Status</option>
             <option value="Eligible">Eligible</option>
             <option value="Disqualified">Disqualified</option>
-            <option value="Pending">Pending</option>
-            <option value="Pending CDRRMO">Pending CDRRMO</option>
+            <option value="Pending eligibility check">Pending eligibility check</option>
+            <option value="Pending CDRRMO verification">Pending CDRRMO verification</option>
             <option value="CDRRMO Overdue">⚠️ CDRRMO Overdue (>14 days)</option>
             <option value="Ready for Module 2">Ready for Module 2 handoff</option>
         </select>
@@ -1966,7 +1966,7 @@
                 <!-- Authority header (Module 1 intake) -->
                 <div class="tha-form-header">
                     <div class="tha-form-crest" aria-hidden="true">THA</div>
-                    <h2>Applicant registration sheet</h2>
+                    <h2>Applicant Registration Sheet</h2>
                     <p class="tha-form-subtitle">Talisay City Housing Authority</p>
                 </div>
 
@@ -1975,7 +1975,7 @@
 
                 <!-- Section A -->
                 <div class="tha-section-block">
-                    <h3 class="tha-section-title">Section A — Applicant identity</h3>
+                    <h3 class="tha-section-title">Applicant identity</h3>
 
                     <!-- Name (Last, First, Middle) -->
                     <div class="form-row" style="grid-template-columns: repeat(3, 1fr);">
@@ -2030,7 +2030,7 @@
                     <div class="form-fieldset" style="border: none; margin-bottom: 1rem; padding: 0;">
                         <div class="form-fieldset-header" onclick="toggleFieldset(this)">
                             <span class="fieldset-toggle-icon">▶</span>
-                            <span>Place of birth (optional)</span>
+                            <span>Place of birth</span>
                         </div>
                         <div class="form-fieldset-content">
                             <div class="form-row full">
@@ -2072,7 +2072,7 @@
                     <div class="form-fieldset" style="border: none; margin-bottom: 0; padding-bottom: 0;">
                         <div class="form-fieldset-header" onclick="toggleFieldset(this)">
                             <span class="fieldset-toggle-icon">▶</span>
-                            <span>Spouse (optional)</span>
+                            <span>Spouse</span>
                         </div>
                         <div class="form-fieldset-content">
                             <div class="form-row">
@@ -2093,7 +2093,7 @@
                 <!-- Section B -->
                 <div class="tha-section-block">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem; padding-bottom: 0.75rem; border-bottom: 1px solid #cbd5e1;">
-                        <h3 class="tha-section-title" style="margin-bottom: 0; padding-bottom: 0; border-bottom: none;">Section B — Household members</h3>
+                        <h3 class="tha-section-title" style="margin-bottom: 0; padding-bottom: 0; border-bottom: none;">Household members</h3>
                         <button type="button" class="tha-btn-add-member" onclick="addHouseholdMember()">Add household member</button>
                     </div>
 
@@ -2109,7 +2109,7 @@
 
                 <!-- Section C -->
                 <div class="tha-section-block">
-                    <h3 class="tha-section-title">Section C — Household income</h3>
+                    <h3 class="tha-section-title">Household income</h3>
 
                     <div class="form-row">
                         <div class="form-group">
@@ -2731,7 +2731,7 @@
                         <span style="color: #16a34a;">✓ No property</span>
                         <span style="color: #16a34a;">✓ Not blacklisted</span>
                     </div>
-                    ${applicant.eligibilityStatus === 'Pending' ? `
+                    ${(applicant.eligibilityStatus === 'Pending' || applicant.eligibilityStatus === 'Pending eligibility check') ? `
                         <div style="display: flex; gap: 0.25rem;">
                             <button type="button" onclick="markISFEligible('${isfId}')" style="background: #10b981; color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.625rem; cursor: pointer;">✓ Eligible</button>
                             <button type="button" onclick="showDisqualifyReason()" style="background: #ef4444; color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.625rem; cursor: pointer;">✗ Disqualify</button>
@@ -3053,7 +3053,8 @@
 
     function shouldShowGenericEligibilityActions(applicant) {
         if (!applicant) return false;
-        if (!(applicant.eligibilityStatus === 'Pending' || applicant.eligibilityStatus === 'Pending CDRRMO')) return false;
+        const st = String(applicant.applicantStatus || '').toLowerCase();
+        if (!(st === 'pending' || st === 'pending_cdrrmo')) return false;
         if (hasPendingFieldDisposition(applicant)) return false;
         return true;
     }
@@ -3079,9 +3080,9 @@
             
             // For Channel B pending CDRRMO, disable mark eligible
             if (btnMarkEligible) {
-                if (applicant.eligibilityStatus === 'Pending CDRRMO' && !isCdrrmoCertified(applicant.cdrrmoStatus)) {
+                if (String(applicant.applicantStatus || '').toLowerCase() === 'pending_cdrrmo' && !isCdrrmoCertified(applicant.cdrrmoStatus)) {
                     btnMarkEligible.disabled = true;
-                    btnMarkEligible.title = 'Awaiting CDRRMO certification';
+                    btnMarkEligible.title = 'Awaiting CDRRMO verification of hazard claim';
                 } else {
                     btnMarkEligible.disabled = false;
                     btnMarkEligible.title = '';
@@ -3255,9 +3256,9 @@
                 currentApplicant.cdrrmoDaysPending = 0;
                 
                 if (newStatus === 'certified') {
-                    currentApplicant.eligibilityStatus = 'Pending';
+                    currentApplicant.eligibilityStatus = 'Pending eligibility check';
                 } else {
-                    currentApplicant.eligibilityStatus = 'Pending';
+                    currentApplicant.eligibilityStatus = 'Pending eligibility check';
                     currentApplicant.channel = 'C';  // Downgraded to walk-in
                 }
                 
@@ -3933,8 +3934,13 @@
                 // Close the registration form modal
                 closeAddModal();
 
-                // Show success message
-                alert('✓ ' + (data.message || 'Applicant registered successfully'));
+                let detail = data.message || 'Applicant registered successfully.';
+                if (data.registrationSmsSent) {
+                    detail += '\n\nRegistration SMS was sent automatically (reference number included).';
+                } else {
+                    detail += '\n\nNo registration SMS: add a valid mobile number to send confirmation.';
+                }
+                alert('✓ ' + detail);
 
                 // Reload the page to refresh the applicants list
                 location.reload();
@@ -3993,10 +3999,10 @@
             if (eligibilityBadgeB) {
                 if (applicant.isInDangerZone) {
                     eligibilityBadgeB.className = 'status-badge status-warning';
-                    eligibilityBadgeB.textContent = 'Pending CDRRMO';
+                    eligibilityBadgeB.textContent = 'Pending CDRRMO verification';
                 } else {
-                    eligibilityBadgeB.className = 'status-badge status-success';
-                    eligibilityBadgeB.textContent = 'Eligible to Proceed';
+                    eligibilityBadgeB.className = 'status-badge status-info';
+                    eligibilityBadgeB.textContent = 'Pending eligibility check';
                 }
             }
 
@@ -4019,7 +4025,7 @@
                 const statusBadge = document.getElementById('reviewEligibilityBadgeB');
                 if (statusBadge) {
                     statusBadge.className = 'status-badge status-warning';
-                    statusBadge.textContent = 'Pending CDRRMO';
+                    statusBadge.textContent = 'Pending CDRRMO verification';
                 }
 
                 // Show CDRRMO Certification section when "Yes" is selected
@@ -4033,8 +4039,8 @@
                 // Set status badge
                 const statusBadge = document.getElementById('reviewEligibilityBadgeB');
                 if (statusBadge) {
-                    statusBadge.className = 'status-badge status-success';
-                    statusBadge.textContent = 'Eligible to Proceed';
+                    statusBadge.className = 'status-badge status-info';
+                    statusBadge.textContent = 'Pending eligibility check';
                 }
 
                 // Hide CDRRMO Certification section when "No" is selected

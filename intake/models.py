@@ -134,8 +134,8 @@ class Applicant(models.Model):
     ]
     
     STATUS_CHOICES = [
-        ('pending', 'Pending Eligibility Check'),
-        ('pending_cdrrmo', 'Pending CDRRMO Certification'),
+        ('pending', 'Pending eligibility check'),
+        ('pending_cdrrmo', 'Pending CDRRMO verification (hazard claim)'),
         ('eligible', 'Eligible - In Queue'),
         ('disqualified', 'Disqualified'),
         ('requirements', 'Submitting Requirements'),
@@ -341,13 +341,13 @@ class Applicant(models.Model):
         return max(actual_count, self.household_size or 1)
     
     def send_registration_sms(self):
-        """Send SMS notification that applicant was registered."""
+        """Send SMS notification that applicant was registered (automatic after encoding)."""
         from .utils import send_sms
+        from . import sms_workflow
         if not self.phone_number:
             return False
-        channel_name = 'Danger Zone' if self.channel == 'danger_zone' else 'Walk-in'
-        message = f"Your housing application has been registered. Reference: {self.reference_number}. Channel: {channel_name}. Please wait for eligibility review."
-        if send_sms(self.phone_number, message, 'registration', applicant=self):
+        message = sms_workflow.message_registration(self)
+        if send_sms(self.phone_number, message, sms_workflow.REGISTRATION, applicant=self):
             self.registration_sms_sent = True
             self.save(update_fields=['registration_sms_sent'])
             return True
@@ -436,7 +436,7 @@ class CDRRMOCertification(models.Model):
     CDRRMO physically visits the location and certifies (or not).
     """
     STATUS_CHOICES = [
-        ('pending', 'Pending CDRRMO Visit'),
+        ('pending', 'Pending CDRRMO verification (claim on file)'),
         ('certified', 'Certified - Danger Zone'),
         ('not_certified', 'Not Certified'),
     ]

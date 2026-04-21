@@ -969,14 +969,12 @@ def applicants_list(request, position):
         # Determine eligibility status display
         # For Channel B (Danger Zone): check if applicant actually selected "Yes" for danger zone
         if app.channel == 'danger_zone' and app.status == 'pending_cdrrmo':
-            # Only show "Pending CDRRMO" if they have a danger_zone_type (selected Yes)
             if app.danger_zone_type:
-                eligibility_status = 'Pending CDRRMO'
+                eligibility_status = 'Pending CDRRMO verification'
             else:
-                # They selected "No" for danger zone - they're eligible to proceed
-                eligibility_status = 'Eligible'
+                eligibility_status = 'Pending eligibility check'
         elif app.status == 'pending':
-            eligibility_status = 'Pending'
+            eligibility_status = 'Pending eligibility check'
         elif app.status == 'eligible':
             eligibility_status = 'Eligible'
         elif app.status == 'disqualified':
@@ -1138,7 +1136,10 @@ def applicants_list(request, position):
     priority_count = len([a for a in applicants if a['queueType'] == 'Priority'])
     walkin_count = len([a for a in applicants if a['queueType'] == 'Walk-in'])
     # Count Channel B applicants awaiting CDRRMO certification (only those who selected Yes for danger zone)
-    pending_cdrrmo = len([a for a in applicants if a.get('eligibilityStatus') == 'Pending CDRRMO' and a.get('dangerZoneType')])
+    pending_cdrrmo = len([
+        a for a in applicants
+        if a.get('applicantStatus') == 'pending_cdrrmo' and a.get('dangerZoneType')
+    ])
     
     # Count CDRRMO overdue (pending > 14 days, only for those in actual danger zones)
     cdrrmo_overdue = len([a for a in applicants if a.get('isCdrrmoFlagged') and a.get('dangerZoneType')])
@@ -1170,15 +1171,17 @@ def applicants_list(request, position):
 @verify_position
 def walkin_register(request, position):
     """
-    Handle applicant registration from the modal form.
-    Handles Channel B (Danger Zone) registrations only.
+    Office walk-in encoding (Module 1) — aligns with THA intake process:
+
+    1. Applicant appears at the office (no prior record).
+    2. Staff encodes identity, household, income, situation.
+    3. If a hazard-area claim is declared, staff records it; status is pending CDRRMO
+       *verification* (claim only — CDRRMO does not use this system).
+    4–6. System persists Applicant profile, generates reference number, stores permanently.
+    7. System sends registration SMS automatically when a mobile number is on file.
 
     URL Route: /intake/staff/<position>/walkin-register/
-
-    Channel B: Danger Zone Walk-in → Creates Applicant + CDRRMO certification
     """
-    from .utils import send_sms
-
     allowed_positions = ['fourth_member', 'field', 'ronda', 'second_member']
     if request.user.position not in allowed_positions:
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -1186,8 +1189,10 @@ def walkin_register(request, position):
         messages.error(request, 'You do not have permission to register applicants.')
         return redirect('accounts:dashboard')
 
+    applicants_list_url = reverse('intake:applicants_list', kwargs={'position': position})
+
     if request.method != 'POST':
-        return redirect('intake:applicants_list')
+        return redirect(applicants_list_url)
 
     # ====== CHANNEL B: Danger Zone Applicants ======
     form = WalkInApplicantForm(request.POST)
@@ -1205,7 +1210,7 @@ def walkin_register(request, position):
             error_text = " | ".join(error_messages) if error_messages else "Form validation failed"
             return JsonResponse({'success': False, 'error': error_text})
         messages.error(request, 'Please fill all required fields.')
-        return redirect('intake:applicants_list')
+        return redirect(applicants_list_url)
 
     # Get barangay instance
     barangay_name = form.cleaned_data['barangay']
@@ -1231,11 +1236,17 @@ def walkin_register(request, position):
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return JsonResponse({'success': False, 'error': msg})
         messages.error(request, msg)
-        return redirect('intake:applicants_list')
+        return redirect(applicants_list_url)
 
-    # Create applicant (always danger_zone channel)
-    danger_zone_type = form.cleaned_data.get('danger_zone_type', '')
-    danger_zone_location = form.cleaned_data.get('danger_zone_location', '')
+    # Channel B — office walk-in; hazard claim is optional (steps 2–3).
+    if is_danger_zone_answer:
+        danger_zone_type = (form.cleaned_data.get('danger_zone_type') or '').strip()
+        danger_zone_location = (form.cleaned_data.get('danger_zone_location') or '').strip()
+        initial_status = 'pending_cdrrmo'
+    else:
+        danger_zone_type = ''
+        danger_zone_location = ''
+        initial_status = 'pending'
 
     applicant = Applicant.objects.create(
         last_name=form.cleaned_data.get('last_name', ''),
@@ -1257,7 +1268,7 @@ def walkin_register(request, position):
         occupation=form.cleaned_data.get('occupation', ''),
         employment_status=form.cleaned_data.get('employment_status', ''),
         channel='danger_zone',
-        status='pending_cdrrmo',
+        status=initial_status,
         danger_zone_type=danger_zone_type,
         danger_zone_location=danger_zone_location,
         registered_by=request.user,
@@ -1271,14 +1282,16 @@ def walkin_register(request, position):
         doc_sketch_location=request.POST.get('doc_sketch_location') == 'true',
     )
 
-    # Create CDRRMO certification for danger zone
-    declared_location = f"{danger_zone_type}: {danger_zone_location}" if danger_zone_location else danger_zone_type
-    CDRRMOCertification.objects.create(
-        applicant=applicant,
-        declared_location=declared_location,
-        status='pending',
-        requested_by=request.user,
-    )
+    # CDRRMO row only when a hazard-area *claim* was recorded (pending verification — not certified).
+    if is_danger_zone_answer:
+        declared_location = f"{danger_zone_type}: {danger_zone_location}" if danger_zone_location else danger_zone_type
+        CDRRMOCertification.objects.create(
+            applicant=applicant,
+            declared_location=declared_location or '—',
+            status='pending',
+            disposition_source='pending',
+            requested_by=request.user,
+        )
 
     # Process household members from form
     for i in range(1, 51):  # Support up to 50 household members
@@ -1303,11 +1316,19 @@ def walkin_register(request, position):
                 # Skip invalid age values
                 pass
 
-    msg = f'{applicant.full_name} registered as Danger Zone applicant. Reference: {applicant.reference_number}'
+    if is_danger_zone_answer:
+        msg = (
+            f'{applicant.full_name} registered. Hazard-area claim on file — pending CDRRMO verification. '
+            f'Reference: {applicant.reference_number}'
+        )
+    else:
+        msg = (
+            f'{applicant.full_name} registered. Reference: {applicant.reference_number}. '
+            f'Pending eligibility check (no hazard claim).'
+        )
 
-    # Send SMS
-    if phone_number:
-        send_sms(phone_number, f"Registered for housing assistance. Reference: {applicant.reference_number}", 'registration', applicant=applicant)
+    # Step 7: automatic registration SMS when mobile is on file (updates registration_sms_sent)
+    applicant.send_registration_sms()
 
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         from datetime import datetime
@@ -1337,6 +1358,7 @@ def walkin_register(request, position):
         return JsonResponse({
             'success': True,
             'message': msg,
+            'registrationSmsSent': applicant.registration_sms_sent,
             'applicant': {
                 'id': str(applicant.id),
                 'fullName': applicant.full_name,
@@ -1364,4 +1386,4 @@ def walkin_register(request, position):
         })
 
     messages.success(request, f'✓ {msg}')
-    return redirect('intake:applicants_list')
+    return redirect(applicants_list_url)

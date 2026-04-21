@@ -113,8 +113,9 @@ DANGER_ZONE_TYPES = [
 
 class WalkInApplicantForm(forms.ModelForm):
     """
-    Registration form for Channel B (Danger Zone) applicants only.
-    Used at the THA office during danger zone walk-in registration.
+    Module 1 office walk-in registration (Channel B desk).
+    Hazard-area particulars are optional; when declared, the backend opens a
+    CDRRMO verification (claim-only) workflow — CDRRMO does not log into the system.
     """
     barangay = forms.ChoiceField(
         choices=BARANGAY_CHOICES,

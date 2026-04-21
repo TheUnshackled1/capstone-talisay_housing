@@ -7,6 +7,29 @@ When SMS_SERVICE=console, messages are still written to SMSLog and logged — no
 
 # --- trigger_event values (keep ≤ 50 chars; indexed in SMSLog) ---
 REGISTRATION = 'registration'
+
+
+def message_registration(applicant) -> str:
+    """
+    SMS after successful Module 1 office encoding (steps 4–7).
+    Confirms save + reference; tells applicant staff are reviewing the record now.
+    """
+    ref = applicant.reference_number
+    base = (
+        f'THA: Your registration has been saved. Reference: {ref}. '
+        f'THA staff are reviewing your record at this time. '
+        f'Please keep this reference for all THA transactions.'
+    )
+    if applicant.status == 'pending_cdrrmo' and applicant.danger_zone_type:
+        base += (
+            ' A hazard-area claim is on file pending CDRRMO verification (office process).'
+            ' You will be advised of next steps.'
+        )
+    else:
+        base += ' You will be contacted or may follow up at the office when advised.'
+    return base
+
+
 ELIGIBILITY = 'eligibility'
 ELIGIBILITY_PASSED = 'eligibility_passed'
 ELIGIBILITY_FAIL = 'eligibility_fail'
