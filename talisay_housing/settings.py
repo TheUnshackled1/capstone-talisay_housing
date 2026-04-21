@@ -10,10 +10,18 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+def _env_bool(key: str, default: bool = False) -> bool:
+    v = os.environ.get(key)
+    if v is None:
+        return default
+    return v.strip().lower() in ('1', 'true', 'yes', 'on')
 
 
 # Quick-start development settings - unsuitable for production
@@ -149,27 +157,29 @@ LOGIN_REDIRECT_URL = 'accounts:dashboard'
 LOGOUT_REDIRECT_URL = 'accounts:dashboard'
 
 # =============================================================================
-# SMS Configuration (httpSMS - FREE via Android Phone)
+# SMS — gateway selection (see intake/utils.send_sms and intake/sms_workflow.py)
 # =============================================================================
-# httpSMS uses your Android phone as SMS gateway - completely free!
-# Just keep the phone on with httpSMS app running
+# SMS_SERVICE:
+#   - console   → no external API; writes SMSLog + prints (best for local dev / until Twilio is subscribed)
+#   - twilio    → requires TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_MESSAGING_SERVICE_SID
+#   - httpsms   → requires HTTPSMS_API_KEY
+#   - semaphore → requires SEMAPHORE_API_KEY
+#
+# Set credentials via environment variables (recommended) or replace the os.environ.get defaults below.
 
-SMS_ENABLED = True  # Real SMS sending is ENABLED
-SMS_SERVICE = 'httpsms'  # 'httpsms', 'twilio', or 'semaphore'
+SMS_ENABLED = _env_bool('SMS_ENABLED', default=True)
+SMS_SERVICE = os.environ.get('SMS_SERVICE', 'console').strip().lower()
 
-# httpSMS Configuration (ACTIVE - FREE)
-HTTPSMS_API_KEY = 'pk_aq3fcHBM5uPwQgI-l7x8qy1VKCMRXulIf05z0LvieKMxPO3DmsdWZ2UCY7lE_eJc'
-HTTPSMS_API_URL = 'https://api.httpsms.com'  # httpSMS API endpoint
+HTTPSMS_API_KEY = os.environ.get('HTTPSMS_API_KEY', '')
+HTTPSMS_API_URL = os.environ.get('HTTPSMS_API_URL', 'https://api.httpsms.com')
 
-# Twilio Configuration (Backup - Paid)
-TWILIO_ACCOUNT_SID = 'ACe90a6af0a068665ed4479c6d303245e9'
-TWILIO_AUTH_TOKEN = '8f98a71c0f227237d59990cfa3c48844'
-TWILIO_PHONE_NUMBER = '+17126421042'
-TWILIO_MESSAGING_SERVICE_SID = 'MGef6b27fa659a0bb41605875f7eddf476'
+TWILIO_ACCOUNT_SID = os.environ.get('TWILIO_ACCOUNT_SID', '')
+TWILIO_AUTH_TOKEN = os.environ.get('TWILIO_AUTH_TOKEN', '')
+TWILIO_PHONE_NUMBER = os.environ.get('TWILIO_PHONE_NUMBER', '')
+TWILIO_MESSAGING_SERVICE_SID = os.environ.get('TWILIO_MESSAGING_SERVICE_SID', '')
 
-# Semaphore Configuration (Backup - Philippine)
-SEMAPHORE_API_KEY = 'c3f15974a138c3c7aabef97f481781f5'
-SEMAPHORE_SENDER_NAME = 'THA'
+SEMAPHORE_API_KEY = os.environ.get('SEMAPHORE_API_KEY', '')
+SEMAPHORE_SENDER_NAME = os.environ.get('SEMAPHORE_SENDER_NAME', 'THA')
 
 # =============================================================================
 # Jazzmin Admin Configuration

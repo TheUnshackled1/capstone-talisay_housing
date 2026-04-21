@@ -676,31 +676,36 @@
 /* Document Checklist Grid */
 .document-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 0.75rem;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
 }
 
 .document-item {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    padding: 0.875rem;
-    background: #f9fafb;
-    border-radius: 10px;
+    gap: 0.5rem;
+    padding: 0.5rem 0.625rem;
+    background: #f8fafc;
+    border-radius: 8px;
     border: 1px solid #e5e7eb;
     transition: all 0.2s;
 }
 
+.document-item:hover {
+    background: #f0f9ff;
+    border-color: #93c5fd;
+}
+
 .document-item.verified {
-    background: #f0fdf4;
+    background: #dcfce7;
     border-color: #86efac;
 }
 
 .document-checkbox {
-    width: 20px;
-    height: 20px;
-    border-radius: 6px;
-    border: 2px solid #d1d5db;
+    width: 18px;
+    height: 18px;
+    border-radius: 5px;
+    border: 1.5px solid #cbd5e1;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -709,14 +714,21 @@
 }
 
 .document-checkbox.checked {
-    background: #22c55e;
-    border-color: #22c55e;
+    background: #1d4ed8;
+    border-color: #1d4ed8;
     color: white;
 }
 
 .document-label {
-    font-size: 0.875rem;
-    color: #374151;
+    font-size: 0.75rem;
+    color: #334155;
+    line-height: 1.35;
+}
+
+@media (max-width: 900px) {
+    .document-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 /* Signatory Timeline */
@@ -1069,13 +1081,13 @@
     <table class="applications-table">
         <thead>
             <tr>
-                <th>Applicant</th>
-                <th>Queue</th>
-                <th>Docs (Group A)</th>
-                <th>Form</th>
-                <th>Routing</th>
-                <th>Stage</th>
-                <th></th>
+                <th>Applicant Record</th>
+                <th>Intake Queue Tag</th>
+                <th>Group A Compliance</th>
+                <th>Application Form</th>
+                <th>Routing Status</th>
+                <th>Process Stage</th>
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -1087,6 +1099,12 @@
                         <span class="applicant-ref">{{ data.applicant.reference_number }}</span>
                         {% if data.blacklist_blocked %}
                         <span style="font-size:0.5625rem;color:#b91c1c;font-weight:600;">Blacklist — Module 2 blocked</span>
+                        {% elif data.applicant_status == 'pending_cdrrmo' %}
+                        {% if data.cdrrmo_status == 'certified' or data.cdrrmo_status == 'not_certified' %}
+                        <span style="font-size:0.5625rem;color:#0369a1;font-weight:600;">CDRRMO disposition received — pending Module 2 decision</span>
+                        {% else %}
+                        <span style="font-size:0.5625rem;color:#b45309;font-weight:600;">CDRRMO: Pending CDRRMO Visit</span>
+                        {% endif %}
                         {% elif not data.m1_income_eligible %}
                         <span style="font-size:0.5625rem;color:#b45309;">Income over M1 ceiling — fix in Module 1</span>
                         {% elif not data.m1_declares_no_property %}
@@ -1103,7 +1121,7 @@
                     {% if data.intake_queue_label != '—' %}
                     <span class="queue-badge priority">{{ data.intake_queue_label }}</span>
                     {% else %}
-                    <span class="queue-badge walkin" title="No active Module 1 queue entry">No queue</span>
+                    <span class="queue-badge walkin" title="No active Module 1 queue entry">No active queue tag</span>
                     {% endif %}
                 </td>
                 <td>
@@ -1121,9 +1139,9 @@
                     {% if data.form_generated %}
                     <span class="form-status generated"><span class="check-icon">✓</span> Generated</span>
                     {% elif data.can_generate_form %}
-                    <span class="form-status can-generate">Ready to generate</span>
+                    <span class="form-status can-generate">Ready for issuance</span>
                     {% else %}
-                    <span class="form-status pending">Locked</span>
+                    <span class="form-status pending">Not yet available</span>
                     {% endif %}
                 </td>
                 <td>
@@ -1132,12 +1150,19 @@
                     {% elif data.routing_status == 'In Progress' %}
                     <span class="routing-status in-progress">In Progress</span>
                     {% else %}
-                    <span class="routing-status not-started">Not Started</span>
+                    <span class="routing-status not-started">Pending</span>
                     {% endif %}
                 </td>
                 <td>
                     {% with stage_slug=data.current_stage|lower|slugify %}
-                    <span class="stage-badge {{ stage_slug }}">{{ data.current_stage }}</span>
+                    <span class="stage-badge {{ stage_slug }}">
+                        {% if data.current_stage == 'Eligibility' %}Eligibility Evaluation
+                        {% elif data.current_stage == 'Document Gathering' %}Document Verification
+                        {% elif data.current_stage == 'Form Released' %}Form Issued
+                        {% elif data.current_stage == 'Signatory Routing' %}Section D Routing
+                        {% elif data.current_stage == 'Fully Approved' %}Fully Endorsed
+                        {% else %}{{ data.current_stage }}{% endif %}
+                    </span>
                     {% endwith %}
                 </td>
                 <td>
@@ -1147,7 +1172,7 @@
                                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
                                 <circle cx="12" cy="12" r="3"/>
                             </svg>
-                            View
+                            Open Record
                         </button>
                         
                         {% if 'generate_form' in data.user_actions %}
@@ -1199,13 +1224,13 @@
     </table>
     </div>
     <div class="table-footer">
-        <p>Showing {{ applicants_data|length }} eligible applicant{{ applicants_data|length|pluralize }}</p>
+        <p>Showing {{ applicants_data|length }} applicant record{{ applicants_data|length|pluralize }}</p>
     </div>
     {% else %}
     <div class="empty-state">
         <div class="empty-state-icon">📋</div>
         <h3>No Applications Found</h3>
-        <p>{% if search %}No results match your search "{{ search }}"{% elif filter_stage != 'all' %}No applicants in this stage{% else %}No eligible applicants yet. Applicants must be marked as "Eligible" in Module 1 first.{% endif %}</p>
+        <p>{% if search %}No results match your search "{{ search }}"{% elif filter_stage != 'all' %}No applicants in this stage{% else %}No applicant records available for Module 2 evaluation yet. In Module 1, open the applicant and click "Proceed to Application & Evaluation" to handoff the record.{% endif %}</p>
     </div>
     {% endif %}
 </div>
@@ -1219,24 +1244,104 @@
                 <p style="font-size: 0.875rem; color: #6b7280; margin: 0.25rem 0 0 0;">
                     <span id="modalRefNumber"></span>
                 </p>
+                <p style="font-size: 0.68rem; color: #94a3b8; margin: 0.35rem 0 0 0; text-transform: uppercase; letter-spacing: .06em;">
+                    Talisay City Housing Authority · Module 2 — Application & Evaluation
+                </p>
             </div>
             <button class="modal-close" onclick="closeModal()">&times;</button>
         </div>
         <div class="modal-body">
             <div id="modalWorkflowGates" style="display:none;margin-bottom:1rem;padding:0.75rem;border-radius:8px;font-size:0.75rem;line-height:1.45;"></div>
+            <div id="modalM1ChecklistBox" style="display:none;margin-bottom:1rem;padding:0.75rem;border:1px solid #dbeafe;border-radius:8px;background:#f8fbff;">
+                <div style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#1e40af;margin-bottom:.45rem;">
+                    Module 1 preliminary eligibility checklist
+                </div>
+                <div id="modalM1ChecklistBody" style="display:grid;gap:.45rem;"></div>
+            </div>
+            <div id="modalRegistrationBox" style="display:none;margin-bottom:1rem;padding:0.75rem;border:1px solid #cbd5e1;border-radius:8px;background:#f8fafc;">
+                <div style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#334155;margin-bottom:.45rem;">
+                    Module 1 applicant registration summary
+                </div>
+                <div id="modalRegistrationSummary" style="font-size:.75rem;color:#334155;line-height:1.45;"></div>
+            </div>
+            <div id="modalEvaluationBox" style="display:none;margin-bottom:1rem;padding:0.75rem;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc;">
+                <div style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#334155;margin-bottom:.45rem;">
+                    Module 2 — Eligibility Evaluation
+                </div>
+                <div id="modalEvaluationStatus" style="font-size:0.75rem;color:#334155;line-height:1.45;margin-bottom:0.6rem;"></div>
+                <div id="modalOfficeCdrrmoBox" style="display:none;margin-bottom:0.65rem;padding:0.65rem;border:1px solid #bfdbfe;border-radius:8px;background:#f0f9ff;">
+                    <div style="font-size:0.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#1e40af;margin-bottom:.45rem;">
+                        Official CDRRMO certification — office receipt
+                    </div>
+                    <p style="margin:0 0 .55rem 0;font-size:.75rem;line-height:1.45;color:#334155;">
+                        Use this when signed or stamped CDRRMO certification has been physically received and filed at the Talisay Housing Authority intake office for this applicant, and the record should be marked as hazard-area certified before the field unit submits an on-site report in the system.
+                    </p>
+                    <label for="modalOfficeCdrrmoNotes" style="display:block;font-size:.72rem;color:#475569;font-weight:600;margin-bottom:.28rem;">
+                        Receiving remarks (optional)
+                    </label>
+                    <input id="modalOfficeCdrrmoNotes" type="text" placeholder="e.g., DRRMO certification no., date of CDRRMO letter, receiving personnel" style="width:100%;padding:.45rem .55rem;border:1px solid #cbd5e1;border-radius:6px;font-size:.75rem;margin-bottom:.5rem;">
+                    <button type="button" onclick="recordOfficeCdrrmoReceipt()" style="padding:.5rem .8rem;border-radius:7px;border:none;background:#1d4ed8;color:#fff;cursor:pointer;font-size:.75rem;">
+                        Record CDRRMO certification received at office
+                    </button>
+                    <p style="margin:.5rem 0 0 0;font-size:.68rem;line-height:1.35;color:#334155;">
+                        This action files the same disposition as a certified CDRRMO finding: the applicant is marked eligible and assigned a priority queue position where applicable, and an SMS is sent if a mobile number is on record.
+                    </p>
+                </div>
+                <div id="modalCdrrmoPendingInfo" style="display:none;margin-bottom:.65rem;padding:.55rem .65rem;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc;font-size:.74rem;color:#475569;line-height:1.45;">
+                    <strong>Awaiting CDRRMO disposition</strong><br>
+                    Either the field unit will submit an on-site verification report (with optional photographs), or intake will file official CDRRMO certification received at the THA office. Use Official CDRRMO certification — office receipt above when paperwork is on file.
+                </div>
+                {% if permissions.can_verify_documents %}
+                <div id="modalEvaluationActions" style="display:none;">
+                    <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.55rem;">
+                        <button type="button" id="modalMarkEligibleBtn" onclick="evaluateApplicant('mark_eligible')" style="padding:0.5rem 0.8rem;border-radius:7px;border:none;background:#047857;color:#fff;cursor:pointer;font-size:0.75rem;">
+                            Record eligibility and queue assignment
+                        </button>
+                        <button type="button" id="modalDisqualifyBtn" onclick="evaluateApplicant('disqualify')" style="padding:0.5rem 0.8rem;border-radius:7px;border:none;background:#b91c1c;color:#fff;cursor:pointer;font-size:0.75rem;">
+                            Record disqualification
+                        </button>
+                    </div>
+                    <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+                        <select id="modalDisqualifyReason" style="padding:0.45rem 0.55rem;border:1px solid #cbd5e1;border-radius:6px;font-size:0.75rem;">
+                            <option value="">Select disqualification reason (when applicable)</option>
+                            <option value="income_exceeds">Income exceeds ₱10,000 limit</option>
+                            <option value="property_owner">Owns property in Talisay City</option>
+                            <option value="blacklisted">On blacklist</option>
+                            <option value="incomplete_docs">Incomplete documents</option>
+                            <option value="false_info">False information provided</option>
+                            <option value="other">Other reason</option>
+                        </select>
+                        <input id="modalDisqualifyNotes" type="text" placeholder="Disqualification remarks (optional)" style="flex:1;min-width:180px;padding:0.45rem 0.55rem;border:1px solid #cbd5e1;border-radius:6px;font-size:0.75rem;">
+                    </div>
+                </div>
+                {% else %}
+                <p style="margin:0;font-size:0.75rem;color:#64748b;">Eligibility evaluation actions are available to Joie/Jocel accounts.</p>
+                {% endif %}
+            </div>
+            <div id="modalCdrrmoBox" style="display:none;margin-bottom:1rem;padding:0.75rem;border:1px solid #dbeafe;border-radius:8px;background:#f8fbff;">
+                <div style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#1e40af;margin-bottom:.45rem;">
+                    Module 1 CDRRMO and field verification record
+                </div>
+                <div id="modalCdrrmoSummary" style="font-size:0.75rem;color:#334155;line-height:1.45;margin-bottom:0.5rem;"></div>
+                <div id="modalCdrrmoNotes" style="display:none;font-size:0.75rem;color:#334155;line-height:1.45;margin-bottom:0.5rem;padding:0.5rem;border:1px solid #cbd5e1;border-radius:6px;background:#fff;"></div>
+                <div id="modalCdrrmoPhotosWrap" style="display:none;">
+                    <div style="font-size:0.68rem;color:#64748b;margin-bottom:0.35rem;">Filed field evidence photographs</div>
+                    <div id="modalCdrrmoPhotos" style="display:flex;flex-wrap:wrap;gap:0.45rem;"></div>
+                </div>
+            </div>
             <!-- Progress Tracker -->
             <div class="progress-tracker" id="progressTracker">
                 <div class="progress-step" data-step="1">
                     <div class="progress-step-circle">1</div>
-                    <span class="progress-step-label">Eligibility</span>
+                        <span class="progress-step-label">Decision</span>
                 </div>
                 <div class="progress-step" data-step="2">
                     <div class="progress-step-circle">2</div>
-                    <span class="progress-step-label">Documents</span>
+                        <span class="progress-step-label">Documents</span>
                 </div>
                 <div class="progress-step" data-step="3">
                     <div class="progress-step-circle">3</div>
-                    <span class="progress-step-label">Form</span>
+                        <span class="progress-step-label">Form</span>
                 </div>
                 <div class="progress-step" data-step="4">
                     <div class="progress-step-circle">4</div>
@@ -1244,18 +1349,18 @@
                 </div>
                 <div class="progress-step" data-step="5">
                     <div class="progress-step-circle">5</div>
-                    <span class="progress-step-label">Approved</span>
+                        <span class="progress-step-label">Approval</span>
                 </div>
                 <div class="progress-step" data-step="6">
                     <div class="progress-step-circle">6</div>
-                    <span class="progress-step-label">Awarded</span>
+                        <span class="progress-step-label">Awarding</span>
                 </div>
             </div>
 
             <!-- Document Checklist Section -->
             {% if permissions.can_verify_documents %}
             <div class="section-heading">
-                📄 Group A Requirements (7 Mandatory)
+                Group A documentary requirements (7 mandatory)
                 <span class="count" id="groupACount">0/7</span>
             </div>
             <div class="document-grid" id="documentGrid">
@@ -1317,17 +1422,17 @@
             {% if permissions.can_generate_form %}
             <div style="margin: 2rem 0; text-align: center;">
                 <button class="generate-form-btn" id="generateFormBtn" disabled onclick="generateForm()">
-                    📝 Generate Application Form
+                    Generate application form
                 </button>
                 <p style="font-size: 0.75rem; color: #6b7280; margin-top: 0.5rem;" id="formStatusText">
-                    Complete all 7 requirements to enable form generation
+                    Complete all seven requirements to enable form generation.
                 </p>
             </div>
             {% endif %}
             {% else %}
             <!-- Read-only document view for non-verifiers -->
             <div class="section-heading">
-                📄 Group A Requirements (7 Mandatory)
+                Group A documentary requirements (7 mandatory)
                 <span class="count" id="groupACount">0/7</span>
             </div>
             <div class="document-grid" id="documentGrid">
@@ -1341,13 +1446,13 @@
                 {% endfor %}
             </div>
             <p style="font-size: 0.75rem; color: #94a3b8; text-align: center; margin-top: 1rem;">
-                📋 Document verification is managed by Jocel (4th Member) or Joie (2nd Member)
+                Document verification is managed by authorized processing officers.
             </p>
             {% endif %}
 
             <!-- Section D Endorsement Checklist -->
             <div class="section-heading">
-                ✍️ Section D — Endorsement Checklist
+                Section D — Endorsement checklist
             </div>
             <div class="signatory-timeline" id="signatoryTimeline">
                 <div class="timeline-item" data-step="received">
@@ -1364,7 +1469,7 @@
                                 onchange="toggleRoutingStep('received', this)"
                                 disabled
                             >
-                            Mark checked on paper
+                            Confirm marked on hardcopy
                         </label>
                     </div>
                 </div>
@@ -1382,7 +1487,7 @@
                                 onchange="toggleRoutingStep('forwarded_oic', this)"
                                 disabled
                             >
-                            Signature on paper confirmed
+                            Confirm hardcopy signature
                         </label>
                     </div>
                 </div>
@@ -1400,7 +1505,7 @@
                                 onchange="toggleRoutingStep('signed_oic', this)"
                                 disabled
                             >
-                            Signature on paper confirmed
+                            Confirm hardcopy signature
                         </label>
                     </div>
                 </div>
@@ -1604,6 +1709,43 @@
             g.style.display = 'none';
             g.innerHTML = '';
         }
+        const cBox = document.getElementById('modalCdrrmoBox');
+        const cSummary = document.getElementById('modalCdrrmoSummary');
+        const cNotes = document.getElementById('modalCdrrmoNotes');
+        const cPhotosWrap = document.getElementById('modalCdrrmoPhotosWrap');
+        const cPhotos = document.getElementById('modalCdrrmoPhotos');
+        const m1ChecklistBox = document.getElementById('modalM1ChecklistBox');
+        const m1ChecklistBody = document.getElementById('modalM1ChecklistBody');
+        const regBox = document.getElementById('modalRegistrationBox');
+        const regSummary = document.getElementById('modalRegistrationSummary');
+        const evalBox = document.getElementById('modalEvaluationBox');
+        const evalStatus = document.getElementById('modalEvaluationStatus');
+        const evalActions = document.getElementById('modalEvaluationActions');
+        const disqualReason = document.getElementById('modalDisqualifyReason');
+        const disqualNotes = document.getElementById('modalDisqualifyNotes');
+        const officeCdrrmoBox = document.getElementById('modalOfficeCdrrmoBox');
+        const officeCdrrmoNotes = document.getElementById('modalOfficeCdrrmoNotes');
+        const cdrrmoPendingInfo = document.getElementById('modalCdrrmoPendingInfo');
+        if (cBox) cBox.style.display = 'none';
+        if (cSummary) cSummary.innerHTML = '';
+        if (cNotes) {
+            cNotes.style.display = 'none';
+            cNotes.innerHTML = '';
+        }
+        if (cPhotosWrap) cPhotosWrap.style.display = 'none';
+        if (cPhotos) cPhotos.innerHTML = '';
+        if (m1ChecklistBox) m1ChecklistBox.style.display = 'none';
+        if (m1ChecklistBody) m1ChecklistBody.innerHTML = '';
+        if (regBox) regBox.style.display = 'none';
+        if (regSummary) regSummary.innerHTML = '';
+        if (evalBox) evalBox.style.display = 'none';
+        if (evalStatus) evalStatus.innerHTML = '';
+        if (evalActions) evalActions.style.display = 'none';
+        if (disqualReason) disqualReason.value = '';
+        if (disqualNotes) disqualNotes.value = '';
+        if (officeCdrrmoBox) officeCdrrmoBox.style.display = 'none';
+        if (officeCdrrmoNotes) officeCdrrmoNotes.value = '';
+        if (cdrrmoPendingInfo) cdrrmoPendingInfo.style.display = 'none';
         // Reset all checkboxes
         document.querySelectorAll('.document-checkbox').forEach(cb => {
             cb.classList.remove('checked');
@@ -1634,6 +1776,259 @@
         window.__applicationNumber = '';
         // Update button state
         updateFormButton();
+    }
+
+    function renderModule1Checklist(data) {
+        const box = document.getElementById('modalM1ChecklistBox');
+        const body = document.getElementById('modalM1ChecklistBody');
+        if (!box || !body) return;
+
+        const incomeOk = !!data.m1_income_eligible;
+        const noProperty = !!data.m1_declares_no_property;
+        const notBlacklisted = !data.blacklist_blocked;
+        const cdrrmoStatus = (data.cdrrmo && data.cdrrmo.status_display) ? data.cdrrmo.status_display : 'Not requested';
+        const incomeText = incomeOk ? 'Within Module 1 income ceiling (≤ ₱10,000)' : 'Over Module 1 income ceiling (requires correction/disposition)';
+        const propertyText = noProperty ? 'No real-property ownership in Talisay City (declared)' : 'Property ownership in Talisay City flagged';
+        const blacklistText = notBlacklisted ? 'Not listed on master blacklist (screening)' : 'Matched master blacklist (Module 2 actions restricted)';
+
+        const line = (ok, text, tone='default') => {
+            const bg = ok ? '#dcfce7' : (tone === 'warn' ? '#fef3c7' : '#fee2e2');
+            const color = ok ? '#166534' : (tone === 'warn' ? '#92400e' : '#991b1b');
+            const icon = ok ? '✓' : (tone === 'warn' ? '!' : '✗');
+            return `<div style="display:flex;align-items:center;gap:.45rem;padding:.42rem .55rem;background:${bg};border-radius:6px;color:${color};font-size:.75rem;">
+                <span style="font-weight:700;">${icon}</span>
+                <span>${escapeHtml(text)}</span>
+            </div>`;
+        };
+
+        body.innerHTML =
+            line(incomeOk, incomeText, 'warn') +
+            line(noProperty, propertyText) +
+            line(notBlacklisted, blacklistText) +
+            `<div style="display:flex;align-items:center;gap:.45rem;padding:.42rem .55rem;background:#e0f2fe;border-radius:6px;color:#075985;font-size:.75rem;">
+                <span style="font-weight:700;">•</span>
+                <span><strong>CDRRMO certification status:</strong> ${escapeHtml(cdrrmoStatus)}</span>
+            </div>`;
+        box.style.display = 'block';
+    }
+
+    function renderModule1Registration(profile) {
+        const box = document.getElementById('modalRegistrationBox');
+        const summary = document.getElementById('modalRegistrationSummary');
+        if (!box || !summary || !profile) return;
+
+        const fmtMoney = (n) => {
+            if (n == null || n === '') return '—';
+            const v = Number(n);
+            if (Number.isNaN(v)) return '—';
+            return '₱' + v.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        };
+        const fmtDate = (v) => {
+            if (!v) return '—';
+            const d = new Date(v);
+            if (Number.isNaN(d.getTime())) return '—';
+            return d.toLocaleDateString();
+        };
+        const hazardLabel = profile.hazard_declared ? 'Yes — within hazard area' : 'No — not within hazard area';
+        const hazardType = profile.danger_zone_type ? escapeHtml(profile.danger_zone_type) : '—';
+        const hazardLoc = profile.danger_zone_location ? escapeHtml(profile.danger_zone_location) : '—';
+        const sectionTitle = (txt) =>
+            `<div style="margin:0.65rem 0 0.35rem 0;font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#475569;">${txt}</div>`;
+        const rowStart = '<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.45rem .9rem;">';
+        const rowEnd = '</div>';
+        const item = (label, value) =>
+            `<div style="background:#fff;border:1px solid #e2e8f0;border-radius:6px;padding:.4rem .5rem;">` +
+            `<div style="font-size:.62rem;color:#64748b;text-transform:uppercase;letter-spacing:.04em;margin-bottom:.15rem;">${label}</div>` +
+            `<div style="font-size:.75rem;color:#1f2937;">${value}</div>` +
+            `</div>`;
+        const itemFull = (label, value) =>
+            `<div style="grid-column:span 2;background:#fff;border:1px solid #e2e8f0;border-radius:6px;padding:.4rem .5rem;">` +
+            `<div style="font-size:.62rem;color:#64748b;text-transform:uppercase;letter-spacing:.04em;margin-bottom:.15rem;">${label}</div>` +
+            `<div style="font-size:.75rem;color:#1f2937;">${value}</div>` +
+            `</div>`;
+
+        summary.innerHTML =
+            sectionTitle('Section A — Applicant identity') +
+            rowStart +
+            item('Last name', escapeHtml(profile.last_name || '—')) +
+            item('First name', escapeHtml(profile.first_name || '—')) +
+            item('Middle name', escapeHtml(profile.middle_name || '—')) +
+            item('Sex', escapeHtml(profile.sex || '—')) +
+            item('Date of birth', escapeHtml(fmtDate(profile.date_of_birth))) +
+            item('Age', profile.age != null ? escapeHtml(String(profile.age)) : '—') +
+            item('Place of birth', escapeHtml(profile.place_of_birth || '—')) +
+            item('Barangay of present address', escapeHtml(profile.barangay || '—')) +
+            itemFull('Present address', escapeHtml(profile.current_address || '—')) +
+            item('Applicant mobile number', escapeHtml(profile.phone_number || '—')) +
+            item('Years of residence in Talisay City', profile.years_residing != null ? escapeHtml(String(profile.years_residing)) : '—') +
+            item('Spouse’s full name', escapeHtml(profile.spouse_name || '—')) +
+            item('Spouse mobile number', escapeHtml(profile.spouse_phone || '—')) +
+            rowEnd +
+            sectionTitle('Section B — Household members') +
+            rowStart +
+            item('Declared household size', profile.household_size != null ? escapeHtml(String(profile.household_size)) : '—') +
+            item('Applicant counted in total', 'Yes') +
+            rowEnd +
+            sectionTitle('Section C — Household income') +
+            rowStart +
+            item('Principal occupation', escapeHtml(profile.occupation || '—')) +
+            item('Employment status', escapeHtml(profile.employment_status || '—')) +
+            item('Gross monthly household income (PHP)', escapeHtml(fmtMoney(profile.monthly_income))) +
+            item('Income ceiling check', Number(profile.monthly_income || 0) <= 10000 ? 'Within Module 1 ceiling' : 'Over Module 1 ceiling') +
+            rowEnd +
+            sectionTitle('Hazard-area residence') +
+            rowStart +
+            item('Declared hazard-area residence', escapeHtml(hazardLabel)) +
+            item('Hazard classification', hazardType) +
+            itemFull('Specific location / landmark', hazardLoc) +
+            rowEnd;
+
+        box.style.display = 'block';
+    }
+
+    function renderEvaluationControls(data) {
+        const evalBox = document.getElementById('modalEvaluationBox');
+        const evalStatus = document.getElementById('modalEvaluationStatus');
+        const evalActions = document.getElementById('modalEvaluationActions');
+        const markEligibleBtn = document.getElementById('modalMarkEligibleBtn');
+        const disqualifyBtn = document.getElementById('modalDisqualifyBtn');
+        if (!evalBox || !evalStatus) return;
+
+        const status = data.applicant_status || '';
+        let statusLabel = data.applicant_status_display || status || '—';
+        const queueLabel = data.intake_queue_label || '—';
+        const channel = data.channel === 'danger_zone' ? 'Channel B - Danger Zone' : 'Channel A - Regular';
+        const officeCdrrmoBox = document.getElementById('modalOfficeCdrrmoBox');
+        const cdrrmoPendingInfo = document.getElementById('modalCdrrmoPendingInfo');
+        const cdrrmoStatus = data.cdrrmo && data.cdrrmo.status ? data.cdrrmo.status : '';
+        let workflowNote = '';
+
+        // Improve status wording for Module 2 decisioning.
+        if (status === 'pending_cdrrmo' && (cdrrmoStatus === 'certified' || cdrrmoStatus === 'not_certified')) {
+            statusLabel = 'Pending Module 2 eligibility decision';
+        }
+        if (status === 'pending_cdrrmo' && cdrrmoStatus === 'pending') {
+            workflowNote = '<br><strong>Workflow:</strong> Awaiting CDRRMO disposition before Module 2 eligibility decision.';
+        } else if (status === 'pending_cdrrmo' && (cdrrmoStatus === 'certified' || cdrrmoStatus === 'not_certified')) {
+            workflowNote = '<br><strong>Workflow:</strong> CDRRMO disposition received. Complete eligibility decision in Module 2.';
+        }
+
+        evalBox.style.display = 'block';
+        evalStatus.innerHTML =
+            `<strong>Current applicant status:</strong> ${escapeHtml(statusLabel)}<br>` +
+            `<strong>Declared intake channel:</strong> ${escapeHtml(channel)}<br>` +
+            `<strong>Current queue tag:</strong> ${escapeHtml(queueLabel)}` +
+            workflowNote;
+
+        const canRecordOfficeReceipt =
+            canVerifyDocs &&
+            data.channel === 'danger_zone' &&
+            status === 'pending_cdrrmo' &&
+            (!cdrrmoStatus || cdrrmoStatus === 'pending');
+        if (officeCdrrmoBox) officeCdrrmoBox.style.display = canRecordOfficeReceipt ? 'block' : 'none';
+        if (cdrrmoPendingInfo) cdrrmoPendingInfo.style.display = canRecordOfficeReceipt ? 'block' : 'none';
+
+        if (!canVerifyDocs || !evalActions) return;
+        const pendingEvaluation = (status === 'pending' || status === 'pending_cdrrmo');
+        if (pendingEvaluation) {
+            evalActions.style.display = 'block';
+
+            // Guard buttons by CDRRMO state for consistent workflow.
+            if (markEligibleBtn) {
+                const canMarkEligible = (
+                    status === 'pending' &&
+                    (data.channel !== 'danger_zone' || cdrrmoStatus === 'certified')
+                ) || (
+                    status === 'pending_cdrrmo' &&
+                    cdrrmoStatus === 'certified'
+                );
+                markEligibleBtn.disabled = !canMarkEligible;
+                markEligibleBtn.style.opacity = canMarkEligible ? '1' : '0.6';
+                markEligibleBtn.style.cursor = canMarkEligible ? 'pointer' : 'not-allowed';
+                if (!canMarkEligible && data.channel === 'danger_zone') {
+                    if (cdrrmoStatus === 'pending') {
+                        markEligibleBtn.title = 'Awaiting CDRRMO disposition.';
+                    } else if (cdrrmoStatus === 'not_certified') {
+                        markEligibleBtn.title = 'CDRRMO not-certified records cannot be marked eligible as danger-zone.';
+                    } else {
+                        markEligibleBtn.title = 'CDRRMO certified disposition required.';
+                    }
+                } else {
+                    markEligibleBtn.title = '';
+                }
+            }
+            if (disqualifyBtn) {
+                disqualifyBtn.disabled = false;
+                disqualifyBtn.style.opacity = '1';
+                disqualifyBtn.style.cursor = 'pointer';
+            }
+        } else {
+            evalActions.style.display = 'none';
+        }
+    }
+
+    function renderModule1Cdrrmo(cdrrmo) {
+        const box = document.getElementById('modalCdrrmoBox');
+        const summary = document.getElementById('modalCdrrmoSummary');
+        const notes = document.getElementById('modalCdrrmoNotes');
+        const photosWrap = document.getElementById('modalCdrrmoPhotosWrap');
+        const photos = document.getElementById('modalCdrrmoPhotos');
+        if (!box || !summary || !notes || !photosWrap || !photos) return;
+        if (!cdrrmo) {
+            box.style.display = 'none';
+            return;
+        }
+        // Only show finalized Module 1 CDRRMO records in Module 2.
+        if (!(cdrrmo.status === 'certified' || cdrrmo.status === 'not_certified')) {
+            box.style.display = 'none';
+            return;
+        }
+        box.style.display = 'block';
+        const src = cdrrmo.disposition_source || 'pending';
+        const srcLabel = src === 'office_intake'
+            ? 'Official CDRRMO paperwork filed at THA intake'
+            : (src === 'field_unit' ? 'Field unit verification report (Ronda)' : 'Awaiting CDRRMO disposition');
+        const recBy = cdrrmo.recorded_by ? escapeHtml(cdrrmo.recorded_by) : '—';
+        const recAt = cdrrmo.recorded_at ? escapeHtml(new Date(cdrrmo.recorded_at).toLocaleDateString()) : '—';
+        const declared = escapeHtml(cdrrmo.declared_location || '—');
+        summary.innerHTML =
+            `<strong>Status:</strong> ${escapeHtml(cdrrmo.status_display || '—')}<br>` +
+            `<strong>Declared classification and situs:</strong> ${declared}<br>` +
+            `<strong>Source:</strong> ${escapeHtml(srcLabel)}<br>` +
+            `<strong>Recorded by:</strong> ${recBy} &nbsp;|&nbsp; <strong>Date:</strong> ${recAt}`;
+
+        const noteText = src === 'office_intake'
+            ? (cdrrmo.office_intake_notes || '')
+            : (cdrrmo.field_notes || '');
+        if (noteText) {
+            notes.style.display = 'block';
+            notes.innerHTML = `<strong>${src === 'office_intake' ? 'Intake receiving remarks' : 'Field unit remarks'}:</strong><br>${escapeHtml(noteText)}`;
+        } else {
+            notes.style.display = 'none';
+            notes.innerHTML = '';
+        }
+
+        photos.innerHTML = '';
+        const urls = Array.isArray(cdrrmo.field_photos) ? cdrrmo.field_photos : [];
+        if (src === 'field_unit' && urls.length > 0) {
+            photosWrap.style.display = 'block';
+            urls.forEach((url) => {
+                if (!url) return;
+                const a = document.createElement('a');
+                a.href = url;
+                a.target = '_blank';
+                a.rel = 'noopener noreferrer';
+                const img = document.createElement('img');
+                img.src = url;
+                img.alt = 'Field evidence photograph';
+                img.loading = 'lazy';
+                img.style.cssText = 'width:76px;height:76px;object-fit:cover;border-radius:6px;border:1px solid #cbd5e1;';
+                a.appendChild(img);
+                photos.appendChild(a);
+            });
+        } else {
+            photosWrap.style.display = 'none';
+        }
     }
 
     async function loadApplicantRequirements(applicantId) {
@@ -1668,6 +2063,10 @@
                     gate.innerHTML = `<strong>M1 snapshot (2.2–2.3)</strong> — Queue: <strong>${q}</strong> · Household size: <strong>${hh}</strong> · ${inc} · ${prop}.`;
                 }
             }
+            renderModule1Checklist(data);
+            renderModule1Registration(data.applicant_profile);
+            renderModule1Cdrrmo(data.cdrrmo);
+            renderEvaluationControls(data);
 
             if (data.requirements) {
                 data.requirements.forEach(req => {
@@ -1778,15 +2177,15 @@
 
         if (window.__modalBlacklistBlocked) {
             btn.disabled = true;
-            btn.textContent = '📝 Generate Application Form';
-            text.textContent = 'Blacklist — form generation disabled until cleared in Module 1.';
+            btn.textContent = 'Generate application form';
+            text.textContent = 'Blacklist flag detected: form generation is disabled until resolved in Module 1.';
             text.style.color = '#b91c1c';
             return;
         }
 
         if (window.__hasApplication) {
             btn.disabled = true;
-            btn.textContent = '📝 Generate Application Form';
+            btn.textContent = 'Generate application form';
             const num = window.__applicationNumber;
             text.textContent = num
                 ? `Application form already generated (${num}).`
@@ -1855,23 +2254,92 @@
         }
     }
 
+    async function evaluateApplicant(action) {
+        if (!currentApplicantId || !canVerifyDocs) return;
+
+        const reason = document.getElementById('modalDisqualifyReason')?.value || '';
+        const notes = document.getElementById('modalDisqualifyNotes')?.value || '';
+
+        if (action === 'disqualify' && !reason) {
+            alert('Please select a disqualification reason before submitting.');
+            return;
+        }
+
+        const ok = action === 'mark_eligible'
+            ? confirm('Record eligibility and assign queue entry for this applicant?')
+            : confirm('Record disqualification for this applicant in Module 2?');
+        if (!ok) return;
+
+        try {
+            const formData = new FormData();
+            formData.append('applicant_id', currentApplicantId);
+            formData.append('action', action);
+            formData.append('reason', reason);
+            formData.append('notes', notes);
+            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+            const response = await fetch('{% url "applications:evaluate_applicant" request.user.position %}', {
+                method: 'POST',
+                body: formData,
+            });
+            const data = await response.json();
+            if (!data.success) {
+                alert(data.error || 'Failed to save evaluation decision.');
+                return;
+            }
+            alert(data.message || 'Evaluation decision recorded successfully.');
+            location.reload();
+        } catch (error) {
+            alert('Error: ' + error.message);
+        }
+    }
+
+    async function recordOfficeCdrrmoReceipt() {
+        if (!currentApplicantId || !canVerifyDocs) return;
+        const notes = document.getElementById('modalOfficeCdrrmoNotes')?.value || '';
+        if (!confirm('Record official CDRRMO office receipt and file this record as certified?')) return;
+
+        try {
+            const formData = new FormData();
+            formData.append('applicant_id', currentApplicantId);
+            formData.append('decision', 'certified');
+            formData.append('notes', notes);
+            formData.append('office_receipt', 'true');
+            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+            const response = await fetch('{% url "intake:update_cdrrmo_certification" request.user.position %}', {
+                method: 'POST',
+                body: formData,
+            });
+            const data = await response.json();
+            if (!data.success) {
+                alert(data.error || 'Failed to record office CDRRMO receipt.');
+                return;
+            }
+            alert(data.message || 'Official CDRRMO office receipt recorded successfully.');
+            location.reload();
+        } catch (error) {
+            alert('Error: ' + error.message);
+        }
+    }
+
     async function generateForm() {
         if (!currentApplicantId) return;
         if (window.__hasApplication) {
-            alert('Application form already generated.');
+            alert('Application form has already been generated.');
             return;
         }
         
         const btn = document.getElementById('generateFormBtn');
         btn.disabled = true;
-        btn.textContent = '⏳ Generating...';
+        btn.textContent = 'Generating...';
         
         try {
             const response = await fetch(`/applications/staff/${position}/generate-form/${currentApplicantId}/`);
             const data = await response.json();
             
             if (data.success) {
-                btn.textContent = '✅ Form Generated!';
+                btn.textContent = 'Form generated';
                 document.getElementById('formStatusText').textContent = `Application #${data.application_number}`;
                 updateProgressTrackerFromStage('Form Released');
                 
@@ -1884,13 +2352,13 @@
                     window.__hasApplication = true;
                     updateFormButton();
                 } else {
-                    btn.textContent = '📝 Generate Application Form';
+                    btn.textContent = 'Generate application form';
                     btn.disabled = false;
                 }
             }
         } catch (error) {
             console.error('Error generating form:', error);
-            btn.textContent = '📝 Generate Application Form';
+            btn.textContent = 'Generate application form';
             btn.disabled = false;
         }
     }

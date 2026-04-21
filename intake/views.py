@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.http import JsonResponse
 from django.utils import timezone
+from django.urls import reverse
 from django.db.models import Q, Prefetch
 from functools import wraps
 from .models import Applicant, Barangay, QueueEntry, CDRRMOCertification, FieldVerificationPhoto
@@ -12,10 +13,33 @@ from .forms import (
     WalkInApplicantForm
 )
 from .utils import check_blacklist, send_sms, ensure_priority_queue_entry
+from . import sms_workflow
 import json
+from collections import defaultdict
 
 # Module 1 income ceiling (₱) — keep in sync with `Applicant.is_income_eligible` in intake/models.py
 MODULE1_MONTHLY_INCOME_CEILING_PESO = 10000
+
+
+def _attach_applicants_sms_history(applicants):
+    """Add smsHistory (latest SMSLog rows) for modal audit / workflow visibility."""
+    from .models import SMSLog
+
+    ids = [a['applicantId'] for a in applicants if a.get('applicantId')]
+    by_app = defaultdict(list)
+    if ids:
+        for log in SMSLog.objects.filter(applicant_id__in=ids).order_by('-sent_at'):
+            key = str(log.applicant_id)
+            if len(by_app[key]) >= 12:
+                continue
+            by_app[key].append({
+                'event': log.trigger_event,
+                'status': log.status,
+                'sentAt': log.sent_at.isoformat(),
+            })
+    for a in applicants:
+        aid = a.get('applicantId')
+        a['smsHistory'] = by_app.get(str(aid), []) if aid else []
 
 
 def verify_position(view_func):
@@ -92,6 +116,14 @@ def update_eligibility(request, position):
     # Channel B/C: Handle Applicant
     try:
         applicant = Applicant.objects.get(id=applicant_id)
+        if applicant.status != 'pending_cdrrmo':
+            return JsonResponse({
+                'success': False,
+                'error': (
+                    f'This record is not pending CDRRMO processing (current status: {applicant.get_status_display()}). '
+                    'No new CDRRMO office disposition can be recorded.'
+                ),
+            })
     except Applicant.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Applicant not found'})
 
@@ -119,83 +151,22 @@ def update_eligibility(request, position):
             return JsonResponse({'success': False, 'error': 'Invalid deadline format'})
 
     elif action == 'mark_eligible':
-        # Check eligibility criteria
-        if applicant.monthly_income > MODULE1_MONTHLY_INCOME_CEILING_PESO:
-            return JsonResponse({
-                'success': False,
-                'error': (
-                    f'Declared monthly household income ₱{applicant.monthly_income:,.2f} exceeds the '
-                    f'Module 1 ceiling of ₱{MODULE1_MONTHLY_INCOME_CEILING_PESO:,.0f}. '
-                    'Correct income via Edit or disqualify with reason “Income exceeds ₱10,000 limit”.'
-                ),
-            })
-        
-        # For Channel B, check CDRRMO certification only if applicant is actually in a danger zone
-        if applicant.channel == 'danger_zone' and applicant.danger_zone_type:
-            # Only require CDRRMO if applicant declared they're in a danger zone
-            try:
-                cert = applicant.cdrrmo_certification
-                if cert.status != 'certified':
-                    return JsonResponse({
-                        'success': False,
-                        'error': 'CDRRMO certification required for danger zone applicants'
-                    })
-            except CDRRMOCertification.DoesNotExist:
-                return JsonResponse({
-                    'success': False,
-                    'error': 'CDRRMO certification not found'
-                })
-        
-        # Mark as eligible
-        applicant.status = 'eligible'
-        applicant.eligibility_checked_by = request.user
-        applicant.eligibility_checked_at = timezone.now()
-        applicant.save()
-
-        queue_entry, _ = ensure_priority_queue_entry(applicant, added_by=request.user)
-        
-        # Send SMS notification
-        if applicant.phone_number:
-            message = (
-                "Congratulations! You are ELIGIBLE for housing assistance. "
-                f"You are now in the Priority Queue (Position #{queue_entry.position}). "
-                f"Reference: {applicant.reference_number}"
-            )
-            send_sms(applicant.phone_number, message, 'eligibility', applicant=applicant)
-        
         return JsonResponse({
-            'success': True,
-            'message': f'Marked as eligible. Added to Priority Queue at position #{queue_entry.position}'
-        })
+            'success': False,
+            'error': (
+                'Eligibility decisions were moved to Module 2 (Application & Evaluation). '
+                'Use /applications/staff/<position>/ and click View.'
+            ),
+        }, status=400)
     
     elif action == 'disqualify':
-        reason = request.POST.get('reason', '')
-        notes = request.POST.get('notes', '')
-        
-        reason_labels = {
-            'income_exceeds': 'Income exceeds ₱10,000 limit',
-            'property_owner': 'Owns property in Talisay City',
-            'blacklisted': 'On blacklist',
-            'incomplete_docs': 'Incomplete documents',
-            'false_info': 'False information provided',
-            'other': notes or 'Other reason'
-        }
-        
-        applicant.status = 'disqualified'
-        applicant.disqualification_reason = reason_labels.get(reason, reason)
-        applicant.eligibility_checked_by = request.user
-        applicant.eligibility_checked_at = timezone.now()
-        applicant.save()
-        
-        # Send SMS notification
-        if applicant.phone_number:
-            message = f"We regret to inform you that your housing application has been DISQUALIFIED. Reason: {applicant.disqualification_reason}. Reference: {applicant.reference_number}. Please visit THA office for more information."
-            send_sms(applicant.phone_number, message, 'eligibility', applicant=applicant)
-        
         return JsonResponse({
-            'success': True,
-            'message': f'Applicant disqualified. Reason: {applicant.disqualification_reason}'
-        })
+            'success': False,
+            'error': (
+                'Disqualification decisions were moved to Module 2 (Application & Evaluation). '
+                'Use /applications/staff/<position>/ and click View.'
+            ),
+        }, status=400)
     
     return JsonResponse({'success': False, 'error': f'Unknown action: {action}'})
 
@@ -249,6 +220,14 @@ def update_applicant(request, position):
 
         # Update Applicant data
         applicant = Applicant.objects.get(id=applicant_id)
+        if applicant.status != 'pending_cdrrmo':
+            return JsonResponse({
+                'success': False,
+                'error': (
+                    f'This record is not pending CDRRMO processing (current status: {applicant.get_status_display()}). '
+                    'Field verification is disabled for non-pending records.'
+                ),
+            })
 
         full_name = request.POST.get('full_name', '').strip()
         barangay_name = request.POST.get('barangay', '').strip()
@@ -296,6 +275,7 @@ def update_applicant(request, position):
                     cert.status = cdrrmo_status
                     cert.result_recorded_by = request.user
                     cert.certified_at = timezone.now()
+                    cert.disposition_source = 'field_unit'
                     if cdrrmo_notes:
                         cert.certification_notes = cdrrmo_notes
                     cert.save()
@@ -367,6 +347,7 @@ def update_cdrrmo_certification(request, position):
         applicant_id = request.POST.get('applicant_id')
         decision = request.POST.get('decision')  # 'certified' or 'not_certified'
         notes = request.POST.get('notes', '').strip()
+        office_receipt = request.POST.get('office_receipt', '').strip().lower() in ('1', 'true', 'yes', 'on')
 
         if not applicant_id or not decision:
             return JsonResponse({'success': False, 'error': 'Missing applicant_id or decision'})
@@ -376,6 +357,13 @@ def update_cdrrmo_certification(request, position):
 
         # Get applicant
         applicant = Applicant.objects.get(id=applicant_id)
+        if applicant.status != 'pending_cdrrmo':
+            return JsonResponse({
+                'success': False,
+                'error': (
+                    f'This record is not pending CDRRMO staff finalization (current status: {applicant.get_status_display()}).'
+                ),
+            })
 
         # Check if CDRRMO certification exists
         if not hasattr(applicant, 'cdrrmo_certification'):
@@ -387,12 +375,13 @@ def update_cdrrmo_certification(request, position):
         if cert.status != 'pending':
             return JsonResponse({'success': False, 'error': f'CDRRMO decision already made: {cert.get_status_display()}'})
 
-        # Record decision
+        # Record decision — always intake-filed disposition (official paperwork / intake recording)
         cert.status = decision
         cert.result_recorded_by = request.user
         cert.certified_at = timezone.now()
-        if notes:
-            cert.certification_notes = notes
+        cert.disposition_source = 'office_intake'
+        cert.office_intake_notes = notes if notes else ''
+        cert.certification_notes = ''
         cert.save()
 
         # Update applicant status and queue placement
@@ -405,10 +394,21 @@ def update_cdrrmo_certification(request, position):
 
             message = f'✅ {applicant.full_name} CERTIFIED as danger zone. Added to Priority Queue (Position {queue_entry.position}).'
 
-            # Send SMS: Certified
             if applicant.phone_number:
-                sms_msg = f'Your location has been verified as a danger zone. You are assigned Priority Queue Position {queue_entry.position}. Please visit THA office for next steps.'
-                send_sms(applicant.phone_number, sms_msg, 'cdrrmo_certified', applicant.id)
+                if office_receipt:
+                    sms_msg = sms_workflow.message_cdrrmo_office_received(applicant, queue_entry.position)
+                    sms_event = sms_workflow.CDRRMO_OFFICE_CERTIFIED
+                else:
+                    sms_msg = sms_workflow.message_cdrrmo_certified_priority(applicant, queue_entry.position)
+                    sms_event = sms_workflow.CDRRMO_CERTIFIED
+                send_sms(applicant.phone_number, sms_msg, sms_event, applicant=applicant)
+
+            return JsonResponse({
+                'success': True,
+                'message': message,
+                'decision': decision,
+                'queue_position': queue_entry.position,
+            })
 
         else:  # not_certified
             # CDRRMO NOT certified → Disqualified
@@ -417,18 +417,15 @@ def update_cdrrmo_certification(request, position):
 
             message = f'❌ {applicant.full_name} NOT CERTIFIED. Applicant disqualified.'
 
-            # Send SMS: Not certified
             if applicant.phone_number:
-                sms_msg = f'Your location claim could not be verified as a danger zone. Your application has been disqualified. Please visit THA office for more information.'
-                send_sms(applicant.phone_number, sms_msg, 'cdrrmo_not_certified', applicant.id)
+                sms_msg = sms_workflow.message_cdrrmo_not_certified(applicant)
+                send_sms(applicant.phone_number, sms_msg, sms_workflow.CDRRMO_NOT_CERTIFIED, applicant=applicant)
 
             return JsonResponse({
                 'success': True,
                 'message': message,
                 'decision': decision
             })
-
-        queue_entry = None
 
     except Applicant.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Applicant not found'})
@@ -484,15 +481,31 @@ def field_verify_cdrrmo(request, position):
 
         cert = applicant.cdrrmo_certification
 
-        # Update with field team verification
+        if cert.status != 'pending':
+            return JsonResponse({
+                'success': False,
+                'error': (
+                    'A CDRRMO disposition is already on file (for example, official certification received at THA intake). '
+                    'Field verification cannot overwrite it.'
+                ),
+            })
+
+        # Field / Ronda on-site verification (separate from intake-filed CDRRMO paperwork)
         cert.status = verification_decision
         cert.certified_at = timezone.now()
         cert.result_recorded_by = request.user
-
-        if verification_notes:
-            cert.certification_notes = verification_notes
+        cert.disposition_source = 'field_unit'
+        cert.office_intake_notes = ''
+        cert.certification_notes = verification_notes if verification_notes else ''
 
         cert.save()
+
+        # Move record into Module 2 handoff list once field verification is submitted.
+        # This ensures evidence photos are visible from Application & Evaluation.
+        if not applicant.module2_handoff_at:
+            applicant.module2_handoff_at = timezone.now()
+            applicant.module2_handoff_by = request.user
+            applicant.save(update_fields=['module2_handoff_at', 'module2_handoff_by', 'updated_at'])
 
         # Optional on-site evidence photos (camera / gallery); validated server-side
         photos = request.FILES.getlist('evidence_photos')
@@ -515,7 +528,16 @@ def field_verify_cdrrmo(request, position):
             )
             photos_saved += 1
 
-        # Return success with updated status
+        sms_dispatched = None
+        if applicant.phone_number:
+            if verification_decision == 'certified':
+                sms_body = sms_workflow.message_field_inspection_sustained(applicant)
+                sms_ev = sms_workflow.FIELD_VERIFICATION_CERTIFIED
+            else:
+                sms_body = sms_workflow.message_field_inspection_not_sustained(applicant)
+                sms_ev = sms_workflow.FIELD_VERIFICATION_NOT_CERTIFIED
+            sms_dispatched = send_sms(applicant.phone_number, sms_body, sms_ev, applicant=applicant)
+
         return JsonResponse({
             'success': True,
             'message': f'Verification recorded as {"✓ Certified" if verification_decision == "certified" else "✗ Not Certified"}',
@@ -523,6 +545,8 @@ def field_verify_cdrrmo(request, position):
             'recorded_by': f'{request.user.first_name} {request.user.last_name}',
             'recorded_at': timezone.now().isoformat(),
             'photos_saved': photos_saved,
+            'sms_dispatched': sms_dispatched,
+            'moved_to_module2': True,
         })
 
     except Applicant.DoesNotExist:
@@ -583,6 +607,15 @@ def update_cdrrmo_status(request, position):
         cert = applicant.cdrrmo_certification
         if cert.status == 'pending':
             return JsonResponse({'success': False, 'error': 'Ronda team has not yet submitted verification'})
+
+        if cert.disposition_source == 'office_intake':
+            return JsonResponse({
+                'success': False,
+                'error': (
+                    'This record was finalized from official CDRRMO paperwork filed at THA intake. '
+                    'There is no separate field report to accept or reject.'
+                ),
+            })
 
         ronda_finding = cert.status  # 'certified' or 'not_certified'
 
@@ -767,6 +800,33 @@ def resend_sms(request, position):
 
 @login_required
 @verify_position
+@require_POST
+def proceed_to_applications(request, position):
+    """
+    Mark an intake record as handed off to Module 2.
+    """
+    if request.user.position not in ['second_member', 'fourth_member']:
+        return JsonResponse({'success': False, 'error': 'Permission denied.'}, status=403)
+
+    applicant_id = request.POST.get('applicant_id')
+    if not applicant_id:
+        return JsonResponse({'success': False, 'error': 'Missing applicant_id.'}, status=400)
+
+    applicant = get_object_or_404(Applicant, id=applicant_id)
+    if applicant.status == 'disqualified':
+        return JsonResponse({'success': False, 'error': 'Disqualified records cannot be forwarded to Module 2.'}, status=400)
+
+    if not applicant.module2_handoff_at:
+        applicant.module2_handoff_at = timezone.now()
+        applicant.module2_handoff_by = request.user
+        applicant.save(update_fields=['module2_handoff_at', 'module2_handoff_by', 'updated_at'])
+
+    module2_url = reverse('applications:applications_list', kwargs={'position': request.user.position})
+    return JsonResponse({'success': True, 'module2_url': module2_url})
+
+
+@login_required
+@verify_position
 def applicants_list(request, position):
     """
     Module 1: Applicant Intake Management
@@ -889,7 +949,9 @@ def applicants_list(request, position):
     
     # ====== CHANNEL B: Danger Zone Applicants + ALL OTHER APPLICANTS ======
     # Get ALL applicants (danger zone, walk-in, etc.)
-    walk_in_applicants = Applicant.objects.all().select_related(
+    walk_in_applicants = Applicant.objects.filter(
+        module2_handoff_at__isnull=True
+    ).select_related(
         'barangay', 'eligibility_checked_by', 'registered_by', 'cdrrmo_certification'
     ).prefetch_related(
         Prefetch(
@@ -944,18 +1006,22 @@ def applicants_list(request, position):
         result_recorded_by_name = None
         certified_at = None
         certification_notes = None
+        office_intake_notes = None
+        cdrrmo_disposition_source = 'pending'
         ronda_evidence_photos = []
         if app.channel == 'danger_zone':
             try:
                 cert = app.cdrrmo_certification
                 cdrrmo_status = cert.get_status_display()
                 cdrrmo_status_value = cert.status
+                cdrrmo_disposition_source = cert.disposition_source
                 danger_zone_type = cert.declared_location
                 is_cdrrmo_flagged = cert.status == 'pending' and cert.is_overdue
                 cdrrmo_days_pending = cert.days_pending if cert.status == 'pending' else 0
                 result_recorded_by_name = f'{cert.result_recorded_by.first_name} {cert.result_recorded_by.last_name}' if cert.result_recorded_by else None
                 certified_at = cert.certified_at.isoformat() if cert.certified_at else None
                 certification_notes = cert.certification_notes or None
+                office_intake_notes = cert.office_intake_notes or None
                 for ph in cert.field_photos.all():
                     if ph.image:
                         try:
@@ -965,6 +1031,7 @@ def applicants_list(request, position):
             except CDRRMOCertification.DoesNotExist:
                 cdrrmo_status = 'Not Requested'
                 cdrrmo_status_value = None
+                cdrrmo_disposition_source = 'pending'
         
         applicants.append({
             'id': str(app.id),
@@ -1012,13 +1079,18 @@ def applicants_list(request, position):
             'dangerZoneType': app.danger_zone_type if hasattr(app, 'danger_zone_type') and app.danger_zone_type else '',
             'dangerZoneLocation': app.danger_zone_location if hasattr(app, 'danger_zone_location') and app.danger_zone_location else (danger_zone_type or ''),
             'eligibilityStatus': eligibility_status,
+            'applicantStatus': app.status,
+            'readyForModule2': (not bool(app.module2_handoff_at)) and app.status != 'disqualified',
+            'module2HandedOff': bool(app.module2_handoff_at),
             'queueType': queue_type,
             'queuePosition': queue_position,
             'cdrrmoStatus': cdrrmo_status,
             'cdrrmo_status': cdrrmo_status_value,  # Raw status value for JS: pending, certified, not_certified
+            'cdrrmo_disposition_source': cdrrmo_disposition_source,
+            'office_intake_notes': office_intake_notes,
             'result_recorded_by_name': result_recorded_by_name,  # Who verified
             'certified_at': certified_at,  # When verified
-            'certification_notes': certification_notes,  # Ronda team notes
+            'certification_notes': certification_notes,  # Field / Ronda on-site notes only
             'ronda_evidence_photos': ronda_evidence_photos,  # Absolute URLs of field-captured evidence
             'isCdrrmoFlagged': is_cdrrmo_flagged,
             'cdrrmoDaysPending': cdrrmo_days_pending,
@@ -1055,6 +1127,8 @@ def applicants_list(request, position):
     
     # Sort all applicants by dateRegistered (FIFO - oldest first)
     applicants.sort(key=lambda x: x['dateRegistered'])
+
+    _attach_applicants_sms_history(applicants)
     
     # Get barangays from database
     barangays = list(Barangay.objects.filter(is_active=True).values_list('name', flat=True).order_by('name'))
@@ -1068,6 +1142,10 @@ def applicants_list(request, position):
     
     # Count CDRRMO overdue (pending > 14 days, only for those in actual danger zones)
     cdrrmo_overdue = len([a for a in applicants if a.get('isCdrrmoFlagged') and a.get('dangerZoneType')])
+    ready_for_module2 = len([
+        a for a in applicants
+        if not a.get('module2HandedOff') and a.get('applicantStatus') != 'disqualified'
+    ])
     
     context = {
         'page_title': 'ISF Recording Management',
@@ -1081,7 +1159,8 @@ def applicants_list(request, position):
             'priority': priority_count,
             'walkin': walkin_count,
             'pending_cdrrmo': pending_cdrrmo,
-            'cdrrmo_overdue': cdrrmo_overdue
+            'cdrrmo_overdue': cdrrmo_overdue,
+            'ready_for_module2': ready_for_module2,
         }
     }
     return render(request, 'intake/staff/applicants.html', context)

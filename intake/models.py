@@ -260,6 +260,18 @@ class Applicant(models.Model):
         blank=True,
         related_name='eligibility_checked_applicants'
     )
+    module2_handoff_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Timestamp when staff forwarded this intake record to Module 2."
+    )
+    module2_handoff_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='module2_handed_off_applicants'
+    )
     
     # Document Checklist (7 required documents)
     doc_brgy_residency = models.BooleanField(default=False, verbose_name="Brgy. Certificate of Residency")
@@ -428,6 +440,12 @@ class CDRRMOCertification(models.Model):
         ('certified', 'Certified - Danger Zone'),
         ('not_certified', 'Not Certified'),
     ]
+
+    DISPOSITION_SOURCE_CHOICES = [
+        ('pending', 'No disposition recorded'),
+        ('office_intake', 'Official CDRRMO paperwork filed at THA intake'),
+        ('field_unit', 'Field unit / Ronda on-site verification'),
+    ]
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     applicant = models.OneToOneField(
@@ -442,6 +460,12 @@ class CDRRMOCertification(models.Model):
     )
     
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    disposition_source = models.CharField(
+        max_length=20,
+        choices=DISPOSITION_SOURCE_CHOICES,
+        default='pending',
+        help_text='Intake-filed CDRRMO documents vs. field/Ronda on-site verification (different workflows).',
+    )
     
     # Coordination tracking
     requested_at = models.DateTimeField(auto_now_add=True)
@@ -461,7 +485,14 @@ class CDRRMOCertification(models.Model):
         blank=True,
         related_name='cdrrmo_results_recorded'
     )
-    certification_notes = models.TextField(blank=True)
+    certification_notes = models.TextField(
+        blank=True,
+        help_text='Remarks from field / Ronda on-site verification (not intake receiving log).',
+    )
+    office_intake_notes = models.TextField(
+        blank=True,
+        help_text='Receiving log when official CDRRMO certification is filed at THA intake.',
+    )
     
     class Meta:
         verbose_name = "CDRRMO Certification"

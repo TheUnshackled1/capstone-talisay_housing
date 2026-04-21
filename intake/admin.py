@@ -126,22 +126,23 @@ class FieldVerificationPhotoInline(admin.TabularInline):
 
 @admin.register(CDRRMOCertification)
 class CDRRMOCertificationAdmin(admin.ModelAdmin):
-    list_display = ('applicant', 'status', 'requested_at', 'certified_at')
-    list_filter = ('status', 'requested_at')
+    list_display = ('applicant', 'status', 'disposition_source', 'requested_at', 'certified_at')
+    list_filter = ('status', 'disposition_source', 'requested_at')
     search_fields = ('applicant__full_name',)
     readonly_fields = ('requested_at', 'certified_at')
     inlines = [FieldVerificationPhotoInline]
 
     fieldsets = (
         ('🏛️ CDRRMO CERTIFICATION', {
-            'fields': ('applicant', 'declared_location', 'status'),
+            'fields': ('applicant', 'declared_location', 'status', 'disposition_source'),
         }),
         ('📅 TIMELINE', {
             'fields': ('requested_at', 'requested_by', 'certified_at', 'result_recorded_by'),
         }),
-        ('📝 NOTES', {
-            'fields': ('certification_notes',),
+        ('📝 INTAKE vs FIELD NOTES', {
+            'fields': ('office_intake_notes', 'certification_notes'),
             'classes': ('collapse',),
+            'description': 'Intake remarks = official paperwork filed at THA. Field notes = Ronda on-site inspection only.',
         }),
     )
 

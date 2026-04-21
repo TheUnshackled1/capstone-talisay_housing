@@ -58,7 +58,7 @@ def lot_awarding_draw(request, position):
 
     # Authorization check: Only Jocel (Fourth Member) can access
     if request.user.position not in ['fourth_member']:
-        return render(request, 'common/access_denied.html',
+        return render(request, 'staff/access_denied.html',
                       {'message': 'Only the Lot Coordinator (Fourth Member) can access this function.'}, status=403)
 
     if request.method == 'POST':
@@ -389,13 +389,13 @@ def occupancy_report_form(request, position):
                 sites = RelocationSite.objects.all()
                 caretaker_site = sites.first() if sites.exists() else None
             else:
-                return render(request, 'common/access_denied.html',
+                return render(request, 'staff/access_denied.html',
                               {'message': 'No site assigned to your account.'}, status=403)
     except:
         caretaker_site = RelocationSite.objects.first()
 
     if not caretaker_site:
-        return render(request, 'common/error.html',
+        return render(request, 'staff/error.html',
                       {'error': 'No sites configured in system.'}, status=404)
 
     # Get all units at site (regardless of status)
@@ -602,12 +602,12 @@ def occupancy_review_detail(request, position, report_id):
     try:
         report = OccupancyReport.objects.get(id=report_id)
     except OccupancyReport.DoesNotExist:
-        return render(request, 'common/error.html',
+        return render(request, 'staff/error.html',
                       {'error': 'Report not found'}, status=404)
 
     # Verify status is 'submitted' (not already reviewed)
     if report.status != 'submitted':
-        return render(request, 'common/error.html',
+        return render(request, 'staff/error.html',
                       {'error': f'This report has already been {report.status}. Cannot review again.'}, status=400)
 
     # Get all unit details for this report
@@ -750,7 +750,7 @@ def housing_units_monitoring(request, position):
         if all_sites.exists():
             site = all_sites.first()
         else:
-            return render(request, 'common/error.html',
+            return render(request, 'staff/error.html',
                           {'error': 'No relocation sites available in the system.'})
 
     # Get all units for the site with related data

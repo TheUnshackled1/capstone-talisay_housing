@@ -1,10 +1,10 @@
 """
-Management command to test SMS sending via Twilio or Semaphore.
+Management command to test SMS routing (console / Twilio / Semaphore / httpSMS).
 
 Usage:
-    python manage.py test_sms --phone 09XXXXXXXXX
-    python manage.py test_sms --phone 09XXXXXXXXX --service twilio
-    python manage.py test_sms --phone 09XXXXXXXXX --service semaphore
+    python manage.py test_sms --phone 09987654321
+    python manage.py test_sms --phone 09987654321 --service console
+    python manage.py test_sms --phone 09987654321 --service twilio
 """
 
 from django.core.management.base import BaseCommand, CommandError
@@ -13,7 +13,7 @@ from intake.utils import send_sms
 
 
 class Command(BaseCommand):
-    help = 'Test SMS sending via Twilio or Semaphore'
+    help = 'Test SMS pipeline (console mode needs no API keys; use twilio when subscribed)'
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -25,9 +25,9 @@ class Command(BaseCommand):
         parser.add_argument(
             '--service',
             type=str,
-            default='twilio',
-            choices=['twilio', 'semaphore'],
-            help='SMS service to use (default: twilio)'
+            default='console',
+            choices=['console', 'twilio', 'semaphore', 'httpsms'],
+            help='SMS_SERVICE override for this run (default: console)'
         )
         parser.add_argument(
             '--message',
@@ -45,20 +45,16 @@ class Command(BaseCommand):
         self.stdout.write(f'Phone: {phone}')
         self.stdout.write(f'Message: {message}\n')
 
-        # Temporarily override SMS service
-        original_service = getattr(settings, 'SMS_SERVICE', 'semaphore')
+        original_service = getattr(settings, 'SMS_SERVICE', 'console')
         settings.SMS_SERVICE = service
 
-        # Test SMS
         success = send_sms(
             phone_number=phone,
             message=message,
             trigger_event='test_sms',
             applicant=None,
-            isf_record=None
         )
 
-        # Restore original service
         settings.SMS_SERVICE = original_service
 
         if success:

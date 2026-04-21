@@ -1,6 +1,8 @@
 {% extends 'field_base.html' %}
 {% load static %}
 
+{% block title %}Field verification desk{% endblock %}
+
 {% block nav_verification %}active{% endblock %}
 
 {% block extra_css %}
@@ -687,6 +689,260 @@
         background: #0f172a;
         margin-bottom: 10px;
     }
+
+    /* ----- Formal field verification modal (THA) ----- */
+    .tha-field-modal-inner {
+        background: #fff;
+        margin: 2rem auto;
+        width: 92%;
+        max-width: 40rem;
+        border-radius: 2px;
+        box-shadow: 0 20px 50px rgba(15, 23, 42, 0.18);
+        overflow: hidden;
+        border: 1px solid #cbd5e1;
+    }
+    .tha-field-modal-header {
+        background: #0f172a;
+        color: #f8fafc;
+        padding: 1.25rem 1.5rem;
+        border-bottom: 3px solid #b45309;
+    }
+    .tha-field-modal-header-row {
+        display: flex;
+        align-items: center;
+        gap: 0.875rem;
+    }
+    .tha-field-modal-crest {
+        flex-shrink: 0;
+        width: 2.75rem;
+        height: 2.75rem;
+        border: 2px solid rgba(248, 250, 252, 0.9);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: Georgia, 'Times New Roman', Times, serif;
+        font-size: 0.5625rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        line-height: 1.1;
+        text-align: center;
+        color: #0f172a;
+        background: #f8fafc;
+    }
+    .tha-field-modal-header h2 {
+        margin: 0;
+        font-family: Georgia, 'Times New Roman', Times, serif;
+        font-size: 1.125rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+    }
+    .tha-field-modal-header p {
+        margin: 0.25rem 0 0;
+        font-size: 0.8125rem;
+        opacity: 0.92;
+        font-weight: 500;
+    }
+    .tha-field-modal-body {
+        padding: 1.75rem 1.5rem 2rem;
+        max-height: 72vh;
+        overflow-y: auto;
+    }
+    .tha-field-claim-panel {
+        margin-bottom: 1.75rem;
+        padding: 1.25rem 1.25rem 1.35rem;
+        background: #f8fafc;
+        border: 1px solid #cbd5e1;
+        border-left: 4px solid #0f172a;
+        border-radius: 2px;
+    }
+    .tha-field-claim-title {
+        margin: 0 0 1rem;
+        padding-bottom: 0.65rem;
+        border-bottom: 1px solid #cbd5e1;
+        font-size: 0.8125rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: #0f172a;
+    }
+    .tha-field-claim-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.875rem;
+    }
+    .tha-field-claim-cell {
+        background: #fff;
+        padding: 0.875rem 1rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 2px;
+    }
+    .tha-field-claim-cell .fld-lbl {
+        display: block;
+        font-size: 0.65rem;
+        font-weight: 700;
+        color: #475569;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        margin-bottom: 0.35rem;
+    }
+    .tha-field-claim-cell p {
+        margin: 0;
+        font-size: 0.9375rem;
+        font-weight: 600;
+        color: #1e293b;
+        line-height: 1.45;
+    }
+    .tha-field-modal-divider {
+        height: 1px;
+        background: #e2e8f0;
+        margin: 1.5rem 0;
+    }
+    .tha-field-cdrrmo-panel {
+        background: #f8fafc !important;
+        border: 1px solid #cbd5e1 !important;
+        border-left: 4px solid #0f172a !important;
+        border-radius: 2px !important;
+    }
+    .tha-field-cdrrmo-panel .cdrrmo-cert-header {
+        border-bottom-color: #cbd5e1 !important;
+    }
+    .tha-field-cdrrmo-panel .cdrrmo-cert-header h3 {
+        color: #0f172a !important;
+        font-family: Georgia, 'Times New Roman', Times, serif;
+        letter-spacing: 0.03em;
+    }
+    .tha-field-cdrrmo-panel .cdrrmo-cert-cell {
+        border-color: #e2e8f0 !important;
+        border-radius: 2px !important;
+    }
+    .tha-field-cdrrmo-panel .cdrrmo-cert-label {
+        color: #475569 !important;
+    }
+    .tha-field-section-heading {
+        margin: 0 0 0.75rem;
+        font-size: 0.8125rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: #0f172a;
+    }
+    .tha-field-section-lead {
+        margin: 0 0 1.25rem;
+        font-size: 0.875rem;
+        color: #475569;
+        line-height: 1.55;
+    }
+    .tha-field-decision-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.875rem;
+        margin-bottom: 1.5rem;
+    }
+    .tha-field-decision-label {
+        padding: 1.1rem 0.9rem;
+        border: 1px solid #cbd5e1;
+        background: #fff;
+        border-radius: 2px;
+        cursor: pointer;
+        text-align: center;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .tha-field-decision-label:hover {
+        border-color: #64748b;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+    }
+    .tha-field-decision-label:has(input:checked) {
+        border-color: #0f172a;
+        box-shadow: 0 0 0 1px #0f172a;
+        background: #f8fafc;
+    }
+    .tha-field-decision-label input {
+        margin-bottom: 0.5rem;
+        width: 1.1rem;
+        height: 1.1rem;
+        cursor: pointer;
+    }
+    .tha-field-decision-affirm {
+        color: #0f172a;
+        font-size: 0.9375rem;
+        margin-bottom: 0.2rem;
+    }
+    .tha-field-decision-negate {
+        color: #0f172a;
+        font-size: 0.9375rem;
+        margin-bottom: 0.2rem;
+    }
+    .tha-field-decision-sub {
+        margin: 0;
+        font-size: 0.75rem;
+        color: #64748b;
+        line-height: 1.4;
+    }
+    .tha-field-workflow-box {
+        background: #fffbeb;
+        border: 1px solid #fcd34d;
+        border-left: 4px solid #b45309;
+        border-radius: 2px;
+        padding: 1rem 1.1rem;
+        margin-bottom: 1.5rem;
+        font-size: 0.8125rem;
+        color: #78350f;
+        line-height: 1.55;
+    }
+    .tha-field-workflow-box strong {
+        display: block;
+        font-size: 0.875rem;
+        margin-bottom: 0.35rem;
+        color: #451a03;
+    }
+    .tha-field-workflow-box ol {
+        margin: 0;
+        padding-left: 1.25rem;
+    }
+    .tha-field-form-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+    }
+    .tha-field-btn-submit {
+        background: #0f172a;
+        color: #fff;
+        padding: 0.75rem 1rem;
+        border: 1px solid #0f172a;
+        border-radius: 2px;
+        cursor: pointer;
+        font-weight: 700;
+        font-size: 0.875rem;
+    }
+    .tha-field-btn-submit:hover {
+        background: #1e293b;
+    }
+    .tha-field-btn-cancel {
+        background: #fff;
+        color: #334155;
+        padding: 0.75rem 1rem;
+        border: 1px solid #94a3b8;
+        border-radius: 2px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+    .tha-field-btn-cancel:hover {
+        background: #f8fafc;
+        border-color: #64748b;
+    }
+    @media (max-width: 560px) {
+        .tha-field-claim-grid,
+        .tha-field-decision-grid,
+        .tha-field-form-actions,
+        .cdrrmo-cert-row2 {
+            grid-template-columns: 1fr !important;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -694,13 +950,13 @@
 <div class="dashboard-container" data-user-position="{{ request.user.position }}">
     <!-- Header -->
     <div class="nav-breadcrumb">
-        <a href="{% url 'accounts:dashboard' %}">Dashboard</a> / Field Verification
+        <a href="{% url 'accounts:dashboard' %}">Dashboard</a> / Field verification (Module 1)
     </div>
 
     <div class="dashboard-header">
         <div>
-            <h1>🔍 Field Verification Dashboard</h1>
-            <p>Module 1: Channel B Danger Zone Verification Workflow</p>
+            <h1>Field verification desk</h1>
+            <p>Talisay City Housing Authority — Module 1, Channel B (hazard-area / walk-in pathway)</p>
         </div>
         <div class="dashboard-header-actions">
             <button onclick="printVerificationSheet()" class="btn-action" title="Print pending applicants list">
@@ -708,20 +964,20 @@
                     <polyline points="6 9 6 2 18 2 18 9"></polyline>
                     <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
                 </svg>
-                📋 Print List
+                Print pending list
             </button>
             <button onclick="location.reload()" class="btn-action refresh" title="Refresh data">
                 <svg style="width: 18px; height: 18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36M20.49 15a9 9 0 0 1-14.85 3.36"></path>
                 </svg>
-                🔄 Refresh
+                Refresh
             </button>
             <button onclick="showMyVerifications()" class="btn-action my-work" title="View my verifications">
                 <svg style="width: 18px; height: 18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                     <polyline points="22 4 12 14.01 9 11.01"></polyline>
                 </svg>
-                ✅ My Work
+                Today’s summary
             </button>
         </div>
     </div>
@@ -730,31 +986,31 @@
     <div class="widgets-grid">
         <!-- Pending Verifications -->
         <div class="widget scroll-animate scroll-delay-1">
-            <p class="widget-title">📋 Pending CDRRMO Verifications</p>
+            <p class="widget-title">Pending field certification</p>
             <div class="metric-value">{{ total_pending }}</div>
-            <div class="metric-label">Awaiting field inspection</div>
+            <div class="metric-label">Awaiting on-site verification</div>
             <div style="margin-top: 12px; font-size: 11px; color: #6b7280; padding: 8px; background: #f0f9ff; border-left: 2px solid #3b82f6; border-radius: 4px;">
-                Only applicants claiming danger zone status
+                Applicants who declared residence within a mapped hazard area (CDRRMO pathway).
             </div>
         </div>
 
         <!-- Verified (Certified) -->
         <div class="widget scroll-animate scroll-delay-2">
-            <p class="widget-title">✅ Verified - Danger Zone</p>
+            <p class="widget-title">Certified — hazard sustained</p>
             <div class="metric-value" style="color: #10b981;">{{ certified_count }}</div>
-            <div class="metric-label">Approved for priority queue</div>
+            <div class="metric-label">Eligible for priority queue processing</div>
             <div style="margin-top: 12px; font-size: 11px; color: #6b7280; padding: 8px; background: #f0fdf4; border-left: 2px solid #10b981; border-radius: 4px;">
-                Ronda field team confirmed
+                Field inspection supports the declared hazard-area classification.
             </div>
         </div>
 
         <!-- Not Certified -->
         <div class="widget scroll-animate scroll-delay-3">
-            <p class="widget-title">❌ Not Verified - False Alarm</p>
+            <p class="widget-title">Not certified — claim not sustained</p>
             <div class="metric-value" style="color: #ef4444;">{{ not_certified_count }}</div>
-            <div class="metric-label">Moved to walk-in FIFO queue</div>
+            <div class="metric-label">Referred to general walk-in queue</div>
             <div style="margin-top: 12px; font-size: 11px; color: #6b7280; padding: 8px; background: #fee2e2; border-left: 2px solid #ef4444; border-radius: 4px;">
-                Not in danger zone per verification
+                On-site findings do not support hazard-area status as declared.
             </div>
         </div>
     </div>
@@ -762,11 +1018,11 @@
     <!-- CRITICAL ALERTS -->
     {% if aging_verifications %}
     <div class="section scroll-animate scroll-delay-2">
-        <div class="section-title">⚠️ Aging Verifications Alert</div>
+        <div class="section-title">Aging verifications (follow-up)</div>
         <div class="widget">
             <div class="alert-box alert-amber">
-                <strong>⏰ {{ aging_verifications|length }} verification(s) pending >7 days</strong>
-                <span>Risk of escalation at 14 days. Priority review needed.</span>
+                <strong>{{ aging_verifications|length }} case(s) pending beyond seven (7) days</strong>
+                <span>Escalation may apply at fourteen (14) days. Please prioritise site visit and submission.</span>
             </div>
             <div class="list-container">
                 {% for cert in aging_verifications %}
@@ -790,7 +1046,7 @@
 
     <!-- PENDING VERIFICATIONS LIST -->
     <div class="section scroll-animate-right scroll-delay-1">
-        <div class="section-title">📝 Pending Verifications (Ready for Field Visit)</div>
+        <div class="section-title">Pending verifications (ready for field visit)</div>
         <div class="widget">
             {% if pending_verifications %}
             <div style="overflow-x: auto;">
@@ -802,11 +1058,11 @@
                             <th style="padding: 14px 12px; text-align: left; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.4px;">Date & Time</th>
                             <th style="padding: 14px 12px; text-align: left; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.4px;">Reference #</th>
                             <th style="padding: 14px 12px; text-align: left; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.4px;">Full Name</th>
+                            <th style="padding: 14px 12px; text-align: left; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.4px;">Current address / barangay</th>
                             <th style="padding: 14px 12px; text-align: left; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.4px;">Channel</th>
                             <th style="padding: 14px 12px; text-align: left; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.4px;">Eligibility</th>
-                            <th style="padding: 14px 12px; text-align: left; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.4px;">Queue</th>
+                            <th style="padding: 14px 12px; text-align: left; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.4px;">Queue / visit order</th>
                             <th style="padding: 14px 12px; text-align: left; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.4px;">Staff Handled</th>
-                            <th style="padding: 14px 12px; text-align: center; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.4px;">Docs</th>
                             <th style="padding: 14px 12px; text-align: center; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.4px;">SMS</th>
                             <th style="padding: 14px 12px; text-align: center; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.4px;">Action</th>
                         </tr>
@@ -819,23 +1075,24 @@
                             <td style="padding: 12px; color: #6b7280; font-size: 12px;">{{ cert.created_at|date:"M d, Y h:i A" }}</td>
                             <td style="padding: 12px; color: #2563eb; font-weight: 600;">{{ cert.reference_number }}</td>
                             <td style="padding: 12px; color: #1f2937; font-weight: 500;">{{ cert.applicant_name }}</td>
+                            <td style="padding: 12px; color: #1f2937; font-size: 12px; line-height: 1.45; max-width: 280px;">
+                                <div style="font-weight: 500;">{{ cert.address|default:"—" }}</div>
+                                <div style="margin-top: 4px; font-size: 11px; color: #64748b; font-weight: 600;">Barangay: {% if cert.barangay %}{{ cert.barangay.name }}{% else %}—{% endif %}</div>
+                            </td>
                             <td style="padding: 12px; color: #6b7280;">
                                 <span style="background: #dbeafe; color: #0369a1; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 600;">{{ cert.channel }}</span>
                             </td>
                             <td style="padding: 12px;">
                                 <span style="background: #fef3c7; color: #92400e; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 600;">{{ cert.eligibility }}</span>
                             </td>
-                            <td style="padding: 12px; color: #6b7280; text-align: center;">{{ cert.queue_position }}</td>
+                            <td style="padding: 12px; color: #475569; text-align: left; font-size: 12px; max-width: 200px;">{{ cert.queue_position }}</td>
                             <td style="padding: 12px; color: #6b7280; font-size: 12px;">{{ cert.staff_handled }}</td>
-                            <td style="padding: 12px; text-align: center; color: #1f2937; font-weight: 600;">
-                                <span style="background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%); color: #15803d; padding: 4px 10px; border-radius: 6px; border: 1px solid #dcfce7; display: inline-block;">{{ cert.doc_count }}/7</span>
-                            </td>
                             <td style="padding: 12px; text-align: center; font-size: 12px;">
                                 <span style="{% if 'Sent' in cert.sms_status %}color: #059669;{% else %}color: #dc2626;{% endif %} font-weight: 600;">{{ cert.sms_status }}</span>
                             </td>
                             <td style="padding: 12px; text-align: center;">
-                                <button class="table-verify-btn" onclick="openVerificationModal('{{ cert.id }}', '{{ cert.applicant_name|escapejs }}', '{{ cert.address|escapejs }}', '{{ cert.danger_zone_type|escapejs }}', '{{ cert.danger_zone_location|escapejs }}', '{{ cert.reference_number|escapejs }}')">
-                                    ✓ Verify
+                                <button type="button" class="table-verify-btn" onclick="openVerificationModal('{{ cert.id }}', '{{ cert.applicant_name|escapejs }}', '{{ cert.address|escapejs }}', '{{ cert.danger_zone_type|escapejs }}', '{{ cert.danger_zone_location|escapejs }}', '{{ cert.reference_number|escapejs }}')">
+                                    Open verification
                                 </button>
                             </td>
                         </tr>
@@ -845,7 +1102,7 @@
             </div>
             {% else %}
             <p style="text-align: center; color: #9ca3af; padding: 40px; font-size: 14px;">
-                ✅ No pending verifications. All Channel B applicants have been processed.
+                No pending hazard-area verifications. All active Channel B cases in this queue are cleared.
             </p>
             {% endif %}
         </div>
@@ -853,25 +1110,25 @@
 
     <!-- WORKFLOW GUIDE -->
     <div class="section scroll-animate-scale scroll-delay-2">
-        <div class="section-title">📚 Field Verification Workflow</div>
+        <div class="section-title">Field verification workflow</div>
         <div class="widget">
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
                 <div style="padding: 18px; background: linear-gradient(135deg, #f0f9ff 0%, #ffffff 100%); border-radius: 10px; border-left: 4px solid #3b82f6; border: 1px solid #dbeafe; transition: all 0.3s ease;">
-                    <strong style="color: #1e40af; font-size: 15px; display: block; margin-bottom: 8px;">Step 1: Visit Location</strong>
+                    <strong style="color: #1e40af; font-size: 15px; display: block; margin-bottom: 8px;">Step 1 — Site inspection</strong>
                     <p style="font-size: 13px; color: #1e3a8a; margin: 0; line-height: 1.5;">
-                        Visit the applicant's address to verify danger zone status. Check living conditions, structural safety, and proximity to hazards.
+                        Proceed to the declared address. Observe conditions, structural exposure, and proximity to the reported hazard in accordance with THA–CDRRMO coordination.
                     </p>
                 </div>
                 <div style="padding: 18px; background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%); border-radius: 10px; border-left: 4px solid #10b981; border: 1px solid #dcfce7; transition: all 0.3s ease;">
-                    <strong style="color: #15803d; font-size: 15px; display: block; margin-bottom: 8px;">Step 2: Record Findings</strong>
+                    <strong style="color: #15803d; font-size: 15px; display: block; margin-bottom: 8px;">Step 2 — Record findings</strong>
                     <p style="font-size: 13px; color: #166534; margin: 0; line-height: 1.5;">
-                        Document: Is it truly a danger zone? Living conditions observed? Income level reasonable? Take photos/notes.
+                        Prepare objective notes and, where practicable, site photographs. Indicate whether the hazard-area claim is supported by physical evidence on the ground.
                     </p>
                 </div>
                 <div style="padding: 18px; background: linear-gradient(135deg, #fffbeb 0%, #ffffff 100%); border-radius: 10px; border-left: 4px solid #f59e0b; border: 1px solid #fef3c7; transition: all 0.3s ease;">
-                    <strong style="color: #92400e; font-size: 15px; display: block; margin-bottom: 8px;">Step 3: Submit Assessment</strong>
+                    <strong style="color: #92400e; font-size: 15px; display: block; margin-bottom: 8px;">Step 3 — Lodge certification</strong>
                     <p style="font-size: 13px; color: #b45309; margin: 0; line-height: 1.5;">
-                        Click <strong>Verify</strong> on a row → Select YES or NO → Submit. Jocel sees the result in Applicant Intake. Assessment feeds into CDRRMO certification.
+                        Use <strong>Open verification</strong> on the queue row, complete the certification form, attach evidence, and submit. Intake staff receive the record for supervisory review.
                     </p>
                 </div>
             </div>
@@ -880,7 +1137,7 @@
 
     <!-- VERIFICATION SUMMARY STATS -->
     <div class="section scroll-animate scroll-delay-3">
-        <div class="section-title">📊 Verification Summary</div>
+        <div class="section-title">Verification summary</div>
         <div class="widgets-grid scroll-animate-scale">
             <div class="widget">
                 <p class="widget-title">Total Processed</p>
@@ -896,24 +1153,24 @@
                         0%
                     {% endif %}
                 </div>
-                <div class="metric-label">Verified as actual danger zones</div>
+                <div class="metric-label">Share of cases certified as hazard-area</div>
             </div>
             <div class="widget">
                 <p class="widget-title">False Alarms</p>
                 <div class="metric-value" style="color: #ef4444;">{{ not_certified_count }}</div>
-                <div class="metric-label">Claims not sustained</div>
+                <div class="metric-label">Claims not sustained on inspection</div>
             </div>
         </div>
     </div>
 
     <!-- INSTRUCTIONS -->
     <div class="scroll-animate-left scroll-delay-4" style="margin-top: 32px; padding: 20px; background: linear-gradient(135deg, #ecfdf5 0%, #ffffff 100%); border: 2px solid #d1fae5; border-radius: 12px; border-left: 4px solid #10b981;">
-        <strong style="color: #065f46; font-size: 16px; display: block; margin-bottom: 12px;">ℹ️ Important Information</strong>
+        <strong style="color: #065f46; font-size: 16px; display: block; margin-bottom: 12px;">Official notice to field personnel</strong>
         <p style="font-size: 14px; color: #047857; margin: 0; line-height: 1.7;">
-            • <strong>Your Role:</strong> Verify if applicants are truly in danger zones. Your assessment determines if they get priority queue status.<br>
-            • <strong>Process:</strong> Click applicant → Select YES or NO → Submit.<br>
-            • <strong>Outcome:</strong> If verified as danger zone → Priority Queue. If false alarm → Walk-in FIFO Queue (penalty).<br>
-            • <strong>Escalation:</strong> If pending >14 days → auto-moved to walk-in queue as safety net.
+            • <strong>Mandate:</strong> You certify, on behalf of the Talisay City Housing Authority field unit, whether the applicant’s declared hazard-area status is supported by inspection.<br>
+            • <strong>Procedure:</strong> Open the verification form from the queue, record a clear affirmative or negative certification, attach photographic evidence when available, and submit.<br>
+            • <strong>Effect of record:</strong> A sustained hazard finding supports priority-queue processing; a negative finding routes the case to the general walk-in queue in line with THA rules.<br>
+            • <strong>Escalation:</strong> Matters pending beyond fourteen (14) days may be administratively re-queued to protect programme integrity.
         </p>
     </div>
 </div>
@@ -1019,7 +1276,7 @@
                 wrap.className = 'field-evidence-thumb';
                 const img = document.createElement('img');
                 img.src = url;
-                img.alt = 'Evidence preview';
+                img.alt = 'Site photograph preview';
                 const btn = document.createElement('button');
                 btn.type = 'button';
                 btn.className = 'field-evidence-thumb-remove';
@@ -1054,7 +1311,7 @@
 
         async function startFieldCamera() {
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                alert('Camera is not supported in this browser. Use "Upload from gallery" instead.');
+                alert('This browser does not support in-page camera access. Please use “Attach from device” to upload photographs.');
                 return;
             }
             try {
@@ -1069,7 +1326,7 @@
                 document.getElementById('fieldCameraCaptureBtn').style.display = 'inline-block';
                 document.getElementById('fieldCameraStopBtn').style.display = 'inline-block';
             } catch (err) {
-                alert('Could not open camera: ' + (err && err.message ? err.message : 'permission denied') + '\n\nUse "Upload from gallery" or try HTTPS/localhost.');
+                alert('Could not open camera: ' + (err && err.message ? err.message : 'permission denied') + '\n\nUse “Attach from device”, or ensure you are on HTTPS or localhost.');
             }
         }
 
@@ -1124,6 +1381,21 @@
             ev.target.value = '';
         }
 
+        function formatHazardClassification(code) {
+            if (!code || !String(code).trim()) return '—';
+            const key = String(code).trim().toLowerCase().replace(/-/g, '_');
+            const map = {
+                riverside: 'Riverside / riverbank',
+                flood_prone: 'Flood-prone area',
+                landslide: 'Landslide-prone area',
+                coastal: 'Coastal / near shoreline',
+                railroad: 'Near railroad tracks',
+                road_right_of_way: 'Road right-of-way',
+                other: 'Other mapped hazard',
+            };
+            return map[key] || String(code).replace(/_/g, ' ');
+        }
+
         // Field Verification Modal
         function openVerificationModal(applicantId, applicantName, address, dangerZoneType, dangerZoneLocation, referenceNumber) {
             clearFieldEvidenceUI();
@@ -1132,8 +1404,9 @@
             document.getElementById('verificationModalApplicantId').value = applicantId;
             document.getElementById('verificationModalName').textContent = applicantName;
             document.getElementById('verificationModalAddress').textContent = address;
-            document.getElementById('verificationModalDangerZone').textContent = dangerZoneType || 'Not specified';
-            document.getElementById('verificationModalLocation').textContent = dangerZoneLocation || 'Not specified';
+            document.getElementById('verificationModalDangerZone').textContent = formatHazardClassification(dangerZoneType);
+            document.getElementById('verificationModalLocation').textContent =
+                (dangerZoneLocation && dangerZoneLocation.trim()) ? dangerZoneLocation.trim() : '—';
 
             const cdrrmoStatusBox = document.getElementById('cdrrmoStatusBox');
             const cdrrmoStatusText = document.getElementById('cdrrmoStatusText');
@@ -1144,8 +1417,8 @@
 
             if (dangerZoneType) {
                 cdrrmoStatusBox.style.display = 'block';
-                cdrrmoStatusText.textContent = '⏳ Pending - Awaiting Field Verification';
-                cdrrmoStatusText.style.color = '#92400e';
+                cdrrmoStatusText.textContent = 'Pending — awaiting field verification report';
+                cdrrmoStatusText.style.color = '#78350f';
                 cdrrmoDateText.textContent = '—';
             } else {
                 cdrrmoStatusBox.style.display = 'none';
@@ -1173,7 +1446,7 @@
             const verificationNotes = document.getElementById('verificationNotes').value;
 
             if (!verificationDecision) {
-                alert('Please select: Is this a danger zone?');
+                alert('Please select one field certification (hazard sustained, or claim not sustained) before submitting.');
                 return;
             }
 
@@ -1201,17 +1474,23 @@
             .then(data => {
                 if (data.success) {
                     var photoMsg = (typeof data.photos_saved === 'number' && data.photos_saved > 0)
-                        ? ('\n\n📷 Saved ' + data.photos_saved + ' evidence photo(s).')
+                        ? ('\n\nAttached ' + data.photos_saved + ' site photograph(s) to this certification.')
                         : '';
-                    alert('✅ ' + data.message + photoMsg + '\n\nVerification recorded. Jocel can review photos in Admin or a future staff view.');
+                    var smsMsg = '';
+                    if (Object.prototype.hasOwnProperty.call(data, 'sms_dispatched')) {
+                        smsMsg = data.sms_dispatched
+                            ? '\n\nA status SMS was queued for the applicant’s contact number (check SMSLog / server output if using console mode).'
+                            : '\n\nNo SMS was queued (missing or invalid mobile number, or gateway error).';
+                    }
+                    alert(data.message + photoMsg + smsMsg + '\n\nThe field certification has been recorded and is now available in Module 2 (Application & Evaluation) for staff review.');
                     closeVerificationModal();
                     setTimeout(() => location.reload(), 1000);
                 } else {
-                    alert('❌ Error: ' + data.error);
+                    alert('Submission could not be completed: ' + data.error);
                 }
             })
             .catch(error => {
-                alert('❌ Connection error: ' + error);
+                alert('Network or server error: ' + error);
                 console.error('Fetch error:', error);
             });
         }
@@ -1261,7 +1540,7 @@
                 <!DOCTYPE html>
                 <html>
                 <head>
-                    <title>Field Verification List - THA</title>
+                    <title>THA — Field verification roster</title>
                     <style>
                         body { font-family: Arial, sans-serif; margin: 20px; }
                         h1 { color: #1f2937; margin-bottom: 10px; }
@@ -1277,8 +1556,8 @@
                     </style>
                 </head>
                 <body>
-                    <h1>📋 Field Verification Sheet</h1>
-                    <p><strong>THA Field Team Verification List</strong></p>
+                    <h1>Field verification roster</h1>
+                    <p><strong>Talisay City Housing Authority — Field operations</strong></p>
                     <p>Printed: ${new Date().toLocaleString()}</p>
                     <p>Team Member: ${document.querySelector('.user-name')?.textContent || 'Field Team'}</p>
 
@@ -1315,12 +1594,12 @@
                     </table>
 
                     <div class="instructions">
-                        <h3>Field Verification Instructions:</h3>
+                        <h3>Instructions to field inspectors</h3>
                         <ol>
-                            <li><strong>Visit Each Location:</strong> Use this list to visit applicant addresses</li>
-                            <li><strong>Verify Status:</strong> Check if applicant is truly in danger zone</li>
-                            <li><strong>Record Decision:</strong> Back in the portal, click applicant → Select YES or NO</li>
-                            <li><strong>Submit Result:</strong> Your verification feeds to staff for review</li>
+                            <li><strong>Site visit:</strong> Use this roster to schedule inspections at declared addresses.</li>
+                            <li><strong>Inspection standard:</strong> Determine whether hazard-area status is supported on the ground.</li>
+                            <li><strong>Electronic return:</strong> In the THA portal, open <em>Open verification</em> for each case and lodge the certification.</li>
+                            <li><strong>Supervisory review:</strong> Intake staff will review the filed record and attachments.</li>
                         </ol>
                     </div>
                 </body>
@@ -1332,164 +1611,132 @@
 
         // Show "My Verifications Today"
         function showMyVerifications() {
-            const stats = {
-                total: document.querySelector('[id*="total_pending"]')?.textContent || '?',
-                certified: document.querySelector('[style*="color: #10b981"]')?.nextElementSibling?.textContent || '0',
-                notCertified: document.querySelector('[style*="color: #ef4444"]')?.nextElementSibling?.textContent || '0'
-            };
-
-            alert(`📊 Today's Verification Summary:\n\n✅ Certified (Danger Zone): ${stats.certified}\n❌ Not Certified (False Alarm): ${stats.notCertified}\n\n📝 Keep submitting your findings!`);
+            const vals = document.querySelectorAll('.widgets-grid > .widget .metric-value');
+            const pending = vals[0] ? vals[0].textContent.trim() : '—';
+            const certified = vals[1] ? vals[1].textContent.trim() : '—';
+            const notCert = vals[2] ? vals[2].textContent.trim() : '—';
+            alert(
+                'Desk summary (current counts)\n\n' +
+                'Pending field certification: ' + pending + '\n' +
+                'Certified — hazard sustained: ' + certified + '\n' +
+                'Not certified — claim not sustained: ' + notCert + '\n\n' +
+                'Please continue to file field reports promptly for THA tracking.'
+            );
         }
 </script>
 
     <!-- FIELD VERIFICATION MODAL -->
-    <div id="verificationModal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); overflow-y: auto; padding: 20px 0;">
-        <div style="background-color: white; margin: 40px auto; width: 90%; max-width: 700px; border-radius: 16px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2); overflow: hidden;">
-            <!-- Modal Header -->
-            <div style="background: linear-gradient(135deg, #1e40af 0%, #2563eb 50%, #1e3a8a 100%); color: white; padding: 32px 28px; border-bottom: 4px solid #1e40af;">
-                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
-                    <span style="font-size: 2rem;">🔍</span>
+    <div id="verificationModal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(15, 23, 42, 0.55); overflow-y: auto; padding: 1rem 0;">
+        <div class="tha-field-modal-inner" role="dialog" aria-labelledby="verificationModalTitle" aria-modal="true">
+            <div class="tha-field-modal-header">
+                <div class="tha-field-modal-header-row">
+                    <div class="tha-field-modal-crest" aria-hidden="true">THA</div>
                     <div>
-                        <h2 style="margin: 0; font-size: 1.4rem; font-weight: 800; letter-spacing: -0.5px;">Field Verification</h2>
-                        <p style="margin: 4px 0 0 0; font-size: 0.85rem; opacity: 0.95; font-weight: 500;">Module 1: Channel B Danger Zone Verification</p>
+                        <h2 id="verificationModalTitle">Hazard-area field certification</h2>
+                        <p>Module 1 — Talisay City Housing Authority / City DRRMO coordination</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Modal Body with Scroll -->
-            <div style="padding: 32px; max-height: 70vh; overflow-y: auto;">
+            <div class="tha-field-modal-body">
                 <input type="hidden" id="verificationModalApplicantId">
 
-                <!-- SECTION 1: APPLICANT'S CLAIM -->
-                <div style="margin-bottom: 28px; padding: 24px; background: linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%); border-left: 5px solid #0369a1; border-radius: 12px; border: 1px solid #bfdbfe;">
-                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 2px solid #93c5fd;">
-                        <span style="font-size: 1.3rem;">📋</span>
-                        <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #1e40af; letter-spacing: 0.3px;">APPLICANT'S CLAIM</h3>
-                    </div>
-
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
-                        <div style="background: white; padding: 16px; border-radius: 8px; border: 1px solid #dcfce7;">
-                            <label style="display: block; font-size: 0.7rem; font-weight: 700; color: #0369a1; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px;">👤 Full Name</label>
-                            <p id="verificationModalName" style="margin: 0; font-size: 1rem; font-weight: 600; color: #1f2937;"></p>
+                <div class="tha-field-claim-panel">
+                    <h3 class="tha-field-claim-title">Part I — Applicant’s sworn declaration (reference)</h3>
+                    <div class="tha-field-claim-grid">
+                        <div class="tha-field-claim-cell">
+                            <span class="fld-lbl">Full name</span>
+                            <p id="verificationModalName"></p>
                         </div>
-                        <div style="background: white; padding: 16px; border-radius: 8px; border: 1px solid #dcfce7;">
-                            <label style="display: block; font-size: 0.7rem; font-weight: 700; color: #0369a1; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px;">📍 Current Address</label>
-                            <p id="verificationModalAddress" style="margin: 0; font-size: 1rem; font-weight: 600; color: #1f2937;"></p>
+                        <div class="tha-field-claim-cell">
+                            <span class="fld-lbl">Present address</span>
+                            <p id="verificationModalAddress"></p>
                         </div>
-                        <div style="background: white; padding: 16px; border-radius: 8px; border: 1px solid #dcfce7;">
-                            <label style="display: block; font-size: 0.7rem; font-weight: 700; color: #0369a1; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px;">⚠️ Danger Zone Type</label>
-                            <p id="verificationModalDangerZone" style="margin: 0; font-size: 1rem; font-weight: 600; color: #1f2937;"></p>
+                        <div class="tha-field-claim-cell">
+                            <span class="fld-lbl">Declared hazard classification</span>
+                            <p id="verificationModalDangerZone"></p>
                         </div>
-                        <div style="background: white; padding: 16px; border-radius: 8px; border: 1px solid #dcfce7;">
-                            <label style="display: block; font-size: 0.7rem; font-weight: 700; color: #0369a1; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px;">📌 Declared Location</label>
-                            <p id="verificationModalLocation" style="margin: 0; font-size: 1rem; font-weight: 600; color: #1f2937;"></p>
+                        <div class="tha-field-claim-cell">
+                            <span class="fld-lbl">Declared location particulars</span>
+                            <p id="verificationModalLocation"></p>
                         </div>
                     </div>
                 </div>
 
-                <!-- SECTION 2: CDRRMO OFFICIAL CERTIFICATION -->
-                <div id="cdrrmoStatusBox" class="cdrrmo-cert-panel" style="display: none;">
+                <div id="cdrrmoStatusBox" class="cdrrmo-cert-panel tha-field-cdrrmo-panel" style="display: none;">
                     <div class="cdrrmo-cert-header">
-                        <span style="font-size: 1.3rem;">🏛️</span>
-                        <h3>CDRRMO CERTIFICATION</h3>
+                        <h3>CDRRMO certification status</h3>
                     </div>
                     <div class="cdrrmo-cert-body">
                         <div class="cdrrmo-cert-cell">
-                            <span class="cdrrmo-cert-label">Government Status</span>
+                            <span class="cdrrmo-cert-label">Government record status</span>
                             <p id="cdrrmoStatusText">—</p>
                         </div>
                         <div class="cdrrmo-cert-row2">
                             <div class="cdrrmo-cert-cell">
-                                <span class="cdrrmo-cert-label">📅 Date Verified</span>
+                                <span class="cdrrmo-cert-label">Date verified (CDRRMO)</span>
                                 <p id="cdrrmoDateText">—</p>
                             </div>
                             <div class="cdrrmo-cert-cell">
-                                <span class="cdrrmo-cert-label">🔖 Reference</span>
+                                <span class="cdrrmo-cert-label">Applicant reference no.</span>
                                 <p id="cdrrmoRefText">—</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- DIVIDER -->
-                <div style="height: 2px; background: linear-gradient(to right, transparent, #e5e7eb, transparent); margin: 28px 0;"></div>
+                <div class="tha-field-modal-divider" role="presentation"></div>
 
-                <!-- SECTION 3: RONDA FIELD VERIFICATION -->
                 <form id="verificationForm" onsubmit="submitVerification(event)">
-                    <div style="margin-bottom: 24px;">
-                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
-                            <span style="font-size: 1.3rem;">❓</span>
-                            <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #1f2937; letter-spacing: 0.3px;">YOUR FIELD VERIFICATION</h3>
-                        </div>
-                        <p style="margin: 0 0 20px 0; font-size: 0.9rem; color: #6b7280; line-height: 1.6;">Based on the applicant's claim and CDRRMO status above, physically verify: <strong style="color: #1f2937;">Is this applicant ACTUALLY in a danger zone?</strong></p>
+                    <h3 class="tha-field-section-heading">Part II — Field inspector’s certification</h3>
+                    <p class="tha-field-section-lead">After physical inspection, certify whether the applicant’s <strong>present address</strong> is located within the hazard area described above, consistent with City DRRMO mapping and THA intake rules.</p>
 
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
-                            <label style="padding: 20px; border: 2.5px solid #e5e7eb; background: white; border-radius: 10px; cursor: pointer; text-align: center; transition: all 0.3s; display: flex; flex-direction: column; align-items: center;">
-                                <input type="radio" name="verification_decision" value="certified" style="margin-bottom: 12px; width: 18px; height: 18px; cursor: pointer;">
-                                <span style="font-size: 2rem; margin-bottom: 8px;">✅</span>
-                                <strong style="color: #10b981; font-size: 1rem; margin-bottom: 4px;">YES, Certified</strong>
-                                <p style="margin: 0; font-size: 0.8rem; color: #6b7280;">Applicant IS in danger zone</p>
-                            </label>
-                            <label style="padding: 20px; border: 2.5px solid #e5e7eb; background: white; border-radius: 10px; cursor: pointer; text-align: center; transition: all 0.3s; display: flex; flex-direction: column; align-items: center;">
-                                <input type="radio" name="verification_decision" value="not_certified" style="margin-bottom: 12px; width: 18px; height: 18px; cursor: pointer;">
-                                <span style="font-size: 2rem; margin-bottom: 8px;">❌</span>
-                                <strong style="color: #ef4444; font-size: 1rem; margin-bottom: 4px;">NO, Not Certified</strong>
-                                <p style="margin: 0; font-size: 0.8rem; color: #6b7280;">FALSE ALARM</p>
-                            </label>
-                        </div>
-
-                        <!-- Add hover effects with CSS -->
-                        <style>
-                            label[style*="display: grid"] label:hover {
-                                border-color: #3b82f6 !important;
-                                box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15) !important;
-                                transform: translateY(-2px);
-                            }
-                        </style>
+                    <div class="tha-field-decision-grid">
+                        <label class="tha-field-decision-label">
+                            <input type="radio" name="verification_decision" value="certified">
+                            <strong class="tha-field-decision-affirm">Certify — hazard sustained</strong>
+                            <p class="tha-field-decision-sub">On-site conditions support the declared hazard-area classification.</p>
+                        </label>
+                        <label class="tha-field-decision-label">
+                            <input type="radio" name="verification_decision" value="not_certified">
+                            <strong class="tha-field-decision-negate">Certify — claim not sustained</strong>
+                            <p class="tha-field-decision-sub">Inspection does not support hazard-area status (administrative re-queue applies).</p>
+                        </label>
                     </div>
 
                     <div class="field-evidence-section">
-                        <span class="field-evidence-label">📷 Site evidence (danger zone)</span>
-                        <p class="field-evidence-hint">Use your device camera or upload photos from your gallery. Images are stored with this verification (JPEG/PNG/WebP, up to 12 files, 6&nbsp;MB each). Requires HTTPS or localhost for camera access in most browsers.</p>
+                        <span class="field-evidence-label">Site photographs (supporting evidence)</span>
+                        <p class="field-evidence-hint">You may capture images using this device or attach files from storage. Accepted types: JPEG, PNG, or WebP. Maximum twelve (12) files, six (6) MB each. Camera access generally requires HTTPS or <code>localhost</code>.</p>
                         <video id="fieldCameraVideo" playsinline autoplay muted style="display: none;"></video>
                         <canvas id="fieldCameraCanvas" style="display: none;"></canvas>
                         <div class="field-evidence-buttons">
-                            <button type="button" id="fieldCameraStartBtn" class="table-verify-btn">Open camera</button>
-                            <button type="button" id="fieldCameraCaptureBtn" class="table-verify-btn" style="display: none;">Capture photo</button>
-                            <button type="button" id="fieldCameraStopBtn" class="table-verify-btn" style="display: none; background: linear-gradient(135deg, #64748b 0%, #475569 100%);">Close camera</button>
+                            <button type="button" id="fieldCameraStartBtn" class="table-verify-btn">Activate camera</button>
+                            <button type="button" id="fieldCameraCaptureBtn" class="table-verify-btn" style="display: none;">Capture frame</button>
+                            <button type="button" id="fieldCameraStopBtn" class="table-verify-btn" style="display: none; background: linear-gradient(135deg, #64748b 0%, #475569 100%);">Stop camera</button>
                         </div>
                         <input type="file" id="fieldEvidenceFileInput" accept="image/jpeg,image/png,image/webp,image/*" multiple style="display: none;">
-                        <button type="button" class="field-evidence-file-btn" id="fieldEvidenceFilePickBtn">Upload from gallery</button>
+                        <button type="button" class="field-evidence-file-btn" id="fieldEvidenceFilePickBtn">Attach from device</button>
                         <div id="fieldEvidenceStrip" class="field-evidence-strip"></div>
                     </div>
 
-                    <div style="margin-bottom: 24px;">
-                        <label for="verificationNotes" style="display: block; font-size: 0.75rem; font-weight: 700; color: #374151; text-transform: uppercase; margin-bottom: 10px; letter-spacing: 0.5px;">📝 Field Notes (Optional)</label>
-                        <textarea id="verificationNotes" name="verification_notes" placeholder="Document your findings: observations, conditions, hazards, etc..." style="width: 100%; padding: 14px; border: 1.5px solid #e5e7eb; border-radius: 8px; font-size: 0.9rem; font-family: inherit; resize: vertical; height: 90px; transition: all 0.2s;" onfocus="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 3px rgba(59,130,246,0.1)'"></textarea>
+                    <div style="margin-bottom: 1.5rem;">
+                        <label for="verificationNotes" style="display: block; font-size: 0.7rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 0.5rem; letter-spacing: 0.06em;">Field inspection notes (optional)</label>
+                        <textarea id="verificationNotes" name="verification_notes" placeholder="Observed conditions, landmarks, weather, interview notes, and other material facts." style="width: 100%; padding: 0.75rem 0.875rem; border: 1px solid #cbd5e1; border-radius: 2px; font-size: 0.875rem; font-family: inherit; resize: vertical; min-height: 5.5rem;" onfocus="this.style.borderColor='#64748b'; this.style.boxShadow='0 0 0 2px rgba(100,116,139,0.15)'" onblur="this.style.borderColor='#cbd5e1'; this.style.boxShadow='none'"></textarea>
                     </div>
 
-                    <div style="background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border: 2px solid #fcd34d; border-radius: 10px; padding: 16px; margin-bottom: 24px; font-size: 0.9rem; color: #92400e;">
-                        <div style="display: flex; gap: 12px;">
-                            <span style="font-size: 1.5rem;">⚠️</span>
-                            <div>
-                                <strong style="display: block; font-size: 1rem; margin-bottom: 6px;">Verification Workflow:</strong>
-                                <ol style="margin: 0; padding-left: 20px; font-size: 0.85rem; line-height: 1.6;">
-                                    <li>Review applicant's claimed danger zone details above</li>
-                                    <li>Check CDRRMO's official government certification</li>
-                                    <li>Based on your field visit: Select YES or NO</li>
-                                    <li>Jocel (staff) will review and make final decision</li>
-                                </ol>
-                            </div>
-                        </div>
+                    <div class="tha-field-workflow-box">
+                        <strong>Procedure reminder</strong>
+                        <ol>
+                            <li>Confirm the declaration in Part I against conditions on the ground.</li>
+                            <li>Review any CDRRMO record status shown above.</li>
+                            <li>Select one certification in Part II and attach photographs where practicable.</li>
+                            <li>Submit for supervisory review through Applicant Intake.</li>
+                        </ol>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                        <button type="submit" style="background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%); color: white; padding: 14px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 1rem; transition: all 0.3s; box-shadow: 0 4px 12px rgba(30, 64, 175, 0.2);">
-                            📤 Submit Verification
-                        </button>
-                        <button type="button" onclick="closeVerificationModal()" style="background: #f3f4f6; color: #374151; padding: 14px 20px; border: 2px solid #e5e7eb; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 1rem; transition: all 0.3s;">
-                            ✕ Cancel
-                        </button>
+                    <div class="tha-field-form-actions">
+                        <button type="submit" class="tha-field-btn-submit">Submit field certification</button>
+                        <button type="button" class="tha-field-btn-cancel" onclick="closeVerificationModal()">Close without submitting</button>
                     </div>
                 </form>
             </div>

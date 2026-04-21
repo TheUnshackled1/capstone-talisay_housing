@@ -1,0 +1,29 @@
+{% extends 'staff_base.html' %}
+
+{% block title %}Error{% endblock %}
+{% block page_title %}Something went wrong{% endblock %}
+{% block page_description %}<p class="page-subtitle">Please read the message below and try again.</p>{% endblock %}
+
+{% block content %}
+<div style="max-width: 36rem; margin: 0 auto; text-align: center; padding: 2rem 1rem;">
+    <h2 style="margin: 0 0 1rem; font-size: 1.5rem; font-weight: 700; color: #dc2626;">Error</h2>
+
+    {% if error_message %}
+    <p style="margin: 0 0 1.5rem; font-size: 1rem; color: var(--gray-700); line-height: 1.6;">{{ error_message }}</p>
+    {% elif error %}
+    <p style="margin: 0 0 1.5rem; font-size: 1rem; color: var(--gray-700); line-height: 1.6;">{{ error }}</p>
+    {% else %}
+    <p style="margin: 0 0 1.5rem; font-size: 1rem; color: var(--gray-700); line-height: 1.6;">
+        Something went wrong. Please try again or contact support if the problem continues.
+    </p>
+    {% endif %}
+
+    {% if error_code %}
+    <p style="margin: 0 0 1.5rem; font-size: 0.875rem; color: var(--gray-500);">Error code: {{ error_code }}</p>
+    {% endif %}
+
+    <a href="{% url 'accounts:dashboard' %}" style="display: inline-block; padding: 0.625rem 1.25rem; background: var(--primary-600, #2563eb); color: white; border-radius: 8px; font-weight: 600; font-size: 0.875rem;">
+        Return to dashboard
+    </a>
+</div>
+{% endblock %}

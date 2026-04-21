@@ -1174,26 +1174,36 @@ def dashboard_field(request):
         applicant__status__in=['eligible', 'pending_cdrrmo', 'requirements']  # Passed eligibility
     ).exclude(
         applicant__danger_zone_type=''  # Empty string means not claimed
-    ).select_related('applicant', 'applicant__registered_by').order_by('-requested_at')
+    ).select_related(
+        'applicant', 'applicant__registered_by', 'applicant__barangay'
+    ).order_by('-requested_at')
+
+    pending_cert_list = list(pending_certifications)
+    total_pending_certs = len(pending_cert_list)
+    # Oldest certification request first — useful field visit order before a QueueEntry exists
+    visit_order_by_applicant_id = {}
+    for order, c in enumerate(
+        sorted(pending_cert_list, key=lambda x: x.requested_at),
+        start=1,
+    ):
+        visit_order_by_applicant_id[c.applicant_id] = order
 
     pending_verifications = []
-    for cert in pending_certifications:
+    for cert in pending_cert_list:
         days_pending = (timezone.now() - cert.requested_at).days
 
-        # Calculate document count (7 required docs)
-        doc_count = sum([
-            cert.applicant.doc_brgy_residency,
-            cert.applicant.doc_brgy_indigency,
-            cert.applicant.doc_cedula,
-            cert.applicant.doc_police_clearance,
-            cert.applicant.doc_no_property,
-            cert.applicant.doc_2x2_picture,
-            cert.applicant.doc_sketch_location,
-        ])
-
-        # Get queue position if exists
+        # Priority QueueEntry is only created after eligibility / CDRRMO staff steps — not at registration.
+        # Show assigned priority number when present; otherwise show FIFO field-visit order among pending cases.
         queue_entry = cert.applicant.queue_entries.filter(status='active').first()
-        queue_position = queue_entry.position if queue_entry else '—'
+        if queue_entry:
+            queue_position = f'Priority no. {queue_entry.position}'
+        else:
+            visit_n = visit_order_by_applicant_id.get(cert.applicant_id, 0)
+            queue_position = (
+                f'Pre-assignment · field visit order {visit_n} of {total_pending_certs}'
+                if total_pending_certs
+                else 'Pre-assignment'
+            )
 
         pending_verifications.append({
             'index': pending_certifications.filter(requested_at__gte=cert.requested_at).count(),
@@ -1213,7 +1223,6 @@ def dashboard_field(request):
             'queue_position': queue_position,
             'staff_handled': cert.applicant.registered_by.get_full_name() if cert.applicant.registered_by else '—',
             'staff_position': cert.applicant.registered_by.get_position_display() if cert.applicant.registered_by else '—',
-            'doc_count': doc_count,
             'sms_status': '✓ Sent' if cert.applicant.registration_sms_sent else '✗ Not Sent',
             'created_at': cert.requested_at,
             'days_pending': days_pending,

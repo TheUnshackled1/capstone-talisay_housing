@@ -222,15 +222,11 @@
     .applicants-table th:nth-child(6),
     .applicants-table td:nth-child(6) { width: 13%; } /* Channel */
     .applicants-table th:nth-child(7),
-    .applicants-table td:nth-child(7) { width: 9%; } /* Eligibility */
+    .applicants-table td:nth-child(7) { width: 15%; } /* Staff Handled */
     .applicants-table th:nth-child(8),
-    .applicants-table td:nth-child(8) { width: 8%; } /* Queue */
+    .applicants-table td:nth-child(8) { width: 10%; } /* SMS */
     .applicants-table th:nth-child(9),
-    .applicants-table td:nth-child(9) { width: 13%; } /* Staff Handled */
-    .applicants-table th:nth-child(10),
-    .applicants-table td:nth-child(10) { width: 8%; } /* SMS */
-    .applicants-table th:nth-child(11),
-    .applicants-table td:nth-child(11) { width: 5%; text-align: center; } /* Action */
+    .applicants-table td:nth-child(9) { width: 7%; text-align: center; } /* Action */
 
     .btn-review {
         display: inline-flex;
@@ -746,6 +742,75 @@
     .handled-by-avatar.second-member { background: #3b82f6; }
     .handled-by-avatar.fourth-member { background: #10b981; }
     .handled-by-avatar.other { background: #94a3b8; }
+
+    /* Applicant review modal — THA / Module 1 formal presentation (scoped to #reviewModal) */
+    #reviewModal .modal-content.tha-review-modal {
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.18);
+    }
+    #reviewModal .tha-review-modal-kicker {
+        font-size: 0.625rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #64748b;
+        margin: 0 0 0.375rem 0;
+    }
+    #reviewModal .modal-content.tha-review-modal .modal-header {
+        border-bottom: 1px solid #e2e8f0;
+        padding-bottom: 0.75rem;
+        margin-bottom: 0;
+    }
+    #reviewModal .modal-content.tha-review-modal .modal-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #0f172a;
+        letter-spacing: -0.02em;
+    }
+    #reviewModal .modal-content.tha-review-modal .modal-subtitle {
+        font-size: 0.8125rem;
+        color: #475569;
+    }
+    #reviewModal .tha-review-section-title {
+        font-size: 0.6875rem;
+        font-weight: 600;
+        color: #475569;
+        margin: 0 0 0.75rem 0;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+    }
+    #reviewModal .tha-review-panel {
+        border-radius: 0.375rem;
+        border: 1px solid #e2e8f0;
+        background: #f8fafc;
+        padding: 0.875rem 1rem;
+    }
+    #reviewModal .tha-review-panel--note {
+        background: #eff6ff;
+        border-color: #bfdbfe;
+        border-left-width: 3px;
+        border-left-color: #1d4ed8;
+    }
+    #reviewModal .tha-review-panel--success {
+        background: #f0fdf4;
+        border-color: #bbf7d0;
+    }
+    #reviewModal .tha-review-panel-label {
+        font-size: 0.6875rem;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin: 0 0 0.25rem 0;
+    }
+    #reviewModal .tha-review-panel p {
+        margin: 0;
+    }
+    #reviewModal .modal-content.tha-review-modal .modal-footer {
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        align-items: center;
+    }
 </style>
 {% endblock %}
 
@@ -800,20 +865,19 @@
     <div class="page-header">
         <div>
             <h1 class="page-title">ISF Recording Management</h1>
-            <p class="page-subtitle">Module 1 — All intake channels: Danger Zone, Walk-in</p>
         </div>
         <button class="btn-primary-add" onclick="openAddModal()">
             <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="12" y1="5" x2="12" y2="19"></line>
                 <line x1="5" y1="12" x2="19" y2="12"></line>
             </svg>
-            Register New Applicant
+            Register applicant
         </button>
     </div>
 
     <!-- Stats Grid -->
     <div class="stats-grid">
-        <div class="stat-card" style="display: flex; align-items: center; gap: 0.75rem;">
+        <div class="stat-card" style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;" onclick="filterReadyForModule2()" title="Show records ready for Module 2 handoff">
             <div style="width: 40px; height: 40px; background: #dbeafe; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center;">
                 <svg style="width: 20px; height: 20px; color: #2563eb;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -828,28 +892,15 @@
             </div>
         </div>
         <div class="stat-card" style="display: flex; align-items: center; gap: 0.75rem;">
-            <div style="width: 40px; height: 40px; background: #f3e8ff; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center;">
-                <svg style="width: 20px; height: 20px; color: #7c3aed;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+            <div style="width: 40px; height: 40px; background: #dcfce7; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center;">
+                <svg style="width: 20px; height: 20px; color: #15803d;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M5 12h14"></path>
+                    <path d="m12 5 7 7-7 7"></path>
                 </svg>
             </div>
             <div>
-                <p class="stat-label">Priority Queue</p>
-                <p class="stat-value purple">{{ stats.priority }}</p>
-            </div>
-        </div>
-        <div class="stat-card" style="display: flex; align-items: center; gap: 0.75rem;">
-            <div style="width: 40px; height: 40px; background: #ccfbf1; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center;">
-                <svg style="width: 20px; height: 20px; color: #0d9488;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                    <line x1="16" y1="2" x2="16" y2="6"></line>
-                    <line x1="8" y1="2" x2="8" y2="6"></line>
-                    <line x1="3" y1="10" x2="21" y2="10"></line>
-                </svg>
-            </div>
-            <div>
-                <p class="stat-label">Walk-in Queue</p>
-                <p class="stat-value teal">{{ stats.walkin }}</p>
+                <p class="stat-label">Ready for Module 2 handoff</p>
+                <p class="stat-value" style="color:#15803d;">{{ stats.ready_for_module2 }}</p>
             </div>
         </div>
         <div class="stat-card alert" style="display: flex; align-items: center; gap: 0.75rem;">
@@ -931,6 +982,7 @@
             <option value="Pending">Pending</option>
             <option value="Pending CDRRMO">Pending CDRRMO</option>
             <option value="CDRRMO Overdue">⚠️ CDRRMO Overdue (>14 days)</option>
+            <option value="Ready for Module 2">Ready for Module 2 handoff</option>
         </select>
         <select class="filter-select" id="filterBarangay" onchange="filterTable()">
             <option value="all">All Barangays</option>
@@ -958,8 +1010,6 @@
                 <th>Reference #</th>
                 <th>Full Name</th>
                 <th>Channel</th>
-                <th>Eligibility</th>
-                <th>Queue</th>
                 <th>Staff Handled</th>
                 <th>SMS</th>
                 <th>Action</th>
@@ -970,6 +1020,7 @@
             <tr 
                 data-channel="{{ applicant.channel }}" 
                 data-status="{{ applicant.eligibilityStatus }}"
+                data-module2-ready="{{ applicant.readyForModule2|yesno:'true,false' }}"
                 data-barangay="{{ applicant.barangay }}"
                 data-cdrrmo-overdue="{{ applicant.isCdrrmoFlagged|yesno:'true,false' }}"
                 data-searchable="{{ applicant.fullName|lower }} {{ applicant.referenceNumber|lower }} {{ applicant.barangay|lower }}"
@@ -988,41 +1039,6 @@
                         {% endif %}
                     {% else %}
                         <span class="badge channel-c">Channel C — Walk-in</span>
-                    {% endif %}
-                </td>
-                <td>
-                    {% if applicant.channel == 'B' %}
-                        {% if applicant.dangerZoneType %}
-                            <span class="badge status-pending-cdrrmo">Pending CDRRMO</span>
-                            {% if applicant.isCdrrmoFlagged %}
-                                <span class="badge cdrrmo-overdue" style="background: #fef2f2; color: #dc2626; border: 1px solid #fca5a5; margin-left: 0.25rem; font-size: 0.5625rem;" title="Pending for {{ applicant.cdrrmoDaysPending }} days (>14 days)">
-                                    ⚠️ {{ applicant.cdrrmoDaysPending }}d
-                                </span>
-                            {% endif %}
-                        {% else %}
-                            <span class="badge status-eligible">Eligible to Proceed</span>
-                        {% endif %}
-                    {% elif applicant.eligibilityStatus == 'Eligible' %}
-                        <span class="badge status-eligible">Eligible</span>
-                    {% elif applicant.eligibilityStatus == 'Disqualified' %}
-                        <span class="badge status-disqualified">Disqualified</span>
-                    {% else %}
-                        <span class="badge status-pending">Pending</span>
-                    {% endif %}
-                </td>
-                <td>
-                    {% if applicant.queueType == 'Priority' %}
-                        <span class="badge queue-priority">Priority {% if applicant.queuePosition %}#{{ applicant.queuePosition }}{% endif %}</span>
-                    {% elif applicant.queueType == 'Walk-in' %}
-                        <span class="badge queue-walkin">Walk-in {% if applicant.queuePosition %}#{{ applicant.queuePosition }}{% endif %}</span>
-                    {% elif applicant.queueType == 'Standby' %}
-                        <span class="badge queue-standby">Standby</span>
-                    {% elif applicant.eligibilityStatus == 'Pending' or applicant.eligibilityStatus == 'Pending CDRRMO' %}
-                        <span class="badge queue-pending">Awaiting</span>
-                    {% elif applicant.eligibilityStatus == 'Disqualified' %}
-                        <span class="badge" style="background: #fee2e2; color: #991b1b;">N/A</span>
-                    {% else %}
-                        <span class="badge queue-none" title="No active Priority or Walk-in queue entry. Eligible applicants appear here until they are placed in a queue.">Not in queue</span>
                     {% endif %}
                 </td>
                 <td>
@@ -1074,9 +1090,10 @@
 
 <!-- Review/Edit Modal - Combined Detail & Review -->
 <div class="modal-overlay" id="reviewModal" onclick="closeReviewModal()">
-    <div class="modal-content" style="max-width: 48rem; max-height: 90vh; overflow-y: auto;" onclick="event.stopPropagation()">
+    <div class="modal-content tha-review-modal" style="max-width: 48rem; max-height: 90vh; overflow-y: auto;" onclick="event.stopPropagation()">
         <div class="modal-header" style="position: sticky; top: 0; background: white; z-index: 10;">
             <div>
+                <p class="tha-review-modal-kicker">Talisay City Housing Authority · Module 1 — Applicant record</p>
                 <h2 class="modal-title" id="reviewName"></h2>
                 <p class="modal-subtitle" id="reviewReference"></p>
             </div>
@@ -1099,19 +1116,17 @@
                 <div id="dangerZoneReviewSection" style="display: none;">
                     <!-- Status Badges Row -->
                     <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; align-items: center;">
-                        <span class="status-badge status-info" id="reviewChannelBadge" style="background: #e0f2fe; color: #0369a1; border: 1px solid #0ea5e9;">Channel B — Walk-in pathway</span>
-                        <span class="status-badge" id="reviewEligibilityBadgeB"></span>
-                        <span class="status-badge" id="reviewQueueBadgeB" style="display: none;"></span>
+                        <span class="status-badge status-info" id="reviewChannelBadge" style="background: #e0f2fe; color: #0369a1; border: 1px solid #0ea5e9;">Channel B — Hazard pathway (classification pending)</span>
                     </div>
                     
                     <!-- Editable Fields for Channel B -->
                     <div class="form-grid" style="margin-bottom: 1rem;">
                         <div class="form-group" style="grid-column: span 2;">
-                            <label class="form-label">Full Name</label>
+                            <label class="form-label">Complete name of applicant</label>
                             <input type="text" class="form-input" id="reviewFullNameB" name="full_name_b" readonly>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Barangay</label>
+                            <label class="form-label">Barangay of residence</label>
                             <select class="form-select" id="reviewBarangayB" name="barangay_b" disabled>
                                 <option value="">Select barangay...</option>
                                 {% for brgy in barangays %}
@@ -1120,34 +1135,33 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Monthly Income (₱)</label>
-                            <input type="number" class="form-input" id="reviewIncomeB" name="monthly_income_b" min="0" step="0.01" readonly>
-                            <span class="help-text" id="reviewIncomeDisplayB" aria-live="polite"></span>
+                            <label class="form-label">Declared monthly household income (PHP)</label>
+                            <input type="text" class="form-input" id="reviewIncomeB" name="monthly_income_b" inputmode="decimal" pattern="[0-9,]*" readonly>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Household Size</label>
+                            <label class="form-label">Household size</label>
                             <input type="number" class="form-input" id="reviewHouseholdB" name="household_size_b" min="1" readonly>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Years Residing</label>
+                            <label class="form-label">Years of residence in Talisay City</label>
                             <input type="number" class="form-input" id="reviewYearsB" name="years_residing_b" min="0" readonly>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Contact Number</label>
+                            <label class="form-label">Mobile / contact number</label>
                             <input type="tel" class="form-input" id="reviewPhoneB" name="phone_number_b" readonly>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Current Address</label>
+                            <label class="form-label">Current address (situs)</label>
                             <input type="text" class="form-input" id="reviewAddressB" name="current_address_b" readonly>
                         </div>
                     </div>
                     
                     <!-- Danger Zone Specific Fields -->
                     <div class="danger-zone-info" style="border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-bottom: 1rem; display: none;">
-                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">Danger Zone Information</h4>
+                        <h4 class="tha-review-section-title">Declared hazard-area particulars</h4>
                         <div class="form-grid">
                             <div class="form-group">
-                                <label class="form-label">Danger Zone Type</label>
+                                <label class="form-label">Hazard classification</label>
                                 <select class="form-select" id="reviewDangerType" name="danger_zone_type" disabled>
                                     <option value="">Select type...</option>
                                     <option value="riverside">Riverside / Riverbank</option>
@@ -1160,104 +1174,157 @@
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label class="form-label">Specific Location</label>
+                                <label class="form-label">Specific location / landmark</label>
                                 <input type="text" class="form-input" id="reviewDangerLocation" name="danger_zone_location" readonly>
                             </div>
                         </div>
                     </div>
 
                     <!-- Not in Danger Zone Message -->
-                    <div class="not-in-danger-zone-msg" style="display: none; background: #dcfce7; border: 1px solid #86efac; border-radius: 0.375rem; padding: 1rem; margin-bottom: 1rem;">
-                        <p style="color: #166534; font-size: 0.9rem; margin: 0;">
-                            <strong>✓ Not in Danger Zone</strong><br>
-                            Applicant is not located in a danger zone and does not require CDRRMO certification.
+                    <div class="not-in-danger-zone-msg tha-review-panel tha-review-panel--success" style="display: none; margin-bottom: 1rem;">
+                        <p style="color: #14532d; font-size: 0.875rem;">
+                            <strong>No hazard declaration on file</strong><br>
+                            <span style="font-size: 0.8125rem;">The applicant did not declare residence in or adjacent to a mapped hazard area. CDRRMO field certification is therefore not required for this record.</span>
                         </p>
                     </div>
 
                     <!-- CDRRMO Certification Status -->
-                    <div class="cdrrmo-certification-section" style="border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-bottom: 1rem; display: none;">
-                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">⚠️ CDRRMO Field Verification</h4>
+                    <div class="cdrrmo-certification-section" hidden style="border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-bottom: 1rem; display: none;">
+                        <h4 class="tha-review-section-title">CDRRMO certification and verification</h4>
 
                         <!-- Declared Danger Zone Info -->
-                        <div style="background: #eff6ff; border-left: 4px solid #0369a1; padding: 0.75rem; margin-bottom: 0.75rem; border-radius: 0.375rem;">
-                            <p style="font-size: 0.75rem; color: #0369a1; margin: 0;"><strong>Declared Location:</strong></p>
-                            <p id="cdrrmoDeclarationType" style="font-size: 0.875rem; color: #1e40af; margin: 0.25rem 0 0 0; font-weight: 500;">—</p>
+                        <div class="tha-review-panel tha-review-panel--note" style="margin-bottom: 0.75rem;">
+                            <p class="tha-review-panel-label" style="color: #1e40af;">Declared classification and situs</p>
+                            <p id="cdrrmoDeclarationType" style="font-size: 0.875rem; color: #1e3a8a; margin: 0.25rem 0 0 0; font-weight: 600;">—</p>
                             <p id="cdrrmoDecLocation" style="font-size: 0.875rem; color: #1e40af; margin: 0.25rem 0 0 0;">—</p>
                         </div>
 
+                        <!-- Workflow timeline: Intake -> CDRRMO disposition -> staff finalization -> Module 2 -->
+                        <div id="cdrrmoWorkflowTimelineBox" style="margin-bottom: 0.75rem; border: 1px solid #dbeafe; background: #f8fbff; border-radius: 0.375rem; padding: 0.75rem 0.875rem;">
+                            <p class="tha-review-panel-label" style="color: #1e40af; margin-bottom: 0.45rem;">Process workflow status</p>
+                            <div id="cdrrmoWorkflowTimelineBody" style="font-size: 0.765rem; color: #334155; line-height: 1.5;"></div>
+                        </div>
+
+                        {% if can_modify %}
+                        <!-- Official CDRRMO paperwork received at THA (while field disposition is still pending) -->
+                        <div id="officeCdrrmoReceiptPanel" style="display: none; margin-bottom: 0.75rem; border: 1px solid #cbd5e1; background: #f8fafc; border-radius: 0.375rem; padding: 0.875rem 1rem;">
+                            <p class="tha-review-panel-label" style="color: #334155;">Official CDRRMO certification — office receipt</p>
+                            <p style="font-size: 0.8125rem; color: #475569; margin: 0 0 0.75rem 0; line-height: 1.45;">
+                                Use this when signed or stamped CDRRMO certification has been <strong>physically received and filed</strong> at the Talisay Housing Authority intake office for this applicant, and the record should be marked as hazard-area certified <em>before</em> the field unit submits an on-site report in the system.
+                            </p>
+                            <label style="font-size: 0.75rem; color: #64748b; font-weight: 600; display: block; margin-bottom: 0.375rem;">Receiving remarks (optional)</label>
+                            <input type="text" id="officeCdrrmoReceiptNotes" class="form-input" placeholder="e.g., DRRMO certification no., date of CDRRMO letter, receiving personnel" style="font-size: 0.75rem; padding: 0.375rem; margin-bottom: 0.75rem;">
+                            <button type="button" class="btn-modal" onclick="recordOfficeCdrrmoCertified()" style="background: #1d4ed8; color: white; border: 1px solid #1e40af; padding: 0.5rem 0.875rem; font-size: 0.75rem; font-weight: 600;">
+                                Record CDRRMO certification received at office
+                            </button>
+                            <p style="font-size: 0.6875rem; color: #64748b; margin: 0.5rem 0 0 0; line-height: 1.4;">
+                                This action files the same disposition as a <strong>certified</strong> CDRRMO finding: the applicant is marked eligible and assigned a priority queue position where applicable, and an SMS is sent if a mobile number is on record.
+                            </p>
+                        </div>
+                        {% endif %}
+
                         <!-- Current Verification Status -->
-                        <div id="cdrrmoStatusBox" class="info-note" style="background: #fef3c7; border-color: #fcd34d; margin-bottom: 0.75rem;">
-                            <p class="info-note-text" style="color: #92400e; margin: 0;" id="cdrrmoStatusText">
-                                <strong>⏳ Pending Field Verification</strong><br>
-                                <span style="font-size: 0.7rem;">Awaiting ronda team to visit and verify the danger zone claim.</span>
+                        <div id="cdrrmoStatusBox" class="info-note" style="background: #fefce8; border-color: #fde047; margin-bottom: 0.75rem;">
+                            <p class="info-note-text" style="color: #854d0e; margin: 0;" id="cdrrmoStatusText">
+                                <strong>Awaiting CDRRMO field verification</strong><br>
+                                <span style="font-size: 0.75rem;">The City Disaster Risk Reduction and Management Office has not yet transmitted an on-site verification disposition for this declaration.</span>
                             </p>
                         </div>
 
-                        <!-- Ronda Team Result (shown when verified) -->
+                        <!-- Official CDRRMO paperwork filed at THA intake (separate from field/Ronda inspection) -->
+                        <div id="officeIntakeResultBox" style="display: none; background: #f8fafc; border: 1px solid #94a3b8; border-radius: 0.375rem; padding: 0.75rem; margin-bottom: 0.75rem;">
+                            <p style="font-size: 0.75rem; color: #334155; margin: 0 0 0.5rem 0;"><strong>Official CDRRMO certification — THA intake file</strong></p>
+                            <p style="font-size: 0.7rem; color: #64748b; margin: 0 0 0.75rem 0; line-height: 1.45;">This record reflects signed or stamped CDRRMO certification <strong>received and logged at the Talisay Housing Authority intake office</strong>. It is not the field unit’s on-site inspection report and does not include Ronda photographic evidence.</p>
+                            <div style="background: white; border: 1px solid #e2e8f0; border-radius: 0.375rem; padding: 0.75rem;">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.75rem;">
+                                    <div>
+                                        <label style="font-size: 0.625rem; color: #64748b; font-weight: 600;">Recorded by (intake):</label>
+                                        <p id="officeIntakeRecordedBy" style="font-size: 0.875rem; color: #1f2937; margin: 0.25rem 0 0 0; font-weight: 500;">—</p>
+                                    </div>
+                                    <div>
+                                        <label style="font-size: 0.625rem; color: #64748b; font-weight: 600;">Date filed at intake:</label>
+                                        <p id="officeIntakeFiledDate" style="font-size: 0.875rem; color: #1f2937; margin: 0.25rem 0 0 0;">—</p>
+                                    </div>
+                                </div>
+                                <div style="margin-bottom: 0.75rem;">
+                                    <label style="font-size: 0.625rem; color: #64748b; font-weight: 600;">Disposition:</label>
+                                    <div id="officeIntakeDisposition" style="display: flex; gap: 0.5rem; margin-top: 0.5rem; flex-wrap: wrap;">
+                                        <span id="officeIntakeCertifiedBadge" style="display: none; background: #dcfce7; color: #14532d; padding: 0.375rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600;">Certified — hazard area (intake file)</span>
+                                        <span id="officeIntakeNotCertifiedBadge" style="display: none; background: #fee2e2; color: #7f1d1d; padding: 0.375rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600;">Not certified (intake file)</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label style="font-size: 0.625rem; color: #64748b; font-weight: 600;">Intake receiving remarks:</label>
+                                    <p id="officeIntakeNotesDisplay" style="font-size: 0.875rem; color: #1f2937; margin: 0.25rem 0 0 0; border-left: 3px solid #94a3b8; padding-left: 0.75rem;">—</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Ronda / field unit on-site result (photos + inspection remarks) -->
                         <div id="rondaTeamResultBox" style="display: none; background: #f0fdf4; border: 1px solid #86efac; border-radius: 0.375rem; padding: 0.75rem; margin-bottom: 0.75rem;">
-                            <p style="font-size: 0.75rem; color: #16a34a; margin: 0 0 0.5rem 0;"><strong>✓ Ronda Team Verification:</strong></p>
+                            <p style="font-size: 0.75rem; color: #166534; margin: 0 0 0.5rem 0;"><strong>Field unit verification report (Ronda)</strong></p>
                             <div style="background: white; border: 1px solid #dcfce7; border-radius: 0.375rem; padding: 0.75rem;">
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.75rem;">
                                     <div>
-                                        <label style="font-size: 0.625rem; color: #64748b; font-weight: 600;">Verified By:</label>
+                                        <label style="font-size: 0.625rem; color: #64748b; font-weight: 600;">Recorded by:</label>
                                         <p id="rondaVerifiedBy" style="font-size: 0.875rem; color: #1f2937; margin: 0.25rem 0 0 0; font-weight: 500;">—</p>
                                     </div>
                                     <div>
-                                        <label style="font-size: 0.625rem; color: #64748b; font-weight: 600;">Date Verified:</label>
+                                        <label style="font-size: 0.625rem; color: #64748b; font-weight: 600;">Date of field visit:</label>
                                         <p id="rondaVerifiedDate" style="font-size: 0.875rem; color: #1f2937; margin: 0.25rem 0 0 0;">—</p>
                                     </div>
                                 </div>
                                 <div style="margin-bottom: 0.75rem;">
-                                    <label style="font-size: 0.625rem; color: #64748b; font-weight: 600;">Ronda Finding:</label>
+                                    <label style="font-size: 0.625rem; color: #64748b; font-weight: 600;">Field disposition:</label>
                                     <div id="rondaDecision" style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
-                                        <span id="rondaCertifiedBadge" style="display: none; background: #dcfce7; color: #166534; padding: 0.375rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600;">✓ Certified - Danger Zone Confirmed</span>
-                                        <span id="rondaNotCertifiedBadge" style="display: none; background: #fee2e2; color: #991b1b; padding: 0.375rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600;">✗ Not Certified - FALSE ALARM</span>
+                                        <span id="rondaCertifiedBadge" style="display: none; background: #dcfce7; color: #14532d; padding: 0.375rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600;">Certified — hazard area confirmed</span>
+                                        <span id="rondaNotCertifiedBadge" style="display: none; background: #fee2e2; color: #7f1d1d; padding: 0.375rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600;">Not certified — declaration not supported</span>
                                     </div>
                                 </div>
                                 <div>
-                                    <label style="font-size: 0.625rem; color: #64748b; font-weight: 600;">Ronda Notes:</label>
+                                    <label style="font-size: 0.625rem; color: #64748b; font-weight: 600;">Field unit remarks:</label>
                                     <p id="rondaNotes" style="font-size: 0.875rem; color: #1f2937; margin: 0.25rem 0 0 0; font-style: italic; border-left: 3px solid #86efac; padding-left: 0.75rem;">—</p>
                                 </div>
                                 <div id="rondaEvidencePhotosSection" style="display: none; margin-top: 0.75rem;">
-                                    <label style="font-size: 0.625rem; color: #64748b; font-weight: 600;">Field evidence (photos from Ronda):</label>
+                                    <label style="font-size: 0.625rem; color: #64748b; font-weight: 600;">Photographic evidence (field unit):</label>
                                     <div id="rondaEvidencePhotosStrip" style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.375rem;"></div>
-                                    <p id="rondaEvidencePhotosEmpty" style="display: none; font-size: 0.75rem; color: #64748b; margin: 0.375rem 0 0 0;">No field photos were uploaded with this verification.</p>
+                                    <p id="rondaEvidencePhotosEmpty" style="display: none; font-size: 0.75rem; color: #64748b; margin: 0.375rem 0 0 0;">No photographic attachments were submitted with this verification.</p>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Staff Action: Approve/Reject (shown when ronda team has submitted) -->
-                        <div id="staffApprovalBox" style="display: none; border: 1px solid #dbeafe; background: #f0f9ff; border-radius: 0.375rem; padding: 0.75rem;">
-                            <p style="font-size: 0.75rem; color: #0369a1; margin: 0 0 0.75rem 0; font-weight: 600;">Staff Decision on Ronda Finding:</p>
+                        <div id="staffApprovalBox" style="display: none; border: 1px solid #bfdbfe; background: #f0f9ff; border-radius: 0.375rem; padding: 0.75rem;">
+                            <p style="font-size: 0.75rem; color: #1e40af; margin: 0 0 0.75rem 0; font-weight: 600;">THA intake staff — disposition on field report</p>
 
                             <div id="cdrrmoActionsBox" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                                <button type="button" onclick="approveCdrrmo()" class="btn-modal" style="background: #dcfce7; color: #166534; border: 1px solid #86efac; padding: 0.5rem 0.75rem; font-size: 0.75rem; flex: 1; min-width: 150px;">
-                                    ✓ Approve - Danger Zone Verified
+                                <button type="button" onclick="approveCdrrmo()" class="btn-modal" style="background: #dcfce7; color: #14532d; border: 1px solid #86efac; padding: 0.5rem 0.75rem; font-size: 0.75rem; flex: 1; min-width: 150px;">
+                                    Accept field report (certified)
                                 </button>
-                                <button type="button" onclick="rejectCdrrmo()" class="btn-modal" style="background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; padding: 0.5rem 0.75rem; font-size: 0.75rem; flex: 1; min-width: 150px;">
-                                    ✗ Reject - Ronda Finding Invalid
+                                <button type="button" onclick="rejectCdrrmo()" class="btn-modal" style="background: #fee2e2; color: #7f1d1d; border: 1px solid #fca5a5; padding: 0.5rem 0.75rem; font-size: 0.75rem; flex: 1; min-width: 150px;">
+                                    Reject field report (not certified)
                                 </button>
                             </div>
 
                             <div style="margin-top: 0.75rem;">
-                                <label style="font-size: 0.75rem; color: #64748b; font-weight: 600; display: block; margin-bottom: 0.375rem;">Staff Notes (Optional):</label>
-                                <input type="text" id="staffCdrrmoNotes" class="form-input" placeholder="e.g., Confirmed with barangay, coordinates sent to housing office" style="font-size: 0.75rem; padding: 0.375rem;">
+                                <label style="font-size: 0.75rem; color: #64748b; font-weight: 600; display: block; margin-bottom: 0.375rem;">Staff remarks (optional)</label>
+                                <input type="text" id="staffCdrrmoNotes" class="form-input" placeholder="Reference barangay certification, coordinates, or other corroborating particulars" style="font-size: 0.75rem; padding: 0.375rem;">
                             </div>
 
                             <div style="margin-top: 0.75rem; background: white; border: 1px solid #cbd5e1; border-radius: 0.375rem; padding: 0.75rem;">
-                                <p style="font-size: 0.75rem; color: #64748b; margin: 0;"><strong>After Approval:</strong> Applicant will be marked eligible and moved to Priority Queue (if certified) or Walk-in Queue (if false alarm).</p>
+                                <p style="font-size: 0.75rem; color: #475569; margin: 0;"><strong>Effect of acceptance:</strong> The record may be advanced for eligibility determination and appropriate queue assignment (priority where certification is affirmed; walk-in where the declaration is not sustained).</p>
                             </div>
                         </div>
                     </div>
                     
                     <!-- Eligibility Check Section -->
                     <div style="border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-bottom: 1rem;">
-                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">Eligibility Check</h4>
+                        <h4 class="tha-review-section-title">Preliminary eligibility assessment</h4>
                         <div id="eligibilityChecksB" style="display: grid; gap: 0.5rem;">
                             <!-- Populated by JavaScript -->
                         </div>
                     </div>
-                    
+
                 </div>
                 
                 <!-- Channel C: Regular Walk-in Applicant View -->
@@ -1265,8 +1332,6 @@
                     <!-- Status Badges Row -->
                     <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;">
                         <span class="status-badge status-info">Channel C — Walk-in</span>
-                        <span class="status-badge" id="reviewEligibilityBadge"></span>
-                        <span class="status-badge" id="reviewQueueBadge" style="display: none;"></span>
                     </div>
                     
                     <!-- Section A: APPLICATION IDENTITY -->
@@ -1361,8 +1426,7 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Monthly Income (₱)</label>
-                                <input type="number" class="form-input" id="reviewIncome" name="monthly_income" min="0" step="0.01" readonly>
-                                <span class="help-text" id="reviewIncomeDisplay" aria-live="polite"></span>
+                                <input type="text" class="form-input" id="reviewIncome" name="monthly_income" inputmode="decimal" pattern="[0-9,]*" readonly>
                             </div>
                         </div>
                     </div>
@@ -1391,13 +1455,6 @@
                         </div>
                     </div>
                     
-                    <!-- SMS Notification Status -->
-                    <div style="border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-top: 1rem;">
-                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">SMS Notifications</h4>
-                        <div id="smsStatusSection" style="display: flex; flex-direction: column; gap: 0.5rem;">
-                            <!-- Populated by JavaScript -->
-                        </div>
-                    </div>
                 </div>
             </div>
             
@@ -1409,26 +1466,11 @@
                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                         <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                     </svg>
-                    <span id="editToggleText">Edit</span>
+                    <span id="editToggleText">Amend record</span>
                 </button>
                 
-                <!-- Action Buttons - Only for Jocel/Joie -->
-                <div id="reviewActions">
-                    <button type="button" class="btn-modal success" id="btnMarkEligible" onclick="markEligible()" style="background: #10b981;">
-                        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="20 6 9 17 4 12"></polyline>
-                        </svg>
-                        Mark Eligible
-                    </button>
-                    <button type="button" class="btn-modal danger" id="btnDisqualify" onclick="showDisqualifyReason()" style="background: #ef4444;">
-                        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <line x1="15" y1="9" x2="9" y2="15"></line>
-                            <line x1="9" y1="9" x2="15" y2="15"></line>
-                        </svg>
-                        Disqualify
-                    </button>
-                </div>
+                <!-- Intake is encoding-only; eligibility/disqualification is handled in Module 2 -->
+                <div id="reviewActions" style="display:none;"></div>
                 
                 <!-- Save/Cancel (Edit Mode) -->
                 <div id="editActions" style="display: none;">
@@ -1438,12 +1480,22 @@
                             <polyline points="17 21 17 13 7 13 7 21"></polyline>
                             <polyline points="7 3 7 8 15 8"></polyline>
                         </svg>
-                        Save Changes
+                        Save amendments
                     </button>
                     <button type="button" class="btn-modal secondary" onclick="cancelEdit()">
-                        Cancel
+                        Discard changes
                     </button>
                 </div>
+
+                <button
+                    type="button"
+                    class="btn-modal primary"
+                    id="btnProceedModule2"
+                    onclick="proceedToModule2Evaluation()"
+                    style="background:#1d4ed8;"
+                >
+                    Proceed to Application & Evaluation
+                </button>
                 
                 <!-- Delete Button - Only for Jocel/Joie -->
                 <button type="button" class="btn-modal danger" id="btnDelete" onclick="confirmDelete()" style="background: #dc2626; margin-left: auto;">
@@ -1451,7 +1503,7 @@
                         <polyline points="3 6 5 6 21 6"></polyline>
                         <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                     </svg>
-                    Delete
+                    Remove record
                 </button>
                 {% else %}
                 <!-- Read-Only Notice for Field Team -->
@@ -1466,7 +1518,7 @@
                 {% endif %}
                 
                 <button type="button" class="btn-modal secondary" onclick="closeReviewModal()">
-                    Close
+                    Dismiss
                 </button>
             </div>
         </form>
@@ -1725,10 +1777,10 @@
 
 <!-- Add Applicant Modal -->
 <div class="modal-overlay" id="addModal" onclick="closeAddModal()">
-    <div class="modal-content" style="max-width: 36rem;" onclick="event.stopPropagation()">
+    <div class="modal-content tha-reg-modal" style="max-width: min(44rem, 96vw);" onclick="event.stopPropagation()">
         <div class="modal-header">
-            <h2 class="modal-title">Register New Applicant</h2>
-            <button class="btn-close" onclick="closeAddModal()">
+            <h2 class="modal-title">Applicant registration</h2>
+            <button type="button" class="btn-close" onclick="closeAddModal()" aria-label="Close registration form">
                 <svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
                     <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -1737,67 +1789,207 @@
         </div>
         <div class="modal-body" style="max-height: 75vh; overflow-y: auto;">
             <style>
-                .tha-form-header { background: linear-gradient(to right, #1e40af 0%, #1e3a8a 100%); color: white; padding: 1.5rem; margin: -1.5rem -1.5rem 1.5rem -1.5rem; text-align: center; border-bottom: 3px solid #fbbf24; }
-                .tha-seal { width: 50px; height: 50px; margin: 0 auto 0.5rem; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: #1e40af; }
-                .tha-form-header h2 { margin: 0; font-size: 1.1rem; font-weight: 700; letter-spacing: 1px; }
-                .tha-form-header p { margin: 0.25rem 0 0; font-size: 0.75rem; opacity: 0.9; }
-                .channel-selector-box { background: #f0f9ff; border: 1px solid #bfdbfe; padding: 1rem; border-radius: 6px; margin-bottom: 1.5rem; }
-                .channel-selector-box > label { display: block; font-weight: 600; font-size: 0.875rem; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; }
-                .channel-selector { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
-                .channel-btn { padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 6px; background: white; cursor: pointer; font-weight: 600; transition: all 0.3s; }
-                .channel-btn:hover { border-color: #1e40af; background: #f0f9ff; }
-                .channel-btn.active { border-color: #1e40af; background: #1e40af; color: white; }
-                .section-label { font-weight: 700; font-size: 0.85rem; color: #1f2937; margin-bottom: 0.75rem; margin-top: 1.5rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.5rem; }
-                .form-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1rem; }
-                .form-row.full { grid-template-columns: 1fr; }
-                .danger-zone-box { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 1rem; border-radius: 4px; margin: 1rem 0; }
-                .danger-zone-box .section-label { color: #92400e; margin-top: 0; }
-                .document-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin-bottom: 1rem; }
-                .document-item { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; background: #f9fafb; border-radius: 4px; border: 1px solid #e5e7eb; cursor: pointer; transition: all 0.2s; }
-                .document-item:hover { background: #f0f9ff; border-color: #1e40af; }
-                .document-item input { cursor: pointer; margin: 0; }
-                .document-item.checked { background: #dbeafe; border-color: #1e40af; }
-                .document-item.complete { background: #dbeafe; border-color: #10b981; }
-                .document-item.incomplete { background: #f9fafb; border-color: #e5e7eb; }
-                .info-note { background: #dbeafe; border-left: 4px solid #1e40af; padding: 0.75rem 1rem; border-radius: 4px; margin-top: 1rem; font-size: 0.8125rem; color: #1e3a8a; }
-                .info-note p { margin: 0; }
-                .danger-warning { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 0.75rem 1rem; border-radius: 4px; margin-top: 1rem; font-size: 0.8125rem; color: #92400e; }
-                .danger-warning p { margin: 0; }
-                .help-text { font-size: 0.75rem; color: #6b7280; margin-top: 0.25rem; display: block; }
-                .form-input { text-transform: capitalize; }
-                @media (max-width: 640px) { .form-row { grid-template-columns: 1fr; } .channel-selector { grid-template-columns: 1fr; } .document-grid { grid-template-columns: 1fr; } }
+                .tha-reg-modal .tha-form-header {
+                    background: #0f172a;
+                    color: #f8fafc;
+                    padding: 1.375rem 1.5rem 1.25rem;
+                    margin: -1.5rem -1.5rem 1.5rem -1.5rem;
+                    text-align: center;
+                    border-bottom: 3px solid #b45309;
+                    box-shadow: inset 0 -1px 0 rgba(255,255,255,0.06);
+                }
+                .tha-reg-modal .tha-form-crest {
+                    width: 3rem;
+                    height: 3rem;
+                    margin: 0 auto 0.625rem;
+                    background: #f8fafc;
+                    color: #0f172a;
+                    border: 2px solid rgba(248, 250, 252, 0.95);
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-family: Georgia, 'Times New Roman', Times, serif;
+                    font-size: 0.5625rem;
+                    font-weight: 700;
+                    letter-spacing: 0.12em;
+                    line-height: 1.15;
+                    text-align: center;
+                }
+                .tha-reg-modal .tha-form-header h2 {
+                    margin: 0;
+                    font-family: Georgia, 'Times New Roman', Times, serif;
+                    font-size: 1.0625rem;
+                    font-weight: 700;
+                    letter-spacing: 0.04em;
+                    text-transform: none;
+                }
+                .tha-reg-modal .tha-form-header .tha-form-subtitle {
+                    margin: 0.35rem 0 0;
+                    font-size: 0.8125rem;
+                    font-weight: 500;
+                    letter-spacing: 0.02em;
+                    opacity: 0.92;
+                }
+                .tha-reg-modal .tha-form-header .tha-form-meta {
+                    margin: 0.5rem 0 0;
+                    font-size: 0.6875rem;
+                    letter-spacing: 0.08em;
+                    text-transform: uppercase;
+                    opacity: 0.75;
+                    font-weight: 600;
+                }
+                .tha-reg-modal .tha-section-title {
+                    font-size: 0.8125rem;
+                    font-weight: 700;
+                    color: #0f172a;
+                    letter-spacing: 0.06em;
+                    text-transform: uppercase;
+                    margin: 0 0 1rem 0;
+                    padding-bottom: 0.5rem;
+                    border-bottom: 1px solid #cbd5e1;
+                }
+                .tha-reg-modal .tha-section-block {
+                    margin-bottom: 1.5rem;
+                    padding-bottom: 1rem;
+                    border-bottom: 1px solid #e2e8f0;
+                }
+                .tha-reg-modal .tha-hazard-prompt {
+                    font-size: 0.8125rem;
+                    font-weight: 700;
+                    color: #0f172a;
+                    letter-spacing: 0.05em;
+                    text-transform: uppercase;
+                    margin-bottom: 1rem;
+                }
+                .tha-reg-modal .tha-hazard-actions {
+                    display: flex;
+                    gap: 0.75rem;
+                    justify-content: center;
+                    flex-wrap: wrap;
+                }
+                .tha-reg-modal .tha-hazard-btn { min-width: 10rem; }
+                .tha-reg-modal .tha-hazard-btn.is-selected-affirm {
+                    background: #0f172a !important;
+                    color: #f8fafc !important;
+                    border-color: #0f172a !important;
+                }
+                .tha-reg-modal .tha-hazard-btn.is-selected-negative {
+                    background: #334155 !important;
+                    color: #f8fafc !important;
+                    border-color: #334155 !important;
+                }
+                .tha-reg-modal .tha-btn-outline {
+                    background: #fff;
+                    border: 1px solid #334155;
+                    color: #0f172a;
+                    padding: 0.625rem 1.75rem;
+                    border-radius: 2px;
+                    cursor: pointer;
+                    font-weight: 600;
+                    font-size: 0.8125rem;
+                    letter-spacing: 0.02em;
+                    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+                }
+                .tha-reg-modal .tha-btn-outline:hover {
+                    background: #f1f5f9;
+                    border-color: #0f172a;
+                }
+                .tha-reg-modal .tha-btn-add-member {
+                    background: #fff;
+                    color: #0f172a;
+                    border: 1px solid #334155;
+                    padding: 0.45rem 0.9rem;
+                    border-radius: 2px;
+                    cursor: pointer;
+                    font-size: 0.8125rem;
+                    font-weight: 600;
+                    letter-spacing: 0.02em;
+                }
+                .tha-reg-modal .tha-btn-add-member:hover {
+                    background: #f8fafc;
+                    border-color: #0f172a;
+                }
+                .tha-reg-modal .channel-selector-box { background: #f8fafc; border: 1px solid #cbd5e1; padding: 1rem; border-radius: 2px; margin-bottom: 1.5rem; }
+                .tha-reg-modal .channel-selector-box > label { display: block; font-weight: 600; font-size: 0.8125rem; margin-bottom: 0.75rem; letter-spacing: 0.04em; text-transform: uppercase; color: #334155; }
+                .tha-reg-modal .channel-selector { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+                .tha-reg-modal .channel-btn { padding: 0.75rem; border: 1px solid #94a3b8; border-radius: 2px; background: white; cursor: pointer; font-weight: 600; font-size: 0.8125rem; transition: border-color 0.15s ease, background 0.15s ease; color: #1e293b; }
+                .tha-reg-modal .channel-btn:hover { border-color: #0f172a; background: #f8fafc; }
+                .tha-reg-modal .channel-btn.active { border-color: #0f172a; background: #0f172a; color: white; }
+                .tha-reg-modal .section-label { font-weight: 700; font-size: 0.85rem; color: #1f2937; margin-bottom: 0.75rem; margin-top: 1.5rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.5rem; }
+                .tha-reg-modal .form-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1rem; }
+                .tha-reg-modal .form-row.full { grid-template-columns: 1fr; }
+                .tha-reg-modal .danger-zone-box { background: #fffbeb; border: 1px solid #fcd34d; border-left: 4px solid #b45309; padding: 1rem; border-radius: 2px; margin: 1rem 0; }
+                .tha-reg-modal .danger-zone-box .section-label { color: #78350f; margin-top: 0; }
+                .tha-reg-modal .document-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin-bottom: 1rem; }
+                .tha-reg-modal .document-item { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; background: #f9fafb; border-radius: 4px; border: 1px solid #e5e7eb; cursor: pointer; transition: all 0.2s; }
+                .tha-reg-modal .document-item:hover { background: #f0f9ff; border-color: #1e40af; }
+                .tha-reg-modal .document-item input { cursor: pointer; margin: 0; }
+                .tha-reg-modal .document-item.checked { background: #dbeafe; border-color: #1e40af; }
+                .tha-reg-modal .document-item.complete { background: #dbeafe; border-color: #10b981; }
+                .tha-reg-modal .document-item.incomplete { background: #f9fafb; border-color: #e5e7eb; }
+                .tha-reg-modal .info-note { background: #eff6ff; border: 1px solid #bfdbfe; border-left: 4px solid #1d4ed8; padding: 0.75rem 1rem; border-radius: 2px; margin-top: 1rem; font-size: 0.8125rem; color: #1e3a8a; }
+                .tha-reg-modal .info-note p { margin: 0; }
+                .tha-reg-modal .danger-warning { background: #fffbeb; border: 1px solid #fcd34d; border-left: 4px solid #b45309; padding: 0.875rem 1rem; border-radius: 2px; margin-top: 1rem; font-size: 0.8125rem; color: #78350f; line-height: 1.5; }
+                .tha-reg-modal .danger-warning p { margin: 0; }
+                .tha-reg-modal .help-text { font-size: 0.6875rem; color: #64748b; margin-top: 0.25rem; display: block; letter-spacing: 0.01em; }
+                .tha-reg-modal #addApplicantForm .form-input,
+                .tha-reg-modal #addApplicantForm .form-select { text-transform: none; border-radius: 2px; }
+                .tha-reg-modal #addApplicantForm label.form-label { font-size: 0.75rem; font-weight: 600; color: #334155; letter-spacing: 0.02em; }
+                .tha-reg-modal .form-fieldset-header { font-size: 0.8125rem; font-weight: 600; color: #1e293b; }
+                .tha-reg-modal .tha-reg-remove-member {
+                    background: #fff;
+                    color: #991b1b;
+                    border: 1px solid #fca5a5;
+                    padding: 0.45rem 0.65rem;
+                    border-radius: 2px;
+                    cursor: pointer;
+                    font-size: 0.75rem;
+                    font-weight: 600;
+                    white-space: nowrap;
+                    align-self: flex-end;
+                }
+                .tha-reg-modal .tha-reg-remove-member:hover {
+                    background: #fef2f2;
+                    border-color: #dc2626;
+                }
+                @media (max-width: 640px) {
+                    .tha-reg-modal .form-row { grid-template-columns: 1fr; }
+                    .tha-reg-modal .channel-selector { grid-template-columns: 1fr; }
+                    .tha-reg-modal .document-grid { grid-template-columns: 1fr; }
+                }
             </style>
 
             <form id="addApplicantForm" method="post" onsubmit="submitAddApplicant(event)">
                 {% csrf_token %}
 
-                <!-- THA Header -->
+                <!-- Authority header (Module 1 intake) -->
                 <div class="tha-form-header">
-                    <div class="tha-seal">🏛️</div>
-                    <h2>REGISTRATION FORM</h2>
-                    <p>Talisay City Housing Authority</p>
+                    <div class="tha-form-crest" aria-hidden="true">THA</div>
+                    <h2>Applicant registration sheet</h2>
+                    <p class="tha-form-subtitle">Talisay City Housing Authority</p>
                 </div>
 
                 <!-- Intake Type -->
                 <input type="hidden" id="channelInput" name="channel" value="danger_zone">
 
-                <!-- SECTION A: APPLICATION IDENTITY -->
-                <div style="margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid #e5e7eb;">
-                    <div style="font-weight: 700; color: #1f2937; font-size: 0.9rem; margin-bottom: 1rem; text-transform: uppercase;">📋 A. APPLICATION IDENTITY</div>
+                <!-- Section A -->
+                <div class="tha-section-block">
+                    <h3 class="tha-section-title">Section A — Applicant identity</h3>
 
                     <!-- Name (Last, First, Middle) -->
                     <div class="form-row" style="grid-template-columns: repeat(3, 1fr);">
                         <div class="form-group">
-                            <label class="form-label">Last Name <span style="color: #dc2626;">*</span></label>
-                            <input type="text" class="form-input" placeholder="Surname" name="last_name" id="lastName" maxlength="100" required>
+                            <label class="form-label">Last name <span style="color: #dc2626;">*</span></label>
+                            <input type="text" class="form-input" placeholder="Family name (surname)" name="last_name" id="lastName" maxlength="100" required>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">First Name <span style="color: #dc2626;">*</span></label>
-                            <input type="text" class="form-input" placeholder="Given name" name="first_name" id="firstName" maxlength="100" required>
+                            <label class="form-label">First name <span style="color: #dc2626;">*</span></label>
+                            <input type="text" class="form-input" placeholder="Given name(s)" name="first_name" id="firstName" maxlength="100" required>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Middle Name</label>
-                            <input type="text" class="form-input" placeholder="Middle name" name="middle_name" id="middleName" maxlength="100">
+                            <label class="form-label">Middle name</label>
+                            <input type="text" class="form-input" placeholder="Extension name, if any" name="middle_name" id="middleName" maxlength="100">
                         </div>
                     </div>
 
@@ -1806,31 +1998,31 @@
                         <div class="form-group">
                             <label class="form-label">Sex <span style="color: #dc2626;">*</span></label>
                             <div style="display: flex; gap: 1.5rem; margin-top: 0.5rem;">
-                                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 500; font-size: 0.75rem;">
+                                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 500; font-size: 0.8125rem; color: #334155;">
                                     <input type="radio" name="sex" id="sexMale" value="M" required style="cursor: pointer;">
                                     <span>Male</span>
                                 </label>
-                                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 500; font-size: 0.75rem;">
+                                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 500; font-size: 0.8125rem; color: #334155;">
                                     <input type="radio" name="sex" id="sexFemale" value="F" required style="cursor: pointer;">
                                     <span>Female</span>
                                 </label>
                             </div>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Years Residing in Talisay <span style="color: #dc2626;">*</span></label>
-                            <input type="number" class="form-input" placeholder="Number of years" name="years_residing" id="yearsResiding" min="0" required>
+                            <label class="form-label">Years of residence in Talisay City <span style="color: #dc2626;">*</span></label>
+                            <input type="number" class="form-input" placeholder="Whole number of years" name="years_residing" id="yearsResiding" min="0" required>
                         </div>
                     </div>
 
                     <!-- Date of Birth & Age (Integrated) -->
                     <div class="form-row">
                         <div class="form-group">
-                            <label class="form-label">Date of Birth <span style="color: #dc2626;">*</span></label>
+                            <label class="form-label">Date of birth <span style="color: #dc2626;">*</span></label>
                             <input type="date" class="form-input" name="date_of_birth" id="dateOfBirth" onchange="calculateAge()" required>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Age <span style="color: #dc2626;">*</span> (Auto-calculated)</label>
-                            <input type="number" class="form-input" placeholder="Auto-calculated" name="age" id="age" min="0" readonly style="background-color: #f3f4f6; cursor: not-allowed; font-weight: 600;">
+                            <label class="form-label">Age <span style="color: #dc2626;">*</span> <span style="font-weight: 500; color: #64748b;">(computed)</span></label>
+                            <input type="number" class="form-input" placeholder="From date of birth" name="age" id="age" min="0" readonly style="background-color: #f1f5f9; cursor: not-allowed; font-weight: 600;">
                         </div>
                     </div>
 
@@ -1838,13 +2030,13 @@
                     <div class="form-fieldset" style="border: none; margin-bottom: 1rem; padding: 0;">
                         <div class="form-fieldset-header" onclick="toggleFieldset(this)">
                             <span class="fieldset-toggle-icon">▶</span>
-                            <span>📍 Place of Birth (Optional)</span>
+                            <span>Place of birth (optional)</span>
                         </div>
                         <div class="form-fieldset-content">
                             <div class="form-row full">
                                 <div class="form-group">
-                                    <label class="form-label">Place of Birth</label>
-                                    <input type="text" class="form-input" placeholder="City/Municipality, Province" name="place_of_birth" id="placeOfBirth" maxlength="255">
+                                    <label class="form-label">Place of birth</label>
+                                    <input type="text" class="form-input" placeholder="City or municipality, province" name="place_of_birth" id="placeOfBirth" maxlength="255">
                                 </div>
                             </div>
                         </div>
@@ -1853,26 +2045,26 @@
                     <!-- Present Address -->
                     <div class="form-row full">
                         <div class="form-group">
-                            <label class="form-label">Present Address <span style="color: #dc2626;">*</span></label>
-                            <input type="text" class="form-input" placeholder="Complete current residential address" name="current_address" id="presentAddress" minlength="10" maxlength="500" required>
+                            <label class="form-label">Present address <span style="color: #dc2626;">*</span></label>
+                            <input type="text" class="form-input" placeholder="House no., street, sitio/purok, barangay, Talisay City" name="current_address" id="presentAddress" minlength="10" maxlength="500" required>
                         </div>
                     </div>
 
                     <!-- Barangay & Applicant Contact Number -->
                     <div class="form-row">
                         <div class="form-group">
-                            <label class="form-label">Barangay <span style="color: #dc2626;">*</span></label>
+                            <label class="form-label">Barangay of present address <span style="color: #dc2626;">*</span></label>
                             <select class="form-select" name="barangay" id="barangay" required>
-                                <option value="">Select barangay...</option>
+                                <option value="">— Select barangay —</option>
                                 {% for barangay in barangays %}
                                 <option value="{{ barangay }}">{{ barangay }}</option>
                                 {% endfor %}
                             </select>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Applicant Contact Number <span style="color: #dc2626;">*</span></label>
+                            <label class="form-label">Applicant mobile number <span style="color: #dc2626;">*</span></label>
                             <input type="tel" class="form-input ph-phone" placeholder="09XXXXXXXXXX" pattern="09[0-9]{9}" name="phone_number" id="phoneNumber" required>
-                            <span class="help-text">11 digits: 09XXXXXXXXXX</span>
+                            <span class="help-text">Philippine mobile format: 11 digits beginning with 09</span>
                         </div>
                     </div>
 
@@ -1880,53 +2072,54 @@
                     <div class="form-fieldset" style="border: none; margin-bottom: 0; padding-bottom: 0;">
                         <div class="form-fieldset-header" onclick="toggleFieldset(this)">
                             <span class="fieldset-toggle-icon">▶</span>
-                            <span>👥 Spouse Information (Optional)</span>
+                            <span>Spouse (optional)</span>
                         </div>
                         <div class="form-fieldset-content">
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label class="form-label">Name of Spouse (if applicable)</label>
-                                    <input type="text" class="form-input" placeholder="Spouse's full name" name="spouse_name" id="spouseName">
+                                    <label class="form-label">Spouse’s full name</label>
+                                    <input type="text" class="form-input" placeholder="If married or in a recognized union" name="spouse_name" id="spouseName">
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label">Spouse Contact Number</label>
+                                    <label class="form-label">Spouse mobile number</label>
                                     <input type="tel" class="form-input ph-phone" placeholder="09XXXXXXXXXX" pattern="09[0-9]{9}" name="spouse_phone" id="spousePhone">
-                                    <span class="help-text">11 digits: 09XXXXXXXXXX</span>
+                                    <span class="help-text">Same format as applicant (optional)</span>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- SECTION B: HOUSEHOLD MEMBERS -->
-                <div style="margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid #e5e7eb;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                        <div style="font-weight: 700; color: #1f2937; font-size: 0.9rem; text-transform: uppercase;">👥 B. HOUSEHOLD MEMBERS</div>
-                        <button type="button" onclick="addHouseholdMember()" style="background: #1e40af; color: white; padding: 0.5rem 1rem; border: none; border-radius: 0.375rem; cursor: pointer; font-size: 0.875rem; font-weight: 600;">+ Add Member</button>
+                <!-- Section B -->
+                <div class="tha-section-block">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem; padding-bottom: 0.75rem; border-bottom: 1px solid #cbd5e1;">
+                        <h3 class="tha-section-title" style="margin-bottom: 0; padding-bottom: 0; border-bottom: none;">Section B — Household members</h3>
+                        <button type="button" class="tha-btn-add-member" onclick="addHouseholdMember()">Add household member</button>
                     </div>
 
                     <!-- Household Members Container -->
                     <div id="householdMembersContainer"></div>
 
                     <div class="form-group" style="margin-top: 1rem;">
-                        <label class="form-label">Household Size <span style="color: #dc2626;">*</span></label>
-                        <input type="number" class="form-input" placeholder="Auto-calculated" name="household_size" id="householdSize" min="1" value="1" readonly style="background-color: #f3f4f6; cursor: not-allowed;">
+                        <label class="form-label">Declared household size <span style="color: #dc2626;">*</span></label>
+                        <input type="number" class="form-input" placeholder="Includes applicant" name="household_size" id="householdSize" min="1" value="1" readonly style="background-color: #f1f5f9; cursor: not-allowed;">
+                        <span class="help-text">Updated automatically from members listed above (applicant counts as one).</span>
                     </div>
                 </div>
 
-                <!-- SECTION C: APPLICANTS FAMILY INCOME -->
-                <div style="margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid #e5e7eb;">
-                    <div style="font-weight: 700; color: #1f2937; font-size: 0.9rem; margin-bottom: 1rem; text-transform: uppercase;">💰 C. APPLICANTS FAMILY INCOME</div>
+                <!-- Section C -->
+                <div class="tha-section-block">
+                    <h3 class="tha-section-title">Section C — Household income</h3>
 
                     <div class="form-row">
                         <div class="form-group">
-                            <label class="form-label">Occupation <span style="color: #dc2626;">*</span></label>
-                            <input type="text" class="form-input" placeholder="Job title or main occupation" name="occupation" id="occupation" maxlength="255" required>
+                            <label class="form-label">Principal occupation <span style="color: #dc2626;">*</span></label>
+                            <input type="text" class="form-input" placeholder="Primary livelihood or post (e.g., vendor, factory worker)" name="occupation" id="occupation" maxlength="255" required>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Status of Employment</label>
+                            <label class="form-label">Employment status</label>
                             <select class="form-select" name="employment_status" id="employmentStatus">
-                                <option value="">Select status...</option>
+                                <option value="">— Select —</option>
                                 <option value="employed">Employed</option>
                                 <option value="self-employed">Self-Employed</option>
                                 <option value="unemployed">Unemployed</option>
@@ -1937,37 +2130,36 @@
 
                     <div class="form-row">
                         <div class="form-group">
-                            <label class="form-label">Monthly Income (₱) <span style="color: #dc2626;">*</span></label>
-                            <input type="number" class="form-input" placeholder="e.g. 8500" name="monthly_income" id="monthlyIncome" min="0" step="0.01" data-income-preview-id="monthlyIncomeFormattedPreview" required>
-                            <span class="help-text">Gross monthly household income</span>
+                            <label class="form-label">Gross monthly household income (PHP) <span style="color: #dc2626;">*</span></label>
+                            <input type="number" class="form-input" placeholder="Amount in pesos" name="monthly_income" id="monthlyIncome" min="0" step="0.01" data-income-preview-id="monthlyIncomeFormattedPreview" required>
+                            <span class="help-text">Total household earnings before deductions, for the reference month.</span>
                             <span class="help-text" id="monthlyIncomeFormattedPreview" aria-live="polite"></span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Danger Zone Question -->
-                <div style="margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid #e5e7eb; text-align: center;">
-                    <div style="font-weight: 700; color: #1f2937; font-size: 0.9rem; margin-bottom: 1rem; text-transform: uppercase;">Is the applicant in a danger zone?</div>
-                    <div style="display: flex; gap: 1rem; justify-content: center;">
-                        <button type="button" onclick="setDangerZone(true)" id="btnDangerZoneYes" style="background: white; border: 2px solid #1e40af; color: #1e40af; padding: 0.75rem 2rem; border-radius: 0.375rem; cursor: pointer; font-weight: 600; transition: all 0.3s;">
-                            Yes
-                        </button>
-                        <button type="button" onclick="setDangerZone(false)" id="btnDangerZoneNo" style="background: white; border: 2px solid #dc2626; color: #dc2626; padding: 0.75rem 2rem; border-radius: 0.375rem; cursor: pointer; font-weight: 600; transition: all 0.3s;">
-                            No
-                        </button>
+                <!-- Hazard-area declaration -->
+                <div class="tha-section-block" style="text-align: center;">
+                    <div class="tha-hazard-prompt">Hazard-area residence</div>
+                    <p style="font-size: 0.8125rem; color: #475569; margin: -0.5rem auto 1rem; max-width: 28rem; line-height: 1.45;">
+                        Indicate whether the applicant’s present address is within a mapped hazard or danger zone requiring City Disaster Risk Reduction and Management Office (CDRRMO) certification.
+                    </p>
+                    <div class="tha-hazard-actions">
+                        <button type="button" class="tha-btn-outline tha-hazard-btn" onclick="setDangerZone(true)" id="btnDangerZoneYes">Yes — within hazard area</button>
+                        <button type="button" class="tha-btn-outline tha-hazard-btn" onclick="setDangerZone(false)" id="btnDangerZoneNo">No — not within hazard area</button>
                     </div>
                     <input type="hidden" id="isDangerZone" name="is_danger_zone" value="">
                 </div>
 
-                <!-- Danger Zone Information (Hidden by default) -->
+                <!-- Hazard detail (shown when “Yes” selected) -->
                 <div id="dangerZoneGroup" style="display: none;">
                     <div class="danger-zone-box">
 
                         <div class="form-row full">
                             <div class="form-group">
-                                <label class="form-label">Danger Zone Type <span style="color: #dc2626;">*</span></label>
+                                <label class="form-label">Hazard classification <span style="color: #dc2626;">*</span></label>
                                 <select class="form-select" name="danger_zone_type" id="dangerZoneType">
-                                    <option value="">Select type...</option>
+                                    <option value="">— Select classification —</option>
                                     <option value="riverside">Riverside / Riverbank</option>
                                     <option value="flood_prone">Flood-Prone Area</option>
                                     <option value="landslide">Landslide-Prone Area</option>
@@ -1981,18 +2173,18 @@
 
                         <div class="form-row full">
                             <div class="form-group">
-                                <label class="form-label">Danger Zone Location Details <span style="color: #dc2626;">*</span></label>
-                                <input type="text" class="form-input" placeholder="Describe the specific danger zone location..." name="danger_zone_location" id="dangerZoneLocation">
-                                <span class="help-text">For CDRRMO verification</span>
+                                <label class="form-label">Location particulars <span style="color: #dc2626;">*</span></label>
+                                <input type="text" class="form-input" placeholder="Sitio, landmark, riverbank segment, or other locational description" name="danger_zone_location" id="dangerZoneLocation">
+                                <span class="help-text">For CDRRMO field verification and records.</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Info Notes -->
+                <!-- Official notices -->
                 <div class="danger-warning" id="cdrrmoNote">
-                    <p><strong>⚠️ CDRRMO Verification Required</strong><br>Danger zone applicants will be marked as <strong>"Pending CDRRMO Certification"</strong> until verified by the ronda team.</p>
-                    <p style="margin-top: 0.75rem; border-top: 1px solid #f59e0b; padding-top: 0.75rem;">System will automatically assign a reference number and send SMS to the applicant upon saving.</p>
+                    <p><strong>Advisory — CDRRMO certification.</strong> Applicants declared within a hazard area are recorded as <strong>pending CDRRMO certification</strong> until cleared by the City DRRMO or designated barangay verification unit.</p>
+                    <p style="margin-top: 0.75rem; border-top: 1px solid rgba(180, 83, 9, 0.35); padding-top: 0.75rem;">Upon submission, the system shall assign a reference number and transmit an acknowledgement by SMS to the mobile number declared above.</p>
                 </div>
             </form>
         </div>
@@ -2001,10 +2193,10 @@
                 <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M5 13l4 4L19 7"/>
                 </svg>
-                Save & Run Eligibility Check
+                Submit and run eligibility check
             </button>
             <button type="button" class="btn-modal secondary" onclick="closeAddModal()">
-                Cancel
+                Close without saving
             </button>
         </div>
     </div>
@@ -2018,18 +2210,34 @@
     const canModify = (document.getElementById('canModifyFlag')?.value || 'false') === 'true';
 
     /**
-     * Channel B is the walk-in intake desk for the hazard pathway; the Yes/No answer
-     * is stored on dangerZoneType (hazard category) and drives CDRRMO vs proceed.
+     * Channel B (hazard pathway): the Yes/No answer is stored on dangerZoneType and drives CDRRMO handling.
+     * `formatHazardZoneTypeLabel` must stay aligned with `reviewDangerType` option values.
      */
+    function formatHazardZoneTypeLabel(raw) {
+        if (raw == null || !String(raw).trim()) return '';
+        const code = String(raw).trim().toLowerCase().replace(/-/g, '_');
+        const map = {
+            riverside: 'Riverside / riverbank',
+            flood_prone: 'Flood-prone area',
+            landslide: 'Landslide-prone area',
+            coastal: 'Coastal / near shoreline',
+            railroad: 'Near railroad tracks',
+            road_right_of_way: 'Road right-of-way',
+            other: 'Other hazard classification',
+        };
+        if (map[code]) return map[code];
+        return String(raw).replace(/_/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); });
+    }
+
     function channelBDisplayLabel(applicant) {
-        if (!applicant) return 'Channel B — Walk-in pathway';
+        if (!applicant) return 'Channel B — Hazard pathway (classification pending)';
         const ch = applicant.channel;
-        if (ch !== 'B' && ch !== 'danger_zone') return 'Channel B — Walk-in pathway';
+        if (ch !== 'B' && ch !== 'danger_zone') return 'Channel B — Hazard pathway (classification pending)';
         const dz = applicant.dangerZoneType || applicant.danger_zone_type;
         const declared = !!(dz && String(dz).trim());
         return declared
-            ? 'Channel B — Hazard declared (Yes)'
-            : 'Channel B — Not in hazard zone (No)';
+            ? 'Channel B — Hazard declaration: affirmative'
+            : 'Channel B — Hazard declaration: negative';
     }
 
     /** Module 1 income rule — must match `Applicant.is_income_eligible` / `update_eligibility` in intake/views.py */
@@ -2049,8 +2257,17 @@
         const amt = '₱' + Number(income).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         const cap = '₱' + Number(ceiling).toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
         return `<div style="margin-top:0.5rem;padding:0.625rem 0.75rem;background:#fef2f2;border:1px solid #fecaca;border-radius:0.375rem;font-size:0.8125rem;color:#991b1b;line-height:1.45;">
-            <strong>Note — Income exceeds ceiling:</strong> This ISF declared <strong>${amt}</strong> monthly household income, which is above the Module 1 limit of <strong>${cap}</strong>. Staff cannot mark them eligible until income is corrected (e.g. via Edit) or they are disqualified (e.g. reason “Income exceeds ₱10,000 limit”).
+            <strong>Advisory — income above Module 1 ceiling:</strong> Declared household income is <strong>${amt}</strong>, which exceeds the applicable ceiling of <strong>${cap}</strong>. Eligibility may not be recorded until the declared income is amended on file or the applicant is formally disqualified on stated grounds.
         </div>`;
+    }
+
+    function formatIncomeInputValue(rawValue) {
+        const numeric = Number.parseFloat(String(rawValue ?? '').replace(/,/g, ''));
+        if (Number.isNaN(numeric)) return '';
+        return numeric.toLocaleString('en-PH', {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 2
+        });
     }
 
     // Format income field with thousands separator on blur (text inputs only)
@@ -2145,6 +2362,7 @@
             const status = row.dataset.status;
             const barangay = row.dataset.barangay;
             const cdrrmoOverdue = row.dataset.cdrrmoOverdue === 'true';
+            const module2Ready = row.dataset.module2Ready === 'true';
             const searchable = row.dataset.searchable;
 
             const matchSearch = searchValue === '' || (searchable && searchable.includes(searchValue));
@@ -2155,6 +2373,8 @@
             let matchStatus;
             if (statusFilter === 'CDRRMO Overdue') {
                 matchStatus = cdrrmoOverdue;
+            } else if (statusFilter === 'Ready for Module 2') {
+                matchStatus = module2Ready;
             } else {
                 matchStatus = statusFilter === 'all' || status === statusFilter;
             }
@@ -2169,6 +2389,12 @@
                 row.style.display = 'none';
             }
         });
+    }
+
+    function filterReadyForModule2() {
+        const statusFilterEl = document.getElementById('filterStatus');
+        if (statusFilterEl) statusFilterEl.value = 'Ready for Module 2';
+        filterTable();
     }
 
     // ====== REVIEW MODAL ======
@@ -2281,14 +2507,7 @@
                 if (dobEl) dobEl.value = currentApplicant.dateOfBirth || '';
                 if (pobEl) pobEl.value = currentApplicant.placeOfBirth || '';
                 if (barangayEl) barangayEl.value = currentApplicant.barangay || '';
-                if (incomeEl) incomeEl.value = String(currentApplicant.monthlyIncome || '').replace(/,/g, '');
-                const incomeDisplayEl = document.getElementById('reviewIncomeDisplay');
-                if (incomeDisplayEl) {
-                    const numericIncome = Number.parseFloat(String(currentApplicant.monthlyIncome || '').replace(/,/g, ''));
-                    incomeDisplayEl.textContent = Number.isNaN(numericIncome)
-                        ? ''
-                        : ('Display: ₱' + numericIncome.toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 2 }));
-                }
+                if (incomeEl) incomeEl.value = formatIncomeInputValue(currentApplicant.monthlyIncome);
                 if (householdEl) householdEl.value = currentApplicant.householdSize || '';
                 if (yearsEl) yearsEl.value = currentApplicant.yearsResiding || '';
                 if (phoneEl) phoneEl.value = currentApplicant.phoneNumber || '';
@@ -2352,10 +2571,10 @@
                 if (eligBadgeB) {
                     if (currentApplicant.isInDangerZone) {
                         eligBadgeB.className = 'status-badge status-warning';
-                        eligBadgeB.textContent = 'Pending CDRRMO';
+                        eligBadgeB.textContent = 'Awaiting CDRRMO field certification';
                     } else {
                         eligBadgeB.className = 'status-badge status-success';
-                        eligBadgeB.textContent = 'Eligible to Proceed';
+                        eligBadgeB.textContent = 'No CDRRMO certification required';
                     }
                 }
 
@@ -2381,7 +2600,7 @@
                         queueBadgeB.style.background = '#f1f5f9';
                         queueBadgeB.style.color = '#64748b';
                         queueBadgeB.style.border = '1px solid #e2e8f0';
-                        queueBadgeB.textContent = 'Not in queue';
+                        queueBadgeB.textContent = 'No queue assignment';
                     }
                 }
                 
@@ -2398,14 +2617,7 @@
                 
                 if (fullNameBEl) fullNameBEl.value = currentApplicant.fullName || '';
                 if (barangayBEl) barangayBEl.value = currentApplicant.barangay || '';
-                if (incomeBEl) incomeBEl.value = String(currentApplicant.monthlyIncome || '').replace(/,/g, '');
-                const incomeDisplayBEl = document.getElementById('reviewIncomeDisplayB');
-                if (incomeDisplayBEl) {
-                    const numericIncomeB = Number.parseFloat(String(currentApplicant.monthlyIncome || '').replace(/,/g, ''));
-                    incomeDisplayBEl.textContent = Number.isNaN(numericIncomeB)
-                        ? ''
-                        : ('Display: ₱' + numericIncomeB.toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 2 }));
-                }
+                if (incomeBEl) incomeBEl.value = formatIncomeInputValue(currentApplicant.monthlyIncome);
                 if (householdBEl) householdBEl.value = currentApplicant.householdSize || '';
                 if (yearsBEl) yearsBEl.value = currentApplicant.yearsResiding || '';
                 if (phoneBEl) phoneBEl.value = currentApplicant.phoneNumber || '';
@@ -2413,41 +2625,24 @@
                 if (dangerTypeEl) dangerTypeEl.value = currentApplicant.dangerZoneType || '';
                 if (dangerLocEl) dangerLocEl.value = currentApplicant.dangerZoneLocation || '';
                 
-                // CDRRMO status (with null checks)
+                // CDRRMO summary strip — only while disposition is still pending (final UI from populateCdrrmoSection)
                 const cdrrmoBox = document.getElementById('cdrrmoStatusBox');
                 const cdrrmoText = document.getElementById('cdrrmoStatusText');
-                if (cdrrmoBox && cdrrmoText) {
-                    if (currentApplicant.cdrrmoStatus === 'Certified - Danger Zone' || currentApplicant.cdrrmoStatus === 'Certified') {
-                        cdrrmoBox.style.background = '#dcfce7';
-                        cdrrmoBox.style.borderColor = '#86efac';
-                        cdrrmoText.style.color = '#166534';
-                        cdrrmoText.innerHTML = `<strong>✓ CDRRMO Certified</strong><br>Applicant has been verified as residing in a danger zone.`;
-                    } else if (currentApplicant.cdrrmoStatus === 'Not Certified' || currentApplicant.cdrrmoStatus === 'Not Certified - Not Danger Zone') {
-                        cdrrmoBox.style.background = '#fee2e2';
+                if (cdrrmoBox && cdrrmoText && currentApplicant.cdrrmo_status === 'pending') {
+                    const daysPending = currentApplicant.cdrrmoDaysPending || 0;
+                    const isOverdue = currentApplicant.isCdrrmoFlagged;
+                    if (isOverdue) {
+                        cdrrmoBox.style.background = '#fef2f2';
                         cdrrmoBox.style.borderColor = '#fca5a5';
-                        cdrrmoText.style.color = '#991b1b';
-                        cdrrmoText.innerHTML = `<strong>✗ CDRRMO Not Certified</strong><br>Applicant's location was not certified as a danger zone.`;
+                        cdrrmoText.style.color = '#dc2626';
+                        cdrrmoText.innerHTML = `<strong>Follow-up required: certification overdue</strong><br>CDRRMO disposition has remained pending for <strong>${daysPending}</strong> calendar days (exceeds the fourteen-day monitoring reference). Coordinate with CDRRMO or intake as appropriate.`;
                     } else {
-                        // Pending status - check for overdue
-                        const daysPending = currentApplicant.cdrrmoDaysPending || 0;
-                        const isOverdue = currentApplicant.isCdrrmoFlagged;
-                        
-                        if (isOverdue) {
-                            cdrrmoBox.style.background = '#fef2f2';
-                            cdrrmoBox.style.borderColor = '#fca5a5';
-                            cdrrmoText.style.color = '#dc2626';
-                            cdrrmoText.innerHTML = `<strong>⚠️ OVERDUE: Pending ${daysPending} days</strong><br>CDRRMO certification has been pending for more than 14 days. Follow-up required.`;
-                        } else {
-                            cdrrmoBox.style.background = '#fef3c7';
-                            cdrrmoBox.style.borderColor = '#fcd34d';
-                            cdrrmoText.style.color = '#92400e';
-                            cdrrmoText.innerHTML = `<strong>⏳ Pending CDRRMO Certification</strong> (${daysPending} days)<br>Applicant must be certified by CDRRMO before eligibility can be determined.`;
-                        }
+                        cdrrmoBox.style.background = '#fef3c7';
+                        cdrrmoBox.style.borderColor = '#fcd34d';
+                        cdrrmoText.style.color = '#92400e';
+                        cdrrmoText.innerHTML = `<strong>Awaiting CDRRMO disposition</strong> (${daysPending} day(s) on record)<br>A field inspection report or official CDRRMO paperwork filed at intake is still required.`;
                     }
                 }
-
-                // Populate CDRRMO section with ronda team findings
-                populateCdrrmoSection(currentApplicant.applicantId || currentApplicant.id, currentApplicant);
 
                 // Populate eligibility checks for Channel B
                 const isInDangerZoneB = currentApplicant.dangerZoneType ? true : false;
@@ -2456,16 +2651,15 @@
                 // Show/hide danger zone sections based on whether applicant has danger zone data
                 const dangerZoneInfoSection = document.querySelector('.danger-zone-info');
                 const notInDangerZoneMsg = document.querySelector('.not-in-danger-zone-msg');
-                const cdrrmoSection = document.querySelector('.cdrrmo-certification-section');
 
                 if (isInDangerZoneB) {
                     if (dangerZoneInfoSection) dangerZoneInfoSection.style.display = 'block';
                     if (notInDangerZoneMsg) notInDangerZoneMsg.style.display = 'none';
-                    if (cdrrmoSection) cdrrmoSection.style.display = 'block';
                 } else {
                     if (dangerZoneInfoSection) dangerZoneInfoSection.style.display = 'none';
                     if (notInDangerZoneMsg) notInDangerZoneMsg.style.display = 'block';
-                    if (cdrrmoSection) cdrrmoSection.style.display = 'none';
+                    const officePanelOff = document.getElementById('officeCdrrmoReceiptPanel');
+                    if (officePanelOff) officePanelOff.style.display = 'none';
                 }
 
             } else {
@@ -2473,9 +2667,6 @@
                 console.warn('Unknown channel:', currentApplicant.channel);
                 if (walkinSection) walkinSection.style.display = 'block';
             }
-        
-        // Populate SMS status section
-        populateSmsStatus(currentApplicant);
         
         // Show/hide action buttons based on status
         updateActionButtons(currentApplicant);
@@ -2491,98 +2682,6 @@
             console.error('Current applicant data:', currentApplicant);
             alert('Error opening modal: ' + error.message + '\n\nCheck browser console (F12) for details.');
         }
-    }
-    
-    function populateSmsStatus(applicant) {
-        const container = document.getElementById('smsStatusSection');
-        if (!container) return;
-        
-        const hasPhone = applicant.hasPhone;
-        const regSent = applicant.registrationSmsSent;
-        const eligSent = applicant.eligibilitySmsSent;
-        const channel = applicant.channel;
-        
-        let html = '';
-        
-        if (!hasPhone) {
-            html = `
-                <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: #f1f5f9; border-radius: 0.375rem;">
-                    <span style="color: #64748b; font-size: 0.8125rem;">📵 No phone number on record. SMS notifications cannot be sent.</span>
-                </div>
-            `;
-        } else {
-            html = `
-                <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.5rem; background: ${regSent ? '#dcfce7' : '#fee2e2'}; border-radius: 0.375rem;">
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <span style="font-size: 1rem;">${regSent ? '✓' : '✗'}</span>
-                        <span style="font-size: 0.8125rem; color: ${regSent ? '#166534' : '#991b1b'};">
-                            Registration SMS ${regSent ? 'Sent' : 'Not Sent'}
-                        </span>
-                    </div>
-                    <button type="button" onclick="resendSms('registration')" class="btn-modal" style="padding: 0.25rem 0.5rem; font-size: 0.6875rem; background: #e2e8f0; color: #475569;">
-                        📤 Resend
-                    </button>
-                </div>
-                <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.5rem; background: ${eligSent ? '#dcfce7' : '#fef3c7'}; border-radius: 0.375rem;">
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <span style="font-size: 1rem;">${eligSent ? '✓' : '⏳'}</span>
-                        <span style="font-size: 0.8125rem; color: ${eligSent ? '#166534' : '#92400e'};">
-                            Eligibility SMS ${eligSent ? 'Sent' : 'Pending (sent on eligibility decision)'}
-                        </span>
-                    </div>
-                    ${applicant.eligibilityStatus !== 'Pending' && applicant.eligibilityStatus !== 'Pending CDRRMO' ? `
-                    <button type="button" onclick="resendSms('eligibility')" class="btn-modal" style="padding: 0.25rem 0.5rem; font-size: 0.6875rem; background: #e2e8f0; color: #475569;">
-                        📤 Resend
-                    </button>
-                    ` : ''}
-                </div>
-            `;
-        }
-        
-        container.innerHTML = html;
-    }
-    
-    function resendSms(smsType) {
-        if (!currentApplicant) {
-            alert('No applicant selected');
-            return;
-        }
-        
-        if (!confirm(`Are you sure you want to resend the ${smsType} SMS notification?`)) {
-            return;
-        }
-        
-        const formData = new FormData();
-        formData.append('channel', currentApplicant.channel);
-        formData.append('id', currentApplicant.channel === 'A' ? currentApplicant.id : currentApplicant.applicantId);
-        formData.append('sms_type', smsType);
-        
-        fetch('{% url "intake:resend_sms" request.user.position %}', {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert(data.message);
-                // Update local state
-                if (smsType === 'registration') {
-                    currentApplicant.registrationSmsSent = true;
-                } else {
-                    currentApplicant.eligibilitySmsSent = true;
-                }
-                populateSmsStatus(currentApplicant);
-            } else {
-                alert('Error: ' + (data.error || 'Unknown error'));
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Network error. Please try again.');
-        });
     }
     
     function populateISFList(applicant) {
@@ -2837,7 +2936,7 @@
                 <svg style="width: 1rem; height: 1rem; color: ${incomePass ? '#16a34a' : '#dc2626'};" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     ${incomePass ? '<polyline points="20 6 9 17 4 12"></polyline>' : '<line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>'}
                 </svg>
-                <span style="font-size: 0.8125rem;">Monthly household income ≤ ₱${ceiling.toLocaleString('en-PH')} <strong>(declared: ₱${income.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})</strong></span>
+                <span style="font-size: 0.8125rem;">Module 1 income ceiling: not to exceed <strong>₱${ceiling.toLocaleString('en-PH')}</strong> — declared household income: <strong>₱${income.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong></span>
             </div>
             ${incomeNote}
             </div>
@@ -2845,13 +2944,13 @@
                 <svg style="width: 1rem; height: 1rem; color: #16a34a;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="20 6 9 17 4 12"></polyline>
                 </svg>
-                <span style="font-size: 0.8125rem;">No property ownership in Talisay City</span>
+                <span style="font-size: 0.8125rem;">No real-property ownership in Talisay City (per applicant declaration)</span>
             </div>
             <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: #dcfce7; border-radius: 0.375rem;">
                 <svg style="width: 1rem; height: 1rem; color: #16a34a;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="20 6 9 17 4 12"></polyline>
                 </svg>
-                <span style="font-size: 0.8125rem;">Not on blacklist</span>
+                <span style="font-size: 0.8125rem;">Not listed on the THA restriction register (screening)</span>
             </div>
         `;
 
@@ -2862,7 +2961,7 @@
                 <svg style="width: 1rem; height: 1rem; color: ${cdrrmoPass ? '#16a34a' : '#d97706'};" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     ${cdrrmoPass ? '<polyline points="20 6 9 17 4 12"></polyline>' : '<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>'}
                 </svg>
-                <span style="font-size: 0.8125rem;">CDRRMO Certification: <strong>${applicant.cdrrmoStatus || 'Pending'}</strong></span>
+                <span style="font-size: 0.8125rem;">CDRRMO certification status: <strong>${applicant.cdrrmoStatus || 'Pending CDRRMO field action'}</strong></span>
             </div>
             `;
         }
@@ -2942,16 +3041,40 @@
         container.innerHTML = html;
     }
     
+    function hasPendingFieldDisposition(applicant) {
+        return !!(
+            applicant &&
+            applicant.channel === 'B' &&
+            applicant.cdrrmo_disposition_source === 'field_unit' &&
+            (applicant.cdrrmo_status === 'certified' || applicant.cdrrmo_status === 'not_certified') &&
+            applicant.applicantStatus === 'pending_cdrrmo'
+        );
+    }
+
+    function shouldShowGenericEligibilityActions(applicant) {
+        if (!applicant) return false;
+        if (!(applicant.eligibilityStatus === 'Pending' || applicant.eligibilityStatus === 'Pending CDRRMO')) return false;
+        if (hasPendingFieldDisposition(applicant)) return false;
+        return true;
+    }
+
     function updateActionButtons(applicant) {
         const btnMarkEligible = document.getElementById('btnMarkEligible');
         const btnDisqualify = document.getElementById('btnDisqualify');
+        const btnProceedModule2 = document.getElementById('btnProceedModule2');
         const reviewActions = document.getElementById('reviewActions');
         
         // Return early if elements don't exist (read-only users)
         if (!reviewActions) return;
+
+        // Module 1 -> Module 2 handoff action
+        if (btnProceedModule2) {
+            const appStatus = String(applicant?.applicantStatus || '').toLowerCase();
+            btnProceedModule2.style.display = appStatus === 'disqualified' ? 'none' : 'inline-flex';
+        }
         
-        // Show action buttons only for pending status
-        if (applicant.eligibilityStatus === 'Pending' || applicant.eligibilityStatus === 'Pending CDRRMO') {
+        // Show generic Mark Eligible / Disqualify only when this is not a pending field report case.
+        if (shouldShowGenericEligibilityActions(applicant)) {
             reviewActions.style.display = 'flex';
             
             // For Channel B pending CDRRMO, disable mark eligible
@@ -2967,6 +3090,41 @@
         } else {
             reviewActions.style.display = 'none';
         }
+    }
+
+    function proceedToModule2Evaluation() {
+        if (!currentApplicant) {
+            alert('No applicant record selected.');
+            return;
+        }
+
+        const baseUrl = '{% url "applications:applications_list" request.user.position %}';
+        const lookup = (currentApplicant.referenceNumber || currentApplicant.fullName || '').trim();
+        const params = new URLSearchParams();
+        params.set('stage', 'all');
+        if (lookup) params.set('search', lookup);
+        const targetUrl = `${baseUrl}?${params.toString()}`;
+
+        const formData = new FormData();
+        formData.append('applicant_id', currentApplicant.applicantId || currentApplicant.id);
+        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+
+        fetch('{% url "intake:proceed_to_applications" request.user.position %}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (!data.success) {
+                alert('Error: ' + (data.error || 'Unable to proceed to Module 2.'));
+                return;
+            }
+
+            window.location.href = targetUrl;
+        })
+        .catch(error => {
+            alert('Error: ' + error.message);
+        });
     }
     
     function closeReviewModal() {
@@ -3041,20 +3199,16 @@
         const editActions = document.getElementById('editActions');
         const reviewActions = document.getElementById('reviewActions');
         
-        if (editToggleText) editToggleText.textContent = isEditMode ? 'Cancel Edit' : 'Edit';
+        if (editToggleText) editToggleText.textContent = isEditMode ? 'Cancel amendment' : 'Amend record';
         if (editActions) editActions.style.display = isEditMode ? 'flex' : 'none';
         
-        // Show review actions for all channels when not in edit mode
-        if (reviewActions) reviewActions.style.display = isEditMode ? 'none' : 'flex';
-        
-        // Show/hide CDRRMO action buttons for Channel B
-        const cdrrmoActionsBox = document.getElementById('cdrrmoActionsBox');
-        if (cdrrmoActionsBox && currentApplicant && currentApplicant.channel === 'B') {
-            // Only show if in edit mode and CDRRMO status is still pending
-            const isPending = !currentApplicant.cdrrmoStatus || 
-                              currentApplicant.cdrrmoStatus === 'Pending CDRRMO Visit' ||
-                              currentApplicant.cdrrmoStatus.toLowerCase().includes('pending');
-            cdrrmoActionsBox.style.display = (isEditMode && isPending) ? 'block' : 'none';
+        // When leaving edit mode, re-apply role/path-based button gating.
+        if (reviewActions) {
+            if (isEditMode) {
+                reviewActions.style.display = 'none';
+            } else if (currentApplicant) {
+                updateActionButtons(currentApplicant);
+            }
         }
         
         // Update document checklists based on channel
@@ -3117,12 +3271,12 @@
                         cdrrmoBox.style.background = '#dcfce7';
                         cdrrmoBox.style.borderColor = '#86efac';
                         cdrrmoText.style.color = '#166534';
-                        cdrrmoText.innerHTML = `<strong>✓ CDRRMO Certified</strong><br>Applicant has been verified as residing in a danger zone.`;
+                        cdrrmoText.innerHTML = `<strong>CDRRMO certification on file</strong><br>The declared hazard-area representation has been certified pursuant to CDRRMO field verification.`;
                     } else {
                         cdrrmoBox.style.background = '#fee2e2';
                         cdrrmoBox.style.borderColor = '#fca5a5';
                         cdrrmoText.style.color = '#991b1b';
-                        cdrrmoText.innerHTML = `<strong>✗ CDRRMO Not Certified</strong><br>Applicant's location was not certified as a danger zone. Moved to Walk-in Queue.`;
+                        cdrrmoText.innerHTML = `<strong>CDRRMO certification not granted</strong><br>The declared location was not certified as a qualifying hazard area. The record will be reclassified for walk-in processing, as applicable.`;
                     }
                 }
                 
@@ -3187,7 +3341,7 @@
                 
                 if (fullNameBEl) fullNameBEl.value = currentApplicant.fullName || '';
                 if (barangayBEl) barangayBEl.value = currentApplicant.barangay || '';
-                if (incomeBEl) incomeBEl.value = String(currentApplicant.monthlyIncome || '').replace(/,/g, '');
+                if (incomeBEl) incomeBEl.value = formatIncomeInputValue(currentApplicant.monthlyIncome);
                 if (householdBEl) householdBEl.value = currentApplicant.householdSize || '';
                 if (yearsBEl) yearsBEl.value = currentApplicant.yearsResiding || '';
                 if (phoneBEl) phoneBEl.value = currentApplicant.phoneNumber || '';
@@ -3205,7 +3359,7 @@
                 
                 if (fullNameEl) fullNameEl.value = currentApplicant.fullName || '';
                 if (barangayEl) barangayEl.value = currentApplicant.barangay || '';
-                if (incomeEl) incomeEl.value = String(currentApplicant.monthlyIncome || '').replace(/,/g, '');
+                if (incomeEl) incomeEl.value = formatIncomeInputValue(currentApplicant.monthlyIncome);
                 if (householdEl) householdEl.value = currentApplicant.householdSize || '';
                 if (yearsEl) yearsEl.value = currentApplicant.yearsResiding || '';
                 if (phoneEl) phoneEl.value = currentApplicant.phoneNumber || '';
@@ -3394,7 +3548,7 @@
             // Channel B: Danger Zone applicant data
             formData.append('full_name', document.getElementById('reviewFullNameB').value);
             formData.append('barangay', document.getElementById('reviewBarangayB').value);
-            formData.append('monthly_income', document.getElementById('reviewIncomeB').value);
+            formData.append('monthly_income', document.getElementById('reviewIncomeB').value.replace(/,/g, ''));
             formData.append('household_size', document.getElementById('reviewHouseholdB').value);
             formData.append('years_residing', document.getElementById('reviewYearsB').value);
             formData.append('phone_number', document.getElementById('reviewPhoneB').value);
@@ -3406,7 +3560,7 @@
             // Channel C: Regular walk-in applicant data
             formData.append('full_name', document.getElementById('reviewFullName').value);
             formData.append('barangay', document.getElementById('reviewBarangay').value);
-            formData.append('monthly_income', document.getElementById('reviewIncome').value);
+            formData.append('monthly_income', document.getElementById('reviewIncome').value.replace(/,/g, ''));
             formData.append('household_size', document.getElementById('reviewHousehold').value);
             formData.append('years_residing', document.getElementById('reviewYears').value);
             formData.append('phone_number', document.getElementById('reviewPhone').value);
@@ -3500,38 +3654,35 @@
         const dangerZoneType = document.getElementById('dangerZoneType');
         const dangerZoneLocation = document.getElementById('dangerZoneLocation');
 
+        const clearHazardBtnStyles = () => {
+            if (btnYes) {
+                btnYes.classList.remove('is-selected-affirm', 'is-selected-negative');
+            }
+            if (btnNo) {
+                btnNo.classList.remove('is-selected-affirm', 'is-selected-negative');
+            }
+        };
+
         if (isDanger === true) {
-            // YES clicked
             dangerZoneGroup.style.display = 'block';
             isDangerInput.value = 'true';
-            btnYes.style.background = '#1e40af';
-            btnYes.style.color = 'white';
-            btnNo.style.background = 'white';
-            btnNo.style.color = '#dc2626';
-            // Set required
+            clearHazardBtnStyles();
+            if (btnYes) btnYes.classList.add('is-selected-affirm');
             dangerZoneType.required = true;
             dangerZoneLocation.required = true;
         } else if (isDanger === false) {
-            // NO clicked
             dangerZoneGroup.style.display = 'none';
             isDangerInput.value = 'false';
-            btnYes.style.background = 'white';
-            btnYes.style.color = '#1e40af';
-            btnNo.style.background = '#dc2626';
-            btnNo.style.color = 'white';
-            // Clear and remove required
+            clearHazardBtnStyles();
+            if (btnNo) btnNo.classList.add('is-selected-negative');
             dangerZoneType.value = '';
             dangerZoneLocation.value = '';
             dangerZoneType.required = false;
             dangerZoneLocation.required = false;
         } else {
-            // Reset
             dangerZoneGroup.style.display = 'none';
             isDangerInput.value = '';
-            btnYes.style.background = 'white';
-            btnYes.style.color = '#1e40af';
-            btnNo.style.background = 'white';
-            btnNo.style.color = '#dc2626';
+            clearHazardBtnStyles();
             dangerZoneType.required = false;
             dangerZoneLocation.required = false;
         }
@@ -3567,29 +3718,29 @@
             memberDiv.style.alignItems = 'flex-end';
             memberDiv.innerHTML = `
                 <div class="form-group">
-                    <label class="form-label">Name</label>
-                    <input type="text" class="form-input hh-member-field" placeholder="Full name" name="hh_member_${i}_name" maxlength="100" minlength="2" onchange="updateHouseholdSize()">
+                    <label class="form-label">Full name</label>
+                    <input type="text" class="form-input hh-member-field" placeholder="Surname, given name, extension" name="hh_member_${i}_name" maxlength="100" minlength="2" onchange="updateHouseholdSize()">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Relationship To Applicant</label>
+                    <label class="form-label">Relationship to applicant</label>
                     <select class="form-select hh-member-field" name="hh_member_${i}_relationship" onchange="updateHouseholdSize()">
-                        <option value="">Select relationship...</option>
+                        <option value="">— Select —</option>
                         <option value="spouse">Spouse</option>
                         <option value="child">Child</option>
                         <option value="parent">Parent</option>
                         <option value="sibling">Sibling</option>
                         <option value="grandchild">Grandchild</option>
-                        <option value="other">Other Relative</option>
+                        <option value="other">Other relative</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Age</label>
-                    <input type="number" class="form-input hh-member-field" placeholder="Age" name="hh_member_${i}_age" min="0" max="120" onchange="updateHouseholdSize()">
+                    <input type="number" class="form-input hh-member-field" placeholder="Years" name="hh_member_${i}_age" min="0" max="120" onchange="updateHouseholdSize()">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Civil Status</label>
+                    <label class="form-label">Civil status</label>
                     <select class="form-select hh-member-field" name="hh_member_${i}_status" onchange="updateHouseholdSize()">
-                        <option value="">Select status...</option>
+                        <option value="">— Select —</option>
                         <option value="single">Single</option>
                         <option value="married">Married</option>
                         <option value="widowed">Widowed</option>
@@ -3598,7 +3749,7 @@
                         <option value="common_law">Common-law</option>
                     </select>
                 </div>
-                <button type="button" onclick="deleteHouseholdMember(${i})" style="background: #ef4444; color: white; padding: 0.5rem 0.75rem; border: none; border-radius: 0.375rem; cursor: pointer; font-size: 0.75rem; font-weight: 600; white-space: nowrap; align-self: flex-end;">Delete</button>
+                <button type="button" onclick="deleteHouseholdMember(${i})" class="tha-reg-remove-member" title="Remove this row">Remove</button>
             `;
             container.appendChild(memberDiv);
         }
@@ -3612,7 +3763,7 @@
 
     function deleteHouseholdMember(index) {
         if (householdMemberCount <= 1) {
-            alert('Must have at least one household member');
+            alert('The last household member row cannot be removed. Clear the fields on that row if it is not used.');
             return;
         }
         householdMemberCount--;
@@ -3818,14 +3969,7 @@
             // Basic info
             document.getElementById('reviewFullNameB').value = applicant.fullName;
             document.getElementById('reviewBarangayB').value = applicant.barangay;
-            document.getElementById('reviewIncomeB').value = Number(String(applicant.monthlyIncome || 0).replace(/,/g, '')).toFixed(2);
-            const previewBEl = document.getElementById('reviewIncomeDisplayB');
-            if (previewBEl) {
-                const previewNum = Number.parseFloat(String(applicant.monthlyIncome || '').replace(/,/g, ''));
-                previewBEl.textContent = Number.isNaN(previewNum)
-                    ? ''
-                    : ('Display: ₱' + previewNum.toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 2 }));
-            }
+            document.getElementById('reviewIncomeB').value = formatIncomeInputValue(applicant.monthlyIncome);
             document.getElementById('reviewHouseholdB').value = applicant.householdSize;
             document.getElementById('reviewYearsB').value = applicant.yearsResiding;
             document.getElementById('reviewPhoneB').value = applicant.phoneNumber;
@@ -3951,34 +4095,6 @@
                 this.parentElement.classList.toggle('checked', this.checked);
             });
         });
-
-        const reviewIncome = document.getElementById('reviewIncome');
-        const reviewIncomeDisplay = document.getElementById('reviewIncomeDisplay');
-        if (reviewIncome && reviewIncomeDisplay) {
-            const syncReviewIncomeDisplay = function() {
-                const value = Number.parseFloat(String(reviewIncome.value || '').replace(/,/g, ''));
-                reviewIncomeDisplay.textContent = Number.isNaN(value)
-                    ? ''
-                    : ('Display: ₱' + value.toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 2 }));
-            };
-            reviewIncome.addEventListener('input', syncReviewIncomeDisplay);
-            reviewIncome.addEventListener('change', syncReviewIncomeDisplay);
-            syncReviewIncomeDisplay();
-        }
-
-        const reviewIncomeB = document.getElementById('reviewIncomeB');
-        const reviewIncomeDisplayB = document.getElementById('reviewIncomeDisplayB');
-        if (reviewIncomeB && reviewIncomeDisplayB) {
-            const syncReviewIncomeDisplayB = function() {
-                const value = Number.parseFloat(String(reviewIncomeB.value || '').replace(/,/g, ''));
-                reviewIncomeDisplayB.textContent = Number.isNaN(value)
-                    ? ''
-                    : ('Display: ₱' + value.toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 2 }));
-            };
-            reviewIncomeB.addEventListener('input', syncReviewIncomeDisplayB);
-            reviewIncomeB.addEventListener('change', syncReviewIncomeDisplayB);
-            syncReviewIncomeDisplayB();
-        }
 
         // Ensure number income field never contains comma-separated values.
         const incomeInput = document.getElementById('monthlyIncome');
@@ -4530,7 +4646,7 @@
         formData.append('decision', 'approved');
         formData.append('staff_notes', staffNotes);
 
-        fetch('/intake/staff/fourth_member/update-cdrrmo-status/', {
+        fetch('{% url "intake:update_cdrrmo_status" request.user.position %}', {
             method: 'POST',
             headers: {
                 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
@@ -4540,11 +4656,11 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert('✅ CDRRMO status approved!\n\nApplicant has been moved to Priority Queue.');
+                alert('CDRRMO disposition recorded as accepted.\n\nThe applicant record will be updated and the page will reload.');
                 closeReviewModal();
                 setTimeout(() => location.reload(), 1000);
             } else {
-                alert('❌ Error: ' + data.error);
+                alert('Error: ' + data.error);
             }
         })
         .catch(error => {
@@ -4561,7 +4677,7 @@
             return;
         }
 
-        if (!confirm('Reject CDRRMO verification? This will mark the applicant as not in danger zone and move to Walk-in Queue.\n\nContinue?')) {
+        if (!confirm('Reject this CDRRMO field report?\n\nThe applicant will be treated as not within a certified hazard area and reclassified for walk-in processing, where applicable.\n\nProceed?')) {
             return;
         }
 
@@ -4570,7 +4686,7 @@
         formData.append('decision', 'rejected');
         formData.append('staff_notes', staffNotes);
 
-        fetch('/intake/staff/fourth_member/update-cdrrmo-status/', {
+        fetch('{% url "intake:update_cdrrmo_status" request.user.position %}', {
             method: 'POST',
             headers: {
                 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
@@ -4580,7 +4696,7 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert('❌ CDRRMO verification rejected.\n\nApplicant has been moved to Walk-in Queue (as not in danger zone).');
+                alert('CDRRMO disposition recorded as rejected.\n\nThe applicant record will be updated for walk-in processing and the page will reload.');
                 closeReviewModal();
                 setTimeout(() => location.reload(), 1000);
             } else {
@@ -4592,6 +4708,49 @@
         });
     }
 
+    function renderCdrrmoWorkflowTimeline(applicantData) {
+        const host = document.getElementById('cdrrmoWorkflowTimelineBody');
+        if (!host) return;
+
+        const status = applicantData.cdrrmo_status || 'pending';
+        const source = applicantData.cdrrmo_disposition_source || 'pending';
+        const appStatus = applicantData.applicantStatus || '';
+        const registeredAt = applicantData.dateRegistered || '—';
+        const dispositionAt = applicantData.certified_at ? new Date(applicantData.certified_at).toLocaleDateString() : null;
+        const finalized = appStatus !== 'pending_cdrrmo';
+        const sentToModule2 = appStatus === 'eligible' || appStatus === 'requirements' || appStatus === 'application' || appStatus === 'standby' || appStatus === 'awarded';
+
+        function dot(done, pending) {
+            if (done) return '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#16a34a;margin-right:0.45rem;vertical-align:middle;"></span>';
+            if (pending) return '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#eab308;margin-right:0.45rem;vertical-align:middle;"></span>';
+            return '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#cbd5e1;margin-right:0.45rem;vertical-align:middle;"></span>';
+        }
+
+        let step2Text = 'Awaiting disposition (office intake filing or field unit report)';
+        if (source === 'office_intake') {
+            step2Text = 'Official CDRRMO paperwork filed at THA intake' + (dispositionAt ? ` (${dispositionAt})` : '');
+        } else if (source === 'field_unit') {
+            step2Text = 'Field unit report submitted' + (dispositionAt ? ` (${dispositionAt})` : '');
+        }
+
+        let step3Text = 'Awaiting staff finalization';
+        if (source === 'office_intake' && status !== 'pending') {
+            step3Text = 'No separate field-finalization step required (office disposition is final)';
+        } else if (finalized) {
+            if (appStatus === 'eligible') step3Text = 'Staff finalized as eligible';
+            else if (appStatus === 'disqualified') step3Text = 'Staff finalized as disqualified';
+            else step3Text = `Staff finalized (status: ${appStatus})`;
+        }
+
+        const lines = [
+            `${dot(true, false)}<strong>Step 1:</strong> Intake record encoded (${registeredAt})`,
+            `${dot(status !== 'pending', status === 'pending')}<strong>Step 2:</strong> ${step2Text}`,
+            `${dot(finalized || (source === 'office_intake' && status !== 'pending'), status !== 'pending' && !(finalized || source === 'office_intake'))}<strong>Step 3:</strong> ${step3Text}`,
+            `${dot(sentToModule2, finalized && !sentToModule2)}<strong>Step 4:</strong> ${sentToModule2 ? 'Ready in Module 2 — Application & Evaluation' : 'Not yet in Module 2 handoff list'}`,
+        ];
+        host.innerHTML = lines.map(function (line) { return `<div style="margin-bottom:0.25rem;">${line}</div>`; }).join('');
+    }
+
     // Function to populate CDRRMO section in modal
     function populateCdrrmoSection(applicantId, applicantData) {
         const cdrrmoSection = document.querySelector('.cdrrmo-certification-section');
@@ -4599,6 +4758,8 @@
 
         // Check if applicant has danger zone info
         if (!applicantData.dangerZoneType) {
+            const opHide = document.getElementById('officeCdrrmoReceiptPanel');
+            if (opHide) opHide.style.display = 'none';
             cdrrmoSection.style.display = 'none';
             return;
         }
@@ -4606,14 +4767,20 @@
         cdrrmoSection.style.display = 'block';
 
         // Set declared info
-        document.getElementById('cdrrmoDeclarationType').textContent = applicantData.dangerZoneType || 'Not specified';
-        document.getElementById('cdrrmoDecLocation').textContent = applicantData.dangerZoneLocation || 'Not specified';
+        const dzType = applicantData.dangerZoneType || applicantData.danger_zone_type;
+        const dzLabel = formatHazardZoneTypeLabel(dzType);
+        document.getElementById('cdrrmoDeclarationType').textContent = dzLabel || dzType || 'Not specified';
+        document.getElementById('cdrrmoDecLocation').textContent = applicantData.dangerZoneLocation || applicantData.danger_zone_location || 'Not specified';
+        renderCdrrmoWorkflowTimeline(applicantData);
 
         // Check CDRRMO certification status
         const cdrrmoStatus = applicantData.cdrrmo_status; // 'pending', 'certified', 'not_certified'
+        const dispositionSource = applicantData.cdrrmo_disposition_source || 'field_unit';
         const rondaTeamResultBox = document.getElementById('rondaTeamResultBox');
         const staffApprovalBox = document.getElementById('staffApprovalBox');
+        const cdrrmoActionsBox = document.getElementById('cdrrmoActionsBox');
         const cdrrmoStatusBox = document.getElementById('cdrrmoStatusBox');
+        const officeIntakeResultBox = document.getElementById('officeIntakeResultBox');
         const rondaEvidenceSection = document.getElementById('rondaEvidencePhotosSection');
         const rondaEvidenceStrip = document.getElementById('rondaEvidencePhotosStrip');
         const rondaEvidenceEmpty = document.getElementById('rondaEvidencePhotosEmpty');
@@ -4624,63 +4791,112 @@
             if (rondaEvidenceEmpty) rondaEvidenceEmpty.style.display = 'none';
         }
 
+        // Intake modal policy: keep CDRRMO/Ronda detailed verification display out of this modal.
+        // Full verification details are viewed from Module 2 (Application & Evaluation) View modal.
+        if (rondaTeamResultBox) rondaTeamResultBox.style.display = 'none';
+        if (staffApprovalBox) staffApprovalBox.style.display = 'none';
+        if (cdrrmoActionsBox) cdrrmoActionsBox.style.display = 'none';
+
         if (cdrrmoStatus === 'pending') {
-            // Still pending - field team hasn't verified yet
             resetRondaEvidencePhotos();
             cdrrmoStatusBox.style.display = 'block';
-            rondaTeamResultBox.style.display = 'none';
-            staffApprovalBox.style.display = 'none';
+            if (rondaTeamResultBox) rondaTeamResultBox.style.display = 'none';
+            if (staffApprovalBox) staffApprovalBox.style.display = 'none';
+            if (cdrrmoActionsBox) cdrrmoActionsBox.style.display = 'none';
+            if (officeIntakeResultBox) officeIntakeResultBox.style.display = 'none';
             document.getElementById('cdrrmoStatusText').innerHTML = `
-                <strong>⏳ Pending Field Verification</strong><br>
-                <span style="font-size: 0.7rem;">Awaiting ronda team to visit and verify the danger zone claim.</span>
+                <strong>Awaiting CDRRMO disposition</strong><br>
+                <span style="font-size: 0.75rem;">Either the field unit will submit an on-site verification report (with optional photographs), or intake will file official CDRRMO certification received at the THA office.${canModify ? ' Use <strong>Official CDRRMO certification — office receipt</strong> below when paperwork is on file.' : ''}</span>
             `;
         } else if (cdrrmoStatus === 'certified' || cdrrmoStatus === 'not_certified') {
-            // Ronda team has submitted a finding - show it
             cdrrmoStatusBox.style.display = 'none';
-            rondaTeamResultBox.style.display = 'block';
-            staffApprovalBox.style.display = 'block';
 
-            // Show ronda team's finding
-            document.getElementById('rondaVerifiedBy').textContent = applicantData.result_recorded_by_name || 'Field Team Member';
-            document.getElementById('rondaVerifiedDate').textContent = applicantData.certified_at ? new Date(applicantData.certified_at).toLocaleDateString() : '—';
-            document.getElementById('rondaNotes').textContent = applicantData.certification_notes || 'No notes provided';
+            if (dispositionSource === 'office_intake') {
+                if (officeIntakeResultBox) officeIntakeResultBox.style.display = 'block';
+                if (rondaTeamResultBox) rondaTeamResultBox.style.display = 'none';
+                if (staffApprovalBox) staffApprovalBox.style.display = 'none';
+                if (cdrrmoActionsBox) cdrrmoActionsBox.style.display = 'none';
+                resetRondaEvidencePhotos();
 
-            if (cdrrmoStatus === 'certified') {
-                document.getElementById('rondaCertifiedBadge').style.display = 'inline-block';
-                document.getElementById('rondaNotCertifiedBadge').style.display = 'none';
-            } else {
-                document.getElementById('rondaCertifiedBadge').style.display = 'none';
-                document.getElementById('rondaNotCertifiedBadge').style.display = 'inline-block';
-            }
+                const oiBy = document.getElementById('officeIntakeRecordedBy');
+                const oiDt = document.getElementById('officeIntakeFiledDate');
+                const oiNotes = document.getElementById('officeIntakeNotesDisplay');
+                if (oiBy) oiBy.textContent = applicantData.result_recorded_by_name || '—';
+                if (oiDt) oiDt.textContent = applicantData.certified_at ? new Date(applicantData.certified_at).toLocaleDateString() : '—';
+                if (oiNotes) oiNotes.textContent = applicantData.office_intake_notes || '—';
 
-            const photoUrls = Array.isArray(applicantData.ronda_evidence_photos) ? applicantData.ronda_evidence_photos : [];
-            if (rondaEvidenceSection && rondaEvidenceStrip) {
-                rondaEvidenceStrip.innerHTML = '';
-                rondaEvidenceSection.style.display = 'block';
-                if (photoUrls.length > 0) {
-                    if (rondaEvidenceEmpty) rondaEvidenceEmpty.style.display = 'none';
-                    photoUrls.forEach(function (url) {
-                        if (!url) return;
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.target = '_blank';
-                        a.rel = 'noopener noreferrer';
-                        a.title = 'Open full size';
-                        const img = document.createElement('img');
-                        img.src = url;
-                        img.alt = 'Field evidence captured by Ronda';
-                        img.loading = 'lazy';
-                        img.style.cssText = 'width: 96px; height: 96px; object-fit: cover; border-radius: 8px; border: 1px solid #dcfce7; display: block;';
-                        a.appendChild(img);
-                        rondaEvidenceStrip.appendChild(a);
-                    });
+                const ocb = document.getElementById('officeIntakeCertifiedBadge');
+                const onb = document.getElementById('officeIntakeNotCertifiedBadge');
+                if (cdrrmoStatus === 'certified') {
+                    if (ocb) ocb.style.display = 'inline-block';
+                    if (onb) onb.style.display = 'none';
                 } else {
-                    if (rondaEvidenceEmpty) rondaEvidenceEmpty.style.display = 'block';
+                    if (ocb) ocb.style.display = 'none';
+                    if (onb) onb.style.display = 'inline-block';
                 }
+            } else {
+                if (officeIntakeResultBox) officeIntakeResultBox.style.display = 'none';
+                if (rondaTeamResultBox) rondaTeamResultBox.style.display = 'none';
+                if (staffApprovalBox) staffApprovalBox.style.display = 'none';
+                if (cdrrmoActionsBox) cdrrmoActionsBox.style.display = 'none';
+                resetRondaEvidencePhotos();
             }
         } else {
             resetRondaEvidencePhotos();
+            if (cdrrmoActionsBox) cdrrmoActionsBox.style.display = 'none';
+            if (officeIntakeResultBox) officeIntakeResultBox.style.display = 'none';
         }
+
+        const officePanel = document.getElementById('officeCdrrmoReceiptPanel');
+        if (officePanel) {
+            const dz = applicantData.dangerZoneType || applicantData.danger_zone_type;
+            const showOffice = canModify && applicantData.cdrrmo_status === 'pending' && !!dz;
+            officePanel.style.display = showOffice ? 'block' : 'none';
+        }
+    }
+
+    /** Intake: official CDRRMO paperwork received at THA while cert is still system-pending (uses `update_cdrrmo_certification`). */
+    function recordOfficeCdrrmoCertified() {
+        if (!canModify) return;
+        const applicantId = document.getElementById('reviewApplicantId')?.value;
+        if (!applicantId || !currentApplicant || currentApplicant.channel !== 'B') {
+            alert('Unable to record certification: no applicant is selected or this record is not a Channel B hazard pathway file.');
+            return;
+        }
+        if (currentApplicant.cdrrmo_status !== 'pending') {
+            alert('Office receipt is only available while the CDRRMO certification record is still pending in the system (before a certified or not-certified disposition is filed).');
+            return;
+        }
+        if (!confirm('Record official CDRRMO certification as received at the THA intake office?\n\nThe applicant will be marked hazard-area certified, assigned a priority queue position where applicable, and notified by SMS if a mobile number is on file.\n\nProceed?')) {
+            return;
+        }
+        const extra = document.getElementById('officeCdrrmoReceiptNotes')?.value?.trim() || '';
+        const prefix = '[Official CDRRMO certification received at THA intake — ' + new Date().toISOString().slice(0, 10) + '] ';
+        const notes = extra ? (prefix + extra) : prefix;
+        const formData = new FormData();
+        formData.append('applicant_id', applicantId);
+        formData.append('decision', 'certified');
+        formData.append('notes', notes);
+        formData.append('office_receipt', '1');
+        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+
+        fetch('{% url "intake:update_cdrrmo_certification" request.user.position %}', {
+            method: 'POST',
+            body: formData,
+        })
+        .then(function (response) { return response.json(); })
+        .then(function (data) {
+            if (data.success) {
+                alert(data.message || 'CDRRMO certification recorded.');
+                closeReviewModal();
+                setTimeout(function () { location.reload(); }, 400);
+            } else {
+                alert(data.error || 'Unable to record certification.');
+            }
+        })
+        .catch(function (err) {
+            alert('Error: ' + err.message);
+        });
     }
 
 </script>

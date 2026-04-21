@@ -1,0 +1,21 @@
+{% extends 'staff_base.html' %}
+
+{% block title %}Access denied{% endblock %}
+{% block page_title %}Access denied{% endblock %}
+{% block page_description %}<p class="page-subtitle">You do not have permission to use this feature.</p>{% endblock %}
+
+{% block content %}
+<div style="max-width: 36rem; margin: 0 auto; text-align: center; padding: 2rem 1rem;">
+    {% if message %}
+    <p style="margin: 0 0 1.5rem; font-size: 1rem; color: var(--gray-700); line-height: 1.6;">{{ message }}</p>
+    {% else %}
+    <p style="margin: 0 0 1.5rem; font-size: 1rem; color: var(--gray-700); line-height: 1.6;">
+        You do not have permission to view this page.
+    </p>
+    {% endif %}
+
+    <a href="{% url 'accounts:dashboard' %}" style="display: inline-block; padding: 0.625rem 1.25rem; background: var(--primary-600, #2563eb); color: white; border-radius: 8px; font-weight: 600; font-size: 0.875rem;">
+        Return to dashboard
+    </a>
+</div>
+{% endblock %}

@@ -6,7 +6,7 @@ from django.views.decorators.http import require_POST
 from django.db.models import Count, Q, Prefetch, Max
 from django.utils import timezone
 from functools import wraps
-from intake.models import Applicant, QueueEntry
+from intake.models import Applicant, QueueEntry, CDRRMOCertification, FieldVerificationPhoto
 from intake.utils import send_sms, check_blacklist, ensure_priority_queue_entry
 from .models import (
     Application, Requirement, RequirementSubmission,
@@ -150,10 +150,13 @@ def applications_list(request, position):
     # Get user permissions
     permissions = get_module2_permissions(request.user)
     
-    # Get all eligible applicants (status='eligible' or beyond in the workflow)
+    # Module 2 shows only records explicitly handed off from Module 1
+    # (plus records already attached to an application object).
     applicants = Applicant.objects.filter(
-        status__in=['eligible', 'requirements', 'application', 'standby', 'awarded']
-    ).select_related('application').prefetch_related(
+        status__in=['pending', 'pending_cdrrmo', 'eligible', 'requirements', 'application', 'standby', 'awarded']
+    ).filter(
+        Q(module2_handoff_at__isnull=False) | Q(application__isnull=False)
+    ).select_related('application', 'cdrrmo_certification').prefetch_related(
         'requirement_submissions',
         'requirement_submissions__requirement',
         Prefetch(
@@ -290,6 +293,9 @@ def applications_list(request, position):
         applicants_data.append({
             'applicant': applicant,
             'application': application,
+            'applicant_status': applicant.status,
+            'applicant_status_display': applicant.get_status_display(),
+            'cdrrmo_status': getattr(getattr(applicant, 'cdrrmo_certification', None), 'status', None),
             'group_a_verified': group_a_verified,
             'can_generate_form': can_generate_form and application is None and not blacklist_blocked,
             'form_generated': application is not None,
@@ -376,6 +382,10 @@ def application_detail(request, position, application_id):
                 queryset=QueueEntry.objects.filter(status='active').order_by('position'),
                 to_attr='active_queue_entries',
             ),
+            Prefetch(
+                'cdrrmo_certification__field_photos',
+                queryset=FieldVerificationPhoto.objects.order_by('uploaded_at'),
+            ),
         ).get(id=application_id)
         # Check if this applicant has an application
         application = getattr(applicant, 'application', None)
@@ -390,6 +400,10 @@ def application_detail(request, position, application_id):
                     'applicant__queue_entries',
                     queryset=QueueEntry.objects.filter(status='active').order_by('position'),
                     to_attr='active_queue_entries',
+                ),
+                Prefetch(
+                    'applicant__cdrrmo_certification__field_photos',
+                    queryset=FieldVerificationPhoto.objects.order_by('uploaded_at'),
                 ),
             ),
             id=application_id
@@ -412,6 +426,28 @@ def application_detail(request, position, application_id):
         'applicant_name': applicant.full_name,
         'applicant_phone': applicant.phone_number,
         'reference_number': applicant.reference_number,
+        'applicant_profile': {
+            'last_name': applicant.last_name or '',
+            'first_name': applicant.first_name or '',
+            'middle_name': applicant.middle_name or '',
+            'sex': applicant.get_sex_display() if applicant.sex else '',
+            'years_residing': applicant.years_residing,
+            'date_of_birth': applicant.date_of_birth.isoformat() if applicant.date_of_birth else None,
+            'age': applicant.age,
+            'place_of_birth': applicant.place_of_birth or '',
+            'current_address': applicant.current_address or '',
+            'barangay': applicant.barangay.name if applicant.barangay else '',
+            'phone_number': applicant.phone_number or '',
+            'spouse_name': applicant.spouse_name or '',
+            'spouse_phone': applicant.spouse_phone or '',
+            'household_size': applicant.household_size,
+            'occupation': applicant.occupation or '',
+            'employment_status': applicant.get_employment_status_display() if applicant.employment_status else '',
+            'monthly_income': float(applicant.monthly_income) if applicant.monthly_income is not None else 0,
+            'hazard_declared': bool(applicant.danger_zone_type),
+            'danger_zone_type': applicant.danger_zone_type or '',
+            'danger_zone_location': applicant.danger_zone_location or '',
+        },
         'requirements': [],
         'routing_steps': [],
         'latest_step': None,
@@ -423,7 +459,46 @@ def application_detail(request, position, application_id):
         'm1_declares_no_property': not applicant.has_property_in_talisay,
         'household_size': applicant.household_size,
         'intake_queue_label': _active_intake_queue_label(applicant),
+        'cdrrmo': None,
+        'applicant_status': applicant.status,
+        'applicant_status_display': applicant.get_status_display(),
+        'channel': applicant.channel,
     }
+
+    # Module 1 CDRRMO snapshot (read-only in Module 2 modal)
+    if applicant.channel == 'danger_zone':
+        try:
+            cert = applicant.cdrrmo_certification
+            photo_urls = []
+            for ph in cert.field_photos.all():
+                if ph.image:
+                    try:
+                        photo_urls.append(request.build_absolute_uri(ph.image.url))
+                    except (ValueError, AttributeError):
+                        pass
+            data['cdrrmo'] = {
+                'status': cert.status,  # pending/certified/not_certified
+                'status_display': cert.get_status_display(),
+                'disposition_source': cert.disposition_source,
+                'declared_location': cert.declared_location or '',
+                'recorded_by': cert.result_recorded_by.get_full_name() if cert.result_recorded_by else '',
+                'recorded_at': cert.certified_at.isoformat() if cert.certified_at else None,
+                'office_intake_notes': cert.office_intake_notes or '',
+                'field_notes': cert.certification_notes or '',
+                'field_photos': photo_urls,
+            }
+        except CDRRMOCertification.DoesNotExist:
+            data['cdrrmo'] = {
+                'status': None,
+                'status_display': 'Not Requested',
+                'disposition_source': 'pending',
+                'declared_location': '',
+                'recorded_by': '',
+                'recorded_at': None,
+                'office_intake_notes': '',
+                'field_notes': '',
+                'field_photos': [],
+            }
     
     if application:
         data.update({
@@ -460,6 +535,103 @@ def application_detail(request, position, application_id):
     return JsonResponse(data)
 
 
+@login_required
+@verify_position
+@require_POST
+def evaluate_applicant(request, position):
+    """
+    Module 2 eligibility/disqualification decision endpoint.
+    Intake is encoding-only; final decisions happen here.
+    """
+    allowed_positions = ['fourth_member', 'second_member']
+    if request.user.position not in allowed_positions:
+        return JsonResponse({'success': False, 'error': 'Permission denied.'}, status=403)
+
+    applicant_id = request.POST.get('applicant_id')
+    action = request.POST.get('action')
+    reason = request.POST.get('reason', '').strip()
+    notes = request.POST.get('notes', '').strip()
+
+    if not applicant_id or action not in ['mark_eligible', 'disqualify']:
+        return JsonResponse({'success': False, 'error': 'Missing or invalid parameters.'}, status=400)
+
+    applicant = get_object_or_404(Applicant, id=applicant_id)
+
+    if applicant.status not in ['pending', 'pending_cdrrmo', 'eligible']:
+        return JsonResponse({
+            'success': False,
+            'error': f'Cannot evaluate record with current status: {applicant.get_status_display()}',
+        }, status=400)
+
+    if action == 'mark_eligible':
+        module1_ceiling = 10000
+        if applicant.monthly_income > module1_ceiling:
+            return JsonResponse({
+                'success': False,
+                'error': (
+                    f'Declared monthly income ₱{applicant.monthly_income:,.2f} exceeds the '
+                    f'Module 1 ceiling of ₱{module1_ceiling:,.0f}.'
+                ),
+            }, status=400)
+
+        if applicant.channel == 'danger_zone' and applicant.danger_zone_type:
+            try:
+                cert = applicant.cdrrmo_certification
+            except CDRRMOCertification.DoesNotExist:
+                return JsonResponse({'success': False, 'error': 'CDRRMO certification record not found.'}, status=400)
+            if cert.status != 'certified':
+                return JsonResponse({
+                    'success': False,
+                    'error': f'CDRRMO certification is required (current status: {cert.get_status_display()}).',
+                }, status=400)
+
+        applicant.status = 'eligible'
+        applicant.eligibility_checked_by = request.user
+        applicant.eligibility_checked_at = timezone.now()
+        applicant.save()
+
+        queue_entry, _ = ensure_priority_queue_entry(applicant, added_by=request.user)
+        if applicant.phone_number:
+            msg = (
+                "Congratulations! You are eligible for housing assistance. "
+                f"You are now in Priority Queue position #{queue_entry.position}. "
+                f"Reference: {applicant.reference_number}."
+            )
+            send_sms(applicant.phone_number, msg, 'eligibility_passed', applicant=applicant)
+
+        return JsonResponse({
+            'success': True,
+            'message': f'Applicant marked eligible and queued at position #{queue_entry.position}.',
+            'new_status': applicant.status,
+        })
+
+    reason_labels = {
+        'income_exceeds': 'Income exceeds ₱10,000 limit',
+        'property_owner': 'Owns property in Talisay City',
+        'blacklisted': 'On blacklist',
+        'incomplete_docs': 'Incomplete documents',
+        'false_info': 'False information provided',
+        'other': notes or 'Other reason',
+    }
+    applicant.status = 'disqualified'
+    applicant.disqualification_reason = reason_labels.get(reason, reason or 'Disqualified in Module 2 evaluation')
+    applicant.eligibility_checked_by = request.user
+    applicant.eligibility_checked_at = timezone.now()
+    applicant.save()
+    QueueEntry.objects.filter(applicant=applicant, status='active').delete()
+    if applicant.phone_number:
+        msg = (
+            "We regret to inform you that your housing application has been disqualified. "
+            f"Reason: {applicant.disqualification_reason}. Ref: {applicant.reference_number}."
+        )
+        send_sms(applicant.phone_number, msg, 'eligibility_fail', applicant=applicant)
+    return JsonResponse({
+        'success': True,
+        'message': f'Applicant disqualified. Reason: {applicant.disqualification_reason}',
+        'new_status': applicant.status,
+    })
+
+
 # =============================================================================
 # DOCUMENT VERIFICATION (Jocel, Joie)
 # =============================================================================
@@ -489,6 +661,17 @@ def update_requirement(request, position):
     requirement_code = request.POST.get('requirement_code')
     status = request.POST.get('status')
     
+    # UI fallback codes (used when requirements table is empty) -> canonical DB codes
+    requirement_aliases = {
+        'brgy_residency': ('brgy_res', 'Brgy. Certificate of Residency', 1),
+        'brgy_indigency': ('brgy_ind', 'Brgy. Certificate of Indigency', 2),
+        'cedula': ('cedula', 'Cedula', 3),
+        'police_clearance': ('police_clr', 'Police Clearance', 4),
+        'no_property': ('no_prop', 'Certificate of No Property', 5),
+        'photo_2x2': ('photo2x2', '2x2 Picture', 6),
+        'sketch': ('sketch', 'Sketch of House Location', 7),
+    }
+
     try:
         applicant = Applicant.objects.get(id=applicant_id)
         is_bl, bl_entry = check_blacklist(applicant.full_name, applicant.phone_number or None)
@@ -505,7 +688,25 @@ def update_requirement(request, position):
                 status=400,
             )
 
-        requirement = Requirement.objects.get(code=requirement_code)
+        # Resolve incoming code and self-heal missing Requirement rows.
+        resolved = requirement_aliases.get(requirement_code)
+        canonical_code = resolved[0] if resolved else requirement_code
+
+        requirement = Requirement.objects.filter(code=canonical_code).first()
+        if requirement is None:
+            if resolved is None:
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Unknown requirement code: {requirement_code}',
+                }, status=400)
+            requirement = Requirement.objects.create(
+                code=canonical_code,
+                name=resolved[1],
+                group='A',
+                order=resolved[2],
+                is_required_for_form=True,
+                is_active=True,
+            )
         
         submission, created = RequirementSubmission.objects.get_or_create(
             applicant=applicant,
@@ -1075,7 +1276,7 @@ def supporting_services_coordinator(request, position):
 
     # Authorization: Fourth Member / Records Officer / Jocel only
     if request.user.position not in ['fourth_member']:
-        return render(request, 'common/access_denied.html',
+        return render(request, 'staff/access_denied.html',
                       {'message': 'Only the Records Officer can access this function.'}, status=403)
 
     if request.method == 'POST':

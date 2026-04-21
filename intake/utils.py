@@ -9,6 +9,20 @@ import requests
 logger = logging.getLogger(__name__)
 
 
+def _sms_simulate_delivery(sms_log, phone_number, message, trigger_event, label):
+    """Mark log as sent without calling an external provider (local / test)."""
+    sms_log.status = 'sent'
+    sms_log.external_id = f'{label}:simulated'
+    sms_log.save(update_fields=['status', 'external_id'])
+    logger.info(
+        'SMS simulated [%s] event=%s to=%s msg=%s',
+        label, trigger_event, phone_number, (message or '')[:200],
+    )
+    print(f"\n{'=' * 60}\nSMS SIMULATED ({label}) — not sent via paid gateway\n{'=' * 60}")
+    print(f"To: {phone_number}\nEvent: {trigger_event}\nMessage:\n{message}\n{'=' * 60}\n")
+    return True
+
+
 def format_phone_number(phone_number):
     """
     Format Philippine phone number for SMS API.
@@ -57,8 +71,8 @@ def send_sms(phone_number, message, trigger_event, applicant=None, isf_record=No
         logger.warning(f"Invalid phone number format: {phone_number}")
         return False
 
-    sms_service = getattr(settings, 'SMS_SERVICE', 'semaphore')
-    sms_enabled = getattr(settings, 'SMS_ENABLED', False)
+    sms_service = (getattr(settings, 'SMS_SERVICE', 'console') or 'console').lower()
+    sms_enabled = getattr(settings, 'SMS_ENABLED', True)
 
     try:
         # Create SMS log record first (pending status)
@@ -70,57 +84,39 @@ def send_sms(phone_number, message, trigger_event, applicant=None, isf_record=No
             status='pending'
         )
 
-        if sms_enabled:
-            if sms_service == 'httpsms':
-                # Send via httpSMS (FREE - Android Phone Gateway)
-                success = send_sms_httpsms(phone_number, message, sms_log)
-                if success:
-                    logger.info(f"SMS sent via httpSMS: {trigger_event} to {phone_number}")
-                    return True
-                else:
-                    return False
-            elif sms_service == 'twilio':
-                # Send via Twilio
-                success = send_sms_twilio(phone_number, message, sms_log)
-                if success:
-                    logger.info(f"SMS sent via Twilio: {trigger_event} to {phone_number}")
-                    return True
-                else:
-                    return False
-            else:
-                # Send via Semaphore API (default)
-                success = send_sms_semaphore(phone_number, message, sms_log)
-                if success:
-                    logger.info(f"SMS sent via Semaphore: {trigger_event} to {phone_number}")
-                    return True
-                else:
-                    return False
-        else:
-            # Development mode - just log to console
-            sms_log.status = 'sent'
-            sms_log.save(update_fields=['status'])
+        # Local / CI: no API keys required — full workflow + SMSLog audit trail
+        if sms_service == 'console':
+            return _sms_simulate_delivery(sms_log, phone_number, message, trigger_event, 'console')
 
-            logger.info(f"SMS logged (dev mode): {trigger_event} to {phone_number}")
-            print(f"\n{'='*60}")
-            print(f"SMS NOTIFICATION (DEV MODE - Not actually sent)")
-            print(f"{'='*60}")
-            print(f"To: {phone_number}")
-            print(f"Event: {trigger_event}")
-            print(f"Message: {message}")
-            print(f"{'='*60}\n")
+        if not sms_enabled:
+            return _sms_simulate_delivery(sms_log, phone_number, message, trigger_event, 'disabled')
 
-            return True
+        if sms_service == 'httpsms':
+            success = send_sms_httpsms(phone_number, message, sms_log)
+            if success:
+                logger.info('SMS sent via httpSMS: %s to %s', trigger_event, phone_number)
+            return success
+
+        if sms_service == 'twilio':
+            success = send_sms_twilio(phone_number, message, sms_log)
+            if success:
+                logger.info('SMS sent via Twilio: %s to %s', trigger_event, phone_number)
+            return success
+
+        # Default: Semaphore (Philippines)
+        success = send_sms_semaphore(phone_number, message, sms_log)
+        if success:
+            logger.info('SMS sent via Semaphore: %s to %s', trigger_event, phone_number)
+        return success
 
     except Exception as e:
-        logger.error(f"Failed to send SMS: {str(e)}")
+        logger.error('Failed to send SMS: %s', str(e))
 
-        # Log failed SMS
         SMSLog.objects.create(
             recipient_phone=phone_number,
             message_content=message,
             trigger_event=trigger_event,
             applicant=applicant,
-            isf_record=isf_record,
             status='failed',
             error_message=str(e)
         )
