@@ -19,6 +19,7 @@ from . import sms_workflow
 import json
 import re
 from collections import defaultdict
+from django.utils.dateparse import parse_date
 
 # Module 1 income ceiling (₱) — keep in sync with `Applicant.is_income_eligible` in intake/models.py
 MODULE1_MONTHLY_INCOME_CEILING_PESO = 10000
@@ -114,6 +115,60 @@ def _build_duplicate_record_message(applicant):
         f"Current status: {status_text}.\n"
         f"Last handled by: {handled_by}."
     )
+
+
+@login_required
+def duplicate_preview(request, position):
+    """
+    Lightweight pre-submit duplicate hint for intake form.
+    Match basis: DOB + barangay + last name + first name (case-insensitive).
+    """
+    if request.method != 'GET':
+        return JsonResponse({'success': False, 'error': 'GET required'}, status=405)
+    if request.user.position != position:
+        return JsonResponse({'success': False, 'error': 'Access denied'}, status=403)
+
+    date_of_birth_raw = (request.GET.get('date_of_birth') or '').strip()
+    barangay_name = (request.GET.get('barangay') or '').strip()
+    last_name = (request.GET.get('last_name') or '').strip()
+    first_name = (request.GET.get('first_name') or '').strip()
+
+    if not (date_of_birth_raw and barangay_name and last_name and first_name):
+        return JsonResponse({'success': True, 'duplicate': False})
+
+    date_of_birth = parse_date(date_of_birth_raw)
+    if not date_of_birth:
+        return JsonResponse({'success': True, 'duplicate': False})
+
+    duplicate_applicant = (
+        Applicant.objects
+        .select_related('registered_by', 'barangay')
+        .prefetch_related('requirement_submissions')
+        .filter(
+            date_of_birth=date_of_birth,
+            barangay__name=barangay_name,
+            last_name__iexact=last_name,
+            first_name__iexact=first_name,
+        )
+        .order_by('-updated_at', '-created_at')
+        .first()
+    )
+    if not duplicate_applicant:
+        return JsonResponse({'success': True, 'duplicate': False})
+
+    location, status_text = _describe_applicant_location(duplicate_applicant)
+    handled_by = duplicate_applicant.registered_by.get_full_name() if duplicate_applicant.registered_by else 'Unknown'
+    return JsonResponse({
+        'success': True,
+        'duplicate': True,
+        'record_id': str(duplicate_applicant.id),
+        'reference_number': duplicate_applicant.reference_number,
+        'full_name': duplicate_applicant.full_name,
+        'location': location,
+        'status': status_text,
+        'handled_by': handled_by,
+        'can_open_in_intake': duplicate_applicant.module2_handoff_at is None,
+    })
 
 
 def _attach_applicants_sms_history(applicants):
@@ -554,8 +609,22 @@ def resend_sms(request, position):
             return JsonResponse({'success': False, 'error': 'No phone number on record'})
 
         if sms_type == 'registration':
-            record.registration_sms_sent = False
-            record.send_registration_sms()
+            if not record.module2_handoff_at:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'SMS for this type is only allowed after proceeding to Module 2.'
+                })
+            handoff_message = sms_workflow.message_proceed_to_evaluation(record)
+            sent = send_sms(
+                record.phone_number,
+                handoff_message,
+                sms_workflow.PROCEED_TO_EVALUATION,
+                applicant=record,
+            )
+            if not sent:
+                return JsonResponse({'success': False, 'error': 'Failed to send SMS'})
+            record.registration_sms_sent = True
+            record.save(update_fields=['registration_sms_sent', 'updated_at'])
         else:
             record.eligibility_sms_sent = False
             record.send_eligibility_sms(eligible=record.status == 'eligible')
@@ -617,6 +686,26 @@ def proceed_to_applications(request, position):
 
     if len(update_fields) > 1:
         applicant.save(update_fields=update_fields)
+
+    # Send SMS only upon Module 2 handoff (not on registration).
+    # Reuse registration_sms_sent as the "handoff SMS sent" tracker to avoid schema changes.
+    if applicant.phone_number and not applicant.registration_sms_sent:
+        print(f"\n[MODULE 2 HANDOFF] Triggering SMS for {applicant.reference_number} to {applicant.phone_number}")
+        handoff_message = sms_workflow.message_proceed_to_evaluation(applicant)
+        if send_sms(
+            applicant.phone_number,
+            handoff_message,
+            sms_workflow.PROCEED_TO_EVALUATION,
+            applicant=applicant,
+        ):
+            applicant.registration_sms_sent = True
+            applicant.save(update_fields=['registration_sms_sent', 'updated_at'])
+            print(f"[MODULE 2 HANDOFF] SMS sent successfully for {applicant.reference_number}\n")
+    else:
+        if not applicant.phone_number:
+            print(f"[MODULE 2 HANDOFF] ⚠️ No phone number for {applicant.reference_number}")
+        elif applicant.registration_sms_sent:
+            print(f"[MODULE 2 HANDOFF] ℹ️ SMS already sent for {applicant.reference_number}")
 
     module2_url = reverse('applications:applications_list', kwargs={'position': request.user.position})
     return JsonResponse({'success': True, 'module2_url': module2_url})
@@ -1223,9 +1312,8 @@ def walkin_register(request, position):
                 # Skip invalid age values
                 pass
 
-    # Step 7: Send registration SMS, confirming applicant was successfully recorded
-    # (Module 2 will send additional SMS for eligibility decisions)
-    applicant.send_registration_sms()
+    # No SMS on registration.
+    # Policy: first applicant-facing SMS is sent when staff proceeds record to Module 2.
 
     msg = f'Successfully registered: {applicant.full_name} | Reference: {applicant.reference_number}'
 
