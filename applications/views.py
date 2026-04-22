@@ -4,10 +4,11 @@ from django.contrib import messages
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.db.models import Count, Q, Prefetch, Max
+from django.db import IntegrityError, transaction
 from django.utils import timezone
 from functools import wraps
 from intake.models import Applicant, CDRRMOCertification, FieldVerificationPhoto
-from intake.utils import send_sms, ensure_priority_queue_entry
+from intake.utils import send_sms
 from intake import sms_workflow
 from .models import (
     Application, Requirement, RequirementSubmission,
@@ -15,6 +16,8 @@ from .models import (
     QueueEntry, CDRRMOCertificationProxy,
 )
 from .utils import check_blacklist_module2
+
+MODULE1_MONTHLY_INCOME_CEILING_PESO = 10000
 
 
 # =============================================================================
@@ -120,6 +123,8 @@ def _active_intake_queue_label(applicant):
     qe = entries[0]
     if qe.queue_type == 'priority':
         return f'Priority #{qe.position}'
+    if qe.queue_type == 'walk_in':
+        return f'Walk-in #{qe.position}'
     return f'Queue #{qe.position}'
 
 
@@ -153,6 +158,188 @@ def _ensure_cdrrmo_pending_after_module2_handoff(applicant):
     if applicant.status == 'pending':
         applicant.status = 'pending_cdrrmo'
         applicant.save(update_fields=['status', 'updated_at'])
+
+
+def _require_module2_handoff(applicant):
+    """
+    Enforce Module 2 gate: record must be handed off from Module 1 first.
+    """
+    if applicant.module2_handoff_at:
+        return None
+    return JsonResponse(
+        {
+            'success': False,
+            'error': (
+                'Process 2.1 gate: this applicant has not been proceeded from Module 1 yet. '
+                'Use "Proceed to Application" in Intake before running Module 2 actions.'
+            ),
+        },
+        status=400,
+    )
+
+
+def _blacklist_source_label(bl_entry):
+    source_map = {
+        'units_blacklist': 'Units Blacklist Entries',
+        'intake_blacklist': 'Module 1 Blacklist',
+    }
+    return source_map.get(getattr(bl_entry, 'source', ''), 'Module 1 Blacklist')
+
+
+def _require_module2_blacklist_clear(applicant):
+    """
+    Enforce Module 2 workflow step 2.1: automatic blacklist stop gate.
+    """
+    is_bl, bl_entry = check_blacklist_module2(applicant.full_name, applicant.phone_number or None)
+    if not is_bl:
+        return None
+
+    reason = bl_entry.get_reason_display() if bl_entry else 'Blacklist match'
+    source_label = _blacklist_source_label(bl_entry)
+    policy_note = (getattr(bl_entry, 'policy_note', '') or '').strip()
+    return JsonResponse(
+        {
+            'success': False,
+            'error': (
+                f'Process 2.1 blocked: applicant matches blacklist [{source_label}] ({reason}). '
+                + (f'{policy_note} ' if policy_note else '')
+                + 'Resolve the source blacklist record before continuing Module 2 processing.'
+            ),
+        },
+        status=400,
+    )
+
+
+def _deactivate_active_queue_entries(applicant):
+    applicant.queue_entries.filter(status='active').update(
+        status='removed',
+        completed_at=timezone.now(),
+    )
+
+
+def _ensure_module2_queue_entry(applicant, queue_type, added_by=None):
+    """
+    Ensure one active queue entry for the selected Module 2 queue type.
+    """
+    queue_type = (queue_type or '').strip().lower()
+    if queue_type not in {'priority', 'walk_in'}:
+        raise ValueError('Invalid queue type')
+
+    active_entries = list(
+        applicant.queue_entries.filter(status='active').order_by('entered_at', 'position')
+    )
+    if active_entries and active_entries[0].queue_type == queue_type:
+        return active_entries[0], False
+
+    if active_entries:
+        _deactivate_active_queue_entries(applicant)
+
+    for _ in range(3):
+        last_position = QueueEntry.objects.filter(
+            queue_type=queue_type,
+            status='active',
+        ).order_by('-position').values_list('position', flat=True).first() or 0
+        try:
+            with transaction.atomic():
+                entry = QueueEntry.objects.create(
+                    applicant=applicant,
+                    queue_type=queue_type,
+                    position=last_position + 1,
+                    status='active',
+                    added_by=added_by,
+                )
+            return entry, True
+        except IntegrityError:
+            continue
+
+    existing = applicant.queue_entries.filter(status='active', queue_type=queue_type).order_by('entered_at').first()
+    if existing:
+        return existing, False
+    raise RuntimeError('Unable to allocate queue position')
+
+
+def _module2_eligibility_snapshot(applicant):
+    """
+    Single rule engine for Module 2 eligibility and queue recommendation.
+    """
+    blockers = []
+    advisories = []
+    is_bl, bl_entry = check_blacklist_module2(applicant.full_name, applicant.phone_number or None)
+    blacklist_detail = ''
+    blacklist_source = ''
+    blacklist_policy_note = ''
+    if is_bl and bl_entry:
+        blacklist_source = _blacklist_source_label(bl_entry)
+        blacklist_policy_note = (getattr(bl_entry, 'policy_note', '') or '').strip()
+        blacklist_detail = bl_entry.get_reason_display()
+        if bl_entry.notes:
+            blacklist_detail += f' — {bl_entry.notes[:200]}'
+        blockers.append(f'Blacklist match [{blacklist_source}] ({blacklist_detail}).')
+        if blacklist_policy_note:
+            advisories.append(blacklist_policy_note)
+
+    income_ok = bool(applicant.is_income_eligible)
+    if not income_ok:
+        blockers.append(
+            f'Declared monthly income ₱{applicant.monthly_income:,.2f} exceeds Module 1 ceiling of ₱{MODULE1_MONTHLY_INCOME_CEILING_PESO:,.0f}.'
+        )
+
+    property_ok = not bool(applicant.has_property_in_talisay)
+    if not property_ok:
+        blockers.append('Applicant is flagged as owning property in Talisay City.')
+
+    declared_household = int(applicant.household_size or 0)
+    listed_household = applicant.household_members.count() + 1
+    household_ok = declared_household >= 1
+    if not household_ok:
+        blockers.append('Declared household size must be at least 1.')
+    household_mismatch = declared_household > 0 and declared_household != listed_household
+    if household_mismatch:
+        advisories.append(
+            f'Household composition mismatch: declared size is {declared_household}, but listed members total {listed_household} (including applicant).'
+        )
+
+    requires_cdrrmo = applicant.channel == 'danger_zone' and bool((applicant.danger_zone_type or '').strip())
+    cdrrmo_status = None
+    if requires_cdrrmo:
+        try:
+            cdrrmo_status = applicant.cdrrmo_certification.status
+        except CDRRMOCertification.DoesNotExist:
+            cdrrmo_status = None
+        if cdrrmo_status != 'certified':
+            status_display = 'Not Recorded'
+            if cdrrmo_status:
+                try:
+                    status_display = applicant.cdrrmo_certification.get_status_display()
+                except Exception:
+                    status_display = cdrrmo_status
+            blockers.append(f'CDRRMO certification must be Certified (current: {status_display}).')
+
+    allowed_queue_types = ['walk_in']
+    recommended_queue_type = 'walk_in'
+    if requires_cdrrmo and cdrrmo_status == 'certified':
+        allowed_queue_types = ['priority', 'walk_in']
+        recommended_queue_type = 'priority'
+
+    return {
+        'eligible': len(blockers) == 0,
+        'blockers': blockers,
+        'advisories': advisories,
+        'blacklist_blocked': is_bl,
+        'blacklist_detail': blacklist_detail,
+        'blacklist_source': blacklist_source,
+        'blacklist_policy_note': blacklist_policy_note,
+        'income_ok': income_ok,
+        'property_ok': property_ok,
+        'household_ok': household_ok,
+        'household_mismatch': household_mismatch,
+        'declared_household_size': declared_household,
+        'listed_household_size': listed_household,
+        'requires_cdrrmo': requires_cdrrmo,
+        'cdrrmo_status': cdrrmo_status,
+        'allowed_queue_types': allowed_queue_types,
+        'recommended_queue_type': recommended_queue_type,
+    }
 
 
 # =============================================================================
@@ -224,7 +411,7 @@ def applications_list(request, position):
             queryset=QueueEntry.objects.filter(status='active').order_by('position'),
             to_attr='active_queue_entries',
         ),
-    ).order_by('-created_at')
+    ).order_by('module2_handoff_at', 'created_at', 'id')
     
     # Get all requirements for the checklist
     requirements = Requirement.objects.filter(is_active=True).order_by('group', 'order')
@@ -341,14 +528,12 @@ def applications_list(request, position):
         if permissions['can_manage_electricity'] and application and application.status == 'awarded':
             user_actions.append('manage_electricity')
 
-        # --- Module 2 workflow: 2.1 Blacklist (D1 applicant profile) ---
-        is_bl, bl_entry = check_blacklist_module2(applicant.full_name, applicant.phone_number or None)
-        blacklist_blocked = bool(is_bl)
-        blacklist_detail = ''
-        if blacklist_blocked and bl_entry:
-            blacklist_detail = f'{bl_entry.get_reason_display()}'
-            if bl_entry.notes:
-                blacklist_detail += f' — {bl_entry.notes[:200]}'
+        # --- Central Module 2 eligibility rules snapshot ---
+        rules = _module2_eligibility_snapshot(applicant)
+        blacklist_blocked = rules['blacklist_blocked']
+        blacklist_detail = rules['blacklist_detail']
+        blacklist_source = rules['blacklist_source']
+        blacklist_policy_note = rules['blacklist_policy_note']
         if blacklist_blocked:
             user_actions = [a for a in user_actions if a not in ('verify_docs', 'generate_form')]
 
@@ -377,10 +562,14 @@ def applications_list(request, position):
             'user_actions': user_actions,
             'blacklist_blocked': blacklist_blocked,
             'blacklist_detail': blacklist_detail,
+            'blacklist_source': blacklist_source,
+            'blacklist_policy_note': blacklist_policy_note,
             'm1_income_eligible': applicant.is_income_eligible,
             'm1_declares_no_property': not applicant.has_property_in_talisay,
             'household_size': applicant.household_size,
             'intake_queue_label': intake_queue_label,
+            'active_queue_type': active_entries[0].queue_type if active_entries else '',
+            'm2_rules': rules,
         })
     
     # Filter by stage if requested
@@ -489,12 +678,7 @@ def application_detail(request, position, application_id):
     applicant.refresh_from_db()
     
     # Build response data
-    is_bl, bl_entry = check_blacklist_module2(applicant.full_name, applicant.phone_number or None)
-    bl_detail = ''
-    if is_bl and bl_entry:
-        bl_detail = bl_entry.get_reason_display()
-        if bl_entry.notes:
-            bl_detail += f' — {bl_entry.notes[:200]}'
+    rules = _module2_eligibility_snapshot(applicant)
 
     data = {
         'applicant_id': str(applicant.id),
@@ -528,12 +712,16 @@ def application_detail(request, position, application_id):
         'latest_step': None,
         'has_application': application is not None,
         'permissions': permissions,
-        'blacklist_blocked': is_bl,
-        'blacklist_detail': bl_detail,
+        'blacklist_blocked': rules['blacklist_blocked'],
+        'blacklist_detail': rules['blacklist_detail'],
+        'blacklist_source': rules['blacklist_source'],
+        'blacklist_policy_note': rules['blacklist_policy_note'],
         'm1_income_eligible': applicant.is_income_eligible,
         'm1_declares_no_property': not applicant.has_property_in_talisay,
         'household_size': applicant.household_size,
         'intake_queue_label': _active_intake_queue_label(applicant),
+        'active_queue_type': (getattr(applicant, 'active_queue_entries', None) or [None])[0].queue_type if (getattr(applicant, 'active_queue_entries', None) or []) else '',
+        'm2_rules': rules,
         'cdrrmo': None,
         'applicant_status': applicant.status,
         'applicant_status_display': applicant.get_status_display(),
@@ -635,6 +823,12 @@ def update_cdrrmo_certification(request, position):
             return JsonResponse({'success': False, 'error': 'Invalid decision. Must be "certified" or "not_certified"'})
 
         applicant = Applicant.objects.get(id=applicant_id)
+        handoff_error = _require_module2_handoff(applicant)
+        if handoff_error:
+            return handoff_error
+        blacklist_error = _require_module2_blacklist_clear(applicant)
+        if blacklist_error:
+            return blacklist_error
         if applicant.status != 'pending_cdrrmo':
             return JsonResponse({
                 'success': False,
@@ -659,7 +853,7 @@ def update_cdrrmo_certification(request, position):
         if decision == 'certified':
             applicant.status = 'eligible'
             applicant.save()
-            queue_entry, _ = ensure_priority_queue_entry(applicant, added_by=request.user)
+            queue_entry, _ = _ensure_module2_queue_entry(applicant, 'priority', added_by=request.user)
 
             if applicant.phone_number:
                 if office_receipt:
@@ -668,7 +862,10 @@ def update_cdrrmo_certification(request, position):
                 else:
                     sms_msg = sms_workflow.message_cdrrmo_certified_priority(applicant, queue_entry.position)
                     sms_event = sms_workflow.CDRRMO_CERTIFIED
-                send_sms(applicant.phone_number, sms_msg, sms_event, applicant=applicant)
+                sent = send_sms(applicant.phone_number, sms_msg, sms_event, applicant=applicant, module='applications')
+                if sent and not applicant.eligibility_sms_sent:
+                    applicant.eligibility_sms_sent = True
+                    applicant.save(update_fields=['eligibility_sms_sent', 'updated_at'])
 
             return JsonResponse({
                 'success': True,
@@ -679,9 +876,13 @@ def update_cdrrmo_certification(request, position):
 
         applicant.status = 'disqualified'
         applicant.save()
+        _deactivate_active_queue_entries(applicant)
         if applicant.phone_number:
             sms_msg = sms_workflow.message_cdrrmo_not_certified(applicant)
-            send_sms(applicant.phone_number, sms_msg, sms_workflow.CDRRMO_NOT_CERTIFIED, applicant=applicant)
+            sent = send_sms(applicant.phone_number, sms_msg, sms_workflow.CDRRMO_NOT_CERTIFIED, applicant=applicant, module='applications')
+            if sent and not applicant.eligibility_sms_sent:
+                applicant.eligibility_sms_sent = True
+                applicant.save(update_fields=['eligibility_sms_sent', 'updated_at'])
         return JsonResponse({
             'success': True,
             'message': f'❌ {applicant.full_name} NOT CERTIFIED. Applicant disqualified.',
@@ -715,6 +916,12 @@ def field_verify_cdrrmo(request, position):
             return JsonResponse({'success': False, 'error': 'Invalid decision. Must be "certified" or "not_certified"'})
 
         applicant = Applicant.objects.get(id=applicant_id)
+        handoff_error = _require_module2_handoff(applicant)
+        if handoff_error:
+            return handoff_error
+        blacklist_error = _require_module2_blacklist_clear(applicant)
+        if blacklist_error:
+            return blacklist_error
         if not hasattr(applicant, 'cdrrmo_certification'):
             return JsonResponse({'success': False, 'error': 'This applicant is not awaiting CDRRMO verification'})
 
@@ -735,11 +942,6 @@ def field_verify_cdrrmo(request, position):
         cert.office_intake_notes = ''
         cert.certification_notes = verification_notes if verification_notes else ''
         cert.save()
-
-        if not applicant.module2_handoff_at:
-            applicant.module2_handoff_at = timezone.now()
-            applicant.module2_handoff_by = request.user
-            applicant.save(update_fields=['module2_handoff_at', 'module2_handoff_by', 'updated_at'])
 
         photos = request.FILES.getlist('evidence_photos')
         max_photos = 12
@@ -768,7 +970,7 @@ def field_verify_cdrrmo(request, position):
             else:
                 sms_body = sms_workflow.message_field_inspection_not_sustained(applicant)
                 sms_ev = sms_workflow.FIELD_VERIFICATION_NOT_CERTIFIED
-            sms_dispatched = send_sms(applicant.phone_number, sms_body, sms_ev, applicant=applicant)
+            sms_dispatched = send_sms(applicant.phone_number, sms_body, sms_ev, applicant=applicant, module='applications')
 
         return JsonResponse({
             'success': True,
@@ -807,6 +1009,12 @@ def update_cdrrmo_status(request, position):
             return JsonResponse({'success': False, 'error': 'Invalid decision. Must be "approved" or "rejected"'})
 
         applicant = Applicant.objects.get(id=applicant_id)
+        handoff_error = _require_module2_handoff(applicant)
+        if handoff_error:
+            return handoff_error
+        blacklist_error = _require_module2_blacklist_clear(applicant)
+        if blacklist_error:
+            return blacklist_error
         if not hasattr(applicant, 'cdrrmo_certification'):
             return JsonResponse({'success': False, 'error': 'This applicant does not have CDRRMO record'})
 
@@ -828,24 +1036,44 @@ def update_cdrrmo_status(request, position):
             applicant.eligibility_checked_at = timezone.now()
             if ronda_finding == 'certified':
                 applicant.status = 'eligible'
-                queue_entry, _ = ensure_priority_queue_entry(applicant, added_by=request.user)
+                queue_entry, _ = _ensure_module2_queue_entry(applicant, 'priority', added_by=request.user)
                 queue_type = 'Priority'
                 msg_outcome = 'moved to Priority Queue'
+                applicant.disqualification_reason = ''
             else:
-                applicant.status = 'eligible'
-                queue_entry, _ = ensure_priority_queue_entry(applicant, added_by=request.user)
-                queue_type = 'Priority'
-                msg_outcome = 'marked eligible and added to queue'
+                # Approving a "not certified" finding must not mark the applicant eligible.
+                applicant.status = 'disqualified'
+                applicant.disqualification_reason = (
+                    'CDRRMO field verification not certified (staff-approved finding).'
+                )
+                _deactivate_active_queue_entries(applicant)
+                queue_entry = None
+                queue_type = 'None'
+                msg_outcome = 'disqualified based on approved not-certified finding'
 
             applicant.save()
             cert.save()
             if applicant.phone_number:
-                eligible_msg = (
-                    "✅ Great news! Your housing application passed eligibility. "
-                    f"You are assigned Priority Queue Position {queue_entry.position}. "
-                    f"Reference: {applicant.reference_number}. Please visit THA office for next steps."
-                )
-                send_sms(applicant.phone_number, eligible_msg, 'eligibility_passed', applicant=applicant)
+                if ronda_finding == 'certified':
+                    eligible_msg = (
+                        "✅ Great news! Your housing application passed eligibility. "
+                        f"You are assigned Priority Queue Position {queue_entry.position}. "
+                        f"Reference: {applicant.reference_number}. Please visit THA office for next steps."
+                    )
+                    sent = send_sms(applicant.phone_number, eligible_msg, 'eligibility_passed', applicant=applicant, module='applications')
+                    if sent and not applicant.eligibility_sms_sent:
+                        applicant.eligibility_sms_sent = True
+                        applicant.save(update_fields=['eligibility_sms_sent', 'updated_at'])
+                else:
+                    reject_msg = (
+                        "❌ Unfortunately, your housing application could not be processed at this time. "
+                        f"Reason: Danger zone verification was not certified. Reference: {applicant.reference_number}. "
+                        "Please visit THA office for appeals."
+                    )
+                    sent = send_sms(applicant.phone_number, reject_msg, 'eligibility_fail', applicant=applicant, module='applications')
+                    if sent and not applicant.eligibility_sms_sent:
+                        applicant.eligibility_sms_sent = True
+                        applicant.save(update_fields=['eligibility_sms_sent', 'updated_at'])
 
             return JsonResponse({
                 'success': True,
@@ -862,7 +1090,7 @@ def update_cdrrmo_status(request, position):
         applicant.eligibility_checked_by = request.user
         applicant.eligibility_checked_at = timezone.now()
         applicant.save()
-        QueueEntry.objects.filter(applicant=applicant).delete()
+        _deactivate_active_queue_entries(applicant)
         cert.save()
         if applicant.phone_number:
             reject_msg = (
@@ -870,7 +1098,10 @@ def update_cdrrmo_status(request, position):
                 f"Reason: Danger zone verification could not be confirmed. Reference: {applicant.reference_number}. "
                 "Please visit THA office for appeals."
             )
-            send_sms(applicant.phone_number, reject_msg, 'eligibility_fail', applicant=applicant)
+            sent = send_sms(applicant.phone_number, reject_msg, 'eligibility_fail', applicant=applicant, module='applications')
+            if sent and not applicant.eligibility_sms_sent:
+                applicant.eligibility_sms_sent = True
+                applicant.save(update_fields=['eligibility_sms_sent', 'updated_at'])
 
         return JsonResponse({
             'success': True,
@@ -901,10 +1132,13 @@ def evaluate_applicant(request, position):
     reason = request.POST.get('reason', '').strip()
     notes = request.POST.get('notes', '').strip()
 
-    if not applicant_id or action not in ['mark_eligible', 'disqualify']:
+    if not applicant_id or action not in ['mark_eligible', 'mark_eligible_priority', 'mark_eligible_walk_in', 'disqualify']:
         return JsonResponse({'success': False, 'error': 'Missing or invalid parameters.'}, status=400)
 
     applicant = get_object_or_404(Applicant, id=applicant_id)
+    handoff_error = _require_module2_handoff(applicant)
+    if handoff_error:
+        return handoff_error
 
     if applicant.status not in ['pending', 'pending_cdrrmo', 'eligible']:
         return JsonResponse({
@@ -912,58 +1146,70 @@ def evaluate_applicant(request, position):
             'error': f'Cannot evaluate record with current status: {applicant.get_status_display()}',
         }, status=400)
 
-    # Module 2 workflow step 2.1: automatic blacklist stop gate.
-    is_bl, bl_entry = check_blacklist_module2(applicant.full_name, applicant.phone_number or None)
-    if is_bl:
-        reason = bl_entry.get_reason_display() if bl_entry else 'Blacklist match'
-        return JsonResponse({
-            'success': False,
-            'error': (
-                f'Process 2.1 blocked: applicant matches blacklist ({reason}). '
-                'Resolve in Module 1 before continuing Module 2 eligibility evaluation.'
-            ),
-        }, status=400)
+    blacklist_error = _require_module2_blacklist_clear(applicant)
+    if blacklist_error:
+        return blacklist_error
 
-    if action == 'mark_eligible':
-        module1_ceiling = 10000
-        if applicant.monthly_income > module1_ceiling:
+    if action in ['mark_eligible', 'mark_eligible_priority', 'mark_eligible_walk_in']:
+        rules = _module2_eligibility_snapshot(applicant)
+        if not rules['eligible']:
             return JsonResponse({
                 'success': False,
-                'error': (
-                    f'Declared monthly income ₱{applicant.monthly_income:,.2f} exceeds the '
-                    f'Module 1 ceiling of ₱{module1_ceiling:,.0f}.'
-                ),
+                'error': 'Eligibility checks failed: ' + ' '.join(rules['blockers']),
             }, status=400)
 
-        if applicant.channel == 'danger_zone' and applicant.danger_zone_type:
-            try:
-                cert = applicant.cdrrmo_certification
-            except CDRRMOCertification.DoesNotExist:
-                return JsonResponse({'success': False, 'error': 'CDRRMO certification record not found.'}, status=400)
-            if cert.status != 'certified':
-                return JsonResponse({
-                    'success': False,
-                    'error': f'CDRRMO certification is required (current status: {cert.get_status_display()}).',
-                }, status=400)
+        forced_queue_type = None
+        if action == 'mark_eligible_priority':
+            forced_queue_type = 'priority'
+        elif action == 'mark_eligible_walk_in':
+            forced_queue_type = 'walk_in'
+
+        queue_type = forced_queue_type or rules['recommended_queue_type']
+        if queue_type not in rules['allowed_queue_types']:
+            allowed_txt = ', '.join(q.replace('_', '-').title() for q in rules['allowed_queue_types'])
+            return JsonResponse({
+                'success': False,
+                'error': f'Selected queue type is not allowed for this applicant. Allowed: {allowed_txt}.',
+            }, status=400)
+
+        current_active = applicant.queue_entries.filter(status='active').order_by('entered_at').first()
+        same_assignment = (
+            applicant.status == 'eligible'
+            and current_active is not None
+            and current_active.queue_type == queue_type
+        )
+        if same_assignment:
+            return JsonResponse({
+                'success': True,
+                'message': f'Applicant is already eligible and assigned to {current_active.get_queue_type_display()} position #{current_active.position}.',
+                'new_status': applicant.status,
+            })
 
         applicant.status = 'eligible'
+        applicant.disqualification_reason = ''
         applicant.eligibility_checked_by = request.user
         applicant.eligibility_checked_at = timezone.now()
         applicant.save()
 
-        queue_entry, _ = ensure_priority_queue_entry(applicant, added_by=request.user)
+        queue_entry, _ = _ensure_module2_queue_entry(applicant, queue_type, added_by=request.user)
+        queue_label = 'Priority Queue' if queue_type == 'priority' else 'Walk-in Queue'
         if applicant.phone_number:
             msg = (
                 "Congratulations! You are eligible for housing assistance. "
-                f"You are now in Priority Queue position #{queue_entry.position}. "
+                f"You are now in {queue_label} position #{queue_entry.position}. "
                 f"Reference: {applicant.reference_number}."
             )
-            send_sms(applicant.phone_number, msg, 'eligibility_passed', applicant=applicant)
+            sent = send_sms(applicant.phone_number, msg, 'eligibility_passed', applicant=applicant, module='applications')
+            if sent and not applicant.eligibility_sms_sent:
+                applicant.eligibility_sms_sent = True
+                applicant.save(update_fields=['eligibility_sms_sent', 'updated_at'])
 
         return JsonResponse({
             'success': True,
-            'message': f'Applicant marked eligible and queued at position #{queue_entry.position}.',
+            'message': f'Applicant marked eligible and queued in {queue_label} at position #{queue_entry.position}.',
             'new_status': applicant.status,
+            'queue_type': queue_type,
+            'queue_position': queue_entry.position,
         })
 
     reason_labels = {
@@ -979,13 +1225,16 @@ def evaluate_applicant(request, position):
     applicant.eligibility_checked_by = request.user
     applicant.eligibility_checked_at = timezone.now()
     applicant.save()
-    QueueEntry.objects.filter(applicant=applicant, status='active').delete()
+    _deactivate_active_queue_entries(applicant)
     if applicant.phone_number:
         msg = (
             "We regret to inform you that your housing application has been disqualified. "
             f"Reason: {applicant.disqualification_reason}. Ref: {applicant.reference_number}."
         )
-        send_sms(applicant.phone_number, msg, 'eligibility_fail', applicant=applicant)
+        sent = send_sms(applicant.phone_number, msg, 'eligibility_fail', applicant=applicant, module='applications')
+        if sent and not applicant.eligibility_sms_sent:
+            applicant.eligibility_sms_sent = True
+            applicant.save(update_fields=['eligibility_sms_sent', 'updated_at'])
     return JsonResponse({
         'success': True,
         'message': f'Applicant disqualified. Reason: {applicant.disqualification_reason}',
@@ -1035,19 +1284,12 @@ def update_requirement(request, position):
 
     try:
         applicant = Applicant.objects.get(id=applicant_id)
-        is_bl, bl_entry = check_blacklist_module2(applicant.full_name, applicant.phone_number or None)
-        if is_bl:
-            reason = bl_entry.get_reason_display() if bl_entry else 'Blacklist match'
-            return JsonResponse(
-                {
-                    'success': False,
-                    'error': (
-                        f'Blacklist (process 2.1): applicant matches master blacklist ({reason}). '
-                        'Disqualify in Module 1 and record remarks before verifying requirements.'
-                    ),
-                },
-                status=400,
-            )
+        handoff_error = _require_module2_handoff(applicant)
+        if handoff_error:
+            return handoff_error
+        blacklist_error = _require_module2_blacklist_clear(applicant)
+        if blacklist_error:
+            return blacklist_error
 
         # Resolve incoming code and self-heal missing Requirement rows.
         resolved = requirement_aliases.get(requirement_code)
@@ -1099,7 +1341,7 @@ def update_requirement(request, position):
                     f"All 7 requirements verified! Please visit Talisay Housing Authority "
                     f"to sign your application form. Reference: {applicant.reference_number}"
                 )
-                send_sms(applicant.phone_number, message, 'documents_complete', applicant=applicant)
+                send_sms(applicant.phone_number, message, 'documents_complete', applicant=applicant, module='applications')
         
         return JsonResponse({
             'success': True,
@@ -1135,33 +1377,19 @@ def generate_form(request, position, applicant_id):
         }, status=403)
     
     applicant = get_object_or_404(Applicant, id=applicant_id)
+    handoff_error = _require_module2_handoff(applicant)
+    if handoff_error:
+        return handoff_error
+    blacklist_error = _require_module2_blacklist_clear(applicant)
+    if blacklist_error:
+        return blacklist_error
 
-    is_bl, bl_entry = check_blacklist_module2(applicant.full_name, applicant.phone_number or None)
-    if is_bl:
-        reason = bl_entry.get_reason_display() if bl_entry else 'Blacklist match'
+    rules = _module2_eligibility_snapshot(applicant)
+    if not rules['eligible']:
         return JsonResponse(
             {
                 'success': False,
-                'error': (
-                    f'Cannot generate form: blacklist match ({reason}). '
-                    'Resolve in applicant profile / Module 1 first.'
-                ),
-            },
-            status=400,
-        )
-    if not applicant.is_income_eligible:
-        return JsonResponse(
-            {
-                'success': False,
-                'error': 'Cannot generate form: declared income exceeds Module 1 ceiling. Correct income in Module 1.',
-            },
-            status=400,
-        )
-    if applicant.has_property_in_talisay:
-        return JsonResponse(
-            {
-                'success': False,
-                'error': 'Cannot generate form: applicant is flagged as owning property in Talisay City.',
+                'error': 'Cannot generate form: ' + ' '.join(rules['blockers']),
             },
             status=400,
         )
@@ -1169,14 +1397,19 @@ def generate_form(request, position, applicant_id):
     # Module 1 should have placed every eligible applicant into FIFO queue.
     # Self-heal older records so Module 2 can proceed without manual queue fixes.
     if applicant.status in ['eligible', 'requirements', 'application']:
-        queue_entry, queue_created = ensure_priority_queue_entry(applicant, added_by=request.user)
+        queue_entry, queue_created = _ensure_module2_queue_entry(
+            applicant,
+            rules['recommended_queue_type'],
+            added_by=request.user,
+        )
         if queue_created and applicant.phone_number:
+            queue_label = 'Priority Queue' if queue_entry.queue_type == 'priority' else 'Walk-in Queue'
             msg = (
                 "Great news! Your housing application is now queued for processing. "
-                f"Priority Queue Position #{queue_entry.position}. "
+                f"{queue_label} Position #{queue_entry.position}. "
                 f"Reference: {applicant.reference_number}"
             )
-            send_sms(applicant.phone_number, msg, 'eligibility_passed', applicant=applicant)
+            send_sms(applicant.phone_number, msg, 'eligibility_passed', applicant=applicant, module='applications')
     
     # Check if all Group A requirements are verified
     group_a_count = applicant.requirement_submissions.filter(
@@ -1212,7 +1445,7 @@ def generate_form(request, position, applicant_id):
     if applicant.phone_number:
         from intake import sms_workflow
         message = sms_workflow.message_proceed_to_evaluation(applicant)
-        send_sms(applicant.phone_number, message, sms_workflow.PROCEED_TO_EVALUATION, applicant=applicant)
+        send_sms(applicant.phone_number, message, sms_workflow.PROCEED_TO_EVALUATION, applicant=applicant, module='applications')
     
     return JsonResponse({
         'success': True,
@@ -1267,6 +1500,12 @@ def update_routing(request, position):
     
     try:
         application = Application.objects.select_related('applicant').get(id=application_id)
+        handoff_error = _require_module2_handoff(application.applicant)
+        if handoff_error:
+            return handoff_error
+        blacklist_error = _require_module2_blacklist_clear(application.applicant)
+        if blacklist_error:
+            return blacklist_error
 
         step_sequence = ['received', 'forwarded_oic', 'signed_oic', 'forwarded_head', 'signed_head']
         if step not in step_sequence:
@@ -1309,7 +1548,7 @@ def update_routing(request, position):
                     f"has been FULLY APPROVED. You are now on the Standby Queue. "
                     f"Please wait for lot availability notification. Reference: {application.applicant.reference_number}"
                 )
-                send_sms(application.applicant.phone_number, message, 'fully_approved', applicant=application.applicant)
+                send_sms(application.applicant.phone_number, message, 'fully_approved', applicant=application.applicant, module='applications')
             
         elif step == 'signed_oic':
             application.status = 'oic_signed'
@@ -1356,7 +1595,13 @@ def move_to_standby(request, position):
     application_id = request.POST.get('application_id')
     
     try:
-        application = Application.objects.get(id=application_id)
+        application = Application.objects.select_related('applicant').get(id=application_id)
+        handoff_error = _require_module2_handoff(application.applicant)
+        if handoff_error:
+            return handoff_error
+        blacklist_error = _require_module2_blacklist_clear(application.applicant)
+        if blacklist_error:
+            return blacklist_error
         
         if application.status != 'head_signed':
             return JsonResponse({
@@ -1388,6 +1633,7 @@ def move_to_standby(request, position):
                 message,
                 'standby_queue',
                 applicant=application.applicant,
+                module='applications',
             )
         
         return JsonResponse({
@@ -1433,6 +1679,12 @@ def award_lot(request, position):
     
     try:
         application = Application.objects.select_related('applicant').get(id=application_id)
+        handoff_error = _require_module2_handoff(application.applicant)
+        if handoff_error:
+            return handoff_error
+        blacklist_error = _require_module2_blacklist_clear(application.applicant)
+        if blacklist_error:
+            return blacklist_error
         
         if application.status not in ['head_signed', 'standby']:
             return JsonResponse({
@@ -1472,7 +1724,7 @@ def award_lot(request, position):
                 f"Please visit THA office for contract signing and key turnover. "
                 f"Reference: {application.applicant.reference_number}"
             )
-            send_sms(application.applicant.phone_number, message, 'lot_awarded', applicant=application.applicant)
+            send_sms(application.applicant.phone_number, message, 'lot_awarded', applicant=application.applicant, module='applications')
         
         return JsonResponse({
             'success': True,
@@ -1570,6 +1822,12 @@ def update_electricity(request, position):
         connection = ElectricityConnection.objects.select_related(
             'application', 'application__applicant'
         ).get(id=connection_id)
+        handoff_error = _require_module2_handoff(connection.application.applicant)
+        if handoff_error:
+            return handoff_error
+        blacklist_error = _require_module2_blacklist_clear(connection.application.applicant)
+        if blacklist_error:
+            return blacklist_error
         
         old_status = connection.status
         connection.status = new_status
@@ -1596,7 +1854,7 @@ def update_electricity(request, position):
                     f"Meter Number: {meter_number}. "
                     f"Reference: {applicant.reference_number}"
                 )
-                send_sms(applicant.phone_number, message, 'electricity_connected', applicant=applicant)
+                send_sms(applicant.phone_number, message, 'electricity_connected', applicant=applicant, module='applications')
                 
         elif new_status == 'issues':
             connection.issue_description = issue_description

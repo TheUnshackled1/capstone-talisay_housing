@@ -317,12 +317,13 @@
 
 .applications-table {
     width: 100%;
+    table-layout: fixed;
     border-collapse: separate;
     border-spacing: 0;
 }
 
 .applications-table thead {
-    background: #f8fafc;
+    background: #eff6ff;
 }
 
 .applications-table th {
@@ -330,10 +331,10 @@
     text-align: left;
     font-size: 0.625rem;
     font-weight: 500;
-    color: #64748b;
+    color: #1e40af;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid #bfdbfe;
     border-right: 1px solid #e2e8f0;
     white-space: nowrap;
 }
@@ -348,9 +349,9 @@
     line-height: 1.35;
 }
 .applications-table .badge.channel-b-hazard {
-    background: #fef3c7;
-    color: #92400e;
-    border: 1px solid #fcd34d;
+    background: #e0f2fe;
+    color: #075985;
+    border: 1px solid #bae6fd;
 }
 
 .applications-table td {
@@ -380,8 +381,9 @@
 /* Compact Module 2 ledger (few columns, stacked detail) */
 .applications-table.compact-table th,
 .applications-table.compact-table td {
-    padding: 0.55rem 0.65rem;
+    padding: 0.5rem 0.55rem;
     vertical-align: top;
+    word-break: break-word;
 }
 .applications-table.compact-table th {
     white-space: normal;
@@ -392,8 +394,32 @@
     width: 2.25rem;
     text-align: center;
 }
+.applications-table.compact-table .col-applicant {
+    width: 16%;
+}
+.applications-table.compact-table .col-transaction {
+    width: 10%;
+}
+.applications-table.compact-table .col-reference {
+    width: 10%;
+}
+.applications-table.compact-table .col-encoded {
+    width: 11%;
+}
+.applications-table.compact-table .col-channel {
+    width: 12%;
+}
+.applications-table.compact-table .col-queue {
+    width: 9%;
+}
+.applications-table.compact-table .col-staff {
+    width: 17%;
+}
+.applications-table.compact-table .col-gate {
+    width: 8%;
+}
 .applications-table.compact-table .col-actions {
-    min-width: 9.5rem;
+    width: 10%;
 }
 .applications-table.compact-table .m2-record-meta {
     font-size: 0.625rem;
@@ -437,7 +463,6 @@
     gap: 0.35rem;
     font-size: 0.625rem;
     color: #334155;
-    min-width: 10.5rem;
 }
 .applications-table.compact-table .m2-progress-stack .m2-pl {
     display: flex;
@@ -471,6 +496,113 @@
     color: #1e293b;
 }
 
+.applicant-inline-meta {
+    font-size: 0.625rem;
+    color: #64748b;
+    font-family: ui-monospace, monospace;
+    font-weight: 600;
+}
+
+.m2-cell-code {
+    font-size: 0.625rem;
+    color: #1e293b;
+    font-family: ui-monospace, monospace;
+    font-weight: 600;
+}
+
+.m2-cell-muted {
+    font-size: 0.625rem;
+    color: #94a3b8;
+}
+
+.m2-gate-line {
+    font-size: 0.62rem;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.m2-checklist {
+    display: grid;
+    gap: 0.5rem;
+    margin-top: 0.55rem;
+    text-align: center;
+}
+
+.m2-check-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    text-align: center;
+    border: 1px solid #dbeafe;
+    border-radius: 10px;
+    background: #ffffff;
+    padding: 0.5rem 0.6rem;
+}
+
+.m2-check-item .icon {
+    width: 1.05rem;
+    height: 1.05rem;
+    border-radius: 9999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.68rem;
+    font-weight: 700;
+    margin-top: 0.08rem;
+}
+
+.m2-check-item .title {
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 0.12rem;
+}
+
+.m2-check-item .desc {
+    font-size: 0.72rem;
+    line-height: 1.45;
+    color: #334155;
+}
+
+.m2-check-item.pass .icon {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.m2-check-item.warn {
+    border-color: #fde68a;
+    background: #fffbeb;
+}
+.m2-check-item.warn .icon {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.m2-check-item.fail {
+    border-color: #fecaca;
+    background: #fef2f2;
+}
+.m2-check-item.fail .icon {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.m2-show-form-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.42rem 0.72rem;
+    border-radius: 8px;
+    border: 1px solid #bfdbfe;
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-size: 0.72rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+.m2-show-form-btn:hover { background: #dbeafe; }
+
 .applicant-ref {
     font-size: 0.625rem;
     color: #94a3b8;
@@ -503,14 +635,113 @@
 }
 
 .queue-badge.walkin {
-    background: #f3e8ff;
-    color: #7c3aed;
+    background: #dbeafe;
+    color: #1d4ed8;
 }
 
 .queue-badge.standby {
     background: #dcfce7;
     color: #16a34a;
 }
+
+.queue-legend {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin: 0 0 0.65rem 0;
+    padding: 0.5rem 0.65rem;
+    border: 1px solid #dbeafe;
+    border-radius: 0.5rem;
+    background: #f8fbff;
+}
+
+.queue-legend-label {
+    font-size: 0.625rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+    font-weight: 700;
+}
+
+.m2-eval-status {
+    font-size: 0.75rem;
+    color: #334155;
+    line-height: 1.45;
+    margin-bottom: 0.6rem;
+}
+
+.m2-eval-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: 0.45rem 0 0.55rem;
+}
+
+.m2-eval-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 9999px;
+    border: 1px solid #cbd5e1;
+    background: #f8fafc;
+    color: #334155;
+    font-size: 0.625rem;
+    font-weight: 600;
+}
+
+.m2-eval-chip.recommend-priority { border-color: #c4b5fd; background: #f5f3ff; color: #6d28d9; }
+.m2-eval-chip.recommend-walkin { border-color: #93c5fd; background: #eff6ff; color: #1d4ed8; }
+.m2-eval-chip.allowed-priority { border-color: #ddd6fe; background: #f5f3ff; color: #7c3aed; }
+.m2-eval-chip.allowed-walkin { border-color: #bfdbfe; background: #eff6ff; color: #1d4ed8; }
+
+.blacklist-source-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.08rem 0.42rem;
+    border-radius: 9999px;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    border: 1px solid transparent;
+    vertical-align: middle;
+}
+.blacklist-source-chip.source-module1 {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border-color: #bfdbfe;
+}
+.blacklist-source-chip.source-units {
+    background: #fff7ed;
+    color: #c2410c;
+    border-color: #fdba74;
+}
+
+.m2-rule-list {
+    margin: 0.4rem 0 0;
+    padding-left: 1rem;
+    font-size: 0.72rem;
+}
+.m2-rule-list li { margin: 0.15rem 0; }
+.m2-rule-list.blockers { color: #b91c1c; }
+.m2-rule-list.advisories { color: #7c2d12; }
+
+.m2-decision-btn {
+    padding: 0.5rem 0.8rem;
+    border-radius: 7px;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    font-size: 0.75rem;
+    font-weight: 600;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+.m2-decision-btn:hover:not(:disabled) { transform: translateY(-1px); }
+.m2-decision-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
+.m2-decision-btn.priority { background: #047857; box-shadow: 0 1px 3px rgba(4, 120, 87, 0.35); }
+.m2-decision-btn.walkin { background: #0369a1; box-shadow: 0 1px 3px rgba(3, 105, 161, 0.35); }
+.m2-decision-btn.disqualify { background: #b91c1c; box-shadow: 0 1px 3px rgba(185, 28, 28, 0.35); }
 
 /* Document Progress - Matching Figma */
 .doc-progress {
@@ -1054,8 +1285,7 @@
     }
     
     .applications-table {
-        display: block;
-        overflow-x: auto;
+        table-layout: auto;
     }
     
     .modal-content {
@@ -1069,28 +1299,10 @@
 
 {% block page_title %}Housing Application and Evaluate Eligibility{% endblock %}
 {% block page_description %}
-<p class="page-subtitle">Blacklist Checking - Document checklist</p>
-<span class="role-badge" style="display: inline-flex; align-items: center; gap: 0.25rem; background: #eff6ff; color: #2563eb; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; margin-left: 0.5rem;">
-    👤 {{ permissions.role_description }}
-</span>
 {% endblock %}
 
 {% block content %}
-<div class="module2-workflow-banner" style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:12px;padding:0.75rem 1rem;margin-bottom:1rem;font-size:0.75rem;color:#0c4a6e;line-height:1.55;">
-    <strong>Module 2 workflow</strong> (housing application &amp; evaluation, after Module 1):
-    <strong>2.1</strong> Blacklist check (master list) —
-    <strong>2.2</strong> Eligibility data (income ceiling, no property in Talisay, household size — from applicant profile) —
-    <strong>2.3</strong> Intake queue (Module 1 <code>QueueEntry</code>) —
-    <strong>2.4</strong> Seven requirements verified here —
-    <strong>2.5</strong> Form generated → signatory routing → standby / SMS.
-    Blacklisted applicants cannot verify documents or generate forms until resolved in Module 1.
-    <span style="display:block;margin-top:0.35rem;padding-top:0.35rem;border-top:1px dashed #7dd3fc;">
-        <strong>Module 2 owned system checks:</strong> The Applications module enforces
-        <strong>2.1 blacklist gate first</strong>. If a match is detected, the workflow stops in this module and does not continue to
-        <strong>2.2 eligibility evaluation</strong> until the record is resolved in Module 1.
-    </span>
-    <a href="{% url 'intake:applicants_list' request.user.position %}" style="color:#0369a1;font-weight:600;">Open Module 1</a>
-</div>
+
 <!-- Queue Summary Cards -->
 <div class="stages-grid queue-summary">
     <div class="stage-card priority scroll-animate-scale scroll-delay-1">
@@ -1148,34 +1360,42 @@
 
 <!-- Applications Table -->
 <div class="applications-table-container">
+    <div class="queue-legend" aria-label="Queue badge legend">
+        <span class="queue-legend-label">Queue legend</span>
+        <span class="queue-badge priority" title="Priority queue (hazard-certified priority path)">Priority</span>
+        <span class="queue-badge walkin" title="Walk-in queue (FIFO regular path)">Walk-in</span>
+        <span class="queue-badge walkin" title="No active Module 2 queue assignment yet">No queue</span>
+    </div>
     {% if applicants_data %}
     <table class="applications-table compact-table">
         <thead>
             <tr>
                 <th class="col-num" title="Row number in this list">#</th>
-                <th title="Full name, reference #, transaction ID (short), and Module 1 encoding timestamp">Applicant record (Encoded at)</th>
-                <th title="Intake channel and active Module 1 queue tag">Channel &amp; queue</th>
-                <th title="Module 1 encoding staff, Module 2 handoff when different, and SMS flags">Staff &amp; SMS</th>
-                <th title="Group A checklist, form, Section D routing, and process stage">Module 2 progress</th>
-                <th class="col-actions">Action</th>
+                <th class="col-applicant" title="Applicant full name">Applicant record</th>
+                <th class="col-transaction" title="Applicant transaction ID">Transaction #</th>
+                <th class="col-reference" title="Applicant reference number">Reference #</th>
+                <th class="col-encoded" title="Date and time encoded in Module 1">Encoded at</th>
+                <th class="col-channel" title="Declared intake channel">Channel</th>
+                <th class="col-queue" title="Active Module 2 queue tag">Queue</th>
+                <th class="col-staff" title="Module 1 encoding staff and Module 2 handoff metadata">Staff</th>
+                <th class="col-gate" title="Module 2 first-gate status">Gate</th>
+                <th class="col-actions">Actions</th>
             </tr>
         </thead>
         <tbody>
             {% for data in applicants_data %}
             <tr data-applicant-id="{{ data.applicant.id }}" class="scroll-animate-left">
                 <td class="col-num" style="font-weight:700;color:#1e293b;">{{ forloop.counter }}</td>
-                <td>
+                <td class="col-applicant">
                     <div class="applicant-cell">
                         <span class="applicant-name" style="font-weight:600;">{{ data.applicant.full_name }}</span>
-                        <div class="m2-record-meta">
-                            <span title="Reference #">{{ data.applicant.reference_number }}</span>
-                            <span aria-hidden="true"> · </span>
-                            <span class="m2-txn-short" title="Transaction # (full): {{ data.applicant.id }}">#{{ data.applicant.id.hex|slice:":8" }}…</span>
-                            <span aria-hidden="true"> · </span>
-                            <span title="Date &amp; time (Module 1 record created)">Encoded at: {{ data.applicant.created_at|date:"n/j/Y, P" }}</span>
-                        </div>
                         {% if data.blacklist_blocked %}
-                        <span style="font-size:0.5625rem;color:#b91c1c;font-weight:600;">Blacklist — Module 2 blocked</span>
+                        <span style="font-size:0.5625rem;color:#b91c1c;font-weight:600;">
+                            Blacklist — Module 2 blocked
+                            {% if data.blacklist_source %}
+                            <span class="blacklist-source-chip {% if data.blacklist_source == 'Units Blacklist Entries' %}source-units{% else %}source-module1{% endif %}">{{ data.blacklist_source }}</span>
+                            {% endif %}
+                        </span>
                         {% elif data.applicant_status == 'pending_cdrrmo' %}
                         {% if data.cdrrmo_status == 'certified' or data.cdrrmo_status == 'not_certified' %}
                         <span style="font-size:0.5625rem;color:#0369a1;font-weight:600;">CDRRMO disposition received — pending Module 2 decision</span>
@@ -1194,19 +1414,26 @@
                         {% endif %}
                     </div>
                 </td>
-                <td>
-                    <div style="display:flex;flex-direction:column;gap:0.35rem;align-items:flex-start;">
-                        <span class="badge channel-b-hazard">{{ data.applicant.get_channel_display }}</span>
-                        <div>
-                            {% if data.intake_queue_label != '—' %}
-                            <span class="queue-badge priority">{{ data.intake_queue_label }}</span>
-                            {% else %}
-                            <span class="queue-badge walkin" title="No active Module 1 queue entry">No queue tag</span>
-                            {% endif %}
-                        </div>
-                    </div>
+                <td class="col-transaction">
+                    <span class="m2-cell-code" title="Transaction # (full): {{ data.applicant.id }}">#{{ data.applicant.id.hex|slice:":8" }}…</span>
                 </td>
-                <td>
+                <td class="col-reference">
+                    <span class="m2-cell-code">{{ data.applicant.reference_number }}</span>
+                </td>
+                <td class="col-encoded">
+                    <span style="font-size:0.6875rem;color:#334155;" title="Date &amp; time (Module 1 record created)">{{ data.applicant.created_at|date:"n/j/Y, P" }}</span>
+                </td>
+                <td class="col-channel">
+                    <span class="badge channel-b-hazard">{{ data.applicant.get_channel_display }}</span>
+                </td>
+                <td class="col-queue">
+                    {% if data.intake_queue_label != '—' %}
+                    <span class="queue-badge {% if data.active_queue_type == 'priority' %}priority{% else %}walkin{% endif %}" title="{% if data.active_queue_type == 'priority' %}Priority queue (hazard-certified priority path){% elif data.active_queue_type == 'walk_in' %}Walk-in queue (FIFO regular path){% else %}Queue assignment{% endif %}">{{ data.intake_queue_label }}</span>
+                    {% else %}
+                    <span class="queue-badge walkin" title="No active Module 2 queue assignment yet">No queue tag</span>
+                    {% endif %}
+                </td>
+                <td class="col-staff">
                     {% with rb=data.applicant.registered_by %}
                     {% if rb %}
                     <div class="m2-staff-row">
@@ -1225,72 +1452,30 @@
                     <span style="font-size:0.625rem;color:#94a3b8;">—</span>
                     {% endif %}
                     {% endwith %}
-                    <div class="m2-sms-line">
-                        {% if data.applicant.phone_number %}
-                            <span title="Registration SMS">{% if data.applicant.registration_sms_sent %}Reg. ✓{% else %}Reg. ✗{% endif %}</span>
-                            <span aria-hidden="true"> · </span>
-                            <span title="Eligibility SMS">{% if data.applicant.eligibility_sms_sent %}Elig. ✓{% else %}Elig. —{% endif %}</span>
-                        {% else %}
-                            <span style="color:#94a3b8;">No phone</span>
-                        {% endif %}
-                    </div>
                 </td>
-                <td>
-                    <div class="m2-progress-stack">
-                        <div class="m2-pl">
-                            <span class="m2-pl-label">Group A</span>
-                            <div class="doc-progress">
-                                <div class="doc-progress-bar">
-                                    <div class="doc-progress-fill" style="width: {% widthratio data.group_a_verified 7 100 %}%"></div>
-                                </div>
-                                <span class="doc-progress-text">{{ data.group_a_verified }}/7</span>
-                                {% if data.group_a_verified >= 7 %}
-                                <span class="doc-complete-check">✓</span>
-                                {% endif %}
-                            </div>
-                        </div>
-                        <div class="m2-pl">
-                            <span class="m2-pl-label">Form</span>
-                            <span>
-                                {% if data.form_generated %}
-                                <span class="form-status generated"><span class="check-icon">✓</span> Generated</span>
-                                {% elif data.can_generate_form %}
-                                <span class="form-status can-generate">Ready</span>
-                                {% else %}
-                                <span class="form-status pending">Not yet available</span>
-                                {% endif %}
-                            </span>
-                        </div>
-                        <div class="m2-pl">
-                            <span class="m2-pl-label">Routing</span>
-                            <span>
-                                {% if data.routing_status == 'Completed' %}
-                                <span class="routing-status completed">Completed</span>
-                                {% elif data.routing_status == 'In Progress' %}
-                                <span class="routing-status in-progress">In progress</span>
-                                {% else %}
-                                <span class="routing-status not-started">Pending</span>
-                                {% endif %}
-                            </span>
-                        </div>
-                        <div class="m2-pl">
-                            <span class="m2-pl-label">Stage</span>
-                            {% with stage_slug=data.current_stage|lower|slugify %}
-                            <span class="stage-badge {{ stage_slug }}">
-                                {% if data.current_stage == 'Eligibility' %}Eligibility Evaluation
-                                {% elif data.current_stage == 'Document Gathering' %}Document Verification
-                                {% elif data.current_stage == 'Form Released' %}Form Issued
-                                {% elif data.current_stage == 'Signatory Routing' %}Section D Routing
-                                {% elif data.current_stage == 'Fully Approved' %}Fully Endorsed
-                                {% else %}{{ data.current_stage }}{% endif %}
-                            </span>
-                            {% endwith %}
-                        </div>
+                <td class="col-gate">
+                    <div class="m2-gate-line">
+                    {% if data.blacklist_blocked %}
+                        <span style="color:#b91c1c;">2.1 Blocked</span>
+                    {% elif data.applicant_status == 'pending_cdrrmo' and data.applicant.channel == 'danger_zone' and data.cdrrmo_status != 'certified' and data.cdrrmo_status != 'not_certified' %}
+                        <span style="color:#b45309;">Awaiting CDRRMO</span>
+                    {% else %}
+                        <span style="color:#166534;">2.1 Clear</span>
+                    {% endif %}
                     </div>
                 </td>
                 <td class="col-actions">
                     <div style="display: flex; gap: 0.25rem; flex-wrap: wrap;">
-                        <button class="action-btn" onclick="openApplicationModal('{{ data.applicant.id }}', '{{ data.applicant.full_name }}', '{{ data.applicant.reference_number }}', {{ data.group_a_verified }}, '{{ data.current_stage }}', '{{ data.application.id|default:"" }}')">
+                        <button
+                            class="action-btn js-open-application-modal"
+                            data-applicant-id="{{ data.applicant.id }}"
+                            data-name="{{ data.applicant.full_name|escape }}"
+                            data-reference="{{ data.applicant.reference_number|escape }}"
+                            data-verified-count="{{ data.group_a_verified }}"
+                            data-current-stage="{{ data.current_stage|escape }}"
+                            data-application-id="{{ data.application.id|default:'' }}"
+                            onclick="openApplicationModalFromButton(this)"
+                        >
                             <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
                                 <circle cx="12" cy="12" r="3"/>
@@ -1374,208 +1559,15 @@
         </div>
         <div class="modal-body">
             <div id="modalWorkflowGates" style="display:none;margin-bottom:1rem;padding:0.75rem;border-radius:8px;font-size:0.75rem;line-height:1.45;"></div>
-            <div id="modalM1ChecklistBox" style="display:none;margin-bottom:1rem;padding:0.75rem;border:1px solid #dbeafe;border-radius:8px;background:#f8fbff;">
-                <div style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#1e40af;margin-bottom:.45rem;">
-                    Module 1 preliminary eligibility checklist
-                </div>
-                <div id="modalM1ChecklistBody" style="display:grid;gap:.45rem;"></div>
+            <div style="margin-bottom:0.65rem;text-align:center;">
+                <button type="button" id="modalToggleM1FormBtn" class="m2-show-form-btn" onclick="toggleModule1FormEvidence()">Show form</button>
             </div>
-            <div id="modalRegistrationBox" style="display:none;margin-bottom:1rem;padding:0.75rem;border:1px solid #cbd5e1;border-radius:8px;background:#f8fafc;">
-                <div style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#334155;margin-bottom:.45rem;">
-                    Module 1 applicant registration summary
+            <div id="modalM1EvidencePanel" style="display:none;margin-bottom:0.9rem;padding:0.75rem;border:1px solid #cbd5e1;border-radius:10px;background:#f8fafc;">
+                <div style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#334155;margin-bottom:.45rem;">
+                    Module 1 encoded form evidence (read-only)
                 </div>
-                <div id="modalRegistrationSummary" style="font-size:.75rem;color:#334155;line-height:1.45;"></div>
+                <div id="modalM1EvidenceSummary" style="font-size:.75rem;color:#334155;line-height:1.45;"></div>
             </div>
-            <div id="modalEvaluationBox" style="display:none;margin-bottom:1rem;padding:0.75rem;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc;">
-                <div style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#334155;margin-bottom:.45rem;">
-                    Module 2 — Eligibility Evaluation
-                </div>
-                <div id="modalEvaluationStatus" style="font-size:0.75rem;color:#334155;line-height:1.45;margin-bottom:0.6rem;"></div>
-                <div id="modalOfficeCdrrmoBox" style="display:none;margin-bottom:0.65rem;padding:0.65rem;border:1px solid #bfdbfe;border-radius:8px;background:#f0f9ff;">
-                    <div style="font-size:0.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#1e40af;margin-bottom:.45rem;">
-                        Official CDRRMO certification — office receipt
-                    </div>
-                    <p style="margin:0 0 .55rem 0;font-size:.75rem;line-height:1.45;color:#334155;">
-                        Use this when signed or stamped CDRRMO certification has been physically received and filed at the Talisay Housing Authority intake office for this applicant, and the record should be marked as hazard-area certified before the field unit submits an on-site report in the system.
-                    </p>
-                    <label for="modalOfficeCdrrmoNotes" style="display:block;font-size:.72rem;color:#475569;font-weight:600;margin-bottom:.28rem;">
-                        Receiving remarks (optional)
-                    </label>
-                    <input id="modalOfficeCdrrmoNotes" type="text" placeholder="e.g., DRRMO certification no., date of CDRRMO letter, receiving personnel" style="width:100%;padding:.45rem .55rem;border:1px solid #cbd5e1;border-radius:6px;font-size:.75rem;margin-bottom:.5rem;">
-                    <button type="button" onclick="recordOfficeCdrrmoReceipt()" style="padding:.5rem .8rem;border-radius:7px;border:none;background:#1d4ed8;color:#fff;cursor:pointer;font-size:.75rem;">
-                        Record CDRRMO certification received at office
-                    </button>
-                    <p style="margin:.5rem 0 0 0;font-size:.68rem;line-height:1.35;color:#334155;">
-                        This action files the same disposition as a certified CDRRMO finding: the applicant is marked eligible and assigned a priority queue position where applicable, and an SMS is sent if a mobile number is on record.
-                    </p>
-                </div>
-                <div id="modalCdrrmoPendingInfo" style="display:none;margin-bottom:.65rem;padding:.55rem .65rem;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc;font-size:.74rem;color:#475569;line-height:1.45;">
-                    <strong>Awaiting CDRRMO disposition</strong><br>
-                    After staff handoff to Module 2, either the field unit submits an on-site verification report (with optional photographs), or intake files official CDRRMO certification received at the THA office. Use Official CDRRMO certification — office receipt above when paperwork is on file.
-                </div>
-                <div id="modalRondaPendingNotice" style="display:none;margin-bottom:.65rem;padding:.6rem .7rem;border:1px solid #fde68a;border-radius:8px;background:#fffbeb;font-size:.74rem;color:#92400e;line-height:1.45;">
-                    <strong>Ronda field verification required</strong><br>
-                    No field report is on file yet for this hazard claim. A <strong>Field / Ronda</strong> account must open the verification desk queue, conduct site validation, and submit a certification with notes/photos before final Module 2 eligibility action.
-                </div>
-                {% if permissions.can_verify_documents %}
-                <div id="modalEvaluationActions" style="display:none;">
-                    <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.55rem;">
-                        <button type="button" id="modalMarkEligibleBtn" onclick="evaluateApplicant('mark_eligible')" style="padding:0.5rem 0.8rem;border-radius:7px;border:none;background:#047857;color:#fff;cursor:pointer;font-size:0.75rem;">
-                            Record eligibility and queue assignment
-                        </button>
-                        <button type="button" id="modalDisqualifyBtn" onclick="evaluateApplicant('disqualify')" style="padding:0.5rem 0.8rem;border-radius:7px;border:none;background:#b91c1c;color:#fff;cursor:pointer;font-size:0.75rem;">
-                            Record disqualification
-                        </button>
-                    </div>
-                    <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
-                        <select id="modalDisqualifyReason" style="padding:0.45rem 0.55rem;border:1px solid #cbd5e1;border-radius:6px;font-size:0.75rem;">
-                            <option value="">Select disqualification reason (when applicable)</option>
-                            <option value="income_exceeds">Income exceeds ₱10,000 limit</option>
-                            <option value="property_owner">Owns property in Talisay City</option>
-                            <option value="blacklisted">On blacklist</option>
-                            <option value="incomplete_docs">Incomplete documents</option>
-                            <option value="false_info">False information provided</option>
-                            <option value="other">Other reason</option>
-                        </select>
-                        <input id="modalDisqualifyNotes" type="text" placeholder="Disqualification remarks (optional)" style="flex:1;min-width:180px;padding:0.45rem 0.55rem;border:1px solid #cbd5e1;border-radius:6px;font-size:0.75rem;">
-                    </div>
-                </div>
-                {% else %}
-                <p style="margin:0;font-size:0.75rem;color:#64748b;">Eligibility evaluation actions are available to Joie/Jocel accounts.</p>
-                {% endif %}
-            </div>
-            <div id="modalCdrrmoBox" style="display:none;margin-bottom:1rem;padding:0.75rem;border:1px solid #dbeafe;border-radius:8px;background:#f8fbff;">
-                <div style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#1e40af;margin-bottom:.45rem;">
-                    CDRRMO and field verification record (Module 2 stage)
-                </div>
-                <div id="modalCdrrmoSummary" style="font-size:0.75rem;color:#334155;line-height:1.45;margin-bottom:0.5rem;"></div>
-                <div id="modalCdrrmoNotes" style="display:none;font-size:0.75rem;color:#334155;line-height:1.45;margin-bottom:0.5rem;padding:0.5rem;border:1px solid #cbd5e1;border-radius:6px;background:#fff;"></div>
-                <div id="modalCdrrmoPhotosWrap" style="display:none;">
-                    <div id="modalCdrrmoPhotosCaption" style="font-size:0.68rem;color:#64748b;margin-bottom:0.35rem;">Filed field evidence photographs</div>
-                    <div id="modalCdrrmoPhotos" style="display:flex;flex-wrap:wrap;gap:0.45rem;"></div>
-                </div>
-            </div>
-            <!-- Progress Tracker -->
-            <div class="progress-tracker" id="progressTracker">
-                <div class="progress-step" data-step="1">
-                    <div class="progress-step-circle">1</div>
-                        <span class="progress-step-label">Decision</span>
-                </div>
-                <div class="progress-step" data-step="2">
-                    <div class="progress-step-circle">2</div>
-                        <span class="progress-step-label">Documents</span>
-                </div>
-                <div class="progress-step" data-step="3">
-                    <div class="progress-step-circle">3</div>
-                        <span class="progress-step-label">Form</span>
-                </div>
-                <div class="progress-step" data-step="4">
-                    <div class="progress-step-circle">4</div>
-                    <span class="progress-step-label">Routing</span>
-                </div>
-                <div class="progress-step" data-step="5">
-                    <div class="progress-step-circle">5</div>
-                        <span class="progress-step-label">Approval</span>
-                </div>
-                <div class="progress-step" data-step="6">
-                    <div class="progress-step-circle">6</div>
-                        <span class="progress-step-label">Awarding</span>
-                </div>
-            </div>
-
-            <!-- Document Checklist Section -->
-            {% if permissions.can_verify_documents %}
-            <div class="section-heading" id="groupAHeading">
-                Group A documentary requirements (7 mandatory)
-                <span class="count" id="groupACount">0/7</span>
-            </div>
-            <div class="document-grid" id="documentGrid">
-                {% for req in group_a_requirements %}
-                <div class="document-item" data-requirement="{{ req.code }}">
-                    <div class="document-checkbox" onclick="toggleRequirement(this, '{{ req.code }}')">
-                        <span style="display: none;">✓</span>
-                    </div>
-                    <span class="document-label">{{ req.name }}</span>
-                </div>
-                {% empty %}
-                <!-- Fallback requirements if none in database -->
-                <div class="document-item" data-requirement="brgy_residency">
-                    <div class="document-checkbox" onclick="toggleRequirement(this, 'brgy_residency')">
-                        <span style="display: none;">✓</span>
-                    </div>
-                    <span class="document-label">Brgy. Certificate of Residency</span>
-                </div>
-                <div class="document-item" data-requirement="brgy_indigency">
-                    <div class="document-checkbox" onclick="toggleRequirement(this, 'brgy_indigency')">
-                        <span style="display: none;">✓</span>
-                    </div>
-                    <span class="document-label">Brgy. Certificate of Indigency</span>
-                </div>
-                <div class="document-item" data-requirement="cedula">
-                    <div class="document-checkbox" onclick="toggleRequirement(this, 'cedula')">
-                        <span style="display: none;">✓</span>
-                    </div>
-                    <span class="document-label">Cedula</span>
-                </div>
-                <div class="document-item" data-requirement="police_clearance">
-                    <div class="document-checkbox" onclick="toggleRequirement(this, 'police_clearance')">
-                        <span style="display: none;">✓</span>
-                    </div>
-                    <span class="document-label">Police Clearance</span>
-                </div>
-                <div class="document-item" data-requirement="no_property">
-                    <div class="document-checkbox" onclick="toggleRequirement(this, 'no_property')">
-                        <span style="display: none;">✓</span>
-                    </div>
-                    <span class="document-label">Certificate of No Property</span>
-                </div>
-                <div class="document-item" data-requirement="photo_2x2">
-                    <div class="document-checkbox" onclick="toggleRequirement(this, 'photo_2x2')">
-                        <span style="display: none;">✓</span>
-                    </div>
-                    <span class="document-label">2x2 Picture</span>
-                </div>
-                <div class="document-item" data-requirement="sketch">
-                    <div class="document-checkbox" onclick="toggleRequirement(this, 'sketch')">
-                        <span style="display: none;">✓</span>
-                    </div>
-                    <span class="document-label">Sketch of House Location</span>
-                </div>
-                {% endfor %}
-            </div>
-
-            <!-- Generate Form Button -->
-            {% if permissions.can_generate_form %}
-            <div id="formGenerationSection" style="margin: 2rem 0; text-align: center;">
-                <button class="generate-form-btn" id="generateFormBtn" disabled onclick="generateForm()">
-                    Generate application form
-                </button>
-                <p style="font-size: 0.75rem; color: #6b7280; margin-top: 0.5rem;" id="formStatusText">
-                    Complete all seven requirements to enable form generation.
-                </p>
-            </div>
-            {% endif %}
-            {% else %}
-            <!-- Read-only document view for non-verifiers -->
-            <div class="section-heading">
-                Group A documentary requirements (7 mandatory)
-                <span class="count" id="groupACount">0/7</span>
-            </div>
-            <div class="document-grid" id="documentGrid">
-                {% for req in group_a_requirements %}
-                <div class="document-item" data-requirement="{{ req.code }}">
-                    <div class="document-checkbox" style="cursor: default;">
-                        <span style="display: none;">✓</span>
-                    </div>
-                    <span class="document-label">{{ req.name }}</span>
-                </div>
-                {% endfor %}
-            </div>
-            <p style="font-size: 0.75rem; color: #94a3b8; text-align: center; margin-top: 1rem;">
-                Document verification is managed by authorized processing officers.
-            </p>
-            {% endif %}
-
         </div>
     </div>
 </div>
@@ -1647,7 +1639,7 @@
     // Current applicant/application being viewed
     let currentApplicantId = null;
     let currentApplicationId = null;
-    const canVerifyDocs = {{ permissions.can_verify_documents|yesno:"true,false" }};
+    const canVerifyDocs = '{{ permissions.can_verify_documents|yesno:"true,false" }}' === 'true';
     window.__modalBlacklistBlocked = false;
     window.__hasApplication = false;
     window.__applicationNumber = '';
@@ -1683,6 +1675,18 @@
     }
 
     // Modal functions
+    function openApplicationModalFromButton(btn) {
+        if (!btn) return;
+        openApplicationModal(
+            btn.dataset.applicantId || '',
+            btn.dataset.name || '',
+            btn.dataset.reference || '',
+            Number(btn.dataset.verifiedCount || 0),
+            btn.dataset.currentStage || 'Eligibility',
+            btn.dataset.applicationId || '',
+        );
+    }
+
     function openApplicationModal(applicantId, name, refNumber, verifiedCount, currentStage, applicationId) {
         currentApplicantId = applicantId;
         currentApplicationId = applicationId || null;
@@ -1726,11 +1730,135 @@
         if (e.target.classList.contains('modal-overlay')) closeModal();
     });
 
+    function toggleModule1FormEvidence() {
+        const panel = document.getElementById('modalM1EvidencePanel');
+        const btn = document.getElementById('modalToggleM1FormBtn');
+        if (!panel || !btn) return;
+        const show = panel.style.display === 'none' || !panel.style.display;
+        panel.style.display = show ? 'block' : 'none';
+        btn.textContent = show ? 'Hide form evidence' : 'Show form';
+    }
+
+    function setModule1FormEvidenceVisibility(show) {
+        const panel = document.getElementById('modalM1EvidencePanel');
+        const btn = document.getElementById('modalToggleM1FormBtn');
+        if (!panel || !btn) return;
+        panel.style.display = show ? 'block' : 'none';
+        btn.textContent = show ? 'Hide form evidence' : 'Show form';
+    }
+
     function escapeHtml(s) {
         if (s == null || s === '') return '';
         const d = document.createElement('div');
         d.textContent = s;
         return d.innerHTML;
+    }
+
+    function applyDocProgressFillWidths() {
+        document.querySelectorAll('.doc-progress-fill[data-progress][data-total]').forEach((node) => {
+            const progress = Number(node.getAttribute('data-progress') || 0);
+            const total = Number(node.getAttribute('data-total') || 0);
+            if (!total || total < 1) {
+                node.style.width = '0%';
+                return;
+            }
+            const pct = Math.max(0, Math.min(100, (progress / total) * 100));
+            node.style.width = `${pct}%`;
+        });
+    }
+
+    applyDocProgressFillWidths();
+
+    function getBlacklistSourceCssClass(source) {
+        if (!source) return 'source-module1';
+        return source === 'Units Blacklist Entries' ? 'source-units' : 'source-module1';
+    }
+
+    function renderBlacklistSourceChip(source) {
+        if (!source) return '';
+        return `<span class="blacklist-source-chip ${getBlacklistSourceCssClass(source)}">${escapeHtml(source)}</span>`;
+    }
+
+    function renderEligibilityPipeline(data) {
+        const gate = document.getElementById('modalWorkflowGates');
+        if (!gate) return;
+
+        const rules = data.m2_rules || {};
+        const blacklistBlocked = !!data.blacklist_blocked;
+        const sourceChip = data.blacklist_source ? ` ${renderBlacklistSourceChip(data.blacklist_source)}` : '';
+        const propertyClear = !!data.m1_declares_no_property;
+        const incomeClear = !!data.m1_income_eligible;
+        const householdMismatch = !!rules.household_mismatch;
+        const declaredHH = rules.declared_household_size != null ? String(rules.declared_household_size) : '—';
+        const listedHH = rules.listed_household_size != null ? String(rules.listed_household_size) : '—';
+        const item = (tone, icon, title, desc) =>
+            `<div class="m2-check-item ${tone}">
+                <span class="icon">${icon}</span>
+                <div>
+                    <div class="title">${title}</div>
+                    <div class="desc">${desc}</div>
+                </div>
+            </div>`;
+
+        gate.style.display = 'block';
+
+        if (blacklistBlocked) {
+            gate.style.background = '#fff7f7';
+            gate.style.border = '1px solid #fecaca';
+            gate.style.color = '#7f1d1d';
+            gate.innerHTML =
+                `<div style="font-weight:700;font-size:0.78rem;margin-bottom:0.35rem;text-align:center;">Module 2 automated checks (2.2 to 2.5)</div>` +
+                `<div class="m2-checklist">` +
+                item(
+                    'fail',
+                    '!',
+                    `2.2 Automatic Blacklist Check${sourceChip}`,
+                    `Blocked. ${escapeHtml(data.blacklist_detail || 'Blacklist match detected.')} ${escapeHtml(data.blacklist_policy_note || '')} Staff cannot continue to next checks until this blacklist record is resolved.`
+                ) +
+                item('warn', '•', '2.3 Check Property Ownership', 'Locked until Step 2.2 is cleared.') +
+                item('warn', '•', '2.4 Check Income Details', 'Locked until Step 2.2 is cleared.') +
+                item('warn', '•', '2.5 Check Household Composition', 'Locked until Step 2.2 is cleared.') +
+                `</div>`;
+            return;
+        }
+
+        gate.style.background = '#f8fafc';
+        gate.style.border = '1px solid #e2e8f0';
+        gate.style.color = '#334155';
+
+        // Check if all checks pass
+        const allChecksPassed = propertyClear && incomeClear && !householdMismatch;
+        const headingCheckmark = allChecksPassed ? ' ✓' : '';
+
+        gate.innerHTML =
+            `<div style="font-weight:700;font-size:0.78rem;margin-bottom:0.35rem;text-align:center;">Module 2 automated checks (2.2 to 2.5)${headingCheckmark}</div>` +
+            `<div class="m2-checklist">` +
+            item('pass', '✓', '2.2 Automatic Blacklist Check', 'Clear. No blacklist match; continue processing.') +
+            item(
+                propertyClear ? 'pass' : 'fail',
+                propertyClear ? '✓' : '!',
+                '2.3 Check Property Ownership',
+                propertyClear
+                    ? 'Cleared - no Talisay property declared.'
+                    : 'Failed - property in Talisay declared (disqualification ground).'
+            ) +
+            item(
+                incomeClear ? 'pass' : 'fail',
+                incomeClear ? '✓' : '!',
+                '2.4 Check Income Details',
+                incomeClear
+                    ? 'Cleared - within Module 1 income threshold.'
+                    : 'Failed - over Module 1 income threshold.'
+            ) +
+            item(
+                householdMismatch ? 'warn' : 'pass',
+                householdMismatch ? '!' : '✓',
+                '2.5 Check Household Composition',
+                householdMismatch
+                    ? `Review needed - declared size (${escapeHtml(declaredHH)}) does not match listed members (${escapeHtml(listedHH)}).`
+                    : `Cleared - declared size (${escapeHtml(declaredHH)}) aligns with listed members (${escapeHtml(listedHH)}).`
+            ) +
+            `</div>`;
     }
 
     function resetModalState() {
@@ -1739,15 +1867,17 @@
             g.style.display = 'none';
             g.innerHTML = '';
         }
+        const evidencePanel = document.getElementById('modalM1EvidencePanel');
+        const evidenceSummary = document.getElementById('modalM1EvidenceSummary');
+        const toggleBtn = document.getElementById('modalToggleM1FormBtn');
+        if (evidencePanel) evidencePanel.style.display = 'none';
+        if (evidenceSummary) evidenceSummary.innerHTML = '';
+        if (toggleBtn) toggleBtn.textContent = 'Show form';
         const cBox = document.getElementById('modalCdrrmoBox');
         const cSummary = document.getElementById('modalCdrrmoSummary');
         const cNotes = document.getElementById('modalCdrrmoNotes');
         const cPhotosWrap = document.getElementById('modalCdrrmoPhotosWrap');
         const cPhotos = document.getElementById('modalCdrrmoPhotos');
-        const m1ChecklistBox = document.getElementById('modalM1ChecklistBox');
-        const m1ChecklistBody = document.getElementById('modalM1ChecklistBody');
-        const regBox = document.getElementById('modalRegistrationBox');
-        const regSummary = document.getElementById('modalRegistrationSummary');
         const evalBox = document.getElementById('modalEvaluationBox');
         const evalStatus = document.getElementById('modalEvaluationStatus');
         const evalActions = document.getElementById('modalEvaluationActions');
@@ -1765,10 +1895,6 @@
         }
         if (cPhotosWrap) cPhotosWrap.style.display = 'none';
         if (cPhotos) cPhotos.innerHTML = '';
-        if (m1ChecklistBox) m1ChecklistBox.style.display = 'none';
-        if (m1ChecklistBody) m1ChecklistBody.innerHTML = '';
-        if (regBox) regBox.style.display = 'none';
-        if (regSummary) regSummary.innerHTML = '';
         if (evalBox) evalBox.style.display = 'none';
         if (evalStatus) evalStatus.innerHTML = '';
         if (evalActions) evalActions.style.display = 'none';
@@ -1835,7 +1961,8 @@
         const cdrrmoStatus = (data.cdrrmo && data.cdrrmo.status_display) ? data.cdrrmo.status_display : 'Not requested';
         const incomeText = incomeOk ? 'Within Module 1 income ceiling (≤ ₱10,000)' : 'Over Module 1 income ceiling (requires correction/disposition)';
         const propertyText = noProperty ? 'No real-property ownership in Talisay City (declared)' : 'Property ownership in Talisay City flagged';
-        const blacklistText = notBlacklisted ? 'Not listed on master blacklist (screening)' : 'Matched master blacklist (Module 2 actions restricted)';
+        const sourceText = data.blacklist_source ? ` ${data.blacklist_source}` : '';
+        const blacklistText = notBlacklisted ? 'Not listed on master blacklist (screening)' : `Matched master blacklist${sourceText} (Module 2 actions restricted)`;
 
         const line = (ok, text, tone='default') => {
             const bg = ok ? '#dcfce7' : (tone === 'warn' ? '#fef3c7' : '#fee2e2');
@@ -1879,10 +2006,16 @@
         box.style.display = 'block';
     }
 
-    function renderModule1Registration(profile) {
-        const box = document.getElementById('modalRegistrationBox');
-        const summary = document.getElementById('modalRegistrationSummary');
+    function renderModule1Registration(profile, data) {
+        const box = document.getElementById('modalM1EvidencePanel');
+        const summary = document.getElementById('modalM1EvidenceSummary');
         if (!box || !summary || !profile) return;
+
+        // Get check results from data
+        const incomeClear = !!(data && data.m1_income_eligible);
+        const propertyClear = !!(data && data.m1_declares_no_property);
+        const rules = (data && data.m2_rules) || {};
+        const householdMismatch = !!rules.household_mismatch;
 
         const fmtMoney = (n) => {
             if (n == null || n === '') return '—';
@@ -1903,13 +2036,13 @@
             `<div style="margin:0.65rem 0 0.35rem 0;font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#475569;">${txt}</div>`;
         const rowStart = '<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.45rem .9rem;">';
         const rowEnd = '</div>';
-        const item = (label, value) =>
-            `<div style="background:#fff;border:1px solid #e2e8f0;border-radius:6px;padding:.4rem .5rem;">` +
+        const item = (label, value, highlight = false) =>
+            `<div style="background:${highlight ? '#f0fdf4' : '#fff'};border:1px solid ${highlight ? '#86efac' : '#e2e8f0'};border-radius:6px;padding:.4rem .5rem;">` +
             `<div style="font-size:.62rem;color:#64748b;text-transform:uppercase;letter-spacing:.04em;margin-bottom:.15rem;">${label}</div>` +
             `<div style="font-size:.75rem;color:#1f2937;">${value}</div>` +
             `</div>`;
-        const itemFull = (label, value) =>
-            `<div style="grid-column:span 2;background:#fff;border:1px solid #e2e8f0;border-radius:6px;padding:.4rem .5rem;">` +
+        const itemFull = (label, value, highlight = false) =>
+            `<div style="grid-column:span 2;background:${highlight ? '#f0fdf4' : '#fff'};border:1px solid ${highlight ? '#86efac' : '#e2e8f0'};border-radius:6px;padding:.4rem .5rem;">` +
             `<div style="font-size:.62rem;color:#64748b;text-transform:uppercase;letter-spacing:.04em;margin-bottom:.15rem;">${label}</div>` +
             `<div style="font-size:.75rem;color:#1f2937;">${value}</div>` +
             `</div>`;
@@ -1923,41 +2056,37 @@
             item('Sex', escapeHtml(profile.sex || '—')) +
             item('Date of birth', escapeHtml(fmtDate(profile.date_of_birth))) +
             item('Age', profile.age != null ? escapeHtml(String(profile.age)) : '—') +
-            item('Place of birth', escapeHtml(profile.place_of_birth || '—')) +
             item('Barangay of present address', escapeHtml(profile.barangay || '—')) +
             itemFull('Present address', escapeHtml(profile.current_address || '—')) +
             item('Applicant mobile number', escapeHtml(profile.phone_number || '—')) +
             item('Years of residence in Talisay City', profile.years_residing != null ? escapeHtml(String(profile.years_residing)) : '—') +
-            item('Spouse’s full name', escapeHtml(profile.spouse_name || '—')) +
-            item('Spouse mobile number', escapeHtml(profile.spouse_phone || '—')) +
             rowEnd +
             sectionTitle('Section B — Household members') +
             rowStart +
-            item('Declared household size', profile.household_size != null ? escapeHtml(String(profile.household_size)) : '—') +
-            item('Applicant counted in total', 'Yes') +
+            item('Declared household size', profile.household_size != null ? escapeHtml(String(profile.household_size)) : '—', !householdMismatch) +
+            item('Applicant counted in total', 'Yes', !householdMismatch) +
             rowEnd +
             sectionTitle('Section C — Household income') +
             rowStart +
             item('Principal occupation', escapeHtml(profile.occupation || '—')) +
             item('Employment status', escapeHtml(profile.employment_status || '—')) +
-            item('Gross monthly household income (PHP)', escapeHtml(fmtMoney(profile.monthly_income))) +
-            item('Income ceiling check', Number(profile.monthly_income || 0) <= 10000 ? 'Within Module 1 ceiling' : 'Over Module 1 ceiling') +
+            item('Gross monthly household income (PHP)', escapeHtml(fmtMoney(profile.monthly_income)), incomeClear) +
+            item('Income ceiling check', Number(profile.monthly_income || 0) <= 10000 ? 'Within Module 1 ceiling' : 'Over Module 1 ceiling', incomeClear) +
             rowEnd +
             sectionTitle('Hazard-area residence') +
             rowStart +
-            item('Declared hazard-area residence', escapeHtml(hazardLabel)) +
-            item('Hazard classification', hazardType) +
-            itemFull('Specific location / landmark', hazardLoc) +
+            item('Declared hazard-area residence', escapeHtml(hazardLabel), propertyClear) +
+            item('Hazard classification', hazardType, propertyClear) +
+            itemFull('Specific location / landmark', hazardLoc, propertyClear) +
             rowEnd;
-
-        box.style.display = 'block';
     }
 
     function renderEvaluationControls(data) {
         const evalBox = document.getElementById('modalEvaluationBox');
         const evalStatus = document.getElementById('modalEvaluationStatus');
         const evalActions = document.getElementById('modalEvaluationActions');
-        const markEligibleBtn = document.getElementById('modalMarkEligibleBtn');
+        const markPriorityBtn = document.getElementById('modalMarkPriorityBtn');
+        const markWalkinBtn = document.getElementById('modalMarkWalkinBtn');
         const disqualifyBtn = document.getElementById('modalDisqualifyBtn');
         if (!evalBox || !evalStatus) return;
 
@@ -1969,6 +2098,11 @@
         const cdrrmoPendingInfo = document.getElementById('modalCdrrmoPendingInfo');
         const rondaPendingNotice = document.getElementById('modalRondaPendingNotice');
         const cdrrmoStatus = data.cdrrmo && data.cdrrmo.status ? data.cdrrmo.status : '';
+        const m2Rules = data.m2_rules || {};
+        const blockers = Array.isArray(m2Rules.blockers) ? m2Rules.blockers : [];
+        const advisories = Array.isArray(m2Rules.advisories) ? m2Rules.advisories : [];
+        const allowedQueues = Array.isArray(m2Rules.allowed_queue_types) ? m2Rules.allowed_queue_types : ['walk_in'];
+        const recommendedQueue = m2Rules.recommended_queue_type || 'walk_in';
         let workflowNote = '';
         const blacklistBlocked = !!data.blacklist_blocked;
 
@@ -1983,16 +2117,40 @@
         }
 
         evalBox.style.display = 'block';
-        evalStatus.innerHTML =
+        const recommendationLabel = recommendedQueue === 'priority' ? 'Priority' : 'Walk-in';
+        const chips = [];
+        chips.push(`<span class="m2-eval-chip ${recommendedQueue === 'priority' ? 'recommend-priority' : 'recommend-walkin'}">Recommended: ${recommendationLabel}</span>`);
+        if (allowedQueues.includes('priority')) {
+            chips.push('<span class="m2-eval-chip allowed-priority">Allowed: Priority</span>');
+        }
+        if (allowedQueues.includes('walk_in')) {
+            chips.push('<span class="m2-eval-chip allowed-walkin">Allowed: Walk-in</span>');
+        }
+
+        let statusHtml =
             `<strong>Current applicant status:</strong> ${escapeHtml(statusLabel)}<br>` +
             `<strong>Declared intake channel:</strong> ${escapeHtml(channel)}<br>` +
             `<strong>Current queue tag:</strong> ${escapeHtml(queueLabel)}` +
-            workflowNote;
+            workflowNote +
+            `<div class="m2-eval-chips">${chips.join('')}</div>`;
+        if (blockers.length > 0) {
+            statusHtml += `<strong style="color:#b91c1c;">Eligibility blockers:</strong>`;
+            statusHtml += `<ul class="m2-rule-list blockers">${blockers.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`;
+        }
+        if (advisories.length > 0) {
+            statusHtml += `<strong style="color:#7c2d12;">Review notes:</strong>`;
+            statusHtml += `<ul class="m2-rule-list advisories">${advisories.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`;
+        }
+        evalStatus.innerHTML = statusHtml;
 
         if (blacklistBlocked) {
+            const sourceBadge = data.blacklist_source ? ` ${renderBlacklistSourceChip(data.blacklist_source)}` : '';
             evalStatus.innerHTML +=
                 '<br><strong style="color:#b91c1c;">Process 2.1 result:</strong> ' +
-                '<span style="color:#b91c1c;">Blacklist match detected. Module 2 workflow is halted for this applicant until resolved in Module 1.</span>';
+                `<span style="color:#b91c1c;">Blacklist match detected${sourceBadge}. Module 2 workflow is halted for this applicant until the source blacklist record is resolved.</span>`;
+            if (data.blacklist_policy_note) {
+                evalStatus.innerHTML += `<br><span style="color:#9a3412;">${escapeHtml(data.blacklist_policy_note)}</span>`;
+            }
             if (evalActions) evalActions.style.display = 'none';
             if (officeCdrrmoBox) officeCdrrmoBox.style.display = 'none';
             if (cdrrmoPendingInfo) cdrrmoPendingInfo.style.display = 'none';
@@ -2016,30 +2174,20 @@
         const pendingEvaluation = (status === 'pending' || status === 'pending_cdrrmo');
         if (pendingEvaluation) {
             evalActions.style.display = 'block';
-
-            // Guard buttons by CDRRMO state for consistent workflow.
-            if (markEligibleBtn) {
-                const canMarkEligible = (
-                    status === 'pending' &&
-                    (data.channel !== 'danger_zone' || cdrrmoStatus === 'certified')
-                ) || (
-                    status === 'pending_cdrrmo' &&
-                    cdrrmoStatus === 'certified'
-                );
-                markEligibleBtn.disabled = !canMarkEligible;
-                markEligibleBtn.style.opacity = canMarkEligible ? '1' : '0.6';
-                markEligibleBtn.style.cursor = canMarkEligible ? 'pointer' : 'not-allowed';
-                if (!canMarkEligible && data.channel === 'danger_zone') {
-                    if (cdrrmoStatus === 'pending') {
-                        markEligibleBtn.title = 'Awaiting CDRRMO disposition.';
-                    } else if (cdrrmoStatus === 'not_certified') {
-                        markEligibleBtn.title = 'CDRRMO not-certified records cannot be marked eligible as danger-zone.';
-                    } else {
-                        markEligibleBtn.title = 'CDRRMO certified disposition required.';
-                    }
-                } else {
-                    markEligibleBtn.title = '';
-                }
+            const canMarkAnyEligible = blockers.length === 0;
+            const canPriority = canMarkAnyEligible && allowedQueues.includes('priority');
+            const canWalkin = canMarkAnyEligible && allowedQueues.includes('walk_in');
+            if (markPriorityBtn) {
+                markPriorityBtn.disabled = !canPriority;
+                markPriorityBtn.style.opacity = canPriority ? '1' : '0.6';
+                markPriorityBtn.style.cursor = canPriority ? 'pointer' : 'not-allowed';
+                markPriorityBtn.title = canPriority ? '' : 'Priority qualification requires certified CDRRMO when hazard claim is declared.';
+            }
+            if (markWalkinBtn) {
+                markWalkinBtn.disabled = !canWalkin;
+                markWalkinBtn.style.opacity = canWalkin ? '1' : '0.6';
+                markWalkinBtn.style.cursor = canWalkin ? 'pointer' : 'not-allowed';
+                markWalkinBtn.title = canWalkin ? '' : 'Resolve eligibility blockers before assigning walk-in queue.';
             }
             if (disqualifyBtn) {
                 disqualifyBtn.disabled = false;
@@ -2138,29 +2286,9 @@
             if (data.has_application && data.id) {
                 currentApplicationId = data.id;
             }
-            const gate = document.getElementById('modalWorkflowGates');
-            if (gate) {
-                gate.style.display = 'block';
-                const q = escapeHtml(data.intake_queue_label || '—');
-                const hh = data.household_size != null ? escapeHtml(String(data.household_size)) : '—';
-                const inc = data.m1_income_eligible ? 'Within income ceiling' : 'Over income ceiling (correct in M1)';
-                const prop = data.m1_declares_no_property ? 'No Talisay property (declared)' : 'Property in Talisay (declared)';
-                if (data.blacklist_blocked) {
-                    gate.style.background = '#fef2f2';
-                    gate.style.border = '1px solid #fecaca';
-                    gate.style.color = '#991b1b';
-                    gate.innerHTML = '<strong>2.1 Blacklist</strong> — Applicant matches master blacklist. ' +
-                        (data.blacklist_detail ? `<span style="display:block;margin-top:0.35rem;">${escapeHtml(data.blacklist_detail)}</span>` : '') +
-                        '<span style="display:block;margin-top:0.35rem;">Module 2 workflow is halted at step 2.1. Resolve the blacklist issue in Module 1 before proceeding to 2.2 eligibility data and succeeding steps.</span>';
-                } else {
-                    gate.style.background = '#f8fafc';
-                    gate.style.border = '1px solid #e2e8f0';
-                    gate.style.color = '#334155';
-                    gate.innerHTML = `<strong>M1 snapshot (2.2–2.3)</strong> — Queue: <strong>${q}</strong> · Household size: <strong>${hh}</strong> · ${inc} · ${prop}.`;
-                }
-            }
-            renderModule1Checklist(data);
-            renderModule1Registration(data.applicant_profile);
+            renderEligibilityPipeline(data);
+            renderModule1Registration(data.applicant_profile, data);
+            setModule1FormEvidenceVisibility(!!data.blacklist_blocked);
             renderModule1Cdrrmo(data.cdrrmo);
             renderEvaluationControls(data);
 
@@ -2274,7 +2402,7 @@
         if (window.__modalBlacklistBlocked) {
             btn.disabled = true;
             btn.textContent = 'Generate application form';
-            text.textContent = 'Blacklist flag detected: form generation is disabled until resolved in Module 1.';
+            text.textContent = 'Blacklist flag detected: form generation is disabled until the source blacklist record is resolved.';
             text.style.color = '#b91c1c';
             return;
         }
@@ -2361,9 +2489,15 @@
             return;
         }
 
-        const ok = action === 'mark_eligible'
-            ? confirm('Record eligibility and assign queue entry for this applicant?')
-            : confirm('Record disqualification for this applicant in Module 2?');
+        let confirmationMessage = 'Record disqualification for this applicant in Module 2?';
+        if (action === 'mark_eligible_priority') {
+            confirmationMessage = 'Mark this applicant as Qualified - Priority and assign Priority queue?';
+        } else if (action === 'mark_eligible_walk_in') {
+            confirmationMessage = 'Mark this applicant as Qualified - Walk-in and assign Walk-in queue?';
+        } else if (action === 'mark_eligible') {
+            confirmationMessage = 'Record eligibility and assign queue entry for this applicant?';
+        }
+        const ok = confirm(confirmationMessage);
         if (!ok) return;
 
         try {

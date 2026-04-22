@@ -410,10 +410,6 @@ class LotAwarding(models.Model):
         return f"{self.application.application_number} - Lot {self.lot_number}"
 
 
-    def __str__(self):
-        return f"{self.get_queue_type_display()} #{self.position} - {self.applicant.full_name}"
-
-
 class SMSLog(models.Model):
     """
     Audit trail for Module 2 (Applications) SMS notifications.
@@ -525,11 +521,12 @@ class CDRRMOCertificationProxy(models.Model):
 
 class QueueEntry(models.Model):
     """
-    Manages priority queue for danger zone applicants.
+    Manages Module 2 queue assignment for eligible applicants.
     Each applicant has one active queue entry at a time.
     """
     QUEUE_TYPE_CHOICES = [
         ('priority', 'Priority Queue - Danger Zone'),
+        ('walk_in', 'Walk-in Queue - FIFO'),
     ]
 
     STATUS_CHOICES = [
