@@ -4,8 +4,6 @@ from . import views
 app_name = 'units'
 
 urlpatterns = [
-    path('awarding-draw/<str:position>/', views.lot_awarding_draw, name='lot_awarding_draw'),
-
     # Compliance Notice Issuance (UI #25 - Week 2)
     path('compliance-notice/<str:position>/', views.compliance_notice_issuance, name='compliance_notice_issuance'),
     path('compliance-notice/<str:position>/issue/', views.process_compliance_notice, name='process_compliance_notice'),

@@ -91,16 +91,6 @@
                     <span>Housing Units</span>
                 </a>
 
-                <!-- Lot Awarding - Module 4 (Fourth Member only) -->
-                {% if user.position == 'fourth_member' %}
-                <a href="{% url 'units:lot_awarding_draw' request.user.position %}" class="nav-link {% block nav_lot_awarding %}{% endblock %}">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                    </svg>
-                    <span>Lot Awarding Draw</span>
-                </a>
-                {% endif %}
-
                 <!-- Compliance Notices - Only for specific roles (not second/fourth member) -->
                 {% if user.position not in 'second_member,fourth_member' %}
                 <a href="{% url 'units:compliance_notice_issuance' request.user.position %}" class="nav-link {% block nav_compliance %}{% endblock %}">
