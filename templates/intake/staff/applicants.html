@@ -1014,14 +1014,6 @@
                 {% endfor %}
             </select>
         </div>
-        <button type="button" onclick="exportToCSV()" class="btn-export" style="display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.5rem 0.75rem; background: #10b981; color: white; border: none; border-radius: 0.5rem; font-size: 0.75rem; font-weight: 500; cursor: pointer; white-space: nowrap;">
-            <svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="7 10 12 15 17 10"></polyline>
-                <line x1="12" y1="15" x2="12" y2="3"></line>
-            </svg>
-            Export CSV
-        </button>
     </div>
 
     <!-- Table -->
@@ -1105,6 +1097,98 @@
                         </svg>
                         Review
                     </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Archive / Receipt Table (read-only reporting) -->
+<div class="applicants-container" style="padding-top: 0;">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin: 0 0 0.5rem 0; gap:0.75rem; flex-wrap:wrap;">
+        <h3 style="margin:0; font-size:0.95rem; color:#1e293b; font-weight:600;">Archive / receipt records (proceeded to Module 2)</h3>
+        <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap; justify-content:flex-end;">
+            <span style="font-size:0.7rem; color:#64748b; background:#f8fafc; border:1px solid #e2e8f0; border-radius:9999px; padding:0.22rem 0.55rem;">
+                Reports only · {{ archive_records|length }} record{{ archive_records|length|pluralize }}
+            </span>
+            <button type="button" onclick="exportToCSV()" class="btn-export" style="display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.5rem 0.75rem; background: #10b981; color: white; border: none; border-radius: 0.5rem; font-size: 0.75rem; font-weight: 500; cursor: pointer; white-space: nowrap;">
+                <svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                Export CSV
+            </button>
+        </div>
+    </div>
+    <table class="applicants-table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Transaction #</th>
+                <th>Date & Time</th>
+                <th>Reference #</th>
+                <th>Full Name</th>
+                <th>Channel</th>
+                <th>Staff Handled</th>
+                <th>SMS</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in archive_records %}
+            <tr>
+                <td style="font-weight: 700; color: #1e293b;">{{ forloop.counter }}</td>
+                <td style="font-weight: 600; color: #1d4ed8;">#{{ row.id }}</td>
+                <td style="font-size: 0.6875rem; color: #64748b;">{{ row.dateTime }}</td>
+                <td>{{ row.referenceNumber }}</td>
+                <td style="font-weight: 500;">{{ row.fullName }}</td>
+                <td>
+                    {% if "Hazard (Yes)" in row.channelLabel %}
+                        <span class="badge channel-b-hazard">{{ row.channelLabel }}</span>
+                    {% else %}
+                        <span class="badge channel-b-screening">{{ row.channelLabel }}</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div style="display: flex; align-items: center; gap: 0.375rem;">
+                        <div class="handled-by-avatar {% if row.handledByPosition == '2nd Member' %}second-member{% elif row.handledByPosition == '4th Member' %}fourth-member{% else %}other{% endif %}">
+                            {{ row.handledByInitials }}
+                        </div>
+                        <div style="display: flex; flex-direction: column; min-width: 0;">
+                            <span style="font-size: 0.625rem; font-weight: 500; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ row.handledBy }}</span>
+                            <span style="font-size: 0.5625rem; color: #64748b;">{{ row.handledByPosition }}</span>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    {% if row.hasPhone %}
+                        {% if row.registrationSmsSent %}
+                        <span style="display: inline-flex; align-items: center; gap: 0.125rem; padding: 0.125rem 0.375rem; background: #dcfce7; color: #166534; border-radius: 9999px; font-size: 0.5625rem; font-weight: 500;">
+                            ✓ Sent
+                        </span>
+                        {% else %}
+                        <span style="display: inline-flex; align-items: center; gap: 0.125rem; padding: 0.125rem 0.375rem; background: #fee2e2; color: #991b1b; border-radius: 9999px; font-size: 0.5625rem; font-weight: 500;">
+                            ✗ Not Sent
+                        </span>
+                        {% endif %}
+                    {% else %}
+                        <span style="padding: 0.125rem 0.375rem; background: #f1f5f9; color: #64748b; border-radius: 9999px; font-size: 0.5625rem;">
+                            No Phone
+                        </span>
+                    {% endif %}
+                </td>
+                <td>
+                    <span style="display:inline-flex; align-items:center; gap:0.25rem; padding:0.2rem 0.45rem; border-radius:9999px; font-size:0.5625rem; font-weight:600; color:#075985; background:#e0f2fe; border:1px solid #bae6fd;" title="Proceeded to Module 2 at {{ row.handoffAt }}{% if row.handoffBy %} by {{ row.handoffBy }}{% endif %}">
+                        Sent to Module 2
+                    </span>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="9" style="text-align:center; color:#64748b; font-size:0.75rem; padding:1rem;">
+                    No proceeded records yet.
                 </td>
             </tr>
             {% endfor %}

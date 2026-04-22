@@ -43,10 +43,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // ========================================
     // SCROLL ANIMATIONS - Intersection Observer
     // ========================================
-    
+
     // Check for reduced motion preference
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    
+
+    let scrollObserver; // Declare outside if block for scope access
+
     if (!prefersReducedMotion) {
         // Select all elements with scroll animation classes
         const animatedElements = document.querySelectorAll(
@@ -62,7 +64,7 @@ document.addEventListener('DOMContentLoaded', function() {
             threshold: 0.15 // 15% visible triggers animation
         };
 
-        const scrollObserver = new IntersectionObserver(function(entries, observer) {
+        scrollObserver = new IntersectionObserver(function(entries, observer) {
             entries.forEach(function(entry) {
                 if (entry.isIntersecting) {
                     entry.target.classList.add('animate-in');

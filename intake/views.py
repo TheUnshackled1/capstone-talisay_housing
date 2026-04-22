@@ -889,7 +889,7 @@ def applicants_list(request, position):
             'fullName': isf.full_name,
             'referenceNumber': isf.reference_number,
             'dateRegistered': isf.created_at.strftime('%Y-%m-%d'),
-            'dateTime': isf.created_at.strftime('%Y-%m-%d %I:%M %p'),
+            'dateTime': isf.created_at.strftime('%b %d, %Y | %I:%M %p'),
             'channel': 'A',
             'channelSource': 'staff_entry' if isf.submitted_by_staff else 'portal',  # Differentiate Channel A source
             'submissionId': str(isf.submission.id),  # For Channel A review
@@ -965,6 +965,12 @@ def applicants_list(request, position):
         ),
     ).order_by('created_at')
 
+    handed_off_applicants = Applicant.objects.filter(
+        module2_handoff_at__isnull=False
+    ).select_related(
+        'barangay', 'registered_by', 'module2_handoff_by'
+    ).order_by('-module2_handoff_at')
+
     for app in walk_in_applicants:
         # Determine eligibility status display
         # For Channel B (Danger Zone): check if applicant actually selected "Yes" for danger zone
@@ -1036,7 +1042,7 @@ def applicants_list(request, position):
             'fullName': app.full_name,
             'referenceNumber': app.reference_number,
             'dateRegistered': app.created_at.strftime('%Y-%m-%d'),
-            'dateTime': app.created_at.strftime('%Y-%m-%d %I:%M %p'),
+            'dateTime': app.created_at.strftime('%b %d, %Y | %I:%M %p'),
             'channel': 'B' if app.channel == 'danger_zone' else 'C',  # Map database channels to UI channels
             'submissionId': None,
             'applicantId': str(app.id),
@@ -1122,6 +1128,26 @@ def applicants_list(request, position):
             'eligibilitySmsSent': app.eligibility_sms_sent,
             'hasPhone': bool(app.phone_number),
         })
+
+    # Read-only archive/receipt rows: records already proceeded to Module 2.
+    archive_records = []
+    for app in handed_off_applicants:
+        danger_declared = bool(getattr(app, 'danger_zone_type', ''))
+        channel_label = 'Channel B — Hazard (Yes)' if danger_declared else 'Channel B — No hazard (No)'
+        archive_records.append({
+            'id': str(app.id),
+            'dateTime': app.created_at.strftime('%b %d, %Y | %I:%M %p'),
+            'referenceNumber': app.reference_number,
+            'fullName': app.full_name,
+            'channelLabel': channel_label,
+            'handledBy': app.registered_by.get_full_name() if app.registered_by else 'Unknown',
+            'handledByPosition': app.registered_by.get_position_display_short() if app.registered_by else '',
+            'handledByInitials': (app.registered_by.first_name[:1] + app.registered_by.last_name[:1]).upper() if app.registered_by else '??',
+            'registrationSmsSent': app.registration_sms_sent,
+            'hasPhone': bool(app.phone_number),
+            'handoffAt': app.module2_handoff_at.strftime('%Y-%m-%d %I:%M %p') if app.module2_handoff_at else '',
+            'handoffBy': app.module2_handoff_by.get_full_name() if app.module2_handoff_by else '',
+        })
     
     # Sort all applicants by dateRegistered (FIFO - oldest first)
     applicants.sort(key=lambda x: x['dateRegistered'])
@@ -1162,7 +1188,8 @@ def applicants_list(request, position):
             'pending_cdrrmo': pending_cdrrmo,
             'cdrrmo_overdue': cdrrmo_overdue,
             'ready_for_module2': ready_for_module2,
-        }
+        },
+        'archive_records': archive_records,
     }
     return render(request, 'intake/staff/applicants.html', context)
 

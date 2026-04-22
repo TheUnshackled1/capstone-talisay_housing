@@ -445,6 +445,33 @@ button {
     display: none;
 }
 
+.date-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--primary-600);
+    border-radius: 0.5rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--white);
+    box-shadow: 0 1px 3px rgba(37, 99, 235, 0.2);
+    border: none;
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+}
+
+.date-badge:hover {
+    background: var(--primary-700);
+    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
+}
+
+.date-badge svg {
+    width: 16px;
+    height: 16px;
+    color: var(--white);
+}
+
 @media (min-width: 640px) {
     .current-date {
         display: block;
@@ -453,13 +480,17 @@ button {
 
 /* Search Bar in Topbar */
 .topbar-search {
-    display: none;
+    display: none !important;
     position: relative;
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    cursor: pointer;
 }
 
 @media (min-width: 768px) {
     .topbar-search {
-        display: block;
+        display: none !important;
     }
 }
 
@@ -481,13 +512,11 @@ button {
 }
 
 .topbar-search svg {
-    position: absolute;
-    left: 0.75rem;
-    top: 50%;
-    transform: translateY(-50%);
+    position: relative;
     width: 18px;
     height: 18px;
     color: var(--gray-400);
+    flex-shrink: 0;
 }
 
 /* Content Area */
