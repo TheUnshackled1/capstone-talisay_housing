@@ -98,3 +98,46 @@ class Document(models.Model):
             return f"{self.file_size / 1024:.1f} KB"
         else:
             return f"{self.file_size / (1024 * 1024):.1f} MB"
+
+
+class SMSLog(models.Model):
+    """
+    Audit trail for Documents (Module 2) SMS notifications.
+    Tracks document submission deadlines, verifications, rejections, etc.
+    """
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('sent', 'Sent'),
+        ('failed', 'Failed'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    recipient_phone = models.CharField(max_length=20)
+    message_content = models.TextField()
+    trigger_event = models.CharField(
+        max_length=50,
+        help_text="Event that triggered this SMS (deadline_notice, document_verified, document_rejected, etc.)"
+    )
+
+    # Optional links to related records
+    applicant = models.ForeignKey(
+        'intake.Applicant',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='documents_sms_logs'
+    )
+
+    # Status tracking
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    error_message = models.TextField(blank=True)
+    external_id = models.CharField(max_length=100, blank=True, help_text="SMS provider message ID")
+    sent_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-sent_at']
+        verbose_name = "SMS Log (Documents)"
+        verbose_name_plural = "SMS Logs (Documents)"
+
+    def __str__(self):
+        return f"SMS to {self.recipient_phone} - {self.trigger_event} ({self.status})"

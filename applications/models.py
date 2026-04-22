@@ -405,9 +405,57 @@ class LotAwarding(models.Model):
         ordering = ['-awarded_at']
         verbose_name = "Lot Awarding"
         verbose_name_plural = "Lot Awardings"
-    
+
     def __str__(self):
         return f"{self.application.application_number} - Lot {self.lot_number}"
+
+
+    def __str__(self):
+        return f"{self.get_queue_type_display()} #{self.position} - {self.applicant.full_name}"
+
+
+class SMSLog(models.Model):
+    """
+    Audit trail for Module 2 (Applications) SMS notifications.
+    Tracks eligibility decisions, queue assignments, document deadlines, etc.
+    """
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('sent', 'Sent'),
+        ('failed', 'Failed'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    recipient_phone = models.CharField(max_length=20)
+    message_content = models.TextField()
+    trigger_event = models.CharField(
+        max_length=50,
+        help_text="Event that triggered this SMS (eligibility_eligible, queue_assigned, deadline_notice, etc.)"
+    )
+
+    # Optional links to related records
+    applicant = models.ForeignKey(
+        'intake.Applicant',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='applications_sms_logs'
+    )
+
+    # Status tracking
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    error_message = models.TextField(blank=True)
+    external_id = models.CharField(max_length=100, blank=True, help_text="SMS provider message ID")
+    sent_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-sent_at']
+        verbose_name = "SMS Log (Module 2)"
+        verbose_name_plural = "SMS Logs (Module 2)"
+
+    def __str__(self):
+        return f"SMS to {self.recipient_phone} - {self.trigger_event} ({self.status})"
+
 
 
 # =============================================================================
@@ -473,3 +521,64 @@ class CDRRMOCertificationProxy(models.Model):
         db_table = 'intake_cdrrmocertification'
         verbose_name = 'CDRRMO Certification (Module 2 view)'
         verbose_name_plural = 'CDRRMO Certifications (Module 2 view)'
+
+
+class QueueEntry(models.Model):
+    """
+    Manages priority queue for danger zone applicants.
+    Each applicant has one active queue entry at a time.
+    """
+    QUEUE_TYPE_CHOICES = [
+        ('priority', 'Priority Queue - Danger Zone'),
+    ]
+
+    STATUS_CHOICES = [
+        ('active', 'Active - Waiting'),
+        ('notified', 'Notified for Requirements'),
+        ('processing', 'Processing Application'),
+        ('completed', 'Completed - Moved to Application'),
+        ('removed', 'Removed from Queue'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    applicant = models.ForeignKey(
+        'intake.Applicant',
+        on_delete=models.CASCADE,
+        related_name='queue_entries'
+    )
+
+    queue_type = models.CharField(max_length=20, choices=QUEUE_TYPE_CHOICES)
+    position = models.PositiveIntegerField(
+        verbose_name="Queue Position",
+        help_text="Position number in the queue (FIFO order)"
+    )
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
+
+    # Timestamps
+    entered_at = models.DateTimeField(auto_now_add=True)
+    notified_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    # Staff tracking
+    added_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='queue_entries_added'
+    )
+
+    class Meta:
+        ordering = ['queue_type', 'position']
+        verbose_name = "Queue Entry"
+        verbose_name_plural = "Queue Entries"
+        constraints = [
+            models.UniqueConstraint(
+                fields=['queue_type', 'position'],
+                condition=models.Q(status='active'),
+                name='unique_active_queue_position'
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.get_queue_type_display()} #{self.position} - {self.applicant.full_name}"
+

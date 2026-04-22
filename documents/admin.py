@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Document
+from .models import Document, SMSLog
 
 
 @admin.register(Document)
@@ -24,6 +24,31 @@ class DocumentAdmin(admin.ModelAdmin):
         }),
         ('📝 NOTES', {
             'fields': ('notes',),
+            'classes': ('collapse',),
+        }),
+    )
+
+
+@admin.register(SMSLog)
+class SMSLogAdmin(admin.ModelAdmin):
+    list_display = ('recipient_phone', 'trigger_event', 'status', 'sent_at')
+    list_filter = ('trigger_event', 'status', 'sent_at')
+    search_fields = ('recipient_phone', 'message_content')
+    readonly_fields = ('sent_at', 'id')
+
+    fieldsets = (
+        ('SMS DETAILS', {
+            'fields': ('recipient_phone', 'message_content', 'trigger_event'),
+        }),
+        ('STATUS', {
+            'fields': ('status', 'error_message', 'external_id'),
+        }),
+        ('RECIPIENT', {
+            'fields': ('applicant',),
+            'classes': ('collapse',),
+        }),
+        ('AUDIT TRAIL', {
+            'fields': ('id', 'sent_at'),
             'classes': ('collapse',),
         }),
     )

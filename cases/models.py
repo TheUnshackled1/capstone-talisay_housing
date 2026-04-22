@@ -186,3 +186,46 @@ class CaseNote(models.Model):
     
     def __str__(self):
         return f"Note on {self.case.case_number} by {self.created_by}"
+
+
+class SMSLog(models.Model):
+    """
+    Audit trail for Cases (Complaints/Monitoring) SMS notifications.
+    Tracks case filing, investigation updates, resolutions, etc.
+    """
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('sent', 'Sent'),
+        ('failed', 'Failed'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    recipient_phone = models.CharField(max_length=20)
+    message_content = models.TextField()
+    trigger_event = models.CharField(
+        max_length=50,
+        help_text="Event that triggered this SMS (case_filed, investigation_update, resolved, escalated, etc.)"
+    )
+
+    # Optional links to related records
+    applicant = models.ForeignKey(
+        'intake.Applicant',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='cases_sms_logs'
+    )
+
+    # Status tracking
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    error_message = models.TextField(blank=True)
+    external_id = models.CharField(max_length=100, blank=True, help_text="SMS provider message ID")
+    sent_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-sent_at']
+        verbose_name = "SMS Log (Cases)"
+        verbose_name_plural = "SMS Logs (Cases)"
+
+    def __str__(self):
+        return f"SMS to {self.recipient_phone} - {self.trigger_event} ({self.status})"

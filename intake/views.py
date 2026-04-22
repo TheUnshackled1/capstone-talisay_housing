@@ -8,7 +8,8 @@ from django.urls import reverse
 from django.db.models import Q, Prefetch
 from django.core.exceptions import ObjectDoesNotExist
 from functools import wraps
-from .models import Applicant, Barangay, QueueEntry, CDRRMOCertification, FieldVerificationPhoto
+from .models import Applicant, Barangay, CDRRMOCertification, FieldVerificationPhoto, HazardDeclarationAudit
+from applications.models import QueueEntry
 from .forms import (
     HouseholdMemberForm,
     WalkInApplicantForm
@@ -21,6 +22,56 @@ from collections import defaultdict
 
 # Module 1 income ceiling (₱) — keep in sync with `Applicant.is_income_eligible` in intake/models.py
 MODULE1_MONTHLY_INCOME_CEILING_PESO = 10000
+
+
+def _is_weak_hazard_location(raw_location):
+    location = " ".join((raw_location or "").split()).strip().lower()
+    if len(location) < 12:
+        return True
+    weak_values = {
+        "n/a", "na", "none", "unknown", "same", "same as address",
+        "same address", "barangay", "sitio", "landmark",
+    }
+    return location in weak_values
+
+
+def _validate_hazard_details(is_danger_zone, danger_zone_type, danger_zone_location):
+    if not is_danger_zone:
+        return None
+    if not (danger_zone_type or "").strip():
+        return "Hazard classification is required when hazard-area residence is marked Yes."
+    if _is_weak_hazard_location(danger_zone_location):
+        return (
+            "Location particulars must be specific (at least 12 characters), "
+            "for example: sitio, landmark, and riverbank/road segment."
+        )
+    return None
+
+
+def _log_hazard_declaration_change(
+    applicant,
+    changed_by,
+    declared_before,
+    declared_after,
+    danger_zone_type_before='',
+    danger_zone_type_after='',
+    danger_zone_location_before='',
+    danger_zone_location_after='',
+    change_source='registration',
+    notes='',
+):
+    HazardDeclarationAudit.objects.create(
+        applicant=applicant,
+        changed_by=changed_by,
+        declared_before=declared_before,
+        declared_after=declared_after,
+        danger_zone_type_before=(danger_zone_type_before or '').strip(),
+        danger_zone_type_after=(danger_zone_type_after or '').strip(),
+        danger_zone_location_before=(danger_zone_location_before or '').strip(),
+        danger_zone_location_after=(danger_zone_location_after or '').strip(),
+        change_source=change_source,
+        notes=(notes or '').strip(),
+    )
 
 
 def _describe_applicant_location(applicant):
@@ -264,6 +315,9 @@ def update_applicant(request, position):
 
         # Update Applicant data
         applicant = Applicant.objects.get(id=applicant_id)
+        old_danger_zone_type = (applicant.danger_zone_type or '').strip()
+        old_danger_zone_location = (applicant.danger_zone_location or '').strip()
+        old_declared = bool(old_danger_zone_type)
         if applicant.status != 'pending_cdrrmo':
             return JsonResponse({
                 'success': False,
@@ -310,6 +364,11 @@ def update_applicant(request, position):
             if danger_zone_type:
                 applicant.danger_zone_type = danger_zone_type
             if danger_zone_location:
+                if _is_weak_hazard_location(danger_zone_location):
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'Location particulars must be specific (at least 12 characters).'
+                    })
                 applicant.danger_zone_location = danger_zone_location
 
             # Update CDRRMO certification status
@@ -342,6 +401,27 @@ def update_applicant(request, position):
         applicant.doc_sketch_location = request.POST.get('doc_sketch_location') == 'true'
 
         applicant.save()
+
+        new_danger_zone_type = (applicant.danger_zone_type or '').strip()
+        new_danger_zone_location = (applicant.danger_zone_location or '').strip()
+        new_declared = bool(new_danger_zone_type)
+        if (
+            old_declared != new_declared
+            or old_danger_zone_type != new_danger_zone_type
+            or old_danger_zone_location != new_danger_zone_location
+        ):
+            _log_hazard_declaration_change(
+                applicant=applicant,
+                changed_by=request.user,
+                declared_before=old_declared,
+                declared_after=new_declared,
+                danger_zone_type_before=old_danger_zone_type,
+                danger_zone_type_after=new_danger_zone_type,
+                danger_zone_location_before=old_danger_zone_location,
+                danger_zone_location_after=new_danger_zone_location,
+                change_source='staff_edit',
+                notes='Updated from intake review modal.',
+            )
 
         return JsonResponse({
             'success': True,
@@ -1052,6 +1132,16 @@ def walkin_register(request, position):
     else:
         danger_zone_type = ''
         danger_zone_location = ''
+    hazard_validation_error = _validate_hazard_details(
+        is_danger_zone_answer,
+        danger_zone_type,
+        danger_zone_location,
+    )
+    if hazard_validation_error:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'error': hazard_validation_error})
+        messages.error(request, hazard_validation_error)
+        return redirect(applicants_list_url)
 
     # All applicants start in 'pending' status - Module 2 will conduct screening
     initial_status = 'pending'
@@ -1085,6 +1175,18 @@ def walkin_register(request, position):
         doc_no_property=request.POST.get('doc_no_property') == 'true',
         doc_2x2_picture=request.POST.get('doc_2x2_picture') == 'true',
         doc_sketch_location=request.POST.get('doc_sketch_location') == 'true',
+    )
+    _log_hazard_declaration_change(
+        applicant=applicant,
+        changed_by=request.user,
+        declared_before=None,
+        declared_after=is_danger_zone_answer,
+        danger_zone_type_before='',
+        danger_zone_type_after=danger_zone_type,
+        danger_zone_location_before='',
+        danger_zone_location_after=danger_zone_location,
+        change_source='registration',
+        notes='Initial hazard declaration captured during intake registration.',
     )
 
     # NOTE: CDRRMO certification will be created in Module 2 during screening (if danger zone claim is verified)

@@ -10,9 +10,9 @@ from collections import OrderedDict
 from functools import wraps
 import json
 
-from intake.models import QueueEntry, Applicant
+from intake.models import Applicant
+from applications.models import QueueEntry, Application, ElectricityConnection
 from intake.utils import send_sms
-from applications.models import Application, ElectricityConnection
 from units.models import (
     HousingUnit, LotAward, RelocationSite, ComplianceNotice,
     OccupancyReport, OccupancyReportDetail, CaseRecord, CaseUpdate, WeeklyReport

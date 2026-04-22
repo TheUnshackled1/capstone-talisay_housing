@@ -553,61 +553,43 @@ class FieldVerificationPhoto(models.Model):
         return f'Photo for {self.certification.applicant.reference_number}'
 
 
-class QueueEntry(models.Model):
+class HazardDeclarationAudit(models.Model):
     """
-    Manages priority queue for danger zone applicants.
-    Each applicant has one active queue entry at a time.
+    Audit trail for hazard-area declaration changes from intake registration/edit flows.
     """
-    QUEUE_TYPE_CHOICES = [
-        ('priority', 'Priority Queue - Danger Zone'),
+    CHANGE_SOURCE_CHOICES = [
+        ('registration', 'Registration'),
+        ('staff_edit', 'Staff Edit'),
     ]
-    
-    STATUS_CHOICES = [
-        ('active', 'Active - Waiting'),
-        ('notified', 'Notified for Requirements'),
-        ('processing', 'Processing Application'),
-        ('completed', 'Completed - Moved to Application'),
-        ('removed', 'Removed from Queue'),
-    ]
-    
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     applicant = models.ForeignKey(
         Applicant,
         on_delete=models.CASCADE,
-        related_name='queue_entries'
+        related_name='hazard_declaration_audits',
     )
-    
-    queue_type = models.CharField(max_length=20, choices=QUEUE_TYPE_CHOICES)
-    position = models.PositiveIntegerField(
-        verbose_name="Queue Position",
-        help_text="Position number in the queue (FIFO order)"
-    )
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
-    
-    # Timestamps
-    entered_at = models.DateTimeField(auto_now_add=True)
-    notified_at = models.DateTimeField(null=True, blank=True)
-    completed_at = models.DateTimeField(null=True, blank=True)
-    
-    # Staff tracking
-    added_by = models.ForeignKey(
+    changed_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
-        related_name='queue_entries_added'
+        blank=True,
+        related_name='hazard_declaration_changes',
     )
-    
+    declared_before = models.BooleanField(null=True, blank=True)
+    declared_after = models.BooleanField()
+    danger_zone_type_before = models.CharField(max_length=50, blank=True, default='')
+    danger_zone_type_after = models.CharField(max_length=50, blank=True, default='')
+    danger_zone_location_before = models.CharField(max_length=255, blank=True, default='')
+    danger_zone_location_after = models.CharField(max_length=255, blank=True, default='')
+    change_source = models.CharField(max_length=20, choices=CHANGE_SOURCE_CHOICES, default='registration')
+    notes = models.TextField(blank=True, default='')
+    created_at = models.DateTimeField(auto_now_add=True)
+
     class Meta:
-        ordering = ['queue_type', 'position']
-        verbose_name = "Queue Entry"
-        verbose_name_plural = "Queue Entries"
-        constraints = [
-            models.UniqueConstraint(
-                fields=['queue_type', 'position'],
-                condition=models.Q(status='active'),
-                name='unique_active_queue_position'
-            )
-        ]
-    
+        ordering = ['-created_at']
+        verbose_name = 'Hazard declaration audit'
+        verbose_name_plural = 'Hazard declaration audits'
+
     def __str__(self):
-        return f"{self.get_queue_type_display()} #{self.position} - {self.applicant.full_name}"
+        return f'{self.applicant.reference_number} hazard declaration ({self.get_change_source_display()})'
+

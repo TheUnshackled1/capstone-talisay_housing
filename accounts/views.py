@@ -6,9 +6,8 @@ from django.utils import timezone
 from django.db.models import Q, OuterRef, Subquery, Prefetch
 from datetime import timedelta, date
 from .forms import LoginForm
-from intake.models import Applicant, QueueEntry, CDRRMOCertification, SMSLog, Blacklist
-from cases.models import Case
-from applications.models import Application, SignatoryRouting, RequirementSubmission
+from intake.models import Applicant, CDRRMOCertification, SMSLog, Blacklist
+from applications.models import QueueEntry, Application, SignatoryRouting, RequirementSubmission
 from units.models import ComplianceNotice, HousingUnit, ElectricityConnection
 import json
 

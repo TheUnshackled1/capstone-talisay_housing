@@ -2,7 +2,7 @@ from django.contrib import admin
 from .models import (
     RelocationSite, HousingUnit, WeeklyReport, LotAward,
     ElectricityConnection, ComplianceNotice, Blacklist,
-    OccupancyReport, OccupancyReportDetail, CaseRecord, CaseUpdate
+    OccupancyReport, OccupancyReportDetail, CaseRecord, CaseUpdate, SMSLog
 )
 
 
@@ -287,5 +287,30 @@ class CaseUpdateAdmin(admin.ModelAdmin):
         }),
         ('🔏 TRACKED BY', {
             'fields': ('updated_by', 'updated_at'),
+        }),
+    )
+
+
+@admin.register(SMSLog)
+class SMSLogAdmin(admin.ModelAdmin):
+    list_display = ('recipient_phone', 'trigger_event', 'status', 'sent_at')
+    list_filter = ('trigger_event', 'status', 'sent_at')
+    search_fields = ('recipient_phone', 'message_content')
+    readonly_fields = ('sent_at', 'id')
+
+    fieldsets = (
+        ('SMS DETAILS', {
+            'fields': ('recipient_phone', 'message_content', 'trigger_event'),
+        }),
+        ('STATUS', {
+            'fields': ('status', 'error_message', 'external_id'),
+        }),
+        ('RECIPIENT', {
+            'fields': ('applicant',),
+            'classes': ('collapse',),
+        }),
+        ('AUDIT TRAIL', {
+            'fields': ('id', 'sent_at'),
+            'classes': ('collapse',),
         }),
     )

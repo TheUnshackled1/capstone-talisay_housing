@@ -43,9 +43,9 @@ def format_phone_number(phone_number):
     return phone
 
 
-def send_sms(phone_number, message, trigger_event, applicant=None, isf_record=None):
+def send_sms(phone_number, message, trigger_event, applicant=None, isf_record=None, module='intake'):
     """
-    Send SMS notification via ClickSend API and log to database.
+    Send SMS notification via configured SMS API and log to app-specific SMSLog.
 
     Args:
         phone_number: Recipient phone number
@@ -53,11 +53,25 @@ def send_sms(phone_number, message, trigger_event, applicant=None, isf_record=No
         trigger_event: Event that triggered SMS (registration, eligibility_passed, etc.)
         applicant: Applicant instance (optional)
         isf_record: ISFRecord instance (optional)
+        module: App module for SMS logging ('intake', 'applications', 'documents', 'units', 'cases')
 
     Returns:
         bool: True if SMS sent successfully, False otherwise
     """
-    from .models import SMSLog
+    # Route to correct app's SMSLog based on module parameter
+    if module == 'intake':
+        from .models import SMSLog
+    elif module == 'applications':
+        from applications.models import SMSLog
+    elif module == 'documents':
+        from documents.models import SMSLog
+    elif module == 'units':
+        from units.models import SMSLog
+    elif module == 'cases':
+        from cases.models import SMSLog
+    else:
+        logger.warning(f"Unknown SMS module: {module}")
+        from .models import SMSLog  # Default to intake
 
     if not phone_number or not message:
         logger.warning("Cannot send SMS: missing phone number or message")
@@ -75,7 +89,7 @@ def send_sms(phone_number, message, trigger_event, applicant=None, isf_record=No
     sms_enabled = getattr(settings, 'SMS_ENABLED', True)
 
     try:
-        # Create SMS log record first (pending status)
+        # Create SMS log record in app-specific table (pending status)
         sms_log = SMSLog.objects.create(
             recipient_phone=phone_number,
             message_content=message,
@@ -94,7 +108,7 @@ def send_sms(phone_number, message, trigger_event, applicant=None, isf_record=No
         # IPROG: Affordable SMS gateway (P1/SMS - perfect for capstone projects)
         success = send_sms_iprog(phone_number, message, sms_log)
         if success:
-            logger.info('SMS sent via IPROG: %s to %s', trigger_event, phone_number)
+            logger.info('SMS sent via IPROG: %s to %s (module: %s)', trigger_event, phone_number, module)
         return success
 
 
@@ -228,7 +242,7 @@ def ensure_priority_queue_entry(applicant, added_by=None):
         tuple[QueueEntry, bool]: (entry, created)
     """
     from django.db import IntegrityError, transaction
-    from .models import QueueEntry
+    from applications.models import QueueEntry
 
     existing = applicant.queue_entries.filter(status='active').order_by('entered_at').first()
     if existing:

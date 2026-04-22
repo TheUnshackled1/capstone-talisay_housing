@@ -6,13 +6,13 @@ from django.views.decorators.http import require_POST
 from django.db.models import Count, Q, Prefetch, Max
 from django.utils import timezone
 from functools import wraps
-from intake.models import Applicant, QueueEntry, CDRRMOCertification, FieldVerificationPhoto
+from intake.models import Applicant, CDRRMOCertification, FieldVerificationPhoto
 from intake.utils import send_sms, ensure_priority_queue_entry
 from intake import sms_workflow
 from .models import (
     Application, Requirement, RequirementSubmission,
     SignatoryRouting, FacilitatedService, ElectricityConnection, LotAwarding,
-    CDRRMOCertificationProxy,
+    QueueEntry, CDRRMOCertificationProxy,
 )
 from .utils import check_blacklist_module2
 
