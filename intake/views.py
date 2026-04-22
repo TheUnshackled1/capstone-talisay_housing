@@ -6,6 +6,7 @@ from django.http import JsonResponse
 from django.utils import timezone
 from django.urls import reverse
 from django.db.models import Q, Prefetch
+from django.core.exceptions import ObjectDoesNotExist
 from functools import wraps
 from .models import Applicant, Barangay, QueueEntry, CDRRMOCertification, FieldVerificationPhoto
 from .forms import (
@@ -15,10 +16,53 @@ from .forms import (
 from .utils import check_blacklist, send_sms, ensure_priority_queue_entry
 from . import sms_workflow
 import json
+import re
 from collections import defaultdict
 
 # Module 1 income ceiling (₱) — keep in sync with `Applicant.is_income_eligible` in intake/models.py
 MODULE1_MONTHLY_INCOME_CEILING_PESO = 10000
+
+
+def _describe_applicant_location(applicant):
+    """
+    Human-readable "where is this record now" label for duplicate checks.
+    Priority: explicit module objects (Application / requirements activity), then applicant status.
+    """
+    location = 'Applicant Intake (Module 1)'
+    status_text = applicant.get_status_display()
+
+    # Module 2 object exists: applicant already moved into Applications.
+    try:
+        application = applicant.application
+    except ObjectDoesNotExist:
+        application = None
+    if application is not None:
+        location = 'Applications (Module 2)'
+        status_text = application.get_status_display()
+    elif applicant.requirement_submissions.exclude(status='pending').exists() or applicant.status == 'requirements':
+        # Requirement submissions are processed under Documents module workflow.
+        location = 'Documents (Requirements)'
+    elif applicant.module2_handoff_at:
+        location = 'Applications (Module 2 queue)'
+    elif applicant.status == 'application':
+        location = 'Applications (Module 2)'
+    elif applicant.status in {'standby', 'awarded'}:
+        location = 'Housing Units / Post-Approval'
+
+    return location, status_text
+
+
+def _build_duplicate_record_message(applicant):
+    location, status_text = _describe_applicant_location(applicant)
+    handled_by = applicant.registered_by.get_full_name() if applicant.registered_by else 'Unknown'
+    return (
+        "Duplicate record detected.\n"
+        f"Matched record: {applicant.reference_number} ({applicant.full_name}).\n"
+        "Match basis: same Date of Birth, Barangay, Last name, and First name.\n"
+        f"Current location: {location}.\n"
+        f"Current status: {status_text}.\n"
+        f"Last handled by: {handled_by}."
+    )
 
 
 def _attach_applicants_sms_history(applicants):
@@ -726,12 +770,9 @@ def applicants_list(request, position):
             'sex': app.sex or '',
             'age': app.age or 0,
             'dateOfBirth': app.date_of_birth.isoformat() if app.date_of_birth else '',
-            'placeOfBirth': app.place_of_birth or '',
             'barangay': app.barangay.name if app.barangay else 'Unknown',
             'phoneNumber': app.phone_number or '',
             'currentAddress': app.current_address or '',
-            'spouseName': app.spouse_name or '',
-            'spousePhone': app.spouse_phone or '',
             # Section B: HOUSEHOLD MEMBERS
             'householdSize': app.household_size,
             'householdMembers': [
@@ -739,7 +780,8 @@ def applicants_list(request, position):
                     'name': member.full_name or '',
                     'relationship': member.get_relationship_display() if hasattr(member, 'get_relationship_display') else (member.relationship or ''),
                     'age': member.age or 0,
-                    'civilStatus': member.get_civil_status_display() if hasattr(member, 'get_civil_status_display') else (member.civil_status or '')
+                    'civilStatus': member.get_civil_status_display() if hasattr(member, 'get_civil_status_display') else (member.civil_status or ''),
+                    'contactNumber': getattr(member, 'contact_number', '') or '',
                 }
                 for member in app.household_members.all()
             ],
@@ -960,6 +1002,35 @@ def walkin_register(request, position):
     barangay_name = form.cleaned_data['barangay']
     barangay, _ = Barangay.objects.get_or_create(name=barangay_name)
 
+    # Duplicate guard: same DOB + barangay + last name + first name.
+    duplicate_last_name = (form.cleaned_data.get('last_name') or '').strip()
+    duplicate_first_name = (form.cleaned_data.get('first_name') or '').strip()
+    duplicate_applicant = (
+        Applicant.objects
+        .select_related('registered_by', 'barangay')
+        .prefetch_related('requirement_submissions')
+        .filter(
+            date_of_birth=date_of_birth,
+            barangay=barangay,
+            last_name__iexact=duplicate_last_name,
+            first_name__iexact=duplicate_first_name,
+        )
+        .order_by('-updated_at', '-created_at')
+        .first()
+    )
+    if duplicate_applicant:
+        duplicate_msg = _build_duplicate_record_message(duplicate_applicant)
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': False,
+                'error': duplicate_msg,
+                'duplicate': True,
+                'duplicate_reference': duplicate_applicant.reference_number,
+                'duplicate_record_id': str(duplicate_applicant.id),
+            })
+        messages.error(request, duplicate_msg)
+        return redirect(applicants_list_url)
+
     # Build full name from components (for display/reference only)
     # Note: Module 2 will perform blacklist check and other screening
     full_name = (form.cleaned_data.get('full_name') or '').strip()
@@ -993,10 +1064,7 @@ def walkin_register(request, position):
         sex=form.cleaned_data.get('sex', ''),
         age=computed_age,
         date_of_birth=date_of_birth,
-        place_of_birth=form.cleaned_data.get('place_of_birth', ''),
         phone_number=phone_number,
-        spouse_name=form.cleaned_data.get('spouse_name', ''),
-        spouse_phone=form.cleaned_data.get('spouse_phone', ''),
         barangay=barangay,
         current_address=form.cleaned_data['current_address'],
         monthly_income=form.cleaned_data['monthly_income'],
@@ -1027,18 +1095,27 @@ def walkin_register(request, position):
         relationship = request.POST.get(f'hh_member_{i}_relationship', '').strip()
         age = request.POST.get(f'hh_member_{i}_age', '').strip()
         civil_status = request.POST.get(f'hh_member_{i}_status', 'single').strip()
+        contact_number_raw = request.POST.get(f'hh_member_{i}_contact', '').strip()
+        contact_number = re.sub(r'\D', '', contact_number_raw) if contact_number_raw else ''
 
         # Only create if at least name and relationship are provided
         if name and relationship:
             try:
                 age_int = int(age) if age else 0
+                if contact_number and (len(contact_number) != 11 or not contact_number.startswith('09')):
+                    msg = f'Household Member {i}: contact number must be 11 digits and start with 09.'
+                    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                        return JsonResponse({'success': False, 'error': msg})
+                    messages.error(request, msg)
+                    return redirect(applicants_list_url)
                 from intake.models import HouseholdMember
                 HouseholdMember.objects.create(
                     applicant=applicant,
                     full_name=name,
                     relationship=relationship,
                     age=age_int,
-                    civil_status=civil_status
+                    civil_status=civil_status,
+                    contact_number=contact_number,
                 )
             except (ValueError, TypeError):
                 # Skip invalid age values

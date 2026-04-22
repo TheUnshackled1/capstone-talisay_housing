@@ -418,6 +418,14 @@ class HouseholdMember(models.Model):
         default='single',
         verbose_name="Civil Status"
     )
+    contact_number = models.CharField(
+        max_length=20,
+        blank=True,
+        default='',
+        validators=[validate_philippine_phone],
+        verbose_name="Contact Number",
+        help_text="Optional household member mobile number (09XXXXXXXXXX).",
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
 

@@ -1605,10 +1605,6 @@
                                 <label class="form-label">Date of Birth</label>
                                 <input type="date" class="form-input" id="reviewDateOfBirth" name="date_of_birth" readonly>
                             </div>
-                            <div class="form-group">
-                                <label class="form-label">Place of Birth</label>
-                                <input type="text" class="form-input" id="reviewPlaceOfBirth" name="place_of_birth" readonly>
-                            </div>
                             <div class="form-group" style="grid-column: span 2;">
                                 <label class="form-label">Present Address</label>
                                 <input type="text" class="form-input" id="reviewAddress" name="current_address" readonly>
@@ -1629,14 +1625,6 @@
                             <div class="form-group">
                                 <label class="form-label">Years Residing in Talisay</label>
                                 <input type="number" class="form-input" id="reviewYears" name="years_residing" min="0" readonly>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Name of Spouse</label>
-                                <input type="text" class="form-input" id="reviewSpouseName" name="spouse_name" readonly>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Spouse Contact Number</label>
-                                <input type="tel" class="form-input" id="reviewSpousePhone" name="spouse_phone" readonly>
                             </div>
                         </div>
                     </div>
@@ -2020,7 +2008,7 @@
 
 <!-- Add Applicant Modal -->
 <div class="modal-overlay" id="addModal" onclick="closeAddModal()">
-    <div class="modal-content tha-reg-modal" style="max-width: min(44rem, 96vw);" onclick="event.stopPropagation()">
+    <div class="modal-content tha-reg-modal" style="width: min(95%, 88rem); max-width: min(95%, 88rem);" onclick="event.stopPropagation()">
         <div class="modal-header">
             <h2 class="modal-title">Applicant registration</h2>
             <button type="button" class="btn-close" onclick="closeAddModal()" aria-label="Close registration form">
@@ -2030,7 +2018,7 @@
                 </svg>
             </button>
         </div>
-        <div class="modal-body" style="max-height: 75vh; overflow-y: auto;">
+        <div class="modal-body" style="max-height: 75vh; overflow-y: auto; overflow-x: hidden;">
             <style>
                 .tha-reg-modal .tha-form-header {
                     background: #0f172a;
@@ -2178,6 +2166,25 @@
                 .tha-reg-modal .help-text { font-size: 0.6875rem; color: #64748b; margin-top: 0.25rem; display: block; letter-spacing: 0.01em; }
                 .tha-reg-modal #addApplicantForm .form-input,
                 .tha-reg-modal #addApplicantForm .form-select { text-transform: none; border-radius: 2px; }
+                .tha-reg-modal #addApplicantForm .form-input,
+                .tha-reg-modal #addApplicantForm .form-select { min-width: 0; }
+                #addModal {
+                    z-index: 1000;
+                    left: var(--sidebar-width);
+                    right: 0;
+                    width: auto;
+                }
+                #addModal .modal-content.tha-reg-modal {
+                    margin: 0 auto;
+                }
+                @media (max-width: 1023px) {
+                    #addModal {
+                        left: 0;
+                    }
+                }
+                .tha-reg-modal .identity-row {
+                    grid-template-columns: repeat(3, minmax(0, 1fr));
+                }
                 .tha-reg-modal #addApplicantForm label.form-label { font-size: 0.75rem; font-weight: 600; color: #334155; letter-spacing: 0.02em; }
                 .tha-reg-modal .form-fieldset-header { font-size: 0.8125rem; font-weight: 600; color: #1e293b; }
                 .tha-reg-modal .tha-reg-remove-member {
@@ -2196,10 +2203,39 @@
                     background: #fef2f2;
                     border-color: #dc2626;
                 }
+                .tha-reg-modal .hh-member-row {
+                    display: grid;
+                    grid-template-columns: 1.35fr 1fr 0.6fr 0.95fr 1fr auto;
+                    gap: 0.75rem;
+                    margin-bottom: 1rem;
+                    align-items: end;
+                }
+                .tha-reg-modal .hh-member-row .tha-reg-remove-member {
+                    min-height: 2.5rem;
+                }
+                .tha-reg-modal .hh-member-help {
+                    font-size: 0.6875rem;
+                    color: #64748b;
+                    margin-top: 0.25rem;
+                    display: block;
+                }
+                @media (max-width: 1200px) {
+                    .tha-reg-modal .identity-row {
+                        grid-template-columns: repeat(2, minmax(0, 1fr));
+                    }
+                    .tha-reg-modal .hh-member-row {
+                        grid-template-columns: repeat(2, minmax(0, 1fr));
+                    }
+                    .tha-reg-modal .hh-member-row .tha-reg-remove-member {
+                        justify-self: start;
+                    }
+                }
                 @media (max-width: 640px) {
                     .tha-reg-modal .form-row { grid-template-columns: 1fr; }
                     .tha-reg-modal .channel-selector { grid-template-columns: 1fr; }
                     .tha-reg-modal .document-grid { grid-template-columns: 1fr; }
+                    .tha-reg-modal .identity-row { grid-template-columns: 1fr; }
+                    .tha-reg-modal .hh-member-row { grid-template-columns: 1fr; }
                 }
             </style>
 
@@ -2221,7 +2257,7 @@
                     <h3 class="tha-section-title">Applicant identity</h3>
 
                     <!-- Name (Last, First, Middle) -->
-                    <div class="form-row" style="grid-template-columns: repeat(3, 1fr);">
+                    <div class="form-row identity-row">
                         <div class="form-group">
                             <label class="form-label">Last name <span style="color: #dc2626;">*</span></label>
                             <input type="text" class="form-input" placeholder="Family name (surname)" name="last_name" id="lastName" maxlength="100" required>
@@ -2276,22 +2312,6 @@
                         </div>
                     </div>
 
-                    <!-- Place of Birth (Collapsible) -->
-                    <div class="form-fieldset" style="border: none; margin-bottom: 1rem; padding: 0;">
-                        <div class="form-fieldset-header" onclick="toggleFieldset(this)">
-                            <span class="fieldset-toggle-icon">▶</span>
-                            <span>Place of birth</span>
-                        </div>
-                        <div class="form-fieldset-content">
-                            <div class="form-row full">
-                                <div class="form-group">
-                                    <label class="form-label">Place of birth</label>
-                                    <input type="text" class="form-input" placeholder="City or municipality, province" name="place_of_birth" id="placeOfBirth" maxlength="255">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- Present Address -->
                     <div class="form-row full">
                         <div class="form-group">
@@ -2315,31 +2335,12 @@
                         </div>
                         <div class="form-group">
                             <label class="form-label">Applicant mobile number <span style="color: #dc2626;">*</span></label>
-                            <input type="tel" class="form-input ph-phone" placeholder="09XXXXXXXXXX" pattern="09[0-9]{9}" name="phone_number" id="phoneNumber" required>
-                            <span class="help-text">Philippine mobile format: 11 digits beginning with 09</span>
+                            <input type="tel" class="form-input ph-phone" placeholder="09XXXXXXXXXX" pattern="09[0-9]{9}" maxlength="11" minlength="11" inputmode="numeric" autocomplete="tel-national" name="phone_number" id="phoneNumber" required>
+                            <span class="help-text">Philippine mobile format: 11 digits beginning with 09. Whole numbers only.</span>
                         </div>
                     </div>
 
                     <!-- Name of Spouse & Spouse Contact No. -->
-                    <div class="form-fieldset" style="border: none; margin-bottom: 0; padding-bottom: 0;">
-                        <div class="form-fieldset-header" onclick="toggleFieldset(this)">
-                            <span class="fieldset-toggle-icon">▶</span>
-                            <span>Spouse</span>
-                        </div>
-                        <div class="form-fieldset-content">
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label class="form-label">Spouse’s full name</label>
-                                    <input type="text" class="form-input" placeholder="If married or in a recognized union" name="spouse_name" id="spouseName">
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Spouse mobile number</label>
-                                    <input type="tel" class="form-input ph-phone" placeholder="09XXXXXXXXXX" pattern="09[0-9]{9}" name="spouse_phone" id="spousePhone">
-                                    <span class="help-text">Same format as applicant (optional)</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
 
                 <!-- Section B -->
@@ -2873,15 +2874,12 @@
                 const sexEl = document.getElementById('reviewSex');
                 const ageEl = document.getElementById('reviewAge');
                 const dobEl = document.getElementById('reviewDateOfBirth');
-                const pobEl = document.getElementById('reviewPlaceOfBirth');
                 const barangayEl = document.getElementById('reviewBarangay');
                 const incomeEl = document.getElementById('reviewIncome');
                 const householdEl = document.getElementById('reviewHousehold');
                 const yearsEl = document.getElementById('reviewYears');
                 const phoneEl = document.getElementById('reviewPhone');
                 const addressEl = document.getElementById('reviewAddress');
-                const spouseNameEl = document.getElementById('reviewSpouseName');
-                const spousePhoneEl = document.getElementById('reviewSpousePhone');
                 const dangerZoneStatusEl = document.getElementById('reviewDangerZoneStatus');
                 const occupationEl = document.getElementById('reviewOccupation');
                 const employmentStatusEl = document.getElementById('reviewEmploymentStatus');
@@ -2901,15 +2899,12 @@
                 if (sexEl) sexEl.value = currentApplicant.sex || '';
                 if (ageEl) ageEl.value = currentApplicant.age || '';
                 if (dobEl) dobEl.value = currentApplicant.dateOfBirth || '';
-                if (pobEl) pobEl.value = currentApplicant.placeOfBirth || '';
                 if (barangayEl) barangayEl.value = currentApplicant.barangay || '';
                 if (incomeEl) incomeEl.value = formatIncomeInputValue(currentApplicant.monthlyIncome);
                 if (householdEl) householdEl.value = currentApplicant.householdSize || '';
                 if (yearsEl) yearsEl.value = currentApplicant.yearsResiding || '';
                 if (phoneEl) phoneEl.value = currentApplicant.phoneNumber || '';
                 if (addressEl) addressEl.value = currentApplicant.currentAddress || '';
-                if (spouseNameEl) spouseNameEl.value = currentApplicant.spouseName || '';
-                if (spousePhoneEl) spousePhoneEl.value = currentApplicant.spousePhone || '';
                 if (occupationEl) occupationEl.value = currentApplicant.occupation || '';
                 if (employmentStatusEl) employmentStatusEl.value = currentApplicant.employmentStatus || '';
 
@@ -4121,11 +4116,7 @@
         for (let i = 1; i <= householdMemberCount; i++) {
             const memberDiv = document.createElement('div');
             memberDiv.id = `hhMember${i}`;
-            memberDiv.className = 'form-row';
-            memberDiv.style.gridTemplateColumns = '1fr 1fr 0.6fr 1fr 0.8fr';
-            memberDiv.style.gap = '0.75rem';
-            memberDiv.style.marginBottom = '1rem';
-            memberDiv.style.alignItems = 'flex-end';
+            memberDiv.className = 'hh-member-row';
             memberDiv.innerHTML = `
                 <div class="form-group">
                     <label class="form-label">Full name</label>
@@ -4159,10 +4150,16 @@
                         <option value="common_law">Common-law</option>
                     </select>
                 </div>
+                <div class="form-group">
+                    <label class="form-label">Contact number <span style="color: #64748b; font-weight: 500;">(optional)</span></label>
+                    <input type="tel" class="form-input hh-member-field ph-phone" placeholder="09XXXXXXXXXX" pattern="09[0-9]{9}" maxlength="11" minlength="11" inputmode="numeric" autocomplete="tel-national" name="hh_member_${i}_contact">
+                    <span class="hh-member-help">11 digits only, starts with 09.</span>
+                </div>
                 <button type="button" onclick="deleteHouseholdMember(${i})" class="tha-reg-remove-member" title="Remove this row">Remove</button>
             `;
             container.appendChild(memberDiv);
         }
+        initializePhoneInputs();
         updateHouseholdSize();
     }
 
@@ -4330,7 +4327,7 @@
         formData.set('full_name', fullName);
 
         // Capitalize text fields in formData
-        ['place_of_birth', 'current_address', 'spouse_name', 'occupation', 'danger_zone_location'].forEach(fieldName => {
+        ['current_address', 'occupation', 'danger_zone_location'].forEach(fieldName => {
             if (formData.has(fieldName)) {
                 formData.set(fieldName, capitalizeFirst(formData.get(fieldName)));
             }
@@ -4377,6 +4374,7 @@
             const relationshipField = document.querySelector(`select[name="hh_member_${i}_relationship"]`);
             const ageField = document.querySelector(`input[name="hh_member_${i}_age"]`);
             const statusField = document.querySelector(`select[name="hh_member_${i}_status"]`);
+            const contactField = document.querySelector(`input[name="hh_member_${i}_contact"]`);
 
             const hasName = nameField && nameField.value.trim();
             const hasRelationship = relationshipField && relationshipField.value.trim();
@@ -4389,6 +4387,14 @@
             if (fieldsWithData > 0 && fieldsWithData < 4) {
                 alert(`Household Member ${i}: Either fill all fields or delete this member.`);
                 return;
+            }
+
+            if (contactField && contactField.value.trim()) {
+                const contactClean = contactField.value.replace(/\D/g, '');
+                if (contactClean.length !== 11 || !contactClean.startsWith('09')) {
+                    alert(`Household Member ${i}: Contact number must be 11 digits and start with 09.`);
+                    return;
+                }
             }
         }
 
@@ -5101,32 +5107,9 @@
 
     // Philippine phone validation - limit to 11 digits, silently
     function initializePhoneInputs() {
-        // Field 6: ISF Review Modal - isfPhoneNumber
-        const isfPhoneInput = document.getElementById('isfPhoneNumber');
-        if (isfPhoneInput) {
-            isfPhoneInput.addEventListener('input', function() {
-                this.value = this.value.replace(/\D/g, '').slice(0, 11);
-            });
-        }
-
-        // Field 8: Channel C Walk-in Modal - walkinPhone
-        const walkinPhoneInput = document.getElementById('walkinPhone');
-        if (walkinPhoneInput) {
-            walkinPhoneInput.addEventListener('input', function() {
-                this.value = this.value.replace(/\D/g, '').slice(0, 11);
-            });
-        }
-
-        // Landowner Phone in Channel A Modal - landownerPhoneWalkin
-        const landownerPhoneWalkin = document.getElementById('landownerPhoneWalkin');
-        if (landownerPhoneWalkin) {
-            landownerPhoneWalkin.addEventListener('input', function() {
-                this.value = this.value.replace(/\D/g, '').slice(0, 11);
-            });
-        }
-
-        // Field 7 & 9: ISF phone fields (Channel A modals) - isf_phone[]
-        document.querySelectorAll('input[name="isf_phone[]"]').forEach(input => {
+        document.querySelectorAll('input.ph-phone, input[name="isf_phone[]"]').forEach(input => {
+            if (input.dataset.phoneInit === 'true') return;
+            input.dataset.phoneInit = 'true';
             input.addEventListener('input', function() {
                 this.value = this.value.replace(/\D/g, '').slice(0, 11);
             });
