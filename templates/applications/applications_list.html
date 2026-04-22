@@ -317,7 +317,8 @@
 
 .applications-table {
     width: 100%;
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0;
 }
 
 .applications-table thead {
@@ -333,6 +334,7 @@
     text-transform: uppercase;
     letter-spacing: 0.05em;
     border-bottom: 1px solid #e2e8f0;
+    border-right: 1px solid #e2e8f0;
     white-space: nowrap;
 }
 
@@ -354,6 +356,7 @@
 .applications-table td {
     padding: 0.75rem 1rem;
     border-bottom: 1px solid #f1f5f9;
+    border-right: 1px solid #e2e8f0;
     vertical-align: middle;
 }
 
@@ -367,6 +370,11 @@
 
 .applications-table tbody tr:last-child td {
     border-bottom: none;
+}
+
+.applications-table th:last-child,
+.applications-table td:last-child {
+    border-right: none;
 }
 
 /* Compact Module 2 ledger (few columns, stacked detail) */
@@ -1145,7 +1153,7 @@
         <thead>
             <tr>
                 <th class="col-num" title="Row number in this list">#</th>
-                <th title="Full name, reference #, transaction ID (short), and Module 1 encoding timestamp">Applicant record</th>
+                <th title="Full name, reference #, transaction ID (short), and Module 1 encoding timestamp">Applicant record (Encoded at)</th>
                 <th title="Intake channel and active Module 1 queue tag">Channel &amp; queue</th>
                 <th title="Module 1 encoding staff, Module 2 handoff when different, and SMS flags">Staff &amp; SMS</th>
                 <th title="Group A checklist, form, Section D routing, and process stage">Module 2 progress</th>
@@ -1164,7 +1172,7 @@
                             <span aria-hidden="true"> · </span>
                             <span class="m2-txn-short" title="Transaction # (full): {{ data.applicant.id }}">#{{ data.applicant.id.hex|slice:":8" }}…</span>
                             <span aria-hidden="true"> · </span>
-                            <span title="Date &amp; time (Module 1 record created)">{{ data.applicant.created_at|date:"n/j/Y, P" }}</span>
+                            <span title="Date &amp; time (Module 1 record created)">Encoded at: {{ data.applicant.created_at|date:"n/j/Y, P" }}</span>
                         </div>
                         {% if data.blacklist_blocked %}
                         <span style="font-size:0.5625rem;color:#b91c1c;font-weight:600;">Blacklist — Module 2 blocked</span>

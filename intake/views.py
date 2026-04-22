@@ -642,7 +642,7 @@ def applicants_list(request, position):
         module2_handoff_at__isnull=False
     ).select_related(
         'barangay', 'registered_by', 'module2_handoff_by'
-    ).order_by('-module2_handoff_at')
+    ).order_by('module2_handoff_at', 'created_at', 'id')
 
     for app in walk_in_applicants:
         # Determine eligibility status display
@@ -806,12 +806,24 @@ def applicants_list(request, position):
     archive_records = []
     for app in handed_off_applicants:
         danger_declared = bool(getattr(app, 'danger_zone_type', ''))
-        channel_label = 'Channel B — Hazard (Yes)' if danger_declared else 'Channel B — No hazard (No)'
+        channel_code = 'B' if app.channel == 'danger_zone' else 'C'
+        if channel_code == 'B':
+            channel_label = 'Channel B — Hazard (Yes)' if danger_declared else 'Channel B — No hazard (No)'
+        else:
+            channel_label = 'Channel C — Walk-in'
+        proceeded_at = app.module2_handoff_at or app.created_at
+
+        # Convert UTC time to Manila time for display
+        from django.utils import timezone
+        local_proceeded_at = timezone.localtime(proceeded_at) if proceeded_at else None
+
         archive_records.append({
             'id': str(app.id),
-            'dateTime': app.created_at.strftime('%b %d, %Y | %I:%M %p'),
+            'dateTime': local_proceeded_at.strftime('%b %d, %Y | %I:%M %p') if local_proceeded_at else '',
             'referenceNumber': app.reference_number,
             'fullName': app.full_name,
+            'barangay': app.barangay.name if app.barangay else '',
+            'channel': channel_code,
             'channelLabel': channel_label,
             'handledBy': app.registered_by.get_full_name() if app.registered_by else 'Unknown',
             'handledByPosition': app.registered_by.get_position_display_short() if app.registered_by else '',

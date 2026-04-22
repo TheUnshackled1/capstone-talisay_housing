@@ -248,6 +248,8 @@
         background: white;
         border: 1px solid #e2e8f0;
         border-radius: 0.75rem;
+        border-collapse: separate;
+        border-spacing: 0;
         overflow: hidden;
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
     }
@@ -266,10 +268,11 @@
         text-transform: uppercase;
         letter-spacing: 0.05em;
         white-space: nowrap;
+        border-right: 1px solid #e2e8f0;
+        border-bottom: 1px solid #cbd5e1;
     }
 
     .applicants-table tbody tr {
-        border-bottom: 1px solid #f1f5f9;
         transition: background 0.15s;
     }
 
@@ -277,15 +280,77 @@
         background: #f8fafc;
     }
 
-    .applicants-table tbody tr:last-child {
-        border-bottom: none;
-    }
-
     .applicants-table td {
         padding: 0.5rem;
         font-size: 0.6875rem;
         color: #334155;
         vertical-align: middle;
+        border-right: 1px solid #e2e8f0;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .applicants-table th:last-child,
+    .applicants-table td:last-child {
+        border-right: none;
+    }
+
+    .applicants-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .section-divider {
+        border: none;
+        border-top: 2px solid #cbd5e1;
+        margin: 0.25rem 1.5rem 1rem;
+    }
+
+    .table-pagination {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        padding: 0.625rem 0.25rem 0.125rem;
+        flex-wrap: wrap;
+    }
+
+    .table-pagination-info {
+        font-size: 0.6875rem;
+        color: #64748b;
+        font-weight: 500;
+    }
+
+    .table-pagination-controls {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+    }
+
+    .btn-page {
+        border: 1px solid #cbd5e1;
+        border-radius: 0.375rem;
+        background: #f8fafc;
+        color: #334155;
+        font-size: 0.6875rem;
+        font-weight: 600;
+        padding: 0.25rem 0.55rem;
+        cursor: pointer;
+    }
+
+    .btn-page:hover:not(:disabled) {
+        background: #eff6ff;
+        border-color: #93c5fd;
+        color: #1d4ed8;
+    }
+
+    .btn-page:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+    }
+
+    .page-indicator {
+        font-size: 0.6875rem;
+        font-weight: 600;
+        color: #475569;
     }
 
     /* Column widths - percentage based to fit container */
@@ -1102,32 +1167,89 @@
             {% endfor %}
         </tbody>
     </table>
+    <div class="table-pagination" id="applicantsPagination">
+        <span class="table-pagination-info" id="applicantsPaginationInfo">Showing 0-0 of 0</span>
+        <div class="table-pagination-controls">
+            <button type="button" class="btn-page" id="applicantsPrevBtn">Prev</button>
+            <span class="page-indicator" id="applicantsPageIndicator">Page 1 of 1</span>
+            <button type="button" class="btn-page" id="applicantsNextBtn">Next</button>
+        </div>
+    </div>
 </div>
+
+<hr class="section-divider" aria-hidden="true">
 
 <!-- Archive / Receipt Table (read-only reporting) -->
 <div class="applicants-container" style="padding-top: 0;">
-    <div style="display:flex; align-items:center; justify-content:space-between; margin: 0 0 0.5rem 0; gap:0.75rem; flex-wrap:wrap;">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin:0 0 0.5rem 0; gap:0.75rem; flex-wrap:wrap;">
         <h3 style="margin:0; font-size:0.95rem; color:#1e293b; font-weight:600;">Archive / receipt records (proceeded to Module 2)</h3>
-        <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap; justify-content:flex-end;">
-            <span style="font-size:0.7rem; color:#64748b; background:#f8fafc; border:1px solid #e2e8f0; border-radius:9999px; padding:0.22rem 0.55rem;">
-                Reports only · {{ archive_records|length }} record{{ archive_records|length|pluralize }}
-            </span>
-            <button type="button" onclick="exportToCSV()" class="btn-export" style="display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.5rem 0.75rem; background: #10b981; color: white; border: none; border-radius: 0.5rem; font-size: 0.75rem; font-weight: 500; cursor: pointer; white-space: nowrap;">
-                <svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="7 10 12 15 17 10"></polyline>
-                    <line x1="12" y1="15" x2="12" y2="3"></line>
-                </svg>
-                Export CSV
-            </button>
+        <span style="font-size:0.7rem; color:#64748b; background:#f8fafc; border:1px solid #e2e8f0; border-radius:9999px; padding:0.22rem 0.55rem;">
+            Reports only · <span id="archiveReportsCount">{{ archive_records|length }}</span> records
+        </span>
+    </div>
+
+    <!-- Archive Controls Bar -->
+    <div class="controls-bar" style="margin-bottom: 1rem;">
+        <!-- Total Count Badge -->
+        <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0.75rem; background: #dbeafe; border-radius: 0.5rem; border: 1px solid #93c5fd;">
+            <svg style="width: 20px; height: 20px; color: #2563eb;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            <div>
+                <p style="font-size: 0.625rem; color: #64748b; margin: 0; text-transform: uppercase; font-weight: 500;">Total Archived</p>
+                <p style="font-size: 1.25rem; font-weight: 700; color: #2563eb; margin: 0;" id="archiveTotalCount">{{ archive_records|length }}</p>
+            </div>
         </div>
+
+        <!-- Search Box -->
+        <div class="search-box">
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.35-4.35"></path>
+            </svg>
+            <input
+                type="text"
+                class="search-input"
+                placeholder="Name, ref #, barangay..."
+                id="archiveSearchInput"
+                onkeyup="filterArchiveTable()"
+            >
+        </div>
+
+        <!-- Channel Filter -->
+        <select class="filter-select header-filter" id="archiveFilterChannel" onchange="filterArchiveTable()" style="min-width: 220px;">
+            <option value="all">All Channels</option>
+            <option value="B">Channel B — Walk-in (hazard pathway)</option>
+            <option value="C">Channel C — Walk-in</option>
+        </select>
+
+        <!-- Barangay Filter -->
+        <select class="filter-select" id="archiveFilterBarangay" onchange="filterArchiveTable()">
+            <option value="all">All Barangays</option>
+            {% for brgy in barangays %}
+            <option value="{{ brgy }}">{{ brgy }}</option>
+            {% endfor %}
+        </select>
+
+        <!-- Export Button -->
+        <button type="button" onclick="exportToCSV()" class="btn-export" style="display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.5rem 0.75rem; background: #10b981; color: white; border: none; border-radius: 0.5rem; font-size: 0.75rem; font-weight: 500; cursor: pointer; white-space: nowrap; margin-left: auto;">
+            <svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Export CSV
+        </button>
     </div>
     <table class="applicants-table">
         <thead>
             <tr>
                 <th>#</th>
                 <th>Transaction #</th>
-                <th>Date & Time</th>
+                <th>Date & Time Proceeded</th>
                 <th>Reference #</th>
                 <th>Full Name</th>
                 <th>Channel</th>
@@ -1136,9 +1258,14 @@
                 <th>Action</th>
             </tr>
         </thead>
-        <tbody>
+        <tbody id="archiveTableBody">
             {% for row in archive_records %}
-            <tr>
+            <tr
+                data-archive-row="true"
+                data-channel="{{ row.channel }}"
+                data-barangay="{{ row.barangay }}"
+                data-searchable="{{ row.fullName|lower }} {{ row.referenceNumber|lower }} {{ row.barangay|lower }}"
+            >
                 <td style="font-weight: 700; color: #1e293b;">{{ forloop.counter }}</td>
                 <td style="font-weight: 600; color: #1d4ed8;">#{{ row.id }}</td>
                 <td style="font-size: 0.6875rem; color: #64748b;">{{ row.dateTime }}</td>
@@ -1186,7 +1313,7 @@
                 </td>
             </tr>
             {% empty %}
-            <tr>
+            <tr id="archiveEmptyRow">
                 <td colspan="9" style="text-align:center; color:#64748b; font-size:0.75rem; padding:1rem;">
                     No proceeded records yet.
                 </td>
@@ -1194,6 +1321,14 @@
             {% endfor %}
         </tbody>
     </table>
+    <div class="table-pagination" id="archivePagination">
+        <span class="table-pagination-info" id="archivePaginationInfo">Showing 0-0 of 0</span>
+        <div class="table-pagination-controls">
+            <button type="button" class="btn-page" id="archivePrevBtn">Prev</button>
+            <span class="page-indicator" id="archivePageIndicator">Page 1 of 1</span>
+            <button type="button" class="btn-page" id="archiveNextBtn">Next</button>
+        </div>
+    </div>
 </div>
 
 <!-- Review/Edit Modal - Combined Detail & Review -->
@@ -2450,6 +2585,10 @@
     }
 
     // Initialize income formatters on page load
+    const TABLE_PAGE_SIZE = 5;
+    let applicantsCurrentPage = 1;
+    let archiveCurrentPage = 1;
+
     window.addEventListener('DOMContentLoaded', function() {
         initDobDatePicker();
         // Attach only to text-like income fields. Number inputs must stay plain numeric.
@@ -2460,21 +2599,70 @@
                 if (!Number.isNaN(idx)) openReviewModal(idx);
             });
         });
+        initializeTablePagination();
+        filterTable(true);
     });
 
-    // Table filtering
-    function filterTable() {
+    function initializeTablePagination() {
+        const applicantsPrevBtn = document.getElementById('applicantsPrevBtn');
+        const applicantsNextBtn = document.getElementById('applicantsNextBtn');
+        const archivePrevBtn = document.getElementById('archivePrevBtn');
+        const archiveNextBtn = document.getElementById('archiveNextBtn');
+
+        if (applicantsPrevBtn) {
+            applicantsPrevBtn.addEventListener('click', function() {
+                if (applicantsCurrentPage > 1) {
+                    applicantsCurrentPage -= 1;
+                    filterTable(false);
+                }
+            });
+        }
+
+        if (applicantsNextBtn) {
+            applicantsNextBtn.addEventListener('click', function() {
+                const rows = getFilteredApplicantRows();
+                const totalPages = Math.max(1, Math.ceil(rows.length / TABLE_PAGE_SIZE));
+                if (applicantsCurrentPage < totalPages) {
+                    applicantsCurrentPage += 1;
+                    filterTable(false);
+                }
+            });
+        }
+
+        if (archivePrevBtn) {
+            archivePrevBtn.addEventListener('click', function() {
+                if (archiveCurrentPage > 1) {
+                    archiveCurrentPage -= 1;
+                    filterArchiveTable(false);
+                }
+            });
+        }
+
+        if (archiveNextBtn) {
+            archiveNextBtn.addEventListener('click', function() {
+                const filteredRows = getFilteredArchiveRows();
+                const totalPages = Math.max(1, Math.ceil(filteredRows.length / TABLE_PAGE_SIZE));
+                if (archiveCurrentPage < totalPages) {
+                    archiveCurrentPage += 1;
+                    filterArchiveTable(false);
+                }
+            });
+        }
+
+        filterArchiveTable(true);
+    }
+
+    function getFilteredApplicantRows() {
         const searchInputEl = document.getElementById('searchInput');
         const channelFilterEl = document.getElementById('filterChannel');
         const barangayFilterEl = document.getElementById('filterBarangay');
-        
+
         const searchValue = searchInputEl ? searchInputEl.value.toLowerCase() : '';
         const channelFilter = channelFilterEl ? channelFilterEl.value : 'all';
         const barangayFilter = barangayFilterEl ? barangayFilterEl.value : 'all';
-        const rows = document.querySelectorAll('#applicantsTableBody tr');
-        
-        let visibleCount = 0;
-        rows.forEach(row => {
+        const rows = Array.from(document.querySelectorAll('#applicantsTableBody tr'));
+
+        return rows.filter(row => {
             const channel = row.dataset.channel;
             const barangay = row.dataset.barangay;
             const searchable = row.dataset.searchable;
@@ -2482,17 +2670,127 @@
             const matchSearch = searchValue === '' || (searchable && searchable.includes(searchValue));
             const matchChannel = channelFilter === 'all' || channel === channelFilter;
             const matchBarangay = barangayFilter === 'all' || barangay === barangayFilter;
+            return matchSearch && matchChannel && matchBarangay;
+        });
+    }
 
-            if (matchSearch && matchChannel && matchBarangay) {
+    function getFilteredArchiveRows() {
+        const searchInputEl = document.getElementById('archiveSearchInput');
+        const channelFilterEl = document.getElementById('archiveFilterChannel');
+        const barangayFilterEl = document.getElementById('archiveFilterBarangay');
+
+        const searchValue = searchInputEl ? searchInputEl.value.toLowerCase() : '';
+        const channelFilter = channelFilterEl ? channelFilterEl.value : 'all';
+        const barangayFilter = barangayFilterEl ? barangayFilterEl.value : 'all';
+        const rows = Array.from(document.querySelectorAll('#archiveTableBody tr[data-archive-row="true"]'));
+
+        return rows.filter(row => {
+            const channel = row.dataset.channel;
+            const barangay = row.dataset.barangay;
+            const searchable = row.dataset.searchable;
+
+            const matchSearch = searchValue === '' || (searchable && searchable.includes(searchValue));
+            const matchChannel = channelFilter === 'all' || channel === channelFilter;
+            const matchBarangay = barangayFilter === 'all' || barangay === barangayFilter;
+            return matchSearch && matchChannel && matchBarangay;
+        });
+    }
+
+    function updatePaginationUI(prefix, totalRows, currentPage, totalPages, start, end) {
+        const infoEl = document.getElementById(`${prefix}PaginationInfo`);
+        const indicatorEl = document.getElementById(`${prefix}PageIndicator`);
+        const prevBtn = document.getElementById(`${prefix}PrevBtn`);
+        const nextBtn = document.getElementById(`${prefix}NextBtn`);
+
+        if (infoEl) {
+            infoEl.textContent = totalRows === 0
+                ? 'Showing 0-0 of 0'
+                : `Showing ${start}-${end} of ${totalRows}`;
+        }
+        if (indicatorEl) indicatorEl.textContent = `Page ${currentPage} of ${totalPages}`;
+        if (prevBtn) prevBtn.disabled = currentPage <= 1 || totalRows === 0;
+        if (nextBtn) nextBtn.disabled = currentPage >= totalPages || totalRows === 0;
+    }
+
+    // Table filtering + pagination
+    function filterTable(resetPage = true) {
+        if (resetPage) applicantsCurrentPage = 1;
+
+        const allRows = Array.from(document.querySelectorAll('#applicantsTableBody tr'));
+        const filteredRows = getFilteredApplicantRows();
+        const totalRows = filteredRows.length;
+        const totalPages = Math.max(1, Math.ceil(totalRows / TABLE_PAGE_SIZE));
+        applicantsCurrentPage = Math.min(applicantsCurrentPage, totalPages);
+
+        const startIndex = (applicantsCurrentPage - 1) * TABLE_PAGE_SIZE;
+        const endIndex = startIndex + TABLE_PAGE_SIZE;
+        const rowsOnPage = filteredRows.slice(startIndex, endIndex);
+
+        allRows.forEach(row => {
+            if (rowsOnPage.includes(row)) {
                 row.style.display = '';
-                visibleCount++;
-                // Update row number
-                const firstTd = row.querySelector('td:first-child');
-                if (firstTd) firstTd.textContent = visibleCount;
             } else {
                 row.style.display = 'none';
             }
         });
+
+        rowsOnPage.forEach((row, index) => {
+            const firstTd = row.querySelector('td:first-child');
+            if (firstTd) firstTd.textContent = startIndex + index + 1;
+        });
+
+        const displayStart = totalRows === 0 ? 0 : startIndex + 1;
+        const displayEnd = totalRows === 0 ? 0 : Math.min(endIndex, totalRows);
+        updatePaginationUI('applicants', totalRows, applicantsCurrentPage, totalPages, displayStart, displayEnd);
+    }
+
+    function filterArchiveTable(resetPage = true) {
+        if (resetPage) archiveCurrentPage = 1;
+        const archiveRows = Array.from(document.querySelectorAll('#archiveTableBody tr[data-archive-row="true"]'));
+        const filteredRows = getFilteredArchiveRows();
+        renderArchiveTablePage(archiveRows, filteredRows);
+    }
+
+    function renderArchiveTablePage(allArchiveRows, filteredArchiveRows) {
+        const archiveRows = allArchiveRows || Array.from(document.querySelectorAll('#archiveTableBody tr[data-archive-row="true"]'));
+        const filteredRows = filteredArchiveRows || getFilteredArchiveRows();
+        const archiveEmptyRow = document.getElementById('archiveEmptyRow');
+        const archiveTotalCountEl = document.getElementById('archiveTotalCount');
+        const archiveReportsCountEl = document.getElementById('archiveReportsCount');
+        const totalRows = filteredRows.length;
+        const totalPages = Math.max(1, Math.ceil(totalRows / TABLE_PAGE_SIZE));
+        archiveCurrentPage = Math.min(archiveCurrentPage, totalPages);
+
+        const startIndex = (archiveCurrentPage - 1) * TABLE_PAGE_SIZE;
+        const endIndex = startIndex + TABLE_PAGE_SIZE;
+        const rowsOnPage = filteredRows.slice(startIndex, endIndex);
+
+        archiveRows.forEach(row => {
+            if (rowsOnPage.includes(row)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        rowsOnPage.forEach((row, index) => {
+            const firstTd = row.querySelector('td:first-child');
+            if (firstTd) firstTd.textContent = startIndex + index + 1;
+        });
+
+        if (archiveEmptyRow) {
+            archiveEmptyRow.style.display = totalRows === 0 ? '' : 'none';
+        }
+        if (archiveTotalCountEl) {
+            archiveTotalCountEl.textContent = String(totalRows);
+        }
+        if (archiveReportsCountEl) {
+            archiveReportsCountEl.textContent = String(totalRows);
+        }
+
+        const displayStart = totalRows === 0 ? 0 : startIndex + 1;
+        const displayEnd = totalRows === 0 ? 0 : Math.min(endIndex, totalRows);
+        updatePaginationUI('archive', totalRows, archiveCurrentPage, totalPages, displayStart, displayEnd);
     }
 
     // ====== REVIEW MODAL ======
