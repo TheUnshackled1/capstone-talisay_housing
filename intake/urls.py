@@ -10,6 +10,7 @@ urlpatterns = [
 
     # Applicant registration from modal
     path('staff/<str:position>/register/', views.walkin_register, name='walkin_register'),
+    path('staff/<str:position>/duplicate-preview/', views.duplicate_preview, name='duplicate_preview'),
 
     # AJAX endpoints for modal operations
     path('staff/<str:position>/update-eligibility/', views.update_eligibility, name='update_eligibility'),

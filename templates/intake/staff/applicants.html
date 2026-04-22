@@ -2248,6 +2248,29 @@
                     margin-top: 0.25rem;
                     display: block;
                 }
+                .tha-reg-modal .duplicate-preview {
+                    display: none;
+                    margin-top: 0.75rem;
+                    border: 1px solid #fcd34d;
+                    background: #fffbeb;
+                    border-left: 4px solid #d97706;
+                    border-radius: 4px;
+                    padding: 0.75rem 0.85rem;
+                }
+                .tha-reg-modal .duplicate-preview-title {
+                    font-size: 0.74rem;
+                    font-weight: 700;
+                    color: #92400e;
+                    margin: 0 0 0.35rem 0;
+                    text-transform: uppercase;
+                    letter-spacing: 0.04em;
+                }
+                .tha-reg-modal .duplicate-preview-body {
+                    font-size: 0.75rem;
+                    color: #78350f;
+                    line-height: 1.45;
+                    margin: 0;
+                }
                 @media (max-width: 1200px) {
                     .tha-reg-modal .identity-row {
                         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2368,6 +2391,15 @@
                             <span class="help-text">Philippine mobile format: 11 digits beginning with 09. Whole numbers only.</span>
                         </div>
                     </div>
+                    <div id="duplicatePreview" class="duplicate-preview" aria-live="polite">
+                        <p class="duplicate-preview-title">Possible Duplicate Record</p>
+                        <p class="duplicate-preview-body" id="duplicatePreviewText"></p>
+                        <div style="margin-top:0.5rem;">
+                            <button type="button" id="duplicateOpenBtn" class="btn-modal secondary" onclick="openDuplicatePreviewRecord()" style="display:none; padding:0.35rem 0.65rem; font-size:0.72rem;">
+                                Open existing record
+                            </button>
+                        </div>
+                    </div>
 
                     <!-- Name of Spouse & Spouse Contact No. -->
                 </div>
@@ -2475,7 +2507,7 @@
                 <!-- Official notices -->
                 <div class="danger-warning" id="cdrrmoNote">
                     <p><strong>Advisory — CDRRMO certification.</strong> Applicants declared within a hazard area are recorded as <strong>pending CDRRMO certification</strong> until cleared by the City DRRMO or designated barangay verification unit.</p>
-                    <p style="margin-top: 0.75rem; border-top: 1px solid rgba(180, 83, 9, 0.35); padding-top: 0.75rem;">Upon submission, the system shall assign a reference number and transmit an acknowledgement by SMS to the mobile number declared above.</p>
+                    <p style="margin-top: 0.75rem; border-top: 1px solid rgba(180, 83, 9, 0.35); padding-top: 0.75rem;">Upon submission, the system shall assign a reference number. An SMS update is sent when staff proceeds this record to Module 2.</p>
                 </div>
             </form>
         </div>
@@ -2500,6 +2532,8 @@
     // Store applicants data in JavaScript
     const applicantsData = JSON.parse(document.getElementById('applicantsDataJson')?.textContent || '[]');
     const canModify = (document.getElementById('canModifyFlag')?.value || 'false') === 'true';
+    const duplicatePreviewUrl = '{% url "intake:duplicate_preview" request.user.position %}';
+    const applicationsListUrl = '{% url "applications:applications_list" request.user.position %}';
 
     /**
      * Channel B (hazard pathway): the Yes/No answer is stored on dangerZoneType and drives CDRRMO handling.
@@ -4066,6 +4100,7 @@
         // Initialize household members
         householdMemberCount = 1;
         renderHouseholdMembers();
+        queueDuplicatePreviewCheck();
     }
 
     function closeAddModal() {
@@ -4088,6 +4123,7 @@
             overAgeOverride.required = false;
         }
         clearHazardInlineErrors();
+        hideDuplicatePreview();
     }
 
     function clearHazardInlineErrors() {
@@ -4108,6 +4144,103 @@
         const cleaned = (rawValue || '').trim().replace(/\s+/g, ' ').toLowerCase();
         const weakValues = ['n/a', 'na', 'none', 'unknown', 'same', 'same as address', 'same address', 'barangay', 'sitio', 'landmark'];
         return cleaned.length < 12 || weakValues.includes(cleaned);
+    }
+
+    let duplicatePreviewTimer = null;
+    let duplicatePreviewInFlight = 0;
+    let duplicatePreviewCurrent = null;
+
+    function hideDuplicatePreview() {
+        const box = document.getElementById('duplicatePreview');
+        const text = document.getElementById('duplicatePreviewText');
+        const openBtn = document.getElementById('duplicateOpenBtn');
+        if (box) box.style.display = 'none';
+        if (text) text.textContent = '';
+        if (openBtn) openBtn.style.display = 'none';
+        duplicatePreviewCurrent = null;
+    }
+
+    function renderDuplicatePreview(data) {
+        const box = document.getElementById('duplicatePreview');
+        const text = document.getElementById('duplicatePreviewText');
+        if (!box || !text) return;
+        if (!data || !data.duplicate) {
+            hideDuplicatePreview();
+            return;
+        }
+        duplicatePreviewCurrent = data;
+        text.textContent = `Record: ${data.reference_number} (${data.full_name}). Current location: ${data.location}. Status: ${data.status}. Last handled by: ${data.handled_by}.`;
+        const openBtn = document.getElementById('duplicateOpenBtn');
+        if (openBtn) openBtn.style.display = 'inline-flex';
+        box.style.display = 'block';
+    }
+
+    function openDuplicatePreviewRecord() {
+        if (!duplicatePreviewCurrent || !duplicatePreviewCurrent.record_id) return;
+
+        const targetId = String(duplicatePreviewCurrent.record_id);
+        const idx = applicantsData.findIndex(app => {
+            const appId = String(app.applicantId || app.id || '');
+            return appId === targetId;
+        });
+
+        if (idx >= 0) {
+            closeAddModal();
+            setTimeout(() => openReviewModal(idx), 50);
+            return;
+        }
+
+        if (duplicatePreviewCurrent.can_open_in_intake) {
+            alert('Matching record is in Intake, but it is not visible in the current list. Refresh the page, then try again.');
+            return;
+        }
+
+        if (confirm('This record has already moved to another module and cannot be opened in Intake review.\n\nOpen Applications module now?')) {
+            window.location.href = applicationsListUrl;
+        }
+    }
+
+    function queueDuplicatePreviewCheck() {
+        if (duplicatePreviewTimer) clearTimeout(duplicatePreviewTimer);
+        duplicatePreviewTimer = setTimeout(runDuplicatePreviewCheck, 300);
+    }
+
+    function runDuplicatePreviewCheck() {
+        const lastName = (document.getElementById('lastName')?.value || '').trim();
+        const firstName = (document.getElementById('firstName')?.value || '').trim();
+        const dateOfBirth = (document.getElementById('dateOfBirth')?.value || '').trim();
+        const barangay = (document.getElementById('barangay')?.value || '').trim();
+
+        if (!lastName || !firstName || !dateOfBirth || !barangay) {
+            hideDuplicatePreview();
+            return;
+        }
+
+        const requestId = ++duplicatePreviewInFlight;
+        const params = new URLSearchParams({
+            last_name: lastName,
+            first_name: firstName,
+            date_of_birth: dateOfBirth,
+            barangay: barangay,
+        });
+
+        fetch(`${duplicatePreviewUrl}?${params.toString()}`, {
+            method: 'GET',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (requestId !== duplicatePreviewInFlight) return;
+                if (!data.success) {
+                    hideDuplicatePreview();
+                    return;
+                }
+                renderDuplicatePreview(data);
+            })
+            .catch(() => {
+                if (requestId !== duplicatePreviewInFlight) return;
+                hideDuplicatePreview();
+            });
     }
 
     function setDangerZone(isDanger) {
@@ -4517,11 +4650,7 @@
                 closeAddModal();
 
                 let detail = data.message || 'Applicant registered successfully.';
-                if (data.registrationSmsSent) {
-                    detail += '\n\nRegistration SMS was sent automatically (reference number included).';
-                } else {
-                    detail += '\n\nNo registration SMS: add a valid mobile number to send confirmation.';
-                }
+                detail += '\n\nNo SMS is sent at registration. The first SMS is sent when this record is proceeded to Module 2.';
                 alert('✓ ' + detail);
 
                 // Reload the page to refresh the applicants list
@@ -4689,6 +4818,14 @@
         if (incomeInput) {
             attachNumberIncomeSanitizer(incomeInput);
         }
+
+        ['lastName', 'firstName', 'dateOfBirth', 'barangay'].forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const eventName = (id === 'barangay' || id === 'dateOfBirth') ? 'change' : 'input';
+            el.addEventListener(eventName, queueDuplicatePreviewCheck);
+            el.addEventListener('blur', queueDuplicatePreviewCheck);
+        });
     });
 
     // Add another ISF record entry for Channel A

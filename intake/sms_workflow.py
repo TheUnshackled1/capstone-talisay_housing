@@ -6,21 +6,7 @@ When SMS_SERVICE=console, messages are still written to SMSLog and logged — no
 """
 
 # --- trigger_event values (keep ≤ 50 chars; indexed in SMSLog) ---
-REGISTRATION = 'registration'
 PROCEED_TO_EVALUATION = 'proceed_evaluation'
-
-
-def message_registration(applicant) -> str:
-    """
-    SMS sent immediately after Module 1 registration (office encoding).
-    Confirms reference number and staff member who registered.
-    Single SMS message (fits in 160 chars) - no message splitting.
-    """
-    ref = applicant.reference_number
-    staff_name = applicant.registered_by.get_full_name() if applicant.registered_by else 'THA'
-    # Keep under 160 chars to send as single SMS (not split into 2)
-    base = f'THA {ref} registered by {staff_name}. Keep this reference for transactions.'
-    return base
 
 
 def message_proceed_to_evaluation(applicant) -> str:
