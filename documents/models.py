@@ -88,6 +88,10 @@ class Document(models.Model):
     @property
     def file_size_display(self):
         """Human-readable file size."""
+        if self.file_size is None:
+            return "—"
+        if self.file_size == 0:
+            return "—"
         if self.file_size < 1024:
             return f"{self.file_size} B"
         elif self.file_size < 1024 * 1024:

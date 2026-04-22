@@ -1,13 +1,9 @@
 from django.contrib import admin
 from .models import (
     SMSLog,
-    Blacklist,
     Barangay,
     Applicant,
     HouseholdMember,
-    CDRRMOCertification,
-    FieldVerificationPhoto,
-    QueueEntry,
 )
 
 
@@ -90,75 +86,9 @@ class BarangayAdmin(admin.ModelAdmin):
     list_filter = ('is_active',)
 
 
-@admin.register(Blacklist)
-class BlacklistAdmin(admin.ModelAdmin):
-    list_display = ('full_name', 'reason', 'blacklisted_at', 'blacklisted_by')
-    list_filter = ('reason', 'blacklisted_at')
-    search_fields = ('full_name', 'phone_number')
-
-    fieldsets = (
-        ('❌ BLACKLIST ENTRY', {
-            'fields': ('full_name', 'phone_number', 'applicant', 'reason'),
-        }),
-        ('📝 DETAILS', {
-            'fields': ('notes',),
-        }),
-        ('🔏 AUDIT TRAIL', {
-            'fields': ('blacklisted_by', 'blacklisted_at'),
-            'classes': ('collapse',),
-        }),
-    )
-
-
 @admin.register(SMSLog)
 class SMSLogAdmin(admin.ModelAdmin):
     list_display = ('recipient_phone', 'trigger_event', 'status', 'sent_at')
     list_filter = ('status', 'trigger_event', 'sent_at')
     search_fields = ('recipient_phone', 'message_content')
     readonly_fields = ('sent_at',)
-
-
-class FieldVerificationPhotoInline(admin.TabularInline):
-    model = FieldVerificationPhoto
-    extra = 0
-    readonly_fields = ('uploaded_at', 'uploaded_by')
-
-
-@admin.register(CDRRMOCertification)
-class CDRRMOCertificationAdmin(admin.ModelAdmin):
-    list_display = ('applicant', 'status', 'disposition_source', 'requested_at', 'certified_at')
-    list_filter = ('status', 'disposition_source', 'requested_at')
-    search_fields = ('applicant__full_name',)
-    readonly_fields = ('requested_at', 'certified_at')
-    inlines = [FieldVerificationPhotoInline]
-
-    fieldsets = (
-        ('🏛️ CDRRMO CERTIFICATION', {
-            'fields': ('applicant', 'declared_location', 'status', 'disposition_source'),
-        }),
-        ('📅 TIMELINE', {
-            'fields': ('requested_at', 'requested_by', 'certified_at', 'result_recorded_by'),
-        }),
-        ('📝 INTAKE vs FIELD NOTES', {
-            'fields': ('office_intake_notes', 'certification_notes'),
-            'classes': ('collapse',),
-            'description': 'Intake remarks = official paperwork filed at THA. Field notes = Ronda on-site inspection only.',
-        }),
-    )
-
-
-@admin.register(QueueEntry)
-class QueueEntryAdmin(admin.ModelAdmin):
-    list_display = ('applicant', 'queue_type', 'position', 'status', 'entered_at')
-    list_filter = ('queue_type', 'status', 'entered_at')
-    search_fields = ('applicant__full_name',)
-    readonly_fields = ('entered_at', 'notified_at', 'completed_at')
-
-    fieldsets = (
-        ('⏳ QUEUE ENTRY', {
-            'fields': ('applicant', 'queue_type', 'position', 'status'),
-        }),
-        ('📅 TIMELINE', {
-            'fields': ('entered_at', 'notified_at', 'completed_at', 'added_by'),
-        }),
-    )

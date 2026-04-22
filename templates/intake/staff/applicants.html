@@ -3,6 +3,8 @@
 
 {% block nav_applicants %}active{% endblock %}
 
+{% block page_title %}Staff Portal{% endblock %}
+
 {% block extra_css %}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_blue.css">
@@ -18,6 +20,8 @@
         align-items: center;
         justify-content: space-between;
         margin-bottom: 1.5rem;
+        gap: 1rem;
+        flex-wrap: wrap;
     }
 
     .page-title {
@@ -102,9 +106,35 @@
 
     .stats-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
         gap: 0.75rem;
         margin-bottom: 1.5rem;
+    }
+
+    .page-header-tools {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .staff-portal-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.45rem 0.65rem;
+        border-radius: 9999px;
+        border: 1px solid #bfdbfe;
+        background: #eff6ff;
+        color: #1e40af;
+        font-size: 0.6875rem;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        white-space: nowrap;
+    }
+
+    .header-filter {
+        min-width: 15rem;
     }
 
     .stat-card {
@@ -168,6 +198,7 @@
         gap: 0.75rem;
         margin-bottom: 1rem;
         flex-wrap: wrap;
+        align-items: center;
     }
 
     .search-box {
@@ -924,67 +955,6 @@
         </button>
     </div>
 
-    <!-- Stats Grid -->
-    <div class="stats-grid">
-        <div class="stat-card" style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;" onclick="filterReadyForModule2()" title="Show records ready for Module 2 handoff">
-            <div style="width: 40px; height: 40px; background: #dbeafe; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center;">
-                <svg style="width: 20px; height: 20px; color: #2563eb;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="9" cy="7" r="4"></circle>
-                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                </svg>
-            </div>
-            <div>
-                <p class="stat-label">Total Applicants</p>
-                <p class="stat-value blue">{{ stats.total }}</p>
-            </div>
-        </div>
-        <div class="stat-card" style="display: flex; align-items: center; gap: 0.75rem;">
-            <div style="width: 40px; height: 40px; background: #dcfce7; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center;">
-                <svg style="width: 20px; height: 20px; color: #15803d;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M5 12h14"></path>
-                    <path d="m12 5 7 7-7 7"></path>
-                </svg>
-            </div>
-            <div>
-                <p class="stat-label">Ready for Module 2 handoff</p>
-                <p class="stat-value" style="color:#15803d;">{{ stats.ready_for_module2 }}</p>
-            </div>
-        </div>
-        <div class="stat-card alert" style="display: flex; align-items: center; gap: 0.75rem;">
-            <div style="width: 40px; height: 40px; background: #fef3c7; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center;">
-                <svg style="width: 20px; height: 20px; color: #d97706;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <polyline points="12 6 12 12 16 14"></polyline>
-                </svg>
-            </div>
-            <div>
-                <p class="stat-label">Pending CDRRMO verification</p>
-                <p class="stat-value amber">{{ stats.pending_cdrrmo }}</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- CDRRMO Alert -->
-    {% if stats.pending_cdrrmo > 0 %}
-    <div class="alert-banner" {% if stats.cdrrmo_overdue > 0 %}style="background: #fef2f2; border-color: #fca5a5;"{% endif %}>
-        <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" {% if stats.cdrrmo_overdue > 0 %}style="color: #dc2626;"{% endif %}>
-            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-            <line x1="12" y1="9" x2="12" y2="13"></line>
-            <line x1="12" y1="17" x2="12.01" y2="17"></line>
-        </svg>
-        <p class="alert-text" {% if stats.cdrrmo_overdue > 0 %}style="color: #dc2626;"{% endif %}>
-            <strong>{{ stats.pending_cdrrmo }}</strong> applicant{{ stats.pending_cdrrmo|pluralize }} with a hazard-area claim pending CDRRMO verification.
-            {% if stats.cdrrmo_overdue > 0 %}
-            <span style="font-weight: 700;">⚠️ {{ stats.cdrrmo_overdue }} overdue (>14 days) — follow up required!</span>
-            {% else %}
-            Follow up required to prevent delays.
-            {% endif %}
-        </p>
-    </div>
-    {% endif %}
-
     <!-- Access Role Info Banner -->
     {% if not can_modify %}
     <div style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border: 1px solid #93c5fd; border-radius: 0.75rem; padding: 1rem 1.25rem; margin-bottom: 1rem; display: flex; align-items: flex-start; gap: 0.75rem;">
@@ -1006,39 +976,44 @@
 
     <!-- Controls -->
     <div class="controls-bar">
+        <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0.75rem; background: #dbeafe; border-radius: 0.5rem; border: 1px solid #93c5fd;">
+            <svg style="width: 20px; height: 20px; color: #2563eb;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            <div>
+                <p style="font-size: 0.625rem; color: #64748b; margin: 0; text-transform: uppercase; font-weight: 500;">Total Applicants</p>
+                <p style="font-size: 1.25rem; font-weight: 700; color: #2563eb; margin: 0;">{{ stats.total }}</p>
+            </div>
+        </div>
         <div class="search-box">
             <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="11" cy="11" r="8"></circle>
                 <path d="m21 21-4.35-4.35"></path>
             </svg>
-            <input 
-                type="text" 
-                class="search-input" 
-                placeholder="Search by name, reference number, or barangay..." 
+            <input
+                type="text"
+                class="search-input"
+                placeholder="Name, ref #, barangay..."
                 id="searchInput"
                 onkeyup="filterTable()"
             >
         </div>
-        <select class="filter-select" id="filterChannel" onchange="filterTable()">
-            <option value="all">All Channels</option>
-            <option value="B">Channel B — Walk-in (hazard pathway)</option>
-            <option value="C">Channel C — Walk-in</option>
-        </select>
-        <select class="filter-select" id="filterStatus" onchange="filterTable()">
-            <option value="all">All Status</option>
-            <option value="Eligible">Eligible</option>
-            <option value="Disqualified">Disqualified</option>
-            <option value="Pending eligibility check">Pending eligibility check</option>
-            <option value="Pending CDRRMO verification">Pending CDRRMO verification</option>
-            <option value="CDRRMO Overdue">⚠️ CDRRMO Overdue (>14 days)</option>
-            <option value="Ready for Module 2">Ready for Module 2 handoff</option>
-        </select>
-        <select class="filter-select" id="filterBarangay" onchange="filterTable()">
-            <option value="all">All Barangays</option>
-            {% for brgy in barangays %}
-            <option value="{{ brgy }}">{{ brgy }}</option>
-            {% endfor %}
-        </select>
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
+            <select class="filter-select header-filter" id="filterChannel" onchange="filterTable()" style="min-width: 220px;">
+                <option value="all">All Channels</option>
+                <option value="B">Channel B — Walk-in (hazard pathway)</option>
+                <option value="C">Channel C — Walk-in</option>
+            </select>
+            <select class="filter-select" id="filterBarangay" onchange="filterTable()">
+                <option value="all">All Barangays</option>
+                {% for brgy in barangays %}
+                <option value="{{ brgy }}">{{ brgy }}</option>
+                {% endfor %}
+            </select>
+        </div>
         <button type="button" onclick="exportToCSV()" class="btn-export" style="display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.5rem 0.75rem; background: #10b981; color: white; border: none; border-radius: 0.5rem; font-size: 0.75rem; font-weight: 500; cursor: pointer; white-space: nowrap;">
             <svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -2179,7 +2154,7 @@
                             <select class="form-select" name="employment_status" id="employmentStatus">
                                 <option value="">— Select —</option>
                                 <option value="employed">Employed</option>
-                                <option value="self-employed">Self-Employed</option>
+                                <option value="self_employed">Self-Employed</option>
                                 <option value="unemployed">Unemployed</option>
                                 <option value="retired">Retired</option>
                             </select>
@@ -2407,39 +2382,24 @@
     function filterTable() {
         const searchInputEl = document.getElementById('searchInput');
         const channelFilterEl = document.getElementById('filterChannel');
-        const statusFilterEl = document.getElementById('filterStatus');
         const barangayFilterEl = document.getElementById('filterBarangay');
         
         const searchValue = searchInputEl ? searchInputEl.value.toLowerCase() : '';
         const channelFilter = channelFilterEl ? channelFilterEl.value : 'all';
-        const statusFilter = statusFilterEl ? statusFilterEl.value : 'all';
         const barangayFilter = barangayFilterEl ? barangayFilterEl.value : 'all';
         const rows = document.querySelectorAll('#applicantsTableBody tr');
         
         let visibleCount = 0;
         rows.forEach(row => {
             const channel = row.dataset.channel;
-            const status = row.dataset.status;
             const barangay = row.dataset.barangay;
-            const cdrrmoOverdue = row.dataset.cdrrmoOverdue === 'true';
-            const module2Ready = row.dataset.module2Ready === 'true';
             const searchable = row.dataset.searchable;
 
             const matchSearch = searchValue === '' || (searchable && searchable.includes(searchValue));
             const matchChannel = channelFilter === 'all' || channel === channelFilter;
             const matchBarangay = barangayFilter === 'all' || barangay === barangayFilter;
-            
-            // Handle special "CDRRMO Overdue" filter
-            let matchStatus;
-            if (statusFilter === 'CDRRMO Overdue') {
-                matchStatus = cdrrmoOverdue;
-            } else if (statusFilter === 'Ready for Module 2') {
-                matchStatus = module2Ready;
-            } else {
-                matchStatus = statusFilter === 'all' || status === statusFilter;
-            }
 
-            if (matchSearch && matchChannel && matchStatus && matchBarangay) {
+            if (matchSearch && matchChannel && matchBarangay) {
                 row.style.display = '';
                 visibleCount++;
                 // Update row number
@@ -2449,12 +2409,6 @@
                 row.style.display = 'none';
             }
         });
-    }
-
-    function filterReadyForModule2() {
-        const statusFilterEl = document.getElementById('filterStatus');
-        if (statusFilterEl) statusFilterEl.value = 'Ready for Module 2';
-        filterTable();
     }
 
     // ====== REVIEW MODAL ======
@@ -4371,24 +4325,16 @@
     // Export to CSV
     function exportToCSV() {
         const channelFilterEl = document.getElementById('filterChannel');
-        const statusFilterEl = document.getElementById('filterStatus');
         const barangayFilterEl = document.getElementById('filterBarangay');
         
         const channelFilter = channelFilterEl ? channelFilterEl.value : 'all';
-        const statusFilter = statusFilterEl ? statusFilterEl.value : 'all';
         const barangayFilter = barangayFilterEl ? barangayFilterEl.value : 'all';
         
         // Filter applicants based on current filters
         let filteredData = applicantsData.filter(app => {
             const matchChannel = channelFilter === 'all' || app.channel === channelFilter;
             const matchBarangay = barangayFilter === 'all' || app.barangay === barangayFilter;
-            let matchStatus;
-            if (statusFilter === 'CDRRMO Overdue') {
-                matchStatus = app.isCdrrmoFlagged;
-            } else {
-                matchStatus = statusFilter === 'all' || app.eligibilityStatus === statusFilter;
-            }
-            return matchChannel && matchStatus && matchBarangay;
+            return matchChannel && matchBarangay;
         });
         
         if (filteredData.length === 0) {

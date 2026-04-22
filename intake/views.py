@@ -1195,7 +1195,11 @@ def walkin_register(request, position):
         return redirect(applicants_list_url)
 
     # ====== CHANNEL B: Danger Zone Applicants ======
-    form = WalkInApplicantForm(request.POST)
+    # Backward-compatible normalization for legacy client values.
+    post_data = request.POST.copy()
+    if post_data.get('employment_status') == 'self-employed':
+        post_data['employment_status'] = 'self_employed'
+    form = WalkInApplicantForm(post_data)
 
     # Get the danger zone answer (Yes/No from the form)
     is_danger_zone_answer = request.POST.get('is_danger_zone', 'false') == 'true'

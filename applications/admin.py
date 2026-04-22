@@ -4,6 +4,7 @@ from .models import (
     FacilitatedService, ElectricityConnection, LotAwarding,
     BlacklistProxy, CDRRMOCertificationProxy,
 )
+from intake.models import QueueEntry
 
 
 @admin.register(Requirement)
@@ -221,5 +222,37 @@ class CDRRMOCertificationProxyAdmin(admin.ModelAdmin):
         ('📅 TIMELINE', {
             'fields': ('requested_at', 'certified_at'),
             'classes': ('collapse',),
+        }),
+    )
+
+    def delete_model(self, request, obj):
+        """Override delete to handle cascading deletes through the real model."""
+        from intake.models import CDRRMOCertification
+        try:
+            # Delete the real object, which will cascade to related photos
+            CDRRMOCertification.objects.filter(id=obj.id).delete()
+        except Exception as e:
+            raise e
+
+    def delete_queryset(self, request, queryset):
+        """Override bulk delete to handle cascading deletes through the real model."""
+        from intake.models import CDRRMOCertification
+        cert_ids = list(queryset.values_list('id', flat=True))
+        CDRRMOCertification.objects.filter(id__in=cert_ids).delete()
+
+
+@admin.register(QueueEntry)
+class QueueEntryAdmin(admin.ModelAdmin):
+    list_display = ('applicant', 'queue_type', 'position', 'status', 'entered_at')
+    list_filter = ('queue_type', 'status', 'entered_at')
+    search_fields = ('applicant__full_name', 'applicant__reference_number')
+    readonly_fields = ('entered_at', 'notified_at', 'completed_at')
+
+    fieldsets = (
+        ('⏳ QUEUE ENTRY', {
+            'fields': ('applicant', 'queue_type', 'position', 'status'),
+        }),
+        ('📅 TIMELINE', {
+            'fields': ('entered_at', 'notified_at', 'completed_at', 'added_by'),
         }),
     )
