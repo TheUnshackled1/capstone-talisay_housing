@@ -357,21 +357,84 @@
     .applicants-table th:nth-child(1),
     .applicants-table td:nth-child(1) { width: 3%; text-align: center; } /* # */
     .applicants-table th:nth-child(2),
-    .applicants-table td:nth-child(2) { width: 10%; } /* Transaction # */
+    .applicants-table td:nth-child(2) { width: 9%; } /* Transaction # */
     .applicants-table th:nth-child(3),
     .applicants-table td:nth-child(3) { width: 8%; } /* Date & Time */
     .applicants-table th:nth-child(4),
     .applicants-table td:nth-child(4) { width: 10%; } /* Reference # */
     .applicants-table th:nth-child(5),
-    .applicants-table td:nth-child(5) { width: 14%; } /* Full Name */
+    .applicants-table td:nth-child(5) { width: 13%; } /* Full Name */
     .applicants-table th:nth-child(6),
-    .applicants-table td:nth-child(6) { width: 13%; } /* Channel */
+    .applicants-table td:nth-child(6) { width: 12%; } /* Channel */
     .applicants-table th:nth-child(7),
-    .applicants-table td:nth-child(7) { width: 15%; } /* Staff Handled */
+    .applicants-table td:nth-child(7) { width: 14%; } /* Staff Handled */
     .applicants-table th:nth-child(8),
-    .applicants-table td:nth-child(8) { width: 10%; } /* SMS */
+    .applicants-table td:nth-child(8) { width: 8%; } /* SMS */
     .applicants-table th:nth-child(9),
-    .applicants-table td:nth-child(9) { width: 7%; text-align: center; } /* Action */
+    .applicants-table td:nth-child(9) { width: 8%; } /* DOB */
+    .applicants-table th:nth-child(10),
+    .applicants-table td:nth-child(10) { width: 8%; } /* Barangay */
+    .applicants-table th:nth-child(11),
+    .applicants-table td:nth-child(11) { width: 7%; text-align: center; } /* Action */
+
+    /* Active table (no SMS column) */
+    .applicants-table--active th:nth-child(1),
+    .applicants-table--active td:nth-child(1) { width: 3%; text-align: center; } /* # */
+    .applicants-table--active th:nth-child(2),
+    .applicants-table--active td:nth-child(2) { width: 10%; } /* Transaction # */
+    .applicants-table--active th:nth-child(3),
+    .applicants-table--active td:nth-child(3) { width: 9%; } /* Date & Time */
+    .applicants-table--active th:nth-child(4),
+    .applicants-table--active td:nth-child(4) { width: 11%; } /* Reference # */
+    .applicants-table--active th:nth-child(5),
+    .applicants-table--active td:nth-child(5) { width: 14%; } /* Full Name */
+    .applicants-table--active th:nth-child(6),
+    .applicants-table--active td:nth-child(6) { width: 13%; } /* Channel */
+    .applicants-table--active th:nth-child(7),
+    .applicants-table--active td:nth-child(7) { width: 16%; } /* Staff Handled */
+    .applicants-table--active th:nth-child(8),
+    .applicants-table--active td:nth-child(8) { width: 8%; } /* DOB */
+    .applicants-table--active th:nth-child(9),
+    .applicants-table--active td:nth-child(9) { width: 9%; } /* Barangay */
+    .applicants-table--active th:nth-child(10),
+    .applicants-table--active td:nth-child(10) { width: 7%; text-align: center; } /* Action */
+
+    .archive-summary-modal .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.65rem 0.85rem;
+        margin-top: 0.75rem;
+    }
+
+    .archive-summary-modal .summary-item {
+        border: 1px solid #e2e8f0;
+        background: #f8fafc;
+        border-radius: 0.5rem;
+        padding: 0.55rem 0.65rem;
+    }
+
+    .archive-summary-modal .summary-label {
+        display: block;
+        font-size: 0.625rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #64748b;
+        font-weight: 700;
+        margin-bottom: 0.2rem;
+    }
+
+    .archive-summary-modal .summary-value {
+        font-size: 0.75rem;
+        color: #1e293b;
+        line-height: 1.45;
+        word-break: break-word;
+    }
+
+    @media (max-width: 900px) {
+        .archive-summary-modal .summary-grid {
+            grid-template-columns: 1fr;
+        }
+    }
 
     .btn-review {
         display: inline-flex;
@@ -482,6 +545,76 @@
         justify-content: space-between;
         border-radius: 1rem 1rem 0 0;
         z-index: 10;
+    }
+
+    .notice-modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 1200;
+        background: rgba(15, 23, 42, 0.45);
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+    }
+
+    .notice-modal-overlay.active {
+        display: flex;
+    }
+
+    .notice-modal {
+        width: min(28rem, 100%);
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.875rem;
+        box-shadow: 0 20px 40px rgba(15, 23, 42, 0.22);
+        overflow: hidden;
+    }
+
+    .notice-modal-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.875rem 1rem 0.75rem;
+        border-bottom: 1px solid #e2e8f0;
+        background: #f8fafc;
+    }
+
+    .notice-modal-badge {
+        width: 0.625rem;
+        height: 0.625rem;
+        border-radius: 50%;
+        background: #334155;
+        flex-shrink: 0;
+    }
+
+    .notice-modal.warning .notice-modal-badge { background: #d97706; }
+    .notice-modal.error .notice-modal-badge { background: #dc2626; }
+    .notice-modal.success .notice-modal-badge { background: #16a34a; }
+    .notice-modal.info .notice-modal-badge { background: #2563eb; }
+
+    .notice-modal-title {
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin: 0;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .notice-modal-body {
+        padding: 0.9rem 1rem;
+        font-size: 0.78rem;
+        color: #334155;
+        line-height: 1.5;
+        white-space: pre-wrap;
+    }
+
+    .notice-modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.5rem;
+        padding: 0 1rem 1rem;
     }
 
     .modal-title {
@@ -1005,6 +1138,55 @@
 </script>
 {% endif %}
 
+<div class="notice-modal-overlay" id="noticeModalOverlay" onclick="closeNoticeModal()">
+    <div class="notice-modal info" id="noticeModal" onclick="event.stopPropagation()">
+        <div class="notice-modal-header">
+            <span class="notice-modal-badge" aria-hidden="true"></span>
+            <p class="notice-modal-title" id="noticeModalTitle">Notice</p>
+        </div>
+        <div class="notice-modal-body" id="noticeModalBody"></div>
+        <div class="notice-modal-actions">
+            <button type="button" class="btn-modal secondary" id="noticeSecondaryBtn" style="display:none;">Cancel</button>
+            <button type="button" class="btn-modal primary" id="noticePrimaryBtn">OK</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="archiveSummaryModal" onclick="closeArchiveSummaryModal()">
+    <div class="modal-content archive-summary-modal" style="max-width: 46rem; width: min(94vw, 46rem);" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <div>
+                <p class="tha-review-modal-kicker">Module 2 handoff summary</p>
+                <h3 class="modal-title" style="font-size: 1rem;">Sent to Module 2</h3>
+                <p class="modal-subtitle" id="archiveSummarySubtitle">Record handoff details</p>
+            </div>
+            <button class="btn-close" onclick="closeArchiveSummaryModal()">
+                <svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="summary-grid">
+                <div class="summary-item"><span class="summary-label">Reference #</span><div class="summary-value" id="archiveSummaryReference">N/A</div></div>
+                <div class="summary-item"><span class="summary-label">Full Name</span><div class="summary-value" id="archiveSummaryName">N/A</div></div>
+                <div class="summary-item"><span class="summary-label">Channel</span><div class="summary-value" id="archiveSummaryChannel">N/A</div></div>
+                <div class="summary-item"><span class="summary-label">SMS Status</span><div class="summary-value" id="archiveSummarySms">N/A</div></div>
+                <div class="summary-item"><span class="summary-label">DOB</span><div class="summary-value" id="archiveSummaryDob">N/A</div></div>
+                <div class="summary-item"><span class="summary-label">Barangay</span><div class="summary-value" id="archiveSummaryBarangay">N/A</div></div>
+                <div class="summary-item"><span class="summary-label">Encoded By</span><div class="summary-value" id="archiveSummaryEncodedBy">N/A</div></div>
+                <div class="summary-item"><span class="summary-label">Staff Role</span><div class="summary-value" id="archiveSummaryStaffRole">N/A</div></div>
+                <div class="summary-item"><span class="summary-label">Proceeded To Module 2</span><div class="summary-value" id="archiveSummaryProceededAt">N/A</div></div>
+                <div class="summary-item"><span class="summary-label">Proceeded By</span><div class="summary-value" id="archiveSummaryProceededBy">N/A</div></div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-modal secondary" onclick="closeArchiveSummaryModal()">Close</button>
+        </div>
+    </div>
+</div>
+
 <div class="applicants-container">
     <!-- Header -->
     <div class="page-header">
@@ -1082,7 +1264,7 @@
     </div>
 
     <!-- Table -->
-    <table class="applicants-table">
+    <table class="applicants-table applicants-table--active">
         <thead>
             <tr>
                 <th>#</th>
@@ -1092,7 +1274,8 @@
                 <th>Full Name</th>
                 <th>Channel</th>
                 <th>Staff Handled</th>
-                <th>SMS</th>
+                <th>DOB</th>
+                <th>Barangay</th>
                 <th>Action</th>
             </tr>
         </thead>
@@ -1104,7 +1287,7 @@
                 data-module2-ready="{{ applicant.readyForModule2|yesno:'true,false' }}"
                 data-barangay="{{ applicant.barangay }}"
                 data-cdrrmo-overdue="{{ applicant.isCdrrmoFlagged|yesno:'true,false' }}"
-                data-searchable="{{ applicant.fullName|lower }} {{ applicant.referenceNumber|lower }} {{ applicant.barangay|lower }}"
+                data-searchable="{{ applicant.fullName|lower }} {{ applicant.referenceNumber|lower }} {{ applicant.barangay|lower }} {{ applicant.dateOfBirthDisplay|default:''|lower }}"
             >
                 <td style="font-weight: 700; color: #1e293b;">{{ forloop.counter }}</td>
                 <td style="font-weight: 600; color: #1d4ed8;">#{{ applicant.id }}</td>
@@ -1134,23 +1317,11 @@
                         </div>
                     </div>
                 </td>
-                <td>
-                    <!-- SMS Status -->
-                    {% if applicant.hasPhone %}
-                        {% if applicant.registrationSmsSent %}
-                            <span style="display: inline-flex; align-items: center; gap: 0.125rem; padding: 0.125rem 0.375rem; background: #dcfce7; color: #166534; border-radius: 9999px; font-size: 0.5625rem; font-weight: 500;">
-                                ✓ Sent
-                            </span>
-                        {% else %}
-                            <span style="display: inline-flex; align-items: center; gap: 0.125rem; padding: 0.125rem 0.375rem; background: #fee2e2; color: #991b1b; border-radius: 9999px; font-size: 0.5625rem; font-weight: 500;">
-                                ✗ Not Sent
-                            </span>
-                        {% endif %}
-                    {% else %}
-                        <span style="padding: 0.125rem 0.375rem; background: #f1f5f9; color: #64748b; border-radius: 9999px; font-size: 0.5625rem;">
-                            No Phone
-                        </span>
-                    {% endif %}
+                <td style="font-size: 0.625rem; color: #1e293b; font-weight: 600;">
+                    {{ applicant.dateOfBirthDisplay|default:"N/A" }}
+                </td>
+                <td style="font-size: 0.5625rem; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ applicant.barangay|default:'N/A' }}">
+                    {{ applicant.barangay|default:"N/A" }}
                 </td>
                 <td>
                     <!-- Review button - opens modal -->
@@ -1255,6 +1426,8 @@
                 <th>Channel</th>
                 <th>Staff Handled</th>
                 <th>SMS</th>
+                <th>DOB</th>
+                <th>Barangay</th>
                 <th>Action</th>
             </tr>
         </thead>
@@ -1264,7 +1437,7 @@
                 data-archive-row="true"
                 data-channel="{{ row.channel }}"
                 data-barangay="{{ row.barangay }}"
-                data-searchable="{{ row.fullName|lower }} {{ row.referenceNumber|lower }} {{ row.barangay|lower }}"
+                data-searchable="{{ row.fullName|lower }} {{ row.referenceNumber|lower }} {{ row.barangay|lower }} {{ row.dateOfBirthDisplay|default:''|lower }}"
             >
                 <td style="font-weight: 700; color: #1e293b;">{{ forloop.counter }}</td>
                 <td style="font-weight: 600; color: #1d4ed8;">#{{ row.id }}</td>
@@ -1306,15 +1479,36 @@
                         </span>
                     {% endif %}
                 </td>
+                <td style="font-size: 0.625rem; color: #1e293b; font-weight: 600;">
+                    {{ row.dateOfBirthDisplay|default:"N/A" }}
+                </td>
+                <td style="font-size: 0.5625rem; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ row.barangay|default:'N/A' }}">
+                    {{ row.barangay|default:"N/A" }}
+                </td>
                 <td>
-                    <span style="display:inline-flex; align-items:center; gap:0.25rem; padding:0.2rem 0.45rem; border-radius:9999px; font-size:0.5625rem; font-weight:600; color:#075985; background:#e0f2fe; border:1px solid #bae6fd;" title="Proceeded to Module 2 at {{ row.handoffAt }}{% if row.handoffBy %} by {{ row.handoffBy }}{% endif %}">
+                    <button
+                        type="button"
+                        onclick="openArchiveHandoffSummary(this)"
+                        data-reference="{{ row.referenceNumber }}"
+                        data-name="{{ row.fullName }}"
+                        data-channel="{{ row.channelLabel }}"
+                        data-proceeded="{{ row.handoffAt|default:row.dateTime }}"
+                        data-proceeded-by="{{ row.handoffBy|default:'Unknown' }}"
+                        data-staff="{{ row.handledBy|default:'Unknown' }}"
+                        data-staff-position="{{ row.handledByPosition|default:'N/A' }}"
+                        data-sms="{% if row.hasPhone %}{% if row.registrationSmsSent %}Sent{% else %}Not Sent{% endif %}{% else %}No Phone{% endif %}"
+                        data-dob="{{ row.dateOfBirthDisplay|default:'N/A' }}"
+                        data-barangay="{{ row.barangay|default:'N/A' }}"
+                        style="display:inline-flex; align-items:center; gap:0.25rem; padding:0.2rem 0.45rem; border-radius:9999px; font-size:0.5625rem; font-weight:600; color:#075985; background:#e0f2fe; border:1px solid #bae6fd; cursor:pointer;"
+                        title="View handoff summary"
+                    >
                         Sent to Module 2
-                    </span>
+                    </button>
                 </td>
             </tr>
             {% empty %}
             <tr id="archiveEmptyRow">
-                <td colspan="9" style="text-align:center; color:#64748b; font-size:0.75rem; padding:1rem;">
+                <td colspan="11" style="text-align:center; color:#64748b; font-size:0.75rem; padding:1rem;">
                     No proceeded records yet.
                 </td>
             </tr>
@@ -2534,6 +2728,85 @@
     const canModify = (document.getElementById('canModifyFlag')?.value || 'false') === 'true';
     const duplicatePreviewUrl = '{% url "intake:duplicate_preview" request.user.position %}';
     const applicationsListUrl = '{% url "applications:applications_list" request.user.position %}';
+    let noticePrimaryHandler = null;
+    let noticeSecondaryHandler = null;
+
+    function closeNoticeModal() {
+        const overlay = document.getElementById('noticeModalOverlay');
+        if (overlay) overlay.classList.remove('active');
+        noticePrimaryHandler = null;
+        noticeSecondaryHandler = null;
+    }
+
+    function showNoticeModal({ title = 'Notice', message = '', type = 'info', primaryText = 'OK', secondaryText = '', onPrimary = null, onSecondary = null }) {
+        const overlay = document.getElementById('noticeModalOverlay');
+        const modal = document.getElementById('noticeModal');
+        const titleEl = document.getElementById('noticeModalTitle');
+        const bodyEl = document.getElementById('noticeModalBody');
+        const primaryBtn = document.getElementById('noticePrimaryBtn');
+        const secondaryBtn = document.getElementById('noticeSecondaryBtn');
+        if (!overlay || !modal || !titleEl || !bodyEl || !primaryBtn || !secondaryBtn) return;
+
+        modal.classList.remove('info', 'success', 'warning', 'error');
+        modal.classList.add(type);
+        titleEl.textContent = title;
+        bodyEl.textContent = message;
+        primaryBtn.textContent = primaryText || 'OK';
+        secondaryBtn.textContent = secondaryText || 'Cancel';
+        secondaryBtn.style.display = secondaryText ? '' : 'none';
+
+        noticePrimaryHandler = onPrimary;
+        noticeSecondaryHandler = onSecondary;
+        overlay.classList.add('active');
+    }
+
+    function openArchiveHandoffSummary(buttonEl) {
+        if (!buttonEl) return;
+        const d = buttonEl.dataset || {};
+        const setText = (id, value) => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = value || 'N/A';
+        };
+
+        setText('archiveSummarySubtitle', `${d.reference || 'N/A'} • ${d.name || 'N/A'}`);
+        setText('archiveSummaryReference', d.reference || 'N/A');
+        setText('archiveSummaryName', d.name || 'N/A');
+        setText('archiveSummaryChannel', d.channel || 'N/A');
+        setText('archiveSummarySms', d.sms || 'N/A');
+        setText('archiveSummaryDob', d.dob || 'N/A');
+        setText('archiveSummaryBarangay', d.barangay || 'N/A');
+        setText('archiveSummaryEncodedBy', d.staff || 'Unknown');
+        setText('archiveSummaryStaffRole', d.staffPosition || 'N/A');
+        setText('archiveSummaryProceededAt', d.proceeded || 'N/A');
+        setText('archiveSummaryProceededBy', d.proceededBy || 'Unknown');
+
+        const modal = document.getElementById('archiveSummaryModal');
+        if (modal) modal.classList.add('active');
+    }
+
+    function closeArchiveSummaryModal() {
+        const modal = document.getElementById('archiveSummaryModal');
+        if (modal) modal.classList.remove('active');
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const primaryBtn = document.getElementById('noticePrimaryBtn');
+        const secondaryBtn = document.getElementById('noticeSecondaryBtn');
+        if (primaryBtn) {
+            primaryBtn.addEventListener('click', function() {
+                const handler = noticePrimaryHandler;
+                closeNoticeModal();
+                if (typeof handler === 'function') handler();
+            });
+        }
+        if (secondaryBtn) {
+            secondaryBtn.addEventListener('click', function() {
+                const handler = noticeSecondaryHandler;
+                closeNoticeModal();
+                if (typeof handler === 'function') handler();
+            });
+        }
+    });
 
     /**
      * Channel B (hazard pathway): the Yes/No answer is stored on dangerZoneType and drives CDRRMO handling.
@@ -3558,7 +3831,11 @@
 
     function proceedToModule2Evaluation() {
         if (!currentApplicant) {
-            alert('No applicant record selected.');
+            showNoticeModal({
+                title: 'No Record Selected',
+                message: 'Please open an applicant record before proceeding to Module 2.',
+                type: 'warning',
+            });
             return;
         }
 
@@ -3580,14 +3857,26 @@
         .then(response => response.json())
         .then(data => {
             if (!data.success) {
-                alert('Error: ' + (data.error || 'Unable to proceed to Module 2.'));
+                showNoticeModal({
+                    title: 'Proceed Failed',
+                    message: data.error || 'Unable to proceed to Module 2.',
+                    type: 'error',
+                });
                 return;
             }
-
-            window.location.href = targetUrl;
+            showNoticeModal({
+                title: 'Proceeding to Module 2',
+                message: 'Record was handed off successfully. Opening Applications module now.',
+                type: 'success',
+                onPrimary: () => { window.location.href = targetUrl; },
+            });
         })
         .catch(error => {
-            alert('Error: ' + error.message);
+            showNoticeModal({
+                title: 'Network Error',
+                message: error.message,
+                type: 'error',
+            });
         });
     }
     
@@ -4191,13 +4480,22 @@
         }
 
         if (duplicatePreviewCurrent.can_open_in_intake) {
-            alert('Matching record is in Intake, but it is not visible in the current list. Refresh the page, then try again.');
+            showNoticeModal({
+                title: 'Record Not Visible',
+                message: 'Matching record is in Intake, but it is not visible in the current list. Refresh the page, then try again.',
+                type: 'warning',
+            });
             return;
         }
 
-        if (confirm('This record has already moved to another module and cannot be opened in Intake review.\n\nOpen Applications module now?')) {
-            window.location.href = applicationsListUrl;
-        }
+        showNoticeModal({
+            title: 'Open in Applications',
+            message: 'This record has already moved to another module and cannot be opened in Intake review.\n\nOpen Applications module now?',
+            type: 'info',
+            primaryText: 'Open Applications',
+            secondaryText: 'Cancel',
+            onPrimary: () => { window.location.href = applicationsListUrl; },
+        });
     }
 
     function queueDuplicatePreviewCheck() {
@@ -4523,7 +4821,11 @@
         if (phoneNumber && phoneNumber.value) {
             const phoneClean = phoneNumber.value.replace(/\D/g, '');
             if (phoneClean.length !== 11 || !phoneClean.startsWith('09')) {
-                alert('Invalid phone format.\nRequired: 09XXXXXXXXXX (11 digits)');
+                showNoticeModal({
+                    title: 'Invalid Applicant Mobile Number',
+                    message: 'Required format: 09XXXXXXXXXX (11 digits).',
+                    type: 'warning',
+                });
                 return;
             }
         }
@@ -4531,7 +4833,11 @@
         // Validate years residing in Talisay (required for eligibility check)
         const yearsResiding = document.getElementById('yearsResiding');
         if (!yearsResiding || yearsResiding.value === '' || yearsResiding.value < 0) {
-            alert('Years Residing in Talisay is required for eligibility check.');
+            showNoticeModal({
+                title: 'Missing Required Field',
+                message: 'Years Residing in Talisay is required for eligibility check.',
+                type: 'warning',
+            });
             return;
         }
 
@@ -4539,16 +4845,28 @@
         const ageResult = calculateAge();
         const computedAge = Number(ageResult);
         if (ageResult == null || !Number.isFinite(computedAge)) {
-            alert('Date of birth is required to compute age.');
+            showNoticeModal({
+                title: 'Date of Birth Required',
+                message: 'Date of birth is required to compute age.',
+                type: 'warning',
+            });
             return;
         }
         if (computedAge < 18) {
-            alert('Applicant must be at least 18 years old.');
+            showNoticeModal({
+                title: 'Age Requirement',
+                message: 'Applicant must be at least 18 years old.',
+                type: 'warning',
+            });
             return;
         }
         const overAgeOverride = document.getElementById('overAgeOverride');
         if (computedAge > 55 && (!overAgeOverride || !overAgeOverride.checked)) {
-            alert('Applicant is above 55. Please confirm staff consideration to proceed.');
+            showNoticeModal({
+                title: 'Staff Confirmation Needed',
+                message: 'Applicant is above 55. Please confirm staff consideration to proceed.',
+                type: 'warning',
+            });
             return;
         }
         formData.set('consider_overage', (computedAge > 55 && overAgeOverride && overAgeOverride.checked) ? 'true' : 'false');
@@ -4570,14 +4888,22 @@
 
             // If any field has data, all must be filled
             if (fieldsWithData > 0 && fieldsWithData < 4) {
-                alert(`Household Member ${i}: Either fill all fields or delete this member.`);
+                showNoticeModal({
+                    title: `Household Member ${i}`,
+                    message: 'Either fill all fields or delete this member row.',
+                    type: 'warning',
+                });
                 return;
             }
 
             if (contactField && contactField.value.trim()) {
                 const contactClean = contactField.value.replace(/\D/g, '');
                 if (contactClean.length !== 11 || !contactClean.startsWith('09')) {
-                    alert(`Household Member ${i}: Contact number must be 11 digits and start with 09.`);
+                    showNoticeModal({
+                        title: `Household Member ${i}`,
+                        message: 'Contact number must be 11 digits and start with 09.',
+                        type: 'warning',
+                    });
                     return;
                 }
             }
@@ -4651,19 +4977,29 @@
 
                 let detail = data.message || 'Applicant registered successfully.';
                 detail += '\n\nNo SMS is sent at registration. The first SMS is sent when this record is proceeded to Module 2.';
-                alert('✓ ' + detail);
-
-                // Reload the page to refresh the applicants list
-                location.reload();
+                showNoticeModal({
+                    title: 'Applicant Registered',
+                    message: detail,
+                    type: 'success',
+                    onPrimary: () => { location.reload(); },
+                });
             } else {
                 // Show detailed error message
                 const errorMsg = data.error || 'Unknown error occurred';
-                alert('❌ Error: ' + errorMsg);
+                showNoticeModal({
+                    title: 'Registration Error',
+                    message: errorMsg,
+                    type: 'error',
+                });
                 console.error('Form submission error:', errorMsg);
             }
         })
         .catch(error => {
-            alert('❌ Error: ' + error.message);
+            showNoticeModal({
+                title: 'Request Failed',
+                message: error.message,
+                type: 'error',
+            });
             console.error('Fetch error:', error);
         });
     }

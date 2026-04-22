@@ -929,6 +929,7 @@ def applicants_list(request, position):
             'referenceNumber': app.reference_number,
             'dateRegistered': app.created_at.strftime('%Y-%m-%d'),
             'dateTime': app.created_at.strftime('%b %d, %Y | %I:%M %p'),
+            'dateOfBirthDisplay': app.date_of_birth.strftime('%m/%d/%Y') if app.date_of_birth else '',
             'channel': 'B' if app.channel == 'danger_zone' else 'C',  # Map database channels to UI channels
             'submissionId': None,
             'applicantId': str(app.id),
@@ -1031,6 +1032,7 @@ def applicants_list(request, position):
         archive_records.append({
             'id': str(app.id),
             'dateTime': local_proceeded_at.strftime('%b %d, %Y | %I:%M %p') if local_proceeded_at else '',
+            'dateOfBirthDisplay': app.date_of_birth.strftime('%m/%d/%Y') if app.date_of_birth else '',
             'referenceNumber': app.reference_number,
             'fullName': app.full_name,
             'barangay': app.barangay.name if app.barangay else '',

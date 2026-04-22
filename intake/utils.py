@@ -85,8 +85,9 @@ def send_sms(phone_number, message, trigger_event, applicant=None, isf_record=No
         logger.warning(f"Invalid phone number format: {phone_number}")
         return False
 
-    sms_service = (getattr(settings, 'SMS_SERVICE', 'console') or 'console').lower()
+    sms_service = (getattr(settings, 'SMS_SERVICE', 'console') or 'console').strip().lower()
     sms_enabled = getattr(settings, 'SMS_ENABLED', True)
+    is_debug = bool(getattr(settings, 'DEBUG', False))
 
     try:
         # Create SMS log record in app-specific table (pending status)
@@ -102,8 +103,28 @@ def send_sms(phone_number, message, trigger_event, applicant=None, isf_record=No
         if sms_service == 'console':
             return _sms_simulate_delivery(sms_log, phone_number, message, trigger_event, 'console')
 
+        # Backward-compatible service aliases used in older .env files.
+        if sms_service in {'clicksend', 'click_send', 'click-send'}:
+            logger.warning("SMS_SERVICE=%s is deprecated/unsupported; falling back to console simulation.", sms_service)
+            return _sms_simulate_delivery(sms_log, phone_number, message, trigger_event, 'console-fallback')
+
+        # Unknown service values should not silently break local testing.
+        if sms_service not in {'iprog'}:
+            logger.warning("Unknown SMS_SERVICE=%s; falling back to console simulation.", sms_service)
+            return _sms_simulate_delivery(sms_log, phone_number, message, trigger_event, 'console-fallback')
+
         if not sms_enabled:
             return _sms_simulate_delivery(sms_log, phone_number, message, trigger_event, 'disabled')
+
+        # In dev mode, missing API token should still allow end-to-end workflow testing.
+        if sms_service == 'iprog' and not getattr(settings, 'IPROG_API_TOKEN', None):
+            if is_debug:
+                logger.warning("IPROG token is missing in DEBUG mode; falling back to console simulation.")
+                return _sms_simulate_delivery(sms_log, phone_number, message, trigger_event, 'console-fallback')
+            sms_log.status = 'failed'
+            sms_log.error_message = 'IPROG API token not configured'
+            sms_log.save(update_fields=['status', 'error_message'])
+            return False
 
         # IPROG: Affordable SMS gateway (P1/SMS - perfect for capstone projects)
         success = send_sms_iprog(phone_number, message, sms_log)
