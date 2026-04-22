@@ -1403,7 +1403,11 @@
                 </div>
                 <div id="modalCdrrmoPendingInfo" style="display:none;margin-bottom:.65rem;padding:.55rem .65rem;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc;font-size:.74rem;color:#475569;line-height:1.45;">
                     <strong>Awaiting CDRRMO disposition</strong><br>
-                    Either the field unit will submit an on-site verification report (with optional photographs), or intake will file official CDRRMO certification received at the THA office. Use Official CDRRMO certification — office receipt above when paperwork is on file.
+                    After staff handoff to Module 2, either the field unit submits an on-site verification report (with optional photographs), or intake files official CDRRMO certification received at the THA office. Use Official CDRRMO certification — office receipt above when paperwork is on file.
+                </div>
+                <div id="modalRondaPendingNotice" style="display:none;margin-bottom:.65rem;padding:.6rem .7rem;border:1px solid #fde68a;border-radius:8px;background:#fffbeb;font-size:.74rem;color:#92400e;line-height:1.45;">
+                    <strong>Ronda field verification required</strong><br>
+                    No field report is on file yet for this hazard claim. A <strong>Field / Ronda</strong> account must open the verification desk queue, conduct site validation, and submit a certification with notes/photos before final Module 2 eligibility action.
                 </div>
                 {% if permissions.can_verify_documents %}
                 <div id="modalEvaluationActions" style="display:none;">
@@ -1434,7 +1438,7 @@
             </div>
             <div id="modalCdrrmoBox" style="display:none;margin-bottom:1rem;padding:0.75rem;border:1px solid #dbeafe;border-radius:8px;background:#f8fbff;">
                 <div style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#1e40af;margin-bottom:.45rem;">
-                    Module 1 CDRRMO and field verification record
+                    CDRRMO and field verification record (Module 2 stage)
                 </div>
                 <div id="modalCdrrmoSummary" style="font-size:0.75rem;color:#334155;line-height:1.45;margin-bottom:0.5rem;"></div>
                 <div id="modalCdrrmoNotes" style="display:none;font-size:0.75rem;color:#334155;line-height:1.45;margin-bottom:0.5rem;padding:0.5rem;border:1px solid #cbd5e1;border-radius:6px;background:#fff;"></div>
@@ -1744,6 +1748,7 @@
         const officeCdrrmoBox = document.getElementById('modalOfficeCdrrmoBox');
         const officeCdrrmoNotes = document.getElementById('modalOfficeCdrrmoNotes');
         const cdrrmoPendingInfo = document.getElementById('modalCdrrmoPendingInfo');
+        const rondaPendingNotice = document.getElementById('modalRondaPendingNotice');
         if (cBox) cBox.style.display = 'none';
         if (cSummary) cSummary.innerHTML = '';
         if (cNotes) {
@@ -1764,6 +1769,7 @@
         if (officeCdrrmoBox) officeCdrrmoBox.style.display = 'none';
         if (officeCdrrmoNotes) officeCdrrmoNotes.value = '';
         if (cdrrmoPendingInfo) cdrrmoPendingInfo.style.display = 'none';
+        if (rondaPendingNotice) rondaPendingNotice.style.display = 'none';
         // Reset all checkboxes
         document.querySelectorAll('.document-checkbox').forEach(cb => {
             cb.classList.remove('checked');
@@ -1851,9 +1857,9 @@
             tail += infoBullet(`<strong>CDRRMO disposition tagging (Module 1):</strong> ${escapeHtml(tagDisp)}`);
             const src = data.cdrrmo.disposition_source || 'pending';
             if (src === 'field_unit') {
-                tail += infoBullet('<strong>Ronda field verification:</strong> On-site report and photographic evidence filed through the field dashboard (Module 1); detailed record appears below.');
+                tail += infoBullet('<strong>Ronda field verification:</strong> On-site report and photographic evidence filed through the field dashboard after Module 2 handoff; detailed record appears below.');
             } else if (src === 'office_intake') {
-                tail += infoBullet('<strong>Office intake filing:</strong> Disposition recorded from official CDRRMO paperwork received at THA intake (Module 1); detailed record appears below.');
+                tail += infoBullet('<strong>Office intake filing:</strong> Disposition recorded from official CDRRMO paperwork received at THA intake during Module 2 processing; detailed record appears below.');
             }
         }
 
@@ -1953,6 +1959,7 @@
         const channel = data.channel === 'danger_zone' ? 'Channel B - Danger Zone' : 'Channel A - Regular';
         const officeCdrrmoBox = document.getElementById('modalOfficeCdrrmoBox');
         const cdrrmoPendingInfo = document.getElementById('modalCdrrmoPendingInfo');
+        const rondaPendingNotice = document.getElementById('modalRondaPendingNotice');
         const cdrrmoStatus = data.cdrrmo && data.cdrrmo.status ? data.cdrrmo.status : '';
         let workflowNote = '';
         const blacklistBlocked = !!data.blacklist_blocked;
@@ -1981,6 +1988,7 @@
             if (evalActions) evalActions.style.display = 'none';
             if (officeCdrrmoBox) officeCdrrmoBox.style.display = 'none';
             if (cdrrmoPendingInfo) cdrrmoPendingInfo.style.display = 'none';
+            if (rondaPendingNotice) rondaPendingNotice.style.display = 'none';
             applyBlacklistWorkflowGate(true);
             return;
         } else {
@@ -1994,6 +2002,7 @@
             (!cdrrmoStatus || cdrrmoStatus === 'pending');
         if (officeCdrrmoBox) officeCdrrmoBox.style.display = canRecordOfficeReceipt ? 'block' : 'none';
         if (cdrrmoPendingInfo) cdrrmoPendingInfo.style.display = canRecordOfficeReceipt ? 'block' : 'none';
+        if (rondaPendingNotice) rondaPendingNotice.style.display = canRecordOfficeReceipt ? 'block' : 'none';
 
         if (!canVerifyDocs || !evalActions) return;
         const pendingEvaluation = (status === 'pending' || status === 'pending_cdrrmo');
@@ -2086,7 +2095,7 @@
         const photosCaption = document.querySelector('#modalCdrrmoPhotosCaption');
         if (photosCaption) {
             photosCaption.textContent = src === 'field_unit'
-                ? 'Ronda field unit — evidence photographs filed (Module 1)'
+                ? 'Ronda field unit — evidence photographs filed after Module 2 handoff'
                 : 'Filed field evidence photographs';
         }
         if (src === 'field_unit' && urls.length > 0) {
@@ -2386,7 +2395,7 @@
             formData.append('office_receipt', 'true');
             formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
 
-            const response = await fetch('{% url "intake:update_cdrrmo_certification" request.user.position %}', {
+            const response = await fetch('{% url "applications:update_cdrrmo_certification" request.user.position %}', {
                 method: 'POST',
                 body: formData,
             });

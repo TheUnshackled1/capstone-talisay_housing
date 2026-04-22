@@ -13,6 +13,9 @@ urlpatterns = [
     # Document verification (Jocel, Joie)
     path('staff/<str:position>/update-requirement/', views.update_requirement, name='update_requirement'),
     path('staff/<str:position>/evaluate-applicant/', views.evaluate_applicant, name='evaluate_applicant'),
+    path('staff/<str:position>/update-cdrrmo-certification/', views.update_cdrrmo_certification, name='update_cdrrmo_certification'),
+    path('staff/<str:position>/field-verify-cdrrmo/', views.field_verify_cdrrmo, name='field_verify_cdrrmo'),
+    path('staff/<str:position>/update-cdrrmo-status/', views.update_cdrrmo_status, name='update_cdrrmo_status'),
 
     # Form generation (Jocel, Joie)
     path('staff/<str:position>/generate-form/<uuid:applicant_id>/', views.generate_form, name='generate_form'),

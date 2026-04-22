@@ -45,7 +45,7 @@ def format_phone_number(phone_number):
 
 def send_sms(phone_number, message, trigger_event, applicant=None, isf_record=None):
     """
-    Send SMS notification via Twilio or Semaphore API and log to database.
+    Send SMS notification via ClickSend API and log to database.
 
     Args:
         phone_number: Recipient phone number
@@ -91,23 +91,12 @@ def send_sms(phone_number, message, trigger_event, applicant=None, isf_record=No
         if not sms_enabled:
             return _sms_simulate_delivery(sms_log, phone_number, message, trigger_event, 'disabled')
 
-        if sms_service == 'httpsms':
-            success = send_sms_httpsms(phone_number, message, sms_log)
-            if success:
-                logger.info('SMS sent via httpSMS: %s to %s', trigger_event, phone_number)
-            return success
-
-        if sms_service == 'twilio':
-            success = send_sms_twilio(phone_number, message, sms_log)
-            if success:
-                logger.info('SMS sent via Twilio: %s to %s', trigger_event, phone_number)
-            return success
-
-        # Default: Semaphore (Philippines)
-        success = send_sms_semaphore(phone_number, message, sms_log)
+        # IPROG: Affordable SMS gateway (P1/SMS - perfect for capstone projects)
+        success = send_sms_iprog(phone_number, message, sms_log)
         if success:
-            logger.info('SMS sent via Semaphore: %s to %s', trigger_event, phone_number)
+            logger.info('SMS sent via IPROG: %s to %s', trigger_event, phone_number)
         return success
+
 
     except Exception as e:
         logger.error('Failed to send SMS: %s', str(e))
@@ -124,9 +113,10 @@ def send_sms(phone_number, message, trigger_event, applicant=None, isf_record=No
         return False
 
 
-def send_sms_httpsms(phone_number, message, sms_log):
+
+def send_sms_iprog(phone_number, message, sms_log):
     """
-    Send SMS via httpSMS API (FREE - uses Android phone as gateway).
+    Send SMS via IPROG SMS API (Affordable Philippine SMS Gateway - P1/SMS).
 
     Args:
         phone_number: Philippine mobile number (09XXXXXXXXX format)
@@ -137,158 +127,59 @@ def send_sms_httpsms(phone_number, message, sms_log):
         bool: True if sent successfully, False otherwise
     """
     try:
-        api_key = getattr(settings, 'HTTPSMS_API_KEY', None)
-        api_url = getattr(settings, 'HTTPSMS_API_URL', 'https://api.httpsms.com')
+        api_token = getattr(settings, 'IPROG_API_TOKEN', None)
 
-        if not api_key:
-            raise Exception("httpSMS API key not configured")
+        if not api_token:
+            raise Exception("IPROG API token not configured in settings")
 
-        # Convert Philippine format to international format for httpSMS
-        # 09XXXXXXXXX -> +639XXXXXXXXX
-        to_number = '+63' + phone_number[1:]
+        # IPROG API endpoint with query parameters
+        base_url = 'https://www.iprogsms.com/api/v1/sms_messages'
 
-        # httpSMS API endpoint: /v1/messages/send
-        payload = {
-            'content': message,
-            'to': to_number,
-        }
+        # Convert to IPROG format: 09XXXXXXXXX → 639XXXXXXXXX (no + or leading 0)
+        if phone_number.startswith('0'):
+            to_number = '63' + phone_number[1:]
+        elif phone_number.startswith('+63'):
+            to_number = phone_number[1:]  # Remove +
+        else:
+            to_number = phone_number
 
-        # httpSMS uses API key in x-api-key header
-        headers = {
-            'x-api-key': api_key,
-            'Content-Type': 'application/json',
+        # Build query parameters
+        params = {
+            'api_token': api_token,
+            'phone_number': to_number,
+            'message': message
         }
 
         response = requests.post(
-            f'{api_url}/v1/messages/send',
-            json=payload,
-            headers=headers,
+            base_url,
+            params=params,
             timeout=10
         )
 
-        if response.status_code in [200, 201]:
+        if response.status_code == 200:
             result = response.json()
-            # Update log with success
-            sms_log.status = 'sent'
-            sms_log.external_id = result.get('data', {}).get('id', 'httpsms-msg')
-            sms_log.save(update_fields=['status', 'external_id'])
-            return True
+            # IPROG returns status: 200 and message_id on success
+            if result.get('status') == 200 and result.get('message_id'):
+                sms_log.status = 'sent'
+                sms_log.external_id = result.get('message_id', f'iprog-{sms_log.id}')
+                sms_log.save(update_fields=['status', 'external_id'])
+                logger.info(f"IPROG SMS sent - Message ID: {sms_log.external_id}")
+                return True
+            else:
+                error_msg = result.get('message', 'Unknown IPROG error')
+                raise Exception(f"IPROG error: {error_msg}")
         else:
-            error_msg = f"httpSMS error: HTTP {response.status_code}"
+            error_msg = f"IPROG API error: HTTP {response.status_code}"
             if response.text:
-                error_msg += f" - {response.text}"
+                try:
+                    error_data = response.json()
+                    error_msg += f" - {error_data.get('message', response.text)}"
+                except:
+                    error_msg += f" - {response.text}"
             raise Exception(error_msg)
 
     except Exception as e:
-        error_msg = f"httpSMS error: {str(e)}"
-        logger.error(error_msg)
-        sms_log.status = 'failed'
-        sms_log.error_message = error_msg
-        sms_log.save(update_fields=['status', 'error_message'])
-        return False
-
-
-def send_sms_twilio(phone_number, message, sms_log):
-    """
-    Send SMS via Twilio API using Messaging Service.
-
-    Args:
-        phone_number: Philippine mobile number (09XXXXXXXXX format)
-        message: SMS message content
-        sms_log: SMSLog instance to update
-
-    Returns:
-        bool: True if sent successfully, False otherwise
-    """
-    try:
-        from twilio.rest import Client
-
-        account_sid = getattr(settings, 'TWILIO_ACCOUNT_SID', None)
-        auth_token = getattr(settings, 'TWILIO_AUTH_TOKEN', None)
-        messaging_service_sid = getattr(settings, 'TWILIO_MESSAGING_SERVICE_SID', None)
-
-        if not account_sid or not auth_token or not messaging_service_sid:
-            raise Exception("Twilio credentials not configured (need Account SID, Auth Token, and Messaging Service SID)")
-
-        # Convert Philippine format to international format
-        # 09XXXXXXXXX -> +639XXXXXXXXX
-        to_number = '+63' + phone_number[1:]
-
-        client = Client(account_sid, auth_token)
-        msg = client.messages.create(
-            body=message,
-            messaging_service_sid=messaging_service_sid,
-            to=to_number
-        )
-
-        # Update log with success
-        sms_log.status = 'sent'
-        sms_log.external_id = msg.sid
-        sms_log.save(update_fields=['status', 'external_id'])
-
-        return True
-
-    except Exception as e:
-        error_msg = f"Twilio error: {str(e)}"
-        logger.error(error_msg)
-        sms_log.status = 'failed'
-        sms_log.error_message = error_msg
-        sms_log.save(update_fields=['status', 'error_message'])
-        return False
-
-
-def send_sms_semaphore(phone_number, message, sms_log):
-    """
-    Send SMS via Semaphore API.
-
-    Args:
-        phone_number: Philippine mobile number (09XXXXXXXXX format)
-        message: SMS message content
-        sms_log: SMSLog instance to update
-
-    Returns:
-        bool: True if sent successfully, False otherwise
-    """
-    try:
-        api_key = getattr(settings, 'SEMAPHORE_API_KEY', None)
-        sender_name = getattr(settings, 'SEMAPHORE_SENDER_NAME', 'SEMAPHORE')
-
-        if not api_key:
-            raise Exception("Semaphore API key not configured")
-
-        response = requests.post(
-            'https://api.semaphore.co/api/v4/messages',
-            data={
-                'apikey': api_key,
-                'number': phone_number,
-                'message': message,
-                'sendername': sender_name
-            },
-            timeout=30
-        )
-
-        if response.status_code == 200:
-            sms_log.status = 'sent'
-            sms_log.save(update_fields=['status'])
-            return True
-        else:
-            error_msg = f"Semaphore API error: {response.status_code} - {response.text}"
-            logger.error(error_msg)
-            sms_log.status = 'failed'
-            sms_log.error_message = error_msg
-            sms_log.save(update_fields=['status', 'error_message'])
-            return False
-
-    except requests.exceptions.RequestException as e:
-        error_msg = f"Network error sending SMS: {str(e)}"
-        logger.error(error_msg)
-        sms_log.status = 'failed'
-        sms_log.error_message = error_msg
-        sms_log.save(update_fields=['status', 'error_message'])
-        return False
-
-    except Exception as e:
-        error_msg = f"Semaphore error: {str(e)}"
+        error_msg = f"IPROG error: {str(e)}"
         logger.error(error_msg)
         sms_log.status = 'failed'
         sms_log.error_message = error_msg

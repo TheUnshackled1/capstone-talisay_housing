@@ -8,6 +8,7 @@ from django.utils import timezone
 from functools import wraps
 from intake.models import Applicant, QueueEntry, CDRRMOCertification, FieldVerificationPhoto
 from intake.utils import send_sms, ensure_priority_queue_entry
+from intake import sms_workflow
 from .models import (
     Application, Requirement, RequirementSubmission,
     SignatoryRouting, FacilitatedService, ElectricityConnection, LotAwarding,
@@ -122,6 +123,38 @@ def _active_intake_queue_label(applicant):
     return f'Queue #{qe.position}'
 
 
+def _ensure_cdrrmo_pending_after_module2_handoff(applicant):
+    """
+    Self-heal legacy hazard-declared handoff rows.
+
+    If a Channel B hazard claim has already been handed off to Module 2,
+    ensure there is a pending CDRRMO record and that applicant status is
+    moved from generic `pending` -> `pending_cdrrmo`.
+    """
+    if applicant.channel != 'danger_zone':
+        return
+    if not applicant.module2_handoff_at:
+        return
+    if not (applicant.danger_zone_type or '').strip():
+        return
+
+    try:
+        applicant.cdrrmo_certification
+    except CDRRMOCertification.DoesNotExist:
+        requested_by = applicant.module2_handoff_by or applicant.registered_by or applicant.eligibility_checked_by
+        CDRRMOCertification.objects.create(
+            applicant=applicant,
+            declared_location=(applicant.danger_zone_location or applicant.danger_zone_type or '').strip() or 'Declared hazard area',
+            requested_by=requested_by,
+            status='pending',
+            disposition_source='pending',
+        )
+
+    if applicant.status == 'pending':
+        applicant.status = 'pending_cdrrmo'
+        applicant.save(update_fields=['status', 'updated_at'])
+
+
 # =============================================================================
 # MAIN APPLICATIONS LIST VIEW
 # =============================================================================
@@ -151,6 +184,22 @@ def applications_list(request, position):
     
     # Get user permissions
     permissions = get_module2_permissions(request.user)
+
+    # Legacy safety net: older Module 2 handoffs may have hazard declaration but
+    # no pending CDRRMO row yet. Normalize these rows before rendering.
+    hazard_handoff_candidates = Applicant.objects.filter(
+        channel='danger_zone',
+        module2_handoff_at__isnull=False,
+        status__in=['pending', 'pending_cdrrmo'],
+    ).exclude(
+        danger_zone_type=''
+    ).select_related(
+        'registered_by',
+        'module2_handoff_by',
+        'eligibility_checked_by',
+    )
+    for candidate in hazard_handoff_candidates:
+        _ensure_cdrrmo_pending_after_module2_handoff(candidate)
     
     # Module 2 shows only records explicitly handed off from Module 1
     # (plus records already attached to an application object).
@@ -434,6 +483,10 @@ def application_detail(request, position, application_id):
     
     # Get user permissions
     permissions = get_module2_permissions(request.user)
+
+    # Ensure modal reflects Module 2 handoff hazard workflow state.
+    _ensure_cdrrmo_pending_after_module2_handoff(applicant)
+    applicant.refresh_from_db()
     
     # Build response data
     is_bl, bl_entry = check_blacklist_module2(applicant.full_name, applicant.phone_number or None)
@@ -557,6 +610,278 @@ def application_detail(request, position, application_id):
         })
     
     return JsonResponse(data)
+
+
+@login_required
+@verify_position
+@require_POST
+def update_cdrrmo_certification(request, position):
+    """
+    Module 2 endpoint for official CDRRMO disposition recording.
+    """
+    allowed_positions = ['fourth_member', 'second_member', 'oic', 'head']
+    if request.user.position not in allowed_positions:
+        return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
+
+    try:
+        applicant_id = request.POST.get('applicant_id')
+        decision = request.POST.get('decision')  # certified / not_certified
+        notes = request.POST.get('notes', '').strip()
+        office_receipt = request.POST.get('office_receipt', '').strip().lower() in ('1', 'true', 'yes', 'on')
+
+        if not applicant_id or not decision:
+            return JsonResponse({'success': False, 'error': 'Missing applicant_id or decision'})
+        if decision not in ['certified', 'not_certified']:
+            return JsonResponse({'success': False, 'error': 'Invalid decision. Must be "certified" or "not_certified"'})
+
+        applicant = Applicant.objects.get(id=applicant_id)
+        if applicant.status != 'pending_cdrrmo':
+            return JsonResponse({
+                'success': False,
+                'error': f'This record is not pending CDRRMO staff finalization (current status: {applicant.get_status_display()}).',
+            })
+
+        if not hasattr(applicant, 'cdrrmo_certification'):
+            return JsonResponse({'success': False, 'error': 'This applicant is not awaiting CDRRMO certification (not Channel B)'})
+
+        cert = applicant.cdrrmo_certification
+        if cert.status != 'pending':
+            return JsonResponse({'success': False, 'error': f'CDRRMO decision already made: {cert.get_status_display()}'})
+
+        cert.status = decision
+        cert.result_recorded_by = request.user
+        cert.certified_at = timezone.now()
+        cert.disposition_source = 'office_intake'
+        cert.office_intake_notes = notes if notes else ''
+        cert.certification_notes = ''
+        cert.save()
+
+        if decision == 'certified':
+            applicant.status = 'eligible'
+            applicant.save()
+            queue_entry, _ = ensure_priority_queue_entry(applicant, added_by=request.user)
+
+            if applicant.phone_number:
+                if office_receipt:
+                    sms_msg = sms_workflow.message_cdrrmo_office_received(applicant, queue_entry.position)
+                    sms_event = sms_workflow.CDRRMO_OFFICE_CERTIFIED
+                else:
+                    sms_msg = sms_workflow.message_cdrrmo_certified_priority(applicant, queue_entry.position)
+                    sms_event = sms_workflow.CDRRMO_CERTIFIED
+                send_sms(applicant.phone_number, sms_msg, sms_event, applicant=applicant)
+
+            return JsonResponse({
+                'success': True,
+                'message': f'✅ {applicant.full_name} CERTIFIED as danger zone. Added to Priority Queue (Position {queue_entry.position}).',
+                'decision': decision,
+                'queue_position': queue_entry.position,
+            })
+
+        applicant.status = 'disqualified'
+        applicant.save()
+        if applicant.phone_number:
+            sms_msg = sms_workflow.message_cdrrmo_not_certified(applicant)
+            send_sms(applicant.phone_number, sms_msg, sms_workflow.CDRRMO_NOT_CERTIFIED, applicant=applicant)
+        return JsonResponse({
+            'success': True,
+            'message': f'❌ {applicant.full_name} NOT CERTIFIED. Applicant disqualified.',
+            'decision': decision
+        })
+
+    except Applicant.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Applicant not found'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': f'Error updating CDRRMO certification: {str(e)}'})
+
+
+@login_required
+@verify_position
+@require_POST
+def field_verify_cdrrmo(request, position):
+    """
+    Module 2 endpoint for Ronda/Field on-site verification findings.
+    """
+    if request.user.position not in ['ronda', 'field']:
+        return JsonResponse({'success': False, 'error': 'Permission denied. Only field personnel can verify.'}, status=403)
+
+    try:
+        applicant_id = request.POST.get('applicant_id')
+        verification_decision = request.POST.get('verification_decision')  # certified / not_certified
+        verification_notes = request.POST.get('verification_notes', '').strip()
+
+        if not applicant_id or not verification_decision:
+            return JsonResponse({'success': False, 'error': 'Missing applicant_id or verification_decision'})
+        if verification_decision not in ['certified', 'not_certified']:
+            return JsonResponse({'success': False, 'error': 'Invalid decision. Must be "certified" or "not_certified"'})
+
+        applicant = Applicant.objects.get(id=applicant_id)
+        if not hasattr(applicant, 'cdrrmo_certification'):
+            return JsonResponse({'success': False, 'error': 'This applicant is not awaiting CDRRMO verification'})
+
+        cert = applicant.cdrrmo_certification
+        if cert.status != 'pending':
+            return JsonResponse({
+                'success': False,
+                'error': (
+                    'A CDRRMO disposition is already on file (for example, official certification received at THA intake). '
+                    'Field verification cannot overwrite it.'
+                ),
+            })
+
+        cert.status = verification_decision
+        cert.certified_at = timezone.now()
+        cert.result_recorded_by = request.user
+        cert.disposition_source = 'field_unit'
+        cert.office_intake_notes = ''
+        cert.certification_notes = verification_notes if verification_notes else ''
+        cert.save()
+
+        if not applicant.module2_handoff_at:
+            applicant.module2_handoff_at = timezone.now()
+            applicant.module2_handoff_by = request.user
+            applicant.save(update_fields=['module2_handoff_at', 'module2_handoff_by', 'updated_at'])
+
+        photos = request.FILES.getlist('evidence_photos')
+        max_photos = 12
+        max_bytes = 6 * 1024 * 1024
+        allowed_types = {'image/jpeg', 'image/png', 'image/webp'}
+        photos_saved = 0
+        for upload in photos[:max_photos]:
+            if upload.size > max_bytes:
+                continue
+            ct = (upload.content_type or '').lower()
+            name = (upload.name or '').lower()
+            if ct not in allowed_types and not name.endswith(('.jpg', '.jpeg', '.png', '.webp')):
+                continue
+            FieldVerificationPhoto.objects.create(
+                certification=cert,
+                image=upload,
+                uploaded_by=request.user,
+            )
+            photos_saved += 1
+
+        sms_dispatched = None
+        if applicant.phone_number:
+            if verification_decision == 'certified':
+                sms_body = sms_workflow.message_field_inspection_sustained(applicant)
+                sms_ev = sms_workflow.FIELD_VERIFICATION_CERTIFIED
+            else:
+                sms_body = sms_workflow.message_field_inspection_not_sustained(applicant)
+                sms_ev = sms_workflow.FIELD_VERIFICATION_NOT_CERTIFIED
+            sms_dispatched = send_sms(applicant.phone_number, sms_body, sms_ev, applicant=applicant)
+
+        return JsonResponse({
+            'success': True,
+            'message': f'Verification recorded as {"✓ Certified" if verification_decision == "certified" else "✗ Not Certified"}',
+            'certification_status': verification_decision,
+            'recorded_by': f'{request.user.first_name} {request.user.last_name}',
+            'recorded_at': timezone.now().isoformat(),
+            'photos_saved': photos_saved,
+            'sms_dispatched': sms_dispatched,
+            'moved_to_module2': True,
+        })
+
+    except Applicant.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Applicant not found'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': f'Error recording verification: {str(e)}'})
+
+
+@login_required
+@verify_position
+@require_POST
+def update_cdrrmo_status(request, position):
+    """
+    Module 2 endpoint for staff approval/rejection of field verification findings.
+    """
+    allowed_positions = ['fourth_member', 'second_member']
+    if request.user.position not in allowed_positions:
+        return JsonResponse({'success': False, 'error': 'Permission denied. Only Jocel or Joie can approve CDRRMO.'}, status=403)
+
+    try:
+        applicant_id = request.POST.get('applicant_id')
+        decision = request.POST.get('decision')  # approved / rejected
+        if not applicant_id or not decision:
+            return JsonResponse({'success': False, 'error': 'Missing applicant_id or decision'})
+        if decision not in ['approved', 'rejected']:
+            return JsonResponse({'success': False, 'error': 'Invalid decision. Must be "approved" or "rejected"'})
+
+        applicant = Applicant.objects.get(id=applicant_id)
+        if not hasattr(applicant, 'cdrrmo_certification'):
+            return JsonResponse({'success': False, 'error': 'This applicant does not have CDRRMO record'})
+
+        cert = applicant.cdrrmo_certification
+        if cert.status == 'pending':
+            return JsonResponse({'success': False, 'error': 'Ronda team has not yet submitted verification'})
+        if cert.disposition_source == 'office_intake':
+            return JsonResponse({
+                'success': False,
+                'error': (
+                    'This record was finalized from official CDRRMO paperwork filed at THA intake. '
+                    'There is no separate field report to accept or reject.'
+                ),
+            })
+
+        ronda_finding = cert.status
+        if decision == 'approved':
+            applicant.eligibility_checked_by = request.user
+            applicant.eligibility_checked_at = timezone.now()
+            if ronda_finding == 'certified':
+                applicant.status = 'eligible'
+                queue_entry, _ = ensure_priority_queue_entry(applicant, added_by=request.user)
+                queue_type = 'Priority'
+                msg_outcome = 'moved to Priority Queue'
+            else:
+                applicant.status = 'eligible'
+                queue_entry, _ = ensure_priority_queue_entry(applicant, added_by=request.user)
+                queue_type = 'Priority'
+                msg_outcome = 'marked eligible and added to queue'
+
+            applicant.save()
+            cert.save()
+            if applicant.phone_number:
+                eligible_msg = (
+                    "✅ Great news! Your housing application passed eligibility. "
+                    f"You are assigned Priority Queue Position {queue_entry.position}. "
+                    f"Reference: {applicant.reference_number}. Please visit THA office for next steps."
+                )
+                send_sms(applicant.phone_number, eligible_msg, 'eligibility_passed', applicant=applicant)
+
+            return JsonResponse({
+                'success': True,
+                'message': f'CDRRMO approval confirmed! Applicant {msg_outcome}.',
+                'status': 'approved',
+                'queue_type': queue_type
+            })
+
+        applicant.status = 'disqualified'
+        applicant.disqualification_reason = (
+            f'CDRRMO verification disputed by staff. Ronda finding: {ronda_finding}. '
+            'Staff assessment: insufficient grounds for acceptance.'
+        )
+        applicant.eligibility_checked_by = request.user
+        applicant.eligibility_checked_at = timezone.now()
+        applicant.save()
+        QueueEntry.objects.filter(applicant=applicant).delete()
+        cert.save()
+        if applicant.phone_number:
+            reject_msg = (
+                "❌ Unfortunately, your housing application could not be processed at this time. "
+                f"Reason: Danger zone verification could not be confirmed. Reference: {applicant.reference_number}. "
+                "Please visit THA office for appeals."
+            )
+            send_sms(applicant.phone_number, reject_msg, 'eligibility_fail', applicant=applicant)
+
+        return JsonResponse({
+            'success': True,
+            'message': 'CDRRMO verification rejected. Applicant has been disqualified.',
+            'status': 'rejected'
+        })
+
+    except Applicant.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Applicant not found'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': f'Error processing approval: {str(e)}'})
 
 
 @login_required
@@ -885,11 +1210,9 @@ def generate_form(request, position, applicant_id):
     
     # Send SMS notification
     if applicant.phone_number:
-        message = (
-            f"Your housing application form {application.application_number} has been generated. "
-            f"Please visit THA office to review and sign. Reference: {applicant.reference_number}"
-        )
-        send_sms(applicant.phone_number, message, 'form_generated', applicant=applicant)
+        from intake import sms_workflow
+        message = sms_workflow.message_proceed_to_evaluation(applicant)
+        send_sms(applicant.phone_number, message, sms_workflow.PROCEED_TO_EVALUATION, applicant=applicant)
     
     return JsonResponse({
         'success': True,

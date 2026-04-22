@@ -12,9 +12,13 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 import os
 from pathlib import Path
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load environment variables from .env file
+load_dotenv(BASE_DIR / '.env')
 
 
 def _env_bool(key: str, default: bool = False) -> bool:
@@ -157,29 +161,21 @@ LOGIN_REDIRECT_URL = 'accounts:dashboard'
 LOGOUT_REDIRECT_URL = 'accounts:dashboard'
 
 # =============================================================================
-# SMS — gateway selection (see intake/utils.send_sms and intake/sms_workflow.py)
+# SMS — IPROG Gateway Configuration (Affordable P1/SMS)
 # =============================================================================
-# SMS_SERVICE:
-#   - console   → no external API; writes SMSLog + prints (best for local dev / until Twilio is subscribed)
-#   - twilio    → requires TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_MESSAGING_SERVICE_SID
-#   - httpsms   → requires HTTPSMS_API_KEY
-#   - semaphore → requires SEMAPHORE_API_KEY
+# SMS_SERVICE: iprog (IPROG SMS - Perfect for student capstone projects)
 #
-# Set credentials via environment variables (recommended) or replace the os.environ.get defaults below.
+# Set credentials via environment variables.
 
 SMS_ENABLED = _env_bool('SMS_ENABLED', default=True)
 SMS_SERVICE = os.environ.get('SMS_SERVICE', 'console').strip().lower()
 
-HTTPSMS_API_KEY = os.environ.get('HTTPSMS_API_KEY', '')
-HTTPSMS_API_URL = os.environ.get('HTTPSMS_API_URL', 'https://api.httpsms.com')
+# IPROG SMS Configuration (Affordable - P1/SMS, perfect for student projects)
+IPROG_API_TOKEN = os.environ.get('IPROG_API_TOKEN', '')
+IPROG_SENDER_NAME = os.environ.get('IPROG_SENDER_NAME', 'IPROG SMS')
 
-TWILIO_ACCOUNT_SID = os.environ.get('TWILIO_ACCOUNT_SID', '')
-TWILIO_AUTH_TOKEN = os.environ.get('TWILIO_AUTH_TOKEN', '')
-TWILIO_PHONE_NUMBER = os.environ.get('TWILIO_PHONE_NUMBER', '')
-TWILIO_MESSAGING_SERVICE_SID = os.environ.get('TWILIO_MESSAGING_SERVICE_SID', '')
 
-SEMAPHORE_API_KEY = os.environ.get('SEMAPHORE_API_KEY', '')
-SEMAPHORE_SENDER_NAME = os.environ.get('SEMAPHORE_SENDER_NAME', 'THA')
+
 
 # =============================================================================
 # Jazzmin Admin Configuration

@@ -4863,7 +4863,7 @@
         formData.append('decision', 'approved');
         formData.append('staff_notes', staffNotes);
 
-        fetch('{% url "intake:update_cdrrmo_status" request.user.position %}', {
+        fetch('{% url "applications:update_cdrrmo_status" request.user.position %}', {
             method: 'POST',
             headers: {
                 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
@@ -4903,7 +4903,7 @@
         formData.append('decision', 'rejected');
         formData.append('staff_notes', staffNotes);
 
-        fetch('{% url "intake:update_cdrrmo_status" request.user.position %}', {
+        fetch('{% url "applications:update_cdrrmo_status" request.user.position %}', {
             method: 'POST',
             headers: {
                 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
@@ -5097,7 +5097,7 @@
         formData.append('office_receipt', '1');
         formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
 
-        fetch('{% url "intake:update_cdrrmo_certification" request.user.position %}', {
+        fetch('{% url "applications:update_cdrrmo_certification" request.user.position %}', {
             method: 'POST',
             body: formData,
         })

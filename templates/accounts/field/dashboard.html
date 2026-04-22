@@ -950,13 +950,13 @@
 <div class="dashboard-container" data-user-position="{{ request.user.position }}">
     <!-- Header -->
     <div class="nav-breadcrumb">
-        <a href="{% url 'accounts:dashboard' %}">Dashboard</a> / Field verification (Module 1)
+        <a href="{% url 'accounts:dashboard' %}">Dashboard</a> / Field verification (post-Module 2 handoff)
     </div>
 
     <div class="dashboard-header">
         <div>
             <h1>Field verification desk</h1>
-            <p>Talisay City Housing Authority — Module 1, Channel B (hazard-area / walk-in pathway)</p>
+            <p>Talisay City Housing Authority — Module 2 handoff stage, Channel B (hazard-area / walk-in pathway)</p>
         </div>
         <div class="dashboard-header-actions">
             <button onclick="printVerificationSheet()" class="btn-action" title="Print pending applicants list">
@@ -1128,7 +1128,7 @@
                 <div style="padding: 18px; background: linear-gradient(135deg, #fffbeb 0%, #ffffff 100%); border-radius: 10px; border-left: 4px solid #f59e0b; border: 1px solid #fef3c7; transition: all 0.3s ease;">
                     <strong style="color: #92400e; font-size: 15px; display: block; margin-bottom: 8px;">Step 3 — Lodge certification</strong>
                     <p style="font-size: 13px; color: #b45309; margin: 0; line-height: 1.5;">
-                        Use <strong>Open verification</strong> on the queue row, complete the certification form, attach evidence, and submit. Intake staff receive the record for supervisory review.
+                        Use <strong>Open verification</strong> on the queue row, complete the certification form, attach evidence, and submit. Module 2 staff receive the record for supervisory review.
                     </p>
                 </div>
             </div>
@@ -1461,7 +1461,7 @@
             const dash = document.querySelector('.dashboard-container');
             const currentPosition = (dash && dash.dataset.userPosition) ? dash.dataset.userPosition : 'field';
 
-            fetch(`/intake/staff/${currentPosition}/field-verify-cdrrmo/`, {
+            fetch(`/applications/staff/${currentPosition}/field-verify-cdrrmo/`, {
                 method: 'POST',
                 headers: {
                     'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
@@ -1633,7 +1633,7 @@
                     <div class="tha-field-modal-crest" aria-hidden="true">THA</div>
                     <div>
                         <h2 id="verificationModalTitle">Hazard-area field certification</h2>
-                        <p>Module 1 — Talisay City Housing Authority / City DRRMO coordination</p>
+                        <p>Post-Module 2 handoff — Talisay City Housing Authority / City DRRMO coordination</p>
                     </div>
                 </div>
             </div>

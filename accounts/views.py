@@ -1154,24 +1154,27 @@ def dashboard_caretaker(request):
 def dashboard_field(request):
     """
     Dashboard for Field Personnel (Ronda - Paul Betila, Roberto Dreyfus, Nonoy)
-    Responsibilities: Module 1 - Channel B Danger Zone Field Verification
+    Responsibilities: Post-Module 2 handoff - Channel B danger-zone field verification
     """
     if request.user.position not in ['ronda', 'field']:
         messages.error(request, 'Access denied. This dashboard is for Field Personnel only.')
         return redirect('accounts:dashboard')
 
-    # ==================== MODULE 1: CHANNEL B FIELD VERIFICATION ====================
-    # Only pending danger zone verifications that are income eligible
+    # ==================== MODULE 2 HANDOFF: CHANNEL B FIELD VERIFICATION ====================
+    # Only pending danger zone verifications after intake staff proceeds the
+    # record to Module 2 (Application & Evaluation).
     # Filter:
     # 1. CDRRMOCertification status='pending' (needs field verification)
     # 2. Applicant claimed danger zone (danger_zone_type is not empty)
     # 3. Applicant is income eligible (monthly_income <= 10,000)
-    # 4. Applicant status is eligible or pending_cdrrmo (already cleared eligibility check)
+    # 4. Applicant was handed off to Module 2 by staff
+    # 5. Applicant is in pending_cdrrmo stage
     pending_certifications = CDRRMOCertification.objects.filter(
         status='pending',
         applicant__danger_zone_type__isnull=False,  # Claimed danger zone
         applicant__monthly_income__lte=10000,  # Income eligible
-        applicant__status__in=['eligible', 'pending_cdrrmo', 'requirements']  # Passed eligibility
+        applicant__module2_handoff_at__isnull=False,  # Staff clicked Proceed to Module 2
+        applicant__status='pending_cdrrmo',
     ).exclude(
         applicant__danger_zone_type=''  # Empty string means not claimed
     ).select_related(

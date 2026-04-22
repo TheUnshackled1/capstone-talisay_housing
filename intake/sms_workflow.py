@@ -7,26 +7,32 @@ When SMS_SERVICE=console, messages are still written to SMSLog and logged — no
 
 # --- trigger_event values (keep ≤ 50 chars; indexed in SMSLog) ---
 REGISTRATION = 'registration'
+PROCEED_TO_EVALUATION = 'proceed_evaluation'
 
 
 def message_registration(applicant) -> str:
     """
-    SMS after successful Module 1 office encoding (steps 4–7).
-    Confirms save + reference; tells applicant staff are reviewing the record now.
+    SMS sent immediately after Module 1 registration (office encoding).
+    Confirms reference number and staff member who registered.
+    All screening happens in Module 2 — no eligibility info here.
+    Single SMS message (fits in 160 chars) - no message splitting.
     """
     ref = applicant.reference_number
-    base = (
-        f'THA: Your registration has been saved. Reference: {ref}. '
-        f'THA staff are reviewing your record at this time. '
-        f'Please keep this reference for all THA transactions.'
-    )
-    if applicant.status == 'pending_cdrrmo' and applicant.danger_zone_type:
-        base += (
-            ' A hazard-area claim is on file pending CDRRMO verification (office process).'
-            ' You will be advised of next steps.'
-        )
-    else:
-        base += ' You will be contacted or may follow up at the office when advised.'
+    staff_name = applicant.registered_by.get_full_name() if applicant.registered_by else 'THA'
+    # Keep under 160 chars to send as single SMS (not split into 2)
+    base = f'THA {ref} registered by {staff_name}. Keep this reference for transactions.'
+    return base
+
+
+def message_proceed_to_evaluation(applicant) -> str:
+    """
+    SMS sent when staff clicks "Proceed to Application & Evaluation" in Module 2.
+    Confirms applicant's registration has proceeded to evaluation stage.
+    Single SMS message (fits in 160 chars) - no message splitting.
+    """
+    ref = applicant.reference_number
+    # Keep under 160 chars to send as single SMS (not split into 2)
+    base = f'THA {ref}: Your registration has proceeded to application verification & evaluation. We will notify you of updates.'
     return base
 
 
