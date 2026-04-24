@@ -279,7 +279,7 @@ class SMSLog(models.Model):
 class CDRRMOCertificationProxy(models.Model):
     """
     Applications-app view of CDRRMO certification records.
-    Uses the same underlying intake table via unmanaged mapping.
+    Uses the same underlying applications table via unmanaged mapping.
     """
     id = models.UUIDField(primary_key=True, editable=False)
     applicant = models.OneToOneField(
@@ -298,7 +298,7 @@ class CDRRMOCertificationProxy(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'intake_cdrrmocertification'
+        db_table = 'applications_cdrrmocertification'
         verbose_name = 'CDRRMO Certification (Module 2 view)'
         verbose_name_plural = 'CDRRMO Certifications (Module 2 view)'
 
@@ -362,4 +362,121 @@ class QueueEntry(models.Model):
 
     def __str__(self):
         return f"{self.get_queue_type_display()} #{self.position} - {self.applicant.full_name}"
+
+
+class CDRRMOCertification(models.Model):
+    """
+    Tracks CDRRMO danger zone certification for Channel B applicants.
+    CDRRMO physically visits the location and certifies (or not).
+    Moved to applications app for Module 2+ operations.
+    """
+    STATUS_CHOICES = [
+        ('pending', 'Pending CDRRMO verification (claim on file)'),
+        ('certified', 'Certified - Danger Zone'),
+        ('not_certified', 'Not Certified'),
+    ]
+
+    DISPOSITION_SOURCE_CHOICES = [
+        ('pending', 'No disposition recorded'),
+        ('office_intake', 'Official CDRRMO paperwork filed at THA intake'),
+        ('field_unit', 'Field unit / Ronda on-site verification'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    applicant = models.OneToOneField(
+        'intake.Applicant',
+        on_delete=models.CASCADE,
+        related_name='cdrrmo_certification'
+    )
+
+    declared_location = models.TextField(
+        verbose_name="Declared Danger Zone Location",
+        help_text="Riverbank, riverside, flood-prone area, etc."
+    )
+
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    disposition_source = models.CharField(
+        max_length=20,
+        choices=DISPOSITION_SOURCE_CHOICES,
+        default='pending',
+        help_text='Intake-filed CDRRMO documents vs. field/Ronda on-site verification (different workflows).',
+    )
+
+    # Coordination tracking
+    requested_at = models.DateTimeField(auto_now_add=True)
+    requested_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='cdrrmo_requests'
+    )
+
+    # Result tracking
+    certified_at = models.DateTimeField(null=True, blank=True)
+    result_recorded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='cdrrmo_results_recorded'
+    )
+    certification_notes = models.TextField(
+        blank=True,
+        help_text='Remarks from field / Ronda on-site verification (not intake receiving log).',
+    )
+    office_intake_notes = models.TextField(
+        blank=True,
+        help_text='Receiving log when official CDRRMO certification is filed at THA intake.',
+    )
+
+    class Meta:
+        verbose_name = "CDRRMO Certification"
+        verbose_name_plural = "CDRRMO Certifications"
+
+    def __str__(self):
+        return f"CDRRMO Cert - {self.applicant.full_name} ({self.get_status_display()})"
+
+    @property
+    def days_pending(self):
+        """Calculate days since certification was requested."""
+        if self.status == 'pending':
+            from django.utils import timezone
+            return (timezone.now() - self.requested_at).days
+        return 0
+
+    @property
+    def is_overdue(self):
+        """Flag if pending > 14 days (per office policy)."""
+        return self.days_pending > 14
+
+
+class FieldVerificationPhoto(models.Model):
+    """
+    On-site photos taken by field/ronda staff as evidence for danger-zone verification.
+    Stored when submitting field verification (Module 1, Channel B).
+    Moved to applications app for Module 2+ operations.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    certification = models.ForeignKey(
+        CDRRMOCertification,
+        on_delete=models.CASCADE,
+        related_name='field_photos',
+    )
+    image = models.ImageField(upload_to='field_verification/%Y/%m/')
+    caption = models.CharField(max_length=200, blank=True)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    uploaded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='field_verification_photos',
+    )
+
+    class Meta:
+        ordering = ['-uploaded_at']
+        verbose_name = 'Field verification photo'
+        verbose_name_plural = 'Field verification photos'
+
+    def __str__(self):
+        return f'Photo for {self.certification.applicant.reference_number}'
 

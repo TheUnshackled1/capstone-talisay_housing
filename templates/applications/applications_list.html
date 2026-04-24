@@ -683,6 +683,33 @@
     border-top: 1px solid #e2e8f0;
     padding-top: 1rem;
 }
+.m2-cdrrmo-receipt-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 180px;
+    padding: 0.65rem 1.25rem;
+    border: none;
+    border-radius: 6px;
+    background: #2563eb;
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+.m2-cdrrmo-receipt-btn:hover {
+    background: #1d4ed8;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+.m2-cdrrmo-receipt-btn.walkin {
+    background: #0f766e;
+}
+.m2-cdrrmo-receipt-btn.walkin:hover {
+    background: #115e59;
+}
 .m2-layer1-done-strip { text-align: center; padding: 0.5rem 0.65rem; border-radius: 8px; background: #ecfdf5; border: 1px solid #a7f3d0; color: #166534; font-size: 0.72rem; font-weight: 600; }
 .m2-blocked-user-msg { margin-top: 0.6rem; padding: 0.65rem; border-radius: 8px; background: #fef2f2; border: 1px solid #fecaca; color: #7f1d1d; font-size: 0.74rem; font-weight: 600; line-height: 1.5; text-align: center; }
 .m2-tech-detail { margin-top: 0.4rem; font-size: 0.65rem; color: #9a3412; font-weight: 500; line-height: 1.4; }
@@ -1722,20 +1749,71 @@
                 <div class="m2-eval28-head">
                     <div class="m2-eval28-kicker">Layer 4 — Final approval marker</div>
                     <div class="m2-eval28-title">2.8 Record Evaluation Approval Status</div>
-                    <div class="m2-eval28-subtitle">Records the evaluation approval/review marker for Module 2 only. This does not alter Module 3 routing workflow.</div>
+                    <div class="m2-eval28-subtitle">THA Staff records the evaluation-related approval or review status required at this stage. This refers only to the evaluation result and not yet to the full routing chain that happens later in Module 3.</div>
                 </div>
                 <div class="m2-eval28-body">
                     <div id="modalEvaluationApprovalSummary"></div>
                     <div id="modalEvaluationApprovalForm" class="m2-eval28-form">
-                        <label>Approval / review status</label>
-                        <select id="modalEvaluationApprovalStatus" class="m2-dq-select">
-                            <option value="">Select status...</option>
-                            <option value="approved">Approved</option>
-                            <option value="for_review">For Review</option>
-                        </select>
-                        <label style="margin-top:0.5rem;">Notes (optional)</label>
-                        <textarea id="modalEvaluationApprovalNotes" class="m2-dq-notes" rows="2" placeholder="2.8 remarks (evaluation only; not Module 3 routing)..."></textarea>
-                        <button type="button" class="m2-eval28-save-btn" onclick="recordEvaluationApprovalStatus()">Done — Save 2.8 status</button>
+                        <!-- Approval Status Options -->
+                        <div style="margin-bottom: 1.2rem; display: flex; gap: 0.75rem; flex-direction: column;">
+                            <!-- Approve Button -->
+                            <button type="button" class="m2-eval28-approve-btn" onclick="setEvaluationApprovalStatus('approved')" style="display:flex;align-items:center;gap:0.75rem;padding:0.9rem;background:#ecfdf5;border:2px solid #86efac;border-radius:8px;cursor:pointer;transition:all 0.2s;font-weight:600;">
+                                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#22c55e" stroke-width="2">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                                <div style="text-align:left;">
+                                    <div style="color:#16a34a;font-size:0.95rem;">✓ Approve - Qualified</div>
+                                    <div style="color:#6b7280;font-size:0.75rem;margin-top:0.1rem;">Record applicant as approved and eligible</div>
+                                </div>
+                            </button>
+
+                            <!-- Disqualify Button -->
+                            <button type="button" class="m2-eval28-disqualify-btn" onclick="setEvaluationApprovalStatus('disqualified')" style="display:flex;align-items:center;gap:0.75rem;padding:0.9rem;background:#fef2f2;border:2px solid #fca5a5;border-radius:8px;cursor:pointer;transition:all 0.2s;font-weight:600;">
+                                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#ef4444" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="15" y1="9" x2="9" y2="15"></line>
+                                    <line x1="9" y1="9" x2="15" y2="15"></line>
+                                </svg>
+                                <div style="text-align:left;">
+                                    <div style="color:#dc2626;font-size:0.95rem;">✗ Disqualify</div>
+                                    <div style="color:#6b7280;font-size:0.75rem;margin-top:0.1rem;">Record disqualification with reason</div>
+                                </div>
+                            </button>
+                        </div>
+
+                        <!-- Disqualification Reason (Hidden by default) -->
+                        <div id="modalDisqualifySection" style="display:none;margin-bottom:1rem;padding:1rem;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;">
+                            <label style="display:block;margin-bottom:0.5rem;font-weight:600;color:#dc2626;">Disqualification Reason *</label>
+                            <select id="modalDisqualifyReasonSelect" style="width:100%;padding:0.625rem;border:1px solid #fca5a5;border-radius:6px;margin-bottom:0.75rem;font-size:0.875rem;">
+                                <option value="">Select reason...</option>
+                                <option value="property_owner">Owns property in Talisay</option>
+                                <option value="income_over_ceiling">Income exceeds ceiling</option>
+                                <option value="blacklisted">On blacklist</option>
+                                <option value="household_mismatch">Household member mismatch</option>
+                                <option value="incomplete_documents">Incomplete documents</option>
+                                <option value="other">Other reason</option>
+                            </select>
+                            <label style="display:block;margin-bottom:0.3rem;font-weight:600;color:#374151;font-size:0.875rem;">Additional Notes</label>
+                            <textarea id="modalDisqualifyNotes" class="m2-dq-notes" rows="2" placeholder="Explain the disqualification reason..." style="width: 100%; box-sizing: border-box; padding: 0.625rem; border: 1px solid #fca5a5; border-radius: 0.5rem; font-size: 0.875rem; font-family: inherit; resize: vertical;"></textarea>
+                        </div>
+
+                        <!-- Approval Notes -->
+                        <label style="margin-bottom:0.3rem;display:block;font-weight:600;color:#374151;font-size:0.875rem;">Evaluation Notes (optional)</label>
+                        <textarea id="modalEvaluationApprovalNotes" class="m2-dq-notes" rows="2" placeholder="2.8 remarks (evaluation only; not Module 3 routing)..." style="width: 100%; box-sizing: border-box; padding: 0.625rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.875rem; font-family: inherit; resize: vertical; margin-bottom: 1rem;"></textarea>
+
+                        <!-- Action Buttons -->
+                        <div style="display:flex;gap:0.75rem;">
+                            <button type="button" class="m2-eval28-save-btn" onclick="recordEvaluationApprovalStatus()" style="flex:1;padding:0.75rem 1rem;background:#2563eb;color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;transition:all 0.2s;">Confirm & Save 2.8 Status</button>
+                            <button type="button" onclick="m2BackToLayer3Step()" style="padding:0.75rem 1rem;background:#f3f4f6;color:#374151;border:1px solid #d1d5db;border-radius:8px;font-weight:500;cursor:pointer;transition:all 0.2s;">Back</button>
+                        </div>
+                        <div id="modalEval28Gateway" style="display:none;margin-top:0.85rem;padding-top:0.75rem;border-top:1px solid #e2e8f0;">
+                            <div style="font-size:0.7rem;color:#475569;margin-bottom:0.45rem;">
+                                Pipeline gateway to Module 3 routing after 2.8 is finalized.
+                            </div>
+                            <button type="button" id="modalProceedModule3Btn" class="m2-proceed-btn" style="min-width:220px;" onclick="proceedToModule3Gateway()">
+                                Proceed to Module 3
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -2002,10 +2080,40 @@
         }
     }
 
-    function m2OpenEvaluationApprovalStep() {
-        window.__m2AllowEval28 = true;
-        renderEvaluationApproval(window.__m2LastApplicantData || {});
+    function m2BackToLayer3Step() {
+        const l3 = document.getElementById('m2Layer3Block');
+        const l3Done = document.getElementById('m2Layer3Done');
         const box = document.getElementById('modalEvaluationApprovalBox');
+        if (box) box.style.display = 'none';
+        if (l3Done) l3Done.style.display = 'none';
+        if (l3) {
+            l3.style.display = 'block';
+            l3.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }
+
+    async function m2OpenEvaluationApprovalStep() {
+        window.__m2AllowEval28 = true;
+        const l3 = document.getElementById('m2Layer3Block');
+        const l3Done = document.getElementById('m2Layer3Done');
+        if (l3) l3.style.display = 'none';
+        if (l3Done) l3Done.style.display = 'block';
+        const gate = document.getElementById('modalWorkflowGates');
+        const box = document.getElementById('modalEvaluationApprovalBox');
+        if (gate && box) {
+            gate.appendChild(box);
+            box.style.display = 'block';
+        }
+        if (currentApplicantId) {
+            try {
+                const response = await fetch(`/applications/staff/${position}/${currentApplicantId}/`);
+                const latest = await response.json();
+                window.__m2LastApplicantData = latest;
+            } catch (error) {
+                // Keep rendering with the last known payload if refresh fails.
+            }
+        }
+        renderEvaluationApproval(window.__m2LastApplicantData || {});
         if (box) box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
@@ -2111,22 +2219,25 @@
         const policy26 =
             "If the applicant's Module 1 record contains a danger-zone claim, THA Staff updates the CDRRMO certification status in Module 2 after receiving and checking the physical certification. This certification serves as an official basis for confirming the applicant's danger-zone status. Once verified, the system uses this status as part of eligibility checking and queue classification. Applicants with verified CDRRMO certification may be classified under the priority category, while applicants whose danger-zone claim remains unverified continue under regular evaluation rules.";
         const requiresCdrrmo = !!(data.m2_rules && data.m2_rules.requires_cdrrmo);
+        const hazardClaimBadge = requiresCdrrmo
+            ? `<span style="display:inline-flex;align-items:center;padding:.3rem .72rem;border-radius:9999px;border:1px solid #86efac;background:#dcfce7;color:#166534;font-size:.72rem;font-weight:700;box-shadow:0 1px 2px rgba(22,101,52,.15);">Hazard claim: Yes (2.6 required)</span>`
+            : `<span style="display:inline-flex;align-items:center;padding:.3rem .72rem;border-radius:9999px;border:1px solid #93c5fd;background:#dbeafe;color:#1d4ed8;font-size:.72rem;font-weight:700;box-shadow:0 1px 2px rgba(29,78,216,.15);">Hazard claim: No (2.6 skipped)</span>`;
         const cdrrmoStatus = data.cdrrmo && data.cdrrmo.status ? data.cdrrmo.status : '';
         const cdrrmoReadout = cdrrmoStatus === 'certified'
-            ? 'CDRRMO certification is recorded as Certified. Danger-zone status can be treated as officially verified; priority may be available when all other requirements allow.'
+            ? 'Danger-zone status is officially verified. Applicant provided a valid CDRRMO certification; priority may be available when all other requirements allow.'
             : (cdrrmoStatus === 'not_certified'
-                ? 'CDRRMO certification is not certified. Applicant follows regular walk-in path.'
-                : 'CDRRMO certification is still pending or not yet on file. Record official CDRRMO result in Module 2.');
+                ? 'Danger-zone claim remains unverified. Valid CDRRMO certification was not provided. Applicant follows regular walk-in path.'
+                : 'CDRRMO certification is still pending or not yet on file. Record official CDRRMO certification result in Module 2.');
 
         const l3Action = (canVerifyDocs && requiresCdrrmo && (!cdrrmoStatus || cdrrmoStatus === 'pending'))
             ? `<div style="margin-top:0.55rem;padding:0.55rem;border:1px solid #bfdbfe;border-radius:8px;background:#eff6ff;">
                 <div style="font-size:0.7rem;font-weight:700;color:#1e3a8a;">Staff action</div>
-                <label style="display:block;font-size:0.69rem;font-weight:600;color:#334155;margin-top:.3rem;">Receiving remarks (optional)</label>
-                <textarea id="modalLayer3CdrrmoNotes" class="m2-cdrrmo-office-notes" rows="2" placeholder="Notes while recording CDRRMO result in Layer 3..."></textarea>
+                <label style="display:block;font-size:0.69rem;font-weight:600;color:#334155;margin-top:.3rem;margin-bottom:.3rem;">Receiving remarks (optional)</label>
+                <textarea id="modalLayer3CdrrmoNotes" class="m2-cdrrmo-office-notes" rows="2" placeholder="Notes while recording CDRRMO result in Layer 3..." style="width: 100%; box-sizing: border-box; padding: 0.625rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.875rem; font-family: inherit; resize: vertical;"></textarea>
                 <div class="m2-layer-footer-nav" style="border-top: none; padding-top: 0; margin-top: 0.65rem;">
                     <button type="button" class="m2-back-btn" onclick="m2BackToLayer2Step()">Back</button>
                     <button type="button" class="m2-cdrrmo-receipt-btn" onclick="recordOfficeCdrrmoReceipt('certified')">Mark as Certified (CDRRMO)</button>
-                    <button type="button" class="m2-cdrrmo-receipt-btn" style="background:#0f766e;" onclick="recordOfficeCdrrmoReceipt('not_certified')">Proceed Without Certification (Walk-in Path)</button>
+                    <button type="button" class="m2-cdrrmo-receipt-btn walkin" onclick="recordOfficeCdrrmoReceipt('not_certified')">Proceed Without Certification (Walk-in Path)</button>
                 </div>
             </div>`
             : `<div class="m2-layer-footer-nav">
@@ -2157,6 +2268,7 @@
             itemStacked(l2Tone24, l2Icon24, '2.3 Check Income Details', incDesc, escapeHtml(policy24)) +
             itemStacked(l2Tone25, l2Icon25, '2.4 Check Household Composition', hhDesc, escapeHtml(policy25)) +
             `</div>` +
+            `<div style="display:flex;justify-content:center;margin:1.2rem 0 0.8rem;padding:0.8rem;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;">${hazardClaimBadge}</div>` +
             `<div class="m2-layer-footer-nav">` +
             `<button type="button" class="m2-back-btn" onclick="m2BackToLayer1Step()">Back</button>` +
             `<button type="button" id="modalToggleM1FormBtn" class="m2-show-form-btn" onclick="toggleModule1FormEvidence()">Show form</button>` +
@@ -2169,30 +2281,42 @@
             (requiresCdrrmo
                 ? `<div id="m2Layer3Block" class="m2-layer3-block" style="display:none;">` +
                   `<div class="m2-layer-eyebrow">Layer 3 — Official verification</div>` +
-                  `<div class="m2-layer-title">2.6 Check CDRRMO Certification Status</div>` +
-                  `<div class="m2-policy-note">${escapeHtml(policy26)}</div>` +
-                  `<div class="m2-checklist">` +
-                  item('pass', '✓', '2.6 CDRRMO status', cdrrmoReadout) +
-                  `</div>` +
-                  `<div style="margin-top:0.4rem;padding:0.55rem;border:1px dashed #cbd5e1;border-radius:8px;background:#f8fafc;font-size:0.71rem;line-height:1.5;color:#334155;">` +
-                  `<strong>Technical rule evaluation (2.6)</strong><br>` +
-                  `Input: channel=${escapeHtml(data.channel || '—')}, requires_cdrrmo=${requiresCdrrmo ? 'true' : 'false'}, cdrrmo_status=${escapeHtml(cdrrmoStatus || 'none')}<br>` +
-                  `Rule: if requires_cdrrmo and cdrrmo_status is pending, hold final eligibility; once finalized, certified unlocks priority while not-certified keeps walk-in path only.<br>` +
-                  `System decision: ${(cdrrmoStatus === 'certified' ? 'VERIFIED' : (cdrrmoStatus === 'not_certified' ? 'NOT VERIFIED' : 'PENDING'))}<br>` +
-                  `Queue effect: ${(cdrrmoStatus === 'certified' ? 'Priority and Walk-in are allowed (priority recommended).' : (cdrrmoStatus === 'not_certified' ? 'Walk-in only; priority remains blocked.' : 'Queue assignment is blocked until CDRRMO status is finalized by staff.'))}` +
+                  `<div class="m2-layer-title" style="margin-bottom:0.75rem;">2.6 Check CDRRMO Certification Status</div>` +
+                  `<div style="display:flex;flex-direction:column;align-items:center;text-align:center;gap:0.5rem;border:1px solid ` + (cdrrmoStatus === 'certified' ? '#bbf7d0' : (cdrrmoStatus === 'not_certified' ? '#bfdbfe' : '#fde68a')) + `;border-radius:8px;background:` + (cdrrmoStatus === 'certified' ? '#f0fdf4' : (cdrrmoStatus === 'not_certified' ? '#eff6ff' : '#fffbeb')) + `;padding:1rem 0.75rem;margin-bottom:0.8rem;">` +
+                     `<div style="display:flex;align-items:center;justify-content:center;gap:0.5rem;">` +
+                         (cdrrmoStatus === 'certified' 
+                             ? `<span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;background:#16a34a;color:#fff;border-radius:50%;font-size:0.6rem;font-weight:bold;">✓</span> <span style="font-weight:700;color:#16a34a;font-size:0.875rem;">VERIFIED</span>`
+                             : (cdrrmoStatus === 'not_certified'
+                                 ? `<span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;background:#2563eb;color:#fff;border-radius:50%;font-size:0.6rem;font-weight:bold;">✓</span> <span style="font-weight:700;color:#1d4ed8;font-size:0.875rem;">NOT VERIFIED</span>`
+                                 : `<span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;background:#d97706;color:#fff;border-radius:50%;font-size:0.6rem;font-weight:bold;">!</span> <span style="font-weight:700;color:#d97706;font-size:0.875rem;">PENDING REVIEW</span>`)) +
+                     `</div>` +
+                     `<div style="font-size:0.75rem;line-height:1.4;color:#334155;">` +
+                         `${cdrrmoReadout}` +
+                     `</div>` +
+                     `<div style="font-size:0.75rem;color:#475569;margin-top:0.2rem;">` +
+                         `<span style="font-weight:600;">Queue effect:</span> <span style="color:#0f172a;">${(cdrrmoStatus === 'certified' ? 'Priority category is recommended.' : (cdrrmoStatus === 'not_certified' ? 'Walk-in path only.' : 'Queue assignment is blocked until evaluation finalized.'))}</span>` +
+                     `</div>` +
                   `</div>` +
                   l3Action +
-                  `</div>`
+                  `</div>` +
+                  `<div id="m2Layer3Done" class="m2-layer1-done-strip" style="display:none; margin-top:0.4rem;">✓ Layer 3 complete — 2.6 CDRRMO review</div>`
                 : '') +
             `</div>`;
     }
 
     function resetModalState() {
         const cBox = document.getElementById('modalCdrrmoBox');
+        const eval28Box = document.getElementById('modalEvaluationApprovalBox');
+        const modalBody = document.querySelector('.modal-body');
         if (cBox) {
             // Rescue modalCdrrmoBox from being destroyed when modalWorkflowGates is cleared
             document.querySelector('.modal-body').appendChild(cBox);
             cBox.style.display = 'none';
+        }
+        if (eval28Box && modalBody) {
+            // Keep Layer 4 panel anchored to modal body after resets.
+            modalBody.appendChild(eval28Box);
+            eval28Box.style.display = 'none';
         }
         const g = document.getElementById('modalWorkflowGates');
         if (g) {
@@ -2223,6 +2347,8 @@
         const evalApprovalForm = document.getElementById('modalEvaluationApprovalForm');
         const evalApprovalStatus = document.getElementById('modalEvaluationApprovalStatus');
         const evalApprovalNotes = document.getElementById('modalEvaluationApprovalNotes');
+        const evalApprovalGateway = document.getElementById('modalEval28Gateway');
+        const proceedModule3Btn = document.getElementById('modalProceedModule3Btn');
         if (cBox) cBox.style.display = 'none';
         if (cSummary) cSummary.innerHTML = '';
         if (cNotes) {
@@ -2245,6 +2371,11 @@
         if (evalApprovalForm) evalApprovalForm.style.display = 'none';
         if (evalApprovalStatus) evalApprovalStatus.value = '';
         if (evalApprovalNotes) evalApprovalNotes.value = '';
+        if (evalApprovalGateway) evalApprovalGateway.style.display = 'none';
+        if (proceedModule3Btn) {
+            proceedModule3Btn.disabled = false;
+            proceedModule3Btn.textContent = 'Proceed to Module 3';
+        }
         // Reset all checkboxes
         document.querySelectorAll('.document-checkbox').forEach(cb => {
             cb.classList.remove('checked');
@@ -2626,15 +2757,21 @@
         const box = document.getElementById('modalEvaluationApprovalBox');
         const summary = document.getElementById('modalEvaluationApprovalSummary');
         const form = document.getElementById('modalEvaluationApprovalForm');
-        const statusSel = document.getElementById('modalEvaluationApprovalStatus');
         const notesEl = document.getElementById('modalEvaluationApprovalNotes');
-        if (!box || !summary || !form || !statusSel || !notesEl) return;
+        const gatewayWrap = document.getElementById('modalEval28Gateway');
+        const gatewayBtn = document.getElementById('modalProceedModule3Btn');
+        if (!box || !summary || !form || !notesEl) return;
 
         const applicantStatus = data.applicant_status || '';
         const queueLabel = data.intake_queue_label || '—';
-        const hasQueueAssignment = applicantStatus === 'eligible' && queueLabel !== '—';
+        const activeQueueType = data.active_queue_type || '';
+        const hasQueueAssignment = applicantStatus === 'eligible' && (
+            activeQueueType === 'priority' ||
+            activeQueueType === 'walk_in' ||
+            queueLabel !== '—'
+        );
         const canRecord = canVerifyDocs && hasQueueAssignment;
-        if (!window.__m2AllowEval28 || !hasQueueAssignment) {
+        if (!window.__m2AllowEval28) {
             box.style.display = 'none';
             return;
         }
@@ -2648,12 +2785,22 @@
         summary.innerHTML = '';
         if (!canRecord) {
             form.style.display = 'none';
-            summary.innerHTML = `<div style="margin-top:.2rem;padding:.45rem .5rem;border-radius:8px;border:1px solid #fde68a;background:#fffbeb;color:#92400e;font-size:.69rem;line-height:1.45;">2.8 is editable only for authorized staff after queue assignment.</div>`;
+            summary.innerHTML = `<div style="margin-top:.2rem;padding:.45rem .5rem;border-radius:8px;border:1px solid #fde68a;background:#fffbeb;color:#92400e;font-size:.69rem;line-height:1.45;">2.8 will be enabled once Module 2 has finalized the applicant as eligible with an active queue assignment (Priority or Walk-in).</div>`;
+            if (gatewayWrap) gatewayWrap.style.display = 'none';
             return;
         }
         form.style.display = 'block';
-        statusSel.value = currentStatus || '';
         notesEl.value = notes;
+        selectedEvaluationApprovalStatus = currentStatus === 'disqualified' ? 'disqualified' : 'approved';
+        setEvaluationApprovalStatus(selectedEvaluationApprovalStatus);
+
+        const hasRecorded2_8 = !!currentStatus;
+        if (gatewayWrap) gatewayWrap.style.display = hasRecorded2_8 ? 'block' : 'none';
+        if (gatewayBtn) {
+            const hasApplication = !!(data.has_application || window.__hasApplication);
+            gatewayBtn.disabled = !hasRecorded2_8 || hasApplication;
+            gatewayBtn.textContent = hasApplication ? 'Module 3 already initialized' : 'Proceed to Module 3';
+        }
     }
 
     async function loadApplicantRequirements(applicantId) {
@@ -2943,21 +3090,63 @@
         }
     }
 
+    // Store selected evaluation approval status
+    let selectedEvaluationApprovalStatus = 'approved';
+
+    function setEvaluationApprovalStatus(status) {
+        selectedEvaluationApprovalStatus = status;
+        const disqualifySection = document.getElementById('modalDisqualifySection');
+        const approveBtn = document.querySelector('.m2-eval28-approve-btn');
+        const disqualifyBtn = document.querySelector('.m2-eval28-disqualify-btn');
+
+        // Update button styles to show selection
+        if (status === 'approved') {
+            if (approveBtn) approveBtn.style.borderColor = '#22c55e';
+            if (approveBtn) approveBtn.style.background = '#ecfdf5';
+            if (disqualifyBtn) disqualifyBtn.style.borderColor = '#fecaca';
+            if (disqualifyBtn) disqualifyBtn.style.background = '#fef2f2';
+            if (disqualifySection) disqualifySection.style.display = 'none';
+        } else if (status === 'disqualified') {
+            if (approveBtn) approveBtn.style.borderColor = '#e5e7eb';
+            if (approveBtn) approveBtn.style.background = '#f9fafb';
+            if (disqualifyBtn) disqualifyBtn.style.borderColor = '#ef4444';
+            if (disqualifyBtn) disqualifyBtn.style.background = '#fef2f2';
+            if (disqualifySection) disqualifySection.style.display = 'block';
+        }
+    }
+
     async function recordEvaluationApprovalStatus() {
         if (!currentApplicantId || !canVerifyDocs) return;
-        const approvalStatus = document.getElementById('modalEvaluationApprovalStatus')?.value || '';
+
+        const approvalStatus = selectedEvaluationApprovalStatus || 'approved';
         const notes = document.getElementById('modalEvaluationApprovalNotes')?.value || '';
-        if (!approvalStatus) {
-            alert('Select a 2.8 approval/review status first.');
-            return;
+
+        // Validate disqualification reason if disqualifying
+        let disqualifyReason = '';
+        if (approvalStatus === 'disqualified') {
+            disqualifyReason = document.getElementById('modalDisqualifyReasonSelect')?.value || '';
+            const disqualifyNotes = document.getElementById('modalDisqualifyNotes')?.value || '';
+
+            if (!disqualifyReason) {
+                alert('Please select a disqualification reason.');
+                return;
+            }
+
+            const confirmMsg = `Confirm: disqualify this applicant?\n\nReason: ${disqualifyReason}\nNotes: ${disqualifyNotes || '(none)'}`;
+            if (!confirm(confirmMsg)) return;
+        } else {
+            if (!confirm('Confirm: save this 2.8 evaluation approval status as Approved?')) return;
         }
-        if (!confirm('Final confirmation: save this 2.8 evaluation approval status?')) return;
 
         try {
             const formData = new FormData();
             formData.append('applicant_id', currentApplicantId);
             formData.append('approval_status', approvalStatus);
             formData.append('notes', notes);
+            if (approvalStatus === 'disqualified') {
+                formData.append('disqualify_reason', disqualifyReason);
+                formData.append('disqualify_notes', document.getElementById('modalDisqualifyNotes')?.value || '');
+            }
             formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
 
             const response = await fetch('{% url "applications:record_evaluation_approval" request.user.position %}', {
@@ -2989,6 +3178,34 @@
                 `Notes: ${notesLine}\n\n` +
                 `This status is an internal Module 2 evaluation marker and remains separate from the Module 3 routing chain.`
             );
+        } catch (error) {
+            alert('Error: ' + error.message);
+        }
+    }
+
+    async function proceedToModule3Gateway() {
+        if (!currentApplicantId) return;
+        if (window.__hasApplication) {
+            alert('Module 3 is already initialized for this applicant.');
+            return;
+        }
+        const approvalStatus = window.__m2LastApplicantData?.evaluation_approval_status || '';
+        if (!approvalStatus) {
+            alert('Please save the 2.8 evaluation approval status first.');
+            return;
+        }
+        if (!confirm('Proceed to Module 3 and generate the application form?')) return;
+
+        try {
+            const response = await fetch(`/applications/staff/${position}/generate-form/${currentApplicantId}/`);
+            const data = await response.json();
+            if (!data.success) {
+                alert(data.error || 'Failed to proceed to Module 3.');
+                return;
+            }
+            window.__hasApplication = true;
+            alert(`Module 3 gateway completed. Application #${data.application_number} is now initialized.`);
+            setTimeout(() => location.reload(), 350);
         } catch (error) {
             alert('Error: ' + error.message);
         }

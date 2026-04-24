@@ -1,7 +1,7 @@
 from django.contrib import admin
 from .models import (
     Requirement, RequirementSubmission, Application, SignatoryRouting,
-    QueueEntry, SMSLog, CDRRMOCertificationProxy,
+    QueueEntry, SMSLog, CDRRMOCertificationProxy, CDRRMOCertification,
 )
 
 
@@ -123,7 +123,6 @@ class CDRRMOCertificationProxyAdmin(admin.ModelAdmin):
 
     def delete_model(self, request, obj):
         """Override delete to handle cascading deletes through the real model."""
-        from intake.models import CDRRMOCertification
         try:
             # Delete the real object, which will cascade to related photos
             CDRRMOCertification.objects.filter(id=obj.id).delete()
@@ -132,7 +131,6 @@ class CDRRMOCertificationProxyAdmin(admin.ModelAdmin):
 
     def delete_queryset(self, request, queryset):
         """Override bulk delete to handle cascading deletes through the real model."""
-        from intake.models import CDRRMOCertification
         cert_ids = list(queryset.values_list('id', flat=True))
         CDRRMOCertification.objects.filter(id__in=cert_ids).delete()
 

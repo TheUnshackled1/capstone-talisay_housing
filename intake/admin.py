@@ -4,6 +4,7 @@ from .models import (
     Barangay,
     Applicant,
     HouseholdMember,
+    Archive,
 )
 
 
@@ -12,11 +13,11 @@ class ApplicantAdmin(admin.ModelAdmin):
     list_display = ('reference_number', 'full_name', 'phone_number', 'status', 'channel', 'created_at')
     list_filter = ('status', 'channel', 'created_at')
     search_fields = ('full_name', 'reference_number', 'phone_number')
-    readonly_fields = ('reference_number', 'created_at', 'updated_at', 'eligibility_checked_at')
+    readonly_fields = ('reference_number', 'created_at', 'updated_at', 'eligibility_checked_at', 'full_name', 'age')
 
     fieldsets = (
         ('📋 PERSONAL INFORMATION', {
-            'fields': ('full_name', 'sex', 'date_of_birth', 'age', 'place_of_birth', 'phone_number'),
+            'fields': ('full_name', 'last_name', 'first_name', 'middle_name', 'extension_name', 'sex', 'date_of_birth', 'age', 'place_of_birth', 'phone_number'),
         }),
         ('👥 SPOUSE INFORMATION', {
             'fields': ('spouse_name', 'spouse_phone'),
@@ -92,3 +93,35 @@ class SMSLogAdmin(admin.ModelAdmin):
     list_filter = ('status', 'trigger_event', 'sent_at')
     search_fields = ('recipient_phone', 'message_content')
     readonly_fields = ('sent_at',)
+
+
+@admin.register(Archive)
+class ArchiveAdmin(admin.ModelAdmin):
+    list_display = ('reference_number_snapshot', 'full_name_snapshot', 'channel', 'archived_by', 'archived_at')
+    list_filter = ('channel', 'archived_at', 'queue_type', 'cdrrmo_certified')
+    search_fields = ('reference_number_snapshot', 'full_name_snapshot')
+    readonly_fields = ('id', 'archived_at', 'reference_number_snapshot', 'full_name_snapshot', 'date_of_birth_snapshot', 'barangay_name_snapshot', 'applicant')
+
+    fieldsets = (
+        ('📋 ARCHIVE RECORD', {
+            'fields': ('id', 'applicant', 'reference_number_snapshot'),
+        }),
+        ('👤 APPLICANT SNAPSHOT', {
+            'fields': ('full_name_snapshot', 'date_of_birth_snapshot', 'barangay_name_snapshot'),
+        }),
+        ('🔄 HANDOFF DETAILS', {
+            'fields': ('channel', 'queue_type', 'archived_at', 'archived_by'),
+        }),
+        ('📱 NOTIFICATION', {
+            'fields': ('sms_sent', 'sms_sent_at'),
+            'classes': ('collapse',),
+        }),
+        ('🧭 CDRRMO', {
+            'fields': ('cdrrmo_certified',),
+            'classes': ('collapse',),
+        }),
+        ('📝 NOTES', {
+            'fields': ('notes',),
+            'classes': ('collapse',),
+        }),
+    )

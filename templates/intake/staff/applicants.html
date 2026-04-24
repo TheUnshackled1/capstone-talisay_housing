@@ -944,13 +944,20 @@
         grid-template-columns: repeat(2, 1fr);
         gap: 1rem;
     }
-    
+
+    .form-grid.identity-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+
     @media (max-width: 640px) {
         .form-grid {
             grid-template-columns: 1fr;
         }
         .form-grid .form-group[style*="span 2"] {
             grid-column: span 1;
+        }
+        .form-grid.identity-grid {
+            grid-template-columns: repeat(2, 1fr);
         }
     }
     
@@ -1171,6 +1178,10 @@
             <div class="summary-grid">
                 <div class="summary-item"><span class="summary-label">Reference #</span><div class="summary-value" id="archiveSummaryReference">N/A</div></div>
                 <div class="summary-item"><span class="summary-label">Full Name</span><div class="summary-value" id="archiveSummaryName">N/A</div></div>
+                <div class="summary-item"><span class="summary-label">Last Name</span><div class="summary-value" id="archiveSummaryLastName">N/A</div></div>
+                <div class="summary-item"><span class="summary-label">First Name</span><div class="summary-value" id="archiveSummaryFirstName">N/A</div></div>
+                <div class="summary-item"><span class="summary-label">Middle Name</span><div class="summary-value" id="archiveSummaryMiddleName">N/A</div></div>
+                <div class="summary-item"><span class="summary-label">Extension Name</span><div class="summary-value" id="archiveSummaryExtensionName">N/A</div></div>
                 <div class="summary-item"><span class="summary-label">Channel</span><div class="summary-value" id="archiveSummaryChannel">N/A</div></div>
                 <div class="summary-item"><span class="summary-label">SMS Status</span><div class="summary-value" id="archiveSummarySms">N/A</div></div>
                 <div class="summary-item"><span class="summary-label">DOB</span><div class="summary-value" id="archiveSummaryDob">N/A</div></div>
@@ -1491,6 +1502,10 @@
                         onclick="openArchiveHandoffSummary(this)"
                         data-reference="{{ row.referenceNumber }}"
                         data-name="{{ row.fullName }}"
+                        data-last-name="{{ row.lastName }}"
+                        data-first-name="{{ row.firstName }}"
+                        data-middle-name="{{ row.middleName }}"
+                        data-extension-name="{{ row.extensionName }}"
                         data-channel="{{ row.channelLabel }}"
                         data-proceeded="{{ row.handoffAt|default:row.dateTime }}"
                         data-proceeded-by="{{ row.handoffBy|default:'Unknown' }}"
@@ -1774,7 +1789,7 @@
                     <!-- Section A: APPLICATION IDENTITY -->
                     <div style="border-bottom: 2px solid #e2e8f0; padding-bottom: 1rem; margin-bottom: 1rem;">
                         <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">A. APPLICATION IDENTITY</h4>
-                        <div class="form-grid" style="margin-bottom: 1rem;">
+                        <div class="form-grid identity-grid" style="margin-bottom: 1rem;">
                             <div class="form-group">
                                 <label class="form-label">Last Name</label>
                                 <input type="text" class="form-input" id="reviewLastName" name="last_name" readonly>
@@ -1786,6 +1801,10 @@
                             <div class="form-group">
                                 <label class="form-label">Middle Name</label>
                                 <input type="text" class="form-input" id="reviewMiddleName" name="middle_name" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Extension Name</label>
+                                <input type="text" class="form-input" id="reviewExtensionName" name="extension_name" readonly placeholder="Jr., Sr., II, III, etc.">
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Sex</label>
@@ -2373,6 +2392,7 @@
                 .tha-reg-modal .section-label { font-weight: 700; font-size: 0.85rem; color: #1f2937; margin-bottom: 0.75rem; margin-top: 1.5rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.5rem; }
                 .tha-reg-modal .form-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1rem; }
                 .tha-reg-modal .form-row.full { grid-template-columns: 1fr; }
+                .tha-reg-modal .form-row.identity-row { grid-template-columns: repeat(4, 1fr); }
                 .tha-reg-modal .danger-zone-box { background: #fffbeb; border: 1px solid #fcd34d; border-left: 4px solid #b45309; padding: 1rem; border-radius: 2px; margin: 1rem 0; }
                 .tha-reg-modal .danger-zone-box .section-label { color: #78350f; margin-top: 0; }
                 .tha-reg-modal .document-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin-bottom: 1rem; }
@@ -2514,7 +2534,11 @@
                         </div>
                         <div class="form-group">
                             <label class="form-label">Middle name</label>
-                            <input type="text" class="form-input" placeholder="Extension name, if any" name="middle_name" id="middleName" maxlength="100">
+                            <input type="text" class="form-input" placeholder="Middle name" name="middle_name" id="middleName" maxlength="100">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Extension name</label>
+                            <input type="text" class="form-input" placeholder="Jr., Sr., II, III, etc." name="extension_name" id="extensionName" maxlength="50">
                         </div>
                     </div>
 
@@ -2771,6 +2795,10 @@
         setText('archiveSummarySubtitle', `${d.reference || 'N/A'} • ${d.name || 'N/A'}`);
         setText('archiveSummaryReference', d.reference || 'N/A');
         setText('archiveSummaryName', d.name || 'N/A');
+        setText('archiveSummaryLastName', d.lastName || 'N/A');
+        setText('archiveSummaryFirstName', d.firstName || 'N/A');
+        setText('archiveSummaryMiddleName', d.middleName || 'N/A');
+        setText('archiveSummaryExtensionName', d.extensionName || 'N/A');
         setText('archiveSummaryChannel', d.channel || 'N/A');
         setText('archiveSummarySms', d.sms || 'N/A');
         setText('archiveSummaryDob', d.dob || 'N/A');
@@ -3233,11 +3261,13 @@
                 const lastNameEl = document.getElementById('reviewLastName');
                 const firstNameEl = document.getElementById('reviewFirstName');
                 const middleNameEl = document.getElementById('reviewMiddleName');
+                const extensionNameEl = document.getElementById('reviewExtensionName');
 
-                if (lastNameEl || firstNameEl || middleNameEl) {
+                if (lastNameEl || firstNameEl || middleNameEl || extensionNameEl) {
                     if (lastNameEl) lastNameEl.value = currentApplicant.lastName || '';
                     if (firstNameEl) firstNameEl.value = currentApplicant.firstName || '';
                     if (middleNameEl) middleNameEl.value = currentApplicant.middleName || '';
+                    if (extensionNameEl) extensionNameEl.value = currentApplicant.extensionName || '';
                 }
 
                 // Populate all fields
@@ -4796,7 +4826,12 @@
         const lastName = capitalizeFirst(document.getElementById('lastName').value.trim());
         const firstName = capitalizeFirst(document.getElementById('firstName').value.trim());
         const middleName = capitalizeFirst(document.getElementById('middleName').value.trim());
-        const fullName = `${lastName}, ${firstName}${middleName ? ' ' + middleName : ''}`;
+        const extensionName = (document.getElementById('extensionName').value.trim());
+
+        let fullName = `${lastName}, ${firstName}${middleName ? ' ' + middleName : ''}`;
+        if (extensionName) {
+            fullName = `${fullName}, ${extensionName}`;
+        }
 
         // Remove commas from income fields before creating FormData
         const incomeFields = form.querySelectorAll('input[name*="income"]');

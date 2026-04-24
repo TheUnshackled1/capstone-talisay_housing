@@ -167,6 +167,7 @@ class WalkInApplicantForm(forms.ModelForm):
             'last_name',
             'first_name',
             'middle_name',
+            'extension_name',
             'sex',
             'age',
             'date_of_birth',
@@ -194,6 +195,10 @@ class WalkInApplicantForm(forms.ModelForm):
             'middle_name': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'Middle name (optional)',
+            }),
+            'extension_name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Jr., Sr., II, III, etc. (optional)',
             }),
             'sex': forms.RadioSelect(attrs={
                 'class': 'form-radio',
@@ -251,6 +256,10 @@ class WalkInApplicantForm(forms.ModelForm):
         }
         labels = {
             'full_name': 'Full Name',
+            'last_name': 'Last Name (Surname)',
+            'first_name': 'First Name (Given Name)',
+            'middle_name': 'Middle Name',
+            'extension_name': 'Extension Name',
             'sex': 'Sex',
             'age': 'Age',
             'date_of_birth': 'Date of Birth',

@@ -7,13 +7,13 @@ from django.db.models import Count, Q, Prefetch, Max
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 from functools import wraps
-from intake.models import Applicant, CDRRMOCertification, FieldVerificationPhoto
+from intake.models import Applicant
 from intake.utils import send_sms
 from intake import sms_workflow
 from documents.models import FacilitatedService, ElectricityConnection, LotAwarding
 from .models import (
     Application, Requirement, RequirementSubmission,
-    SignatoryRouting, QueueEntry, CDRRMOCertificationProxy,
+    SignatoryRouting, QueueEntry, CDRRMOCertificationProxy, CDRRMOCertification, FieldVerificationPhoto,
 )
 from .utils import check_blacklist_module2
 
@@ -140,9 +140,12 @@ def _ensure_cdrrmo_pending_after_module2_handoff(applicant):
         return
     if not applicant.module2_handoff_at:
         return
-    # Channel B itself is the official danger-zone declaration path.
-    # Keep legacy rows (blank danger_zone_type) in this workflow.
-    if applicant.channel != 'danger_zone':
+    has_hazard_claim = bool((applicant.danger_zone_type or '').strip() or (applicant.danger_zone_location or '').strip())
+    if not has_hazard_claim:
+        # Self-heal rows incorrectly forced into pending_cdrrmo.
+        if applicant.status == 'pending_cdrrmo':
+            applicant.status = 'pending'
+            applicant.save(update_fields=['status', 'updated_at'])
         return
 
     try:
@@ -354,7 +357,7 @@ def _module2_eligibility_snapshot(applicant, checked_by=None):
             f'Household composition mismatch: declared size is {declared_household}, but listed members total {listed_household} (including applicant).'
         )
 
-    requires_cdrrmo = applicant.channel == 'danger_zone'
+    requires_cdrrmo = bool((applicant.danger_zone_type or '').strip() or (applicant.danger_zone_location or '').strip())
     cdrrmo_status = None
     if requires_cdrrmo:
         try:
@@ -430,6 +433,14 @@ def applications_list(request, position):
     
     # Get user permissions
     permissions = get_module2_permissions(request.user)
+
+    # Self-heal records declared as non-hazard in Module 1 but left in pending_cdrrmo.
+    Applicant.objects.filter(
+        channel='danger_zone',
+        status='pending_cdrrmo',
+        danger_zone_type='',
+        danger_zone_location='',
+    ).update(status='pending', updated_at=timezone.now())
 
     # Legacy safety net: older Module 2 handoffs may have hazard declaration but
     # no pending CDRRMO row yet. Normalize these rows before rendering.
@@ -774,7 +785,7 @@ def application_detail(request, position, application_id):
             'occupation': applicant.occupation or '',
             'employment_status': applicant.get_employment_status_display() if applicant.employment_status else '',
             'monthly_income': float(applicant.monthly_income) if applicant.monthly_income is not None else 0,
-            'hazard_declared': applicant.channel == 'danger_zone' or bool((applicant.danger_zone_type or '').strip()),
+            'hazard_declared': bool((applicant.danger_zone_type or '').strip() or (applicant.danger_zone_location or '').strip()),
             'danger_zone_type': applicant.danger_zone_type or '',
             'danger_zone_location': applicant.danger_zone_location or '',
         },
@@ -1335,6 +1346,7 @@ def evaluate_applicant(request, position):
 def record_evaluation_approval(request, position):
     """
     Module 2 step 2.8 endpoint.
+    Auto-confirms evaluation approval (only 'approved' status) based on Layer 3 CDRRMO completion.
     Stores evaluation approval/review marker only (separate from Module 3 routing).
     """
     allowed_positions = ['fourth_member', 'second_member']
@@ -1344,10 +1356,13 @@ def record_evaluation_approval(request, position):
     applicant_id = request.POST.get('applicant_id')
     approval_status = request.POST.get('approval_status', '').strip()
     notes = request.POST.get('notes', '').strip()
+
     if not applicant_id:
         return JsonResponse({'success': False, 'error': 'Missing applicant_id.'}, status=400)
-    if approval_status not in ['approved', 'for_review']:
-        return JsonResponse({'success': False, 'error': 'Invalid approval status.'}, status=400)
+
+    # Only 'approved' status allowed (auto-determined by system)
+    if approval_status != 'approved':
+        return JsonResponse({'success': False, 'error': 'Invalid approval status. Only "approved" is allowed.'}, status=400)
 
     applicant = get_object_or_404(Applicant, id=applicant_id)
     handoff_error = _require_module2_handoff(applicant)
@@ -1357,17 +1372,29 @@ def record_evaluation_approval(request, position):
     if blacklist_error:
         return blacklist_error
 
+    # Validate that applicant is eligible and in queue (Layer 3 completed)
     if applicant.status != 'eligible':
         return JsonResponse({
             'success': False,
             'error': 'Record 2.8 only after Module 2 evaluation marks the applicant eligible and queued.',
         }, status=400)
+
     active_queue = applicant.queue_entries.filter(status='active').order_by('entered_at').first()
     if active_queue is None:
         return JsonResponse({
             'success': False,
             'error': 'Record 2.8 only after queue assignment (Priority or Walk-in) is active.',
         }, status=400)
+
+    # Validate Layer 3 (CDRRMO) is complete
+    if applicant.cdrrmo_certification:
+        cdrrmo_cert = applicant.cdrrmo_certification
+        # If CDRRMO was declared, it must be certified (not just pending)
+        if cdrrmo_cert.status in ['pending', 'pending_certification']:
+            return JsonResponse({
+                'success': False,
+                'error': 'Cannot record 2.8 until Layer 3 CDRRMO review is complete (Certified or Denied).',
+            }, status=400)
 
     applicant.evaluation_approval_status = approval_status
     applicant.evaluation_approval_notes = notes
@@ -1383,7 +1410,7 @@ def record_evaluation_approval(request, position):
 
     return JsonResponse({
         'success': True,
-        'message': f'2.8 recorded as {applicant.get_evaluation_approval_status_display()}.',
+        'message': f'2.8 confirmed and saved as Approved.',
         'approval_status': applicant.evaluation_approval_status,
         'approval_status_display': applicant.get_evaluation_approval_status_display(),
         'approval_by': applicant.evaluation_approval_by.get_full_name() if applicant.evaluation_approval_by else '',

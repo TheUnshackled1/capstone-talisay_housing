@@ -8,7 +8,7 @@ from django.urls import reverse
 from django.db.models import Q, Prefetch
 from django.core.exceptions import ObjectDoesNotExist
 from functools import wraps
-from .models import Applicant, Barangay, CDRRMOCertification, FieldVerificationPhoto, HazardDeclarationAudit
+from .models import Applicant, Barangay, Archive
 from applications.models import QueueEntry
 from .forms import (
     HouseholdMemberForm,
@@ -49,30 +49,6 @@ def _validate_hazard_details(is_danger_zone, danger_zone_type, danger_zone_locat
     return None
 
 
-def _log_hazard_declaration_change(
-    applicant,
-    changed_by,
-    declared_before,
-    declared_after,
-    danger_zone_type_before='',
-    danger_zone_type_after='',
-    danger_zone_location_before='',
-    danger_zone_location_after='',
-    change_source='registration',
-    notes='',
-):
-    HazardDeclarationAudit.objects.create(
-        applicant=applicant,
-        changed_by=changed_by,
-        declared_before=declared_before,
-        declared_after=declared_after,
-        danger_zone_type_before=(danger_zone_type_before or '').strip(),
-        danger_zone_type_after=(danger_zone_type_after or '').strip(),
-        danger_zone_location_before=(danger_zone_location_before or '').strip(),
-        danger_zone_location_after=(danger_zone_location_after or '').strip(),
-        change_source=change_source,
-        notes=(notes or '').strip(),
-    )
 
 
 def _describe_applicant_location(applicant):
@@ -426,26 +402,6 @@ def update_applicant(request, position):
                     })
                 applicant.danger_zone_location = danger_zone_location
 
-            # Update CDRRMO certification status
-            if cdrrmo_status and cdrrmo_status in ['certified', 'not_certified']:
-                try:
-                    cert = applicant.cdrrmo_certification
-                    cert.status = cdrrmo_status
-                    cert.result_recorded_by = request.user
-                    cert.certified_at = timezone.now()
-                    cert.disposition_source = 'field_unit'
-                    if cdrrmo_notes:
-                        cert.certification_notes = cdrrmo_notes
-                    cert.save()
-
-                    # Update applicant status based on CDRRMO result
-                    if cdrrmo_status == 'certified':
-                        applicant.status = 'pending'  # Ready for eligibility check
-                    elif cdrrmo_status == 'not_certified':
-                        applicant.status = 'disqualified'  # Not verified as danger zone
-                except CDRRMOCertification.DoesNotExist:
-                    pass
-
         # Update document checklist
         applicant.doc_brgy_residency = request.POST.get('doc_brgy_residency') == 'true'
         applicant.doc_brgy_indigency = request.POST.get('doc_brgy_indigency') == 'true'
@@ -465,18 +421,7 @@ def update_applicant(request, position):
             or old_danger_zone_type != new_danger_zone_type
             or old_danger_zone_location != new_danger_zone_location
         ):
-            _log_hazard_declaration_change(
-                applicant=applicant,
-                changed_by=request.user,
-                declared_before=old_declared,
-                declared_after=new_declared,
-                danger_zone_type_before=old_danger_zone_type,
-                danger_zone_type_after=new_danger_zone_type,
-                danger_zone_location_before=old_danger_zone_location,
-                danger_zone_location_after=new_danger_zone_location,
-                change_source='staff_edit',
-                notes='Updated from intake review modal.',
-            )
+            pass  # Audit trail removed - models deleted
 
         return JsonResponse({
             'success': True,
@@ -667,25 +612,38 @@ def proceed_to_applications(request, position):
         applicant.module2_handoff_by = request.user
         update_fields.extend(['module2_handoff_at', 'module2_handoff_by'])
 
-    # Hazard-declared records must enter pending CDRRMO flow in Module 2.
-    if applicant.channel == 'danger_zone' and bool((applicant.danger_zone_type or '').strip()):
-        cert = getattr(applicant, 'cdrrmo_certification', None)
-        if cert is None:
-            CDRRMOCertification.objects.create(
-                applicant=applicant,
-                declared_location=(applicant.danger_zone_location or applicant.danger_zone_type or '').strip() or 'Declared hazard area',
-                requested_by=request.user,
-                status='pending',
-                disposition_source='pending',
-            )
-
-        # Move encoding-stage record into CDRRMO awaiting state for Module 2.
-        if applicant.status == 'pending':
-            applicant.status = 'pending_cdrrmo'
-            update_fields.append('status')
-
     if len(update_fields) > 1:
         applicant.save(update_fields=update_fields)
+
+    # Create Archive record for audit trail (Module 2 handoff receipt)
+    try:
+        channel_value = applicant.channel
+        if channel_value == 'walk_in':
+            archive_channel = 'channel_a'
+        elif channel_value == 'danger_zone':
+            archive_channel = 'channel_b_hazard' if (applicant.danger_zone_type or '').strip() else 'channel_b_no_hazard'
+        elif channel_value == 'landowner':
+            archive_channel = 'channel_c'
+        else:
+            archive_channel = channel_value
+
+        Archive.objects.create(
+            applicant=applicant,
+            reference_number_snapshot=applicant.reference_number,
+            full_name_snapshot=applicant.full_name,
+            last_name_snapshot=applicant.last_name,
+            first_name_snapshot=applicant.first_name,
+            middle_name_snapshot=applicant.middle_name,
+            extension_name_snapshot=applicant.extension_name,
+            date_of_birth_snapshot=applicant.date_of_birth,
+            channel=archive_channel,
+            barangay_name_snapshot=applicant.barangay.name if applicant.barangay else '',
+            sms_sent=applicant.registration_sms_sent,
+            cdrrmo_certified=bool(getattr(applicant, 'cdrrmo_certification', None) and applicant.cdrrmo_certification.status == 'certified'),
+            archived_by=request.user,
+        )
+    except Exception as e:
+        print(f"[ARCHIVE ERROR] Failed to create archive for {applicant.reference_number}: {str(e)}")
 
     # Send SMS only upon Module 2 handoff (not on registration).
     # Reuse registration_sms_sent as the "handoff SMS sent" tracker to avoid schema changes.
@@ -838,24 +796,14 @@ def applicants_list(request, position):
     walk_in_applicants = Applicant.objects.filter(
         module2_handoff_at__isnull=True
     ).select_related(
-        'barangay', 'eligibility_checked_by', 'registered_by', 'cdrrmo_certification'
+        'barangay', 'eligibility_checked_by', 'registered_by'
     ).prefetch_related(
         Prefetch(
             'queue_entries',
             queryset=QueueEntry.objects.filter(status='active'),
             to_attr='active_queue',
         ),
-        Prefetch(
-            'cdrrmo_certification__field_photos',
-            queryset=FieldVerificationPhoto.objects.order_by('uploaded_at'),
-        ),
     ).order_by('created_at')
-
-    handed_off_applicants = Applicant.objects.filter(
-        module2_handoff_at__isnull=False
-    ).select_related(
-        'barangay', 'registered_by', 'module2_handoff_by'
-    ).order_by('module2_handoff_at', 'created_at', 'id')
 
     for app in walk_in_applicants:
         # Determine eligibility status display
@@ -900,29 +848,11 @@ def applicants_list(request, position):
         cdrrmo_disposition_source = 'pending'
         ronda_evidence_photos = []
         if app.channel == 'danger_zone':
-            try:
-                cert = app.cdrrmo_certification
-                cdrrmo_status = cert.get_status_display()
-                cdrrmo_status_value = cert.status
-                cdrrmo_disposition_source = cert.disposition_source
-                danger_zone_type = cert.declared_location
-                is_cdrrmo_flagged = cert.status == 'pending' and cert.is_overdue
-                cdrrmo_days_pending = cert.days_pending if cert.status == 'pending' else 0
-                result_recorded_by_name = f'{cert.result_recorded_by.first_name} {cert.result_recorded_by.last_name}' if cert.result_recorded_by else None
-                certified_at = cert.certified_at.isoformat() if cert.certified_at else None
-                certification_notes = cert.certification_notes or None
-                office_intake_notes = cert.office_intake_notes or None
-                for ph in cert.field_photos.all():
-                    if ph.image:
-                        try:
-                            ronda_evidence_photos.append(request.build_absolute_uri(ph.image.url))
-                        except (ValueError, AttributeError):
-                            pass
-            except CDRRMOCertification.DoesNotExist:
-                cdrrmo_status = 'Not Requested'
-                cdrrmo_status_value = None
-                cdrrmo_disposition_source = 'pending'
-        
+            # CDRRMO model has been removed from intake app
+            cdrrmo_status = 'Not Requested'
+            cdrrmo_status_value = None
+            cdrrmo_disposition_source = 'pending'
+
         applicants.append({
             'id': str(app.id),
             'fullName': app.full_name,
@@ -937,6 +867,7 @@ def applicants_list(request, position):
             'lastName': app.last_name or '',
             'firstName': app.first_name or '',
             'middleName': app.middle_name or '',
+            'extensionName': app.extension_name or '',
             'sex': app.sex or '',
             'age': app.age or 0,
             'dateOfBirth': app.date_of_birth.isoformat() if app.date_of_birth else '',
@@ -1015,36 +946,44 @@ def applicants_list(request, position):
         })
 
     # Read-only archive/receipt rows: records already proceeded to Module 2.
+    # Query Archive model for snapshot data of handed-off records
     archive_records = []
-    for app in handed_off_applicants:
-        danger_declared = bool(getattr(app, 'danger_zone_type', ''))
-        channel_code = 'B' if app.channel == 'danger_zone' else 'C'
-        if channel_code == 'B':
-            channel_label = 'Channel B — Hazard (Yes)' if danger_declared else 'Channel B — No hazard (No)'
-        else:
-            channel_label = 'Channel C — Walk-in'
-        proceeded_at = app.module2_handoff_at or app.created_at
+    archives = Archive.objects.select_related('archived_by').order_by('-archived_at')
+
+    channel_display_map = {
+        'channel_a': ('A', 'Channel A — Walk-in'),
+        'channel_b_no_hazard': ('B', 'Channel B — No hazard (No)'),
+        'channel_b_hazard': ('B', 'Channel B — Hazard (Yes)'),
+        'channel_c': ('C', 'Channel C — Landowner'),
+    }
+
+    for archive in archives:
+        channel_code, channel_label = channel_display_map.get(archive.channel, ('?', archive.channel))
 
         # Convert UTC time to Manila time for display
         from django.utils import timezone
-        local_proceeded_at = timezone.localtime(proceeded_at) if proceeded_at else None
+        local_archived_at = timezone.localtime(archive.archived_at) if archive.archived_at else None
 
         archive_records.append({
-            'id': str(app.id),
-            'dateTime': local_proceeded_at.strftime('%b %d, %Y | %I:%M %p') if local_proceeded_at else '',
-            'dateOfBirthDisplay': app.date_of_birth.strftime('%m/%d/%Y') if app.date_of_birth else '',
-            'referenceNumber': app.reference_number,
-            'fullName': app.full_name,
-            'barangay': app.barangay.name if app.barangay else '',
+            'id': str(archive.id),
+            'dateTime': local_archived_at.strftime('%b %d, %Y | %I:%M %p') if local_archived_at else '',
+            'dateOfBirthDisplay': archive.date_of_birth_snapshot.strftime('%m/%d/%Y') if archive.date_of_birth_snapshot else '',
+            'referenceNumber': archive.reference_number_snapshot,
+            'fullName': archive.full_name_snapshot,
+            'lastName': archive.last_name_snapshot or '',
+            'firstName': archive.first_name_snapshot or '',
+            'middleName': archive.middle_name_snapshot or '',
+            'extensionName': archive.extension_name_snapshot or '',
+            'barangay': archive.barangay_name_snapshot,
             'channel': channel_code,
             'channelLabel': channel_label,
-            'handledBy': app.registered_by.get_full_name() if app.registered_by else 'Unknown',
-            'handledByPosition': app.registered_by.get_position_display_short() if app.registered_by else '',
-            'handledByInitials': (app.registered_by.first_name[:1] + app.registered_by.last_name[:1]).upper() if app.registered_by else '??',
-            'registrationSmsSent': app.registration_sms_sent,
-            'hasPhone': bool(app.phone_number),
-            'handoffAt': app.module2_handoff_at.strftime('%Y-%m-%d %I:%M %p') if app.module2_handoff_at else '',
-            'handoffBy': app.module2_handoff_by.get_full_name() if app.module2_handoff_by else '',
+            'handledBy': archive.archived_by.get_full_name() if archive.archived_by else 'Unknown',
+            'handledByPosition': archive.archived_by.get_position_display_short() if archive.archived_by else '',
+            'handledByInitials': (archive.archived_by.first_name[:1] + archive.archived_by.last_name[:1]).upper() if archive.archived_by else '??',
+            'registrationSmsSent': archive.sms_sent,
+            'hasPhone': False,  # Archive doesn't store phone, but SMS sent status is tracked
+            'handoffAt': local_archived_at.strftime('%Y-%m-%d %I:%M %p') if local_archived_at else '',
+            'handoffBy': archive.archived_by.get_full_name() if archive.archived_by else '',
         })
     
     # Sort all applicants by dateRegistered (FIFO - oldest first)
@@ -1267,20 +1206,6 @@ def walkin_register(request, position):
         doc_2x2_picture=request.POST.get('doc_2x2_picture') == 'true',
         doc_sketch_location=request.POST.get('doc_sketch_location') == 'true',
     )
-    _log_hazard_declaration_change(
-        applicant=applicant,
-        changed_by=request.user,
-        declared_before=None,
-        declared_after=is_danger_zone_answer,
-        danger_zone_type_before='',
-        danger_zone_type_after=danger_zone_type,
-        danger_zone_location_before='',
-        danger_zone_location_after=danger_zone_location,
-        change_source='registration',
-        notes='Initial hazard declaration captured during intake registration.',
-    )
-
-    # NOTE: CDRRMO certification will be created in Module 2 during screening (if danger zone claim is verified)
 
     # Process household members from form
     for i in range(1, 51):  # Support up to 50 household members
@@ -1354,6 +1279,7 @@ def walkin_register(request, position):
                 'lastName': applicant.last_name,
                 'firstName': applicant.first_name,
                 'middleName': applicant.middle_name,
+                'extensionName': applicant.extension_name,
                 'referenceNumber': applicant.reference_number,
                 'dateRegistered': applicant.created_at.strftime('%Y-%m-%d'),
                 'channel': applicant.channel,
@@ -1376,3 +1302,78 @@ def walkin_register(request, position):
 
     messages.success(request, f'✓ {msg}')
     return redirect(applicants_list_url)
+
+
+@login_required
+def archive_list(request, staff_position):
+    """
+    Display archived records (applicants proceeded to Module 2).
+    URL: /intake/staff/<position>/archive/
+    """
+    from django.core.paginator import Paginator
+
+    # Get filters from query parameters
+    selected_channel = request.GET.get('channel', '')
+    selected_barangay = request.GET.get('barangay', '')
+
+    # Build query
+    archives_qs = Archive.objects.select_related('applicant', 'archived_by').order_by('-archived_at')
+
+    if selected_channel:
+        archives_qs = archives_qs.filter(channel=selected_channel)
+
+    if selected_barangay:
+        archives_qs = archives_qs.filter(barangay_name_snapshot=selected_barangay)
+
+    # Get unique channels and barangays for filters
+    channel_choices = {
+        'channel_a': 'Channel A — Walk-in',
+        'channel_b_no_hazard': 'Channel B — No hazard',
+        'channel_b_hazard': 'Channel B — Hazard',
+        'channel_c': 'Channel C — Landowner',
+    }
+
+    barangays = Archive.objects.values_list('barangay_name_snapshot', flat=True).distinct().order_by('barangay_name_snapshot')
+    barangays = [b for b in barangays if b]  # Remove empty values
+
+    # Prepare records for template
+    records = []
+    for archive in archives_qs:
+        staff_user = archive.archived_by
+        staff_name = staff_user.get_full_name() if staff_user else '—'
+        staff_position_val = getattr(staff_user, 'position', None) or '—'
+
+        channel_display = channel_choices.get(archive.channel, archive.channel)
+
+        records.append({
+            'id': str(archive.id),
+            'archived_at_display': archive.archived_at.strftime('%b %d, %Y | %I:%M %p'),
+            'reference_number': archive.reference_number_snapshot,
+            'full_name': archive.full_name_snapshot,
+            'channel': archive.channel,
+            'channel_display': channel_display,
+            'staff_name': staff_name,
+            'staff_position': staff_position_val,
+            'sms_sent': archive.sms_sent,
+            'date_of_birth': archive.date_of_birth_snapshot,
+            'barangay': archive.barangay_name_snapshot,
+        })
+
+    # Pagination
+    paginator = Paginator(records, 25)  # 25 records per page
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'page_title': 'Archive Records',
+        'staff_position': staff_position,
+        'total_archived': archives_qs.count(),
+        'channels': channel_choices,
+        'selected_channel': selected_channel,
+        'barangays': barangays,
+        'selected_barangay': selected_barangay,
+        'archive_records': page_obj.object_list,
+        'page_obj': page_obj,
+    }
+
+    return render(request, 'intake/archive_list.html', context)

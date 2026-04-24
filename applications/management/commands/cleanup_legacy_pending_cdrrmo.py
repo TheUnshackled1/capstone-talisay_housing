@@ -2,8 +2,8 @@ from django.core.management.base import BaseCommand
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 
-from applications.models import QueueEntry
-from intake.models import Applicant, CDRRMOCertification
+from applications.models import QueueEntry, CDRRMOCertification
+from intake.models import Applicant
 
 
 class Command(BaseCommand):

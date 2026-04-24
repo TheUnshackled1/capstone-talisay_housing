@@ -102,6 +102,7 @@ class Applicant(models.Model):
     last_name = models.CharField(max_length=100, verbose_name="Last Name (Surname)", default="")
     first_name = models.CharField(max_length=100, verbose_name="First Name (Given Name)", default="")
     middle_name = models.CharField(max_length=100, blank=True, default="", verbose_name="Middle Name")
+    extension_name = models.CharField(max_length=50, blank=True, default="", verbose_name="Extension Name", help_text="Jr., Sr., II, III, IV, etc.")
 
     # Keep full_name for backward compatibility
     full_name = models.CharField(max_length=255, verbose_name="Full Name", editable=False)
@@ -292,9 +293,13 @@ class Applicant(models.Model):
             random_suffix = ''.join([str(random.randint(0, 9)) for _ in range(4)])
             self.reference_number = f"APP-{date_str}-{random_suffix}"
 
-        # Auto-generate full_name from components (last, first, middle)
+        # Auto-generate full_name from components (first, middle, last + extension)
         name_parts = [self.first_name, self.middle_name, self.last_name]
-        self.full_name = ' '.join([part for part in name_parts if part]).strip()
+        base_name = ' '.join([part for part in name_parts if part]).strip()
+        if self.extension_name:
+            self.full_name = f"{base_name}, {self.extension_name}".strip()
+        else:
+            self.full_name = base_name
 
         super().save(*args, **kwargs)
     
@@ -411,158 +416,80 @@ class HouseholdMember(models.Model):
         return f"{self.full_name} ({self.get_relationship_display()}) - {self.applicant.full_name}"
 
 
-class CDRRMOCertification(models.Model):
+class Archive(models.Model):
     """
-    Tracks CDRRMO danger zone certification for Channel B applicants.
-    CDRRMO physically visits the location and certifies (or not).
+    Formal record of applicants archived when proceeded to Module 2.
+    Captures snapshot of applicant state at handoff time for audit trail and reporting.
     """
-    STATUS_CHOICES = [
-        ('pending', 'Pending CDRRMO verification (claim on file)'),
-        ('certified', 'Certified - Danger Zone'),
-        ('not_certified', 'Not Certified'),
-    ]
-
-    DISPOSITION_SOURCE_CHOICES = [
-        ('pending', 'No disposition recorded'),
-        ('office_intake', 'Official CDRRMO paperwork filed at THA intake'),
-        ('field_unit', 'Field unit / Ronda on-site verification'),
-    ]
-    
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    applicant = models.OneToOneField(
-        Applicant,
-        on_delete=models.CASCADE,
-        related_name='cdrrmo_certification'
-    )
-    
-    declared_location = models.TextField(
-        verbose_name="Declared Danger Zone Location",
-        help_text="Riverbank, riverside, flood-prone area, etc."
-    )
-    
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
-    disposition_source = models.CharField(
-        max_length=20,
-        choices=DISPOSITION_SOURCE_CHOICES,
-        default='pending',
-        help_text='Intake-filed CDRRMO documents vs. field/Ronda on-site verification (different workflows).',
-    )
-    
-    # Coordination tracking
-    requested_at = models.DateTimeField(auto_now_add=True)
-    requested_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        related_name='cdrrmo_requests'
-    )
-    
-    # Result tracking
-    certified_at = models.DateTimeField(null=True, blank=True)
-    result_recorded_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='cdrrmo_results_recorded'
-    )
-    certification_notes = models.TextField(
-        blank=True,
-        help_text='Remarks from field / Ronda on-site verification (not intake receiving log).',
-    )
-    office_intake_notes = models.TextField(
-        blank=True,
-        help_text='Receiving log when official CDRRMO certification is filed at THA intake.',
-    )
-    
-    class Meta:
-        verbose_name = "CDRRMO Certification"
-        verbose_name_plural = "CDRRMO Certifications"
-    
-    def __str__(self):
-        return f"CDRRMO Cert - {self.applicant.full_name} ({self.get_status_display()})"
-    
-    @property
-    def days_pending(self):
-        """Calculate days since certification was requested."""
-        if self.status == 'pending':
-            from django.utils import timezone
-            return (timezone.now() - self.requested_at).days
-        return 0
-    
-    @property
-    def is_overdue(self):
-        """Flag if pending > 14 days (per office policy)."""
-        return self.days_pending > 14
-
-
-class FieldVerificationPhoto(models.Model):
-    """
-    On-site photos taken by field/ronda staff as evidence for danger-zone verification.
-    Stored when submitting field verification (Module 1, Channel B).
-    """
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    certification = models.ForeignKey(
-        CDRRMOCertification,
-        on_delete=models.CASCADE,
-        related_name='field_photos',
-    )
-    image = models.ImageField(upload_to='field_verification/%Y/%m/')
-    caption = models.CharField(max_length=200, blank=True)
-    uploaded_at = models.DateTimeField(auto_now_add=True)
-    uploaded_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        related_name='field_verification_photos',
-    )
-
-    class Meta:
-        ordering = ['-uploaded_at']
-        verbose_name = 'Field verification photo'
-        verbose_name_plural = 'Field verification photos'
-
-    def __str__(self):
-        return f'Photo for {self.certification.applicant.reference_number}'
-
-
-class HazardDeclarationAudit(models.Model):
-    """
-    Audit trail for hazard-area declaration changes from intake registration/edit flows.
-    """
-    CHANGE_SOURCE_CHOICES = [
-        ('registration', 'Registration'),
-        ('staff_edit', 'Staff Edit'),
+    CHANNEL_CHOICES = [
+        ('channel_a', 'Channel A — Walk-in'),
+        ('channel_b_no_hazard', 'Channel B — No hazard'),
+        ('channel_b_hazard', 'Channel B — Hazard'),
+        ('channel_c', 'Channel C — Landowner'),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    # Archive event reference
     applicant = models.ForeignKey(
         Applicant,
         on_delete=models.CASCADE,
-        related_name='hazard_declaration_audits',
+        related_name='archives'
     )
-    changed_by = models.ForeignKey(
+
+    # Archive timing and staff
+    archived_at = models.DateTimeField(auto_now_add=True)
+    archived_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
-        blank=True,
-        related_name='hazard_declaration_changes',
+        related_name='archived_applicants'
     )
-    declared_before = models.BooleanField(null=True, blank=True)
-    declared_after = models.BooleanField()
-    danger_zone_type_before = models.CharField(max_length=50, blank=True, default='')
-    danger_zone_type_after = models.CharField(max_length=50, blank=True, default='')
-    danger_zone_location_before = models.CharField(max_length=255, blank=True, default='')
-    danger_zone_location_after = models.CharField(max_length=255, blank=True, default='')
-    change_source = models.CharField(max_length=20, choices=CHANGE_SOURCE_CHOICES, default='registration')
-    notes = models.TextField(blank=True, default='')
-    created_at = models.DateTimeField(auto_now_add=True)
+
+    # Snapshot of applicant state at archive time
+    reference_number_snapshot = models.CharField(max_length=50, db_index=True)
+    full_name_snapshot = models.CharField(max_length=255)
+    # Individual name components (for display in reports/modals)
+    last_name_snapshot = models.CharField(max_length=100, blank=True)
+    first_name_snapshot = models.CharField(max_length=100, blank=True)
+    middle_name_snapshot = models.CharField(max_length=100, blank=True)
+    extension_name_snapshot = models.CharField(max_length=50, blank=True)
+    date_of_birth_snapshot = models.DateField(null=True, blank=True)
+
+    # Channel and queue information
+    channel = models.CharField(max_length=30, choices=CHANNEL_CHOICES, db_index=True)
+    queue_type = models.CharField(
+        max_length=20,
+        choices=[('priority', 'Priority Queue'), ('walk_in', 'Walk-in Queue')],
+        blank=True,
+        help_text="Queue type assigned upon Module 2 entry"
+    )
+
+    # Location snapshot
+    barangay_name_snapshot = models.CharField(max_length=100, blank=True)
+
+    # SMS notification tracking
+    sms_sent = models.BooleanField(default=False)
+    sms_sent_at = models.DateTimeField(null=True, blank=True)
+
+    # CDRRMO information if applicable
+    cdrrmo_certified = models.BooleanField(
+        default=False,
+        help_text="Whether CDRRMO certificate was present at archive time"
+    )
+
+    notes = models.TextField(blank=True)
 
     class Meta:
-        ordering = ['-created_at']
-        verbose_name = 'Hazard declaration audit'
-        verbose_name_plural = 'Hazard declaration audits'
+        ordering = ['-archived_at']
+        verbose_name = "Intake Archive"
+        verbose_name_plural = "Intake Archives"
+        indexes = [
+            models.Index(fields=['archived_at']),
+            models.Index(fields=['reference_number_snapshot']),
+            models.Index(fields=['channel']),
+        ]
 
     def __str__(self):
-        return f'{self.applicant.reference_number} hazard declaration ({self.get_change_source_display()})'
+        return f"Archive: {self.reference_number_snapshot} - {self.full_name_snapshot}"
 

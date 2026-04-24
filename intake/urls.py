@@ -8,6 +8,9 @@ urlpatterns = [
     # Role-based URL structure: /intake/staff/<position>/applicants/
     path('staff/<str:position>/applicants/', views.applicants_list, name='applicants_list'),
 
+    # Archive / receipt records (proceeded to Module 2)
+    path('staff/<str:position>/archives/', views.archive_list, name='archive_list'),
+
     # Applicant registration from modal
     path('staff/<str:position>/register/', views.walkin_register, name='walkin_register'),
     path('staff/<str:position>/duplicate-preview/', views.duplicate_preview, name='duplicate_preview'),
