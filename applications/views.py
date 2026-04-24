@@ -8,7 +8,7 @@ from django.db import IntegrityError, transaction
 from django.utils import timezone
 from functools import wraps
 from intake.models import Applicant
-from intake.utils import send_sms
+from intake.utils import send_sms as _raw_send_sms
 from intake import sms_workflow
 from documents.models import FacilitatedService, ElectricityConnection, LotAwarding
 from .models import (
@@ -18,6 +18,23 @@ from .models import (
 from .utils import check_blacklist_module2
 
 MODULE1_MONTHLY_INCOME_CEILING_PESO = 10000
+EVAL28_APPROVED_SMS_EVENT = 'evaluation_approval_approved'
+
+
+def send_sms(recipient_phone, message_content, trigger_event, applicant=None, module='applications'):
+    """
+    Applications-module SMS policy:
+    Send ISF SMS only after Layer 4 (2.8) is saved as Approved.
+    """
+    if module == 'applications' and trigger_event != EVAL28_APPROVED_SMS_EVENT:
+        return False
+    return _raw_send_sms(
+        recipient_phone,
+        message_content,
+        trigger_event,
+        applicant=applicant,
+        module=module,
+    )
 
 
 # =============================================================================
@@ -1407,13 +1424,14 @@ def record_evaluation_approval(request, position):
     applicant_id = request.POST.get('applicant_id')
     approval_status = request.POST.get('approval_status', '').strip()
     notes = request.POST.get('notes', '').strip()
+    disqualify_reason = request.POST.get('disqualify_reason', '').strip()
+    disqualify_notes = request.POST.get('disqualify_notes', '').strip()
 
     if not applicant_id:
         return JsonResponse({'success': False, 'error': 'Missing applicant_id.'}, status=400)
 
-    # Only 'approved' status allowed (auto-determined by system)
-    if approval_status != 'approved':
-        return JsonResponse({'success': False, 'error': 'Invalid approval status. Only "approved" is allowed.'}, status=400)
+    if approval_status not in {'approved', 'disqualified'}:
+        return JsonResponse({'success': False, 'error': 'Invalid approval status.'}, status=400)
 
     applicant = get_object_or_404(Applicant, id=applicant_id)
     handoff_error = _require_module2_handoff(applicant)
@@ -1423,19 +1441,34 @@ def record_evaluation_approval(request, position):
     if blacklist_error:
         return blacklist_error
 
-    # Validate that applicant is eligible and in queue (Layer 3 completed)
-    if applicant.status != 'eligible':
-        return JsonResponse({
-            'success': False,
-            'error': 'Record 2.8 only after Module 2 evaluation marks the applicant eligible and queued.',
-        }, status=400)
+    previous_eval28_status = applicant.evaluation_approval_status or ''
 
-    active_queue = applicant.queue_entries.filter(status='active').order_by('entered_at').first()
-    if active_queue is None:
-        return JsonResponse({
-            'success': False,
-            'error': 'Record 2.8 only after queue assignment (Priority or Walk-in) is active.',
-        }, status=400)
+    # Validate base Module 2 state for 2.8 action.
+    if approval_status == 'approved':
+        if applicant.status != 'eligible':
+            return JsonResponse({
+                'success': False,
+                'error': 'Record 2.8 approval only after Module 2 evaluation marks the applicant eligible and queued.',
+            }, status=400)
+        active_queue = applicant.queue_entries.filter(status='active').order_by('entered_at').first()
+        if active_queue is None:
+            return JsonResponse({
+                'success': False,
+                'error': 'Record 2.8 approval only after queue assignment (Priority or Walk-in) is active.',
+            }, status=400)
+    else:
+        # Disqualification in Layer 4 is allowed for active evaluation states.
+        if applicant.status not in {'pending', 'pending_cdrrmo', 'eligible'}:
+            return JsonResponse({
+                'success': False,
+                'error': f'Cannot disqualify record with current status: {applicant.get_status_display()}',
+            }, status=400)
+        active_queue = applicant.queue_entries.filter(status='active').order_by('entered_at').first()
+        if not disqualify_reason:
+            return JsonResponse({
+                'success': False,
+                'error': 'Disqualification reason is required.',
+            }, status=400)
 
     # Validate Layer 3 (CDRRMO) is complete
     if applicant.cdrrmo_certification:
@@ -1447,25 +1480,64 @@ def record_evaluation_approval(request, position):
                 'error': 'Cannot record 2.8 until Layer 3 CDRRMO review is complete (Certified or Denied).',
             }, status=400)
 
+    if approval_status == 'disqualified':
+        reason_labels = {
+            'income_over_ceiling': 'Income exceeds ₱10,000 limit',
+            'property_owner': 'Owns property in Talisay City',
+            'blacklisted': 'On blacklist',
+            'household_mismatch': 'Household member mismatch',
+            'incomplete_documents': 'Incomplete documents',
+            'other': disqualify_notes or 'Other reason',
+        }
+        reason_text = reason_labels.get(disqualify_reason, disqualify_reason or 'Disqualified in Module 2 evaluation')
+        applicant.status = 'disqualified'
+        applicant.disqualification_reason = reason_text
+        applicant.eligibility_checked_by = request.user
+        applicant.eligibility_checked_at = timezone.now()
+        _deactivate_active_queue_entries(applicant)
+        active_queue = None
+
     applicant.evaluation_approval_status = approval_status
     applicant.evaluation_approval_notes = notes
     applicant.evaluation_approval_by = request.user
     applicant.evaluation_approval_at = timezone.now()
-    applicant.save(update_fields=[
+    update_fields = [
         'evaluation_approval_status',
         'evaluation_approval_notes',
         'evaluation_approval_by',
         'evaluation_approval_at',
         'updated_at',
-    ])
+    ]
+    if approval_status == 'disqualified':
+        update_fields.extend(['status', 'disqualification_reason', 'eligibility_checked_by', 'eligibility_checked_at'])
+    applicant.save(update_fields=update_fields)
+
+    sms_dispatched = None
+    if applicant.phone_number and previous_eval28_status != approval_status:
+        if approval_status == 'approved':
+            queue_label = 'Priority Queue' if (active_queue and active_queue.queue_type == 'priority') else 'Walk-in Queue'
+            queue_pos = active_queue.position if active_queue else '?'
+            sms_msg = (
+                "THA update: Your Module 2 evaluation has been approved. "
+                f"Queue assignment: {queue_label} position #{queue_pos}. "
+                f"Ref: {applicant.reference_number}."
+            )
+            sms_dispatched = send_sms(
+                applicant.phone_number,
+                sms_msg,
+                EVAL28_APPROVED_SMS_EVENT,
+                applicant=applicant,
+                module='applications',
+            )
 
     return JsonResponse({
         'success': True,
-        'message': f'2.8 confirmed and saved as Approved.',
+        'message': f'2.8 saved as {applicant.get_evaluation_approval_status_display()}.',
         'approval_status': applicant.evaluation_approval_status,
         'approval_status_display': applicant.get_evaluation_approval_status_display(),
         'approval_by': applicant.evaluation_approval_by.get_full_name() if applicant.evaluation_approval_by else '',
         'approval_at': applicant.evaluation_approval_at.isoformat() if applicant.evaluation_approval_at else None,
+        'sms_dispatched': sms_dispatched,
     })
 
 

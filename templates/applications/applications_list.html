@@ -1842,24 +1842,24 @@
                         <!-- Approval Status Options -->
                         <div style="margin-bottom: 1.2rem; display: flex; gap: 0.75rem; flex-direction: column;">
                             <!-- Approve Button -->
-                            <button type="button" class="m2-eval28-approve-btn" onclick="setEvaluationApprovalStatus('approved')" style="display:flex;align-items:center;gap:0.75rem;padding:0.9rem;background:#ecfdf5;border:2px solid #86efac;border-radius:8px;cursor:pointer;transition:all 0.2s;font-weight:600;">
+                            <button type="button" class="m2-eval28-approve-btn" onclick="setEvaluationApprovalStatus('approved')" style="display:flex;align-items:center;justify-content:center;gap:0.75rem;padding:0.95rem;background:#ecfdf5;border:2px solid #86efac;border-radius:10px;cursor:pointer;transition:all 0.2s;font-weight:600;text-align:center;">
                                 <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#22c55e" stroke-width="2">
                                     <polyline points="20 6 9 17 4 12"></polyline>
                                 </svg>
-                                <div style="text-align:left;">
+                                <div style="text-align:center;">
                                     <div style="color:#16a34a;font-size:0.95rem;">✓ Approve - Qualified</div>
                                     <div style="color:#6b7280;font-size:0.75rem;margin-top:0.1rem;">Record applicant as approved and eligible</div>
                                 </div>
                             </button>
 
                             <!-- Disqualify Button -->
-                            <button type="button" class="m2-eval28-disqualify-btn" onclick="setEvaluationApprovalStatus('disqualified')" style="display:flex;align-items:center;gap:0.75rem;padding:0.9rem;background:#fef2f2;border:2px solid #fca5a5;border-radius:8px;cursor:pointer;transition:all 0.2s;font-weight:600;">
+                            <button type="button" class="m2-eval28-disqualify-btn" onclick="setEvaluationApprovalStatus('disqualified')" style="display:flex;align-items:center;justify-content:center;gap:0.75rem;padding:0.95rem;background:#fef2f2;border:2px solid #fca5a5;border-radius:10px;cursor:pointer;transition:all 0.2s;font-weight:600;text-align:center;">
                                 <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#ef4444" stroke-width="2">
                                     <circle cx="12" cy="12" r="10"></circle>
                                     <line x1="15" y1="9" x2="9" y2="15"></line>
                                     <line x1="9" y1="9" x2="15" y2="15"></line>
                                 </svg>
-                                <div style="text-align:left;">
+                                <div style="text-align:center;">
                                     <div style="color:#dc2626;font-size:0.95rem;">✗ Disqualify</div>
                                     <div style="color:#6b7280;font-size:0.75rem;margin-top:0.1rem;">Record disqualification with reason</div>
                                 </div>
@@ -1883,13 +1883,13 @@
                         </div>
 
                         <!-- Approval Notes -->
-                        <label style="margin-bottom:0.3rem;display:block;font-weight:600;color:#374151;font-size:0.875rem;">Evaluation Notes (optional)</label>
+                        <label style="margin-bottom:0.3rem;display:block;font-weight:600;color:#374151;font-size:0.875rem;text-align:center;">Evaluation Notes (optional)</label>
                         <textarea id="modalEvaluationApprovalNotes" class="m2-dq-notes" rows="2" placeholder="2.8 remarks (evaluation only; not Module 3 routing)..." style="width: 100%; box-sizing: border-box; padding: 0.625rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.875rem; font-family: inherit; resize: vertical; margin-bottom: 1rem;"></textarea>
 
                         <!-- Action Buttons -->
-                        <div style="display:flex;gap:0.75rem;">
-                            <button type="button" class="m2-eval28-save-btn" onclick="recordEvaluationApprovalStatus()" style="flex:1;padding:0.75rem 1rem;background:#2563eb;color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;transition:all 0.2s;">Confirm & Save 2.8 Status</button>
-                            <button type="button" onclick="m2BackToLayer3Step()" style="padding:0.75rem 1rem;background:#f3f4f6;color:#374151;border:1px solid #d1d5db;border-radius:8px;font-weight:500;cursor:pointer;transition:all 0.2s;">Back</button>
+                        <div style="display:flex;gap:0.75rem;align-items:stretch;">
+                            <button type="button" class="m2-eval28-save-btn" onclick="recordEvaluationApprovalStatus()" style="flex:1;min-height:48px;padding:0.78rem 1.1rem;background:#2563eb;color:white;border:none;border-radius:10px;font-weight:700;cursor:pointer;transition:all 0.2s;font-size:0.9rem;">Confirm Save Status - Proceed to Documents</button>
+                            <button type="button" onclick="m2BackToLayer3Step()" style="min-width:108px;min-height:48px;padding:0.78rem 1rem;background:#f3f4f6;color:#374151;border:1px solid #d1d5db;border-radius:10px;font-weight:600;cursor:pointer;transition:all 0.2s;font-size:0.88rem;">Back</button>
                         </div>
                         <div id="modalEval28Gateway" style="display:none;margin-top:0.85rem;padding-top:0.75rem;border-top:1px solid #e2e8f0;">
                             <div style="font-size:0.7rem;color:#475569;margin-bottom:0.45rem;">
@@ -2340,8 +2340,8 @@
             "If the applicant's Module 1 record contains a danger-zone claim, THA Staff updates the CDRRMO certification status in Module 2 after receiving and checking the physical certification. This certification serves as an official basis for confirming the applicant's danger-zone status. Once verified, the system uses this status as part of eligibility checking and queue classification. Applicants with verified CDRRMO certification may be classified under the priority category, while applicants whose danger-zone claim remains unverified continue under regular evaluation rules.";
         const requiresCdrrmo = !!(data.m2_rules && data.m2_rules.requires_cdrrmo);
         const hazardClaimBadge = requiresCdrrmo
-            ? `<span style="display:inline-flex;align-items:center;padding:.3rem .72rem;border-radius:9999px;border:1px solid #86efac;background:#dcfce7;color:#166534;font-size:.72rem;font-weight:700;box-shadow:0 1px 2px rgba(22,101,52,.15);">Hazard claim: Yes (2.6 required)</span>`
-            : `<span style="display:inline-flex;align-items:center;padding:.3rem .72rem;border-radius:9999px;border:1px solid #93c5fd;background:#dbeafe;color:#1d4ed8;font-size:.72rem;font-weight:700;box-shadow:0 1px 2px rgba(29,78,216,.15);">Hazard claim: No (2.6 skipped)</span>`;
+            ? `<span style="display:inline-flex;align-items:center;padding:.3rem .72rem;border-radius:9999px;border:1px solid #86efac;background:#dcfce7;color:#166534;font-size:.72rem;font-weight:700;box-shadow:0 1px 2px rgba(22,101,52,.15);">Hazard claim: Yes (2.5 required)</span>`
+            : `<span style="display:inline-flex;align-items:center;padding:.3rem .72rem;border-radius:9999px;border:1px solid #93c5fd;background:#dbeafe;color:#1d4ed8;font-size:.72rem;font-weight:700;box-shadow:0 1px 2px rgba(29,78,216,.15);">Hazard claim: No (2.5 skipped)</span>`;
         const cdrrmoStatus = data.cdrrmo && data.cdrrmo.status ? data.cdrrmo.status : '';
         const cdrrmoReadout = cdrrmoStatus === 'certified'
             ? 'Danger-zone status is officially verified. Applicant provided a valid CDRRMO certification; priority may be available when all other requirements allow.'
@@ -3302,6 +3302,23 @@
                 `Notes: ${notesLine}\n\n` +
                 `This status is an internal Module 2 evaluation marker and remains separate from the Module 3 routing chain.`
             );
+            if ((data.approval_status || approvalStatus) === 'approved') {
+                const reference = window.__m2LastApplicantData?.reference_number || '';
+                const docsUrl = reference
+                    ? `/documents/${position}/management/?search=${encodeURIComponent(reference)}`
+                    : `/documents/${position}/management/`;
+                const smsStatusLine = data.sms_dispatched
+                    ? 'SMS sent to ISF applicant for notification.'
+                    : 'SMS was not sent (check contact number or SMS service logs).';
+                alert(
+                    `2.8 Approved successfully.\n` +
+                    `${smsStatusLine}\n\n` +
+                    `Redirecting to Document Management...`
+                );
+                setTimeout(() => {
+                    window.location.href = docsUrl;
+                }, 250);
+            }
         } catch (error) {
             alert('Error: ' + error.message);
         }
