@@ -2,31 +2,7 @@
 Module 2 utility helpers.
 """
 
-from .models import BlacklistProxy
 from units.models import Blacklist as UnitsBlacklist
-
-
-class _IntakeBlacklistAdapter:
-    """
-    Adapter for intake blacklist rows so Module 2 can consume a unified shape.
-    """
-
-    _REASON_LABELS = {
-        'repossession': 'Housing Unit Repossessed',
-        'fraud': 'Fraudulent Information',
-        'violation': 'Violation of Housing Rules',
-        'other': 'Other',
-    }
-
-    def __init__(self, entry):
-        self._entry = entry
-        self.notes = (entry.notes or '').strip()
-        self.source = 'intake_blacklist'
-        self.policy_note = ''
-
-    def get_reason_display(self):
-        reason_key = (getattr(self._entry, 'reason', '') or '').strip()
-        return self._REASON_LABELS.get(reason_key, reason_key.replace('_', ' ').title() or 'Blacklist match')
 
 
 class _UnitsBlacklistAdapter:
@@ -60,47 +36,31 @@ class _UnitsBlacklistAdapter:
         return self._entry.applicant.full_name if self._entry and self._entry.applicant else ''
 
 
-def check_blacklist_module2(full_name, phone_number=None):
+def check_blacklist_module2(full_name, phone_number=None, applicant_id=None):
     """
     Module 2 automatic blacklist gate (workflow step 2.1).
 
+    Source of truth: ``units.Blacklist`` (housing monitoring / compliance).
+
     Returns:
-        tuple[bool, BlacklistProxy | None]
+        tuple[bool, _UnitsBlacklistAdapter | None]
     """
     full_name = (full_name or '').strip()
     phone_number = (phone_number or '').strip()
+    applicant_id = str(applicant_id or '').strip()
 
-    if full_name:
-        name_match = BlacklistProxy.objects.filter(
-            full_name__icontains=full_name,
-        ).first()
-        if name_match:
-            return True, _IntakeBlacklistAdapter(name_match)
-
-    if phone_number:
-        phone_match = BlacklistProxy.objects.filter(
-            phone_number=phone_number,
-        ).first()
-        if phone_match:
-            return True, _IntakeBlacklistAdapter(phone_match)
-
-    # Temporary cross-module pipeline:
-    # also enforce Units blacklist entries while final consolidation is pending.
-    units_name_q = UnitsBlacklist.objects.none()
-    units_phone_q = UnitsBlacklist.objects.none()
-
-    if full_name:
-        units_name_q = UnitsBlacklist.objects.select_related('applicant').filter(
-            applicant__full_name__icontains=full_name,
-            reason='repossession',
-        )
-    if phone_number:
-        units_phone_q = UnitsBlacklist.objects.select_related('applicant').filter(
-            applicant__phone_number=phone_number,
-            reason='repossession',
-        )
-
-    units_match = (units_name_q | units_phone_q).order_by('-blacklisted_at').first()
+    # Primary source for Module 2 disqualification gate:
+    # Units blacklist entries produced by compliance/repossession monitoring.
+    units_q = UnitsBlacklist.objects.select_related('applicant')
+    units_match = None
+    if applicant_id:
+        units_match = units_q.filter(applicant_id=applicant_id).order_by('-blacklisted_at').first()
+    if not units_match and phone_number:
+        units_match = units_q.filter(applicant__phone_number=phone_number).order_by('-blacklisted_at').first()
+    if not units_match and full_name:
+        units_match = units_q.filter(applicant__full_name__iexact=full_name).order_by('-blacklisted_at').first()
+    if not units_match and full_name:
+        units_match = units_q.filter(applicant__full_name__icontains=full_name).order_by('-blacklisted_at').first()
     if units_match:
         return True, _UnitsBlacklistAdapter(units_match)
 

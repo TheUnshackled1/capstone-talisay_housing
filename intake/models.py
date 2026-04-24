@@ -54,55 +54,6 @@ class SMSLog(models.Model):
         return f"SMS to {self.recipient_phone} - {self.trigger_event} ({self.status})"
 
 
-class Blacklist(models.Model):
-    """
-    Permanent record of blacklisted individuals.
-    Auto-checked during every Module 1 eligibility check.
-    """
-    REASON_CHOICES = [
-        ('repossession', 'Housing Unit Repossessed'),
-        ('fraud', 'Fraudulent Information'),
-        ('violation', 'Violation of Housing Rules'),
-        ('other', 'Other'),
-    ]
-    
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    
-    # Identity
-    full_name = models.CharField(max_length=255)
-    phone_number = models.CharField(max_length=20, blank=True)
-    
-    # Reason
-    reason = models.CharField(max_length=20, choices=REASON_CHOICES)
-    notes = models.TextField(blank=True)
-    
-    # Link to applicant if exists
-    applicant = models.ForeignKey(
-        'Applicant',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='blacklist_entries'
-    )
-    
-    # Staff tracking
-    blacklisted_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        related_name='blacklist_entries_created'
-    )
-    blacklisted_at = models.DateTimeField(auto_now_add=True)
-    
-    class Meta:
-        ordering = ['-blacklisted_at']
-        verbose_name = "Blacklist Entry"
-        verbose_name_plural = "Blacklist"
-    
-    def __str__(self):
-        return f"Blacklisted: {self.full_name} ({self.get_reason_display()})"
-
-
 class Barangay(models.Model):
     """
     Reference table for the 27 barangays of Talisay City.
@@ -142,7 +93,6 @@ class Applicant(models.Model):
         ('application', 'Application In Progress'),
         ('standby', 'Fully Approved - Standby'),
         ('awarded', 'Lot Awarded'),
-        ('blacklisted', 'Blacklisted'),
     ]
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

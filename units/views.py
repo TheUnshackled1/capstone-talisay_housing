@@ -11,7 +11,8 @@ from functools import wraps
 import json
 
 from intake.models import Applicant
-from applications.models import QueueEntry, Application, ElectricityConnection
+from applications.models import QueueEntry, Application
+from documents.models import ElectricityConnection
 from intake.utils import send_sms
 from units.models import (
     HousingUnit, LotAward, RelocationSite, ComplianceNotice,

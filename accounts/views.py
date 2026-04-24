@@ -6,9 +6,11 @@ from django.utils import timezone
 from django.db.models import Q, OuterRef, Subquery, Prefetch
 from datetime import timedelta, date
 from .forms import LoginForm
-from intake.models import Applicant, CDRRMOCertification, SMSLog, Blacklist
+from intake.models import Applicant, CDRRMOCertification, SMSLog
+from units.models import Blacklist as UnitsBlacklist
 from applications.models import QueueEntry, Application, SignatoryRouting, RequirementSubmission
 from units.models import ComplianceNotice, HousingUnit, ElectricityConnection
+from cases.models import Case
 import json
 
 
@@ -300,7 +302,7 @@ def dashboard_head(request):
     overdue_cdrrmo = CDRRMOCertification.objects.filter(status='pending', requested_at__lt=overdue_threshold).count()
 
     # Blacklist summary
-    blacklist_count = Blacklist.objects.count()
+    blacklist_count = UnitsBlacklist.objects.count()
 
     # SMS failures (last 7 days)
     seven_days_ago = timezone.now() - timedelta(days=7)
@@ -484,8 +486,8 @@ def dashboard_oic(request):
     overdue_cdrrmo = CDRRMOCertification.objects.filter(status='pending', requested_at__lt=overdue_threshold).count()
 
     # Blacklist count
-    blacklist_count = Blacklist.objects.count()
-    recent_blacklist = Blacklist.objects.all().order_by('-blacklisted_at')[:5]
+    blacklist_count = UnitsBlacklist.objects.count()
+    recent_blacklist = UnitsBlacklist.objects.select_related('applicant').order_by('-blacklisted_at')[:5]
 
     # Total applicants
     total_applicants = Applicant.objects.count()
@@ -1020,7 +1022,7 @@ def dashboard_fourth_member(request):
         Application.objects.filter(status='standby').select_related('applicant').order_by('updated_at')[:40]
     )
 
-    blacklist_count = Blacklist.objects.count()
+    blacklist_count = UnitsBlacklist.objects.count()
     repossessed_count = HousingUnit.objects.filter(status='Repossessed').count()
     awaiting_reaward = Application.objects.filter(status='standby').count()
 
@@ -1616,7 +1618,7 @@ def head_applicants_overview(request):
         })
 
     # Blacklist count
-    blacklist_count = Blacklist.objects.count()
+    blacklist_count = UnitsBlacklist.objects.count()
 
     # SMS failures (last 7 days)
     seven_days_ago = timezone.now() - timedelta(days=7)
@@ -1816,7 +1818,7 @@ def head_analytics_dashboard(request):
         'services_completion_rate': services_completion_rate
     }
 
-    return render(request, 'accounts/head/analytics_dashboard.html', context)
+    return render(request, 'accounts/head/analytics.html', context)
 
 
 @login_required
@@ -1869,9 +1871,9 @@ def head_monthly_reports(request):
 
     # Housing units for month
     total_units = HousingUnit.objects.count()
-    occupied_units = HousingUnit.objects.filter(occupancy_status='occupied').count()
-    vacant_units = HousingUnit.objects.filter(occupancy_status='vacant').count()
-    under_notice_units = HousingUnit.objects.filter(occupancy_status__in=['30_day_notice', 'final_notice']).count()
+    occupied_units = HousingUnit.objects.filter(status='Occupied').count()
+    vacant_units = HousingUnit.objects.filter(status='Vacant — available').count()
+    under_notice_units = HousingUnit.objects.filter(status__in=['Under notice (30-day)', 'Final notice (10-day)']).count()
 
     # Cases for month
     cases_open = Case.objects.filter(
@@ -2024,7 +2026,7 @@ def oic_applicants_overview(request):
         })
 
     # Blacklist count
-    blacklist_count = Blacklist.objects.count()
+    blacklist_count = UnitsBlacklist.objects.count()
 
     # SMS failures (last 7 days)
     seven_days_ago = timezone.now() - timedelta(days=7)

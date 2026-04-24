@@ -10,10 +10,10 @@ from functools import wraps
 from intake.models import Applicant, CDRRMOCertification, FieldVerificationPhoto
 from intake.utils import send_sms
 from intake import sms_workflow
+from documents.models import FacilitatedService, ElectricityConnection, LotAwarding
 from .models import (
     Application, Requirement, RequirementSubmission,
-    SignatoryRouting, FacilitatedService, ElectricityConnection, LotAwarding,
-    QueueEntry, CDRRMOCertificationProxy,
+    SignatoryRouting, QueueEntry, CDRRMOCertificationProxy,
 )
 from .utils import check_blacklist_module2
 
@@ -181,19 +181,67 @@ def _require_module2_handoff(applicant):
 def _blacklist_source_label(bl_entry):
     source_map = {
         'units_blacklist': 'Units Blacklist Entries',
-        'intake_blacklist': 'Module 1 Blacklist',
     }
-    return source_map.get(getattr(bl_entry, 'source', ''), 'Module 1 Blacklist')
+    return source_map.get(getattr(bl_entry, 'source', ''), 'Units Blacklist Entries')
+
+
+def _build_module2_blacklist_disqualification_reason(bl_entry):
+    reason = bl_entry.get_reason_display() if bl_entry else 'Blacklist match'
+    source_label = _blacklist_source_label(bl_entry)
+    policy_note = (getattr(bl_entry, 'policy_note', '') or '').strip()
+    notes = (getattr(bl_entry, 'notes', '') or '').strip()
+    text = f'On blacklist [{source_label}] ({reason}).'
+    if notes:
+        text += f' Remarks: {notes[:400]}'
+    if policy_note:
+        text += f' Policy note: {policy_note}'
+    return text
+
+
+def _auto_disqualify_if_blacklisted(applicant, bl_entry, checked_by=None):
+    """
+    Persist Module 2 policy: blacklist match immediately disqualifies record.
+    """
+    if not bl_entry:
+        return False
+
+    reason_text = _build_module2_blacklist_disqualification_reason(bl_entry)
+    should_update_reason = (applicant.disqualification_reason or '').strip() != reason_text
+    should_update_status = applicant.status != 'disqualified'
+    should_update_checker = bool(checked_by) and applicant.eligibility_checked_by_id != checked_by.id
+    has_active_queue = applicant.queue_entries.filter(status='active').exists()
+    changed = should_update_reason or should_update_status or should_update_checker
+
+    if changed:
+        applicant.status = 'disqualified'
+        applicant.disqualification_reason = reason_text
+        applicant.eligibility_checked_at = timezone.now()
+        update_fields = ['status', 'disqualification_reason', 'eligibility_checked_at', 'updated_at']
+        if checked_by:
+            applicant.eligibility_checked_by = checked_by
+            update_fields.append('eligibility_checked_by')
+        applicant.save(update_fields=update_fields)
+
+    if has_active_queue:
+        _deactivate_active_queue_entries(applicant)
+        changed = True
+
+    return changed
 
 
 def _require_module2_blacklist_clear(applicant):
     """
     Enforce Module 2 workflow step 2.1: automatic blacklist stop gate.
     """
-    is_bl, bl_entry = check_blacklist_module2(applicant.full_name, applicant.phone_number or None)
+    is_bl, bl_entry = check_blacklist_module2(
+        applicant.full_name,
+        applicant.phone_number or None,
+        applicant_id=applicant.id,
+    )
     if not is_bl:
         return None
 
+    _auto_disqualify_if_blacklisted(applicant, bl_entry)
     reason = bl_entry.get_reason_display() if bl_entry else 'Blacklist match'
     source_label = _blacklist_source_label(bl_entry)
     policy_note = (getattr(bl_entry, 'policy_note', '') or '').strip()
@@ -258,17 +306,22 @@ def _ensure_module2_queue_entry(applicant, queue_type, added_by=None):
     raise RuntimeError('Unable to allocate queue position')
 
 
-def _module2_eligibility_snapshot(applicant):
+def _module2_eligibility_snapshot(applicant, checked_by=None):
     """
     Single rule engine for Module 2 eligibility and queue recommendation.
     """
     blockers = []
     advisories = []
-    is_bl, bl_entry = check_blacklist_module2(applicant.full_name, applicant.phone_number or None)
+    is_bl, bl_entry = check_blacklist_module2(
+        applicant.full_name,
+        applicant.phone_number or None,
+        applicant_id=applicant.id,
+    )
     blacklist_detail = ''
     blacklist_source = ''
     blacklist_policy_note = ''
     if is_bl and bl_entry:
+        _auto_disqualify_if_blacklisted(applicant, bl_entry, checked_by=checked_by)
         blacklist_source = _blacklist_source_label(bl_entry)
         blacklist_policy_note = (getattr(bl_entry, 'policy_note', '') or '').strip()
         blacklist_detail = bl_entry.get_reason_display()
@@ -529,7 +582,7 @@ def applications_list(request, position):
             user_actions.append('manage_electricity')
 
         # --- Central Module 2 eligibility rules snapshot ---
-        rules = _module2_eligibility_snapshot(applicant)
+        rules = _module2_eligibility_snapshot(applicant, checked_by=request.user)
         blacklist_blocked = rules['blacklist_blocked']
         blacklist_detail = rules['blacklist_detail']
         blacklist_source = rules['blacklist_source']
@@ -678,7 +731,7 @@ def application_detail(request, position, application_id):
     applicant.refresh_from_db()
     
     # Build response data
-    rules = _module2_eligibility_snapshot(applicant)
+    rules = _module2_eligibility_snapshot(applicant, checked_by=request.user)
 
     data = {
         'applicant_id': str(applicant.id),

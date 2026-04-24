@@ -222,37 +222,24 @@ def send_sms_iprog(phone_number, message, sms_log):
         return False
 
 
-def check_blacklist(full_name, phone_number=None):
+def check_blacklist(full_name, phone_number=None, applicant_id=None):
     """
-    Check if a person is on the blacklist.
-    
-    Args:
-        full_name: Full name to check
-        phone_number: Phone number to check (optional)
-    
+    Check if a person is on the housing-units blacklist (units.Blacklist).
+
+    Intake no longer maintains a separate blacklist table; Module 2 and
+    intake helpers use the same Units monitoring source.
+
     Returns:
-        tuple: (is_blacklisted: bool, blacklist_entry or None)
+        tuple: (is_blacklisted: bool, adapter_or_None) — same shape as
+        ``applications.utils.check_blacklist_module2``.
     """
-    from .models import Blacklist
-    
-    # Check by name (case-insensitive partial match)
-    name_match = Blacklist.objects.filter(
-        full_name__icontains=full_name.strip()
-    ).first()
-    
-    if name_match:
-        return (True, name_match)
-    
-    # Check by phone number if provided
-    if phone_number:
-        phone_match = Blacklist.objects.filter(
-            phone_number=phone_number.strip()
-        ).first()
-        
-        if phone_match:
-            return (True, phone_match)
-    
-    return (False, None)
+    from applications.utils import check_blacklist_module2
+
+    return check_blacklist_module2(
+        full_name,
+        phone_number,
+        applicant_id=applicant_id,
+    )
 
 
 def ensure_priority_queue_entry(applicant, added_by=None):

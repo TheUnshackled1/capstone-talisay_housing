@@ -203,7 +203,7 @@ JAZZMIN_SETTINGS = {
         "intake": "fas fa-inbox",
         "intake.Applicant": "fas fa-user-check",
         "intake.Barangay": "fas fa-map-marker",
-        "intake.Blacklist": "fas fa-ban",
+        "units.Blacklist": "fas fa-ban",
         "intake.CDRRMOCertification": "fas fa-certificate",
         "intake.HouseholdMember": "fas fa-users",
         "intake.QueueEntry": "fas fa-list-ol",

@@ -1,8 +1,7 @@
 from django.contrib import admin
 from .models import (
     Requirement, RequirementSubmission, Application, SignatoryRouting,
-    FacilitatedService, ElectricityConnection, LotAwarding, QueueEntry, SMSLog,
-    BlacklistProxy, CDRRMOCertificationProxy,
+    QueueEntry, SMSLog, CDRRMOCertificationProxy,
 )
 
 
@@ -96,108 +95,6 @@ class SignatoryRoutingAdmin(admin.ModelAdmin):
         }),
         ('📝 NOTES', {
             'fields': ('notes',),
-            'classes': ('collapse',),
-        }),
-    )
-
-
-@admin.register(FacilitatedService)
-class FacilitatedServiceAdmin(admin.ModelAdmin):
-    list_display = ('application', 'service_type', 'status', 'initiated_at')
-    list_filter = ('service_type', 'status', 'initiated_at')
-    search_fields = ('application__application_number',)
-    readonly_fields = ('initiated_at', 'completed_at')
-
-    fieldsets = (
-        ('🔧 SERVICE', {
-            'fields': ('application', 'service_type', 'status'),
-        }),
-        ('📅 TIMELINE', {
-            'fields': ('initiated_at', 'initiated_by', 'completed_at', 'completed_by'),
-        }),
-        ('📝 NOTES', {
-            'fields': ('notes',),
-            'classes': ('collapse',),
-        }),
-    )
-
-
-@admin.register(ElectricityConnection)
-class ElectricityConnectionAdmin(admin.ModelAdmin):
-    list_display = ('application', 'status', 'applied_at', 'connected_at')
-    list_filter = ('status', 'applied_at')
-    search_fields = ('application__application_number',)
-    readonly_fields = ('applied_at', 'connected_at')
-
-    fieldsets = (
-        ('💡 ELECTRICITY CONNECTION', {
-            'fields': ('application', 'status'),
-        }),
-        ('📝 NEGROS POWER APPLICATION', {
-            'fields': ('applied_at', 'applied_by', 'negros_power_reference'),
-        }),
-        ('🔍 INSPECTION', {
-            'fields': ('inspection_date', 'inspection_result'),
-            'classes': ('collapse',),
-        }),
-        ('✅ CONNECTION COMPLETION', {
-            'fields': ('connected_at', 'meter_number'),
-            'classes': ('collapse',),
-        }),
-        ('⚠️ ISSUES', {
-            'fields': ('issue_description', 'issue_resolved_at'),
-            'classes': ('collapse',),
-        }),
-        ('📝 NOTES', {
-            'fields': ('notes',),
-            'classes': ('collapse',),
-        }),
-    )
-
-
-@admin.register(LotAwarding)
-class LotAwardingAdmin(admin.ModelAdmin):
-    list_display = ('application', 'lot_number', 'block_number', 'awarded_at')
-    list_filter = ('awarded_at', 'contract_signed', 'keys_turned_over')
-    search_fields = ('application__application_number', 'lot_number')
-    readonly_fields = ('awarded_at',)
-
-    fieldsets = (
-        ('🏡 LOT AWARD', {
-            'fields': ('application', 'lot_number', 'block_number', 'site_name'),
-        }),
-        ('🎖️ AWARD CEREMONY', {
-            'fields': ('awarded_at', 'awarded_by'),
-        }),
-        ('📜 CONTRACT', {
-            'fields': ('contract_signed', 'contract_signed_at'),
-            'classes': ('collapse',),
-        }),
-        ('🔑 KEY TURNOVER', {
-            'fields': ('keys_turned_over', 'keys_turned_over_at'),
-            'classes': ('collapse',),
-        }),
-        ('📝 NOTES', {
-            'fields': ('notes',),
-            'classes': ('collapse',),
-        }),
-    )
-
-
-@admin.register(BlacklistProxy)
-class BlacklistProxyAdmin(admin.ModelAdmin):
-    list_display = ('full_name', 'phone_number', 'reason', 'blacklisted_at', 'blacklisted_by')
-    list_filter = ('reason', 'blacklisted_at')
-    search_fields = ('full_name', 'phone_number', 'notes')
-    readonly_fields = ('id', 'blacklisted_at')
-    ordering = ('-blacklisted_at',)
-
-    fieldsets = (
-        ('⛔ MODULE 2 BLACKLIST GATE (2.1)', {
-            'fields': ('id', 'full_name', 'phone_number', 'reason', 'notes'),
-        }),
-        ('🔗 LINKS', {
-            'fields': ('applicant', 'blacklisted_by', 'blacklisted_at'),
             'classes': ('collapse',),
         }),
     )

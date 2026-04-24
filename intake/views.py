@@ -14,7 +14,7 @@ from .forms import (
     HouseholdMemberForm,
     WalkInApplicantForm
 )
-from .utils import check_blacklist, send_sms, ensure_priority_queue_entry
+from .utils import send_sms, ensure_priority_queue_entry
 from . import sms_workflow
 import json
 import re

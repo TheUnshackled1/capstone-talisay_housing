@@ -588,6 +588,34 @@
     color: #991b1b;
 }
 
+.m2-pipeline-layers { text-align: left; }
+.m2-layer-eyebrow { font-size: 0.58rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #64748b; text-align: center; }
+.m2-layer-title { font-size: 0.82rem; font-weight: 700; color: #0f172a; margin: 0.2rem 0 0.45rem; text-align: center; }
+.m2-proceed-btn {
+    display: block;
+    width: 100%;
+    margin-top: 0.65rem;
+    padding: 0.55rem 0.9rem;
+    border: none;
+    border-radius: 8px;
+    background: #2563eb;
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+.m2-proceed-btn:hover { background: #1d4ed8; }
+.m2-layer1-done-strip { text-align: center; padding: 0.5rem 0.65rem; border-radius: 8px; background: #ecfdf5; border: 1px solid #a7f3d0; color: #166534; font-size: 0.72rem; font-weight: 600; }
+.m2-blocked-user-msg { margin-top: 0.6rem; padding: 0.65rem; border-radius: 8px; background: #fef2f2; border: 1px solid #fecaca; color: #7f1d1d; font-size: 0.74rem; font-weight: 600; line-height: 1.5; text-align: center; }
+.m2-tech-detail { margin-top: 0.4rem; font-size: 0.65rem; color: #9a3412; font-weight: 500; line-height: 1.4; }
+.m2-layer2-block { display: none; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #e2e8f0; }
+.m2-layer2-block .m2-checklist { text-align: left; }
+.m2-check-item.m2-item-stacked { flex-direction: column; align-items: stretch; text-align: left; gap: 0.35rem; }
+.m2-check-item.m2-item-stacked .m2-check-head { display: flex; align-items: flex-start; gap: 0.45rem; }
+.m2-check-item.m2-item-stacked .m2-check-head .icon { flex-shrink: 0; margin-top: 0.1rem; }
+.m2-policy-note { font-size: 0.64rem; line-height: 1.5; color: #64748b; }
+
 .m2-show-form-btn {
     display: inline-flex;
     align-items: center;
@@ -1769,14 +1797,25 @@
 
     applyDocProgressFillWidths();
 
-    function getBlacklistSourceCssClass(source) {
-        if (!source) return 'source-module1';
-        return source === 'Units Blacklist Entries' ? 'source-units' : 'source-module1';
+    function getBlacklistSourceCssClass() {
+        return 'source-units';
     }
 
     function renderBlacklistSourceChip(source) {
         if (!source) return '';
         return `<span class="blacklist-source-chip ${getBlacklistSourceCssClass(source)}">${escapeHtml(source)}</span>`;
+    }
+
+    function m2ProceedToLayer2Step() {
+        const main = document.getElementById('m2Layer1Main');
+        const done = document.getElementById('m2Layer1Done');
+        const l2 = document.getElementById('m2Layer2Block');
+        if (main) main.style.display = 'none';
+        if (done) done.style.display = 'block';
+        if (l2) {
+            l2.style.display = 'block';
+            l2.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
     }
 
     function renderEligibilityPipeline(data) {
@@ -1791,6 +1830,14 @@
         const householdMismatch = !!rules.household_mismatch;
         const declaredHH = rules.declared_household_size != null ? String(rules.declared_household_size) : '—';
         const listedHH = rules.listed_household_size != null ? String(rules.listed_household_size) : '—';
+
+        const policy23 =
+            'THA Staff records or confirms the applicant’s property ownership result. The system evaluates whether ownership of real property disqualifies the applicant. If the result causes disqualification, the system records the disqualification remarks. If the applicant is cleared, the record proceeds to the next check.';
+        const policy24 =
+            'The system retrieves the income details that were already encoded during registration in Module 1. THA Staff reviews or confirms the encoded income information, and the system checks whether the income level remains within the allowed eligibility threshold. No re-encoding is needed unless correction is necessary.';
+        const policy25 =
+            'THA Staff records or confirms the household composition and related details needed for evaluation. The system uses this information as part of eligibility determination and applicant prioritization.';
+
         const item = (tone, icon, title, desc) =>
             `<div class="m2-check-item ${tone}">
                 <span class="icon">${icon}</span>
@@ -1800,24 +1847,47 @@
                 </div>
             </div>`;
 
+        const itemStacked = (tone, icon, title, desc, policyHtml) =>
+            `<div class="m2-check-item ${tone} m2-item-stacked">
+                <div class="m2-check-head">
+                    <span class="icon">${icon}</span>
+                    <div>
+                        <div class="title">${title}</div>
+                        <div class="desc">${desc}</div>
+                    </div>
+                </div>
+                <div class="m2-policy-note">${policyHtml}</div>
+            </div>`;
+
         gate.style.display = 'block';
 
         if (blacklistBlocked) {
             gate.style.background = '#fff7f7';
             gate.style.border = '1px solid #fecaca';
             gate.style.color = '#7f1d1d';
+            const detail = escapeHtml(
+                [data.blacklist_detail || '', data.blacklist_policy_note || ''].filter(Boolean).join(' ')
+            );
             gate.innerHTML =
-                `<div style="font-weight:700;font-size:0.78rem;margin-bottom:0.35rem;text-align:center;">Module 2 automated checks (2.2 to 2.5)</div>` +
+                `<div class="m2-pipeline-layers">` +
+                `<div class="m2-layer-eyebrow">Layer 1 — System check</div>` +
+                `<div class="m2-layer-title">2.2 Automatic Blacklist Check</div>` +
                 `<div class="m2-checklist">` +
                 item(
                     'fail',
                     '!',
                     `2.2 Automatic Blacklist Check${sourceChip}`,
-                    `Blocked. ${escapeHtml(data.blacklist_detail || 'Blacklist match detected.')} ${escapeHtml(data.blacklist_policy_note || '')} Staff cannot continue to next checks until this blacklist record is resolved.`
+                    `Blocked. ${escapeHtml(data.blacklist_detail || 'This applicant matches the housing-units blacklist.')}${
+                        data.blacklist_policy_note ? ' ' + escapeHtml(data.blacklist_policy_note) : ''
+                    }`
                 ) +
-                item('warn', '•', '2.3 Check Property Ownership', 'Locked until Step 2.2 is cleared.') +
-                item('warn', '•', '2.4 Check Income Details', 'Locked until Step 2.2 is cleared.') +
-                item('warn', '•', '2.5 Check Household Composition', 'Locked until Step 2.2 is cleared.') +
+                `</div>` +
+                `<div class="m2-blocked-user-msg">` +
+                `Sorry, this ISF is on the blacklist. You cannot continue to the next layer or section.` +
+                `</div>` +
+                (detail
+                    ? `<div class="m2-tech-detail">Record: ${detail}</div>`
+                    : '') +
                 `</div>`;
             return;
         }
@@ -1826,38 +1896,50 @@
         gate.style.border = '1px solid #e2e8f0';
         gate.style.color = '#334155';
 
-        // Check if all checks pass
-        const allChecksPassed = propertyClear && incomeClear && !householdMismatch;
-        const headingCheckmark = allChecksPassed ? ' ✓' : '';
+        const propDesc = propertyClear
+            ? 'Cleared - no Talisay property declared.'
+            : 'Failed - property in Talisay declared (disqualification ground).';
+        const incDesc = incomeClear
+            ? 'Cleared - within Module 1 income threshold.'
+            : 'Failed - over Module 1 income threshold.';
+        const hhDesc = householdMismatch
+            ? `Review needed - declared size (${escapeHtml(declaredHH)}) does not match listed members (${escapeHtml(
+                  listedHH
+              )}).`
+            : `Cleared - declared size (${escapeHtml(declaredHH)}) aligns with listed members (${escapeHtml(listedHH)}).`;
+
+        const l2Tone23 = propertyClear ? 'pass' : 'fail';
+        const l2Icon23 = propertyClear ? '✓' : '!';
+        const l2Tone24 = incomeClear ? 'pass' : 'fail';
+        const l2Icon24 = incomeClear ? '✓' : '!';
+        const l2Tone25 = householdMismatch ? 'warn' : 'pass';
+        const l2Icon25 = householdMismatch ? '!' : '✓';
 
         gate.innerHTML =
-            `<div style="font-weight:700;font-size:0.78rem;margin-bottom:0.35rem;text-align:center;">Module 2 automated checks (2.2 to 2.5)${headingCheckmark}</div>` +
+            `<div class="m2-pipeline-layers">` +
+            `<div id="m2Layer1Main">` +
+            `<div class="m2-layer-eyebrow">Layer 1 — System check</div>` +
+            `<div class="m2-layer-title">2.2 Automatic Blacklist Check</div>` +
             `<div class="m2-checklist">` +
-            item('pass', '✓', '2.2 Automatic Blacklist Check', 'Clear. No blacklist match; continue processing.') +
             item(
-                propertyClear ? 'pass' : 'fail',
-                propertyClear ? '✓' : '!',
-                '2.3 Check Property Ownership',
-                propertyClear
-                    ? 'Cleared - no Talisay property declared.'
-                    : 'Failed - property in Talisay declared (disqualification ground).'
+                'pass',
+                '✓',
+                '2.2 Automatic Blacklist Check',
+                'Clear. No blacklist match; continue processing.'
             ) +
-            item(
-                incomeClear ? 'pass' : 'fail',
-                incomeClear ? '✓' : '!',
-                '2.4 Check Income Details',
-                incomeClear
-                    ? 'Cleared - within Module 1 income threshold.'
-                    : 'Failed - over Module 1 income threshold.'
-            ) +
-            item(
-                householdMismatch ? 'warn' : 'pass',
-                householdMismatch ? '!' : '✓',
-                '2.5 Check Household Composition',
-                householdMismatch
-                    ? `Review needed - declared size (${escapeHtml(declaredHH)}) does not match listed members (${escapeHtml(listedHH)}).`
-                    : `Cleared - declared size (${escapeHtml(declaredHH)}) aligns with listed members (${escapeHtml(listedHH)}).`
-            ) +
+            `</div>` +
+            `<button type="button" class="m2-proceed-btn" onclick="m2ProceedToLayer2Step()">Proceed to checks 2.3 – 2.5</button>` +
+            `</div>` +
+            `<div id="m2Layer1Done" class="m2-layer1-done-strip" style="display:none;">✓ Layer 1 complete — 2.2 Automatic Blacklist Check clear</div>` +
+            `<div id="m2Layer2Block" class="m2-layer2-block">` +
+            `<div class="m2-layer-eyebrow">Layer 2 — Eligibility readouts</div>` +
+            `<div class="m2-layer-title">2.3 to 2.5 (property, income, household)</div>` +
+            `<div class="m2-checklist">` +
+            itemStacked(l2Tone23, l2Icon23, '2.3 Check Property Ownership', propDesc, escapeHtml(policy23)) +
+            itemStacked(l2Tone24, l2Icon24, '2.4 Check Income Details', incDesc, escapeHtml(policy24)) +
+            itemStacked(l2Tone25, l2Icon25, '2.5 Check Household Composition', hhDesc, escapeHtml(policy25)) +
+            `</div>` +
+            `</div>` +
             `</div>`;
     }
 
