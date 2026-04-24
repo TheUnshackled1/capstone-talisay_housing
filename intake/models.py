@@ -254,6 +254,29 @@ class Applicant(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     eligibility_checked_at = models.DateTimeField(null=True, blank=True)
+
+    # Module 2.8 - Evaluation approval/review marker (separate from Module 3 routing)
+    EVALUATION_APPROVAL_CHOICES = [
+        ('', 'Not Recorded'),
+        ('approved', 'Approved'),
+        ('for_review', 'For Review'),
+    ]
+    evaluation_approval_status = models.CharField(
+        max_length=20,
+        choices=EVALUATION_APPROVAL_CHOICES,
+        blank=True,
+        default='',
+        help_text='Module 2 step 2.8 approval/review marker only.',
+    )
+    evaluation_approval_notes = models.TextField(blank=True, default='')
+    evaluation_approval_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='evaluation_approved_applicants',
+    )
+    evaluation_approval_at = models.DateTimeField(null=True, blank=True)
     
     class Meta:
         ordering = ['created_at']

@@ -156,9 +156,9 @@
     background: #f0fdf4;
 }
 
-/* Two-card queue summary mode */
+/* Three-card queue summary mode */
 .stages-grid.queue-summary {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 .stages-grid.queue-summary .stage-card {
     cursor: default;
@@ -174,8 +174,13 @@
     background: #dbeafe;
     color: #1d4ed8;
 }
+.stage-card.disqualified .stage-icon {
+    background: #fee2e2;
+    color: #dc2626;
+}
 .stage-card.priority .stage-count { color: #7c3aed; }
 .stage-card.walk-in .stage-count { color: #1d4ed8; }
+.stage-card.disqualified .stage-count { color: #dc2626; }
 
 /* Primary CTA - match intake button */
 .btn-primary-add {
@@ -592,25 +597,65 @@
 .m2-layer-eyebrow { font-size: 0.58rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #64748b; text-align: center; }
 .m2-layer-title { font-size: 0.82rem; font-weight: 700; color: #0f172a; margin: 0.2rem 0 0.45rem; text-align: center; }
 .m2-proceed-btn {
-    display: block;
-    width: 100%;
-    margin-top: 0.65rem;
-    padding: 0.55rem 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 180px;
+    margin-top: 0;
+    padding: 0.5rem 0.95rem;
     border: none;
     border-radius: 8px;
     background: #2563eb;
     color: #fff;
-    font-size: 0.75rem;
+    font-size: 0.73rem;
     font-weight: 600;
     cursor: pointer;
     transition: background 0.15s ease;
 }
 .m2-proceed-btn:hover { background: #1d4ed8; }
+.m2-back-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 120px;
+    padding: 0.5rem 0.95rem;
+    border: 1px solid #94a3b8;
+    border-radius: 8px;
+    background: #f8fafc;
+    color: #334155;
+    font-size: 0.73rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+.m2-back-btn:hover { background: #e2e8f0; }
+.m2-layer-footer-nav {
+    display: flex;
+    gap: 0.45rem;
+    margin-top: 0.65rem;
+    justify-content: flex-end;
+    align-items: center;
+    flex-wrap: wrap;
+}
 .m2-layer1-done-strip { text-align: center; padding: 0.5rem 0.65rem; border-radius: 8px; background: #ecfdf5; border: 1px solid #a7f3d0; color: #166534; font-size: 0.72rem; font-weight: 600; }
 .m2-blocked-user-msg { margin-top: 0.6rem; padding: 0.65rem; border-radius: 8px; background: #fef2f2; border: 1px solid #fecaca; color: #7f1d1d; font-size: 0.74rem; font-weight: 600; line-height: 1.5; text-align: center; }
 .m2-tech-detail { margin-top: 0.4rem; font-size: 0.65rem; color: #9a3412; font-weight: 500; line-height: 1.4; }
 .m2-layer2-block { display: none; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #e2e8f0; }
 .m2-layer2-block .m2-checklist { text-align: left; }
+.m2-layer4-block { display: block; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #e2e8f0; }
+.m2-eval28-panel { display:none; margin-top:0.95rem; border:1px solid #cbd5e1; border-radius:10px; background:#fff; overflow:hidden; }
+.m2-eval28-head { padding:0.6rem 0.75rem; border-bottom:1px solid #e2e8f0; background:#f8fafc; }
+.m2-eval28-kicker { font-size:0.58rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:#64748b; text-align:center; }
+.m2-eval28-title { margin-top:0.2rem; font-size:0.82rem; font-weight:700; color:#0f172a; text-align:center; }
+.m2-eval28-subtitle { margin-top:0.2rem; font-size:0.68rem; line-height:1.45; color:#475569; }
+.m2-eval28-body { padding:0.7rem 0.75rem; }
+.m2-eval28-form { display:none; margin-top:0.65rem; padding-top:0.65rem; border-top:1px dashed #cbd5e1; }
+.m2-eval28-form label { display:block; font-size:0.69rem; font-weight:700; color:#1e293b; margin-bottom:0.2rem; }
+.m2-eval28-save-btn {
+    display:inline-flex; align-items:center; justify-content:center; margin-top:0.55rem;
+    padding:0.5rem 1rem; border-radius:7px; border:1px solid #1d4ed8; background:#1d4ed8; color:#fff;
+    font-size:0.74rem; font-weight:700; cursor:pointer;
+}
+.m2-eval28-save-btn:hover { background:#1e40af; border-color:#1e40af; }
 .m2-check-item.m2-item-stacked { flex-direction: column; align-items: stretch; text-align: left; gap: 0.35rem; }
 .m2-check-item.m2-item-stacked .m2-check-head { display: flex; align-items: flex-start; gap: 0.45rem; }
 .m2-check-item.m2-item-stacked .m2-check-head .icon { flex-shrink: 0; margin-top: 0.1rem; }
@@ -1356,6 +1401,19 @@
             <div class="stage-title">Walk-in Queue</div>
         </div>
     </div>
+    <div class="stage-card disqualified scroll-animate-scale scroll-delay-3">
+        <div class="stage-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="8" y1="8" x2="16" y2="16"></line>
+                <line x1="16" y1="8" x2="8" y2="16"></line>
+            </svg>
+        </div>
+        <div class="stage-meta">
+            <div class="stage-count">{{ queue_counts.disqualified|default:0 }}</div>
+            <div class="stage-title">Disqualified</div>
+        </div>
+    </div>
 </div>
 
 <!-- Routing Delay Alert -->
@@ -1383,6 +1441,12 @@
         <option value="signatory_routing" {% if filter_stage == 'signatory_routing' %}selected{% endif %}>Signatory Routing</option>
         <option value="fully_approved" {% if filter_stage == 'fully_approved' %}selected{% endif %}>Fully Approved</option>
         <option value="lot_awarded" {% if filter_stage == 'lot_awarded' %}selected{% endif %}>Lot Awarded</option>
+    </select>
+    <select class="filter-select" id="eval28Filter" onchange="handleStageChange()">
+        <option value="all" {% if filter_eval28 == 'all' %}selected{% endif %}>2.8 All</option>
+        <option value="approved" {% if filter_eval28 == 'approved' %}selected{% endif %}>2.8 Approved</option>
+        <option value="for_review" {% if filter_eval28 == 'for_review' %}selected{% endif %}>2.8 For Review</option>
+        <option value="not_recorded" {% if filter_eval28 == 'not_recorded' %}selected{% endif %}>2.8 Not Recorded</option>
     </select>
 </div>
 
@@ -1426,14 +1490,17 @@
                         </span>
                         {% elif data.applicant_status == 'pending_cdrrmo' %}
                         {% if data.cdrrmo_status == 'certified' or data.cdrrmo_status == 'not_certified' %}
-                        <span style="font-size:0.5625rem;color:#0369a1;font-weight:600;">CDRRMO disposition received — pending Module 2 decision</span>
+                        <span style="font-size:0.5625rem;color:#0369a1;font-weight:600;">CDRRMO finalized — awaiting eligibility and queue assignment</span>
                         {% else %}
-                        <span style="font-size:0.5625rem;color:#b45309;font-weight:600;">CDRRMO: Pending CDRRMO Visit</span>
+                        <span style="font-size:0.5625rem;color:#b45309;font-weight:600;">CDRRMO pending staff finalization (2.6)</span>
                         {% endif %}
                         {% elif not data.m1_income_eligible %}
                         <span style="font-size:0.5625rem;color:#b45309;">Income over M1 ceiling — fix in Module 1</span>
                         {% elif not data.m1_declares_no_property %}
                         <span style="font-size:0.5625rem;color:#b45309;">Property in Talisay flagged</span>
+                        {% endif %}
+                        {% if data.evaluation_approval_status %}
+                        <span style="font-size:0.5625rem;color:#1e3a8a;font-weight:600;">2.8 {{ data.evaluation_approval_status_display }}</span>
                         {% endif %}
                         {% if data.is_delayed %}
                         <div class="routing-delayed-indicator">
@@ -1486,7 +1553,9 @@
                     {% if data.blacklist_blocked %}
                         <span style="color:#b91c1c;">2.1 Blocked</span>
                     {% elif data.applicant_status == 'pending_cdrrmo' and data.applicant.channel == 'danger_zone' and data.cdrrmo_status != 'certified' and data.cdrrmo_status != 'not_certified' %}
-                        <span style="color:#b45309;">Awaiting CDRRMO</span>
+                        <span style="color:#b45309;">2.6 Pending</span>
+                    {% elif data.evaluation_approval_status %}
+                        <span style="color:#1e3a8a;">2.8 {{ data.evaluation_approval_status_display }}</span>
                     {% else %}
                         <span style="color:#166534;">2.1 Clear</span>
                     {% endif %}
@@ -1565,7 +1634,7 @@
     <div class="empty-state">
         <div class="empty-state-icon">📋</div>
         <h3>No Applications Found</h3>
-        <p>{% if search %}No results match your search "{{ search }}"{% elif filter_stage != 'all' %}No applicants in this stage{% else %}No applicant records available for Module 2 evaluation yet. In Module 1, open the applicant and click "Proceed to Application & Evaluation" to handoff the record.{% endif %}</p>
+        <p>{% if search %}No results match your search "{{ search }}"{% elif filter_stage != 'all' or filter_eval28 != 'all' %}No applicants match the selected filters{% else %}No applicant records available for Module 2 evaluation yet. In Module 1, open the applicant and click "Proceed to Application & Evaluation" to handoff the record.{% endif %}</p>
     </div>
     {% endif %}
 </div>
@@ -1587,14 +1656,40 @@
         </div>
         <div class="modal-body">
             <div id="modalWorkflowGates" style="display:none;margin-bottom:1rem;padding:0.75rem;border-radius:8px;font-size:0.75rem;line-height:1.45;"></div>
-            <div style="margin-bottom:0.65rem;text-align:center;">
-                <button type="button" id="modalToggleM1FormBtn" class="m2-show-form-btn" onclick="toggleModule1FormEvidence()">Show form</button>
-            </div>
             <div id="modalM1EvidencePanel" style="display:none;margin-bottom:0.9rem;padding:0.75rem;border:1px solid #cbd5e1;border-radius:10px;background:#f8fafc;">
                 <div style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#334155;margin-bottom:.45rem;">
                     Module 1 encoded form evidence (read-only)
                 </div>
                 <div id="modalM1EvidenceSummary" style="font-size:.75rem;color:#334155;line-height:1.45;"></div>
+            </div>
+            <div id="modalCdrrmoBox" style="display:none;margin-bottom:0.9rem;padding:0.75rem;border:1px solid #cbd5e1;border-radius:10px;background:#ffffff;">
+                <div id="modalCdrrmoSummary" style="font-size:.75rem;color:#334155;line-height:1.45;"></div>
+                <div id="modalCdrrmoNotes" style="display:none;margin-top:.4rem;font-size:.72rem;color:#475569;"></div>
+                <div id="modalCdrrmoPhotosWrap" style="display:none;margin-top:.45rem;">
+                    <p id="modalCdrrmoPhotosCaption" style="font-size:0.65rem;margin:0 0 0.35rem 0;color:#64748b;"></p>
+                    <div id="modalCdrrmoPhotos" style="display:flex;flex-wrap:wrap;gap:0.35rem;"></div>
+                </div>
+            </div>
+            <div id="modalEvaluationApprovalBox" class="m2-eval28-panel">
+                <div class="m2-eval28-head">
+                    <div class="m2-eval28-kicker">Layer 4 — Final approval marker</div>
+                    <div class="m2-eval28-title">2.8 Record Evaluation Approval Status</div>
+                    <div class="m2-eval28-subtitle">Records the evaluation approval/review marker for Module 2 only. This does not alter Module 3 routing workflow.</div>
+                </div>
+                <div class="m2-eval28-body">
+                    <div id="modalEvaluationApprovalSummary"></div>
+                    <div id="modalEvaluationApprovalForm" class="m2-eval28-form">
+                        <label>Approval / review status</label>
+                        <select id="modalEvaluationApprovalStatus" class="m2-dq-select">
+                            <option value="">Select status...</option>
+                            <option value="approved">Approved</option>
+                            <option value="for_review">For Review</option>
+                        </select>
+                        <label style="margin-top:0.5rem;">Notes (optional)</label>
+                        <textarea id="modalEvaluationApprovalNotes" class="m2-dq-notes" rows="2" placeholder="2.8 remarks (evaluation only; not Module 3 routing)..."></textarea>
+                        <button type="button" class="m2-eval28-save-btn" onclick="recordEvaluationApprovalStatus()">Done — Save 2.8 status</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -1669,6 +1764,8 @@
     let currentApplicationId = null;
     const canVerifyDocs = '{{ permissions.can_verify_documents|yesno:"true,false" }}' === 'true';
     window.__modalBlacklistBlocked = false;
+    window.__m2AllowEval28 = false;
+    window.__m2LastApplicantData = null;
     window.__hasApplication = false;
     window.__applicationNumber = '';
     const position = '{{ request.user.position }}';
@@ -1684,7 +1781,9 @@
 
     // Filter functions
     function filterByStage(stage) {
-        window.location.href = `?stage=${stage}`;
+        const eval28 = document.getElementById('eval28Filter')?.value || 'all';
+        const search = document.getElementById('searchInput')?.value || '';
+        window.location.href = `?stage=${stage}&eval28=${encodeURIComponent(eval28)}&search=${encodeURIComponent(search)}`;
     }
 
     function handleStageChange() {
@@ -1698,7 +1797,8 @@
         searchTimeout = setTimeout(() => {
             const search = event.target.value;
             const stage = document.getElementById('stageFilter').value;
-            window.location.href = `?stage=${stage}&search=${encodeURIComponent(search)}`;
+            const eval28 = document.getElementById('eval28Filter')?.value || 'all';
+            window.location.href = `?stage=${stage}&eval28=${encodeURIComponent(eval28)}&search=${encodeURIComponent(search)}`;
         }, 500);
     }
 
@@ -1818,6 +1918,45 @@
         }
     }
 
+    function m2ProceedToLayer3Step() {
+        const l2 = document.getElementById('m2Layer2Block');
+        const l3 = document.getElementById('m2Layer3Block');
+        if (l2) l2.style.display = 'none';
+        if (l3) {
+            l3.style.display = 'block';
+            l3.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }
+
+    function m2BackToLayer1Step() {
+        const main = document.getElementById('m2Layer1Main');
+        const done = document.getElementById('m2Layer1Done');
+        const l2 = document.getElementById('m2Layer2Block');
+        if (l2) l2.style.display = 'none';
+        if (done) done.style.display = 'none';
+        if (main) {
+            main.style.display = 'block';
+            main.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }
+
+    function m2BackToLayer2Step() {
+        const l2 = document.getElementById('m2Layer2Block');
+        const l3 = document.getElementById('m2Layer3Block');
+        if (l3) l3.style.display = 'none';
+        if (l2) {
+            l2.style.display = 'block';
+            l2.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }
+
+    function m2OpenEvaluationApprovalStep() {
+        window.__m2AllowEval28 = true;
+        renderEvaluationApproval(window.__m2LastApplicantData || {});
+        const box = document.getElementById('modalEvaluationApprovalBox');
+        if (box) box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
     function renderEligibilityPipeline(data) {
         const gate = document.getElementById('modalWorkflowGates');
         if (!gate) return;
@@ -1857,6 +1996,11 @@
                     </div>
                 </div>
                 <div class="m2-policy-note">${policyHtml}</div>
+            </div>`;
+        const itemDescOnly = (tone, icon, descHtml) =>
+            `<div class="m2-check-item ${tone} m2-check-desc-only">
+                <span class="icon">${icon}</span>
+                <div class="desc">${descHtml}</div>
             </div>`;
 
         gate.style.display = 'block';
@@ -1903,11 +2047,8 @@
             ? 'Cleared - within Module 1 income threshold.'
             : 'Failed - over Module 1 income threshold.';
         const hhDesc = householdMismatch
-            ? `Review needed - declared size (${escapeHtml(declaredHH)}) does not match listed members (${escapeHtml(
-                  listedHH
-              )}).`
+            ? `Review needed - declared size (${escapeHtml(declaredHH)}) does not match listed members (${escapeHtml(listedHH)}).`
             : `Cleared - declared size (${escapeHtml(declaredHH)}) aligns with listed members (${escapeHtml(listedHH)}).`;
-
         const l2Tone23 = propertyClear ? 'pass' : 'fail';
         const l2Icon23 = propertyClear ? '✓' : '!';
         const l2Tone24 = incomeClear ? 'pass' : 'fail';
@@ -1915,23 +2056,46 @@
         const l2Tone25 = householdMismatch ? 'warn' : 'pass';
         const l2Icon25 = householdMismatch ? '!' : '✓';
 
+        const policy26 =
+            "If the applicant's Module 1 record contains a danger-zone claim, THA Staff updates the CDRRMO certification status in Module 2 after receiving and checking the physical certification. This certification serves as an official basis for confirming the applicant's danger-zone status. Once verified, the system uses this status as part of eligibility checking and queue classification. Applicants with verified CDRRMO certification may be classified under the priority category, while applicants whose danger-zone claim remains unverified continue under regular evaluation rules.";
+        const requiresCdrrmo = !!(data.m2_rules && data.m2_rules.requires_cdrrmo);
+        const cdrrmoStatus = data.cdrrmo && data.cdrrmo.status ? data.cdrrmo.status : '';
+        const cdrrmoReadout = cdrrmoStatus === 'certified'
+            ? 'CDRRMO certification is recorded as Certified. Danger-zone status can be treated as officially verified; priority may be available when all other requirements allow.'
+            : (cdrrmoStatus === 'not_certified'
+                ? 'CDRRMO certification is not certified. Applicant follows regular walk-in path.'
+                : 'CDRRMO certification is still pending or not yet on file. Record official CDRRMO result in Module 2.');
+
+        const l3Action = (canVerifyDocs && requiresCdrrmo && (!cdrrmoStatus || cdrrmoStatus === 'pending'))
+            ? `<div style="margin-top:0.55rem;padding:0.55rem;border:1px solid #bfdbfe;border-radius:8px;background:#eff6ff;">
+                <div style="font-size:0.7rem;font-weight:700;color:#1e3a8a;">Staff action</div>
+                <label style="display:block;font-size:0.69rem;font-weight:600;color:#334155;margin-top:.3rem;">Receiving remarks (optional)</label>
+                <textarea id="modalLayer3CdrrmoNotes" class="m2-cdrrmo-office-notes" rows="2" placeholder="Notes while recording CDRRMO result in Layer 3..."></textarea>
+                <div style="display:flex;flex-wrap:wrap;gap:0.45rem;margin-top:.35rem;">
+                    <button type="button" class="m2-cdrrmo-receipt-btn" onclick="recordOfficeCdrrmoReceipt('certified')">Mark as Certified (CDRRMO)</button>
+                    <button type="button" class="m2-cdrrmo-receipt-btn" style="background:#0f766e;" onclick="recordOfficeCdrrmoReceipt('not_certified')">Proceed Without Certification (Walk-in Path)</button>
+                </div>
+            </div>`
+            : `<div class="m2-m2L3-footer"><button type="button" class="m2-proceed-btn" onclick="m2OpenEvaluationApprovalStep()">Done — Proceed to 2.8</button></div>`;
+
         gate.innerHTML =
             `<div class="m2-pipeline-layers">` +
             `<div id="m2Layer1Main">` +
             `<div class="m2-layer-eyebrow">Layer 1 — System check</div>` +
             `<div class="m2-layer-title">2.2 Automatic Blacklist Check</div>` +
             `<div class="m2-checklist">` +
-            item(
-                'pass',
-                '✓',
-                '2.2 Automatic Blacklist Check',
-                'Clear. No blacklist match; continue processing.'
-            ) +
+            itemDescOnly('pass', '✓', 'Clear. No blacklist match; continue processing.') +
             `</div>` +
+            `<div class="m2-layer-footer-nav">` +
+            `<button type="button" class="m2-back-btn" onclick="closeModal()">Back</button>` +
             `<button type="button" class="m2-proceed-btn" onclick="m2ProceedToLayer2Step()">Proceed to checks 2.3 – 2.5</button>` +
+            `</div>` +
             `</div>` +
             `<div id="m2Layer1Done" class="m2-layer1-done-strip" style="display:none;">✓ Layer 1 complete — 2.2 Automatic Blacklist Check clear</div>` +
             `<div id="m2Layer2Block" class="m2-layer2-block">` +
+            `<div class="m2-layer-footer-nav" style="justify-content:flex-start;margin-top:0;margin-bottom:.35rem;">` +
+            `<button type="button" class="m2-back-btn" onclick="m2BackToLayer1Step()">Back</button>` +
+            `</div>` +
             `<div class="m2-layer-eyebrow">Layer 2 — Eligibility readouts</div>` +
             `<div class="m2-layer-title">2.3 to 2.5 (property, income, household)</div>` +
             `<div class="m2-checklist">` +
@@ -1939,7 +2103,32 @@
             itemStacked(l2Tone24, l2Icon24, '2.4 Check Income Details', incDesc, escapeHtml(policy24)) +
             itemStacked(l2Tone25, l2Icon25, '2.5 Check Household Composition', hhDesc, escapeHtml(policy25)) +
             `</div>` +
+            (requiresCdrrmo
+                ? `<div class="m2-layer-footer-nav">` +
+                  `<button type="button" id="modalToggleM1FormBtn" class="m2-show-form-btn" onclick="toggleModule1FormEvidence()">Show form</button>` +
+                  `<button type="button" class="m2-proceed-btn" onclick="m2ProceedToLayer3Step()">Proceed to 2.6 CDRRMO</button>` +
+                  `</div>`
+                : '') +
             `</div>` +
+            (requiresCdrrmo
+                ? `<div id="m2Layer3Block" class="m2-layer3-block" style="display:none;">` +
+                  `<div style="margin-bottom:.45rem;"><button type="button" class="m2-back-btn" onclick="m2BackToLayer2Step()">Back</button></div>` +
+                  `<div class="m2-layer-eyebrow">Layer 3 — Official verification</div>` +
+                  `<div class="m2-layer-title">2.6 Check CDRRMO Certification Status</div>` +
+                  `<div class="m2-policy-note">${escapeHtml(policy26)}</div>` +
+                  `<div class="m2-checklist">` +
+                  item('pass', '✓', '2.6 CDRRMO status', cdrrmoReadout) +
+                  `</div>` +
+                  `<div style="margin-top:0.4rem;padding:0.55rem;border:1px dashed #cbd5e1;border-radius:8px;background:#f8fafc;font-size:0.71rem;line-height:1.5;color:#334155;">` +
+                  `<strong>Technical rule evaluation (2.6)</strong><br>` +
+                  `Input: channel=${escapeHtml(data.channel || '—')}, requires_cdrrmo=${requiresCdrrmo ? 'true' : 'false'}, cdrrmo_status=${escapeHtml(cdrrmoStatus || 'none')}<br>` +
+                  `Rule: if requires_cdrrmo and cdrrmo_status is pending, hold final eligibility; once finalized, certified unlocks priority while not-certified keeps walk-in path only.<br>` +
+                  `System decision: ${(cdrrmoStatus === 'certified' ? 'VERIFIED' : (cdrrmoStatus === 'not_certified' ? 'NOT VERIFIED' : 'PENDING'))}<br>` +
+                  `Queue effect: ${(cdrrmoStatus === 'certified' ? 'Priority and Walk-in are allowed (priority recommended).' : (cdrrmoStatus === 'not_certified' ? 'Walk-in only; priority remains blocked.' : 'Queue assignment is blocked until CDRRMO status is finalized by staff.'))}` +
+                  `</div>` +
+                  l3Action +
+                  `</div>`
+                : '') +
             `</div>`;
     }
 
@@ -1969,6 +2158,11 @@
         const officeCdrrmoNotes = document.getElementById('modalOfficeCdrrmoNotes');
         const cdrrmoPendingInfo = document.getElementById('modalCdrrmoPendingInfo');
         const rondaPendingNotice = document.getElementById('modalRondaPendingNotice');
+        const evalApprovalBox = document.getElementById('modalEvaluationApprovalBox');
+        const evalApprovalSummary = document.getElementById('modalEvaluationApprovalSummary');
+        const evalApprovalForm = document.getElementById('modalEvaluationApprovalForm');
+        const evalApprovalStatus = document.getElementById('modalEvaluationApprovalStatus');
+        const evalApprovalNotes = document.getElementById('modalEvaluationApprovalNotes');
         if (cBox) cBox.style.display = 'none';
         if (cSummary) cSummary.innerHTML = '';
         if (cNotes) {
@@ -1986,6 +2180,11 @@
         if (officeCdrrmoNotes) officeCdrrmoNotes.value = '';
         if (cdrrmoPendingInfo) cdrrmoPendingInfo.style.display = 'none';
         if (rondaPendingNotice) rondaPendingNotice.style.display = 'none';
+        if (evalApprovalBox) evalApprovalBox.style.display = 'none';
+        if (evalApprovalSummary) evalApprovalSummary.innerHTML = '';
+        if (evalApprovalForm) evalApprovalForm.style.display = 'none';
+        if (evalApprovalStatus) evalApprovalStatus.value = '';
+        if (evalApprovalNotes) evalApprovalNotes.value = '';
         // Reset all checkboxes
         document.querySelectorAll('.document-checkbox').forEach(cb => {
             cb.classList.remove('checked');
@@ -2014,6 +2213,8 @@
         
         window.__hasApplication = false;
         window.__applicationNumber = '';
+        window.__m2AllowEval28 = false;
+        window.__m2LastApplicantData = null;
         applyBlacklistWorkflowGate(false);
         // Update button state
         updateFormButton();
@@ -2357,10 +2558,45 @@
         }
     }
 
+    function renderEvaluationApproval(data) {
+        const box = document.getElementById('modalEvaluationApprovalBox');
+        const summary = document.getElementById('modalEvaluationApprovalSummary');
+        const form = document.getElementById('modalEvaluationApprovalForm');
+        const statusSel = document.getElementById('modalEvaluationApprovalStatus');
+        const notesEl = document.getElementById('modalEvaluationApprovalNotes');
+        if (!box || !summary || !form || !statusSel || !notesEl) return;
+
+        const applicantStatus = data.applicant_status || '';
+        const queueLabel = data.intake_queue_label || '—';
+        const hasQueueAssignment = applicantStatus === 'eligible' && queueLabel !== '—';
+        const canRecord = canVerifyDocs && hasQueueAssignment;
+        if (!window.__m2AllowEval28 || !hasQueueAssignment) {
+            box.style.display = 'none';
+            return;
+        }
+        box.style.display = 'block';
+        const currentStatus = data.evaluation_approval_status || '';
+        const currentDisplay = data.evaluation_approval_status_display || 'Not yet recorded';
+        const by = data.evaluation_approval_by || '—';
+        const at = data.evaluation_approval_at ? new Date(data.evaluation_approval_at).toLocaleString() : '—';
+        const notes = data.evaluation_approval_notes || '';
+
+        summary.innerHTML = '';
+        if (!canRecord) {
+            form.style.display = 'none';
+            summary.innerHTML = `<div style="margin-top:.2rem;padding:.45rem .5rem;border-radius:8px;border:1px solid #fde68a;background:#fffbeb;color:#92400e;font-size:.69rem;line-height:1.45;">2.8 is editable only for authorized staff after queue assignment.</div>`;
+            return;
+        }
+        form.style.display = 'block';
+        statusSel.value = currentStatus || '';
+        notesEl.value = notes;
+    }
+
     async function loadApplicantRequirements(applicantId) {
         try {
             const response = await fetch(`/applications/staff/${position}/${applicantId}/`);
             const data = await response.json();
+            window.__m2LastApplicantData = data;
             
             window.__modalBlacklistBlocked = !!data.blacklist_blocked;
             window.__hasApplication = !!data.has_application;
@@ -2373,6 +2609,7 @@
             setModule1FormEvidenceVisibility(!!data.blacklist_blocked);
             renderModule1Cdrrmo(data.cdrrmo);
             renderEvaluationControls(data);
+            renderEvaluationApproval(data);
 
             if (data.requirements) {
                 data.requirements.forEach(req => {
@@ -2606,15 +2843,21 @@
         }
     }
 
-    async function recordOfficeCdrrmoReceipt() {
+    async function recordOfficeCdrrmoReceipt(decision = 'certified') {
         if (!currentApplicantId || !canVerifyDocs) return;
-        const notes = document.getElementById('modalOfficeCdrrmoNotes')?.value || '';
-        if (!confirm('Record official CDRRMO office receipt and file this record as certified?')) return;
+        const notes =
+            document.getElementById('modalOfficeCdrrmoNotes')?.value ||
+            document.getElementById('modalLayer3CdrrmoNotes')?.value ||
+            '';
+        const confirmMsg = decision === 'not_certified'
+            ? 'Proceed without CDRRMO certification and continue under walk-in path?'
+            : 'Record official CDRRMO office receipt and file this record as certified?';
+        if (!confirm(confirmMsg)) return;
 
         try {
             const formData = new FormData();
             formData.append('applicant_id', currentApplicantId);
-            formData.append('decision', 'certified');
+            formData.append('decision', decision);
             formData.append('notes', notes);
             formData.append('office_receipt', 'true');
             formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
@@ -2630,6 +2873,57 @@
             }
             alert(data.message || 'Official CDRRMO office receipt recorded successfully.');
             location.reload();
+        } catch (error) {
+            alert('Error: ' + error.message);
+        }
+    }
+
+    async function recordEvaluationApprovalStatus() {
+        if (!currentApplicantId || !canVerifyDocs) return;
+        const approvalStatus = document.getElementById('modalEvaluationApprovalStatus')?.value || '';
+        const notes = document.getElementById('modalEvaluationApprovalNotes')?.value || '';
+        if (!approvalStatus) {
+            alert('Select a 2.8 approval/review status first.');
+            return;
+        }
+        if (!confirm('Final confirmation: save this 2.8 evaluation approval status?')) return;
+
+        try {
+            const formData = new FormData();
+            formData.append('applicant_id', currentApplicantId);
+            formData.append('approval_status', approvalStatus);
+            formData.append('notes', notes);
+            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+            const response = await fetch('{% url "applications:record_evaluation_approval" request.user.position %}', {
+                method: 'POST',
+                body: formData,
+            });
+            const data = await response.json();
+            if (!data.success) {
+                alert(data.error || 'Failed to save 2.8 status.');
+                return;
+            }
+            if (!window.__m2LastApplicantData) window.__m2LastApplicantData = {};
+            window.__m2LastApplicantData.evaluation_approval_status = data.approval_status || approvalStatus;
+            window.__m2LastApplicantData.evaluation_approval_status_display = data.approval_status_display || '';
+            window.__m2LastApplicantData.evaluation_approval_by = data.approval_by || '';
+            window.__m2LastApplicantData.evaluation_approval_at = data.approval_at || null;
+            window.__m2LastApplicantData.evaluation_approval_notes = notes;
+            renderEvaluationApproval(window.__m2LastApplicantData);
+            const currentDisplay = window.__m2LastApplicantData.evaluation_approval_status_display || 'Not yet recorded';
+            const by = window.__m2LastApplicantData.evaluation_approval_by || '—';
+            const at = window.__m2LastApplicantData.evaluation_approval_at
+                ? new Date(window.__m2LastApplicantData.evaluation_approval_at).toLocaleString()
+                : '—';
+            const notesLine = window.__m2LastApplicantData.evaluation_approval_notes || '—';
+            alert(
+                `Current 2.8 status: ${currentDisplay}\n` +
+                `Recorded by: ${by}\n` +
+                `Recorded at: ${at}\n` +
+                `Notes: ${notesLine}\n\n` +
+                `This status is an internal Module 2 evaluation marker and remains separate from the Module 3 routing chain.`
+            );
         } catch (error) {
             alert('Error: ' + error.message);
         }

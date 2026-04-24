@@ -140,7 +140,9 @@ def _ensure_cdrrmo_pending_after_module2_handoff(applicant):
         return
     if not applicant.module2_handoff_at:
         return
-    if not (applicant.danger_zone_type or '').strip():
+    # Channel B itself is the official danger-zone declaration path.
+    # Keep legacy rows (blank danger_zone_type) in this workflow.
+    if applicant.channel != 'danger_zone':
         return
 
     try:
@@ -352,21 +354,25 @@ def _module2_eligibility_snapshot(applicant, checked_by=None):
             f'Household composition mismatch: declared size is {declared_household}, but listed members total {listed_household} (including applicant).'
         )
 
-    requires_cdrrmo = applicant.channel == 'danger_zone' and bool((applicant.danger_zone_type or '').strip())
+    requires_cdrrmo = applicant.channel == 'danger_zone'
     cdrrmo_status = None
     if requires_cdrrmo:
         try:
             cdrrmo_status = applicant.cdrrmo_certification.status
         except CDRRMOCertification.DoesNotExist:
             cdrrmo_status = None
-        if cdrrmo_status != 'certified':
+        if cdrrmo_status in (None, '', 'pending'):
             status_display = 'Not Recorded'
             if cdrrmo_status:
                 try:
                     status_display = applicant.cdrrmo_certification.get_status_display()
                 except Exception:
                     status_display = cdrrmo_status
-            blockers.append(f'CDRRMO certification must be Certified (current: {status_display}).')
+            blockers.append(f'CDRRMO certification must be finalized first (current: {status_display}).')
+        elif cdrrmo_status == 'not_certified':
+            advisories.append(
+                'CDRRMO result is Not Certified. Continue Module 2 evaluation under regular walk-in path (priority disabled).'
+            )
 
     allowed_queue_types = ['walk_in']
     recommended_queue_type = 'walk_in'
@@ -431,8 +437,6 @@ def applications_list(request, position):
         channel='danger_zone',
         module2_handoff_at__isnull=False,
         status__in=['pending', 'pending_cdrrmo'],
-    ).exclude(
-        danger_zone_type=''
     ).select_related(
         'registered_by',
         'module2_handoff_by',
@@ -506,6 +510,7 @@ def applications_list(request, position):
     queue_counts = {
         'priority': 0,
         'walk_in': 0,
+        'disqualified': 0,
     }
 
     # Prepare applicant data with document counts
@@ -623,6 +628,8 @@ def applications_list(request, position):
             'intake_queue_label': intake_queue_label,
             'active_queue_type': active_entries[0].queue_type if active_entries else '',
             'm2_rules': rules,
+            'evaluation_approval_status': applicant.evaluation_approval_status or '',
+            'evaluation_approval_status_display': applicant.get_evaluation_approval_status_display() if applicant.evaluation_approval_status else '',
         })
     
     # Filter by stage if requested
@@ -639,6 +646,13 @@ def applications_list(request, position):
         target_stage = stage_map.get(filter_stage)
         if target_stage:
             applicants_data = [a for a in applicants_data if a['current_stage'] == target_stage]
+
+    filter_eval28 = request.GET.get('eval28', 'all')
+    if filter_eval28 != 'all':
+        if filter_eval28 == 'not_recorded':
+            applicants_data = [a for a in applicants_data if not (a.get('evaluation_approval_status') or '').strip()]
+        elif filter_eval28 in ('approved', 'for_review'):
+            applicants_data = [a for a in applicants_data if a.get('evaluation_approval_status') == filter_eval28]
     
     # Search filter
     search = request.GET.get('search', '')
@@ -648,7 +662,10 @@ def applications_list(request, position):
             if search.lower() in a['applicant'].full_name.lower() or
                search.lower() in a['applicant'].reference_number.lower()
         ]
-    
+
+    # Count disqualified applicants
+    queue_counts['disqualified'] = Applicant.objects.filter(status='disqualified').count()
+
     context = {
         'applicants_data': applicants_data,
         'stage_counts': stage_counts,
@@ -658,6 +675,7 @@ def applications_list(request, position):
         'group_b_requirements': group_b_requirements,
         'delayed_routings': delayed_routings,
         'filter_stage': filter_stage,
+        'filter_eval28': filter_eval28,
         'search': search,
         'total_eligible': applicants.count(),
         'permissions': permissions,
@@ -756,7 +774,7 @@ def application_detail(request, position, application_id):
             'occupation': applicant.occupation or '',
             'employment_status': applicant.get_employment_status_display() if applicant.employment_status else '',
             'monthly_income': float(applicant.monthly_income) if applicant.monthly_income is not None else 0,
-            'hazard_declared': bool(applicant.danger_zone_type),
+            'hazard_declared': applicant.channel == 'danger_zone' or bool((applicant.danger_zone_type or '').strip()),
             'danger_zone_type': applicant.danger_zone_type or '',
             'danger_zone_location': applicant.danger_zone_location or '',
         },
@@ -779,6 +797,11 @@ def application_detail(request, position, application_id):
         'applicant_status': applicant.status,
         'applicant_status_display': applicant.get_status_display(),
         'channel': applicant.channel,
+        'evaluation_approval_status': applicant.evaluation_approval_status or '',
+        'evaluation_approval_status_display': applicant.get_evaluation_approval_status_display() if applicant.evaluation_approval_status else '',
+        'evaluation_approval_notes': applicant.evaluation_approval_notes or '',
+        'evaluation_approval_by': applicant.evaluation_approval_by.get_full_name() if applicant.evaluation_approval_by else '',
+        'evaluation_approval_at': applicant.evaluation_approval_at.isoformat() if applicant.evaluation_approval_at else None,
     }
 
     # Module 1 CDRRMO snapshot (read-only in Module 2 modal)
@@ -903,9 +926,13 @@ def update_cdrrmo_certification(request, position):
         cert.certification_notes = ''
         cert.save()
 
+        applicant.status = 'eligible'
+        applicant.disqualification_reason = ''
+        applicant.eligibility_checked_by = request.user
+        applicant.eligibility_checked_at = timezone.now()
+        applicant.save(update_fields=['status', 'disqualification_reason', 'eligibility_checked_by', 'eligibility_checked_at', 'updated_at'])
+
         if decision == 'certified':
-            applicant.status = 'eligible'
-            applicant.save()
             queue_entry, _ = _ensure_module2_queue_entry(applicant, 'priority', added_by=request.user)
 
             if applicant.phone_number:
@@ -927,19 +954,26 @@ def update_cdrrmo_certification(request, position):
                 'queue_position': queue_entry.position,
             })
 
-        applicant.status = 'disqualified'
-        applicant.save()
-        _deactivate_active_queue_entries(applicant)
+        queue_entry, _ = _ensure_module2_queue_entry(applicant, 'walk_in', added_by=request.user)
         if applicant.phone_number:
-            sms_msg = sms_workflow.message_cdrrmo_not_certified(applicant)
+            sms_msg = (
+                "CDRRMO certification was not provided/verified in Module 2. "
+                f"You are currently placed in Walk-in Queue position #{queue_entry.position}. "
+                f"Reference: {applicant.reference_number}. Final evaluation remains under regular processing rules."
+            )
             sent = send_sms(applicant.phone_number, sms_msg, sms_workflow.CDRRMO_NOT_CERTIFIED, applicant=applicant, module='applications')
             if sent and not applicant.eligibility_sms_sent:
                 applicant.eligibility_sms_sent = True
                 applicant.save(update_fields=['eligibility_sms_sent', 'updated_at'])
         return JsonResponse({
             'success': True,
-            'message': f'❌ {applicant.full_name} NOT CERTIFIED. Applicant disqualified.',
-            'decision': decision
+            'message': (
+                f'ℹ️ {applicant.full_name} marked as NOT CERTIFIED and placed in Walk-in Queue '
+                f'(Position {queue_entry.position}).'
+            ),
+            'decision': decision,
+            'queue_type': 'walk_in',
+            'queue_position': queue_entry.position,
         })
 
     except Applicant.DoesNotExist:
@@ -1292,6 +1326,68 @@ def evaluate_applicant(request, position):
         'success': True,
         'message': f'Applicant disqualified. Reason: {applicant.disqualification_reason}',
         'new_status': applicant.status,
+    })
+
+
+@login_required
+@verify_position
+@require_POST
+def record_evaluation_approval(request, position):
+    """
+    Module 2 step 2.8 endpoint.
+    Stores evaluation approval/review marker only (separate from Module 3 routing).
+    """
+    allowed_positions = ['fourth_member', 'second_member']
+    if request.user.position not in allowed_positions:
+        return JsonResponse({'success': False, 'error': 'Permission denied.'}, status=403)
+
+    applicant_id = request.POST.get('applicant_id')
+    approval_status = request.POST.get('approval_status', '').strip()
+    notes = request.POST.get('notes', '').strip()
+    if not applicant_id:
+        return JsonResponse({'success': False, 'error': 'Missing applicant_id.'}, status=400)
+    if approval_status not in ['approved', 'for_review']:
+        return JsonResponse({'success': False, 'error': 'Invalid approval status.'}, status=400)
+
+    applicant = get_object_or_404(Applicant, id=applicant_id)
+    handoff_error = _require_module2_handoff(applicant)
+    if handoff_error:
+        return handoff_error
+    blacklist_error = _require_module2_blacklist_clear(applicant)
+    if blacklist_error:
+        return blacklist_error
+
+    if applicant.status != 'eligible':
+        return JsonResponse({
+            'success': False,
+            'error': 'Record 2.8 only after Module 2 evaluation marks the applicant eligible and queued.',
+        }, status=400)
+    active_queue = applicant.queue_entries.filter(status='active').order_by('entered_at').first()
+    if active_queue is None:
+        return JsonResponse({
+            'success': False,
+            'error': 'Record 2.8 only after queue assignment (Priority or Walk-in) is active.',
+        }, status=400)
+
+    applicant.evaluation_approval_status = approval_status
+    applicant.evaluation_approval_notes = notes
+    applicant.evaluation_approval_by = request.user
+    applicant.evaluation_approval_at = timezone.now()
+    applicant.save(update_fields=[
+        'evaluation_approval_status',
+        'evaluation_approval_notes',
+        'evaluation_approval_by',
+        'evaluation_approval_at',
+        'updated_at',
+    ])
+
+    return JsonResponse({
+        'success': True,
+        'message': f'2.8 recorded as {applicant.get_evaluation_approval_status_display()}.',
+        'approval_status': applicant.evaluation_approval_status,
+        'approval_status_display': applicant.get_evaluation_approval_status_display(),
+        'approval_by': applicant.evaluation_approval_by.get_full_name() if applicant.evaluation_approval_by else '',
+        'approval_at': applicant.evaluation_approval_at.isoformat() if applicant.evaluation_approval_at else None,
     })
 
 
