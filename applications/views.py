@@ -165,6 +165,42 @@ def _ensure_cdrrmo_pending_after_module2_handoff(applicant):
         applicant.save(update_fields=['status', 'updated_at'])
 
 
+def _auto_finalize_non_hazard_walkin(applicant, acted_by=None):
+    """
+    Auto-heal non-hazard handoff rows that should already be queued as Walk-in.
+
+    Applies only when:
+    - Module 2 handoff exists
+    - No hazard claim is declared (2.6 is skipped)
+    - Record is rule-eligible in Module 2
+    - No active queue entry exists yet
+    """
+    if not applicant.module2_handoff_at:
+        return False
+    has_hazard_claim = bool((applicant.danger_zone_type or '').strip() or (applicant.danger_zone_location or '').strip())
+    if has_hazard_claim:
+        return False
+    if applicant.queue_entries.filter(status='active').exists():
+        return False
+    if applicant.status in {'disqualified', 'awarded'}:
+        return False
+
+    rules = _module2_eligibility_snapshot(applicant, checked_by=acted_by)
+    if not rules.get('eligible'):
+        return False
+
+    applicant.status = 'eligible'
+    applicant.disqualification_reason = ''
+    applicant.eligibility_checked_at = timezone.now()
+    update_fields = ['status', 'disqualification_reason', 'eligibility_checked_at', 'updated_at']
+    if acted_by and applicant.eligibility_checked_by_id != acted_by.id:
+        applicant.eligibility_checked_by = acted_by
+        update_fields.append('eligibility_checked_by')
+    applicant.save(update_fields=update_fields)
+    _ensure_module2_queue_entry(applicant, 'walk_in', added_by=acted_by)
+    return True
+
+
 def _require_module2_handoff(applicant):
     """
     Enforce Module 2 gate: record must be handed off from Module 1 first.
@@ -455,6 +491,19 @@ def applications_list(request, position):
     )
     for candidate in hazard_handoff_candidates:
         _ensure_cdrrmo_pending_after_module2_handoff(candidate)
+
+    # Auto-heal non-hazard handoff rows that were never queue-assigned.
+    non_hazard_handoff_candidates = Applicant.objects.filter(
+        module2_handoff_at__isnull=False,
+        status__in=['pending', 'eligible'],
+    ).filter(
+        Q(danger_zone_type__isnull=True) | Q(danger_zone_type=''),
+        Q(danger_zone_location__isnull=True) | Q(danger_zone_location=''),
+    ).exclude(
+        queue_entries__status='active',
+    ).distinct().select_related('eligibility_checked_by')
+    for candidate in non_hazard_handoff_candidates:
+        _auto_finalize_non_hazard_walkin(candidate, acted_by=request.user)
     
     # Module 2 shows only records explicitly handed off from Module 1
     # (plus records already attached to an application object).
@@ -757,7 +806,9 @@ def application_detail(request, position, application_id):
 
     # Ensure modal reflects Module 2 handoff hazard workflow state.
     _ensure_cdrrmo_pending_after_module2_handoff(applicant)
+    _auto_finalize_non_hazard_walkin(applicant, acted_by=request.user)
     applicant.refresh_from_db()
+    applicant.active_queue_entries = list(applicant.queue_entries.filter(status='active').order_by('position'))
     
     # Build response data
     rules = _module2_eligibility_snapshot(applicant, checked_by=request.user)
