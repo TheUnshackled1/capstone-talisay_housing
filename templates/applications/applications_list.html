@@ -2872,7 +2872,8 @@
                 return;
             }
             alert(data.message || 'Official CDRRMO office receipt recorded successfully.');
-            location.reload();
+            // Auto-refresh shortly after 2.6 action so queue tags/counters update without manual reload.
+            setTimeout(() => location.reload(), 450);
         } catch (error) {
             alert('Error: ' + error.message);
         }
