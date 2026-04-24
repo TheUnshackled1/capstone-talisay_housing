@@ -544,6 +544,26 @@
     background: #ffffff;
     padding: 0.5rem 0.6rem;
 }
+.m2-item-stacked {
+    flex-direction: column;
+}
+.m2-check-head {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    text-align: center;
+}
+.m2-policy-note {
+    font-size: 0.68rem;
+    color: #64748b;
+    text-align: left;
+    line-height: 1.45;
+}
+.m2-item-stacked .m2-policy-note {
+    text-align: center;
+    margin-top: 0.25rem;
+}
 
 .m2-check-item .icon {
     width: 1.05rem;
@@ -602,39 +622,66 @@
     justify-content: center;
     min-width: 180px;
     margin-top: 0;
-    padding: 0.5rem 0.95rem;
+    padding: 0.65rem 1.25rem;
     border: none;
-    border-radius: 8px;
+    border-radius: 6px;
     background: #2563eb;
     color: #fff;
-    font-size: 0.73rem;
+    font-size: 0.75rem;
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.15s ease;
+    transition: all 0.15s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
-.m2-proceed-btn:hover { background: #1d4ed8; }
+.m2-proceed-btn:hover { background: #1d4ed8; transform: translateY(-1px); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
 .m2-back-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 120px;
-    padding: 0.5rem 0.95rem;
-    border: 1px solid #94a3b8;
-    border-radius: 8px;
-    background: #f8fafc;
-    color: #334155;
-    font-size: 0.73rem;
+    min-width: 100px;
+    padding: 0.65rem 1.25rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #64748b;
+    font-size: 0.75rem;
     font-weight: 600;
     cursor: pointer;
+    transition: all 0.15s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
 }
-.m2-back-btn:hover { background: #e2e8f0; }
+.m2-back-btn:hover { background: #f1f5f9; border-color: #cbd5e1; color: #334155; }
+.m2-show-form-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 140px;
+    padding: 0.65rem 1.25rem;
+    border: 1px solid #bfdbfe;
+    border-radius: 6px;
+    background: #eff6ff;
+    color: #1e3a8a;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+.m2-show-form-btn:hover {
+    background: #dbeafe;
+    border-color: #93c5fd;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+}
 .m2-layer-footer-nav {
     display: flex;
-    gap: 0.45rem;
-    margin-top: 0.65rem;
-    justify-content: flex-end;
+    gap: 0.85rem;
+    margin-top: 1.5rem;
+    justify-content: center;
     align-items: center;
     flex-wrap: wrap;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 1rem;
 }
 .m2-layer1-done-strip { text-align: center; padding: 0.5rem 0.65rem; border-radius: 8px; background: #ecfdf5; border: 1px solid #a7f3d0; color: #166534; font-size: 0.72rem; font-weight: 600; }
 .m2-blocked-user-msg { margin-top: 0.6rem; padding: 0.65rem; border-radius: 8px; background: #fef2f2; border: 1px solid #fecaca; color: #7f1d1d; font-size: 0.74rem; font-weight: 600; line-height: 1.5; text-align: center; }
@@ -1642,17 +1689,17 @@
 <!-- Application Detail Modal -->
 <div class="modal-overlay" id="applicationModal">
     <div class="modal-content">
-        <div class="modal-header">
-            <div>
+        <div class="modal-header" style="position: relative; text-align: center;">
+            <div style="width: 100%;">
                 <h2 id="modalApplicantName">Loading...</h2>
                 <p style="font-size: 0.875rem; color: #6b7280; margin: 0.25rem 0 0 0;">
                     <span id="modalRefNumber"></span>
                 </p>
                 <p style="font-size: 0.68rem; color: #94a3b8; margin: 0.35rem 0 0 0; text-transform: uppercase; letter-spacing: .06em;">
-                    Talisay City Housing Authority · Module 2 — Application & Evaluation
+                    Talisay City Housing Authority · Application & Evaluation
                 </p>
             </div>
-            <button class="modal-close" onclick="closeModal()">&times;</button>
+            <button class="modal-close" style="position: absolute; right: 1.5rem; top: 1.5rem;" onclick="closeModal()">&times;</button>
         </div>
         <div class="modal-body">
             <div id="modalWorkflowGates" style="display:none;margin-bottom:1rem;padding:0.75rem;border-radius:8px;font-size:0.75rem;line-height:1.45;"></div>
@@ -1662,7 +1709,7 @@
                 </div>
                 <div id="modalM1EvidenceSummary" style="font-size:.75rem;color:#334155;line-height:1.45;"></div>
             </div>
-            <div id="modalCdrrmoBox" style="display:none;margin-bottom:0.9rem;padding:0.75rem;border:1px solid #cbd5e1;border-radius:10px;background:#ffffff;">
+            <div id="modalCdrrmoBox" style="display:none;margin-bottom:0.9rem;padding:0.75rem;border:1px solid #cbd5e1;border-radius:10px;background:#ffffff;text-align:center;">
                 <div id="modalCdrrmoSummary" style="font-size:.75rem;color:#334155;line-height:1.45;"></div>
                 <div id="modalCdrrmoNotes" style="display:none;margin-top:.4rem;font-size:.72rem;color:#475569;"></div>
                 <div id="modalCdrrmoPhotosWrap" style="display:none;margin-top:.45rem;">
@@ -1920,8 +1967,10 @@
 
     function m2ProceedToLayer3Step() {
         const l2 = document.getElementById('m2Layer2Block');
+        const l2Done = document.getElementById('m2Layer2Done');
         const l3 = document.getElementById('m2Layer3Block');
         if (l2) l2.style.display = 'none';
+        if (l2Done) l2Done.style.display = 'block';
         if (l3) {
             l3.style.display = 'block';
             l3.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -1942,8 +1991,10 @@
 
     function m2BackToLayer2Step() {
         const l2 = document.getElementById('m2Layer2Block');
+        const l2Done = document.getElementById('m2Layer2Done');
         const l3 = document.getElementById('m2Layer3Block');
         if (l3) l3.style.display = 'none';
+        if (l2Done) l2Done.style.display = 'none';
         if (l2) {
             l2.style.display = 'block';
             l2.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -2071,48 +2122,51 @@
                 <div style="font-size:0.7rem;font-weight:700;color:#1e3a8a;">Staff action</div>
                 <label style="display:block;font-size:0.69rem;font-weight:600;color:#334155;margin-top:.3rem;">Receiving remarks (optional)</label>
                 <textarea id="modalLayer3CdrrmoNotes" class="m2-cdrrmo-office-notes" rows="2" placeholder="Notes while recording CDRRMO result in Layer 3..."></textarea>
-                <div style="display:flex;flex-wrap:wrap;gap:0.45rem;margin-top:.35rem;">
+                <div class="m2-layer-footer-nav" style="border-top: none; padding-top: 0; margin-top: 0.65rem;">
+                    <button type="button" class="m2-back-btn" onclick="m2BackToLayer2Step()">Back</button>
                     <button type="button" class="m2-cdrrmo-receipt-btn" onclick="recordOfficeCdrrmoReceipt('certified')">Mark as Certified (CDRRMO)</button>
                     <button type="button" class="m2-cdrrmo-receipt-btn" style="background:#0f766e;" onclick="recordOfficeCdrrmoReceipt('not_certified')">Proceed Without Certification (Walk-in Path)</button>
                 </div>
             </div>`
-            : `<div class="m2-m2L3-footer"><button type="button" class="m2-proceed-btn" onclick="m2OpenEvaluationApprovalStep()">Done — Proceed to 2.8</button></div>`;
+            : `<div class="m2-layer-footer-nav">
+                    <button type="button" class="m2-back-btn" onclick="m2BackToLayer2Step()">Back</button>
+                    <button type="button" class="m2-proceed-btn" onclick="m2OpenEvaluationApprovalStep()">Done — Proceed to 2.8</button>
+               </div>`;
 
         gate.innerHTML =
             `<div class="m2-pipeline-layers">` +
             `<div id="m2Layer1Main">` +
             `<div class="m2-layer-eyebrow">Layer 1 — System check</div>` +
-            `<div class="m2-layer-title">2.2 Automatic Blacklist Check</div>` +
+            `<div class="m2-layer-title">2.1 Automatic Blacklist Check</div>` +
             `<div class="m2-checklist">` +
             itemDescOnly('pass', '✓', 'Clear. No blacklist match; continue processing.') +
             `</div>` +
+            `<div id="m2Layer1CdrrmoPlaceholder" style="margin-top: 1rem; width: 100%;"></div>` +
             `<div class="m2-layer-footer-nav">` +
             `<button type="button" class="m2-back-btn" onclick="closeModal()">Back</button>` +
-            `<button type="button" class="m2-proceed-btn" onclick="m2ProceedToLayer2Step()">Proceed to checks 2.3 – 2.5</button>` +
+            `<button type="button" class="m2-proceed-btn" onclick="m2ProceedToLayer2Step()">Proceed Layer 2</button>` +
             `</div>` +
             `</div>` +
-            `<div id="m2Layer1Done" class="m2-layer1-done-strip" style="display:none;">✓ Layer 1 complete — 2.2 Automatic Blacklist Check clear</div>` +
-            `<div id="m2Layer2Block" class="m2-layer2-block">` +
-            `<div class="m2-layer-footer-nav" style="justify-content:flex-start;margin-top:0;margin-bottom:.35rem;">` +
-            `<button type="button" class="m2-back-btn" onclick="m2BackToLayer1Step()">Back</button>` +
-            `</div>` +
+            `<div id="m2Layer1Done" class="m2-layer1-done-strip" style="display:none;">✓ Layer 1 complete — 2.1 Automatic Blacklist Check clear</div>` +
+            `<div id="m2Layer2Block" class="m2-layer2-block" style="display:none;">` +
             `<div class="m2-layer-eyebrow">Layer 2 — Eligibility readouts</div>` +
-            `<div class="m2-layer-title">2.3 to 2.5 (property, income, household)</div>` +
+            `<div class="m2-layer-title">2.2 Property Ownership - 2.3 Income Details - 2.4 Household Composition</div>` +
             `<div class="m2-checklist">` +
-            itemStacked(l2Tone23, l2Icon23, '2.3 Check Property Ownership', propDesc, escapeHtml(policy23)) +
-            itemStacked(l2Tone24, l2Icon24, '2.4 Check Income Details', incDesc, escapeHtml(policy24)) +
-            itemStacked(l2Tone25, l2Icon25, '2.5 Check Household Composition', hhDesc, escapeHtml(policy25)) +
+            itemStacked(l2Tone23, l2Icon23, '2.2 Check Property Ownership', propDesc, escapeHtml(policy23)) +
+            itemStacked(l2Tone24, l2Icon24, '2.3 Check Income Details', incDesc, escapeHtml(policy24)) +
+            itemStacked(l2Tone25, l2Icon25, '2.4 Check Household Composition', hhDesc, escapeHtml(policy25)) +
             `</div>` +
+            `<div class="m2-layer-footer-nav">` +
+            `<button type="button" class="m2-back-btn" onclick="m2BackToLayer1Step()">Back</button>` +
+            `<button type="button" id="modalToggleM1FormBtn" class="m2-show-form-btn" onclick="toggleModule1FormEvidence()">Show form</button>` +
             (requiresCdrrmo
-                ? `<div class="m2-layer-footer-nav">` +
-                  `<button type="button" id="modalToggleM1FormBtn" class="m2-show-form-btn" onclick="toggleModule1FormEvidence()">Show form</button>` +
-                  `<button type="button" class="m2-proceed-btn" onclick="m2ProceedToLayer3Step()">Proceed to 2.6 CDRRMO</button>` +
-                  `</div>`
-                : '') +
+                ? `<button type="button" class="m2-proceed-btn" onclick="m2ProceedToLayer3Step()">Proceed to Layer 3</button>`
+                : `<button type="button" class="m2-proceed-btn" onclick="m2OpenEvaluationApprovalStep()">Done — Proceed to 2.8</button>`) +
             `</div>` +
+            `</div>` +
+            `<div id="m2Layer2Done" class="m2-layer1-done-strip" style="display:none; margin-top: 0.4rem;">✓ Layer 2 complete — Eligibility readouts clear</div>` +
             (requiresCdrrmo
                 ? `<div id="m2Layer3Block" class="m2-layer3-block" style="display:none;">` +
-                  `<div style="margin-bottom:.45rem;"><button type="button" class="m2-back-btn" onclick="m2BackToLayer2Step()">Back</button></div>` +
                   `<div class="m2-layer-eyebrow">Layer 3 — Official verification</div>` +
                   `<div class="m2-layer-title">2.6 Check CDRRMO Certification Status</div>` +
                   `<div class="m2-policy-note">${escapeHtml(policy26)}</div>` +
@@ -2133,6 +2187,12 @@
     }
 
     function resetModalState() {
+        const cBox = document.getElementById('modalCdrrmoBox');
+        if (cBox) {
+            // Rescue modalCdrrmoBox from being destroyed when modalWorkflowGates is cleared
+            document.querySelector('.modal-body').appendChild(cBox);
+            cBox.style.display = 'none';
+        }
         const g = document.getElementById('modalWorkflowGates');
         if (g) {
             g.style.display = 'none';
@@ -2144,7 +2204,6 @@
         if (evidencePanel) evidencePanel.style.display = 'none';
         if (evidenceSummary) evidenceSummary.innerHTML = '';
         if (toggleBtn) toggleBtn.textContent = 'Show form';
-        const cBox = document.getElementById('modalCdrrmoBox');
         const cSummary = document.getElementById('modalCdrrmoSummary');
         const cNotes = document.getElementById('modalCdrrmoNotes');
         const cPhotosWrap = document.getElementById('modalCdrrmoPhotosWrap');
@@ -2510,8 +2569,7 @@
         const recAt = cdrrmo.recorded_at ? escapeHtml(new Date(cdrrmo.recorded_at).toLocaleDateString()) : '—';
         const declared = escapeHtml(cdrrmo.declared_location || '—');
         summary.innerHTML =
-            `<strong>CDRRMO disposition tagging (Module 1):</strong> ${tagLine}<br>` +
-            `<strong>Certification outcome:</strong> ${escapeHtml(cdrrmo.status_display || '—')}<br>` +
+            `<strong>CDRRMO disposition tagging:</strong> ${tagLine}<br>` +
             `<strong>Declared classification and situs:</strong> ${declared}<br>` +
             `<strong>Recorded by:</strong> ${recBy} &nbsp;|&nbsp; <strong>Date:</strong> ${recAt}`;
 
@@ -2555,6 +2613,11 @@
             });
         } else {
             photosWrap.style.display = 'none';
+        }
+        
+        const placeholder = document.getElementById('m2Layer1CdrrmoPlaceholder');
+        if (placeholder) {
+            placeholder.appendChild(box);
         }
     }
 
