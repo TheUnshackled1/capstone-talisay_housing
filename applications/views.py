@@ -8,14 +8,19 @@ from django.db import IntegrityError, transaction
 from django.utils import timezone
 from functools import wraps
 from intake.models import Applicant
-from intake.utils import send_sms as _raw_send_sms
 from intake import sms_workflow
-from documents.models import FacilitatedService, ElectricityConnection, LotAwarding
-from .models import (
-    Application, Requirement, RequirementSubmission,
-    SignatoryRouting, QueueEntry, CDRRMOCertificationProxy, CDRRMOCertification, FieldVerificationPhoto,
+from documents.models import (
+    FacilitatedService,
+    ElectricityConnection,
+    LotAwarding,
+    Requirement,
+    RequirementSubmission,
+    SignatoryRouting,
 )
-from .utils import check_blacklist_module2
+from .models import (
+    Application, QueueEntry, CDRRMOCertificationProxy, CDRRMOCertification, FieldVerificationPhoto,
+)
+from .utils import check_blacklist_module2, send_sms_for_applications
 
 MODULE1_MONTHLY_INCOME_CEILING_PESO = 10000
 EVAL28_APPROVED_SMS_EVENT = 'evaluation_approval_approved'
@@ -26,14 +31,13 @@ def send_sms(recipient_phone, message_content, trigger_event, applicant=None, mo
     Applications-module SMS policy:
     Send ISF SMS only after Layer 4 (2.8) is saved as Approved.
     """
-    if module == 'applications' and trigger_event != EVAL28_APPROVED_SMS_EVENT:
+    if module != 'applications':
         return False
-    return _raw_send_sms(
+    return send_sms_for_applications(
         recipient_phone,
         message_content,
         trigger_event,
         applicant=applicant,
-        module=module,
     )
 
 
@@ -1426,6 +1430,7 @@ def record_evaluation_approval(request, position):
     notes = request.POST.get('notes', '').strip()
     disqualify_reason = request.POST.get('disqualify_reason', '').strip()
     disqualify_notes = request.POST.get('disqualify_notes', '').strip()
+    force_sms = str(request.POST.get('force_sms', '')).strip().lower() in {'1', 'true', 'yes', 'on'}
 
     if not applicant_id:
         return JsonResponse({'success': False, 'error': 'Missing applicant_id.'}, status=400)
@@ -1513,22 +1518,23 @@ def record_evaluation_approval(request, position):
     applicant.save(update_fields=update_fields)
 
     sms_dispatched = None
-    if applicant.phone_number and previous_eval28_status != approval_status:
-        if approval_status == 'approved':
-            queue_label = 'Priority Queue' if (active_queue and active_queue.queue_type == 'priority') else 'Walk-in Queue'
-            queue_pos = active_queue.position if active_queue else '?'
-            sms_msg = (
-                "THA update: Your Module 2 evaluation has been approved. "
-                f"Queue assignment: {queue_label} position #{queue_pos}. "
-                f"Ref: {applicant.reference_number}."
-            )
-            sms_dispatched = send_sms(
-                applicant.phone_number,
-                sms_msg,
-                EVAL28_APPROVED_SMS_EVENT,
-                applicant=applicant,
-                module='applications',
-            )
+    should_send_eval28_sms = approval_status == 'approved' and applicant.phone_number and (
+        previous_eval28_status != approval_status or force_sms
+    )
+    if should_send_eval28_sms:
+        queue_label = 'Priority Queue' if (active_queue and active_queue.queue_type == 'priority') else 'Walk-in Queue'
+        queue_pos = active_queue.position if active_queue else '?'
+        sms_msg = (
+            "THA update: Your Module 2 evaluation has been approved. "
+            f"Queue assignment: {queue_label} position #{queue_pos}. "
+            f"Ref: {applicant.reference_number}."
+        )
+        sms_dispatched = send_sms_for_applications(
+            applicant.phone_number,
+            sms_msg,
+            EVAL28_APPROVED_SMS_EVENT,
+            applicant=applicant,
+        )
 
     return JsonResponse({
         'success': True,

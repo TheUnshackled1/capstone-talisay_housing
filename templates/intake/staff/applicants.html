@@ -245,6 +245,8 @@
 
     .applicants-table {
         width: 100%;
+        table-layout: fixed;
+        min-width: 0;
         background: white;
         border: 1px solid #e2e8f0;
         border-radius: 0.75rem;
@@ -254,20 +256,37 @@
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
     }
 
+    .table-scroll {
+        width: 100%;
+        overflow-x: hidden;
+        overflow-y: hidden;
+        border-radius: 0.75rem;
+    }
+
+    .table-scroll .applicants-table {
+        margin: 0;
+    }
+
+    .applicants-table--archive {
+        min-width: 0;
+    }
+
     .applicants-table thead {
         background: #f8fafc;
         border-bottom: 1px solid #e2e8f0;
     }
 
     .applicants-table th {
-        padding: 0.625rem 0.5rem;
+        padding: 0.5rem 0.4rem;
         text-align: left;
-        font-size: 0.625rem;
+        font-size: 0.58rem;
         font-weight: 600;
         color: #64748b;
         text-transform: uppercase;
         letter-spacing: 0.05em;
         white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
         border-right: 1px solid #e2e8f0;
         border-bottom: 1px solid #cbd5e1;
     }
@@ -281,12 +300,14 @@
     }
 
     .applicants-table td {
-        padding: 0.5rem;
-        font-size: 0.6875rem;
+        padding: 0.425rem 0.38rem;
+        font-size: 0.625rem;
         color: #334155;
         vertical-align: middle;
         border-right: 1px solid #e2e8f0;
         border-bottom: 1px solid #e2e8f0;
+        white-space: normal;
+        overflow-wrap: anywhere;
     }
 
     .applicants-table th:last-child,
@@ -353,51 +374,54 @@
         color: #475569;
     }
 
-    /* Column widths - percentage based to fit container */
+    /* Compact widths - fit without horizontal scrolling */
     .applicants-table th:nth-child(1),
     .applicants-table td:nth-child(1) { width: 3%; text-align: center; } /* # */
     .applicants-table th:nth-child(2),
-    .applicants-table td:nth-child(2) { width: 9%; } /* Transaction # */
+    .applicants-table td:nth-child(2) { width: 12%; } /* Transaction # */
     .applicants-table th:nth-child(3),
-    .applicants-table td:nth-child(3) { width: 8%; } /* Date & Time */
+    .applicants-table td:nth-child(3) { width: 10%; } /* Date & Time */
     .applicants-table th:nth-child(4),
     .applicants-table td:nth-child(4) { width: 10%; } /* Reference # */
     .applicants-table th:nth-child(5),
-    .applicants-table td:nth-child(5) { width: 13%; } /* Full Name */
+    .applicants-table td:nth-child(5) { width: 14%; } /* Full Name */
     .applicants-table th:nth-child(6),
     .applicants-table td:nth-child(6) { width: 12%; } /* Channel */
     .applicants-table th:nth-child(7),
-    .applicants-table td:nth-child(7) { width: 14%; } /* Staff Handled */
+    .applicants-table td:nth-child(7) { width: 13%; } /* Staff Handled */
     .applicants-table th:nth-child(8),
-    .applicants-table td:nth-child(8) { width: 8%; } /* SMS */
+    .applicants-table td:nth-child(8) { width: 7%; } /* SMS */
     .applicants-table th:nth-child(9),
-    .applicants-table td:nth-child(9) { width: 8%; } /* DOB */
+    .applicants-table td:nth-child(9) { width: 7%; } /* DOB */
     .applicants-table th:nth-child(10),
-    .applicants-table td:nth-child(10) { width: 8%; } /* Barangay */
+    .applicants-table td:nth-child(10) { width: 9%; } /* Barangay */
     .applicants-table th:nth-child(11),
-    .applicants-table td:nth-child(11) { width: 7%; text-align: center; } /* Action */
+    .applicants-table td:nth-child(11) { width: 10%; text-align: center; } /* Action */
+
+    .applicants-table--archive th:nth-child(11),
+    .applicants-table--archive td:nth-child(11) { text-align: center; }
 
     /* Active table (no SMS column) */
     .applicants-table--active th:nth-child(1),
     .applicants-table--active td:nth-child(1) { width: 3%; text-align: center; } /* # */
     .applicants-table--active th:nth-child(2),
-    .applicants-table--active td:nth-child(2) { width: 10%; } /* Transaction # */
+    .applicants-table--active td:nth-child(2) { width: 12%; } /* Transaction # */
     .applicants-table--active th:nth-child(3),
-    .applicants-table--active td:nth-child(3) { width: 9%; } /* Date & Time */
+    .applicants-table--active td:nth-child(3) { width: 11%; } /* Date & Time */
     .applicants-table--active th:nth-child(4),
     .applicants-table--active td:nth-child(4) { width: 11%; } /* Reference # */
     .applicants-table--active th:nth-child(5),
-    .applicants-table--active td:nth-child(5) { width: 14%; } /* Full Name */
+    .applicants-table--active td:nth-child(5) { width: 16%; } /* Full Name */
     .applicants-table--active th:nth-child(6),
     .applicants-table--active td:nth-child(6) { width: 13%; } /* Channel */
     .applicants-table--active th:nth-child(7),
-    .applicants-table--active td:nth-child(7) { width: 16%; } /* Staff Handled */
+    .applicants-table--active td:nth-child(7) { width: 13%; } /* Staff Handled */
     .applicants-table--active th:nth-child(8),
-    .applicants-table--active td:nth-child(8) { width: 8%; } /* DOB */
+    .applicants-table--active td:nth-child(8) { width: 7%; } /* DOB */
     .applicants-table--active th:nth-child(9),
-    .applicants-table--active td:nth-child(9) { width: 9%; } /* Barangay */
+    .applicants-table--active td:nth-child(9) { width: 10%; } /* Barangay */
     .applicants-table--active th:nth-child(10),
-    .applicants-table--active td:nth-child(10) { width: 7%; text-align: center; } /* Action */
+    .applicants-table--active td:nth-child(10) { width: 10%; text-align: center; } /* Action */
 
     .archive-summary-modal .summary-grid {
         display: grid;
@@ -440,17 +464,18 @@
         display: inline-flex;
         align-items: center;
         gap: 0.375rem;
-        padding: 0.5rem 0.875rem;
+        padding: 0.42rem 0.68rem;
         background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
         color: white;
         border: none;
         border-radius: 0.5rem;
-        font-size: 0.75rem;
+        font-size: 0.6875rem;
         font-weight: 500;
         cursor: pointer;
         transition: all 0.2s;
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
         text-decoration: none;
+        white-space: nowrap;
     }
 
     .btn-review:hover {
@@ -471,6 +496,36 @@
     .btn-review .btn-icon {
         width: 0.875rem;
         height: 0.875rem;
+    }
+
+    .btn-archive-action {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.25rem;
+        padding: 0.22rem 0.42rem;
+        border-radius: 9999px;
+        font-size: 0.53rem;
+        font-weight: 600;
+        color: #075985;
+        background: #e0f2fe;
+        border: 1px solid #bae6fd;
+        cursor: pointer;
+        white-space: nowrap;
+        line-height: 1;
+        transition: background 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+    }
+
+    .btn-archive-action:hover {
+        background: #bae6fd;
+        border-color: #7dd3fc;
+        box-shadow: 0 2px 6px rgba(14, 116, 144, 0.2);
+        transform: translateY(-1px);
+    }
+
+    .btn-archive-action:focus-visible {
+        outline: 2px solid rgba(59, 130, 246, 0.45);
+        outline-offset: 2px;
     }
 
     .badge {
@@ -1164,7 +1219,7 @@
         <div class="modal-header">
             <div>
                 <p class="tha-review-modal-kicker">Module 2 handoff summary</p>
-                <h3 class="modal-title" style="font-size: 1rem;">Sent to Module 2</h3>
+                <h3 class="modal-title" style="font-size: 1rem;">Module 2 / Module 3 Handoff Summary</h3>
                 <p class="modal-subtitle" id="archiveSummarySubtitle">Record handoff details</p>
             </div>
             <button class="btn-close" onclick="closeArchiveSummaryModal()">
@@ -1190,6 +1245,10 @@
                 <div class="summary-item"><span class="summary-label">Staff Role</span><div class="summary-value" id="archiveSummaryStaffRole">N/A</div></div>
                 <div class="summary-item"><span class="summary-label">Proceeded To Module 2</span><div class="summary-value" id="archiveSummaryProceededAt">N/A</div></div>
                 <div class="summary-item"><span class="summary-label">Proceeded By</span><div class="summary-value" id="archiveSummaryProceededBy">N/A</div></div>
+                <div class="summary-item"><span class="summary-label">Module 2 Handoff Summary</span><div class="summary-value" id="archiveSummaryModule2Summary">N/A</div></div>
+                <div class="summary-item"><span class="summary-label">Sent to Module 3 Summary</span><div class="summary-value" id="archiveSummaryModule3Summary">Not yet proceeded to Module 3</div></div>
+                <div class="summary-item"><span class="summary-label">Module 3 Proceeded At</span><div class="summary-value" id="archiveSummaryModule3At">N/A</div></div>
+                <div class="summary-item"><span class="summary-label">Module 3 Proceeded By</span><div class="summary-value" id="archiveSummaryModule3By">N/A</div></div>
             </div>
         </div>
         <div class="modal-footer">
@@ -1275,12 +1334,13 @@
     </div>
 
     <!-- Table -->
+    <div class="table-scroll">
     <table class="applicants-table applicants-table--active">
         <thead>
             <tr>
                 <th>#</th>
-                <th>Transaction #</th>
-                <th>Date & Time</th>
+                <th>Txn #</th>
+                <th>Date/Time</th>
                 <th>Reference #</th>
                 <th>Full Name</th>
                 <th>Channel</th>
@@ -1301,7 +1361,7 @@
                 data-searchable="{{ applicant.fullName|lower }} {{ applicant.referenceNumber|lower }} {{ applicant.barangay|lower }} {{ applicant.dateOfBirthDisplay|default:''|lower }}"
             >
                 <td style="font-weight: 700; color: #1e293b;">{{ forloop.counter }}</td>
-                <td style="font-weight: 600; color: #1d4ed8;">#{{ applicant.id }}</td>
+                <td style="font-weight: 600; color: #1d4ed8;">#{{ applicant.id|slice:":8" }}</td>
                 <td style="font-size: 0.6875rem; color: #64748b;">{{ applicant.dateTime }}</td>
                 <td>{{ applicant.referenceNumber }}</td>
                 <td style="font-weight: 500;">{{ applicant.fullName }}</td>
@@ -1349,6 +1409,7 @@
             {% endfor %}
         </tbody>
     </table>
+    </div>
     <div class="table-pagination" id="applicantsPagination">
         <span class="table-pagination-info" id="applicantsPaginationInfo">Showing 0-0 of 0</span>
         <div class="table-pagination-controls">
@@ -1426,12 +1487,13 @@
             Export CSV
         </button>
     </div>
-    <table class="applicants-table">
+    <div class="table-scroll">
+    <table class="applicants-table applicants-table--archive">
         <thead>
             <tr>
                 <th>#</th>
                 <th>Transaction #</th>
-                <th>Date & Time Proceeded</th>
+                <th>Proceeded</th>
                 <th>Reference #</th>
                 <th>Full Name</th>
                 <th>Channel</th>
@@ -1451,7 +1513,7 @@
                 data-searchable="{{ row.fullName|lower }} {{ row.referenceNumber|lower }} {{ row.barangay|lower }} {{ row.dateOfBirthDisplay|default:''|lower }}"
             >
                 <td style="font-weight: 700; color: #1e293b;">{{ forloop.counter }}</td>
-                <td style="font-weight: 600; color: #1d4ed8;">#{{ row.id }}</td>
+                <td style="font-weight: 600; color: #1d4ed8;">#{{ row.id|slice:":8" }}</td>
                 <td style="font-size: 0.6875rem; color: #64748b;">{{ row.dateTime }}</td>
                 <td>{{ row.referenceNumber }}</td>
                 <td style="font-weight: 500;">{{ row.fullName }}</td>
@@ -1499,6 +1561,7 @@
                 <td>
                     <button
                         type="button"
+                        class="btn-archive-action"
                         onclick="openArchiveHandoffSummary(this)"
                         data-reference="{{ row.referenceNumber }}"
                         data-name="{{ row.fullName }}"
@@ -1514,10 +1577,13 @@
                         data-sms="{% if row.hasPhone %}{% if row.registrationSmsSent %}Sent{% else %}Not Sent{% endif %}{% else %}No Phone{% endif %}"
                         data-dob="{{ row.dateOfBirthDisplay|default:'N/A' }}"
                         data-barangay="{{ row.barangay|default:'N/A' }}"
-                        style="display:inline-flex; align-items:center; gap:0.25rem; padding:0.2rem 0.45rem; border-radius:9999px; font-size:0.5625rem; font-weight:600; color:#075985; background:#e0f2fe; border:1px solid #bae6fd; cursor:pointer;"
+                        data-module2-summary="{{ row.module2Summary|default:'' }}"
+                        data-module3-summary="{{ row.module3Summary|default:'Not yet proceeded to Module 3' }}"
+                        data-module3-at="{{ row.module3ProceededAt|default:'' }}"
+                        data-module3-by="{{ row.module3ProceededBy|default:'' }}"
                         title="View handoff summary"
                     >
-                        Sent to Module 2
+                        Handoff Summary
                     </button>
                 </td>
             </tr>
@@ -1530,6 +1596,7 @@
             {% endfor %}
         </tbody>
     </table>
+    </div>
     <div class="table-pagination" id="archivePagination">
         <span class="table-pagination-info" id="archivePaginationInfo">Showing 0-0 of 0</span>
         <div class="table-pagination-controls">
@@ -2546,13 +2613,13 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label class="form-label">Sex <span style="color: #dc2626;">*</span></label>
-                            <div style="display: flex; gap: 1.5rem; margin-top: 0.5rem;">
-                                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 500; font-size: 0.8125rem; color: #334155;">
-                                    <input type="radio" name="sex" id="sexMale" value="M" required style="cursor: pointer;">
+                            <div class="tha-hazard-radio-group" role="radiogroup" aria-label="Sex" style="justify-content:flex-start;">
+                                <label class="tha-hazard-radio" for="sexMale">
+                                    <input type="radio" name="sex" id="sexMale" value="M" required>
                                     <span>Male</span>
                                 </label>
-                                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 500; font-size: 0.8125rem; color: #334155;">
-                                    <input type="radio" name="sex" id="sexFemale" value="F" required style="cursor: pointer;">
+                                <label class="tha-hazard-radio" for="sexFemale">
+                                    <input type="radio" name="sex" id="sexFemale" value="F" required>
                                     <span>Female</span>
                                 </label>
                             </div>
@@ -2582,12 +2649,26 @@
                         </div>
                     </div>
 
-                    <!-- Present Address -->
-                    <div class="form-row full">
+                    <!-- Present Address + Property Ownership Declaration -->
+                    <div class="form-row">
                         <div class="form-group">
                             <label class="form-label">Present address <span style="color: #dc2626;">*</span></label>
                             <input type="text" class="form-input" placeholder="House no., street, sitio/purok, Talisay City" name="current_address" id="presentAddress" minlength="10" maxlength="500" required>
                             <span class="help-text">Enter address details here. Select the barangay below so it is stored in a structured field.</span>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" id="propertyOwnershipLabel">Has Property Ownership in Talisay City <span style="color: #dc2626;">*</span></label>
+                            <div class="tha-hazard-radio-group" role="radiogroup" aria-labelledby="propertyOwnershipLabel" style="justify-content:flex-start;">
+                                <label class="tha-hazard-radio" for="hasPropertyYes">
+                                    <input type="radio" id="hasPropertyYes" name="has_property_in_talisay" value="yes">
+                                    <span>Yes</span>
+                                </label>
+                                <label class="tha-hazard-radio" for="hasPropertyNo">
+                                    <input type="radio" id="hasPropertyNo" name="has_property_in_talisay" value="no">
+                                    <span>No</span>
+                                </label>
+                            </div>
+                            <span class="help-text">This declaration feeds Module 2.2 Property Ownership check.</span>
                         </div>
                     </div>
 
@@ -2663,9 +2744,7 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label class="form-label">Gross monthly household income (PHP) <span style="color: #dc2626;">*</span></label>
-                            <input type="number" class="form-input" placeholder="Amount in pesos" name="monthly_income" id="monthlyIncome" min="0" step="0.01" data-income-preview-id="monthlyIncomeFormattedPreview" required>
-                            <span class="help-text">Total household earnings before deductions, for the reference month.</span>
-                            <span class="help-text" id="monthlyIncomeFormattedPreview" aria-live="polite"></span>
+                            <input type="text" class="form-input" placeholder="Amount in pesos" name="monthly_income" id="monthlyIncome" inputmode="decimal" autocomplete="off" required>
                         </div>
                     </div>
                 </div>
@@ -2807,6 +2886,10 @@
         setText('archiveSummaryStaffRole', d.staffPosition || 'N/A');
         setText('archiveSummaryProceededAt', d.proceeded || 'N/A');
         setText('archiveSummaryProceededBy', d.proceededBy || 'Unknown');
+        setText('archiveSummaryModule2Summary', d.module2Summary || `${d.reference || 'N/A'} • ${d.name || 'N/A'}`);
+        setText('archiveSummaryModule3Summary', d.module3Summary || 'Not yet proceeded to Module 3');
+        setText('archiveSummaryModule3At', d.module3At || 'N/A');
+        setText('archiveSummaryModule3By', d.module3By || 'N/A');
 
         const modal = document.getElementById('archiveSummaryModal');
         if (modal) modal.classList.add('active');
@@ -2917,34 +3000,32 @@
         });
     }
 
-    // Keep number inputs strictly numeric (no commas) to avoid browser parse warnings.
+    // Format monthly income inline as user types (e.g., 1500 -> 1,500).
     function attachNumberIncomeSanitizer(input) {
-        const previewId = input.dataset.incomePreviewId;
-        const previewEl = previewId ? document.getElementById(previewId) : null;
+        const format = function(rawValue) {
+            const cleaned = String(rawValue || '')
+                .replace(/[^0-9.]/g, '')
+                .replace(/(\..*)\./g, '$1');
+            if (!cleaned) return '';
 
-        const updatePreview = function(rawValue) {
-            if (!previewEl) return;
-            const parsed = Number.parseFloat(rawValue);
-            if (Number.isNaN(parsed) || rawValue === '') {
-                previewEl.textContent = '';
-                return;
-            }
-            previewEl.textContent = 'Display: ₱' + parsed.toLocaleString('en-PH', {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 2
-            });
+            const parts = cleaned.split('.');
+            const whole = parts[0] || '0';
+            const decimal = parts[1] !== undefined ? parts[1].slice(0, 2) : '';
+            const grouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            return decimal !== '' ? `${grouped}.${decimal}` : grouped;
         };
 
         const sanitize = function() {
             if (typeof this.value !== 'string') return;
-            const cleaned = this.value.replace(/,/g, '');
-            if (cleaned !== this.value) {
-                this.value = cleaned;
-            }
-            updatePreview(cleaned);
+            this.value = format(this.value);
         };
         input.addEventListener('input', sanitize);
-        input.addEventListener('change', sanitize);
+        input.addEventListener('blur', sanitize);
+        if (input.form) {
+            input.form.addEventListener('submit', function() {
+                input.value = input.value.replace(/,/g, '');
+            });
+        }
         sanitize.call(input);
     }
 
@@ -3859,7 +3940,9 @@
         }
     }
 
+    let module2ProceedInFlight = false;
     function proceedToModule2Evaluation() {
+        if (module2ProceedInFlight) return;
         if (!currentApplicant) {
             showNoticeModal({
                 title: 'No Record Selected',
@@ -3879,6 +3962,13 @@
         const formData = new FormData();
         formData.append('applicant_id', currentApplicant.applicantId || currentApplicant.id);
         formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+        const proceedBtn = document.getElementById('btnProceedModule2');
+        module2ProceedInFlight = true;
+        if (proceedBtn) {
+            proceedBtn.disabled = true;
+            proceedBtn.style.opacity = '0.7';
+            proceedBtn.style.cursor = 'not-allowed';
+        }
 
         fetch('{% url "intake:proceed_to_applications" request.user.position %}', {
             method: 'POST',
@@ -3896,7 +3986,9 @@
             }
             showNoticeModal({
                 title: 'Proceeding to Module 2',
-                message: 'Record was handed off successfully. Opening Applications module now.',
+                message: data.already_handed_off
+                    ? 'Record was already handed off previously. Opening Applications module now.'
+                    : 'Record was handed off successfully. Opening Applications module now.',
                 type: 'success',
                 onPrimary: () => { window.location.href = targetUrl; },
             });
@@ -3907,6 +3999,14 @@
                 message: error.message,
                 type: 'error',
             });
+        })
+        .finally(() => {
+            module2ProceedInFlight = false;
+            if (proceedBtn) {
+                proceedBtn.disabled = false;
+                proceedBtn.style.opacity = '1';
+                proceedBtn.style.cursor = 'pointer';
+            }
         });
     }
     
@@ -4871,6 +4971,17 @@
             showNoticeModal({
                 title: 'Missing Required Field',
                 message: 'Years Residing in Talisay is required for eligibility check.',
+                type: 'warning',
+            });
+            return;
+        }
+
+        // Property ownership declaration is required for Module 2.2.
+        const propertyOwnershipSelected = formData.get('has_property_in_talisay');
+        if (!propertyOwnershipSelected || !['yes', 'no'].includes(String(propertyOwnershipSelected).toLowerCase())) {
+            showNoticeModal({
+                title: 'Property Ownership Required',
+                message: 'Please select Yes or No for property ownership in Talisay City.',
                 type: 'warning',
             });
             return;

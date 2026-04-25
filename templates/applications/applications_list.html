@@ -1160,6 +1160,53 @@
     transform: translateY(0);
 }
 
+.flow-alert-card {
+    background: #ffffff;
+    border-radius: 18px;
+    width: min(92vw, 560px);
+    box-shadow: 0 20px 38px rgba(15, 23, 42, 0.2);
+    border: 1px solid #e2e8f0;
+    padding: 1.25rem 1.25rem 1rem;
+}
+
+.flow-alert-title {
+    margin: 0 0 0.55rem;
+    color: #0f172a;
+    font-size: 1.18rem;
+    font-weight: 700;
+}
+
+.flow-alert-message {
+    margin: 0;
+    color: #334155;
+    font-size: 0.98rem;
+    line-height: 1.6;
+    white-space: pre-line;
+}
+
+.flow-alert-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 1.15rem;
+}
+
+.flow-alert-ok {
+    min-width: 92px;
+    border: none;
+    border-radius: 9999px;
+    background: #4f46e5;
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.95rem;
+    padding: 0.52rem 1.15rem;
+    cursor: pointer;
+    box-shadow: 0 6px 16px rgba(79, 70, 229, 0.35);
+}
+
+.flow-alert-ok:hover {
+    background: #4338ca;
+}
+
 .modal-header {
     padding: 1.5rem;
     border-bottom: 1px solid #e5e7eb;
@@ -1557,19 +1604,6 @@
             <div class="stage-title">Walk-in Queue</div>
         </div>
     </div>
-    <div class="stage-card disqualified scroll-animate-scale scroll-delay-3">
-        <div class="stage-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="8" y1="8" x2="16" y2="16"></line>
-                <line x1="16" y1="8" x2="8" y2="16"></line>
-            </svg>
-        </div>
-        <div class="stage-meta">
-            <div class="stage-count">{{ queue_counts.disqualified|default:0 }}</div>
-            <div class="stage-title">Disqualified</div>
-        </div>
-    </div>
 </div>
 
 <!-- Routing Delay Alert -->
@@ -1888,16 +1922,8 @@
 
                         <!-- Action Buttons -->
                         <div style="display:flex;gap:0.75rem;align-items:stretch;">
-                            <button type="button" class="m2-eval28-save-btn" onclick="recordEvaluationApprovalStatus()" style="flex:1;min-height:48px;padding:0.78rem 1.1rem;background:#2563eb;color:white;border:none;border-radius:10px;font-weight:700;cursor:pointer;transition:all 0.2s;font-size:0.9rem;">Confirm Save Status - Proceed to Documents</button>
+                            <button type="button" class="m2-eval28-save-btn" onclick="saveAndProceedModule3()" style="flex:1;min-height:48px;padding:0.78rem 1.1rem;background:#2563eb;color:white;border:none;border-radius:10px;font-weight:700;cursor:pointer;transition:all 0.2s;font-size:0.9rem;">Save 2.8 Status & Proceed to Module 3</button>
                             <button type="button" onclick="m2BackToLayer3Step()" style="min-width:108px;min-height:48px;padding:0.78rem 1rem;background:#f3f4f6;color:#374151;border:1px solid #d1d5db;border-radius:10px;font-weight:600;cursor:pointer;transition:all 0.2s;font-size:0.88rem;">Back</button>
-                        </div>
-                        <div id="modalEval28Gateway" style="display:none;margin-top:0.85rem;padding-top:0.75rem;border-top:1px solid #e2e8f0;">
-                            <div style="font-size:0.7rem;color:#475569;margin-bottom:0.45rem;">
-                                Pipeline gateway to Module 3 routing after 2.8 is finalized.
-                            </div>
-                            <button type="button" id="modalProceedModule3Btn" class="m2-proceed-btn" style="min-width:220px;" onclick="proceedToModule3Gateway()">
-                                Proceed to Module 3
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -1966,6 +1992,16 @@
 </div>
 {% endif %}
 
+<div class="modal-overlay" id="flowAlertModal" onclick="closeFlowAlert(event)">
+    <div class="flow-alert-card" onclick="event.stopPropagation()">
+        <h3 class="flow-alert-title" id="flowAlertTitle">Notice</h3>
+        <p class="flow-alert-message" id="flowAlertMessage"></p>
+        <div class="flow-alert-actions">
+            <button type="button" class="flow-alert-ok" onclick="confirmFlowAlert()">OK</button>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}
@@ -1980,6 +2016,35 @@
     window.__hasApplication = false;
     window.__applicationNumber = '';
     const position = '{{ request.user.position }}';
+    let flowAlertOnConfirm = null;
+
+    function showFlowAlert(message, title = 'Notice', onConfirm = null) {
+        const modal = document.getElementById('flowAlertModal');
+        const titleEl = document.getElementById('flowAlertTitle');
+        const messageEl = document.getElementById('flowAlertMessage');
+        if (!modal || !titleEl || !messageEl) {
+            alert(message);
+            if (typeof onConfirm === 'function') onConfirm();
+            return;
+        }
+        titleEl.textContent = title;
+        messageEl.textContent = message || '';
+        flowAlertOnConfirm = onConfirm;
+        modal.classList.add('active');
+    }
+
+    function closeFlowAlert(event) {
+        if (event && event.target && event.target.id !== 'flowAlertModal') return;
+        const modal = document.getElementById('flowAlertModal');
+        if (modal) modal.classList.remove('active');
+    }
+
+    function confirmFlowAlert() {
+        const onConfirm = flowAlertOnConfirm;
+        flowAlertOnConfirm = null;
+        closeFlowAlert();
+        if (typeof onConfirm === 'function') onConfirm();
+    }
 
     function mapApplicationStatusToProgressStage(status) {
         if (!status) return null;
@@ -3115,7 +3180,7 @@
             formData.append('status', status);
             formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
             
-            const response = await fetch('{% url "applications:update_requirement" request.user.position %}', {
+            const response = await fetch('{% url "documents:update_requirement_submission" request.user.position %}', {
                 method: 'POST',
                 body: formData
             });
@@ -3267,6 +3332,7 @@
             formData.append('applicant_id', currentApplicantId);
             formData.append('approval_status', approvalStatus);
             formData.append('notes', notes);
+            formData.append('force_sms', '1');
             if (approvalStatus === 'disqualified') {
                 formData.append('disqualify_reason', disqualifyReason);
                 formData.append('disqualify_notes', document.getElementById('modalDisqualifyNotes')?.value || '');
@@ -3319,6 +3385,95 @@
                     window.location.href = docsUrl;
                 }, 250);
             }
+        } catch (error) {
+            alert('Error: ' + error.message);
+        }
+    }
+
+    async function saveAndProceedModule3() {
+        if (!currentApplicantId || !canVerifyDocs) return;
+
+        const approvalStatus = selectedEvaluationApprovalStatus || 'approved';
+        const notes = document.getElementById('modalEvaluationApprovalNotes')?.value || '';
+
+        let disqualifyReason = '';
+        if (approvalStatus === 'disqualified') {
+            disqualifyReason = document.getElementById('modalDisqualifyReasonSelect')?.value || '';
+            const disqualifyNotes = document.getElementById('modalDisqualifyNotes')?.value || '';
+            if (!disqualifyReason) {
+                alert('Please select a disqualification reason.');
+                return;
+            }
+            const confirmMsg = `Confirm: disqualify this applicant?\n\nReason: ${disqualifyReason}\nNotes: ${disqualifyNotes || '(none)'}`;
+            if (!confirm(confirmMsg)) return;
+        } else {
+            if (!confirm('Confirm: save 2.8 as Approved and proceed to Module 3 now?')) return;
+        }
+
+        try {
+            const formData = new FormData();
+            formData.append('applicant_id', currentApplicantId);
+            formData.append('approval_status', approvalStatus);
+            formData.append('notes', notes);
+            if (approvalStatus === 'disqualified') {
+                formData.append('disqualify_reason', disqualifyReason);
+                formData.append('disqualify_notes', document.getElementById('modalDisqualifyNotes')?.value || '');
+            }
+            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+            const saveResponse = await fetch('{% url "applications:record_evaluation_approval" request.user.position %}', {
+                method: 'POST',
+                body: formData,
+            });
+            const saveData = await saveResponse.json();
+            if (!saveData.success) {
+                alert(saveData.error || 'Failed to save 2.8 status.');
+                return;
+            }
+
+            if (approvalStatus !== 'approved') {
+                alert('2.8 status saved as Disqualified.');
+                setTimeout(() => location.reload(), 300);
+                return;
+            }
+
+            if (window.__hasApplication) {
+                const reference = window.__m2LastApplicantData?.reference_number || '';
+                const docsUrl = reference
+                    ? `/documents/${position}/management/?search=${encodeURIComponent(reference)}`
+                    : `/documents/${position}/management/`;
+                alert('2.8 saved. Module 3 is already initialized for this applicant. Redirecting to Documents...');
+                window.location.href = docsUrl;
+                return;
+            }
+
+            const proceedResponse = await fetch(`/applications/staff/${position}/generate-form/${currentApplicantId}/`);
+            const proceedData = await proceedResponse.json();
+            if (!proceedData.success) {
+                const reference = window.__m2LastApplicantData?.reference_number || '';
+                const docsUrl = reference
+                    ? `/documents/${position}/management/?search=${encodeURIComponent(reference)}`
+                    : `/documents/${position}/management/`;
+                const proceedError = proceedData.error || '2.8 saved, but failed to proceed to Module 3.';
+                if (/requirements\s+verified|all\s+7\s+must\s+be\s+complete/i.test(proceedError)) {
+                    const separator = docsUrl.includes('?') ? '&' : '?';
+                    window.location.href = `${docsUrl}${separator}m2_notice=requirements_gate`;
+                    return;
+                }
+                showFlowAlert(
+                    proceedError + '\n\nRedirecting to Document Management.',
+                    'Unable to Proceed',
+                    () => { window.location.href = docsUrl; }
+                );
+                return;
+            }
+
+            const reference = window.__m2LastApplicantData?.reference_number || '';
+            const docsUrl = reference
+                ? `/documents/${position}/management/?search=${encodeURIComponent(reference)}`
+                : `/documents/${position}/management/`;
+            alert(`2.8 saved and Module 3 initialized.\nApplication #${proceedData.application_number}\n\nRedirecting to Documents...`);
+            window.location.href = docsUrl;
         } catch (error) {
             alert('Error: ' + error.message);
         }
@@ -3429,7 +3584,7 @@
             formData.append('step', step);
             formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
             
-            const response = await fetch('{% url "applications:update_routing" request.user.position %}', {
+            const response = await fetch('{% url "documents:update_signatory_routing" request.user.position %}', {
                 method: 'POST',
                 body: formData
             });

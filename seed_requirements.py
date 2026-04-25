@@ -11,7 +11,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'talisay_housing.settings')
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 django.setup()
 
-from applications.models import Requirement
+from documents.models import Requirement
 
 def seed_requirements():
     """Create the 7 Group A requirements if they don't exist."""

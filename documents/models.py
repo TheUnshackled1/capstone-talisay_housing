@@ -45,7 +45,7 @@ class Document(models.Model):
     
     # Optionally link to specific requirement submission
     requirement_submission = models.ForeignKey(
-        'applications.RequirementSubmission',
+        'documents.RequirementSubmission',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -98,6 +98,303 @@ class Document(models.Model):
             return f"{self.file_size / 1024:.1f} KB"
         else:
             return f"{self.file_size / (1024 * 1024):.1f} MB"
+
+
+class Requirement(models.Model):
+    """
+    Reference table for required documents.
+    Hard-moved ownership from applications module.
+    """
+    DOCUMENT_GROUP_CHOICES = [
+        ('A', 'Group A - Applicant Requirements'),
+        ('B', 'Group B - Office-Generated'),
+        ('C', 'Group C - Post-Award'),
+    ]
+
+    code = models.CharField(max_length=10, unique=True, primary_key=True)
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
+    group = models.CharField(max_length=1, choices=DOCUMENT_GROUP_CHOICES, default='A')
+    order = models.PositiveSmallIntegerField(default=0)
+    is_required_for_form = models.BooleanField(
+        default=True,
+        help_text="If True, this must be complete before application form is generated"
+    )
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['group', 'order']
+        verbose_name = "Requirement"
+        verbose_name_plural = "Requirements"
+        db_table = 'applications_requirement'
+
+    def __str__(self):
+        return f"{self.code}: {self.name}"
+
+
+class RequirementSubmission(models.Model):
+    """
+    Tracks submitted/verified state per applicant requirement.
+    Hard-moved ownership from applications module.
+    """
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('submitted', 'Submitted'),
+        ('verified', 'Verified'),
+        ('rejected', 'Rejected - Resubmit Required'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    applicant = models.ForeignKey(
+        'intake.Applicant',
+        on_delete=models.CASCADE,
+        related_name='requirement_submissions'
+    )
+    requirement = models.ForeignKey(
+        Requirement,
+        on_delete=models.PROTECT,
+        related_name='submissions'
+    )
+
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    rejection_reason = models.TextField(blank=True)
+    submitted_at = models.DateTimeField(null=True, blank=True)
+    verified_at = models.DateTimeField(null=True, blank=True)
+    verified_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='verified_requirements'
+    )
+    notes = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ['applicant', 'requirement__order']
+        verbose_name = "Requirement Submission"
+        verbose_name_plural = "Requirement Submissions"
+        db_table = 'applications_requirementsubmission'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['applicant', 'requirement'],
+                name='unique_applicant_requirement'
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.applicant.full_name} - {self.requirement.name} ({self.get_status_display()})"
+
+
+class SignatoryRouting(models.Model):
+    """
+    Tracks document routing through signatory chain.
+    Hard-moved ownership from applications module.
+    """
+    STEP_CHOICES = [
+        ('received', 'Received - Processing'),
+        ('forwarded_oic', 'Forwarded to OIC'),
+        ('signed_oic', 'Signed by OIC'),
+        ('forwarded_head', 'Forwarded to Head'),
+        ('signed_head', 'Signed by Head - Complete'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    application = models.ForeignKey(
+        'applications.Application',
+        on_delete=models.CASCADE,
+        related_name='routing_steps'
+    )
+    step = models.CharField(max_length=20, choices=STEP_CHOICES)
+    action_at = models.DateTimeField(auto_now_add=True)
+    action_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='routing_actions'
+    )
+    notes = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ['application', 'action_at']
+        verbose_name = "Signatory Routing Step"
+        verbose_name_plural = "Signatory Routing Steps"
+        db_table = 'applications_signatoryrouting'
+
+    def __str__(self):
+        return f"{self.application.application_number} - {self.get_step_display()}"
+
+    @property
+    def days_since_action(self):
+        from django.utils import timezone
+        return (timezone.now() - self.action_at).days
+
+    @property
+    def is_delayed(self):
+        return self.days_since_action > 3
+
+
+# Backward-compatible symbol used in some views/admin.
+SignatoryRoutingStep = SignatoryRouting
+
+class FieldInspection(models.Model):
+    """
+    Phase B (3.4): Ronda field inspection submission and staff confirmation.
+    """
+    STATUS_CHOICES = [
+        ('submitted', 'Submitted by Ronda'),
+        ('confirmed', 'Confirmed by THA Staff'),
+        ('needs_revision', 'Needs Revision'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    application = models.OneToOneField(
+        'applications.Application',
+        on_delete=models.CASCADE,
+        related_name='field_inspection',
+    )
+    findings = models.TextField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='submitted')
+    submitted_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='field_inspections_submitted',
+        help_text='Ronda user who submitted the field report.',
+    )
+    submitted_at = models.DateTimeField(auto_now_add=True)
+    confirmed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='field_inspections_confirmed',
+        help_text='THA Staff who confirmed the report.',
+    )
+    confirmed_at = models.DateTimeField(null=True, blank=True)
+    staff_notes = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ['-submitted_at']
+        verbose_name = 'Field Inspection'
+        verbose_name_plural = 'Field Inspections'
+
+    def __str__(self):
+        return f'{self.application.application_number} - {self.get_status_display()}'
+
+
+class FieldInspectionPhoto(models.Model):
+    """
+    Photos attached to Phase B field inspection submission.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    inspection = models.ForeignKey(
+        FieldInspection,
+        on_delete=models.CASCADE,
+        related_name='photos',
+    )
+    image = models.ImageField(upload_to='documents/field_inspection/%Y/%m/')
+    caption = models.CharField(max_length=200, blank=True)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-uploaded_at']
+        verbose_name = 'Field Inspection Photo'
+        verbose_name_plural = 'Field Inspection Photos'
+
+    def __str__(self):
+        return f'Photo - {self.inspection.application.application_number}'
+
+
+class CommitteeInterview(models.Model):
+    """
+    Phase C (3.5-3.7): committee schedule and recorded result.
+    """
+    RESULT_CHOICES = [
+        ('pending', 'Pending'),
+        ('passed', 'Passed'),
+        ('failed', 'Failed'),
+        ('follow_up', 'Needs Follow-up'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    application = models.OneToOneField(
+        'applications.Application',
+        on_delete=models.CASCADE,
+        related_name='committee_interview',
+    )
+    scheduled_at = models.DateTimeField(null=True, blank=True)
+    scheduled_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='committee_interviews_scheduled',
+    )
+    result = models.CharField(max_length=20, choices=RESULT_CHOICES, default='pending')
+    result_recorded_at = models.DateTimeField(null=True, blank=True)
+    result_recorded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='committee_interviews_recorded',
+    )
+    remarks = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ['-result_recorded_at', '-scheduled_at']
+        verbose_name = 'Committee Interview'
+        verbose_name_plural = 'Committee Interviews'
+
+    def __str__(self):
+        return f'{self.application.application_number} - {self.get_result_display()}'
+
+
+class EndorsementRoutingStep(models.Model):
+    """
+    Phase D: seven-step endorsement and signature routing chain.
+    """
+    STEP_CHOICES = [
+        ('barangay_affairs', 'Barangay Affairs Office endorsement'),
+        ('community_relations', 'Community Relations Office endorsement'),
+        ('cswd_referral', 'CSWD referral, interview, and profiling'),
+        ('sp_endorsement', 'SP endorsement'),
+        ('gk_orientation', 'GK team orientation and conformity'),
+        ('tha_recommending', 'THA recommending approval'),
+        ('mayor_final', "Mayor's Office final approval"),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    application = models.ForeignKey(
+        'applications.Application',
+        on_delete=models.CASCADE,
+        related_name='endorsement_routing_steps',
+    )
+    step = models.CharField(max_length=40, choices=STEP_CHOICES)
+    is_completed = models.BooleanField(default=False)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    recorded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='endorsement_steps_recorded',
+    )
+    remarks = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ['application', 'step']
+        verbose_name = 'Endorsement Routing Step'
+        verbose_name_plural = 'Endorsement Routing Steps'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['application', 'step'],
+                name='unique_application_endorsement_step',
+            )
+        ]
+
+    def __str__(self):
+        return f'{self.application.application_number} - {self.get_step_display()}'
 
 
 class FacilitatedService(models.Model):

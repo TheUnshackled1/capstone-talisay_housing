@@ -3,6 +3,7 @@ Module 2 utility helpers.
 """
 
 from units.models import Blacklist as UnitsBlacklist
+from intake.utils import send_sms as _base_send_sms
 
 
 class _UnitsBlacklistAdapter:
@@ -65,3 +66,21 @@ def check_blacklist_module2(full_name, phone_number=None, applicant_id=None):
         return True, _UnitsBlacklistAdapter(units_match)
 
     return False, None
+
+
+def send_sms_for_applications(recipient_phone, message_content, trigger_event, applicant=None):
+    """
+    Module 2 SMS gateway wrapper.
+
+    Policy: only 2.8 approved event should send applicant-facing SMS
+    from Applications module.
+    """
+    if trigger_event != 'evaluation_approval_approved':
+        return False
+    return _base_send_sms(
+        recipient_phone,
+        message_content,
+        trigger_event,
+        applicant=applicant,
+        module='applications',
+    )

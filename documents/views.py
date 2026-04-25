@@ -3,12 +3,16 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
 from django.http import JsonResponse
-from django.views.decorators.http import require_http_methods
+from django.views.decorators.http import require_http_methods, require_POST
 from functools import wraps
 import json
 from intake.models import Applicant
 from units.models import LotAward
-from documents.models import Document
+from documents.models import (
+    Document,
+    RequirementSubmission,
+    EndorsementRoutingStep,
+)
 
 
 # =============================================================================
@@ -46,8 +50,22 @@ def document_management(request, position):
     search_query = request.GET.get('search', '').strip()
     status_filter = request.GET.get('status', 'all').strip()
 
-    # Get all applicants
-    applicants_qs = Applicant.objects.prefetch_related('application__lot_awards__unit', 'documents').all()
+    # Module 3 pipeline scope:
+    # include records that are already 2.8-approved OR already in/after documents-processing states.
+    applicants_qs = (
+        Applicant.objects
+        .prefetch_related(
+            'application__lot_awards__unit',
+            'documents',
+            'requirement_submissions__requirement',
+            'application__endorsement_routing_steps',
+        )
+        .filter(module2_handoff_at__isnull=False)
+        .filter(
+            Q(evaluation_approval_status='approved') |
+            Q(status__in=['requirements', 'application', 'standby', 'awarded'])
+        )
+    )
 
     # Filter by status
     if status_filter != 'all' and status_filter:
@@ -83,6 +101,35 @@ def document_management(request, position):
         except:
             lot_info = None
 
+        group_a_verified = sum(
+            1 for sub in applicant.requirement_submissions.all()
+            if getattr(sub.requirement, 'group', '') == 'A' and sub.status == 'verified'
+        )
+        has_danger_zone_requirement = applicant.channel == 'danger_zone'
+        cdrrmo_verified = bool(
+            has_danger_zone_requirement and
+            getattr(getattr(applicant, 'cdrrmo_certification', None), 'status', '') == 'certified'
+        )
+        phase_a_required_docs = 7 + (1 if has_danger_zone_requirement else 0)
+        phase_a_verified_docs = group_a_verified + (1 if cdrrmo_verified else 0)
+
+        app_obj = getattr(applicant, 'application', None)
+        signed_form_confirmed = bool(app_obj and app_obj.applicant_signed_at)
+        phase_a_complete = phase_a_verified_docs >= phase_a_required_docs and signed_form_confirmed
+
+        field_inspection = getattr(app_obj, 'field_inspection', None) if app_obj else None
+        phase_b_complete = bool(field_inspection and field_inspection.status == 'confirmed' and field_inspection.confirmed_at)
+
+        committee = getattr(app_obj, 'committee_interview', None) if app_obj else None
+        committee_result = getattr(committee, 'result', 'pending') if committee else 'pending'
+        phase_c_complete = committee_result == 'passed'
+
+        routing_steps = list(getattr(app_obj, 'endorsement_routing_steps', []).all()) if app_obj else []
+        completed_routing_count = sum(1 for step in routing_steps if step.is_completed)
+        phase_d_complete = completed_routing_count >= 7
+
+        module3_ready_for_module4 = phase_a_complete and phase_b_complete and phase_c_complete and phase_d_complete
+
         applicants_list.append({
             'id': str(applicant.id),
             'full_name': applicant.full_name,
@@ -96,6 +143,16 @@ def document_management(request, position):
             'doc_count': doc_count,
             'total_docs': total_docs,
             'doc_percentage': int((doc_count / total_docs) * 100) if total_docs > 0 else 0,
+            'phase_a_verified_docs': phase_a_verified_docs,
+            'phase_a_required_docs': phase_a_required_docs,
+            'phase_a_complete': phase_a_complete,
+            'phase_b_complete': phase_b_complete,
+            'phase_c_complete': phase_c_complete,
+            'phase_d_complete': phase_d_complete,
+            'phase_d_completed_steps': completed_routing_count,
+            'module3_ready_for_module4': module3_ready_for_module4,
+            'committee_result': committee_result,
+            'signed_form_confirmed': signed_form_confirmed,
         })
 
     # Document group definitions
@@ -138,6 +195,18 @@ def document_management(request, position):
         }
     }
 
+    applicant_ids = [a['id'] for a in applicants_list]
+    documents_qs = (
+        Document.objects
+        .select_related('applicant')
+        .filter(applicant_id__in=applicant_ids)
+        .order_by('-uploaded_at')
+    )
+    disqualified_count = Applicant.objects.filter(
+        module2_handoff_at__isnull=False,
+        status='disqualified',
+    ).count()
+
     context = {
         'page_title': 'Document Management',
         'user_position': request.user.position,
@@ -156,10 +225,11 @@ def document_management(request, position):
             ('awarded', 'Awarded'),
         ],
         # New template context variables
-        'documents': Document.objects.select_related('applicant').order_by('-uploaded_at'),
-        'total_documents': Document.objects.count(),
-        'total_applicants': Applicant.objects.filter(documents__isnull=False).distinct().count(),
-        'total_size_gb': round(sum(doc.file_size for doc in Document.objects.all()) / (1024*1024*1024), 2),
+        'documents': documents_qs,
+        'total_documents': documents_qs.count(),
+        'total_applicants': len(applicants_list),
+        'total_size_gb': round(sum(doc.file_size for doc in documents_qs) / (1024*1024*1024), 2),
+        'disqualified_count': disqualified_count,
     }
 
     return render(request, 'documents/management.html', context)
@@ -334,3 +404,27 @@ def delete_document(request, position, doc_id):
         return JsonResponse({'success': False, 'error': 'Document not found'}, status=404)
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@login_required
+@verify_position
+@require_POST
+def update_requirement_submission(request, position):
+    """
+    Documents-module alias for Module 2 requirement submission updates.
+    Delegates to applications logic to preserve behavior.
+    """
+    from applications.views import update_requirement
+    return update_requirement(request, position)
+
+
+@login_required
+@verify_position
+@require_POST
+def update_signatory_routing(request, position):
+    """
+    Documents-module alias for Module 2 signatory routing updates.
+    Delegates to applications logic to preserve behavior.
+    """
+    from applications.views import update_routing
+    return update_routing(request, position)

@@ -1,5 +1,18 @@
 from django.contrib import admin
-from .models import Document, SMSLog, FacilitatedService, ElectricityConnection, LotAwarding
+from .models import (
+    Document,
+    SMSLog,
+    FacilitatedService,
+    ElectricityConnection,
+    LotAwarding,
+    Requirement,
+    RequirementSubmission,
+    SignatoryRouting,
+    FieldInspection,
+    FieldInspectionPhoto,
+    CommitteeInterview,
+    EndorsementRoutingStep,
+)
 
 
 @admin.register(Document)
@@ -21,6 +34,68 @@ class DocumentAdmin(admin.ModelAdmin):
         }),
         ('🔏 UPLOADED BY', {
             'fields': ('uploaded_by', 'uploaded_at'),
+        }),
+        ('📝 NOTES', {
+            'fields': ('notes',),
+            'classes': ('collapse',),
+        }),
+    )
+
+
+@admin.register(Requirement)
+class RequirementAdmin(admin.ModelAdmin):
+    list_display = ('code', 'name', 'group', 'is_required_for_form', 'is_active')
+    list_filter = ('group', 'is_required_for_form', 'is_active')
+    search_fields = ('code', 'name')
+
+    fieldsets = (
+        ('📋 REQUIREMENT', {
+            'fields': ('code', 'name', 'group'),
+        }),
+        ('⚙️ SETTINGS', {
+            'fields': ('is_required_for_form', 'is_active', 'order'),
+        }),
+        ('📝 DESCRIPTION', {
+            'fields': ('description',),
+            'classes': ('collapse',),
+        }),
+    )
+
+
+@admin.register(RequirementSubmission)
+class RequirementSubmissionAdmin(admin.ModelAdmin):
+    list_display = ('applicant', 'requirement', 'status', 'verified_at')
+    list_filter = ('status', 'verified_at')
+    search_fields = ('applicant__full_name', 'requirement__code')
+    readonly_fields = ('submitted_at', 'verified_at')
+
+    fieldsets = (
+        ('📄 SUBMISSION', {
+            'fields': ('applicant', 'requirement', 'status'),
+        }),
+        ('✅ VERIFICATION', {
+            'fields': ('verified_at', 'verified_by', 'rejection_reason'),
+        }),
+        ('📝 NOTES', {
+            'fields': ('notes',),
+            'classes': ('collapse',),
+        }),
+    )
+
+
+@admin.register(SignatoryRouting)
+class SignatoryRoutingStepAdmin(admin.ModelAdmin):
+    list_display = ('application', 'step', 'action_at', 'action_by')
+    list_filter = ('step', 'action_at')
+    search_fields = ('application__application_number', 'application__applicant__full_name')
+    readonly_fields = ('action_at',)
+
+    fieldsets = (
+        ('📋 ROUTING STEP', {
+            'fields': ('application', 'step'),
+        }),
+        ('🔏 ACTION', {
+            'fields': ('action_at', 'action_by'),
         }),
         ('📝 NOTES', {
             'fields': ('notes',),
@@ -52,6 +127,34 @@ class SMSLogAdmin(admin.ModelAdmin):
             'classes': ('collapse',),
         }),
     )
+
+
+class FieldInspectionPhotoInline(admin.TabularInline):
+    model = FieldInspectionPhoto
+    extra = 0
+
+
+@admin.register(FieldInspection)
+class FieldInspectionAdmin(admin.ModelAdmin):
+    list_display = ('application', 'status', 'submitted_by', 'submitted_at', 'confirmed_by', 'confirmed_at')
+    list_filter = ('status', 'submitted_at', 'confirmed_at')
+    search_fields = ('application__application_number', 'application__applicant__full_name')
+    readonly_fields = ('submitted_at',)
+    inlines = [FieldInspectionPhotoInline]
+
+
+@admin.register(CommitteeInterview)
+class CommitteeInterviewAdmin(admin.ModelAdmin):
+    list_display = ('application', 'scheduled_at', 'result', 'result_recorded_at', 'result_recorded_by')
+    list_filter = ('result', 'scheduled_at', 'result_recorded_at')
+    search_fields = ('application__application_number', 'application__applicant__full_name')
+
+
+@admin.register(EndorsementRoutingStep)
+class EndorsementRoutingStepAdmin(admin.ModelAdmin):
+    list_display = ('application', 'step', 'is_completed', 'completed_at', 'recorded_by')
+    list_filter = ('step', 'is_completed', 'completed_at')
+    search_fields = ('application__application_number', 'application__applicant__full_name')
 
 
 @admin.register(FacilitatedService)

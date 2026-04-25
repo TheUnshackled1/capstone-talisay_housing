@@ -1,50 +1,8 @@
 from django.contrib import admin
 from .models import (
-    Requirement, RequirementSubmission, Application, SignatoryRouting,
+    Application,
     QueueEntry, SMSLog, CDRRMOCertificationProxy, CDRRMOCertification,
 )
-
-
-@admin.register(Requirement)
-class RequirementAdmin(admin.ModelAdmin):
-    list_display = ('code', 'name', 'group', 'is_required_for_form', 'is_active')
-    list_filter = ('group', 'is_required_for_form', 'is_active')
-    search_fields = ('code', 'name')
-
-    fieldsets = (
-        ('📋 REQUIREMENT', {
-            'fields': ('code', 'name', 'group'),
-        }),
-        ('⚙️ SETTINGS', {
-            'fields': ('is_required_for_form', 'is_active', 'order'),
-        }),
-        ('📝 DESCRIPTION', {
-            'fields': ('description',),
-            'classes': ('collapse',),
-        }),
-    )
-
-
-@admin.register(RequirementSubmission)
-class RequirementSubmissionAdmin(admin.ModelAdmin):
-    list_display = ('applicant', 'requirement', 'status', 'verified_at')
-    list_filter = ('status', 'verified_at')
-    search_fields = ('applicant__full_name', 'requirement__code')
-    readonly_fields = ('submitted_at', 'verified_at')
-
-    fieldsets = (
-        ('📄 SUBMISSION', {
-            'fields': ('applicant', 'requirement', 'status'),
-        }),
-        ('✅ VERIFICATION', {
-            'fields': ('verified_at', 'verified_by', 'rejection_reason'),
-        }),
-        ('📝 NOTES', {
-            'fields': ('notes',),
-            'classes': ('collapse',),
-        }),
-    )
-
 
 @admin.register(Application)
 class ApplicationAdmin(admin.ModelAdmin):
@@ -71,27 +29,6 @@ class ApplicationAdmin(admin.ModelAdmin):
         ('📅 AUDIT TRAIL', {
             'fields': ('form_generated_at', 'form_generated_by', 'created_at', 'updated_at'),
             'classes': ('collapse',),
-        }),
-        ('📝 NOTES', {
-            'fields': ('notes',),
-            'classes': ('collapse',),
-        }),
-    )
-
-
-@admin.register(SignatoryRouting)
-class SignatoryRoutingAdmin(admin.ModelAdmin):
-    list_display = ('application', 'step', 'action_at', 'action_by')
-    list_filter = ('step', 'action_at')
-    search_fields = ('application__application_number', 'application__applicant__full_name')
-    readonly_fields = ('action_at',)
-
-    fieldsets = (
-        ('📋 ROUTING STEP', {
-            'fields': ('application', 'step'),
-        }),
-        ('🔏 ACTION', {
-            'fields': ('action_at', 'action_by'),
         }),
         ('📝 NOTES', {
             'fields': ('notes',),

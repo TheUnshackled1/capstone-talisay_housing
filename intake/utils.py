@@ -195,10 +195,46 @@ def send_sms_iprog(phone_number, message, sms_log):
             result = response.json()
             # IPROG returns status: 200 and message_id on success
             if result.get('status') == 200 and result.get('message_id'):
+                message_id = result.get('message_id', f'iprog-{sms_log.id}')
+                delivery_status = 'unknown'
+                delivery_note = (result.get('message') or '').strip()
+
+                # Check immediate status endpoint so UI/logs reflect provider reality.
+                try:
+                    status_response = requests.get(
+                        'https://www.iprogsms.com/api/v1/sms_messages/status',
+                        params={
+                            'api_token': api_token,
+                            'message_id': message_id,
+                        },
+                        timeout=10,
+                    )
+                    if status_response.status_code == 200:
+                        status_result = status_response.json()
+                        delivery_status = (status_result.get('message_status') or 'unknown').strip().lower()
+                        if status_result.get('status') != 200:
+                            delivery_note = status_result.get('message', 'Status lookup returned non-200 provider status')
+                        elif not delivery_note:
+                            delivery_note = 'IPROG accepted message for delivery.'
+                    else:
+                        delivery_note = f'Status lookup HTTP {status_response.status_code}'
+                except Exception as status_error:
+                    logger.warning("IPROG status check failed for %s: %s", message_id, status_error)
+                    delivery_note = f'Status lookup failed: {status_error}'
+
+                if delivery_status in {'failed', 'rejected', 'undelivered'}:
+                    sms_log.status = 'failed'
+                    sms_log.external_id = message_id
+                    sms_log.error_message = f"IPROG delivery status: {delivery_status}. {delivery_note}"
+                    sms_log.save(update_fields=['status', 'external_id', 'error_message'])
+                    logger.error("IPROG delivery failed - Message ID: %s status=%s", message_id, delivery_status)
+                    return False
+
                 sms_log.status = 'sent'
-                sms_log.external_id = result.get('message_id', f'iprog-{sms_log.id}')
-                sms_log.save(update_fields=['status', 'external_id'])
-                logger.info(f"IPROG SMS sent - Message ID: {sms_log.external_id}")
+                sms_log.external_id = message_id
+                sms_log.error_message = f"IPROG delivery status: {delivery_status or 'unknown'}. {delivery_note}"
+                sms_log.save(update_fields=['status', 'external_id', 'error_message'])
+                logger.info("IPROG SMS accepted - Message ID: %s status=%s", message_id, delivery_status)
                 return True
             else:
                 error_msg = result.get('message', 'Unknown IPROG error')

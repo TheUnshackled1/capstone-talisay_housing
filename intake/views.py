@@ -5,10 +5,11 @@ from django.views.decorators.http import require_POST
 from django.http import JsonResponse
 from django.utils import timezone
 from django.urls import reverse
+from django.db import transaction
 from django.db.models import Q, Prefetch
 from django.core.exceptions import ObjectDoesNotExist
 from functools import wraps
-from .models import Applicant, Barangay, Archive
+from .models import Applicant, Barangay, Archive, SMSLog
 from applications.models import QueueEntry
 from .forms import (
     HouseholdMemberForm,
@@ -605,68 +606,89 @@ def proceed_to_applications(request, position):
     if applicant.status == 'disqualified':
         return JsonResponse({'success': False, 'error': 'Disqualified records cannot be forwarded to Module 2.'}, status=400)
 
-    update_fields = ['updated_at']
+    phone = (applicant.phone_number or '').strip()
+    if not phone:
+        return JsonResponse({
+            'success': False,
+            'error': 'Applicant mobile number is required before proceeding to Module 2.',
+        }, status=400)
 
-    if not applicant.module2_handoff_at:
-        applicant.module2_handoff_at = timezone.now()
-        applicant.module2_handoff_by = request.user
-        update_fields.extend(['module2_handoff_at', 'module2_handoff_by'])
+    with transaction.atomic():
+        update_fields = ['updated_at']
 
-    if len(update_fields) > 1:
-        applicant.save(update_fields=update_fields)
+        created_handoff = False
+        if not applicant.module2_handoff_at:
+            applicant.module2_handoff_at = timezone.now()
+            applicant.module2_handoff_by = request.user
+            update_fields.extend(['module2_handoff_at', 'module2_handoff_by'])
+            created_handoff = True
 
-    # Create Archive record for audit trail (Module 2 handoff receipt)
-    try:
-        channel_value = applicant.channel
-        if channel_value == 'walk_in':
-            archive_channel = 'channel_a'
-        elif channel_value == 'danger_zone':
-            archive_channel = 'channel_b_hazard' if (applicant.danger_zone_type or '').strip() else 'channel_b_no_hazard'
-        elif channel_value == 'landowner':
-            archive_channel = 'channel_c'
-        else:
-            archive_channel = channel_value
+        if len(update_fields) > 1:
+            applicant.save(update_fields=update_fields)
 
-        Archive.objects.create(
-            applicant=applicant,
-            reference_number_snapshot=applicant.reference_number,
-            full_name_snapshot=applicant.full_name,
-            last_name_snapshot=applicant.last_name,
-            first_name_snapshot=applicant.first_name,
-            middle_name_snapshot=applicant.middle_name,
-            extension_name_snapshot=applicant.extension_name,
-            date_of_birth_snapshot=applicant.date_of_birth,
-            channel=archive_channel,
-            barangay_name_snapshot=applicant.barangay.name if applicant.barangay else '',
-            sms_sent=applicant.registration_sms_sent,
-            cdrrmo_certified=bool(getattr(applicant, 'cdrrmo_certification', None) and applicant.cdrrmo_certification.status == 'certified'),
-            archived_by=request.user,
-        )
-    except Exception as e:
-        print(f"[ARCHIVE ERROR] Failed to create archive for {applicant.reference_number}: {str(e)}")
+        # Create Archive record once per Module 2 handoff (idempotent for double-clicks/retries).
+        archive_record = None
+        if created_handoff:
+            channel_value = applicant.channel
+            if channel_value == 'walk_in':
+                archive_channel = 'channel_a'
+            elif channel_value == 'danger_zone':
+                archive_channel = 'channel_b_hazard' if (applicant.danger_zone_type or '').strip() else 'channel_b_no_hazard'
+            elif channel_value == 'landowner':
+                archive_channel = 'channel_c'
+            else:
+                archive_channel = channel_value
 
-    # Send SMS only upon Module 2 handoff (not on registration).
-    # Reuse registration_sms_sent as the "handoff SMS sent" tracker to avoid schema changes.
-    if applicant.phone_number and not applicant.registration_sms_sent:
-        print(f"\n[MODULE 2 HANDOFF] Triggering SMS for {applicant.reference_number} to {applicant.phone_number}")
-        handoff_message = sms_workflow.message_proceed_to_evaluation(applicant)
-        if send_sms(
-            applicant.phone_number,
-            handoff_message,
-            sms_workflow.PROCEED_TO_EVALUATION,
-            applicant=applicant,
-        ):
+            archive_record = Archive.objects.create(
+                applicant=applicant,
+                reference_number_snapshot=applicant.reference_number,
+                full_name_snapshot=applicant.full_name,
+                last_name_snapshot=applicant.last_name,
+                first_name_snapshot=applicant.first_name,
+                middle_name_snapshot=applicant.middle_name,
+                extension_name_snapshot=applicant.extension_name,
+                date_of_birth_snapshot=applicant.date_of_birth,
+                channel=archive_channel,
+                barangay_name_snapshot=applicant.barangay.name if applicant.barangay else '',
+                sms_sent=applicant.registration_sms_sent,
+                cdrrmo_certified=bool(getattr(applicant, 'cdrrmo_certification', None) and applicant.cdrrmo_certification.status == 'certified'),
+                archived_by=request.user,
+            )
+
+        # Must send SMS notification on proceed (first handoff or previous unsent state).
+        if not applicant.registration_sms_sent:
+            print(f"\n[MODULE 2 HANDOFF] Triggering SMS for {applicant.reference_number} to {applicant.phone_number}")
+            handoff_message = sms_workflow.message_proceed_to_evaluation(applicant)
+            sms_ok = send_sms(
+                applicant.phone_number,
+                handoff_message,
+                sms_workflow.PROCEED_TO_EVALUATION,
+                applicant=applicant,
+            )
+            if not sms_ok:
+                latest_sms_log = SMSLog.objects.filter(applicant=applicant).order_by('-sent_at').first()
+                sms_error_detail = (latest_sms_log.error_message or '').strip() if latest_sms_log else ''
+                transaction.set_rollback(True)
+                return JsonResponse({
+                    'success': False,
+                    'error': (
+                        f'SMS notification failed. Handoff was not completed. '
+                        f'Gateway detail: {sms_error_detail}'
+                    ) if sms_error_detail else (
+                        'SMS notification failed. Handoff was not completed. '
+                        'Please verify SMS gateway and try again.'
+                    ),
+                }, status=502)
+
             applicant.registration_sms_sent = True
             applicant.save(update_fields=['registration_sms_sent', 'updated_at'])
+            if archive_record:
+                archive_record.sms_sent = True
+                archive_record.save(update_fields=['sms_sent'])
             print(f"[MODULE 2 HANDOFF] SMS sent successfully for {applicant.reference_number}\n")
-    else:
-        if not applicant.phone_number:
-            print(f"[MODULE 2 HANDOFF] ⚠️ No phone number for {applicant.reference_number}")
-        elif applicant.registration_sms_sent:
-            print(f"[MODULE 2 HANDOFF] ℹ️ SMS already sent for {applicant.reference_number}")
 
     module2_url = reverse('applications:applications_list', kwargs={'position': request.user.position})
-    return JsonResponse({'success': True, 'module2_url': module2_url})
+    return JsonResponse({'success': True, 'module2_url': module2_url, 'already_handed_off': not created_handoff})
 
 
 @login_required
@@ -948,7 +970,11 @@ def applicants_list(request, position):
     # Read-only archive/receipt rows: records already proceeded to Module 2.
     # Query Archive model for snapshot data of handed-off records
     archive_records = []
-    archives = Archive.objects.select_related('archived_by').order_by('-archived_at')
+    archives = Archive.objects.select_related(
+        'archived_by',
+        'applicant',
+        'applicant__application__form_generated_by',
+    ).order_by('-archived_at')
 
     channel_display_map = {
         'channel_a': ('A', 'Channel A — Walk-in'),
@@ -963,6 +989,27 @@ def applicants_list(request, position):
         # Convert UTC time to Manila time for display
         from django.utils import timezone
         local_archived_at = timezone.localtime(archive.archived_at) if archive.archived_at else None
+
+        module3_summary = 'Not yet proceeded to Module 3'
+        module3_proceeded_at = ''
+        module3_proceeded_by = ''
+        module3_application_number = ''
+        if archive.applicant_id and hasattr(archive.applicant, 'application'):
+            app_obj = getattr(archive.applicant, 'application', None)
+            if app_obj and app_obj.form_generated_at:
+                local_form_generated_at = timezone.localtime(app_obj.form_generated_at)
+                module3_proceeded_at = local_form_generated_at.strftime('%Y-%m-%d %I:%M %p')
+                module3_proceeded_by = app_obj.form_generated_by.get_full_name() if app_obj.form_generated_by else 'Unknown'
+                module3_application_number = app_obj.application_number or ''
+                module3_summary = f"Application #{module3_application_number} • {module3_proceeded_at}"
+
+        applicant_phone = ''
+        if archive.applicant_id and archive.applicant:
+            applicant_phone = (archive.applicant.phone_number or '').strip()
+        has_phone = bool(applicant_phone)
+        sms_sent_state = bool(archive.sms_sent)
+        if archive.applicant_id and archive.applicant:
+            sms_sent_state = bool(archive.applicant.registration_sms_sent)
 
         archive_records.append({
             'id': str(archive.id),
@@ -980,10 +1027,15 @@ def applicants_list(request, position):
             'handledBy': archive.archived_by.get_full_name() if archive.archived_by else 'Unknown',
             'handledByPosition': archive.archived_by.get_position_display_short() if archive.archived_by else '',
             'handledByInitials': (archive.archived_by.first_name[:1] + archive.archived_by.last_name[:1]).upper() if archive.archived_by else '??',
-            'registrationSmsSent': archive.sms_sent,
-            'hasPhone': False,  # Archive doesn't store phone, but SMS sent status is tracked
+            'registrationSmsSent': sms_sent_state,
+            'hasPhone': has_phone,
             'handoffAt': local_archived_at.strftime('%Y-%m-%d %I:%M %p') if local_archived_at else '',
             'handoffBy': archive.archived_by.get_full_name() if archive.archived_by else '',
+            'module2Summary': f"{archive.reference_number_snapshot} • {archive.full_name_snapshot}",
+            'module3Summary': module3_summary,
+            'module3ProceededAt': module3_proceeded_at,
+            'module3ProceededBy': module3_proceeded_by,
+            'module3ApplicationNumber': module3_application_number,
         })
     
     # Sort all applicants by dateRegistered (FIFO - oldest first)
@@ -1192,6 +1244,7 @@ def walkin_register(request, position):
         years_residing=form.cleaned_data.get('years_residing', 0),
         occupation=form.cleaned_data.get('occupation', ''),
         employment_status=form.cleaned_data.get('employment_status', ''),
+        has_property_in_talisay=form.cleaned_data.get('has_property_in_talisay', False),
         channel='danger_zone',
         status=initial_status,
         danger_zone_type=danger_zone_type,

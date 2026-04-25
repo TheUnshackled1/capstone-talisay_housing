@@ -160,6 +160,10 @@ LOGIN_URL = 'accounts:login'
 LOGIN_REDIRECT_URL = 'accounts:dashboard'
 LOGOUT_REDIRECT_URL = 'accounts:dashboard'
 
+# Session settings
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_COOKIE_AGE = 60 * 30  # 30 minutes
+
 # =============================================================================
 # SMS — IPROG Gateway Configuration (Affordable P1/SMS)
 # =============================================================================
@@ -210,9 +214,9 @@ JAZZMIN_SETTINGS = {
         "intake.SMSLog": "fas fa-sms",
         "applications": "fas fa-file-alt",
         "applications.Application": "fas fa-file-contract",
-        "applications.Requirement": "fas fa-checklist",
-        "applications.RequirementSubmission": "fas fa-check-circle",
-        "applications.SignatoryRoutingStep": "fas fa-route",
+        "documents.Requirement": "fas fa-checklist",
+        "documents.RequirementSubmission": "fas fa-check-circle",
+        "documents.SignatoryRouting": "fas fa-route",
         "documents": "fas fa-folder",
         "documents.Document": "fas fa-file",
         "units": "fas fa-building",

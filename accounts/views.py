@@ -9,7 +9,8 @@ from .forms import LoginForm
 from intake.models import Applicant, SMSLog
 from applications.models import CDRRMOCertification
 from units.models import Blacklist as UnitsBlacklist
-from applications.models import QueueEntry, Application, SignatoryRouting, RequirementSubmission
+from applications.models import QueueEntry, Application
+from documents.models import SignatoryRouting, RequirementSubmission
 from units.models import ComplianceNotice, HousingUnit, ElectricityConnection
 from cases.models import Case
 import json

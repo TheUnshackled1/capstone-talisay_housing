@@ -19,6 +19,10 @@
 
 <!-- Main Container -->
 <div style="padding: 2rem 1.5rem; background: #f9fafb; min-height: 100vh;">
+    <div id="m2NoticeToast" style="display:none; margin-bottom: 1rem; padding: 0.75rem 1rem; border: 1px solid #bfdbfe; background: #eff6ff; color: #1e3a8a; border-radius: 10px; font-size: 0.8125rem; font-weight: 500;">
+        2.8 status saved. Complete all 7 requirements to proceed with Module 3 form generation.
+    </div>
+
     <!-- Stats Cards -->
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
         <div class="scroll-animate-scale scroll-delay-1" style="background: #eff6ff; border: 2px solid #bfdbfe; border-radius: 12px; padding: 1.5rem; text-align: center;">
@@ -34,6 +38,11 @@
         <div class="scroll-animate-scale scroll-delay-3" style="background: #dcfce7; border: 2px solid #bbf7d0; border-radius: 12px; padding: 1.5rem; text-align: center;">
             <div style="font-size: 2.5rem; font-weight: 700; color: #16a34a; margin-bottom: 0.5rem;">{{ total_size_gb|default:"0" }}</div>
             <div style="font-size: 0.875rem; color: var(--gray-600); font-weight: 500;">Storage (GB)</div>
+        </div>
+
+        <div class="scroll-animate-scale scroll-delay-4" style="background: #fee2e2; border: 2px solid #fecaca; border-radius: 12px; padding: 1.5rem; text-align: center;">
+            <div style="font-size: 2.5rem; font-weight: 700; color: #b91c1c; margin-bottom: 0.5rem;">{{ disqualified_count|default:"0" }}</div>
+            <div style="font-size: 0.875rem; color: var(--gray-600); font-weight: 500;">Disqualified</div>
         </div>
     </div>
 
@@ -71,6 +80,67 @@
                 <option value="explanation_letter">Explanation Letter</option>
             </optgroup>
         </select>
+    </div>
+
+    <!-- Module 3 Applicant Table -->
+    <div style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; margin-bottom: 1.5rem;">
+        <div style="padding: 0.875rem 1rem; border-bottom: 1px solid #e2e8f0; background: #f8fafc; font-size: 0.875rem; font-weight: 600; color: #0f172a;">
+            Module 3 Pipeline Applicants
+        </div>
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; min-width: 880px;">
+                <thead>
+                    <tr style="background: #f8fafc;">
+                        <th style="text-align: left; padding: 0.75rem 1rem; font-size: 0.75rem; color: #475569; border-bottom: 1px solid #e2e8f0;">Applicant</th>
+                        <th style="text-align: left; padding: 0.75rem 1rem; font-size: 0.75rem; color: #475569; border-bottom: 1px solid #e2e8f0;">Reference</th>
+                        <th style="text-align: left; padding: 0.75rem 1rem; font-size: 0.75rem; color: #475569; border-bottom: 1px solid #e2e8f0;">Status</th>
+                        <th style="text-align: left; padding: 0.75rem 1rem; font-size: 0.75rem; color: #475569; border-bottom: 1px solid #e2e8f0;">Phase A</th>
+                        <th style="text-align: left; padding: 0.75rem 1rem; font-size: 0.75rem; color: #475569; border-bottom: 1px solid #e2e8f0;">Phase B</th>
+                        <th style="text-align: left; padding: 0.75rem 1rem; font-size: 0.75rem; color: #475569; border-bottom: 1px solid #e2e8f0;">Phase C</th>
+                        <th style="text-align: left; padding: 0.75rem 1rem; font-size: 0.75rem; color: #475569; border-bottom: 1px solid #e2e8f0;">Phase D</th>
+                        <th style="text-align: left; padding: 0.75rem 1rem; font-size: 0.75rem; color: #475569; border-bottom: 1px solid #e2e8f0;">Lot Assignment</th>
+                        <th style="text-align: left; padding: 0.75rem 1rem; font-size: 0.75rem; color: #475569; border-bottom: 1px solid #e2e8f0;">Documents</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for applicant in applicants %}
+                    <tr class="applicant-row" style="border-bottom: 1px solid #f1f5f9;">
+                        <td style="padding: 0.75rem 1rem; font-size: 0.8125rem; color: #0f172a; font-weight: 600;">{{ applicant.full_name }}</td>
+                        <td style="padding: 0.75rem 1rem; font-size: 0.8125rem; color: #334155;">{{ applicant.reference_number }}</td>
+                        <td style="padding: 0.75rem 1rem; font-size: 0.8125rem; color: #334155;">{{ applicant.status_display }}</td>
+                        <td style="padding: 0.75rem 1rem; font-size: 0.75rem; color: #334155;">
+                            {% if applicant.phase_a_complete %}✓ Complete{% else %}{{ applicant.phase_a_verified_docs }}/{{ applicant.phase_a_required_docs }} docs · {% if applicant.signed_form_confirmed %}Signed{% else %}Unsigned{% endif %}{% endif %}
+                        </td>
+                        <td style="padding: 0.75rem 1rem; font-size: 0.75rem; color: #334155;">
+                            {% if applicant.phase_b_complete %}✓ Confirmed{% else %}Pending field inspection{% endif %}
+                        </td>
+                        <td style="padding: 0.75rem 1rem; font-size: 0.75rem; color: #334155;">
+                            {% if applicant.phase_c_complete %}✓ Passed{% else %}{{ applicant.committee_result|default:"pending"|title }}{% endif %}
+                        </td>
+                        <td style="padding: 0.75rem 1rem; font-size: 0.75rem; color: #334155;">
+                            {% if applicant.phase_d_complete %}✓ 7/7 complete{% else %}{{ applicant.phase_d_completed_steps }}/7 completed{% endif %}
+                        </td>
+                        <td style="padding: 0.75rem 1rem; font-size: 0.8125rem; color: #334155;">
+                            {% if applicant.lot_assignment %}
+                                Block {{ applicant.lot_assignment.block }} · Lot {{ applicant.lot_assignment.lot }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                        <td style="padding: 0.75rem 1rem; font-size: 0.8125rem; color: #334155;">
+                            {{ applicant.doc_count }}/{{ applicant.total_docs }} ({{ applicant.doc_percentage }}%)
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" style="padding: 1.25rem 1rem; font-size: 0.8125rem; color: #64748b; text-align: center;">
+                            No Module 3 pipeline applicants found yet.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <!-- Documents List -->
@@ -297,6 +367,10 @@ document.getElementById('searchInput').addEventListener('input', (e) => {
         const text = item.textContent.toLowerCase();
         item.style.display = text.includes(query) ? 'flex' : 'none';
     });
+    document.querySelectorAll('.applicant-row').forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(query) ? '' : 'none';
+    });
 });
 
 // Filter functionality
@@ -314,6 +388,21 @@ document.getElementById('typeFilter').addEventListener('change', (e) => {
 document.addEventListener('keydown', e => {
     if (e.key === 'Escape') closeUploadModal();
 });
+
+// Show subtle handoff toast when redirected from Module 2 requirement gate.
+(() => {
+    const params = new URLSearchParams(window.location.search);
+    const reason = params.get('m2_notice');
+    const toast = document.getElementById('m2NoticeToast');
+    if (reason === 'requirements_gate' && toast) {
+        toast.style.display = 'block';
+        setTimeout(() => {
+            toast.style.transition = 'opacity 250ms ease';
+            toast.style.opacity = '0';
+            setTimeout(() => { toast.style.display = 'none'; }, 260);
+        }, 5200);
+    }
+})();
 </script>
 
 {% endblock %}

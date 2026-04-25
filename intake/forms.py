@@ -123,6 +123,16 @@ class WalkInApplicantForm(forms.ModelForm):
         label="Barangay",
         widget=forms.Select(attrs={'class': 'form-select'})
     )
+    has_property_in_talisay = forms.ChoiceField(
+        choices=[
+            ('', '— Select —'),
+            ('yes', 'Yes'),
+            ('no', 'No'),
+        ],
+        required=True,
+        label="Has Property Ownership in Talisay City",
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
 
     # Danger zone specific fields (optional - only required if applicant IS in danger zone)
     danger_zone_type = forms.ChoiceField(
@@ -181,6 +191,7 @@ class WalkInApplicantForm(forms.ModelForm):
             'years_residing',
             'occupation',
             'employment_status',
+            'has_property_in_talisay',
         ]
         widgets = {
             'last_name': forms.TextInput(attrs={
@@ -300,3 +311,10 @@ class WalkInApplicantForm(forms.ModelForm):
                 self.add_error('danger_zone_location', 'This field is required for danger zone applicants.')
 
         return cleaned_data
+
+    def clean_has_property_in_talisay(self):
+        """Normalize Yes/No selection into model boolean semantics."""
+        value = (self.cleaned_data.get('has_property_in_talisay') or '').strip().lower()
+        if value not in {'yes', 'no'}:
+            raise forms.ValidationError('Please select Yes or No for property ownership.')
+        return value == 'yes'

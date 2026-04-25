@@ -8,7 +8,8 @@ from django.test import Client
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from intake.models import Applicant
-from applications.models import Application, SignatoryRouting, ElectricityConnection
+from applications.models import Application
+from documents.models import SignatoryRouting, ElectricityConnection
 from units.models import HousingUnit, ComplianceNotice
 from cases.models import Case
 
