@@ -7,1897 +7,2176 @@
 
 {% block extra_css %}
 <style>
-/* Stage Summary Cards - Matching Figma */
-.stages-grid {
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: 0.75rem;
-    margin-bottom: 1rem;
-}
-
-@media (max-width: 1024px) {
+    /* Stage Summary Cards - Matching Figma */
     .stages-grid {
-        grid-template-columns: repeat(3, 1fr);
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 0.75rem;
+        margin-bottom: 1rem;
     }
-}
 
-@media (max-width: 640px) {
-    .stages-grid {
-        grid-template-columns: repeat(2, 1fr);
+    @media (max-width: 1024px) {
+        .stages-grid {
+            grid-template-columns: repeat(3, 1fr);
+        }
     }
-}
 
-.stage-card {
-    background: white;
-    border-radius: 0.75rem;
-    padding: 0.75rem;
-    border: 1px solid #e2e8f0;
-    cursor: pointer;
-    transition: all 0.2s;
-    text-align: left;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-.stage-card:hover {
-    border-color: #bfdbfe;
-    background: #f8fafc;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
-}
-
-.stage-card.active {
-    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.1);
-}
-
-.stage-card .stage-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 0.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-
-.stage-card .stage-icon svg {
-    width: 20px;
-    height: 20px;
-}
-
-.stage-card .stage-meta {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    min-width: 0;
-}
-
-.stage-card .stage-count {
-    font-size: 1.75rem;
-    font-weight: 600;
-    color: #1e293b;
-    line-height: 1.2;
-}
-
-.stage-card .stage-title {
-    font-size: 0.625rem;
-    color: #64748b;
-    margin-top: 0.25rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
-.stage-card.eligibility .stage-icon {
-    background: #f1f5f9;
-    color: #64748b;
-}
-
-.stage-card.document-gathering .stage-icon {
-    background: #fef3c7;
-    color: #d97706;
-}
-
-.stage-card.form-released .stage-icon {
-    background: #dbeafe;
-    color: #2563eb;
-}
-
-.stage-card.signatory-routing .stage-icon {
-    background: #ede9fe;
-    color: #7c3aed;
-}
-
-.stage-card.fully-approved .stage-icon {
-    background: #ccfbf1;
-    color: #0d9488;
-}
-
-.stage-card.lot-awarded .stage-icon {
-    background: #dcfce7;
-    color: #16a34a;
-}
-
-.stage-card.eligibility .stage-count { color: #64748b; }
-.stage-card.document-gathering .stage-count { color: #d97706; }
-.stage-card.form-released .stage-count { color: #2563eb; }
-.stage-card.signatory-routing .stage-count { color: #7c3aed; }
-.stage-card.fully-approved .stage-count { color: #0d9488; }
-.stage-card.lot-awarded .stage-count { color: #16a34a; }
-
-.stage-card.eligibility.active {
-    border-color: #cbd5e1;
-    background: #f8fafc;
-}
-
-.stage-card.document-gathering.active {
-    border-color: #fcd34d;
-    background: #fffbeb;
-}
-
-.stage-card.form-released.active {
-    border-color: #93c5fd;
-    background: #eff6ff;
-}
-
-.stage-card.signatory-routing.active {
-    border-color: #c4b5fd;
-    background: #f5f3ff;
-}
-
-.stage-card.fully-approved.active {
-    border-color: #99f6e4;
-    background: #f0fdfa;
-}
-
-.stage-card.lot-awarded.active {
-    border-color: #86efac;
-    background: #f0fdf4;
-}
-
-/* Queue summary mode */
-.stages-grid.queue-summary {
-    display: flex;
-    gap: 1rem;
-    flex-wrap: wrap;
-    margin-bottom: 1.5rem;
-}
-.stages-grid.queue-summary .stage-card {
-    cursor: default;
-    flex: 1;
-    padding: 0.75rem 1.25rem;
-}
-.stages-grid.queue-summary .stage-meta {
-    flex-direction: row;
-    align-items: baseline;
-    gap: 0.5rem;
-}
-.stages-grid.queue-summary .stage-count {
-    font-size: 1.5rem;
-}
-.stages-grid.queue-summary .stage-title {
-    margin-top: 0;
-    font-size: 0.6875rem;
-    font-weight: 600;
-}
-.stages-grid.queue-summary .stage-card:hover {
-    transform: none;
-}
-.stage-card.priority .stage-icon {
-    background: #ede9fe;
-    color: #7c3aed;
-}
-.stage-card.walk-in .stage-icon {
-    background: #dbeafe;
-    color: #1d4ed8;
-}
-.stage-card.disqualified .stage-icon {
-    background: #fee2e2;
-    color: #dc2626;
-}
-.stage-card.priority .stage-count { color: #7c3aed; }
-.stage-card.walk-in .stage-count { color: #1d4ed8; }
-.stage-card.disqualified .stage-count { color: #dc2626; }
-
-/* Primary CTA - match intake button */
-.btn-primary-add {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.625rem 1rem;
-    background: #1d4ed8;
-    color: white;
-    border: none;
-    border-radius: 0.5rem;
-    font-size: 0.75rem;
-    font-weight: 500;
-    cursor: pointer;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-    transition: background 0.2s;
-    text-decoration: none;
-}
-
-.btn-primary-add:hover {
-    background: #1e40af;
-}
-
-/* Routing Delay Alert - Red style matching Figma */
-.routing-alert {
-    background: #fef2f2;
-    border: 1px solid #fecaca;
-    border-radius: 12px;
-    padding: 0.75rem 1rem;
-    margin-bottom: 1rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.routing-alert-icon {
-    color: #ef4444;
-    font-size: 1rem;
-    flex-shrink: 0;
-}
-
-.routing-alert-content {
-    flex: 1;
-}
-
-.routing-alert-content p {
-    font-size: 0.75rem;
-    color: #991b1b;
-    margin: 0;
-}
-
-.routing-alert-content .alert-label {
-    font-weight: 600;
-    color: #dc2626;
-}
-
-.routing-alert-content h4 {
-    font-weight: 600;
-    color: #92400e;
-    margin-bottom: 0.25rem;
-}
-
-.routing-alert-content p {
-    font-size: 0.875rem;
-    color: #b45309;
-    margin: 0;
-}
-
-/* Filter Bar - Matching Figma */
-.filter-bar {
-    display: flex;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
-    flex-wrap: wrap;
-    align-items: center;
-}
-
-.search-box {
-    flex: 1;
-    min-width: 200px;
-    position: relative;
-}
-
-.search-box input {
-    width: 100%;
-    padding: 0.625rem 0.75rem 0.625rem 2.5rem;
-    border: 1px solid #e2e8f0;
-    border-radius: 0.5rem;
-    font-size: 0.875rem;
-    background: white;
-    transition: all 0.2s;
-}
-
-.search-box input:focus {
-    outline: none;
-    border-color: #3b82f6;
-}
-
-.search-box input::placeholder {
-    color: #94a3b8;
-}
-
-.search-box .search-icon {
-    position: absolute;
-    left: 0.75rem;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #94a3b8;
-    font-size: 1rem;
-}
-
-.filter-select {
-    padding: 0.625rem 2rem 0.625rem 0.75rem;
-    border: 1px solid #e2e8f0;
-    border-radius: 0.5rem;
-    font-size: 0.875rem;
-    background: white;
-    cursor: pointer;
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2364748b'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 0.5rem center;
-}
-
-.filter-select:focus {
-    outline: none;
-    border-color: #3b82f6;
-}
-
-/* Applications Table - Matching Figma */
-.applications-table-container {
-    background: white;
-    border-radius: 12px;
-    border: 1px solid #e2e8f0;
-    overflow: hidden;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-.applications-table {
-    width: 100%;
-    table-layout: fixed;
-    border-collapse: separate;
-    border-spacing: 0;
-}
-
-.applications-table thead {
-    background: #f8fafc;
-    border-bottom: 1px solid #e2e8f0;
-}
-
-.applications-table th {
-    padding: 0.625rem 0.75rem;
-    text-align: left;
-    font-size: 0.625rem;
-    font-weight: 600;
-    color: #64748b;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    border-right: 1px solid #e2e8f0;
-    white-space: nowrap;
-}
-
-/* Channel badge (aligned with Module 1 applicant ledger) */
-.applications-table .badge {
-    display: inline-block;
-    padding: 0.25rem 0.375rem;
-    border-radius: 9999px;
-    font-size: 0.6rem;
-    font-weight: 600;
-    border: 1px solid;
-    line-height: 1.25;
-    text-align: center;
-}
-.applications-table .badge.channel-b-hazard {
-    background: #fef3c7;
-    color: #92400e;
-    border: 1px solid #fcd34d;
-}
-.applications-table .badge.channel-b-screening {
-    background: #e0f2fe;
-    color: #0369a1;
-    border: 1px solid #7dd3fc;
-}
-.applications-table .badge.channel-a {
-    background: #dbeafe;
-    color: #1e40af;
-    border: 1px solid #bfdbfe;
-}
-.applications-table .badge.channel-c {
-    background: #ccfbf1;
-    color: #115e59;
-    border: 1px solid #99f6e4;
-}
-
-.applications-table .badge.queue-priority {
-    background: #f3e8ff;
-    color: #6b21a8;
-    border: 1px solid #ede9fe;
-}
-.applications-table .badge.queue-walkin {
-    background: #dbeafe;
-    color: #1e40af;
-    border: 1px solid #bfdbfe;
-}
-.applications-table .badge.status-approved {
-    background: #dcfce7;
-    color: #166534;
-    border: 1px solid #bbf7d0;
-}
-.applications-table .badge.status-disqualified {
-    background: #fee2e2;
-    color: #991b1b;
-    border: 1px solid #fecaca;
-}
-
-.applications-table td {
-    padding: 0.5rem 0.75rem;
-    border-bottom: 1px solid #e2e8f0;
-    border-right: 1px solid #e2e8f0;
-    vertical-align: middle;
-    font-size: 0.6875rem;
-    color: #334155;
-    overflow: hidden;
-}
-
-.applications-table tbody tr {
-    transition: background 0.15s;
-}
-
-.applications-table tbody tr:hover {
-    background: #f8fafc;
-}
-
-.applications-table tbody tr:last-child td {
-    border-bottom: none;
-}
-
-.applications-table th:last-child,
-.applications-table td:last-child {
-    border-right: none;
-}
-
-/* Column width for main applications table */
-.applications-table .col-num {
-    width: 3%;
-    text-align: center;
-}
-.applications-table .col-applicant {
-    width: 12%;
-}
-.applications-table .col-transaction {
-    width: 20%;
-}
-.applications-table .col-reference {
-    width: 10%;
-}
-.applications-table .col-encoded {
-    width: 9%;
-}
-.applications-table .col-channel {
-    width: 12%;
-    text-align: center;
-}
-.applications-table .col-queue {
-    width: 10%;
-    text-align: center;
-}
-.applications-table .col-staff {
-    width: 13%;
-}
-.applications-table .col-gate {
-    width: 7%;
-    text-align: center;
-}
-.applications-table .col-actions {
-    width: 4%;
-    text-align: center;
-}
-
-/* Compact Module 2 ledger (few columns, stacked detail) */
-.applications-table.compact-table th,
-.applications-table.compact-table td {
-    padding: 0.5rem 0.55rem;
-    vertical-align: top;
-    word-break: break-word;
-}
-.applications-table.compact-table th {
-    white-space: normal;
-    line-height: 1.35;
-    max-width: 14rem;
-}
-.applications-table.compact-table .col-num {
-    width: 2.25rem;
-    text-align: center;
-}
-.applications-table.compact-table .col-applicant {
-    width: 16%;
-}
-.applications-table.compact-table .col-transaction {
-    width: 10%;
-}
-.applications-table.compact-table .col-reference {
-    width: 10%;
-}
-.applications-table.compact-table .col-encoded {
-    width: 11%;
-}
-.applications-table.compact-table .col-channel {
-    width: 12%;
-}
-.applications-table.compact-table .col-queue {
-    width: 9%;
-}
-.applications-table.compact-table .col-staff {
-    width: 17%;
-}
-.applications-table.compact-table .col-gate {
-    width: 8%;
-}
-.applications-table.compact-table .col-actions {
-    width: 10%;
-}
-.applications-table.compact-table .m2-record-meta {
-    font-size: 0.625rem;
-    color: #64748b;
-    line-height: 1.4;
-    margin-top: 0.2rem;
-    font-family: ui-monospace, monospace;
-}
-.applications-table.compact-table .m2-txn-short {
-    color: #1d4ed8;
-    font-weight: 600;
-    cursor: default;
-}
-.applications-table.compact-table .m2-staff-row {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.35rem;
-    font-size: 0.625rem;
-    line-height: 1.35;
-}
-.applications-table.compact-table .m2-staff-avatar {
-    width: 1.5rem;
-    height: 1.5rem;
-    border-radius: 9999px;
-    background: #e0e7ff;
-    color: #3730a3;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.5rem;
-    font-weight: 700;
-    flex-shrink: 0;
-}
-.applications-table.compact-table .m2-sms-line {
-    font-size: 0.5625rem;
-    margin-top: 0.35rem;
-    color: #475569;
-}
-.applications-table.compact-table .m2-progress-stack {
-    display: grid;
-    gap: 0.35rem;
-    font-size: 0.625rem;
-    color: #334155;
-}
-.applications-table.compact-table .m2-progress-stack .m2-pl {
-    display: flex;
-    align-items: center;
-    gap: 0.35rem;
-    flex-wrap: wrap;
-}
-.applications-table.compact-table .m2-progress-stack .m2-pl-label {
-    flex: 0 0 4.5rem;
-    font-size: 0.5625rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: #64748b;
-}
-.applications-table.compact-table .m2-progress-stack .doc-progress {
-    flex: 1;
-    min-width: 5rem;
-}
-
-/* Applicant Cell */
-.applicant-cell {
-    display: flex;
-    flex-direction: column;
-    gap: 0.125rem;
-}
-
-.applicant-name {
-    font-size: 0.75rem;
-    font-weight: 400;
-    color: #1e293b;
-}
-
-.applicant-inline-meta {
-    font-size: 0.625rem;
-    color: #64748b;
-    font-family: ui-monospace, monospace;
-    font-weight: 600;
-}
-
-.m2-cell-code {
-    font-size: 0.625rem;
-    color: #1e293b;
-    font-family: ui-monospace, monospace;
-    font-weight: 600;
-}
-
-.m2-cell-muted {
-    font-size: 0.625rem;
-    color: #94a3b8;
-}
-
-.m2-gate-line {
-    font-size: 0.62rem;
-    font-weight: 600;
-    line-height: 1.3;
-}
-
-.m2-checklist {
-    display: grid;
-    gap: 0.5rem;
-    margin-top: 0.55rem;
-    text-align: center;
-}
-
-.m2-check-item {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.55rem;
-    text-align: center;
-    border: 1px solid #dbeafe;
-    border-radius: 10px;
-    background: #ffffff;
-    padding: 0.5rem 0.6rem;
-}
-.m2-item-stacked {
-    flex-direction: column;
-}
-.m2-check-head {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.55rem;
-    text-align: center;
-}
-.m2-policy-note {
-    font-size: 0.68rem;
-    color: #64748b;
-    text-align: left;
-    line-height: 1.45;
-}
-.m2-item-stacked .m2-policy-note {
-    text-align: center;
-    margin-top: 0.25rem;
-}
-
-.m2-check-item .icon {
-    width: 1.05rem;
-    height: 1.05rem;
-    border-radius: 9999px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.68rem;
-    font-weight: 700;
-    margin-top: 0.08rem;
-}
-
-.m2-check-item .title {
-    font-size: 0.74rem;
-    font-weight: 700;
-    color: #0f172a;
-    margin-bottom: 0.12rem;
-}
-
-.m2-check-item .desc {
-    font-size: 0.72rem;
-    line-height: 1.45;
-    color: #334155;
-}
-
-.m2-check-item.pass .icon {
-    background: #dcfce7;
-    color: #166534;
-}
-
-.m2-check-item.warn {
-    border-color: #fde68a;
-    background: #fffbeb;
-}
-.m2-check-item.warn .icon {
-    background: #fef3c7;
-    color: #92400e;
-}
-
-.m2-check-item.fail {
-    border-color: #fecaca;
-    background: #fef2f2;
-}
-.m2-check-item.fail .icon {
-    background: #fee2e2;
-    color: #991b1b;
-}
-
-.m2-pipeline-layers { text-align: left; }
-.m2-layer-eyebrow { font-size: 0.58rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #64748b; text-align: center; }
-.m2-layer-title { font-size: 0.82rem; font-weight: 700; color: #0f172a; margin: 0.2rem 0 0.45rem; text-align: center; }
-.m2-proceed-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 180px;
-    margin-top: 0;
-    padding: 0.65rem 1.25rem;
-    border: none;
-    border-radius: 6px;
-    background: #2563eb;
-    color: #fff;
-    font-size: 0.75rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-.m2-proceed-btn:hover { background: #1d4ed8; transform: translateY(-1px); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
-.m2-back-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 100px;
-    padding: 0.65rem 1.25rem;
-    border: 1px solid #e2e8f0;
-    border-radius: 6px;
-    background: #ffffff;
-    color: #64748b;
-    font-size: 0.75rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
-}
-.m2-back-btn:hover { background: #f1f5f9; border-color: #cbd5e1; color: #334155; }
-.m2-show-form-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 140px;
-    padding: 0.65rem 1.25rem;
-    border: 1px solid #bfdbfe;
-    border-radius: 6px;
-    background: #eff6ff;
-    color: #1e3a8a;
-    font-size: 0.75rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
-}
-.m2-show-form-btn:hover {
-    background: #dbeafe;
-    border-color: #93c5fd;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
-}
-.m2-layer-footer-nav {
-    display: flex;
-    gap: 0.85rem;
-    margin-top: 1.5rem;
-    justify-content: center;
-    align-items: center;
-    flex-wrap: wrap;
-    border-top: 1px solid #e2e8f0;
-    padding-top: 1rem;
-}
-.m2-cdrrmo-receipt-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 180px;
-    padding: 0.65rem 1.25rem;
-    border: none;
-    border-radius: 6px;
-    background: #2563eb;
-    color: #fff;
-    font-size: 0.75rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-.m2-cdrrmo-receipt-btn:hover {
-    background: #1d4ed8;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-}
-.m2-cdrrmo-receipt-btn.walkin {
-    background: #0f766e;
-}
-.m2-cdrrmo-receipt-btn.walkin:hover {
-    background: #115e59;
-}
-.m2-layer1-done-strip { text-align: center; padding: 0.5rem 0.65rem; border-radius: 8px; background: #ecfdf5; border: 1px solid #a7f3d0; color: #166534; font-size: 0.72rem; font-weight: 600; }
-.m2-blocked-user-msg { margin-top: 0.6rem; padding: 0.65rem; border-radius: 8px; background: #fef2f2; border: 1px solid #fecaca; color: #7f1d1d; font-size: 0.74rem; font-weight: 600; line-height: 1.5; text-align: center; }
-.m2-tech-detail { margin-top: 0.4rem; font-size: 0.65rem; color: #9a3412; font-weight: 500; line-height: 1.4; }
-.m2-layer2-block { display: none; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #e2e8f0; }
-.m2-layer2-block .m2-checklist { text-align: left; }
-.m2-layer3-block { display: none; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #e2e8f0; }
-.m2-layer4-block { display: block; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #e2e8f0; }
-.m2-eval28-panel { display:none; margin-top:0.95rem; border:1px solid #cbd5e1; border-radius:10px; background:#fff; overflow:hidden; }
-.m2-eval28-head { padding:0.6rem 0.75rem; border-bottom:1px solid #e2e8f0; background:#f8fafc; }
-.m2-eval28-kicker { font-size:0.58rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:#64748b; text-align:center; }
-.m2-eval28-title { margin-top:0.2rem; font-size:0.82rem; font-weight:700; color:#0f172a; text-align:center; }
-.m2-eval28-subtitle { margin-top:0.2rem; font-size:0.68rem; line-height:1.45; color:#475569; }
-.m2-eval28-body { padding:0.7rem 0.75rem; }
-.m2-eval28-form { display:none; margin-top:0.65rem; padding-top:0.65rem; border-top:1px dashed #cbd5e1; }
-.m2-eval28-form label { display:block; font-size:0.69rem; font-weight:700; color:#1e293b; margin-bottom:0.2rem; }
-.m2-eval28-save-btn {
-    display:inline-flex; align-items:center; justify-content:center; margin-top:0.55rem;
-    padding:0.5rem 1rem; border-radius:7px; border:1px solid #1d4ed8; background:#1d4ed8; color:#fff;
-    font-size:0.74rem; font-weight:700; cursor:pointer;
-}
-.m2-eval28-save-btn:hover { background:#1e40af; border-color:#1e40af; }
-.m2-check-item.m2-item-stacked { flex-direction: column; align-items: stretch; text-align: left; gap: 0.35rem; }
-.m2-check-item.m2-item-stacked .m2-check-head { display: flex; align-items: flex-start; gap: 0.45rem; }
-.m2-check-item.m2-item-stacked .m2-check-head .icon { flex-shrink: 0; margin-top: 0.1rem; }
-.m2-policy-note { font-size: 0.64rem; line-height: 1.5; color: #64748b; }
-
-.m2-show-form-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0.42rem 0.72rem;
-    border-radius: 8px;
-    border: 1px solid #bfdbfe;
-    background: #eff6ff;
-    color: #1d4ed8;
-    font-size: 0.72rem;
-    font-weight: 700;
-    cursor: pointer;
-}
-.m2-show-form-btn:hover { background: #dbeafe; }
-
-.applicant-ref {
-    font-size: 0.625rem;
-    color: #94a3b8;
-    font-family: ui-monospace, monospace;
-}
-
-.routing-delayed-indicator {
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-    margin-top: 0.125rem;
-    font-size: 0.5625rem;
-    color: #dc2626;
-}
-
-/* Queue Badge - Matching Figma purple style */
-.queue-badge {
-    display: inline-block;
-    padding: 0.125rem 0.375rem;
-    border-radius: 9999px;
-    font-size: 0.625rem;
-    font-weight: 500;
-    max-width: 95%;
-    overflow-wrap: break-word;
-    line-height: 1.2;
-}
-
-.queue-badge.priority {
-    background: #f3e8ff;
-    color: #6b21a8;
-    border: 1px solid #ede9fe;
-}
-
-.queue-badge.walkin {
-    background: #dbeafe;
-    color: #1e40af;
-    border: 1px solid #bfdbfe;
-}
-
-.queue-badge.standby {
-    background: #dcfce7;
-    color: #166534;
-    border: 1px solid #bbf7d0;
-}
-
-.queue-legend {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-    margin: 0 0 0.65rem 0;
-    padding: 0.5rem 0.65rem;
-    border: 1px solid #dbeafe;
-    border-radius: 0.5rem;
-    background: #f8fbff;
-}
-
-.queue-legend-label {
-    font-size: 0.625rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: #64748b;
-    font-weight: 700;
-}
-
-.m2-eval-status {
-    font-size: 0.75rem;
-    color: #334155;
-    line-height: 1.45;
-    margin-bottom: 0.6rem;
-}
-
-.m2-eval-chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
-    margin: 0.45rem 0 0.55rem;
-}
-
-.m2-eval-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
-    padding: 0.2rem 0.5rem;
-    border-radius: 9999px;
-    border: 1px solid #cbd5e1;
-    background: #f8fafc;
-    color: #334155;
-    font-size: 0.625rem;
-    font-weight: 600;
-}
-
-.m2-eval-chip.recommend-priority { border-color: #c4b5fd; background: #f5f3ff; color: #6d28d9; }
-.m2-eval-chip.recommend-walkin { border-color: #93c5fd; background: #eff6ff; color: #1d4ed8; }
-.m2-eval-chip.allowed-priority { border-color: #ddd6fe; background: #f5f3ff; color: #7c3aed; }
-.m2-eval-chip.allowed-walkin { border-color: #bfdbfe; background: #eff6ff; color: #1d4ed8; }
-
-.blacklist-source-chip {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.08rem 0.42rem;
-    border-radius: 9999px;
-    font-size: 0.6rem;
-    font-weight: 700;
-    letter-spacing: 0.01em;
-    border: 1px solid transparent;
-    vertical-align: middle;
-}
-.blacklist-source-chip.source-module1 {
-    background: #eff6ff;
-    color: #1d4ed8;
-    border-color: #bfdbfe;
-}
-.blacklist-source-chip.source-units {
-    background: #fff7ed;
-    color: #c2410c;
-    border-color: #fdba74;
-}
-
-.m2-rule-list {
-    margin: 0.4rem 0 0;
-    padding-left: 1rem;
-    font-size: 0.72rem;
-}
-.m2-rule-list li { margin: 0.15rem 0; }
-.m2-rule-list.blockers { color: #b91c1c; }
-.m2-rule-list.advisories { color: #7c2d12; }
-
-.m2-decision-btn {
-    padding: 0.5rem 0.8rem;
-    border-radius: 7px;
-    border: none;
-    color: #fff;
-    cursor: pointer;
-    font-size: 0.75rem;
-    font-weight: 600;
-    transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
-}
-.m2-decision-btn:hover:not(:disabled) { transform: translateY(-1px); }
-.m2-decision-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
-.m2-decision-btn.priority { background: #047857; box-shadow: 0 1px 3px rgba(4, 120, 87, 0.35); }
-.m2-decision-btn.walkin { background: #0369a1; box-shadow: 0 1px 3px rgba(3, 105, 161, 0.35); }
-.m2-decision-btn.disqualify { background: #b91c1c; box-shadow: 0 1px 3px rgba(185, 28, 28, 0.35); }
-
-/* Document Progress - Matching Figma */
-.doc-progress {
-    display: flex;
-    align-items: center;
-    gap: 0.375rem;
-}
-
-.doc-progress-bar {
-    width: 5rem;
-    height: 0.375rem;
-    background: #e2e8f0;
-    border-radius: 9999px;
-    overflow: hidden;
-}
-
-.doc-progress-fill {
-    height: 100%;
-    background: #3b82f6;
-    border-radius: 9999px;
-    transition: width 0.3s ease;
-}
-
-.doc-progress-text {
-    font-size: 0.625rem;
-    color: #64748b;
-    white-space: nowrap;
-}
-
-.doc-complete-check {
-    color: #22c55e;
-    font-size: 0.75rem;
-}
-
-/* Form Status - Matching Figma */
-.form-status {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
-    font-size: 0.625rem;
-}
-
-.form-status.pending {
-    color: #94a3b8;
-}
-
-.form-status.can-generate {
-    color: #94a3b8;
-}
-
-.form-status.generated {
-    color: #16a34a;
-}
-
-.form-status .check-icon {
-    color: #22c55e;
-}
-
-/* Routing Status - Matching Figma text style */
-.routing-status {
-    font-size: 0.625rem;
-}
-
-.routing-status.completed {
-    color: #16a34a;
-}
-
-.routing-status.in-progress {
-    color: #3b82f6;
-}
-
-.routing-status.not-started {
-    color: #94a3b8;
-}
-
-/* Stage Badge - Matching Figma colors */
-.stage-badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.125rem 0.5rem;
-    border-radius: 9999px;
-    font-size: 0.625rem;
-    font-weight: 500;
-    white-space: nowrap;
-}
-
-.stage-badge.eligibility {
-    background: #f1f5f9;
-    color: #64748b;
-}
-
-.stage-badge.document-gathering {
-    background: #fef3c7;
-    color: #d97706;
-}
-
-.stage-badge.form-released {
-    background: #dbeafe;
-    color: #2563eb;
-}
-
-.stage-badge.signatory-routing {
-    background: #ede9fe;
-    color: #7c3aed;
-}
-
-.stage-badge.fully-approved {
-    background: #ccfbf1;
-    color: #0d9488;
-}
-
-.stage-badge.lot-awarded {
-    background: #dcfce7;
-    color: #16a34a;
-}
-
-/* Action Buttons - Matching Figma */
-.action-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
-    padding: 0.375rem 0.625rem;
-    border-radius: 8px;
-    font-size: 0.625rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.15s;
-    border: none;
-    background: #f1f5f9;
-    color: #64748b;
-}
-
-.action-btn:hover {
-    background: #eff6ff;
-    color: #3b82f6;
-}
-
-.action-btn .eye-icon {
-    width: 0.75rem;
-    height: 0.75rem;
-}
-
-/* Table Footer */
-.table-footer {
-    padding: 0.75rem 1rem;
-    border-top: 1px solid #f1f5f9;
-    background: #f8fafc;
-}
-
-.table-footer p {
-    font-size: 0.6875rem;
-    color: #64748b;
-    margin: 0;
-}
-
-/* Modal Styles */
-.modal-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    opacity: 0;
-    visibility: hidden;
-    transition: all 0.2s;
-}
-
-.modal-overlay.active {
-    opacity: 1;
-    visibility: visible;
-}
-
-.modal-content {
-    background: white;
-    border-radius: 16px;
-    width: 90%;
-    max-width: 800px;
-    max-height: 90vh;
-    overflow-y: auto;
-    transform: translateY(20px);
-    transition: transform 0.2s;
-}
-
-.modal-overlay.active .modal-content {
-    transform: translateY(0);
-}
-
-.flow-alert-card {
-    background: #ffffff;
-    border-radius: 18px;
-    width: min(92vw, 560px);
-    box-shadow: 0 20px 38px rgba(15, 23, 42, 0.2);
-    border: 1px solid #e2e8f0;
-    padding: 1.25rem 1.25rem 1rem;
-}
-
-.flow-alert-title {
-    margin: 0 0 0.55rem;
-    color: #0f172a;
-    font-size: 1.18rem;
-    font-weight: 700;
-}
-
-.flow-alert-message {
-    margin: 0;
-    color: #334155;
-    font-size: 0.98rem;
-    line-height: 1.6;
-    white-space: pre-line;
-}
-
-.flow-alert-actions {
-    display: flex;
-    justify-content: flex-end;
-    margin-top: 1.15rem;
-}
-
-.flow-alert-ok {
-    min-width: 92px;
-    border: none;
-    border-radius: 9999px;
-    background: #4f46e5;
-    color: #fff;
-    font-weight: 700;
-    font-size: 0.95rem;
-    padding: 0.52rem 1.15rem;
-    cursor: pointer;
-    box-shadow: 0 6px 16px rgba(79, 70, 229, 0.35);
-}
-
-.flow-alert-ok:hover {
-    background: #4338ca;
-}
-
-.modal-header {
-    padding: 1.5rem;
-    border-bottom: 1px solid #e5e7eb;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-}
-
-.modal-header h2 {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: #1f2937;
-    margin: 0;
-}
-
-.modal-close {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    border: none;
-    background: #f3f4f6;
-    color: #6b7280;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.25rem;
-    transition: all 0.2s;
-}
-
-.modal-close:hover {
-    background: #e5e7eb;
-    color: #374151;
-}
-
-.modal-body {
-    padding: 1.5rem;
-}
-
-/* Progress Bar */
-.progress-tracker {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 2rem;
-    position: relative;
-}
-
-.progress-tracker::before {
-    content: '';
-    position: absolute;
-    top: 16px;
-    left: 32px;
-    right: 32px;
-    height: 3px;
-    background: #e5e7eb;
-    z-index: 0;
-}
-
-.progress-step {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.5rem;
-    position: relative;
-    z-index: 1;
-}
-
-.progress-step-circle {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: #e5e7eb;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: #6b7280;
-}
-
-.progress-step.completed .progress-step-circle {
-    background: #22c55e;
-    color: white;
-}
-
-.progress-step.current .progress-step-circle {
-    background: #2563eb;
-    color: white;
-    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2);
-}
-
-.progress-step-label {
-    font-size: 0.75rem;
-    color: #6b7280;
-    text-align: center;
-    max-width: 80px;
-}
-
-/* Document Checklist Grid */
-.document-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.5rem;
-}
-
-.document-item {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 0.625rem;
-    background: #f8fafc;
-    border-radius: 8px;
-    border: 1px solid #e5e7eb;
-    transition: all 0.2s;
-}
-
-.document-item:hover {
-    background: #f0f9ff;
-    border-color: #93c5fd;
-}
-
-.document-item.verified {
-    background: #dcfce7;
-    border-color: #86efac;
-}
-
-.document-checkbox {
-    width: 18px;
-    height: 18px;
-    border-radius: 5px;
-    border: 1.5px solid #cbd5e1;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-
-.document-checkbox.checked {
-    background: #1d4ed8;
-    border-color: #1d4ed8;
-    color: white;
-}
-
-.document-label {
-    font-size: 0.75rem;
-    color: #334155;
-    line-height: 1.35;
-}
-
-@media (max-width: 900px) {
-    .document-grid {
-        grid-template-columns: 1fr;
+    @media (max-width: 640px) {
+        .stages-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
     }
-}
 
-/* Signatory Timeline */
-.signatory-timeline {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-.timeline-item {
-    display: flex;
-    gap: 1rem;
-    position: relative;
-}
-
-.timeline-item::before {
-    content: '';
-    position: absolute;
-    left: 15px;
-    top: 36px;
-    bottom: -16px;
-    width: 2px;
-    background: #e5e7eb;
-}
-
-.timeline-item:last-child::before {
-    display: none;
-}
-
-.timeline-icon {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: #f3f4f6;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    z-index: 1;
-}
-
-.timeline-icon.completed {
-    background: #22c55e;
-    color: white;
-}
-
-.timeline-icon.pending {
-    background: #e5e7eb;
-    color: #9ca3af;
-}
-
-.timeline-icon.delayed {
-    background: #fbbf24;
-    color: white;
-}
-
-.timeline-content {
-    flex: 1;
-    padding-bottom: 1rem;
-}
-
-.timeline-content h4 {
-    font-weight: 600;
-    color: #1f2937;
-    margin-bottom: 0.25rem;
-}
-
-.timeline-content p {
-    font-size: 0.75rem;
-    color: #6b7280;
-    margin: 0;
-}
-
-.timeline-content .delayed-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
-    padding: 0.25rem 0.5rem;
-    background: #fef3c7;
-    color: #b45309;
-    border-radius: 4px;
-    font-size: 0.7rem;
-    font-weight: 500;
-    margin-top: 0.5rem;
-}
-
-/* Section Headings in Modal */
-.section-heading {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: #374151;
-    margin-bottom: 1rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.section-heading .count {
-    background: #e5e7eb;
-    padding: 0.125rem 0.5rem;
-    border-radius: 9999px;
-    font-size: 0.75rem;
-    font-weight: 500;
-    color: #6b7280;
-}
-
-/* Timeline Action Buttons */
-.timeline-action-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
-    padding: 0.375rem 0.75rem;
-    background: #3b82f6;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    font-size: 0.75rem;
-    font-weight: 500;
-    cursor: pointer;
-    margin-top: 0.5rem;
-    transition: background 0.2s;
-}
-
-.timeline-action-btn:hover {
-    background: #2563eb;
-}
-
-/* Generate Form Button */
-.generate-form-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.75rem 1.25rem;
-    background: linear-gradient(to right, #2563eb, #3b82f6);
-    color: white;
-    border: none;
-    border-radius: 10px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.generate-form-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-}
-
-.generate-form-btn:disabled {
-    background: #d1d5db;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
-}
-
-/* Empty State - Matching Figma */
-.empty-state {
-    text-align: center;
-    padding: 3rem 2rem;
-}
-
-.empty-state-icon {
-    width: 48px;
-    height: 48px;
-    margin: 0 auto 0.75rem;
-    background: #f1f5f9;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.25rem;
-    color: #94a3b8;
-}
-
-.empty-state h3 {
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: #64748b;
-    margin-bottom: 0.25rem;
-}
-
-.empty-state p {
-    color: #94a3b8;
-    font-size: 0.75rem;
-}
-
-/* Second-pass visual polish */
-.module-shell {
-    background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
-    border: 1px solid #dbeafe;
-    border-radius: 14px;
-    box-shadow: 0 3px 10px rgba(15, 23, 42, 0.06);
-    padding: 0.85rem 1rem;
-    margin-bottom: 0.8rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-}
-
-.module-chip {
-    display: inline-flex;
-    align-items: center;
-    border-radius: 999px;
-    padding: 0.22rem 0.58rem;
-    background: #dbeafe;
-    color: #1d4ed8;
-    font-size: 0.64rem;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    margin-bottom: 0.3rem;
-}
-
-.module-shell h2 {
-    margin: 0;
-    font-size: 1rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: #0f172a;
-}
-
-.module-shell p {
-    margin: 0.3rem 0 0;
-    color: #64748b;
-    font-size: 0.75rem;
-}
-
-.module-shell-actions {
-    display: inline-flex;
-    gap: 0.45rem;
-    flex-wrap: wrap;
-}
-
-.module-shell-btn {
-    border: 1px solid #cbd5e1;
-    background: #ffffff;
-    color: #334155;
-    border-radius: 8px;
-    padding: 0.46rem 0.72rem;
-    font-size: 0.7rem;
-    font-weight: 700;
-    cursor: pointer;
-}
-
-.module-shell-btn.primary {
-    border-color: #1d4ed8;
-    color: #ffffff;
-    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-}
-
-.stages-grid {
-    margin-bottom: 0.8rem;
-}
-
-.stage-card {
-    padding: 0.65rem;
-}
-
-.stage-card .stage-icon {
-    width: 34px;
-    height: 34px;
-}
-
-.stage-card .stage-icon svg {
-    width: 16px;
-    height: 16px;
-}
-
-.stage-card .stage-count {
-    font-size: 1.4rem;
-}
-
-.stage-card .stage-title {
-    font-size: 0.58rem;
-}
-
-.filter-bar {
-    margin-bottom: 0.8rem;
-    border: 1px solid #e2e8f0;
-    border-radius: 0.7rem;
-    padding: 0.55rem;
-    background: #f8fafc;
-}
-
-.search-box input {
-    padding: 0.56rem 0.72rem 0.56rem 2.28rem;
-    border: 1px solid #cbd5e1;
-    font-size: 0.78rem;
-}
-
-.filter-select {
-    padding: 0.56rem 1.9rem 0.56rem 0.68rem;
-    border: 1px solid #cbd5e1;
-    font-size: 0.75rem;
-}
-
-.applications-table-container {
-    border-color: #dbe2ea;
-}
-
-.applications-table th {
-    padding: 0.5rem 0.62rem;
-    font-size: 0.58rem;
-    font-weight: 700;
-}
-
-.applications-table td {
-    padding: 0.4rem 0.6rem;
-}
-
-.applications-table.compact-table th,
-.applications-table.compact-table td {
-    padding: 0.34rem 0.44rem;
-}
-
-.action-btn {
-    padding: 0.3rem 0.5rem;
-    font-size: 0.58rem;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-    .stages-grid {
-        grid-template-columns: repeat(2, 1fr);
+    .stage-card {
+        background: white;
+        border-radius: 0.75rem;
+        padding: 0.75rem;
+        border: 1px solid #e2e8f0;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-align: left;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
     }
-    
+
+    .stage-card:hover {
+        border-color: #bfdbfe;
+        background: #f8fafc;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+    }
+
+    .stage-card.active {
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.1);
+    }
+
+    .stage-card .stage-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .stage-card .stage-icon svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    .stage-card .stage-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        min-width: 0;
+    }
+
+    .stage-card .stage-count {
+        font-size: 1.75rem;
+        font-weight: 600;
+        color: #1e293b;
+        line-height: 1.2;
+    }
+
+    .stage-card .stage-title {
+        font-size: 0.625rem;
+        color: #64748b;
+        margin-top: 0.25rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .stage-card.eligibility .stage-icon {
+        background: #f1f5f9;
+        color: #64748b;
+    }
+
+    .stage-card.document-gathering .stage-icon {
+        background: #fef3c7;
+        color: #d97706;
+    }
+
+    .stage-card.form-released .stage-icon {
+        background: #dbeafe;
+        color: #2563eb;
+    }
+
+    .stage-card.signatory-routing .stage-icon {
+        background: #ede9fe;
+        color: #7c3aed;
+    }
+
+    .stage-card.fully-approved .stage-icon {
+        background: #ccfbf1;
+        color: #0d9488;
+    }
+
+    .stage-card.lot-awarded .stage-icon {
+        background: #dcfce7;
+        color: #16a34a;
+    }
+
+    .stage-card.eligibility .stage-count {
+        color: #64748b;
+    }
+
+    .stage-card.document-gathering .stage-count {
+        color: #d97706;
+    }
+
+    .stage-card.form-released .stage-count {
+        color: #2563eb;
+    }
+
+    .stage-card.signatory-routing .stage-count {
+        color: #7c3aed;
+    }
+
+    .stage-card.fully-approved .stage-count {
+        color: #0d9488;
+    }
+
+    .stage-card.lot-awarded .stage-count {
+        color: #16a34a;
+    }
+
+    .stage-card.eligibility.active {
+        border-color: #cbd5e1;
+        background: #f8fafc;
+    }
+
+    .stage-card.document-gathering.active {
+        border-color: #fcd34d;
+        background: #fffbeb;
+    }
+
+    .stage-card.form-released.active {
+        border-color: #93c5fd;
+        background: #eff6ff;
+    }
+
+    .stage-card.signatory-routing.active {
+        border-color: #c4b5fd;
+        background: #f5f3ff;
+    }
+
+    .stage-card.fully-approved.active {
+        border-color: #99f6e4;
+        background: #f0fdfa;
+    }
+
+    .stage-card.lot-awarded.active {
+        border-color: #86efac;
+        background: #f0fdf4;
+    }
+
+    /* Queue summary mode */
+    .stages-grid.queue-summary {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-bottom: 1.5rem;
+    }
+
+    .stages-grid.queue-summary .stage-card {
+        cursor: default;
+        flex: 1;
+        padding: 0.75rem 1.25rem;
+    }
+
+    .stages-grid.queue-summary .stage-meta {
+        flex-direction: row;
+        align-items: baseline;
+        gap: 0.5rem;
+    }
+
+    .stages-grid.queue-summary .stage-count {
+        font-size: 1.5rem;
+    }
+
+    .stages-grid.queue-summary .stage-title {
+        margin-top: 0;
+        font-size: 0.6875rem;
+        font-weight: 600;
+    }
+
+    .stages-grid.queue-summary .stage-card:hover {
+        transform: none;
+    }
+
+    .stage-card.priority .stage-icon {
+        background: #ede9fe;
+        color: #7c3aed;
+    }
+
+    .stage-card.walk-in .stage-icon {
+        background: #dbeafe;
+        color: #1d4ed8;
+    }
+
+    .stage-card.disqualified .stage-icon {
+        background: #fee2e2;
+        color: #dc2626;
+    }
+
+    .stage-card.priority .stage-count {
+        color: #7c3aed;
+    }
+
+    .stage-card.walk-in .stage-count {
+        color: #1d4ed8;
+    }
+
+    .stage-card.disqualified .stage-count {
+        color: #dc2626;
+    }
+
+    /* Primary CTA - match intake button */
+    .btn-primary-add {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.625rem 1rem;
+        background: #1d4ed8;
+        color: white;
+        border: none;
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: 500;
+        cursor: pointer;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        transition: background 0.2s;
+        text-decoration: none;
+    }
+
+    .btn-primary-add:hover {
+        background: #1e40af;
+    }
+
+    /* Routing Delay Alert - Red style matching Figma */
+    .routing-alert {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        border-radius: 12px;
+        padding: 0.75rem 1rem;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .routing-alert-icon {
+        color: #ef4444;
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+
+    .routing-alert-content {
+        flex: 1;
+    }
+
+    .routing-alert-content p {
+        font-size: 0.75rem;
+        color: #991b1b;
+        margin: 0;
+    }
+
+    .routing-alert-content .alert-label {
+        font-weight: 600;
+        color: #dc2626;
+    }
+
+    .routing-alert-content h4 {
+        font-weight: 600;
+        color: #92400e;
+        margin-bottom: 0.25rem;
+    }
+
+    .routing-alert-content p {
+        font-size: 0.875rem;
+        color: #b45309;
+        margin: 0;
+    }
+
+    /* Filter Bar - Matching Figma */
     .filter-bar {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .search-box {
+        flex: 1;
+        min-width: 200px;
+        position: relative;
+    }
+
+    .search-box input {
+        width: 100%;
+        padding: 0.625rem 0.75rem 0.625rem 2.5rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        background: white;
+        transition: all 0.2s;
+    }
+
+    .search-box input:focus {
+        outline: none;
+        border-color: #3b82f6;
+    }
+
+    .search-box input::placeholder {
+        color: #94a3b8;
+    }
+
+    .search-box .search-icon {
+        position: absolute;
+        left: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #94a3b8;
+        font-size: 1rem;
+    }
+
+    .filter-select {
+        padding: 0.625rem 2rem 0.625rem 0.75rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        background: white;
+        cursor: pointer;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2364748b'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 0.5rem center;
+    }
+
+    .filter-select:focus {
+        outline: none;
+        border-color: #3b82f6;
+    }
+
+    /* Applications Table - Matching Figma */
+    .applications-table-container {
+        background: white;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        overflow: hidden;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    .applications-table {
+        width: 100%;
+        table-layout: fixed;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .applications-table thead {
+        background: #f8fafc;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .applications-table th {
+        padding: 0.625rem 0.75rem;
+        text-align: left;
+        font-size: 0.625rem;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border-right: 1px solid #e2e8f0;
+        white-space: nowrap;
+    }
+
+    /* Channel badge (aligned with Module 1 applicant ledger) */
+    .applications-table .badge {
+        display: inline-block;
+        padding: 0.25rem 0.375rem;
+        border-radius: 9999px;
+        font-size: 0.6rem;
+        font-weight: 600;
+        border: 1px solid;
+        line-height: 1.25;
+        text-align: center;
+    }
+
+    .applications-table .badge.channel-b-hazard {
+        background: #fef3c7;
+        color: #92400e;
+        border: 1px solid #fcd34d;
+    }
+
+    .applications-table .badge.channel-b-screening {
+        background: #e0f2fe;
+        color: #0369a1;
+        border: 1px solid #7dd3fc;
+    }
+
+    .applications-table .badge.channel-a {
+        background: #dbeafe;
+        color: #1e40af;
+        border: 1px solid #bfdbfe;
+    }
+
+    .applications-table .badge.channel-c {
+        background: #ccfbf1;
+        color: #115e59;
+        border: 1px solid #99f6e4;
+    }
+
+    .applications-table .badge.queue-priority {
+        background: #f3e8ff;
+        color: #6b21a8;
+        border: 1px solid #ede9fe;
+    }
+
+    .applications-table .badge.queue-walkin {
+        background: #dbeafe;
+        color: #1e40af;
+        border: 1px solid #bfdbfe;
+    }
+
+    .applications-table .badge.status-approved {
+        background: #dcfce7;
+        color: #166534;
+        border: 1px solid #bbf7d0;
+    }
+
+    .applications-table .badge.status-disqualified {
+        background: #fee2e2;
+        color: #991b1b;
+        border: 1px solid #fecaca;
+    }
+
+    .applications-table td {
+        padding: 0.5rem 0.75rem;
+        border-bottom: 1px solid #e2e8f0;
+        border-right: 1px solid #e2e8f0;
+        vertical-align: middle;
+        font-size: 0.6875rem;
+        color: #334155;
+        overflow: hidden;
+    }
+
+    .applications-table tbody tr {
+        transition: background 0.15s;
+    }
+
+    .applications-table tbody tr:hover {
+        background: #f8fafc;
+    }
+
+    .applications-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .applications-table th:last-child,
+    .applications-table td:last-child {
+        border-right: none;
+    }
+
+    /* Column width for main applications table */
+    .applications-table .col-num {
+        width: 3%;
+        text-align: center;
+    }
+
+    .applications-table .col-applicant {
+        width: 12%;
+    }
+
+    .applications-table .col-transaction {
+        width: 20%;
+    }
+
+    .applications-table .col-reference {
+        width: 10%;
+    }
+
+    .applications-table .col-encoded {
+        width: 9%;
+    }
+
+    .applications-table .col-channel {
+        width: 12%;
+        text-align: center;
+    }
+
+    .applications-table .col-queue {
+        width: 10%;
+        text-align: center;
+    }
+
+    .applications-table .col-staff {
+        width: 13%;
+    }
+
+    .applications-table .col-gate {
+        width: 7%;
+        text-align: center;
+    }
+
+    .applications-table .col-actions {
+        width: 4%;
+        text-align: center;
+    }
+
+    /* Compact Module 2 ledger (few columns, stacked detail) */
+    .applications-table.compact-table th,
+    .applications-table.compact-table td {
+        padding: 0.5rem 0.55rem;
+        vertical-align: top;
+        word-break: break-word;
+    }
+
+    .applications-table.compact-table th {
+        white-space: normal;
+        line-height: 1.35;
+        max-width: 14rem;
+    }
+
+    .applications-table.compact-table .col-num {
+        width: 2.25rem;
+        text-align: center;
+    }
+
+    .applications-table.compact-table .col-applicant {
+        width: 16%;
+    }
+
+    .applications-table.compact-table .col-transaction {
+        width: 10%;
+    }
+
+    .applications-table.compact-table .col-reference {
+        width: 10%;
+    }
+
+    .applications-table.compact-table .col-encoded {
+        width: 11%;
+    }
+
+    .applications-table.compact-table .col-channel {
+        width: 12%;
+    }
+
+    .applications-table.compact-table .col-queue {
+        width: 9%;
+    }
+
+    .applications-table.compact-table .col-staff {
+        width: 17%;
+    }
+
+    .applications-table.compact-table .col-gate {
+        width: 8%;
+    }
+
+    .applications-table.compact-table .col-actions {
+        width: 10%;
+    }
+
+    .applications-table.compact-table .m2-record-meta {
+        font-size: 0.625rem;
+        color: #64748b;
+        line-height: 1.4;
+        margin-top: 0.2rem;
+        font-family: ui-monospace, monospace;
+    }
+
+    .applications-table.compact-table .m2-txn-short {
+        color: #1d4ed8;
+        font-weight: 600;
+        cursor: default;
+    }
+
+    .applications-table.compact-table .m2-staff-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.35rem;
+        font-size: 0.625rem;
+        line-height: 1.35;
+    }
+
+    .applications-table.compact-table .m2-staff-avatar {
+        width: 1.5rem;
+        height: 1.5rem;
+        border-radius: 9999px;
+        background: #e0e7ff;
+        color: #3730a3;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.5rem;
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+
+    .applications-table.compact-table .m2-sms-line {
+        font-size: 0.5625rem;
+        margin-top: 0.35rem;
+        color: #475569;
+    }
+
+    .applications-table.compact-table .m2-progress-stack {
+        display: grid;
+        gap: 0.35rem;
+        font-size: 0.625rem;
+        color: #334155;
+    }
+
+    .applications-table.compact-table .m2-progress-stack .m2-pl {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        flex-wrap: wrap;
+    }
+
+    .applications-table.compact-table .m2-progress-stack .m2-pl-label {
+        flex: 0 0 4.5rem;
+        font-size: 0.5625rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #64748b;
+    }
+
+    .applications-table.compact-table .m2-progress-stack .doc-progress {
+        flex: 1;
+        min-width: 5rem;
+    }
+
+    /* Applicant Cell */
+    .applicant-cell {
+        display: flex;
+        flex-direction: column;
+        gap: 0.125rem;
+    }
+
+    .applicant-name {
+        font-size: 0.75rem;
+        font-weight: 400;
+        color: #1e293b;
+    }
+
+    .applicant-inline-meta {
+        font-size: 0.625rem;
+        color: #64748b;
+        font-family: ui-monospace, monospace;
+        font-weight: 600;
+    }
+
+    .m2-cell-code {
+        font-size: 0.625rem;
+        color: #1e293b;
+        font-family: ui-monospace, monospace;
+        font-weight: 600;
+    }
+
+    .m2-cell-muted {
+        font-size: 0.625rem;
+        color: #94a3b8;
+    }
+
+    .m2-gate-line {
+        font-size: 0.62rem;
+        font-weight: 600;
+        line-height: 1.3;
+    }
+
+    .m2-checklist {
+        display: grid;
+        gap: 0.5rem;
+        margin-top: 0.55rem;
+        text-align: center;
+    }
+
+    .m2-check-item {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.55rem;
+        text-align: center;
+        border: 1px solid #dbeafe;
+        border-radius: 10px;
+        background: #ffffff;
+        padding: 0.5rem 0.6rem;
+    }
+
+    .m2-item-stacked {
         flex-direction: column;
     }
-    
-    .search-box {
-        width: 100%;
+
+    .m2-check-head {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.55rem;
+        text-align: center;
     }
-    
-    .applications-table {
-        table-layout: auto;
+
+    .m2-policy-note {
+        font-size: 0.68rem;
+        color: #64748b;
+        text-align: left;
+        line-height: 1.45;
     }
-    
+
+    .m2-item-stacked .m2-policy-note {
+        text-align: center;
+        margin-top: 0.25rem;
+    }
+
+    .m2-check-item .icon {
+        width: 1.05rem;
+        height: 1.05rem;
+        border-radius: 9999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.68rem;
+        font-weight: 700;
+        margin-top: 0.08rem;
+    }
+
+    .m2-check-item .title {
+        font-size: 0.74rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 0.12rem;
+    }
+
+    .m2-check-item .desc {
+        font-size: 0.72rem;
+        line-height: 1.45;
+        color: #334155;
+    }
+
+    .m2-check-item.pass .icon {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .m2-check-item.warn {
+        border-color: #fde68a;
+        background: #fffbeb;
+    }
+
+    .m2-check-item.warn .icon {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .m2-check-item.fail {
+        border-color: #fecaca;
+        background: #fef2f2;
+    }
+
+    .m2-check-item.fail .icon {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .m2-pipeline-layers {
+        text-align: left;
+    }
+
+    .m2-layer-eyebrow {
+        font-size: 0.58rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #64748b;
+        text-align: center;
+    }
+
+    .m2-layer-title {
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin: 0.2rem 0 0.45rem;
+        text-align: center;
+    }
+
+    .m2-proceed-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 180px;
+        margin-top: 0;
+        padding: 0.65rem 1.25rem;
+        border: none;
+        border-radius: 6px;
+        background: #2563eb;
+        color: #fff;
+        font-size: 0.75rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    .m2-proceed-btn:hover {
+        background: #1d4ed8;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+
+    .m2-back-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 100px;
+        padding: 0.65rem 1.25rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        background: #ffffff;
+        color: #64748b;
+        font-size: 0.75rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+    }
+
+    .m2-back-btn:hover {
+        background: #f1f5f9;
+        border-color: #cbd5e1;
+        color: #334155;
+    }
+
+    .m2-show-form-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 140px;
+        padding: 0.65rem 1.25rem;
+        border: 1px solid #bfdbfe;
+        border-radius: 6px;
+        background: #eff6ff;
+        color: #1e3a8a;
+        font-size: 0.75rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+    }
+
+    .m2-show-form-btn:hover {
+        background: #dbeafe;
+        border-color: #93c5fd;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+    }
+
+    .m2-layer-footer-nav {
+        display: flex;
+        gap: 0.85rem;
+        margin-top: 1.5rem;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: wrap;
+        border-top: 1px solid #e2e8f0;
+        padding-top: 1rem;
+    }
+
+    .m2-cdrrmo-receipt-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 180px;
+        padding: 0.65rem 1.25rem;
+        border: none;
+        border-radius: 6px;
+        background: #2563eb;
+        color: #fff;
+        font-size: 0.75rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    .m2-cdrrmo-receipt-btn:hover {
+        background: #1d4ed8;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+
+    .m2-cdrrmo-receipt-btn.walkin {
+        background: #0f766e;
+    }
+
+    .m2-cdrrmo-receipt-btn.walkin:hover {
+        background: #115e59;
+    }
+
+    .m2-layer1-done-strip {
+        text-align: center;
+        padding: 0.5rem 0.65rem;
+        border-radius: 8px;
+        background: #ecfdf5;
+        border: 1px solid #a7f3d0;
+        color: #166534;
+        font-size: 0.72rem;
+        font-weight: 600;
+    }
+
+    .m2-blocked-user-msg {
+        margin-top: 0.6rem;
+        padding: 0.65rem;
+        border-radius: 8px;
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        color: #7f1d1d;
+        font-size: 0.74rem;
+        font-weight: 600;
+        line-height: 1.5;
+        text-align: center;
+    }
+
+    .m2-tech-detail {
+        margin-top: 0.4rem;
+        font-size: 0.65rem;
+        color: #9a3412;
+        font-weight: 500;
+        line-height: 1.4;
+    }
+
+    .m2-layer2-block {
+        display: none;
+        margin-top: 0.75rem;
+        padding-top: 0.75rem;
+        border-top: 1px solid #e2e8f0;
+    }
+
+    .m2-layer2-block .m2-checklist {
+        text-align: left;
+    }
+
+    .m2-layer3-block {
+        display: none;
+        margin-top: 0.75rem;
+        padding-top: 0.75rem;
+        border-top: 1px solid #e2e8f0;
+    }
+
+    .m2-layer4-block {
+        display: block;
+        margin-top: 0.75rem;
+        padding-top: 0.75rem;
+        border-top: 1px solid #e2e8f0;
+    }
+
+    .m2-eval28-panel {
+        display: none;
+        margin-top: 0.95rem;
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        background: #fff;
+        overflow: hidden;
+    }
+
+    .m2-eval28-head {
+        padding: 0.6rem 0.75rem;
+        border-bottom: 1px solid #e2e8f0;
+        background: #f8fafc;
+    }
+
+    .m2-eval28-kicker {
+        font-size: 0.58rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        color: #64748b;
+        text-align: center;
+    }
+
+    .m2-eval28-title {
+        margin-top: 0.2rem;
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: #0f172a;
+        text-align: center;
+    }
+
+    .m2-eval28-subtitle {
+        margin-top: 0.2rem;
+        font-size: 0.68rem;
+        line-height: 1.45;
+        color: #475569;
+    }
+
+    .m2-eval28-body {
+        padding: 0.7rem 0.75rem;
+    }
+
+    .m2-eval28-form {
+        display: none;
+        margin-top: 0.65rem;
+        padding-top: 0.65rem;
+        border-top: 1px dashed #cbd5e1;
+    }
+
+    .m2-eval28-form label {
+        display: block;
+        font-size: 0.69rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 0.2rem;
+    }
+
+    .m2-eval28-save-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 0.55rem;
+        padding: 0.5rem 1rem;
+        border-radius: 7px;
+        border: 1px solid #1d4ed8;
+        background: #1d4ed8;
+        color: #fff;
+        font-size: 0.74rem;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    .m2-eval28-save-btn:hover {
+        background: #1e40af;
+        border-color: #1e40af;
+    }
+
+    .m2-check-item.m2-item-stacked {
+        flex-direction: column;
+        align-items: stretch;
+        text-align: left;
+        gap: 0.35rem;
+    }
+
+    .m2-check-item.m2-item-stacked .m2-check-head {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.45rem;
+    }
+
+    .m2-check-item.m2-item-stacked .m2-check-head .icon {
+        flex-shrink: 0;
+        margin-top: 0.1rem;
+    }
+
+    .m2-policy-note {
+        font-size: 0.64rem;
+        line-height: 1.5;
+        color: #64748b;
+    }
+
+    .m2-show-form-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.42rem 0.72rem;
+        border-radius: 8px;
+        border: 1px solid #bfdbfe;
+        background: #eff6ff;
+        color: #1d4ed8;
+        font-size: 0.72rem;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    .m2-show-form-btn:hover {
+        background: #dbeafe;
+    }
+
+    .applicant-ref {
+        font-size: 0.625rem;
+        color: #94a3b8;
+        font-family: ui-monospace, monospace;
+    }
+
+    .routing-delayed-indicator {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        margin-top: 0.125rem;
+        font-size: 0.5625rem;
+        color: #dc2626;
+    }
+
+    /* Queue Badge - Matching Figma purple style */
+    .queue-badge {
+        display: inline-block;
+        padding: 0.125rem 0.375rem;
+        border-radius: 9999px;
+        font-size: 0.625rem;
+        font-weight: 500;
+        max-width: 95%;
+        overflow-wrap: break-word;
+        line-height: 1.2;
+    }
+
+    .queue-badge.priority {
+        background: #f3e8ff;
+        color: #6b21a8;
+        border: 1px solid #ede9fe;
+    }
+
+    .queue-badge.walkin {
+        background: #dbeafe;
+        color: #1e40af;
+        border: 1px solid #bfdbfe;
+    }
+
+    .queue-badge.standby {
+        background: #dcfce7;
+        color: #166534;
+        border: 1px solid #bbf7d0;
+    }
+
+    .queue-legend {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        margin: 0 0 0.65rem 0;
+        padding: 0.5rem 0.65rem;
+        border: 1px solid #dbeafe;
+        border-radius: 0.5rem;
+        background: #f8fbff;
+    }
+
+    .queue-legend-label {
+        font-size: 0.625rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #64748b;
+        font-weight: 700;
+    }
+
+    .m2-eval-status {
+        font-size: 0.75rem;
+        color: #334155;
+        line-height: 1.45;
+        margin-bottom: 0.6rem;
+    }
+
+    .m2-eval-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        margin: 0.45rem 0 0.55rem;
+    }
+
+    .m2-eval-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.2rem 0.5rem;
+        border-radius: 9999px;
+        border: 1px solid #cbd5e1;
+        background: #f8fafc;
+        color: #334155;
+        font-size: 0.625rem;
+        font-weight: 600;
+    }
+
+    .m2-eval-chip.recommend-priority {
+        border-color: #c4b5fd;
+        background: #f5f3ff;
+        color: #6d28d9;
+    }
+
+    .m2-eval-chip.recommend-walkin {
+        border-color: #93c5fd;
+        background: #eff6ff;
+        color: #1d4ed8;
+    }
+
+    .m2-eval-chip.allowed-priority {
+        border-color: #ddd6fe;
+        background: #f5f3ff;
+        color: #7c3aed;
+    }
+
+    .m2-eval-chip.allowed-walkin {
+        border-color: #bfdbfe;
+        background: #eff6ff;
+        color: #1d4ed8;
+    }
+
+    .blacklist-source-chip {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.08rem 0.42rem;
+        border-radius: 9999px;
+        font-size: 0.6rem;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+        border: 1px solid transparent;
+        vertical-align: middle;
+    }
+
+    .blacklist-source-chip.source-module1 {
+        background: #eff6ff;
+        color: #1d4ed8;
+        border-color: #bfdbfe;
+    }
+
+    .blacklist-source-chip.source-units {
+        background: #fff7ed;
+        color: #c2410c;
+        border-color: #fdba74;
+    }
+
+    .m2-rule-list {
+        margin: 0.4rem 0 0;
+        padding-left: 1rem;
+        font-size: 0.72rem;
+    }
+
+    .m2-rule-list li {
+        margin: 0.15rem 0;
+    }
+
+    .m2-rule-list.blockers {
+        color: #b91c1c;
+    }
+
+    .m2-rule-list.advisories {
+        color: #7c2d12;
+    }
+
+    .m2-decision-btn {
+        padding: 0.5rem 0.8rem;
+        border-radius: 7px;
+        border: none;
+        color: #fff;
+        cursor: pointer;
+        font-size: 0.75rem;
+        font-weight: 600;
+        transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+    }
+
+    .m2-decision-btn:hover:not(:disabled) {
+        transform: translateY(-1px);
+    }
+
+    .m2-decision-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+
+    .m2-decision-btn.priority {
+        background: #047857;
+        box-shadow: 0 1px 3px rgba(4, 120, 87, 0.35);
+    }
+
+    .m2-decision-btn.walkin {
+        background: #0369a1;
+        box-shadow: 0 1px 3px rgba(3, 105, 161, 0.35);
+    }
+
+    .m2-decision-btn.disqualify {
+        background: #b91c1c;
+        box-shadow: 0 1px 3px rgba(185, 28, 28, 0.35);
+    }
+
+    /* Document Progress - Matching Figma */
+    .doc-progress {
+        display: flex;
+        align-items: center;
+        gap: 0.375rem;
+    }
+
+    .doc-progress-bar {
+        width: 5rem;
+        height: 0.375rem;
+        background: #e2e8f0;
+        border-radius: 9999px;
+        overflow: hidden;
+    }
+
+    .doc-progress-fill {
+        height: 100%;
+        background: #3b82f6;
+        border-radius: 9999px;
+        transition: width 0.3s ease;
+    }
+
+    .doc-progress-text {
+        font-size: 0.625rem;
+        color: #64748b;
+        white-space: nowrap;
+    }
+
+    .doc-complete-check {
+        color: #22c55e;
+        font-size: 0.75rem;
+    }
+
+    /* Form Status - Matching Figma */
+    .form-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 0.625rem;
+    }
+
+    .form-status.pending {
+        color: #94a3b8;
+    }
+
+    .form-status.can-generate {
+        color: #94a3b8;
+    }
+
+    .form-status.generated {
+        color: #16a34a;
+    }
+
+    .form-status .check-icon {
+        color: #22c55e;
+    }
+
+    /* Routing Status - Matching Figma text style */
+    .routing-status {
+        font-size: 0.625rem;
+    }
+
+    .routing-status.completed {
+        color: #16a34a;
+    }
+
+    .routing-status.in-progress {
+        color: #3b82f6;
+    }
+
+    .routing-status.not-started {
+        color: #94a3b8;
+    }
+
+    /* Stage Badge - Matching Figma colors */
+    .stage-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.125rem 0.5rem;
+        border-radius: 9999px;
+        font-size: 0.625rem;
+        font-weight: 500;
+        white-space: nowrap;
+    }
+
+    .stage-badge.eligibility {
+        background: #f1f5f9;
+        color: #64748b;
+    }
+
+    .stage-badge.document-gathering {
+        background: #fef3c7;
+        color: #d97706;
+    }
+
+    .stage-badge.form-released {
+        background: #dbeafe;
+        color: #2563eb;
+    }
+
+    .stage-badge.signatory-routing {
+        background: #ede9fe;
+        color: #7c3aed;
+    }
+
+    .stage-badge.fully-approved {
+        background: #ccfbf1;
+        color: #0d9488;
+    }
+
+    .stage-badge.lot-awarded {
+        background: #dcfce7;
+        color: #16a34a;
+    }
+
+    /* Action Buttons - Matching Figma */
+    .action-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.375rem 0.625rem;
+        border-radius: 8px;
+        font-size: 0.625rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.15s;
+        border: none;
+        background: #f1f5f9;
+        color: #64748b;
+    }
+
+    .action-btn:hover {
+        background: #eff6ff;
+        color: #3b82f6;
+    }
+
+    .action-btn .eye-icon {
+        width: 0.75rem;
+        height: 0.75rem;
+    }
+
+    /* Table Footer */
+    .table-footer {
+        padding: 0.75rem 1rem;
+        border-top: 1px solid #f1f5f9;
+        background: #f8fafc;
+    }
+
+    .table-footer p {
+        font-size: 0.6875rem;
+        color: #64748b;
+        margin: 0;
+    }
+
+    /* Modal Styles */
+    .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.2s;
+    }
+
+    .modal-overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
+
     .modal-content {
-        width: 100%;
-        max-height: 100vh;
-        border-radius: 0;
+        background: white;
+        border-radius: 16px;
+        width: 90%;
+        max-width: 800px;
+        max-height: 90vh;
+        overflow-y: auto;
+        transform: translateY(20px);
+        transition: transform 0.2s;
     }
-}
 
-/* Micro-pass parity refinement */
-.module-shell {
-    padding: 0.95rem 1.05rem;
-    border-radius: 13px;
-    margin-bottom: 0.72rem;
-}
+    .modal-overlay.active .modal-content {
+        transform: translateY(0);
+    }
 
-.module-chip {
-    font-size: 0.6rem;
-    padding: 0.22rem 0.5rem;
-    margin-bottom: 0.34rem;
-}
+    .flow-alert-card {
+        background: #ffffff;
+        border-radius: 18px;
+        width: min(92vw, 560px);
+        box-shadow: 0 20px 38px rgba(15, 23, 42, 0.2);
+        border: 1px solid #e2e8f0;
+        padding: 1.25rem 1.25rem 1rem;
+    }
 
-.module-shell h2 {
-    font-size: 1.03rem;
-    margin-bottom: 0.05rem;
-}
+    .flow-alert-title {
+        margin: 0 0 0.55rem;
+        color: #0f172a;
+        font-size: 1.18rem;
+        font-weight: 700;
+    }
 
-.module-shell p {
-    font-size: 0.77rem;
-}
+    .flow-alert-message {
+        margin: 0;
+        color: #334155;
+        font-size: 0.98rem;
+        line-height: 1.6;
+        white-space: pre-line;
+    }
 
-.module-shell-btn {
-    min-height: 34px;
-    font-size: 0.7rem;
-    border-radius: 9px;
-}
+    .flow-alert-actions {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 1.15rem;
+    }
 
-.stages-grid.queue-summary {
-    margin-bottom: 0.75rem;
-    gap: 0.72rem;
-}
+    .flow-alert-ok {
+        min-width: 92px;
+        border: none;
+        border-radius: 9999px;
+        background: #4f46e5;
+        color: #fff;
+        font-weight: 700;
+        font-size: 0.95rem;
+        padding: 0.52rem 1.15rem;
+        cursor: pointer;
+        box-shadow: 0 6px 16px rgba(79, 70, 229, 0.35);
+    }
 
-.stages-grid.queue-summary .stage-card {
-    padding: 0.72rem 0.9rem;
-    border-radius: 11px;
-}
+    .flow-alert-ok:hover {
+        background: #4338ca;
+    }
 
-.stage-card .stage-count {
-    font-size: 1.34rem;
-}
+    .modal-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+    }
 
-.stage-card .stage-title {
-    font-size: 0.56rem;
-}
+    .modal-header h2 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin: 0;
+    }
 
-.routing-alert {
-    border-radius: 11px;
-    margin-bottom: 0.72rem;
-}
+    .modal-close {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        border: none;
+        background: #f3f4f6;
+        color: #6b7280;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        transition: all 0.2s;
+    }
 
-.filter-bar {
-    margin-bottom: 0.72rem;
-    padding: 0.58rem;
-    border-radius: 11px;
-    gap: 0.6rem;
-}
+    .modal-close:hover {
+        background: #e5e7eb;
+        color: #374151;
+    }
 
-.search-box input,
-.filter-select {
-    min-height: 40px;
-    border-radius: 9px;
-}
+    .modal-body {
+        padding: 1.5rem;
+    }
 
-.applications-table-container {
-    border-radius: 11px;
-}
+    /* Progress Bar */
+    .progress-tracker {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 2rem;
+        position: relative;
+    }
 
-.applications-table th {
-    font-size: 0.56rem;
-    padding: 0.48rem 0.54rem;
-    letter-spacing: 0.052em;
-}
+    .progress-tracker::before {
+        content: '';
+        position: absolute;
+        top: 16px;
+        left: 32px;
+        right: 32px;
+        height: 3px;
+        background: #e5e7eb;
+        z-index: 0;
+    }
 
-.applications-table td {
-    font-size: 0.64rem;
-    padding: 0.36rem 0.52rem;
-}
+    .progress-step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+        position: relative;
+        z-index: 1;
+    }
 
-.applications-table .badge,
-.queue-badge {
-    font-size: 0.56rem;
-}
+    .progress-step-circle {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: #e5e7eb;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #6b7280;
+    }
 
-.action-btn {
-    min-height: 28px;
-    border-radius: 7px;
-    font-size: 0.56rem;
-    padding: 0.26rem 0.46rem;
-}
+    .progress-step.completed .progress-step-circle {
+        background: #22c55e;
+        color: white;
+    }
+
+    .progress-step.current .progress-step-circle {
+        background: #2563eb;
+        color: white;
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2);
+    }
+
+    .progress-step-label {
+        font-size: 0.75rem;
+        color: #6b7280;
+        text-align: center;
+        max-width: 80px;
+    }
+
+    /* Document Checklist Grid */
+    .document-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
+    }
+
+    .document-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 0.625rem;
+        background: #f8fafc;
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+        transition: all 0.2s;
+    }
+
+    .document-item:hover {
+        background: #f0f9ff;
+        border-color: #93c5fd;
+    }
+
+    .document-item.verified {
+        background: #dcfce7;
+        border-color: #86efac;
+    }
+
+    .document-checkbox {
+        width: 18px;
+        height: 18px;
+        border-radius: 5px;
+        border: 1.5px solid #cbd5e1;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .document-checkbox.checked {
+        background: #1d4ed8;
+        border-color: #1d4ed8;
+        color: white;
+    }
+
+    .document-label {
+        font-size: 0.75rem;
+        color: #334155;
+        line-height: 1.35;
+    }
+
+    @media (max-width: 900px) {
+        .document-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Signatory Timeline */
+    .signatory-timeline {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .timeline-item {
+        display: flex;
+        gap: 1rem;
+        position: relative;
+    }
+
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: 15px;
+        top: 36px;
+        bottom: -16px;
+        width: 2px;
+        background: #e5e7eb;
+    }
+
+    .timeline-item:last-child::before {
+        display: none;
+    }
+
+    .timeline-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: #f3f4f6;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        z-index: 1;
+    }
+
+    .timeline-icon.completed {
+        background: #22c55e;
+        color: white;
+    }
+
+    .timeline-icon.pending {
+        background: #e5e7eb;
+        color: #9ca3af;
+    }
+
+    .timeline-icon.delayed {
+        background: #fbbf24;
+        color: white;
+    }
+
+    .timeline-content {
+        flex: 1;
+        padding-bottom: 1rem;
+    }
+
+    .timeline-content h4 {
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 0.25rem;
+    }
+
+    .timeline-content p {
+        font-size: 0.75rem;
+        color: #6b7280;
+        margin: 0;
+    }
+
+    .timeline-content .delayed-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.25rem 0.5rem;
+        background: #fef3c7;
+        color: #b45309;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        font-weight: 500;
+        margin-top: 0.5rem;
+    }
+
+    /* Section Headings in Modal */
+    .section-heading {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .section-heading .count {
+        background: #e5e7eb;
+        padding: 0.125rem 0.5rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: #6b7280;
+    }
+
+    /* Timeline Action Buttons */
+    .timeline-action-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.375rem 0.75rem;
+        background: #3b82f6;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        cursor: pointer;
+        margin-top: 0.5rem;
+        transition: background 0.2s;
+    }
+
+    .timeline-action-btn:hover {
+        background: #2563eb;
+    }
+
+    /* Generate Form Button */
+    .generate-form-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.25rem;
+        background: linear-gradient(to right, #2563eb, #3b82f6);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .generate-form-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    }
+
+    .generate-form-btn:disabled {
+        background: #d1d5db;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+
+    /* Empty State - Matching Figma */
+    .empty-state {
+        text-align: center;
+        padding: 3rem 2rem;
+    }
+
+    .empty-state-icon {
+        width: 48px;
+        height: 48px;
+        margin: 0 auto 0.75rem;
+        background: #f1f5f9;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        color: #94a3b8;
+    }
+
+    .empty-state h3 {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #64748b;
+        margin-bottom: 0.25rem;
+    }
+
+    .empty-state p {
+        color: #94a3b8;
+        font-size: 0.75rem;
+    }
+
+    /* Second-pass visual polish */
+    .module-shell {
+        background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+        border: 1px solid #dbeafe;
+        border-radius: 14px;
+        box-shadow: 0 3px 10px rgba(15, 23, 42, 0.06);
+        padding: 0.85rem 1rem;
+        margin-bottom: 0.8rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .module-chip {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 0.22rem 0.58rem;
+        background: #dbeafe;
+        color: #1d4ed8;
+        font-size: 0.64rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        margin-bottom: 0.3rem;
+    }
+
+    .module-shell h2 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #0f172a;
+    }
+
+    .module-shell p {
+        margin: 0.3rem 0 0;
+        color: #64748b;
+        font-size: 0.75rem;
+    }
+
+    .module-shell-actions {
+        display: inline-flex;
+        gap: 0.45rem;
+        flex-wrap: wrap;
+    }
+
+    .module-shell-btn {
+        border: 1px solid #cbd5e1;
+        background: #ffffff;
+        color: #334155;
+        border-radius: 8px;
+        padding: 0.46rem 0.72rem;
+        font-size: 0.7rem;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    .module-shell-btn.primary {
+        border-color: #1d4ed8;
+        color: #ffffff;
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    }
+
+    .stages-grid {
+        margin-bottom: 0.8rem;
+    }
+
+    .stage-card {
+        padding: 0.65rem;
+    }
+
+    .stage-card .stage-icon {
+        width: 34px;
+        height: 34px;
+    }
+
+    .stage-card .stage-icon svg {
+        width: 16px;
+        height: 16px;
+    }
+
+    .stage-card .stage-count {
+        font-size: 1.4rem;
+    }
+
+    .stage-card .stage-title {
+        font-size: 0.58rem;
+    }
+
+    .filter-bar {
+        margin-bottom: 0.8rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.7rem;
+        padding: 0.55rem;
+        background: #f8fafc;
+    }
+
+    .search-box input {
+        padding: 0.56rem 0.72rem 0.56rem 2.28rem;
+        border: 1px solid #cbd5e1;
+        font-size: 0.78rem;
+    }
+
+    .filter-select {
+        padding: 0.56rem 1.9rem 0.56rem 0.68rem;
+        border: 1px solid #cbd5e1;
+        font-size: 0.75rem;
+    }
+
+    .applications-table-container {
+        border-color: #dbe2ea;
+    }
+
+    .applications-table th {
+        padding: 0.5rem 0.62rem;
+        font-size: 0.58rem;
+        font-weight: 700;
+    }
+
+    .applications-table td {
+        padding: 0.4rem 0.6rem;
+    }
+
+    .applications-table.compact-table th,
+    .applications-table.compact-table td {
+        padding: 0.34rem 0.44rem;
+    }
+
+    .action-btn {
+        padding: 0.3rem 0.5rem;
+        font-size: 0.58rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .stages-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .filter-bar {
+            flex-direction: column;
+        }
+
+        .search-box {
+            width: 100%;
+        }
+
+        .applications-table {
+            table-layout: auto;
+        }
+
+        .modal-content {
+            width: 100%;
+            max-height: 100vh;
+            border-radius: 0;
+        }
+    }
+
+    /* Micro-pass parity refinement */
+    .module-shell {
+        padding: 0.95rem 1.05rem;
+        border-radius: 13px;
+        margin-bottom: 0.72rem;
+    }
+
+    .module-chip {
+        font-size: 0.6rem;
+        padding: 0.22rem 0.5rem;
+        margin-bottom: 0.34rem;
+    }
+
+    .module-shell h2 {
+        font-size: 1.03rem;
+        margin-bottom: 0.05rem;
+    }
+
+    .module-shell p {
+        font-size: 0.77rem;
+    }
+
+    .module-shell-btn {
+        min-height: 34px;
+        font-size: 0.7rem;
+        border-radius: 9px;
+    }
+
+    .stages-grid.queue-summary {
+        margin-bottom: 0.75rem;
+        gap: 0.72rem;
+    }
+
+    .stages-grid.queue-summary .stage-card {
+        padding: 0.72rem 0.9rem;
+        border-radius: 11px;
+    }
+
+    .stage-card .stage-count {
+        font-size: 1.34rem;
+    }
+
+    .stage-card .stage-title {
+        font-size: 0.56rem;
+    }
+
+    .routing-alert {
+        border-radius: 11px;
+        margin-bottom: 0.72rem;
+    }
+
+    .filter-bar {
+        margin-bottom: 0.72rem;
+        padding: 0.58rem;
+        border-radius: 11px;
+        gap: 0.6rem;
+    }
+
+    .search-box input,
+    .filter-select {
+        min-height: 40px;
+        border-radius: 9px;
+    }
+
+    .applications-table-container {
+        border-radius: 11px;
+    }
+
+    .applications-table th {
+        font-size: 0.56rem;
+        padding: 0.48rem 0.54rem;
+        letter-spacing: 0.052em;
+    }
+
+    .applications-table td {
+        font-size: 0.64rem;
+        padding: 0.36rem 0.52rem;
+    }
+
+    .applications-table .badge,
+    .queue-badge {
+        font-size: 0.56rem;
+    }
+
+    .action-btn {
+        min-height: 28px;
+        border-radius: 7px;
+        font-size: 0.56rem;
+        padding: 0.26rem 0.46rem;
+    }
 </style>
 {% endblock %}
 
-{% block page_title %}Module 2 - Application and Evaluation{% endblock %}
-{% block page_description %}
-<p class="page-subtitle">Review queued applicants, verify stage progress, and maintain routing readiness.</p>
-{% endblock %}
+{% block page_title %}Staff Portal{% endblock %}
+{% block page_description %}{% endblock %}
 
 {% block content %}
 
-<div class="module-shell">
-    <div>
-        <span class="module-chip">Module 2</span>
-        <h2>Application and Evaluation</h2>
-        <p>Review queued applicants, verify stage progress, and maintain routing readiness.</p>
-    </div>
-    <div class="module-shell-actions">
-        <button type="button" class="module-shell-btn" onclick="window.location.reload()">Refresh</button>
-        <button type="button" class="module-shell-btn primary" onclick="document.getElementById('searchInput')?.focus()">Search Applicant</button>
-    </div>
-</div>
-
-<!-- Queue Summary Cards -->
-<div class="stages-grid queue-summary">
-    <div class="stage-card priority scroll-animate-scale scroll-delay-1">
-        <div class="stage-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M12 3l2.4 4.86 5.36.78-3.88 3.78.92 5.35L12 15.77 7.2 17.77l.92-5.35L4.24 8.64l5.36-.78L12 3z"></path>
-            </svg>
-        </div>
-        <div class="stage-meta">
-            <div class="stage-count">{{ queue_counts.priority|default:0 }}</div>
-            <div class="stage-title">Priority Queue</div>
+<div class="applicants-container" style="padding: 1rem 1rem 0.9rem; max-width: 100%; background: #ffffff; border: 1px solid #dbe2ea; border-radius: 0.85rem; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06); margin-bottom: 0.95rem;">
+    <div class="page-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.95rem; gap: 1rem; flex-wrap: wrap;">
+        <div>
+            <h1 class="page-title" style="font-size: 1.02rem; font-weight: 700; color: #0f172a; margin: 0; letter-spacing: 0.04em; text-transform: uppercase;">Application and Evaluation</h1>
+            <p class="page-subtitle" style="font-size: 0.75rem; color: #64748b; margin-top: 0.2rem;">Review queued applicants, verify stage progress, and maintain routing readiness.</p>
         </div>
     </div>
-    <div class="stage-card walk-in scroll-animate-scale scroll-delay-2">
-        <div class="stage-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="8" r="4"></circle>
-                <path d="M4 21a8 8 0 0 1 16 0"></path>
-            </svg>
+
+<!-- Controls Bar (intake-style compact row) -->
+<div class="controls-bar" style="display: flex; gap: 0.75rem; margin-bottom: 0.85rem; flex-wrap: wrap; align-items: center; padding: 0.6rem; border: 1px solid #e2e8f0; background: #f8fafc; border-radius: 0.7rem;">
+    <div class="summary-chip-card" style="display: flex; align-items: center; gap: 0.65rem; padding: 0.46rem 0.68rem; background: #f3e8ff; border-radius: 0.55rem; border: 1px solid #e9d5ff;">
+        <svg style="width: 20px; height: 20px; color: #7c3aed;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 3l2.4 4.86 5.36.78-3.88 3.78.92 5.35L12 15.77 7.2 17.77l.92-5.35L4.24 8.64l5.36-.78L12 3z"></path>
+        </svg>
+        <div>
+            <p style="font-size: 0.625rem; color: #6b21a8; margin: 0; text-transform: uppercase; font-weight: 500;">Priority Queue</p>
+            <p style="font-size: 1.25rem; font-weight: 700; color: #7c3aed; margin: 0;">{{ queue_counts.priority|default:0 }}</p>
         </div>
-        <div class="stage-meta">
-            <div class="stage-count">{{ queue_counts.walk_in|default:0 }}</div>
-            <div class="stage-title">Walk-in Queue</div>
+    </div>
+    <div class="summary-chip-card" style="display: flex; align-items: center; gap: 0.65rem; padding: 0.46rem 0.68rem; background: #eff6ff; border-radius: 0.55rem; border: 1px solid #bfdbfe;">
+        <svg style="width: 20px; height: 20px; color: #2563eb;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="8" r="4"></circle>
+            <path d="M4 21a8 8 0 0 1 16 0"></path>
+        </svg>
+        <div>
+            <p style="font-size: 0.625rem; color: #64748b; margin: 0; text-transform: uppercase; font-weight: 500;">Walk-in Queue</p>
+            <p style="font-size: 1.25rem; font-weight: 700; color: #2563eb; margin: 0;">{{ queue_counts.walk_in|default:0 }}</p>
         </div>
     </div>
-</div>
-
-<!-- Routing Delay Alert -->
-{% if delayed_routings %}
-<div class="routing-alert">
-    <span class="routing-alert-icon">⚠</span>
-    <div class="routing-alert-content">
-        <p><span class="alert-label">Routing delay detected:</span> {{ delayed_routings.count }} application(s) stalled for more than 3 days.</p>
+    <div class="search-box" style="flex: 1; min-width: 200px; position: relative;">
+        <svg style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); width: 1rem; height: 1rem; color: #94a3b8;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.35-4.35"></path>
+        </svg>
+        <input type="text" id="searchInput" placeholder="Name, ref #, barangay..." value="{{ search }}" onkeyup="handleSearch(event)" style="width: 100%; padding: 0.56rem 0.72rem 0.56rem 2.25rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.78rem; outline: none;">
     </div>
-</div>
-{% endif %}
-
-<!-- Filter Bar -->
-<div class="filter-bar">
-
-    <div class="search-box">
-        <span class="search-icon">🔍</span>
-        <input type="text" id="searchInput" placeholder="Search by name or reference number..." 
-               value="{{ search }}" onkeyup="handleSearch(event)">
+    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
+        <select class="filter-select" id="stageFilter" onchange="handleStageChange()" style="padding: 0.56rem 1.9rem 0.56rem 0.7rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.75rem; background: white; cursor: pointer; appearance: none; background-image: url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2364748b'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E&quot;); background-repeat: no-repeat; background-position: right 0.5rem center;">
+            <option value="all" {% if filter_stage == 'all' %}selected{% endif %}>All Stages</option>
+            <option value="eligibility" {% if filter_stage == 'eligibility' %}selected{% endif %}>Eligibility</option>
+            <option value="document_gathering" {% if filter_stage == 'document_gathering' %}selected{% endif %}>Document Gathering</option>
+            <option value="form_released" {% if filter_stage == 'form_released' %}selected{% endif %}>Form Released</option>
+            <option value="signatory_routing" {% if filter_stage == 'signatory_routing' %}selected{% endif %}>Signatory Routing</option>
+            <option value="fully_approved" {% if filter_stage == 'fully_approved' %}selected{% endif %}>Fully Approved</option>
+            <option value="lot_awarded" {% if filter_stage == 'lot_awarded' %}selected{% endif %}>Lot Awarded</option>
+        </select>
+        <select class="filter-select" id="eval28Filter" onchange="handleStageChange()" style="padding: 0.56rem 1.9rem 0.56rem 0.7rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.75rem; background: white; cursor: pointer; appearance: none; background-image: url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2364748b'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E&quot;); background-repeat: no-repeat; background-position: right 0.5rem center;">
+            <option value="all" {% if filter_eval28 == 'all' %}selected{% endif %}>2.6 All</option>
+            <option value="approved" {% if filter_eval28 == 'approved' %}selected{% endif %}>2.6 Approved</option>
+            <option value="for_review" {% if filter_eval28 == 'for_review' %}selected{% endif %}>2.6 For Review</option>
+            <option value="not_recorded" {% if filter_eval28 == 'not_recorded' %}selected{% endif %}>2.6 Not Recorded</option>
+        </select>
     </div>
-    <select class="filter-select" id="stageFilter" onchange="handleStageChange()">
-        <option value="all" {% if filter_stage == 'all' %}selected{% endif %}>All Stages</option>
-        <option value="eligibility" {% if filter_stage == 'eligibility' %}selected{% endif %}>Eligibility</option>
-        <option value="document_gathering" {% if filter_stage == 'document_gathering' %}selected{% endif %}>Document Gathering</option>
-        <option value="form_released" {% if filter_stage == 'form_released' %}selected{% endif %}>Form Released</option>
-        <option value="signatory_routing" {% if filter_stage == 'signatory_routing' %}selected{% endif %}>Signatory Routing</option>
-        <option value="fully_approved" {% if filter_stage == 'fully_approved' %}selected{% endif %}>Fully Approved</option>
-        <option value="lot_awarded" {% if filter_stage == 'lot_awarded' %}selected{% endif %}>Lot Awarded</option>
-    </select>
-    <select class="filter-select" id="eval28Filter" onchange="handleStageChange()">
-        <option value="all" {% if filter_eval28 == 'all' %}selected{% endif %}>2.8 All</option>
-        <option value="approved" {% if filter_eval28 == 'approved' %}selected{% endif %}>2.8 Approved</option>
-        <option value="for_review" {% if filter_eval28 == 'for_review' %}selected{% endif %}>2.8 For Review</option>
-        <option value="not_recorded" {% if filter_eval28 == 'not_recorded' %}selected{% endif %}>2.8 Not Recorded</option>
-    </select>
 </div>
 
 <!-- Applications Table -->
@@ -1920,7 +2199,7 @@
                 <th class="col-channel" title="Declared intake channel">Channel</th>
                 <th class="col-queue" title="Active Module 2 queue tag">Queue</th>
                 <th class="col-staff" title="Module 1 encoding staff and Module 2 handoff metadata">Staff</th>
-                <th class="col-gate" title="Module 2 first-gate status">Gate</th>
+                <th class="col-gate" title="Module 2 evaluation status">Eval</th>
                 <th class="col-actions">Actions</th>
             </tr>
         </thead>
@@ -1935,14 +2214,18 @@
                         <span style="font-size:0.5625rem;color:#b91c1c;font-weight:600;">
                             Blacklist — Module 2 blocked
                             {% if data.blacklist_source %}
-                            <span class="blacklist-source-chip {% if data.blacklist_source == 'Units Blacklist Entries' %}source-units{% else %}source-module1{% endif %}">{{ data.blacklist_source }}</span>
+                            <span
+                                class="blacklist-source-chip {% if data.blacklist_source == 'Units Blacklist Entries' %}source-units{% else %}source-module1{% endif %}">{{
+                                data.blacklist_source }}</span>
                             {% endif %}
                         </span>
                         {% elif data.applicant_status == 'pending_cdrrmo' %}
                         {% if data.cdrrmo_status == 'certified' or data.cdrrmo_status == 'not_certified' %}
-                        <span style="font-size:0.5625rem;color:#0369a1;font-weight:600;">CDRRMO finalized — awaiting eligibility and queue assignment</span>
+                        <span style="font-size:0.5625rem;color:#0369a1;font-weight:600;">CDRRMO finalized — awaiting
+                            eligibility and queue assignment</span>
                         {% else %}
-                        <span style="font-size:0.5625rem;color:#b45309;font-weight:600;">CDRRMO pending staff finalization (2.6)</span>
+                        <span style="font-size:0.5625rem;color:#b45309;font-weight:600;">CDRRMO pending staff
+                            finalization (2.6)</span>
                         {% endif %}
                         {% elif not data.m1_income_eligible %}
                         <span style="font-size:0.5625rem;color:#b45309;">Income over M1 ceiling — fix in Module 1</span>
@@ -1950,7 +2233,8 @@
                         <span style="font-size:0.5625rem;color:#b45309;">Property in Talisay flagged</span>
                         {% endif %}
                         {% if data.evaluation_approval_status %}
-                        <span style="font-size:0.5625rem;color:#1e3a8a;font-weight:600;">2.8 {{ data.evaluation_approval_status_display }}</span>
+                        <span style="font-size:0.5625rem;color:#1e3a8a;font-weight:600;">2.6 {{
+                            data.evaluation_approval_status_display }}</span>
                         {% endif %}
                         {% if data.is_delayed %}
                         <div class="routing-delayed-indicator">
@@ -1960,118 +2244,130 @@
                     </div>
                 </td>
                 <td class="col-transaction">
-                    <span class="m2-cell-code" style="font-family: monospace; font-size: 0.6rem; word-break: break-all;">#{{ data.applicant.id }}</span>
+                    <span class="m2-cell-code"
+                        style="font-family: monospace; font-size: 0.6rem; word-break: break-all;">#{{ data.applicant.id
+                        }}</span>
                 </td>
                 <td class="col-reference">
                     <span class="m2-cell-code">{{ data.applicant.reference_number }}</span>
                 </td>
                 <td class="col-encoded">
-                    <span style="font-size:0.6875rem;color:#334155;" title="Date &amp; time (Module 1 record created)">{{ data.applicant.created_at|date:"n/j/Y, P" }}</span>
+                    <span style="font-size:0.6875rem;color:#334155;"
+                        title="Date &amp; time (Module 1 record created)">{{ data.applicant.created_at|date:"n/j/Y, P"
+                        }}</span>
                 </td>
                 <td class="col-channel">
                     {% if data.applicant.channel == 'danger_zone' %}
-                        <span class="badge channel-b-hazard">Channel B<br/>Danger Zone</span>
+                    <span class="badge channel-b-hazard">Channel B<br />Danger Zone</span>
                     {% else %}
-                        <span class="badge channel-a">Channel A<br/>Walk-in</span>
+                    <span class="badge channel-a">Channel A<br />Walk-in</span>
                     {% endif %}
                 </td>
                 <td class="col-queue">
                     {% if data.intake_queue_label != '—' %}
-                    <span class="queue-badge {% if data.active_queue_type == 'priority' %}priority{% else %}walkin{% endif %}" title="{% if data.active_queue_type == 'priority' %}Priority queue (hazard-certified priority path){% elif data.active_queue_type == 'walk_in' %}Walk-in queue (FIFO regular path){% else %}Queue assignment{% endif %}">{{ data.intake_queue_label }}</span>
+                    <span
+                        class="queue-badge {% if data.active_queue_type == 'priority' %}priority{% else %}walkin{% endif %}"
+                        title="{% if data.active_queue_type == 'priority' %}Priority queue (hazard-certified priority path){% elif data.active_queue_type == 'walk_in' %}Walk-in queue (FIFO regular path){% else %}Queue assignment{% endif %}">{{
+                        data.intake_queue_label }}</span>
                     {% else %}
                     <span class="queue-badge walkin" title="No active Module 2 queue assignment yet">No queue tag</span>
                     {% endif %}
                 </td>
                 <td class="col-staff">
-                    {% with rb=data.applicant.registered_by %}
-                    {% if rb %}
+                    {% if data.applicant.registered_by %}
                     <div class="m2-staff-row">
-                        <div class="m2-staff-avatar">{{ rb.first_name|default:''|slice:':1'|upper }}{{ rb.last_name|default:''|slice:':1'|upper }}</div>
+                        <div class="m2-staff-avatar">{{ data.applicant.registered_by.first_name|default:''|slice:':1'|upper }}{{ data.applicant.registered_by.last_name|default:''|slice:':1'|upper }}</div>
                         <div style="min-width:0;">
-                            <div style="font-weight:500;color:#1e293b;">{{ rb.get_full_name }}</div>
-                            <div style="color:#64748b;">{{ rb.get_position_display }}</div>
-                            {% if data.applicant.module2_handoff_by_id and data.applicant.module2_handoff_by_id != rb.id %}
-                            <div style="color:#475569;margin-top:0.2rem;font-size:0.5625rem;" title="Proceed to Application &amp; Evaluation (Module 1)">
+                            <div style="font-weight:500;color:#1e293b;">{{ data.applicant.registered_by.get_full_name }}</div>
+                            <div style="color:#64748b;">{{ data.applicant.registered_by.get_position_display }}</div>
+                            {% if data.applicant.module2_handoff_by_id and data.applicant.module2_handoff_by_id != data.applicant.registered_by.id %}
+                            <div style="color:#475569;margin-top:0.2rem;font-size:0.5625rem;"
+                                title="Proceed to Application &amp; Evaluation (Module 1)">
                                 <strong>M2 handoff:</strong> {{ data.applicant.module2_handoff_by.get_full_name }}
                             </div>
                             {% endif %}
                         </div>
                     </div>
                     {% else %}
-                    <span style="font-size:0.625rem;color:#94a3b8;">—</span>
+                    <span style="font-size:0.625rem;color:#94a3b8;">&mdash;</span>
                     {% endif %}
-                    {% endwith %}
                 </td>
                 <td class="col-gate">
                     <div class="m2-gate-line">
-                    {% if data.blacklist_blocked %}
+                        {% if data.blacklist_blocked %}
                         <span style="color:#b91c1c;">2.1 Blocked</span>
-                    {% elif data.applicant_status == 'pending_cdrrmo' and data.applicant.channel == 'danger_zone' and data.cdrrmo_status != 'certified' and data.cdrrmo_status != 'not_certified' %}
+                        {% elif data.applicant_status == 'pending_cdrrmo' and data.applicant.channel == 'danger_zone'
+                        and data.cdrrmo_status != 'certified' and data.cdrrmo_status != 'not_certified' %}
                         <span style="color:#b45309;">2.6 Pending</span>
-                    {% elif data.evaluation_approval_status %}
+                        {% elif data.evaluation_approval_status %}
                         <span style="color:#1e3a8a;">2.8 {{ data.evaluation_approval_status_display }}</span>
-                    {% else %}
+                        {% else %}
                         <span style="color:#166534;">2.1 Clear</span>
-                    {% endif %}
+                        {% endif %}
                     </div>
                 </td>
                 <td class="col-actions">
                     <div style="display: flex; gap: 0.25rem; flex-wrap: wrap;">
-                        <button
-                            class="action-btn js-open-application-modal"
-                            data-applicant-id="{{ data.applicant.id }}"
+                        <button class="action-btn js-open-application-modal" data-applicant-id="{{ data.applicant.id }}"
                             data-name="{{ data.applicant.full_name|escape }}"
                             data-reference="{{ data.applicant.reference_number|escape }}"
                             data-verified-count="{{ data.group_a_verified }}"
                             data-current-stage="{{ data.current_stage|escape }}"
                             data-application-id="{{ data.application.id|default:'' }}"
-                            onclick="openApplicationModalFromButton(this)"
-                        >
-                            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                                <circle cx="12" cy="12" r="3"/>
+                            onclick="openApplicationModalFromButton(this)">
+                            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                <circle cx="12" cy="12" r="3" />
                             </svg>
                             Open Record
                         </button>
-                        
+
                         {% if 'generate_form' in data.user_actions %}
-                        <button class="action-btn" style="background: #dcfce7; color: #16a34a;" onclick="generateFormDirect('{{ data.applicant.id }}')">
+                        <button class="action-btn" style="background: #dcfce7; color: #16a34a;"
+                            onclick="generateFormDirect('{{ data.applicant.id }}')">
                             📝 Generate Form
                         </button>
                         {% endif %}
-                        
+
                         {% if 'receive_routing' in data.user_actions %}
-                        <button class="action-btn" style="background: #dbeafe; color: #2563eb;" onclick="updateRouting('{{ data.application.id }}', 'received')">
+                        <button class="action-btn" style="background: #dbeafe; color: #2563eb;"
+                            onclick="updateRouting('{{ data.application.id }}', 'received')">
                             📨 Receive
                         </button>
                         {% endif %}
-                        
+
                         {% if 'forward_to_oic' in data.user_actions %}
-                        <button class="action-btn" style="background: #dbeafe; color: #2563eb;" onclick="updateRouting('{{ data.application.id }}', 'forwarded_oic')">
+                        <button class="action-btn" style="background: #dbeafe; color: #2563eb;"
+                            onclick="updateRouting('{{ data.application.id }}', 'forwarded_oic')">
                             ➡️ Forward to OIC
                         </button>
                         {% endif %}
-                        
+
                         {% if 'sign_oic' in data.user_actions %}
-                        <button class="action-btn" style="background: #fef3c7; color: #d97706;" onclick="updateRouting('{{ data.application.id }}', 'signed_oic')">
+                        <button class="action-btn" style="background: #fef3c7; color: #d97706;"
+                            onclick="updateRouting('{{ data.application.id }}', 'signed_oic')">
                             ✍️ Sign (OIC)
                         </button>
                         {% endif %}
-                        
+
                         {% if 'forward_to_head' in data.user_actions %}
-                        <button class="action-btn" style="background: #dbeafe; color: #2563eb;" onclick="updateRouting('{{ data.application.id }}', 'forwarded_head')">
+                        <button class="action-btn" style="background: #dbeafe; color: #2563eb;"
+                            onclick="updateRouting('{{ data.application.id }}', 'forwarded_head')">
                             ➡️ Forward to Head
                         </button>
                         {% endif %}
-                        
+
                         {% if 'sign_head' in data.user_actions %}
-                        <button class="action-btn" style="background: #dcfce7; color: #16a34a;" onclick="updateRouting('{{ data.application.id }}', 'signed_head')">
+                        <button class="action-btn" style="background: #dcfce7; color: #16a34a;"
+                            onclick="updateRouting('{{ data.application.id }}', 'signed_head')">
                             ✅ Sign (Head)
                         </button>
                         {% endif %}
-                        
+
                         {% if 'award_lot' in data.user_actions %}
-                        <button class="action-btn" style="background: #f3e8ff; color: #7c3aed;" onclick="openAwardModal('{{ data.application.id }}', '{{ data.applicant.full_name }}')">
+                        <button class="action-btn" style="background: #f3e8ff; color: #7c3aed;"
+                            onclick="openAwardModal('{{ data.application.id }}', '{{ data.applicant.full_name }}')">
                             🏠 Award Lot
                         </button>
                         {% endif %}
@@ -2088,9 +2384,13 @@
     <div class="empty-state">
         <div class="empty-state-icon">📋</div>
         <h3>No Applications Found</h3>
-        <p>{% if search %}No results match your search "{{ search }}"{% elif filter_stage != 'all' or filter_eval28 != 'all' %}No applicants match the selected filters{% else %}No applicant records available for Module 2 evaluation yet. In Module 1, open the applicant and click "Proceed to Application & Evaluation" to handoff the record.{% endif %}</p>
+        <p>{% if search %}No results match your search "{{ search }}"{% elif filter_stage != 'all' or filter_eval28 !=
+            'all' %}No applicants match the selected filters{% else %}No applicant records available for Module 2
+            evaluation yet. In Module 1, open the applicant and click "Proceed to Application & Evaluation" to handoff
+            the record.{% endif %}</p>
     </div>
     {% endif %}
+</div>
 </div>
 
 <!-- Application Detail Modal -->
@@ -2102,21 +2402,28 @@
                 <p style="font-size: 0.875rem; color: #6b7280; margin: 0.25rem 0 0 0;">
                     <span id="modalRefNumber"></span>
                 </p>
-                <p style="font-size: 0.68rem; color: #94a3b8; margin: 0.35rem 0 0 0; text-transform: uppercase; letter-spacing: .06em;">
+                <p
+                    style="font-size: 0.68rem; color: #94a3b8; margin: 0.35rem 0 0 0; text-transform: uppercase; letter-spacing: .06em;">
                     Talisay City Housing Authority · Application & Evaluation
                 </p>
             </div>
-            <button class="modal-close" style="position: absolute; right: 1.5rem; top: 1.5rem;" onclick="closeModal()">&times;</button>
+            <button class="modal-close" style="position: absolute; right: 1.5rem; top: 1.5rem;"
+                onclick="closeModal()">&times;</button>
         </div>
         <div class="modal-body">
-            <div id="modalWorkflowGates" style="display:none;margin-bottom:1rem;padding:0.75rem;border-radius:8px;font-size:0.75rem;line-height:1.45;"></div>
-            <div id="modalM1EvidencePanel" style="display:none;margin-bottom:0.9rem;padding:0.75rem;border:1px solid #cbd5e1;border-radius:10px;background:#f8fafc;">
-                <div style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#334155;margin-bottom:.45rem;">
+            <div id="modalWorkflowGates"
+                style="display:none;margin-bottom:1rem;padding:0.75rem;border-radius:8px;font-size:0.75rem;line-height:1.45;">
+            </div>
+            <div id="modalM1EvidencePanel"
+                style="display:none;margin-bottom:0.9rem;padding:0.75rem;border:1px solid #cbd5e1;border-radius:10px;background:#f8fafc;">
+                <div
+                    style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#334155;margin-bottom:.45rem;">
                     Module 1 encoded form evidence (read-only)
                 </div>
                 <div id="modalM1EvidenceSummary" style="font-size:.75rem;color:#334155;line-height:1.45;"></div>
             </div>
-            <div id="modalCdrrmoBox" style="display:none;margin-bottom:0.9rem;padding:0.75rem;border:1px solid #cbd5e1;border-radius:10px;background:#ffffff;text-align:center;">
+            <div id="modalCdrrmoBox"
+                style="display:none;margin-bottom:0.9rem;padding:0.75rem;border:1px solid #cbd5e1;border-radius:10px;background:#ffffff;text-align:center;">
                 <div id="modalCdrrmoSummary" style="font-size:.75rem;color:#334155;line-height:1.45;"></div>
                 <div id="modalCdrrmoNotes" style="display:none;margin-top:.4rem;font-size:.72rem;color:#475569;"></div>
                 <div id="modalCdrrmoPhotosWrap" style="display:none;margin-top:.45rem;">
@@ -2127,8 +2434,10 @@
             <div id="modalEvaluationApprovalBox" class="m2-eval28-panel">
                 <div class="m2-eval28-head">
                     <div class="m2-eval28-kicker">Layer 4 — Final approval marker</div>
-                    <div class="m2-eval28-title">2.8 Record Evaluation Approval Status</div>
-                    <div class="m2-eval28-subtitle">THA Staff records the evaluation-related approval or review status required at this stage. This refers only to the evaluation result and not yet to the full routing chain that happens later in Module 3.</div>
+                    <div class="m2-eval28-title">2.6 Record Evaluation Approval Status</div>
+                    <div class="m2-eval28-subtitle">THA Staff records the evaluation-related approval or review status
+                        required at this stage. This refers only to the evaluation result and not yet to the full
+                        routing chain that happens later in Module 3.</div>
                 </div>
                 <div class="m2-eval28-body">
                     <div id="modalEvaluationApprovalSummary"></div>
@@ -2136,34 +2445,46 @@
                         <!-- Approval Status Options -->
                         <div style="margin-bottom: 1.2rem; display: flex; gap: 0.75rem; flex-direction: column;">
                             <!-- Approve Button -->
-                            <button type="button" class="m2-eval28-approve-btn" onclick="setEvaluationApprovalStatus('approved')" style="display:flex;align-items:center;justify-content:center;gap:0.75rem;padding:0.95rem;background:#ecfdf5;border:2px solid #86efac;border-radius:10px;cursor:pointer;transition:all 0.2s;font-weight:600;text-align:center;">
-                                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#22c55e" stroke-width="2">
+                            <button type="button" class="m2-eval28-approve-btn"
+                                onclick="setEvaluationApprovalStatus('approved')"
+                                style="display:flex;align-items:center;justify-content:center;gap:0.75rem;padding:0.95rem;background:#ecfdf5;border:2px solid #86efac;border-radius:10px;cursor:pointer;transition:all 0.2s;font-weight:600;text-align:center;">
+                                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#22c55e"
+                                    stroke-width="2">
                                     <polyline points="20 6 9 17 4 12"></polyline>
                                 </svg>
                                 <div style="text-align:center;">
                                     <div style="color:#16a34a;font-size:0.95rem;">✓ Approve - Qualified</div>
-                                    <div style="color:#6b7280;font-size:0.75rem;margin-top:0.1rem;">Record applicant as approved and eligible</div>
+                                    <div style="color:#6b7280;font-size:0.75rem;margin-top:0.1rem;">Record applicant as
+                                        approved and eligible</div>
                                 </div>
                             </button>
 
                             <!-- Disqualify Button -->
-                            <button type="button" class="m2-eval28-disqualify-btn" onclick="setEvaluationApprovalStatus('disqualified')" style="display:flex;align-items:center;justify-content:center;gap:0.75rem;padding:0.95rem;background:#fef2f2;border:2px solid #fca5a5;border-radius:10px;cursor:pointer;transition:all 0.2s;font-weight:600;text-align:center;">
-                                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#ef4444" stroke-width="2">
+                            <button type="button" class="m2-eval28-disqualify-btn"
+                                onclick="setEvaluationApprovalStatus('disqualified')"
+                                style="display:flex;align-items:center;justify-content:center;gap:0.75rem;padding:0.95rem;background:#fef2f2;border:2px solid #fca5a5;border-radius:10px;cursor:pointer;transition:all 0.2s;font-weight:600;text-align:center;">
+                                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#ef4444"
+                                    stroke-width="2">
                                     <circle cx="12" cy="12" r="10"></circle>
                                     <line x1="15" y1="9" x2="9" y2="15"></line>
                                     <line x1="9" y1="9" x2="15" y2="15"></line>
                                 </svg>
                                 <div style="text-align:center;">
                                     <div style="color:#dc2626;font-size:0.95rem;">✗ Disqualify</div>
-                                    <div style="color:#6b7280;font-size:0.75rem;margin-top:0.1rem;">Record disqualification with reason</div>
+                                    <div style="color:#6b7280;font-size:0.75rem;margin-top:0.1rem;">Record
+                                        disqualification with reason</div>
                                 </div>
                             </button>
                         </div>
 
                         <!-- Disqualification Reason (Hidden by default) -->
-                        <div id="modalDisqualifySection" style="display:none;margin-bottom:1rem;padding:1rem;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;">
-                            <label style="display:block;margin-bottom:0.5rem;font-weight:600;color:#dc2626;">Disqualification Reason *</label>
-                            <select id="modalDisqualifyReasonSelect" style="width:100%;padding:0.625rem;border:1px solid #fca5a5;border-radius:6px;margin-bottom:0.75rem;font-size:0.875rem;">
+                        <div id="modalDisqualifySection"
+                            style="display:none;margin-bottom:1rem;padding:1rem;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;">
+                            <label
+                                style="display:block;margin-bottom:0.5rem;font-weight:600;color:#dc2626;">Disqualification
+                                Reason *</label>
+                            <select id="modalDisqualifyReasonSelect"
+                                style="width:100%;padding:0.625rem;border:1px solid #fca5a5;border-radius:6px;margin-bottom:0.75rem;font-size:0.875rem;">
                                 <option value="">Select reason...</option>
                                 <option value="property_owner">Owns property in Talisay</option>
                                 <option value="income_over_ceiling">Income exceeds ceiling</option>
@@ -2172,18 +2493,29 @@
                                 <option value="incomplete_documents">Incomplete documents</option>
                                 <option value="other">Other reason</option>
                             </select>
-                            <label style="display:block;margin-bottom:0.3rem;font-weight:600;color:#374151;font-size:0.875rem;">Additional Notes</label>
-                            <textarea id="modalDisqualifyNotes" class="m2-dq-notes" rows="2" placeholder="Explain the disqualification reason..." style="width: 100%; box-sizing: border-box; padding: 0.625rem; border: 1px solid #fca5a5; border-radius: 0.5rem; font-size: 0.875rem; font-family: inherit; resize: vertical;"></textarea>
+                            <label
+                                style="display:block;margin-bottom:0.3rem;font-weight:600;color:#374151;font-size:0.875rem;">Additional
+                                Notes</label>
+                            <textarea id="modalDisqualifyNotes" class="m2-dq-notes" rows="2"
+                                placeholder="Explain the disqualification reason..."
+                                style="width: 100%; box-sizing: border-box; padding: 0.625rem; border: 1px solid #fca5a5; border-radius: 0.5rem; font-size: 0.875rem; font-family: inherit; resize: vertical;"></textarea>
                         </div>
 
                         <!-- Approval Notes -->
-                        <label style="margin-bottom:0.3rem;display:block;font-weight:600;color:#374151;font-size:0.875rem;text-align:center;">Evaluation Notes (optional)</label>
-                        <textarea id="modalEvaluationApprovalNotes" class="m2-dq-notes" rows="2" placeholder="2.8 remarks (evaluation only; not Module 3 routing)..." style="width: 100%; box-sizing: border-box; padding: 0.625rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.875rem; font-family: inherit; resize: vertical; margin-bottom: 1rem;"></textarea>
+                        <label
+                            style="margin-bottom:0.3rem;display:block;font-weight:600;color:#374151;font-size:0.875rem;text-align:center;">Evaluation
+                            Notes (optional)</label>
+                        <textarea id="modalEvaluationApprovalNotes" class="m2-dq-notes" rows="2"
+                            placeholder="2.6 remarks (evaluation only; not Module 3 routing)..."
+                            style="width: 100%; box-sizing: border-box; padding: 0.625rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.875rem; font-family: inherit; resize: vertical; margin-bottom: 1rem;"></textarea>
 
                         <!-- Action Buttons -->
                         <div style="display:flex;gap:0.75rem;align-items:stretch;">
-                            <button type="button" class="m2-eval28-save-btn" onclick="saveAndProceedModule3()" style="flex:1;min-height:48px;padding:0.78rem 1.1rem;background:#2563eb;color:white;border:none;border-radius:10px;font-weight:700;cursor:pointer;transition:all 0.2s;font-size:0.9rem;">Save 2.8 Status & Proceed to Module 3</button>
-                            <button type="button" onclick="m2BackToLayer3Step()" style="min-width:108px;min-height:48px;padding:0.78rem 1rem;background:#f3f4f6;color:#374151;border:1px solid #d1d5db;border-radius:10px;font-weight:600;cursor:pointer;transition:all 0.2s;font-size:0.88rem;">Back</button>
+                            <button type="button" class="m2-eval28-save-btn" onclick="saveAndProceedModule3()"
+                                style="flex:1;min-height:48px;padding:0.78rem 1.1rem;background:#2563eb;color:white;border:none;border-radius:10px;font-weight:700;cursor:pointer;transition:all 0.2s;font-size:0.9rem;">Save
+                                Status & Proceed to Documents</button>
+                            <button type="button" onclick="m2BackToLayer3Step()"
+                                style="min-width:108px;min-height:48px;padding:0.78rem 1rem;background:#f3f4f6;color:#374151;border:1px solid #d1d5db;border-radius:10px;font-weight:600;cursor:pointer;transition:all 0.2s;font-size:0.88rem;">Back</button>
                         </div>
                     </div>
                 </div>
@@ -2199,7 +2531,7 @@
             <div>
                 <h2>🏠 Award Lot</h2>
                 <p style="font-size: 0.875rem; color: #6b7280; margin: 0.25rem 0 0 0;" id="awardModalName">
-                    
+
                 </p>
             </div>
             <button class="modal-close" onclick="closeAwardModal()">&times;</button>
@@ -2208,33 +2540,44 @@
             <input type="hidden" name="application_id" id="awardApplicationId">
             <div class="modal-body">
                 <div style="margin-bottom: 1rem;">
-                    <label style="display: block; font-size: 0.75rem; font-weight: 500; color: #374151; margin-bottom: 0.375rem;">Site Name</label>
+                    <label
+                        style="display: block; font-size: 0.75rem; font-weight: 500; color: #374151; margin-bottom: 0.375rem;">Site
+                        Name</label>
                     <input type="text" name="site_name" required placeholder="e.g., GK Cabatangan"
-                           style="width: 100%; padding: 0.625rem; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.875rem;">
+                        style="width: 100%; padding: 0.625rem; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.875rem;">
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                     <div>
-                        <label style="display: block; font-size: 0.75rem; font-weight: 500; color: #374151; margin-bottom: 0.375rem;">Lot Number</label>
+                        <label
+                            style="display: block; font-size: 0.75rem; font-weight: 500; color: #374151; margin-bottom: 0.375rem;">Lot
+                            Number</label>
                         <input type="text" name="lot_number" required placeholder="e.g., 5"
-                               style="width: 100%; padding: 0.625rem; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.875rem;">
+                            style="width: 100%; padding: 0.625rem; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.875rem;">
                     </div>
                     <div>
-                        <label style="display: block; font-size: 0.75rem; font-weight: 500; color: #374151; margin-bottom: 0.375rem;">Block Number</label>
+                        <label
+                            style="display: block; font-size: 0.75rem; font-weight: 500; color: #374151; margin-bottom: 0.375rem;">Block
+                            Number</label>
                         <input type="text" name="block_number" required placeholder="e.g., 3"
-                               style="width: 100%; padding: 0.625rem; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.875rem;">
+                            style="width: 100%; padding: 0.625rem; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.875rem;">
                     </div>
                 </div>
                 <div style="margin-bottom: 1rem;">
-                    <label style="display: block; font-size: 0.75rem; font-weight: 500; color: #374151; margin-bottom: 0.375rem;">Notes (Optional)</label>
+                    <label
+                        style="display: block; font-size: 0.75rem; font-weight: 500; color: #374151; margin-bottom: 0.375rem;">Notes
+                        (Optional)</label>
                     <textarea name="notes" placeholder="Any additional notes..." rows="2"
-                              style="width: 100%; padding: 0.625rem; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.875rem; resize: vertical;"></textarea>
+                        style="width: 100%; padding: 0.625rem; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.875rem; resize: vertical;"></textarea>
                 </div>
             </div>
-            <div class="modal-footer" style="padding: 1rem 1.5rem; border-top: 1px solid #e5e7eb; display: flex; justify-content: flex-end; gap: 0.5rem;">
-                <button type="button" onclick="closeAwardModal()" style="padding: 0.625rem 1rem; background: white; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.8125rem; cursor: pointer;">
+            <div class="modal-footer"
+                style="padding: 1rem 1.5rem; border-top: 1px solid #e5e7eb; display: flex; justify-content: flex-end; gap: 0.5rem;">
+                <button type="button" onclick="closeAwardModal()"
+                    style="padding: 0.625rem 1rem; background: white; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.8125rem; cursor: pointer;">
                     Cancel
                 </button>
-                <button type="submit" style="padding: 0.625rem 1rem; background: #7c3aed; color: white; border: none; border-radius: 8px; font-size: 0.8125rem; font-weight: 500; cursor: pointer;">
+                <button type="submit"
+                    style="padding: 0.625rem 1rem; background: #7c3aed; color: white; border: none; border-radius: 8px; font-size: 0.8125rem; font-weight: 500; cursor: pointer;">
                     🏠 Award Lot
                 </button>
             </div>
@@ -2245,8 +2588,7 @@
 <!-- Electricity Link for authorized users -->
 {% if permissions.can_manage_electricity %}
 <div style="position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 40;">
-    <a href="{% url 'applications:electricity_list' request.user.position %}"
-       class="btn-primary-add">
+    <a href="{% url 'applications:electricity_list' request.user.position %}" class="btn-primary-add">
         ⚡ Electricity Tracking
     </a>
 </div>
@@ -2356,16 +2698,16 @@
         currentApplicationId = applicationId || null;
         const modal = document.getElementById('applicationModal');
         modal.classList.add('active');
-        
+
         // Set applicant info
         document.getElementById('modalApplicantName').textContent = name;
         document.getElementById('modalRefNumber').textContent = refNumber;
-        
+
         // Reset and load state
         resetModalState();
         updateGroupACount();
         updateProgressTrackerFromStage(currentStage);
-        
+
         // Load actual requirement status from server
         if (currentApplicantId) {
             loadApplicantRequirements(currentApplicantId);
@@ -2543,7 +2885,7 @@
                 formData.append('applicant_id', currentApplicantId);
                 formData.append('action', 'mark_eligible_walk_in');
                 formData.append('reason', '');
-                formData.append('notes', 'Auto-finalized from Layer 2 (no hazard claim) before 2.8.');
+                formData.append('notes', 'Auto-finalized from Layer 2 (no hazard claim) before 2.6.');
                 formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
                 const response = await fetch('{% url "applications:evaluate_applicant" request.user.position %}', {
                     method: 'POST',
@@ -2551,7 +2893,7 @@
                 });
                 const data = await response.json();
                 if (!data.success) {
-                    alert(data.error || 'Unable to finalize Module 2 eligibility before opening 2.8.');
+                    alert(data.error || 'Unable to finalize Module 2 eligibility before opening 2.6.');
                     return;
                 }
             } catch (error) {
@@ -2610,49 +2952,27 @@
 
         gate.style.display = 'block';
 
-        if (blacklistBlocked) {
-            gate.style.background = '#fff7f7';
-            gate.style.border = '1px solid #fecaca';
-            gate.style.color = '#7f1d1d';
-            const detail = escapeHtml(
-                [data.blacklist_detail || '', data.blacklist_policy_note || ''].filter(Boolean).join(' ')
-            );
-            gate.innerHTML =
-                `<div class="m2-pipeline-layers">` +
-                `<div class="m2-layer-eyebrow">Layer 1 — System check</div>` +
-                `<div class="m2-layer-title">2.2 Automatic Blacklist Check</div>` +
-                `<div class="m2-checklist">` +
-                item(
-                    'fail',
-                    '!',
-                    `2.2 Automatic Blacklist Check${sourceChip}`,
-                    `Blocked. ${escapeHtml(data.blacklist_detail || 'This applicant matches the housing-units blacklist.')}${
-                        data.blacklist_policy_note ? ' ' + escapeHtml(data.blacklist_policy_note) : ''
-                    }`
-                ) +
-                `</div>` +
-                `<div class="m2-blocked-user-msg">` +
-                `Sorry, this ISF is on the blacklist. You cannot continue to the next layer or section.` +
-                `</div>` +
-                (detail
-                    ? `<div class="m2-tech-detail">Record: ${detail}</div>`
-                    : '') +
-                `</div>`;
-            return;
-        }
-
         gate.style.background = '#f8fafc';
         gate.style.border = '1px solid #e2e8f0';
         gate.style.color = '#334155';
 
+        const l1Tone = blacklistBlocked ? 'fail' : 'pass';
+        const l1Icon = blacklistBlocked ? '!' : '✓';
+        const l1Desc = blacklistBlocked
+            ? `Flag noted${sourceChip}. Blacklist match is advisory only in Module 2; processing may continue.${data.blacklist_detail ? ' ' + escapeHtml(data.blacklist_detail) : ''}${data.blacklist_policy_note ? ' ' + escapeHtml(data.blacklist_policy_note) : ''}`
+            : 'Clear. No blacklist match; continue processing.';
+        const l1DoneText = blacklistBlocked
+            ? '✓ Layer 1 complete — 2.1 blacklist advisory noted'
+            : '✓ Layer 1 complete — 2.1 Automatic Blacklist Check clear';
+
         const propDesc = propertyClear
             ? 'Cleared - no Talisay property declared.'
-            : 'Failed - property in Talisay declared (disqualification ground).';
+            : 'Flagged - property in Talisay declared. Advisory only in Module 2; applicant can proceed on walk-in path unless Layer 3 qualifies for priority.';
         const incDesc = incomeClear
             ? 'Cleared - within Module 1 income threshold.'
-            : 'Failed - over Module 1 income threshold.';
+            : 'Flagged - over Module 1 income threshold. Advisory only in Module 2; applicant can proceed on walk-in path unless Layer 3 qualifies for priority.';
         const hhDesc = householdMismatch
-            ? `Review needed - declared size (${escapeHtml(declaredHH)}) does not match listed members (${escapeHtml(listedHH)}).`
+            ? `Flagged - declared size (${escapeHtml(declaredHH)}) does not match listed members (${escapeHtml(listedHH)}). Advisory only in Module 2; applicant can proceed on walk-in path unless Layer 3 qualifies for priority.`
             : `Cleared - declared size (${escapeHtml(declaredHH)}) aligns with listed members (${escapeHtml(listedHH)}).`;
         const l2Tone23 = propertyClear ? 'pass' : 'fail';
         const l2Icon23 = propertyClear ? '✓' : '!';
@@ -2669,17 +2989,22 @@
             : `<span style="display:inline-flex;align-items:center;padding:.3rem .72rem;border-radius:9999px;border:1px solid #93c5fd;background:#dbeafe;color:#1d4ed8;font-size:.72rem;font-weight:700;box-shadow:0 1px 2px rgba(29,78,216,.15);">Hazard claim: No (2.5 skipped)</span>`;
         const cdrrmoStatus = data.cdrrmo && data.cdrrmo.status ? data.cdrrmo.status : '';
         const cdrrmoReadout = cdrrmoStatus === 'certified'
-            ? 'Danger-zone status is officially verified. Applicant provided a valid CDRRMO certification; priority may be available when all other requirements allow.'
+            ? 'Danger-zone status is officially verified. Applicant provided a valid CDRRMO certification. Queue assignment is Priority.'
             : (cdrrmoStatus === 'not_certified'
                 ? 'Danger-zone claim remains unverified. Valid CDRRMO certification was not provided. Applicant follows regular walk-in path.'
                 : 'CDRRMO certification is still pending or not yet on file. Record official CDRRMO certification result in Module 2.');
 
         const l3Action = (canVerifyDocs && requiresCdrrmo && (!cdrrmoStatus || cdrrmoStatus === 'pending'))
-            ? `<div style="margin-top:0.55rem;padding:0.55rem;border:1px solid #bfdbfe;border-radius:8px;background:#eff6ff;">
-                <div style="font-size:0.7rem;font-weight:700;color:#1e3a8a;">Staff action</div>
-                <label style="display:block;font-size:0.69rem;font-weight:600;color:#334155;margin-top:.3rem;margin-bottom:.3rem;">Receiving remarks (optional)</label>
-                <textarea id="modalLayer3CdrrmoNotes" class="m2-cdrrmo-office-notes" rows="2" placeholder="Notes while recording CDRRMO result in Layer 3..." style="width: 100%; box-sizing: border-box; padding: 0.625rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.875rem; font-family: inherit; resize: vertical;"></textarea>
-                <div class="m2-layer-footer-nav" style="border-top: none; padding-top: 0; margin-top: 0.65rem;">
+            ? `<div style="margin-top:0.75rem;padding:1rem 1.25rem;border:1px solid #bfdbfe;border-radius:10px;background:linear-gradient(135deg,#eff6ff 0%,#f8fafc 100%);box-shadow:0 1px 3px rgba(37,99,235,.08);">
+                <div style="text-align:center;margin-bottom:0.75rem;">
+                    <div style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.72rem;font-weight:700;color:#1e3a8a;text-transform:uppercase;letter-spacing:0.06em;">
+                        <svg style="width:14px;height:14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                        Staff action
+                    </div>
+                    <div style="font-size:0.68rem;color:#64748b;margin-top:0.2rem;">Receiving remarks (optional)</div>
+                </div>
+                <textarea id="modalLayer3CdrrmoNotes" class="m2-cdrrmo-office-notes" rows="2" placeholder="Notes while recording CDRRMO result in Layer 3..." style="width:100%;box-sizing:border-box;padding:0.625rem;border:1px solid #cbd5e1;border-radius:0.5rem;font-size:0.8rem;font-family:inherit;resize:vertical;background:#ffffff;transition:border-color 150ms ease;" onfocus="this.style.borderColor='#93c5fd';this.style.boxShadow='0 0 0 3px rgba(59,130,246,.1)'" onblur="this.style.borderColor='#cbd5e1';this.style.boxShadow='none'"></textarea>
+                <div class="m2-layer-footer-nav" style="border-top:none;padding-top:0;margin-top:0.75rem;justify-content:center;">
                     <button type="button" class="m2-back-btn" onclick="m2BackToLayer2Step()">Back</button>
                     <button type="button" class="m2-cdrrmo-receipt-btn" onclick="recordOfficeCdrrmoReceipt('certified')">Mark as Certified (CDRRMO)</button>
                     <button type="button" class="m2-cdrrmo-receipt-btn walkin" onclick="recordOfficeCdrrmoReceipt('not_certified')">Proceed Without Certification (Walk-in Path)</button>
@@ -2687,7 +3012,7 @@
             </div>`
             : `<div class="m2-layer-footer-nav">
                     <button type="button" class="m2-back-btn" onclick="m2BackToLayer2Step()">Back</button>
-                    <button type="button" class="m2-proceed-btn" onclick="m2OpenEvaluationApprovalStep()">Done — Proceed to 2.8</button>
+                    <button type="button" class="m2-proceed-btn" onclick="m2OpenEvaluationApprovalStep()">Done — Proceed to 2.6</button>
                </div>`;
 
         gate.innerHTML =
@@ -2696,7 +3021,7 @@
             `<div class="m2-layer-eyebrow">Layer 1 — System check</div>` +
             `<div class="m2-layer-title">2.1 Automatic Blacklist Check</div>` +
             `<div class="m2-checklist">` +
-            itemDescOnly('pass', '✓', 'Clear. No blacklist match; continue processing.') +
+            itemDescOnly(l1Tone, l1Icon, l1Desc) +
             `</div>` +
             `<div id="m2Layer1CdrrmoPlaceholder" style="margin-top: 1rem; width: 100%;"></div>` +
             `<div class="m2-layer-footer-nav">` +
@@ -2704,7 +3029,7 @@
             `<button type="button" class="m2-proceed-btn" onclick="m2ProceedToLayer2Step()">Proceed Layer 2</button>` +
             `</div>` +
             `</div>` +
-            `<div id="m2Layer1Done" class="m2-layer1-done-strip" style="display:none;">✓ Layer 1 complete — 2.1 Automatic Blacklist Check clear</div>` +
+            `<div id="m2Layer1Done" class="m2-layer1-done-strip" style="display:none;">${l1DoneText}</div>` +
             `<div id="m2Layer2Block" class="m2-layer2-block" style="display:none;">` +
             `<div class="m2-layer-eyebrow">Layer 2 — Eligibility readouts</div>` +
             `<div class="m2-layer-title">2.2 Property Ownership - 2.3 Income Details - 2.4 Household Composition</div>` +
@@ -2719,32 +3044,32 @@
             `<button type="button" id="modalToggleM1FormBtn" class="m2-show-form-btn" onclick="toggleModule1FormEvidence()">Show form</button>` +
             (requiresCdrrmo
                 ? `<button type="button" class="m2-proceed-btn" onclick="m2ProceedToLayer3Step()">Proceed to Layer 3</button>`
-                : `<button type="button" class="m2-proceed-btn" onclick="m2FinalizeNoHazardAndOpen28()">Done — Proceed to 2.8</button>`) +
+                : `<button type="button" class="m2-proceed-btn" onclick="m2FinalizeNoHazardAndOpen28()">Done — Proceed to 2.6</button>`) +
             `</div>` +
             `</div>` +
-            `<div id="m2Layer2Done" class="m2-layer1-done-strip" style="display:none; margin-top: 0.4rem;">✓ Layer 2 complete — Eligibility readouts clear</div>` +
+            `<div id="m2Layer2Done" class="m2-layer1-done-strip" style="display:none; margin-top: 0.4rem;">✓ Layer 2 complete — Eligibility readouts reviewed (advisory flags allowed)</div>` +
             (requiresCdrrmo
                 ? `<div id="m2Layer3Block" class="m2-layer3-block" style="display:none;">` +
-                  `<div class="m2-layer-eyebrow">Layer 3 — Official verification</div>` +
-                  `<div class="m2-layer-title" style="margin-bottom:0.75rem;">2.6 Check CDRRMO Certification Status</div>` +
-                  `<div style="display:flex;flex-direction:column;align-items:center;text-align:center;gap:0.5rem;border:1px solid ` + (cdrrmoStatus === 'certified' ? '#bbf7d0' : (cdrrmoStatus === 'not_certified' ? '#bfdbfe' : '#fde68a')) + `;border-radius:8px;background:` + (cdrrmoStatus === 'certified' ? '#f0fdf4' : (cdrrmoStatus === 'not_certified' ? '#eff6ff' : '#fffbeb')) + `;padding:1rem 0.75rem;margin-bottom:0.8rem;">` +
-                     `<div style="display:flex;align-items:center;justify-content:center;gap:0.5rem;">` +
-                         (cdrrmoStatus === 'certified' 
-                             ? `<span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;background:#16a34a;color:#fff;border-radius:50%;font-size:0.6rem;font-weight:bold;">✓</span> <span style="font-weight:700;color:#16a34a;font-size:0.875rem;">VERIFIED</span>`
-                             : (cdrrmoStatus === 'not_certified'
-                                 ? `<span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;background:#2563eb;color:#fff;border-radius:50%;font-size:0.6rem;font-weight:bold;">✓</span> <span style="font-weight:700;color:#1d4ed8;font-size:0.875rem;">NOT VERIFIED</span>`
-                                 : `<span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;background:#d97706;color:#fff;border-radius:50%;font-size:0.6rem;font-weight:bold;">!</span> <span style="font-weight:700;color:#d97706;font-size:0.875rem;">PENDING REVIEW</span>`)) +
-                     `</div>` +
-                     `<div style="font-size:0.75rem;line-height:1.4;color:#334155;">` +
-                         `${cdrrmoReadout}` +
-                     `</div>` +
-                     `<div style="font-size:0.75rem;color:#475569;margin-top:0.2rem;">` +
-                         `<span style="font-weight:600;">Queue effect:</span> <span style="color:#0f172a;">${(cdrrmoStatus === 'certified' ? 'Priority category is recommended.' : (cdrrmoStatus === 'not_certified' ? 'Walk-in path only.' : 'Queue assignment is blocked until evaluation finalized.'))}</span>` +
-                     `</div>` +
-                  `</div>` +
-                  l3Action +
-                  `</div>` +
-                  `<div id="m2Layer3Done" class="m2-layer1-done-strip" style="display:none; margin-top:0.4rem;">✓ Layer 3 complete — 2.6 CDRRMO review</div>`
+                `<div class="m2-layer-eyebrow">Layer 3 — Official verification</div>` +
+                `<div class="m2-layer-title" style="margin-bottom:0.75rem;">2.6 Check CDRRMO Certification Status</div>` +
+                `<div style="display:flex;flex-direction:column;align-items:center;text-align:center;gap:0.5rem;border:1px solid ` + (cdrrmoStatus === 'certified' ? '#bbf7d0' : (cdrrmoStatus === 'not_certified' ? '#bfdbfe' : '#fde68a')) + `;border-radius:8px;background:` + (cdrrmoStatus === 'certified' ? '#f0fdf4' : (cdrrmoStatus === 'not_certified' ? '#eff6ff' : '#fffbeb')) + `;padding:1rem 0.75rem;margin-bottom:0.8rem;">` +
+                `<div style="display:flex;align-items:center;justify-content:center;gap:0.5rem;">` +
+                (cdrrmoStatus === 'certified'
+                    ? `<span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;background:#16a34a;color:#fff;border-radius:50%;font-size:0.6rem;font-weight:bold;">✓</span> <span style="font-weight:700;color:#16a34a;font-size:0.875rem;">VERIFIED</span>`
+                    : (cdrrmoStatus === 'not_certified'
+                        ? `<span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;background:#2563eb;color:#fff;border-radius:50%;font-size:0.6rem;font-weight:bold;">✓</span> <span style="font-weight:700;color:#1d4ed8;font-size:0.875rem;">NOT VERIFIED</span>`
+                        : `<span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;background:#d97706;color:#fff;border-radius:50%;font-size:0.6rem;font-weight:bold;">!</span> <span style="font-weight:700;color:#d97706;font-size:0.875rem;">PENDING REVIEW</span>`)) +
+                `</div>` +
+                `<div style="font-size:0.75rem;line-height:1.4;color:#334155;">` +
+                `${cdrrmoReadout}` +
+                `</div>` +
+                `<div style="font-size:0.75rem;color:#475569;margin-top:0.2rem;">` +
+                `<span style="font-weight:600;">Queue effect:</span> <span style="color:#0f172a;">${(cdrrmoStatus === 'certified' ? 'Priority queue placement is automatic.' : (cdrrmoStatus === 'not_certified' ? 'Walk-in path only.' : 'Finalize CDRRMO result, then queue assignment follows that result automatically.'))}</span>` +
+                `</div>` +
+                `</div>` +
+                l3Action +
+                `</div>` +
+                `<div id="m2Layer3Done" class="m2-layer1-done-strip" style="display:none; margin-top:0.4rem;">✓ Layer 3 complete — 2.6 CDRRMO review</div>`
                 : '') +
             `</div>`;
     }
@@ -2830,23 +3155,23 @@
         document.querySelectorAll('.document-item').forEach(item => {
             item.classList.remove('verified');
         });
-        
+
         // Reset timeline
         document.querySelectorAll('.timeline-icon').forEach(icon => {
             icon.classList.remove('completed');
             icon.classList.add('pending');
         });
-        
+
         // Reset progress tracker
         document.querySelectorAll('.progress-step').forEach(step => {
             step.classList.remove('completed', 'current');
         });
-        
+
         // Hide all timeline action buttons
         document.querySelectorAll('.timeline-action-btn').forEach(btn => {
             btn.style.display = 'none';
         });
-        
+
         window.__hasApplication = false;
         window.__applicationNumber = '';
         window.__m2AllowEval28 = false;
@@ -2883,7 +3208,7 @@
         const sourceText = data.blacklist_source ? ` ${data.blacklist_source}` : '';
         const blacklistText = notBlacklisted ? 'Not listed on master blacklist (screening)' : `Matched master blacklist${sourceText} (Module 2 actions restricted)`;
 
-        const line = (ok, text, tone='default') => {
+        const line = (ok, text, tone = 'default') => {
             const bg = ok ? '#dcfce7' : (tone === 'warn' ? '#fef3c7' : '#fee2e2');
             const color = ok ? '#166534' : (tone === 'warn' ? '#92400e' : '#991b1b');
             const icon = ok ? '✓' : (tone === 'warn' ? '!' : '✗');
@@ -3191,7 +3516,7 @@
         } else {
             photosWrap.style.display = 'none';
         }
-        
+
         const placeholder = document.getElementById('m2Layer1CdrrmoPlaceholder');
         if (placeholder) {
             placeholder.appendChild(box);
@@ -3230,7 +3555,7 @@
         summary.innerHTML = '';
         if (!canRecord) {
             form.style.display = 'none';
-            summary.innerHTML = `<div style="margin-top:.2rem;padding:.45rem .5rem;border-radius:8px;border:1px solid #fde68a;background:#fffbeb;color:#92400e;font-size:.69rem;line-height:1.45;">2.8 will be enabled once Module 2 has finalized the applicant as eligible with an active queue assignment (Priority or Walk-in).</div>`;
+            summary.innerHTML = `<div style="margin-top:.2rem;padding:.45rem .5rem;border-radius:8px;border:1px solid #fde68a;background:#fffbeb;color:#92400e;font-size:.69rem;line-height:1.45;">2.6 will be enabled once Module 2 has finalized the applicant as eligible with an active queue assignment (Priority or Walk-in).</div>`;
             if (gatewayWrap) gatewayWrap.style.display = 'none';
             return;
         }
@@ -3248,7 +3573,7 @@
             gatewayBtn.textContent = hasApplication ? 'Module 3 already initialized' : 'Proceed to Module 3';
         }
         if (hasRecorded2_8 && !canProceedToModule3) {
-            summary.innerHTML = `<div style="margin-top:.2rem;padding:.45rem .5rem;border-radius:8px;border:1px solid #fecaca;background:#fef2f2;color:#991b1b;font-size:.69rem;line-height:1.45;">Module 3 gateway is unavailable for Disqualified records. Update 2.8 to Approved if this record should proceed to routing.</div>`;
+            summary.innerHTML = `<div style="margin-top:.2rem;padding:.45rem .5rem;border-radius:8px;border:1px solid #fecaca;background:#fef2f2;color:#991b1b;font-size:.69rem;line-height:1.45;">Module 3 gateway is unavailable for Disqualified records. Update 2.6 to Approved if this record should proceed to routing.</div>`;
         }
     }
 
@@ -3257,7 +3582,7 @@
             const response = await fetch(`/applications/staff/${position}/${applicantId}/`);
             const data = await response.json();
             window.__m2LastApplicantData = data;
-            
+
             window.__modalBlacklistBlocked = !!data.blacklist_blocked;
             window.__hasApplication = !!data.has_application;
             window.__applicationNumber = data.application_number || '';
@@ -3290,7 +3615,7 @@
             if (progressFromStatus) {
                 updateProgressTrackerFromStage(progressFromStatus);
             }
-            
+
             if (data.routing_steps) {
                 updateRoutingTimeline(data.routing_steps, data.latest_step);
             }
@@ -3302,7 +3627,7 @@
     function updateRoutingTimeline(steps, latestStep) {
         const stepOrder = ['received', 'forwarded_oic', 'signed_oic', 'forwarded_head', 'signed_head'];
         const completedSteps = new Set(steps.map(s => s.step));
-        
+
         stepOrder.forEach(step => {
             const item = document.querySelector(`[data-step="${step}"]`);
             if (item) {
@@ -3325,7 +3650,7 @@
                 }
             }
         });
-        
+
         const nextStepMap = {
             null: 'received',
             'received': 'forwarded_oic',
@@ -3352,15 +3677,15 @@
             alert('This applicant is on the blacklist. Resolve in Module 1 before verifying requirements (workflow 2.1).');
             return;
         }
-        
+
         const isChecked = checkbox.classList.toggle('checked');
         const span = checkbox.querySelector('span');
         if (span) span.style.display = isChecked ? 'block' : 'none';
         checkbox.closest('.document-item').classList.toggle('verified', isChecked);
-        
+
         updateGroupACount();
         updateFormButton();
-        
+
         // Save to server
         saveRequirementStatus(requirementCode, isChecked ? 'verified' : 'pending');
     }
@@ -3375,7 +3700,7 @@
         const verified = document.querySelectorAll('.document-grid .document-checkbox.checked').length;
         const btn = document.getElementById('generateFormBtn');
         const text = document.getElementById('formStatusText');
-        
+
         if (!btn || !text) return;
 
         if (window.__modalBlacklistBlocked) {
@@ -3396,7 +3721,7 @@
             text.style.color = '#0369a1';
             return;
         }
-        
+
         if (verified >= 7) {
             btn.disabled = false;
             text.textContent = 'All requirements verified. Ready to generate form!';
@@ -3417,13 +3742,13 @@
             'Fully Approved': 5,
             'Lot Awarded': 6
         };
-        
+
         const currentStep = stageMap[currentStage] || 1;
-        
+
         document.querySelectorAll('.progress-step').forEach((step, index) => {
             const stepNum = index + 1;
             step.classList.remove('completed', 'current');
-            
+
             if (stepNum < currentStep) {
                 step.classList.add('completed');
             } else if (stepNum === currentStep) {
@@ -3439,13 +3764,13 @@
             formData.append('requirement_code', requirementCode);
             formData.append('status', status);
             formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
-            
+
             const response = await fetch('{% url "documents:update_requirement_submission" request.user.position %}', {
                 method: 'POST',
                 body: formData
             });
             const data = await response.json();
-            
+
             if (!data.success) {
                 alert(data.error || 'Error saving requirement');
                 if (String(data.error || '').toLowerCase().includes('blacklist')) {
@@ -3584,7 +3909,7 @@
             const confirmMsg = `Confirm: disqualify this applicant?\n\nReason: ${disqualifyReason}\nNotes: ${disqualifyNotes || '(none)'}`;
             if (!confirm(confirmMsg)) return;
         } else {
-            if (!confirm('Confirm: save this 2.8 evaluation approval status as Approved?')) return;
+            if (!confirm('Confirm: save this 2.6 evaluation approval status as Approved?')) return;
         }
 
         try {
@@ -3605,7 +3930,7 @@
             });
             const data = await response.json();
             if (!data.success) {
-                alert(data.error || 'Failed to save 2.8 status.');
+                alert(data.error || 'Failed to save 2.6 status.');
                 return;
             }
             if (!window.__m2LastApplicantData) window.__m2LastApplicantData = {};
@@ -3622,7 +3947,7 @@
                 : '—';
             const notesLine = window.__m2LastApplicantData.evaluation_approval_notes || '—';
             alert(
-                `Current 2.8 status: ${currentDisplay}\n` +
+                `Current 2.6 status: ${currentDisplay}\n` +
                 `Recorded by: ${by}\n` +
                 `Recorded at: ${at}\n` +
                 `Notes: ${notesLine}\n\n` +
@@ -3637,7 +3962,7 @@
                     ? 'SMS sent to ISF applicant for notification.'
                     : 'SMS was not sent (check contact number or SMS service logs).';
                 alert(
-                    `2.8 Approved successfully.\n` +
+                    `2.6 Approved successfully.\n` +
                     `${smsStatusLine}\n\n` +
                     `Redirecting to Document Management...`
                 );
@@ -3667,7 +3992,7 @@
             const confirmMsg = `Confirm: disqualify this applicant?\n\nReason: ${disqualifyReason}\nNotes: ${disqualifyNotes || '(none)'}`;
             if (!confirm(confirmMsg)) return;
         } else {
-            if (!confirm('Confirm: save 2.8 as Approved and proceed to Module 3 now?')) return;
+            if (!confirm('Confirm: save 2.6 as Approved and proceed to Module 3 now?')) return;
         }
 
         try {
@@ -3687,12 +4012,12 @@
             });
             const saveData = await saveResponse.json();
             if (!saveData.success) {
-                alert(saveData.error || 'Failed to save 2.8 status.');
+                alert(saveData.error || 'Failed to save 2.6 status.');
                 return;
             }
 
             if (approvalStatus !== 'approved') {
-                alert('2.8 status saved as Disqualified.');
+                alert('2.6 status saved as Disqualified.');
                 setTimeout(() => location.reload(), 300);
                 return;
             }
@@ -3702,7 +4027,7 @@
                 const docsUrl = reference
                     ? `/documents/${position}/management/?search=${encodeURIComponent(reference)}`
                     : `/documents/${position}/management/`;
-                alert('2.8 saved. Module 3 is already initialized for this applicant. Redirecting to Documents...');
+                alert('2.6 saved. Module 3 is already initialized for this applicant. Redirecting to Documents...');
                 window.location.href = docsUrl;
                 return;
             }
@@ -3714,7 +4039,7 @@
                 const docsUrl = reference
                     ? `/documents/${position}/management/?search=${encodeURIComponent(reference)}`
                     : `/documents/${position}/management/`;
-                const proceedError = proceedData.error || '2.8 saved, but failed to proceed to Module 3.';
+                const proceedError = proceedData.error || '2.6 saved, but failed to proceed to Module 3.';
                 if (/requirements\s+verified|all\s+7\s+must\s+be\s+complete/i.test(proceedError)) {
                     const separator = docsUrl.includes('?') ? '&' : '?';
                     window.location.href = `${docsUrl}${separator}m2_notice=requirements_gate`;
@@ -3732,7 +4057,7 @@
             const docsUrl = reference
                 ? `/documents/${position}/management/?search=${encodeURIComponent(reference)}`
                 : `/documents/${position}/management/`;
-            alert(`2.8 saved and Module 3 initialized.\nApplication #${proceedData.application_number}\n\nRedirecting to Documents...`);
+            alert(`2.6 saved and Module 3 initialized.\nApplication #${proceedData.application_number}\n\nRedirecting to Documents...`);
             window.location.href = docsUrl;
         } catch (error) {
             alert('Error: ' + error.message);
@@ -3752,7 +4077,7 @@
         }
         const approvalStatus = window.__m2LastApplicantData?.evaluation_approval_status || '';
         if (approvalStatus !== 'approved') {
-            alert('Only records marked as Approved in 2.8 can proceed to Module 3.');
+            alert('Only records marked as Approved in 2.6 can proceed to Module 3.');
             return;
         }
         if (!confirm('Proceed to Module 3 and generate the application form?')) return;
@@ -3785,15 +4110,15 @@
             window.location.href = docsUrl;
             return;
         }
-        
+
         const btn = document.getElementById('generateFormBtn');
         btn.disabled = true;
         btn.textContent = 'Generating...';
-        
+
         try {
             const response = await fetch(`/applications/staff/${position}/generate-form/${currentApplicantId}/`);
             const data = await response.json();
-            
+
             if (data.success) {
                 btn.textContent = 'Form generated';
                 document.getElementById('formStatusText').textContent = `Application #${data.application_number}`;
@@ -3824,11 +4149,11 @@
     async function generateFormDirect(applicantId) {
         if (!confirm('Generate application form for this applicant?')) return;
         const docsUrl = `/documents/${position}/management/`;
-        
+
         try {
             const response = await fetch(`/applications/staff/${position}/generate-form/${applicantId}/`);
             const data = await response.json();
-            
+
             if (data.success) {
                 alert(`Form generated! Application #${data.application_number}\nRedirecting to Documents...`);
                 window.location.href = docsUrl;
@@ -3849,21 +4174,21 @@
             'forwarded_head': 'Check CSWDO endorsement',
             'signed_head': 'Check SP Office endorsement (complete Section D)'
         };
-        
+
         if (!confirm(`${stepLabels[step]}?`)) return;
-        
+
         try {
             const formData = new FormData();
             formData.append('application_id', applicationId);
             formData.append('step', step);
             formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
-            
+
             const response = await fetch('{% url "documents:update_signatory_routing" request.user.position %}', {
                 method: 'POST',
                 body: formData
             });
             const data = await response.json();
-            
+
             if (data.success) {
                 alert('Routing updated successfully!');
                 location.reload();
@@ -3893,17 +4218,17 @@
 
     document.getElementById('awardForm').addEventListener('submit', async (e) => {
         e.preventDefault();
-        
+
         const formData = new FormData(e.target);
         formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
-        
+
         try {
             const response = await fetch('{% url "applications:award_lot" request.user.position %}', {
                 method: 'POST',
                 body: formData
             });
             const data = await response.json();
-            
+
             if (data.success) {
                 alert('Lot awarded successfully! SMS notification sent to beneficiary.');
                 location.reload();

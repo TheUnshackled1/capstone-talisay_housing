@@ -207,8 +207,7 @@ def _auto_finalize_non_hazard_walkin(applicant, acted_by=None):
         return False
 
     rules = _module2_eligibility_snapshot(applicant, checked_by=acted_by)
-    if not rules.get('eligible'):
-        return False
+    # Eligibility checks are advisory-only (red indicator); auto-finalize proceeds regardless.
 
     applicant.status = 'eligible'
     applicant.disqualification_reason = ''
@@ -293,31 +292,10 @@ def _auto_disqualify_if_blacklisted(applicant, bl_entry, checked_by=None):
 
 def _require_module2_blacklist_clear(applicant):
     """
-    Enforce Module 2 workflow step 2.1: automatic blacklist stop gate.
+    Module 2 workflow step 2.1: blacklist check is now advisory-only.
+    Shows red indicator in the eligibility pipeline but does not block actions.
     """
-    is_bl, bl_entry = check_blacklist_module2(
-        applicant.full_name,
-        applicant.phone_number or None,
-        applicant_id=applicant.id,
-    )
-    if not is_bl:
-        return None
-
-    _auto_disqualify_if_blacklisted(applicant, bl_entry)
-    reason = bl_entry.get_reason_display() if bl_entry else 'Blacklist match'
-    source_label = _blacklist_source_label(bl_entry)
-    policy_note = (getattr(bl_entry, 'policy_note', '') or '').strip()
-    return JsonResponse(
-        {
-            'success': False,
-            'error': (
-                f'Process 2.1 blocked: applicant matches blacklist [{source_label}] ({reason}). '
-                + (f'{policy_note} ' if policy_note else '')
-                + 'Resolve the source blacklist record before continuing Module 2 processing.'
-            ),
-        },
-        status=400,
-    )
+    return None
 
 
 def _deactivate_active_queue_entries(applicant):
@@ -383,31 +361,30 @@ def _module2_eligibility_snapshot(applicant, checked_by=None):
     blacklist_source = ''
     blacklist_policy_note = ''
     if is_bl and bl_entry:
-        _auto_disqualify_if_blacklisted(applicant, bl_entry, checked_by=checked_by)
         blacklist_source = _blacklist_source_label(bl_entry)
         blacklist_policy_note = (getattr(bl_entry, 'policy_note', '') or '').strip()
         blacklist_detail = bl_entry.get_reason_display()
         if bl_entry.notes:
             blacklist_detail += f' — {bl_entry.notes[:200]}'
-        blockers.append(f'Blacklist match [{blacklist_source}] ({blacklist_detail}).')
+        advisories.append(f'Blacklist match [{blacklist_source}] ({blacklist_detail}).')
         if blacklist_policy_note:
             advisories.append(blacklist_policy_note)
 
     income_ok = bool(applicant.is_income_eligible)
     if not income_ok:
-        blockers.append(
+        advisories.append(
             f'Declared monthly income ₱{applicant.monthly_income:,.2f} exceeds Module 1 ceiling of ₱{MODULE1_MONTHLY_INCOME_CEILING_PESO:,.0f}.'
         )
 
     property_ok = not bool(applicant.has_property_in_talisay)
     if not property_ok:
-        blockers.append('Applicant is flagged as owning property in Talisay City.')
+        advisories.append('Applicant is flagged as owning property in Talisay City.')
 
     declared_household = int(applicant.household_size or 0)
     listed_household = applicant.household_members.count() + 1
     household_ok = declared_household >= 1
     if not household_ok:
-        blockers.append('Declared household size must be at least 1.')
+        advisories.append('Declared household size must be at least 1.')
     household_mismatch = declared_household > 0 and declared_household != listed_household
     if household_mismatch:
         advisories.append(
@@ -428,16 +405,19 @@ def _module2_eligibility_snapshot(applicant, checked_by=None):
                     status_display = applicant.cdrrmo_certification.get_status_display()
                 except Exception:
                     status_display = cdrrmo_status
-            blockers.append(f'CDRRMO certification must be finalized first (current: {status_display}).')
+            advisories.append(f'CDRRMO certification must be finalized first (current: {status_display}).')
         elif cdrrmo_status == 'not_certified':
             advisories.append(
                 'CDRRMO result is Not Certified. Continue Module 2 evaluation under regular walk-in path (priority disabled).'
             )
 
+    # Queue mapping policy:
+    # - Hazard claim + certified CDRRMO -> Priority only
+    # - Otherwise -> Walk-in only
     allowed_queue_types = ['walk_in']
     recommended_queue_type = 'walk_in'
     if requires_cdrrmo and cdrrmo_status == 'certified':
-        allowed_queue_types = ['priority', 'walk_in']
+        allowed_queue_types = ['priority']
         recommended_queue_type = 'priority'
 
     return {
@@ -673,8 +653,7 @@ def applications_list(request, position):
         blacklist_detail = rules['blacklist_detail']
         blacklist_source = rules['blacklist_source']
         blacklist_policy_note = rules['blacklist_policy_note']
-        if blacklist_blocked:
-            user_actions = [a for a in user_actions if a not in ('verify_docs', 'generate_form')]
+        # Blacklist is advisory-only; do not strip actions.
 
         intake_queue_label = _active_intake_queue_label(applicant)
         active_entries = getattr(applicant, 'active_queue_entries', None) or []
@@ -691,7 +670,7 @@ def applications_list(request, position):
             'applicant_status_display': applicant.get_status_display(),
             'cdrrmo_status': getattr(getattr(applicant, 'cdrrmo_certification', None), 'status', None),
             'group_a_verified': group_a_verified,
-            'can_generate_form': can_generate_form and application is None and not blacklist_blocked,
+            'can_generate_form': can_generate_form and application is None,
             'form_generated': application is not None,
             'current_stage': current_stage,
             'routing_status': routing_status,
@@ -1211,39 +1190,25 @@ def update_cdrrmo_status(request, position):
                 msg_outcome = 'moved to Priority Queue'
                 applicant.disqualification_reason = ''
             else:
-                # Approving a "not certified" finding must not mark the applicant eligible.
-                applicant.status = 'disqualified'
-                applicant.disqualification_reason = (
-                    'CDRRMO field verification not certified (staff-approved finding).'
-                )
-                _deactivate_active_queue_entries(applicant)
-                queue_entry = None
-                queue_type = 'None'
-                msg_outcome = 'disqualified based on approved not-certified finding'
+                # Not certified finding approved by staff — assign to Walk-in queue.
+                applicant.status = 'eligible'
+                queue_entry, _ = _ensure_module2_queue_entry(applicant, 'walk_in', added_by=request.user)
+                queue_type = 'Walk-in'
+                msg_outcome = 'moved to Walk-in Queue (CDRRMO not certified)'
+                applicant.disqualification_reason = ''
 
             applicant.save()
             cert.save()
             if applicant.phone_number:
-                if ronda_finding == 'certified':
-                    eligible_msg = (
-                        "✅ Great news! Your housing application passed eligibility. "
-                        f"You are assigned Priority Queue Position {queue_entry.position}. "
-                        f"Reference: {applicant.reference_number}. Please visit THA office for next steps."
-                    )
-                    sent = send_sms(applicant.phone_number, eligible_msg, 'eligibility_passed', applicant=applicant, module='applications')
-                    if sent and not applicant.eligibility_sms_sent:
-                        applicant.eligibility_sms_sent = True
-                        applicant.save(update_fields=['eligibility_sms_sent', 'updated_at'])
-                else:
-                    reject_msg = (
-                        "❌ Unfortunately, your housing application could not be processed at this time. "
-                        f"Reason: Danger zone verification was not certified. Reference: {applicant.reference_number}. "
-                        "Please visit THA office for appeals."
-                    )
-                    sent = send_sms(applicant.phone_number, reject_msg, 'eligibility_fail', applicant=applicant, module='applications')
-                    if sent and not applicant.eligibility_sms_sent:
-                        applicant.eligibility_sms_sent = True
-                        applicant.save(update_fields=['eligibility_sms_sent', 'updated_at'])
+                eligible_msg = (
+                    "✅ Great news! Your housing application passed eligibility. "
+                    f"You are assigned {queue_type} Queue Position {queue_entry.position}. "
+                    f"Reference: {applicant.reference_number}. Please visit THA office for next steps."
+                )
+                sent = send_sms(applicant.phone_number, eligible_msg, 'eligibility_passed', applicant=applicant, module='applications')
+                if sent and not applicant.eligibility_sms_sent:
+                    applicant.eligibility_sms_sent = True
+                    applicant.save(update_fields=['eligibility_sms_sent', 'updated_at'])
 
             return JsonResponse({
                 'success': True,
@@ -1252,31 +1217,27 @@ def update_cdrrmo_status(request, position):
                 'queue_type': queue_type
             })
 
-        applicant.status = 'disqualified'
-        applicant.disqualification_reason = (
-            f'CDRRMO verification disputed by staff. Ronda finding: {ronda_finding}. '
-            'Staff assessment: insufficient grounds for acceptance.'
-        )
+        # Staff rejected CDRRMO finding — assign to Walk-in queue instead of disqualifying.
+        applicant.status = 'eligible'
+        applicant.disqualification_reason = ''
         applicant.eligibility_checked_by = request.user
         applicant.eligibility_checked_at = timezone.now()
         applicant.save()
-        _deactivate_active_queue_entries(applicant)
+        queue_entry, _ = _ensure_module2_queue_entry(applicant, 'walk_in', added_by=request.user)
         cert.save()
         if applicant.phone_number:
-            reject_msg = (
-                "❌ Unfortunately, your housing application could not be processed at this time. "
-                f"Reason: Danger zone verification could not be confirmed. Reference: {applicant.reference_number}. "
-                "Please visit THA office for appeals."
+            walk_in_msg = (
+                f"Your housing application has been assigned to Walk-in Queue position #{queue_entry.position}. "
+                f"Reference: {applicant.reference_number}. Please visit THA office for next steps."
             )
-            sent = send_sms(applicant.phone_number, reject_msg, 'eligibility_fail', applicant=applicant, module='applications')
-            if sent and not applicant.eligibility_sms_sent:
-                applicant.eligibility_sms_sent = True
-                applicant.save(update_fields=['eligibility_sms_sent', 'updated_at'])
+            sent = send_sms(applicant.phone_number, walk_in_msg, 'eligibility_passed', applicant=applicant, module='applications')
 
         return JsonResponse({
             'success': True,
-            'message': 'CDRRMO verification rejected. Applicant has been disqualified.',
-            'status': 'rejected'
+            'message': f'CDRRMO verification result noted. Applicant assigned to Walk-in Queue position #{queue_entry.position}.',
+            'status': 'rejected',
+            'queue_type': 'Walk-in',
+            'queue_position': queue_entry.position,
         })
 
     except Applicant.DoesNotExist:
@@ -1290,8 +1251,9 @@ def update_cdrrmo_status(request, position):
 @require_POST
 def evaluate_applicant(request, position):
     """
-    Module 2 eligibility/disqualification decision endpoint.
-    Intake is encoding-only; final decisions happen here.
+    Module 2 eligibility evaluation and queue assignment endpoint.
+    Evaluates applicant and assigns to Priority or Walk-in queue.
+    Disqualification is handled in Module 3 (Documents).
     """
     allowed_positions = ['fourth_member', 'second_member']
     if request.user.position not in allowed_positions:
@@ -1302,7 +1264,7 @@ def evaluate_applicant(request, position):
     reason = request.POST.get('reason', '').strip()
     notes = request.POST.get('notes', '').strip()
 
-    if not applicant_id or action not in ['mark_eligible', 'mark_eligible_priority', 'mark_eligible_walk_in', 'disqualify']:
+    if not applicant_id or action not in ['mark_eligible', 'mark_eligible_priority', 'mark_eligible_walk_in']:
         return JsonResponse({'success': False, 'error': 'Missing or invalid parameters.'}, status=400)
 
     applicant = get_object_or_404(Applicant, id=applicant_id)
@@ -1322,11 +1284,7 @@ def evaluate_applicant(request, position):
 
     if action in ['mark_eligible', 'mark_eligible_priority', 'mark_eligible_walk_in']:
         rules = _module2_eligibility_snapshot(applicant)
-        if not rules['eligible']:
-            return JsonResponse({
-                'success': False,
-                'error': 'Eligibility checks failed: ' + ' '.join(rules['blockers']),
-            }, status=400)
+        # Eligibility checks are advisory-only (red indicator); they do not block marking eligible.
 
         forced_queue_type = None
         if action == 'mark_eligible_priority':
@@ -1382,34 +1340,11 @@ def evaluate_applicant(request, position):
             'queue_position': queue_entry.position,
         })
 
-    reason_labels = {
-        'income_exceeds': 'Income exceeds ₱10,000 limit',
-        'property_owner': 'Owns property in Talisay City',
-        'blacklisted': 'On blacklist',
-        'incomplete_docs': 'Incomplete documents',
-        'false_info': 'False information provided',
-        'other': notes or 'Other reason',
-    }
-    applicant.status = 'disqualified'
-    applicant.disqualification_reason = reason_labels.get(reason, reason or 'Disqualified in Module 2 evaluation')
-    applicant.eligibility_checked_by = request.user
-    applicant.eligibility_checked_at = timezone.now()
-    applicant.save()
-    _deactivate_active_queue_entries(applicant)
-    if applicant.phone_number:
-        msg = (
-            "We regret to inform you that your housing application has been disqualified. "
-            f"Reason: {applicant.disqualification_reason}. Ref: {applicant.reference_number}."
-        )
-        sent = send_sms(applicant.phone_number, msg, 'eligibility_fail', applicant=applicant, module='applications')
-        if sent and not applicant.eligibility_sms_sent:
-            applicant.eligibility_sms_sent = True
-            applicant.save(update_fields=['eligibility_sms_sent', 'updated_at'])
+    # Disqualification is handled in Module 3 (Documents), not here.
     return JsonResponse({
-        'success': True,
-        'message': f'Applicant disqualified. Reason: {applicant.disqualification_reason}',
-        'new_status': applicant.status,
-    })
+        'success': False,
+        'error': 'Module 2 handles evaluation and queue assignment only. Disqualification is processed in Module 3.',
+    }, status=400)
 
 
 @login_required
@@ -1428,15 +1363,13 @@ def record_evaluation_approval(request, position):
     applicant_id = request.POST.get('applicant_id')
     approval_status = request.POST.get('approval_status', '').strip()
     notes = request.POST.get('notes', '').strip()
-    disqualify_reason = request.POST.get('disqualify_reason', '').strip()
-    disqualify_notes = request.POST.get('disqualify_notes', '').strip()
     force_sms = str(request.POST.get('force_sms', '')).strip().lower() in {'1', 'true', 'yes', 'on'}
 
     if not applicant_id:
         return JsonResponse({'success': False, 'error': 'Missing applicant_id.'}, status=400)
 
-    if approval_status not in {'approved', 'disqualified'}:
-        return JsonResponse({'success': False, 'error': 'Invalid approval status.'}, status=400)
+    if approval_status != 'approved':
+        return JsonResponse({'success': False, 'error': 'Module 2 step 2.8 only supports approval. Disqualification is handled in Module 3.'}, status=400)
 
     applicant = get_object_or_404(Applicant, id=applicant_id)
     handoff_error = _require_module2_handoff(applicant)
@@ -1449,31 +1382,17 @@ def record_evaluation_approval(request, position):
     previous_eval28_status = applicant.evaluation_approval_status or ''
 
     # Validate base Module 2 state for 2.8 action.
-    if approval_status == 'approved':
-        if applicant.status != 'eligible':
-            return JsonResponse({
-                'success': False,
-                'error': 'Record 2.8 approval only after Module 2 evaluation marks the applicant eligible and queued.',
-            }, status=400)
-        active_queue = applicant.queue_entries.filter(status='active').order_by('entered_at').first()
-        if active_queue is None:
-            return JsonResponse({
-                'success': False,
-                'error': 'Record 2.8 approval only after queue assignment (Priority or Walk-in) is active.',
-            }, status=400)
-    else:
-        # Disqualification in Layer 4 is allowed for active evaluation states.
-        if applicant.status not in {'pending', 'pending_cdrrmo', 'eligible'}:
-            return JsonResponse({
-                'success': False,
-                'error': f'Cannot disqualify record with current status: {applicant.get_status_display()}',
-            }, status=400)
-        active_queue = applicant.queue_entries.filter(status='active').order_by('entered_at').first()
-        if not disqualify_reason:
-            return JsonResponse({
-                'success': False,
-                'error': 'Disqualification reason is required.',
-            }, status=400)
+    if applicant.status != 'eligible':
+        return JsonResponse({
+            'success': False,
+            'error': 'Record 2.8 approval only after Module 2 evaluation marks the applicant eligible and queued.',
+        }, status=400)
+    active_queue = applicant.queue_entries.filter(status='active').order_by('entered_at').first()
+    if active_queue is None:
+        return JsonResponse({
+            'success': False,
+            'error': 'Record 2.8 approval only after queue assignment (Priority or Walk-in) is active.',
+        }, status=400)
 
     # Validate Layer 3 (CDRRMO) is complete
     if applicant.cdrrmo_certification:
@@ -1485,22 +1404,7 @@ def record_evaluation_approval(request, position):
                 'error': 'Cannot record 2.8 until Layer 3 CDRRMO review is complete (Certified or Denied).',
             }, status=400)
 
-    if approval_status == 'disqualified':
-        reason_labels = {
-            'income_over_ceiling': 'Income exceeds ₱10,000 limit',
-            'property_owner': 'Owns property in Talisay City',
-            'blacklisted': 'On blacklist',
-            'household_mismatch': 'Household member mismatch',
-            'incomplete_documents': 'Incomplete documents',
-            'other': disqualify_notes or 'Other reason',
-        }
-        reason_text = reason_labels.get(disqualify_reason, disqualify_reason or 'Disqualified in Module 2 evaluation')
-        applicant.status = 'disqualified'
-        applicant.disqualification_reason = reason_text
-        applicant.eligibility_checked_by = request.user
-        applicant.eligibility_checked_at = timezone.now()
-        _deactivate_active_queue_entries(applicant)
-        active_queue = None
+
 
     applicant.evaluation_approval_status = approval_status
     applicant.evaluation_approval_notes = notes
@@ -1513,8 +1417,7 @@ def record_evaluation_approval(request, position):
         'evaluation_approval_at',
         'updated_at',
     ]
-    if approval_status == 'disqualified':
-        update_fields.extend(['status', 'disqualification_reason', 'eligibility_checked_by', 'eligibility_checked_at'])
+
     applicant.save(update_fields=update_fields)
 
     sms_dispatched = None
@@ -1690,14 +1593,7 @@ def generate_form(request, position, applicant_id):
         return blacklist_error
 
     rules = _module2_eligibility_snapshot(applicant)
-    if not rules['eligible']:
-        return JsonResponse(
-            {
-                'success': False,
-                'error': 'Cannot generate form: ' + ' '.join(rules['blockers']),
-            },
-            status=400,
-        )
+    # Eligibility checks are advisory-only (red indicator); they do not block form generation.
 
     # Module 1 should have placed every eligible applicant into FIFO queue.
     # Self-heal older records so Module 2 can proceed without manual queue fixes.

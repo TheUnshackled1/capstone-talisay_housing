@@ -1,9 +1,10 @@
 """
-Management command to test SMS routing (console / Twilio / Semaphore / httpSMS).
+Management command to test SMS routing (console / IPROG / Twilio / Semaphore / httpSMS).
 
 Usage:
     python manage.py test_sms --phone 09987654321
     python manage.py test_sms --phone 09987654321 --service console
+    python manage.py test_sms --phone 09987654321 --service iprog
     python manage.py test_sms --phone 09987654321 --service twilio
 """
 
@@ -13,7 +14,7 @@ from intake.utils import send_sms
 
 
 class Command(BaseCommand):
-    help = 'Test SMS pipeline (console mode needs no API keys; use twilio when subscribed)'
+    help = 'Test SMS pipeline (console mode needs no API keys; use iprog for live gateway)'
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -26,7 +27,7 @@ class Command(BaseCommand):
             '--service',
             type=str,
             default='console',
-            choices=['console', 'twilio', 'semaphore', 'httpsms'],
+            choices=['console', 'iprog', 'twilio', 'semaphore', 'httpsms'],
             help='SMS_SERVICE override for this run (default: console)'
         )
         parser.add_argument(

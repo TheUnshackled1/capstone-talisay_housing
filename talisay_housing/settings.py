@@ -177,6 +177,10 @@ SMS_SERVICE = os.environ.get('SMS_SERVICE', 'console').strip().lower()
 # IPROG SMS Configuration (Affordable - P1/SMS, perfect for student projects)
 IPROG_API_TOKEN = os.environ.get('IPROG_API_TOKEN', '')
 IPROG_SENDER_NAME = os.environ.get('IPROG_SENDER_NAME', 'IPROG SMS')
+IPROG_SEND_TIMEOUT_SECONDS = float(os.environ.get('IPROG_SEND_TIMEOUT_SECONDS', '25'))
+IPROG_STATUS_TIMEOUT_SECONDS = float(os.environ.get('IPROG_STATUS_TIMEOUT_SECONDS', '12'))
+IPROG_SEND_RETRY_ATTEMPTS = int(os.environ.get('IPROG_SEND_RETRY_ATTEMPTS', '3'))
+IPROG_SEND_RETRY_BACKOFF_SECONDS = float(os.environ.get('IPROG_SEND_RETRY_BACKOFF_SECONDS', '1.5'))
 
 
 

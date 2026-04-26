@@ -3,60 +3,58 @@
 
 {% block title %}Document Management - THA{% endblock %}
 
+{% block page_title %}Staff Portal{% endblock %}
+
 {% block content %}
 {% csrf_token %}
 
-<!-- Page Header -->
-<div style="padding: 1.5rem; background: white; border-bottom: 1px solid var(--gray-200); display: flex; justify-content: space-between; align-items: baseline; gap: 2rem;">
-    <div>
-        <h1 style="margin: 0 0 0.5rem; font-size: 1.75rem; font-weight: 700; color: var(--gray-900);">Document Management</h1>
-        <p style="margin: 0; font-size: 0.875rem; color: var(--gray-600);">Module 3 — Complete document history per applicant · Physical documents remain official hard copy</p>
-    </div>
-    <button onclick="openUploadModal()" style="padding: 0.625rem 1.25rem; background: var(--primary-600); color: white; border: none; border-radius: 8px; font-size: 0.875rem; font-weight: 600; cursor: pointer; white-space: nowrap;">
-        ⬆️ Upload Document
-    </button>
-</div>
-
-<!-- Main Container -->
-<div style="padding: 2rem 1.5rem; background: #f9fafb; min-height: 100vh;">
-    <div id="m2NoticeToast" style="display:none; margin-bottom: 1rem; padding: 0.75rem 1rem; border: 1px solid #bfdbfe; background: #eff6ff; color: #1e3a8a; border-radius: 10px; font-size: 0.8125rem; font-weight: 500;">
-        2.8 status saved. Complete all 7 requirements to proceed with Module 3 form generation.
+<div style="padding: 1rem 1rem 0.9rem; max-width: 100%; background: #ffffff; border: 1px solid #dbe2ea; border-radius: 0.85rem; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06); margin-bottom: 0.95rem;">
+    <!-- Page Header -->
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.95rem; gap: 1rem; flex-wrap: wrap;">
+        <div>
+            <h1 style="font-size: 1.02rem; font-weight: 700; color: #0f172a; margin: 0; letter-spacing: 0.04em; text-transform: uppercase;">Document Management</h1>
+            <p style="font-size: 0.75rem; color: #64748b; margin-top: 0.2rem;">Module 3 — Complete document history per applicant · Physical documents remain official hard copy</p>
+        </div>
+        <button onclick="openUploadModal()" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.52rem 0.88rem; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; border: none; border-radius: 0.5rem; font-size: 0.72rem; font-weight: 700; cursor: pointer; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); white-space: nowrap;">
+            ⬆️ Upload Document
+        </button>
     </div>
 
-    <!-- Stats Cards -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
-        <div class="scroll-animate-scale scroll-delay-1" style="background: #eff6ff; border: 2px solid #bfdbfe; border-radius: 12px; padding: 1.5rem; text-align: center;">
-            <div style="font-size: 2.5rem; font-weight: 700; color: #2563eb; margin-bottom: 0.5rem;">{{ total_documents }}</div>
-            <div style="font-size: 0.875rem; color: var(--gray-600); font-weight: 500;">Total Documents</div>
+    <!-- Controls Bar -->
+    <div style="display: flex; gap: 0.75rem; margin-bottom: 0.85rem; flex-wrap: wrap; align-items: center; padding: 0.6rem; border: 1px solid #e2e8f0; background: #f8fafc; border-radius: 0.7rem;">
+        <div style="display: flex; align-items: center; gap: 0.65rem; padding: 0.46rem 0.68rem; background: #eff6ff; border-radius: 0.55rem; border: 1px solid #bfdbfe;">
+            <svg style="width: 20px; height: 20px; color: #2563eb;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+            <div>
+                <p style="font-size: 0.625rem; color: #64748b; margin: 0; text-transform: uppercase; font-weight: 500;">Total Documents</p>
+                <p style="font-size: 1.25rem; font-weight: 700; color: #2563eb; margin: 0;">{{ total_documents }}</p>
+            </div>
         </div>
-
-        <div class="scroll-animate-scale scroll-delay-2" style="background: #fef3c7; border: 2px solid #fde68a; border-radius: 12px; padding: 1.5rem; text-align: center;">
-            <div style="font-size: 2.5rem; font-weight: 700; color: #d97706; margin-bottom: 0.5rem;">{{ total_applicants }}</div>
-            <div style="font-size: 0.875rem; color: var(--gray-600); font-weight: 500;">Applicants</div>
+        <div style="display: flex; align-items: center; gap: 0.65rem; padding: 0.46rem 0.68rem; background: #fef3c7; border-radius: 0.55rem; border: 1px solid #fde68a;">
+            <svg style="width: 20px; height: 20px; color: #d97706;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+            <div>
+                <p style="font-size: 0.625rem; color: #92400e; margin: 0; text-transform: uppercase; font-weight: 500;">Applicants</p>
+                <p style="font-size: 1.25rem; font-weight: 700; color: #d97706; margin: 0;">{{ total_applicants }}</p>
+            </div>
         </div>
-
-        <div class="scroll-animate-scale scroll-delay-3" style="background: #dcfce7; border: 2px solid #bbf7d0; border-radius: 12px; padding: 1.5rem; text-align: center;">
-            <div style="font-size: 2.5rem; font-weight: 700; color: #16a34a; margin-bottom: 0.5rem;">{{ total_size_gb|default:"0" }}</div>
-            <div style="font-size: 0.875rem; color: var(--gray-600); font-weight: 500;">Storage (GB)</div>
+        <div style="display: flex; align-items: center; gap: 0.65rem; padding: 0.46rem 0.68rem; background: #dcfce7; border-radius: 0.55rem; border: 1px solid #bbf7d0;">
+            <svg style="width: 20px; height: 20px; color: #16a34a;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
+            <div>
+                <p style="font-size: 0.625rem; color: #166534; margin: 0; text-transform: uppercase; font-weight: 500;">Storage (GB)</p>
+                <p style="font-size: 1.25rem; font-weight: 700; color: #16a34a; margin: 0;">{{ total_size_gb|default:"0" }}</p>
+            </div>
         </div>
-
-        <div class="scroll-animate-scale scroll-delay-4" style="background: #fee2e2; border: 2px solid #fecaca; border-radius: 12px; padding: 1.5rem; text-align: center;">
-            <div style="font-size: 2.5rem; font-weight: 700; color: #b91c1c; margin-bottom: 0.5rem;">{{ disqualified_count|default:"0" }}</div>
-            <div style="font-size: 0.875rem; color: var(--gray-600); font-weight: 500;">Disqualified</div>
+        <div style="display: flex; align-items: center; gap: 0.65rem; padding: 0.46rem 0.68rem; background: #fee2e2; border-radius: 0.55rem; border: 1px solid #fecaca;">
+            <svg style="width: 20px; height: 20px; color: #dc2626;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+            <div>
+                <p style="font-size: 0.625rem; color: #991b1b; margin: 0; text-transform: uppercase; font-weight: 500;">Disqualified</p>
+                <p style="font-size: 1.25rem; font-weight: 700; color: #dc2626; margin: 0;">{{ disqualified_count|default:"0" }}</p>
+            </div>
         </div>
-    </div>
-
-    <!-- Search & Filter -->
-    <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; align-items: center; flex-wrap: wrap;">
-        <div style="position: relative; flex: 1; min-width: 250px;">
-            <svg style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--gray-400); pointer-events: none;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="11" cy="11" r="8"></circle>
-                <path d="m21 21-4.35-4.35"></path>
-            </svg>
-            <input type="text" id="searchInput" placeholder="Search by applicant name or document type..." style="width: 100%; padding: 0.75rem 0.75rem 0.75rem 2.5rem; border: 1px solid var(--gray-300); border-radius: 8px; font-size: 0.875rem;">
+        <div style="flex: 1; min-width: 200px; position: relative;">
+            <svg style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); width: 1rem; height: 1rem; color: #94a3b8;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
+            <input type="text" id="searchInput" placeholder="Search by applicant or document type..." style="width: 100%; padding: 0.56rem 0.72rem 0.56rem 2.25rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.78rem; outline: none;">
         </div>
-
-        <select id="typeFilter" style="padding: 0.75rem; border: 1px solid var(--gray-300); border-radius: 8px; font-size: 0.875rem; background: white; cursor: pointer;">
+        <select id="typeFilter" style="padding: 0.56rem 1.9rem 0.56rem 0.7rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.75rem; background: white; cursor: pointer; appearance: none; background-image: url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2364748b'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E&quot;); background-repeat: no-repeat; background-position: right 0.5rem center;">
             <option value="all">All Types</option>
             <optgroup label="Applicant Requirements">
                 <option value="barangay_residency">Barangay Certificate of Residency</option>

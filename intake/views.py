@@ -613,6 +613,9 @@ def proceed_to_applications(request, position):
             'error': 'Applicant mobile number is required before proceeding to Module 2.',
         }, status=400)
 
+    sms_sent_now = False
+    sms_warning = ''
+
     with transaction.atomic():
         update_fields = ['updated_at']
 
@@ -668,27 +671,32 @@ def proceed_to_applications(request, position):
             if not sms_ok:
                 latest_sms_log = SMSLog.objects.filter(applicant=applicant).order_by('-sent_at').first()
                 sms_error_detail = (latest_sms_log.error_message or '').strip() if latest_sms_log else ''
-                transaction.set_rollback(True)
-                return JsonResponse({
-                    'success': False,
-                    'error': (
-                        f'SMS notification failed. Handoff was not completed. '
-                        f'Gateway detail: {sms_error_detail}'
-                    ) if sms_error_detail else (
-                        'SMS notification failed. Handoff was not completed. '
-                        'Please verify SMS gateway and try again.'
-                    ),
-                }, status=502)
+                sms_warning = (
+                    f'SMS notification failed. Handoff completed, but no SMS was sent. '
+                    f'Gateway detail: {sms_error_detail}'
+                ) if sms_error_detail else (
+                    'SMS notification failed. Handoff completed, but no SMS was sent. '
+                    'Please verify SMS gateway and try again.'
+                )
+                print(f"[MODULE 2 HANDOFF] SMS failed for {applicant.reference_number}: {sms_error_detail or 'no gateway detail'}\n")
 
-            applicant.registration_sms_sent = True
-            applicant.save(update_fields=['registration_sms_sent', 'updated_at'])
-            if archive_record:
-                archive_record.sms_sent = True
-                archive_record.save(update_fields=['sms_sent'])
-            print(f"[MODULE 2 HANDOFF] SMS sent successfully for {applicant.reference_number}\n")
+            if sms_ok:
+                sms_sent_now = True
+                applicant.registration_sms_sent = True
+                applicant.save(update_fields=['registration_sms_sent', 'updated_at'])
+                if archive_record:
+                    archive_record.sms_sent = True
+                    archive_record.save(update_fields=['sms_sent'])
+                print(f"[MODULE 2 HANDOFF] SMS sent successfully for {applicant.reference_number}\n")
 
     module2_url = reverse('applications:applications_list', kwargs={'position': request.user.position})
-    return JsonResponse({'success': True, 'module2_url': module2_url, 'already_handed_off': not created_handoff})
+    return JsonResponse({
+        'success': True,
+        'module2_url': module2_url,
+        'already_handed_off': not created_handoff,
+        'sms_sent': bool(applicant.registration_sms_sent or sms_sent_now),
+        'sms_warning': sms_warning,
+    })
 
 
 @login_required

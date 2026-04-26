@@ -3,70 +3,82 @@
 
 {% block title %}Housing Unit & Occupancy Monitoring - THA{% endblock %}
 
+{% block page_title %}Staff Portal{% endblock %}
+
 {% block content %}
 {% csrf_token %}
 
-<!-- Page Header -->
-<div style="padding: 1.5rem; background: white; border-bottom: 1px solid var(--gray-200); display: flex; justify-content: space-between; align-items: baseline; gap: 2rem;">
-    <div>
-        <h1 style="margin: 0 0 0.5rem; font-size: 1.75rem; font-weight: 700; color: var(--gray-900);">Housing Unit & Occupancy Monitoring</h1>
-        <p style="margin: 0; font-size: 0.875rem; color: var(--gray-600);">Module 4 — GK Cabatangan · {{ total_units }} total units · Weekly caretaker reports</p>
+<div style="padding: 1rem 1rem 0.9rem; max-width: 100%; background: #ffffff; border: 1px solid #dbe2ea; border-radius: 0.85rem; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06); margin-bottom: 0.95rem;">
+    <!-- Page Header -->
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.95rem; gap: 1rem; flex-wrap: wrap;">
+        <div>
+            <h1 style="font-size: 1.02rem; font-weight: 700; color: #0f172a; margin: 0; letter-spacing: 0.04em; text-transform: uppercase;">Housing Unit & Occupancy Monitoring</h1>
+            <p style="font-size: 0.75rem; color: #64748b; margin-top: 0.2rem;">Module 4 — GK Cabatangan · {{ total_units }} total units · Weekly caretaker reports</p>
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+            <button id="gridView" class="view-btn" onclick="switchView('grid')" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.52rem 0.88rem; background: white; color: #334155; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.72rem; font-weight: 700; cursor: pointer; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);">Grid</button>
+            <button id="tableView" class="view-btn" onclick="switchView('table')" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.52rem 0.88rem; background: white; color: #334155; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.72rem; font-weight: 700; cursor: pointer; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);">Table</button>
+        </div>
     </div>
-    <div style="display: flex; gap: 0.5rem;">
-        <button id="gridView" class="view-btn" onclick="switchView('grid')" style="padding: 0.5rem 1rem; border: 1px solid var(--gray-300); border-radius: 6px; background: white; color: var(--gray-700); font-size: 0.875rem; cursor: pointer; font-weight: 500;">Grid</button>
-        <button id="tableView" class="view-btn" onclick="switchView('table')" style="padding: 0.5rem 1rem; border: 1px solid var(--gray-300); border-radius: 6px; background: white; color: var(--gray-700); font-size: 0.875rem; cursor: pointer; font-weight: 500;">Table</button>
-    </div>
-</div>
 
-<!-- Main Container -->
-<div style="padding: 2rem 1.5rem; background: #f9fafb; min-height: 100vh;">
-    <!-- Status Summary Cards -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
-        <div class="scroll-animate-scale scroll-delay-1" style="background: #f0fdf4; border: 2px solid #bbf7d0; border-radius: 12px; padding: 1.5rem; text-align: center; cursor: pointer;">
-            <div style="font-size: 2.5rem; font-weight: 700; color: #16a34a; margin-bottom: 0.5rem;">{{ occupied_count }}</div>
-            <div style="font-size: 0.875rem; color: var(--gray-600); font-weight: 500;">Occupied</div>
+    <!-- Controls Bar -->
+    <div style="display: flex; gap: 0.75rem; margin-bottom: 0.85rem; flex-wrap: wrap; align-items: center; padding: 0.6rem; border: 1px solid #e2e8f0; background: #f8fafc; border-radius: 0.7rem;">
+        <div style="display: flex; align-items: center; gap: 0.65rem; padding: 0.46rem 0.68rem; background: #f0fdf4; border-radius: 0.55rem; border: 1px solid #bbf7d0;">
+            <svg style="width: 20px; height: 20px; color: #16a34a;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+            <div>
+                <p style="font-size: 0.625rem; color: #166534; margin: 0; text-transform: uppercase; font-weight: 500;">Occupied</p>
+                <p style="font-size: 1.25rem; font-weight: 700; color: #16a34a; margin: 0;">{{ occupied_count }}</p>
+            </div>
         </div>
-
-        <div class="scroll-animate-scale scroll-delay-2" style="background: #eff6ff; border: 2px solid #bfdbfe; border-radius: 12px; padding: 1.5rem; text-align: center; cursor: pointer;">
-            <div style="font-size: 2.5rem; font-weight: 700; color: #2563eb; margin-bottom: 0.5rem;">{{ vacant_count }}</div>
-            <div style="font-size: 0.875rem; color: var(--gray-600); font-weight: 500;">Vacant</div>
+        <div style="display: flex; align-items: center; gap: 0.65rem; padding: 0.46rem 0.68rem; background: #eff6ff; border-radius: 0.55rem; border: 1px solid #bfdbfe;">
+            <svg style="width: 20px; height: 20px; color: #2563eb;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
+            <div>
+                <p style="font-size: 0.625rem; color: #64748b; margin: 0; text-transform: uppercase; font-weight: 500;">Vacant</p>
+                <p style="font-size: 1.25rem; font-weight: 700; color: #2563eb; margin: 0;">{{ vacant_count }}</p>
+            </div>
         </div>
-
-        <div class="scroll-animate-scale scroll-delay-3" style="background: #fffbeb; border: 2px solid #fcd34d; border-radius: 12px; padding: 1.5rem; text-align: center; cursor: pointer;">
-            <div style="font-size: 2.5rem; font-weight: 700; color: #d97706; margin-bottom: 0.5rem;">{{ notice_30_count }}</div>
-            <div style="font-size: 0.875rem; color: var(--gray-600); font-weight: 500;">30-day Notice</div>
+        <div style="display: flex; align-items: center; gap: 0.65rem; padding: 0.46rem 0.68rem; background: #fffbeb; border-radius: 0.55rem; border: 1px solid #fde68a;">
+            <svg style="width: 20px; height: 20px; color: #d97706;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+            <div>
+                <p style="font-size: 0.625rem; color: #92400e; margin: 0; text-transform: uppercase; font-weight: 500;">30-Day Notice</p>
+                <p style="font-size: 1.25rem; font-weight: 700; color: #d97706; margin: 0;">{{ notice_30_count }}</p>
+            </div>
         </div>
-
-        <div class="scroll-animate-scale scroll-delay-4" style="background: #fef2f2; border: 2px solid #fecaca; border-radius: 12px; padding: 1.5rem; text-align: center; cursor: pointer;">
-            <div style="font-size: 2.5rem; font-weight: 700; color: #dc2626; margin-bottom: 0.5rem;">{{ notice_10_count }}</div>
-            <div style="font-size: 0.875rem; color: var(--gray-600); font-weight: 500;">Final Notice</div>
+        <div style="display: flex; align-items: center; gap: 0.65rem; padding: 0.46rem 0.68rem; background: #fee2e2; border-radius: 0.55rem; border: 1px solid #fecaca;">
+            <svg style="width: 20px; height: 20px; color: #dc2626;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+            <div>
+                <p style="font-size: 0.625rem; color: #991b1b; margin: 0; text-transform: uppercase; font-weight: 500;">Final Notice</p>
+                <p style="font-size: 1.25rem; font-weight: 700; color: #dc2626; margin: 0;">{{ notice_10_count }}</p>
+            </div>
         </div>
-
-        <div class="scroll-animate-scale scroll-delay-5" style="background: #f3e8ff; border: 2px solid #e9d5ff; border-radius: 12px; padding: 1.5rem; text-align: center; cursor: pointer;">
-            <div style="font-size: 2.5rem; font-weight: 700; color: #a855f7; margin-bottom: 0.5rem;">{{ repossessed_count }}</div>
-            <div style="font-size: 0.875rem; color: var(--gray-600); font-weight: 500;">Repossessed</div>
+        <div style="display: flex; align-items: center; gap: 0.65rem; padding: 0.46rem 0.68rem; background: #f3e8ff; border-radius: 0.55rem; border: 1px solid #e9d5ff;">
+            <svg style="width: 20px; height: 20px; color: #a855f7;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+            <div>
+                <p style="font-size: 0.625rem; color: #6b21a8; margin: 0; text-transform: uppercase; font-weight: 500;">Repossessed</p>
+                <p style="font-size: 1.25rem; font-weight: 700; color: #a855f7; margin: 0;">{{ repossessed_count }}</p>
+            </div>
         </div>
     </div>
 
     <!-- Escalation Alert -->
     {% if has_escalation_alerts %}
-    <div style="background: #fef2f2; border-left: 4px solid #dc2626; border-radius: 6px; padding: 1rem; margin-bottom: 2rem; display: flex; gap: 0.75rem;">
+    <div style="background: #fef2f2; border-left: 4px solid #dc2626; border-radius: 6px; padding: 0.75rem 1rem; margin-bottom: 0.85rem; display: flex; gap: 0.75rem; font-size: 0.78rem;">
         <span style="color: #dc2626; font-weight: 600; flex-shrink: 0;">⚠️</span>
         <div>
-            <p style="margin: 0; font-size: 0.875rem; color: #991b1b; font-weight: 600;">Final notice deadline approaching:</p>
-            <p style="margin: 0.25rem 0 0; font-size: 0.8rem; color: #7f1d1d;">{{ escalation_message }}</p>
+            <p style="margin: 0; color: #991b1b; font-weight: 600;">Final notice deadline approaching:</p>
+            <p style="margin: 0.15rem 0 0; color: #7f1d1d;">{{ escalation_message }}</p>
         </div>
     </div>
     {% endif %}
 
     <!-- Filter Tabs -->
-    <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.5rem;">
-        <button class="filter-tab active" data-filter="all" onclick="filterUnits('all')" style="padding: 0.4rem 0.75rem; border: 1px solid var(--gray-300); background: white; border-radius: 20px; font-size: 0.8rem; cursor: pointer; font-weight: 500;">All Units ({{ total_units }})</button>
-        <button class="filter-tab" data-filter="Occupied" onclick="filterUnits('Occupied')" style="padding: 0.4rem 0.75rem; border: 1px solid #bbf7d0; background: white; border-radius: 20px; font-size: 0.8rem; cursor: pointer;">Occupied ({{ occupied_count }})</button>
-        <button class="filter-tab" data-filter="Vacant — available" onclick="filterUnits('Vacant — available')" style="padding: 0.4rem 0.75rem; border: 1px solid #bfdbfe; background: white; border-radius: 20px; font-size: 0.8rem; cursor: pointer;">Vacant — available ({{ vacant_count }})</button>
-        <button class="filter-tab" data-filter="Under notice (30-day)" onclick="filterUnits('Under notice (30-day)')" style="padding: 0.4rem 0.75rem; border: 1px solid #fcd34d; background: white; border-radius: 20px; font-size: 0.8rem; cursor: pointer;">Under notice (30-day) ({{ notice_30_count }})</button>
-        <button class="filter-tab" data-filter="Final notice (10-day)" onclick="filterUnits('Final notice (10-day)')" style="padding: 0.4rem 0.75rem; border: 1px solid #fecaca; background: white; border-radius: 20px; font-size: 0.8rem; cursor: pointer;">Final notice (10-day) ({{ notice_10_count }})</button>
-        <button class="filter-tab" data-filter="Repossessed" onclick="filterUnits('Repossessed')" style="padding: 0.4rem 0.75rem; border: 1px solid #e9d5ff; background: white; border-radius: 20px; font-size: 0.8rem; cursor: pointer;">Repossessed ({{ repossessed_count }})</button>
+    <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.85rem;">
+        <button class="filter-tab active" data-filter="all" onclick="filterUnits('all')" style="padding: 0.4rem 0.75rem; border: 1px solid #cbd5e1; background: white; border-radius: 20px; font-size: 0.72rem; cursor: pointer; font-weight: 600;">All Units ({{ total_units }})</button>
+        <button class="filter-tab" data-filter="Occupied" onclick="filterUnits('Occupied')" style="padding: 0.4rem 0.75rem; border: 1px solid #bbf7d0; background: white; border-radius: 20px; font-size: 0.72rem; cursor: pointer;">Occupied ({{ occupied_count }})</button>
+        <button class="filter-tab" data-filter="Vacant — available" onclick="filterUnits('Vacant — available')" style="padding: 0.4rem 0.75rem; border: 1px solid #bfdbfe; background: white; border-radius: 20px; font-size: 0.72rem; cursor: pointer;">Vacant ({{ vacant_count }})</button>
+        <button class="filter-tab" data-filter="Under notice (30-day)" onclick="filterUnits('Under notice (30-day)')" style="padding: 0.4rem 0.75rem; border: 1px solid #fcd34d; background: white; border-radius: 20px; font-size: 0.72rem; cursor: pointer;">30-Day ({{ notice_30_count }})</button>
+        <button class="filter-tab" data-filter="Final notice (10-day)" onclick="filterUnits('Final notice (10-day)')" style="padding: 0.4rem 0.75rem; border: 1px solid #fecaca; background: white; border-radius: 20px; font-size: 0.72rem; cursor: pointer;">Final ({{ notice_10_count }})</button>
+        <button class="filter-tab" data-filter="Repossessed" onclick="filterUnits('Repossessed')" style="padding: 0.4rem 0.75rem; border: 1px solid #e9d5ff; background: white; border-radius: 20px; font-size: 0.72rem; cursor: pointer;">Repossessed ({{ repossessed_count }})</button>
     </div>
 
     <!-- GRID VIEW -->

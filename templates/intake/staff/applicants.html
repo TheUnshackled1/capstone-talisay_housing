@@ -2611,10 +2611,30 @@
                 }
                 .tha-reg-modal .hh-member-row {
                     display: grid;
-                    grid-template-columns: 1.35fr 1fr 0.6fr 0.95fr 1fr auto;
-                    gap: 0.75rem;
+                    grid-template-columns: 1.35fr 1fr 0.5fr 0.55fr 0.85fr 1fr auto;
+                    gap: 0.65rem;
                     margin-bottom: 1rem;
                     align-items: end;
+                }
+                .tha-reg-modal .hh-member-row .hh-sex-group {
+                    display: flex;
+                    gap: 0.65rem;
+                    align-items: center;
+                    padding-bottom: 0.35rem;
+                }
+                .tha-reg-modal .hh-member-row .hh-sex-group label {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.25rem;
+                    font-size: 0.78rem;
+                    color: #334155;
+                    cursor: pointer;
+                    white-space: nowrap;
+                }
+                .tha-reg-modal .hh-member-row .hh-sex-group input[type="radio"] {
+                    margin: 0;
+                    accent-color: #2563eb;
+                    cursor: pointer;
                 }
                 .tha-reg-modal .hh-member-row .tha-reg-remove-member {
                     min-height: 2.5rem;
@@ -2653,7 +2673,7 @@
                         grid-template-columns: repeat(2, minmax(0, 1fr));
                     }
                     .tha-reg-modal .hh-member-row {
-                        grid-template-columns: repeat(2, minmax(0, 1fr));
+                        grid-template-columns: repeat(3, minmax(0, 1fr));
                     }
                     .tha-reg-modal .hh-member-row .tha-reg-remove-member {
                         justify-self: start;
@@ -4080,12 +4100,23 @@
                 });
                 return;
             }
+            const proceedMessage = data.sms_warning
+                ? (
+                    (data.already_handed_off
+                        ? 'Record was already handed off previously. '
+                        : 'Record was handed off successfully. ') +
+                    data.sms_warning +
+                    ' Opening Applications module now.'
+                )
+                : (
+                    data.already_handed_off
+                        ? 'Record was already handed off previously. Opening Applications module now.'
+                        : 'Record was handed off successfully. Opening Applications module now.'
+                );
             showNoticeModal({
                 title: 'Proceeding to Module 2',
-                message: data.already_handed_off
-                    ? 'Record was already handed off previously. Opening Applications module now.'
-                    : 'Record was handed off successfully. Opening Applications module now.',
-                type: 'success',
+                message: proceedMessage,
+                type: data.sms_warning ? 'warning' : 'success',
                 onPrimary: () => { window.location.href = targetUrl; },
             });
         })
@@ -4846,6 +4877,13 @@
                 <div class="form-group">
                     <label class="form-label">Age</label>
                     <input type="number" class="form-input hh-member-field" placeholder="Years" name="hh_member_${i}_age" min="0" max="120" onchange="updateHouseholdSize()">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Sex</label>
+                    <div class="hh-sex-group">
+                        <label><input type="radio" name="hh_member_${i}_sex" value="male"> Male</label>
+                        <label><input type="radio" name="hh_member_${i}_sex" value="female"> Female</label>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Civil status</label>

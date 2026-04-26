@@ -5,6 +5,7 @@ Utility functions for the intake module.
 from django.conf import settings
 import logging
 import requests
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +29,9 @@ def format_phone_number(phone_number):
     Format Philippine phone number for SMS API.
     Converts various formats to 09XXXXXXXXX format.
     """
-    phone = phone_number.strip().replace(' ', '').replace('-', '')
+    # Keep only digits/+ so user-entered separators don't break delivery.
+    raw = (phone_number or '').strip()
+    phone = ''.join(ch for ch in raw if ch.isdigit() or ch == '+')
     
     # Remove +63 prefix
     if phone.startswith('+63'):
@@ -169,6 +172,10 @@ def send_sms_iprog(phone_number, message, sms_log):
 
         # IPROG API endpoint with query parameters
         base_url = 'https://www.iprogsms.com/api/v1/sms_messages'
+        send_timeout = float(getattr(settings, 'IPROG_SEND_TIMEOUT_SECONDS', 25))
+        status_timeout = float(getattr(settings, 'IPROG_STATUS_TIMEOUT_SECONDS', 12))
+        retry_attempts = max(1, int(getattr(settings, 'IPROG_SEND_RETRY_ATTEMPTS', 3)))
+        retry_backoff = float(getattr(settings, 'IPROG_SEND_RETRY_BACKOFF_SECONDS', 1.5))
 
         # Convert to IPROG format: 09XXXXXXXXX → 639XXXXXXXXX (no + or leading 0)
         if phone_number.startswith('0'):
@@ -184,12 +191,35 @@ def send_sms_iprog(phone_number, message, sms_log):
             'phone_number': to_number,
             'message': message
         }
+        sender_name = (getattr(settings, 'IPROG_SENDER_NAME', '') or '').strip()
+        if sender_name:
+            params['sender_name'] = sender_name
 
-        response = requests.post(
-            base_url,
-            params=params,
-            timeout=10
-        )
+        response = None
+        last_request_error = None
+        for attempt in range(1, retry_attempts + 1):
+            try:
+                response = requests.post(
+                    base_url,
+                    params=params,
+                    timeout=send_timeout
+                )
+                last_request_error = None
+                break
+            except requests.RequestException as req_err:
+                last_request_error = req_err
+                logger.warning(
+                    "IPROG send attempt %s/%s failed for %s: %s",
+                    attempt,
+                    retry_attempts,
+                    to_number,
+                    req_err,
+                )
+                if attempt < retry_attempts:
+                    time.sleep(retry_backoff * attempt)
+
+        if response is None:
+            raise Exception(f"Unable to reach IPROG after {retry_attempts} attempt(s): {last_request_error}")
 
         if response.status_code == 200:
             result = response.json()
@@ -207,7 +237,7 @@ def send_sms_iprog(phone_number, message, sms_log):
                             'api_token': api_token,
                             'message_id': message_id,
                         },
-                        timeout=10,
+                        timeout=status_timeout,
                     )
                     if status_response.status_code == 200:
                         status_result = status_response.json()
@@ -237,8 +267,12 @@ def send_sms_iprog(phone_number, message, sms_log):
                 logger.info("IPROG SMS accepted - Message ID: %s status=%s", message_id, delivery_status)
                 return True
             else:
-                error_msg = result.get('message', 'Unknown IPROG error')
-                raise Exception(f"IPROG error: {error_msg}")
+                provider_message = result.get('message', 'Unknown IPROG error')
+                if isinstance(provider_message, list):
+                    provider_message = '; '.join(str(part) for part in provider_message if part)
+                elif not isinstance(provider_message, str):
+                    provider_message = str(provider_message)
+                raise Exception(f"IPROG provider rejected request: {provider_message}")
         else:
             error_msg = f"IPROG API error: HTTP {response.status_code}"
             if response.text:
@@ -250,7 +284,8 @@ def send_sms_iprog(phone_number, message, sms_log):
             raise Exception(error_msg)
 
     except Exception as e:
-        error_msg = f"IPROG error: {str(e)}"
+        raw_error = str(e)
+        error_msg = raw_error if raw_error.startswith('IPROG ') else f"IPROG error: {raw_error}"
         logger.error(error_msg)
         sms_log.status = 'failed'
         sms_log.error_message = error_msg
