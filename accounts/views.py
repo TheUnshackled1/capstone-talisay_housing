@@ -1205,7 +1205,7 @@ def dashboard_view(request):
 @login_required
 def applicants_list(request):
     """
-    Module 1: ISF Recording Management - Applicant Intake
+    Module 1: ISF Registration - Applicant Intake
     Accessible to: Second Member (Joie), Fourth Member (Jocel)
     """
     allowed_positions = ['second_member', 'fourth_member']
@@ -1425,7 +1425,7 @@ def applicants_list(request):
     pending_cdrrmo = len([a for a in mock_applicants if a.get('cdrrmoStatus') == 'Pending'])
     
     context = {
-        'page_title': 'ISF Recording Management',
+        'page_title': 'ISF Registration',
         'user_position': request.user.position,
         'applicants': mock_applicants,
         'applicants_json': json.dumps(mock_applicants),

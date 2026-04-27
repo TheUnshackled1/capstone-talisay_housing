@@ -293,7 +293,15 @@ def send_sms_iprog(phone_number, message, sms_log):
         return False
 
 
-def check_blacklist(full_name, phone_number=None, applicant_id=None):
+def check_blacklist(
+    full_name,
+    phone_number=None,
+    applicant_id=None,
+    last_name=None,
+    first_name=None,
+    date_of_birth=None,
+    barangay_id=None,
+):
     """
     Check if a person is on the housing-units blacklist (units.Blacklist).
 
@@ -310,6 +318,10 @@ def check_blacklist(full_name, phone_number=None, applicant_id=None):
         full_name,
         phone_number,
         applicant_id=applicant_id,
+        last_name=last_name,
+        first_name=first_name,
+        date_of_birth=date_of_birth,
+        barangay_id=barangay_id,
     )
 
 

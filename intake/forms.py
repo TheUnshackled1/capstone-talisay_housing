@@ -164,6 +164,18 @@ class WalkInApplicantForm(forms.ModelForm):
         }),
         help_text="Required for eligibility check"
     )
+    is_registered_voter_talisay = forms.TypedChoiceField(
+        choices=[
+            ('', '— Select —'),
+            ('yes', 'Yes'),
+            ('no', 'No'),
+        ],
+        coerce=lambda value: str(value).lower() == 'yes',
+        empty_value='',
+        required=True,
+        label="Registered Voter in Talisay City",
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -189,6 +201,7 @@ class WalkInApplicantForm(forms.ModelForm):
             'monthly_income',
             'household_size',
             'years_residing',
+            'is_registered_voter_talisay',
             'occupation',
             'employment_status',
             'has_property_in_talisay',

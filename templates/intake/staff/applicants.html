@@ -8,6 +8,7 @@
 {% block extra_css %}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_blue.css">
+<link rel="stylesheet" href="{% static 'css/tailwind.css' %}">
 <style>
     /* Applicants Page Styles */
     .applicants-container {
@@ -1313,9 +1314,9 @@
     <div class="modal-content archive-summary-modal" style="max-width: 46rem; width: min(94vw, 46rem);" onclick="event.stopPropagation()">
         <div class="modal-header">
             <div>
-                <p class="tha-review-modal-kicker">Module 2 handoff summary</p>
-                <h3 class="modal-title" style="font-size: 1rem;">Module 2 / Module 3 Handoff Summary</h3>
-                <p class="modal-subtitle" id="archiveSummarySubtitle">Record handoff details</p>
+                <p class="tha-review-modal-kicker">Applicant Journey</p>
+                <h3 class="modal-title" style="font-size: 1rem;">Handoff Summary</h3>
+                <p class="modal-subtitle" id="archiveSummarySubtitle">Complete handoff details</p>
             </div>
             <button class="btn-close" onclick="closeArchiveSummaryModal()">
                 <svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1325,25 +1326,100 @@
             </button>
         </div>
         <div class="modal-body">
-            <div class="summary-grid">
-                <div class="summary-item"><span class="summary-label">Reference #</span><div class="summary-value" id="archiveSummaryReference">N/A</div></div>
-                <div class="summary-item"><span class="summary-label">Full Name</span><div class="summary-value" id="archiveSummaryName">N/A</div></div>
-                <div class="summary-item"><span class="summary-label">Last Name</span><div class="summary-value" id="archiveSummaryLastName">N/A</div></div>
-                <div class="summary-item"><span class="summary-label">First Name</span><div class="summary-value" id="archiveSummaryFirstName">N/A</div></div>
-                <div class="summary-item"><span class="summary-label">Middle Name</span><div class="summary-value" id="archiveSummaryMiddleName">N/A</div></div>
-                <div class="summary-item"><span class="summary-label">Extension Name</span><div class="summary-value" id="archiveSummaryExtensionName">N/A</div></div>
-                <div class="summary-item"><span class="summary-label">Channel</span><div class="summary-value" id="archiveSummaryChannel">N/A</div></div>
-                <div class="summary-item"><span class="summary-label">SMS Status</span><div class="summary-value" id="archiveSummarySms">N/A</div></div>
-                <div class="summary-item"><span class="summary-label">DOB</span><div class="summary-value" id="archiveSummaryDob">N/A</div></div>
-                <div class="summary-item"><span class="summary-label">Barangay</span><div class="summary-value" id="archiveSummaryBarangay">N/A</div></div>
-                <div class="summary-item"><span class="summary-label">Encoded By</span><div class="summary-value" id="archiveSummaryEncodedBy">N/A</div></div>
-                <div class="summary-item"><span class="summary-label">Staff Role</span><div class="summary-value" id="archiveSummaryStaffRole">N/A</div></div>
-                <div class="summary-item"><span class="summary-label">Proceeded To Module 2</span><div class="summary-value" id="archiveSummaryProceededAt">N/A</div></div>
-                <div class="summary-item"><span class="summary-label">Proceeded By</span><div class="summary-value" id="archiveSummaryProceededBy">N/A</div></div>
-                <div class="summary-item"><span class="summary-label">Module 2 Handoff Summary</span><div class="summary-value" id="archiveSummaryModule2Summary">N/A</div></div>
-                <div class="summary-item"><span class="summary-label">Sent to Module 3 Summary</span><div class="summary-value" id="archiveSummaryModule3Summary">Not yet proceeded to Module 3</div></div>
-                <div class="summary-item"><span class="summary-label">Module 3 Proceeded At</span><div class="summary-value" id="archiveSummaryModule3At">N/A</div></div>
-                <div class="summary-item"><span class="summary-label">Module 3 Proceeded By</span><div class="summary-value" id="archiveSummaryModule3By">N/A</div></div>
+            <!-- REGISTRATION SECTION (Module 1) -->
+            <div style="margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 2px solid #e2e8f0;">
+                <h4 style="font-size: 0.875rem; font-weight: 700; color: #1e40af; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem;">📋 Registration</h4>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                    <div>
+                        <p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Reference #</p>
+                        <div style="font-size: 0.9375rem; font-weight: 600; color: #1e40af;" id="archiveSummaryReference">N/A</div>
+                    </div>
+                    <div>
+                        <p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Full Name</p>
+                        <div style="font-size: 0.9375rem; font-weight: 500; color: #1e293b;" id="archiveSummaryName">N/A</div>
+                    </div>
+                    <div>
+                        <p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Last Name</p>
+                        <div style="font-size: 0.9375rem; font-weight: 500; color: #1e293b;" id="archiveSummaryLastName">N/A</div>
+                    </div>
+                    <div>
+                        <p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">First Name</p>
+                        <div style="font-size: 0.9375rem; font-weight: 500; color: #1e293b;" id="archiveSummaryFirstName">N/A</div>
+                    </div>
+                    <div>
+                        <p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Middle Name</p>
+                        <div style="font-size: 0.9375rem; font-weight: 500; color: #1e293b;" id="archiveSummaryMiddleName">N/A</div>
+                    </div>
+                    <div>
+                        <p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Extension Name</p>
+                        <div style="font-size: 0.9375rem; font-weight: 500; color: #1e293b;" id="archiveSummaryExtensionName">N/A</div>
+                    </div>
+                    <div>
+                        <p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">DOB</p>
+                        <div style="font-size: 0.9375rem; font-weight: 500; color: #1e293b;" id="archiveSummaryDob">N/A</div>
+                    </div>
+                    <div>
+                        <p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Barangay</p>
+                        <div style="font-size: 0.9375rem; font-weight: 500; color: #1e293b;" id="archiveSummaryBarangay">N/A</div>
+                    </div>
+                    <div>
+                        <p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Encoded By</p>
+                        <div style="font-size: 0.9375rem; font-weight: 500; color: #1e293b;" id="archiveSummaryEncodedBy">N/A</div>
+                    </div>
+                    <div>
+                        <p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Staff Role</p>
+                        <div style="font-size: 0.9375rem; font-weight: 500; color: #1e293b;" id="archiveSummaryStaffRole">N/A</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- APPLICATION SECTION (Module 2) -->
+            <div style="margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 2px solid #e2e8f0;">
+                <h4 style="font-size: 0.875rem; font-weight: 700; color: #059669; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem;">📄 Application</h4>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                    <div>
+                        <p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Proceeded To Application</p>
+                        <div style="font-size: 0.9375rem; font-weight: 500; color: #1e293b;" id="archiveSummaryProceededAt">N/A</div>
+                    </div>
+                    <div>
+                        <p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Proceeded By</p>
+                        <div style="font-size: 0.9375rem; font-weight: 500; color: #1e293b;" id="archiveSummaryProceededBy">N/A</div>
+                    </div>
+                    <div style="grid-column: 1 / -1;">
+                        <p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Application Status</p>
+                        <div style="font-size: 0.9375rem; font-weight: 500; color: #1e293b;" id="archiveSummaryModule2Summary">N/A</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DOCUMENTS SECTION (Module 3) -->
+            <div style="margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 2px solid #e2e8f0;">
+                <h4 style="font-size: 0.875rem; font-weight: 700; color: #d97706; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem;">📦 Documents</h4>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                    <div>
+                        <p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">SMS Status</p>
+                        <div style="font-size: 0.9375rem; font-weight: 500; color: #1e293b;" id="archiveSummarySms">N/A</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LOT AWARDING SECTION (Module 4) -->
+            <div>
+                <h4 style="font-size: 0.875rem; font-weight: 700; color: #7c3aed; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem;">🏠 Lot Awarding</h4>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                    <div>
+                        <p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Status</p>
+                        <div style="font-size: 0.9375rem; font-weight: 500; color: #1e293b;" id="archiveSummaryModule3Summary">Not yet proceeded to Lot Awarding</div>
+                    </div>
+                    <div>
+                        <p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Proceeded At</p>
+                        <div style="font-size: 0.9375rem; font-weight: 500; color: #1e293b;" id="archiveSummaryModule3At">N/A</div>
+                    </div>
+                    <div>
+                        <p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Proceeded By</p>
+                        <div style="font-size: 0.9375rem; font-weight: 500; color: #1e293b;" id="archiveSummaryModule3By">N/A</div>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="modal-footer">
@@ -1355,17 +1431,19 @@
 <div class="applicants-container">
     <!-- Header -->
     <div class="page-header">
-        <div>
-            <h1 class="page-title">ISF Recording Management</h1>
-            <p class="page-subtitle">Record, review, and prepare applicant intake records for Module 2 handoff.</p>
+        <div style="flex: 1;"></div>
+        <div style="text-align: center; flex: 2;">
+            <h1 class="page-title">ISF Registration</h1>
         </div>
-        <button class="btn-primary-add" onclick="openAddModal()">
-            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="12" y1="5" x2="12" y2="19"></line>
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
-            Register applicant
-        </button>
+        <div style="flex: 1; display: flex; justify-content: flex-end;">
+            <button class="btn-primary-add" onclick="openAddModal()">
+                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                Register applicant
+            </button>
+        </div>
     </div>
 
     <!-- Access Role Info Banner -->
@@ -1415,11 +1493,6 @@
             >
         </div>
         <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
-            <select class="filter-select header-filter" id="filterChannel" onchange="filterTable()" style="min-width: 220px;">
-                <option value="all">All Channels</option>
-                <option value="B">Channel B — Walk-in (hazard pathway)</option>
-                <option value="C">Channel C — Walk-in</option>
-            </select>
             <select class="filter-select" id="filterBarangay" onchange="filterTable()">
                 <option value="all">All Barangays</option>
                 {% for brgy in barangays %}
@@ -1435,11 +1508,10 @@
         <thead>
             <tr>
                 <th>#</th>
-                <th>Txn #</th>
+                <th>Transaction #</th>
                 <th>Date/Time</th>
                 <th>Reference #</th>
                 <th>Full Name</th>
-                <th>Channel</th>
                 <th>Staff Handled</th>
                 <th>DOB</th>
                 <th>Barangay</th>
@@ -1461,17 +1533,6 @@
                 <td style="font-size: 0.6875rem; color: #64748b;">{{ applicant.dateTime }}</td>
                 <td>{{ applicant.referenceNumber }}</td>
                 <td style="font-weight: 500;">{{ applicant.fullName }}</td>
-                <td>
-                    {% if applicant.channel == 'B' %}
-                        {% if applicant.dangerZoneType %}
-                            <span class="badge channel-b-hazard" title="Applicant declared they are in or near a hazard zone (Yes).">Channel B — Hazard (Yes)</span>
-                        {% else %}
-                            <span class="badge channel-b-screening" title="Same walk-in desk; applicant declared not in a hazard zone (No).">Channel B — No hazard (No)</span>
-                        {% endif %}
-                    {% else %}
-                        <span class="badge channel-c">Channel C — Walk-in</span>
-                    {% endif %}
-                </td>
                 <td>
                     <!-- Staff who handled this transaction -->
                     <div style="display: flex; align-items: center; gap: 0.375rem;">
@@ -1520,11 +1581,8 @@
 
 <!-- Archive / Receipt Table (read-only reporting) -->
 <div class="applicants-container" style="padding-top: 0.65rem;">
-    <div style="display:flex; align-items:center; justify-content:space-between; margin:0 0 0.5rem 0; gap:0.75rem; flex-wrap:wrap;">
-        <h3 style="margin:0; font-size:0.95rem; color:#1e293b; font-weight:600;">Archive / receipt records (proceeded to Module 2)</h3>
-        <span style="font-size:0.7rem; color:#64748b; background:#f8fafc; border:1px solid #e2e8f0; border-radius:9999px; padding:0.22rem 0.55rem;">
-            Reports only · <span id="archiveReportsCount">{{ archive_records|length }}</span> records
-        </span>
+    <div style="display:flex; align-items:center; justify-content:center; margin:0 0 0.5rem 0; gap:0.75rem; flex-wrap:wrap;">
+        <h3 style="margin:0; font-size:0.95rem; color:#1e293b; font-weight:600; text-align: center;">ARCHIVE / RECORDS</h3>
     </div>
 
     <!-- Archive Controls Bar -->
@@ -1558,13 +1616,6 @@
             >
         </div>
 
-        <!-- Channel Filter -->
-        <select class="filter-select header-filter" id="archiveFilterChannel" onchange="filterArchiveTable()" style="min-width: 220px;">
-            <option value="all">All Channels</option>
-            <option value="B">Channel B — Walk-in (hazard pathway)</option>
-            <option value="C">Channel C — Walk-in</option>
-        </select>
-
         <!-- Barangay Filter -->
         <select class="filter-select" id="archiveFilterBarangay" onchange="filterArchiveTable()">
             <option value="all">All Barangays</option>
@@ -1592,7 +1643,6 @@
                 <th>Proceeded</th>
                 <th>Reference #</th>
                 <th>Full Name</th>
-                <th>Channel</th>
                 <th>Staff Handled</th>
                 <th>SMS</th>
                 <th>DOB</th>
@@ -1613,13 +1663,6 @@
                 <td style="font-size: 0.6875rem; color: #64748b;">{{ row.dateTime }}</td>
                 <td>{{ row.referenceNumber }}</td>
                 <td style="font-weight: 500;">{{ row.fullName }}</td>
-                <td>
-                    {% if "Hazard (Yes)" in row.channelLabel %}
-                        <span class="badge channel-b-hazard">{{ row.channelLabel }}</span>
-                    {% else %}
-                        <span class="badge channel-b-screening">{{ row.channelLabel }}</span>
-                    {% endif %}
-                </td>
                 <td>
                     <div style="display: flex; align-items: center; gap: 0.375rem;">
                         <div class="handled-by-avatar {% if row.handledByPosition == '2nd Member' %}second-member{% elif row.handledByPosition == '4th Member' %}fourth-member{% else %}other{% endif %}">
@@ -2073,7 +2116,7 @@
                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                         <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                     </svg>
-                    <span id="editToggleText">Amend record</span>
+                    <span id="editToggleText">EDIT record</span>
                 </button>
                 
                 <!-- Intake is encoding-only; eligibility/disqualification is handled in Module 2 -->
@@ -2110,7 +2153,7 @@
                         <polyline points="3 6 5 6 21 6"></polyline>
                         <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                     </svg>
-                    Remove record
+                    DELETE record
                 </button>
                 {% else %}
                 <!-- Read-Only Notice for Field Team -->
@@ -2556,6 +2599,7 @@
                 .tha-reg-modal .form-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1rem; }
                 .tha-reg-modal .form-row.full { grid-template-columns: 1fr; }
                 .tha-reg-modal .form-row.identity-row { grid-template-columns: repeat(4, 1fr); }
+                .tha-reg-modal .form-row.three-cols { grid-template-columns: repeat(3, 1fr); }
                 .tha-reg-modal .danger-zone-box { background: #fffbeb; border: 1px solid #fcd34d; border-left: 4px solid #b45309; padding: 1rem; border-radius: 2px; margin: 1rem 0; }
                 .tha-reg-modal .danger-zone-box .section-label { color: #78350f; margin-top: 0; }
                 .tha-reg-modal .document-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin-bottom: 1rem; }
@@ -2715,7 +2759,7 @@
                     .tha-reg-modal .form-row { grid-template-columns: 1fr; }
                     .tha-reg-modal .channel-selector { grid-template-columns: 1fr; }
                     .tha-reg-modal .document-grid { grid-template-columns: 1fr; }
-                    .tha-reg-modal .identity-row { grid-template-columns: 1fr; }
+                    .tha-reg-modal .identity-row, .tha-reg-modal .three-cols { grid-template-columns: 1fr; }
                     .tha-reg-modal .hh-member-row {
                         grid-template-columns: 1fr;
                         padding: 0.75rem;
@@ -2761,7 +2805,7 @@
                     </div>
 
                     <!-- Sex & Years Residing in Talisay -->
-                    <div class="form-row">
+                    <div class="form-row three-cols">
                         <div class="form-group">
                             <label class="form-label">Sex <span style="color: #dc2626;">*</span></label>
                             <div class="tha-hazard-radio-group" role="radiogroup" aria-label="Sex" style="justify-content:flex-start;">
@@ -2779,11 +2823,11 @@
                             <label class="form-label">Registered voter in Talisay City <span style="color: #dc2626;">*</span></label>
                             <div class="tha-hazard-radio-group" role="radiogroup" aria-label="Registered voter in Talisay City" style="justify-content:flex-start;">
                                 <label class="tha-hazard-radio" for="voterYes">
-                                    <input type="radio" name="is_registered_voter_talisay" id="voterYes" value="yes" required>
+                                    <input type="radio" name="is_registered_voter_talisay" id="voterYes" value="true" required>
                                     <span>Yes</span>
                                 </label>
                                 <label class="tha-hazard-radio" for="voterNo">
-                                    <input type="radio" name="is_registered_voter_talisay" id="voterNo" value="no" required>
+                                    <input type="radio" name="is_registered_voter_talisay" id="voterNo" value="false" required>
                                     <span>No</span>
                                 </label>
                             </div>
@@ -2832,7 +2876,6 @@
                                     <span>No</span>
                                 </label>
                             </div>
-                            <span class="help-text">This declaration feeds Module 2.2 Property Ownership check.</span>
                         </div>
                     </div>
 
@@ -4201,7 +4244,7 @@
         const editActions = document.getElementById('editActions');
         const reviewActions = document.getElementById('reviewActions');
         
-        if (editToggleText) editToggleText.textContent = isEditMode ? 'Cancel amendment' : 'Amend record';
+        if (editToggleText) editToggleText.textContent = isEditMode ? 'Cancel amendment' : 'EDIT record';
         if (editActions) editActions.style.display = isEditMode ? 'flex' : 'none';
         
         // When leaving edit mode, re-apply role/path-based button gating.

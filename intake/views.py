@@ -899,6 +899,7 @@ def applicants_list(request, position):
             'middleName': app.middle_name or '',
             'extensionName': app.extension_name or '',
             'sex': app.sex or '',
+            'isRegisteredVoterTalisay': bool(app.is_registered_voter_talisay),
             'age': app.age or 0,
             'dateOfBirth': app.date_of_birth.isoformat() if app.date_of_birth else '',
             'barangay': app.barangay.name if app.barangay else 'Unknown',
@@ -1072,7 +1073,7 @@ def applicants_list(request, position):
     ])
     
     context = {
-        'page_title': 'ISF Recording Management',
+        'page_title': 'ISF Registration',
         'user_position': request.user.position,
         'can_modify': can_modify,  # True for Jocel/Joie, False for Field Team
         'applicants': applicants,
@@ -1125,6 +1126,12 @@ def walkin_register(request, position):
     post_data = request.POST.copy()
     if post_data.get('employment_status') == 'self-employed':
         post_data['employment_status'] = 'self_employed'
+    # Radio may send various formats; normalize to yes/no for TypedChoiceField.
+    voter_raw = (post_data.get('is_registered_voter_talisay') or '').strip().lower()
+    if voter_raw in ('yes', '1', 'on', 'true'):
+        post_data['is_registered_voter_talisay'] = 'yes'
+    elif voter_raw in ('no', '0', 'off', 'false'):
+        post_data['is_registered_voter_talisay'] = 'no'
     form = WalkInApplicantForm(post_data)
 
     # Get the danger zone answer (Yes/No from the form)
@@ -1250,9 +1257,10 @@ def walkin_register(request, position):
         monthly_income=form.cleaned_data['monthly_income'],
         household_size=form.cleaned_data.get('household_size', 1) or 1,
         years_residing=form.cleaned_data.get('years_residing', 0),
+        is_registered_voter_talisay=bool(form.cleaned_data.get('is_registered_voter_talisay')),
         occupation=form.cleaned_data.get('occupation', ''),
         employment_status=form.cleaned_data.get('employment_status', ''),
-        has_property_in_talisay=form.cleaned_data.get('has_property_in_talisay', False),
+        has_property_in_talisay=(form.cleaned_data.get('has_property_in_talisay') == 'yes'),
         channel='danger_zone',
         status=initial_status,
         danger_zone_type=danger_zone_type,
@@ -1351,6 +1359,7 @@ def walkin_register(request, position):
                 'incomeCeilingPeso': MODULE1_MONTHLY_INCOME_CEILING_PESO,
                 'householdSize': applicant.household_size,
                 'yearsResiding': applicant.years_residing,
+                'isRegisteredVoterTalisay': bool(applicant.is_registered_voter_talisay),
                 'phoneNumber': applicant.phone_number,
                 'currentAddress': applicant.current_address,
                 'dangerZoneType': applicant.danger_zone_type,

@@ -146,6 +146,11 @@ class Applicant(models.Model):
         default=0,
         verbose_name="Years Residing in Talisay"
     )
+    is_registered_voter_talisay = models.BooleanField(
+        default=False,
+        verbose_name="Registered Voter in Talisay City",
+        help_text="Declared voter registration status in Talisay City."
+    )
     
     # Household & Income
     monthly_income = models.DecimalField(
@@ -188,6 +193,48 @@ class Applicant(models.Model):
         max_length=255,
         blank=True,
         verbose_name="Specific Danger Zone Location"
+    )
+
+    # Module 2 Layer 3 — Displacement classification
+    DISPLACEMENT_REASON_CHOICES = [
+        ('', 'Not declared'),
+        ('danger_zone', 'Danger Zone / Hazard Area'),
+        ('ejected', 'Ejected from Previous Residence'),
+        ('relocated', 'Relocated Due to Expansion or Project Development'),
+    ]
+    EJECTION_TYPE_CHOICES = [
+        ('', '— Select —'),
+        ('private_eviction', 'Private land eviction'),
+        ('court_order', 'Court order'),
+        ('landowner_recovery', 'Landowner recovery'),
+        ('other', 'Other'),
+    ]
+    displacement_reason = models.CharField(
+        max_length=20,
+        blank=True,
+        default='',
+        choices=DISPLACEMENT_REASON_CHOICES,
+        verbose_name='Displacement Reason',
+        help_text='Module 2 Layer 3 displacement classification.',
+    )
+    ejection_type = models.CharField(
+        max_length=30,
+        blank=True,
+        default='',
+        choices=EJECTION_TYPE_CHOICES,
+        verbose_name='Ejection Type',
+    )
+    ejection_date = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name='Ejection / Notice Date',
+    )
+    project_name = models.CharField(
+        max_length=255,
+        blank=True,
+        default='',
+        verbose_name='Relocation Project Name',
+        help_text='Project that triggered relocation (road widening, drainage, government project, etc.).',
     )
 
     # Eligibility tracking
@@ -359,6 +406,7 @@ class HouseholdMember(models.Model):
         ('parent', 'Parent'),
         ('sibling', 'Sibling'),
         ('grandchild', 'Grandchild'),
+        ('live_in_partner', 'Live-in Partner'),
         ('other', 'Other Relative'),
     ]
 

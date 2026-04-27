@@ -968,6 +968,16 @@
         border-top: 1px solid #e2e8f0;
     }
 
+    /* Layer 3 displacement panels are styled with Tailwind utilities;
+       this hook preserves the runtime is-active toggle behavior. */
+    .m2-disp-panel {
+        display: none;
+    }
+
+    .m2-disp-panel.is-active {
+        display: block;
+    }
+
     .m2-layer4-block {
         display: block;
         margin-top: 0.75rem;
@@ -1110,22 +1120,24 @@
         color: #dc2626;
     }
 
-    /* Queue Badge - Matching Figma purple style */
+    /* Queue Badge - Enhanced modern styling */
     .queue-badge {
         display: inline-block;
-        padding: 0.125rem 0.375rem;
-        border-radius: 9999px;
+        padding: 0.27rem 0.48rem;
+        border-radius: 0.35rem;
         font-size: 0.625rem;
-        font-weight: 500;
+        font-weight: 600;
         max-width: 95%;
         overflow-wrap: break-word;
-        line-height: 1.2;
+        line-height: 1.3;
+        letter-spacing: 0.02em;
+        transition: all 0.2s ease;
     }
 
     .queue-badge.priority {
         background: #f3e8ff;
         color: #6b21a8;
-        border: 1px solid #ede9fe;
+        border: 1px solid #e9d5ff;
     }
 
     .queue-badge.walkin {
@@ -1140,16 +1152,18 @@
         border: 1px solid #bbf7d0;
     }
 
+    /* Queue Legend - Enhanced modern styling with gradient */
     .queue-legend {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
+        gap: 0.75rem;
         flex-wrap: wrap;
-        margin: 0 0 0.65rem 0;
-        padding: 0.5rem 0.65rem;
+        margin: 0 0 0.85rem 0;
+        padding: 0.65rem 0.85rem;
         border: 1px solid #dbeafe;
-        border-radius: 0.5rem;
-        background: #f8fbff;
+        border-radius: 0.6rem;
+        background: linear-gradient(135deg, #f8fbff 0%, #f0f9ff 100%);
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
     }
 
     .queue-legend-label {
@@ -1405,25 +1419,32 @@
         color: #16a34a;
     }
 
-    /* Action Buttons - Matching Figma */
+    /* Action Buttons - Enhanced with gradient and smooth animations */
     .action-btn {
         display: inline-flex;
         align-items: center;
         gap: 0.25rem;
-        padding: 0.375rem 0.625rem;
-        border-radius: 8px;
+        padding: 0.42rem 0.72rem;
+        border-radius: 0.5rem;
         font-size: 0.625rem;
-        font-weight: 500;
+        font-weight: 600;
         cursor: pointer;
-        transition: all 0.15s;
+        transition: all 0.2s ease;
         border: none;
-        background: #f1f5f9;
-        color: #64748b;
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
     }
 
     .action-btn:hover {
-        background: #eff6ff;
-        color: #3b82f6;
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+    }
+
+    .action-btn:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 4px rgba(37, 99, 235, 0.1);
     }
 
     .action-btn .eye-icon {
@@ -2124,266 +2145,251 @@
 
 {% block content %}
 
-<div class="applicants-container" style="padding: 1rem 1rem 0.9rem; max-width: 100%; background: #ffffff; border: 1px solid #dbe2ea; border-radius: 0.85rem; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06); margin-bottom: 0.95rem;">
-    <div class="page-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.95rem; gap: 1rem; flex-wrap: wrap;">
-        <div>
-            <h1 class="page-title" style="font-size: 1.02rem; font-weight: 700; color: #0f172a; margin: 0; letter-spacing: 0.04em; text-transform: uppercase;">Application and Evaluation</h1>
-            <p class="page-subtitle" style="font-size: 0.75rem; color: #64748b; margin-top: 0.2rem;">Review queued applicants, verify stage progress, and maintain routing readiness.</p>
+<div class="applicants-container"
+    style="padding: 1rem 1rem 0.9rem; max-width: 100%; background: #ffffff; border: 1px solid #dbe2ea; border-radius: 0.85rem; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06); margin-bottom: 0.95rem;">
+    <div class="page-header"
+        style="display: flex; align-items: center; justify-content: center; margin-bottom: 0.95rem; gap: 1rem; flex-wrap: wrap;">
+        <div style="text-align: center;">
+            <h1 class="page-title"
+                style="font-size: 1.02rem; font-weight: 700; color: #0f172a; margin: 0; letter-spacing: 0.04em; text-transform: uppercase;">
+                Application and Evaluation</h1>
+
         </div>
     </div>
 
-<!-- Controls Bar (intake-style compact row) -->
-<div class="controls-bar" style="display: flex; gap: 0.75rem; margin-bottom: 0.85rem; flex-wrap: wrap; align-items: center; padding: 0.6rem; border: 1px solid #e2e8f0; background: #f8fafc; border-radius: 0.7rem;">
-    <div class="summary-chip-card" style="display: flex; align-items: center; gap: 0.65rem; padding: 0.46rem 0.68rem; background: #f3e8ff; border-radius: 0.55rem; border: 1px solid #e9d5ff;">
-        <svg style="width: 20px; height: 20px; color: #7c3aed;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 3l2.4 4.86 5.36.78-3.88 3.78.92 5.35L12 15.77 7.2 17.77l.92-5.35L4.24 8.64l5.36-.78L12 3z"></path>
-        </svg>
-        <div>
-            <p style="font-size: 0.625rem; color: #6b21a8; margin: 0; text-transform: uppercase; font-weight: 500;">Priority Queue</p>
-            <p style="font-size: 1.25rem; font-weight: 700; color: #7c3aed; margin: 0;">{{ queue_counts.priority|default:0 }}</p>
+    <!-- Controls Bar (intake-style compact row) -->
+    <div class="controls-bar"
+        style="display: flex; gap: 0.75rem; margin-bottom: 0.85rem; flex-wrap: wrap; align-items: center; padding: 0.6rem; border: 1px solid #e2e8f0; background: #f8fafc; border-radius: 0.7rem;">
+        <div class="summary-chip-card"
+            style="display: flex; align-items: center; gap: 0.65rem; padding: 0.46rem 0.68rem; background: #f3e8ff; border-radius: 0.55rem; border: 1px solid #e9d5ff;">
+            <svg style="width: 20px; height: 20px; color: #7c3aed;" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2">
+                <path d="M12 3l2.4 4.86 5.36.78-3.88 3.78.92 5.35L12 15.77 7.2 17.77l.92-5.35L4.24 8.64l5.36-.78L12 3z">
+                </path>
+            </svg>
+            <div>
+                <p style="font-size: 0.625rem; color: #6b21a8; margin: 0; text-transform: uppercase; font-weight: 500;">
+                    Priority Queue</p>
+                <p style="font-size: 1.25rem; font-weight: 700; color: #7c3aed; margin: 0;">{{ queue_counts.priority|default:0 }}</p>
+            </div>
+        </div>
+        <div class="summary-chip-card"
+            style="display: flex; align-items: center; gap: 0.65rem; padding: 0.46rem 0.68rem; background: #eff6ff; border-radius: 0.55rem; border: 1px solid #bfdbfe;">
+            <svg style="width: 20px; height: 20px; color: #2563eb;" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="8" r="4"></circle>
+                <path d="M4 21a8 8 0 0 1 16 0"></path>
+            </svg>
+            <div>
+                <p style="font-size: 0.625rem; color: #64748b; margin: 0; text-transform: uppercase; font-weight: 500;">
+                    Walk-in Queue</p>
+                <p style="font-size: 1.25rem; font-weight: 700; color: #2563eb; margin: 0;">{{ queue_counts.walk_in|default:0 }}</p>
+            </div>
+        </div>
+        <div class="search-box" style="flex: 1; min-width: 200px; position: relative;">
+            <svg style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); width: 1rem; height: 1rem; color: #94a3b8;"
+                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.35-4.35"></path>
+            </svg>
+            <input type="text" id="searchInput" placeholder="Name, ref #, barangay..." value="{{ search }}"
+                onkeyup="handleSearch(event)"
+                style="width: 100%; padding: 0.56rem 0.72rem 0.56rem 2.25rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.78rem; outline: none;">
+        </div>
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
         </div>
     </div>
-    <div class="summary-chip-card" style="display: flex; align-items: center; gap: 0.65rem; padding: 0.46rem 0.68rem; background: #eff6ff; border-radius: 0.55rem; border: 1px solid #bfdbfe;">
-        <svg style="width: 20px; height: 20px; color: #2563eb;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="8" r="4"></circle>
-            <path d="M4 21a8 8 0 0 1 16 0"></path>
-        </svg>
-        <div>
-            <p style="font-size: 0.625rem; color: #64748b; margin: 0; text-transform: uppercase; font-weight: 500;">Walk-in Queue</p>
-            <p style="font-size: 1.25rem; font-weight: 700; color: #2563eb; margin: 0;">{{ queue_counts.walk_in|default:0 }}</p>
-        </div>
-    </div>
-    <div class="search-box" style="flex: 1; min-width: 200px; position: relative;">
-        <svg style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); width: 1rem; height: 1rem; color: #94a3b8;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="11" cy="11" r="8"></circle>
-            <path d="m21 21-4.35-4.35"></path>
-        </svg>
-        <input type="text" id="searchInput" placeholder="Name, ref #, barangay..." value="{{ search }}" onkeyup="handleSearch(event)" style="width: 100%; padding: 0.56rem 0.72rem 0.56rem 2.25rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.78rem; outline: none;">
-    </div>
-    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
-        <select class="filter-select" id="stageFilter" onchange="handleStageChange()" style="padding: 0.56rem 1.9rem 0.56rem 0.7rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.75rem; background: white; cursor: pointer; appearance: none; background-image: url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2364748b'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E&quot;); background-repeat: no-repeat; background-position: right 0.5rem center;">
-            <option value="all" {% if filter_stage == 'all' %}selected{% endif %}>All Stages</option>
-            <option value="eligibility" {% if filter_stage == 'eligibility' %}selected{% endif %}>Eligibility</option>
-            <option value="document_gathering" {% if filter_stage == 'document_gathering' %}selected{% endif %}>Document Gathering</option>
-            <option value="form_released" {% if filter_stage == 'form_released' %}selected{% endif %}>Form Released</option>
-            <option value="signatory_routing" {% if filter_stage == 'signatory_routing' %}selected{% endif %}>Signatory Routing</option>
-            <option value="fully_approved" {% if filter_stage == 'fully_approved' %}selected{% endif %}>Fully Approved</option>
-            <option value="lot_awarded" {% if filter_stage == 'lot_awarded' %}selected{% endif %}>Lot Awarded</option>
-        </select>
-        <select class="filter-select" id="eval28Filter" onchange="handleStageChange()" style="padding: 0.56rem 1.9rem 0.56rem 0.7rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.75rem; background: white; cursor: pointer; appearance: none; background-image: url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2364748b'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E&quot;); background-repeat: no-repeat; background-position: right 0.5rem center;">
-            <option value="all" {% if filter_eval28 == 'all' %}selected{% endif %}>2.6 All</option>
-            <option value="approved" {% if filter_eval28 == 'approved' %}selected{% endif %}>2.6 Approved</option>
-            <option value="for_review" {% if filter_eval28 == 'for_review' %}selected{% endif %}>2.6 For Review</option>
-            <option value="not_recorded" {% if filter_eval28 == 'not_recorded' %}selected{% endif %}>2.6 Not Recorded</option>
-        </select>
-    </div>
-</div>
 
-<!-- Applications Table -->
-<div class="applications-table-container">
-    <div class="queue-legend" aria-label="Queue badge legend">
-        <span class="queue-legend-label">Queue legend</span>
-        <span class="queue-badge priority" title="Priority queue (hazard-certified priority path)">Priority</span>
-        <span class="queue-badge walkin" title="Walk-in queue (FIFO regular path)">Walk-in</span>
-        <span class="queue-badge walkin" title="No active Module 2 queue assignment yet">No queue</span>
-    </div>
-    {% if applicants_data %}
-    <table class="applications-table compact-table">
-        <thead>
-            <tr>
-                <th class="col-num" title="Row number in this list">#</th>
-                <th class="col-applicant" title="Applicant full name">Applicant record</th>
-                <th class="col-transaction" title="Applicant transaction ID">Transaction #</th>
-                <th class="col-reference" title="Applicant reference number">Reference #</th>
-                <th class="col-encoded" title="Date and time encoded in Module 1">Encoded at</th>
-                <th class="col-channel" title="Declared intake channel">Channel</th>
-                <th class="col-queue" title="Active Module 2 queue tag">Queue</th>
-                <th class="col-staff" title="Module 1 encoding staff and Module 2 handoff metadata">Staff</th>
-                <th class="col-gate" title="Module 2 evaluation status">Eval</th>
-                <th class="col-actions">Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for data in applicants_data %}
-            <tr data-applicant-id="{{ data.applicant.id }}" class="scroll-animate-left">
-                <td class="col-num" style="font-weight:700;color:#1e293b;">{{ forloop.counter }}</td>
-                <td class="col-applicant">
-                    <div class="applicant-cell">
-                        <span class="applicant-name" style="font-weight:600;">{{ data.applicant.full_name }}</span>
-                        {% if data.blacklist_blocked %}
-                        <span style="font-size:0.5625rem;color:#b91c1c;font-weight:600;">
-                            Blacklist — Module 2 blocked
-                            {% if data.blacklist_source %}
-                            <span
-                                class="blacklist-source-chip {% if data.blacklist_source == 'Units Blacklist Entries' %}source-units{% else %}source-module1{% endif %}">{{
-                                data.blacklist_source }}</span>
+    <!-- Applications Table -->
+    <div class="applications-table-container">
+        <div class="queue-legend" aria-label="Queue badge legend">
+            <span class="queue-legend-label">Queue legend</span>
+            <span class="queue-badge priority" title="Priority queue (hazard-certified priority path)">Priority</span>
+            <span class="queue-badge walkin" title="Walk-in queue (FIFO regular path)">Walk-in</span>
+            <span class="queue-badge walkin" title="No active Module 2 queue assignment yet">No queue</span>
+        </div>
+        {% if applicants_data %}
+        <table class="applications-table compact-table">
+            <thead>
+                <tr>
+                    <th class="col-num" title="Row number in this list">#</th>
+                    <th class="col-applicant" title="Applicant full name">Applicant record</th>
+                    <th class="col-transaction" title="Applicant transaction ID">Transaction #</th>
+                    <th class="col-reference" title="Applicant reference number">Reference #</th>
+                    <th class="col-encoded" title="Date and time encoded in Module 1">Encoded at</th>
+
+                    <th class="col-queue" title="Active Module 2 queue tag">Queue</th>
+                    <th class="col-staff" title="Module 1 encoding staff and Module 2 handoff metadata">Staff</th>
+                    <th class="col-gate" title="Module 2 evaluation status">status</th>
+                    <th class="col-actions">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for data in applicants_data %}
+                <tr data-applicant-id="{{ data.applicant.id }}" class="scroll-animate-left" {% if data.blacklist_blocked %}style="background:#fef2f2;"{% endif %}>
+                    <td class="col-num" style="font-weight:700;color:#1e293b;">{{ forloop.counter }}</td>
+                    <td class="col-applicant">
+                        <div class="applicant-cell">
+                            <span class="applicant-name" style="font-weight:600;">{{ data.applicant.full_name }}</span>
+                            {% if data.blacklist_blocked %}
+                            <span style="font-size:0.5625rem;color:#b91c1c;font-weight:600;">
+                                Blacklist — Module 2 blocked
+                                {% if data.blacklist_source %}
+                                <span class="blacklist-source-chip {% if data.blacklist_source == 'Units Blacklist Entries' %}source-units{% else %}source-module1{% endif %}">{{ data.blacklist_source }}</span>
+                                {% endif %}
+                            </span>
+                            {% elif data.applicant_status == 'pending_cdrrmo' %}
+                            {% if data.cdrrmo_status == 'certified' or data.cdrrmo_status == 'not_certified' %}
+                            <span style="font-size:0.5625rem;color:#0369a1;font-weight:600;">CDRRMO finalized — awaiting
+                                eligibility and queue assignment</span>
+                            {% else %}
+                            <span style="font-size:0.5625rem;color:#b45309;font-weight:600;">CDRRMO pending staff
+                                finalization (2.6)</span>
                             {% endif %}
-                        </span>
-                        {% elif data.applicant_status == 'pending_cdrrmo' %}
-                        {% if data.cdrrmo_status == 'certified' or data.cdrrmo_status == 'not_certified' %}
-                        <span style="font-size:0.5625rem;color:#0369a1;font-weight:600;">CDRRMO finalized — awaiting
-                            eligibility and queue assignment</span>
-                        {% else %}
-                        <span style="font-size:0.5625rem;color:#b45309;font-weight:600;">CDRRMO pending staff
-                            finalization (2.6)</span>
-                        {% endif %}
-                        {% elif not data.m1_income_eligible %}
-                        <span style="font-size:0.5625rem;color:#b45309;">Income over M1 ceiling — fix in Module 1</span>
-                        {% elif not data.m1_declares_no_property %}
-                        <span style="font-size:0.5625rem;color:#b45309;">Property in Talisay flagged</span>
-                        {% endif %}
-                        {% if data.evaluation_approval_status %}
-                        <span style="font-size:0.5625rem;color:#1e3a8a;font-weight:600;">2.6 {{
-                            data.evaluation_approval_status_display }}</span>
-                        {% endif %}
-                        {% if data.is_delayed %}
-                        <div class="routing-delayed-indicator">
-                            <span>⚠</span> Routing delayed
-                        </div>
-                        {% endif %}
-                    </div>
-                </td>
-                <td class="col-transaction">
-                    <span class="m2-cell-code" style="font-family: monospace; font-size: 0.6rem; word-break: break-all;">APP-{{ data.applicant.id }}</span>
-                </td>
-                <td class="col-reference">
-                    <span class="m2-cell-code">{{ data.applicant.reference_number }}</span>
-                </td>
-                <td class="col-encoded">
-                    <span style="font-size:0.6875rem;color:#334155;" title="Date &amp; time (Module 1 record created)">{{ data.applicant.created_at|date:"n/j/Y, P" }}</span>
-                </td>
-                <td class="col-channel">
-                    {% if data.applicant.channel == 'danger_zone' %}
-                    <span class="badge channel-b-hazard">Channel B<br />Danger Zone</span>
-                    {% else %}
-                    <span class="badge channel-a">Channel A<br />Walk-in</span>
-                    {% endif %}
-                </td>
-                <td class="col-queue">
-                    {% if data.intake_queue_label != '—' %}
-                    <span class="queue-badge {% if data.active_queue_type == 'priority' %}priority{% else %}walkin{% endif %}" title="{% if data.active_queue_type == 'priority' %}Priority queue (hazard-certified priority path){% elif data.active_queue_type == 'walk_in' %}Walk-in queue (FIFO regular path){% else %}Queue assignment{% endif %}">{{ data.intake_queue_label }}</span>
-                    {% else %}
-                    <span class="queue-badge walkin" title="No active Module 2 queue assignment yet">No queue tag</span>
-                    {% endif %}
-                </td>
-                <td class="col-staff">
-                    {% if data.applicant.registered_by %}
-                    <div class="m2-staff-row">
-                        <div class="m2-staff-avatar">{{ data.applicant.registered_by.first_name|default:''|slice:':1'|upper }}{{ data.applicant.registered_by.last_name|default:''|slice:':1'|upper }}</div>
-                        <div style="min-width:0;">
-                            <div style="font-weight:500;color:#1e293b;">{{ data.applicant.registered_by.get_full_name }}</div>
-                            <div style="color:#64748b;">{{ data.applicant.registered_by.get_position_display }}</div>
-                            {% if data.applicant.module2_handoff_by_id and data.applicant.module2_handoff_by_id != data.applicant.registered_by.id %}
-                            <div style="color:#475569;margin-top:0.2rem;font-size:0.5625rem;"
-                                title="Proceed to Application &amp; Evaluation (Module 1)">
-                                <strong>M2 handoff:</strong> {{ data.applicant.module2_handoff_by.get_full_name }}
+                            {% endif %}
+                            {% if data.evaluation_approval_status %}
+                            <span style="font-size:0.5625rem;color:#1e3a8a;font-weight:600;">2.6 {{ data.evaluation_approval_status_display }}</span>
+                            {% endif %}
+                            {% if data.is_delayed %}
+                            <div class="routing-delayed-indicator">
+                                <span>⚠</span> Routing delayed
                             </div>
                             {% endif %}
                         </div>
-                    </div>
-                    {% else %}
-                    <span style="font-size:0.625rem;color:#94a3b8;">&mdash;</span>
-                    {% endif %}
-                </td>
-                <td class="col-gate">
-                    <div class="m2-gate-line">
-                        {% if data.blacklist_blocked %}
-                        <span style="color:#b91c1c;">2.1 Blocked</span>
-                        {% elif data.applicant_status == 'pending_cdrrmo' and data.applicant.channel == 'danger_zone'
-                        and data.cdrrmo_status != 'certified' and data.cdrrmo_status != 'not_certified' %}
-                        <span style="color:#b45309;">2.6 Pending</span>
-                        {% elif data.evaluation_approval_status %}
-                        <span style="color:#1e3a8a;">2.8 {{ data.evaluation_approval_status_display }}</span>
+                    </td>
+                    <td class="col-transaction">
+                        <span class="m2-cell-code" style="font-family: monospace; font-size: 0.6rem; word-break: break-all;">APP-{{ data.applicant.id }}</span>
+                    </td>
+                    <td class="col-reference">
+                        <span class="m2-cell-code">{{ data.applicant.reference_number }}</span>
+                    </td>
+                    <td class="col-encoded">
+                        <span style="font-size:0.6875rem;color:#334155;" title="Date &amp; time (Module 1 record created)">{{ data.applicant.created_at|date:"n/j/Y, P" }}</span>
+                    </td>
+
+                    <td class="col-queue">
+                        {% if data.intake_queue_label != '—' %}
+                        <span class="queue-badge {% if data.active_queue_type == 'priority' %}priority{% else %}walkin{% endif %}" title="{% if data.active_queue_type == 'priority' %}Priority queue (hazard-certified priority path){% elif data.active_queue_type == 'walk_in' %}Walk-in queue (FIFO regular path){% else %}Queue assignment{% endif %}">{{ data.intake_queue_label }}</span>
                         {% else %}
-                        <span style="color:#166534;">2.1 Clear</span>
+                        <span class="queue-badge walkin" title="No active Module 2 queue assignment yet">No queue tag</span>
                         {% endif %}
-                    </div>
-                </td>
-                <td class="col-actions">
-                    <div style="display: flex; gap: 0.25rem; flex-wrap: wrap;">
-                        <button class="action-btn js-open-application-modal" data-applicant-id="{{ data.applicant.id }}"
-                            data-name="{{ data.applicant.full_name|escape }}"
-                            data-reference="{{ data.applicant.reference_number|escape }}"
-                            data-verified-count="{{ data.group_a_verified }}"
-                            data-current-stage="{{ data.current_stage|escape }}"
-                            data-application-id="{{ data.application.id|default:'' }}"
-                            onclick="openApplicationModalFromButton(this)">
-                            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                                <circle cx="12" cy="12" r="3" />
-                            </svg>
-                            Open Record
-                        </button>
+                    </td>
+                    <td class="col-staff">
+                        {% if data.applicant.registered_by %}
+                        <div class="m2-staff-row">
+                            <div class="m2-staff-avatar">{{ data.applicant.registered_by.first_name|default:''|slice:':1'|upper }}{{ data.applicant.registered_by.last_name|default:''|slice:':1'|upper }}</div>
+                            <div style="min-width:0;">
+                                <div style="font-weight:500;color:#1e293b;">{{ data.applicant.registered_by.get_full_name }}</div>
+                                <div style="color:#64748b;">{{ data.applicant.registered_by.get_position_display }}
+                                </div>
+                                {% if data.applicant.module2_handoff_by_id and data.applicant.module2_handoff_by_id != data.applicant.registered_by.id %}
+                                <div style="color:#475569;margin-top:0.2rem;font-size:0.5625rem;"
+                                    title="Proceed to Application &amp; Evaluation (Module 1)">
+                                    <strong>M2 handoff:</strong> {{ data.applicant.module2_handoff_by.get_full_name }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% else %}
+                        <span style="font-size:0.625rem;color:#94a3b8;">&mdash;</span>
+                        {% endif %}
+                    </td>
+                    <td class="col-gate">
+                        <div class="m2-gate-line">
+                            {% if data.blacklist_blocked %}
+                            <span style="color:#b91c1c;font-weight:700;">Blocked</span>
+                            {% elif data.applicant_status == 'pending_cdrrmo' and data.applicant.channel == 'danger_zone' and data.cdrrmo_status != 'certified' and data.cdrrmo_status != 'not_certified' %}
+                            <span style="color:#b45309;">Pending</span>
+                            {% elif data.evaluation_approval_status %}
+                            <span style="color:#1e3a8a;">{{ data.evaluation_approval_status_display }}</span>
+                            {% else %}
+                            <span style="color:#166534;">Clear</span>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td class="col-actions">
+                        <div style="display: flex; gap: 0.25rem; flex-wrap: wrap;">
+                            <button class="action-btn js-open-application-modal"
+                                data-applicant-id="{{ data.applicant.id }}"
+                                data-name="{{ data.applicant.full_name|escape }}"
+                                data-reference="{{ data.applicant.reference_number|escape }}"
+                                data-verified-count="{{ data.group_a_verified }}"
+                                data-current-stage="{{ data.current_stage|escape }}"
+                                data-application-id="{{ data.application.id|default:'' }}"
+                                onclick="openApplicationModalFromButton(this)">
+                                <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                    <circle cx="12" cy="12" r="3" />
+                                </svg>
+                                Open Record
+                            </button>
 
-                        {% if 'generate_form' in data.user_actions %}
-                        <button class="action-btn" style="background: #dcfce7; color: #16a34a;"
-                            onclick="generateFormDirect('{{ data.applicant.id }}')">
-                            📝 Generate Form
-                        </button>
-                        {% endif %}
+                            {% if 'generate_form' in data.user_actions %}
+                            <button class="action-btn" style="background: #dcfce7; color: #16a34a;"
+                                onclick="generateFormDirect('{{ data.applicant.id }}')">
+                                📝 Generate Form
+                            </button>
+                            {% endif %}
 
-                        {% if 'receive_routing' in data.user_actions %}
-                        <button class="action-btn" style="background: #dbeafe; color: #2563eb;"
-                            onclick="updateRouting('{{ data.application.id }}', 'received')">
-                            📨 Receive
-                        </button>
-                        {% endif %}
+                            {% if 'receive_routing' in data.user_actions %}
+                            <button class="action-btn" style="background: #dbeafe; color: #2563eb;"
+                                onclick="updateRouting('{{ data.application.id }}', 'received')">
+                                📨 Receive
+                            </button>
+                            {% endif %}
 
-                        {% if 'forward_to_oic' in data.user_actions %}
-                        <button class="action-btn" style="background: #dbeafe; color: #2563eb;"
-                            onclick="updateRouting('{{ data.application.id }}', 'forwarded_oic')">
-                            ➡️ Forward to OIC
-                        </button>
-                        {% endif %}
+                            {% if 'forward_to_oic' in data.user_actions %}
+                            <button class="action-btn" style="background: #dbeafe; color: #2563eb;"
+                                onclick="updateRouting('{{ data.application.id }}', 'forwarded_oic')">
+                                ➡️ Forward to OIC
+                            </button>
+                            {% endif %}
 
-                        {% if 'sign_oic' in data.user_actions %}
-                        <button class="action-btn" style="background: #fef3c7; color: #d97706;"
-                            onclick="updateRouting('{{ data.application.id }}', 'signed_oic')">
-                            ✍️ Sign (OIC)
-                        </button>
-                        {% endif %}
+                            {% if 'sign_oic' in data.user_actions %}
+                            <button class="action-btn" style="background: #fef3c7; color: #d97706;"
+                                onclick="updateRouting('{{ data.application.id }}', 'signed_oic')">
+                                ✍️ Sign (OIC)
+                            </button>
+                            {% endif %}
 
-                        {% if 'forward_to_head' in data.user_actions %}
-                        <button class="action-btn" style="background: #dbeafe; color: #2563eb;"
-                            onclick="updateRouting('{{ data.application.id }}', 'forwarded_head')">
-                            ➡️ Forward to Head
-                        </button>
-                        {% endif %}
+                            {% if 'forward_to_head' in data.user_actions %}
+                            <button class="action-btn" style="background: #dbeafe; color: #2563eb;"
+                                onclick="updateRouting('{{ data.application.id }}', 'forwarded_head')">
+                                ➡️ Forward to Head
+                            </button>
+                            {% endif %}
 
-                        {% if 'sign_head' in data.user_actions %}
-                        <button class="action-btn" style="background: #dcfce7; color: #16a34a;"
-                            onclick="updateRouting('{{ data.application.id }}', 'signed_head')">
-                            ✅ Sign (Head)
-                        </button>
-                        {% endif %}
+                            {% if 'sign_head' in data.user_actions %}
+                            <button class="action-btn" style="background: #dcfce7; color: #16a34a;"
+                                onclick="updateRouting('{{ data.application.id }}', 'signed_head')">
+                                ✅ Sign (Head)
+                            </button>
+                            {% endif %}
 
-                        {% if 'award_lot' in data.user_actions %}
-                        <button class="action-btn" style="background: #f3e8ff; color: #7c3aed;"
-                            onclick="openAwardModal('{{ data.application.id }}', '{{ data.applicant.full_name }}')">
-                            🏠 Award Lot
-                        </button>
-                        {% endif %}
-                    </div>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    <div class="table-footer">
-        <p>Showing {{ applicants_data|length }} applicant record{{ applicants_data|length|pluralize }}</p>
+                            {% if 'award_lot' in data.user_actions %}
+                            <button class="action-btn" style="background: #f3e8ff; color: #7c3aed;"
+                                onclick="openAwardModal('{{ data.application.id }}', '{{ data.applicant.full_name }}')">
+                                🏠 Award Lot
+                            </button>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="table-footer">
+            <p>Showing {{ applicants_data|length }} applicant record{{ applicants_data|length|pluralize }}</p>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">📋</div>
+            <h3>No Applications Found</h3>
+            <p>{% if search %}No results match your search "{{ search }}"{% else %}No applicant records available for Module 2 evaluation yet. In Module 1, open the applicant and click "Proceed to Application & Evaluation" to handoff the record.{% endif %}</p>
+        </div>
+        {% endif %}
     </div>
-    {% else %}
-    <div class="empty-state">
-        <div class="empty-state-icon">📋</div>
-        <h3>No Applications Found</h3>
-        <p>{% if search %}No results match your search "{{ search }}"{% elif filter_stage != 'all' or filter_eval28 !=
-            'all' %}No applicants match the selected filters{% else %}No applicant records available for Module 2
-            evaluation yet. In Module 1, open the applicant and click "Proceed to Application & Evaluation" to handoff
-            the record.{% endif %}</p>
-    </div>
-    {% endif %}
-</div>
 </div>
 
 <!-- Application Detail Modal -->
@@ -2862,39 +2868,88 @@
         if (box) box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
-    async function m2FinalizeNoHazardAndOpen28() {
-        const requiresCdrrmo = !!(window.__m2LastApplicantData?.m2_rules && window.__m2LastApplicantData.m2_rules.requires_cdrrmo);
-        if (requiresCdrrmo) {
-            await m2OpenEvaluationApprovalStep();
+    function m2OnDisplacementReasonChange() {
+        const options = document.querySelectorAll('#m2DispOptions .m2-disp-option');
+        let selected = '';
+        options.forEach(opt => {
+            const input = opt.querySelector('input[type="radio"]');
+            if (input && input.checked) {
+                selected = input.value;
+                opt.classList.add('is-selected');
+            } else {
+                opt.classList.remove('is-selected');
+            }
+        });
+        document.querySelectorAll('.m2-disp-panel').forEach(panel => {
+            const value = panel.getAttribute('data-disp-panel') || '';
+            if (value === selected) {
+                panel.classList.add('is-active');
+            } else {
+                panel.classList.remove('is-active');
+            }
+        });
+    }
+
+    async function recordDisplacementClassification() {
+        if (!currentApplicantId || !canVerifyDocs) return;
+
+        const selectedRadio = document.querySelector('#m2DispOptions input[name="modalDisplacementReason"]:checked');
+        const reason = selectedRadio ? selectedRadio.value : '';
+        if (!reason) {
+            alert('Select one displacement reason before saving.');
             return;
         }
 
-        const applicantStatus = window.__m2LastApplicantData?.applicant_status || '';
-        const activeQueueType = window.__m2LastApplicantData?.active_queue_type || '';
-        const alreadyEligibleQueued = applicantStatus === 'eligible' && (activeQueueType === 'priority' || activeQueueType === 'walk_in');
-        if (!alreadyEligibleQueued && currentApplicantId && canVerifyDocs) {
-            try {
-                const formData = new FormData();
-                formData.append('applicant_id', currentApplicantId);
-                formData.append('action', 'mark_eligible_walk_in');
-                formData.append('reason', '');
-                formData.append('notes', 'Auto-finalized from Layer 2 (no hazard claim) before 2.6.');
-                formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
-                const response = await fetch('{% url "applications:evaluate_applicant" request.user.position %}', {
-                    method: 'POST',
-                    body: formData,
-                });
-                const data = await response.json();
-                if (!data.success) {
-                    alert(data.error || 'Unable to finalize Module 2 eligibility before opening 2.6.');
-                    return;
-                }
-            } catch (error) {
-                alert('Error: ' + error.message);
+        const formData = new FormData();
+        formData.append('applicant_id', currentApplicantId);
+        formData.append('displacement_reason', reason);
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+        if (reason === 'danger_zone') {
+            const hazardType = (document.getElementById('m2HazardType')?.value || '').trim();
+            const hazardLocation = (document.getElementById('m2HazardLocation')?.value || '').trim();
+            if (!hazardType) {
+                alert('Hazard Type is required for the Danger Zone option.');
                 return;
             }
+            if (!hazardLocation) {
+                alert('Hazard Location Details is required for the Danger Zone option.');
+                return;
+            }
+            formData.append('hazard_type', hazardType);
+            formData.append('hazard_location', hazardLocation);
+        } else if (reason === 'ejected') {
+            const ejectionType = (document.getElementById('m2EjectionType')?.value || '').trim();
+            const ejectionDate = (document.getElementById('m2EjectionDate')?.value || '').trim();
+            if (!ejectionType) {
+                alert('Ejection Type is required for the Ejected option.');
+                return;
+            }
+            formData.append('ejection_type', ejectionType);
+            if (ejectionDate) formData.append('ejection_date', ejectionDate);
+        } else if (reason === 'relocated') {
+            const projectName = (document.getElementById('m2ProjectName')?.value || '').trim();
+            if (!projectName) {
+                alert('Project Name is required for the Project Relocation option.');
+                return;
+            }
+            formData.append('project_name', projectName);
         }
-        await m2OpenEvaluationApprovalStep();
+
+        try {
+            const response = await fetch('{% url "applications:record_displacement_classification" request.user.position %}', {
+                method: 'POST',
+                body: formData,
+            });
+            const data = await response.json();
+            if (!data.success) {
+                alert(data.error || 'Unable to save displacement classification.');
+                return;
+            }
+            await m2OpenEvaluationApprovalStep();
+        } catch (error) {
+            alert('Error: ' + error.message);
+        }
     }
 
     function renderEligibilityPipeline(data) {
@@ -2907,15 +2962,18 @@
         const propertyClear = !!data.m1_declares_no_property;
         const incomeClear = !!data.m1_income_eligible;
         const householdMismatch = !!rules.household_mismatch;
+        const householdHasLiveInPartner = !!rules.household_has_live_in_partner;
+        const liveInPartnerCount = Number(rules.live_in_partner_count || 0);
+        const householdClear = !householdHasLiveInPartner;
         const declaredHH = rules.declared_household_size != null ? String(rules.declared_household_size) : '—';
         const listedHH = rules.listed_household_size != null ? String(rules.listed_household_size) : '—';
 
         const policy23 =
-            'THA Staff records or confirms the applicant’s property ownership result. The system evaluates whether ownership of real property disqualifies the applicant. If the result causes disqualification, the system records the disqualification remarks. If the applicant is cleared, the record proceeds to the next check.';
+            'THA Staff records or confirms the applicant’s property ownership result. The system evaluates whether ownership of real property disqualifies the applicant. If property in Talisay is declared, this is a Layer 2 flag and the applicant goes to the Walk-in queue.';
         const policy24 =
-            'The system retrieves the income details that were already encoded during registration in Module 1. THA Staff reviews or confirms the encoded income information, and the system checks whether the income level remains within the allowed eligibility threshold. No re-encoding is needed unless correction is necessary.';
+            'The system retrieves the income details that were already encoded during registration in Module 1. If the declared income exceeds the Module 1 ceiling, this is a Layer 2 flag and the applicant goes to the Walk-in queue. No re-encoding is needed unless correction is necessary.';
         const policy25 =
-            'THA Staff records or confirms the household composition and related details needed for evaluation. The system uses this information as part of eligibility determination and applicant prioritization.';
+            'THA Staff records or confirms household composition. A registered live-in partner among the household members is a Layer 2 flag and pushes the applicant to the Walk-in queue. The system uses this information as part of eligibility determination and applicant prioritization.';
 
         const item = (tone, icon, title, desc) =>
             `<div class="m2-check-item ${tone}">
@@ -2960,52 +3018,197 @@
 
         const propDesc = propertyClear
             ? 'Cleared - no Talisay property declared.'
-            : 'Flagged - property in Talisay declared. Advisory only in Module 2; applicant can proceed on walk-in path unless Layer 3 qualifies for priority.';
+            : 'Flagged - property in Talisay declared. Layer 2 flag pushes the applicant to the Walk-in queue.';
         const incDesc = incomeClear
             ? 'Cleared - within Module 1 income threshold.'
-            : 'Flagged - over Module 1 income threshold. Advisory only in Module 2; applicant can proceed on walk-in path unless Layer 3 qualifies for priority.';
-        const hhDesc = householdMismatch
-            ? `Flagged - declared size (${escapeHtml(declaredHH)}) does not match listed members (${escapeHtml(listedHH)}). Advisory only in Module 2; applicant can proceed on walk-in path unless Layer 3 qualifies for priority.`
-            : `Cleared - declared size (${escapeHtml(declaredHH)}) aligns with listed members (${escapeHtml(listedHH)}).`;
+            : 'Flagged - over Module 1 income threshold. Layer 2 flag pushes the applicant to the Walk-in queue.';
+        const hhDesc = householdHasLiveInPartner
+            ? `Flagged - registered household includes a live-in partner${liveInPartnerCount > 1 ? ` (${liveInPartnerCount})` : ''}. Layer 2 flag pushes the applicant to the Walk-in queue.`
+            : `Cleared - no live-in partner among registered household members (declared ${escapeHtml(declaredHH)} / listed ${escapeHtml(listedHH)}).`;
         const l2Tone23 = propertyClear ? 'pass' : 'fail';
         const l2Icon23 = propertyClear ? '✓' : '!';
         const l2Tone24 = incomeClear ? 'pass' : 'fail';
         const l2Icon24 = incomeClear ? '✓' : '!';
-        const l2Tone25 = householdMismatch ? 'warn' : 'pass';
-        const l2Icon25 = householdMismatch ? '!' : '✓';
+        const l2Tone25 = householdHasLiveInPartner ? 'fail' : 'pass';
+        const l2Icon25 = householdHasLiveInPartner ? '!' : '✓';
 
-        const policy26 =
-            "If the applicant's Module 1 record contains a danger-zone claim, THA Staff updates the CDRRMO certification status in Module 2 after receiving and checking the physical certification. This certification serves as an official basis for confirming the applicant's danger-zone status. Once verified, the system uses this status as part of eligibility checking and queue classification. Applicants with verified CDRRMO certification may be classified under the priority category, while applicants whose danger-zone claim remains unverified continue under regular evaluation rules.";
-        const requiresCdrrmo = !!(data.m2_rules && data.m2_rules.requires_cdrrmo);
-        const hazardClaimBadge = requiresCdrrmo
-            ? `<span style="display:inline-flex;align-items:center;padding:.3rem .72rem;border-radius:9999px;border:1px solid #86efac;background:#dcfce7;color:#166534;font-size:.72rem;font-weight:700;box-shadow:0 1px 2px rgba(22,101,52,.15);">Hazard claim: Yes (2.5 required)</span>`
-            : `<span style="display:inline-flex;align-items:center;padding:.3rem .72rem;border-radius:9999px;border:1px solid #93c5fd;background:#dbeafe;color:#1d4ed8;font-size:.72rem;font-weight:700;box-shadow:0 1px 2px rgba(29,78,216,.15);">Hazard claim: No (2.5 skipped)</span>`;
-        const cdrrmoStatus = data.cdrrmo && data.cdrrmo.status ? data.cdrrmo.status : '';
-        const cdrrmoReadout = cdrrmoStatus === 'certified'
-            ? 'Danger-zone status is officially verified. Applicant provided a valid CDRRMO certification. Queue assignment is Priority.'
-            : (cdrrmoStatus === 'not_certified'
-                ? 'Danger-zone claim remains unverified. Valid CDRRMO certification was not provided. Applicant follows regular walk-in path.'
-                : 'CDRRMO certification is still pending or not yet on file. Record official CDRRMO certification result in Module 2.');
+        const profile = data.applicant_profile || {};
+        const savedReason = (profile.displacement_reason || '').trim();
+        const savedReasonDisplay = profile.displacement_reason_display || '';
+        const savedHazardType = profile.danger_zone_type || '';
+        const savedHazardLocation = profile.danger_zone_location || '';
+        const savedEjectionType = profile.ejection_type || '';
+        const savedEjectionDate = profile.ejection_date || '';
+        const savedProjectName = profile.project_name || '';
+        const layer2Clear = !!rules.layer2_clear;
+        const qualifiesForPriority = !!rules.qualifies_for_priority;
+        const escAttr = (value) => escapeHtml(String(value == null ? '' : value));
+        const radio = (value, title, sub, accent) => {
+            const checked = savedReason === value ? ' checked' : '';
+            const isSelected = savedReason === value;
+            const accentBorder = accent === 'blue' ? 'has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50 has-[:checked]:ring-blue-100'
+                : accent === 'amber' ? 'has-[:checked]:border-amber-600 has-[:checked]:bg-amber-50 has-[:checked]:ring-amber-100'
+                    : 'has-[:checked]:border-emerald-600 has-[:checked]:bg-emerald-50 has-[:checked]:ring-emerald-100';
+            const accentDot = accent === 'blue' ? 'accent-blue-600'
+                : accent === 'amber' ? 'accent-amber-600'
+                    : 'accent-emerald-600';
+            const fallbackSelected = isSelected
+                ? (accent === 'blue' ? ' border-blue-600 bg-blue-50 ring-2 ring-blue-100'
+                    : accent === 'amber' ? ' border-amber-600 bg-amber-50 ring-2 ring-amber-100'
+                        : ' border-emerald-600 bg-emerald-50 ring-2 ring-emerald-100')
+                : '';
+            const disabled = canVerifyDocs ? '' : ' opacity-60 cursor-not-allowed';
+            return `
+                <label class="m2-disp-option group relative flex items-start gap-3 p-3 sm:p-4 rounded-xl border border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 cursor-pointer transition-all has-[:checked]:ring-2 has-[:checked]:shadow-sm ${accentBorder}${fallbackSelected}${disabled}" data-disp-option="${value}">
+                    <input type="radio" name="modalDisplacementReason" value="${value}" onchange="m2OnDisplacementReasonChange()"${checked}${canVerifyDocs ? '' : ' disabled'} class="mt-0.5 h-4 w-4 ${accentDot} cursor-pointer disabled:cursor-not-allowed">
+                    <span class="flex-1 min-w-0">
+                        <span class="block text-sm font-semibold text-slate-900 leading-tight">${title}</span>
+                        <span class="block mt-1 text-[0.7rem] sm:text-xs text-slate-500 leading-relaxed">${sub}</span>
+                    </span>
+                </label>`;
+        };
 
-        const l3Action = (canVerifyDocs && requiresCdrrmo && (!cdrrmoStatus || cdrrmoStatus === 'pending'))
-            ? `<div style="margin-top:0.75rem;padding:1rem 1.25rem;border:1px solid #bfdbfe;border-radius:10px;background:linear-gradient(135deg,#eff6ff 0%,#f8fafc 100%);box-shadow:0 1px 3px rgba(37,99,235,.08);">
-                <div style="text-align:center;margin-bottom:0.75rem;">
-                    <div style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.72rem;font-weight:700;color:#1e3a8a;text-transform:uppercase;letter-spacing:0.06em;">
-                        <svg style="width:14px;height:14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-                        Staff action
+        const hazardTypeOptions = [
+            ['', '— Select hazard type —'],
+            ['flood_prone', 'Flood-prone area'],
+            ['landslide', 'Landslide-prone area'],
+            ['storm_surge', 'Storm surge zone'],
+            ['river_bank', 'River / creek bank'],
+            ['cliff_edge', 'Cliff edge'],
+            ['coastal', 'Coastal erosion'],
+            ['other', 'Other hazard'],
+        ];
+        const ejectionTypeOptions = [
+            ['', '— Select ejection type —'],
+            ['private_eviction', 'Private land eviction'],
+            ['court_order', 'Court order'],
+            ['landowner_recovery', 'Landowner recovery'],
+            ['other', 'Other'],
+        ];
+
+        const buildOptions = (opts, selected) => opts.map(([val, label]) => {
+            const sel = String(selected || '') === String(val) ? ' selected' : '';
+            return `<option value="${escAttr(val)}"${sel}>${escapeHtml(label)}</option>`;
+        }).join('');
+
+        const dangerPanelActive = savedReason === 'danger_zone' ? ' is-active' : '';
+        const ejectedPanelActive = savedReason === 'ejected' ? ' is-active' : '';
+        const relocatedPanelActive = savedReason === 'relocated' ? ' is-active' : '';
+
+        const fieldInputCls = 'w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-md focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors';
+        const fieldLabelCls = 'block text-xs font-semibold text-slate-700 mb-1';
+        const fieldRequiredCls = 'text-red-600 ml-0.5';
+        const requiredDocCls = 'mt-2 rounded-lg border border-dashed border-slate-300 bg-white px-3 py-2 text-xs text-slate-600 leading-relaxed';
+        const requiredDocStrongCls = 'text-slate-900 font-semibold';
+        const pendingBadge = (color, text) => {
+            const palette = color === 'amber'
+                ? 'bg-amber-50 border-amber-200 text-amber-800'
+                : 'bg-blue-50 border-blue-200 text-blue-800';
+            return `
+                <span class="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[0.65rem] font-bold uppercase tracking-wider border ${palette}" title="Module 3 verifies the supporting document.">
+                    <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>
+                    ${text}
+                </span>`;
+        };
+        const panelHeaderCls = (color) => {
+            const palette = color === 'blue' ? 'text-blue-900'
+                : color === 'amber' ? 'text-amber-900'
+                : 'text-emerald-900';
+            return `text-xs sm:text-[0.78rem] font-bold uppercase tracking-wider ${palette} mb-3`;
+        };
+        const panelShellCls = (color) => {
+            const palette = color === 'blue' ? 'border-blue-200 from-blue-50'
+                : color === 'amber' ? 'border-amber-200 from-amber-50'
+                : 'border-emerald-200 from-emerald-50';
+            return `m2-disp-panel mb-4 rounded-xl border ${palette} bg-gradient-to-br to-slate-50 p-4 sm:p-5 shadow-sm`;
+        };
+
+        const dangerPanel = `
+            <div class="${panelShellCls('blue')}${dangerPanelActive}" id="m2DispPanelDangerZone" data-disp-panel="danger_zone">
+                <div class="${panelHeaderCls('blue')}">Danger Zone Details</div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                    <div>
+                        <label for="m2HazardType" class="${fieldLabelCls}">Hazard Type<span class="${fieldRequiredCls}">*</span></label>
+                        <select id="m2HazardType" name="hazard_type" class="${fieldInputCls}"${canVerifyDocs ? '' : ' disabled'}>
+                            ${buildOptions(hazardTypeOptions, savedHazardType)}
+                        </select>
                     </div>
-                    <div style="font-size:0.68rem;color:#64748b;margin-top:0.2rem;">Receiving remarks (optional)</div>
+                    <div>
+                        <label for="m2HazardLocation" class="${fieldLabelCls}">Hazard Location Details<span class="${fieldRequiredCls}">*</span></label>
+                        <input type="text" id="m2HazardLocation" name="hazard_location" class="${fieldInputCls}" placeholder="Sitio / purok / river / creek / landmark" value="${escAttr(savedHazardLocation)}" maxlength="255"${canVerifyDocs ? '' : ' disabled'}>
+                    </div>
                 </div>
-                <textarea id="modalLayer3CdrrmoNotes" class="m2-cdrrmo-office-notes" rows="2" placeholder="Notes while recording CDRRMO result in Layer 3..." style="width:100%;box-sizing:border-box;padding:0.625rem;border:1px solid #cbd5e1;border-radius:0.5rem;font-size:0.8rem;font-family:inherit;resize:vertical;background:#ffffff;transition:border-color 150ms ease;" onfocus="this.style.borderColor='#93c5fd';this.style.boxShadow='0 0 0 3px rgba(59,130,246,.1)'" onblur="this.style.borderColor='#cbd5e1';this.style.boxShadow='none'"></textarea>
-                <div class="m2-layer-footer-nav" style="border-top:none;padding-top:0;margin-top:0.75rem;justify-content:center;">
-                    <button type="button" class="m2-back-btn" onclick="m2BackToLayer2Step()">Back</button>
-                    <button type="button" class="m2-cdrrmo-receipt-btn" onclick="recordOfficeCdrrmoReceipt('certified')">Mark as Certified (CDRRMO)</button>
-                    <button type="button" class="m2-cdrrmo-receipt-btn walkin" onclick="recordOfficeCdrrmoReceipt('not_certified')">Proceed Without Certification (Walk-in Path)</button>
+                <div class="${requiredDocCls}">
+                    <strong class="${requiredDocStrongCls}">Required Document:</strong> CDRRMO Certificate
                 </div>
-            </div>`
-            : `<div class="m2-layer-footer-nav">
-                    <button type="button" class="m2-back-btn" onclick="m2BackToLayer2Step()">Back</button>
-                    <button type="button" class="m2-proceed-btn" onclick="m2OpenEvaluationApprovalStep()">Done — Proceed to 2.6</button>
+                ${pendingBadge('amber', 'Certification Status: Pending CDRRMO Verification')}
+            </div>`;
+
+        const ejectedPanel = `
+            <div class="${panelShellCls('amber')}${ejectedPanelActive}" id="m2DispPanelEjected" data-disp-panel="ejected">
+                <div class="${panelHeaderCls('amber')}">Ejection Details</div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                    <div>
+                        <label for="m2EjectionType" class="${fieldLabelCls}">Ejection Type<span class="${fieldRequiredCls}">*</span></label>
+                        <select id="m2EjectionType" name="ejection_type" class="${fieldInputCls}"${canVerifyDocs ? '' : ' disabled'}>
+                            ${buildOptions(ejectionTypeOptions, savedEjectionType)}
+                        </select>
+                    </div>
+                    <div>
+                        <label for="m2EjectionDate" class="${fieldLabelCls}">Date of notice or ejection</label>
+                        <input type="date" id="m2EjectionDate" name="ejection_date" class="${fieldInputCls}" value="${escAttr(savedEjectionDate)}"${canVerifyDocs ? '' : ' disabled'}>
+                    </div>
+                </div>
+                <div class="${requiredDocCls}">
+                    <strong class="${requiredDocStrongCls}">Required Document:</strong> Court order / legal office certification / barangay certification
+                </div>
+                ${pendingBadge('amber', 'Document Status: Pending Module 3 Verification')}
+            </div>`;
+
+        const relocatedPanel = `
+            <div class="${panelShellCls('emerald')}${relocatedPanelActive}" id="m2DispPanelRelocated" data-disp-panel="relocated">
+                <div class="${panelHeaderCls('emerald')}">Project Relocation Details</div>
+                <div class="grid grid-cols-1">
+                    <div>
+                        <label for="m2ProjectName" class="${fieldLabelCls}">Project Name<span class="${fieldRequiredCls}">*</span></label>
+                        <input type="text" id="m2ProjectName" name="project_name" class="${fieldInputCls}" placeholder="Road widening / drainage / government project / other" value="${escAttr(savedProjectName)}" maxlength="255"${canVerifyDocs ? '' : ' disabled'}>
+                    </div>
+                </div>
+                <div class="${requiredDocCls}">
+                    <strong class="${requiredDocStrongCls}">Required Document:</strong> Project documentation (notice of relocation / right-of-way / project order)
+                </div>
+                ${pendingBadge('blue', 'Document Status: Pending Module 3 Verification')}
+            </div>`;
+
+        const savedReadout = savedReason
+            ? `<div class="mb-3 flex items-start gap-2 px-3 py-2 rounded-lg bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-700">
+                    <svg class="w-4 h-4 flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 13l4 4L19 7"></path></svg>
+                    <span>Last saved classification: <span class="font-bold">${escapeHtml(savedReasonDisplay || savedReason)}</span>. You may keep or change the selection before continuing.</span>
+                </div>`
+            : '';
+
+        const queueHintToneCls = qualifiesForPriority
+            ? 'border-emerald-300 bg-emerald-50 text-emerald-800'
+            : (layer2Clear
+                ? 'border-blue-300 bg-blue-50 text-blue-800'
+                : 'border-amber-300 bg-amber-50 text-amber-800');
+        const queueHintIcon = qualifiesForPriority
+            ? '<svg class="w-4 h-4 flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="M9 12l2 2 4-4"></path></svg>'
+            : '<svg class="w-4 h-4 flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><path d="M12 8v4M12 16h.01"></path></svg>';
+        const queueHintText = qualifiesForPriority
+            ? '<strong>Queue effect:</strong> Layers 2 &amp; 3 are clear &mdash; applicant qualifies for the <span class="font-bold">Priority Queue</span>.'
+            : (layer2Clear
+                ? '<strong>Queue effect:</strong> Layer 2 is clear, but Layer 3 must be classified to qualify for Priority. Otherwise the applicant remains on the <span class="font-bold">Walk-in Queue</span>.'
+                : '<strong>Queue effect:</strong> Layer 2 has a flag &mdash; applicant goes to the <span class="font-bold">Walk-in Queue</span> regardless of Layer 3 selection.');
+
+        const layer3FooterNav = canVerifyDocs
+            ? `<div class="flex flex-col-reverse sm:flex-row sm:justify-between gap-2 sm:gap-3 mt-4 pt-3 border-t border-slate-200">
+                    <button type="button" class="px-4 py-2 text-sm rounded-lg border border-slate-300 text-slate-700 bg-white hover:bg-slate-50 hover:border-slate-400 transition-colors font-medium" onclick="m2BackToLayer2Step()">Back</button>
+                    <button type="button" class="px-4 py-2 text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors font-semibold shadow-sm" onclick="recordDisplacementClassification()">Save &amp; Proceed to 2.6</button>
+               </div>`
+            : `<div class="flex flex-col-reverse sm:flex-row sm:justify-between gap-2 sm:gap-3 mt-4 pt-3 border-t border-slate-200">
+                    <button type="button" class="px-4 py-2 text-sm rounded-lg border border-slate-300 text-slate-700 bg-white hover:bg-slate-50 hover:border-slate-400 transition-colors font-medium" onclick="m2BackToLayer2Step()">Back</button>
+                    <button type="button" class="px-4 py-2 text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors font-semibold shadow-sm" onclick="m2OpenEvaluationApprovalStep()">Continue to 2.6 (read-only)</button>
                </div>`;
 
         gate.innerHTML =
@@ -3031,39 +3234,34 @@
             itemStacked(l2Tone24, l2Icon24, '2.3 Check Income Details', incDesc, escapeHtml(policy24)) +
             itemStacked(l2Tone25, l2Icon25, '2.4 Check Household Composition', hhDesc, escapeHtml(policy25)) +
             `</div>` +
-            `<div style="display:flex;justify-content:center;margin:1.2rem 0 0.8rem;padding:0.8rem;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;">${hazardClaimBadge}</div>` +
             `<div class="m2-layer-footer-nav">` +
             `<button type="button" class="m2-back-btn" onclick="m2BackToLayer1Step()">Back</button>` +
             `<button type="button" id="modalToggleM1FormBtn" class="m2-show-form-btn" onclick="toggleModule1FormEvidence()">Show form</button>` +
-            (requiresCdrrmo
-                ? `<button type="button" class="m2-proceed-btn" onclick="m2ProceedToLayer3Step()">Proceed to Layer 3</button>`
-                : `<button type="button" class="m2-proceed-btn" onclick="m2FinalizeNoHazardAndOpen28()">Done — Proceed to 2.6</button>`) +
+            `<button type="button" class="m2-proceed-btn" onclick="m2ProceedToLayer3Step()">Proceed to Layer 3</button>` +
             `</div>` +
             `</div>` +
-            `<div id="m2Layer2Done" class="m2-layer1-done-strip" style="display:none; margin-top: 0.4rem;">✓ Layer 2 complete — Eligibility readouts reviewed (advisory flags allowed)</div>` +
-            (requiresCdrrmo
-                ? `<div id="m2Layer3Block" class="m2-layer3-block" style="display:none;">` +
-                `<div class="m2-layer-eyebrow">Layer 3 — Official verification</div>` +
-                `<div class="m2-layer-title" style="margin-bottom:0.75rem;">2.6 Check CDRRMO Certification Status</div>` +
-                `<div style="display:flex;flex-direction:column;align-items:center;text-align:center;gap:0.5rem;border:1px solid ` + (cdrrmoStatus === 'certified' ? '#bbf7d0' : (cdrrmoStatus === 'not_certified' ? '#bfdbfe' : '#fde68a')) + `;border-radius:8px;background:` + (cdrrmoStatus === 'certified' ? '#f0fdf4' : (cdrrmoStatus === 'not_certified' ? '#eff6ff' : '#fffbeb')) + `;padding:1rem 0.75rem;margin-bottom:0.8rem;">` +
-                `<div style="display:flex;align-items:center;justify-content:center;gap:0.5rem;">` +
-                (cdrrmoStatus === 'certified'
-                    ? `<span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;background:#16a34a;color:#fff;border-radius:50%;font-size:0.6rem;font-weight:bold;">✓</span> <span style="font-weight:700;color:#16a34a;font-size:0.875rem;">VERIFIED</span>`
-                    : (cdrrmoStatus === 'not_certified'
-                        ? `<span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;background:#2563eb;color:#fff;border-radius:50%;font-size:0.6rem;font-weight:bold;">✓</span> <span style="font-weight:700;color:#1d4ed8;font-size:0.875rem;">NOT VERIFIED</span>`
-                        : `<span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;background:#d97706;color:#fff;border-radius:50%;font-size:0.6rem;font-weight:bold;">!</span> <span style="font-weight:700;color:#d97706;font-size:0.875rem;">PENDING REVIEW</span>`)) +
-                `</div>` +
-                `<div style="font-size:0.75rem;line-height:1.4;color:#334155;">` +
-                `${cdrrmoReadout}` +
-                `</div>` +
-                `<div style="font-size:0.75rem;color:#475569;margin-top:0.2rem;">` +
-                `<span style="font-weight:600;">Queue effect:</span> <span style="color:#0f172a;">${(cdrrmoStatus === 'certified' ? 'Priority queue placement is automatic.' : (cdrrmoStatus === 'not_certified' ? 'Walk-in path only.' : 'Finalize CDRRMO result, then queue assignment follows that result automatically.'))}</span>` +
-                `</div>` +
-                `</div>` +
-                l3Action +
-                `</div>` +
-                `<div id="m2Layer3Done" class="m2-layer1-done-strip" style="display:none; margin-top:0.4rem;">✓ Layer 3 complete — 2.6 CDRRMO review</div>`
-                : '') +
+            `<div id="m2Layer2Done" class="m2-layer1-done-strip" style="display:none; margin-top: 0.4rem;">${layer2Clear ? '✓ Layer 2 complete — Eligibility readouts clear' : '! Layer 2 complete — flag(s) noted; applicant on Walk-in path'}</div>` +
+            `<div id="m2Layer3Block" class="m2-layer3-block" style="display:none;">` +
+            `<div class="px-3 sm:px-4 py-3 sm:py-4 rounded-2xl bg-gradient-to-br from-slate-50 via-white to-slate-50 border border-slate-200 shadow-sm">` +
+            `<div class="text-center mb-3 sm:mb-4">` +
+            `<div class="inline-block text-[0.65rem] sm:text-xs font-bold uppercase tracking-[0.18em] text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-1 rounded-full">Layer 3 — Reason for Relocation</div>` +
+            `<h3 class="mt-2 text-base sm:text-lg lg:text-xl font-bold text-slate-900 leading-snug">2.6 Classify Displacement &amp; Required Document</h3>` +
+            `<p class="mt-1.5 text-xs sm:text-sm text-slate-500 leading-relaxed max-w-2xl mx-auto">Select the applicant's reason for relocation. Module 2 records the classification and details below; the required supporting document is verified in <span class="font-semibold text-slate-700">Module 3</span>.</p>` +
+            `</div>` +
+            `<div class="mb-3 flex items-start gap-2.5 px-3 py-2.5 rounded-lg border ${queueHintToneCls} text-xs sm:text-[0.78rem] leading-relaxed">${queueHintIcon}<span>${queueHintText}</span></div>` +
+            savedReadout +
+            `<div id="m2DispOptions" class="grid grid-cols-1 lg:grid-cols-3 gap-2 sm:gap-3 mb-4">` +
+            radio('danger_zone', 'Danger Zone / Hazard Area', 'Applicant currently lives in a flood-prone, landslide, storm-surge, riverbank, cliff-edge, or coastal hazard area.', 'blue') +
+            radio('ejected', 'Ejected from Previous Residence', 'Applicant was evicted/displaced (private land eviction, court order, landowner recovery, etc.).', 'amber') +
+            radio('relocated', 'Relocated Due to Expansion or Project Development', 'Applicant must relocate because of a road-widening, drainage, or government project.', 'emerald') +
+            `</div>` +
+            dangerPanel +
+            ejectedPanel +
+            relocatedPanel +
+            layer3FooterNav +
+            `</div>` +
+            `</div>` +
+            `<div id="m2Layer3Done" class="m2-layer1-done-strip" style="display:none; margin-top:0.4rem;">✓ Layer 3 complete — Displacement classification recorded</div>` +
             `</div>`;
     }
 

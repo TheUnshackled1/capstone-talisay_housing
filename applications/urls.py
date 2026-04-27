@@ -15,6 +15,7 @@ urlpatterns = [
     path('staff/<str:position>/evaluate-applicant/', views.evaluate_applicant, name='evaluate_applicant'),
     path('staff/<str:position>/record-evaluation-approval/', views.record_evaluation_approval, name='record_evaluation_approval'),
     path('staff/<str:position>/update-cdrrmo-certification/', views.update_cdrrmo_certification, name='update_cdrrmo_certification'),
+    path('staff/<str:position>/record-displacement-classification/', views.record_displacement_classification, name='record_displacement_classification'),
     path('staff/<str:position>/field-verify-cdrrmo/', views.field_verify_cdrrmo, name='field_verify_cdrrmo'),
     path('staff/<str:position>/update-cdrrmo-status/', views.update_cdrrmo_status, name='update_cdrrmo_status'),
 

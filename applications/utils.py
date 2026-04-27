@@ -37,11 +37,27 @@ class _UnitsBlacklistAdapter:
         return self._entry.applicant.full_name if self._entry and self._entry.applicant else ''
 
 
-def check_blacklist_module2(full_name, phone_number=None, applicant_id=None):
+def check_blacklist_module2(
+    full_name,
+    phone_number=None,
+    applicant_id=None,
+    last_name=None,
+    first_name=None,
+    date_of_birth=None,
+    barangay_id=None,
+):
     """
     Module 2 automatic blacklist gate (workflow step 2.1).
 
     Source of truth: ``units.Blacklist`` (housing monitoring / compliance).
+
+    Match priority (first match wins):
+        1. Applicant UUID (direct OneToOne link — strongest)
+        2. Phone number (exact)
+        3. Last name + First name + Date of birth + Barangay (full identity match)
+        4. Last name + First name + Date of birth (3-of-4)
+        5. Last name + First name + Barangay (3-of-4 — when DOB unknown)
+        6. Full name (case-insensitive exact) — last-resort fallback
 
     Returns:
         tuple[bool, _UnitsBlacklistAdapter | None]
@@ -49,19 +65,73 @@ def check_blacklist_module2(full_name, phone_number=None, applicant_id=None):
     full_name = (full_name or '').strip()
     phone_number = (phone_number or '').strip()
     applicant_id = str(applicant_id or '').strip()
+    last_name = (last_name or '').strip()
+    first_name = (first_name or '').strip()
+    if hasattr(barangay_id, 'pk'):
+        barangay_id = barangay_id.pk
 
     # Primary source for Module 2 disqualification gate:
     # Units blacklist entries produced by compliance/repossession monitoring.
     units_q = UnitsBlacklist.objects.select_related('applicant')
     units_match = None
+
     if applicant_id:
-        units_match = units_q.filter(applicant_id=applicant_id).order_by('-blacklisted_at').first()
+        units_match = (
+            units_q.filter(applicant_id=applicant_id)
+            .order_by('-blacklisted_at')
+            .first()
+        )
+
     if not units_match and phone_number:
-        units_match = units_q.filter(applicant__phone_number=phone_number).order_by('-blacklisted_at').first()
+        units_match = (
+            units_q.filter(applicant__phone_number=phone_number)
+            .order_by('-blacklisted_at')
+            .first()
+        )
+
+    has_first_last = bool(first_name and last_name)
+
+    if not units_match and has_first_last and date_of_birth and barangay_id:
+        units_match = (
+            units_q.filter(
+                applicant__last_name__iexact=last_name,
+                applicant__first_name__iexact=first_name,
+                applicant__date_of_birth=date_of_birth,
+                applicant__barangay_id=barangay_id,
+            )
+            .order_by('-blacklisted_at')
+            .first()
+        )
+
+    if not units_match and has_first_last and date_of_birth:
+        units_match = (
+            units_q.filter(
+                applicant__last_name__iexact=last_name,
+                applicant__first_name__iexact=first_name,
+                applicant__date_of_birth=date_of_birth,
+            )
+            .order_by('-blacklisted_at')
+            .first()
+        )
+
+    if not units_match and has_first_last and barangay_id:
+        units_match = (
+            units_q.filter(
+                applicant__last_name__iexact=last_name,
+                applicant__first_name__iexact=first_name,
+                applicant__barangay_id=barangay_id,
+            )
+            .order_by('-blacklisted_at')
+            .first()
+        )
+
     if not units_match and full_name:
-        units_match = units_q.filter(applicant__full_name__iexact=full_name).order_by('-blacklisted_at').first()
-    if not units_match and full_name:
-        units_match = units_q.filter(applicant__full_name__icontains=full_name).order_by('-blacklisted_at').first()
+        units_match = (
+            units_q.filter(applicant__full_name__iexact=full_name)
+            .order_by('-blacklisted_at')
+            .first()
+        )
+
     if units_match:
         return True, _UnitsBlacklistAdapter(units_match)
 

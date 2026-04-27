@@ -349,6 +349,10 @@ def _module2_eligibility_snapshot(applicant, checked_by=None):
         applicant.full_name,
         applicant.phone_number or None,
         applicant_id=applicant.id,
+        last_name=applicant.last_name,
+        first_name=applicant.first_name,
+        date_of_birth=applicant.date_of_birth,
+        barangay_id=applicant.barangay_id,
     )
     blacklist_detail = ''
     blacklist_source = ''
@@ -375,14 +379,32 @@ def _module2_eligibility_snapshot(applicant, checked_by=None):
 
     declared_household = int(applicant.household_size or 0)
     listed_household = applicant.household_members.count() + 1
-    household_ok = declared_household >= 1
-    if not household_ok:
+    has_min_household = declared_household >= 1
+    if not has_min_household:
         advisories.append('Declared household size must be at least 1.')
-    household_mismatch = declared_household > 0 and declared_household != listed_household
-    if household_mismatch:
+
+    # Layer 2 / 2.4 Household Composition: a registered "live-in partner"
+    # household member triggers the Household Composition flag and pushes the
+    # applicant to the walk-in queue (Module 2 policy).
+    live_in_partner_count = applicant.household_members.filter(
+        relationship='live_in_partner'
+    ).count()
+    household_has_live_in_partner = live_in_partner_count > 0
+    household_ok = has_min_household and not household_has_live_in_partner
+    if household_has_live_in_partner:
         advisories.append(
-            f'Household composition mismatch: declared size is {declared_household}, but listed members total {listed_household} (including applicant).'
+            'Household Composition flagged: registered household includes a live-in partner '
+            '(walk-in path under Module 2 policy).'
         )
+
+    # Retained for any legacy templates/consumers; queue policy no longer
+    # depends on size mismatch.
+    household_mismatch = declared_household > 0 and declared_household != listed_household
+
+    displacement_reason = (applicant.displacement_reason or '').strip()
+    displacement_classified = displacement_reason in ('danger_zone', 'ejected', 'relocated')
+    if not displacement_classified:
+        advisories.append('Module 2 Layer 3 displacement classification has not been recorded yet.')
 
     requires_cdrrmo = bool((applicant.danger_zone_type or '').strip() or (applicant.danger_zone_location or '').strip())
     cdrrmo_status = None
@@ -391,27 +413,24 @@ def _module2_eligibility_snapshot(applicant, checked_by=None):
             cdrrmo_status = applicant.cdrrmo_certification.status
         except CDRRMOCertification.DoesNotExist:
             cdrrmo_status = None
-        if cdrrmo_status in (None, '', 'pending'):
-            status_display = 'Not Recorded'
-            if cdrrmo_status:
-                try:
-                    status_display = applicant.cdrrmo_certification.get_status_display()
-                except Exception:
-                    status_display = cdrrmo_status
-            advisories.append(f'CDRRMO certification must be finalized first (current: {status_display}).')
-        elif cdrrmo_status == 'not_certified':
-            advisories.append(
-                'CDRRMO result is Not Certified. Continue Module 2 evaluation under regular walk-in path (priority disabled).'
-            )
 
-    # Queue mapping policy:
-    # - Hazard claim + certified CDRRMO -> Priority only
-    # - Otherwise -> Walk-in only
-    allowed_queue_types = ['walk_in']
-    recommended_queue_type = 'walk_in'
-    if requires_cdrrmo and cdrrmo_status == 'certified':
+    # Queue mapping policy (Module 2):
+    # - Layer 1 (blacklist) is advisory only; it does not affect queue placement.
+    # - Layer 2 (2.2 property, 2.3 income, 2.4 household composition) — any
+    #   flag here pushes the applicant to the walk-in queue.
+    # - Layer 3 — applicant must be classified under one of the three
+    #   displacement reasons. Document verification still happens in Module 3.
+    # All three layers clean -> Priority queue. Otherwise -> Walk-in queue.
+    layer2_clear = bool(property_ok and income_ok and household_ok)
+    layer3_clear = bool(displacement_classified)
+    qualifies_for_priority = layer2_clear and layer3_clear
+
+    if qualifies_for_priority:
         allowed_queue_types = ['priority']
         recommended_queue_type = 'priority'
+    else:
+        allowed_queue_types = ['walk_in']
+        recommended_queue_type = 'walk_in'
 
     return {
         'eligible': len(blockers) == 0,
@@ -425,12 +444,19 @@ def _module2_eligibility_snapshot(applicant, checked_by=None):
         'property_ok': property_ok,
         'household_ok': household_ok,
         'household_mismatch': household_mismatch,
+        'household_has_live_in_partner': household_has_live_in_partner,
+        'live_in_partner_count': live_in_partner_count,
         'declared_household_size': declared_household,
         'listed_household_size': listed_household,
         'requires_cdrrmo': requires_cdrrmo,
         'cdrrmo_status': cdrrmo_status,
+        'layer2_clear': layer2_clear,
+        'layer3_clear': layer3_clear,
+        'qualifies_for_priority': qualifies_for_priority,
         'allowed_queue_types': allowed_queue_types,
         'recommended_queue_type': recommended_queue_type,
+        'displacement_reason': displacement_reason,
+        'displacement_classified': displacement_classified,
     }
 
 
@@ -829,6 +855,12 @@ def application_detail(request, position, application_id):
             'hazard_declared': bool((applicant.danger_zone_type or '').strip() or (applicant.danger_zone_location or '').strip()),
             'danger_zone_type': applicant.danger_zone_type or '',
             'danger_zone_location': applicant.danger_zone_location or '',
+            'displacement_reason': applicant.displacement_reason or '',
+            'displacement_reason_display': applicant.get_displacement_reason_display() if applicant.displacement_reason else '',
+            'ejection_type': applicant.ejection_type or '',
+            'ejection_type_display': applicant.get_ejection_type_display() if applicant.ejection_type else '',
+            'ejection_date': applicant.ejection_date.isoformat() if applicant.ejection_date else None,
+            'project_name': applicant.project_name or '',
         },
         'requirements': [],
         'routing_steps': [],
@@ -1032,6 +1064,130 @@ def update_cdrrmo_certification(request, position):
         return JsonResponse({'success': False, 'error': 'Applicant not found'})
     except Exception as e:
         return JsonResponse({'success': False, 'error': f'Error updating CDRRMO certification: {str(e)}'})
+
+
+@login_required
+@verify_position
+@require_POST
+def record_displacement_classification(request, position):
+    """
+    Module 2 — Layer 3 displacement classification.
+
+    Staff records WHY the applicant is seeking relocation. The selection drives
+    which supporting document Module 3 will verify later (CDRRMO certificate /
+    court order / project documentation). Module 2 only persists the staff
+    selection and accompanying details — no document verification happens here.
+    """
+    allowed_positions = ['fourth_member', 'second_member', 'oic']
+    if request.user.position not in allowed_positions:
+        return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
+
+    try:
+        applicant_id = request.POST.get('applicant_id')
+        reason = (request.POST.get('displacement_reason') or '').strip()
+        if not applicant_id:
+            return JsonResponse({'success': False, 'error': 'Missing applicant_id'})
+        if reason not in ('danger_zone', 'ejected', 'relocated'):
+            return JsonResponse({'success': False, 'error': 'Select a valid displacement reason.'})
+
+        applicant = Applicant.objects.get(id=applicant_id)
+        handoff_error = _require_module2_handoff(applicant)
+        if handoff_error:
+            return handoff_error
+        blacklist_error = _require_module2_blacklist_clear(applicant)
+        if blacklist_error:
+            return blacklist_error
+
+        applicant.displacement_reason = reason
+        update_fields = {'displacement_reason'}
+
+        if reason == 'danger_zone':
+            hazard_type = (request.POST.get('hazard_type') or '').strip()
+            hazard_location = (request.POST.get('hazard_location') or '').strip()
+            if not hazard_type:
+                return JsonResponse({'success': False, 'error': 'Hazard Type is required.'})
+            if not hazard_location:
+                return JsonResponse({'success': False, 'error': 'Hazard Location Details is required.'})
+            applicant.danger_zone_type = hazard_type
+            applicant.danger_zone_location = hazard_location
+            applicant.ejection_type = ''
+            applicant.ejection_date = None
+            applicant.project_name = ''
+            update_fields.update({
+                'danger_zone_type', 'danger_zone_location',
+                'ejection_type', 'ejection_date', 'project_name',
+            })
+        elif reason == 'ejected':
+            ej_type = (request.POST.get('ejection_type') or '').strip()
+            ej_date_raw = (request.POST.get('ejection_date') or '').strip()
+            valid_ejection_types = {
+                key for key, _ in Applicant.EJECTION_TYPE_CHOICES if key
+            }
+            if ej_type not in valid_ejection_types:
+                return JsonResponse({'success': False, 'error': 'Select a valid Ejection Type.'})
+            ej_date = None
+            if ej_date_raw:
+                try:
+                    from datetime import date as _date
+                    ej_date = _date.fromisoformat(ej_date_raw)
+                except ValueError:
+                    return JsonResponse({'success': False, 'error': 'Invalid date of notice or ejection.'})
+            applicant.ejection_type = ej_type
+            applicant.ejection_date = ej_date
+            applicant.danger_zone_type = ''
+            applicant.danger_zone_location = ''
+            applicant.project_name = ''
+            update_fields.update({
+                'ejection_type', 'ejection_date',
+                'danger_zone_type', 'danger_zone_location', 'project_name',
+            })
+        else:  # relocated
+            project_name = (request.POST.get('project_name') or '').strip()
+            if not project_name:
+                return JsonResponse({'success': False, 'error': 'Project Name is required.'})
+            applicant.project_name = project_name
+            applicant.danger_zone_type = ''
+            applicant.danger_zone_location = ''
+            applicant.ejection_type = ''
+            applicant.ejection_date = None
+            update_fields.update({
+                'project_name',
+                'danger_zone_type', 'danger_zone_location',
+                'ejection_type', 'ejection_date',
+            })
+
+        update_fields.add('updated_at')
+        applicant.save(update_fields=list(update_fields))
+
+        # Auto-create a pending CDRRMO certification record when staff classifies
+        # the applicant as living in a danger zone, so Module 3 has a record to
+        # verify against. Existing certifications are left untouched.
+        if reason == 'danger_zone' and not hasattr(applicant, 'cdrrmo_certification'):
+            try:
+                CDRRMOCertification.objects.create(
+                    applicant=applicant,
+                    requested_by=request.user,
+                    status='pending',
+                    declared_location=(applicant.danger_zone_location or applicant.danger_zone_type or '').strip() or 'Declared hazard area',
+                    disposition_source='pending',
+                )
+            except Exception:
+                # Non-fatal: Module 3 will still pick up the pending state from
+                # the displacement_reason field even if the auxiliary record is
+                # missing.
+                pass
+
+        return JsonResponse({
+            'success': True,
+            'message': f'Layer 3 classification saved: {applicant.get_displacement_reason_display()}.',
+            'displacement_reason': reason,
+            'displacement_reason_display': applicant.get_displacement_reason_display(),
+        })
+
+    except Applicant.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Applicant not found'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': f'Error recording displacement classification: {str(e)}'})
 
 
 @login_required
