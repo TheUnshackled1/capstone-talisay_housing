@@ -1387,7 +1387,7 @@ def archive_list(request, staff_position):
     selected_barangay = request.GET.get('barangay', '')
 
     # Build query
-    archives_qs = Archive.objects.select_related('applicant', 'archived_by').order_by('-archived_at')
+    archives_qs = Archive.objects.select_related('applicant', 'archived_by').order_by('archived_at')
 
     if selected_channel:
         archives_qs = archives_qs.filter(channel=selected_channel)

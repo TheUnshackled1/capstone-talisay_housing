@@ -529,7 +529,7 @@ class Archive(models.Model):
     notes = models.TextField(blank=True)
 
     class Meta:
-        ordering = ['-archived_at']
+        ordering = ['archived_at']
         verbose_name = "Intake Archive"
         verbose_name_plural = "Intake Archives"
         indexes = [
