@@ -1,13 +1,14 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.db.models import Q
+from django.db.models import Q, Prefetch
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods, require_POST
 from functools import wraps
 import json
 from intake.models import Applicant
 from units.models import LotAward
+from applications.models import QueueEntry
 from documents.models import (
     Document,
     RequirementSubmission,
@@ -52,6 +53,9 @@ def document_management(request, position):
 
     # Module 3 pipeline scope:
     # include records that are already 2.8-approved OR already in/after documents-processing states.
+    # Ordering: applicants are processed strictly by Module 2 queue assignment —
+    # Priority queue (lowest position first), then Walk-in queue (lowest position first),
+    # then any without an active queue entry.
     applicants_qs = (
         Applicant.objects
         .prefetch_related(
@@ -59,6 +63,11 @@ def document_management(request, position):
             'documents',
             'requirement_submissions__requirement',
             'application__endorsement_routing_steps',
+            Prefetch(
+                'queue_entries',
+                queryset=QueueEntry.objects.filter(status='active').order_by('position'),
+                to_attr='active_queue_entries',
+            ),
         )
         .filter(module2_handoff_at__isnull=False)
         .filter(
@@ -80,9 +89,28 @@ def document_management(request, position):
             Q(application__lot_awards__unit__lot_number__icontains=search_query)
         ).distinct()
 
+    # Queue priority ordering: priority queue first, then walk-in, then none.
+    QUEUE_RANK = {'priority': 0, 'walk_in': 1}
+    QUEUE_LABEL = {'priority': 'Priority', 'walk_in': 'Walk-in'}
+
     # Prepare applicants with lot info and document count
     applicants_list = []
     for applicant in applicants_qs:
+        # Resolve active queue entry from the prefetched list (lowest position wins).
+        active_entries = getattr(applicant, 'active_queue_entries', None) or []
+        active_queue_entry = active_entries[0] if active_entries else None
+        if active_queue_entry:
+            queue_type = active_queue_entry.queue_type
+            queue_position = active_queue_entry.position
+            queue_label_short = QUEUE_LABEL.get(queue_type, queue_type or '—')
+            queue_label = f"{queue_label_short} #{queue_position}"
+            queue_rank = QUEUE_RANK.get(queue_type, 99)
+        else:
+            queue_type = ''
+            queue_position = None
+            queue_label_short = ''
+            queue_label = '—'
+            queue_rank = 99
         # Count uploaded documents
         doc_count = applicant.documents.count()
         total_docs = 15  # Total possible documents
@@ -153,7 +181,16 @@ def document_management(request, position):
             'module3_ready_for_module4': module3_ready_for_module4,
             'committee_result': committee_result,
             'signed_form_confirmed': signed_form_confirmed,
+            'queue_type': queue_type,
+            'queue_position': queue_position,
+            'queue_label_short': queue_label_short,
+            'queue_label': queue_label,
+            '_queue_rank': queue_rank,
+            '_queue_position_sort': queue_position if queue_position is not None else 10**9,
         })
+
+    # Final ordering: priority queue first (by position), then walk-in (by position), then no-queue.
+    applicants_list.sort(key=lambda a: (a['_queue_rank'], a['_queue_position_sort'], a['full_name']))
 
     # Document group definitions
     doc_groups = {

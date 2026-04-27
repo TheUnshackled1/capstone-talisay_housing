@@ -204,9 +204,10 @@
             Module 3 Pipeline Applicants
         </div>
         <div style="overflow-x: auto;">
-            <table style="width: 100%; border-collapse: collapse; min-width: 880px;">
+            <table style="width: 100%; border-collapse: collapse; min-width: 1020px;">
                 <thead>
                     <tr style="background: #f8fafc;">
+                        <th style="text-align: left; padding: 0.75rem 1rem; font-size: 0.75rem; color: #475569; border-bottom: 1px solid #e2e8f0;">Queue</th>
                         <th style="text-align: left; padding: 0.75rem 1rem; font-size: 0.75rem; color: #475569; border-bottom: 1px solid #e2e8f0;">Applicant</th>
                         <th style="text-align: left; padding: 0.75rem 1rem; font-size: 0.75rem; color: #475569; border-bottom: 1px solid #e2e8f0;">Reference</th>
                         <th style="text-align: left; padding: 0.75rem 1rem; font-size: 0.75rem; color: #475569; border-bottom: 1px solid #e2e8f0;">Status</th>
@@ -221,6 +222,15 @@
                 <tbody>
                     {% for applicant in applicants %}
                     <tr class="applicant-row" style="border-bottom: 1px solid #f1f5f9;">
+                        <td style="padding: 0.75rem 1rem; font-size: 0.75rem; white-space: nowrap;">
+                            {% if applicant.queue_type == 'priority' %}
+                                <span style="display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.2rem 0.6rem; background: #fef3c7; color: #92400e; border: 1px solid #fde68a; border-radius: 9999px; font-weight: 700;">★ Priority #{{ applicant.queue_position }}</span>
+                            {% elif applicant.queue_type == 'walk_in' %}
+                                <span style="display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.2rem 0.6rem; background: #e0f2fe; color: #075985; border: 1px solid #bae6fd; border-radius: 9999px; font-weight: 700;">Walk-in #{{ applicant.queue_position }}</span>
+                            {% else %}
+                                <span style="color: #94a3b8;">—</span>
+                            {% endif %}
+                        </td>
                         <td style="padding: 0.75rem 1rem; font-size: 0.8125rem; color: #0f172a; font-weight: 600;">{{ applicant.full_name }}</td>
                         <td style="padding: 0.75rem 1rem; font-size: 0.8125rem; color: #334155;">{{ applicant.reference_number }}</td>
                         <td style="padding: 0.75rem 1rem; font-size: 0.8125rem; color: #334155;">{{ applicant.status_display }}</td>
@@ -249,7 +259,7 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="9" style="padding: 1.25rem 1rem; font-size: 0.8125rem; color: #64748b; text-align: center;">
+                        <td colspan="10" style="padding: 1.25rem 1rem; font-size: 0.8125rem; color: #64748b; text-align: center;">
                             No Module 3 pipeline applicants found yet.
                         </td>
                     </tr>

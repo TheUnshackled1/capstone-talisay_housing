@@ -2040,10 +2040,28 @@
             table-layout: auto;
         }
 
+        /* Bottom-sheet modal on mobile */
+        .modal-overlay {
+            align-items: flex-end;
+        }
+
         .modal-content {
             width: 100%;
-            max-height: 100vh;
-            border-radius: 0;
+            max-height: 92vh;
+            border-radius: 20px 20px 0 0;
+            box-shadow: 0 -8px 40px rgba(15, 23, 42, 0.18);
+        }
+
+        .modal-header {
+            padding: 0.875rem 1rem 0.75rem;
+        }
+
+        .modal-header h2 {
+            font-size: 1rem;
+        }
+
+        .modal-body {
+            padding: 0.75rem 0.875rem 1.25rem;
         }
     }
 
@@ -2430,60 +2448,46 @@
                     <div id="modalCdrrmoPhotos" style="display:flex;flex-wrap:wrap;gap:0.35rem;"></div>
                 </div>
             </div>
-            <div id="modalEvaluationApprovalBox" class="m2-eval28-panel">
-                <div class="m2-eval28-head">
-                    <div class="m2-eval28-kicker">Layer 4 — Final approval marker</div>
-                    <div class="m2-eval28-title">2.6 Record Evaluation Approval Status</div>
-                    <div class="m2-eval28-subtitle">THA Staff records the evaluation-related approval or review status
-                        required at this stage. This refers only to the evaluation result and not yet to the full
-                        routing chain that happens later in Module 3.</div>
+            <div id="modalEvaluationApprovalBox" class="m2-eval28-panel mt-3 rounded-2xl bg-white border border-slate-200 shadow-sm overflow-hidden">
+                <!-- Layer 4 header -->
+                <div class="px-3 pt-4 pb-3 sm:px-5 sm:pt-5 sm:pb-4 text-center bg-gradient-to-br from-slate-50 via-white to-slate-50 border-b border-slate-100">
+                    <span class="inline-flex items-center gap-1 sm:gap-1.5 text-[0.58rem] sm:text-[0.65rem] font-extrabold uppercase tracking-[0.1em] sm:tracking-[0.18em] text-indigo-700 bg-indigo-50 border border-indigo-200 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full">
+                        <svg class="w-2.5 h-2.5 sm:w-3 sm:h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+                        Layer 4 &mdash; Final approval marker
+                    </span>
+                    <h3 class="mt-2 sm:mt-2.5 text-base sm:text-lg font-extrabold text-slate-900 leading-tight">2.6 Record Evaluation Approval Status</h3>
+                    <p class="mt-1 sm:mt-1.5 text-[0.7rem] sm:text-xs text-slate-500 max-w-xs sm:max-w-sm mx-auto leading-relaxed">THA Staff records the evaluation result here. This refers only to the evaluation outcome — full routing happens later in Module 3.</p>
                 </div>
-                <div class="m2-eval28-body">
+                <!-- Layer 4 body -->
+                <div class="px-3 sm:px-5 pt-3 sm:pt-4 pb-4 sm:pb-5">
                     <div id="modalEvaluationApprovalSummary"></div>
                     <div id="modalEvaluationApprovalForm" class="m2-eval28-form">
-                        <!-- Approval Status Options -->
-                        <div style="margin-bottom: 1.2rem; display: flex; gap: 0.75rem; flex-direction: column;">
-                            <!-- Approve Button -->
-                            <button type="button" class="m2-eval28-approve-btn"
-                                onclick="setEvaluationApprovalStatus('approved')"
-                                style="display:flex;align-items:center;justify-content:center;gap:0.75rem;padding:0.95rem;background:#ecfdf5;border:2px solid #86efac;border-radius:10px;cursor:pointer;transition:all 0.2s;font-weight:600;text-align:center;">
-                                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#22c55e"
-                                    stroke-width="2">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                                <div style="text-align:center;">
-                                    <div style="color:#16a34a;font-size:0.95rem;">✓ Approve - Qualified</div>
-                                    <div style="color:#6b7280;font-size:0.75rem;margin-top:0.1rem;">Record applicant as
-                                        approved and eligible</div>
+                        <!-- Approval / Disqualify option cards — side-by-side on sm+ -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-4">
+                            <button type="button" class="m2-eval28-approve-btn w-full flex items-center gap-3 sm:gap-4 p-3 sm:p-4 bg-emerald-50 border-2 border-emerald-200 rounded-xl cursor-pointer hover:border-emerald-400 hover:bg-emerald-100 active:bg-emerald-200 transition-all font-semibold text-left" onclick="setEvaluationApprovalStatus('approved')">
+                                <div class="w-9 h-9 sm:w-10 sm:h-10 flex-shrink-0 flex items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                                    <svg class="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+                                </div>
+                                <div>
+                                    <div class="text-xs sm:text-sm font-bold text-emerald-800">Approve — Qualified</div>
+                                    <div class="text-[0.68rem] sm:text-xs text-emerald-700 mt-0.5">Record applicant as approved and eligible</div>
                                 </div>
                             </button>
-
-                            <!-- Disqualify Button -->
-                            <button type="button" class="m2-eval28-disqualify-btn"
-                                onclick="setEvaluationApprovalStatus('disqualified')"
-                                style="display:flex;align-items:center;justify-content:center;gap:0.75rem;padding:0.95rem;background:#fef2f2;border:2px solid #fca5a5;border-radius:10px;cursor:pointer;transition:all 0.2s;font-weight:600;text-align:center;">
-                                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#ef4444"
-                                    stroke-width="2">
-                                    <circle cx="12" cy="12" r="10"></circle>
-                                    <line x1="15" y1="9" x2="9" y2="15"></line>
-                                    <line x1="9" y1="9" x2="15" y2="15"></line>
-                                </svg>
-                                <div style="text-align:center;">
-                                    <div style="color:#dc2626;font-size:0.95rem;">✗ Disqualify</div>
-                                    <div style="color:#6b7280;font-size:0.75rem;margin-top:0.1rem;">Record
-                                        disqualification with reason</div>
+                            <button type="button" class="m2-eval28-disqualify-btn w-full flex items-center gap-3 sm:gap-4 p-3 sm:p-4 bg-red-50 border-2 border-red-200 rounded-xl cursor-pointer hover:border-red-400 hover:bg-red-100 active:bg-red-200 transition-all font-semibold text-left" onclick="setEvaluationApprovalStatus('disqualified')">
+                                <div class="w-9 h-9 sm:w-10 sm:h-10 flex-shrink-0 flex items-center justify-center rounded-full bg-red-100 text-red-600">
+                                    <svg class="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                                </div>
+                                <div>
+                                    <div class="text-xs sm:text-sm font-bold text-red-800">Disqualify</div>
+                                    <div class="text-[0.68rem] sm:text-xs text-red-700 mt-0.5">Record disqualification with reason</div>
                                 </div>
                             </button>
                         </div>
 
-                        <!-- Disqualification Reason (Hidden by default) -->
-                        <div id="modalDisqualifySection"
-                            style="display:none;margin-bottom:1rem;padding:1rem;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;">
-                            <label
-                                style="display:block;margin-bottom:0.5rem;font-weight:600;color:#dc2626;">Disqualification
-                                Reason *</label>
-                            <select id="modalDisqualifyReasonSelect"
-                                style="width:100%;padding:0.625rem;border:1px solid #fca5a5;border-radius:6px;margin-bottom:0.75rem;font-size:0.875rem;">
+                        <!-- Disqualification Reason (hidden by default) -->
+                        <div id="modalDisqualifySection" class="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl" style="display:none;">
+                            <label class="block mb-1.5 text-xs font-bold text-red-700">Disqualification Reason <span class="text-red-500">*</span></label>
+                            <select id="modalDisqualifyReasonSelect" class="w-full px-3 py-2 text-sm border border-red-300 rounded-lg mb-3 focus:outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100 bg-white">
                                 <option value="">Select reason...</option>
                                 <option value="property_owner">Owns property in Talisay</option>
                                 <option value="income_over_ceiling">Income exceeds ceiling</option>
@@ -2492,29 +2496,26 @@
                                 <option value="incomplete_documents">Incomplete documents</option>
                                 <option value="other">Other reason</option>
                             </select>
-                            <label
-                                style="display:block;margin-bottom:0.3rem;font-weight:600;color:#374151;font-size:0.875rem;">Additional
-                                Notes</label>
-                            <textarea id="modalDisqualifyNotes" class="m2-dq-notes" rows="2"
-                                placeholder="Explain the disqualification reason..."
-                                style="width: 100%; box-sizing: border-box; padding: 0.625rem; border: 1px solid #fca5a5; border-radius: 0.5rem; font-size: 0.875rem; font-family: inherit; resize: vertical;"></textarea>
+                            <label class="block mb-1.5 text-xs font-semibold text-slate-700">Additional Notes</label>
+                            <textarea id="modalDisqualifyNotes" class="m2-dq-notes w-full px-3 py-2 text-sm border border-red-200 rounded-lg focus:outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100 resize-vertical" rows="2" placeholder="Explain the disqualification reason..."></textarea>
                         </div>
 
-                        <!-- Approval Notes -->
-                        <label
-                            style="margin-bottom:0.3rem;display:block;font-weight:600;color:#374151;font-size:0.875rem;text-align:center;">Evaluation
-                            Notes (optional)</label>
-                        <textarea id="modalEvaluationApprovalNotes" class="m2-dq-notes" rows="2"
-                            placeholder="2.6 remarks (evaluation only; not Module 3 routing)..."
-                            style="width: 100%; box-sizing: border-box; padding: 0.625rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.875rem; font-family: inherit; resize: vertical; margin-bottom: 1rem;"></textarea>
+                        <!-- Evaluation notes -->
+                        <div class="mb-4">
+                            <label class="block mb-1.5 text-xs font-semibold text-slate-700">Evaluation Notes <span class="text-slate-400 font-normal">(optional)</span></label>
+                            <textarea id="modalEvaluationApprovalNotes" class="m2-dq-notes w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 resize-vertical" rows="2" placeholder="2.6 remarks (evaluation only; not Module 3 routing)..."></textarea>
+                        </div>
 
-                        <!-- Action Buttons -->
-                        <div style="display:flex;gap:0.75rem;align-items:stretch;">
-                            <button type="button" class="m2-eval28-save-btn" onclick="saveAndProceedModule3()"
-                                style="flex:1;min-height:48px;padding:0.78rem 1.1rem;background:#2563eb;color:white;border:none;border-radius:10px;font-weight:700;cursor:pointer;transition:all 0.2s;font-size:0.9rem;">Save
-                                Status & Proceed to Documents</button>
-                            <button type="button" onclick="m2BackToLayer3Step()"
-                                style="min-width:108px;min-height:48px;padding:0.78rem 1rem;background:#f3f4f6;color:#374151;border:1px solid #d1d5db;border-radius:10px;font-weight:600;cursor:pointer;transition:all 0.2s;font-size:0.88rem;">Back</button>
+                        <!-- Footer action buttons -->
+                        <div class="flex flex-col-reverse sm:flex-row sm:justify-between gap-2 pt-3 border-t border-slate-200">
+                            <button type="button" class="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 text-sm rounded-xl border border-slate-300 text-slate-700 bg-white hover:bg-slate-50 hover:border-slate-400 active:bg-slate-100 transition-colors font-medium" onclick="m2BackToLayer3Step()">
+                                <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+                                Back
+                            </button>
+                            <button type="button" class="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 text-sm rounded-xl bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 transition-colors font-semibold shadow" onclick="saveAndProceedModule3()">
+                                Save Status &amp; Proceed to Documents
+                                <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -2975,36 +2976,55 @@
         const policy25 =
             'THA Staff records or confirms household composition. A registered live-in partner among the household members is a Layer 2 flag and pushes the applicant to the Walk-in queue. The system uses this information as part of eligibility determination and applicant prioritization.';
 
-        const item = (tone, icon, title, desc) =>
-            `<div class="m2-check-item ${tone}">
-                <span class="icon">${icon}</span>
-                <div>
-                    <div class="title">${title}</div>
-                    <div class="desc">${desc}</div>
+        // Tailwind-based tone config for all check items
+        const toneCfg = (tone) => ({
+            pass: { card:'border-emerald-200 bg-emerald-50', iconBg:'bg-emerald-100', iconTxt:'text-emerald-700', titleTxt:'text-emerald-900', descTxt:'text-emerald-800', policyBorder:'border-emerald-200', policyTxt:'text-emerald-700', iconPath:`<path d="M20 6L9 17l-5-5"/>` },
+            fail: { card:'border-red-200 bg-red-50',         iconBg:'bg-red-100',     iconTxt:'text-red-700',     titleTxt:'text-red-900',     descTxt:'text-red-800',     policyBorder:'border-red-200',     policyTxt:'text-red-700',     iconPath:`<path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>` },
+            warn: { card:'border-amber-200 bg-amber-50',     iconBg:'bg-amber-100',   iconTxt:'text-amber-700',   titleTxt:'text-amber-900',   descTxt:'text-amber-800',   policyBorder:'border-amber-200',   policyTxt:'text-amber-700',   iconPath:`<circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>` },
+        })[tone] || { card:'border-slate-200 bg-slate-50', iconBg:'bg-slate-100', iconTxt:'text-slate-600', titleTxt:'text-slate-900', descTxt:'text-slate-700', policyBorder:'border-slate-200', policyTxt:'text-slate-600', iconPath:`<circle cx="12" cy="12" r="10"/>` };
+
+        const item = (tone, _icon, title, desc) => {
+            const c = toneCfg(tone);
+            return `<div class="flex items-start gap-3 rounded-xl border ${c.card} p-3 sm:p-4">
+                <div class="w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0 flex items-center justify-center rounded-full ${c.iconBg} ${c.iconTxt}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-3.5 h-3.5 sm:w-4 sm:h-4">${c.iconPath}</svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="text-xs sm:text-sm font-bold ${c.titleTxt} leading-snug mb-0.5">${title}</div>
+                    <div class="text-[0.7rem] sm:text-xs ${c.descTxt} leading-relaxed">${desc}</div>
                 </div>
             </div>`;
+        };
 
-        const itemStacked = (tone, icon, title, desc, policyHtml) =>
-            `<div class="m2-check-item ${tone} m2-item-stacked">
-                <div class="m2-check-head">
-                    <span class="icon">${icon}</span>
-                    <div>
-                        <div class="title">${title}</div>
-                        <div class="desc">${desc}</div>
+        const itemStacked = (tone, _icon, title, desc, policyHtml) => {
+            const c = toneCfg(tone);
+            return `<div class="rounded-xl border ${c.card} p-2.5 sm:p-3.5 mb-2 last:mb-0">
+                <div class="flex items-start gap-2.5 sm:gap-3">
+                    <div class="w-6 h-6 sm:w-7 sm:h-7 flex-shrink-0 flex items-center justify-center rounded-full ${c.iconBg} ${c.iconTxt} mt-0.5">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-3 h-3 sm:w-3.5 sm:h-3.5">${c.iconPath}</svg>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="text-xs sm:text-sm font-bold ${c.titleTxt} leading-snug mb-0.5">${title}</div>
+                        <div class="text-[0.7rem] sm:text-xs font-medium ${c.descTxt}">${desc}</div>
                     </div>
                 </div>
-                <div class="m2-policy-note">${policyHtml}</div>
+                <div class="mt-2 pt-2 border-t border-dashed ${c.policyBorder} text-[0.64rem] sm:text-[0.68rem] ${c.policyTxt} leading-relaxed">${policyHtml}</div>
             </div>`;
-        const itemDescOnly = (tone, icon, descHtml) =>
-            `<div class="m2-check-item ${tone} m2-check-desc-only">
-                <span class="icon">${icon}</span>
-                <div class="desc">${descHtml}</div>
+        };
+
+        const itemDescOnly = (tone, _icon, descHtml) => {
+            const c = toneCfg(tone);
+            return `<div class="flex items-start gap-3 rounded-xl border ${c.card} p-3 sm:p-4">
+                <div class="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-full ${c.iconBg} ${c.iconTxt}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-4 h-4">${c.iconPath}</svg>
+                </div>
+                <p class="text-xs sm:text-sm ${c.descTxt} leading-relaxed self-center">${descHtml}</p>
             </div>`;
+        };
 
         gate.style.display = 'block';
-
-        gate.style.background = '#f8fafc';
-        gate.style.border = '1px solid #e2e8f0';
+        gate.style.background = 'transparent';
+        gate.style.border = 'none';
         gate.style.color = '#334155';
 
         const l1Tone = blacklistBlocked ? 'fail' : 'pass';
@@ -3046,25 +3066,51 @@
         const radio = (value, title, sub, accent) => {
             const checked = savedReason === value ? ' checked' : '';
             const isSelected = savedReason === value;
-            const accentBorder = accent === 'blue' ? 'has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50 has-[:checked]:ring-blue-100'
-                : accent === 'amber' ? 'has-[:checked]:border-amber-600 has-[:checked]:bg-amber-50 has-[:checked]:ring-amber-100'
-                    : 'has-[:checked]:border-emerald-600 has-[:checked]:bg-emerald-50 has-[:checked]:ring-emerald-100';
-            const accentDot = accent === 'blue' ? 'accent-blue-600'
-                : accent === 'amber' ? 'accent-amber-600'
-                    : 'accent-emerald-600';
-            const fallbackSelected = isSelected
-                ? (accent === 'blue' ? ' border-blue-600 bg-blue-50 ring-2 ring-blue-100'
-                    : accent === 'amber' ? ' border-amber-600 bg-amber-50 ring-2 ring-amber-100'
-                        : ' border-emerald-600 bg-emerald-50 ring-2 ring-emerald-100')
-                : '';
-            const disabled = canVerifyDocs ? '' : ' opacity-60 cursor-not-allowed';
+            // Per-option visual config keyed by value
+            const cfg = {
+                danger_zone: {
+                    icon: `<path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>`,
+                    selBg:'bg-red-600',   defBg:'bg-red-100',
+                    selTxt:'text-white',  defTxt:'text-red-600',
+                    cardSel:'border-red-400 bg-red-50 ring-2 ring-red-100',
+                    cardHas:'has-[:checked]:border-red-400 has-[:checked]:bg-red-50 has-[:checked]:ring-2 has-[:checked]:ring-red-100',
+                    check:'text-red-500',
+                },
+                ejected: {
+                    icon: `<path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>`,
+                    selBg:'bg-amber-500',  defBg:'bg-amber-100',
+                    selTxt:'text-white',   defTxt:'text-amber-600',
+                    cardSel:'border-amber-400 bg-amber-50 ring-2 ring-amber-100',
+                    cardHas:'has-[:checked]:border-amber-400 has-[:checked]:bg-amber-50 has-[:checked]:ring-2 has-[:checked]:ring-amber-100',
+                    check:'text-amber-500',
+                },
+                relocated: {
+                    icon: `<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/>`,
+                    selBg:'bg-emerald-600', defBg:'bg-emerald-100',
+                    selTxt:'text-white',    defTxt:'text-emerald-600',
+                    cardSel:'border-emerald-400 bg-emerald-50 ring-2 ring-emerald-100',
+                    cardHas:'has-[:checked]:border-emerald-400 has-[:checked]:bg-emerald-50 has-[:checked]:ring-2 has-[:checked]:ring-emerald-100',
+                    check:'text-emerald-600',
+                },
+            }[value] || {};
+            const iconBg  = isSelected ? (cfg.selBg  || 'bg-slate-600') : (cfg.defBg  || 'bg-slate-100');
+            const iconTxt = isSelected ? (cfg.selTxt || 'text-white')   : (cfg.defTxt || 'text-slate-600');
+            const fallbackSelected = isSelected ? ` ${cfg.cardSel || ''}` : '';
+            const disabled  = canVerifyDocs ? '' : ' opacity-50 cursor-not-allowed pointer-events-none';
+            const indicator = isSelected
+                ? `<svg class="w-5 h-5 flex-shrink-0 ${cfg.check || 'text-slate-400'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>`
+                : `<div class="w-5 h-5 flex-shrink-0 rounded-full border-2 border-slate-300 bg-white"></div>`;
             return `
-                <label class="m2-disp-option group relative flex items-start gap-3 p-3 sm:p-4 rounded-xl border border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 cursor-pointer transition-all has-[:checked]:ring-2 has-[:checked]:shadow-sm ${accentBorder}${fallbackSelected}${disabled}" data-disp-option="${value}">
-                    <input type="radio" name="modalDisplacementReason" value="${value}" onchange="m2OnDisplacementReasonChange()"${checked}${canVerifyDocs ? '' : ' disabled'} class="mt-0.5 h-4 w-4 ${accentDot} cursor-pointer disabled:cursor-not-allowed">
-                    <span class="flex-1 min-w-0">
-                        <span class="block text-sm font-semibold text-slate-900 leading-tight">${title}</span>
-                        <span class="block mt-1 text-[0.7rem] sm:text-xs text-slate-500 leading-relaxed">${sub}</span>
-                    </span>
+                <label class="m2-disp-option group relative flex flex-col gap-3 p-4 rounded-2xl border-2 border-slate-200 bg-white hover:border-slate-300 hover:shadow-md cursor-pointer transition-all duration-150 ${cfg.cardHas || ''}${fallbackSelected}${disabled}" data-disp-option="${value}">
+                    <input type="radio" name="modalDisplacementReason" value="${value}" onchange="m2OnDisplacementReasonChange()"${checked}${canVerifyDocs ? '' : ' disabled'} class="sr-only">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-xl ${iconBg} ${iconTxt} transition-colors duration-150 shadow-sm">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5">${cfg.icon || ''}</svg>
+                        </div>
+                        <span class="flex-1 text-sm font-bold text-slate-800 leading-snug">${title}</span>
+                        ${indicator}
+                    </div>
+                    <p class="text-[0.7rem] text-slate-500 leading-relaxed">${sub}</p>
                 </label>`;
         };
 
@@ -3091,164 +3137,221 @@
             return `<option value="${escAttr(val)}"${sel}>${escapeHtml(label)}</option>`;
         }).join('');
 
-        const dangerPanelActive = savedReason === 'danger_zone' ? ' is-active' : '';
-        const ejectedPanelActive = savedReason === 'ejected' ? ' is-active' : '';
-        const relocatedPanelActive = savedReason === 'relocated' ? ' is-active' : '';
+        const dangerPanelActive   = savedReason === 'danger_zone' ? ' is-active' : '';
+        const ejectedPanelActive  = savedReason === 'ejected'     ? ' is-active' : '';
+        const relocatedPanelActive = savedReason === 'relocated'  ? ' is-active' : '';
 
-        const fieldInputCls = 'w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-md focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors';
-        const fieldLabelCls = 'block text-xs font-semibold text-slate-700 mb-1';
-        const fieldRequiredCls = 'text-red-600 ml-0.5';
-        const requiredDocCls = 'mt-2 rounded-lg border border-dashed border-slate-300 bg-white px-3 py-2 text-xs text-slate-600 leading-relaxed';
-        const requiredDocStrongCls = 'text-slate-900 font-semibold';
-        const pendingBadge = (color, text) => {
-            const palette = color === 'amber'
-                ? 'bg-amber-50 border-amber-200 text-amber-800'
-                : 'bg-blue-50 border-blue-200 text-blue-800';
-            return `
-                <span class="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[0.65rem] font-bold uppercase tracking-wider border ${palette}" title="Module 3 verifies the supporting document.">
-                    <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>
-                    ${text}
-                </span>`;
+        const fieldInputCls   = 'w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed transition-colors';
+        const fieldLabelCls   = 'block text-xs font-semibold text-slate-600 mb-1.5';
+        const fieldRequiredCls = 'text-red-500 ml-0.5';
+
+        // Panel shell: overflow-hidden so colored header clips to rounded corners
+        const panelShell = (color) => {
+            const border = color === 'blue' ? 'border-red-200' : color === 'amber' ? 'border-amber-200' : 'border-emerald-200';
+            return `m2-disp-panel mb-4 overflow-hidden rounded-2xl border ${border} bg-white shadow-sm`;
         };
-        const panelHeaderCls = (color) => {
-            const palette = color === 'blue' ? 'text-blue-900'
-                : color === 'amber' ? 'text-amber-900'
-                : 'text-emerald-900';
-            return `text-xs sm:text-[0.78rem] font-bold uppercase tracking-wider ${palette} mb-3`;
+        // Colored header strip with matching icon
+        const panelHead = (color, label) => {
+            const bg = color === 'blue' ? 'bg-red-600' : color === 'amber' ? 'bg-amber-500' : 'bg-emerald-600';
+            const iconPath = color === 'blue'
+                ? `<path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>`
+                : color === 'amber'
+                    ? `<path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>`
+                    : `<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/>`;
+            return `<div class="px-4 py-2.5 ${bg} flex items-center gap-2.5">
+                <svg class="w-3.5 h-3.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${iconPath}</svg>
+                <span class="text-[0.68rem] font-extrabold uppercase tracking-widest text-white">${label}</span>
+            </div>`;
         };
-        const panelShellCls = (color) => {
-            const palette = color === 'blue' ? 'border-blue-200 from-blue-50'
-                : color === 'amber' ? 'border-amber-200 from-amber-50'
-                : 'border-emerald-200 from-emerald-50';
-            return `m2-disp-panel mb-4 rounded-xl border ${palette} bg-gradient-to-br to-slate-50 p-4 sm:p-5 shadow-sm`;
+        // Required document callout box
+        const reqDocBox = (color, docText) => {
+            const pal = color === 'blue'
+                ? 'bg-red-50 border-red-100 text-red-800'
+                : color === 'amber' ? 'bg-amber-50 border-amber-100 text-amber-800'
+                : 'bg-emerald-50 border-emerald-100 text-emerald-800';
+            return `<div class="mt-3 flex items-start gap-2.5 rounded-lg border ${pal} px-3 py-2.5 text-xs">
+                <svg class="w-3.5 h-3.5 flex-shrink-0 mt-0.5 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                <span><strong class="font-semibold">Required Document:</strong> ${docText}</span>
+            </div>`;
+        };
+        // Full-width pending strip at panel bottom
+        const pendingStrip = (color, text) => {
+            const pal = color === 'amber'
+                ? 'bg-amber-50 border-t border-amber-200 text-amber-700'
+                : 'bg-sky-50 border-t border-sky-200 text-sky-700';
+            return `<div class="px-4 py-2.5 ${pal} flex items-center gap-2 text-[0.68rem] font-semibold uppercase tracking-wide">
+                <svg class="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                ${text}
+            </div>`;
         };
 
         const dangerPanel = `
-            <div class="${panelShellCls('blue')}${dangerPanelActive}" id="m2DispPanelDangerZone" data-disp-panel="danger_zone">
-                <div class="${panelHeaderCls('blue')}">Danger Zone Details</div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                    <div>
-                        <label for="m2HazardType" class="${fieldLabelCls}">Hazard Type<span class="${fieldRequiredCls}">*</span></label>
-                        <select id="m2HazardType" name="hazard_type" class="${fieldInputCls}"${canVerifyDocs ? '' : ' disabled'}>
-                            ${buildOptions(hazardTypeOptions, savedHazardType)}
-                        </select>
+            <div class="${panelShell('blue')}${dangerPanelActive}" id="m2DispPanelDangerZone" data-disp-panel="danger_zone">
+                ${panelHead('blue', 'Danger Zone Details')}
+                <div class="p-4 sm:p-5">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                        <div>
+                            <label for="m2HazardType" class="${fieldLabelCls}">Hazard Type<span class="${fieldRequiredCls}">*</span></label>
+                            <select id="m2HazardType" name="hazard_type" class="${fieldInputCls}"${canVerifyDocs ? '' : ' disabled'}>
+                                ${buildOptions(hazardTypeOptions, savedHazardType)}
+                            </select>
+                        </div>
+                        <div>
+                            <label for="m2HazardLocation" class="${fieldLabelCls}">Hazard Location Details<span class="${fieldRequiredCls}">*</span></label>
+                            <input type="text" id="m2HazardLocation" name="hazard_location" class="${fieldInputCls}" placeholder="Sitio / purok / river / creek / landmark" value="${escAttr(savedHazardLocation)}" maxlength="255"${canVerifyDocs ? '' : ' disabled'}>
+                        </div>
                     </div>
-                    <div>
-                        <label for="m2HazardLocation" class="${fieldLabelCls}">Hazard Location Details<span class="${fieldRequiredCls}">*</span></label>
-                        <input type="text" id="m2HazardLocation" name="hazard_location" class="${fieldInputCls}" placeholder="Sitio / purok / river / creek / landmark" value="${escAttr(savedHazardLocation)}" maxlength="255"${canVerifyDocs ? '' : ' disabled'}>
-                    </div>
+                    ${reqDocBox('blue', 'CDRRMO Certificate')}
                 </div>
-                <div class="${requiredDocCls}">
-                    <strong class="${requiredDocStrongCls}">Required Document:</strong> CDRRMO Certificate
-                </div>
-                ${pendingBadge('amber', 'Certification Status: Pending CDRRMO Verification')}
+                ${pendingStrip('amber', 'Certification Status: Pending CDRRMO Verification')}
             </div>`;
 
         const ejectedPanel = `
-            <div class="${panelShellCls('amber')}${ejectedPanelActive}" id="m2DispPanelEjected" data-disp-panel="ejected">
-                <div class="${panelHeaderCls('amber')}">Ejection Details</div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                    <div>
-                        <label for="m2EjectionType" class="${fieldLabelCls}">Ejection Type<span class="${fieldRequiredCls}">*</span></label>
-                        <select id="m2EjectionType" name="ejection_type" class="${fieldInputCls}"${canVerifyDocs ? '' : ' disabled'}>
-                            ${buildOptions(ejectionTypeOptions, savedEjectionType)}
-                        </select>
+            <div class="${panelShell('amber')}${ejectedPanelActive}" id="m2DispPanelEjected" data-disp-panel="ejected">
+                ${panelHead('amber', 'Ejection Details')}
+                <div class="p-4 sm:p-5">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                        <div>
+                            <label for="m2EjectionType" class="${fieldLabelCls}">Ejection Type<span class="${fieldRequiredCls}">*</span></label>
+                            <select id="m2EjectionType" name="ejection_type" class="${fieldInputCls}"${canVerifyDocs ? '' : ' disabled'}>
+                                ${buildOptions(ejectionTypeOptions, savedEjectionType)}
+                            </select>
+                        </div>
+                        <div>
+                            <label for="m2EjectionDate" class="${fieldLabelCls}">Date of notice or ejection</label>
+                            <input type="date" id="m2EjectionDate" name="ejection_date" class="${fieldInputCls}" value="${escAttr(savedEjectionDate)}"${canVerifyDocs ? '' : ' disabled'}>
+                        </div>
                     </div>
-                    <div>
-                        <label for="m2EjectionDate" class="${fieldLabelCls}">Date of notice or ejection</label>
-                        <input type="date" id="m2EjectionDate" name="ejection_date" class="${fieldInputCls}" value="${escAttr(savedEjectionDate)}"${canVerifyDocs ? '' : ' disabled'}>
-                    </div>
+                    ${reqDocBox('amber', 'Court order / legal office certification / barangay certification')}
                 </div>
-                <div class="${requiredDocCls}">
-                    <strong class="${requiredDocStrongCls}">Required Document:</strong> Court order / legal office certification / barangay certification
-                </div>
-                ${pendingBadge('amber', 'Document Status: Pending Module 3 Verification')}
+                ${pendingStrip('amber', 'Document Status: Pending Module 3 Verification')}
             </div>`;
 
         const relocatedPanel = `
-            <div class="${panelShellCls('emerald')}${relocatedPanelActive}" id="m2DispPanelRelocated" data-disp-panel="relocated">
-                <div class="${panelHeaderCls('emerald')}">Project Relocation Details</div>
-                <div class="grid grid-cols-1">
+            <div class="${panelShell('emerald')}${relocatedPanelActive}" id="m2DispPanelRelocated" data-disp-panel="relocated">
+                ${panelHead('emerald', 'Project Relocation Details')}
+                <div class="p-4 sm:p-5">
                     <div>
                         <label for="m2ProjectName" class="${fieldLabelCls}">Project Name<span class="${fieldRequiredCls}">*</span></label>
                         <input type="text" id="m2ProjectName" name="project_name" class="${fieldInputCls}" placeholder="Road widening / drainage / government project / other" value="${escAttr(savedProjectName)}" maxlength="255"${canVerifyDocs ? '' : ' disabled'}>
                     </div>
+                    ${reqDocBox('emerald', 'Project documentation (notice of relocation / right-of-way / project order)')}
                 </div>
-                <div class="${requiredDocCls}">
-                    <strong class="${requiredDocStrongCls}">Required Document:</strong> Project documentation (notice of relocation / right-of-way / project order)
-                </div>
-                ${pendingBadge('blue', 'Document Status: Pending Module 3 Verification')}
+                ${pendingStrip('sky', 'Document Status: Pending Module 3 Verification')}
             </div>`;
 
         const savedReadout = savedReason
-            ? `<div class="mb-3 flex items-start gap-2 px-3 py-2 rounded-lg bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-700">
-                    <svg class="w-4 h-4 flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 13l4 4L19 7"></path></svg>
-                    <span>Last saved classification: <span class="font-bold">${escapeHtml(savedReasonDisplay || savedReason)}</span>. You may keep or change the selection before continuing.</span>
+            ? `<div class="mb-4 flex items-center gap-3 px-4 py-3 rounded-xl bg-emerald-50 border border-emerald-200">
+                    <div class="w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-full bg-emerald-100">
+                        <svg class="w-4 h-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 13l4 4L19 7"/></svg>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-xs font-bold text-emerald-800">Classification saved</p>
+                        <p class="text-xs text-emerald-700 mt-0.5">Current: <strong>${escapeHtml(savedReasonDisplay || savedReason)}</strong> &mdash; you may keep or change before saving.</p>
+                    </div>
                 </div>`
             : '';
 
-        const queueHintToneCls = qualifiesForPriority
-            ? 'border-emerald-300 bg-emerald-50 text-emerald-800'
-            : (layer2Clear
-                ? 'border-blue-300 bg-blue-50 text-blue-800'
-                : 'border-amber-300 bg-amber-50 text-amber-800');
-        const queueHintIcon = qualifiesForPriority
-            ? '<svg class="w-4 h-4 flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="M9 12l2 2 4-4"></path></svg>'
-            : '<svg class="w-4 h-4 flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><path d="M12 8v4M12 16h.01"></path></svg>';
-        const queueHintText = qualifiesForPriority
-            ? '<strong>Queue effect:</strong> Layers 2 &amp; 3 are clear &mdash; applicant qualifies for the <span class="font-bold">Priority Queue</span>.'
-            : (layer2Clear
-                ? '<strong>Queue effect:</strong> Layer 2 is clear, but Layer 3 must be classified to qualify for Priority. Otherwise the applicant remains on the <span class="font-bold">Walk-in Queue</span>.'
-                : '<strong>Queue effect:</strong> Layer 2 has a flag &mdash; applicant goes to the <span class="font-bold">Walk-in Queue</span> regardless of Layer 3 selection.');
+        // Queue hint banner — computed as a ready-to-insert HTML string
+        const queueHintHtml = (() => {
+            const p = qualifiesForPriority
+                ? { wrap:'border-emerald-200 bg-emerald-50', iconPath:`<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/>`, iconCls:'text-emerald-600', label:'Priority Queue', labelCls:'bg-emerald-600 text-white', body:'Layers 2 &amp; 3 are clear &mdash; applicant qualifies for the', bodyCls:'text-emerald-800', suffix:'' }
+                : layer2Clear
+                    ? { wrap:'border-blue-200 bg-blue-50',     iconPath:`<circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>`,                                                                                                          iconCls:'text-blue-500',   label:'Walk-in Queue',   labelCls:'bg-blue-600 text-white',    body:'Layer 2 is clear, but Layer 3 must be classified for Priority. Unclassified applicants remain on the', bodyCls:'text-blue-800', suffix:'' }
+                    : { wrap:'border-amber-200 bg-amber-50',   iconPath:`<circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>`,                                                                                                          iconCls:'text-amber-500',  label:'Walk-in Queue',   labelCls:'bg-amber-500 text-white',   body:'Layer 2 has a flag &mdash; applicant goes to the', bodyCls:'text-amber-800', suffix:' regardless of Layer 3 selection.' };
+            return `<div class="mb-4 flex items-start gap-3 px-4 py-3 rounded-xl border ${p.wrap}">
+                <svg class="w-5 h-5 flex-shrink-0 mt-0.5 ${p.iconCls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${p.iconPath}</svg>
+                <p class="flex-1 min-w-0 text-xs ${p.bodyCls} leading-relaxed">${p.body} <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[0.65rem] font-bold ${p.labelCls}">${p.label}</span>${p.suffix ? ' ' + p.suffix : ''}</p>
+            </div>`;
+        })();
 
         const layer3FooterNav = canVerifyDocs
-            ? `<div class="flex flex-col-reverse sm:flex-row sm:justify-between gap-2 sm:gap-3 mt-4 pt-3 border-t border-slate-200">
-                    <button type="button" class="px-4 py-2 text-sm rounded-lg border border-slate-300 text-slate-700 bg-white hover:bg-slate-50 hover:border-slate-400 transition-colors font-medium" onclick="m2BackToLayer2Step()">Back</button>
-                    <button type="button" class="px-4 py-2 text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors font-semibold shadow-sm" onclick="recordDisplacementClassification()">Save &amp; Proceed to 2.6</button>
+            ? `<div class="flex flex-col-reverse sm:flex-row sm:justify-between gap-2 sm:gap-3 mt-5 pt-4 border-t border-slate-200">
+                    <button type="button" class="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 text-sm rounded-xl border border-slate-300 text-slate-700 bg-white hover:bg-slate-50 hover:border-slate-400 active:bg-slate-100 transition-colors font-medium" onclick="m2BackToLayer2Step()">
+                        <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+                        Back
+                    </button>
+                    <button type="button" class="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 text-sm rounded-xl bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 transition-colors font-semibold shadow" onclick="recordDisplacementClassification()">
+                        Save &amp; Proceed to 2.6
+                        <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    </button>
                </div>`
-            : `<div class="flex flex-col-reverse sm:flex-row sm:justify-between gap-2 sm:gap-3 mt-4 pt-3 border-t border-slate-200">
-                    <button type="button" class="px-4 py-2 text-sm rounded-lg border border-slate-300 text-slate-700 bg-white hover:bg-slate-50 hover:border-slate-400 transition-colors font-medium" onclick="m2BackToLayer2Step()">Back</button>
-                    <button type="button" class="px-4 py-2 text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors font-semibold shadow-sm" onclick="m2OpenEvaluationApprovalStep()">Continue to 2.6 (read-only)</button>
+            : `<div class="flex flex-col-reverse sm:flex-row sm:justify-between gap-2 sm:gap-3 mt-5 pt-4 border-t border-slate-200">
+                    <button type="button" class="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 text-sm rounded-xl border border-slate-300 text-slate-700 bg-white hover:bg-slate-50 hover:border-slate-400 active:bg-slate-100 transition-colors font-medium" onclick="m2BackToLayer2Step()">
+                        <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+                        Back
+                    </button>
+                    <button type="button" class="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 text-sm rounded-xl bg-slate-600 text-white hover:bg-slate-700 active:bg-slate-800 transition-colors font-semibold shadow" onclick="m2OpenEvaluationApprovalStep()">
+                        Continue to 2.6 (read-only)
+                        <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    </button>
                </div>`;
+
+        // Reusable nav button builders (w-full on mobile, auto on sm+)
+        const btnBack  = (label, onclick) => `<button type="button" class="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 text-sm rounded-xl border border-slate-300 text-slate-700 bg-white hover:bg-slate-50 hover:border-slate-400 active:bg-slate-100 transition-colors font-medium" onclick="${onclick}"><svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>${label}</button>`;
+        const btnProceed = (label, onclick) => `<button type="button" class="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 text-sm rounded-xl bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 transition-colors font-semibold shadow" onclick="${onclick}">${label}<svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>`;
+        const btnSecondary = (id, label, onclick) => `<button type="button" id="${id}" class="flex items-center justify-center gap-1.5 px-3 py-2 text-xs rounded-lg border border-blue-200 text-blue-700 bg-blue-50 hover:bg-blue-100 active:bg-blue-200 transition-colors font-semibold" onclick="${onclick}"><svg class="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>${label}</button>`;
+        const layerFooterNav = (left, right) => `<div class="flex flex-col-reverse sm:flex-row sm:justify-between gap-2 mt-4 pt-3 border-t border-slate-200">${left}${right}</div>`;
+        const layerCard = (eyebrowCls, eyebrowIcon, eyebrowText, title, subtitle, content) =>
+            `<div class="rounded-2xl bg-white border border-slate-200 shadow-sm overflow-hidden">` +
+            `<div class="px-3 pt-4 pb-3 sm:px-5 sm:pt-5 sm:pb-4 text-center bg-gradient-to-br from-slate-50 via-white to-slate-50 border-b border-slate-100">` +
+            `<span class="inline-flex items-center gap-1 sm:gap-1.5 text-[0.58rem] sm:text-[0.65rem] font-extrabold uppercase tracking-[0.1em] sm:tracking-[0.18em] ${eyebrowCls} px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full"><svg class="w-2.5 h-2.5 sm:w-3 sm:h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">${eyebrowIcon}</svg>${eyebrowText}</span>` +
+            `<h3 class="mt-2 sm:mt-2.5 text-base sm:text-lg font-extrabold text-slate-900 leading-tight">${title}</h3>` +
+            (subtitle ? `<p class="mt-1 sm:mt-1.5 text-[0.7rem] sm:text-xs text-slate-500 max-w-xs sm:max-w-sm mx-auto leading-relaxed">${subtitle}</p>` : '') +
+            `</div>` +
+            `<div class="px-3 sm:px-5 pt-3 sm:pt-4 pb-4 sm:pb-5">${content}</div>` +
+            `</div>`;
+        const doneStrip = (id, clear, text, extraCls) => {
+            const tone = clear ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-amber-50 border-amber-200 text-amber-800';
+            const iconPath = clear ? '<path d="M20 6L9 17l-5-5"/>' : '<circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>';
+            const iconCls = clear ? 'text-emerald-600' : 'text-amber-600';
+            return `<div id="${id}" class="mt-2 px-4 py-2.5 rounded-xl border ${tone} text-xs font-semibold ${extraCls || ''}" style="display:none;"><span style="display:inline-flex;align-items:center;gap:0.4rem;"><svg style="width:0.875rem;height:0.875rem;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="${iconCls}">${iconPath}</svg>${text}</span></div>`;
+        };
 
         gate.innerHTML =
             `<div class="m2-pipeline-layers">` +
             `<div id="m2Layer1Main">` +
-            `<div class="m2-layer-eyebrow">Layer 1 — System check</div>` +
-            `<div class="m2-layer-title">2.1 Automatic Blacklist Check</div>` +
-            `<div class="m2-checklist">` +
-            itemDescOnly(l1Tone, l1Icon, l1Desc) +
+            layerCard(
+                'text-slate-600 bg-slate-100 border border-slate-300',
+                `<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>`,
+                'Layer 1 &mdash; System check',
+                '2.1 Automatic Blacklist Check',
+                'System automatically checks the applicant against the housing-units blacklist registry.',
+                itemDescOnly(l1Tone, l1Icon, l1Desc) +
+                `<div id="m2Layer1CdrrmoPlaceholder" class="mt-3"></div>` +
+                layerFooterNav(
+                    btnBack('Close', 'closeModal()'),
+                    btnProceed('Proceed to Layer 2', 'm2ProceedToLayer2Step()')
+                )
+            ) +
             `</div>` +
-            `<div id="m2Layer1CdrrmoPlaceholder" style="margin-top: 1rem; width: 100%;"></div>` +
-            `<div class="m2-layer-footer-nav">` +
-            `<button type="button" class="m2-back-btn" onclick="closeModal()">Back</button>` +
-            `<button type="button" class="m2-proceed-btn" onclick="m2ProceedToLayer2Step()">Proceed Layer 2</button>` +
+            doneStrip('m2Layer1Done', !blacklistBlocked, l1DoneText) +
+            `<div id="m2Layer2Block" class="m2-layer2-block mt-3" style="display:none;">` +
+            layerCard(
+                'text-purple-700 bg-purple-50 border border-purple-200',
+                `<path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/>`,
+                'Layer 2 &mdash; Eligibility readouts',
+                '2.2 Property Ownership &middot; 2.3 Income Details &middot; 2.4 Household Composition',
+                '',
+                itemStacked(l2Tone23, l2Icon23, '2.2 Check Property Ownership', propDesc, escapeHtml(policy23)) +
+                itemStacked(l2Tone24, l2Icon24, '2.3 Check Income Details', incDesc, escapeHtml(policy24)) +
+                itemStacked(l2Tone25, l2Icon25, '2.4 Check Household Composition', hhDesc, escapeHtml(policy25)) +
+                layerFooterNav(
+                    `<div class="flex gap-2">` + btnBack('Back', 'm2BackToLayer1Step()') + btnSecondary('modalToggleM1FormBtn', 'Show form', 'toggleModule1FormEvidence()') + `</div>`,
+                    btnProceed('Proceed to Layer 3', 'm2ProceedToLayer3Step()')
+                )
+            ) +
             `</div>` +
-            `</div>` +
-            `<div id="m2Layer1Done" class="m2-layer1-done-strip" style="display:none;">${l1DoneText}</div>` +
-            `<div id="m2Layer2Block" class="m2-layer2-block" style="display:none;">` +
-            `<div class="m2-layer-eyebrow">Layer 2 — Eligibility readouts</div>` +
-            `<div class="m2-layer-title">2.2 Property Ownership - 2.3 Income Details - 2.4 Household Composition</div>` +
-            `<div class="m2-checklist">` +
-            itemStacked(l2Tone23, l2Icon23, '2.2 Check Property Ownership', propDesc, escapeHtml(policy23)) +
-            itemStacked(l2Tone24, l2Icon24, '2.3 Check Income Details', incDesc, escapeHtml(policy24)) +
-            itemStacked(l2Tone25, l2Icon25, '2.4 Check Household Composition', hhDesc, escapeHtml(policy25)) +
-            `</div>` +
-            `<div class="m2-layer-footer-nav">` +
-            `<button type="button" class="m2-back-btn" onclick="m2BackToLayer1Step()">Back</button>` +
-            `<button type="button" id="modalToggleM1FormBtn" class="m2-show-form-btn" onclick="toggleModule1FormEvidence()">Show form</button>` +
-            `<button type="button" class="m2-proceed-btn" onclick="m2ProceedToLayer3Step()">Proceed to Layer 3</button>` +
-            `</div>` +
-            `</div>` +
-            `<div id="m2Layer2Done" class="m2-layer1-done-strip" style="display:none; margin-top: 0.4rem;">${layer2Clear ? '✓ Layer 2 complete — Eligibility readouts clear' : '! Layer 2 complete — flag(s) noted; applicant on Walk-in path'}</div>` +
+            doneStrip('m2Layer2Done', layer2Clear, layer2Clear ? '✓ Layer 2 complete — Eligibility readouts clear' : '! Layer 2 complete — flag(s) noted; applicant on Walk-in path') +
             `<div id="m2Layer3Block" class="m2-layer3-block" style="display:none;">` +
-            `<div class="px-3 sm:px-4 py-3 sm:py-4 rounded-2xl bg-gradient-to-br from-slate-50 via-white to-slate-50 border border-slate-200 shadow-sm">` +
-            `<div class="text-center mb-3 sm:mb-4">` +
-            `<div class="inline-block text-[0.65rem] sm:text-xs font-bold uppercase tracking-[0.18em] text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-1 rounded-full">Layer 3 — Reason for Relocation</div>` +
-            `<h3 class="mt-2 text-base sm:text-lg lg:text-xl font-bold text-slate-900 leading-snug">2.6 Classify Displacement &amp; Required Document</h3>` +
-            `<p class="mt-1.5 text-xs sm:text-sm text-slate-500 leading-relaxed max-w-2xl mx-auto">Select the applicant's reason for relocation. Module 2 records the classification and details below; the required supporting document is verified in <span class="font-semibold text-slate-700">Module 3</span>.</p>` +
+            `<div class="rounded-2xl bg-white border border-slate-200 shadow-sm overflow-hidden">` +
+            `<div class="px-5 pt-5 pb-4 text-center bg-gradient-to-br from-slate-50 via-white to-slate-50 border-b border-slate-100">` +
+            `<span class="inline-flex items-center gap-1.5 text-[0.65rem] font-extrabold uppercase tracking-[0.18em] text-blue-700 bg-blue-50 border border-blue-200 px-3 py-1 rounded-full"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Layer 3 &mdash; Reason for Relocation</span>` +
+            `<h3 class="mt-2.5 text-lg sm:text-xl font-extrabold text-slate-900 leading-tight">2.6 Classify Displacement &amp; Required Document</h3>` +
+            `<p class="mt-2 text-xs sm:text-sm text-slate-500 leading-relaxed max-w-xl mx-auto">Select the applicant's reason for relocation. Module 2 records the classification; the required document is verified in <strong class="font-semibold text-slate-700">Module 3</strong>.</p>` +
             `</div>` +
-            `<div class="mb-3 flex items-start gap-2.5 px-3 py-2.5 rounded-lg border ${queueHintToneCls} text-xs sm:text-[0.78rem] leading-relaxed">${queueHintIcon}<span>${queueHintText}</span></div>` +
+            `<div class="px-4 sm:px-5 pt-4 pb-5">` +
+            queueHintHtml +
             savedReadout +
             `<div id="m2DispOptions" class="grid grid-cols-1 lg:grid-cols-3 gap-2 sm:gap-3 mb-4">` +
             radio('danger_zone', 'Danger Zone / Hazard Area', 'Applicant currently lives in a flood-prone, landslide, storm-surge, riverbank, cliff-edge, or coastal hazard area.', 'blue') +
@@ -3261,7 +3364,8 @@
             layer3FooterNav +
             `</div>` +
             `</div>` +
-            `<div id="m2Layer3Done" class="m2-layer1-done-strip" style="display:none; margin-top:0.4rem;">✓ Layer 3 complete — Displacement classification recorded</div>` +
+            `</div>` +
+            doneStrip('m2Layer3Done', true, '✓ Layer 3 complete — Displacement classification recorded') +
             `</div>`;
     }
 

@@ -526,10 +526,14 @@ def applications_list(request, position):
     
     # Module 2 shows only records explicitly handed off from Module 1
     # (plus records already attached to an application object).
+    # Once an applicant is 2.6-approved, they leave the Module 2 list and live
+    # in Module 3 (documents/<position>/management/) only.
     applicants = Applicant.objects.filter(
         status__in=['pending', 'pending_cdrrmo', 'eligible', 'requirements', 'application', 'standby', 'awarded']
     ).filter(
         Q(module2_handoff_at__isnull=False) | Q(application__isnull=False)
+    ).exclude(
+        evaluation_approval_status='approved'
     ).select_related(
         'application',
         'cdrrmo_certification',
@@ -1540,17 +1544,9 @@ def record_evaluation_approval(request, position):
             'error': 'Record 2.8 approval only after queue assignment (Priority or Walk-in) is active.',
         }, status=400)
 
-    # Validate Layer 3 (CDRRMO) is complete
-    if applicant.cdrrmo_certification:
-        cdrrmo_cert = applicant.cdrrmo_certification
-        # If CDRRMO was declared, it must be certified (not just pending)
-        if cdrrmo_cert.status in ['pending', 'pending_certification']:
-            return JsonResponse({
-                'success': False,
-                'error': 'Cannot record 2.8 until Layer 3 CDRRMO review is complete (Certified or Denied).',
-            }, status=400)
-
-
+    # NOTE: Layer 3 CDRRMO completion gate temporarily disabled — 2.8 approval can
+    # be recorded while CDRRMO certification is still Pending. Re-enable later if
+    # the policy needs to require Certified/Denied before final 2.8 approval.
 
     applicant.evaluation_approval_status = approval_status
     applicant.evaluation_approval_notes = notes
