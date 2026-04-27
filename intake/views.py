@@ -1006,7 +1006,7 @@ def applicants_list(request, position):
         'archived_by',
         'applicant',
         'applicant__application__form_generated_by',
-    ).order_by('-archived_at')
+    ).order_by('archived_at')
 
     channel_display_map = {
         'channel_a': ('A', 'Channel A — Walk-in'),

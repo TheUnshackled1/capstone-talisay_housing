@@ -23,6 +23,9 @@ from .models import (
 from .utils import check_blacklist_module2, send_sms_for_applications
 
 MODULE1_MONTHLY_INCOME_CEILING_PESO = 10000
+# Minimum years of residence in Talisay City for Module 2 Layer 2 (2.6) eligibility.
+# Mirror of `MODULE1_MIN_YEARS_RESIDING_TALISAY` in intake/views.py — keep in sync.
+MODULE1_MIN_YEARS_RESIDING_TALISAY = 5
 EVAL28_APPROVED_SMS_EVENT = 'evaluation_approval_approved'
 
 
@@ -394,14 +397,47 @@ def _module2_eligibility_snapshot(applicant, checked_by=None):
             '(walk-in path under Module 2 policy).'
         )
 
+    # Layer 2 / 2.5 Voter Registration: applicant must be a registered voter
+    # in Talisay City (declared at Module 1 registration). Any non-registered
+    # applicant is a Layer 2 flag and pushes them to the walk-in queue.
+    voter_ok = bool(applicant.is_registered_voter_talisay)
+    if not voter_ok:
+        advisories.append(
+            'Voter Registration flagged: applicant is not a registered voter in Talisay City '
+            '(walk-in path under Module 2 policy).'
+        )
+
+    # Layer 2 / 2.6 Length of Residence: applicant must have resided in
+    # Talisay City for at least `MODULE1_MIN_YEARS_RESIDING_TALISAY` years.
+    # Below threshold is a Layer 2 flag (walk-in path).
+    try:
+        years_residing_int = int(applicant.years_residing or 0)
+    except (TypeError, ValueError):
+        years_residing_int = 0
+    residency_ok = years_residing_int >= MODULE1_MIN_YEARS_RESIDING_TALISAY
+    if not residency_ok:
+        advisories.append(
+            f'Length of Residence flagged: declared {years_residing_int} year(s) in Talisay City '
+            f'is below the {MODULE1_MIN_YEARS_RESIDING_TALISAY}-year minimum '
+            '(walk-in path under Module 2 policy).'
+        )
+
     # Retained for any legacy templates/consumers; queue policy no longer
     # depends on size mismatch.
     household_mismatch = declared_household > 0 and declared_household != listed_household
 
     displacement_reason = (applicant.displacement_reason or '').strip()
-    displacement_classified = displacement_reason in ('danger_zone', 'ejected', 'relocated')
+    # Layer 3 complete when any of A / B / C / D (not_abc) is recorded.
+    displacement_reasons_all = ('danger_zone', 'ejected', 'relocated', 'not_abc')
+    # Priority queue only for A, B, or C; Option D (not_abc) is always walk-in.
+    displacement_reasons_priority = ('danger_zone', 'ejected', 'relocated')
+    displacement_classified = displacement_reason in displacement_reasons_all
     if not displacement_classified:
         advisories.append('Module 2 Layer 3 displacement classification has not been recorded yet.')
+    if displacement_reason == 'not_abc':
+        advisories.append(
+            'Option D (none of A, B, or C): applicant is on the Walk-in path; Priority is not available for this ground.'
+        )
 
     requires_cdrrmo = bool((applicant.danger_zone_type or '').strip() or (applicant.danger_zone_location or '').strip())
     cdrrmo_status = None
@@ -413,14 +449,20 @@ def _module2_eligibility_snapshot(applicant, checked_by=None):
 
     # Queue mapping policy (Module 2):
     # - Layer 1 (blacklist) is advisory only; it does not affect queue placement.
-    # - Layer 2 (2.2 property, 2.3 income, 2.4 household composition) — any
-    #   flag here pushes the applicant to the walk-in queue.
-    # - Layer 3 — applicant must be classified under one of the three
-    #   displacement reasons. Document verification still happens in Module 3.
-    # All three layers clean -> Priority queue. Otherwise -> Walk-in queue.
-    layer2_clear = bool(property_ok and income_ok and household_ok)
+    # - Layer 2 (2.2 property, 2.3 income, 2.4 household composition,
+    #   2.5 voter registration, 2.6 length of residence) — any flag here
+    #   pushes the applicant to the walk-in queue.
+    # - Layer 3 — A, B, C, or D. Option D (not_abc) always routes to Walk-in;
+    #   A/B/C with Layer 2 clean may route to Priority. Document verification
+    #   for A/B/C still happens in Module 3.
+    layer2_clear = bool(
+        property_ok and income_ok and household_ok and voter_ok and residency_ok
+    )
     layer3_clear = bool(displacement_classified)
-    qualifies_for_priority = layer2_clear and layer3_clear
+    qualifies_for_priority = bool(
+        layer2_clear
+        and (displacement_reason in displacement_reasons_priority)
+    )
 
     if qualifies_for_priority:
         allowed_queue_types = ['priority']
@@ -445,6 +487,11 @@ def _module2_eligibility_snapshot(applicant, checked_by=None):
         'live_in_partner_count': live_in_partner_count,
         'declared_household_size': declared_household,
         'listed_household_size': listed_household,
+        'voter_ok': voter_ok,
+        'is_registered_voter_talisay': bool(applicant.is_registered_voter_talisay),
+        'residency_ok': residency_ok,
+        'years_residing': years_residing_int,
+        'min_years_residing_talisay': MODULE1_MIN_YEARS_RESIDING_TALISAY,
         'requires_cdrrmo': requires_cdrrmo,
         'cdrrmo_status': cdrrmo_status,
         'layer2_clear': layer2_clear,
@@ -697,6 +744,8 @@ def applications_list(request, position):
             'blacklist_policy_note': blacklist_policy_note,
             'm1_income_eligible': applicant.is_income_eligible,
             'm1_declares_no_property': not applicant.has_property_in_talisay,
+            'm1_voter_eligible': bool(applicant.is_registered_voter_talisay),
+            'm1_residency_eligible': bool(rules.get('residency_ok')),
             'household_size': applicant.household_size,
             'intake_queue_label': intake_queue_label,
             'active_queue_type': active_entries[0].queue_type if active_entries else '',
@@ -835,8 +884,10 @@ def application_detail(request, position, application_id):
             'last_name': applicant.last_name or '',
             'first_name': applicant.first_name or '',
             'middle_name': applicant.middle_name or '',
+            'extension_name': applicant.extension_name or '',
             'sex': applicant.get_sex_display() if applicant.sex else '',
             'years_residing': applicant.years_residing,
+            'is_registered_voter_talisay': bool(applicant.is_registered_voter_talisay),
             'date_of_birth': applicant.date_of_birth.isoformat() if applicant.date_of_birth else None,
             'age': applicant.age,
             'place_of_birth': applicant.place_of_birth or '',
@@ -849,6 +900,7 @@ def application_detail(request, position, application_id):
             'occupation': applicant.occupation or '',
             'employment_status': applicant.get_employment_status_display() if applicant.employment_status else '',
             'monthly_income': float(applicant.monthly_income) if applicant.monthly_income is not None else 0,
+            'has_property_in_talisay': bool(applicant.has_property_in_talisay),
             'hazard_declared': bool((applicant.danger_zone_type or '').strip() or (applicant.danger_zone_location or '').strip()),
             'danger_zone_type': applicant.danger_zone_type or '',
             'danger_zone_location': applicant.danger_zone_location or '',
@@ -870,6 +922,8 @@ def application_detail(request, position, application_id):
         'blacklist_policy_note': rules['blacklist_policy_note'],
         'm1_income_eligible': applicant.is_income_eligible,
         'm1_declares_no_property': not applicant.has_property_in_talisay,
+        'm1_voter_eligible': bool(applicant.is_registered_voter_talisay),
+        'm1_residency_eligible': bool(rules.get('residency_ok')),
         'household_size': applicant.household_size,
         'intake_queue_label': _active_intake_queue_label(applicant),
         'active_queue_type': (getattr(applicant, 'active_queue_entries', None) or [None])[0].queue_type if (getattr(applicant, 'active_queue_entries', None) or []) else '',
@@ -1084,7 +1138,7 @@ def record_displacement_classification(request, position):
         reason = (request.POST.get('displacement_reason') or '').strip()
         if not applicant_id:
             return JsonResponse({'success': False, 'error': 'Missing applicant_id'})
-        if reason not in ('danger_zone', 'ejected', 'relocated'):
+        if reason not in ('danger_zone', 'ejected', 'relocated', 'not_abc'):
             return JsonResponse({'success': False, 'error': 'Select a valid displacement reason.'})
 
         applicant = Applicant.objects.get(id=applicant_id)
@@ -1107,6 +1161,17 @@ def record_displacement_classification(request, position):
                 return JsonResponse({'success': False, 'error': 'Hazard Location Details is required.'})
             applicant.danger_zone_type = hazard_type
             applicant.danger_zone_location = hazard_location
+            applicant.ejection_type = ''
+            applicant.ejection_date = None
+            applicant.project_name = ''
+            update_fields.update({
+                'danger_zone_type', 'danger_zone_location',
+                'ejection_type', 'ejection_date', 'project_name',
+            })
+        elif reason == 'not_abc':
+            # Option D: clear A/B/C-specific particulars; no CDRRMO track from this choice.
+            applicant.danger_zone_type = ''
+            applicant.danger_zone_location = ''
             applicant.ejection_type = ''
             applicant.ejection_date = None
             applicant.project_name = ''
@@ -1174,11 +1239,44 @@ def record_displacement_classification(request, position):
                 # missing.
                 pass
 
+        # Auto-promote queue placement now that Layer 3 has been classified.
+        # Policy: once a displacement reason is recorded AND Layer 2 is clean,
+        # the applicant is moved to the Priority Queue immediately — regardless
+        # of CDRRMO certification state for danger-zone cases. CDRRMO finalization
+        # (`update_cdrrmo_certification` / `update_cdrrmo_status`) still owns the
+        # demotion path: a `not_certified` outcome will move the applicant back
+        # to Walk-in. If Layer 2 has any flag, the applicant stays on Walk-in.
+        queue_placement = None
+        try:
+            rules = _module2_eligibility_snapshot(applicant, checked_by=request.user)
+            target_queue = rules.get('recommended_queue_type') or 'walk_in'
+            if target_queue not in ('priority', 'walk_in'):
+                target_queue = 'walk_in'
+            queue_entry, queue_changed = _ensure_module2_queue_entry(
+                applicant, target_queue, added_by=request.user,
+            )
+            queue_placement = {
+                'queue_type': queue_entry.queue_type,
+                'queue_position': queue_entry.position,
+                'queue_changed': bool(queue_changed),
+                'qualifies_for_priority': bool(rules.get('qualifies_for_priority')),
+                'layer2_clear': bool(rules.get('layer2_clear')),
+                'layer3_clear': bool(rules.get('layer3_clear')),
+                'requires_cdrrmo': bool(rules.get('requires_cdrrmo')),
+                'cdrrmo_status': rules.get('cdrrmo_status'),
+                'advisories': list(rules.get('advisories') or []),
+            }
+        except Exception:
+            # Non-fatal: the classification is still saved; queue placement can
+            # be reconciled by the next eligibility check.
+            queue_placement = None
+
         return JsonResponse({
             'success': True,
             'message': f'Layer 3 classification saved: {applicant.get_displacement_reason_display()}.',
             'displacement_reason': reason,
             'displacement_reason_display': applicant.get_displacement_reason_display(),
+            'queue_placement': queue_placement,
         })
 
     except Applicant.DoesNotExist:

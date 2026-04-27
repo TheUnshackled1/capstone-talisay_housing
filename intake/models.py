@@ -201,6 +201,8 @@ class Applicant(models.Model):
         ('danger_zone', 'Danger Zone / Hazard Area'),
         ('ejected', 'Ejected from Previous Residence'),
         ('relocated', 'Relocated Due to Expansion or Project Development'),
+        # Option D in Module 2 Layer 3: not covered by A/B/C; walk-in path only
+        ('not_abc', 'None of A, B, or C (Other / Not listed)'),
     ]
     EJECTION_TYPE_CHOICES = [
         ('', '— Select —'),

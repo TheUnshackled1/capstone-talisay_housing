@@ -1188,73 +1188,469 @@
     .handled-by-avatar.fourth-member { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
     .handled-by-avatar.other { background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%); }
 
-    /* Applicant review modal — THA / Module 1 formal presentation (scoped to #reviewModal) */
+    /* ============================================================
+       Applicant Review Modal — institutional "official record" UX
+       ============================================================ */
     #reviewModal .modal-content.tha-review-modal {
-        border: 1px solid #e2e8f0;
-        box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.18);
+        border: 1px solid #cbd5e1;
+        border-radius: 1rem;
+        box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.28);
+        overflow: hidden;
     }
-    #reviewModal .tha-review-modal-kicker {
-        font-size: 0.625rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        color: #64748b;
-        margin: 0 0 0.375rem 0;
+
+    /* Top accent bar — institutional ribbon */
+    #reviewModal .modal-content.tha-review-modal::before {
+        content: '';
+        position: sticky;
+        top: 0;
+        display: block;
+        height: 4px;
+        background: linear-gradient(90deg, #1e3a8a 0%, #2563eb 35%, #0ea5e9 70%, #06b6d4 100%);
+        z-index: 11;
     }
+
     #reviewModal .modal-content.tha-review-modal .modal-header {
-        border-bottom: 1px solid #e2e8f0;
-        padding-bottom: 0.75rem;
-        margin-bottom: 0;
+        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        border-bottom: 2px solid #e2e8f0;
+        padding: 1.1rem 1.5rem 1rem;
     }
+
+    #reviewModal .tha-review-modal-kicker {
+        font-size: 0.6rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: #1e3a8a;
+        margin: 0 0 0.4rem 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    #reviewModal .tha-review-modal-kicker::before {
+        content: '';
+        width: 0.5rem;
+        height: 0.5rem;
+        background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+        border-radius: 50%;
+        box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.12);
+    }
+
     #reviewModal .modal-content.tha-review-modal .modal-title {
-        font-size: 1.125rem;
-        font-weight: 600;
+        font-size: 1.2rem;
+        font-weight: 700;
         color: #0f172a;
         letter-spacing: -0.02em;
+        line-height: 1.25;
     }
+
     #reviewModal .modal-content.tha-review-modal .modal-subtitle {
-        font-size: 0.8125rem;
+        font-size: 0.78rem;
         color: #475569;
+        margin-top: 0.3rem;
+        font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+        letter-spacing: 0.01em;
     }
-    #reviewModal .tha-review-section-title {
-        font-size: 0.6875rem;
-        font-weight: 600;
-        color: #475569;
-        margin: 0 0 0.75rem 0;
+
+    /* Body: tighter padding, section cards */
+    #reviewModal .modal-body {
+        padding: 1.25rem 1.5rem;
+        background: #fafbfc;
+    }
+
+    /* Status badge above the form — refined institutional pill */
+    #reviewModal .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.35rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.65rem;
+        font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.06em;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
     }
-    #reviewModal .tha-review-panel {
-        border-radius: 0.375rem;
+    #reviewModal .status-badge::before {
+        content: '';
+        width: 0.4rem;
+        height: 0.4rem;
+        background: currentColor;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    /* Section title — formal eyebrow */
+    #reviewModal .tha-review-section-title {
+        font-size: 0.65rem;
+        font-weight: 800;
+        color: #1e3a8a;
+        margin: 0 0 0.85rem 0;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        display: flex;
+        align-items: center;
+        gap: 0.55rem;
+    }
+    #reviewModal .tha-review-section-title::before {
+        content: '';
+        width: 3px;
+        height: 0.85rem;
+        background: linear-gradient(180deg, #1e3a8a 0%, #2563eb 100%);
+        border-radius: 2px;
+    }
+    #reviewModal .tha-review-section-title::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: linear-gradient(90deg, #cbd5e1 0%, transparent 100%);
+    }
+
+    /* Form labels — uppercase eyebrow style */
+    #reviewModal .form-label {
+        font-size: 0.6rem;
+        font-weight: 700;
+        color: #64748b;
+        margin-bottom: 0.4rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        display: block;
+    }
+
+    /* Readonly form inputs — render as record-of-data values, not editable controls */
+    #reviewModal .form-input[readonly],
+    #reviewModal .form-select[disabled] {
+        background: #ffffff;
         border: 1px solid #e2e8f0;
-        background: #f8fafc;
-        padding: 0.875rem 1rem;
+        border-left: 3px solid #1e3a8a;
+        color: #0f172a;
+        font-weight: 600;
+        font-size: 0.82rem;
+        padding: 0.55rem 0.7rem;
+        border-radius: 0.4rem;
+        cursor: default;
+        box-shadow: 0 1px 1px rgba(15, 23, 42, 0.03);
+        transition: border-color 0.15s ease;
+    }
+
+    /* Editable mode (when EDIT clicked, readonly removed) — clear input affordance */
+    #reviewModal .form-input:not([readonly]),
+    #reviewModal .form-select:not([disabled]) {
+        background: #ffffff;
+        border: 1px solid #93c5fd;
+        border-radius: 0.4rem;
+        font-size: 0.82rem;
+        padding: 0.55rem 0.7rem;
+        color: #0f172a;
+        font-weight: 500;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
+    }
+    #reviewModal .form-input:not([readonly]):focus,
+    #reviewModal .form-select:not([disabled]):focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+    }
+
+    /* Form-group spacing */
+    #reviewModal .form-group {
+        margin-bottom: 0.85rem;
+    }
+
+    /* Note panels: refined to feel like official records */
+    #reviewModal .tha-review-panel {
+        border-radius: 0.55rem;
+        border: 1px solid #e2e8f0;
+        background: #ffffff;
+        padding: 0.95rem 1.05rem;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
     }
     #reviewModal .tha-review-panel--note {
-        background: #eff6ff;
+        background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%);
         border-color: #bfdbfe;
-        border-left-width: 3px;
-        border-left-color: #1d4ed8;
+        border-left: 4px solid #1d4ed8;
     }
     #reviewModal .tha-review-panel--success {
-        background: #f0fdf4;
+        background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
         border-color: #bbf7d0;
+        border-left: 4px solid #16a34a;
     }
     #reviewModal .tha-review-panel-label {
-        font-size: 0.6875rem;
-        font-weight: 600;
-        color: #64748b;
+        font-size: 0.6rem;
+        font-weight: 800;
+        color: #1e3a8a;
         text-transform: uppercase;
-        letter-spacing: 0.04em;
-        margin: 0 0 0.25rem 0;
+        letter-spacing: 0.12em;
+        margin: 0 0 0.4rem 0;
     }
     #reviewModal .tha-review-panel p {
         margin: 0;
     }
+
+    /* Eligibility checks — list with semantic icons */
+    #reviewModal #eligibilityChecksB > *,
+    #reviewModal #eligibilityChecksWalkin > *,
+    #reviewModal #eligibilityChecksLandowner > * {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.5rem;
+        padding: 0.7rem 0.85rem;
+        font-size: 0.78rem;
+        color: #1e293b;
+        line-height: 1.45;
+        box-shadow: 0 1px 1px rgba(15, 23, 42, 0.03);
+    }
+
+    /* Sticky footer — clear action hierarchy */
     #reviewModal .modal-content.tha-review-modal .modal-footer {
         gap: 0.5rem;
         flex-wrap: wrap;
         align-items: center;
+        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        border-top: 1px solid #e2e8f0;
+        padding: 0.85rem 1.5rem;
+    }
+    #reviewModal .btn-modal {
+        font-weight: 700;
+        font-size: 0.72rem;
+        letter-spacing: 0.04em;
+        padding: 0.6rem 1rem;
+        border-radius: 0.55rem;
+        transition: all 0.18s ease;
+        text-transform: uppercase;
+    }
+    #reviewModal .btn-modal.primary {
+        background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+        border-color: #1e3a8a;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+    #reviewModal .btn-modal.primary:hover {
+        background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 14px rgba(37, 99, 235, 0.28);
+    }
+    #reviewModal .btn-modal.danger {
+        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+        color: #fff;
+        border-color: #b91c1c;
+    }
+    #reviewModal .btn-modal.danger:hover {
+        background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 14px rgba(220, 38, 38, 0.28);
+    }
+    #reviewModal .btn-modal.success {
+        background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+        color: #fff;
+        border-color: #15803d;
+    }
+    #reviewModal .btn-modal.success:hover {
+        background: linear-gradient(135deg, #15803d 0%, #14532d 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 14px rgba(22, 163, 74, 0.28);
+    }
+    #reviewModal .btn-modal.secondary {
+        background: #ffffff;
+        color: #475569;
+        border-color: #cbd5e1;
+    }
+    #reviewModal .btn-modal.secondary:hover {
+        background: #f8fafc;
+        border-color: #94a3b8;
+        color: #1e293b;
+    }
+    #reviewModal .btn-close {
+        color: #64748b;
+        border-radius: 0.5rem;
+    }
+    #reviewModal .btn-close:hover {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    /* ============================================================
+       Handoff Summary Modal — Applicant Journey timeline
+       ============================================================ */
+    #archiveSummaryModal .modal-content.archive-summary-modal {
+        border: 1px solid #cbd5e1;
+        border-radius: 1rem;
+        box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.28);
+        overflow: hidden;
+    }
+    #archiveSummaryModal .modal-content.archive-summary-modal::before {
+        content: '';
+        position: sticky;
+        top: 0;
+        display: block;
+        height: 4px;
+        background: linear-gradient(90deg, #1e3a8a 0%, #2563eb 25%, #16a34a 50%, #d97706 75%, #7c3aed 100%);
+        z-index: 11;
+    }
+    #archiveSummaryModal .modal-header {
+        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        border-bottom: 2px solid #e2e8f0;
+        padding: 1.1rem 1.5rem 1rem;
+    }
+    #archiveSummaryModal .tha-review-modal-kicker {
+        font-size: 0.6rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: #1e3a8a;
+        margin: 0 0 0.4rem 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+    #archiveSummaryModal .tha-review-modal-kicker::before {
+        content: '';
+        width: 0.5rem;
+        height: 0.5rem;
+        background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+        border-radius: 50%;
+        box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.12);
+    }
+    #archiveSummaryModal .modal-title {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #0f172a;
+        letter-spacing: -0.02em;
+    }
+    #archiveSummaryModal .modal-subtitle {
+        font-size: 0.78rem;
+        color: #475569;
+        margin-top: 0.3rem;
+    }
+    #archiveSummaryModal .modal-body {
+        padding: 1.25rem 1.5rem;
+        background: #fafbfc;
+    }
+
+    /* Module section card — left accent, white surface */
+    #archiveSummaryModal .modal-body > div {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.75rem;
+        padding: 1.1rem 1.2rem !important;
+        margin-bottom: 0.85rem !important;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+    #archiveSummaryModal .modal-body > div::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: 4px;
+    }
+    #archiveSummaryModal .modal-body > div:nth-child(1)::before {
+        background: linear-gradient(180deg, #2563eb 0%, #1e40af 100%);
+    }
+    #archiveSummaryModal .modal-body > div:nth-child(2)::before {
+        background: linear-gradient(180deg, #16a34a 0%, #15803d 100%);
+    }
+    #archiveSummaryModal .modal-body > div:nth-child(3)::before {
+        background: linear-gradient(180deg, #d97706 0%, #b45309 100%);
+    }
+    #archiveSummaryModal .modal-body > div:nth-child(4)::before {
+        background: linear-gradient(180deg, #7c3aed 0%, #6d28d9 100%);
+    }
+
+    /* Force-remove inline border-bottom dividers (decorative cards now self-divide) */
+    #archiveSummaryModal .modal-body > div[style*="border-bottom"] {
+        border-bottom: 1px solid #e2e8f0 !important;
+        padding-bottom: 1.1rem !important;
+    }
+
+    /* Section title — refined eyebrow + connecting rule */
+    #archiveSummaryModal .modal-body h4 {
+        font-size: 0.78rem !important;
+        font-weight: 800 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.12em !important;
+        margin: 0 0 1rem 0 !important;
+        display: flex;
+        align-items: center;
+        gap: 0.55rem;
+        padding-left: 0.4rem;
+    }
+    #archiveSummaryModal .modal-body h4::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: linear-gradient(90deg, #cbd5e1 0%, transparent 100%);
+    }
+
+    /* Field cell — labeled value block */
+    #archiveSummaryModal .modal-body p[style*="text-transform"] {
+        font-size: 0.6rem !important;
+        font-weight: 800 !important;
+        color: #64748b !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.1em !important;
+        margin-bottom: 0.35rem !important;
+    }
+    #archiveSummaryModal .modal-body div[id^="archiveSummary"] {
+        font-size: 0.85rem !important;
+        font-weight: 600 !important;
+        color: #0f172a !important;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.45rem;
+        padding: 0.55rem 0.7rem;
+        line-height: 1.4;
+        word-break: break-word;
+    }
+
+    /* Reference & ref-style values get monospace + accent */
+    #archiveSummaryModal #archiveSummaryReference,
+    #archiveSummaryModal #archiveSummaryModule2Summary {
+        font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace !important;
+        color: #1e3a8a !important;
+        background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%) !important;
+        border-color: #bfdbfe !important;
+        letter-spacing: 0.01em !important;
+    }
+
+    /* "N/A" values — soften */
+    #archiveSummaryModal .modal-body div[id^="archiveSummary"]:has-text("N/A") {
+        color: #94a3b8 !important;
+        font-weight: 500 !important;
+    }
+
+    /* Footer */
+    #archiveSummaryModal .modal-footer {
+        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        border-top: 1px solid #e2e8f0;
+        padding: 0.85rem 1.5rem;
+    }
+    #archiveSummaryModal .btn-modal.secondary {
+        font-weight: 700;
+        font-size: 0.72rem;
+        letter-spacing: 0.04em;
+        padding: 0.55rem 1.1rem;
+        border-radius: 0.55rem;
+        text-transform: uppercase;
+        background: #ffffff;
+        color: #475569;
+        border: 1px solid #cbd5e1;
+        transition: all 0.18s ease;
+    }
+    #archiveSummaryModal .btn-modal.secondary:hover {
+        background: #f8fafc;
+        border-color: #94a3b8;
+        color: #1e293b;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+    }
+    #archiveSummaryModal .btn-close {
+        color: #64748b;
+        border-radius: 0.5rem;
+    }
+    #archiveSummaryModal .btn-close:hover {
+        background: #fee2e2;
+        color: #991b1b;
     }
 
     /* Micro-pass parity refinement */
@@ -1390,13 +1786,13 @@
 
 <div class="modal-overlay" id="archiveSummaryModal" onclick="closeArchiveSummaryModal()">
     <div class="modal-content archive-summary-modal" style="max-width: 46rem; width: min(94vw, 46rem);" onclick="event.stopPropagation()">
-        <div class="modal-header">
-            <div>
+        <div class="modal-header" style="justify-content: center;">
+            <div style="text-align: center;">
                 <p class="tha-review-modal-kicker">Applicant Journey</p>
                 <h3 class="modal-title" style="font-size: 1rem;">Handoff Summary</h3>
                 <p class="modal-subtitle" id="archiveSummarySubtitle">Complete handoff details</p>
             </div>
-            <button class="btn-close" onclick="closeArchiveSummaryModal()">
+            <button class="btn-close" onclick="closeArchiveSummaryModal()" style="position: absolute; right: 1.5rem;">
                 <svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
                     <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -1405,8 +1801,8 @@
         </div>
         <div class="modal-body">
             <!-- REGISTRATION SECTION (Module 1) -->
-            <div style="margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 2px solid #e2e8f0;">
-                <h4 style="font-size: 0.875rem; font-weight: 700; color: #1e40af; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem;">📋 Registration</h4>
+            <div>
+                <h4 style="color: #1e40af;"><svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>Module 1 &middot; Registration</h4>
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
                     <div>
                         <p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Reference #</p>
@@ -1452,8 +1848,8 @@
             </div>
 
             <!-- APPLICATION SECTION (Module 2) -->
-            <div style="margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 2px solid #e2e8f0;">
-                <h4 style="font-size: 0.875rem; font-weight: 700; color: #059669; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem;">📄 Application</h4>
+            <div>
+                <h4 style="color: #15803d;"><svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11H5a2 2 0 0 0-2 2v7h18v-7a2 2 0 0 0-2-2h-4"/><path d="M9 11V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v6"/><polyline points="9 11 12 14 15 11"/></svg>Module 2 &middot; Application &amp; Evaluation</h4>
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
                     <div>
                         <p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Proceeded To Application</p>
@@ -1471,8 +1867,8 @@
             </div>
 
             <!-- DOCUMENTS SECTION (Module 3) -->
-            <div style="margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 2px solid #e2e8f0;">
-                <h4 style="font-size: 0.875rem; font-weight: 700; color: #d97706; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem;">📦 Documents</h4>
+            <div>
+                <h4 style="color: #b45309;"><svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>Module 3 &middot; Documents</h4>
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
                     <div>
                         <p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">SMS Status</p>
@@ -1483,7 +1879,7 @@
 
             <!-- LOT AWARDING SECTION (Module 4) -->
             <div>
-                <h4 style="font-size: 0.875rem; font-weight: 700; color: #7c3aed; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem;">🏠 Lot Awarding</h4>
+                <h4 style="color: #6d28d9;"><svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Module 4 &middot; Lot Awarding</h4>
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
                     <div>
                         <p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Status</p>
@@ -1827,13 +2223,13 @@
 <!-- Review/Edit Modal - Combined Detail & Review -->
 <div class="modal-overlay" id="reviewModal" onclick="closeReviewModal()">
     <div class="modal-content tha-review-modal" style="max-width: 48rem; max-height: 90vh; overflow-y: auto;" onclick="event.stopPropagation()">
-        <div class="modal-header" style="position: sticky; top: 0; background: white; z-index: 10;">
-            <div>
+        <div class="modal-header" style="position: sticky; top: 0; background: white; z-index: 10; justify-content: center;">
+            <div style="text-align: center;">
                 <p class="tha-review-modal-kicker">Talisay City Housing Authority Applicant record</p>
                 <h2 class="modal-title" id="reviewName"></h2>
                 <p class="modal-subtitle" id="reviewReference"></p>
             </div>
-            <button class="btn-close" onclick="closeReviewModal()">
+            <button class="btn-close" onclick="closeReviewModal()" style="position: absolute; right: 1.5rem;">
                 <svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
                     <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -1850,45 +2246,100 @@
             <div class="modal-body" id="reviewBody">
                 <!-- Channel B: Danger Zone Applicant View -->
                 <div id="dangerZoneReviewSection" style="display: none;">
-                    <!-- Status Badges Row -->
-                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; align-items: center;">
-                        <span class="status-badge status-info" id="reviewChannelBadge" style="background: #e0f2fe; color: #0369a1; border: 1px solid #0ea5e9;">Channel B — Hazard pathway (classification pending)</span>
-                    </div>
                     
-                    <!-- Editable Fields for Channel B -->
-                    <div class="form-grid" style="margin-bottom: 1rem;">
-                        <div class="form-group" style="grid-column: span 2;">
-                            <label class="form-label">Complete name of applicant</label>
-                            <input type="text" class="form-input" id="reviewFullNameB" name="full_name_b" readonly>
+                    <!-- Hidden field preserved for save handler -->
+                    <input type="hidden" id="reviewFullNameB" name="full_name_b" value="">
+
+                    <!-- Section A: APPLICATION IDENTITY -->
+                    <div style="border-bottom: 2px solid #e2e8f0; padding-bottom: 1rem; margin-bottom: 1rem;">
+                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">A. Application identity</h4>
+                        <div class="form-grid identity-grid" style="margin-bottom: 1rem;">
+                            <div class="form-group">
+                                <label class="form-label">Last name</label>
+                                <input type="text" class="form-input" id="reviewLastNameB" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">First name</label>
+                                <input type="text" class="form-input" id="reviewFirstNameB" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Middle name</label>
+                                <input type="text" class="form-input" id="reviewMiddleNameB" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Extension name</label>
+                                <input type="text" class="form-input" id="reviewExtensionNameB" readonly placeholder="Jr., Sr., II, III, etc.">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Sex</label>
+                                <input type="text" class="form-input" id="reviewSexB" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Age</label>
+                                <input type="number" class="form-input" id="reviewAgeB" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Date of birth</label>
+                                <input type="date" class="form-input" id="reviewDateOfBirthB" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Registered voter in Talisay City</label>
+                                <input type="text" class="form-input" id="reviewVoterB" readonly>
+                            </div>
+                            <div class="form-group" style="grid-column: span 2;">
+                                <label class="form-label">Present address</label>
+                                <input type="text" class="form-input" id="reviewAddressB" name="current_address_b" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Barangay of residence</label>
+                                <select class="form-select" id="reviewBarangayB" name="barangay_b" disabled>
+                                    <option value="">Select barangay...</option>
+                                    {% for brgy in barangays %}
+                                    <option value="{{ brgy }}">{{ brgy }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Mobile / contact number</label>
+                                <input type="tel" class="form-input" id="reviewPhoneB" name="phone_number_b" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Years of residence in Talisay City</label>
+                                <input type="number" class="form-input" id="reviewYearsB" name="years_residing_b" min="0" readonly>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">Barangay of residence</label>
-                            <select class="form-select" id="reviewBarangayB" name="barangay_b" disabled>
-                                <option value="">Select barangay...</option>
-                                {% for brgy in barangays %}
-                                <option value="{{ brgy }}">{{ brgy }}</option>
-                                {% endfor %}
-                            </select>
+                    </div>
+
+                    <!-- Section B: HOUSEHOLD MEMBERS -->
+                    <div style="border-bottom: 2px solid #e2e8f0; padding-bottom: 1rem; margin-bottom: 1rem;">
+                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">B. Household members</h4>
+                        <div id="reviewHouseholdListB" style="margin-bottom: 0.75rem;">
+                            <!-- Populated by JavaScript -->
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">Declared monthly household income (PHP)</label>
-                            <input type="text" class="form-input" id="reviewIncomeB" name="monthly_income_b" inputmode="decimal" pattern="[0-9,]*" readonly>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">Declared household size</label>
+                                <input type="number" class="form-input" id="reviewHouseholdB" name="household_size_b" min="1" readonly>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">Household size</label>
-                            <input type="number" class="form-input" id="reviewHouseholdB" name="household_size_b" min="1" readonly>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Years of residence in Talisay City</label>
-                            <input type="number" class="form-input" id="reviewYearsB" name="years_residing_b" min="0" readonly>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Mobile / contact number</label>
-                            <input type="tel" class="form-input" id="reviewPhoneB" name="phone_number_b" readonly>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Current address (situs)</label>
-                            <input type="text" class="form-input" id="reviewAddressB" name="current_address_b" readonly>
+                    </div>
+
+                    <!-- Section C: HOUSEHOLD INCOME -->
+                    <div style="border-bottom: 2px solid #e2e8f0; padding-bottom: 1rem; margin-bottom: 1rem;">
+                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">C. Household income</h4>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">Principal occupation</label>
+                                <input type="text" class="form-input" id="reviewOccupationB" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Employment status</label>
+                                <input type="text" class="form-input" id="reviewEmploymentStatusB" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Declared monthly household income (PHP)</label>
+                                <input type="text" class="form-input" id="reviewIncomeB" name="monthly_income_b" inputmode="decimal" pattern="[0-9,]*" readonly>
+                            </div>
                         </div>
                     </div>
                     
@@ -1914,14 +2365,6 @@
                                 <input type="text" class="form-input" id="reviewDangerLocation" name="danger_zone_location" readonly>
                             </div>
                         </div>
-                    </div>
-
-                    <!-- Not in Danger Zone Message -->
-                    <div class="not-in-danger-zone-msg tha-review-panel tha-review-panel--success" style="display: none; margin-bottom: 1rem;">
-                        <p style="color: #14532d; font-size: 0.875rem;">
-                            <strong>No hazard declaration on file</strong><br>
-                            <span style="font-size: 0.8125rem;">The applicant did not declare residence in or adjacent to a mapped hazard area. CDRRMO field certification is therefore not required for this record.</span>
-                        </p>
                     </div>
 
                     <!-- CDRRMO Certification Status -->
@@ -2053,9 +2496,8 @@
                         </div>
                     </div>
                     
-                    <!-- Eligibility Check Section -->
+                    <!-- Channel B supplemental status (CDRRMO only when applicable) -->
                     <div style="border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-bottom: 1rem;">
-                        <h4 class="tha-review-section-title">Preliminary eligibility assessment</h4>
                         <div id="eligibilityChecksB" style="display: grid; gap: 0.5rem;">
                             <!-- Populated by JavaScript -->
                         </div>
@@ -2186,7 +2628,7 @@
                 </div>
             </div>
             
-            <div class="modal-footer" style="position: sticky; bottom: 0; background: white; border-top: 1px solid #e2e8f0;">
+            <div class="modal-footer">
                 {% if can_modify %}
                 <!-- Edit Mode Toggle - Only for Jocel/Joie -->
                 <button type="button" class="btn-modal secondary" id="btnEditToggle" onclick="toggleEditMode()">
@@ -2196,12 +2638,12 @@
                     </svg>
                     <span id="editToggleText">EDIT record</span>
                 </button>
-                
+
                 <!-- Intake is encoding-only; eligibility/disqualification is handled in Module 2 -->
                 <div id="reviewActions" style="display:none;"></div>
-                
+
                 <!-- Save/Cancel (Edit Mode) -->
-                <div id="editActions" style="display: none;">
+                <div id="editActions" style="display: none; gap: 0.5rem;">
                     <button type="submit" class="btn-modal primary">
                         <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
@@ -2220,13 +2662,15 @@
                     class="btn-modal primary"
                     id="btnProceedModule2"
                     onclick="proceedToModule2Evaluation()"
-                    style="background:#1d4ed8;"
                 >
-                    Proceed to Application & Evaluation
+                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                    Proceed to Application &amp; Evaluation
                 </button>
-                
+
                 <!-- Delete Button - Only for Jocel/Joie -->
-                <button type="button" class="btn-modal danger" id="btnDelete" onclick="confirmDelete()" style="background: #dc2626; margin-left: auto;">
+                <button type="button" class="btn-modal danger" id="btnDelete" onclick="confirmDelete()" style="margin-left: auto;">
                     <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <polyline points="3 6 5 6 21 6"></polyline>
                         <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -3700,7 +4144,10 @@
                 if (addressBEl) addressBEl.value = currentApplicant.currentAddress || '';
                 if (dangerTypeEl) dangerTypeEl.value = currentApplicant.dangerZoneType || '';
                 if (dangerLocEl) dangerLocEl.value = currentApplicant.dangerZoneLocation || '';
-                
+
+                // Mirror Registration Sheet identity / household / income fields (read-only)
+                populateChannelBRegistrationMirror(currentApplicant);
+
                 // CDRRMO summary strip — only while disposition is still pending (final UI from populateCdrrmoSection)
                 const cdrrmoBox = document.getElementById('cdrrmoStatusBox');
                 const cdrrmoText = document.getElementById('cdrrmoStatusText');
@@ -3726,14 +4173,11 @@
 
                 // Show/hide danger zone sections based on whether applicant has danger zone data
                 const dangerZoneInfoSection = document.querySelector('.danger-zone-info');
-                const notInDangerZoneMsg = document.querySelector('.not-in-danger-zone-msg');
 
                 if (isInDangerZoneB) {
                     if (dangerZoneInfoSection) dangerZoneInfoSection.style.display = 'block';
-                    if (notInDangerZoneMsg) notInDangerZoneMsg.style.display = 'none';
                 } else {
                     if (dangerZoneInfoSection) dangerZoneInfoSection.style.display = 'none';
-                    if (notInDangerZoneMsg) notInDangerZoneMsg.style.display = 'block';
                     const officePanelOff = document.getElementById('officeCdrrmoReceiptPanel');
                     if (officePanelOff) officePanelOff.style.display = 'none';
                 }
@@ -3997,38 +4441,60 @@
         });
     }
     
+    // Mirror Registration Sheet fields (Section A/B/C) into the Channel B review modal.
+    // Read-only display only — driven from applicant JSON, never from form input.
+    function populateChannelBRegistrationMirror(applicant) {
+        if (!applicant) return;
+        const setValue = (id, value) => {
+            const el = document.getElementById(id);
+            if (el) el.value = value == null ? '' : value;
+        };
+        setValue('reviewLastNameB', applicant.lastName);
+        setValue('reviewFirstNameB', applicant.firstName);
+        setValue('reviewMiddleNameB', applicant.middleName);
+        setValue('reviewExtensionNameB', applicant.extensionName);
+        const sexDisplay = applicant.sex === 'M' ? 'Male' : applicant.sex === 'F' ? 'Female' : (applicant.sex || '');
+        setValue('reviewSexB', sexDisplay);
+        setValue('reviewAgeB', applicant.age);
+        setValue('reviewDateOfBirthB', applicant.dateOfBirth);
+        const voterEl = document.getElementById('reviewVoterB');
+        if (voterEl) voterEl.value = applicant.isRegisteredVoterTalisay ? 'Yes' : 'No';
+        setValue('reviewOccupationB', applicant.occupation);
+        setValue('reviewEmploymentStatusB', applicant.employmentStatus);
+
+        const listEl = document.getElementById('reviewHouseholdListB');
+        if (listEl) {
+            const members = Array.isArray(applicant.householdMembers) ? applicant.householdMembers : [];
+            if (members.length === 0) {
+                listEl.innerHTML = '<p style="font-size: 0.8125rem; color: #64748b; margin: 0;">No household members declared (applicant counts as one).</p>';
+            } else {
+                let html = '<div style="display: grid; gap: 0.75rem;">';
+                members.forEach(member => {
+                    html += `
+                        <div style="padding: 0.75rem; background: #f9fafb; border-left: 3px solid #3b82f6; border-radius: 0.375rem;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.875rem;">
+                                <div><strong>Name:</strong> ${member.name || '-'}</div>
+                                <div><strong>Relationship:</strong> ${member.relationship || '-'}</div>
+                                <div><strong>Age:</strong> ${member.age || '-'}</div>
+                                <div><strong>Civil status:</strong> ${member.civilStatus || '-'}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                listEl.innerHTML = html;
+            }
+        }
+    }
+
     // Channel B specific eligibility checks (includes CDRRMO only if in danger zone)
     function populateEligibilityChecksB(applicant, isInDangerZone) {
         const container = document.getElementById('eligibilityChecksB');
         if (!container) return;
 
-        const { income, ceiling, pass: incomePass } = incomeCheckState(applicant);
         const cdrrmoPass = isCdrrmoCertified(applicant.cdrrmoStatus);
-        const incomeNote = incomeExceedsCeilingNoticeHtml(incomePass, income, ceiling);
 
-        let html = `
-            <div style="display: flex; flex-direction: column;">
-            <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: ${incomePass ? '#dcfce7' : '#fee2e2'}; border-radius: 0.375rem;">
-                <svg style="width: 1rem; height: 1rem; color: ${incomePass ? '#16a34a' : '#dc2626'};" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    ${incomePass ? '<polyline points="20 6 9 17 4 12"></polyline>' : '<line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>'}
-                </svg>
-                <span style="font-size: 0.8125rem;">Module 1 income ceiling: not to exceed <strong>₱${ceiling.toLocaleString('en-PH')}</strong> — declared household income: <strong>₱${income.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong></span>
-            </div>
-            ${incomeNote}
-            </div>
-            <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: #dcfce7; border-radius: 0.375rem;">
-                <svg style="width: 1rem; height: 1rem; color: #16a34a;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-                <span style="font-size: 0.8125rem;">No real-property ownership in Talisay City (per applicant declaration)</span>
-            </div>
-            <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: #dcfce7; border-radius: 0.375rem;">
-                <svg style="width: 1rem; height: 1rem; color: #16a34a;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-                <span style="font-size: 0.8125rem;">Not listed on the THA restriction register (screening)</span>
-            </div>
-        `;
+        let html = '';
 
         // Only show CDRRMO check if applicant is in danger zone
         if (isInDangerZone) {
@@ -4470,6 +4936,7 @@
                 if (addressBEl) addressBEl.value = currentApplicant.currentAddress || '';
                 if (dangerTypeEl) dangerTypeEl.value = currentApplicant.dangerZoneType || '';
                 if (dangerLocEl) dangerLocEl.value = currentApplicant.dangerZoneLocation || '';
+                populateChannelBRegistrationMirror(currentApplicant);
             } else {
                 const fullNameEl = document.getElementById('reviewFullName');
                 const barangayEl = document.getElementById('reviewBarangay');
@@ -4925,6 +5392,7 @@
                         <option value="parent">Parent</option>
                         <option value="sibling">Sibling</option>
                         <option value="grandchild">Grandchild</option>
+                        <option value="live_in_partner">Live-in Partner</option>
                         <option value="other">Other relative</option>
                     </select>
                 </div>
@@ -5331,6 +5799,7 @@
             document.getElementById('reviewYearsB').value = applicant.yearsResiding;
             document.getElementById('reviewPhoneB').value = applicant.phoneNumber;
             document.getElementById('reviewAddressB').value = applicant.currentAddress;
+            populateChannelBRegistrationMirror(applicant);
 
             // Update channel badge from hazard Yes/No (dangerZoneType set when Yes)
             const dangerZoneBadge = document.getElementById('reviewDangerZoneBadge');
@@ -5359,12 +5828,10 @@
 
             // CONDITIONALLY show danger zone info section
             const dangerZoneInfoSection = document.querySelector('.danger-zone-info');
-            const notInDangerZoneMsg = document.querySelector('.not-in-danger-zone-msg');
 
             if (applicant.isInDangerZone) {
                 // User selected "Yes" - show danger zone details
                 if (dangerZoneInfoSection) dangerZoneInfoSection.style.display = 'block';
-                if (notInDangerZoneMsg) notInDangerZoneMsg.style.display = 'none';
 
                 document.getElementById('reviewDangerType').value = applicant.dangerZoneType || '';
 
@@ -5383,9 +5850,8 @@
                 const cdrrmoSection = document.querySelector('.cdrrmo-certification-section');
                 if (cdrrmoSection) cdrrmoSection.style.display = 'block';
             } else {
-                // User selected "No" - hide danger zone details, show message
+                // User selected "No" - hide danger zone details
                 if (dangerZoneInfoSection) dangerZoneInfoSection.style.display = 'none';
-                if (notInDangerZoneMsg) notInDangerZoneMsg.style.display = 'block';
 
                 // Set status badge
                 const statusBadge = document.getElementById('reviewEligibilityBadgeB');
