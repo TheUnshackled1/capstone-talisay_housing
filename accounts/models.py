@@ -9,7 +9,6 @@ class User(AbstractUser):
     """
     
     POSITION_CHOICES = [
-        ('head', 'First Member — Head'),
         ('oic', 'OIC-THA (Officer-in-Charge)'),
         ('second_member', 'Second Member'),
         ('fourth_member', 'Fourth Member'),
@@ -43,7 +42,6 @@ class User(AbstractUser):
     def get_position_display_short(self):
         """Return a shorter position label for UI display."""
         short_labels = {
-            'head': 'Head',
             'oic': 'OIC',
             'second_member': '2nd Member',
             'fourth_member': '4th Member',

@@ -212,51 +212,7 @@
                 </a>
             </div>
 
-            {% if user.position == 'head' %}
-            <!-- HEAD (Arthur Maramba) - M2 Final Signatory, M6 Reports -->
-            <div class="nav-section">
-                <div class="nav-section-title">Oversight</div>
-                <a href="{% url 'accounts:head_applicants' %}" class="nav-link {% block nav_head_applicants %}{% endblock %}">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                        <circle cx="9" cy="7" r="4"/>
-                        <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
-                    </svg>
-                    <span>Applicants Overview</span>
-                </a>
-            </div>
-            <div class="nav-section">
-                <div class="nav-section-title">Applications (M2)</div>
-                <a href="{% url 'accounts:head_pending_sig' %}" class="nav-link {% block nav_head_pending_sig %}{% endblock %}">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M9 11l3 3L22 4"/>
-                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
-                    </svg>
-                    <span>Pending Signatures</span>
-                </a>
-            </div>
-            <div class="nav-section">
-                <div class="nav-section-title">Analytics & Reports (M6)</div>
-                <a href="{% url 'accounts:head_analytics' %}" class="nav-link {% block nav_head_analytics %}{% endblock %}">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="18" y1="20" x2="18" y2="10"/>
-                        <line x1="12" y1="20" x2="12" y2="4"/>
-                        <line x1="6" y1="20" x2="6" y2="14"/>
-                    </svg>
-                    <span>Analytics Dashboard</span>
-                </a>
-                <a href="{% url 'accounts:head_reports' %}" class="nav-link {% block nav_head_reports %}{% endblock %}">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                        <polyline points="14 2 14 8 20 8"/>
-                        <line x1="16" y1="13" x2="8" y2="13"/>
-                        <line x1="16" y1="17" x2="8" y2="17"/>
-                    </svg>
-                    <span>Monthly Reports</span>
-                </a>
-            </div>
-
-            {% elif user.position == 'oic' %}
+            {% if user.position == 'oic' %}
             <!-- OIC (Victor Fregil) - M2 OIC Signatory, M4 Compliance, M5 Escalated Cases -->
             <div class="nav-section">
                 <div class="nav-section-title">Oversight</div>
@@ -467,9 +423,7 @@
             </div>
             <div class="nav-section">
                 <div class="nav-section-title">Reports</div>
-                {% if user.position == 'head' %}
-                <a href="{% url 'accounts:head_analytics' %}" class="nav-link">
-                {% elif user.position == 'oic' %}
+                {% if user.position == 'oic' %}
                 <a href="{% url 'accounts:oic_analytics' %}" class="nav-link">
                 {% elif user.position == 'second_member' %}
                 <a href="{% url 'accounts:second_member_analytics' %}" class="nav-link">
@@ -591,7 +545,7 @@
 
             <!-- Stats Overview - Role Based -->
             <div class="stats-grid">
-                {% if user.position == 'head' or user.position == 'oic' %}
+                {% if user.position == 'oic' %}
                 <!-- Leadership Stats (Head, OIC) -->
                 <div class="stat-card blue scroll-animate-left scroll-delay-1">
                     <div class="stat-header">
@@ -932,65 +886,7 @@
                 <h2 class="section-title">My Tasks</h2>
             </div>
             <div class="quick-actions">
-                {% if user.position == 'head' %}
-                <!-- Head: Final signatory, Reports + View Intake -->
-                <a href="{% url 'accounts:head_applicants' %}" class="action-card scroll-animate-left scroll-delay-1">
-                    <div class="action-icon-wrapper">
-                        <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                            <circle cx="9" cy="7" r="4"/>
-                            <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
-                        </svg>
-                    </div>
-                    <div class="action-text">
-                        <h4>View Applicants</h4>
-                        <p>Intake oversight</p>
-                    </div>
-                </a>
-
-                <a href="#" class="action-card scroll-animate scroll-delay-2">
-                    <div class="action-icon-wrapper">
-                        <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                            <polyline points="22 4 12 14.01 9 11.01"/>
-                        </svg>
-                    </div>
-                    <div class="action-text">
-                        <h4>Sign Applications</h4>
-                        <p>Final approval (M2)</p>
-                    </div>
-                </a>
-
-                <a href="#" class="action-card scroll-animate scroll-delay-3">
-                    <div class="action-icon-wrapper">
-                        <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="18" y1="20" x2="18" y2="10"/>
-                            <line x1="12" y1="20" x2="12" y2="4"/>
-                            <line x1="6" y1="20" x2="6" y2="14"/>
-                        </svg>
-                    </div>
-                    <div class="action-text">
-                        <h4>View Reports</h4>
-                        <p>Analytics (M6)</p>
-                    </div>
-                </a>
-
-                <a href="#" class="action-card scroll-animate-right scroll-delay-4">
-                    <div class="action-icon-wrapper">
-                        <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="3" y="3" width="7" height="7" rx="1"/>
-                            <rect x="14" y="3" width="7" height="7" rx="1"/>
-                            <rect x="14" y="14" width="7" height="7" rx="1"/>
-                            <rect x="3" y="14" width="7" height="7" rx="1"/>
-                        </svg>
-                    </div>
-                    <div class="action-text">
-                        <h4>System Overview</h4>
-                        <p>All modules status</p>
-                    </div>
-                </a>
-
-                {% elif user.position == 'oic' %}
+                {% if user.position == 'oic' %}
                 <!-- OIC: Signatory, Compliance, Escalated Cases + View Intake -->
                 <a href="{% url 'accounts:oic_applicants' %}" class="action-card scroll-animate-left scroll-delay-1">
                     <div class="action-icon-wrapper">
@@ -1277,10 +1173,7 @@
             </div>
             
             <div class="widgets-grid">
-                {% if user.position == 'head' %}
-                    {% include 'accounts/head/dashboard.html' %}
-                
-                {% elif user.position == 'oic' %}
+                {% if user.position == 'oic' %}
                     {% include 'accounts/oic/dashboard.html' %}
                 
                 {% elif user.position == 'second_member' %}

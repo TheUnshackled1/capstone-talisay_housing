@@ -125,14 +125,7 @@ def get_module2_permissions(user):
             'can_sign_oic': True,
             'role_description': 'OIC Signatory',
         })
-    elif position == 'head':
-        # Arthur - Head/Final signature
-        permissions.update({
-            'can_view': True,
-            'can_sign_head': True,
-            'role_description': 'Head/Final Signatory',
-        })
-    
+
     return permissions
 
 
@@ -460,10 +453,9 @@ def applications_list(request, position):
     ✅ Joie (2nd Member) - Supervisor: verify docs, electricity tracking
     ✅ Laarni (5th Member) - Electricity tracking only
     ✅ Victor (OIC) - View + OIC signature
-    ✅ Arthur (Head) - View + Head signature
     """
     # Check access
-    allowed_positions = ['fourth_member', 'second_member', 'fifth_member', 'oic', 'head']
+    allowed_positions = ['fourth_member', 'second_member', 'fifth_member', 'oic']
     if request.user.position not in allowed_positions:
         messages.error(request, 'Access denied. Module 2 is for authorized staff only.')
         return redirect('accounts:dashboard')
@@ -563,8 +555,6 @@ def applications_list(request, position):
     # Check for routing delays (>3 days)
     delayed_routings = SignatoryRouting.objects.filter(
         action_at__lt=timezone.now() - timezone.timedelta(days=3)
-    ).exclude(
-        application__routing_steps__step='signed_head'
     ).select_related('application', 'application__applicant')
     
     # Queue summary cards (Module 1 queue tags surfaced in Module 2)
@@ -611,7 +601,7 @@ def applications_list(request, position):
             latest_routing = application.routing_steps.last()
             if latest_routing:
                 latest_routing_step = latest_routing.step
-                if latest_routing.step == 'signed_head':
+                if latest_routing.step == 'signed_oic':
                     routing_status = 'Completed'
                 else:
                     routing_status = 'In Progress'
@@ -945,7 +935,7 @@ def update_cdrrmo_certification(request, position):
     """
     Module 2 endpoint for official CDRRMO disposition recording.
     """
-    allowed_positions = ['fourth_member', 'second_member', 'oic', 'head']
+    allowed_positions = ['fourth_member', 'second_member', 'oic']
     if request.user.position not in allowed_positions:
         return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
 
@@ -1681,8 +1671,6 @@ def update_routing(request, position):
         'received': ['fourth_member', 'second_member'],
         'forwarded_oic': ['fourth_member', 'second_member'],
         'signed_oic': ['fourth_member', 'second_member', 'oic'],
-        'forwarded_head': ['fourth_member', 'second_member'],
-        'signed_head': ['fourth_member', 'second_member', 'head'],
     }
 
     allowed_positions = step_permissions.get(step, [])
@@ -1691,7 +1679,6 @@ def update_routing(request, position):
             'fourth_member': 'Jocel (4th Member)',
             'second_member': 'Joie (2nd Member)',
             'oic': 'Victor (OIC)',
-            'head': 'Arthur (Head)',
         }
         required = ', '.join([position_names.get(p, p) for p in allowed_positions])
         return JsonResponse({
@@ -1708,7 +1695,7 @@ def update_routing(request, position):
         if blacklist_error:
             return blacklist_error
 
-        step_sequence = ['received', 'forwarded_oic', 'signed_oic', 'forwarded_head', 'signed_head']
+        step_sequence = ['received', 'forwarded_oic', 'signed_oic']
         if step not in step_sequence:
             return JsonResponse({'success': False, 'error': 'Invalid routing step.'}, status=400)
 
@@ -1738,10 +1725,10 @@ def update_routing(request, position):
         )
         
         # Update application status based on step
-        if step == 'signed_head':
-            application.status = 'head_signed'
+        if step == 'signed_oic':
+            application.status = 'fully_approved'
             application.fully_approved_at = timezone.now()
-            
+
             # Send SMS: Fully Approved
             if application.applicant.phone_number:
                 message = (
@@ -1750,10 +1737,8 @@ def update_routing(request, position):
                     f"Please wait for lot availability notification. Reference: {application.applicant.reference_number}"
                 )
                 send_sms(application.applicant.phone_number, message, 'fully_approved', applicant=application.applicant, module='applications')
-            
-        elif step == 'signed_oic':
-            application.status = 'oic_signed'
-        elif step in ['received', 'forwarded_oic', 'forwarded_head']:
+
+        elif step in ['received', 'forwarded_oic']:
             application.status = 'routing'
         
         application.save()

@@ -133,25 +133,14 @@
                 </a>
             </div>
 
-            <!-- Analytics Section - All Users (Position-Specific) -->
+            <!-- Analytics Section - OIC & Second Member Only -->
             <div class="nav-section">
                 <div class="nav-section-title">Reports</div>
 
-                {% if user.position == 'head' %}
-                <a href="{% url 'accounts:head_analytics' %}" class="nav-link">
-                {% elif user.position == 'oic' %}
+                {% if user.position == 'oic' %}
                 <a href="{% url 'accounts:oic_analytics' %}" class="nav-link">
                 {% elif user.position == 'second_member' %}
                 <a href="{% url 'accounts:second_member_analytics' %}" class="nav-link">
-                {% elif user.position == 'fourth_member' %}
-                <a href="{% url 'accounts:fourth_member_analytics' %}" class="nav-link">
-                {% elif user.position == 'fifth_member' %}
-                <a href="{% url 'accounts:fifth_member_analytics' %}" class="nav-link">
-                {% elif user.position == 'caretaker' %}
-                <a href="{% url 'accounts:caretaker_analytics' %}" class="nav-link">
-                {% elif user.position == 'field' or user.position == 'ronda' %}
-                <!-- Field team uses field_base.html, analytics not available -->
-                <a href="#" class="nav-link" style="opacity: 0.5; cursor: not-allowed;" title="Analytics not available for field personnel">
                 {% else %}
                 <a href="#" class="nav-link" style="opacity: 0.5; cursor: not-allowed;" title="Analytics not available">
                 {% endif %}

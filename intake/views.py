@@ -716,8 +716,8 @@ def applicants_list(request, position):
     # Staff who can view applicants list:
     # - Jocel (fourth_member) & Joie (second_member): Full access - can review, edit, mark eligibility
     # - Ronda & Field Team: Read access - can view for verification
-    # - OIC & Head: View only - oversight access
-    allowed_positions = ['second_member', 'fourth_member', 'field', 'ronda', 'oic', 'head']
+    # - OIC: View only - oversight access
+    allowed_positions = ['second_member', 'fourth_member', 'field', 'ronda', 'oic']
     if request.user.position not in allowed_positions:
         messages.error(request, 'Access denied. This module is for authorized staff only.')
         return redirect('accounts:dashboard')

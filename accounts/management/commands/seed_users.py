@@ -11,13 +11,6 @@ class Command(BaseCommand):
         # Superusers (Admin access)
         superusers_data = [
             {
-                'username': 'arthur.maramba',
-                'email': 'arthur.maramba@talisayhousing.gov.ph',
-                'first_name': 'Arthur Benjamin',
-                'last_name': 'Maramba',
-                'position': 'head',
-            },
-            {
                 'username': 'victor.fregil',
                 'email': 'victor.fregil@talisayhousing.gov.ph',
                 'first_name': 'Victor',
