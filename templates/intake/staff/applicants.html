@@ -2610,50 +2610,73 @@
                     border-color: #dc2626;
                 }
                 .tha-reg-modal .hh-member-row {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 0.65rem;
+                    display: grid;
+                    grid-template-columns: 1.8fr 1.5fr 0.7fr 0.7fr 1.2fr 1.5fr auto;
+                    gap: 0.75rem;
+                    align-items: start;
+                    border: 1px solid #e2e8f0;
+                    padding: 1rem;
+                    border-radius: 0.5rem;
+                    background: #f8fafc;
                     margin-bottom: 1rem;
                 }
-                .tha-reg-modal .hh-row-1 {
-                    display: grid;
-                    grid-template-columns: 1.5fr 1.5fr 0.8fr;
-                    gap: 0.65rem;
-                    align-items: end;
-                }
+                .tha-reg-modal .hh-row-1,
                 .tha-reg-modal .hh-row-2 {
-                    display: grid;
-                    grid-template-columns: 0.8fr 1.5fr 1.5fr auto;
-                    gap: 0.65rem;
-                    align-items: end;
+                    display: contents;
+                }
+                .tha-reg-modal .hh-member-row .form-group {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 0.4rem;
+                }
+                .tha-reg-modal .hh-member-row .form-label {
+                    font-size: 0.75rem;
+                    font-weight: 600;
+                    color: #475569;
+                    text-transform: uppercase;
+                    letter-spacing: 0.02em;
+                    margin: 0;
+                }
+                .tha-reg-modal .hh-member-row .form-input,
+                .tha-reg-modal .hh-member-row .form-select {
+                    min-height: 2.35rem;
+                    font-size: 0.875rem;
+                    padding: 0.5rem 0.625rem;
                 }
                 .tha-reg-modal .hh-member-row .hh-sex-group {
                     display: flex;
-                    gap: 0.65rem;
+                    gap: 0.75rem;
                     align-items: center;
-                    padding-bottom: 0.35rem;
+                    justify-content: flex-start;
+                    min-height: 2.35rem;
                 }
                 .tha-reg-modal .hh-member-row .hh-sex-group label {
                     display: flex;
                     align-items: center;
-                    gap: 0.25rem;
-                    font-size: 0.78rem;
+                    gap: 0.3rem;
+                    font-size: 0.875rem;
                     color: #334155;
                     cursor: pointer;
                     white-space: nowrap;
+                    margin: 0;
                 }
                 .tha-reg-modal .hh-member-row .hh-sex-group input[type="radio"] {
                     margin: 0;
                     accent-color: #2563eb;
                     cursor: pointer;
+                    width: 1rem;
+                    height: 1rem;
                 }
                 .tha-reg-modal .hh-member-row .tha-reg-remove-member {
-                    min-height: 2.5rem;
+                    align-self: flex-end;
+                    min-height: 2.35rem;
+                    padding: 0.5rem 1rem;
+                    margin-top: 1.35rem;
                 }
                 .tha-reg-modal .hh-member-help {
-                    font-size: 0.6875rem;
+                    font-size: 0.75rem;
                     color: #64748b;
-                    margin-top: 0.25rem;
+                    margin-top: 0.2rem;
                     display: block;
                 }
                 .tha-reg-modal .duplicate-preview {
@@ -2680,17 +2703,12 @@
                     margin: 0;
                 }
                 @media (max-width: 1200px) {
-                    .tha-reg-modal .identity-row {
-                        grid-template-columns: repeat(2, minmax(0, 1fr));
+                    .tha-reg-modal .hh-member-row {
+                        grid-template-columns: 1fr;
                     }
-                    .tha-reg-modal .hh-row-1 {
-                        grid-template-columns: 1.5fr 1fr;
-                    }
+                    .tha-reg-modal .hh-row-1,
                     .tha-reg-modal .hh-row-2 {
-                        grid-template-columns: 1fr 1fr auto;
-                    }
-                    .tha-reg-modal .hh-member-row .tha-reg-remove-member {
-                        justify-self: start;
+                        display: contents;
                     }
                 }
                 @media (max-width: 640px) {
@@ -2698,8 +2716,10 @@
                     .tha-reg-modal .channel-selector { grid-template-columns: 1fr; }
                     .tha-reg-modal .document-grid { grid-template-columns: 1fr; }
                     .tha-reg-modal .identity-row { grid-template-columns: 1fr; }
-                    .tha-reg-modal .hh-row-1 { grid-template-columns: 1fr; }
-                    .tha-reg-modal .hh-row-2 { grid-template-columns: 1fr; }
+                    .tha-reg-modal .hh-member-row {
+                        grid-template-columns: 1fr;
+                        padding: 0.75rem;
+                    }
                 }
             </style>
 
@@ -2752,6 +2772,19 @@
                                 <label class="tha-hazard-radio" for="sexFemale">
                                     <input type="radio" name="sex" id="sexFemale" value="F" required>
                                     <span>Female</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Registered voter in Talisay City <span style="color: #dc2626;">*</span></label>
+                            <div class="tha-hazard-radio-group" role="radiogroup" aria-label="Registered voter in Talisay City" style="justify-content:flex-start;">
+                                <label class="tha-hazard-radio" for="voterYes">
+                                    <input type="radio" name="is_registered_voter_talisay" id="voterYes" value="yes" required>
+                                    <span>Yes</span>
+                                </label>
+                                <label class="tha-hazard-radio" for="voterNo">
+                                    <input type="radio" name="is_registered_voter_talisay" id="voterNo" value="no" required>
+                                    <span>No</span>
                                 </label>
                             </div>
                         </div>
@@ -4613,8 +4646,6 @@
         const form = document.getElementById('addApplicantForm');
         if (modal) modal.classList.remove('active');
         if (form) form.reset();
-        // Reset danger zone selection
-        setDangerZone(null);
         const ageHint = document.getElementById('ageEligibilityHint');
         const overAgeWrap = document.getElementById('overAgeOverrideWrap');
         const overAgeOverride = document.getElementById('overAgeOverride');
@@ -4627,28 +4658,7 @@
             overAgeOverride.checked = false;
             overAgeOverride.required = false;
         }
-        clearHazardInlineErrors();
         hideDuplicatePreview();
-    }
-
-    function clearHazardInlineErrors() {
-        ['hazardDeclarationError', 'hazardTypeError', 'hazardLocationError'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.style.display = 'none';
-        });
-    }
-
-    function showHazardInlineError(id, message) {
-        const el = document.getElementById(id);
-        if (!el) return;
-        if (message) el.textContent = message;
-        el.style.display = 'block';
-    }
-
-    function isWeakHazardLocation(rawValue) {
-        const cleaned = (rawValue || '').trim().replace(/\s+/g, ' ').toLowerCase();
-        const weakValues = ['n/a', 'na', 'none', 'unknown', 'same', 'same as address', 'same address', 'barangay', 'sitio', 'landmark'];
-        return cleaned.length < 12 || weakValues.includes(cleaned);
     }
 
     let duplicatePreviewTimer = null;
@@ -4757,41 +4767,6 @@
             });
     }
 
-    function setDangerZone(isDanger) {
-        const dangerZoneGroup = document.getElementById('dangerZoneGroup');
-        const isDangerInput = document.getElementById('isDangerZone');
-        const yesRadio = document.getElementById('isDangerYes');
-        const noRadio = document.getElementById('isDangerNo');
-        const dangerZoneType = document.getElementById('dangerZoneType');
-        const dangerZoneLocation = document.getElementById('dangerZoneLocation');
-        clearHazardInlineErrors();
-
-        if (isDanger === true) {
-            if (dangerZoneGroup) dangerZoneGroup.style.display = 'block';
-            if (isDangerInput) isDangerInput.value = 'true';
-            if (yesRadio) yesRadio.checked = true;
-            if (noRadio) noRadio.checked = false;
-            if (dangerZoneType) dangerZoneType.required = true;
-            if (dangerZoneLocation) dangerZoneLocation.required = true;
-        } else if (isDanger === false) {
-            if (dangerZoneGroup) dangerZoneGroup.style.display = 'none';
-            if (isDangerInput) isDangerInput.value = 'false';
-            if (yesRadio) yesRadio.checked = false;
-            if (noRadio) noRadio.checked = true;
-            if (dangerZoneType) dangerZoneType.value = '';
-            if (dangerZoneLocation) dangerZoneLocation.value = '';
-            if (dangerZoneType) dangerZoneType.required = false;
-            if (dangerZoneLocation) dangerZoneLocation.required = false;
-        } else {
-            if (dangerZoneGroup) dangerZoneGroup.style.display = 'none';
-            if (isDangerInput) isDangerInput.value = 'false';
-            if (yesRadio) yesRadio.checked = false;
-            if (noRadio) noRadio.checked = false;
-            if (dangerZoneType) dangerZoneType.required = false;
-            if (dangerZoneLocation) dangerZoneLocation.required = false;
-        }
-    }
-
     let householdMemberCount = 0;
 
     function updateHouseholdSize() {
@@ -4817,55 +4792,51 @@
             memberDiv.id = `hhMember${i}`;
             memberDiv.className = 'hh-member-row';
             memberDiv.innerHTML = `
-                <div class="hh-row-1">
-                    <div class="form-group">
-                        <label class="form-label">Full name</label>
-                        <input type="text" class="form-input hh-member-field" placeholder="Surname, given name, extension" name="hh_member_${i}_name" maxlength="100" minlength="2" onchange="updateHouseholdSize()">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Relationship to applicant</label>
-                        <select class="form-select hh-member-field" name="hh_member_${i}_relationship" onchange="updateHouseholdSize()">
-                            <option value="">— Select —</option>
-                            <option value="spouse">Spouse</option>
-                            <option value="child">Child</option>
-                            <option value="parent">Parent</option>
-                            <option value="sibling">Sibling</option>
-                            <option value="grandchild">Grandchild</option>
-                            <option value="other">Other relative</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Age</label>
-                        <input type="number" class="form-input hh-member-field" placeholder="Years" name="hh_member_${i}_age" min="0" max="120" onchange="updateHouseholdSize()">
+                <div class="form-group">
+                    <label class="form-label">Full name</label>
+                    <input type="text" class="form-input hh-member-field" placeholder="Surname, given name, extension" name="hh_member_${i}_name" maxlength="100" minlength="2" onchange="updateHouseholdSize()">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Relationship</label>
+                    <select class="form-select hh-member-field" name="hh_member_${i}_relationship" onchange="updateHouseholdSize()">
+                        <option value="">— Select —</option>
+                        <option value="spouse">Spouse</option>
+                        <option value="child">Child</option>
+                        <option value="parent">Parent</option>
+                        <option value="sibling">Sibling</option>
+                        <option value="grandchild">Grandchild</option>
+                        <option value="other">Other relative</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Age</label>
+                    <input type="number" class="form-input hh-member-field" placeholder="Years" name="hh_member_${i}_age" min="0" max="120" onchange="updateHouseholdSize()">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Sex</label>
+                    <div class="hh-sex-group">
+                        <label><input type="radio" name="hh_member_${i}_sex" value="male"> Male</label>
+                        <label><input type="radio" name="hh_member_${i}_sex" value="female"> Female</label>
                     </div>
                 </div>
-                <div class="hh-row-2">
-                    <div class="form-group">
-                        <label class="form-label">Sex</label>
-                        <div class="hh-sex-group">
-                            <label><input type="radio" name="hh_member_${i}_sex" value="male"> Male</label>
-                            <label><input type="radio" name="hh_member_${i}_sex" value="female"> Female</label>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Civil status</label>
-                        <select class="form-select hh-member-field" name="hh_member_${i}_status" onchange="updateHouseholdSize()">
-                            <option value="">— Select —</option>
-                            <option value="single">Single</option>
-                            <option value="married">Married</option>
-                            <option value="widowed">Widowed</option>
-                            <option value="divorced">Divorced</option>
-                            <option value="separated">Separated</option>
-                            <option value="common_law">Common-law</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Contact number <span style="color: #64748b; font-weight: 500;">(optional)</span></label>
-                        <input type="tel" class="form-input hh-member-field ph-phone" placeholder="09XXXXXXXXXX" pattern="09[0-9]{9}" maxlength="11" minlength="11" inputmode="numeric" autocomplete="tel-national" name="hh_member_${i}_contact">
-                        <span class="hh-member-help">11 digits only, starts with 09.</span>
-                    </div>
-                    <button type="button" onclick="deleteHouseholdMember(${i})" class="tha-reg-remove-member" title="Remove this row">Remove</button>
+                <div class="form-group">
+                    <label class="form-label">Civil Status</label>
+                    <select class="form-select hh-member-field" name="hh_member_${i}_status" onchange="updateHouseholdSize()">
+                        <option value="">— Select —</option>
+                        <option value="single">Single</option>
+                        <option value="married">Married</option>
+                        <option value="widowed">Widowed</option>
+                        <option value="divorced">Divorced</option>
+                        <option value="separated">Separated</option>
+                        <option value="common_law">Common-law</option>
+                    </select>
                 </div>
+                <div class="form-group">
+                    <label class="form-label">Contact (Opt)</label>
+                    <input type="tel" class="form-input hh-member-field ph-phone" placeholder="09XXXXXXXXXX" pattern="09[0-9]{9}" maxlength="11" minlength="11" inputmode="numeric" autocomplete="tel-national" name="hh_member_${i}_contact">
+                    <span class="hh-member-help">11 digits only</span>
+                </div>
+                <button type="button" onclick="deleteHouseholdMember(${i})" class="tha-reg-remove-member" title="Remove this member">Remove</button>
             `;
             container.appendChild(memberDiv);
         }
