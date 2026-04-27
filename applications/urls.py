@@ -22,7 +22,7 @@ urlpatterns = [
     # Form generation (Jocel, Joie)
     path('staff/<str:position>/generate-form/<uuid:applicant_id>/', views.generate_form, name='generate_form'),
 
-    # Signatory routing (Jay, OIC, Head)
+    # Signatory routing (Jocel/Joie, OIC)
     path('staff/<str:position>/update-routing/', views.update_routing, name='update_routing'),
 
     # Move to standby queue (Jocel, Joie)

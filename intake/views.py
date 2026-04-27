@@ -25,6 +25,23 @@ from django.utils.dateparse import parse_date
 # Module 1 income ceiling (₱) — keep in sync with `Applicant.is_income_eligible` in intake/models.py
 MODULE1_MONTHLY_INCOME_CEILING_PESO = 10000
 
+# Module 1 residency eligibility threshold (years residing in Talisay City).
+# Soft check only: applicants below this threshold are still allowed to register
+# and submit. The flag is surfaced for downstream eligibility evaluation.
+MODULE1_MIN_YEARS_RESIDING_TALISAY = 5
+
+
+def _is_residency_eligible(years_residing):
+    """Soft eligibility check for Talisay City residency tenure.
+
+    Does NOT block intake. The result is exposed alongside the applicant
+    payload so reviewers can see eligibility at a glance.
+    """
+    try:
+        return int(years_residing or 0) >= MODULE1_MIN_YEARS_RESIDING_TALISAY
+    except (TypeError, ValueError):
+        return False
+
 
 def _is_weak_hazard_location(raw_location):
     location = " ".join((raw_location or "").split()).strip().lower()
@@ -774,6 +791,8 @@ def applicants_list(request, position):
             'incomeCeilingPeso': MODULE1_MONTHLY_INCOME_CEILING_PESO,
             'householdSize': isf.household_members,
             'yearsResiding': isf.years_residing,
+            'residencyEligible': _is_residency_eligible(isf.years_residing),
+            'minYearsResidingTalisay': MODULE1_MIN_YEARS_RESIDING_TALISAY,
             'phoneNumber': isf.phone_number or '',
             # Landowner info from submission
             'landownerName': isf.submission.landowner_name or '',
@@ -923,6 +942,10 @@ def applicants_list(request, position):
             'incomeEligible': app.is_income_eligible,
             'incomeCeilingPeso': MODULE1_MONTHLY_INCOME_CEILING_PESO,
             'yearsResiding': app.years_residing,
+            # Soft residency eligibility (≥ MODULE1_MIN_YEARS_RESIDING_TALISAY years).
+            # Not a hard block at intake — surfaced here for reviewer visibility.
+            'residencyEligible': _is_residency_eligible(app.years_residing),
+            'minYearsResidingTalisay': MODULE1_MIN_YEARS_RESIDING_TALISAY,
             'occupation': app.occupation or '',
             'employmentStatus': app.get_employment_status_display() if app.employment_status else '',
             # Danger Zone details
@@ -1359,6 +1382,8 @@ def walkin_register(request, position):
                 'incomeCeilingPeso': MODULE1_MONTHLY_INCOME_CEILING_PESO,
                 'householdSize': applicant.household_size,
                 'yearsResiding': applicant.years_residing,
+                'residencyEligible': _is_residency_eligible(applicant.years_residing),
+                'minYearsResidingTalisay': MODULE1_MIN_YEARS_RESIDING_TALISAY,
                 'isRegisteredVoterTalisay': bool(applicant.is_registered_voter_talisay),
                 'phoneNumber': applicant.phone_number,
                 'currentAddress': applicant.current_address,

@@ -45,7 +45,7 @@ def _applicant_intake_docs_done_count(applicant):
 def _applications_pending_signatory_step(step):
     """
     Applications whose most recent SignatoryRouting step equals `step`
-    (e.g. 'forwarded_oic' = awaiting OIC signature, 'forwarded_head' = awaiting Head).
+    (e.g. 'forwarded_oic' = awaiting OIC signature, 'signed_oic' = OIC has signed).
     """
     latest_sq = (
         SignatoryRouting.objects.filter(application_id=OuterRef('pk'))
@@ -67,7 +67,7 @@ def _applications_pending_signatory_step(step):
 
 def _build_oversight_applicants_table_rows():
     """
-    Rows for Head/OIC applicant intake overview (ISFRecord model was removed; use Applicant only).
+    Rows for OIC applicant intake overview (ISFRecord model was removed; use Applicant only).
     """
     applicants_qs = (
         Applicant.objects.select_related('registered_by', 'eligibility_checked_by', 'barangay')
@@ -119,7 +119,7 @@ def _build_oversight_applicants_table_rows():
 
 
 def _m2_signatory_pipeline_counts():
-    """Counts for M2 signatory strip (OIC / Head pending pages)."""
+    """Counts for M2 signatory strip (OIC pending pages)."""
     latest_sq = (
         SignatoryRouting.objects.filter(application_id=OuterRef('pk'))
         .order_by('-action_at')
@@ -137,10 +137,8 @@ def _m2_signatory_pipeline_counts():
         'latest_received': _c(_latest='received'),
         'latest_forwarded_oic': _c(_latest='forwarded_oic'),
         'latest_signed_oic': _c(_latest='signed_oic'),
-        'latest_forwarded_head': _c(_latest='forwarded_head'),
-        'latest_signed_head': _c(_latest='signed_head'),
         'fully_approved': Application.objects.filter(
-            status__in=['head_signed', 'standby', 'awarded'],
+            status__in=['oic_signed', 'standby', 'awarded'],
         ).count(),
     }
 
@@ -379,7 +377,6 @@ def dashboard_oic(request):
         ('completed', 'Applicant Signed'),
         ('routing', 'Signatory Routing'),
         ('oic_signed', 'OIC Approved'),
-        ('head_signed', 'Head Approved'),
         ('standby', 'On Standby'),
         ('awarded', 'Lot Awarded'),
     ]
@@ -769,9 +766,9 @@ def dashboard_second_member(request):
     total_applicants = Applicant.objects.count()
 
     # Shared stat card data (for dashboard headers)
-    # Applications awaiting signature (any pending signature status)
-    awaiting_head_signature = Application.objects.filter(
-        status='head_signed'
+    # Applications fully approved by OIC (final signature)
+    awaiting_signature_count = Application.objects.filter(
+        status='oic_signed'
     ).count()
 
     # Total housing units
@@ -814,7 +811,7 @@ def dashboard_second_member(request):
 
         # ========== SYSTEM OVERVIEW ==========
         'total_applicants': total_applicants,
-        'awaiting_signature': awaiting_head_signature,  # Shared stat card
+        'awaiting_signature': awaiting_signature_count,  # Shared stat card
         'housing_units': total_housing_units,  # Shared stat card
         'approved_this_month': approved_this_month,  # Shared stat card
         # Second-row stat cards (aligned to Joie’s intake + oversight role)
@@ -838,7 +835,7 @@ def dashboard_fourth_member(request):
         return redirect('accounts:dashboard')
 
     total_applicants = Applicant.objects.count()
-    awaiting_head_signature = Application.objects.filter(status='head_signed').count()
+    awaiting_signature_count = Application.objects.filter(status='oic_signed').count()
     total_housing_units = HousingUnit.objects.count()
     this_month_start = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     approved_this_month = Application.objects.filter(
@@ -912,7 +909,7 @@ def dashboard_fourth_member(request):
         'page_title': 'Fourth Member Dashboard',
         'user_position': 'fourth_member',
         'total_applicants': total_applicants,
-        'awaiting_signature': awaiting_head_signature,
+        'awaiting_signature': awaiting_signature_count,
         'housing_units': total_housing_units,
         'approved_this_month': approved_this_month,
         'queue_today': queue_today,
@@ -945,7 +942,7 @@ def dashboard_fifth_member(request):
         return redirect('accounts:dashboard')
 
     total_applicants = Applicant.objects.count()
-    awaiting_head_signature = Application.objects.filter(status='head_signed').count()
+    awaiting_signature_count = Application.objects.filter(status='oic_signed').count()
     total_housing_units = HousingUnit.objects.count()
     this_month_start = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     approved_this_month = Application.objects.filter(
@@ -994,7 +991,7 @@ def dashboard_fifth_member(request):
         'page_title': 'Fifth Member Dashboard',
         'user_position': 'fifth_member',
         'total_applicants': total_applicants,
-        'awaiting_signature': awaiting_head_signature,
+        'awaiting_signature': awaiting_signature_count,
         'housing_units': total_housing_units,
         'approved_this_month': approved_this_month,
         'pending_connections': pending_connections,

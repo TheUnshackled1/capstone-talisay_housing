@@ -193,9 +193,7 @@ class SignatoryRouting(models.Model):
     STEP_CHOICES = [
         ('received', 'Received - Processing'),
         ('forwarded_oic', 'Forwarded to OIC'),
-        ('signed_oic', 'Signed by OIC'),
-        ('forwarded_head', 'Forwarded to Head'),
-        ('signed_head', 'Signed by Head - Complete'),
+        ('signed_oic', 'Signed by OIC - Complete'),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

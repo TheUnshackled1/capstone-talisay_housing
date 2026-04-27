@@ -12,8 +12,7 @@ class Application(models.Model):
         ('draft', 'Draft - Form Generated'),
         ('completed', 'Completed - Signed by Applicant'),
         ('routing', 'Under Signatory Routing'),
-        ('oic_signed', 'Signed by OIC'),
-        ('head_signed', 'Signed by Head - Fully Approved'),
+        ('oic_signed', 'Signed by OIC - Fully Approved'),
         ('standby', 'Fully Approved - On Standby'),
         ('awarded', 'Lot Awarded'),
     ]

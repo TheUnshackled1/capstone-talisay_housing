@@ -70,14 +70,12 @@ def get_module2_permissions(user):
     
     Module 2 Staff Roles:
     - Jocel (4th Member): Verify documents, generate forms, record lot awarding
-    - Jay (3rd Member): Receive documents, forward to OIC/Head
-    - Joie (2nd Member): Supervisor, electricity tracking
+    - Joie (2nd Member): Supervisor, electricity tracking, routing backup
     - Laarni (5th Member): Electricity tracking
-    - Victor (OIC): Sign applications
-    - Arthur (Head): Final signature
+    - Victor (OIC): Final signature
     """
     position = user.position
-    
+
     permissions = {
         'can_view': False,
         'can_verify_documents': False,
@@ -85,7 +83,6 @@ def get_module2_permissions(user):
         'can_receive_routing': False,
         'can_forward_routing': False,
         'can_sign_oic': False,
-        'can_sign_head': False,
         'can_award_lot': False,
         'can_manage_electricity': False,
         'role_description': '',
@@ -575,7 +572,7 @@ def applications_list(request, position):
             application__status='routing'
         ).count(),
         'fully_approved': applicants.filter(
-            application__status__in=['oic_signed', 'head_signed', 'standby']
+            application__status__in=['oic_signed', 'standby']
         ).count(),
         'lot_awarded': applicants.filter(
             application__status='awarded'
@@ -613,9 +610,9 @@ def applications_list(request, position):
         # Determine current stage
         if application and application.status == 'awarded':
             current_stage = 'Lot Awarded'
-        elif application and application.status in ['head_signed', 'standby']:
+        elif application and application.status in ['oic_signed', 'standby']:
             current_stage = 'Fully Approved'
-        elif application and application.status in ['routing', 'oic_signed']:
+        elif application and application.status == 'routing':
             current_stage = 'Signatory Routing'
         elif application and application.status in ['draft', 'completed']:
             current_stage = 'Form Released'
@@ -658,11 +655,7 @@ def applications_list(request, position):
             user_actions.append('forward_to_oic')
         if permissions['can_sign_oic'] and application and latest_routing_step == 'forwarded_oic':
             user_actions.append('sign_oic')
-        if permissions['can_forward_routing'] and application and latest_routing_step == 'signed_oic':
-            user_actions.append('forward_to_head')
-        if permissions['can_sign_head'] and application and latest_routing_step == 'forwarded_head':
-            user_actions.append('sign_head')
-        if permissions['can_award_lot'] and application and application.status in ['head_signed', 'standby']:
+        if permissions['can_award_lot'] and application and application.status in ['oic_signed', 'standby']:
             user_actions.append('award_lot')
         if permissions['can_manage_electricity'] and application and application.status == 'awarded':
             user_actions.append('manage_electricity')
@@ -1798,7 +1791,7 @@ def generate_form(request, position, applicant_id):
 
 
 # =============================================================================
-# SIGNATORY ROUTING (Jay, OIC, Head)
+# SIGNATORY ROUTING (Jocel/Joie, OIC)
 # =============================================================================
 
 @login_required
@@ -1811,8 +1804,8 @@ def update_routing(request, position):
     URL: /applications/<position>/routing/update/
 
     ACCESS CONTROL:
-    - Staff (Jocel 4th / Joie 2nd): marks physical-paper signatures/checkpoints
-    - OIC and Head may still update their own signature checkpoints
+    - Staff (Jocel 4th / Joie 2nd): marks physical-paper checkpoints
+    - OIC may update its own signature checkpoint
     """
     application_id = request.POST.get('application_id')
     step = request.POST.get('step')
@@ -1878,7 +1871,7 @@ def update_routing(request, position):
         
         # Update application status based on step
         if step == 'signed_oic':
-            application.status = 'fully_approved'
+            application.status = 'oic_signed'
             application.fully_approved_at = timezone.now()
 
             # Send SMS: Fully Approved
@@ -1941,10 +1934,10 @@ def move_to_standby(request, position):
         if blacklist_error:
             return blacklist_error
         
-        if application.status != 'head_signed':
+        if application.status != 'oic_signed':
             return JsonResponse({
                 'success': False,
-                'error': 'Application must be fully approved (Head signed) before moving to standby.'
+                'error': 'Application must be fully approved (OIC signed) before moving to standby.'
             })
         
         application.status = 'standby'
@@ -2024,7 +2017,7 @@ def award_lot(request, position):
         if blacklist_error:
             return blacklist_error
         
-        if application.status not in ['head_signed', 'standby']:
+        if application.status not in ['oic_signed', 'standby']:
             return JsonResponse({
                 'success': False,
                 'error': 'Application must be fully approved before lot can be awarded.'
