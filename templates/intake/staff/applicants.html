@@ -2610,10 +2610,21 @@
                     border-color: #dc2626;
                 }
                 .tha-reg-modal .hh-member-row {
-                    display: grid;
-                    grid-template-columns: 1.35fr 1fr 0.5fr 0.55fr 0.85fr 1fr auto;
+                    display: flex;
+                    flex-direction: column;
                     gap: 0.65rem;
                     margin-bottom: 1rem;
+                }
+                .tha-reg-modal .hh-row-1 {
+                    display: grid;
+                    grid-template-columns: 1.5fr 1.5fr 0.8fr;
+                    gap: 0.65rem;
+                    align-items: end;
+                }
+                .tha-reg-modal .hh-row-2 {
+                    display: grid;
+                    grid-template-columns: 0.8fr 1.5fr 1.5fr auto;
+                    gap: 0.65rem;
                     align-items: end;
                 }
                 .tha-reg-modal .hh-member-row .hh-sex-group {
@@ -2672,8 +2683,11 @@
                     .tha-reg-modal .identity-row {
                         grid-template-columns: repeat(2, minmax(0, 1fr));
                     }
-                    .tha-reg-modal .hh-member-row {
-                        grid-template-columns: repeat(3, minmax(0, 1fr));
+                    .tha-reg-modal .hh-row-1 {
+                        grid-template-columns: 1.5fr 1fr;
+                    }
+                    .tha-reg-modal .hh-row-2 {
+                        grid-template-columns: 1fr 1fr auto;
                     }
                     .tha-reg-modal .hh-member-row .tha-reg-remove-member {
                         justify-self: start;
@@ -2684,7 +2698,8 @@
                     .tha-reg-modal .channel-selector { grid-template-columns: 1fr; }
                     .tha-reg-modal .document-grid { grid-template-columns: 1fr; }
                     .tha-reg-modal .identity-row { grid-template-columns: 1fr; }
-                    .tha-reg-modal .hh-member-row { grid-template-columns: 1fr; }
+                    .tha-reg-modal .hh-row-1 { grid-template-columns: 1fr; }
+                    .tha-reg-modal .hh-row-2 { grid-template-columns: 1fr; }
                 }
             </style>
 
@@ -2865,63 +2880,7 @@
                     </div>
                 </div>
 
-                <!-- Hazard-area declaration -->
-                <div class="tha-section-block" style="text-align: center;">
-                    <div class="tha-hazard-prompt" id="hazardDeclLabel">Hazard-area residence</div>
-                    <p style="font-size: 0.8125rem; color: #475569; margin: -0.5rem auto 1rem; max-width: 28rem; line-height: 1.45;">
-                        Indicate whether the applicant’s present address is within a mapped hazard or danger zone requiring City Disaster Risk Reduction and Management Office (CDRRMO) certification.
-                    </p>
-                    <div class="tha-hazard-radio-group" role="radiogroup" aria-labelledby="hazardDeclLabel">
-                        <label class="tha-hazard-radio" for="isDangerYes">
-                            <input type="radio" id="isDangerYes" name="is_danger_zone_choice" value="true" onchange="setDangerZone(true)">
-                            <span>Yes — within hazard area</span>
-                        </label>
-                        <label class="tha-hazard-radio" for="isDangerNo">
-                            <input type="radio" id="isDangerNo" name="is_danger_zone_choice" value="false" onchange="setDangerZone(false)">
-                            <span>No — not within hazard area</span>
-                        </label>
-                    </div>
-                    <span id="hazardDeclarationError" class="hazard-inline-error">Please select Yes or No for hazard-area residence.</span>
-                    <input type="hidden" id="isDangerZone" name="is_danger_zone" value="">
-                </div>
-
-                <!-- Hazard detail (shown when “Yes” selected) -->
-                <div id="dangerZoneGroup" style="display: none;">
-                    <div class="danger-zone-box">
-
-                        <div class="form-row full">
-                            <div class="form-group">
-                                <label class="form-label">Hazard classification <span style="color: #dc2626;">*</span></label>
-                                <select class="form-select" name="danger_zone_type" id="dangerZoneType">
-                                    <option value="">— Select classification —</option>
-                                    <option value="riverside">Riverside / Riverbank</option>
-                                    <option value="flood_prone">Flood-Prone Area</option>
-                                    <option value="landslide">Landslide-Prone Area</option>
-                                    <option value="coastal">Coastal / Near Shoreline</option>
-                                    <option value="railroad">Near Railroad Tracks</option>
-                                    <option value="road_right_of_way">Road Right of Way</option>
-                                    <option value="other">Other Danger Zone</option>
-                                </select>
-                                <span id="hazardTypeError" class="hazard-inline-error">Hazard classification is required.</span>
-                            </div>
-                        </div>
-
-                        <div class="form-row full">
-                            <div class="form-group">
-                                <label class="form-label">Location particulars <span style="color: #dc2626;">*</span></label>
-                                <input type="text" class="form-input" placeholder="Sitio, landmark, riverbank segment, or other locational description" name="danger_zone_location" id="dangerZoneLocation">
-                                <span class="help-text">For CDRRMO field verification and records.</span>
-                                <span id="hazardLocationError" class="hazard-inline-error">Location particulars must be specific (minimum 12 characters).</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Official notices -->
-                <div class="danger-warning" id="cdrrmoNote">
-                    <p><strong>Advisory — CDRRMO certification.</strong> Applicants declared within a hazard area are recorded as <strong>pending CDRRMO certification</strong> until cleared by the City DRRMO or designated barangay verification unit.</p>
-                    <p style="margin-top: 0.75rem; border-top: 1px solid rgba(180, 83, 9, 0.35); padding-top: 0.75rem;">Upon submission, the system shall assign a reference number. An SMS update is sent when staff proceeds this record to Module 2.</p>
-                </div>
+                <input type="hidden" id="isDangerZone" name="is_danger_zone" value="false">
             </form>
         </div>
         <div class="modal-footer">
@@ -4808,28 +4767,28 @@
         clearHazardInlineErrors();
 
         if (isDanger === true) {
-            dangerZoneGroup.style.display = 'block';
-            isDangerInput.value = 'true';
+            if (dangerZoneGroup) dangerZoneGroup.style.display = 'block';
+            if (isDangerInput) isDangerInput.value = 'true';
             if (yesRadio) yesRadio.checked = true;
             if (noRadio) noRadio.checked = false;
-            dangerZoneType.required = true;
-            dangerZoneLocation.required = true;
+            if (dangerZoneType) dangerZoneType.required = true;
+            if (dangerZoneLocation) dangerZoneLocation.required = true;
         } else if (isDanger === false) {
-            dangerZoneGroup.style.display = 'none';
-            isDangerInput.value = 'false';
+            if (dangerZoneGroup) dangerZoneGroup.style.display = 'none';
+            if (isDangerInput) isDangerInput.value = 'false';
             if (yesRadio) yesRadio.checked = false;
             if (noRadio) noRadio.checked = true;
-            dangerZoneType.value = '';
-            dangerZoneLocation.value = '';
-            dangerZoneType.required = false;
-            dangerZoneLocation.required = false;
+            if (dangerZoneType) dangerZoneType.value = '';
+            if (dangerZoneLocation) dangerZoneLocation.value = '';
+            if (dangerZoneType) dangerZoneType.required = false;
+            if (dangerZoneLocation) dangerZoneLocation.required = false;
         } else {
-            dangerZoneGroup.style.display = 'none';
-            isDangerInput.value = '';
+            if (dangerZoneGroup) dangerZoneGroup.style.display = 'none';
+            if (isDangerInput) isDangerInput.value = 'false';
             if (yesRadio) yesRadio.checked = false;
             if (noRadio) noRadio.checked = false;
-            dangerZoneType.required = false;
-            dangerZoneLocation.required = false;
+            if (dangerZoneType) dangerZoneType.required = false;
+            if (dangerZoneLocation) dangerZoneLocation.required = false;
         }
     }
 
@@ -4858,51 +4817,55 @@
             memberDiv.id = `hhMember${i}`;
             memberDiv.className = 'hh-member-row';
             memberDiv.innerHTML = `
-                <div class="form-group">
-                    <label class="form-label">Full name</label>
-                    <input type="text" class="form-input hh-member-field" placeholder="Surname, given name, extension" name="hh_member_${i}_name" maxlength="100" minlength="2" onchange="updateHouseholdSize()">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Relationship to applicant</label>
-                    <select class="form-select hh-member-field" name="hh_member_${i}_relationship" onchange="updateHouseholdSize()">
-                        <option value="">— Select —</option>
-                        <option value="spouse">Spouse</option>
-                        <option value="child">Child</option>
-                        <option value="parent">Parent</option>
-                        <option value="sibling">Sibling</option>
-                        <option value="grandchild">Grandchild</option>
-                        <option value="other">Other relative</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Age</label>
-                    <input type="number" class="form-input hh-member-field" placeholder="Years" name="hh_member_${i}_age" min="0" max="120" onchange="updateHouseholdSize()">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Sex</label>
-                    <div class="hh-sex-group">
-                        <label><input type="radio" name="hh_member_${i}_sex" value="male"> Male</label>
-                        <label><input type="radio" name="hh_member_${i}_sex" value="female"> Female</label>
+                <div class="hh-row-1">
+                    <div class="form-group">
+                        <label class="form-label">Full name</label>
+                        <input type="text" class="form-input hh-member-field" placeholder="Surname, given name, extension" name="hh_member_${i}_name" maxlength="100" minlength="2" onchange="updateHouseholdSize()">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Relationship to applicant</label>
+                        <select class="form-select hh-member-field" name="hh_member_${i}_relationship" onchange="updateHouseholdSize()">
+                            <option value="">— Select —</option>
+                            <option value="spouse">Spouse</option>
+                            <option value="child">Child</option>
+                            <option value="parent">Parent</option>
+                            <option value="sibling">Sibling</option>
+                            <option value="grandchild">Grandchild</option>
+                            <option value="other">Other relative</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Age</label>
+                        <input type="number" class="form-input hh-member-field" placeholder="Years" name="hh_member_${i}_age" min="0" max="120" onchange="updateHouseholdSize()">
                     </div>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Civil status</label>
-                    <select class="form-select hh-member-field" name="hh_member_${i}_status" onchange="updateHouseholdSize()">
-                        <option value="">— Select —</option>
-                        <option value="single">Single</option>
-                        <option value="married">Married</option>
-                        <option value="widowed">Widowed</option>
-                        <option value="divorced">Divorced</option>
-                        <option value="separated">Separated</option>
-                        <option value="common_law">Common-law</option>
-                    </select>
+                <div class="hh-row-2">
+                    <div class="form-group">
+                        <label class="form-label">Sex</label>
+                        <div class="hh-sex-group">
+                            <label><input type="radio" name="hh_member_${i}_sex" value="male"> Male</label>
+                            <label><input type="radio" name="hh_member_${i}_sex" value="female"> Female</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Civil status</label>
+                        <select class="form-select hh-member-field" name="hh_member_${i}_status" onchange="updateHouseholdSize()">
+                            <option value="">— Select —</option>
+                            <option value="single">Single</option>
+                            <option value="married">Married</option>
+                            <option value="widowed">Widowed</option>
+                            <option value="divorced">Divorced</option>
+                            <option value="separated">Separated</option>
+                            <option value="common_law">Common-law</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Contact number <span style="color: #64748b; font-weight: 500;">(optional)</span></label>
+                        <input type="tel" class="form-input hh-member-field ph-phone" placeholder="09XXXXXXXXXX" pattern="09[0-9]{9}" maxlength="11" minlength="11" inputmode="numeric" autocomplete="tel-national" name="hh_member_${i}_contact">
+                        <span class="hh-member-help">11 digits only, starts with 09.</span>
+                    </div>
+                    <button type="button" onclick="deleteHouseholdMember(${i})" class="tha-reg-remove-member" title="Remove this row">Remove</button>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Contact number <span style="color: #64748b; font-weight: 500;">(optional)</span></label>
-                    <input type="tel" class="form-input hh-member-field ph-phone" placeholder="09XXXXXXXXXX" pattern="09[0-9]{9}" maxlength="11" minlength="11" inputmode="numeric" autocomplete="tel-national" name="hh_member_${i}_contact">
-                    <span class="hh-member-help">11 digits only, starts with 09.</span>
-                </div>
-                <button type="button" onclick="deleteHouseholdMember(${i})" class="tha-reg-remove-member" title="Remove this row">Remove</button>
             `;
             container.appendChild(memberDiv);
         }
@@ -5189,41 +5152,11 @@
             }
         }
 
-        // Validate danger zone selection and fields
-        const isDangerZoneVal = document.getElementById('isDangerZone').value;
-        clearHazardInlineErrors();
-
-        if (!isDangerZoneVal) {
-            showHazardInlineError('hazardDeclarationError');
-            const yesRadio = document.getElementById('isDangerYes');
-            if (yesRadio) yesRadio.focus();
-            return;
-        }
-
-        // Clear danger zone fields if applicant is NOT in danger zone
-        if (isDangerZoneVal === 'false') {
-            formData.set('danger_zone_type', '');
-            formData.set('danger_zone_location', '');
-        }
-
-        // If applicant is in danger zone, validate details
-        if (isDangerZoneVal === 'true') {
-            const dangerZoneType = document.getElementById('dangerZoneType').value;
-            const dangerZoneLocation = document.getElementById('dangerZoneLocation').value.trim();
-
-            if (!dangerZoneType) {
-                showHazardInlineError('hazardTypeError');
-                const dangerZoneTypeEl = document.getElementById('dangerZoneType');
-                if (dangerZoneTypeEl) dangerZoneTypeEl.focus();
-                return;
-            }
-            if (isWeakHazardLocation(dangerZoneLocation)) {
-                showHazardInlineError('hazardLocationError');
-                const dangerZoneLocationEl = document.getElementById('dangerZoneLocation');
-                if (dangerZoneLocationEl) dangerZoneLocationEl.focus();
-                return;
-            }
-        }
+        // Hazard/CDRRMO declaration is handled in Module 2 Layer 3 (2.6).
+        // Registration no longer collects this data at intake form level.
+        formData.set('is_danger_zone', 'false');
+        formData.set('danger_zone_type', '');
+        formData.set('danger_zone_location', '');
 
         // Submit to walkin_register endpoint
         let endpoint = '{% url "intake:walkin_register" request.user.position %}';
