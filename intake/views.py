@@ -11,6 +11,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from functools import wraps
 from .models import Applicant, Barangay, Archive, SMSLog
 from applications.models import QueueEntry
+from documents.models import Document, Requirement
 from .forms import (
     HouseholdMemberForm,
     WalkInApplicantForm
@@ -29,6 +30,39 @@ MODULE1_MONTHLY_INCOME_CEILING_PESO = 10000
 # Soft check only: applicants below this threshold are still allowed to register
 # and submit. The flag is surfaced for downstream eligibility evaluation.
 MODULE1_MIN_YEARS_RESIDING_TALISAY = 5
+
+# Group A requirement codes (documents.Requirement) → documents.Document.document_type
+ARCHIVE_REQUIREMENT_CODE_TO_DOCUMENT_TYPE = {
+    'R01': 'barangay_residency',
+    'R02': 'barangay_indigency',
+    'R03': 'cedula',
+    'R04': 'police_clearance',
+    'R05': 'no_property',
+    'R06': 'photo_2x2',
+    'R07': 'house_sketch',
+}
+
+
+def _archive_requirement_scan_rows(requirements_group_a, scanned_types_set):
+    """
+    Build checklist rows matching Requirement reference data; `scanned` is True when
+    at least one Document exists for this applicant with the mapped document_type.
+    """
+    scanned_types_set = scanned_types_set or set()
+    rows = []
+    for req in requirements_group_a:
+        dtype = ARCHIVE_REQUIREMENT_CODE_TO_DOCUMENT_TYPE.get(req.code)
+        scanned = bool(dtype and dtype in scanned_types_set)
+        rows.append({
+            'code': req.code,
+            'name': req.name,
+            'group_display': req.get_group_display(),
+            'is_required_for_form': req.is_required_for_form,
+            'is_active': req.is_active,
+            'scanned': scanned,
+        })
+    scanned_count = sum(1 for r in rows if r['scanned'])
+    return rows, scanned_count
 
 
 def _is_residency_eligible(years_residing):
@@ -1002,11 +1036,23 @@ def applicants_list(request, position):
     # Read-only archive/receipt rows: records already proceeded to Module 2.
     # Query Archive model for snapshot data of handed-off records
     archive_records = []
-    archives = Archive.objects.select_related(
-        'archived_by',
-        'applicant',
-        'applicant__application__form_generated_by',
-    ).order_by('archived_at')
+    archives = list(
+        Archive.objects.select_related(
+            'archived_by',
+            'applicant',
+            'applicant__application__form_generated_by',
+        ).order_by('archived_at')
+    )
+
+    applicant_ids_for_docs = [a.applicant_id for a in archives if a.applicant_id]
+    docs_by_applicant_id = defaultdict(set)
+    if applicant_ids_for_docs:
+        for aid, doc_type in Document.objects.filter(
+            applicant_id__in=applicant_ids_for_docs,
+        ).values_list('applicant_id', 'document_type'):
+            docs_by_applicant_id[aid].add(doc_type)
+
+    requirements_group_a = list(Requirement.objects.filter(group='A').order_by('order', 'code'))
 
     channel_display_map = {
         'channel_a': ('A', 'Channel A — Walk-in'),
@@ -1043,6 +1089,15 @@ def applicants_list(request, position):
         if archive.applicant_id and archive.applicant:
             sms_sent_state = bool(archive.applicant.registration_sms_sent)
 
+        scanned_types = docs_by_applicant_id.get(archive.applicant_id, set()) if archive.applicant_id else set()
+        requirement_scan_rows, scanned_count = _archive_requirement_scan_rows(
+            requirements_group_a,
+            scanned_types,
+        )
+        requirements_total = len(requirement_scan_rows)
+        if requirements_total == 0:
+            requirements_total = 7
+
         archive_records.append({
             'id': str(archive.id),
             'dateTime': local_archived_at.strftime('%b %d, %Y | %I:%M %p') if local_archived_at else '',
@@ -1068,7 +1123,20 @@ def applicants_list(request, position):
             'module3ProceededAt': module3_proceeded_at,
             'module3ProceededBy': module3_proceeded_by,
             'module3ApplicationNumber': module3_application_number,
+            'requirementScanRows': requirement_scan_rows,
+            'scannedCount': scanned_count,
+            'requirementsTotal': requirements_total,
+            'applicantId': str(archive.applicant_id) if archive.applicant_id else '',
         })
+
+    archive_documents_modal = {
+        r['referenceNumber']: {
+            'referenceNumber': r['referenceNumber'],
+            'fullName': r['fullName'],
+            'rows': r['requirementScanRows'],
+        }
+        for r in archive_records
+    }
     
     # Sort all applicants by dateRegistered (FIFO - oldest first)
     applicants.sort(key=lambda x: x['dateRegistered'])
@@ -1111,6 +1179,7 @@ def applicants_list(request, position):
             'ready_for_module2': ready_for_module2,
         },
         'archive_records': archive_records,
+        'archive_documents_modal': archive_documents_modal,
     }
     return render(request, 'intake/staff/applicants.html', context)
 

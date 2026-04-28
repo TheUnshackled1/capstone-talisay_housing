@@ -900,6 +900,107 @@
         flex-shrink: 0;
     }
 
+    #reviewModal .tha-review-modal .tha-layer-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.75rem;
+    }
+
+    #reviewModal .tha-review-modal .tha-layer-card {
+        padding: 0.75rem;
+        border-radius: 0.75rem;
+        border: 1px solid rgba(15, 23, 42, 0.08);
+        background: #f8fafc;
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+    }
+
+    #reviewModal .tha-review-modal .tha-layer-card.option-a {
+        background: #dcfce7;
+        border-color: #86efac;
+    }
+
+    #reviewModal .tha-review-modal .tha-layer-card.option-b {
+        background: #e0f2fe;
+        border-color: #7dd3fc;
+    }
+
+    #reviewModal .tha-review-modal .tha-layer-card.option-c {
+        background: #fae8ff;
+        border-color: #e9d5ff;
+    }
+
+    #reviewModal .tha-review-modal .tha-layer-card.option-d {
+        background: #fee2e2;
+        border-color: #fecaca;
+    }
+
+    #reviewModal .tha-review-modal .tha-layer-option {
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+    }
+
+    #reviewModal .tha-review-modal .tha-layer-title {
+        font-weight: 700;
+        font-size: 0.85rem;
+        color: #0f172a;
+    }
+
+    #reviewModal .tha-review-modal .tha-layer-text {
+        margin: 0;
+        font-size: 0.75rem;
+        color: #1f2937;
+        line-height: 1.4;
+    }
+
+    #reviewModal .tha-review-modal .tha-layer-card-choice {
+        cursor: default;
+    }
+
+    #reviewModal .tha-review-modal .tha-layer-check {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        margin-bottom: 0.25rem;
+        position: relative;
+    }
+
+    #reviewModal .tha-review-modal .tha-layer-check input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    #reviewModal .tha-review-modal .tha-layer-checkmark {
+        width: 1rem;
+        height: 1rem;
+        border: 2px solid #cbd5e1;
+        border-radius: 0.2rem;
+        background: #fff;
+        display: inline-block;
+        position: relative;
+        box-sizing: border-box;
+    }
+
+    #reviewModal .tha-review-modal .tha-layer-check input:checked + .tha-layer-checkmark {
+        background: #0f172a;
+        border-color: #0f172a;
+    }
+
+    #reviewModal .tha-review-modal .tha-layer-check input:checked + .tha-layer-checkmark::after {
+        content: '';
+        position: absolute;
+        left: 0.25rem;
+        top: 0.05rem;
+        width: 0.25rem;
+        height: 0.55rem;
+        border: solid #fff;
+        border-width: 0 0.15rem 0.15rem 0;
+        transform: rotate(45deg);
+    }
+
     .modal-footer {
         position: sticky;
         bottom: 0;
@@ -2056,7 +2157,7 @@
 <!-- Archive / Receipt Table (read-only reporting) -->
 <div class="applicants-container" style="padding-top: 0.65rem;">
     <div style="display:flex; align-items:center; justify-content:center; margin:0 0 0.5rem 0; gap:0.75rem; flex-wrap:wrap;">
-        <h3 style="margin:0; font-size:0.95rem; color:#1e293b; font-weight:600; text-align: center;">ARCHIVE / RECORDS</h3>
+        <h3 style="margin:0; font-size:0.95rem; color:#1e293b; font-weight:600; text-align: center;">LIST OF APPLICATIONS</h3>
     </div>
 
     <!-- Archive Controls Bar -->
@@ -2121,6 +2222,7 @@
                 <th>SMS</th>
                 <th>DOB</th>
                 <th>Barangay</th>
+                <th>Documents</th>
                 <th>Action</th>
             </tr>
         </thead>
@@ -2170,6 +2272,21 @@
                 </td>
                 <td style="font-size: 0.5625rem; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ row.barangay|default:'N/A' }}">
                     {{ row.barangay|default:"N/A" }}
+                </td>
+                <td style="vertical-align: middle;">
+                    {% if row.docsCount == row.docsTotal %}
+                    <span style="display: inline-flex; align-items: center; gap: 0.125rem; padding: 0.125rem 0.5rem; background: #dcfce7; color: #166534; border-radius: 9999px; font-size: 0.5625rem; font-weight: 600;">
+                        Requirements {{ row.docsCount }}/{{ row.docsTotal }}
+                    </span>
+                    {% elif row.docsCount > 0 %}
+                    <span style="display: inline-flex; align-items: center; gap: 0.125rem; padding: 0.125rem 0.5rem; background: #fef3c7; color: #92400e; border-radius: 9999px; font-size: 0.5625rem; font-weight: 600;">
+                        Requirements {{ row.docsCount }}/{{ row.docsTotal }}
+                    </span>
+                    {% else %}
+                    <span style="display: inline-flex; align-items: center; gap: 0.125rem; padding: 0.125rem 0.5rem; background: #f1f5f9; color: #64748b; border-radius: 9999px; font-size: 0.5625rem; font-weight: 600;">
+                        Requirements {{ row.docsCount }}/{{ row.docsTotal }}
+                    </span>
+                    {% endif %}
                 </td>
                 <td>
                     <button
@@ -3135,6 +3252,142 @@
                 .tha-reg-modal .info-note p { margin: 0; }
                 .tha-reg-modal .danger-warning { background: #fffbeb; border: 1px solid #fcd34d; border-left: 4px solid #b45309; padding: 0.875rem 1rem; border-radius: 2px; margin-top: 1rem; font-size: 0.8125rem; color: #78350f; line-height: 1.5; }
                 .tha-reg-modal .danger-warning p { margin: 0; }
+                .tha-reg-modal .tha-layer-shell {
+                    border: 1px solid #e2e8f0;
+                    border-radius: 0.75rem;
+                    overflow: hidden;
+                    background: #ffffff;
+                    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+                }
+                .tha-reg-modal .tha-layer-header {
+                    padding: 1.1rem 1.25rem 0.95rem;
+                    text-align: center;
+                    background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+                    border-bottom: 1px solid #e2e8f0;
+                }
+                .tha-reg-modal .tha-layer-pill {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 0.35rem;
+                    font-size: 0.58rem;
+                    font-weight: 700;
+                    letter-spacing: 0.16em;
+                    text-transform: uppercase;
+                    padding: 0.2rem 0.6rem;
+                    border-radius: 999px;
+                    border: 1px solid #cbd5e1;
+                    background: #f1f5f9;
+                    color: #475569;
+                }
+                .tha-reg-modal .tha-layer-title {
+                    margin: 0.5rem 0 0;
+                    font-size: 0.95rem;
+                    font-weight: 700;
+                    color: #0f172a;
+                    letter-spacing: 0.01em;
+                }
+                .tha-reg-modal .tha-layer-desc {
+                    margin: 0.45rem auto 0;
+                    max-width: 36rem;
+                    font-size: 0.8125rem;
+                    color: #475569;
+                    line-height: 1.5;
+                }
+                .tha-reg-modal .tha-layer-body {
+                    padding: 1rem 1.1rem 1.1rem;
+                }
+                .tha-reg-modal .tha-layer-grid {
+                    display: grid;
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                    gap: 0.75rem;
+                    margin-top: 1rem;
+                }
+                .tha-reg-modal .tha-layer-card {
+                    border: 1px solid #e2e8f0;
+                    background: #ffffff;
+                    border-radius: 0.5rem;
+                    padding: 0.75rem 0.85rem;
+                }
+                .tha-reg-modal .tha-layer-card.option-a { border-left: 4px solid #b91c1c; }
+                .tha-reg-modal .tha-layer-card.option-b { border-left: 4px solid #b45309; }
+                .tha-reg-modal .tha-layer-card.option-c { border-left: 4px solid #047857; }
+                .tha-reg-modal .tha-layer-card.option-d { border-left: 4px solid #475569; }
+                .tha-reg-modal .tha-layer-card.option-a .tha-layer-option { color: #b91c1c; }
+                .tha-reg-modal .tha-layer-card.option-b .tha-layer-option { color: #b45309; }
+                .tha-reg-modal .tha-layer-card.option-c .tha-layer-option { color: #047857; }
+                .tha-reg-modal .tha-layer-card.option-d .tha-layer-option { color: #475569; }
+                .tha-reg-modal .tha-layer-card:hover {
+                    border-color: #cbd5e1;
+                    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+                }
+                .tha-reg-modal .tha-layer-card .tha-layer-option {
+                    font-size: 0.65rem;
+                    font-weight: 700;
+                    letter-spacing: 0.12em;
+                    text-transform: uppercase;
+                    color: #475569;
+                    margin-bottom: 0.35rem;
+                }
+                .tha-reg-modal .tha-layer-card .tha-layer-title {
+                    font-size: 0.875rem;
+                    font-weight: 700;
+                    color: #0f172a;
+                    margin-bottom: 0.35rem;
+                }
+                .tha-reg-modal .tha-layer-card .tha-layer-text {
+                    margin: 0;
+                    font-size: 0.8125rem;
+                    color: #475569;
+                    line-height: 1.45;
+                }
+                .tha-reg-modal .tha-layer-card-choice {
+                    cursor: pointer;
+                }
+                .tha-reg-modal .tha-layer-check {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 0.45rem;
+                    margin-bottom: 0.35rem;
+                    position: relative;
+                }
+                .tha-reg-modal .tha-layer-check input {
+                    position: absolute;
+                    opacity: 0;
+                    pointer-events: none;
+                }
+                .tha-reg-modal .tha-layer-checkmark {
+                    width: 1rem;
+                    height: 1rem;
+                    border: 2px solid #cbd5e1;
+                    border-radius: 0.2rem;
+                    background: #ffffff;
+                    display: inline-block;
+                    position: relative;
+                    box-sizing: border-box;
+                }
+                .tha-reg-modal .tha-layer-check input:checked + .tha-layer-checkmark {
+                    background: #0f172a;
+                    border-color: #0f172a;
+                }
+                .tha-reg-modal .tha-layer-check input:checked + .tha-layer-checkmark::after {
+                    content: '';
+                    position: absolute;
+                    left: 0.25rem;
+                    top: 0.05rem;
+                    width: 0.25rem;
+                    height: 0.55rem;
+                    border: solid #ffffff;
+                    border-width: 0 0.15rem 0.15rem 0;
+                    transform: rotate(45deg);
+                }
+                .tha-reg-modal .tha-layer-stack {
+                    display: grid;
+                    gap: 0.65rem;
+                }
+                .tha-reg-modal .tha-layer-stack .info-note,
+                .tha-reg-modal .tha-layer-stack .danger-warning {
+                    margin-top: 0;
+                }
                 .tha-reg-modal .help-text { font-size: 0.6875rem; color: #64748b; margin-top: 0.25rem; display: block; letter-spacing: 0.01em; }
                 .tha-reg-modal #addApplicantForm .form-input,
                 .tha-reg-modal #addApplicantForm .form-select { text-transform: none; border-radius: 2px; }
@@ -3286,6 +3539,13 @@
                         grid-template-columns: 1fr;
                         padding: 0.75rem;
                     }
+                    .tha-reg-modal .tha-layer-header {
+                        padding: 0.9rem 0.85rem 0.8rem;
+                        text-align: left;
+                    }
+                    .tha-reg-modal .tha-layer-desc { margin-left: 0; margin-right: 0; }
+                    .tha-reg-modal .tha-layer-body { padding: 0.85rem 0.85rem 0.95rem; }
+                    .tha-reg-modal .tha-layer-grid { grid-template-columns: 1fr; }
                 }
             </style>
 
@@ -3480,6 +3740,38 @@
 
                 <input type="hidden" id="isDangerZone" name="is_danger_zone" value="false">
             </form>
+
+            <div class="tha-section-block">
+                <div class="tha-layer-shell">
+                    <div class="tha-layer-header">
+                        <h3 class="tha-layer-title">Applicant Situation</h3>
+                    </div>
+                    <div class="tha-layer-body">
+                        <div class="tha-layer-grid">
+                            <div class="tha-layer-card option-a">
+                                <div class="tha-layer-option">Option A</div>
+                                <div class="tha-layer-title">Resident of Danger Zone or Hazard Area</div>
+                                <p class="tha-layer-text">Applicant resides in a flood-prone, landslide, storm-surge, riverbank, cliff-edge, or coastal hazard area requiring relocation for safety.</p>
+                            </div>
+                            <div class="tha-layer-card option-b">
+                                <div class="tha-layer-option">Option B</div>
+                                <div class="tha-layer-title">Ejected or Evicted from Prior Residence</div>
+                                <p class="tha-layer-text">Applicant has been evicted or displaced through private land eviction, court order, landowner recovery, or analogous proceedings.</p>
+                            </div>
+                            <div class="tha-layer-card option-c">
+                                <div class="tha-layer-option">Option C</div>
+                                <div class="tha-layer-title">Displaced by Government Project or Infrastructure</div>
+                                <p class="tha-layer-text">Applicant is required to relocate due to a road-widening, drainage, infrastructure, or other government-initiated project.</p>
+                            </div>
+                            <div class="tha-layer-card option-d">
+                                <div class="tha-layer-option">Option D</div>
+                                <div class="tha-layer-title">None of A, B, or C (Other / not listed)</div>
+                                <p class="tha-layer-text">The situation does not fall under a hazard area, ejection, or a government project. The applicant is recorded for the Walk-in path (no Priority on this ground).</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
         <div class="modal-footer">
             <button type="submit" form="addApplicantForm" class="btn-modal primary" id="submitBtn">

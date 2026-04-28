@@ -1096,6 +1096,178 @@
         border-top: 1px solid #e2e8f0;
     }
 
+    .m2-layer3-shell {
+        border: 1px solid #e2e8f0;
+        border-radius: 0.85rem;
+        overflow: hidden;
+        background: #ffffff;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+    }
+
+    .m2-layer3-header {
+        padding: 1.1rem 1.25rem 0.95rem;
+        text-align: center;
+        background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .m2-layer3-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-size: 0.58rem;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.6rem;
+        border-radius: 999px;
+        border: 1px solid #cbd5e1;
+        background: #f1f5f9;
+        color: #475569;
+    }
+
+    .m2-layer3-title {
+        margin: 0.5rem 0 0;
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #0f172a;
+        letter-spacing: 0.01em;
+    }
+
+    .m2-layer3-desc {
+        margin: 0.45rem auto 0;
+        max-width: 36rem;
+        font-size: 0.8125rem;
+        color: #475569;
+        line-height: 1.5;
+    }
+
+    .m2-layer3-body {
+        padding: 1rem 1.1rem 1.1rem;
+    }
+
+    .m2-disp-options {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.5rem;
+        margin-bottom: 0.7rem;
+    }
+
+    .m2-disp-option {
+        border: 1px solid #e2e8f0;
+        border-radius: 0.5rem;
+        background: #ffffff;
+        padding: 0.6rem 0.7rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        position: relative;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+
+    .m2-disp-option:hover {
+        border-color: #cbd5e1;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+    }
+
+    .m2-disp-option.is-selected {
+        border-color: #0f172a;
+        background: #f8fafc;
+        box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
+    }
+
+    .m2-disp-option.is-disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .m2-disp-option__top {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 0.5rem;
+    }
+
+    .m2-disp-option__title-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .m2-disp-option__label {
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: #475569;
+    }
+
+    .m2-disp-option__check {
+        width: 1rem;
+        height: 1rem;
+        border-radius: 0.2rem;
+        border: 2px solid #cbd5e1;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: transparent;
+        flex-shrink: 0;
+        background: #ffffff;
+    }
+
+    .m2-disp-option__check svg {
+        width: 0.7rem;
+        height: 0.7rem;
+    }
+
+    .m2-disp-option.is-selected .m2-disp-option__check {
+        border-color: #0f172a;
+        background: #0f172a;
+        color: #ffffff;
+    }
+
+    .m2-disp-option__title {
+        font-size: 0.875rem;
+        font-weight: 700;
+        color: #0f172a;
+        flex: 1;
+    }
+
+    .m2-disp-option__desc {
+        margin: 0;
+        font-size: 0.78rem;
+        color: #475569;
+        line-height: 1.45;
+    }
+
+    .m2-disp-option.option-a { border-left: 4px solid #b91c1c; }
+    .m2-disp-option.option-b { border-left: 4px solid #b45309; }
+    .m2-disp-option.option-c { border-left: 4px solid #047857; }
+    .m2-disp-option.option-d { border-left: 4px solid #475569; }
+
+    .m2-disp-option.option-a .m2-disp-option__label { color: #b91c1c; }
+    .m2-disp-option.option-b .m2-disp-option__label { color: #b45309; }
+    .m2-disp-option.option-c .m2-disp-option__label { color: #047857; }
+    .m2-disp-option.option-d .m2-disp-option__label { color: #475569; }
+
+    @media (max-width: 640px) {
+        .m2-layer3-header {
+            padding: 0.9rem 0.85rem 0.8rem;
+            text-align: left;
+        }
+        .m2-layer3-desc {
+            margin-left: 0;
+            margin-right: 0;
+        }
+        .m2-layer3-body {
+            padding: 0.85rem 0.85rem 0.95rem;
+        }
+        .m2-disp-options {
+            grid-template-columns: 1fr;
+        }
+    }
+
     /* Layer 3 displacement panels are styled with Tailwind utilities;
        this hook preserves the runtime is-active toggle behavior. */
     .m2-disp-panel {
@@ -3485,54 +3657,41 @@
         const layer2Clear = !!rules.layer2_clear;
         const qualifiesForPriority = !!rules.qualifies_for_priority;
         const escAttr = (value) => escapeHtml(String(value == null ? '' : value));
-        const radio = (value, title, sub, accent) => {
+        const radio = (value, title, sub) => {
             const checked = savedReason === value ? ' checked' : '';
             const isSelected = savedReason === value;
             // Per-option visual config keyed by value (institutional palette: muted accent + navy selection)
             const cfg = {
                 danger_zone: {
                     label: 'Option A',
-                    icon: `<path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>`,
-                    accentBg:'bg-red-700',   accentTxt:'text-red-700',
+                    optionClass: 'option-a',
                 },
                 ejected: {
                     label: 'Option B',
-                    icon: `<path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>`,
-                    accentBg:'bg-amber-700',  accentTxt:'text-amber-700',
+                    optionClass: 'option-b',
                 },
                 relocated: {
                     label: 'Option C',
-                    icon: `<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/>`,
-                    accentBg:'bg-emerald-700', accentTxt:'text-emerald-700',
+                    optionClass: 'option-c',
                 },
                 not_abc: {
                     label: 'Option D',
-                    icon: `<circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>`,
-                    accentBg:'bg-slate-700', accentTxt:'text-slate-700',
+                    optionClass: 'option-d',
                 },
             }[value] || {};
-            const iconBg  = isSelected ? 'bg-slate-900' : 'bg-slate-50 border border-slate-200';
-            const iconTxt = isSelected ? 'text-white'   : (cfg.accentTxt || 'text-slate-700');
-            const cardSel = isSelected ? 'border-slate-900 bg-slate-50 ring-2 ring-slate-900/10' : '';
-            const cardHas = `has-[:checked]:border-slate-900 has-[:checked]:bg-slate-50 has-[:checked]:ring-2 has-[:checked]:ring-slate-900/10`;
-            const disabled  = canVerifyDocs ? '' : ' opacity-50 cursor-not-allowed pointer-events-none';
-            const indicator = isSelected
-                ? `<span class="inline-flex items-center justify-center w-5 h-5 sm:w-5 sm:h-5 flex-shrink-0 rounded-full bg-slate-900 text-white"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></span>`
-                : `<span class="inline-block w-5 h-5 flex-shrink-0 rounded-full border-2 border-slate-300 bg-white"></span>`;
+            const disabled = canVerifyDocs ? '' : ' is-disabled';
+            const optionClass = `${cfg.optionClass || ''}${isSelected ? ' is-selected' : ''}${disabled}`.trim();
             return `
-                <label class="m2-disp-option group relative flex flex-col gap-2.5 sm:gap-3 p-3.5 sm:p-4 rounded-lg border border-slate-200 bg-white hover:border-slate-400 hover:shadow-sm cursor-pointer transition-all duration-150 ${cardHas} ${cardSel} ${disabled}" data-disp-option="${value}">
+                <label class="m2-disp-option ${optionClass}" data-disp-option="${value}">
                     <input type="radio" name="modalDisplacementReason" value="${value}" onchange="m2OnDisplacementReasonChange()"${checked}${canVerifyDocs ? '' : ' disabled'} class="sr-only">
-                    <div class="flex items-start justify-between gap-2">
-                        <span class="text-[0.6rem] font-bold uppercase tracking-[0.14em] ${cfg.accentTxt || 'text-slate-500'}">${cfg.label || ''}</span>
-                        ${indicator}
+                    <div class="m2-disp-option__top">
+                        <span class="m2-disp-option__label">${cfg.label || ''}</span>
                     </div>
-                    <div class="flex items-center gap-2.5 sm:gap-3">
-                        <div class="w-9 h-9 sm:w-10 sm:h-10 flex-shrink-0 flex items-center justify-center rounded-md ${iconBg} ${iconTxt} transition-colors duration-150">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4 sm:w-5 sm:h-5">${cfg.icon || ''}</svg>
-                        </div>
-                        <span class="flex-1 text-[0.8rem] sm:text-sm font-semibold text-slate-900 leading-snug">${title}</span>
+                    <div class="m2-disp-option__title-row">
+                        <span class="m2-disp-option__check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></span>
+                        <span class="m2-disp-option__title">${title}</span>
                     </div>
-                    <p class="text-[0.7rem] sm:text-xs text-slate-600 leading-relaxed">${sub}</p>
+                    <p class="m2-disp-option__desc">${sub}</p>
                 </label>`;
         };
 
@@ -3650,7 +3809,7 @@
                     </div>
                     ${reqDocBox('amber', 'Court Order, Legal Office Certification, or Barangay Certification')}
                 </div>
-                ${pendingStrip('amber', 'Document Status &middot; Awaiting Module 3 Verification')}
+                ${pendingStrip('amber', 'Document status &middot; Awaiting verification in Applications')}
             </div>`;
 
         const relocatedPanel = `
@@ -3663,65 +3822,15 @@
                     </div>
                     ${reqDocBox('emerald', 'Notice of Relocation, Right-of-Way Documentation, or Project Order')}
                 </div>
-                ${pendingStrip('sky', 'Document Status &middot; Awaiting Module 3 Verification')}
+                ${pendingStrip('sky', 'Document status &middot; Awaiting verification in Applications')}
             </div>`;
 
-        const notAbcPanel = `
-            <div class="${panelShell('slate')}${notAbcPanelActive}" id="m2DispPanelNotAbc" data-disp-panel="not_abc">
-                ${panelHead('slate', 'Option D — None of the above (Walk-in path)')}
-                <div class="p-4 sm:p-5 lg:p-6">
-                    <p class="text-[0.78rem] sm:text-sm text-slate-700 leading-relaxed">
-                        Use this when the applicant&rsquo;s situation is <strong class="text-slate-900">not</strong> covered by
-                        <span class="font-semibold">A (hazard / danger area)</span>,
-                        <span class="font-semibold">B (ejection or eviction)</span>, or
-                        <span class="font-semibold">C (government project or infrastructure)</span>.
-                        The record is placed on the <strong>Walk-in Queue</strong> under Module 2; Priority placement does not apply to this ground.
-                    </p>
-                    <div class="mt-4 flex items-start gap-3 rounded-md border border-slate-200 bg-slate-50 px-3.5 sm:px-4 py-3">
-                        <div class="flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-md bg-white border border-slate-300">
-                            <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <p class="text-[0.62rem] sm:text-[0.65rem] font-bold uppercase tracking-[0.14em] text-slate-500 mb-0.5">Module 3 / documents</p>
-                            <p class="text-[0.78rem] sm:text-sm font-medium text-slate-800">No A/B/C-specific required document track applies. Follow standard walk-in module documentation as assigned by staff.</p>
-                        </div>
-                    </div>
-                </div>
-                ${pendingStrip('amber', 'Queue &middot; Walk-in (Option D)')}
-            </div>`;
+        const notAbcPanel = '';
 
-        const savedReadout = savedReason
-            ? `<div class="mb-4 flex items-start sm:items-center gap-3 px-4 py-3 rounded-md border border-slate-300 border-l-4 border-l-emerald-700 bg-white shadow-sm">
-                    <div class="w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0 flex items-center justify-center rounded-full bg-emerald-50 border border-emerald-200">
-                        <svg class="w-4 h-4 text-emerald-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 13l4 4L19 7"/></svg>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <p class="text-[0.62rem] sm:text-[0.65rem] font-bold uppercase tracking-[0.14em] text-slate-500">Classification of Record</p>
-                        <p class="text-[0.78rem] sm:text-sm font-semibold text-slate-900 mt-0.5 leading-snug"><strong class="font-semibold">${escapeHtml(savedReasonDisplay || savedReason)}</strong> <span class="font-normal text-slate-600">&mdash; the classification may be revised prior to confirmation.</span></p>
-                    </div>
-                </div>`
-            : '';
+        const savedReadout = '';
 
         // Queue endorsement banner — formal eligibility advisory
-        const queueHintHtml = (() => {
-            const l3Any = ['danger_zone', 'ejected', 'relocated', 'not_abc'].includes(savedReason);
-            const p = qualifiesForPriority
-                ? { wrap:'border-emerald-300 border-l-emerald-700', iconPath:`<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/>`, iconCls:'text-emerald-700', label:'Priority Queue', labelCls:'bg-emerald-700 text-white', heading:'Eligibility Advisory', body:'Layers 2 and 3 have been satisfied. The applicant is endorsed for placement in the', suffix:'.' }
-                : !layer2Clear
-                    ? { wrap:'border-amber-300 border-l-amber-700', iconPath:`<circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>`, iconCls:'text-amber-700', label:'Walk-in Queue', labelCls:'bg-amber-700 text-white', heading:'Eligibility Advisory', body:'A flag was raised in Layer 2. The applicant shall be placed on the', suffix:' irrespective of Layer 3 classification.' }
-                : savedReason === 'not_abc'
-                    ? { wrap:'border-slate-300 border-l-slate-700', iconPath:`<circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>`, iconCls:'text-slate-700', label:'Walk-in Queue', labelCls:'bg-slate-800 text-white', heading:'Eligibility Advisory', body:'Option D (none of A, B, or C): the applicant is placed on the', suffix:'. Priority is not available on this ground.' }
-                : !l3Any
-                    ? { wrap:'border-slate-300 border-l-slate-700', iconPath:`<circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>`, iconCls:'text-slate-700', label:'Walk-in Queue', labelCls:'bg-slate-800 text-white', heading:'Eligibility Advisory', body:'Layer 2 has been cleared. Layer 3 must be classified to qualify for Priority placement; unclassified applicants will be retained on the', suffix:'.' }
-                    : { wrap:'border-slate-300 border-l-slate-700', iconPath:`<circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>`, iconCls:'text-slate-700', label:'Walk-in Queue', labelCls:'bg-slate-800 text-white', heading:'Eligibility Advisory', body:'The applicant is on the', suffix:'.' };
-            return `<div class="mb-4 flex items-start gap-3 px-4 py-3 rounded-md border border-l-4 bg-white ${p.wrap} shadow-sm">
-                <svg class="w-5 h-5 flex-shrink-0 mt-0.5 ${p.iconCls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${p.iconPath}</svg>
-                <div class="flex-1 min-w-0">
-                    <p class="text-[0.62rem] sm:text-[0.65rem] font-bold uppercase tracking-[0.14em] text-slate-500">${p.heading}</p>
-                    <p class="text-[0.78rem] sm:text-sm text-slate-800 leading-relaxed mt-0.5">${p.body} <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-[0.6rem] sm:text-[0.65rem] font-bold uppercase tracking-wider ${p.labelCls}">${p.label}</span>${p.suffix}</p>
-                </div>
-            </div>`;
-        })();
+        const queueHintHtml = '';
 
         const layer3FooterNav = canVerifyDocs
             ? `<div class="flex flex-col-reverse sm:flex-row sm:justify-between gap-2 sm:gap-3 mt-6 pt-5 border-t border-slate-200">
@@ -3804,20 +3913,18 @@
             `</div>` +
             doneStrip('m2Layer2Done', layer2Clear, layer2Clear ? '✓ Layer 2 complete — Eligibility readouts clear' : '! Layer 2 complete — flag(s) noted; applicant on Walk-in path') +
             `<div id="m2Layer3Block" class="m2-layer3-block" style="display:none;">` +
-            `<div class="rounded-xl sm:rounded-2xl bg-white border border-slate-300 shadow-sm overflow-hidden">` +
-            `<div class="px-4 sm:px-6 lg:px-8 pt-5 pb-4 sm:pt-6 sm:pb-5 bg-slate-50 border-b-2 border-slate-200">` +
-            `<div class="flex items-center gap-2 mb-2"><span class="inline-flex items-center gap-1.5 text-[0.6rem] sm:text-[0.65rem] font-bold uppercase tracking-[0.16em] text-slate-700 bg-white border border-slate-300 px-2.5 py-1 rounded-sm shadow-sm"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 12h6M9 8h6M9 16h4"/></svg>Section 2.7 &middot; Layer 3</span><span class="hidden sm:inline-block h-px flex-1 bg-slate-300"></span></div>` +
-            `<h3 class="text-base sm:text-lg lg:text-xl font-bold text-slate-900 leading-snug tracking-tight">Classification of Displacement &amp; Required Documentation</h3>` +
-            `<p class="mt-1.5 text-[0.75rem] sm:text-xs lg:text-sm text-slate-600 leading-relaxed max-w-2xl">Identify the applicant's qualifying ground for relocation. The classification is recorded by <strong class="font-semibold text-slate-800">Module 2</strong>; the corresponding documentary requirement is verified by <strong class="font-semibold text-slate-800">Module 3</strong>.</p>` +
+            `<div class="m2-layer3-shell">` +
+            `<div class="m2-layer3-header">` +
+            `<h3 class="m2-layer3-title">Classification of Displacement &amp; Required Documentation</h3>` +
             `</div>` +
-            `<div class="px-4 sm:px-6 lg:px-8 pt-4 sm:pt-5 pb-5 sm:pb-6">` +
+            `<div class="m2-layer3-body">` +
             queueHintHtml +
             savedReadout +
-            `<div id="m2DispOptions" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 mb-5">` +
-            radio('danger_zone', 'Resident of Danger Zone or Hazard Area', 'Applicant resides in a flood-prone, landslide, storm-surge, riverbank, cliff-edge, or coastal hazard area requiring relocation for safety.', 'blue') +
-            radio('ejected', 'Ejected or Evicted from Prior Residence', 'Applicant has been evicted or displaced through private land eviction, court order, landowner recovery, or analogous proceedings.', 'amber') +
-            radio('relocated', 'Displaced by Government Project or Infrastructure', 'Applicant is required to relocate due to a road-widening, drainage, infrastructure, or other government-initiated project.', 'emerald') +
-            radio('not_abc', 'None of A, B, or C (Other / not listed)', 'The situation does not fall under a hazard area, ejection, or a government project. The applicant is recorded for the Walk-in path (no Priority on this ground).', 'slate') +
+            `<div id="m2DispOptions" class="m2-disp-options">` +
+            radio('danger_zone', 'Resident of Danger Zone or Hazard Area', 'Applicant resides in a flood-prone, landslide, storm-surge, riverbank, cliff-edge, or coastal hazard area requiring relocation for safety.') +
+            radio('ejected', 'Ejected or Evicted from Prior Residence', 'Applicant has been evicted or displaced through private land eviction, court order, landowner recovery, or analogous proceedings.') +
+            radio('relocated', 'Displaced by Government Project or Infrastructure', 'Applicant is required to relocate due to a road-widening, drainage, infrastructure, or other government-initiated project.') +
+            radio('not_abc', 'None of A, B, or C (Other / not listed)', 'The situation does not fall under a hazard area, ejection, or a government project. The applicant is recorded for the Walk-in path (no Priority on this ground).') +
             `</div>` +
             dangerPanel +
             ejectedPanel +
@@ -4587,7 +4694,7 @@
             formData.append('status', status);
             formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
 
-            const response = await fetch('{% url "documents:update_requirement_submission" request.user.position %}', {
+            const response = await fetch('{% url "applications:update_requirement" request.user.position %}', {
                 method: 'POST',
                 body: formData
             });
@@ -4773,20 +4880,20 @@
                 `Recorded by: ${by}\n` +
                 `Recorded at: ${at}\n` +
                 `Notes: ${notesLine}\n\n` +
-                `This status is an internal Module 2 evaluation marker and remains separate from the Module 3 routing chain.`
+                `This status is an internal Module 2 evaluation marker and remains separate from endorsement / signatory routing.`
             );
             if ((data.approval_status || approvalStatus) === 'approved') {
                 const reference = window.__m2LastApplicantData?.reference_number || '';
                 const docsUrl = reference
-                    ? `/documents/${position}/management/?search=${encodeURIComponent(reference)}`
-                    : `/documents/${position}/management/`;
+                    ? `/applications/staff/${position}/?search=${encodeURIComponent(reference)}`
+                    : `/applications/staff/${position}/`;
                 const smsStatusLine = data.sms_dispatched
                     ? 'SMS sent to ISF applicant for notification.'
                     : 'SMS was not sent (check contact number or SMS service logs).';
                 alert(
                     `2.6 Approved successfully.\n` +
                     `${smsStatusLine}\n\n` +
-                    `Redirecting to Document Management...`
+                    `Returning to Applications...`
                 );
                 setTimeout(() => {
                     window.location.href = docsUrl;
@@ -4847,9 +4954,9 @@
             if (window.__hasApplication) {
                 const reference = window.__m2LastApplicantData?.reference_number || '';
                 const docsUrl = reference
-                    ? `/documents/${position}/management/?search=${encodeURIComponent(reference)}`
-                    : `/documents/${position}/management/`;
-                alert('2.6 saved. Module 3 is already initialized for this applicant. Redirecting to Documents...');
+                    ? `/applications/staff/${position}/?search=${encodeURIComponent(reference)}`
+                    : `/applications/staff/${position}/`;
+                alert('2.6 saved. The application record is already initialized for this applicant. Returning to Applications...');
                 window.location.href = docsUrl;
                 return;
             }
@@ -4859,8 +4966,8 @@
             if (!proceedData.success) {
                 const reference = window.__m2LastApplicantData?.reference_number || '';
                 const docsUrl = reference
-                    ? `/documents/${position}/management/?search=${encodeURIComponent(reference)}`
-                    : `/documents/${position}/management/`;
+                    ? `/applications/staff/${position}/?search=${encodeURIComponent(reference)}`
+                    : `/applications/staff/${position}/`;
                 const proceedError = proceedData.error || '2.6 saved, but failed to proceed to Module 3.';
                 if (/requirements\s+verified|all\s+7\s+must\s+be\s+complete/i.test(proceedError)) {
                     const separator = docsUrl.includes('?') ? '&' : '?';
@@ -4868,7 +4975,7 @@
                     return;
                 }
                 showFlowAlert(
-                    proceedError + '\n\nRedirecting to Document Management.',
+                    proceedError + '\n\nReturning to Applications.',
                     'Unable to Proceed',
                     () => { window.location.href = docsUrl; }
                 );
@@ -4877,9 +4984,9 @@
 
             const reference = window.__m2LastApplicantData?.reference_number || '';
             const docsUrl = reference
-                ? `/documents/${position}/management/?search=${encodeURIComponent(reference)}`
-                : `/documents/${position}/management/`;
-            alert(`2.6 saved and Module 3 initialized.\nApplication #${proceedData.application_number}\n\nRedirecting to Documents...`);
+                ? `/applications/staff/${position}/?search=${encodeURIComponent(reference)}`
+                : `/applications/staff/${position}/`;
+            alert(`2.6 saved and application form initialized.\nApplication #${proceedData.application_number}\n\nReturning to Applications...`);
             window.location.href = docsUrl;
         } catch (error) {
             alert('Error: ' + error.message);
@@ -4890,10 +4997,10 @@
         if (!currentApplicantId) return;
         const reference = window.__m2LastApplicantData?.reference_number || '';
         const docsUrl = reference
-            ? `/documents/${position}/management/?search=${encodeURIComponent(reference)}`
-            : `/documents/${position}/management/`;
+            ? `/applications/staff/${position}/?search=${encodeURIComponent(reference)}`
+            : `/applications/staff/${position}/`;
         if (window.__hasApplication) {
-            alert('Module 3 is already initialized for this applicant. Redirecting to Documents...');
+            alert('Application form is already initialized for this applicant. Returning to Applications...');
             window.location.href = docsUrl;
             return;
         }
@@ -4925,10 +5032,10 @@
         if (!currentApplicantId) return;
         const reference = window.__m2LastApplicantData?.reference_number || '';
         const docsUrl = reference
-            ? `/documents/${position}/management/?search=${encodeURIComponent(reference)}`
-            : `/documents/${position}/management/`;
+            ? `/applications/staff/${position}/?search=${encodeURIComponent(reference)}`
+            : `/applications/staff/${position}/`;
         if (window.__hasApplication) {
-            alert('Application form has already been generated. Redirecting to Documents...');
+            alert('Application form has already been generated. Returning to Applications...');
             window.location.href = docsUrl;
             return;
         }
@@ -4945,7 +5052,7 @@
                 btn.textContent = 'Form generated';
                 document.getElementById('formStatusText').textContent = `Application #${data.application_number}`;
                 updateProgressTrackerFromStage('Form Released');
-                alert(`Application #${data.application_number} generated. Redirecting to Documents...`);
+                alert(`Application #${data.application_number} generated. Returning to Applications...`);
                 setTimeout(() => {
                     window.location.href = docsUrl;
                 }, 250);
@@ -4970,14 +5077,14 @@
     // Direct form generation from table button
     async function generateFormDirect(applicantId) {
         if (!confirm('Generate application form for this applicant?')) return;
-        const docsUrl = `/documents/${position}/management/`;
+        const docsUrl = `/applications/staff/${position}/`;
 
         try {
             const response = await fetch(`/applications/staff/${position}/generate-form/${applicantId}/`);
             const data = await response.json();
 
             if (data.success) {
-                alert(`Form generated! Application #${data.application_number}\nRedirecting to Documents...`);
+                alert(`Form generated! Application #${data.application_number}\nReturning to Applications...`);
                 window.location.href = docsUrl;
             } else {
                 alert(data.error || 'Failed to generate form');
@@ -5003,7 +5110,7 @@
             formData.append('step', step);
             formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
 
-            const response = await fetch('{% url "documents:update_signatory_routing" request.user.position %}', {
+            const response = await fetch('{% url "applications:update_routing" request.user.position %}', {
                 method: 'POST',
                 body: formData
             });
