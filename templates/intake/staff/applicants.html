@@ -474,10 +474,7 @@
     .applicants-table th:nth-child(11),
     .applicants-table td:nth-child(11) { width: 9%; text-align: center; } /* Action */
 
-    .applicants-table--archive th:nth-child(11),
-    .applicants-table--archive td:nth-child(11) { text-align: center; }
-
-    /* Archive table column tuning (archive table has 11 columns; no Channel column). */
+    /* Archive table column tuning (archive table has 10 columns; no Channel column). */
     .applicants-table--archive th:nth-child(7),
     .applicants-table--archive td:nth-child(7) { width: 6.25rem !important; text-align: center; } /* SMS */
     .applicants-table--archive th:nth-child(8),
@@ -610,7 +607,7 @@
         align-items: center;
         justify-content: center;
         gap: 0.25rem;
-        padding: 0.22rem 0.42rem;
+        padding: 0.08rem 0.2rem;
         border-radius: 9999px;
         font-size: 0.53rem;
         font-weight: 600;
@@ -645,10 +642,12 @@
         font-size: 0.5625rem;
         font-weight: 600;
         cursor: pointer;
-        white-space: nowrap;
+        white-space: normal;
         line-height: 1.2;
         font-family: inherit;
         transition: background 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+        max-width: 75px;
+        word-wrap: break-word;
     }
     .btn-archive-docs--done {
         background: #dcfce7;
@@ -674,28 +673,373 @@
         outline-offset: 2px;
     }
 
+    #archiveRequirementsModal .archive-req-modal {
+        border: 1px solid #cbd5e1;
+        border-radius: 1rem;
+        overflow: hidden;
+        box-shadow: 0 24px 52px -18px rgba(15, 23, 42, 0.35);
+    }
+    #archiveRequirementsModal .archive-req-modal::before {
+        content: '';
+        position: sticky;
+        top: 0;
+        display: block;
+        height: 4px;
+        background: linear-gradient(90deg, #1e3a8a 0%, #2563eb 50%, #0ea5e9 100%);
+        z-index: 11;
+    }
+    #archiveRequirementsModal .archive-req-header {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        padding: 1rem 1.25rem 0.9rem;
+        border-bottom: 1px solid #e2e8f0;
+        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+    }
+    #archiveRequirementsModal .archive-req-headline {
+        text-align: center;
+        max-width: calc(100% - 2.5rem);
+    }
+    #archiveRequirementsModal .archive-req-title {
+        margin: 0.2rem 0 0;
+        font-size: 1.02rem;
+        letter-spacing: -0.01em;
+    }
+    #archiveRequirementsModal .archive-req-subtitle {
+        margin-top: 0.3rem;
+        font-size: 0.78rem;
+        color: #475569;
+        word-break: break-word;
+    }
+    #archiveRequirementsModal .archive-req-body {
+        background: #f8fafc;
+        padding: 1rem 1.25rem 0.95rem;
+    }
+    #archiveRequirementsModal .archive-req-summary {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+    }
+    #archiveRequirementsModal .archive-req-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.32rem 0.62rem;
+        border-radius: 9999px;
+        border: 1px solid #bfdbfe;
+        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        color: #1e3a8a;
+        font-size: 0.64rem;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+    }
+    #archiveRequirementsModal .archive-req-chip-value {
+        font-size: 0.75rem;
+    }
+    #archiveRequirementsModal .archive-req-table-wrap {
+        border: 1px solid #e2e8f0;
+        border-radius: 0.8rem;
+        background: #fff;
+        overflow: hidden;
+    }
     #archiveRequirementsModal .archive-req-table {
         width: 100%;
-        border-collapse: collapse;
-        font-size: 0.6875rem;
+        border-collapse: separate;
+        border-spacing: 0;
+        font-size: 0.72rem;
     }
     #archiveRequirementsModal .archive-req-table th,
     #archiveRequirementsModal .archive-req-table td {
-        padding: 0.4rem 0.5rem;
+        padding: 0.56rem 0.6rem;
         text-align: left;
         border-bottom: 1px solid #e2e8f0;
-        vertical-align: top;
+        vertical-align: middle;
     }
     #archiveRequirementsModal .archive-req-table th {
-        font-weight: 700;
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        font-weight: 800;
         color: #475569;
         text-transform: uppercase;
-        letter-spacing: 0.04em;
-        font-size: 0.575rem;
-        background: #f8fafc;
+        letter-spacing: 0.05em;
+        font-size: 0.57rem;
+        background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+    }
+    #archiveRequirementsModal .archive-req-table tr:hover td {
+        background: #f8fbff;
     }
     #archiveRequirementsModal .archive-req-table tr:last-child td {
         border-bottom: none;
+    }
+    #archiveRequirementsModal .archive-req-table-code {
+        width: 5.5rem;
+        font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+        font-weight: 700;
+        color: #1e3a8a;
+    }
+    #archiveRequirementsModal .archive-req-table-name {
+        min-width: 16rem;
+        color: #0f172a;
+        font-weight: 600;
+    }
+    #archiveRequirementsModal .archive-req-table-group {
+        color: #475569;
+    }
+    #archiveRequirementsModal .archive-req-footnote {
+        margin: 0.7rem 0 0;
+        font-size: 0.67rem;
+        color: #64748b;
+        line-height: 1.45;
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.65rem;
+        padding: 0.55rem 0.7rem;
+    }
+    #archiveRequirementsModal .archive-req-footer {
+        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        border-top: 1px solid #e2e8f0;
+        padding: 0.75rem 1.25rem;
+        display: flex;
+        justify-content: flex-end;
+    }
+    #archiveRequirementsModal .req-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 4.9rem;
+        padding: 0.22rem 0.5rem;
+        border-radius: 9999px;
+        border: 1px solid transparent;
+        font-size: 0.61rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        line-height: 1.15;
+    }
+    #archiveRequirementsModal .req-badge-yes {
+        background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+        color: #166534;
+        border-color: #86efac;
+    }
+    #archiveRequirementsModal .req-badge-no {
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        color: #64748b;
+        border-color: #cbd5e1;
+    }
+    #archiveRequirementsModal .req-scan {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.32rem;
+        padding: 0.24rem 0.56rem;
+        border-radius: 9999px;
+        border: 1px solid transparent;
+        font-size: 0.62rem;
+        font-weight: 800;
+        letter-spacing: 0.03em;
+    }
+    #archiveRequirementsModal .req-scan::before {
+        content: '';
+        width: 0.42rem;
+        height: 0.42rem;
+        border-radius: 9999px;
+        background: currentColor;
+        opacity: 0.85;
+    }
+    #archiveRequirementsModal .req-scan-done {
+        color: #166534;
+        background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+        border-color: #86efac;
+    }
+    #archiveRequirementsModal .req-scan-pending {
+        color: #64748b;
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border-color: #cbd5e1;
+    }
+    @media (max-width: 640px) {
+        #archiveRequirementsModal .archive-req-body {
+            padding: 0.85rem 0.8rem 0.8rem;
+        }
+        #archiveRequirementsModal .archive-req-header {
+            padding: 0.9rem 0.8rem 0.75rem;
+        }
+        #archiveRequirementsModal .archive-req-title {
+            font-size: 0.94rem;
+        }
+        #archiveRequirementsModal .archive-req-subtitle {
+            font-size: 0.72rem;
+        }
+        #archiveRequirementsModal .archive-req-table {
+            font-size: 0.68rem;
+            min-width: 680px;
+        }
+        #archiveRequirementsModal .archive-req-table th,
+        #archiveRequirementsModal .archive-req-table td {
+            padding: 0.48rem 0.5rem;
+        }
+        #archiveRequirementsModal .archive-req-footer {
+            padding: 0.7rem 0.8rem;
+        }
+    }
+
+    #documentScanModal .docscan-modal {
+        width: min(96vw, 58rem);
+        border: 1px solid #cbd5e1;
+        border-radius: 1rem;
+        overflow: hidden;
+        box-shadow: 0 26px 56px -20px rgba(15, 23, 42, 0.35);
+    }
+    #documentScanModal .docscan-header {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        border-bottom: 1px solid #e2e8f0;
+        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        padding: 1rem 1.25rem 0.9rem;
+        display: flex;
+        justify-content: center;
+    }
+    #documentScanModal .docscan-headline {
+        text-align: center;
+        max-width: calc(100% - 2.25rem);
+    }
+    #documentScanModal .docscan-title {
+        margin: 0.25rem 0 0;
+        font-size: 1.03rem;
+        letter-spacing: -0.01em;
+        color: #0f172a;
+    }
+    #documentScanModal .docscan-subtitle {
+        margin-top: 0.28rem;
+        font-size: 0.78rem;
+        color: #475569;
+    }
+    #documentScanModal .docscan-body {
+        background: #f8fafc;
+        padding: 1rem 1.25rem 1rem;
+    }
+    #documentScanModal .docscan-summary {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.55rem;
+        margin-bottom: 0.8rem;
+    }
+    #documentScanModal .docscan-chip {
+        border: 1px solid #bfdbfe;
+        border-radius: 0.7rem;
+        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        color: #1e3a8a;
+        padding: 0.5rem 0.65rem;
+    }
+    #documentScanModal .docscan-chip-label {
+        display: block;
+        margin: 0;
+        font-size: 0.6rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+    }
+    #documentScanModal .docscan-chip-value {
+        display: block;
+        margin-top: 0.18rem;
+        font-size: 1rem;
+        font-weight: 800;
+        color: #1d4ed8;
+    }
+    #documentScanModal .docscan-table-wrap {
+        border: 1px solid #e2e8f0;
+        border-radius: 0.75rem;
+        background: #fff;
+        overflow: hidden;
+    }
+    #documentScanModal .docscan-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        font-size: 0.72rem;
+    }
+    #documentScanModal .docscan-table th,
+    #documentScanModal .docscan-table td {
+        border-bottom: 1px solid #e2e8f0;
+        padding: 0.56rem 0.58rem;
+        text-align: left;
+        vertical-align: middle;
+    }
+    #documentScanModal .docscan-table th {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+        color: #475569;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-size: 0.57rem;
+    }
+    #documentScanModal .docscan-table tr:last-child td { border-bottom: none; }
+    #documentScanModal .docscan-table-code {
+        width: 5.5rem;
+        font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+        font-weight: 700;
+        color: #1e3a8a;
+    }
+    #documentScanModal .docscan-table-name { color: #0f172a; font-weight: 600; }
+    #documentScanModal .docscan-check {
+        width: 0.95rem;
+        height: 0.95rem;
+        accent-color: #2563eb;
+        cursor: default;
+    }
+    #documentScanModal .docscan-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.22rem 0.52rem;
+        border-radius: 9999px;
+        border: 1px solid transparent;
+        font-size: 0.62rem;
+        font-weight: 800;
+        letter-spacing: 0.03em;
+    }
+    #documentScanModal .docscan-status-done {
+        color: #166534;
+        background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+        border-color: #86efac;
+    }
+    #documentScanModal .docscan-status-pending {
+        color: #64748b;
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border-color: #cbd5e1;
+    }
+    #documentScanModal .docscan-footnote {
+        margin: 0.72rem 0 0;
+        font-size: 0.67rem;
+        color: #64748b;
+        line-height: 1.45;
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.65rem;
+        padding: 0.55rem 0.7rem;
+    }
+    #documentScanModal .docscan-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.7rem;
+        border-top: 1px solid #e2e8f0;
+        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        padding: 0.8rem 1.25rem;
+    }
+    @media (max-width: 640px) {
+        #documentScanModal .docscan-header { padding: 0.9rem 0.8rem 0.78rem; }
+        #documentScanModal .docscan-body { padding: 0.85rem 0.8rem 0.8rem; }
+        #documentScanModal .docscan-summary { grid-template-columns: 1fr; }
+        #documentScanModal .docscan-table { min-width: 760px; }
+        #documentScanModal .docscan-footer { padding: 0.7rem 0.8rem; }
     }
 
     .badge {
@@ -2106,22 +2450,26 @@
 </div>
 
 <div class="modal-overlay" id="archiveRequirementsModal" onclick="closeArchiveRequirementsModal()">
-    <div class="modal-content archive-summary-modal" style="max-width: 52rem; width: min(96vw, 52rem);" onclick="event.stopPropagation()">
-        <div class="modal-header" style="justify-content: center;">
-            <div style="text-align: center;">
+    <div class="modal-content archive-summary-modal archive-req-modal" style="max-width: 54rem; width: min(97vw, 54rem);" onclick="event.stopPropagation()">
+        <div class="archive-req-header">
+            <div class="archive-req-headline">
                 <p class="tha-review-modal-kicker">Document scan checklist</p>
-                <h3 class="modal-title" style="font-size: 1rem;">Applicant requirements (Group&nbsp;A)</h3>
-                <p class="modal-subtitle" id="archiveRequirementsSubtitle">Reference • Name</p>
+                <h3 class="modal-title archive-req-title">Applicant requirements (Group&nbsp;A)</h3>
+                <p class="modal-subtitle archive-req-subtitle" id="archiveRequirementsSubtitle">Reference • Name</p>
             </div>
-            <button type="button" class="btn-close" onclick="closeArchiveRequirementsModal()" style="position: absolute; right: 1.5rem;">
+            <button type="button" class="btn-close" onclick="closeArchiveRequirementsModal()" style="position: absolute; right: 1rem; top: 0.8rem;">
                 <svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
                     <line x1="6" y1="6" x2="18" y2="18"></line>
                 </svg>
             </button>
         </div>
-        <div class="modal-body" style="background: #fafbfc; padding-top: 0;">
-            <div style="background:#fff;border:1px solid #e2e8f0;border-radius:0.75rem;overflow:hidden;">
+        <div class="archive-req-body">
+            <div class="archive-req-summary">
+                <span class="archive-req-chip">Required Scanned <span class="archive-req-chip-value" id="archiveRequirementsScannedSummary">0/0</span></span>
+                <span class="archive-req-chip">Rows <span class="archive-req-chip-value" id="archiveRequirementsRowSummary">0</span></span>
+            </div>
+            <div class="archive-req-table-wrap">
                 <div class="table-scroll" style="max-height: min(60vh, 28rem); overflow: auto;">
                     <table class="archive-req-table">
                         <thead>
@@ -2138,11 +2486,11 @@
                     </table>
                 </div>
             </div>
-            <p style="margin: 0.75rem 0 0; font-size: 0.65rem; color: #64748b; line-height: 1.4;">
+            <p class="archive-req-footnote">
                 “Scanned” means at least one digital file exists in the applicant’s vault for that row. When registration Applicant Situation is Option A, B, or C, an eighth row (“ISF situational documentation”) counts toward Requirements X/8; Option D stays at X/7.
             </p>
         </div>
-        <div class="modal-footer">
+        <div class="archive-req-footer">
             <button type="button" class="btn-modal secondary" onclick="closeArchiveRequirementsModal()">Close</button>
         </div>
     </div>
@@ -2150,12 +2498,12 @@
 
 <!-- DOCUMENT SCAN CHECKLIST MODAL (shown before proceeding to LIST OF APPLICATIONS) -->
 <div class="modal-overlay" id="documentScanModal" onclick="closeDocumentScanModal()" style="display: none;">
-    <div class="modal-content archive-summary-modal" style="max-width: 56rem; width: min(96vw, 56rem);" onclick="event.stopPropagation()">
-        <div class="modal-header" style="justify-content: center;">
-            <div style="text-align: center;">
-                <p class="tha-review-modal-kicker">📋 Document Scan Checklist</p>
-                <h3 class="modal-title" style="font-size: 1rem;">Applicant Requirements (Group A)</h3>
-                <p class="modal-subtitle" id="documentScanApplicantRef">Reference • Name</p>
+    <div class="modal-content archive-summary-modal docscan-modal" onclick="event.stopPropagation()">
+        <div class="docscan-header">
+            <div class="docscan-headline">
+                <p class="tha-review-modal-kicker">Document scan checklist</p>
+                <h3 class="docscan-title">Applicant requirements (Group A)</h3>
+                <p class="docscan-subtitle" id="documentScanApplicantRef">Reference • Name</p>
             </div>
             <button type="button" class="btn-close" onclick="closeDocumentScanModal()" style="position: absolute; right: 1.5rem;">
                 <svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -2164,49 +2512,47 @@
                 </svg>
             </button>
         </div>
-        <div class="modal-body" style="background: #fafbfc; padding-top: 0;">
-            <!-- Status Bar -->
-            <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <p style="font-size: 0.75rem; color: #64748b; margin: 0; font-weight: 600; text-transform: uppercase;">Progress</p>
-                    <p style="font-size: 1.5rem; font-weight: 700; color: #2563eb; margin: 0.25rem 0 0 0;" id="documentScanProgress">0/7</p>
+        <div class="docscan-body">
+            <div class="docscan-summary">
+                <div class="docscan-chip">
+                    <span class="docscan-chip-label">Required Scanned</span>
+                    <span class="docscan-chip-value" id="documentScanProgress">0/7</span>
                 </div>
-                <div style="flex: 1; height: 8px; background: #e2e8f0; border-radius: 9999px; margin: 0 1.5rem; overflow: hidden;">
-                    <div id="documentScanProgressBar" style="height: 100%; background: linear-gradient(90deg, #2563eb 0%, #1d4ed8 100%); width: 0%; transition: width 0.3s ease;"></div>
+                <div class="docscan-chip">
+                    <span class="docscan-chip-label">Rows</span>
+                    <span class="docscan-chip-value" id="documentScanRows">7</span>
                 </div>
-                <p style="font-size: 0.875rem; color: #475569; margin: 0; font-weight: 600;" id="documentScanPercentage">0%</p>
+                <div class="docscan-chip">
+                    <span class="docscan-chip-label">Readiness</span>
+                    <span class="docscan-chip-value" id="documentScanReadiness">Blocked</span>
+                </div>
             </div>
 
-            <!-- Checklist Table -->
-            <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 0.75rem; overflow: hidden;">
+            <div class="docscan-table-wrap">
                 <div class="table-scroll" style="max-height: min(50vh, 24rem); overflow: auto;">
-                    <table style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">
-                        <thead style="position: sticky; top: 0; background: #f1f5f9; border-bottom: 2px solid #e2e8f0;">
+                    <table class="docscan-table">
+                        <thead>
                             <tr>
-                                <th style="padding: 0.75rem; text-align: left; color: #475569; font-weight: 600; width: 60px;">
-                                    <input type="checkbox" id="selectAllDocs" style="cursor: pointer;" onchange="toggleSelectAllDocs()">
-                                </th>
-                                <th style="padding: 0.75rem; text-align: left; color: #475569; font-weight: 600;">Code</th>
-                                <th style="padding: 0.75rem; text-align: left; color: #475569; font-weight: 600;">Document Name</th>
-                                <th style="padding: 0.75rem; text-align: center; color: #475569; font-weight: 600;">Status</th>
+                                <th>Checked</th>
+                                <th>Code</th>
+                                <th>Name</th>
+                                <th>Group</th>
+                                <th>Is required for form</th>
+                                <th>Is active</th>
+                                <th>Scanned</th>
                             </tr>
                         </thead>
-                        <tbody id="documentScanTableBody" style="background: white;">
-                            <!-- Populated by JavaScript -->
-                        </tbody>
+                        <tbody id="documentScanTableBody"></tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- Helper Text -->
-            <p style="margin: 1rem 0 0; font-size: 0.75rem; color: #64748b; line-height: 1.5;">
-                ✓ <strong>Required:</strong> Check the box for each document scanned (R01–R07, 7 documents minimum)<br>
-                ○ <strong>Optional:</strong> ISF situational documentation (ISF-SIT) is optional—applicant may proceed without it
+            <p class="docscan-footnote">
+                Applicant can proceed only when all seven baseline requirements (R01-R07) are scanned. If Applicant Situation is Option A, B, or C, the ISF-SIT row is shown but remains optional for this proceed gate.
             </p>
         </div>
 
-        <!-- Footer with Action Buttons -->
-        <div class="modal-footer" style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+        <div class="docscan-footer">
             <button type="button" class="btn-modal secondary" onclick="closeDocumentScanModal()">Cancel</button>
             <button type="button" class="btn-modal primary" id="submitToApplicationsBtn" onclick="submitToApplications()" disabled style="opacity: 0.5; cursor: not-allowed;">
                 Submit to LIST OF APPLICATIONS
@@ -2385,7 +2731,7 @@
                 <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
             </svg>
             <div>
-                <p style="font-size: 0.625rem; color: #64748b; margin: 0; text-transform: uppercase; font-weight: 500;">Total Archived</p>
+                <p style="font-size: 0.625rem; color: #64748b; margin: 0; text-transform: uppercase; font-weight: 500;">Total List</p>
                 <p style="font-size: 1.25rem; font-weight: 700; color: #2563eb; margin: 0;" id="archiveTotalCount">{{ archive_records|length }}</p>
             </div>
         </div>
@@ -2422,6 +2768,9 @@
             </svg>
             Export CSV
         </button>
+        <a href="{% url 'intake:archive_list' request.user.position %}" class="btn-primary-add" style="margin-left: 0.5rem;">
+            🗂️ Archives
+        </a>
     </div>
     <div class="table-scroll">
     <table class="applicants-table applicants-table--archive">
@@ -2437,7 +2786,6 @@
                 <th>DOB</th>
                 <th>Barangay</th>
                 <th>Documents</th>
-                <th>Action</th>
             </tr>
         </thead>
         <tbody id="archiveTableBody">
@@ -2498,38 +2846,10 @@
                         Requirements {{ row.scannedCount }}/{{ row.requirementsTotal }}
                     </button>
                 </td>
-                <td>
-                    <button
-                        type="button"
-                        class="btn-archive-action"
-                        onclick="openArchiveHandoffSummary(this)"
-                        data-reference="{{ row.referenceNumber }}"
-                        data-name="{{ row.fullName }}"
-                        data-last-name="{{ row.lastName }}"
-                        data-first-name="{{ row.firstName }}"
-                        data-middle-name="{{ row.middleName }}"
-                        data-extension-name="{{ row.extensionName }}"
-                        data-channel="{{ row.channelLabel }}"
-                        data-proceeded="{{ row.handoffAt|default:row.dateTime }}"
-                        data-proceeded-by="{{ row.handoffBy|default:'Unknown' }}"
-                        data-staff="{{ row.handledBy|default:'Unknown' }}"
-                        data-staff-position="{{ row.handledByPosition|default:'N/A' }}"
-                        data-sms="{% if row.hasPhone %}{% if row.registrationSmsSent %}Sent{% else %}Not Sent{% endif %}{% else %}No Phone{% endif %}"
-                        data-dob="{{ row.dateOfBirthDisplay|default:'N/A' }}"
-                        data-barangay="{{ row.barangay|default:'N/A' }}"
-                        data-module2-summary="{{ row.module2Summary|default:'' }}"
-                        data-module3-summary="{{ row.module3Summary|default:'Not yet proceeded to Module 3' }}"
-                        data-module3-at="{{ row.module3ProceededAt|default:'' }}"
-                        data-module3-by="{{ row.module3ProceededBy|default:'' }}"
-                        title="View handoff summary"
-                    >
-                        Handoff Summary
-                    </button>
-                </td>
             </tr>
             {% empty %}
             <tr id="archiveEmptyRow">
-                <td colspan="11" style="text-align:center; color:#64748b; font-size:0.75rem; padding:1rem;">
+                <td colspan="10" style="text-align:center; color:#64748b; font-size:0.75rem; padding:1rem;">
                     No proceeded records yet.
                 </td>
             </tr>
@@ -4187,21 +4507,36 @@
         }
         if (!tbody) return;
 
+        const scannedSummaryEl = document.getElementById('archiveRequirementsScannedSummary');
+        const rowSummaryEl = document.getElementById('archiveRequirementsRowSummary');
+
         if (!payload || !payload.rows || !payload.rows.length) {
+            if (scannedSummaryEl) scannedSummaryEl.textContent = '0/0';
+            if (rowSummaryEl) rowSummaryEl.textContent = '0';
             tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:1rem;color:#64748b;">No Group A requirements in the catalog. Seed requirements (e.g. R01–R07) to see this checklist.</td></tr>';
         } else {
+            var rows = payload.rows || [];
+            var requiredRows = rows.filter(function (r) { return !!r.is_required_for_form; });
+            var scannedRequired = requiredRows.filter(function (r) { return !!r.scanned; }).length;
+            if (scannedSummaryEl) scannedSummaryEl.textContent = String(scannedRequired) + '/' + String(requiredRows.length);
+            if (rowSummaryEl) rowSummaryEl.textContent = String(rows.length);
+
             tbody.innerHTML = payload.rows.map(function (r) {
-                var reqTxt = r.is_required_for_form ? 'True' : 'False';
-                var activeTxt = r.is_active ? 'True' : 'False';
+                var reqBadge = r.is_required_for_form
+                    ? '<span class="req-badge req-badge-yes">Required</span>'
+                    : '<span class="req-badge req-badge-no">Optional</span>';
+                var activeBadge = r.is_active
+                    ? '<span class="req-badge req-badge-yes">Active</span>'
+                    : '<span class="req-badge req-badge-no">Inactive</span>';
                 var scanCell = r.scanned
-                    ? '<span style="color:#166534;font-weight:600;">✓</span>'
-                    : '<span style="color:#cbd5e1;">—</span>';
+                    ? '<span class="req-scan req-scan-done">Scanned</span>'
+                    : '<span class="req-scan req-scan-pending">Not scanned</span>';
                 return '<tr>'
-                    + '<td>' + escapeHtml(String(r.code || '')) + '</td>'
-                    + '<td>' + escapeHtml(String(r.name || '')) + '</td>'
-                    + '<td>' + escapeHtml(String(r.group_display || '')) + '</td>'
-                    + '<td>' + escapeHtml(reqTxt) + '</td>'
-                    + '<td>' + escapeHtml(activeTxt) + '</td>'
+                    + '<td class="archive-req-table-code">' + escapeHtml(String(r.code || '')) + '</td>'
+                    + '<td class="archive-req-table-name">' + escapeHtml(String(r.name || '')) + '</td>'
+                    + '<td class="archive-req-table-group">' + escapeHtml(String(r.group_display || '')) + '</td>'
+                    + '<td>' + reqBadge + '</td>'
+                    + '<td>' + activeBadge + '</td>'
                     + '<td>' + scanCell + '</td>'
                     + '</tr>';
             }).join('');
@@ -5399,30 +5734,77 @@
             refEl.textContent = `${applicant.referenceNumber} • ${applicant.fullName}`;
         }
 
-        // Get requirements data
         const requirements = [
-            { code: 'R01', name: 'Brgy. Certificate of Residency', isRequired: true, isFSIT: false },
-            { code: 'R02', name: 'Brgy. Certificate of Indigency', isRequired: true, isFSIT: false },
-            { code: 'R03', name: 'Cedula', isRequired: true, isFSIT: false },
-            { code: 'R04', name: 'Police Clearance', isRequired: true, isFSIT: false },
-            { code: 'R05', name: 'Certificate of No Property', isRequired: true, isFSIT: false },
-            { code: 'R06', name: '2x2 Picture', isRequired: true, isFSIT: false },
-            { code: 'R07', name: 'Sketch of House Location', isRequired: true, isFSIT: false },
+            {
+                code: 'R01',
+                name: 'Brgy. Certificate of Residency',
+                group: 'Group A - Applicant Requirements',
+                isRequired: true,
+                isActive: true,
+                scanned: !!applicant.docBrgyResidency,
+            },
+            {
+                code: 'R02',
+                name: 'Brgy. Certificate of Indigency',
+                group: 'Group A - Applicant Requirements',
+                isRequired: true,
+                isActive: true,
+                scanned: !!applicant.docBrgyIndigency,
+            },
+            {
+                code: 'R03',
+                name: 'Cedula',
+                group: 'Group A - Applicant Requirements',
+                isRequired: true,
+                isActive: true,
+                scanned: !!applicant.docCedula,
+            },
+            {
+                code: 'R04',
+                name: 'Police Clearance',
+                group: 'Group A - Applicant Requirements',
+                isRequired: true,
+                isActive: true,
+                scanned: !!applicant.docPoliceClearance,
+            },
+            {
+                code: 'R05',
+                name: 'Certificate of No Property',
+                group: 'Group A - Applicant Requirements',
+                isRequired: true,
+                isActive: true,
+                scanned: !!applicant.docNoProperty,
+            },
+            {
+                code: 'R06',
+                name: '2x2 Picture',
+                group: 'Group A - Applicant Requirements',
+                isRequired: true,
+                isActive: true,
+                scanned: !!applicant.doc2x2Picture,
+            },
+            {
+                code: 'R07',
+                name: 'Sketch of House Location',
+                group: 'Group A - Applicant Requirements',
+                isRequired: true,
+                isActive: true,
+                scanned: !!applicant.docSketchLocation,
+            },
         ];
-
-        // Add ISF-SIT if Option A, B, or C
-        const hasISF = ['danger_zone', 'ejected', 'relocated'].includes(applicant.displacementReason);
-        if (hasISF) {
-            requirements.push({ code: 'ISF-SIT', name: 'ISF situational documentation (Options A / B / C)', isRequired: false, isFSIT: true });
+        if (['danger_zone', 'ejected', 'relocated'].includes(applicant.displacementReason)) {
+            requirements.push({
+                code: 'ISF-SIT',
+                name: 'ISF situational documentation (Options A / B / C)',
+                group: 'Group A - Applicant Requirements',
+                isRequired: false,
+                isActive: true,
+                scanned: false,
+            });
         }
 
-        // Populate the table
         populateDocumentScanTable(requirements, applicant);
 
-        // Reset checkboxes
-        documentScanCheckboxes = {};
-
-        // Show modal
         modal.style.display = 'flex';
     }
 
@@ -5437,106 +5819,65 @@
 
         tbody.innerHTML = requirements.map(req => `
             <tr style="border-bottom: 1px solid #e2e8f0;">
-                <td style="padding: 0.75rem; text-align: center;">
+                <td style="text-align: center;">
                     <input
                         type="checkbox"
-                        class="doc-scan-checkbox"
+                        class="doc-scan-checkbox docscan-check"
                         data-code="${req.code}"
                         data-required="${req.isRequired}"
-                        style="cursor: pointer;"
-                        onchange="updateDocumentScanProgress()"
+                        ${req.scanned ? 'checked' : ''}
+                        disabled
                     >
                 </td>
-                <td style="padding: 0.75rem; color: #1e293b; font-weight: 600;">${escapeHtml(req.code)}</td>
-                <td style="padding: 0.75rem; color: #475569;">${escapeHtml(req.name)}</td>
-                <td style="padding: 0.75rem; text-align: center;">
-                    <span class="doc-scan-status" style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; background: #fee2e2; color: #991b1b;">
-                        Not Scanned
+                <td class="docscan-table-code">${escapeHtml(req.code)}</td>
+                <td class="docscan-table-name">${escapeHtml(req.name)}</td>
+                <td>${escapeHtml(req.group || 'Group A - Applicant Requirements')}</td>
+                <td>
+                    <span class="${req.isRequired ? 'req-badge req-badge-yes' : 'req-badge req-badge-no'}">
+                        ${req.isRequired ? 'Required' : 'Optional'}
+                    </span>
+                </td>
+                <td>
+                    <span class="${req.isActive ? 'req-badge req-badge-yes' : 'req-badge req-badge-no'}">
+                        ${req.isActive ? 'Active' : 'Inactive'}
+                    </span>
+                </td>
+                <td>
+                    <span class="${req.scanned ? 'docscan-status docscan-status-done' : 'docscan-status docscan-status-pending'}">
+                        ${req.scanned ? 'Scanned' : 'Not scanned'}
                     </span>
                 </td>
             </tr>
         `).join('');
 
-        // Re-attach event listeners
-        document.querySelectorAll('.doc-scan-checkbox').forEach(checkbox => {
-            checkbox.addEventListener('change', updateDocumentScanProgress);
-        });
-
+        const rowsEl = document.getElementById('documentScanRows');
+        if (rowsEl) rowsEl.textContent = String(requirements.length);
         updateDocumentScanProgress();
     }
 
     function updateDocumentScanProgress() {
-        const checkboxes = document.querySelectorAll('.doc-scan-checkbox:checked');
         const requiredCheckboxes = document.querySelectorAll('.doc-scan-checkbox[data-required="true"]:checked');
         const totalRequired = document.querySelectorAll('.doc-scan-checkbox[data-required="true"]');
 
         const scannedCount = requiredCheckboxes.length;
         const requiredCount = totalRequired.length;
-        const percentage = requiredCount > 0 ? Math.round((scannedCount / requiredCount) * 100) : 0;
 
-        // Update progress display
         const progressEl = document.getElementById('documentScanProgress');
         if (progressEl) progressEl.textContent = `${scannedCount}/${requiredCount}`;
+        const readinessEl = document.getElementById('documentScanReadiness');
+        const isComplete = scannedCount === requiredCount && requiredCount > 0;
+        if (readinessEl) readinessEl.textContent = isComplete ? 'Ready' : 'Review';
 
-        const percentageEl = document.getElementById('documentScanPercentage');
-        if (percentageEl) percentageEl.textContent = `${percentage}%`;
-
-        // Update progress bar
-        const progressBar = document.getElementById('documentScanProgressBar');
-        if (progressBar) progressBar.style.width = `${percentage}%`;
-
-        // Update checkbox statuses
-        document.querySelectorAll('.doc-scan-checkbox').forEach((checkbox, idx) => {
-            const statusEl = checkbox.closest('tr')?.querySelector('.doc-scan-status');
-            if (statusEl) {
-                if (checkbox.checked) {
-                    statusEl.textContent = '✓ Scanned';
-                    statusEl.style.background = '#dcfce7';
-                    statusEl.style.color = '#14532d';
-                } else {
-                    statusEl.textContent = 'Not Scanned';
-                    statusEl.style.background = '#fee2e2';
-                    statusEl.style.color = '#991b1b';
-                }
-            }
-        });
-
-        // Enable/disable Submit button only when 7/7 required documents are scanned
         const submitBtn = document.getElementById('submitToApplicationsBtn');
         if (submitBtn) {
-            const isComplete = scannedCount === requiredCount;
-            submitBtn.disabled = !isComplete;
-            submitBtn.style.opacity = isComplete ? '1' : '0.5';
-            submitBtn.style.cursor = isComplete ? 'pointer' : 'not-allowed';
+            submitBtn.disabled = false;
+            submitBtn.style.opacity = '1';
+            submitBtn.style.cursor = 'pointer';
         }
-    }
-
-    function toggleSelectAllDocs() {
-        const selectAllCheckbox = document.getElementById('selectAllDocs');
-        const docCheckboxes = document.querySelectorAll('.doc-scan-checkbox');
-
-        const isChecked = selectAllCheckbox?.checked;
-        docCheckboxes.forEach(checkbox => {
-            checkbox.checked = isChecked;
-        });
-
-        updateDocumentScanProgress();
     }
 
     function submitToApplications() {
         if (!currentApplicant) return;
-
-        const checkboxes = document.querySelectorAll('.doc-scan-checkbox[data-required="true"]:checked');
-        const requiredCheckboxes = document.querySelectorAll('.doc-scan-checkbox[data-required="true"]');
-
-        if (checkboxes.length !== requiredCheckboxes.length) {
-            showNoticeModal({
-                title: 'Incomplete Checklist',
-                message: 'Please mark all 7 required documents as scanned before proceeding.',
-                type: 'warning',
-            });
-            return;
-        }
 
         // Close the document scan modal
         closeDocumentScanModal();

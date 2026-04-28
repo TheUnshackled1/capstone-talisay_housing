@@ -162,7 +162,7 @@ LOGOUT_REDIRECT_URL = 'accounts:dashboard'
 
 # Session settings
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-SESSION_COOKIE_AGE = 60 * 30  # 30 minutes
+SESSION_COOKIE_AGE = 60 * 60  # 1 hour
 
 # =============================================================================
 # SMS — IPROG Gateway Configuration (Affordable P1/SMS)

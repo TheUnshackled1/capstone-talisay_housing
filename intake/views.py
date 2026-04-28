@@ -1442,7 +1442,7 @@ def walkin_register(request, position):
 
 
 @login_required
-def archive_list(request, staff_position):
+def archive_list(request, position):
     """
     Display archived records (applicants proceeded to Module 2).
     URL: /intake/staff/<position>/archive/
@@ -1452,15 +1452,26 @@ def archive_list(request, staff_position):
     # Get filters from query parameters
     selected_channel = request.GET.get('channel', '')
     selected_barangay = request.GET.get('barangay', '')
+    search_query = (request.GET.get('q') or '').strip()
 
     # Build query
-    archives_qs = Archive.objects.select_related('applicant', 'archived_by').order_by('archived_at')
+    archives_qs = Archive.objects.select_related(
+        'applicant',
+        'archived_by',
+        'applicant__application__form_generated_by',
+    ).order_by('archived_at')
 
     if selected_channel:
         archives_qs = archives_qs.filter(channel=selected_channel)
 
     if selected_barangay:
         archives_qs = archives_qs.filter(barangay_name_snapshot=selected_barangay)
+    if search_query:
+        archives_qs = archives_qs.filter(
+            Q(full_name_snapshot__icontains=search_query) |
+            Q(reference_number_snapshot__icontains=search_query) |
+            Q(barangay_name_snapshot__icontains=search_query)
+        )
 
     # Get unique channels and barangays for filters
     channel_choices = {
@@ -1472,6 +1483,17 @@ def archive_list(request, staff_position):
 
     barangays = Archive.objects.values_list('barangay_name_snapshot', flat=True).distinct().order_by('barangay_name_snapshot')
     barangays = [b for b in barangays if b]  # Remove empty values
+
+    applicant_ids_for_docs = list(
+        archives_qs.exclude(applicant_id__isnull=True).values_list('applicant_id', flat=True)
+    )
+    docs_by_applicant_id = defaultdict(set)
+    if applicant_ids_for_docs:
+        for aid, doc_type in Document.objects.filter(
+            applicant_id__in=applicant_ids_for_docs,
+        ).values_list('applicant_id', 'document_type'):
+            docs_by_applicant_id[aid].add(doc_type)
+    requirements_group_a = list(Requirement.objects.filter(group='A').order_by('order', 'code'))
 
     # Prepare records for template
     records = []
@@ -1490,14 +1512,41 @@ def archive_list(request, staff_position):
         # Convert to local timezone for display
         local_archived_at = timezone.localtime(archive.archived_at)
         date_time_display = local_archived_at.strftime('%b %d, %Y | %I:%M %p')
+        handoff_at_detail = local_archived_at.strftime('%Y-%m-%d %I:%M %p')
 
         # Get DOB display
         dob_display = archive.date_of_birth_snapshot.strftime('%m/%d/%Y') if archive.date_of_birth_snapshot else 'N/A'
 
+        scanned_types = docs_by_applicant_id.get(archive.applicant_id, set()) if archive.applicant_id else set()
+        disp_snapshot = ''
+        if archive.applicant_id and archive.applicant:
+            disp_snapshot = (archive.applicant.displacement_reason or '').strip()
+        requirement_scan_rows, scanned_count, trackable_total = _archive_requirement_scan_rows(
+            requirements_group_a,
+            scanned_types,
+            displacement_reason=disp_snapshot,
+        )
+        requirements_total = trackable_total if trackable_total > 0 else max(len(requirement_scan_rows), 1)
+
+        module3_summary = 'Not yet proceeded to Module 3'
+        module3_proceeded_at = ''
+        module3_proceeded_by = ''
+        if archive.applicant_id and hasattr(archive.applicant, 'application'):
+            app_obj = getattr(archive.applicant, 'application', None)
+            if app_obj and app_obj.form_generated_at:
+                local_form_generated_at = timezone.localtime(app_obj.form_generated_at)
+                module3_proceeded_at = local_form_generated_at.strftime('%Y-%m-%d %I:%M %p')
+                module3_proceeded_by = app_obj.form_generated_by.get_full_name() if app_obj.form_generated_by else 'Unknown'
+                module3_summary = f"Application #{app_obj.application_number} • {module3_proceeded_at}"
+
+        sms_text = 'No Phone'
+        if bool(archive.applicant.phone_number if archive.applicant else False):
+            sms_text = 'Sent' if archive.sms_sent else 'Not Sent'
+
         records.append({
             'id': str(archive.id),
             'dateTime': date_time_display,
-            'handoffAt': date_time_display,
+            'handoffAt': handoff_at_detail,
             'referenceNumber': archive.reference_number_snapshot,
             'fullName': archive.full_name_snapshot,
             'lastName': archive.last_name_snapshot,
@@ -1512,10 +1561,15 @@ def archive_list(request, staff_position):
             'handoffBy': staff_name,
             'registrationSmsSent': archive.sms_sent,
             'hasPhone': bool(archive.applicant.phone_number if archive.applicant else False),
+            'smsText': sms_text,
             'dateOfBirthDisplay': dob_display,
             'barangay': archive.barangay_name_snapshot,
-            'scannedCount': 0,  # TODO: Calculate from Document model if needed
-            'requirementsTotal': 7,
+            'scannedCount': scanned_count,
+            'requirementsTotal': requirements_total,
+            'module2Summary': f"{archive.reference_number_snapshot} • {archive.full_name_snapshot}",
+            'module3Summary': module3_summary,
+            'module3ProceededAt': module3_proceeded_at,
+            'module3ProceededBy': module3_proceeded_by,
         })
 
     # Pagination
@@ -1525,7 +1579,8 @@ def archive_list(request, staff_position):
 
     context = {
         'page_title': 'Archive Records',
-        'staff_position': staff_position,
+        'staff_position': position,
+        'position': position,
         'total_archived': archives_qs.count(),
         'channels': channel_choices,
         'selected_channel': selected_channel,

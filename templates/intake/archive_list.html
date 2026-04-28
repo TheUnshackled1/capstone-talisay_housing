@@ -1,0 +1,521 @@
+{% extends 'staff_base.html' %}
+{% load static %}
+
+{% block nav_applicants %}active{% endblock %}
+{% block page_title %}Staff Portal{% endblock %}
+
+{% block extra_css %}
+<style>
+    .applicants-container {
+        padding: 1rem 1rem 0.9rem;
+        max-width: 100%;
+        background: #ffffff;
+        border: 1px solid #dbe2ea;
+        border-radius: 0.85rem;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+        margin-bottom: 0.95rem;
+    }
+    .controls-bar {
+        display:flex;
+        align-items:center;
+        gap:0.5rem;
+        flex-wrap:wrap;
+        margin-bottom:0.72rem;
+        padding:0.52rem;
+        border-radius:0.64rem;
+        border: 1px solid #e2e8f0;
+        background: #f8fafc;
+    }
+    .summary-chip-card {
+        display:inline-flex; align-items:center; gap:0.5rem; background:#f8fafc; border:1px solid #e2e8f0;
+        border-radius:0.52rem; padding:0.42rem 0.58rem; white-space:nowrap;
+    }
+    .search-box { flex:1 1 280px; min-width:240px; position:relative; }
+    .search-icon { position:absolute; left:0.65rem; top:50%; transform:translateY(-50%); width:0.9rem; height:0.9rem; color:#94a3b8; }
+    .search-input { width:100%; padding:0.52rem 0.65rem 0.52rem 2rem; border:1px solid #dbe2ea; border-radius:9px; min-height:39px; font-size:0.74rem; color:#334155; }
+    .filter-select { padding:0.52rem 0.65rem; border:1px solid #dbe2ea; border-radius:9px; min-height:39px; font-size:0.74rem; background:#fff; color:#334155; }
+    .table-scroll { overflow-x:auto; }
+    .applicants-table { width:100%; border-collapse:collapse; font-size:0.7rem; min-width:980px; }
+    .applicants-table th, .applicants-table td { border:1px solid #e5e7eb; padding:0.4rem 0.45rem; text-align:left; vertical-align:top; }
+    .applicants-table th { background:#f8fafc; color:#475569; font-weight:700; text-transform:uppercase; letter-spacing:0.03em; font-size:0.54rem; padding:0.45rem 0.34rem; }
+    .applicants-table td { font-size:0.6rem; padding:0.34rem 0.3rem; }
+    .table-pagination { margin-top:0.6rem; padding-top:0.46rem; display:flex; justify-content:space-between; align-items:center; font-size:0.72rem; color:#64748b; gap:0.5rem; flex-wrap:wrap; }
+    .table-pagination-controls { display:inline-flex; align-items:center; gap:0.4rem; }
+    .btn-page { border:1px solid #d1d5db; background:#fff; color:#334155; border-radius:6px; padding:0.25rem 0.5rem; min-height:25px; font-size:0.62rem; text-decoration:none; }
+    .handled-by-avatar { width:1.15rem; height:1.15rem; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:0.55rem; font-weight:700; color:#fff; background:#64748b; }
+    .handled-by-avatar.second-member { background:#2563eb; }
+    .handled-by-avatar.fourth-member { background:#7c3aed; }
+    .btn-archive-action {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.22rem 0.42rem;
+        border-radius: 9999px;
+        font-size: 0.53rem;
+        font-weight: 600;
+        color: #075985;
+        background: #e0f2fe;
+        border: 1px solid #bae6fd;
+        text-decoration: none;
+        white-space: nowrap;
+        line-height: 1;
+        transition: background 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+    }
+    .btn-archive-action:hover {
+        background: #bae6fd;
+        border-color: #7dd3fc;
+        box-shadow: 0 2px 6px rgba(14, 116, 144, 0.2);
+        transform: translateY(-1px);
+    }
+    .btn-archive-action:focus-visible {
+        outline: 2px solid rgba(59, 130, 246, 0.45);
+        outline-offset: 2px;
+    }
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.5);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+    }
+    .modal-overlay.active { display: flex; }
+    .btn-close {
+        border: 1px solid #e2e8f0;
+        background: #fff;
+        width: 1.8rem;
+        height: 1.8rem;
+        border-radius: 999px;
+        color: #334155;
+        cursor: pointer;
+        line-height: 1;
+        font-size: 1rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Handoff Summary Modal — Applicant Journey timeline */
+    #archiveSummaryModal .modal-content.archive-summary-modal {
+        border: 1px solid #cbd5e1;
+        border-radius: 1rem;
+        box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.28);
+        overflow: hidden;
+        width: min(94vw, 46rem);
+        max-height: 90vh;
+        overflow-y: auto;
+        background: #fff;
+        position: relative;
+    }
+    #archiveSummaryModal .modal-content.archive-summary-modal::before {
+        content: '';
+        position: sticky;
+        top: 0;
+        display: block;
+        height: 4px;
+        background: linear-gradient(90deg, #1e3a8a 0%, #2563eb 25%, #16a34a 50%, #d97706 75%, #7c3aed 100%);
+        z-index: 11;
+    }
+    #archiveSummaryModal .modal-header {
+        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        border-bottom: 2px solid #e2e8f0;
+        padding: 1.1rem 1.5rem 1rem;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+    #archiveSummaryModal .tha-review-modal-kicker {
+        font-size: 0.6rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: #1e3a8a;
+        margin: 0 0 0.4rem 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+    #archiveSummaryModal .tha-review-modal-kicker::before {
+        content: '';
+        width: 0.5rem;
+        height: 0.5rem;
+        background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+        border-radius: 50%;
+        box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.12);
+    }
+    #archiveSummaryModal .modal-title {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #0f172a;
+        letter-spacing: -0.02em;
+    }
+    #archiveSummaryModal .modal-subtitle {
+        font-size: 0.78rem;
+        color: #475569;
+        margin-top: 0.3rem;
+    }
+    #archiveSummaryModal .modal-body {
+        padding: 1.25rem 1.5rem;
+        background: #fafbfc;
+    }
+    #archiveSummaryModal .modal-body > div {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.75rem;
+        padding: 1.1rem 1.2rem !important;
+        margin-bottom: 0.85rem !important;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+    #archiveSummaryModal .modal-body > div::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: 4px;
+    }
+    #archiveSummaryModal .modal-body > div:nth-child(1)::before { background: linear-gradient(180deg, #2563eb 0%, #1e40af 100%); }
+    #archiveSummaryModal .modal-body > div:nth-child(2)::before { background: linear-gradient(180deg, #16a34a 0%, #15803d 100%); }
+    #archiveSummaryModal .modal-body > div:nth-child(3)::before { background: linear-gradient(180deg, #d97706 0%, #b45309 100%); }
+    #archiveSummaryModal .modal-body > div:nth-child(4)::before { background: linear-gradient(180deg, #7c3aed 0%, #6d28d9 100%); }
+    #archiveSummaryModal .modal-body h4 {
+        font-size: 0.78rem !important;
+        font-weight: 800 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.12em !important;
+        margin: 0 0 1rem 0 !important;
+        display: flex;
+        align-items: center;
+        gap: 0.55rem;
+        padding-left: 0.4rem;
+    }
+    #archiveSummaryModal .modal-body h4::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: linear-gradient(90deg, #cbd5e1 0%, transparent 100%);
+    }
+    #archiveSummaryModal .modal-body p[style*="text-transform"] {
+        font-size: 0.6rem !important;
+        font-weight: 800 !important;
+        color: #64748b !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.1em !important;
+        margin-bottom: 0.35rem !important;
+    }
+    #archiveSummaryModal .modal-body div[id^="archiveSummary"] {
+        font-size: 0.85rem !important;
+        font-weight: 600 !important;
+        color: #0f172a !important;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.45rem;
+        padding: 0.55rem 0.7rem;
+        line-height: 1.4;
+        word-break: break-word;
+    }
+    #archiveSummaryModal #archiveSummaryReference,
+    #archiveSummaryModal #archiveSummaryModule2Summary {
+        font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace !important;
+        color: #1e3a8a !important;
+        background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%) !important;
+        border-color: #bfdbfe !important;
+        letter-spacing: 0.01em !important;
+    }
+    #archiveSummaryModal .modal-footer {
+        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        border-top: 1px solid #e2e8f0;
+        padding: 0.85rem 1.5rem;
+        display: flex;
+        justify-content: flex-end;
+    }
+    #archiveSummaryModal .btn-modal.secondary {
+        font-weight: 700;
+        font-size: 0.72rem;
+        letter-spacing: 0.04em;
+        padding: 0.55rem 1.1rem;
+        border-radius: 0.55rem;
+        text-transform: uppercase;
+        background: #ffffff;
+        color: #475569;
+        border: 1px solid #cbd5e1;
+        transition: all 0.18s ease;
+    }
+    #archiveSummaryModal .btn-modal.secondary:hover {
+        background: #f8fafc;
+        border-color: #94a3b8;
+        color: #1e293b;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+    }
+    #archiveSummaryModal .btn-close {
+        color: #64748b;
+        border-radius: 0.5rem;
+    }
+    #archiveSummaryModal .btn-close:hover {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+    @media (max-width: 1200px) {
+        .controls-bar {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            align-items: stretch;
+        }
+        .summary-chip-card,
+        .search-box,
+        .filter-select {
+            width: 100%;
+            min-width: 0;
+        }
+        .btn-export {
+            width: 100%;
+            justify-content: center;
+            margin-left: 0 !important;
+        }
+    }
+    @media (max-width: 640px) {
+        .controls-bar { grid-template-columns: 1fr; }
+        .search-box { min-width: 0; }
+        .applicants-table { min-width: 820px; }
+        .btn-archive-action {
+            padding: 0.22rem 0.42rem;
+            font-size: 0.53rem;
+            line-height: 1;
+            border-radius: 9999px;
+        }
+        .table-pagination {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .table-pagination-controls {
+            width: 100%;
+            justify-content: space-between;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="applicants-container">
+    <div style="display:flex; align-items:center; justify-content:center; margin:0 0 0.5rem 0; gap:0.75rem; flex-wrap:wrap;">
+        <h3 style="margin:0; font-size:0.95rem; color:#1e293b; font-weight:600; text-align: center;">ARCHIVES</h3>
+    </div>
+
+    <form class="controls-bar" method="get">
+        <div class="summary-chip-card">
+            <svg style="width: 20px; height: 20px; color: #2563eb;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            <div>
+                <p style="font-size: 0.625rem; color: #64748b; margin: 0; text-transform: uppercase; font-weight: 500;">Total Archived</p>
+                <p style="font-size: 1.25rem; font-weight: 700; color: #2563eb; margin: 0;">{{ total_archived }}</p>
+            </div>
+        </div>
+        <div class="search-box">
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
+            <input type="text" class="search-input" placeholder="Name, ref #, barangay..." name="q" value="{{ request.GET.q|default:'' }}">
+        </div>
+        <select class="filter-select" name="barangay">
+            <option value="">All Barangays</option>
+            {% for brgy in barangays %}<option value="{{ brgy }}" {% if selected_barangay == brgy %}selected{% endif %}>{{ brgy }}</option>{% endfor %}
+        </select>
+        <select class="filter-select" name="channel">
+            <option value="">All Channels</option>
+            {% for key, label in channels.items %}
+            <option value="{{ key }}" {% if selected_channel == key %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        <button type="button" onclick="exportArchiveCSV()" class="btn-export" style="display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.5rem 0.75rem; background: #10b981; color: white; border: none; border-radius: 0.5rem; font-size: 0.75rem; font-weight: 500; cursor: pointer; white-space: nowrap; margin-left: auto;">
+            <svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            Export CSV
+        </button>
+    </form>
+
+    <div class="table-scroll">
+    <table class="applicants-table applicants-table--archive">
+        <thead>
+            <tr><th>#</th><th>Transaction #</th><th>Proceeded</th><th>Reference #</th><th>Full Name</th><th>Staff Handled</th><th>SMS</th><th>DOB</th><th>Barangay</th><th>Action</th></tr>
+        </thead>
+        <tbody>
+            {% for row in archive_records %}
+            <tr>
+                <td style="font-weight:700; color:#1e293b;">{{ forloop.counter }}</td>
+                <td style="font-weight:600; color:#1d4ed8;">#{{ row.id|slice:":8" }}</td>
+                <td style="font-size:0.6875rem; color:#64748b;">{{ row.dateTime }}</td>
+                <td>{{ row.referenceNumber }}</td>
+                <td style="font-weight:500;">{{ row.fullName }}</td>
+                <td><div style="display:flex; align-items:center; gap:0.375rem;"><div class="handled-by-avatar {% if row.handledByPosition == '2nd Member' %}second-member{% elif row.handledByPosition == '4th Member' %}fourth-member{% else %}other{% endif %}">{{ row.handledByInitials }}</div><div style="display:flex; flex-direction:column; min-width:0;"><span style="font-size:0.625rem; font-weight:500; color:#1e293b;">{{ row.handledBy }}</span><span style="font-size:0.5625rem; color:#64748b;">{{ row.handledByPosition }}</span></div></div></td>
+                <td>{% if row.hasPhone %}{% if row.registrationSmsSent %}<span style="display:inline-flex; align-items:center; gap:0.125rem; padding:0.125rem 0.375rem; background:#dcfce7; color:#166534; border-radius:9999px; font-size:0.5625rem; font-weight:500;">✓ Sent</span>{% else %}<span style="display:inline-flex; align-items:center; gap:0.125rem; padding:0.125rem 0.375rem; background:#fee2e2; color:#991b1b; border-radius:9999px; font-size:0.5625rem; font-weight:500;">✗ Not Sent</span>{% endif %}{% else %}<span style="padding:0.125rem 0.375rem; background:#f1f5f9; color:#64748b; border-radius:9999px; font-size:0.5625rem;">No Phone</span>{% endif %}</td>
+                <td style="font-size:0.625rem; color:#1e293b; font-weight:600;">{{ row.dateOfBirthDisplay|default:"N/A" }}</td>
+                <td style="font-size:0.5625rem; color:#64748b;">{{ row.barangay|default:"N/A" }}</td>
+                <td>
+                    <button
+                        type="button"
+                        class="btn-archive-action"
+                        onclick="openArchiveHandoffSummary(this)"
+                        data-reference="{{ row.referenceNumber }}"
+                        data-name="{{ row.fullName }}"
+                        data-last-name="{{ row.lastName|default:'N/A' }}"
+                        data-first-name="{{ row.firstName|default:'N/A' }}"
+                        data-middle-name="{{ row.middleName|default:'N/A' }}"
+                        data-extension-name="{{ row.extensionName|default:'N/A' }}"
+                        data-proceeded="{{ row.handoffAt|default:row.dateTime }}"
+                        data-proceeded-by="{{ row.handoffBy|default:'Unknown' }}"
+                        data-staff="{{ row.handledBy|default:'Unknown' }}"
+                        data-staff-position="{{ row.handledByPosition|default:'N/A' }}"
+                        data-sms="{{ row.smsText|default:'N/A' }}"
+                        data-dob="{{ row.dateOfBirthDisplay|default:'N/A' }}"
+                        data-barangay="{{ row.barangay|default:'N/A' }}"
+                        data-module2-summary="{{ row.module2Summary|default:'' }}"
+                        data-module3-summary="{{ row.module3Summary|default:'Not yet proceeded to Module 3' }}"
+                        data-module3-at="{{ row.module3ProceededAt|default:'' }}"
+                        data-module3-by="{{ row.module3ProceededBy|default:'' }}"
+                    >
+                        Handoff Summary
+                    </button>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="10" style="text-align:center; color:#64748b; font-size:0.75rem; padding:1rem;">No proceeded records yet.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+
+    <div class="table-pagination">
+        <span class="table-pagination-info">{% if page_obj.paginator.count %}Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ page_obj.paginator.count }}{% else %}Showing 0-0 of 0{% endif %}</span>
+        <div class="table-pagination-controls">
+            {% if page_obj.has_previous %}<a class="btn-page" href="?page={{ page_obj.previous_page_number }}&barangay={{ selected_barangay }}&channel={{ selected_channel }}&q={{ request.GET.q|default:'' }}">Prev</a>{% else %}<span class="btn-page" style="opacity:0.45; pointer-events:none;">Prev</span>{% endif %}
+            <span class="page-indicator">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+            {% if page_obj.has_next %}<a class="btn-page" href="?page={{ page_obj.next_page_number }}&barangay={{ selected_barangay }}&channel={{ selected_channel }}&q={{ request.GET.q|default:'' }}">Next</a>{% else %}<span class="btn-page" style="opacity:0.45; pointer-events:none;">Next</span>{% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="archiveSummaryModal" onclick="closeArchiveSummaryModal()">
+    <div class="modal-content archive-summary-modal" style="max-width: 46rem; width: min(94vw, 46rem);" onclick="event.stopPropagation()">
+        <div class="modal-header" style="justify-content: center;">
+            <div style="text-align: center;">
+                <p class="tha-review-modal-kicker">Applicant Journey</p>
+                <h3 class="modal-title" style="font-size: 1rem;">Handoff Summary</h3>
+                <p class="modal-subtitle" id="archiveSummarySubtitle">Complete handoff details</p>
+            </div>
+            <button class="btn-close" onclick="closeArchiveSummaryModal()" style="position: absolute; right: 1.5rem;">
+                <svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div>
+                <h4 style="color: #1e40af;"><svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>Module 1 &middot; Registration</h4>
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1rem;">
+                    <div><p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Reference #</p><div id="archiveSummaryReference">N/A</div></div>
+                    <div><p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Full Name</p><div id="archiveSummaryName">N/A</div></div>
+                    <div><p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Last Name</p><div id="archiveSummaryLastName">N/A</div></div>
+                    <div><p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">First Name</p><div id="archiveSummaryFirstName">N/A</div></div>
+                    <div><p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Middle Name</p><div id="archiveSummaryMiddleName">N/A</div></div>
+                    <div><p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Extension Name</p><div id="archiveSummaryExtensionName">N/A</div></div>
+                    <div><p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">DOB</p><div id="archiveSummaryDob">N/A</div></div>
+                    <div><p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Barangay</p><div id="archiveSummaryBarangay">N/A</div></div>
+                    <div><p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Encoded By</p><div id="archiveSummaryEncodedBy">N/A</div></div>
+                    <div><p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Staff Role</p><div id="archiveSummaryStaffRole">N/A</div></div>
+                </div>
+            </div>
+            <div>
+                <h4 style="color: #16a34a;"><svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg>Module 2 &middot; Application &amp; Evaluation</h4>
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1rem;">
+                    <div><p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Proceeded To Application</p><div id="archiveSummaryProceededAt">N/A</div></div>
+                    <div><p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Proceeded By</p><div id="archiveSummaryProceededBy">N/A</div></div>
+                    <div><p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Application Status</p><div id="archiveSummaryModule2Summary">N/A</div></div>
+                </div>
+            </div>
+            <div>
+                <h4 style="color: #d97706;"><svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 13 7 8"/><line x1="12" y1="13" x2="12" y2="3"/></svg>Module 3 &middot; Documents</h4>
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1rem;">
+                    <div><p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">SMS Status</p><div id="archiveSummarySms">N/A</div></div>
+                </div>
+            </div>
+            <div>
+                <h4 style="color: #6d28d9;"><svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Module 4 &middot; Lot Awarding</h4>
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1rem;">
+                    <div><p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Status</p><div id="archiveSummaryModule3Summary">Not yet proceeded to Lot Awarding</div></div>
+                    <div><p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Proceeded At</p><div id="archiveSummaryModule3At">N/A</div></div>
+                    <div><p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Proceeded By</p><div id="archiveSummaryModule3By">N/A</div></div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-modal secondary" onclick="closeArchiveSummaryModal()">Close</button>
+        </div>
+    </div>
+</div>
+
+<script>
+function exportArchiveCSV() {
+    const table = document.querySelector('.applicants-table');
+    if (!table) return;
+    const headers = Array.from(table.querySelectorAll('thead th')).map(th => th.textContent.trim());
+    const rows = Array.from(table.querySelectorAll('tbody tr'))
+        .filter(tr => tr.querySelectorAll('td').length > 1)
+        .map(tr => Array.from(tr.querySelectorAll('td')).map(td => (td.textContent || '').replace(/\s+/g, ' ').trim()));
+
+    if (rows.length === 0) {
+        alert('No archive rows to export.');
+        return;
+    }
+    let csv = headers.map(h => `"${String(h).replace(/"/g, '""')}"`).join(',') + '\n';
+    rows.forEach(row => {
+        csv += row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + '\n';
+    });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.href = url;
+    link.download = `Archive_Records_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+function openArchiveHandoffSummary(buttonEl) {
+    if (!buttonEl) return;
+    const d = buttonEl.dataset || {};
+    const setText = (id, value) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = value || 'N/A';
+    };
+    setText('archiveSummarySubtitle', `${d.reference || 'N/A'} • ${d.name || 'N/A'}`);
+    setText('archiveSummaryReference', d.reference || 'N/A');
+    setText('archiveSummaryName', d.name || 'N/A');
+    setText('archiveSummaryLastName', d.lastName || 'N/A');
+    setText('archiveSummaryFirstName', d.firstName || 'N/A');
+    setText('archiveSummaryMiddleName', d.middleName || 'N/A');
+    setText('archiveSummaryExtensionName', d.extensionName || 'N/A');
+    setText('archiveSummaryDob', d.dob || 'N/A');
+    setText('archiveSummaryBarangay', d.barangay || 'N/A');
+    setText('archiveSummaryEncodedBy', d.staff || 'Unknown');
+    setText('archiveSummaryStaffRole', d.staffPosition || 'N/A');
+    setText('archiveSummaryProceededAt', d.proceeded || 'N/A');
+    setText('archiveSummaryProceededBy', d.proceededBy || 'Unknown');
+    setText('archiveSummaryModule2Summary', d.module2Summary || `${d.reference || 'N/A'} • ${d.name || 'N/A'}`);
+    setText('archiveSummarySms', d.sms || 'N/A');
+    setText('archiveSummaryModule3Summary', d.module3Summary || 'Not yet proceeded to Module 3');
+    setText('archiveSummaryModule3At', d.module3At || 'N/A');
+    setText('archiveSummaryModule3By', d.module3By || 'N/A');
+    const modal = document.getElementById('archiveSummaryModal');
+    if (modal) modal.classList.add('active');
+}
+function closeArchiveSummaryModal() {
+    const modal = document.getElementById('archiveSummaryModal');
+    if (modal) modal.classList.remove('active');
+}
+</script>
+{% endblock %}
