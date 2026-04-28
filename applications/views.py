@@ -1117,17 +1117,46 @@ def update_cdrrmo_certification(request, position):
         return JsonResponse({'success': False, 'error': f'Error updating CDRRMO certification: {str(e)}'})
 
 
+def _layer3_queue_placement_bundle(applicant, acting_user):
+    """
+    Module 2 Layer 3 follows registration-time displacement encoding; this only
+    adjusts queue placement once staff proceed past the acknowledgement step.
+    """
+    try:
+        rules = _module2_eligibility_snapshot(applicant, checked_by=acting_user)
+        target_queue = rules.get('recommended_queue_type') or 'walk_in'
+        if target_queue not in ('priority', 'walk_in'):
+            target_queue = 'walk_in'
+        queue_entry, queue_changed = _ensure_module2_queue_entry(
+            applicant, target_queue, added_by=acting_user,
+        )
+        return {
+            'queue_type': queue_entry.queue_type,
+            'queue_position': queue_entry.position,
+            'queue_changed': bool(queue_changed),
+            'qualifies_for_priority': bool(rules.get('qualifies_for_priority')),
+            'layer2_clear': bool(rules.get('layer2_clear')),
+            'layer3_clear': bool(rules.get('layer3_clear')),
+            'requires_cdrrmo': bool(rules.get('requires_cdrrmo')),
+            'cdrrmo_status': rules.get('cdrrmo_status'),
+            'advisories': list(rules.get('advisories') or []),
+        }
+    except Exception:
+        return None
+
+
 @login_required
 @verify_position
 @require_POST
 def record_displacement_classification(request, position):
     """
-    Module 2 — Layer 3 displacement classification.
+    Module 2 — Layer 3 acknowledgement (particulars are captured at Module 1 registration).
 
-    Staff records WHY the applicant is seeking relocation. The selection drives
-    which supporting document Module 3 will verify later (CDRRMO certificate /
-    court order / project documentation). Module 2 only persists the staff
-    selection and accompanying details — no document verification happens here.
+    For new applicants, ``review_only=1`` runs queue placement using the
+    displacement reason and details already stored on the Applicant record.
+
+    The full POST body (``displacement_reason``, ``hazard_type``, etc.) remains
+    supported as a legacy/administrative override when needed.
     """
     allowed_positions = ['fourth_member', 'second_member', 'oic']
     if request.user.position not in allowed_positions:
@@ -1135,11 +1164,8 @@ def record_displacement_classification(request, position):
 
     try:
         applicant_id = request.POST.get('applicant_id')
-        reason = (request.POST.get('displacement_reason') or '').strip()
         if not applicant_id:
             return JsonResponse({'success': False, 'error': 'Missing applicant_id'})
-        if reason not in ('danger_zone', 'ejected', 'relocated', 'not_abc'):
-            return JsonResponse({'success': False, 'error': 'Select a valid displacement reason.'})
 
         applicant = Applicant.objects.get(id=applicant_id)
         handoff_error = _require_module2_handoff(applicant)
@@ -1148,6 +1174,31 @@ def record_displacement_classification(request, position):
         blacklist_error = _require_module2_blacklist_clear(applicant)
         if blacklist_error:
             return blacklist_error
+
+        review_only = request.POST.get('review_only') == '1'
+        if review_only:
+            reason = (applicant.displacement_reason or '').strip()
+            if reason not in ('danger_zone', 'ejected', 'relocated', 'not_abc'):
+                return JsonResponse({
+                    'success': False,
+                    'error': (
+                        'Displacement classification is not on file. Complete Applicant Situation '
+                        'and particulars during Module 1 (Intake registration) first.'
+                    ),
+                }, status=400)
+            queue_placement = _layer3_queue_placement_bundle(applicant, request.user)
+            return JsonResponse({
+                'success': True,
+                'message': 'Layer 3 acknowledged — particulars are on file from Module 1 intake.',
+                'displacement_reason': reason,
+                'displacement_reason_display': applicant.get_displacement_reason_display(),
+                'queue_placement': queue_placement,
+                'review_only': True,
+            })
+
+        reason = (request.POST.get('displacement_reason') or '').strip()
+        if reason not in ('danger_zone', 'ejected', 'relocated', 'not_abc'):
+            return JsonResponse({'success': False, 'error': 'Select a valid displacement reason.'})
 
         applicant.displacement_reason = reason
         update_fields = {'displacement_reason'}
@@ -1246,30 +1297,7 @@ def record_displacement_classification(request, position):
         # (`update_cdrrmo_certification` / `update_cdrrmo_status`) still owns the
         # demotion path: a `not_certified` outcome will move the applicant back
         # to Walk-in. If Layer 2 has any flag, the applicant stays on Walk-in.
-        queue_placement = None
-        try:
-            rules = _module2_eligibility_snapshot(applicant, checked_by=request.user)
-            target_queue = rules.get('recommended_queue_type') or 'walk_in'
-            if target_queue not in ('priority', 'walk_in'):
-                target_queue = 'walk_in'
-            queue_entry, queue_changed = _ensure_module2_queue_entry(
-                applicant, target_queue, added_by=request.user,
-            )
-            queue_placement = {
-                'queue_type': queue_entry.queue_type,
-                'queue_position': queue_entry.position,
-                'queue_changed': bool(queue_changed),
-                'qualifies_for_priority': bool(rules.get('qualifies_for_priority')),
-                'layer2_clear': bool(rules.get('layer2_clear')),
-                'layer3_clear': bool(rules.get('layer3_clear')),
-                'requires_cdrrmo': bool(rules.get('requires_cdrrmo')),
-                'cdrrmo_status': rules.get('cdrrmo_status'),
-                'advisories': list(rules.get('advisories') or []),
-            }
-        except Exception:
-            # Non-fatal: the classification is still saved; queue placement can
-            # be reconciled by the next eligibility check.
-            queue_placement = None
+        queue_placement = _layer3_queue_placement_bundle(applicant, request.user)
 
         return JsonResponse({
             'success': True,

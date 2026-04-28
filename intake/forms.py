@@ -4,6 +4,18 @@ from django.core.exceptions import ValidationError
 import re
 
 
+def _is_weak_hazard_location_input(raw_location):
+    """Match `intake.views._is_weak_hazard_location` for registration validation."""
+    location = " ".join((raw_location or "").split()).strip().lower()
+    if len(location) < 12:
+        return True
+    weak_values = {
+        "n/a", "na", "none", "unknown", "same", "same as address",
+        "same address", "barangay", "sitio", "landmark",
+    }
+    return location in weak_values
+
+
 def validate_philippine_phone(value):
     """
     Validates Philippine phone number format.
@@ -99,23 +111,34 @@ class HouseholdMemberForm(forms.ModelForm):
 # Channel B: Danger Zone Registration Form
 # ============================================================
 
-DANGER_ZONE_TYPES = [
-    ('', '-- Select Danger Zone Type --'),
-    ('riverside', 'Riverside / Riverbank'),
-    ('flood_prone', 'Flood-Prone Area'),
-    ('landslide', 'Landslide-Prone Area'),
-    ('coastal', 'Coastal / Near Shoreline'),
-    ('railroad', 'Near Railroad Tracks'),
-    ('road_right_of_way', 'Road Right of Way'),
-    ('other', 'Other Danger Zone'),
+DISPLACEMENT_REGISTRATION_CHOICES = [
+    ('danger_zone', 'Danger Zone / Hazard Area (Option A)'),
+    ('ejected', 'Ejected from previous residence (Option B)'),
+    ('relocated', 'Relocated due to project / infrastructure (Option C)'),
+    ('not_abc', 'None of A, B, or C (Option D)'),
 ]
+
+# Aligned with Module 2 hazard options (stored on Applicant.danger_zone_type).
+DANGER_ZONE_TYPES = [
+    ('', '— Select hazard type —'),
+    ('flood_prone', 'Flood-prone area'),
+    ('landslide', 'Landslide-prone area'),
+    ('storm_surge', 'Storm surge zone'),
+    ('river_bank', 'River / creek bank'),
+    ('cliff_edge', 'Cliff edge'),
+    ('coastal', 'Coastal erosion'),
+    ('other', 'Other hazard'),
+]
+
+EJECTION_REGISTRATION_CHOICES = list(Applicant.EJECTION_TYPE_CHOICES)
 
 
 class WalkInApplicantForm(forms.ModelForm):
     """
     Module 1 office walk-in registration (Channel B desk).
-    Hazard-area particulars are optional; when declared, the backend opens a
-    CDRRMO verification (claim-only) workflow — CDRRMO does not log into the system.
+
+    Applicant Situation (Options A–D) determines displacement particulars collected here:
+    hazard (CDRRMO pathway), ejection, or government-project relocation. Details persist on the Applicant record for Modules 2–3 (verification workflows downstream).
     """
     barangay = forms.ChoiceField(
         choices=BARANGAY_CHOICES,
@@ -134,6 +157,13 @@ class WalkInApplicantForm(forms.ModelForm):
         widget=forms.Select(attrs={'class': 'form-select'})
     )
 
+    displacement_reason = forms.ChoiceField(
+        choices=DISPLACEMENT_REGISTRATION_CHOICES,
+        required=True,
+        label="Applicant Situation (Options A–D)",
+        widget=forms.RadioSelect(attrs={'class': 'form-radio'}),
+    )
+
     # Danger zone specific fields (optional - only required if applicant IS in danger zone)
     danger_zone_type = forms.ChoiceField(
         choices=DANGER_ZONE_TYPES,
@@ -144,12 +174,35 @@ class WalkInApplicantForm(forms.ModelForm):
 
     danger_zone_location = forms.CharField(
         required=False,
-        label="Danger Zone Location Details",
-        widget=forms.Textarea(attrs={
+        max_length=255,
+        label="Hazard Location Description",
+        widget=forms.TextInput(attrs={
             'class': 'form-control',
-            'rows': 2,
-            'placeholder': 'Describe the specific danger zone location...'
+            'placeholder': 'Sitio, purok, river, creek, or nearby landmark',
+            'maxlength': 255,
         })
+    )
+
+    ejection_type = forms.ChoiceField(
+        choices=EJECTION_REGISTRATION_CHOICES,
+        required=False,
+        label="Ejection Classification",
+        widget=forms.Select(attrs={'class': 'form-select'}),
+    )
+    ejection_date = forms.DateField(
+        required=False,
+        label="Date of Notice or Ejection",
+        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+    )
+    project_name = forms.CharField(
+        required=False,
+        max_length=255,
+        label="Project Designation",
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Road-widening, drainage, infrastructure, or other government project',
+            'maxlength': 255,
+        }),
     )
 
     # Eligibility check required field
@@ -205,6 +258,12 @@ class WalkInApplicantForm(forms.ModelForm):
             'occupation',
             'employment_status',
             'has_property_in_talisay',
+            'displacement_reason',
+            'danger_zone_type',
+            'danger_zone_location',
+            'ejection_type',
+            'ejection_date',
+            'project_name',
         ]
         widgets = {
             'last_name': forms.TextInput(attrs={
@@ -307,21 +366,49 @@ class WalkInApplicantForm(forms.ModelForm):
         return income
 
     def clean(self):
-        """Custom validation for danger zone fields - only required if is_danger_zone=true."""
+        """Require hazard / ejection / project particulars by Applicant Situation (A–D)."""
         cleaned_data = super().clean()
+        dr = (cleaned_data.get('displacement_reason') or '').strip()
 
-        # Check if is_danger_zone was in the original POST data
-        is_danger_zone = self.data.get('is_danger_zone', 'false')
+        danger_zone_type = (cleaned_data.get('danger_zone_type') or '').strip()
+        danger_zone_location = (cleaned_data.get('danger_zone_location') or '').strip()
+        ejection_type = (cleaned_data.get('ejection_type') or '').strip()
+        project_name = (cleaned_data.get('project_name') or '').strip()
 
-        # Only validate danger zone fields if applicant is in danger zone
-        if is_danger_zone == 'true':
-            danger_zone_type = cleaned_data.get('danger_zone_type')
-            danger_zone_location = cleaned_data.get('danger_zone_location')
-
+        if dr == 'danger_zone':
             if not danger_zone_type:
-                self.add_error('danger_zone_type', 'This field is required for danger zone applicants.')
-            if not danger_zone_location or not danger_zone_location.strip():
-                self.add_error('danger_zone_location', 'This field is required for danger zone applicants.')
+                self.add_error('danger_zone_type', 'Hazard classification is required for Option A.')
+            if not danger_zone_location:
+                self.add_error('danger_zone_location', 'Hazard location description is required for Option A.')
+            elif _is_weak_hazard_location_input(danger_zone_location):
+                self.add_error(
+                    'danger_zone_location',
+                    'Location particulars must be specific (at least 12 characters), for example: sitio, landmark, and riverbank/road segment.',
+                )
+            cleaned_data['ejection_type'] = ''
+            cleaned_data['ejection_date'] = None
+            cleaned_data['project_name'] = ''
+        elif dr == 'ejected':
+            valid_ej = {key for key, _ in Applicant.EJECTION_TYPE_CHOICES if key}
+            if ejection_type not in valid_ej:
+                self.add_error('ejection_type', 'Ejection classification is required for Option B.')
+            cleaned_data['danger_zone_type'] = ''
+            cleaned_data['danger_zone_location'] = ''
+            cleaned_data['project_name'] = ''
+        elif dr == 'relocated':
+            if not project_name:
+                self.add_error('project_name', 'Project designation is required for Option C.')
+            cleaned_data['danger_zone_type'] = ''
+            cleaned_data['danger_zone_location'] = ''
+            cleaned_data['ejection_type'] = ''
+            cleaned_data['ejection_date'] = None
+        else:
+            # Option D or unset — clear situational particulars on save (view also normalizes)
+            cleaned_data['danger_zone_type'] = ''
+            cleaned_data['danger_zone_location'] = ''
+            cleaned_data['ejection_type'] = ''
+            cleaned_data['ejection_date'] = None
+            cleaned_data['project_name'] = ''
 
         return cleaned_data
 

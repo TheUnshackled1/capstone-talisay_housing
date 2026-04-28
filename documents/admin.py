@@ -44,13 +44,17 @@ class DocumentAdmin(admin.ModelAdmin):
 
 @admin.register(Requirement)
 class RequirementAdmin(admin.ModelAdmin):
-    list_display = ('code', 'name', 'group', 'is_required_for_form', 'is_active')
+    list_display = ('code', 'name', 'vault_document_type', 'group', 'is_required_for_form', 'is_active')
     list_filter = ('group', 'is_required_for_form', 'is_active')
     search_fields = ('code', 'name')
 
     fieldsets = (
         ('📋 REQUIREMENT', {
             'fields': ('code', 'name', 'group'),
+        }),
+        ('📎 DIGITAL VAULT LINK', {
+            'fields': ('vault_document_type',),
+            'description': 'Set to match an uploaded Document type for scan checklist / Module 2 tracking.',
         }),
         ('⚙️ SETTINGS', {
             'fields': ('is_required_for_form', 'is_active', 'order'),

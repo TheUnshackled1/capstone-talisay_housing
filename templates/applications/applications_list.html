@@ -1268,14 +1268,14 @@
         }
     }
 
-    /* Layer 3 displacement panels are styled with Tailwind utilities;
-       this hook preserves the runtime is-active toggle behavior. */
+    /* Layer 3: only one particulars panel visible; Tailwind utilities on the same
+       div can otherwise override plain display:none — keep these defensive. */
     .m2-disp-panel {
-        display: none;
+        display: none !important;
     }
 
     .m2-disp-panel.is-active {
-        display: block;
+        display: block !important;
     }
 
     .m2-layer4-block {
@@ -3394,73 +3394,13 @@
         if (box) box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
-    function m2OnDisplacementReasonChange() {
-        const options = document.querySelectorAll('#m2DispOptions .m2-disp-option');
-        let selected = '';
-        options.forEach(opt => {
-            const input = opt.querySelector('input[type="radio"]');
-            if (input && input.checked) {
-                selected = input.value;
-                opt.classList.add('is-selected');
-            } else {
-                opt.classList.remove('is-selected');
-            }
-        });
-        document.querySelectorAll('.m2-disp-panel').forEach(panel => {
-            const value = panel.getAttribute('data-disp-panel') || '';
-            if (value === selected) {
-                panel.classList.add('is-active');
-            } else {
-                panel.classList.remove('is-active');
-            }
-        });
-    }
-
-    async function recordDisplacementClassification() {
-        if (!currentApplicantId || !canVerifyDocs) return;
-
-        const selectedRadio = document.querySelector('#m2DispOptions input[name="modalDisplacementReason"]:checked');
-        const reason = selectedRadio ? selectedRadio.value : '';
-        if (!reason) {
-            alert('Select one displacement reason before saving.');
-            return;
-        }
+    async function m2Layer3ProceedToEvaluation() {
+        if (!currentApplicantId) return;
 
         const formData = new FormData();
         formData.append('applicant_id', currentApplicantId);
-        formData.append('displacement_reason', reason);
         formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
-
-        if (reason === 'danger_zone') {
-            const hazardType = (document.getElementById('m2HazardType')?.value || '').trim();
-            const hazardLocation = (document.getElementById('m2HazardLocation')?.value || '').trim();
-            if (!hazardType) {
-                alert('Hazard Type is required for the Danger Zone option.');
-                return;
-            }
-            if (!hazardLocation) {
-                alert('Hazard Location Details is required for the Danger Zone option.');
-                return;
-            }
-            formData.append('hazard_type', hazardType);
-            formData.append('hazard_location', hazardLocation);
-        } else if (reason === 'ejected') {
-            const ejectionType = (document.getElementById('m2EjectionType')?.value || '').trim();
-            const ejectionDate = (document.getElementById('m2EjectionDate')?.value || '').trim();
-            if (!ejectionType) {
-                alert('Ejection Type is required for the Ejected option.');
-                return;
-            }
-            formData.append('ejection_type', ejectionType);
-            if (ejectionDate) formData.append('ejection_date', ejectionDate);
-        } else if (reason === 'relocated') {
-            const projectName = (document.getElementById('m2ProjectName')?.value || '').trim();
-            if (!projectName) {
-                alert('Project Name is required for the Project Relocation option.');
-                return;
-            }
-            formData.append('project_name', projectName);
-        }
+        formData.append('review_only', '1');
 
         try {
             const response = await fetch('{% url "applications:record_displacement_classification" request.user.position %}', {
@@ -3469,48 +3409,41 @@
             });
             const data = await response.json();
             if (!data.success) {
-                alert(data.error || 'Unable to save displacement classification.');
+                alert(data.error || 'Unable to continue from Layer 3.');
                 return;
             }
 
-            // Queue auto-promotion notice. The backend now upgrades the queue
-            // entry to Priority as soon as Layer 2 is clean and Layer 3 has been
-            // classified — for danger-zone, ejected, and project-relocation
-            // applicants alike. We surface that placement here so staff sees the
-            // outcome before stepping into Layer 4 (Evaluation Approval).
             const qp = data.queue_placement;
             if (qp && qp.queue_type && currentApplicantId) {
-                // Live-update the table row + queue counters so closing the modal
-                // without proceeding to Layer 4 still reflects the new placement.
                 updateApplicantQueueRow(currentApplicantId, qp);
             }
             if (qp && qp.queue_type) {
-                const reasonLabel = data.displacement_reason_display || 'Layer 3 classification';
+                const reasonLabel = data.displacement_reason_display || 'Recorded classification';
                 let header;
                 let body;
                 if (qp.queue_type === 'priority') {
-                    header = 'Applicant promoted to PRIORITY QUEUE';
+                    header = 'Applicant aligned to PRIORITY QUEUE';
                     const lines = [
-                        'Layers 1, 2, and 3 are all satisfied.',
-                        `Classification recorded: ${reasonLabel}.`,
+                        'Layers 1, 2, and 3 are satisfied for queue placement.',
+                        `Classification on file: ${reasonLabel}.`,
                         `Queue placement: Priority Queue #${qp.queue_position}.`,
                     ];
                     if (qp.requires_cdrrmo && qp.cdrrmo_status && qp.cdrrmo_status !== 'certified') {
                         lines.push(
-                            'Note: CDRRMO certification is still pending. If CDRRMO returns "not certified", ' +
-                            'the applicant will be moved back to the Walk-in Queue automatically.'
+                            'Note: CDRRMO certification may still be pending for hazard-area cases. '
+                            + 'If CDRRMO returns "not certified", routing may revert to Walk-in per policy.'
                         );
                     }
                     lines.push('Proceeding to Layer 4 — Evaluation Approval.');
                     body = lines.join('\n\n');
                 } else {
-                    header = 'Applicant placed on WALK-IN QUEUE';
+                    header = 'Applicant aligned to WALK-IN QUEUE';
                     const lines = [
-                        `Classification recorded: ${reasonLabel}.`,
+                        `Classification on file: ${reasonLabel}.`,
                         `Queue placement: Walk-in Queue #${qp.queue_position}.`,
                     ];
                     if (!qp.layer2_clear) {
-                        lines.push('Layer 2 has at least one flag, so the applicant cannot be promoted to Priority.');
+                        lines.push('Layer 2 has at least one flag, so Priority is not available.');
                     }
                     lines.push('Proceeding to Layer 4 — Evaluation Approval.');
                     body = lines.join('\n\n');
@@ -3654,202 +3587,75 @@
         const savedEjectionType = profile.ejection_type || '';
         const savedEjectionDate = profile.ejection_date || '';
         const savedProjectName = profile.project_name || '';
+        const savedEjectionDisplay = profile.ejection_type_display || '';
         const layer2Clear = !!rules.layer2_clear;
+        const layer3Clear = !!rules.layer3_clear;
         const qualifiesForPriority = !!rules.qualifies_for_priority;
         const escAttr = (value) => escapeHtml(String(value == null ? '' : value));
-        const radio = (value, title, sub) => {
-            const checked = savedReason === value ? ' checked' : '';
-            const isSelected = savedReason === value;
-            // Per-option visual config keyed by value (institutional palette: muted accent + navy selection)
-            const cfg = {
-                danger_zone: {
-                    label: 'Option A',
-                    optionClass: 'option-a',
-                },
-                ejected: {
-                    label: 'Option B',
-                    optionClass: 'option-b',
-                },
-                relocated: {
-                    label: 'Option C',
-                    optionClass: 'option-c',
-                },
-                not_abc: {
-                    label: 'Option D',
-                    optionClass: 'option-d',
-                },
-            }[value] || {};
-            const disabled = canVerifyDocs ? '' : ' is-disabled';
-            const optionClass = `${cfg.optionClass || ''}${isSelected ? ' is-selected' : ''}${disabled}`.trim();
-            return `
-                <label class="m2-disp-option ${optionClass}" data-disp-option="${value}">
-                    <input type="radio" name="modalDisplacementReason" value="${value}" onchange="m2OnDisplacementReasonChange()"${checked}${canVerifyDocs ? '' : ' disabled'} class="sr-only">
-                    <div class="m2-disp-option__top">
-                        <span class="m2-disp-option__label">${cfg.label || ''}</span>
-                    </div>
-                    <div class="m2-disp-option__title-row">
-                        <span class="m2-disp-option__check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></span>
-                        <span class="m2-disp-option__title">${title}</span>
-                    </div>
-                    <p class="m2-disp-option__desc">${sub}</p>
-                </label>`;
-        };
 
-        const hazardTypeOptions = [
-            ['', '— Select hazard type —'],
-            ['flood_prone', 'Flood-prone area'],
-            ['landslide', 'Landslide-prone area'],
-            ['storm_surge', 'Storm surge zone'],
-            ['river_bank', 'River / creek bank'],
-            ['cliff_edge', 'Cliff edge'],
-            ['coastal', 'Coastal erosion'],
-            ['other', 'Other hazard'],
-        ];
-        const ejectionTypeOptions = [
-            ['', '— Select ejection type —'],
-            ['private_eviction', 'Private land eviction'],
-            ['court_order', 'Court order'],
-            ['landowner_recovery', 'Landowner recovery'],
-            ['other', 'Other'],
-        ];
+        const hazardLabelPretty = ({
+            flood_prone: 'Flood-prone area',
+            landslide: 'Landslide-prone area',
+            storm_surge: 'Storm surge zone',
+            river_bank: 'River / creek bank',
+            cliff_edge: 'Cliff edge',
+            coastal: 'Coastal erosion',
+            other: 'Other hazard',
+        })[savedHazardType] || (savedHazardType ? savedHazardType.replace(/_/g, ' ') : '—');
 
-        const buildOptions = (opts, selected) => opts.map(([val, label]) => {
-            const sel = String(selected || '') === String(val) ? ' selected' : '';
-            return `<option value="${escAttr(val)}"${sel}>${escapeHtml(label)}</option>`;
-        }).join('');
+        let layer3ReadonlyBody = '';
+        if (!savedReason) {
+            layer3ReadonlyBody =
+                `<div class="rounded-md border border-amber-200 bg-amber-50 p-3 sm:p-4 text-[0.8rem] text-amber-950 leading-snug">
+                    Displacement particulars are not on file. Record <strong>Applicant Situation (A–D)</strong> and the matching particulars during
+                    <strong>Module 1 intake registration</strong> before running Module 2.
+                </div>`;
+        } else {
+            layer3ReadonlyBody =
+                `<p class="text-[0.78rem] sm:text-[0.8rem] text-slate-600 mb-3 text-left leading-relaxed">
+                    Encoded during <strong>Module 1 (Intake) registration</strong>. Supporting documents are verified in Module 3.
+                </p>` +
+                `<div class="rounded-md border border-slate-200 bg-slate-50 p-3 sm:p-4 text-left">` +
+                `<p class="text-sm font-bold text-slate-900">${escAttr(savedReasonDisplay || savedReason)}</p>`;
+            if (savedReason === 'danger_zone') {
+                layer3ReadonlyBody +=
+                    `<dl class="mt-2 space-y-1 text-[0.78rem]">` +
+                    `<dt class="text-slate-500 font-semibold uppercase tracking-wide text-[0.62rem]">Hazard classification</dt>` +
+                    `<dd>${escAttr(hazardLabelPretty)}</dd>` +
+                    `<dt class="text-slate-500 font-semibold uppercase tracking-wide text-[0.62rem] mt-1">Hazard location</dt>` +
+                    `<dd>${escAttr(savedHazardLocation || '—')}</dd>` +
+                    `</dl>` +
+                    `<p class="mt-2 text-[0.7rem] text-slate-500">CDRRMO certification workflow continues elsewhere on this applicant record.</p>`;
+            } else if (savedReason === 'ejected') {
+                const ejDatePretty = savedEjectionDate
+                    ? (savedEjectionDate.indexOf('-') >= 0
+                        ? (function () { try { const p = savedEjectionDate.split('T')[0].split('-'); return p[2] + '/' + p[1] + '/' + p[0]; } catch (e) { return savedEjectionDate; } })()
+                        : savedEjectionDate)
+                    : '—';
+                layer3ReadonlyBody +=
+                    `<dl class="mt-2 space-y-1 text-[0.78rem]">` +
+                    `<dt class="text-slate-500 font-semibold uppercase tracking-wide text-[0.62rem]">Ejection classification</dt>` +
+                    `<dd>${escAttr(savedEjectionDisplay || savedEjectionType || '—')}</dd>` +
+                    `<dt class="text-slate-500 font-semibold uppercase tracking-wide text-[0.62rem] mt-1">Date of notice</dt>` +
+                    `<dd>${escAttr(ejDatePretty)}</dd>` +
+                    `</dl>`;
+            } else if (savedReason === 'relocated') {
+                layer3ReadonlyBody +=
+                    `<p class="mt-2 text-[0.78rem]"><span class="text-slate-500 font-semibold uppercase tracking-wide text-[0.62rem]">Project designation</span><br>${escAttr(savedProjectName || '—')}</p>`;
+            } else if (savedReason === 'not_abc') {
+                layer3ReadonlyBody +=
+                    `<p class="mt-2 text-[0.78rem] text-slate-600">Walk-in path — Priority is not asserted on displacement grounds alone.</p>`;
+            }
+            layer3ReadonlyBody += `</div>`;
+        }
 
-        const dangerPanelActive   = savedReason === 'danger_zone' ? ' is-active' : '';
-        const ejectedPanelActive  = savedReason === 'ejected'     ? ' is-active' : '';
-        const relocatedPanelActive = savedReason === 'relocated'  ? ' is-active' : '';
-        const notAbcPanelActive   = savedReason === 'not_abc'     ? ' is-active' : '';
-
-        const fieldInputCls   = 'w-full px-3 py-2 sm:py-2.5 text-sm bg-white border border-slate-300 rounded-md focus:outline-none focus:border-slate-700 focus:ring-2 focus:ring-slate-200 disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed transition-colors';
-        const fieldLabelCls   = 'block text-[0.7rem] sm:text-xs font-semibold uppercase tracking-wide text-slate-700 mb-1.5';
-        const fieldRequiredCls = 'text-red-600 ml-0.5';
-
-        // Panel shell — institutional bordered card
-        const panelShell = (color) => {
-            const accent = color === 'blue' ? 'border-l-red-700' : color === 'amber' ? 'border-l-amber-700' : color === 'slate' ? 'border-l-slate-600' : 'border-l-emerald-700';
-            return `m2-disp-panel mb-4 overflow-hidden rounded-md border border-slate-300 border-l-4 ${accent} bg-white shadow-sm`;
-        };
-        // Header — slate institutional bar with subtle accent
-        const panelHead = (color, label) => {
-            const accentTxt = color === 'blue' ? 'text-red-700' : color === 'amber' ? 'text-amber-700' : color === 'slate' ? 'text-slate-700' : 'text-emerald-700';
-            const iconPath = color === 'blue'
-                ? `<path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>`
-                : color === 'amber'
-                    ? `<path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>`
-                    : color === 'slate'
-                        ? `<circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>`
-                        : `<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/>`;
-            return `<div class="px-4 sm:px-5 py-3 bg-slate-50 border-b border-slate-200 flex items-center gap-2.5">
-                <svg class="w-4 h-4 ${accentTxt}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${iconPath}</svg>
-                <span class="text-[0.7rem] sm:text-xs font-bold uppercase tracking-[0.14em] text-slate-800">${label}</span>
-            </div>`;
-        };
-        // Required document callout — formal certification block
-        const reqDocBox = (color, docText) => {
-            return `<div class="mt-4 flex items-start gap-3 rounded-md border border-slate-200 bg-slate-50 px-3.5 sm:px-4 py-3">
-                <div class="flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-md bg-white border border-slate-300">
-                    <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-                </div>
-                <div class="flex-1 min-w-0">
-                    <p class="text-[0.62rem] sm:text-[0.65rem] font-bold uppercase tracking-[0.14em] text-slate-500 mb-0.5">Required Documentation</p>
-                    <p class="text-[0.78rem] sm:text-sm font-semibold text-slate-900 leading-snug">${docText}</p>
-                </div>
-            </div>`;
-        };
-        // Full-width status strip at panel bottom — formal verification status
-        const pendingStrip = (color, text) => {
-            const pal = color === 'amber'
-                ? 'bg-amber-50 border-t border-amber-200 text-amber-800'
-                : 'bg-sky-50 border-t border-sky-200 text-sky-800';
-            return `<div class="px-4 sm:px-5 py-2.5 ${pal} flex items-center gap-2 text-[0.65rem] sm:text-[0.7rem] font-semibold uppercase tracking-[0.12em]">
-                <svg class="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-                ${text}
-            </div>`;
-        };
-
-        const dangerPanel = `
-            <div class="${panelShell('blue')}${dangerPanelActive}" id="m2DispPanelDangerZone" data-disp-panel="danger_zone">
-                ${panelHead('blue', 'Danger Zone / Hazard Area Particulars')}
-                <div class="p-4 sm:p-5 lg:p-6">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                        <div>
-                            <label for="m2HazardType" class="${fieldLabelCls}">Hazard Classification<span class="${fieldRequiredCls}">*</span></label>
-                            <select id="m2HazardType" name="hazard_type" class="${fieldInputCls}"${canVerifyDocs ? '' : ' disabled'}>
-                                ${buildOptions(hazardTypeOptions, savedHazardType)}
-                            </select>
-                        </div>
-                        <div>
-                            <label for="m2HazardLocation" class="${fieldLabelCls}">Hazard Location Description<span class="${fieldRequiredCls}">*</span></label>
-                            <input type="text" id="m2HazardLocation" name="hazard_location" class="${fieldInputCls}" placeholder="Sitio, purok, river, creek, or nearby landmark" value="${escAttr(savedHazardLocation)}" maxlength="255"${canVerifyDocs ? '' : ' disabled'}>
-                        </div>
-                    </div>
-                    ${reqDocBox('blue', 'CDRRMO Certification of Hazard-Area Residency')}
-                </div>
-                ${pendingStrip('amber', 'Certification Status &middot; Awaiting CDRRMO Verification')}
-            </div>`;
-
-        const ejectedPanel = `
-            <div class="${panelShell('amber')}${ejectedPanelActive}" id="m2DispPanelEjected" data-disp-panel="ejected">
-                ${panelHead('amber', 'Ejection / Eviction Particulars')}
-                <div class="p-4 sm:p-5 lg:p-6">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                        <div>
-                            <label for="m2EjectionType" class="${fieldLabelCls}">Ejection Classification<span class="${fieldRequiredCls}">*</span></label>
-                            <select id="m2EjectionType" name="ejection_type" class="${fieldInputCls}"${canVerifyDocs ? '' : ' disabled'}>
-                                ${buildOptions(ejectionTypeOptions, savedEjectionType)}
-                            </select>
-                        </div>
-                        <div>
-                            <label for="m2EjectionDate" class="${fieldLabelCls}">Date of Notice or Ejection</label>
-                            <input type="date" id="m2EjectionDate" name="ejection_date" class="${fieldInputCls}" value="${escAttr(savedEjectionDate)}"${canVerifyDocs ? '' : ' disabled'}>
-                        </div>
-                    </div>
-                    ${reqDocBox('amber', 'Court Order, Legal Office Certification, or Barangay Certification')}
-                </div>
-                ${pendingStrip('amber', 'Document status &middot; Awaiting verification in Applications')}
-            </div>`;
-
-        const relocatedPanel = `
-            <div class="${panelShell('emerald')}${relocatedPanelActive}" id="m2DispPanelRelocated" data-disp-panel="relocated">
-                ${panelHead('emerald', 'Project / Government-Initiated Relocation Particulars')}
-                <div class="p-4 sm:p-5 lg:p-6">
-                    <div>
-                        <label for="m2ProjectName" class="${fieldLabelCls}">Project Designation<span class="${fieldRequiredCls}">*</span></label>
-                        <input type="text" id="m2ProjectName" name="project_name" class="${fieldInputCls}" placeholder="Road-widening, drainage, infrastructure, or other government project" value="${escAttr(savedProjectName)}" maxlength="255"${canVerifyDocs ? '' : ' disabled'}>
-                    </div>
-                    ${reqDocBox('emerald', 'Notice of Relocation, Right-of-Way Documentation, or Project Order')}
-                </div>
-                ${pendingStrip('sky', 'Document status &middot; Awaiting verification in Applications')}
-            </div>`;
-
-        const notAbcPanel = '';
-
-        const savedReadout = '';
-
-        // Queue endorsement banner — formal eligibility advisory
-        const queueHintHtml = '';
-
-        const layer3FooterNav = canVerifyDocs
-            ? `<div class="flex flex-col-reverse sm:flex-row sm:justify-between gap-2 sm:gap-3 mt-6 pt-5 border-t border-slate-200">
+        const layer3FooterNav = `<div class="flex flex-col-reverse sm:flex-row sm:justify-between gap-2 sm:gap-3 mt-6 pt-5 border-t border-slate-200">
                     <button type="button" class="w-full sm:w-auto flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 text-[0.8rem] sm:text-sm rounded-md border border-slate-300 text-slate-800 bg-white hover:bg-slate-50 hover:border-slate-400 active:bg-slate-100 transition-colors font-semibold uppercase tracking-wide" onclick="m2BackToLayer2Step()">
                         <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
                         Return to Layer 2
                     </button>
-                    <button type="button" class="w-full sm:w-auto flex items-center justify-center gap-2 px-5 sm:px-6 py-2.5 text-[0.8rem] sm:text-sm rounded-md bg-emerald-600 text-white hover:bg-emerald-700 active:bg-emerald-800 transition-colors font-semibold uppercase tracking-wide shadow-sm" onclick="recordDisplacementClassification()">
-                        Confirm &amp; Continue to Evaluation
-                        <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                    </button>
-               </div>`
-            : `<div class="flex flex-col-reverse sm:flex-row sm:justify-between gap-2 sm:gap-3 mt-6 pt-5 border-t border-slate-200">
-                    <button type="button" class="w-full sm:w-auto flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 text-[0.8rem] sm:text-sm rounded-md border border-slate-300 text-slate-800 bg-white hover:bg-slate-50 hover:border-slate-400 active:bg-slate-100 transition-colors font-semibold uppercase tracking-wide" onclick="m2BackToLayer2Step()">
-                        <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-                        Return to Layer 2
-                    </button>
-                    <button type="button" class="w-full sm:w-auto flex items-center justify-center gap-2 px-5 sm:px-6 py-2.5 text-[0.8rem] sm:text-sm rounded-md bg-slate-700 text-white hover:bg-slate-800 active:bg-slate-900 transition-colors font-semibold uppercase tracking-wide shadow-sm" onclick="m2OpenEvaluationApprovalStep()">
-                        Proceed (Read-only)
+                    <button type="button" class="w-full sm:w-auto flex items-center justify-center gap-2 px-5 sm:px-6 py-2.5 text-[0.8rem] sm:text-sm rounded-md ${layer3Clear ? 'bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white shadow-sm' : 'bg-slate-400 text-white cursor-not-allowed opacity-75'} transition-colors font-semibold uppercase tracking-wide" onclick="m2Layer3ProceedToEvaluation()"${layer3Clear ? '' : ' disabled'}>
+                        ${canVerifyDocs ? 'Confirm queue placement &amp; continue' : 'Continue to Evaluation'}
                         <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                     </button>
                </div>`;
@@ -3915,27 +3721,18 @@
             `<div id="m2Layer3Block" class="m2-layer3-block" style="display:none;">` +
             `<div class="m2-layer3-shell">` +
             `<div class="m2-layer3-header">` +
-            `<h3 class="m2-layer3-title">Classification of Displacement &amp; Required Documentation</h3>` +
+            `<h3 class="m2-layer3-title">Displacement classification</h3>` +
+            `<p class="m2-layer3-desc text-[0.75rem] sm:text-[0.8rem] text-slate-600 mt-2 max-w-xl mx-auto">Hazard / ejection / project particulars were captured during <strong>Module 1 intake registration</strong>. Review the summary below, then proceed.</p>` +
             `</div>` +
             `<div class="m2-layer3-body">` +
-            queueHintHtml +
-            savedReadout +
-            `<div id="m2DispOptions" class="m2-disp-options">` +
-            radio('danger_zone', 'Resident of Danger Zone or Hazard Area', 'Applicant resides in a flood-prone, landslide, storm-surge, riverbank, cliff-edge, or coastal hazard area requiring relocation for safety.') +
-            radio('ejected', 'Ejected or Evicted from Prior Residence', 'Applicant has been evicted or displaced through private land eviction, court order, landowner recovery, or analogous proceedings.') +
-            radio('relocated', 'Displaced by Government Project or Infrastructure', 'Applicant is required to relocate due to a road-widening, drainage, infrastructure, or other government-initiated project.') +
-            radio('not_abc', 'None of A, B, or C (Other / not listed)', 'The situation does not fall under a hazard area, ejection, or a government project. The applicant is recorded for the Walk-in path (no Priority on this ground).') +
-            `</div>` +
-            dangerPanel +
-            ejectedPanel +
-            relocatedPanel +
-            notAbcPanel +
+            layer3ReadonlyBody +
             layer3FooterNav +
             `</div>` +
             `</div>` +
             `</div>` +
-            doneStrip('m2Layer3Done', true, '✓ Layer 3 complete — Displacement classification recorded') +
+            doneStrip('m2Layer3Done', layer3Clear, layer3Clear ? '✓ Layer 3 — Classification on file (Module 1 intake)' : '! Layer 3 — Classification not recorded at intake') +
             `</div>`;
+
     }
 
     function resetModalState() {

@@ -31,27 +31,23 @@ MODULE1_MONTHLY_INCOME_CEILING_PESO = 10000
 # and submit. The flag is surfaced for downstream eligibility evaluation.
 MODULE1_MIN_YEARS_RESIDING_TALISAY = 5
 
-# Group A requirement codes (documents.Requirement) → documents.Document.document_type
-ARCHIVE_REQUIREMENT_CODE_TO_DOCUMENT_TYPE = {
-    'R01': 'barangay_residency',
-    'R02': 'barangay_indigency',
-    'R03': 'cedula',
-    'R04': 'police_clearance',
-    'R05': 'no_property',
-    'R06': 'photo_2x2',
-    'R07': 'house_sketch',
-}
+# Applicant Situation Options A/B/C need an extra vault slot (ISF situational documentation).
+DISPLACEMENT_PATHS_NEED_ISF_EXTRA = frozenset({'danger_zone', 'ejected', 'relocated'})
+ISF_EXTRA_VAULT_DOC_TYPE = 'isf_situational_docs'
 
 
-def _archive_requirement_scan_rows(requirements_group_a, scanned_types_set):
+def _archive_requirement_scan_rows(requirements_group_a, scanned_types_set, displacement_reason=''):
     """
-    Build checklist rows matching Requirement reference data; `scanned` is True when
-    at least one Document exists for this applicant with the mapped document_type.
+    Build checklist rows from `documents.Requirement` rows; `scanned` is True when this
+    requirement's `vault_document_type` matches an uploaded Applicant Document.
+
+    When displacement is Options A, B, or C, one extra trackable row is appended for
+    `ISF_EXTRA_VAULT_DOC_TYPE` (Option D keeps the base count only).
     """
     scanned_types_set = scanned_types_set or set()
     rows = []
     for req in requirements_group_a:
-        dtype = ARCHIVE_REQUIREMENT_CODE_TO_DOCUMENT_TYPE.get(req.code)
+        dtype = (getattr(req, 'vault_document_type', None) or '').strip()
         scanned = bool(dtype and dtype in scanned_types_set)
         rows.append({
             'code': req.code,
@@ -61,8 +57,32 @@ def _archive_requirement_scan_rows(requirements_group_a, scanned_types_set):
             'is_active': req.is_active,
             'scanned': scanned,
         })
-    scanned_count = sum(1 for r in rows if r['scanned'])
-    return rows, scanned_count
+    scanned_count = 0
+    trackable_total = 0
+    for req in requirements_group_a:
+        dtype = (getattr(req, 'vault_document_type', None) or '').strip()
+        if not dtype:
+            continue
+        trackable_total += 1
+        if dtype in scanned_types_set:
+            scanned_count += 1
+
+    dr = (displacement_reason or '').strip()
+    if dr in DISPLACEMENT_PATHS_NEED_ISF_EXTRA:
+        scanned_isf = ISF_EXTRA_VAULT_DOC_TYPE in scanned_types_set
+        rows.append({
+            'code': 'ISF-SIT',
+            'name': 'ISF situational documentation (Options A / B / C)',
+            'group_display': 'Group A - Applicant Requirements',
+            'is_required_for_form': True,
+            'is_active': True,
+            'scanned': scanned_isf,
+        })
+        trackable_total += 1
+        if scanned_isf:
+            scanned_count += 1
+
+    return rows, scanned_count, trackable_total
 
 
 def _is_residency_eligible(years_residing):
@@ -642,9 +662,9 @@ def resend_sms(request, position):
 @require_POST
 def proceed_to_applications(request, position):
     """
-    Mark an intake record as handed off to Module 2.
-    For hazard-declared applicants, ensure a pending CDRRMO case exists
-    so field/ronda verification starts after the Module 2 handoff.
+    Move applicant to Archive (LIST OF APPLICATIONS section on intake page).
+    Does NOT hand off to Module 2 yet - just creates archive record for tracking.
+    No SMS is triggered by this action.
     """
     if request.user.position not in ['second_member', 'fourth_member']:
         return JsonResponse({'success': False, 'error': 'Permission denied.'}, status=403)
@@ -655,99 +675,46 @@ def proceed_to_applications(request, position):
 
     applicant = get_object_or_404(Applicant, id=applicant_id)
     if applicant.status == 'disqualified':
-        return JsonResponse({'success': False, 'error': 'Disqualified records cannot be forwarded to Module 2.'}, status=400)
-
-    phone = (applicant.phone_number or '').strip()
-    if not phone:
-        return JsonResponse({
-            'success': False,
-            'error': 'Applicant mobile number is required before proceeding to Module 2.',
-        }, status=400)
-
-    sms_sent_now = False
-    sms_warning = ''
+        return JsonResponse({'success': False, 'error': 'Disqualified records cannot be archived.'}, status=400)
 
     with transaction.atomic():
-        update_fields = ['updated_at']
+        # Create Archive record (idempotent - only create if doesn't exist)
+        archive_record, created = Archive.objects.get_or_create(
+            applicant=applicant,
+            defaults={
+                'reference_number_snapshot': applicant.reference_number,
+                'full_name_snapshot': applicant.full_name,
+                'last_name_snapshot': applicant.last_name,
+                'first_name_snapshot': applicant.first_name,
+                'middle_name_snapshot': applicant.middle_name,
+                'extension_name_snapshot': applicant.extension_name,
+                'date_of_birth_snapshot': applicant.date_of_birth,
+                'channel': _map_applicant_channel_to_archive(applicant),
+                'barangay_name_snapshot': applicant.barangay.name if applicant.barangay else '',
+                'sms_sent': applicant.registration_sms_sent,
+                'cdrrmo_certified': bool(getattr(applicant, 'cdrrmo_certification', None) and applicant.cdrrmo_certification.status == 'certified'),
+                'archived_by': request.user,
+            }
+        )
 
-        created_handoff = False
-        if not applicant.module2_handoff_at:
-            applicant.module2_handoff_at = timezone.now()
-            applicant.module2_handoff_by = request.user
-            update_fields.extend(['module2_handoff_at', 'module2_handoff_by'])
-            created_handoff = True
-
-        if len(update_fields) > 1:
-            applicant.save(update_fields=update_fields)
-
-        # Create Archive record once per Module 2 handoff (idempotent for double-clicks/retries).
-        archive_record = None
-        if created_handoff:
-            channel_value = applicant.channel
-            if channel_value == 'walk_in':
-                archive_channel = 'channel_a'
-            elif channel_value == 'danger_zone':
-                archive_channel = 'channel_b_hazard' if (applicant.danger_zone_type or '').strip() else 'channel_b_no_hazard'
-            elif channel_value == 'landowner':
-                archive_channel = 'channel_c'
-            else:
-                archive_channel = channel_value
-
-            archive_record = Archive.objects.create(
-                applicant=applicant,
-                reference_number_snapshot=applicant.reference_number,
-                full_name_snapshot=applicant.full_name,
-                last_name_snapshot=applicant.last_name,
-                first_name_snapshot=applicant.first_name,
-                middle_name_snapshot=applicant.middle_name,
-                extension_name_snapshot=applicant.extension_name,
-                date_of_birth_snapshot=applicant.date_of_birth,
-                channel=archive_channel,
-                barangay_name_snapshot=applicant.barangay.name if applicant.barangay else '',
-                sms_sent=applicant.registration_sms_sent,
-                cdrrmo_certified=bool(getattr(applicant, 'cdrrmo_certification', None) and applicant.cdrrmo_certification.status == 'certified'),
-                archived_by=request.user,
-            )
-
-        # Must send SMS notification on proceed (first handoff or previous unsent state).
-        if not applicant.registration_sms_sent:
-            print(f"\n[MODULE 2 HANDOFF] Triggering SMS for {applicant.reference_number} to {applicant.phone_number}")
-            handoff_message = sms_workflow.message_proceed_to_evaluation(applicant)
-            sms_ok = send_sms(
-                applicant.phone_number,
-                handoff_message,
-                sms_workflow.PROCEED_TO_EVALUATION,
-                applicant=applicant,
-            )
-            if not sms_ok:
-                latest_sms_log = SMSLog.objects.filter(applicant=applicant).order_by('-sent_at').first()
-                sms_error_detail = (latest_sms_log.error_message or '').strip() if latest_sms_log else ''
-                sms_warning = (
-                    f'SMS notification failed. Handoff completed, but no SMS was sent. '
-                    f'Gateway detail: {sms_error_detail}'
-                ) if sms_error_detail else (
-                    'SMS notification failed. Handoff completed, but no SMS was sent. '
-                    'Please verify SMS gateway and try again.'
-                )
-                print(f"[MODULE 2 HANDOFF] SMS failed for {applicant.reference_number}: {sms_error_detail or 'no gateway detail'}\n")
-
-            if sms_ok:
-                sms_sent_now = True
-                applicant.registration_sms_sent = True
-                applicant.save(update_fields=['registration_sms_sent', 'updated_at'])
-                if archive_record:
-                    archive_record.sms_sent = True
-                    archive_record.save(update_fields=['sms_sent'])
-                print(f"[MODULE 2 HANDOFF] SMS sent successfully for {applicant.reference_number}\n")
-
-    module2_url = reverse('applications:applications_list', kwargs={'position': request.user.position})
     return JsonResponse({
         'success': True,
-        'module2_url': module2_url,
-        'already_handed_off': not created_handoff,
-        'sms_sent': bool(applicant.registration_sms_sent or sms_sent_now),
-        'sms_warning': sms_warning,
+        'message': f'Applicant {applicant.reference_number} moved to LIST OF APPLICATIONS.',
+        'created': created,
     })
+
+
+def _map_applicant_channel_to_archive(applicant):
+    """Map applicant channel to archive channel."""
+    channel_value = applicant.channel
+    if channel_value == 'walk_in':
+        return 'channel_a'
+    elif channel_value == 'danger_zone':
+        return 'channel_b_hazard' if (applicant.danger_zone_type or '').strip() else 'channel_b_no_hazard'
+    elif channel_value == 'landowner':
+        return 'channel_c'
+    else:
+        return channel_value
 
 
 @login_required
@@ -809,12 +776,13 @@ def applicants_list(request, position):
             except:
                 pass
         
+        local_created_at = timezone.localtime(isf.created_at)
         applicants.append({
             'id': str(isf.id),
             'fullName': isf.full_name,
             'referenceNumber': isf.reference_number,
-            'dateRegistered': isf.created_at.strftime('%Y-%m-%d'),
-            'dateTime': isf.created_at.strftime('%b %d, %Y | %I:%M %p'),
+            'dateRegistered': local_created_at.strftime('%Y-%m-%d'),
+            'dateTime': local_created_at.strftime('%b %d, %Y | %I:%M %p'),
             'channel': 'A',
             'channelSource': 'staff_entry' if isf.submitted_by_staff else 'portal',  # Differentiate Channel A source
             'submissionId': str(isf.submission.id),  # For Channel A review
@@ -876,8 +844,12 @@ def applicants_list(request, position):
     
     # ====== CHANNEL B: Danger Zone Applicants + ALL OTHER APPLICANTS ======
     # Get ALL applicants (danger zone, walk-in, etc.)
+    # Exclude applicants already proceeded to the Intake Archive table so they
+    # do not remain visible in the active intake list (prevents duplicates).
     walk_in_applicants = Applicant.objects.filter(
         module2_handoff_at__isnull=True
+    ).exclude(
+        archives__isnull=False
     ).select_related(
         'barangay', 'eligibility_checked_by', 'registered_by'
     ).prefetch_related(
@@ -936,12 +908,13 @@ def applicants_list(request, position):
             cdrrmo_status_value = None
             cdrrmo_disposition_source = 'pending'
 
+        local_created_at = timezone.localtime(app.created_at)
         applicants.append({
             'id': str(app.id),
             'fullName': app.full_name,
             'referenceNumber': app.reference_number,
-            'dateRegistered': app.created_at.strftime('%Y-%m-%d'),
-            'dateTime': app.created_at.strftime('%b %d, %Y | %I:%M %p'),
+            'dateRegistered': local_created_at.strftime('%Y-%m-%d'),
+            'dateTime': local_created_at.strftime('%b %d, %Y | %I:%M %p'),
             'dateOfBirthDisplay': app.date_of_birth.strftime('%m/%d/%Y') if app.date_of_birth else '',
             'channel': 'B' if app.channel == 'danger_zone' else 'C',  # Map database channels to UI channels
             'submissionId': None,
@@ -986,6 +959,11 @@ def applicants_list(request, position):
             'isInDangerZone': app.channel == 'danger_zone' and bool(app.danger_zone_type),
             'dangerZoneType': app.danger_zone_type if hasattr(app, 'danger_zone_type') and app.danger_zone_type else '',
             'dangerZoneLocation': app.danger_zone_location if hasattr(app, 'danger_zone_location') and app.danger_zone_location else (danger_zone_type or ''),
+            # Applicant Situation (A, B, C, D) and specific details
+            'displacementReason': (app.displacement_reason or '').strip(),
+            'ejectionType': (app.ejection_type or '').strip() if hasattr(app, 'ejection_type') else '',
+            'ejectionDate': app.ejection_date.isoformat() if hasattr(app, 'ejection_date') and app.ejection_date else '',
+            'projectName': (app.project_name or '').strip() if hasattr(app, 'project_name') else '',
             'eligibilityStatus': eligibility_status,
             'applicantStatus': app.status,
             'readyForModule2': (not bool(app.module2_handoff_at)) and app.status != 'disqualified',
@@ -1065,7 +1043,6 @@ def applicants_list(request, position):
         channel_code, channel_label = channel_display_map.get(archive.channel, ('?', archive.channel))
 
         # Convert UTC time to Manila time for display
-        from django.utils import timezone
         local_archived_at = timezone.localtime(archive.archived_at) if archive.archived_at else None
 
         module3_summary = 'Not yet proceeded to Module 3'
@@ -1090,13 +1067,15 @@ def applicants_list(request, position):
             sms_sent_state = bool(archive.applicant.registration_sms_sent)
 
         scanned_types = docs_by_applicant_id.get(archive.applicant_id, set()) if archive.applicant_id else set()
-        requirement_scan_rows, scanned_count = _archive_requirement_scan_rows(
+        disp_snapshot = ''
+        if archive.applicant_id and archive.applicant:
+            disp_snapshot = (archive.applicant.displacement_reason or '').strip()
+        requirement_scan_rows, scanned_count, trackable_total = _archive_requirement_scan_rows(
             requirements_group_a,
             scanned_types,
+            displacement_reason=disp_snapshot,
         )
-        requirements_total = len(requirement_scan_rows)
-        if requirements_total == 0:
-            requirements_total = 7
+        requirements_total = trackable_total if trackable_total > 0 else max(len(requirement_scan_rows), 1)
 
         archive_records.append({
             'id': str(archive.id),
@@ -1226,9 +1205,6 @@ def walkin_register(request, position):
         post_data['is_registered_voter_talisay'] = 'no'
     form = WalkInApplicantForm(post_data)
 
-    # Get the danger zone answer (Yes/No from the form)
-    is_danger_zone_answer = request.POST.get('is_danger_zone', 'false') == 'true'
-
     if not form.is_valid():
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             # Return detailed form errors for debugging
@@ -1313,24 +1289,14 @@ def walkin_register(request, position):
             full_name = "Unnamed Applicant"
     phone_number = form.cleaned_data.get('phone_number', '')
 
-    # Channel B — office walk-in; record danger zone claim if provided (for reference only)
-    # Screening and eligibility determination will be done in Module 2
-    if is_danger_zone_answer:
+    # Applicant Situation (Options A–D) and particulars — validated in WalkInApplicantForm.clean().
+    dr_reg = (form.cleaned_data.get('displacement_reason') or '').strip()
+    if dr_reg == 'danger_zone':
         danger_zone_type = (form.cleaned_data.get('danger_zone_type') or '').strip()
         danger_zone_location = (form.cleaned_data.get('danger_zone_location') or '').strip()
     else:
         danger_zone_type = ''
         danger_zone_location = ''
-    hazard_validation_error = _validate_hazard_details(
-        is_danger_zone_answer,
-        danger_zone_type,
-        danger_zone_location,
-    )
-    if hazard_validation_error:
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return JsonResponse({'success': False, 'error': hazard_validation_error})
-        messages.error(request, hazard_validation_error)
-        return redirect(applicants_list_url)
 
     # All applicants start in 'pending' status - Module 2 will conduct screening
     initial_status = 'pending'
@@ -1355,8 +1321,15 @@ def walkin_register(request, position):
         has_property_in_talisay=(form.cleaned_data.get('has_property_in_talisay') == 'yes'),
         channel='danger_zone',
         status=initial_status,
+        displacement_reason=dr_reg,
         danger_zone_type=danger_zone_type,
         danger_zone_location=danger_zone_location,
+        ejection_type=(form.cleaned_data.get('ejection_type') or '').strip()
+        if dr_reg == 'ejected' else '',
+        ejection_date=form.cleaned_data.get('ejection_date')
+        if dr_reg == 'ejected' else None,
+        project_name=(form.cleaned_data.get('project_name') or '').strip()
+        if dr_reg == 'relocated' else '',
         registered_by=request.user,
         # Document checklist
         doc_brgy_residency=request.POST.get('doc_brgy_residency') == 'true',
@@ -1458,7 +1431,7 @@ def walkin_register(request, position):
                 'currentAddress': applicant.current_address,
                 'dangerZoneType': applicant.danger_zone_type,
                 'dangerZoneLocation': applicant.danger_zone_location,
-                'isInDangerZone': is_danger_zone_answer,  # Use the actual Yes/No answer
+                'isInDangerZone': dr_reg == 'danger_zone',
                 'documents': documents_submitted,
                 'docsCount': f"{docs_count}/7",
             }
@@ -1505,22 +1478,44 @@ def archive_list(request, staff_position):
     for archive in archives_qs:
         staff_user = archive.archived_by
         staff_name = staff_user.get_full_name() if staff_user else '—'
-        staff_position_val = getattr(staff_user, 'position', None) or '—'
+        staff_position_val = getattr(staff_user, 'position', None)
+        if staff_position_val:
+            staff_position_display = staff_user.get_position_display_short() if hasattr(staff_user, 'get_position_display_short') else staff_position_val
+        else:
+            staff_position_display = '—'
 
+        staff_initials = staff_user.first_name[:1] + staff_user.last_name[:1] if staff_user else '—'
         channel_display = channel_choices.get(archive.channel, archive.channel)
+
+        # Convert to local timezone for display
+        local_archived_at = timezone.localtime(archive.archived_at)
+        date_time_display = local_archived_at.strftime('%b %d, %Y | %I:%M %p')
+
+        # Get DOB display
+        dob_display = archive.date_of_birth_snapshot.strftime('%m/%d/%Y') if archive.date_of_birth_snapshot else 'N/A'
 
         records.append({
             'id': str(archive.id),
-            'archived_at_display': archive.archived_at.strftime('%b %d, %Y | %I:%M %p'),
-            'reference_number': archive.reference_number_snapshot,
-            'full_name': archive.full_name_snapshot,
+            'dateTime': date_time_display,
+            'handoffAt': date_time_display,
+            'referenceNumber': archive.reference_number_snapshot,
+            'fullName': archive.full_name_snapshot,
+            'lastName': archive.last_name_snapshot,
+            'firstName': archive.first_name_snapshot,
+            'middleName': archive.middle_name_snapshot,
+            'extensionName': archive.extension_name_snapshot,
             'channel': archive.channel,
-            'channel_display': channel_display,
-            'staff_name': staff_name,
-            'staff_position': staff_position_val,
-            'sms_sent': archive.sms_sent,
-            'date_of_birth': archive.date_of_birth_snapshot,
+            'channelLabel': channel_display,
+            'handledBy': staff_name,
+            'handledByPosition': staff_position_display,
+            'handledByInitials': staff_initials,
+            'handoffBy': staff_name,
+            'registrationSmsSent': archive.sms_sent,
+            'hasPhone': bool(archive.applicant.phone_number if archive.applicant else False),
+            'dateOfBirthDisplay': dob_display,
             'barangay': archive.barangay_name_snapshot,
+            'scannedCount': 0,  # TODO: Calculate from Document model if needed
+            'requirementsTotal': 7,
         })
 
     # Pagination

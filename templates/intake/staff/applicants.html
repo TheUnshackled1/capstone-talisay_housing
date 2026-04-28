@@ -477,6 +477,28 @@
     .applicants-table--archive th:nth-child(11),
     .applicants-table--archive td:nth-child(11) { text-align: center; }
 
+    /* Archive table column tuning (archive table has 11 columns; no Channel column). */
+    .applicants-table--archive th:nth-child(7),
+    .applicants-table--archive td:nth-child(7) { width: 6.25rem !important; text-align: center; } /* SMS */
+    .applicants-table--archive th:nth-child(8),
+    .applicants-table--archive td:nth-child(8) {
+        width: 7.5rem !important;         /* DOB */
+        white-space: nowrap !important;
+        overflow-wrap: unset !important;  /* override global overflow-wrap:anywhere */
+        word-break: normal !important;
+        hyphens: none !important;
+    }
+    .applicants-table--archive th:nth-child(9),
+    .applicants-table--archive td:nth-child(9) { width: 9.5% !important; } /* Barangay */
+
+    /* Keep SMS chip compact in archive table */
+    .applicants-table--archive td:nth-child(7) span {
+        padding: 0.1rem 0.3rem !important;
+        font-size: 0.53rem !important;
+        line-height: 1.1 !important;
+        white-space: nowrap !important;
+    }
+
     /* Active table (no SMS column) */
     .applicants-table--active th:nth-child(1),
     .applicants-table--active td:nth-child(1) { width: 3%; text-align: center; } /* # */
@@ -611,6 +633,69 @@
     .btn-archive-action:focus-visible {
         outline: 2px solid rgba(59, 130, 246, 0.45);
         outline-offset: 2px;
+    }
+
+    .btn-archive-docs {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.125rem;
+        padding: 0.22rem 0.55rem;
+        border-radius: 9999px;
+        font-size: 0.5625rem;
+        font-weight: 600;
+        cursor: pointer;
+        white-space: nowrap;
+        line-height: 1.2;
+        font-family: inherit;
+        transition: background 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+    }
+    .btn-archive-docs--done {
+        background: #dcfce7;
+        color: #166534;
+        border: 1px solid #86efac;
+    }
+    .btn-archive-docs--partial {
+        background: #fef3c7;
+        color: #92400e;
+        border: 1px solid #fcd34d;
+    }
+    .btn-archive-docs--none {
+        background: #f1f5f9;
+        color: #64748b;
+        border: 1px solid #e2e8f0;
+    }
+    .btn-archive-docs:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 6px rgba(15, 23, 42, 0.12);
+    }
+    .btn-archive-docs:focus-visible {
+        outline: 2px solid rgba(59, 130, 246, 0.45);
+        outline-offset: 2px;
+    }
+
+    #archiveRequirementsModal .archive-req-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.6875rem;
+    }
+    #archiveRequirementsModal .archive-req-table th,
+    #archiveRequirementsModal .archive-req-table td {
+        padding: 0.4rem 0.5rem;
+        text-align: left;
+        border-bottom: 1px solid #e2e8f0;
+        vertical-align: top;
+    }
+    #archiveRequirementsModal .archive-req-table th {
+        font-weight: 700;
+        color: #475569;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        font-size: 0.575rem;
+        background: #f8fafc;
+    }
+    #archiveRequirementsModal .archive-req-table tr:last-child td {
+        border-bottom: none;
     }
 
     .badge {
@@ -752,20 +837,37 @@
     .notice-modal.info .notice-modal-badge { background: #2563eb; }
 
     .notice-modal-title {
-        font-size: 0.82rem;
+        font-size: 0.95rem;
         font-weight: 700;
         color: #1e293b;
         margin: 0;
         text-transform: uppercase;
         letter-spacing: 0.04em;
+        flex: 1;
+        text-align: center;
+        padding-right: 1.125rem;
     }
 
     .notice-modal-body {
         padding: 0.9rem 1rem;
-        font-size: 0.78rem;
+        font-size: 0.9rem;
         color: #334155;
         line-height: 1.5;
         white-space: pre-wrap;
+    }
+
+    .notice-modal-message-center {
+        text-align: center;
+    }
+
+    .notice-modal-sms-note {
+        margin-top: 0.75rem;
+        padding: 0.6rem 0.75rem;
+        background: #dcfce7;
+        border: 1px solid #86efac;
+        border-radius: 0.5rem;
+        color: #166534;
+        line-height: 1.45;
     }
 
     .notice-modal-actions {
@@ -2003,6 +2105,118 @@
     </div>
 </div>
 
+<div class="modal-overlay" id="archiveRequirementsModal" onclick="closeArchiveRequirementsModal()">
+    <div class="modal-content archive-summary-modal" style="max-width: 52rem; width: min(96vw, 52rem);" onclick="event.stopPropagation()">
+        <div class="modal-header" style="justify-content: center;">
+            <div style="text-align: center;">
+                <p class="tha-review-modal-kicker">Document scan checklist</p>
+                <h3 class="modal-title" style="font-size: 1rem;">Applicant requirements (Group&nbsp;A)</h3>
+                <p class="modal-subtitle" id="archiveRequirementsSubtitle">Reference • Name</p>
+            </div>
+            <button type="button" class="btn-close" onclick="closeArchiveRequirementsModal()" style="position: absolute; right: 1.5rem;">
+                <svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <div class="modal-body" style="background: #fafbfc; padding-top: 0;">
+            <div style="background:#fff;border:1px solid #e2e8f0;border-radius:0.75rem;overflow:hidden;">
+                <div class="table-scroll" style="max-height: min(60vh, 28rem); overflow: auto;">
+                    <table class="archive-req-table">
+                        <thead>
+                            <tr>
+                                <th>Code</th>
+                                <th>Name</th>
+                                <th>Group</th>
+                                <th>Is required for form</th>
+                                <th>Is active</th>
+                                <th>Scanned</th>
+                            </tr>
+                        </thead>
+                        <tbody id="archiveRequirementsTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+            <p style="margin: 0.75rem 0 0; font-size: 0.65rem; color: #64748b; line-height: 1.4;">
+                “Scanned” means at least one digital file exists in the applicant’s vault for that row. When registration Applicant Situation is Option A, B, or C, an eighth row (“ISF situational documentation”) counts toward Requirements X/8; Option D stays at X/7.
+            </p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-modal secondary" onclick="closeArchiveRequirementsModal()">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- DOCUMENT SCAN CHECKLIST MODAL (shown before proceeding to LIST OF APPLICATIONS) -->
+<div class="modal-overlay" id="documentScanModal" onclick="closeDocumentScanModal()" style="display: none;">
+    <div class="modal-content archive-summary-modal" style="max-width: 56rem; width: min(96vw, 56rem);" onclick="event.stopPropagation()">
+        <div class="modal-header" style="justify-content: center;">
+            <div style="text-align: center;">
+                <p class="tha-review-modal-kicker">📋 Document Scan Checklist</p>
+                <h3 class="modal-title" style="font-size: 1rem;">Applicant Requirements (Group A)</h3>
+                <p class="modal-subtitle" id="documentScanApplicantRef">Reference • Name</p>
+            </div>
+            <button type="button" class="btn-close" onclick="closeDocumentScanModal()" style="position: absolute; right: 1.5rem;">
+                <svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <div class="modal-body" style="background: #fafbfc; padding-top: 0;">
+            <!-- Status Bar -->
+            <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <p style="font-size: 0.75rem; color: #64748b; margin: 0; font-weight: 600; text-transform: uppercase;">Progress</p>
+                    <p style="font-size: 1.5rem; font-weight: 700; color: #2563eb; margin: 0.25rem 0 0 0;" id="documentScanProgress">0/7</p>
+                </div>
+                <div style="flex: 1; height: 8px; background: #e2e8f0; border-radius: 9999px; margin: 0 1.5rem; overflow: hidden;">
+                    <div id="documentScanProgressBar" style="height: 100%; background: linear-gradient(90deg, #2563eb 0%, #1d4ed8 100%); width: 0%; transition: width 0.3s ease;"></div>
+                </div>
+                <p style="font-size: 0.875rem; color: #475569; margin: 0; font-weight: 600;" id="documentScanPercentage">0%</p>
+            </div>
+
+            <!-- Checklist Table -->
+            <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 0.75rem; overflow: hidden;">
+                <div class="table-scroll" style="max-height: min(50vh, 24rem); overflow: auto;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">
+                        <thead style="position: sticky; top: 0; background: #f1f5f9; border-bottom: 2px solid #e2e8f0;">
+                            <tr>
+                                <th style="padding: 0.75rem; text-align: left; color: #475569; font-weight: 600; width: 60px;">
+                                    <input type="checkbox" id="selectAllDocs" style="cursor: pointer;" onchange="toggleSelectAllDocs()">
+                                </th>
+                                <th style="padding: 0.75rem; text-align: left; color: #475569; font-weight: 600;">Code</th>
+                                <th style="padding: 0.75rem; text-align: left; color: #475569; font-weight: 600;">Document Name</th>
+                                <th style="padding: 0.75rem; text-align: center; color: #475569; font-weight: 600;">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="documentScanTableBody" style="background: white;">
+                            <!-- Populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Helper Text -->
+            <p style="margin: 1rem 0 0; font-size: 0.75rem; color: #64748b; line-height: 1.5;">
+                ✓ <strong>Required:</strong> Check the box for each document scanned (R01–R07, 7 documents minimum)<br>
+                ○ <strong>Optional:</strong> ISF situational documentation (ISF-SIT) is optional—applicant may proceed without it
+            </p>
+        </div>
+
+        <!-- Footer with Action Buttons -->
+        <div class="modal-footer" style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+            <button type="button" class="btn-modal secondary" onclick="closeDocumentScanModal()">Cancel</button>
+            <button type="button" class="btn-modal primary" id="submitToApplicationsBtn" onclick="submitToApplications()" disabled style="opacity: 0.5; cursor: not-allowed;">
+                Submit to LIST OF APPLICATIONS
+            </button>
+        </div>
+    </div>
+</div>
+
+{{ archive_documents_modal|json_script:"archive-pages-documents-payload" }}
+
 <div class="applicants-container">
     <!-- Header -->
     <div class="page-header">
@@ -2155,7 +2369,7 @@
 <hr class="section-divider" aria-hidden="true">
 
 <!-- Archive / Receipt Table (read-only reporting) -->
-<div class="applicants-container" style="padding-top: 0.65rem;">
+<div class="applicants-container" id="archiveSection" style="padding-top: 0.65rem;">
     <div style="display:flex; align-items:center; justify-content:center; margin:0 0 0.5rem 0; gap:0.75rem; flex-wrap:wrap;">
         <h3 style="margin:0; font-size:0.95rem; color:#1e293b; font-weight:600; text-align: center;">LIST OF APPLICATIONS</h3>
     </div>
@@ -2274,19 +2488,15 @@
                     {{ row.barangay|default:"N/A" }}
                 </td>
                 <td style="vertical-align: middle;">
-                    {% if row.docsCount == row.docsTotal %}
-                    <span style="display: inline-flex; align-items: center; gap: 0.125rem; padding: 0.125rem 0.5rem; background: #dcfce7; color: #166534; border-radius: 9999px; font-size: 0.5625rem; font-weight: 600;">
-                        Requirements {{ row.docsCount }}/{{ row.docsTotal }}
-                    </span>
-                    {% elif row.docsCount > 0 %}
-                    <span style="display: inline-flex; align-items: center; gap: 0.125rem; padding: 0.125rem 0.5rem; background: #fef3c7; color: #92400e; border-radius: 9999px; font-size: 0.5625rem; font-weight: 600;">
-                        Requirements {{ row.docsCount }}/{{ row.docsTotal }}
-                    </span>
-                    {% else %}
-                    <span style="display: inline-flex; align-items: center; gap: 0.125rem; padding: 0.125rem 0.5rem; background: #f1f5f9; color: #64748b; border-radius: 9999px; font-size: 0.5625rem; font-weight: 600;">
-                        Requirements {{ row.docsCount }}/{{ row.docsTotal }}
-                    </span>
-                    {% endif %}
+                    <button
+                        type="button"
+                        class="btn-archive-docs {% if row.scannedCount == row.requirementsTotal %}btn-archive-docs--done{% elif row.scannedCount > 0 %}btn-archive-docs--partial{% else %}btn-archive-docs--none{% endif %}"
+                        onclick="openArchiveRequirementsModal(this)"
+                        data-reference="{{ row.referenceNumber }}"
+                        title="Applicant requirement scan checklist — {{ row.scannedCount }} of {{ row.requirementsTotal }} digitally filed"
+                    >
+                        Requirements {{ row.scannedCount }}/{{ row.requirementsTotal }}
+                    </button>
                 </td>
                 <td>
                     <button
@@ -2459,30 +2669,32 @@
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- Danger Zone Specific Fields -->
-                    <div class="danger-zone-info" style="border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-bottom: 1rem; display: none;">
-                        <h4 class="tha-review-section-title">Declared hazard-area particulars</h4>
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label class="form-label">Hazard classification</label>
-                                <select class="form-select" id="reviewDangerType" name="danger_zone_type" disabled>
-                                    <option value="">Select type...</option>
-                                    <option value="riverside">Riverside / Riverbank</option>
-                                    <option value="flood_prone">Flood-Prone Area</option>
-                                    <option value="landslide">Landslide-Prone Area</option>
-                                    <option value="coastal">Coastal / Near Shoreline</option>
-                                    <option value="railroad">Near Railroad Tracks</option>
-                                    <option value="road_right_of_way">Road Right of Way</option>
-                                    <option value="other">Other Danger Zone</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Specific location / landmark</label>
-                                <input type="text" class="form-input" id="reviewDangerLocation" name="danger_zone_location" readonly>
+
+                    <!-- Section D: APPLICANT SITUATION -->
+                    <div style="border-bottom: 2px solid #e2e8f0; padding-bottom: 1rem; margin-bottom: 1rem;">
+                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.5px;">D. Applicant Situation</h4>
+
+                        <!-- Main Situation Display Card -->
+                        <div id="reviewApplicantSituationCard" style="background: linear-gradient(135deg, #f0f9ff 0%, #f1f5f9 100%); border: 2px solid #cbd5e1; border-radius: 0.75rem; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 1rem;">
+                            <div style="display: flex; align-items: flex-start; gap: 1rem;">
+                                <!-- Icon -->
+                                <div id="situationIcon" style="width: 48px; height: 48px; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; background: #e0f2fe; flex-shrink: 0;">
+                                    <span style="font-size: 1.5rem;">ℹ️</span>
+                                </div>
+                                <!-- Content -->
+                                <div style="flex: 1;">
+                                    <p id="reviewSituationLabel" style="font-size: 1rem; font-weight: 700; color: #1e293b; margin: 0 0 0.5rem 0;">—</p>
+                                    <p id="reviewSituationDescription" style="font-size: 0.875rem; color: #475569; margin: 0; line-height: 1.6;">—</p>
+                                </div>
                             </div>
                         </div>
                     </div>
+
+                    <!-- Danger Zone Specific Fields (REMOVED) -->
+
+                    <!-- Option B: Ejection/Eviction from Prior Residence (REMOVED) -->
+
+                    <!-- Option C: Displaced by Government Project/Infrastructure (REMOVED) -->
 
                     <!-- CDRRMO Certification Status -->
                     <div class="cdrrmo-certification-section" hidden style="border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-bottom: 1rem; display: none;">
@@ -2778,12 +2990,12 @@
                     type="button"
                     class="btn-modal primary"
                     id="btnProceedModule2"
-                    onclick="proceedToModule2Evaluation()"
+                    onclick="proceedToArchive()"
                 >
                     <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M5 12h14M12 5l7 7-7 7"/>
                     </svg>
-                    Proceed to Application &amp; Evaluation
+                    Proceed to LIST OF APPLICATIONS
                 </button>
 
                 <!-- Delete Button - Only for Jocel/Joie -->
@@ -3738,40 +3950,114 @@
                     </div>
                 </div>
 
-                <input type="hidden" id="isDangerZone" name="is_danger_zone" value="false">
-            </form>
+                <div class="tha-section-block">
+                    <div class="tha-layer-shell">
+                        <div class="tha-layer-header">
+                            <h3 class="tha-layer-title">Applicant Situation</h3>
+                        </div>
+                        <div class="tha-layer-body">
+                            <div class="tha-layer-grid">
+                                <div class="tha-layer-card option-a">
+                                    <label class="tha-layer-check tha-layer-card-choice">
+                                        <input type="radio" name="displacement_reason" value="danger_zone">
+                                        <span class="tha-layer-checkmark"></span>
+                                        <span class="tha-layer-option">Option A</span>
+                                    </label>
+                                    <div class="tha-layer-title">Resident of Danger Zone or Hazard Area</div>
+                                    <p class="tha-layer-text">Applicant resides in a flood-prone, landslide, storm-surge, riverbank, cliff-edge, or coastal hazard area requiring relocation for safety.</p>
+                                </div>
+                                <div class="tha-layer-card option-b">
+                                    <label class="tha-layer-check tha-layer-card-choice">
+                                        <input type="radio" name="displacement_reason" value="ejected">
+                                        <span class="tha-layer-checkmark"></span>
+                                        <span class="tha-layer-option">Option B</span>
+                                    </label>
+                                    <div class="tha-layer-title">Ejected or Evicted from Prior Residence</div>
+                                    <p class="tha-layer-text">Applicant has been evicted or displaced through private land eviction, court order, landowner recovery, or analogous proceedings.</p>
+                                </div>
+                                <div class="tha-layer-card option-c">
+                                    <label class="tha-layer-check tha-layer-card-choice">
+                                        <input type="radio" name="displacement_reason" value="relocated">
+                                        <span class="tha-layer-checkmark"></span>
+                                        <span class="tha-layer-option">Option C</span>
+                                    </label>
+                                    <div class="tha-layer-title">Displaced by Government Project or Infrastructure</div>
+                                    <p class="tha-layer-text">Applicant is required to relocate due to a road-widening, drainage, infrastructure, or other government-initiated project.</p>
+                                </div>
+                                <div class="tha-layer-card option-d">
+                                    <label class="tha-layer-check tha-layer-card-choice">
+                                        <input type="radio" name="displacement_reason" value="not_abc">
+                                        <span class="tha-layer-checkmark"></span>
+                                        <span class="tha-layer-option">Option D</span>
+                                    </label>
+                                    <div class="tha-layer-title">None of A, B, or C (Other / not listed)</div>
+                                    <p class="tha-layer-text">The situation does not fall under a hazard area, ejection, or a government project. The applicant is recorded for the Walk-in path (no Priority on this ground).</p>
+                                </div>
+                            </div>
 
-            <div class="tha-section-block">
-                <div class="tha-layer-shell">
-                    <div class="tha-layer-header">
-                        <h3 class="tha-layer-title">Applicant Situation</h3>
-                    </div>
-                    <div class="tha-layer-body">
-                        <div class="tha-layer-grid">
-                            <div class="tha-layer-card option-a">
-                                <div class="tha-layer-option">Option A</div>
-                                <div class="tha-layer-title">Resident of Danger Zone or Hazard Area</div>
-                                <p class="tha-layer-text">Applicant resides in a flood-prone, landslide, storm-surge, riverbank, cliff-edge, or coastal hazard area requiring relocation for safety.</p>
+                            <div id="registrationDispDanger" class="tha-reg-disp-panel danger-zone-box" hidden>
+                                <p class="section-label" style="margin-top:0;">Danger Zone / Hazard Area Particulars</p>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">Hazard classification <span style="color: #dc2626;">*</span></label>
+                                        <select class="form-select" name="danger_zone_type" id="registrationDangerZoneType">
+                                            <option value="">— Select hazard type —</option>
+                                            <option value="flood_prone">Flood-prone area</option>
+                                            <option value="landslide">Landslide-prone area</option>
+                                            <option value="storm_surge">Storm surge zone</option>
+                                            <option value="river_bank">River / creek bank</option>
+                                            <option value="cliff_edge">Cliff edge</option>
+                                            <option value="coastal">Coastal erosion</option>
+                                            <option value="other">Other hazard</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Hazard Location Description <span style="color: #dc2626;">*</span></label>
+                                        <input type="text" class="form-input" name="danger_zone_location" id="registrationDangerZoneLocation" placeholder="Sitio, purok, river, creek, or nearby landmark" maxlength="255" autocomplete="off">
+                                    </div>
+                                </div>
+                                <div class="info-note" style="margin-top: 0.75rem;">
+                                    <p><strong>Required Documentation:</strong> CDRRMO Certification of Hazard-Area Residency — certification status tracked after registration (verification in Applications).</p>
+                                </div>
                             </div>
-                            <div class="tha-layer-card option-b">
-                                <div class="tha-layer-option">Option B</div>
-                                <div class="tha-layer-title">Ejected or Evicted from Prior Residence</div>
-                                <p class="tha-layer-text">Applicant has been evicted or displaced through private land eviction, court order, landowner recovery, or analogous proceedings.</p>
+
+                            <div id="registrationDispEjected" class="tha-reg-disp-panel danger-zone-box" style="border-color:#fcd34d;border-left-color:#b45309;" hidden>
+                                <p class="section-label" style="margin-top:0;">Ejection / Eviction Particulars</p>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">Ejection Classification <span style="color: #dc2626;">*</span></label>
+                                        <select class="form-select" name="ejection_type" id="registrationEjectionType">
+                                            <option value="">— Select ejection type —</option>
+                                            <option value="private_eviction">Private land eviction</option>
+                                            <option value="court_order">Court order</option>
+                                            <option value="landowner_recovery">Landowner recovery</option>
+                                            <option value="other">Other</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Date of Notice or Ejection</label>
+                                        <input type="date" class="form-input" name="ejection_date" id="registrationEjectionDate">
+                                    </div>
+                                </div>
+                                <div class="info-note" style="margin-top: 0.75rem;">
+                                    <p><strong>Required Documentation:</strong> Court Order, Legal Office Certification, or Barangay Certification — verification status tracked in Applications.</p>
+                                </div>
                             </div>
-                            <div class="tha-layer-card option-c">
-                                <div class="tha-layer-option">Option C</div>
-                                <div class="tha-layer-title">Displaced by Government Project or Infrastructure</div>
-                                <p class="tha-layer-text">Applicant is required to relocate due to a road-widening, drainage, infrastructure, or other government-initiated project.</p>
-                            </div>
-                            <div class="tha-layer-card option-d">
-                                <div class="tha-layer-option">Option D</div>
-                                <div class="tha-layer-title">None of A, B, or C (Other / not listed)</div>
-                                <p class="tha-layer-text">The situation does not fall under a hazard area, ejection, or a government project. The applicant is recorded for the Walk-in path (no Priority on this ground).</p>
+
+                            <div id="registrationDispRelocated" class="tha-reg-disp-panel danger-zone-box" style="border-color:#6ee7b7;border-left-color:#047857;" hidden>
+                                <p class="section-label" style="margin-top:0;">Project / Government-Initiated Relocation Particulars</p>
+                                <div class="form-group">
+                                    <label class="form-label">Project Designation <span style="color: #dc2626;">*</span></label>
+                                    <input type="text" class="form-input" name="project_name" id="registrationProjectName" placeholder="Road-widening, drainage, infrastructure, or other government project" maxlength="255" autocomplete="off">
+                                </div>
+                                <div class="info-note" style="margin-top: 0.75rem;">
+                                    <p><strong>Required Documentation:</strong> Notice of Relocation, Right-of-Way Documentation, or Project Order — verification tracked in Applications.</p>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            </form>
         </div>
         <div class="modal-footer">
             <button type="submit" form="addApplicantForm" class="btn-modal primary" id="submitBtn">
@@ -3795,7 +4081,8 @@
     const applicantsData = JSON.parse(document.getElementById('applicantsDataJson')?.textContent || '[]');
     const canModify = (document.getElementById('canModifyFlag')?.value || 'false') === 'true';
     const duplicatePreviewUrl = '{% url "intake:duplicate_preview" request.user.position %}';
-    const applicationsListUrl = '{% url "applications:applications_list" request.user.position %}';
+    // Intake module does not hand off/navigate to Applications automatically.
+    // (Applications module is accessed from its own navigation item.)
     let noticePrimaryHandler = null;
     let noticeSecondaryHandler = null;
 
@@ -3806,7 +4093,7 @@
         noticeSecondaryHandler = null;
     }
 
-    function showNoticeModal({ title = 'Notice', message = '', type = 'info', primaryText = 'OK', secondaryText = '', onPrimary = null, onSecondary = null }) {
+    function showNoticeModal({ title = 'Notice', message = '', messageHtml = '', type = 'info', primaryText = 'OK', secondaryText = '', onPrimary = null, onSecondary = null, allowHtml = false }) {
         const overlay = document.getElementById('noticeModalOverlay');
         const modal = document.getElementById('noticeModal');
         const titleEl = document.getElementById('noticeModalTitle');
@@ -3818,7 +4105,11 @@
         modal.classList.remove('info', 'success', 'warning', 'error');
         modal.classList.add(type);
         titleEl.textContent = title;
-        bodyEl.textContent = message;
+        if (allowHtml && messageHtml) {
+            bodyEl.innerHTML = messageHtml;
+        } else {
+            bodyEl.textContent = message;
+        }
         primaryBtn.textContent = primaryText || 'OK';
         secondaryBtn.textContent = secondaryText || 'Cancel';
         secondaryBtn.style.display = secondaryText ? '' : 'none';
@@ -3827,6 +4118,8 @@
         noticeSecondaryHandler = onSecondary;
         overlay.classList.add('active');
     }
+
+    // NOTE: Proceed-to-Module-2 action removed from Intake Archive table.
 
     function openArchiveHandoffSummary(buttonEl) {
         if (!buttonEl) return;
@@ -3865,6 +4158,59 @@
         if (modal) modal.classList.remove('active');
     }
 
+    function closeArchiveRequirementsModal() {
+        const modal = document.getElementById('archiveRequirementsModal');
+        if (modal) modal.classList.remove('active');
+    }
+
+    function openArchiveRequirementsModal(buttonEl) {
+        if (!buttonEl) return;
+        let payloadMap = {};
+        const scriptEl = document.getElementById('archive-pages-documents-payload');
+        if (scriptEl && scriptEl.textContent) {
+            try {
+                payloadMap = JSON.parse(scriptEl.textContent);
+            } catch (_err) {
+                payloadMap = {};
+            }
+        }
+        const ref = (buttonEl.dataset && buttonEl.dataset.reference) || '';
+        const payload = payloadMap[ref];
+
+        const tbody = document.getElementById('archiveRequirementsTableBody');
+        const subtitle = document.getElementById('archiveRequirementsSubtitle');
+
+        if (subtitle) {
+            subtitle.textContent = payload && payload.referenceNumber
+                ? (payload.referenceNumber + ' • ' + (payload.fullName || ''))
+                : ref + ' • —';
+        }
+        if (!tbody) return;
+
+        if (!payload || !payload.rows || !payload.rows.length) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:1rem;color:#64748b;">No Group A requirements in the catalog. Seed requirements (e.g. R01–R07) to see this checklist.</td></tr>';
+        } else {
+            tbody.innerHTML = payload.rows.map(function (r) {
+                var reqTxt = r.is_required_for_form ? 'True' : 'False';
+                var activeTxt = r.is_active ? 'True' : 'False';
+                var scanCell = r.scanned
+                    ? '<span style="color:#166534;font-weight:600;">✓</span>'
+                    : '<span style="color:#cbd5e1;">—</span>';
+                return '<tr>'
+                    + '<td>' + escapeHtml(String(r.code || '')) + '</td>'
+                    + '<td>' + escapeHtml(String(r.name || '')) + '</td>'
+                    + '<td>' + escapeHtml(String(r.group_display || '')) + '</td>'
+                    + '<td>' + escapeHtml(reqTxt) + '</td>'
+                    + '<td>' + escapeHtml(activeTxt) + '</td>'
+                    + '<td>' + scanCell + '</td>'
+                    + '</tr>';
+            }).join('');
+        }
+
+        var modalEl = document.getElementById('archiveRequirementsModal');
+        if (modalEl) modalEl.classList.add('active');
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
         const primaryBtn = document.getElementById('noticePrimaryBtn');
         const secondaryBtn = document.getElementById('noticeSecondaryBtn');
@@ -3882,6 +4228,20 @@
                 if (typeof handler === 'function') handler();
             });
         }
+        document.querySelectorAll('#addApplicantForm input[name="displacement_reason"]').forEach(function(radio) {
+            radio.addEventListener('change', syncRegistrationDisplacementPanels);
+        });
+
+        // If an action requested auto-scroll to the Archive section, do it once after reload.
+        try {
+            if (sessionStorage.getItem('scrollToArchiveSection') === '1') {
+                sessionStorage.removeItem('scrollToArchiveSection');
+                const target = document.getElementById('archiveSection');
+                if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        } catch (_err) {
+            // ignore storage errors
+        }
     });
 
     /**
@@ -3895,6 +4255,9 @@
             riverside: 'Riverside / riverbank',
             flood_prone: 'Flood-prone area',
             landslide: 'Landslide-prone area',
+            storm_surge: 'Storm surge zone',
+            river_bank: 'River / creek bank',
+            cliff_edge: 'Cliff edge',
             coastal: 'Coastal / near shoreline',
             railroad: 'Near railroad tracks',
             road_right_of_way: 'Road right-of-way',
@@ -4463,16 +4826,62 @@
                 const isInDangerZoneB = currentApplicant.dangerZoneType ? true : false;
                 populateEligibilityChecksB(currentApplicant, isInDangerZoneB);
 
-                // Show/hide danger zone sections based on whether applicant has danger zone data
-                const dangerZoneInfoSection = document.querySelector('.danger-zone-info');
+                // Populate Applicant Situation (D. section)
+                const situationLabel = document.getElementById('reviewSituationLabel');
+                const situationDesc = document.getElementById('reviewSituationDescription');
+                const displacementReason = currentApplicant.displacementReason || '';
 
-                if (isInDangerZoneB) {
-                    if (dangerZoneInfoSection) dangerZoneInfoSection.style.display = 'block';
-                } else {
-                    if (dangerZoneInfoSection) dangerZoneInfoSection.style.display = 'none';
-                    const officePanelOff = document.getElementById('officeCdrrmoReceiptPanel');
-                    if (officePanelOff) officePanelOff.style.display = 'none';
+                if (situationLabel && situationDesc) {
+                    if (displacementReason === 'danger_zone') {
+                        situationLabel.textContent = 'Option A: Resident of Danger Zone or Hazard Area';
+                        situationDesc.textContent = 'Applicant resides in a flood-prone, landslide, storm-surge, riverbank, cliff-edge, or coastal hazard area requiring relocation for safety.';
+                    } else if (displacementReason === 'ejected') {
+                        situationLabel.textContent = 'Option B: Ejected or Evicted from Prior Residence';
+                        situationDesc.textContent = 'Applicant has been evicted or displaced through private land eviction, court order, landowner recovery, or analogous proceedings.';
+                    } else if (displacementReason === 'relocated') {
+                        situationLabel.textContent = 'Option C: Displaced by Government Project or Infrastructure';
+                        situationDesc.textContent = 'Applicant is required to relocate due to a road-widening, drainage, infrastructure, or other government-initiated project.';
+                    } else if (displacementReason === 'not_abc') {
+                        situationLabel.textContent = 'Option D';
+                        situationDesc.textContent = 'The situation does not fall under a hazard area, ejection, or a government project. The applicant is recorded for the Walk-in path (no Priority on this ground).';
+                    } else {
+                        situationLabel.textContent = '—';
+                        situationDesc.textContent = 'Applicant situation not recorded.';
+                    }
                 }
+
+                // Show/hide danger zone sections based on displacement reason
+                const dangerZoneInfoSection = document.querySelector('.danger-zone-info');
+                const ejectionInfoSection = document.querySelector('.ejection-info');
+                const projectInfoSection = document.querySelector('.project-info');
+
+                // Hide all sections first
+                if (dangerZoneInfoSection) dangerZoneInfoSection.style.display = 'none';
+                if (ejectionInfoSection) ejectionInfoSection.style.display = 'none';
+                if (projectInfoSection) projectInfoSection.style.display = 'none';
+
+                // Show/hide danger zone sections based on displacement reason
+                if (displacementReason === 'danger_zone') {
+                    if (dangerZoneInfoSection) dangerZoneInfoSection.style.display = 'block';
+                    // Populate danger zone fields
+                    const dangerTypeEl = document.getElementById('reviewDangerType');
+                    const dangerLocEl = document.getElementById('reviewDangerLocation');
+                    if (dangerTypeEl) dangerTypeEl.value = currentApplicant.dangerZoneType || '';
+                    if (dangerLocEl) dangerLocEl.value = currentApplicant.dangerZoneLocation || '';
+                } else if (displacementReason === 'ejected') {
+                    if (ejectionInfoSection) ejectionInfoSection.style.display = 'block';
+                    // Populate ejection fields
+                    const ejectionTypeEl = document.getElementById('reviewEjectionType');
+                    const ejectionDateEl = document.getElementById('reviewEjectionDate');
+                    if (ejectionTypeEl) ejectionTypeEl.value = currentApplicant.ejectionType || '';
+                    if (ejectionDateEl) ejectionDateEl.value = currentApplicant.ejectionDate || '';
+                } else if (displacementReason === 'relocated') {
+                    if (projectInfoSection) projectInfoSection.style.display = 'block';
+                    // Populate project fields
+                    const projectNameEl = document.getElementById('reviewProjectName');
+                    if (projectNameEl) projectNameEl.value = currentApplicant.projectName || '';
+                }
+                // For Option D (not_abc): no additional sections shown
 
             } else {
                 // Unknown channel - show Channel C section as fallback with error message
@@ -4788,17 +5197,7 @@
 
         let html = '';
 
-        // Only show CDRRMO check if applicant is in danger zone
-        if (isInDangerZone) {
-            html += `
-            <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: ${cdrrmoPass ? '#dcfce7' : '#fef3c7'}; border-radius: 0.375rem;">
-                <svg style="width: 1rem; height: 1rem; color: ${cdrrmoPass ? '#16a34a' : '#d97706'};" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    ${cdrrmoPass ? '<polyline points="20 6 9 17 4 12"></polyline>' : '<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>'}
-                </svg>
-                <span style="font-size: 0.8125rem;">CDRRMO certification status: <strong>${applicant.cdrrmoStatus || 'Pending CDRRMO field action'}</strong></span>
-            </div>
-            `;
-        }
+        // Removed CDRRMO check text based on user request
 
         container.innerHTML = html;
     }
@@ -4927,85 +5326,226 @@
         }
     }
 
-    let module2ProceedInFlight = false;
-    function proceedToModule2Evaluation() {
-        if (module2ProceedInFlight) return;
-        if (!currentApplicant) {
+    // Archive-only proceed (LIST OF APPLICATIONS on Intake page)
+    let archiveProceedInFlight = false;
+
+    function proceedToArchive(applicant = null) {
+        const target = applicant || currentApplicant;
+        if (archiveProceedInFlight) return;
+        if (!target || !(target.applicantId || target.id)) {
             showNoticeModal({
                 title: 'No Record Selected',
-                message: 'Please open an applicant record before proceeding to Module 2.',
+                message: 'Please open an applicant record before proceeding to LIST OF APPLICATIONS.',
                 type: 'warning',
             });
             return;
         }
 
-        // Always land on the full Module 2 queue. We intentionally do NOT pre-apply
-        // a `search=<reference>` param here: that produced a "phantom" 1-record view
-        // that disappeared on refresh and confused staff into thinking records were
-        // missing. The shared queue is the source of truth.
-        const targetUrl = '{% url "applications:applications_list" request.user.position %}';
-
         const formData = new FormData();
-        formData.append('applicant_id', currentApplicant.applicantId || currentApplicant.id);
+        formData.append('applicant_id', target.applicantId || target.id);
         formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
-        const proceedBtn = document.getElementById('btnProceedModule2');
-        module2ProceedInFlight = true;
-        if (proceedBtn) {
-            proceedBtn.disabled = true;
-            proceedBtn.style.opacity = '0.7';
-            proceedBtn.style.cursor = 'not-allowed';
-        }
+
+        archiveProceedInFlight = true;
 
         fetch('{% url "intake:proceed_to_applications" request.user.position %}', {
             method: 'POST',
             body: formData
         })
-        .then(response => response.json())
-        .then(data => {
-            if (!data.success) {
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) {
+                    showNoticeModal({
+                        title: 'Proceed Failed',
+                        message: data.error || 'Unable to proceed to LIST OF APPLICATIONS.',
+                        type: 'error',
+                    });
+                    return;
+                }
                 showNoticeModal({
-                    title: 'Proceed Failed',
-                    message: data.error || 'Unable to proceed to Module 2.',
+                    title: 'Applicant Archived',
+                    message: `${target.referenceNumber || ''} has been moved to LIST OF APPLICATIONS.`,
+                    type: 'success',
+                    onPrimary: () => {
+                        try { sessionStorage.setItem('scrollToArchiveSection', '1'); } catch (_err) {}
+                        closeReviewModal();
+                        location.reload();
+                    },
+                });
+            })
+            .catch(error => {
+                showNoticeModal({
+                    title: 'Network Error',
+                    message: error.message,
                     type: 'error',
                 });
-                return;
-            }
-            const proceedMessage = data.sms_warning
-                ? (
-                    (data.already_handed_off
-                        ? 'Record was already handed off previously. '
-                        : 'Record was handed off successfully. ') +
-                    data.sms_warning +
-                    ' Opening Applications module now.'
-                )
-                : (
-                    data.already_handed_off
-                        ? 'Record was already handed off previously. Opening Applications module now.'
-                        : 'Record was handed off successfully. Opening Applications module now.'
-                );
-            showNoticeModal({
-                title: 'Proceeding to Module 2',
-                message: proceedMessage,
-                type: data.sms_warning ? 'warning' : 'success',
-                onPrimary: () => { window.location.href = targetUrl; },
+            })
+            .finally(() => {
+                archiveProceedInFlight = false;
             });
-        })
-        .catch(error => {
-            showNoticeModal({
-                title: 'Network Error',
-                message: error.message,
-                type: 'error',
-            });
-        })
-        .finally(() => {
-            module2ProceedInFlight = false;
-            if (proceedBtn) {
-                proceedBtn.disabled = false;
-                proceedBtn.style.opacity = '1';
-                proceedBtn.style.cursor = 'pointer';
+    }
+
+    function openDocumentScanModal(applicant) {
+        if (!applicant) return;
+
+        const modal = document.getElementById('documentScanModal');
+        if (!modal) {
+            console.error('Document scan modal not found');
+            return;
+        }
+
+        // Set applicant reference
+        const refEl = document.getElementById('documentScanApplicantRef');
+        if (refEl) {
+            refEl.textContent = `${applicant.referenceNumber} • ${applicant.fullName}`;
+        }
+
+        // Get requirements data
+        const requirements = [
+            { code: 'R01', name: 'Brgy. Certificate of Residency', isRequired: true, isFSIT: false },
+            { code: 'R02', name: 'Brgy. Certificate of Indigency', isRequired: true, isFSIT: false },
+            { code: 'R03', name: 'Cedula', isRequired: true, isFSIT: false },
+            { code: 'R04', name: 'Police Clearance', isRequired: true, isFSIT: false },
+            { code: 'R05', name: 'Certificate of No Property', isRequired: true, isFSIT: false },
+            { code: 'R06', name: '2x2 Picture', isRequired: true, isFSIT: false },
+            { code: 'R07', name: 'Sketch of House Location', isRequired: true, isFSIT: false },
+        ];
+
+        // Add ISF-SIT if Option A, B, or C
+        const hasISF = ['danger_zone', 'ejected', 'relocated'].includes(applicant.displacementReason);
+        if (hasISF) {
+            requirements.push({ code: 'ISF-SIT', name: 'ISF situational documentation (Options A / B / C)', isRequired: false, isFSIT: true });
+        }
+
+        // Populate the table
+        populateDocumentScanTable(requirements, applicant);
+
+        // Reset checkboxes
+        documentScanCheckboxes = {};
+
+        // Show modal
+        modal.style.display = 'flex';
+    }
+
+    function closeDocumentScanModal() {
+        const modal = document.getElementById('documentScanModal');
+        if (modal) modal.style.display = 'none';
+    }
+
+    function populateDocumentScanTable(requirements, applicant) {
+        const tbody = document.getElementById('documentScanTableBody');
+        if (!tbody) return;
+
+        tbody.innerHTML = requirements.map(req => `
+            <tr style="border-bottom: 1px solid #e2e8f0;">
+                <td style="padding: 0.75rem; text-align: center;">
+                    <input
+                        type="checkbox"
+                        class="doc-scan-checkbox"
+                        data-code="${req.code}"
+                        data-required="${req.isRequired}"
+                        style="cursor: pointer;"
+                        onchange="updateDocumentScanProgress()"
+                    >
+                </td>
+                <td style="padding: 0.75rem; color: #1e293b; font-weight: 600;">${escapeHtml(req.code)}</td>
+                <td style="padding: 0.75rem; color: #475569;">${escapeHtml(req.name)}</td>
+                <td style="padding: 0.75rem; text-align: center;">
+                    <span class="doc-scan-status" style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; background: #fee2e2; color: #991b1b;">
+                        Not Scanned
+                    </span>
+                </td>
+            </tr>
+        `).join('');
+
+        // Re-attach event listeners
+        document.querySelectorAll('.doc-scan-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', updateDocumentScanProgress);
+        });
+
+        updateDocumentScanProgress();
+    }
+
+    function updateDocumentScanProgress() {
+        const checkboxes = document.querySelectorAll('.doc-scan-checkbox:checked');
+        const requiredCheckboxes = document.querySelectorAll('.doc-scan-checkbox[data-required="true"]:checked');
+        const totalRequired = document.querySelectorAll('.doc-scan-checkbox[data-required="true"]');
+
+        const scannedCount = requiredCheckboxes.length;
+        const requiredCount = totalRequired.length;
+        const percentage = requiredCount > 0 ? Math.round((scannedCount / requiredCount) * 100) : 0;
+
+        // Update progress display
+        const progressEl = document.getElementById('documentScanProgress');
+        if (progressEl) progressEl.textContent = `${scannedCount}/${requiredCount}`;
+
+        const percentageEl = document.getElementById('documentScanPercentage');
+        if (percentageEl) percentageEl.textContent = `${percentage}%`;
+
+        // Update progress bar
+        const progressBar = document.getElementById('documentScanProgressBar');
+        if (progressBar) progressBar.style.width = `${percentage}%`;
+
+        // Update checkbox statuses
+        document.querySelectorAll('.doc-scan-checkbox').forEach((checkbox, idx) => {
+            const statusEl = checkbox.closest('tr')?.querySelector('.doc-scan-status');
+            if (statusEl) {
+                if (checkbox.checked) {
+                    statusEl.textContent = '✓ Scanned';
+                    statusEl.style.background = '#dcfce7';
+                    statusEl.style.color = '#14532d';
+                } else {
+                    statusEl.textContent = 'Not Scanned';
+                    statusEl.style.background = '#fee2e2';
+                    statusEl.style.color = '#991b1b';
+                }
             }
         });
+
+        // Enable/disable Submit button only when 7/7 required documents are scanned
+        const submitBtn = document.getElementById('submitToApplicationsBtn');
+        if (submitBtn) {
+            const isComplete = scannedCount === requiredCount;
+            submitBtn.disabled = !isComplete;
+            submitBtn.style.opacity = isComplete ? '1' : '0.5';
+            submitBtn.style.cursor = isComplete ? 'pointer' : 'not-allowed';
+        }
     }
+
+    function toggleSelectAllDocs() {
+        const selectAllCheckbox = document.getElementById('selectAllDocs');
+        const docCheckboxes = document.querySelectorAll('.doc-scan-checkbox');
+
+        const isChecked = selectAllCheckbox?.checked;
+        docCheckboxes.forEach(checkbox => {
+            checkbox.checked = isChecked;
+        });
+
+        updateDocumentScanProgress();
+    }
+
+    function submitToApplications() {
+        if (!currentApplicant) return;
+
+        const checkboxes = document.querySelectorAll('.doc-scan-checkbox[data-required="true"]:checked');
+        const requiredCheckboxes = document.querySelectorAll('.doc-scan-checkbox[data-required="true"]');
+
+        if (checkboxes.length !== requiredCheckboxes.length) {
+            showNoticeModal({
+                title: 'Incomplete Checklist',
+                message: 'Please mark all 7 required documents as scanned before proceeding.',
+                type: 'warning',
+            });
+            return;
+        }
+
+        // Close the document scan modal
+        closeDocumentScanModal();
+
+        // Now call the actual proceed_to_applications endpoint
+        proceedToArchive(currentApplicant);
+    }
+
+    // NOTE: `proceedToApplicationsAPI` removed — use `proceedToArchive` only.
     
     function closeReviewModal() {
         const modal = document.getElementById('reviewModal');
@@ -5510,6 +6050,16 @@
     }
 
     // Add Modal
+    function syncRegistrationDisplacementPanels() {
+        const v = document.querySelector('#addApplicantForm input[name="displacement_reason"]:checked')?.value || '';
+        const danger = document.getElementById('registrationDispDanger');
+        const ejected = document.getElementById('registrationDispEjected');
+        const relocated = document.getElementById('registrationDispRelocated');
+        if (danger) danger.hidden = v !== 'danger_zone';
+        if (ejected) ejected.hidden = v !== 'ejected';
+        if (relocated) relocated.hidden = v !== 'relocated';
+    }
+
     function openAddModal() {
         const modal = document.getElementById('addModal');
         if (modal) modal.classList.add('active');
@@ -5518,6 +6068,7 @@
         householdMemberCount = 1;
         renderHouseholdMembers();
         queueDuplicatePreviewCheck();
+        syncRegistrationDisplacementPanels();
     }
 
     function closeAddModal() {
@@ -5538,6 +6089,7 @@
             overAgeOverride.required = false;
         }
         hideDuplicatePreview();
+        syncRegistrationDisplacementPanels();
     }
 
     let duplicatePreviewTimer = null;
@@ -5594,12 +6146,9 @@
         }
 
         showNoticeModal({
-            title: 'Open in Applications',
-            message: 'This record has already moved to another module and cannot be opened in Intake review.\n\nOpen Applications module now?',
-            type: 'info',
-            primaryText: 'Open Applications',
-            secondaryText: 'Cancel',
-            onPrimary: () => { window.location.href = applicationsListUrl; },
+            title: 'Record Not Available in Intake',
+            message: 'This record has already moved to another module and cannot be opened in Intake review.',
+            type: 'warning',
         });
     }
 
@@ -6003,11 +6552,43 @@
             }
         }
 
-        // Hazard/CDRRMO declaration is handled in Module 2 Layer 3 (2.6).
-        // Registration no longer collects this data at intake form level.
-        formData.set('is_danger_zone', 'false');
-        formData.set('danger_zone_type', '');
-        formData.set('danger_zone_location', '');
+        const displacementReason = (formData.get('displacement_reason') || '').trim();
+        if (!displacementReason) {
+            showNoticeModal({
+                title: 'Applicant Situation',
+                message: 'Please select Option A, B, C, or D under Applicant Situation.',
+                type: 'warning',
+            });
+            return;
+        }
+        if (displacementReason === 'danger_zone') {
+            const hz = (document.getElementById('registrationDangerZoneType')?.value || '').trim();
+            const loc = (document.getElementById('registrationDangerZoneLocation')?.value || '').trim().replace(/\s+/g, ' ');
+            if (!hz) {
+                showNoticeModal({ title: 'Hazard classification', message: 'Select a hazard type for Option A.', type: 'warning' });
+                return;
+            }
+            if (!loc || loc.length < 12) {
+                showNoticeModal({
+                    title: 'Hazard location',
+                    message: 'Enter a specific hazard location (at least 12 characters), e.g. sitio, landmark, river segment.',
+                    type: 'warning',
+                });
+                return;
+            }
+        } else if (displacementReason === 'ejected') {
+            const ej = (document.getElementById('registrationEjectionType')?.value || '').trim();
+            if (!ej) {
+                showNoticeModal({ title: 'Ejection classification', message: 'Select an ejection type for Option B.', type: 'warning' });
+                return;
+            }
+        } else if (displacementReason === 'relocated') {
+            const pn = (document.getElementById('registrationProjectName')?.value || '').trim();
+            if (!pn) {
+                showNoticeModal({ title: 'Project designation', message: 'Enter the government project or infrastructure designation for Option C.', type: 'warning' });
+                return;
+            }
+        }
 
         // Submit to walkin_register endpoint
         let endpoint = '{% url "intake:walkin_register" request.user.position %}';
@@ -6039,11 +6620,13 @@
                 // Close the registration form modal
                 closeAddModal();
 
-                let detail = data.message || 'Applicant registered successfully.';
-                detail += '\n\nNo SMS is sent at registration. The first SMS is sent when this record is proceeded to Module 2.';
+                const successLine = data.message || 'Applicant registered successfully.';
+                const smsNote = 'No SMS is sent at registration. The first SMS is sent when this record is proceeded to Module 2.';
+                const detailHtml = `<div class="notice-modal-message-center">${escapeHtml(successLine)}</div><div class="notice-modal-sms-note">${escapeHtml(smsNote)}</div>`;
                 showNoticeModal({
                     title: 'Applicant Registered',
-                    message: detail,
+                    messageHtml: detailHtml,
+                    allowHtml: true,
                     type: 'success',
                     onPrimary: () => { location.reload(); },
                 });

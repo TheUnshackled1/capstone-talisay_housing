@@ -21,23 +21,25 @@ def seed_requirements():
     print(f'Existing requirements: {existing}')
     
     if existing == 0:
+        # (code, name, group, order, required, vault_document_type key on Document model)
         requirements = [
-            ('R01', 'Brgy. Certificate of Residency', 'A', 1, True),
-            ('R02', 'Brgy. Certificate of Indigency', 'A', 2, True),
-            ('R03', 'Cedula', 'A', 3, True),
-            ('R04', 'Police Clearance', 'A', 4, True),
-            ('R05', 'Certificate of No Property', 'A', 5, True),
-            ('R06', '2x2 Picture', 'A', 6, True),
-            ('R07', 'Sketch of House Location', 'A', 7, True),
+            ('R01', 'Brgy. Certificate of Residency', 'A', 1, True, 'barangay_residency'),
+            ('R02', 'Brgy. Certificate of Indigency', 'A', 2, True, 'barangay_indigency'),
+            ('R03', 'Cedula', 'A', 3, True, 'cedula'),
+            ('R04', 'Police Clearance', 'A', 4, True, 'police_clearance'),
+            ('R05', 'Certificate of No Property', 'A', 5, True, 'no_property'),
+            ('R06', '2x2 Picture', 'A', 6, True, 'photo_2x2'),
+            ('R07', 'Sketch of House Location', 'A', 7, True, 'house_sketch'),
         ]
         
-        for code, name, group, order, required in requirements:
+        for code, name, group, order, required, vault in requirements:
             Requirement.objects.create(
                 code=code,
                 name=name,
                 group=group,
                 order=order,
-                is_required_for_form=required
+                is_required_for_form=required,
+                vault_document_type=vault,
             )
             print(f'✅ Created: {code} - {name}')
         

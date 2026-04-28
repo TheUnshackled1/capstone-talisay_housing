@@ -17,7 +17,11 @@ class Document(models.Model):
         ('no_property', 'Certificate of No Property'),
         ('photo_2x2', '2x2 Picture'),
         ('house_sketch', 'Sketch of House Location'),
-        
+        (
+            'isf_situational_docs',
+            'ISF situational documentation (Applicant Situation Options A/B/C)',
+        ),
+
         # Group B - Office-Generated
         ('application_form', 'Application Form'),
         ('notarized_docs', 'Notarized Documents'),
@@ -116,6 +120,13 @@ class Requirement(models.Model):
     description = models.TextField(blank=True)
     group = models.CharField(max_length=1, choices=DOCUMENT_GROUP_CHOICES, default='A')
     order = models.PositiveSmallIntegerField(default=0)
+    vault_document_type = models.CharField(
+        max_length=30,
+        blank=True,
+        default='',
+        choices=Document.DOCUMENT_TYPE_CHOICES,
+        help_text='Links this row to vault uploads: a scan exists when Applicant has a Document with this type.',
+    )
     is_required_for_form = models.BooleanField(
         default=True,
         help_text="If True, this must be complete before application form is generated"
