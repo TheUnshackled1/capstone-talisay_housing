@@ -811,9 +811,55 @@
         border-top: 1px solid #e2e8f0;
         padding: 0.75rem 1.25rem;
         display: flex;
+        align-items: center;
+        flex-wrap: wrap;
         gap: 0.5rem;
         justify-content: flex-end;
         flex-shrink: 0;
+    }
+    #archiveRequirementsModal #archiveProceedToEvaluationBtn {
+        min-width: 15rem;
+        font-weight: 700;
+        color: #64748b;
+        background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
+        border: 1px solid #cbd5e1;
+        box-shadow: none;
+        transition: all 0.18s ease;
+    }
+    #archiveRequirementsModal #archiveProceedToEvaluationBtn.is-ready {
+        color: #ffffff;
+        background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
+        border-color: #1d4ed8;
+        box-shadow: 0 8px 20px rgba(37, 99, 235, 0.25);
+    }
+    #archiveRequirementsModal #archiveProceedToEvaluationBtn[disabled] {
+        opacity: 1 !important;
+        cursor: not-allowed !important;
+        box-shadow: none;
+    }
+    #archiveRequirementsModal #archiveScanAllBtn {
+        border-color: #93c5fd;
+        color: #1d4ed8;
+        background: #eff6ff;
+    }
+    #archiveRequirementsModal #archiveScanAllBtn:hover {
+        border-color: #60a5fa;
+        background: #dbeafe;
+    }
+    #archiveRequirementsModal .archive-proceed-hint {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.4rem 0.65rem;
+        border-radius: 9999px;
+        font-size: 0.72rem;
+        border: 1px solid #cbd5e1;
+        background: #f8fafc;
+        color: #64748b;
+    }
+    #archiveRequirementsModal .archive-proceed-hint.is-ready {
+        border-color: #86efac;
+        background: #f0fdf4;
+        color: #15803d;
     }
     #archiveRequirementsModal .req-badge {
         display: inline-flex;
@@ -1192,6 +1238,34 @@
     .notice-modal.error .notice-modal-badge { background: #dc2626; }
     .notice-modal.success .notice-modal-badge { background: #16a34a; }
     .notice-modal.info .notice-modal-badge { background: #2563eb; }
+
+    /* Align intake notice “success” with global flow-alert success (THA green dialog) */
+    .notice-modal.success {
+        border-color: #86efac;
+        background: linear-gradient(165deg, #ecfdf5 0%, #ffffff 46%, #ffffff 100%);
+        box-shadow:
+            0 20px 40px rgba(21, 128, 61, 0.1),
+            0 1px 0 rgba(255, 255, 255, 0.75) inset;
+    }
+    .notice-modal.success .notice-modal-header {
+        background: transparent;
+        border-bottom-color: #bbf7d0;
+    }
+    .notice-modal.success .notice-modal-title {
+        color: #14532d;
+    }
+    .notice-modal.success .notice-modal-body {
+        color: #166534;
+        text-align: center;
+    }
+    .notice-modal.success .btn-modal.primary {
+        background: linear-gradient(180deg, #22c55e, #15803d);
+        box-shadow: 0 8px 18px rgba(21, 128, 61, 0.32);
+        border: none;
+    }
+    .notice-modal.success .btn-modal.primary:hover {
+        background: linear-gradient(180deg, #16a34a, #166534);
+    }
 
     .notice-modal-title {
         font-size: 0.95rem;
@@ -2337,6 +2411,7 @@
             <p class="notice-modal-title" id="noticeModalTitle">Notice</p>
         </div>
         <div class="notice-modal-body" id="noticeModalBody"></div>
+        <div id="noticeModalRefWrap" style="display: none; text-align: center; padding: 0 1rem;"></div>
         <div class="notice-modal-actions">
             <button type="button" class="btn-modal secondary" id="noticeSecondaryBtn" style="display:none;">Cancel</button>
             <button type="button" class="btn-modal primary" id="noticePrimaryBtn">OK</button>
@@ -2409,7 +2484,7 @@
 
             <!-- APPLICATION SECTION (Module 2) -->
             <div>
-                <h4 style="color: #15803d;"><svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11H5a2 2 0 0 0-2 2v7h18v-7a2 2 0 0 0-2-2h-4"/><path d="M9 11V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v6"/><polyline points="9 11 12 14 15 11"/></svg>Module 2 &middot; Application &amp; Evaluation</h4>
+                <h4 style="color: #15803d;"><svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11H5a2 2 0 0 0-2 2v7h18v-7a2 2 0 0 0-2-2h-4"/><path d="M9 11V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v6"/><polyline points="9 11 12 14 15 11"/></svg>Module 2 &middot; Application &amp; Eligibility</h4>
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
                     <div>
                         <p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Proceeded To Application</p>
@@ -2513,13 +2588,12 @@
                 id="archiveProceedToEvaluationBtn"
                 onclick="proceedToEvaluationFromArchiveRequirements()"
                 disabled
-                style="opacity:0.6;cursor:not-allowed;"
             >
-                Proceed to Evaluation of Applications
+                Proceed to Application &amp; Eligibility
             </button>
             <span
                 id="archiveProceedHint"
-                style="font-size:0.75rem;color:#64748b;align-self:center;"
+                class="archive-proceed-hint"
             >
                 Complete R01-R07 to proceed.
             </span>
@@ -2758,7 +2832,7 @@
 <!-- Archive / Receipt Table (read-only reporting) -->
 <div class="applicants-container" id="archiveSection" style="padding-top: 0.65rem;">
     <div style="display:flex; align-items:center; justify-content:center; margin:0 0 0.5rem 0; gap:0.75rem; flex-wrap:wrap;">
-        <h3 style="margin:0; font-size:0.95rem; color:#1e293b; font-weight:600; text-align: center;">LIST OF APPLICATIONS</h3>
+        <h3 style="margin:0; font-size:0.95rem; color:#1e293b; font-weight:600; text-align: center;">LIST OF APPLICANTS</h3>
     </div>
 
     <!-- Archive Controls Bar -->
@@ -3356,7 +3430,7 @@
                     <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M5 12h14M12 5l7 7-7 7"/>
                     </svg>
-                    Proceed to LIST OF APPLICATIONS
+                    Proceed to LIST OF APPLICANTS
                 </button>
 
                 <!-- Delete Button - Only for Jocel/Joie -->
@@ -4599,22 +4673,41 @@
 
     function closeNoticeModal() {
         const overlay = document.getElementById('noticeModalOverlay');
+        const refWrap = document.getElementById('noticeModalRefWrap');
         if (overlay) overlay.classList.remove('active');
+        if (refWrap) {
+            refWrap.innerHTML = '';
+            refWrap.style.display = 'none';
+        }
         noticePrimaryHandler = null;
         noticeSecondaryHandler = null;
     }
 
-    function showNoticeModal({ title = 'Notice', message = '', messageHtml = '', type = 'info', primaryText = 'OK', secondaryText = '', onPrimary = null, onSecondary = null, allowHtml = false }) {
+    function showNoticeModal({ title = 'Notice', message = '', messageHtml = '', type = 'info', primaryText = 'OK', secondaryText = '', onPrimary = null, onSecondary = null, allowHtml = false, refPill = '' }) {
         const overlay = document.getElementById('noticeModalOverlay');
         const modal = document.getElementById('noticeModal');
         const titleEl = document.getElementById('noticeModalTitle');
         const bodyEl = document.getElementById('noticeModalBody');
+        const refWrap = document.getElementById('noticeModalRefWrap');
         const primaryBtn = document.getElementById('noticePrimaryBtn');
         const secondaryBtn = document.getElementById('noticeSecondaryBtn');
         if (!overlay || !modal || !titleEl || !bodyEl || !primaryBtn || !secondaryBtn) return;
 
         modal.classList.remove('info', 'success', 'warning', 'error');
         modal.classList.add(type);
+        if (refWrap) {
+            refWrap.innerHTML = '';
+            refWrap.style.display = 'none';
+            const rp = refPill && String(refPill).trim();
+            if (rp && type === 'success') {
+                const pill = document.createElement('span');
+                pill.className = 'flow-alert-ref-pill';
+                pill.style.marginTop = '0';
+                pill.textContent = rp;
+                refWrap.appendChild(pill);
+                refWrap.style.display = 'block';
+            }
+        }
         titleEl.textContent = title;
         if (allowHtml && messageHtml) {
             bodyEl.innerHTML = messageHtml;
@@ -4625,7 +4718,16 @@
         secondaryBtn.textContent = secondaryText || 'Cancel';
         secondaryBtn.style.display = secondaryText ? '' : 'none';
 
-        noticePrimaryHandler = onPrimary;
+        const normalizedTitle = String(title || '').trim().toLowerCase();
+        const normalizedMessage = String(message || '').replace(/\s+/g, ' ').trim();
+        const isScannerHttpOkNotice =
+            normalizedTitle === 'notice' &&
+            /http\s*process.*ok.*\(\s*200\s*\)/i.test(normalizedMessage);
+
+        // Force refresh for scanner HTTP success popups so checklist state updates immediately.
+        noticePrimaryHandler = isScannerHttpOkNotice
+            ? function () { window.location.replace(window.location.href); }
+            : onPrimary;
         noticeSecondaryHandler = onSecondary;
         overlay.classList.add('active');
     }
@@ -4714,13 +4816,12 @@
         const hintEl = document.getElementById('archiveProceedHint');
         if (!proceedBtn) return;
         proceedBtn.disabled = !canProceed;
-        proceedBtn.style.opacity = canProceed ? '1' : '0.6';
-        proceedBtn.style.cursor = canProceed ? 'pointer' : 'not-allowed';
+        proceedBtn.classList.toggle('is-ready', !!canProceed);
         if (hintEl) {
             hintEl.textContent = canProceed
                 ? 'All baseline requirements complete. Ready to proceed.'
                 : 'Complete R01-R07 to proceed.';
-            hintEl.style.color = canProceed ? '#15803d' : '#64748b';
+            hintEl.classList.toggle('is-ready', !!canProceed);
         }
     }
 
@@ -4732,7 +4833,7 @@
         if (!(requiredRows.length > 0 && scannedRequired === requiredRows.length)) {
             showNoticeModal({
                 title: 'Incomplete Requirements',
-                message: 'Complete all baseline required documents (R01-R07) before proceeding to Evaluation of Applications.',
+                message: 'Complete all baseline required documents (R01-R07) before proceeding to Application & Eligibility.',
                 type: 'warning',
             });
             return;
@@ -4753,13 +4854,13 @@
         const originalText = proceedBtn ? proceedBtn.textContent : '';
         if (proceedBtn) {
             proceedBtn.disabled = true;
-            proceedBtn.style.opacity = '0.6';
-            proceedBtn.style.cursor = 'wait';
             proceedBtn.textContent = 'Proceeding...';
         }
 
         const formData = new FormData();
         formData.append('applicant_id', applicantId);
+        // This checklist CTA explicitly promotes the archived record into Module 2.
+        formData.append('promote_to_module2', '1');
         const csrfEl = document.querySelector('[name=csrfmiddlewaretoken]');
         if (csrfEl) formData.append('csrfmiddlewaretoken', csrfEl.value);
 
@@ -4770,7 +4871,7 @@
             .then(function (response) { return response.json(); })
             .then(function (data) {
                 if (!data.success) {
-                    throw new Error(data.error || 'Unable to proceed to Evaluation of Applications.');
+                    throw new Error(data.error || 'Unable to proceed to Application & Eligibility.');
                 }
                 const nextUrl = `${evaluationApplicationsUrl}?applicant_id=${encodeURIComponent(applicantId)}&from=intake_scan_checklist&ref=${encodeURIComponent(ref)}`;
                 window.location.href = nextUrl;
@@ -4778,16 +4879,14 @@
             .catch(function (error) {
                 showNoticeModal({
                     title: 'Proceed Failed',
-                    message: error.message || 'Unable to proceed to Evaluation of Applications.',
+                    message: error.message || 'Unable to proceed to Application & Eligibility.',
                     type: 'error',
                 });
             })
             .finally(function () {
                 if (proceedBtn) {
                     proceedBtn.disabled = false;
-                    proceedBtn.style.opacity = '1';
-                    proceedBtn.style.cursor = 'pointer';
-                    proceedBtn.textContent = originalText || 'Proceed to Evaluation of Applications';
+                    proceedBtn.textContent = originalText || 'Proceed to Application & Eligibility';
                 }
             });
     }
@@ -4818,7 +4917,7 @@
         const applicantId = payload ? payload.applicantId : '';
         const referenceNumber = payload ? payload.referenceNumber : '';
         if (!rows.length || !applicantId) {
-            alert('Unable to scan documents for this applicant.');
+            showFlowAlert('Unable to scan documents for this applicant.');
             return;
         }
 
@@ -4862,7 +4961,7 @@
                 try { dwt.CloseSource(); } catch (_err) {}
             }
         } catch (error) {
-            alert(error.message || 'Unable to scan all documents.');
+            showFlowAlert(error.message || 'Unable to scan all documents.');
         } finally {
             setArchiveScanButtonBusy(false);
         }
@@ -4945,7 +5044,10 @@
             primaryBtn.addEventListener('click', function() {
                 const handler = noticePrimaryHandler;
                 closeNoticeModal();
-                if (typeof handler === 'function') handler();
+                if (typeof handler === 'function') {
+                    handler();
+                    return;
+                }
             });
         }
         if (secondaryBtn) {
@@ -5312,14 +5414,14 @@
             currentApplicant = applicantsData[index];
             if (!currentApplicant) {
                 console.error('No applicant data at index:', index);
-                alert('Error: No applicant data found.');
+                showFlowAlert('Error: No applicant data found.');
                 return;
             }
             
             const modal = document.getElementById('reviewModal');
             if (!modal) {
                 console.error('Review modal element not found');
-                alert('Error: Modal not found in page.');
+                showFlowAlert('Error: Modal not found in page.');
                 return;
             }
             
@@ -5628,7 +5730,7 @@
             console.error('Error opening review modal:', error);
             console.error('Stack trace:', error.stack);
             console.error('Current applicant data:', currentApplicant);
-            alert('Error opening modal: ' + error.message + '\n\nCheck browser console (F12) for details.');
+            showFlowAlert('Error opening modal: ' + error.message + '\n\nCheck browser console (F12) for details.');
         }
     }
     
@@ -5736,14 +5838,14 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert('✓ ISF marked as eligible and added to Priority Queue.');
+                showFlowAlert('ISF marked as eligible and added to Priority Queue.', 'Success', null, 'success');
                 location.reload();
             } else {
-                alert('Error: ' + (data.error || 'Unknown error'));
+                showFlowAlert('Error: ' + (data.error || 'Unknown error'));
             }
         })
         .catch(error => {
-            alert('Error: ' + error.message);
+            showFlowAlert('Error: ' + error.message);
         });
     }
     
@@ -6031,7 +6133,7 @@
         // Return early if elements don't exist (read-only users)
         if (!reviewActions) return;
 
-        // Module 1 -> Module 2 handoff action
+        // Proceed from modal → Intake Archives only (no Applicant.module2_handoff_*)
         if (btnProceedModule2) {
             const appStatus = String(applicant?.applicantStatus || '').toLowerCase();
             btnProceedModule2.style.display = appStatus === 'disqualified' ? 'none' : 'inline-flex';
@@ -6056,7 +6158,7 @@
         }
     }
 
-    // Archive-only proceed (LIST OF APPLICATIONS on Intake page)
+    // Archive-only proceed (same endpoint as modal “Proceed to LIST OF APPLICATIONS”)
     let archiveProceedInFlight = false;
 
     function proceedToArchive(applicant = null) {
@@ -6093,7 +6195,7 @@
                 }
                 showNoticeModal({
                     title: 'Applicant Archived',
-                    message: `${target.referenceNumber || ''} has been moved to LIST OF APPLICATIONS.`,
+                    message: `${target.referenceNumber || ''} has been moved to LIST OF APPLICANTS`,
                     type: 'success',
                     onPrimary: () => {
                         try { sessionStorage.setItem('scrollToArchiveSection', '1'); } catch (_err) {}
@@ -6320,7 +6422,7 @@
             updateDocumentScanProgress();
             buttonEl.textContent = 'Scanned';
         } catch (error) {
-            alert('Unable to scan ' + name + ': ' + (error.message || 'unknown error'));
+            showFlowAlert('Unable to scan ' + name + ': ' + (error.message || 'unknown error'));
             buttonEl.textContent = oldText;
             buttonEl.disabled = false;
             return;
@@ -6422,7 +6524,7 @@
             }
         } catch (error) {
             console.error('Error scanning all documents:', error);
-            alert(error.message || 'Unable to scan all documents. Please try again.');
+            showFlowAlert(error.message || 'Unable to scan all documents. Please try again.');
         } finally {
             setDocumentScanButtonsBusy(false);
         }
@@ -6536,7 +6638,7 @@
     // Update CDRRMO certification status (Channel B only)
     function updateCdrrmoStatus(newStatus) {
         if (!currentApplicant || currentApplicant.channel !== 'B') {
-            alert('CDRRMO certification only applies to Channel B applicants.');
+            showFlowAlert('CDRRMO certification only applies to Channel B applicants.');
             return;
         }
         
@@ -6596,15 +6698,15 @@
                 // Hide action buttons
                 if (cdrrmoActionsBox) cdrrmoActionsBox.style.display = 'none';
                 
-                alert(`CDRRMO status updated to ${statusText}. Page will reload to reflect changes.`);
+                showFlowAlert(`CDRRMO status updated to ${statusText}. Page will reload to reflect changes.`);
                 location.reload();
             } else {
-                alert('Error: ' + (data.error || 'Unknown error'));
+                showFlowAlert('Error: ' + (data.error || 'Unknown error'));
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('Network error. Please try again.');
+            showFlowAlert('Network error. Please try again.');
         });
     }
     
@@ -6693,7 +6795,7 @@
         const deadlineTime = document.getElementById('deadlineTime').value;
 
         if (!deadlineDate || !deadlineTime) {
-            alert('Please select both date and time');
+            showFlowAlert('Please select both date and time');
             return;
         }
 
@@ -6715,14 +6817,14 @@
         .then(data => {
             if (data.success) {
                 closeDeadlineModal();
-                alert('✓ Document deadline set. Applicant status changed to "Submitting Requirements" and will be notified via SMS.');
+                showFlowAlert('Document deadline set. Applicant status changed to "Submitting Requirements" and will be notified via SMS.', 'Success', null, 'success');
                 location.reload();
             } else {
-                alert('Error: ' + (data.error || 'Unknown error'));
+                showFlowAlert('Error: ' + (data.error || 'Unknown error'));
             }
         })
         .catch(error => {
-            alert('Error: ' + error.message);
+            showFlowAlert('Error: ' + error.message);
         });
     }
 
@@ -6750,14 +6852,14 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert('✓ Applicant marked as eligible and added to queue.');
+                showFlowAlert('Applicant marked as eligible and added to queue.', 'Success', null, 'success');
                 location.reload();
             } else {
-                alert('Error: ' + (data.error || 'Unknown error'));
+                showFlowAlert('Error: ' + (data.error || 'Unknown error'));
             }
         })
         .catch(error => {
-            alert('Error: ' + error.message);
+            showFlowAlert('Error: ' + error.message);
         });
     }
     
@@ -6797,7 +6899,7 @@
         const notes = notesEl ? notesEl.value : '';
         
         if (!reason) {
-            alert('Please select a reason for disqualification.');
+            showFlowAlert('Please select a reason for disqualification.');
             return;
         }
         
@@ -6815,14 +6917,14 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert('Applicant disqualified.');
+                showFlowAlert('Applicant disqualified.');
                 location.reload();
             } else {
-                alert('Error: ' + (data.error || 'Unknown error'));
+                showFlowAlert('Error: ' + (data.error || 'Unknown error'));
             }
         })
         .catch(error => {
-            alert('Error: ' + error.message);
+            showFlowAlert('Error: ' + error.message);
         });
     }
     
@@ -6889,14 +6991,14 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert('✓ Changes saved successfully.');
+                showFlowAlert('Changes saved successfully.', 'Success', null, 'success');
                 location.reload();
             } else {
-                alert('Error: ' + (data.error || 'Unknown error'));
+                showFlowAlert('Error: ' + (data.error || 'Unknown error'));
             }
         })
         .catch(error => {
-            alert('Error: ' + error.message);
+            showFlowAlert('Error: ' + error.message);
         });
     }
     
@@ -6930,15 +7032,15 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert('✓ Applicant deleted successfully.');
+                showFlowAlert('Applicant deleted successfully.', 'Success', null, 'success');
                 closeReviewModal();
                 location.reload();
             } else {
-                alert('Error: ' + (data.error || 'Unknown error'));
+                showFlowAlert('Error: ' + (data.error || 'Unknown error'));
             }
         })
         .catch(error => {
-            alert('Error: ' + error.message);
+            showFlowAlert('Error: ' + error.message);
         });
     }
 
@@ -7173,7 +7275,7 @@
 
     function deleteHouseholdMember(index) {
         if (householdMemberCount <= 1) {
-            alert('The last household member row cannot be removed. Clear the fields on that row if it is not used.');
+            showFlowAlert('The last household member row cannot be removed. Clear the fields on that row if it is not used.');
             return;
         }
         householdMemberCount--;
@@ -7764,7 +7866,7 @@
             });
             isfCount = entries.length;
         } else {
-            alert('At least one ISF record is required.');
+            showFlowAlert('At least one ISF record is required.');
         }
     }
     
@@ -7796,7 +7898,7 @@
         });
         
         if (filteredData.length === 0) {
-            alert('No data to export with current filters.');
+            showFlowAlert('No data to export with current filters.');
             return;
         }
         
@@ -7866,7 +7968,7 @@
     function loadISFData(applicantData) {
         // Load ISF data into the modal (direct data loading, no AJAX needed)
         if (!applicantData) {
-            alert('Error: No applicant data available');
+            showFlowAlert('Error: No applicant data available');
             return;
         }
         currentISFData = applicantData;
@@ -8006,29 +8108,29 @@
 
         // Prevent submission if Mark as Eligible button is disabled
         if (action === 'eligible' && document.getElementById('isfApproveBtn').disabled) {
-            alert('This applicant does not meet eligibility criteria. Please mark as disqualified or address the issues.');
+            showFlowAlert('This applicant does not meet eligibility criteria. Please mark as disqualified or address the issues.');
             return;
         }
 
         // Validation
         if (!phoneNumber) {
-            alert('Contact number is required');
+            showFlowAlert('Contact number is required');
             return;
         }
 
         // Validate Philippine phone format (11 digits, starts with 09)
         const phoneClean = phoneNumber.replace(/\D/g, '');
         if (phoneClean.length !== 11 || !phoneClean.startsWith('09')) {
-            alert('Invalid phone format. Required: 09XXXXXXXXXX (11 digits)');
+            showFlowAlert('Invalid phone format. Required: 09XXXXXXXXXX (11 digits)');
             return;
         }
 
         if (!barangay) {
-            alert('Barangay is required');
+            showFlowAlert('Barangay is required');
             return;
         }
         if (!propertyOwnership) {
-            alert('Property ownership verification is required');
+            showFlowAlert('Property ownership verification is required');
             return;
         }
 
@@ -8036,7 +8138,7 @@
         if (disqualifyGroup.style.display !== 'none') {
             const reason = document.getElementById('isfDisqualifyReason').value;
             if (!reason) {
-                alert('Disqualification reason is required');
+                showFlowAlert('Disqualification reason is required');
                 return;
             }
         }
@@ -8066,15 +8168,15 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert(data.message || 'ISF processed successfully');
+                showFlowAlert(data.message || 'ISF processed successfully');
                 closeISFModal();
                 location.reload();
             } else {
-                alert('Error: ' + (data.error || 'Unknown error'));
+                showFlowAlert('Error: ' + (data.error || 'Unknown error'));
             }
         })
         .catch(error => {
-            alert('Error submitting form: ' + error.message);
+            showFlowAlert('Error submitting form: ' + error.message);
         });
     }
 
@@ -8121,7 +8223,7 @@
 
         // Validation
         if (!reason.trim()) {
-            alert('Reason for edit is required');
+            showFlowAlert('Reason for edit is required');
             return;
         }
 
@@ -8133,7 +8235,7 @@
         } else if (years && years !== currentISFData.years_residing) {
             submitFieldEdit('years_residing', years, reason);
         } else {
-            alert('No changes detected');
+            showFlowAlert('No changes detected');
             return;
         }
     }
@@ -8159,7 +8261,7 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert(data.message || 'Data updated successfully');
+                showFlowAlert(data.message || 'Data updated successfully');
                 // Update currentISFData
                 currentISFData[fieldName] = newValue;
                 // Re-check eligibility after edit
@@ -8167,11 +8269,11 @@
                 // Exit edit mode
                 toggleISFEditMode();
             } else {
-                alert('Error: ' + (data.error || 'Failed to update'));
+                showFlowAlert('Error: ' + (data.error || 'Failed to update'));
             }
         })
         .catch(error => {
-            alert('Error updating data: ' + error.message);
+            showFlowAlert('Error updating data: ' + error.message);
         });
     }
 
@@ -8205,7 +8307,7 @@
         const applicantId = document.getElementById('reviewApplicantId').value;
 
         if (!applicantId) {
-            alert('Error: No applicant selected');
+            showFlowAlert('Error: No applicant selected');
             return;
         }
 
@@ -8224,15 +8326,15 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert('CDRRMO disposition recorded as accepted.\n\nThe applicant record will be updated and the page will reload.');
+                showFlowAlert('CDRRMO disposition recorded as accepted.\n\nThe applicant record will be updated and the page will reload.');
                 closeReviewModal();
                 setTimeout(() => location.reload(), 1000);
             } else {
-                alert('Error: ' + data.error);
+                showFlowAlert('Error: ' + data.error);
             }
         })
         .catch(error => {
-            alert('Error: ' + error.message);
+            showFlowAlert('Error: ' + error.message);
         });
     }
 
@@ -8241,7 +8343,7 @@
         const applicantId = document.getElementById('reviewApplicantId').value;
 
         if (!applicantId) {
-            alert('Error: No applicant selected');
+            showFlowAlert('Error: No applicant selected');
             return;
         }
 
@@ -8264,15 +8366,15 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert('CDRRMO disposition recorded as rejected.\n\nThe applicant record will be updated for walk-in processing and the page will reload.');
+                showFlowAlert('CDRRMO disposition recorded as rejected.\n\nThe applicant record will be updated for walk-in processing and the page will reload.');
                 closeReviewModal();
                 setTimeout(() => location.reload(), 1000);
             } else {
-                alert('Error: ' + data.error);
+                showFlowAlert('Error: ' + data.error);
             }
         })
         .catch(error => {
-            alert('Error: ' + error.message);
+            showFlowAlert('Error: ' + error.message);
         });
     }
 
@@ -8314,7 +8416,7 @@
             `${dot(true, false)}<strong>Step 1:</strong> Intake record encoded (${registeredAt})`,
             `${dot(status !== 'pending', status === 'pending')}<strong>Step 2:</strong> ${step2Text}`,
             `${dot(finalized || (source === 'office_intake' && status !== 'pending'), status !== 'pending' && !(finalized || source === 'office_intake'))}<strong>Step 3:</strong> ${step3Text}`,
-            `${dot(sentToModule2, finalized && !sentToModule2)}<strong>Step 4:</strong> ${sentToModule2 ? 'Ready in Module 2 — Application & Evaluation' : 'Not yet in Module 2 handoff list'}`,
+            `${dot(sentToModule2, finalized && !sentToModule2)}<strong>Step 4:</strong> ${sentToModule2 ? 'Ready in Module 2 — Application & Eligibility' : 'Not yet in Module 2 handoff list'}`,
         ];
         host.innerHTML = lines.map(function (line) { return `<div style="margin-bottom:0.25rem;">${line}</div>`; }).join('');
     }
@@ -8360,7 +8462,7 @@
         }
 
         // Intake modal policy: keep CDRRMO/Ronda detailed verification display out of this modal.
-        // Full verification details are viewed from Module 2 (Application & Evaluation) View modal.
+        // Full verification details are viewed from Module 2 (Application & Eligibility) View modal.
         if (rondaTeamResultBox) rondaTeamResultBox.style.display = 'none';
         if (staffApprovalBox) staffApprovalBox.style.display = 'none';
         if (cdrrmoActionsBox) cdrrmoActionsBox.style.display = 'none';
@@ -8428,11 +8530,11 @@
         if (!canModify) return;
         const applicantId = document.getElementById('reviewApplicantId')?.value;
         if (!applicantId || !currentApplicant || currentApplicant.channel !== 'B') {
-            alert('Unable to record certification: no applicant is selected or this record is not a Channel B hazard pathway file.');
+            showFlowAlert('Unable to record certification: no applicant is selected or this record is not a Channel B hazard pathway file.');
             return;
         }
         if (currentApplicant.cdrrmo_status !== 'pending') {
-            alert('Office receipt is only available while the CDRRMO certification record is still pending in the system (before a certified or not-certified disposition is filed).');
+            showFlowAlert('Office receipt is only available while the CDRRMO certification record is still pending in the system (before a certified or not-certified disposition is filed).');
             return;
         }
         if (!confirm('Record official CDRRMO certification as received at the THA intake office?\n\nThe applicant will be marked hazard-area certified, assigned a priority queue position where applicable, and notified by SMS if a mobile number is on file.\n\nProceed?')) {
@@ -8455,15 +8557,15 @@
         .then(function (response) { return response.json(); })
         .then(function (data) {
             if (data.success) {
-                alert(data.message || 'CDRRMO certification recorded.');
+                showFlowAlert(data.message || 'CDRRMO certification recorded.');
                 closeReviewModal();
                 setTimeout(function () { location.reload(); }, 400);
             } else {
-                alert(data.error || 'Unable to record certification.');
+                showFlowAlert(data.error || 'Unable to record certification.');
             }
         })
         .catch(function (err) {
-            alert('Error: ' + err.message);
+            showFlowAlert('Error: ' + err.message);
         });
     }
 

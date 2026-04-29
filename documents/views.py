@@ -39,8 +39,10 @@ def verify_position(view_func):
 @verify_position
 def document_management(request, position):
     """
-    Module 3 - Document Management
-    Search and manage documents for all applicants and beneficiaries.
+    Document vault (Module 3 UI) — search and manage files per applicant.
+
+    Includes applicants who appear on Intake LIST OF APPLICATIONS (Intake Archive exists)
+    and/or have an Intake Archive (and legacy rows may still set module2_handoff_at).
 
     URL: /documents/<position>/management/
     """
@@ -51,11 +53,10 @@ def document_management(request, position):
     search_query = request.GET.get('search', '').strip()
     status_filter = request.GET.get('status', 'all').strip()
 
-    # Module 3 pipeline scope:
-    # include records that are already 2.8-approved OR already in/after documents-processing states.
-    # Ordering: applicants are processed strictly by Module 2 queue assignment —
-    # Priority queue (lowest position first), then Walk-in queue (lowest position first),
-    # then any without an active queue entry.
+    # Vault list scope: anyone on Intake "LIST OF APPLICATIONS" (has an Archive row) and/or
+    # anyone with Intake Archive or legacy Module 2 handoff timestamp. Union covers both:
+    # before staff proceed to Application & Eligibility.
+    # Ordering: Module 2 queue first when present — priority, then walk-in, then no queue.
     applicants_qs = (
         Applicant.objects
         .prefetch_related(
@@ -69,11 +70,10 @@ def document_management(request, position):
                 to_attr='active_queue_entries',
             ),
         )
-        .filter(module2_handoff_at__isnull=False)
         .filter(
-            Q(evaluation_approval_status='approved') |
-            Q(status__in=['requirements', 'application', 'standby', 'awarded'])
+            Q(archives__isnull=False) | Q(module2_handoff_at__isnull=False)
         )
+        .distinct()
     )
 
     # Filter by status
@@ -239,10 +239,12 @@ def document_management(request, position):
         .filter(applicant_id__in=applicant_ids)
         .order_by('-uploaded_at')
     )
-    disqualified_count = Applicant.objects.filter(
-        module2_handoff_at__isnull=False,
-        status='disqualified',
-    ).count()
+    disqualified_count = (
+        Applicant.objects.filter(status='disqualified')
+        .filter(Q(archives__isnull=False) | Q(module2_handoff_at__isnull=False))
+        .distinct()
+        .count()
+    )
 
     context = {
         'page_title': 'Document Management',

@@ -403,7 +403,7 @@
         <div class="modal-header" style="justify-content: center;">
             <div style="text-align: center;">
                 <p class="tha-review-modal-kicker">Applicant Journey</p>
-                <h3 class="modal-title" style="font-size: 1rem;">Handoff Summary</h3>
+                <h3 class="modal-title" style="font-size: 1rem;">Archive Summary</h3>
                 <p class="modal-subtitle" id="archiveSummarySubtitle">Complete handoff details</p>
             </div>
             <button class="btn-close" onclick="closeArchiveSummaryModal()" style="position: absolute; right: 1.5rem;">
@@ -430,11 +430,11 @@
                 </div>
             </div>
             <div>
-                <h4 style="color: #16a34a;"><svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg>Module 2 &middot; Application &amp; Evaluation</h4>
+                <h4 style="color: #16a34a;"><svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg>Module 2 &middot; Intake Archives Receipt</h4>
                 <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1rem;">
-                    <div><p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Proceeded To Application</p><div id="archiveSummaryProceededAt">N/A</div></div>
+                    <div><p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Proceeded To Archives</p><div id="archiveSummaryProceededAt">N/A</div></div>
                     <div><p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Proceeded By</p><div id="archiveSummaryProceededBy">N/A</div></div>
-                    <div><p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Application Status</p><div id="archiveSummaryModule2Summary">N/A</div></div>
+                    <div><p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Archive Snapshot</p><div id="archiveSummaryModule2Summary">N/A</div></div>
                 </div>
             </div>
             <div>
@@ -444,9 +444,9 @@
                 </div>
             </div>
             <div>
-                <h4 style="color: #6d28d9;"><svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Module 4 &middot; Lot Awarding</h4>
+                <h4 style="color: #6d28d9;"><svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Module 4 &middot; Downstream Progress</h4>
                 <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1rem;">
-                    <div><p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Status</p><div id="archiveSummaryModule3Summary">Not yet proceeded to Lot Awarding</div></div>
+                    <div><p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Status</p><div id="archiveSummaryModule3Summary">Not yet proceeded beyond Archives</div></div>
                     <div><p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Proceeded At</p><div id="archiveSummaryModule3At">N/A</div></div>
                     <div><p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Proceeded By</p><div id="archiveSummaryModule3By">N/A</div></div>
                 </div>
@@ -468,7 +468,7 @@ function exportArchiveCSV() {
         .map(tr => Array.from(tr.querySelectorAll('td')).map(td => (td.textContent || '').replace(/\s+/g, ' ').trim()));
 
     if (rows.length === 0) {
-        alert('No archive rows to export.');
+        showFlowAlert('No archive rows to export.');
         return;
     }
     let csv = headers.map(h => `"${String(h).replace(/"/g, '""')}"`).join(',') + '\n';
@@ -507,7 +507,7 @@ function openArchiveHandoffSummary(buttonEl) {
     setText('archiveSummaryProceededBy', d.proceededBy || 'Unknown');
     setText('archiveSummaryModule2Summary', d.module2Summary || `${d.reference || 'N/A'} • ${d.name || 'N/A'}`);
     setText('archiveSummarySms', d.sms || 'N/A');
-    setText('archiveSummaryModule3Summary', d.module3Summary || 'Not yet proceeded to Module 3');
+    setText('archiveSummaryModule3Summary', d.module3Summary || 'Not yet proceeded beyond Archives');
     setText('archiveSummaryModule3At', d.module3At || 'N/A');
     setText('archiveSummaryModule3By', d.module3By || 'N/A');
     const modal = document.getElementById('archiveSummaryModal');

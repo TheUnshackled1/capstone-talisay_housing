@@ -17,7 +17,7 @@ from .forms import (
     HouseholdMemberForm,
     WalkInApplicantForm
 )
-from .utils import send_sms, ensure_priority_queue_entry
+from .utils import send_sms
 from . import sms_workflow
 import json
 import re
@@ -107,21 +107,6 @@ def _is_weak_hazard_location(raw_location):
     return location in weak_values
 
 
-def _validate_hazard_details(is_danger_zone, danger_zone_type, danger_zone_location):
-    if not is_danger_zone:
-        return None
-    if not (danger_zone_type or "").strip():
-        return "Hazard classification is required when hazard-area residence is marked Yes."
-    if _is_weak_hazard_location(danger_zone_location):
-        return (
-            "Location particulars must be specific (at least 12 characters), "
-            "for example: sitio, landmark, and riverbank/road segment."
-        )
-    return None
-
-
-
-
 def _describe_applicant_location(applicant):
     """
     Human-readable "where is this record now" label for duplicate checks.
@@ -141,8 +126,8 @@ def _describe_applicant_location(applicant):
     elif applicant.requirement_submissions.exclude(status='pending').exists() or applicant.status == 'requirements':
         # Requirement submissions are processed under Documents module workflow.
         location = 'Documents (Requirements)'
-    elif applicant.module2_handoff_at:
-        location = 'Applications (Module 2 queue)'
+    elif applicant.archives.exists():
+        location = 'Intake Archives (proceeded from registration list)'
     elif applicant.status == 'application':
         location = 'Applications (Module 2)'
     elif applicant.status in {'standby', 'awarded'}:
@@ -214,7 +199,7 @@ def duplicate_preview(request, position):
         'location': location,
         'status': status_text,
         'handled_by': handled_by,
-        'can_open_in_intake': duplicate_applicant.module2_handoff_at is None,
+        'can_open_in_intake': not duplicate_applicant.archives.exists(),
     })
 
 
@@ -252,31 +237,6 @@ def verify_position(view_func):
             return redirect('accounts:dashboard')
         return view_func(request, position, *args, **kwargs)
     return wrapper
-
-
-
-@login_required
-@verify_position
-def isf_review(request, position, isf_id):
-    """DEPRECATED: Channel A (ISF Review) has been removed."""
-    return JsonResponse({'error': 'Channel A has been removed'}, status=404)
-
-
-@login_required
-@verify_position
-def register_landowner_walkin(request, position):
-    """
-    DEPRECATED: Landowner submission flow has been removed.
-    This endpoint is no longer available.
-    """
-    return JsonResponse({'success': False, 'error': 'Landowner submission flow has been removed.'}, status=404)
-
-
-@login_required
-@verify_position
-def edit_isf_record(request, position, isf_id):
-    """DEPRECATED: Channel A (Edit ISF) has been removed."""
-    return JsonResponse({'error': 'Channel A has been removed'}, status=404)
 
 
 @login_required
@@ -351,7 +311,7 @@ def update_eligibility(request, position):
         return JsonResponse({
             'success': False,
             'error': (
-                'Eligibility decisions were moved to Module 2 (Application & Evaluation). '
+                'Eligibility decisions were moved to Module 2 (Application & Eligibility). '
                 'Use /applications/staff/<position>/ and click View.'
             ),
         }, status=400)
@@ -360,7 +320,7 @@ def update_eligibility(request, position):
         return JsonResponse({
             'success': False,
             'error': (
-                'Disqualification decisions were moved to Module 2 (Application & Evaluation). '
+                'Disqualification decisions were moved to Module 2 (Application & Eligibility). '
                 'Use /applications/staff/<position>/ and click View.'
             ),
         }, status=400)
@@ -579,40 +539,6 @@ def upload_scanned_requirement(request, position):
 
 @login_required
 @verify_position
-@require_POST
-def update_cdrrmo_certification(request, position):
-    """
-    Deprecated intake proxy.
-    CDRRMO action ownership moved to applications app.
-    """
-    from applications.views import update_cdrrmo_certification as app_update_cdrrmo_certification
-    return app_update_cdrrmo_certification(request, position)
-
-
-@login_required
-@require_POST
-def field_verify_cdrrmo(request, position):
-    """
-    Deprecated intake proxy.
-    CDRRMO field verification moved to applications app.
-    """
-    from applications.views import field_verify_cdrrmo as app_field_verify_cdrrmo
-    return app_field_verify_cdrrmo(request, position)
-
-
-@login_required
-@verify_position
-def update_cdrrmo_status(request, position):
-    """
-    Deprecated intake proxy.
-    CDRRMO staff finalization moved to applications app.
-    """
-    from applications.views import update_cdrrmo_status as app_update_cdrrmo_status
-    return app_update_cdrrmo_status(request, position)
-
-
-@login_required
-@verify_position
 def delete_applicant(request, position):
     """
     AJAX endpoint to delete an applicant.
@@ -697,10 +623,10 @@ def resend_sms(request, position):
             return JsonResponse({'success': False, 'error': 'No phone number on record'})
 
         if sms_type == 'registration':
-            if not record.module2_handoff_at:
+            if not record.archives.exists():
                 return JsonResponse({
                     'success': False,
-                    'error': 'SMS for this type is only allowed after proceeding to Module 2.'
+                    'error': 'SMS for this type is only allowed after the record is proceeded to Archives.',
                 })
             handoff_message = sms_workflow.message_proceed_to_evaluation(record)
             sent = send_sms(
@@ -732,11 +658,7 @@ def resend_sms(request, position):
 @verify_position
 @require_POST
 def proceed_to_applications(request, position):
-    """
-    Move applicant to Archive (LIST OF APPLICATIONS section on intake page).
-    Does NOT hand off to Module 2 yet - just creates archive record for tracking.
-    No SMS is triggered by this action.
-    """
+ 
     if request.user.position not in ['second_member', 'fourth_member']:
         return JsonResponse({'success': False, 'error': 'Permission denied.'}, status=403)
 
@@ -747,9 +669,10 @@ def proceed_to_applications(request, position):
     applicant = get_object_or_404(Applicant, id=applicant_id)
     if applicant.status == 'disqualified':
         return JsonResponse({'success': False, 'error': 'Disqualified records cannot be archived.'}, status=400)
+    promote_to_module2 = str(request.POST.get('promote_to_module2', '')).strip().lower() in {'1', 'true', 'yes', 'on'}
 
     with transaction.atomic():
-        # Create Archive record (idempotent - only create if doesn't exist)
+        # Intake Archives receipt.
         archive_record, created = Archive.objects.get_or_create(
             applicant=applicant,
             defaults={
@@ -767,11 +690,22 @@ def proceed_to_applications(request, position):
                 'archived_by': request.user,
             }
         )
+        # Optional promotion path used by the archive checklist CTA:
+        # once baseline R01-R07 are complete, mark as handed off for Module 2 list visibility.
+        if promote_to_module2 and applicant.module2_handoff_at is None:
+            applicant.module2_handoff_at = timezone.now()
+            applicant.module2_handoff_by = request.user
+            applicant.save(update_fields=['module2_handoff_at', 'module2_handoff_by', 'updated_at'])
 
     return JsonResponse({
         'success': True,
-        'message': f'Applicant {applicant.reference_number} moved to LIST OF APPLICATIONS.',
+        'message': (
+            f'Applicant {applicant.reference_number} moved to Application & Eligibility.'
+            if promote_to_module2
+            else f'Applicant {applicant.reference_number} moved to Archives.'
+        ),
         'created': created,
+        'promoted_to_module2': bool(promote_to_module2),
     })
 
 
@@ -914,13 +848,9 @@ def applicants_list(request, position):
         })
     
     # ====== CHANNEL B: Danger Zone Applicants + ALL OTHER APPLICANTS ======
-    # Get ALL applicants (danger zone, walk-in, etc.)
-    # Exclude applicants already proceeded to the Intake Archive table so they
-    # do not remain visible in the active intake list (prevents duplicates).
+    # Active "Total List": applicants not yet in Intake Archives (proceed button creates Archive only).
     walk_in_applicants = Applicant.objects.filter(
-        module2_handoff_at__isnull=True
-    ).exclude(
-        archives__isnull=False
+        archives__isnull=True,
     ).select_related(
         'barangay', 'eligibility_checked_by', 'registered_by'
     ).prefetch_related(
@@ -1037,8 +967,9 @@ def applicants_list(request, position):
             'projectName': (app.project_name or '').strip() if hasattr(app, 'project_name') else '',
             'eligibilityStatus': eligibility_status,
             'applicantStatus': app.status,
-            'readyForModule2': (not bool(app.module2_handoff_at)) and app.status != 'disqualified',
-            'module2HandedOff': bool(app.module2_handoff_at),
+            # Legacy JSON keys — "Module 2" here means ready to proceed to Intake Archives / not disqualified.
+            'readyForModule2': app.status != 'disqualified',
+            'module2HandedOff': False,
             'queueType': queue_type,
             'queuePosition': queue_position,
             'cdrrmoStatus': cdrrmo_status,
@@ -1082,11 +1013,13 @@ def applicants_list(request, position):
             'hasPhone': bool(app.phone_number),
         })
 
-    # Read-only archive/receipt rows: records already proceeded to Module 2.
-    # Query Archive model for snapshot data of handed-off records
+    # Read-only archive/receipt rows (proceed from modal creates Archive; no Module 2 handoff on Applicant).
+    # Query Archive model for snapshot data
     archive_records = []
     archives = list(
-        Archive.objects.select_related(
+        Archive.objects.filter(
+            applicant__module2_handoff_at__isnull=True,
+        ).select_related(
             'archived_by',
             'applicant',
             'applicant__application__form_generated_by',
@@ -1116,7 +1049,7 @@ def applicants_list(request, position):
         # Convert UTC time to Manila time for display
         local_archived_at = timezone.localtime(archive.archived_at) if archive.archived_at else None
 
-        module3_summary = 'Not yet proceeded to Module 3'
+        module3_summary = 'Not yet proceeded beyond Archives'
         module3_proceeded_at = ''
         module3_proceeded_by = ''
         module3_application_number = ''
@@ -1516,7 +1449,7 @@ def walkin_register(request, position):
 @login_required
 def archive_list(request, position):
     """
-    Display archived records (applicants proceeded to Module 2).
+    Display Intake Archive receipts (records proceeded from the registration list).
     URL: /intake/staff/<position>/archive/
     """
     from django.core.paginator import Paginator
@@ -1600,7 +1533,7 @@ def archive_list(request, position):
         )
         requirements_total = trackable_total if trackable_total > 0 else max(len(requirement_scan_rows), 1)
 
-        module3_summary = 'Not yet proceeded to Module 3'
+        module3_summary = 'Not yet proceeded beyond Archives'
         module3_proceeded_at = ''
         module3_proceeded_by = ''
         if archive.applicant_id and hasattr(archive.applicant, 'application'):

@@ -1,5 +1,6 @@
 from django.core.management.base import BaseCommand
 from django.db import IntegrityError, transaction
+from django.db.models import Q
 from django.utils import timezone
 
 from applications.models import QueueEntry, CDRRMOCertification
@@ -78,9 +79,10 @@ class Command(BaseCommand):
         candidates = Applicant.objects.filter(
             channel="danger_zone",
             status="pending_cdrrmo",
-            module2_handoff_at__isnull=False,
             id__in=list(cert_map.keys()),
-        ).order_by("created_at")
+        ).filter(
+            Q(archives__isnull=False) | Q(module2_handoff_at__isnull=False),
+        ).distinct().order_by("created_at")
 
         self.stdout.write(
             self.style.NOTICE(

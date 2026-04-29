@@ -12,13 +12,13 @@ PROCEED_TO_EVALUATION = 'proceed_evaluation'
 def message_proceed_to_evaluation(applicant) -> str:
     """
     Module 1 handoff SMS.
-    Sent when staff clicks "Proceed to Application & Evaluation"
+    Sent when staff clicks "Proceed to Application & Eligibility"
     from Intake, moving the record to Module 2.
     Single SMS message (fits in 160 chars) - no message splitting.
     """
     ref = applicant.reference_number
     # Keep under 160 chars to send as single SMS (not split into 2)
-    base = f'THA {ref}: Your registration has proceeded to application verification & evaluation. We will notify you of updates.'
+    base = f'THA {ref}: Your registration has proceeded to application verification & eligibility. We will notify you of updates.'
     return base
 
 

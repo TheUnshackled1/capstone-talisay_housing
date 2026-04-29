@@ -1,0 +1,152 @@
+/**
+ * Shared THA flow alert dialog (Application list + intake staff pages).
+ * Scoped to #flowAlertModal so other .modal-overlay usages stay unaffected.
+ */
+
+#flowAlertModal.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 13050;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+    padding: 1rem;
+}
+
+#flowAlertModal.modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.flow-alert-card {
+    background: #ffffff;
+    border-radius: 18px;
+    width: min(92vw, 560px);
+    box-shadow: 0 20px 38px rgba(15, 23, 42, 0.2);
+    border: 1px solid #e2e8f0;
+    padding: 1.25rem 1.25rem 1rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.flow-alert-card.flow-alert-card--success {
+    border-color: #86efac;
+    background: linear-gradient(165deg, #ecfdf5 0%, #ffffff 42%, #ffffff 100%);
+    box-shadow:
+        0 20px 44px rgba(21, 128, 61, 0.12),
+        0 1px 0 rgba(255, 255, 255, 0.8) inset;
+    padding-top: 1.35rem;
+}
+
+.flow-alert-success-badge {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    margin: 0 auto 0.95rem;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #22c55e, #16a34a);
+    color: #fff;
+    box-shadow: 0 8px 20px rgba(22, 163, 74, 0.35);
+}
+
+.flow-alert-success-badge svg {
+    width: 28px;
+    height: 28px;
+    stroke: currentColor;
+    stroke-width: 2.5;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.flow-alert-card--success .flow-alert-success-badge {
+    display: flex;
+}
+
+.flow-alert-title {
+    margin: 0 0 0.55rem;
+    color: #0f172a;
+    font-size: 1.18rem;
+    font-weight: 700;
+    text-align: center;
+    letter-spacing: -0.02em;
+}
+
+.flow-alert-card--success .flow-alert-title {
+    color: #14532d;
+    font-size: 1.12rem;
+}
+
+.flow-alert-message {
+    margin: 0;
+    color: #334155;
+    font-size: 0.98rem;
+    line-height: 1.6;
+    white-space: pre-line;
+    text-align: center;
+}
+
+.flow-alert-card--success .flow-alert-message {
+    color: #166534;
+    font-size: 0.9rem;
+    line-height: 1.65;
+    max-width: 34rem;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.flow-alert-ref-pill {
+    display: inline-block;
+    margin-top: 0.65rem;
+    padding: 0.35rem 0.65rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    font-family: ui-monospace, 'Cascadia Code', 'Segoe UI Mono', monospace;
+    color: #14532d;
+    background: rgba(187, 247, 208, 0.65);
+    border: 1px solid #bbf7d0;
+    border-radius: 9999px;
+    letter-spacing: 0.02em;
+}
+
+.flow-alert-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 1.25rem;
+}
+
+.flow-alert-ok {
+    min-width: 108px;
+    border: none;
+    border-radius: 9999px;
+    background: #4f46e5;
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.95rem;
+    padding: 0.52rem 1.35rem;
+    cursor: pointer;
+    box-shadow: 0 6px 16px rgba(79, 70, 229, 0.35);
+    transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.flow-alert-ok:hover {
+    background: #4338ca;
+}
+
+.flow-alert-ok:active {
+    transform: scale(0.98);
+}
+
+.flow-alert-card--success .flow-alert-ok {
+    background: linear-gradient(180deg, #22c55e, #15803d);
+    box-shadow: 0 8px 22px rgba(21, 128, 61, 0.38);
+}
+
+.flow-alert-card--success .flow-alert-ok:hover {
+    background: linear-gradient(180deg, #16a34a, #166534);
+}

@@ -144,15 +144,15 @@ def _active_intake_queue_label(applicant):
 
 def _ensure_cdrrmo_pending_after_module2_handoff(applicant):
     """
-    Self-heal legacy hazard-declared handoff rows.
+    Self-heal hazard-declared rows after Intake Archives proceed.
 
-    If a Channel B hazard claim has already been handed off to Module 2,
+    If a Channel B hazard claim exists and the applicant has an Intake Archive row,
     ensure there is a pending CDRRMO record and that applicant status is
     moved from generic `pending` -> `pending_cdrrmo`.
     """
     if applicant.channel != 'danger_zone':
         return
-    if not applicant.module2_handoff_at:
+    if not applicant.archives.exists():
         return
     has_hazard_claim = bool((applicant.danger_zone_type or '').strip() or (applicant.danger_zone_location or '').strip())
     if not has_hazard_claim:
@@ -165,7 +165,13 @@ def _ensure_cdrrmo_pending_after_module2_handoff(applicant):
     try:
         applicant.cdrrmo_certification
     except CDRRMOCertification.DoesNotExist:
-        requested_by = applicant.module2_handoff_by or applicant.registered_by or applicant.eligibility_checked_by
+        arch = applicant.archives.order_by('-archived_at').first()
+        requested_by = (
+            (arch.archived_by if arch else None)
+            or getattr(applicant, 'module2_handoff_by', None)
+            or applicant.registered_by
+            or applicant.eligibility_checked_by
+        )
         CDRRMOCertification.objects.create(
             applicant=applicant,
             declared_location=(applicant.danger_zone_location or applicant.danger_zone_type or '').strip() or 'Declared hazard area',
@@ -184,12 +190,12 @@ def _auto_finalize_non_hazard_walkin(applicant, acted_by=None):
     Auto-heal non-hazard handoff rows that should already be queued as Walk-in.
 
     Applies only when:
-    - Module 2 handoff exists
+    - Applicant has an Intake Archive row (proceeded from Module 1 list)
     - No hazard claim is declared (2.6 is skipped)
     - Record is rule-eligible in Module 2
     - No active queue entry exists yet
     """
-    if not applicant.module2_handoff_at:
+    if not applicant.archives.exists():
         return False
     has_hazard_claim = bool((applicant.danger_zone_type or '').strip() or (applicant.danger_zone_location or '').strip())
     if has_hazard_claim:
@@ -214,10 +220,8 @@ def _auto_finalize_non_hazard_walkin(applicant, acted_by=None):
     return True
 
 
-def _require_module2_handoff(applicant):
-    """
-    Enforce Module 2 gate: record must be handed off from Module 1 first.
-    """
+def _require_intake_archive(applicant):
+    """Module 2 gate: applicant must have been proceeded in Intake (Intake Archive row exists)."""
     if applicant.module2_handoff_at:
         return None
     return JsonResponse(
@@ -512,7 +516,7 @@ def _module2_eligibility_snapshot(applicant, checked_by=None):
 @verify_position
 def applications_list(request, position):
     """
-    Module 2 - Housing Application & Evaluation
+    Module 2 - Housing Application & Eligibility
     Shows eligible applicants with document checklist progress, signatory routing, etc.
 
     URL: /applications/<position>/list/
@@ -631,13 +635,6 @@ def applications_list(request, position):
         action_at__lt=timezone.now() - timezone.timedelta(days=3)
     ).select_related('application', 'application__applicant')
     
-    # Queue summary cards (Module 1 queue tags surfaced in Module 2)
-    queue_counts = {
-        'priority': 0,
-        'walk_in': 0,
-        'disqualified': 0,
-    }
-
     # Prepare applicant data with document counts
     applicants_data = []
     for applicant in applicants:
@@ -717,12 +714,6 @@ def applications_list(request, position):
 
         intake_queue_label = _active_intake_queue_label(applicant)
         active_entries = getattr(applicant, 'active_queue_entries', None) or []
-        if active_entries:
-            if active_entries[0].queue_type == 'priority':
-                queue_counts['priority'] += 1
-            else:
-                queue_counts['walk_in'] += 1
-
         applicants_data.append({
             'applicant': applicant,
             'application': application,
@@ -785,13 +776,12 @@ def applications_list(request, position):
                search.lower() in a['applicant'].reference_number.lower()
         ]
 
-    # Count disqualified applicants
-    queue_counts['disqualified'] = Applicant.objects.filter(status='disqualified').count()
+    from_intake_handoff = request.GET.get('from') == 'intake_scan_checklist'
+    intake_handoff_ref = (request.GET.get('ref') or '').strip()[:120]
 
     context = {
         'applicants_data': applicants_data,
         'stage_counts': stage_counts,
-        'queue_counts': queue_counts,
         'requirements': requirements,
         'group_a_requirements': group_a_requirements,
         'group_b_requirements': group_b_requirements,
@@ -802,6 +792,8 @@ def applications_list(request, position):
         'total_eligible': applicants.count(),
         'permissions': permissions,
         'user_position': request.user.position,
+        'from_intake_handoff': from_intake_handoff,
+        'intake_handoff_ref': intake_handoff_ref,
     }
     
     return render(request, 'applications/applications_list.html', context)
@@ -828,6 +820,10 @@ def application_detail(request, position, application_id):
     
     try:
         applicant = Applicant.objects.prefetch_related(
+            Prefetch(
+                'archives',
+                queryset=Archive.objects.select_related('archived_by').order_by('archived_at'),
+            ),
             'requirement_submissions',
             'requirement_submissions__requirement',
             Prefetch(
@@ -846,6 +842,10 @@ def application_detail(request, position, application_id):
         # Try as Application ID
         application = get_object_or_404(
             Application.objects.select_related('applicant').prefetch_related(
+                Prefetch(
+                    'applicant__archives',
+                    queryset=Archive.objects.select_related('archived_by').order_by('archived_at'),
+                ),
                 'routing_steps',
                 'applicant__requirement_submissions',
                 'applicant__requirement_submissions__requirement',
@@ -866,7 +866,7 @@ def application_detail(request, position, application_id):
     # Get user permissions
     permissions = get_module2_permissions(request.user)
 
-    # Ensure modal reflects Module 2 handoff hazard workflow state.
+    # Ensure modal reflects hazard workflow after Intake Archives proceed.
     _ensure_cdrrmo_pending_after_module2_handoff(applicant)
     _auto_finalize_non_hazard_walkin(applicant, acted_by=request.user)
     applicant.refresh_from_db()
@@ -1034,7 +1034,7 @@ def update_cdrrmo_certification(request, position):
             return JsonResponse({'success': False, 'error': 'Invalid decision. Must be "certified" or "not_certified"'})
 
         applicant = Applicant.objects.get(id=applicant_id)
-        handoff_error = _require_module2_handoff(applicant)
+        handoff_error = _require_intake_archive(applicant)
         if handoff_error:
             return handoff_error
         blacklist_error = _require_module2_blacklist_clear(applicant)
@@ -1094,7 +1094,7 @@ def update_cdrrmo_certification(request, position):
             sms_msg = (
                 "CDRRMO certification was not provided/verified in Module 2. "
                 f"You are currently placed in Walk-in Queue position #{queue_entry.position}. "
-                f"Reference: {applicant.reference_number}. Final evaluation remains under regular processing rules."
+                f"Reference: {applicant.reference_number}. Final eligibility processing remains under regular processing rules."
             )
             sent = send_sms(applicant.phone_number, sms_msg, sms_workflow.CDRRMO_NOT_CERTIFIED, applicant=applicant, module='applications')
             if sent and not applicant.eligibility_sms_sent:
@@ -1168,7 +1168,7 @@ def record_displacement_classification(request, position):
             return JsonResponse({'success': False, 'error': 'Missing applicant_id'})
 
         applicant = Applicant.objects.get(id=applicant_id)
-        handoff_error = _require_module2_handoff(applicant)
+        handoff_error = _require_intake_archive(applicant)
         if handoff_error:
             return handoff_error
         blacklist_error = _require_module2_blacklist_clear(applicant)
@@ -1334,7 +1334,7 @@ def field_verify_cdrrmo(request, position):
             return JsonResponse({'success': False, 'error': 'Invalid decision. Must be "certified" or "not_certified"'})
 
         applicant = Applicant.objects.get(id=applicant_id)
-        handoff_error = _require_module2_handoff(applicant)
+        handoff_error = _require_intake_archive(applicant)
         if handoff_error:
             return handoff_error
         blacklist_error = _require_module2_blacklist_clear(applicant)
@@ -1427,7 +1427,7 @@ def update_cdrrmo_status(request, position):
             return JsonResponse({'success': False, 'error': 'Invalid decision. Must be "approved" or "rejected"'})
 
         applicant = Applicant.objects.get(id=applicant_id)
-        handoff_error = _require_module2_handoff(applicant)
+        handoff_error = _require_intake_archive(applicant)
         if handoff_error:
             return handoff_error
         blacklist_error = _require_module2_blacklist_clear(applicant)
@@ -1537,7 +1537,7 @@ def evaluate_applicant(request, position):
         return JsonResponse({'success': False, 'error': 'Missing or invalid parameters.'}, status=400)
 
     applicant = get_object_or_404(Applicant, id=applicant_id)
-    handoff_error = _require_module2_handoff(applicant)
+    handoff_error = _require_intake_archive(applicant)
     if handoff_error:
         return handoff_error
 
@@ -1612,7 +1612,7 @@ def evaluate_applicant(request, position):
     # Disqualification is handled in Module 3 (Documents), not here.
     return JsonResponse({
         'success': False,
-        'error': 'Module 2 handles evaluation and queue assignment only. Disqualification is processed in Module 3.',
+        'error': 'Module 2 handles eligibility determination and queue assignment only. Disqualification is processed in Module 3.',
     }, status=400)
 
 
@@ -1622,8 +1622,8 @@ def evaluate_applicant(request, position):
 def record_evaluation_approval(request, position):
     """
     Module 2 step 2.8 endpoint.
-    Auto-confirms evaluation approval (only 'approved' status) based on Layer 3 CDRRMO completion.
-    Stores evaluation approval/review marker only (separate from Module 3 routing).
+    Auto-confirms eligibility approval / step 2.8 (only 'approved' status) based on Layer 3 CDRRMO completion.
+    Stores eligibility approval marker only (separate from Module 3 routing).
     """
     allowed_positions = ['fourth_member', 'second_member']
     if request.user.position not in allowed_positions:
@@ -1641,7 +1641,7 @@ def record_evaluation_approval(request, position):
         return JsonResponse({'success': False, 'error': 'Module 2 step 2.8 only supports approval. Disqualification is handled in Module 3.'}, status=400)
 
     applicant = get_object_or_404(Applicant, id=applicant_id)
-    handoff_error = _require_module2_handoff(applicant)
+    handoff_error = _require_intake_archive(applicant)
     if handoff_error:
         return handoff_error
     blacklist_error = _require_module2_blacklist_clear(applicant)
@@ -1654,7 +1654,7 @@ def record_evaluation_approval(request, position):
     if applicant.status != 'eligible':
         return JsonResponse({
             'success': False,
-            'error': 'Record 2.8 approval only after Module 2 evaluation marks the applicant eligible and queued.',
+            'error': 'Record 2.8 approval only after Module 2 marks the applicant eligible and queued.',
         }, status=400)
     active_queue = applicant.queue_entries.filter(status='active').order_by('entered_at').first()
     if active_queue is None:
@@ -1689,7 +1689,7 @@ def record_evaluation_approval(request, position):
         queue_label = 'Priority Queue' if (active_queue and active_queue.queue_type == 'priority') else 'Walk-in Queue'
         queue_pos = active_queue.position if active_queue else '?'
         sms_msg = (
-            "THA update: Your Module 2 evaluation has been approved. "
+            "THA update: Your Module 2 eligibility approval has been recorded. "
             f"Queue assignment: {queue_label} position #{queue_pos}. "
             f"Ref: {applicant.reference_number}."
         )
@@ -1753,7 +1753,7 @@ def update_requirement(request, position):
 
     try:
         applicant = Applicant.objects.get(id=applicant_id)
-        handoff_error = _require_module2_handoff(applicant)
+        handoff_error = _require_intake_archive(applicant)
         if handoff_error:
             return handoff_error
         blacklist_error = _require_module2_blacklist_clear(applicant)
@@ -1846,7 +1846,7 @@ def generate_form(request, position, applicant_id):
         }, status=403)
     
     applicant = get_object_or_404(Applicant, id=applicant_id)
-    handoff_error = _require_module2_handoff(applicant)
+    handoff_error = _require_intake_archive(applicant)
     if handoff_error:
         return handoff_error
     blacklist_error = _require_module2_blacklist_clear(applicant)
@@ -1959,7 +1959,7 @@ def update_routing(request, position):
     
     try:
         application = Application.objects.select_related('applicant').get(id=application_id)
-        handoff_error = _require_module2_handoff(application.applicant)
+        handoff_error = _require_intake_archive(application.applicant)
         if handoff_error:
             return handoff_error
         blacklist_error = _require_module2_blacklist_clear(application.applicant)
@@ -2053,7 +2053,7 @@ def move_to_standby(request, position):
     
     try:
         application = Application.objects.select_related('applicant').get(id=application_id)
-        handoff_error = _require_module2_handoff(application.applicant)
+        handoff_error = _require_intake_archive(application.applicant)
         if handoff_error:
             return handoff_error
         blacklist_error = _require_module2_blacklist_clear(application.applicant)
@@ -2136,7 +2136,7 @@ def award_lot(request, position):
     
     try:
         application = Application.objects.select_related('applicant').get(id=application_id)
-        handoff_error = _require_module2_handoff(application.applicant)
+        handoff_error = _require_intake_archive(application.applicant)
         if handoff_error:
             return handoff_error
         blacklist_error = _require_module2_blacklist_clear(application.applicant)
@@ -2279,7 +2279,7 @@ def update_electricity(request, position):
         connection = ElectricityConnection.objects.select_related(
             'application', 'application__applicant'
         ).get(id=connection_id)
-        handoff_error = _require_module2_handoff(connection.application.applicant)
+        handoff_error = _require_intake_archive(connection.application.applicant)
         if handoff_error:
             return handoff_error
         blacklist_error = _require_module2_blacklist_clear(connection.application.applicant)

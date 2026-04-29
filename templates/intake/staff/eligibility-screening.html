@@ -663,17 +663,17 @@ function submitEligibilityDecision(decision) {
     .then(response => response.json())
     .then(result => {
         if (result.success) {
-            alert(result.message);
+            showFlowAlert(result.message, 'Success', null, 'success');
             closeReviewModal();
             // Reload applicants list
             location.reload();
         } else {
-            alert('Error: ' + (result.error || result.message));
+            showFlowAlert('Error: ' + (result.error || result.message), 'Notice');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('An error occurred');
+        showFlowAlert('An error occurred', 'Notice');
     });
 }
 

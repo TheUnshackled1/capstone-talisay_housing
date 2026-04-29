@@ -1036,14 +1036,13 @@ def dashboard_field(request):
         messages.error(request, 'Access denied. This dashboard is for Field Personnel only.')
         return redirect('accounts:dashboard')
 
-    # ==================== MODULE 2 HANDOFF: CHANNEL B FIELD VERIFICATION ====================
-    # Only pending danger zone verifications after intake staff proceeds the
-    # record to Module 2 (Application & Evaluation).
+    # ==================== CHANNEL B FIELD VERIFICATION ====================
+    # Pending danger zone verifications after intake staff proceeded the record to Archives.
     # Filter:
     # 1. CDRRMOCertification status='pending' (needs field verification)
     # 2. Applicant claimed danger zone (danger_zone_type is not empty)
     # 3. Applicant is income eligible (monthly_income <= 10,000)
-    # 4. Applicant was handed off to Module 2 by staff
+    # 4. Applicant has an Intake Archive row (Proceed → LIST OF APPLICATIONS)
     # 5. Applicant is in pending_cdrrmo stage
     pending_certifications = CDRRMOCertification.objects.filter(
         status='pending',
@@ -1053,7 +1052,7 @@ def dashboard_field(request):
         applicant__status='pending_cdrrmo',
     ).exclude(
         applicant__danger_zone_type=''  # Empty string means not claimed
-    ).select_related(
+    ).distinct().select_related(
         'applicant', 'applicant__registered_by', 'applicant__barangay'
     ).order_by('-requested_at')
 

@@ -131,7 +131,7 @@
     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.95rem; gap: 1rem; flex-wrap: wrap;">
         <div>
             <h1 style="font-size: 1.02rem; font-weight: 700; color: #0f172a; margin: 0; letter-spacing: 0.04em; text-transform: uppercase;">Document Management</h1>
-            <p style="font-size: 0.75rem; color: #64748b; margin-top: 0.2rem;">Module 3 — Complete document history per applicant · Physical documents remain official hard copy</p>
+            <p style="font-size: 0.75rem; color: #64748b; margin-top: 0.2rem;">Module 3 — Vault for everyone on Intake <strong>LIST OF APPLICATIONS</strong> (archive on file) and everyone handed off to <strong>Application &amp; Eligibility</strong> · Physical files remain the official hard copy</p>
         </div>
         <button onclick="openUploadModal()" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.52rem 0.88rem; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; border: none; border-radius: 0.5rem; font-size: 0.72rem; font-weight: 700; cursor: pointer; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); white-space: nowrap;">
             ⬆️ Upload Document
@@ -435,7 +435,7 @@ function closeUploadModal(e) {
 function submitUpload() {
     const form = document.getElementById('uploadForm');
     if (!form.checkValidity()) {
-        alert('Please fill in all required fields');
+        showFlowAlert('Please fill in all required fields');
         return;
     }
 
@@ -449,14 +449,14 @@ function submitUpload() {
     .then(r => r.json())
     .then(d => {
         if (d.success) {
-            alert('✓ Document uploaded');
+            showFlowAlert('Document uploaded', 'Success', null, 'success');
             closeUploadModal();
             location.reload();
         } else {
-            alert('Error: ' + (d.error || 'Upload failed'));
+            showFlowAlert('Error: ' + (d.error || 'Upload failed'));
         }
     })
-    .catch(e => alert('Error: ' + e));
+    .catch(e => showFlowAlert('Error: ' + e));
 }
 
 function deleteDocument(docId) {
@@ -470,10 +470,10 @@ function deleteDocument(docId) {
     .then(r => r.json())
     .then(d => {
         if (d.success) {
-            alert('✓ Document deleted');
+            showFlowAlert('Document deleted', 'Success', null, 'success');
             location.reload();
         } else {
-            alert('Error: ' + (d.error || 'Delete failed'));
+            showFlowAlert('Error: ' + (d.error || 'Delete failed'));
         }
     });
 }
