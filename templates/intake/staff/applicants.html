@@ -676,6 +676,9 @@
     #archiveRequirementsModal .archive-req-modal {
         border: 1px solid #cbd5e1;
         border-radius: 1rem;
+        display: flex;
+        flex-direction: column;
+        max-height: min(92vh, 54rem);
         overflow: hidden;
         box-shadow: 0 24px 52px -18px rgba(15, 23, 42, 0.35);
     }
@@ -717,6 +720,8 @@
     #archiveRequirementsModal .archive-req-body {
         background: #f8fafc;
         padding: 1rem 1.25rem 0.95rem;
+        overflow-y: auto;
+        min-height: 0;
     }
     #archiveRequirementsModal .archive-req-summary {
         display: flex;
@@ -806,7 +811,9 @@
         border-top: 1px solid #e2e8f0;
         padding: 0.75rem 1.25rem;
         display: flex;
+        gap: 0.5rem;
         justify-content: flex-end;
+        flex-shrink: 0;
     }
     #archiveRequirementsModal .req-badge {
         display: inline-flex;
@@ -928,6 +935,12 @@
         grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 0.55rem;
         margin-bottom: 0.8rem;
+    }
+    #documentScanModal .docscan-summary-actions {
+        grid-column: 1 / -1;
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 0.1rem;
     }
     #documentScanModal .docscan-chip {
         border: 1px solid #bfdbfe;
@@ -2487,10 +2500,13 @@
                 </div>
             </div>
             <p class="archive-req-footnote">
-                “Scanned” means at least one digital file exists in the applicant’s vault for that row. When registration Applicant Situation is Option A, B, or C, an eighth row (“ISF situational documentation”) counts toward Requirements X/8; Option D stays at X/7.
+                “Scanned” means at least one digital file exists in the applicant’s vault for that row. When registration Applicant Situation is Option A, B, or C, an eighth row (“ISF situational documentation”) is shown for follow-up tracking but does not change the 7 required baseline gate.
             </p>
         </div>
         <div class="archive-req-footer">
+            <button type="button" class="btn-modal secondary" id="archiveScanAllBtn" onclick="scanAllArchiveRequirementsOneByOne()">
+                Scan all documents
+            </button>
             <button type="button" class="btn-modal secondary" onclick="closeArchiveRequirementsModal()">Close</button>
         </div>
     </div>
@@ -2526,6 +2542,11 @@
                     <span class="docscan-chip-label">Readiness</span>
                     <span class="docscan-chip-value" id="documentScanReadiness">Blocked</span>
                 </div>
+                <div class="docscan-summary-actions">
+                    <button type="button" class="btn-modal secondary" id="scanAllDocumentsTopBtn" onclick="scanAllDocumentsOneByOne()">
+                        Scan all documents
+                    </button>
+                </div>
             </div>
 
             <div class="docscan-table-wrap">
@@ -2540,6 +2561,7 @@
                                 <th>Is required for form</th>
                                 <th>Is active</th>
                                 <th>Scanned</th>
+                                <th>Action</th>
                             </tr>
                         </thead>
                         <tbody id="documentScanTableBody"></tbody>
@@ -2554,6 +2576,9 @@
 
         <div class="docscan-footer">
             <button type="button" class="btn-modal secondary" onclick="closeDocumentScanModal()">Cancel</button>
+            <button type="button" class="btn-modal secondary" id="scanAllDocumentsBtn" onclick="scanAllDocumentsOneByOne()">
+                Scan all documents
+            </button>
             <button type="button" class="btn-modal primary" id="submitToApplicationsBtn" onclick="submitToApplications()" disabled style="opacity: 0.5; cursor: not-allowed;">
                 Submit to LIST OF APPLICATIONS
             </button>
@@ -4395,12 +4420,157 @@
 
 <script id="applicantsDataJson" type="application/json">{{ applicants_json|safe }}</script>
 <input type="hidden" id="canModifyFlag" value="{{ can_modify|yesno:'true,false' }}">
+<script src="{% static 'Dynamic Web TWAIN SDK 19.3.3/Resources/dynamsoft.webtwain.initiate.js' %}"></script>
+<script src="{% static 'Dynamic Web TWAIN SDK 19.3.3/Resources/dynamsoft.webtwain.config.js' %}"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<div id="dwtcontrolContainer" style="width: 0; height: 0; overflow: hidden; position: absolute; left: -9999px;"></div>
 <script>
     // Store applicants data in JavaScript
     const applicantsData = JSON.parse(document.getElementById('applicantsDataJson')?.textContent || '[]');
     const canModify = (document.getElementById('canModifyFlag')?.value || 'false') === 'true';
     const duplicatePreviewUrl = '{% url "intake:duplicate_preview" request.user.position %}';
+    const DOC_KEY_TO_APPLICANT_PROP = {
+        doc_brgy_residency: 'docBrgyResidency',
+        doc_brgy_indigency: 'docBrgyIndigency',
+        doc_cedula: 'docCedula',
+        doc_police_clearance: 'docPoliceClearance',
+        doc_no_property: 'docNoProperty',
+        doc_2x2_picture: 'doc2x2Picture',
+        doc_sketch_location: 'docSketchLocation',
+    };
+    let DWTObject = null;
+    if (window.Dynamsoft?.DWT) {
+        Dynamsoft.DWT.RegisterEvent("OnWebTwainReady", function () {
+            DWTObject = Dynamsoft.DWT.GetWebTwain("dwtcontrolContainer");
+        });
+    }
+
+    async function waitForDwtReady(timeoutMs = 5000) {
+        const startedAt = Date.now();
+        while (!DWTObject && (Date.now() - startedAt) < timeoutMs) {
+            await new Promise(function (resolve) { setTimeout(resolve, 100); });
+        }
+        return DWTObject;
+    }
+
+    async function acquireImageWithDwt(opts = {}) {
+        const dwt = await waitForDwtReady();
+        if (!dwt) throw new Error('Scanner SDK is not ready yet. Refresh the page and try again.');
+        const shouldSelectSource = opts.selectSource === true;
+        const shouldCloseSourceAfterAcquire = opts.closeSourceAfterAcquire !== false;
+        if (shouldSelectSource) {
+            await dwt.SelectSourceAsync();
+        }
+        const beforeCount = Number(dwt.HowManyImagesInBuffer || 0);
+        await dwt.AcquireImageAsync({
+            IfCloseSourceAfterAcquire: shouldCloseSourceAfterAcquire,
+        });
+        const afterCount = Number(dwt.HowManyImagesInBuffer || 0);
+        if (afterCount <= beforeCount) {
+            throw new Error('No image was acquired from the scanner.');
+        }
+        return true;
+    }
+
+    function applyScannedStateToApplicant(docKey) {
+        if (!currentApplicant) return;
+        const prop = DOC_KEY_TO_APPLICANT_PROP[docKey];
+        if (!prop) return;
+        currentApplicant[prop] = true;
+        currentApplicant.docsCount = [
+            currentApplicant.docBrgyResidency,
+            currentApplicant.docBrgyIndigency,
+            currentApplicant.docCedula,
+            currentApplicant.docPoliceClearance,
+            currentApplicant.docNoProperty,
+            currentApplicant.doc2x2Picture,
+            currentApplicant.docSketchLocation
+        ].filter(Boolean).length;
+
+        const currentId = String(currentApplicant.applicantId || currentApplicant.id || '');
+        const match = applicantsData.find(function (a) {
+            return String(a.applicantId || a.id || '') === currentId;
+        });
+        if (match) {
+            match[prop] = true;
+            match.docsCount = currentApplicant.docsCount;
+        }
+    }
+
+    function uploadCurrentScannedImageForApplicant(applicantId, referenceNumber, docKey, docCode) {
+        return new Promise(async function (resolve, reject) {
+            const originalAlert = window.alert;
+            const suppressedMessage = 'HTTP process: OK (200).';
+            const restoreAlert = function () {
+                window.alert = originalAlert;
+            };
+            window.alert = function (message) {
+                if (typeof message === 'string' && message.trim() === suppressedMessage) {
+                    return;
+                }
+                return originalAlert.apply(window, arguments);
+            };
+            try {
+                const dwt = await waitForDwtReady();
+                if (!dwt) {
+                    restoreAlert();
+                    reject(new Error('Scanner SDK is not ready.'));
+                    return;
+                }
+                const index = Number(dwt.CurrentImageIndexInBuffer);
+                if (index < 0) {
+                    restoreAlert();
+                    reject(new Error('No scanned image in buffer.'));
+                    return;
+                }
+                const safeApplicantId = encodeURIComponent(applicantId || '');
+                const safeDocKey = encodeURIComponent(docKey || '');
+                const safeDocCode = encodeURIComponent(docCode || '');
+                const uploadUrl = `{% url "intake:upload_scanned_requirement" request.user.position %}?applicant_id=${safeApplicantId}&doc_key=${safeDocKey}&doc_code=${safeDocCode}`;
+                const fileName = `${(referenceNumber || 'applicant')}_${docCode || 'scan'}.png`;
+
+                dwt.HTTPUpload(
+                    uploadUrl,
+                    [index],
+                    Dynamsoft.DWT.EnumDWT_ImageType.IT_PNG,
+                    Dynamsoft.DWT.EnumDWT_UploadDataFormat.Binary,
+                    fileName,
+                    function () {
+                        restoreAlert();
+                        resolve(true);
+                    },
+                    function (_errorCode, errorString, httpResponse) {
+                        restoreAlert();
+                        let message = errorString || 'Upload failed.';
+                        if (httpResponse) {
+                            try {
+                                const parsed = JSON.parse(httpResponse);
+                                if (parsed && parsed.error) message = parsed.error;
+                            } catch (_err) {
+                                // keep fallback message
+                            }
+                        }
+                        reject(new Error(message));
+                    }
+                );
+            } catch (error) {
+                restoreAlert();
+                reject(error);
+            }
+        });
+    }
+
+    function uploadCurrentScannedImage(docKey, docCode) {
+        if (!currentApplicant) {
+            return Promise.reject(new Error('No applicant selected.'));
+        }
+        return uploadCurrentScannedImageForApplicant(
+            currentApplicant.applicantId || currentApplicant.id || '',
+            currentApplicant.referenceNumber || '',
+            docKey,
+            docCode
+        );
+    }
     // Intake module does not hand off/navigate to Applications automatically.
     // (Applications module is accessed from its own navigation item.)
     let noticePrimaryHandler = null;
@@ -4483,6 +4653,117 @@
         if (modal) modal.classList.remove('active');
     }
 
+    const ARCHIVE_DOC_KEY_BY_CODE = {
+        R01: 'doc_brgy_residency',
+        R02: 'doc_brgy_indigency',
+        R03: 'doc_cedula',
+        R04: 'doc_police_clearance',
+        R05: 'doc_no_property',
+        R06: 'doc_2x2_picture',
+        R07: 'doc_sketch_location',
+    };
+    function isFollowUpRequirement(code) {
+        return String(code || '').toUpperCase() === 'ISF-SIT';
+    }
+    let currentArchiveRequirementsPayload = null;
+
+    function setArchiveScanButtonBusy(isBusy) {
+        const strictBtn = document.getElementById('archiveScanAllBtn');
+        if (strictBtn) {
+            strictBtn.disabled = isBusy;
+            strictBtn.style.opacity = isBusy ? '0.6' : '1';
+            strictBtn.style.cursor = isBusy ? 'wait' : 'pointer';
+            strictBtn.textContent = isBusy ? 'Scanning documents...' : 'Scan all documents';
+        }
+    }
+
+    function updateArchiveRequirementsSummary(rows) {
+        const scannedSummaryEl = document.getElementById('archiveRequirementsScannedSummary');
+        const rowSummaryEl = document.getElementById('archiveRequirementsRowSummary');
+        const safeRows = Array.isArray(rows) ? rows : [];
+        const requiredRows = safeRows.filter(function (r) { return !!r.is_required_for_form; });
+        const scannedRequired = requiredRows.filter(function (r) { return !!r.scanned; }).length;
+        if (scannedSummaryEl) scannedSummaryEl.textContent = String(scannedRequired) + '/' + String(requiredRows.length);
+        if (rowSummaryEl) rowSummaryEl.textContent = String(safeRows.length);
+    }
+
+    function saveArchiveRequirementDoc(applicantId, docKey, isChecked) {
+        if (!applicantId || !docKey) return Promise.resolve(false);
+        const csrfEl = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (!csrfEl) return Promise.resolve(false);
+
+        const formData = new FormData();
+        formData.append('csrfmiddlewaretoken', csrfEl.value);
+        formData.append('applicant_id', applicantId);
+        formData.append('action', 'update_doc');
+        formData.append(docKey, isChecked);
+
+        return fetch('{% url "intake:update_applicant" request.user.position %}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(function (response) { return response.json(); })
+        .then(function (data) { return !!data.success; })
+        .catch(function (_error) { return false; });
+    }
+
+    async function scanAllArchiveRequirementsOneByOne() {
+        const payload = currentArchiveRequirementsPayload;
+        const rows = payload && Array.isArray(payload.rows) ? payload.rows : [];
+        const applicantId = payload ? payload.applicantId : '';
+        const referenceNumber = payload ? payload.referenceNumber : '';
+        if (!rows.length || !applicantId) {
+            alert('Unable to scan documents for this applicant.');
+            return;
+        }
+
+        const pending = rows.filter(function (r) {
+            const code = String(r.code || '').toUpperCase();
+            return !!r.is_required_for_form && !r.scanned && !!ARCHIVE_DOC_KEY_BY_CODE[code];
+        });
+        if (!pending.length) {
+            updateArchiveRequirementsSummary(rows);
+            return;
+        }
+
+        setArchiveScanButtonBusy(true);
+        try {
+            const dwt = await waitForDwtReady();
+            if (!dwt) throw new Error('Scanner SDK is not ready yet. Refresh the page and try again.');
+            await dwt.SelectSourceAsync();
+
+            for (const row of pending) {
+                const code = String(row.code || '').toUpperCase();
+                const docKey = ARCHIVE_DOC_KEY_BY_CODE[code];
+                await acquireImageWithDwt({ selectSource: false, closeSourceAfterAcquire: false });
+                await uploadCurrentScannedImageForApplicant(applicantId, referenceNumber, docKey, code);
+
+                // Backward-compatible checklist flag sync.
+                const isSaved = await saveArchiveRequirementDoc(applicantId, docKey, true);
+                if (!isSaved) {
+                    console.warn('Checklist flag sync fallback failed after successful vault upload for', code);
+                }
+
+                row.scanned = true;
+                const statusEl = document.querySelector('[data-archive-code="' + code + '"] .req-scan');
+                if (statusEl) {
+                    statusEl.className = 'req-scan req-scan-done';
+                    statusEl.textContent = 'Scanned';
+                }
+                updateArchiveRequirementsSummary(rows);
+                await new Promise(function (resolve) { setTimeout(resolve, 120); });
+            }
+            if (typeof dwt.CloseSource === 'function') {
+                try { dwt.CloseSource(); } catch (_err) {}
+            }
+        } catch (error) {
+            alert(error.message || 'Unable to scan all documents.');
+        } finally {
+            setArchiveScanButtonBusy(false);
+        }
+    }
+
+
     function openArchiveRequirementsModal(buttonEl) {
         if (!buttonEl) return;
         let payloadMap = {};
@@ -4496,6 +4777,7 @@
         }
         const ref = (buttonEl.dataset && buttonEl.dataset.reference) || '';
         const payload = payloadMap[ref];
+        currentArchiveRequirementsPayload = payload || null;
 
         const tbody = document.getElementById('archiveRequirementsTableBody');
         const subtitle = document.getElementById('archiveRequirementsSubtitle');
@@ -4514,12 +4796,10 @@
             if (scannedSummaryEl) scannedSummaryEl.textContent = '0/0';
             if (rowSummaryEl) rowSummaryEl.textContent = '0';
             tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:1rem;color:#64748b;">No Group A requirements in the catalog. Seed requirements (e.g. R01–R07) to see this checklist.</td></tr>';
+            setArchiveScanButtonBusy(false);
         } else {
             var rows = payload.rows || [];
-            var requiredRows = rows.filter(function (r) { return !!r.is_required_for_form; });
-            var scannedRequired = requiredRows.filter(function (r) { return !!r.scanned; }).length;
-            if (scannedSummaryEl) scannedSummaryEl.textContent = String(scannedRequired) + '/' + String(requiredRows.length);
-            if (rowSummaryEl) rowSummaryEl.textContent = String(rows.length);
+            updateArchiveRequirementsSummary(rows);
 
             tbody.innerHTML = payload.rows.map(function (r) {
                 var reqBadge = r.is_required_for_form
@@ -4531,20 +4811,27 @@
                 var scanCell = r.scanned
                     ? '<span class="req-scan req-scan-done">Scanned</span>'
                     : '<span class="req-scan req-scan-pending">Not scanned</span>';
-                return '<tr>'
+                var code = escapeHtml(String(r.code || '')).toUpperCase();
+                var followUpBadge = code === 'ISF-SIT'
+                    ? '<span class="req-badge req-badge-no" style="margin-left:0.45rem;">Follow-up</span>'
+                    : '';
+                var rowStyle = code === 'ISF-SIT' ? ' style="background:#f8fafc;"' : '';
+                return '<tr data-archive-code="' + code + '"' + rowStyle + '>'
                     + '<td class="archive-req-table-code">' + escapeHtml(String(r.code || '')) + '</td>'
-                    + '<td class="archive-req-table-name">' + escapeHtml(String(r.name || '')) + '</td>'
+                    + '<td class="archive-req-table-name">' + escapeHtml(String(r.name || '')) + followUpBadge + '</td>'
                     + '<td class="archive-req-table-group">' + escapeHtml(String(r.group_display || '')) + '</td>'
                     + '<td>' + reqBadge + '</td>'
                     + '<td>' + activeBadge + '</td>'
                     + '<td>' + scanCell + '</td>'
                     + '</tr>';
             }).join('');
+            setArchiveScanButtonBusy(false);
         }
 
         var modalEl = document.getElementById('archiveRequirementsModal');
         if (modalEl) modalEl.classList.add('active');
     }
+    window.openArchiveRequirementsModal = openArchiveRequirementsModal;
 
     document.addEventListener('DOMContentLoaded', function() {
         const primaryBtn = document.getElementById('noticePrimaryBtn');
@@ -5424,7 +5711,7 @@
     
     // Save single document status to database
     function saveDocumentStatus(docKey, isChecked) {
-        if (!currentApplicant) return;
+        if (!currentApplicant) return Promise.resolve(false);
         
         const formData = new FormData();
         formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
@@ -5437,7 +5724,7 @@
             formData.append('submission_id', currentApplicant.submissionId);
         }
         
-        fetch('{% url "intake:update_applicant" request.user.position %}', {
+        return fetch('{% url "intake:update_applicant" request.user.position %}', {
             method: 'POST',
             body: formData
         })
@@ -5468,12 +5755,15 @@
                     ].filter(Boolean).length;
                 }
                 console.log('Document saved:', docKey, isChecked);
+                return true;
             } else {
                 console.error('Error saving document:', data.error);
+                return false;
             }
         })
         .catch(error => {
             console.error('Error:', error);
+            return false;
         });
     }
     
@@ -5734,11 +6024,15 @@
             refEl.textContent = `${applicant.referenceNumber} • ${applicant.fullName}`;
         }
 
+        // Fallback CTA injection: ensure scan action is visible even if older modal markup is cached.
+        ensureDocumentScanActionButtons();
+
         const requirements = [
             {
                 code: 'R01',
                 name: 'Brgy. Certificate of Residency',
                 group: 'Group A - Applicant Requirements',
+                dbKey: 'doc_brgy_residency',
                 isRequired: true,
                 isActive: true,
                 scanned: !!applicant.docBrgyResidency,
@@ -5747,6 +6041,7 @@
                 code: 'R02',
                 name: 'Brgy. Certificate of Indigency',
                 group: 'Group A - Applicant Requirements',
+                dbKey: 'doc_brgy_indigency',
                 isRequired: true,
                 isActive: true,
                 scanned: !!applicant.docBrgyIndigency,
@@ -5755,6 +6050,7 @@
                 code: 'R03',
                 name: 'Cedula',
                 group: 'Group A - Applicant Requirements',
+                dbKey: 'doc_cedula',
                 isRequired: true,
                 isActive: true,
                 scanned: !!applicant.docCedula,
@@ -5763,6 +6059,7 @@
                 code: 'R04',
                 name: 'Police Clearance',
                 group: 'Group A - Applicant Requirements',
+                dbKey: 'doc_police_clearance',
                 isRequired: true,
                 isActive: true,
                 scanned: !!applicant.docPoliceClearance,
@@ -5771,6 +6068,7 @@
                 code: 'R05',
                 name: 'Certificate of No Property',
                 group: 'Group A - Applicant Requirements',
+                dbKey: 'doc_no_property',
                 isRequired: true,
                 isActive: true,
                 scanned: !!applicant.docNoProperty,
@@ -5779,6 +6077,7 @@
                 code: 'R06',
                 name: '2x2 Picture',
                 group: 'Group A - Applicant Requirements',
+                dbKey: 'doc_2x2_picture',
                 isRequired: true,
                 isActive: true,
                 scanned: !!applicant.doc2x2Picture,
@@ -5787,6 +6086,7 @@
                 code: 'R07',
                 name: 'Sketch of House Location',
                 group: 'Group A - Applicant Requirements',
+                dbKey: 'doc_sketch_location',
                 isRequired: true,
                 isActive: true,
                 scanned: !!applicant.docSketchLocation,
@@ -5797,6 +6097,7 @@
                 code: 'ISF-SIT',
                 name: 'ISF situational documentation (Options A / B / C)',
                 group: 'Group A - Applicant Requirements',
+                dbKey: '',
                 isRequired: false,
                 isActive: true,
                 scanned: false,
@@ -5806,6 +6107,26 @@
         populateDocumentScanTable(requirements, applicant);
 
         modal.style.display = 'flex';
+    }
+
+    function ensureDocumentScanActionButtons() {
+        const modal = document.getElementById('documentScanModal');
+        if (!modal) return;
+
+        if (!document.getElementById('scanAllDocumentsHeaderBtn')) {
+            const headline = modal.querySelector('.docscan-headline');
+            if (headline) {
+                const headerBtn = document.createElement('button');
+                headerBtn.type = 'button';
+                headerBtn.id = 'scanAllDocumentsHeaderBtn';
+                headerBtn.className = 'btn-modal secondary';
+                headerBtn.textContent = 'Scan all documents';
+                headerBtn.style.marginTop = '0.45rem';
+                headerBtn.style.alignSelf = 'flex-start';
+                headerBtn.onclick = scanAllDocumentsOneByOne;
+                headline.appendChild(headerBtn);
+            }
+        }
     }
 
     function closeDocumentScanModal() {
@@ -5818,19 +6139,23 @@
         if (!tbody) return;
 
         tbody.innerHTML = requirements.map(req => `
-            <tr style="border-bottom: 1px solid #e2e8f0;">
+            <tr style="border-bottom: 1px solid #e2e8f0; ${isFollowUpRequirement(req.code) ? 'background:#f8fafc;' : ''}" data-docscan-code="${escapeHtml(req.code)}">
                 <td style="text-align: center;">
                     <input
                         type="checkbox"
                         class="doc-scan-checkbox docscan-check"
                         data-code="${req.code}"
+                        data-doc-key="${req.dbKey || ''}"
                         data-required="${req.isRequired}"
                         ${req.scanned ? 'checked' : ''}
                         disabled
                     >
                 </td>
                 <td class="docscan-table-code">${escapeHtml(req.code)}</td>
-                <td class="docscan-table-name">${escapeHtml(req.name)}</td>
+                <td class="docscan-table-name">
+                    ${escapeHtml(req.name)}
+                    ${isFollowUpRequirement(req.code) ? '<span class="req-badge req-badge-no" style="margin-left:0.45rem;">Follow-up</span>' : ''}
+                </td>
                 <td>${escapeHtml(req.group || 'Group A - Applicant Requirements')}</td>
                 <td>
                     <span class="${req.isRequired ? 'req-badge req-badge-yes' : 'req-badge req-badge-no'}">
@@ -5847,12 +6172,55 @@
                         ${req.scanned ? 'Scanned' : 'Not scanned'}
                     </span>
                 </td>
+                <td>
+                    ${req.dbKey
+                        ? `<button type="button" class="btn-modal secondary docscan-row-scan-btn" data-code="${escapeHtml(req.code)}" data-doc-key="${escapeHtml(req.dbKey)}" data-doc-name="${escapeHtml(req.name)}" onclick="scanSingleRequirementFromRow(this)" ${canModify ? '' : 'disabled'}>${canModify ? 'Scan' : 'View only'}</button>`
+                        : '<span style="color:#64748b;font-size:0.75rem;">N/A</span>'}
+                </td>
             </tr>
         `).join('');
 
         const rowsEl = document.getElementById('documentScanRows');
         if (rowsEl) rowsEl.textContent = String(requirements.length);
         updateDocumentScanProgress();
+    }
+
+    async function scanSingleRequirementFromRow(buttonEl) {
+        if (!buttonEl || !currentApplicant) return;
+        const docKey = buttonEl.dataset.docKey || '';
+        const code = buttonEl.dataset.code || 'document';
+        const name = buttonEl.dataset.docName || code;
+        if (!docKey) return;
+
+        buttonEl.disabled = true;
+        const oldText = buttonEl.textContent;
+        buttonEl.textContent = 'Scanning...';
+        try {
+            await acquireImageWithDwt({ selectSource: true });
+            await uploadCurrentScannedImage(docKey, code);
+            applyScannedStateToApplicant(docKey);
+            const isSaved = await saveDocumentStatus(docKey, true);
+            if (!isSaved) {
+                console.warn('Checklist flag sync fallback failed after successful vault upload for', code);
+            }
+
+            const row = buttonEl.closest('tr');
+            const checkbox = row?.querySelector('.doc-scan-checkbox');
+            const statusEl = row?.querySelector('.docscan-status');
+            if (checkbox) checkbox.checked = true;
+            if (statusEl) {
+                statusEl.className = 'docscan-status docscan-status-done';
+                statusEl.textContent = 'Scanned';
+            }
+            updateDocumentScanProgress();
+            buttonEl.textContent = 'Scanned';
+        } catch (error) {
+            alert('Unable to scan ' + name + ': ' + (error.message || 'unknown error'));
+            buttonEl.textContent = oldText;
+            buttonEl.disabled = false;
+            return;
+        }
+        buttonEl.disabled = true;
     }
 
     function updateDocumentScanProgress() {
@@ -5873,6 +6241,85 @@
             submitBtn.disabled = false;
             submitBtn.style.opacity = '1';
             submitBtn.style.cursor = 'pointer';
+        }
+    }
+
+    function setDocumentScanButtonsBusy(isBusy) {
+        const headerScanBtn = document.getElementById('scanAllDocumentsHeaderBtn');
+        const scanBtn = document.getElementById('scanAllDocumentsBtn');
+        const topScanBtn = document.getElementById('scanAllDocumentsTopBtn');
+        const submitBtn = document.getElementById('submitToApplicationsBtn');
+        if (headerScanBtn) {
+            headerScanBtn.disabled = isBusy;
+            headerScanBtn.style.opacity = isBusy ? '0.6' : '1';
+            headerScanBtn.style.cursor = isBusy ? 'wait' : 'pointer';
+            headerScanBtn.textContent = isBusy ? 'Scanning documents...' : 'Scan all documents';
+        }
+        if (scanBtn) {
+            scanBtn.disabled = isBusy;
+            scanBtn.style.opacity = isBusy ? '0.6' : '1';
+            scanBtn.style.cursor = isBusy ? 'wait' : 'pointer';
+            scanBtn.textContent = isBusy ? 'Scanning documents...' : 'Scan all documents';
+        }
+        if (topScanBtn) {
+            topScanBtn.disabled = isBusy;
+            topScanBtn.style.opacity = isBusy ? '0.6' : '1';
+            topScanBtn.style.cursor = isBusy ? 'wait' : 'pointer';
+            topScanBtn.textContent = isBusy ? 'Scanning documents...' : 'Scan all documents';
+        }
+        if (submitBtn) {
+            submitBtn.disabled = isBusy;
+            submitBtn.style.opacity = isBusy ? '0.6' : '1';
+            submitBtn.style.cursor = isBusy ? 'wait' : 'pointer';
+        }
+    }
+
+    async function scanAllDocumentsOneByOne() {
+        if (!currentApplicant) return;
+
+        const checkboxes = Array.from(document.querySelectorAll('.doc-scan-checkbox[data-required="true"]'));
+        const pending = checkboxes.filter((checkbox) => !checkbox.checked && checkbox.dataset.docKey);
+        if (pending.length === 0) {
+            updateDocumentScanProgress();
+            return;
+        }
+
+        setDocumentScanButtonsBusy(true);
+        try {
+            const dwt = await waitForDwtReady();
+            if (!dwt) throw new Error('Scanner SDK is not ready yet. Refresh the page and try again.');
+            await dwt.SelectSourceAsync();
+            for (const checkbox of pending) {
+                await acquireImageWithDwt({ selectSource: false, closeSourceAfterAcquire: false });
+                await uploadCurrentScannedImage(checkbox.dataset.docKey, checkbox.dataset.code || 'document');
+                applyScannedStateToApplicant(checkbox.dataset.docKey);
+                const isSaved = await saveDocumentStatus(checkbox.dataset.docKey, true);
+                if (!isSaved) {
+                    console.warn('Checklist flag sync fallback failed after successful vault upload for', checkbox.dataset.code || 'document');
+                }
+
+                checkbox.checked = true;
+                const statusEl = checkbox.closest('tr')?.querySelector('.docscan-status');
+                if (statusEl) {
+                    statusEl.className = 'docscan-status docscan-status-done';
+                    statusEl.textContent = 'Scanned';
+                }
+                const rowBtn = checkbox.closest('tr')?.querySelector('.docscan-row-scan-btn');
+                if (rowBtn) {
+                    rowBtn.disabled = true;
+                    rowBtn.textContent = 'Scanned';
+                }
+                updateDocumentScanProgress();
+                await new Promise((resolve) => setTimeout(resolve, 120));
+            }
+            if (typeof dwt.CloseSource === 'function') {
+                try { dwt.CloseSource(); } catch (_err) {}
+            }
+        } catch (error) {
+            console.error('Error scanning all documents:', error);
+            alert(error.message || 'Unable to scan all documents. Please try again.');
+        } finally {
+            setDocumentScanButtonsBusy(false);
         }
     }
 

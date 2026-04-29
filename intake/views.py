@@ -7,6 +7,7 @@ from django.utils import timezone
 from django.urls import reverse
 from django.db import transaction
 from django.db.models import Q, Prefetch
+from django.views.decorators.csrf import csrf_exempt
 from django.core.exceptions import ObjectDoesNotExist
 from functools import wraps
 from .models import Applicant, Barangay, Archive, SMSLog
@@ -74,13 +75,11 @@ def _archive_requirement_scan_rows(requirements_group_a, scanned_types_set, disp
             'code': 'ISF-SIT',
             'name': 'ISF situational documentation (Options A / B / C)',
             'group_display': 'Group A - Applicant Requirements',
-            'is_required_for_form': True,
+            # Follow-up only: displayed in checklist but does not affect 7-doc proceed gate.
+            'is_required_for_form': False,
             'is_active': True,
             'scanned': scanned_isf,
         })
-        trackable_total += 1
-        if scanned_isf:
-            scanned_count += 1
 
     return rows, scanned_count, trackable_total
 
@@ -504,6 +503,78 @@ def update_applicant(request, position):
         return JsonResponse({'success': False, 'error': 'Applicant not found'})
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
+
+
+@login_required
+@verify_position
+@csrf_exempt
+@require_POST
+def upload_scanned_requirement(request, position):
+    """
+    Accepts scanner-uploaded file payloads and stores them in the central Document vault.
+    Also mirrors checklist booleans on Applicant for backward-compatible UI counts.
+    """
+    allowed_positions = ['fourth_member', 'second_member']
+    if request.user.position not in allowed_positions:
+        return JsonResponse({'success': False, 'error': 'Permission denied.'}, status=403)
+
+    applicant_id = (request.POST.get('applicant_id') or request.GET.get('applicant_id') or '').strip()
+    doc_key = (request.POST.get('doc_key') or request.GET.get('doc_key') or '').strip()
+    doc_code = (request.POST.get('doc_code') or request.GET.get('doc_code') or '').strip().upper()
+
+    key_to_document_type = {
+        'doc_brgy_residency': 'barangay_residency',
+        'doc_brgy_indigency': 'barangay_indigency',
+        'doc_cedula': 'cedula',
+        'doc_police_clearance': 'police_clearance',
+        'doc_no_property': 'no_property',
+        'doc_2x2_picture': 'photo_2x2',
+        'doc_sketch_location': 'house_sketch',
+    }
+
+    if not applicant_id or doc_key not in key_to_document_type:
+        return JsonResponse({'success': False, 'error': 'Missing or invalid applicant/document mapping.'}, status=400)
+
+    uploaded_file = request.FILES.get('file')
+    if not uploaded_file and request.FILES:
+        uploaded_file = next(iter(request.FILES.values()))
+    if not uploaded_file:
+        return JsonResponse({'success': False, 'error': 'No scanned file payload received.'}, status=400)
+
+    try:
+        applicant = Applicant.objects.get(id=applicant_id)
+    except Applicant.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Applicant not found.'}, status=404)
+
+    document_type = key_to_document_type[doc_key]
+    label_map = dict(Document.DOCUMENT_TYPE_CHOICES)
+    doc_title = f"{applicant.full_name} - {label_map.get(document_type, document_type)}"
+
+    doc, created = Document.objects.update_or_create(
+        applicant=applicant,
+        document_type=document_type,
+        defaults={
+            'title': doc_title,
+            'file': uploaded_file,
+            'file_name': uploaded_file.name,
+            'file_size': uploaded_file.size,
+            'mime_type': getattr(uploaded_file, 'content_type', '') or '',
+            'uploaded_by': request.user,
+        },
+    )
+
+    if hasattr(applicant, doc_key):
+        setattr(applicant, doc_key, True)
+        applicant.save(update_fields=[doc_key])
+
+    return JsonResponse({
+        'success': True,
+        'message': 'Scanned file saved to vault.',
+        'document_id': str(doc.id),
+        'created': created,
+        'doc_code': doc_code,
+        'doc_type': document_type,
+    })
 
 
 @login_required
@@ -1112,6 +1183,7 @@ def applicants_list(request, position):
         r['referenceNumber']: {
             'referenceNumber': r['referenceNumber'],
             'fullName': r['fullName'],
+            'applicantId': r.get('applicantId', ''),
             'rows': r['requirementScanRows'],
         }
         for r in archive_records

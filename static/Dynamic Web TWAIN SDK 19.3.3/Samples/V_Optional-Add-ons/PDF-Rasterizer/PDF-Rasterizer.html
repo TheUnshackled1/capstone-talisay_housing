@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>PDF Rasterizer</title>
+	<script type="text/javascript" src="Resources/dynamsoft.webtwain.initiate.js"></script>
+	<script type="text/javascript" src="Resources/dynamsoft.webtwain.config.js"></script>
+	<script type="text/javascript" src="Resources/addon/dynamsoft.webtwain.addon.pdf.js"> </script>
+</head>
+
+<body>
+	<label>
+		<input type="radio" value="jpg" name="ImageType" id="imgTypejpeg" />JPEG</label>
+	<label>
+		<input type="radio" value="tif" name="ImageType" id="imgTypetiff" />TIFF</label>
+	<label>
+		<input type="radio" value="pdf" name="ImageType" id="imgTypepdf" checked="checked" />PDF</label>
+	<button onclick="LoadImage();">Load</button>
+	<button onclick="SaveWithFileDialog();">Save</button>
+	<!-- dwtcontrolContainer is the default div id for Dynamic Web TWAIN control.
+     If you need to rename the id, you should also change the id in dynamsoft.webtwain.config.js accordingly. -->
+    <div id="dwtcontrolContainer"  style="width: 350px; height: 380px;"></div>
+
+	<div style="margin-top: 30px;letter-spacing: 0px;color: #323234;font-size: 14px;">
+		<div style="font: normal normal 600 14px/27px Open Sans;">About: </div>
+		<div style="font: normal normal normal 14px/24px Open Sans;">This sample uses 
+			<ul style="margin-left: -20px;margin-top: -1px;">
+				<li>Dynamic Web TWAIN Core Module </li>
+				<li>PDF Rasterizer addon </li>
+			</ul>
+		</div>
+		<div style="margin-top: 10px;font: normal normal 600 14px/27px Open Sans;">Learn More:</div>
+		<div style="font: normal normal normal 14px/28px Open Sans;color: #FE8E14;">
+			<a style="color: #FE8E14;text-decoration: none;" target="_blank" href="https://www.dynamsoft.com/web-twain/docs/faq/when-is-pdf-rasterizer-needed.html?product=dwt&utm_source=installer">When is PDF Rasterizer needed? ></a><br />
+			<a style="color: #FE8E14;text-decoration: none;" target="_blank" href="https://www.dynamsoft.com/web-twain/docs/faq/encrypt-pdf-files.html?product=dwt&utm_source=installer">Is it possible to load encrypted PDF files? ></a>
+		</div>
+	</div>
+	<script type="text/javascript">
+		var DWTObject;
+		Dynamsoft.DWT.RegisterEvent("OnWebTwainReady", function () {
+			DWTObject = Dynamsoft.DWT.GetWebTwain('dwtcontrolContainer'); // Get the Dynamic Web TWAIN object that is embeded in the div with id 'dwtcontrolContainer'
+            // Please NOTE that the PDF Rasterizer doesn't work for Chrome/Firefox 26-			
+            if (DWTObject.Addon.PDF.IsModuleInstalled()) {
+                DWTObject.Addon.PDF.SetReaderOptions({
+                    convertMode: Dynamsoft.DWT.EnumDWT_ConvertMode.CM_RENDERALL,
+                    renderOptions: {
+                        renderAnnotations: true,
+                        resolution: 200
+                    },
+                    preserveUnmodifiedOnSave: true
+                });
+            }
+		});
+
+		//Callback functions for async APIs
+		function OnSuccess() {
+			console.log('successful');
+		}
+
+		function OnFailure(errorCode, errorString) {
+			alert(errorString);
+		}
+
+		function LoadImage() {
+			if (DWTObject) {
+				
+				DWTObject.IfShowFileDialog = true; // Open the system's file dialog to load image
+				DWTObject.LoadImageEx("", Dynamsoft.DWT.EnumDWT_ImageType.IT_PDF, OnSuccess, OnFailure); // Load images in all supported formats (.bmp, .jpg, .tif, .png, .pdf). OnSuccess or OnFailure will be called after the operation
+
+			}
+		}
+
+		function SaveWithFileDialog() {
+			if (DWTObject) {
+				if (DWTObject.HowManyImagesInBuffer > 0) {
+					DWTObject.IfShowFileDialog = true;
+					if (document.getElementById("imgTypejpeg").checked == true) {
+						//If the current image is B&W
+						//1 is B&W, 8 is Gray, 24 is RGB
+						if (DWTObject.GetImageBitDepth(DWTObject.CurrentImageIndexInBuffer) == 1)
+							//If so, convert the image to Gray
+							DWTObject.ConvertToGrayScale(DWTObject.CurrentImageIndexInBuffer);
+						//Save image in JPEG
+						DWTObject.SaveAsJPEG("DynamicWebTWAIN.jpg", DWTObject.CurrentImageIndexInBuffer);
+					}
+					else if (document.getElementById("imgTypetiff").checked == true)
+						DWTObject.SaveAllAsMultiPageTIFF("DynamicWebTWAIN.tif", OnSuccess, OnFailure);
+					else if (document.getElementById("imgTypepdf").checked == true)
+						DWTObject.SaveAllAsPDF("DynamicWebTWAIN.pdf", OnSuccess, OnFailure);
+				}
+			}
+		}
+
+	</script>
+</body>
+
+</html>

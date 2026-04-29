@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Hello World</title>
+    <script type="text/javascript" src="Resources/dynamsoft.webtwain.initiate.js"></script>
+    <script type="text/javascript" src="Resources/dynamsoft.webtwain.config.js"></script>
+</head>
+
+<body>
+	<button onclick="AcquireImage();">Scan</button>
+    <div id="dwtcontrolContainer" style="width: 350px; height: 380px;"></div>
+	<div style="margin-top: 30px;letter-spacing: 0px;color: #323234;font-size: 14px;">
+		<div style="font: normal normal 600 14px/27px Open Sans;">About: </div>
+		<div style="font: normal normal normal 14px/24px Open Sans;">This sample uses the Core Module of Dynamic Web TWAIN.</div>
+		<div style="margin-top: 10px;font: normal normal 600 14px/27px Open Sans;">Learn More:</div>
+		<div style="font: normal normal normal 14px/28px Open Sans;color: #FE8E14;">
+			<a style="color: #FE8E14;text-decoration: none;" target="_blank" href="https://www.dynamsoft.com/web-twain/docs/faq/download-virtual-scanner-for-testing.html?product=dwt&utm_source=installer">Download virtual scanner for testing ></a><br/>
+			<a style="color: #FE8E14;text-decoration: none;" target="_blank" href="https://www.dynamsoft.com/web-twain/docs/indepth/features/initialize.html#dynamsoftdwtload?product=dwt&utm_source=installer">How to initialize Dynamic Web TWAIN instance on demand ></a>        
+		</div>
+	</div>
+
+
+    <script type="text/javascript">
+		var DWTObject;
+		Dynamsoft.DWT.RegisterEvent("OnWebTwainReady", function () {
+			DWTObject = Dynamsoft.DWT.GetWebTwain('dwtcontrolContainer'); // Get the Dynamic Web TWAIN object that is embeded in the div with id 'dwtcontrolContainer'
+		}); 
+
+		function AcquireImage() {
+            if (DWTObject) {
+				DWTObject.SelectSourceAsync().then(function(){
+					return DWTObject.AcquireImageAsync({
+					        IfCloseSourceAfterAcquire: true // Scanner source will be closed automatically after the scan.
+						});
+				}).catch(function (exp) {
+					alert(exp.message);
+				});
+            }
+        }
+    </script>
+</body>
+
+</html>

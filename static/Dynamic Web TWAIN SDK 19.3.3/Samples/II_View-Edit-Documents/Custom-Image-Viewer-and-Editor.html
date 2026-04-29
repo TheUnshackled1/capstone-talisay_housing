@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Custom image viewer and editor</title>
+    <script type="text/javascript" src="Resources/dynamsoft.webtwain.initiate.js"></script>
+    <script type="text/javascript" src="Resources/dynamsoft.webtwain.config.js"></script>
+</head>
+
+<body>
+    <select size="1" id="source" style="position: relative; width: 220px;"></select>
+	<button onclick="AcquireImage();">Scan</button>
+	<button onclick="LoadImage();">Load</button>
+
+    <div style="width: 480px; display: block;">
+
+        <!-- dwtcontrolContainer is the default div id for Dynamic Web TWAIN control.
+        If you need to rename the id, you should also change the id in the dynamsoft.webtwain.config.js accordingly. -->
+        <div id="dwtcontrolContainer" style="width: 350px; height: 380px;"></div>
+
+        <div>
+			<button onclick="btnFirstImage_onclick();"> |< </button>
+			<button onclick="btnPreImage_onclick();"> < </button>
+            <input type="text" size="2" id="DW_CurrentImage" readonly="readonly" value="0" /> /
+            <input type="text" size="2" id="DW_TotalImage" readonly="readonly" value="0" />
+			<button onclick="btnNextImage_onclick();"> > </button>
+			<button onclick="btnLastImage_onclick();"> >| </button> Preview Mode:
+            <select size="1" id="DW_PreviewMode" onchange="setlPreviewMode();"><br>
+				<option value="0">-1X-1</option>
+                <option value="1">1X1</option>
+                <option value="2">2X2</option>
+                <option value="3">3X3</option>
+                <option value="4">4X4</option>
+                <option value="5">5X5</option>
+            </select>
+        </div>
+		<div style="width: 500px; display: block;">
+			<button onclick="btnCrop_onclick();">Crop</button>
+			<button onclick="btnRotateLeft_onclick();">Rotate Left</button>
+			<button onclick="btnRemoveSelectedImages_onclick();">Remove Selected Images</button>
+			<button onclick="btnRemoveAllImages_onclick();">Remove All Images</button>
+		</div>
+		<div style="width: 500px; display: block;">
+			<button onclick="btnZoomIn_onclick();">Zoom in</button>
+			<button onclick="btnZoomOut_onclick();">Zoom out</button>
+			<button onclick="btnFitWindow_onclick();">Fit Window</button>
+		</div>
+    </div>
+   
+	<div style="margin-top: 30px;letter-spacing: 0px;color: #323234;font-size: 14px;">
+		<div style="font: normal normal 600 14px/27px Open Sans;">About: </div>
+		<div style="font: normal normal normal 14px/24px Open Sans;">This sample uses the Core Module of Dynamic Web TWAIN.</div>
+		<div style="margin-top: 10px;font: normal normal 600 14px/27px Open Sans;">Learn More:</div>
+		<div style="font: normal normal normal 14px/28px Open Sans;color: #FE8E14;">
+			<a style="color: #FE8E14;text-decoration: none;" target="_blank" href="https://www.dynamsoft.com/web-twain/docs/faq/hide-image-viewer.html?product=dwt&utm_source=installer">How to hide the Dynamsoft Image viewer and use my own viewer ></a><br/>    
+			<a style="color: #FE8E14;text-decoration: none;" target="_blank" href="https://www.dynamsoft.com/web-twain/docs/faq/insert-image-after-selected-image.html?product=dwt&utm_source=installer">How to insert an image after a selected image in the viewer ></a>  
+		</div>
+	</div>
+	
+    <script type="text/javascript">
+        var DWTObject, deviceList, _iLeft, _iTop, _iRight, _iBottom, bSingleMode = false;
+        Dynamsoft.DWT.RegisterEvent("OnWebTwainReady", function () {
+            DWTObject = Dynamsoft.DWT.GetWebTwain('dwtcontrolContainer'); // Get the Dynamic Web TWAIN object that is embeded in the div with id 'dwtcontrolContainer'
+            if (DWTObject) {
+               deviceList=[];
+				DWTObject.GetDevicesAsync().then(function(devices){
+					for (var i = 0; i < devices.length; i++) { // Get how many sources are installed in the system
+						document.getElementById('source').options.add(new Option(devices[i].displayName, i)); // Add the sources in a drop-down list
+						deviceList.push(devices[i]);
+                    }
+				}).catch(function (exp) {
+					alert(exp.message);
+				});
+				
+				updatePageInfo();
+				
+				DWTObject.Viewer.autoChangeIndex = true;
+
+				document.getElementById('DW_PreviewMode').selectedIndex = 1;
+
+                // The event OnPostTransfer fires after each image is scanned and transferred
+                DWTObject.RegisterEvent("OnPostTransfer", function () {
+                    setTimeout(updatePageInfo,20);
+                });
+
+                // The event OnPostLoad fires after the images from a local directory have been loaded into the control
+                DWTObject.RegisterEvent("OnPostLoad", function () {
+                    setTimeout(updatePageInfo,20);
+                });
+
+                // The event click fires when the mouse clicks on an image on Dynamic Web TWAIN viewer
+                DWTObject.Viewer.on("click", function () {
+                   updatePageInfo();
+                });
+
+                // The event topPageChanged fires when the top image currently displayed in the viewer changes
+                DWTObject.Viewer.on("topPageChanged", topPageChanged);
+				
+				DWTObject.Viewer.on("pageAreaSelected", function (index, rect) {
+                     if (rect.length > 0) {
+						var currentRect = rect[rect.length - 1];
+						_iLeft = currentRect.x;
+						_iTop = currentRect.y;
+						_iRight = currentRect.x + currentRect.width;
+						_iBottom = currentRect.y + currentRect.height;
+					}
+                });
+				
+				DWTObject.Viewer.on("pageAreaUnselected", function (index) {
+                    _iLeft = 0;
+					_iTop = 0;
+					_iRight = 0;
+					_iBottom = 0;
+                });
+				
+				_iLeft = 0;
+				_iTop = 0;
+				_iRight = 0;
+				_iBottom = 0;
+            }
+        });
+		
+		function topPageChanged(index){
+			updatePageInfo();
+		}
+
+        function AcquireImage() {
+            if (DWTObject) {	
+				var ddlSource = document.getElementById('source');
+				if (ddlSource) {
+					DWTObject.SelectDeviceAsync(deviceList[ddlSource.selectedIndex]).then(function () {
+						return DWTObject.AcquireImageAsync({
+								IfShowUI:true,
+								IfCloseSourceAfterAcquire: true // Scanner source will be closed automatically after the scan.
+							});
+					}).catch(function (exp) {
+						alert(exp.message);
+					});
+				}			
+            }
+        }
+
+        //Callback functions for async APIs
+        function OnSuccess() {
+            console.log('successful');
+        }
+
+        function OnFailure(errorCode, errorString) {
+            alert(errorString);
+        }
+
+        function LoadImage() {
+            if (DWTObject) {
+                DWTObject.IfShowFileDialog = true; // Open the system's file dialog to load image
+                DWTObject.LoadImageEx("", Dynamsoft.DWT.EnumDWT_ImageType.IT_ALL, OnSuccess, OnFailure); // Load images in all supported formats (.bmp, .jpg, .tif, .png, .pdf). OnSuccess or OnFailure will be called after the operation
+            }
+        }
+
+        function btnPreImage_onclick() {
+            if (DWTObject) {
+				DWTObject.Viewer.off("topPageChanged", topPageChanged);
+				DWTObject.Viewer.previous();
+				updatePageInfo();
+				DWTObject.Viewer.on("topPageChanged", topPageChanged);
+            }
+        }
+
+        function btnNextImage_onclick() {
+            if (DWTObject) {
+				DWTObject.Viewer.off("topPageChanged", topPageChanged);
+				DWTObject.Viewer.next();
+				updatePageInfo();
+				DWTObject.Viewer.on("topPageChanged", topPageChanged);
+            }
+        }
+
+        function btnFirstImage_onclick() {
+            if (DWTObject) {
+				DWTObject.Viewer.first();
+				updatePageInfo();
+            }
+        }
+
+        function btnLastImage_onclick() {
+            if (DWTObject) {
+				DWTObject.Viewer.off("topPageChanged", topPageChanged);
+				
+				DWTObject.Viewer.last();
+				updatePageInfo();
+				
+				DWTObject.Viewer.on("topPageChanged", topPageChanged);
+            }
+        }
+        function setlPreviewMode() {
+            if (DWTObject) {
+                var o = parseInt(document.getElementById('DW_PreviewMode').selectedIndex);
+				DWTObject.Viewer.off("topPageChanged", topPageChanged);
+				if(o == 0){
+					DWTObject.Viewer.setViewMode(-1, -1);
+					bSingleMode = true;
+				} else {
+					DWTObject.Viewer.setViewMode(o, o);
+					bSingleMode = false;
+				}
+				DWTObject.Viewer.on("topPageChanged", topPageChanged);
+            }
+        }
+		
+		function btnCrop_onclick() {
+			if (DWTObject){
+				if (!checkIfImagesInBuffer()) {
+					return;
+				}
+				if (_iLeft != 0 || _iTop != 0 || _iRight != 0 || _iBottom != 0) {
+					DWTObject.Crop(
+						DWTObject.CurrentImageIndexInBuffer,
+						_iLeft, _iTop, _iRight, _iBottom
+					);
+					_iLeft = 0;
+					_iTop = 0;
+					_iRight = 0;
+					_iBottom = 0;
+					return;
+				} else {
+					alert("Crop: failed. Please first select the area you'd like to crop.");
+				}
+			}
+		}
+		
+		
+		function btnRotateLeft_onclick() {
+            if (DWTObject){
+                if (!checkIfImagesInBuffer()) {
+					return;
+				}
+				
+                DWTObject.RotateLeft(DWTObject.CurrentImageIndexInBuffer);
+			}
+        }
+		
+		function checkIfImagesInBuffer() {
+			if (DWTObject.HowManyImagesInBuffer == 0) {
+				alert("There is no image in buffer.")
+				return false;
+			}
+			else
+				return true;
+		}
+		
+
+        function btnRemoveSelectedImages_onclick() {
+            if (DWTObject) {
+				if(!bSingleMode)
+					DWTObject.RemoveAllSelectedImages();
+				else
+					DWTObject.RemoveImage(DWTObject.CurrentImageIndexInBuffer);
+				
+                if (DWTObject.HowManyImagesInBuffer == 0) {
+                    document.getElementById('DW_CurrentImage').value = "0";
+                    document.getElementById('DW_TotalImage').value = "0";
+                }
+                else {
+                    updatePageInfo();
+                }
+            }
+        }
+
+        function btnRemoveAllImages_onclick() {
+            if (DWTObject) {
+                DWTObject.RemoveAllImages();
+                document.getElementById('DW_TotalImage').value = "0";
+                document.getElementById('DW_CurrentImage').value = "0";
+            }
+        }
+
+        function updatePageInfo() {
+            if (DWTObject) {
+                document.getElementById('DW_TotalImage').value = DWTObject.HowManyImagesInBuffer;
+                document.getElementById('DW_CurrentImage').value = DWTObject.CurrentImageIndexInBuffer + 1;
+            }
+        }
+		
+		function btnZoomIn_onclick(){
+			if (DWTObject) {
+				if (!checkIfImagesInBuffer()) {
+					return;
+				}
+				if(!bSingleMode){
+					DWTObject.Viewer.setViewMode(-1, -1);
+					document.getElementById('DW_PreviewMode').selectedIndex = 0;
+				}
+				bSingleMode = true;
+				
+		
+				var zoom = Math.round(DWTObject.Viewer.zoom * 100);
+				if (zoom >= 6500)
+					return;
+				
+				var zoomInStep = 5;
+				DWTObject.Viewer.zoom = (zoom + zoomInStep) / 100.0;
+			}
+		}
+		
+		function btnZoomOut_onclick(){
+			if (DWTObject) {
+				if (!checkIfImagesInBuffer()) {
+					return;
+				}
+				if(!bSingleMode){
+					DWTObject.Viewer.setViewMode(-1, -1);
+					document.getElementById('DW_PreviewMode').selectedIndex = 0;
+				}
+				bSingleMode = true;
+
+				var zoom = Math.round(DWTObject.Viewer.zoom * 100);
+				if (zoom <= 2)
+					return;
+
+				var zoomOutStep = 5;
+				DWTObject.Viewer.zoom = (zoom - zoomOutStep) / 100.0;
+			}
+		}
+		
+		function btnFitWindow_onclick(){
+			if (DWTObject){ 
+				if (!checkIfImagesInBuffer()) {
+					return;
+				}
+				if(!bSingleMode){
+					DWTObject.Viewer.setViewMode(-1, -1);
+					document.getElementById('DW_PreviewMode').selectedIndex = 0;
+				}
+				bSingleMode = true;
+
+
+				DWTObject.Viewer.fitWindow();
+			}
+		}
+    </script>
+</body>
+
+</html>
