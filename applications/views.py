@@ -10,6 +10,7 @@ from functools import wraps
 from intake.models import Applicant
 from intake import sms_workflow
 from documents.models import (
+    Document,
     FacilitatedService,
     ElectricityConnection,
     LotAwarding,
@@ -276,10 +277,30 @@ def _auto_disqualify_if_blacklisted(applicant, bl_entry, checked_by=None):
 
 def _require_module2_blacklist_clear(applicant):
     """
-    Module 2 workflow step 2.1: blacklist check is now advisory-only.
-    Shows red indicator in the eligibility pipeline but does not block actions.
+    Module 2 workflow step 2.1: blacklist check is a hard gate.
+    If matched, auto-disqualify and block further Module 2 actions.
     """
-    return None
+    is_bl, bl_entry = check_blacklist_module2(
+        applicant.full_name,
+        applicant.phone_number or None,
+        applicant_id=applicant.id,
+        last_name=applicant.last_name,
+        first_name=applicant.first_name,
+        date_of_birth=applicant.date_of_birth,
+        barangay_id=applicant.barangay_id,
+    )
+    if not is_bl:
+        return None
+
+    _auto_disqualify_if_blacklisted(applicant, bl_entry)
+    reason_text = _build_module2_blacklist_disqualification_reason(bl_entry)
+    return JsonResponse({
+        'success': False,
+        'error': (
+            'Applicant is blacklisted and has been automatically disqualified. '
+            f'{reason_text}'
+        ),
+    }, status=400)
 
 
 def _deactivate_active_queue_entries(applicant):
@@ -462,6 +483,72 @@ def _module2_eligibility_snapshot(applicant, checked_by=None):
         allowed_queue_types = ['walk_in']
         recommended_queue_type = 'walk_in'
 
+    # Readiness checks that combine Applicant Profile + Documents + Queue/Application context.
+    required_group_a_doc_types = list(
+        Requirement.objects.filter(
+            group='A',
+            is_active=True,
+            is_required_for_form=True,
+        ).exclude(
+            vault_document_type='',
+        ).values_list('vault_document_type', flat=True)
+    )
+    required_docs_total = len(required_group_a_doc_types)
+    scanned_required_docs = 0
+    if required_docs_total > 0:
+        scanned_required_docs = applicant.documents.filter(
+            document_type__in=required_group_a_doc_types,
+        ).values('document_type').distinct().count()
+    required_docs_complete = (required_docs_total == 0) or (scanned_required_docs >= required_docs_total)
+
+    if requires_cdrrmo:
+        if cdrrmo_status == 'pending':
+            certification_status = 'pending'
+        elif cdrrmo_status == 'certified':
+            certification_status = 'certified'
+        elif cdrrmo_status == 'not_certified':
+            certification_status = 'not_certified'
+        else:
+            certification_status = 'missing'
+    else:
+        certification_status = 'not_required'
+
+    disposition_source = ''
+    if requires_cdrrmo and hasattr(applicant, 'cdrrmo_certification'):
+        disposition_source = (applicant.cdrrmo_certification.disposition_source or '').strip()
+    field_evidence_required = bool(requires_cdrrmo and disposition_source == 'field_unit')
+    field_photos_count = 0
+    if field_evidence_required and hasattr(applicant, 'cdrrmo_certification'):
+        field_photos_count = applicant.cdrrmo_certification.field_photos.count()
+    if not field_evidence_required:
+        field_evidence_status = 'not_required'
+    elif field_photos_count > 0:
+        field_evidence_status = 'available'
+    elif certification_status == 'pending':
+        field_evidence_status = 'pending'
+    else:
+        field_evidence_status = 'missing'
+
+    active_queue = applicant.queue_entries.filter(status='active').exists()
+    queue_ready = bool(active_queue or applicant.status != 'eligible')
+    basic_eligibility_ok = bool(layer2_clear)
+    certification_ready = certification_status in ('not_required', 'certified', 'not_certified')
+    field_evidence_ready = field_evidence_status in ('not_required', 'available', 'pending')
+    # Applicant Situation documentary evidence:
+    # Options A/B/C require at least one ISF situational supporting document.
+    situation_docs_required = displacement_reason in ('danger_zone', 'ejected', 'relocated')
+    situation_docs_count = applicant.documents.filter(document_type='isf_situational_docs').count() if situation_docs_required else 0
+    situation_docs_ready = (not situation_docs_required) or (situation_docs_count > 0)
+    form_generation_ready = bool(
+        required_docs_complete
+        and not is_bl
+        and displacement_classified
+        and certification_ready
+        and field_evidence_ready
+        and situation_docs_ready
+        and queue_ready
+    )
+
     return {
         'eligible': len(blockers) == 0,
         'blockers': blockers,
@@ -492,6 +579,21 @@ def _module2_eligibility_snapshot(applicant, checked_by=None):
         'recommended_queue_type': recommended_queue_type,
         'displacement_reason': displacement_reason,
         'displacement_classified': displacement_classified,
+        # Extended evaluator payload for "Evaluate Eligibility and Application Readiness"
+        'basic_eligibility_ok': basic_eligibility_ok,
+        'certification_required': bool(requires_cdrrmo),
+        'certification_status': certification_status,
+        'field_evidence_required': field_evidence_required,
+        'field_evidence_status': field_evidence_status,
+        'field_photos_count': field_photos_count,
+        'required_docs_total': required_docs_total,
+        'required_docs_scanned': scanned_required_docs,
+        'required_docs_complete': required_docs_complete,
+        'situation_docs_required': situation_docs_required,
+        'situation_docs_count': situation_docs_count,
+        'situation_docs_ready': situation_docs_ready,
+        'queue_ready': queue_ready,
+        'form_generation_ready': form_generation_ready,
     }
 
 
@@ -569,7 +671,33 @@ def applications_list(request, position):
         Q(module2_handoff_at__isnull=False) | Q(application__isnull=False)
     ).exclude(
         evaluation_approval_status='approved'
-    ).select_related(
+    )
+
+    # Display Applicant for Evaluation:
+    # Read Applicant Profiles from intake + Document Records from documents.
+    # Only include rows with complete baseline Group A required document scans.
+    required_group_a_doc_types = list(
+        Requirement.objects.filter(
+            group='A',
+            is_active=True,
+            is_required_for_form=True,
+        ).exclude(
+            vault_document_type='',
+        ).values_list('vault_document_type', flat=True)
+    )
+    required_group_a_total = len(required_group_a_doc_types)
+    if required_group_a_total > 0:
+        applicants = applicants.annotate(
+            scanned_required_group_a=Count(
+                'documents',
+                filter=Q(documents__document_type__in=required_group_a_doc_types),
+                distinct=True,
+            )
+        ).filter(
+            scanned_required_group_a__gte=required_group_a_total
+        )
+
+    applicants = applicants.select_related(
         'application',
         'cdrrmo_certification',
         'registered_by',
@@ -657,7 +785,19 @@ def applications_list(request, position):
         blacklist_detail = rules['blacklist_detail']
         blacklist_source = rules['blacklist_source']
         blacklist_policy_note = rules['blacklist_policy_note']
-        # Blacklist is advisory-only; do not strip actions.
+        # Hard gate: immediately disqualify + exclude from Module 2 list payload.
+        if blacklist_blocked:
+            _, bl_entry = check_blacklist_module2(
+                applicant.full_name,
+                applicant.phone_number or None,
+                applicant_id=applicant.id,
+                last_name=applicant.last_name,
+                first_name=applicant.first_name,
+                date_of_birth=applicant.date_of_birth,
+                barangay_id=applicant.barangay_id,
+            )
+            _auto_disqualify_if_blacklisted(applicant, bl_entry, checked_by=request.user)
+            continue
 
         applicants_data.append({
             'applicant': applicant,
@@ -680,6 +820,7 @@ def applications_list(request, position):
             'm1_residency_eligible': bool(rules.get('residency_ok')),
             'household_size': applicant.household_size,
             'm2_rules': rules,
+            'm2_evaluator': rules,
         })
     
     # Filter by stage if requested
@@ -1437,6 +1578,256 @@ def update_cdrrmo_status(request, position):
         return JsonResponse({'success': False, 'error': 'Applicant not found'})
     except Exception as e:
         return JsonResponse({'success': False, 'error': f'Error processing approval: {str(e)}'})
+
+
+@login_required
+@verify_position
+@require_POST
+def evaluate_precheck(request, position):
+    """
+    Process 2 - First checklist precheck.
+    Runs blacklist gate before deeper evaluation steps.
+    """
+    allowed_positions = ['fourth_member', 'second_member', 'oic']
+    if request.user.position not in allowed_positions:
+        return JsonResponse({'success': False, 'error': 'Permission denied.'}, status=403)
+
+    applicant_id = request.POST.get('applicant_id')
+    if not applicant_id:
+        return JsonResponse({'success': False, 'error': 'Missing applicant_id.'}, status=400)
+
+    applicant = get_object_or_404(Applicant, id=applicant_id)
+    handoff_error = _require_intake_archive(applicant)
+    if handoff_error:
+        return handoff_error
+
+    blacklist_error = _require_module2_blacklist_clear(applicant)
+    if blacklist_error:
+        return blacklist_error
+
+    return JsonResponse({
+        'success': True,
+        'message': 'Precheck passed: applicant is not blacklisted and may proceed to eligibility evaluation.',
+    })
+
+
+@login_required
+@verify_position
+@require_POST
+def eligibility_snapshot(request, position):
+    """
+    Process 2 checklist snapshot.
+    Eligibility = profile checks + document completeness gates.
+    """
+    allowed_positions = ['fourth_member', 'second_member', 'oic']
+    if request.user.position not in allowed_positions:
+        return JsonResponse({'success': False, 'error': 'Permission denied.'}, status=403)
+
+    applicant_id = request.POST.get('applicant_id')
+    if not applicant_id:
+        return JsonResponse({'success': False, 'error': 'Missing applicant_id.'}, status=400)
+
+    applicant = get_object_or_404(Applicant, id=applicant_id)
+    handoff_error = _require_intake_archive(applicant)
+    if handoff_error:
+        return handoff_error
+
+    rules = _module2_eligibility_snapshot(applicant, checked_by=request.user)
+    auto_disqualified = False
+    if rules.get('blacklist_blocked'):
+        _, bl_entry = check_blacklist_module2(
+            applicant.full_name,
+            applicant.phone_number or None,
+            applicant_id=applicant.id,
+            last_name=applicant.last_name,
+            first_name=applicant.first_name,
+            date_of_birth=applicant.date_of_birth,
+            barangay_id=applicant.barangay_id,
+        )
+        auto_disqualified = _auto_disqualify_if_blacklisted(applicant, bl_entry, checked_by=request.user)
+
+    # Build requirement scan evidence (same baseline source as Document Scan Checklist).
+    required_rows = list(
+        Requirement.objects.filter(
+            group='A',
+            is_active=True,
+            is_required_for_form=True,
+        ).exclude(
+            vault_document_type='',
+        ).order_by('order', 'code').values('code', 'name', 'vault_document_type')
+    )
+    req_scan_by_code = {}
+    requirement_rows = []
+    doc_type_to_latest_file = {}
+    for doc in applicant.documents.exclude(file='').order_by('-uploaded_at'):
+        if doc.document_type in doc_type_to_latest_file:
+            continue
+        try:
+            file_url = request.build_absolute_uri(doc.file.url)
+        except (ValueError, AttributeError):
+            file_url = ''
+        doc_type_to_latest_file[doc.document_type] = {
+            'url': file_url,
+            'name': (doc.file_name or doc.title or doc.get_document_type_display() or '').strip(),
+        }
+    for row in required_rows:
+        files_count = applicant.documents.filter(document_type=row['vault_document_type']).count()
+        scanned = files_count > 0
+        req_scan_by_code[row['code']] = {
+            'scanned': scanned,
+            'files_count': files_count,
+        }
+        requirement_rows.append({
+            'code': row['code'],
+            'name': row['name'],
+            'document_type': row['vault_document_type'],
+            'scanned': scanned,
+            'files_count': files_count,
+        })
+
+    def _req_scanned(code):
+        return bool((req_scan_by_code.get(code) or {}).get('scanned'))
+
+    def _latest_doc_for_req(code):
+        row = next((item for item in required_rows if item['code'] == code), None)
+        if not row:
+            return {'url': '', 'name': ''}
+        return doc_type_to_latest_file.get(row['vault_document_type'], {'url': '', 'name': ''})
+
+    # Per-check statuses (profile checks + evidence gates)
+    age_value = int(applicant.age or 0)
+    age_known = age_value > 0
+    age_ok = age_value >= 18 if age_known else False
+    age_residency_ok = bool(age_ok and rules.get('residency_ok'))
+
+    def _status(ok, pending=False):
+        if pending:
+            return 'pending'
+        return 'passed' if ok else 'failed'
+
+    property_evidence_ready = _req_scanned('R05')
+    residency_evidence_ready = _req_scanned('R01')
+    income_evidence_ready = _req_scanned('R02')
+    household_evidence_ready = _req_scanned('R03')
+    voter_value_known = applicant.is_registered_voter_talisay is not None
+
+    checks = {
+        'property': {
+            'title': 'Check Property Ownership',
+            'status': _status(bool(rules.get('property_ok')), pending=not property_evidence_ready),
+            'reason': (
+                'No property in Talisay City.'
+                if rules.get('property_ok')
+                else 'Property ownership in Talisay City is flagged.'
+            ),
+            'evidence': [
+                f'Profile declaration: {"No property in Talisay City" if not applicant.has_property_in_talisay else "Has property in Talisay City"}',
+                f'R05 Certificate of No Property: {"Scanned" if property_evidence_ready else "Not scanned"}',
+            ],
+            'view_document': _latest_doc_for_req('R05'),
+        },
+        'age_residency': {
+            'title': 'Check Age and Residency Requirements',
+            'status': _status(age_residency_ok, pending=(not age_known or not residency_evidence_ready)),
+            'reason': (
+                f'Age {age_value}, residency {rules.get("years_residing", 0)} years (minimum {rules.get("min_years_residing_talisay", MODULE1_MIN_YEARS_RESIDING_TALISAY)}).'
+                if age_known
+                else 'Age is missing in profile.'
+            ),
+            'evidence': [
+                f'Profile age: {age_value if age_known else "Missing"}',
+                f'Profile years residing: {rules.get("years_residing", 0)} (minimum {rules.get("min_years_residing_talisay", MODULE1_MIN_YEARS_RESIDING_TALISAY)})',
+                f'R01 Brgy. Certificate of Residency: {"Scanned" if residency_evidence_ready else "Not scanned"}',
+            ],
+            'view_document': _latest_doc_for_req('R01'),
+        },
+        'income': {
+            'title': 'Check Income Details',
+            'status': _status(bool(rules.get('income_ok')), pending=not income_evidence_ready),
+            'reason': (
+                f'Declared income ₱{applicant.monthly_income:,.2f}.'
+                if applicant.monthly_income is not None
+                else 'Monthly income not provided.'
+            ),
+            'evidence': [
+                f'Profile monthly income: {"₱" + format(applicant.monthly_income, ",.2f") if applicant.monthly_income is not None else "Missing"}',
+                f'R02 Brgy. Certificate of Indigency: {"Scanned" if income_evidence_ready else "Not scanned"}',
+            ],
+            'view_document': _latest_doc_for_req('R02'),
+        },
+        'household': {
+            'title': 'Check Household Composition',
+            'status': _status(bool(rules.get('household_ok')), pending=not household_evidence_ready),
+            'reason': (
+                'Household composition passes policy checks.'
+                if rules.get('household_ok')
+                else 'Household composition has a policy flag (e.g., live-in partner).'
+            ),
+            'evidence': [
+                f'Profile household size: {applicant.household_size if applicant.household_size is not None else "Missing"}',
+                f'Listed household size (computed): {rules.get("listed_household_size", "N/A")}',
+                f'R03 Cedula: {"Scanned" if household_evidence_ready else "Not scanned"}',
+            ],
+            'view_document': _latest_doc_for_req('R03'),
+        },
+        'voter': {
+            'title': 'Check Registered voters',
+            'status': _status(bool(rules.get('voter_ok')), pending=not voter_value_known),
+            'reason': (
+                'Registered voter in Talisay City.'
+                if rules.get('voter_ok')
+                else 'Not a registered voter in Talisay City.'
+            ),
+            'evidence': [
+                f'Profile voter flag: {"Yes" if applicant.is_registered_voter_talisay else "No"}',
+                'Source: Module 1 applicant profile (no dedicated voter document row in R01-R07 checklist).',
+            ],
+        },
+    }
+
+    gates = {
+        'required_docs': {
+            'title': 'Required baseline scans (R01-R07)',
+            'status': 'passed' if rules.get('required_docs_complete') else 'pending',
+            'reason': f'{rules.get("required_docs_scanned", 0)}/{rules.get("required_docs_total", 0)} scanned.',
+        },
+        'situation_docs': {
+            'title': 'Applicant Situation supporting documents',
+            'status': (
+                'not_required'
+                if not rules.get('situation_docs_required')
+                else ('passed' if rules.get('situation_docs_ready') else 'pending')
+            ),
+            'reason': (
+                'Not required for Option D.'
+                if not rules.get('situation_docs_required')
+                else f'{rules.get("situation_docs_count", 0)} file(s) uploaded.'
+            ),
+        },
+    }
+
+    return JsonResponse({
+        'success': True,
+        'applicant_id': str(applicant.id),
+        'auto_disqualified': bool(auto_disqualified),
+        'checks': checks,
+        'gates': gates,
+        'document_scan_checklist': {
+            'required_scanned': int(rules.get('required_docs_scanned', 0)),
+            'required_total': int(rules.get('required_docs_total', 0)),
+            'rows': requirement_rows,
+        },
+        'overall': {
+            'blacklist_blocked': bool(rules.get('blacklist_blocked')),
+            'form_generation_ready': bool(rules.get('form_generation_ready')),
+            'required_docs_complete': bool(rules.get('required_docs_complete')),
+            'certification_status': rules.get('certification_status'),
+            'field_evidence_status': rules.get('field_evidence_status'),
+            'situation_docs_ready': bool(rules.get('situation_docs_ready')),
+        },
+        'blockers': list(rules.get('blockers') or []),
+        'advisories': list(rules.get('advisories') or []),
+    })
 
 
 @login_required

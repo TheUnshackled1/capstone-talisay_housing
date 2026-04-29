@@ -600,8 +600,9 @@
     .applications-table.compact-table th,
     .applications-table.compact-table td {
         padding: 0.5rem 0.55rem;
-        vertical-align: top;
+        vertical-align: middle;
         word-break: break-word;
+        text-align: center;
     }
 
     .applications-table.compact-table th {
@@ -674,10 +675,12 @@
 
     .applications-table.compact-table .m2-staff-row {
         display: flex;
-        align-items: flex-start;
+        align-items: center;
+        justify-content: center;
         gap: 0.35rem;
         font-size: 0.625rem;
         line-height: 1.35;
+        text-align: center;
     }
 
     .applications-table.compact-table .m2-staff-avatar {
@@ -735,7 +738,39 @@
         display: flex;
         flex-direction: column;
         gap: 0.2rem;
+        align-items: center;
+        text-align: center;
+        justify-content: center;
+        min-height: 100%;
     }
+
+    .applications-table td.col-applicant,
+    .applications-table td.col-status {
+        vertical-align: middle;
+    }
+
+    .col-status-wrap {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        min-height: 100%;
+    }
+    .m2-readiness-chip {
+        display: inline-flex;
+        align-items: center;
+        margin-top: 0.3rem;
+        padding: 0.14rem 0.42rem;
+        border-radius: 9999px;
+        font-size: 0.56rem;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+        border: 1px solid transparent;
+    }
+    .m2-readiness-chip.ready { background: #dcfce7; border-color: #86efac; color: #166534; }
+    .m2-readiness-chip.pending { background: #fef3c7; border-color: #fde68a; color: #92400e; }
+    .m2-readiness-chip.blocked { background: #fee2e2; border-color: #fecaca; color: #991b1b; }
 
     .applicant-name {
         font-size: 0.78rem;
@@ -743,6 +778,10 @@
         color: #0f172a;
         line-height: 1.3;
     }
+    .applicant-name.option-a { color: #b91c1c; } /* Danger zone */
+    .applicant-name.option-b { color: #b45309; } /* Ejected */
+    .applicant-name.option-c { color: #047857; } /* Relocated */
+    .applicant-name.option-d { color: #475569; } /* None of A/B/C */
 
     .applicant-inline-meta {
         font-size: 0.625rem;
@@ -1858,49 +1897,341 @@
 
     .flow-alert-card {
         background: #ffffff;
-        border-radius: 18px;
-        width: min(92vw, 560px);
-        box-shadow: 0 20px 38px rgba(15, 23, 42, 0.2);
-        border: 1px solid #e2e8f0;
-        padding: 1.25rem 1.25rem 1rem;
+        border-radius: 1rem;
+        width: min(92vw, 520px);
+        box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.28);
+        border: 1px solid #cbd5e1;
+        overflow: hidden;
+        padding: 0;
+    }
+    .flow-alert-head {
+        display: flex;
+        align-items: center;
+        gap: 0.55rem;
+        margin: 0;
+        padding: 1rem 1.2rem 0.75rem;
+        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        border-bottom: 1px solid #e2e8f0;
+    }
+    .flow-alert-icon {
+        width: 1.3rem;
+        height: 1.3rem;
+        border-radius: 9999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.82rem;
+        font-weight: 800;
+        line-height: 1;
+    }
+    .flow-alert-card.success .flow-alert-icon {
+        background: #16a34a;
+        color: #ffffff;
+        border: none;
     }
 
     .flow-alert-title {
-        margin: 0 0 0.55rem;
+        margin: 0;
         color: #0f172a;
-        font-size: 1.18rem;
+        font-size: 1.05rem;
         font-weight: 700;
     }
 
     .flow-alert-message {
         margin: 0;
+        padding: 1rem 1.2rem 0.2rem;
         color: #334155;
-        font-size: 0.98rem;
-        line-height: 1.6;
+        font-size: 0.94rem;
+        line-height: 1.55;
         white-space: pre-line;
+        text-align: center;
     }
 
     .flow-alert-actions {
         display: flex;
         justify-content: flex-end;
-        margin-top: 1.15rem;
+        gap: 0.55rem;
+        margin-top: 0;
+        padding: 0.95rem 1.2rem 1rem;
     }
 
     .flow-alert-ok {
-        min-width: 92px;
-        border: none;
-        border-radius: 9999px;
-        background: #4f46e5;
-        color: #fff;
+        min-width: 88px;
+        border: 1px solid #cbd5e1;
+        border-radius: 0.6rem;
+        background: #ffffff;
+        color: #475569;
         font-weight: 700;
-        font-size: 0.95rem;
-        padding: 0.52rem 1.15rem;
+        font-size: 0.84rem;
+        padding: 0.48rem 0.95rem;
         cursor: pointer;
-        box-shadow: 0 6px 16px rgba(79, 70, 229, 0.35);
+        box-shadow: none;
     }
 
     .flow-alert-ok:hover {
-        background: #4338ca;
+        background: #f8fafc;
+        border-color: #94a3b8;
+        color: #1e293b;
+    }
+    .flow-alert-next {
+        min-width: 88px;
+        border: none;
+        border-radius: 0.6rem;
+        background: #2563eb;
+        color: #fff;
+        font-weight: 700;
+        font-size: 0.84rem;
+        padding: 0.48rem 0.95rem;
+        cursor: pointer;
+        box-shadow: none;
+    }
+    .flow-alert-next:hover {
+        background: #1d4ed8;
+    }
+    .eligibility-next-modal {
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 1rem;
+        width: min(94vw, 640px);
+        max-height: 88vh;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.28);
+        overflow: hidden;
+    }
+    .eligibility-next-header {
+        padding: 1rem 1.2rem 0.8rem;
+        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        border-bottom: 1px solid #e2e8f0;
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        text-align: center;
+    }
+    .eligibility-next-title {
+        margin: 0;
+        font-size: 1.02rem;
+        font-weight: 700;
+        color: #0f172a;
+    }
+    .eligibility-next-subtitle {
+        margin: 0.25rem 0 0;
+        font-size: 0.74rem;
+        color: #475569;
+    }
+    .eligibility-next-body {
+        padding: 1rem 1.2rem;
+        background: #fafbfc;
+        overflow-y: auto;
+        flex: 1;
+    }
+    .eligibility-next-item {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.7rem;
+        padding: 0.62rem 0.72rem;
+        margin-bottom: 0.45rem;
+        font-size: 0.82rem;
+        color: #1e293b;
+        font-weight: 600;
+        display: flex;
+        flex-direction: column;
+        gap: 0.28rem;
+    }
+    .eligibility-next-item .line-title {
+        font-size: 0.8rem;
+        color: #0f172a;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        flex-wrap: wrap;
+        justify-content: center;
+        text-align: center;
+    }
+    .eligibility-next-item .line-reason {
+        margin-top: 0;
+        font-size: 0.72rem;
+        color: #475569;
+        font-weight: 500;
+        line-height: 1.35;
+        text-align: center;
+    }
+    .eligibility-next-item .line-evidence {
+        margin-top: 0.05rem;
+        font-size: 0.68rem;
+        color: #0f766e;
+        font-weight: 500;
+        line-height: 1.4;
+        background: #ecfeff;
+        border: 1px solid #a5f3fc;
+        border-radius: 0.45rem;
+        padding: 0.3rem 0.45rem;
+        white-space: normal;
+        word-break: break-word;
+        text-align: center;
+    }
+    .eligibility-evidence-actions {
+        margin-top: 0.1rem;
+        display: flex;
+        justify-content: center;
+        width: 100%;
+    }
+    .eligibility-view-doc-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.3rem;
+        border: 1px solid #bfdbfe;
+        background: #eff6ff;
+        color: #1d4ed8;
+        border-radius: 0.45rem;
+        padding: 0.25rem 0.48rem;
+        min-height: 30px;
+        min-width: 150px;
+        font-size: 0.66rem;
+        font-weight: 700;
+        cursor: pointer;
+        text-decoration: none;
+    }
+    .eligibility-view-doc-btn:hover {
+        background: #dbeafe;
+        border-color: #93c5fd;
+    }
+    .eligibility-decision-actions {
+        margin-top: 0.05rem;
+        display: flex;
+        gap: 0.32rem;
+        flex-wrap: wrap;
+        justify-content: center;
+        width: 100%;
+    }
+    .eligibility-decision-btn {
+        border: 1px solid #cbd5e1;
+        background: #ffffff;
+        color: #334155;
+        border-radius: 0.4rem;
+        padding: 0.2rem 0.42rem;
+        min-height: 28px;
+        min-width: 94px;
+        font-size: 0.64rem;
+        font-weight: 700;
+        cursor: pointer;
+        text-align: center;
+    }
+    .eligibility-decision-btn:hover {
+        background: #f8fafc;
+    }
+    .eligibility-decision-btn.active-pass {
+        border-color: #86efac;
+        background: #dcfce7;
+        color: #166534;
+    }
+    .eligibility-decision-btn.active-fail {
+        border-color: #fecaca;
+        background: #fee2e2;
+        color: #991b1b;
+    }
+    .eligibility-check-chip {
+        display: inline-flex;
+        align-items: center;
+        margin-left: 0.45rem;
+        padding: 0.12rem 0.4rem;
+        border-radius: 9999px;
+        font-size: 0.6rem;
+        font-weight: 700;
+    }
+    .eligibility-check-chip.passed { background:#dcfce7; color:#166534; border:1px solid #86efac; }
+    .eligibility-check-chip.failed { background:#fee2e2; color:#991b1b; border:1px solid #fecaca; }
+    .eligibility-check-chip.pending { background:#fef3c7; color:#92400e; border:1px solid #fde68a; }
+    .eligibility-check-chip.not_required { background:#f1f5f9; color:#475569; border:1px solid #cbd5e1; }
+    .eligibility-evidence-card {
+        margin-top: 0.5rem;
+        border: 1px solid #cbd5e1;
+        border-radius: 0.7rem;
+        background: #f8fafc;
+        overflow: hidden;
+    }
+    .eligibility-evidence-head {
+        padding: 0.5rem 0.6rem;
+        border-bottom: 1px solid #e2e8f0;
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: #0f172a;
+    }
+    .eligibility-evidence-row {
+        display: grid;
+        grid-template-columns: 64px 1fr auto;
+        gap: 0.4rem;
+        align-items: center;
+        padding: 0.42rem 0.6rem;
+        border-top: 1px solid #e2e8f0;
+        font-size: 0.68rem;
+        color: #334155;
+    }
+    .eligibility-evidence-row:first-child { border-top: none; }
+    .eligibility-evidence-code { font-family: monospace; font-weight: 700; color: #1e293b; }
+    .eligibility-evidence-scan {
+        padding: 0.08rem 0.35rem;
+        border-radius: 9999px;
+        font-size: 0.62rem;
+        font-weight: 700;
+    }
+    .eligibility-evidence-scan.scanned { background:#dcfce7; color:#166534; border:1px solid #86efac; }
+    .eligibility-evidence-scan.not-scanned { background:#fee2e2; color:#991b1b; border:1px solid #fecaca; }
+    .eligibility-next-footer {
+        padding: 0.8rem 1.2rem 1rem;
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        background: #ffffff;
+        position: sticky;
+        bottom: 0;
+        z-index: 2;
+    }
+    .eligibility-next-back {
+        border: 1px solid #cbd5e1;
+        background: #ffffff;
+        color: #334155;
+        border-radius: 0.6rem;
+        padding: 0.45rem 0.85rem;
+        font-size: 0.8rem;
+        font-weight: 700;
+        cursor: pointer;
+    }
+    .eligibility-next-back:hover {
+        background: #f8fafc;
+    }
+    .eligibility-next-close {
+        border: 1px solid #cbd5e1;
+        background: #ffffff;
+        color: #475569;
+        border-radius: 0.6rem;
+        padding: 0.45rem 0.85rem;
+        font-size: 0.8rem;
+        font-weight: 700;
+        cursor: pointer;
+    }
+    .eligibility-next-close:hover {
+        background: #f8fafc;
+    }
+    @media (max-width: 640px) {
+        .eligibility-next-modal {
+            width: min(96vw, 640px);
+            max-height: 92vh;
+        }
+        .eligibility-next-header,
+        .eligibility-next-body,
+        .eligibility-next-footer {
+            padding-left: 0.85rem;
+            padding-right: 0.85rem;
+        }
+        .eligibility-evidence-row {
+            grid-template-columns: 54px 1fr;
+        }
+        .eligibility-evidence-scan {
+            justify-self: start;
+        }
     }
 
     .modal-header {
@@ -2678,7 +3009,7 @@
                     <th class="col-transaction" title="Applicant transaction ID">Transaction #</th>
                     <th class="col-reference" title="Applicant reference number">Reference #</th>
                     <th class="col-encoded" title="Date and time proceeded to Application & Evaluation">Proceeded time</th>
-
+                    <th class="col-staff" title="Applicant Situation selected during intake">Situation Status</th>
                     <th class="col-staff" title="Module 1 encoding staff and Module 2 handoff metadata">Staff</th>
                     <th class="col-actions">Actions</th>
                 </tr>
@@ -2689,7 +3020,7 @@
                     <td class="col-num" style="font-weight:700;color:#1e293b;">{{ forloop.counter }}</td>
                     <td class="col-applicant">
                         <div class="applicant-cell">
-                            <span class="applicant-name" style="font-weight:600;">{{ data.applicant.full_name }}</span>
+                            <span class="applicant-name {% if data.applicant.displacement_reason == 'danger_zone' %}option-a{% elif data.applicant.displacement_reason == 'ejected' %}option-b{% elif data.applicant.displacement_reason == 'relocated' %}option-c{% elif data.applicant.displacement_reason == 'not_abc' %}option-d{% endif %}">{{ data.applicant.full_name }}</span>
                             {% if data.blacklist_blocked %}
                             <span style="font-size:0.5625rem;color:#b91c1c;font-weight:600;">
                                 Blacklist — Module 2 blocked
@@ -2708,6 +3039,49 @@
                     </td>
                     <td class="col-encoded">
                         <span style="font-size:0.6875rem;color:#334155;" title="Date &amp; time proceeded to Application &amp; Evaluation">{{ data.applicant.module2_handoff_at|default:data.applicant.created_at|date:"n/j/Y, P" }}</span>
+                    </td>
+                    <td class="col-staff col-status">
+                        <div class="col-status-wrap">
+                        {% if data.applicant.displacement_reason == 'danger_zone' %}
+                        <span style="display:inline-flex;align-items:center;padding:0.18rem 0.45rem;border-radius:9999px;background:#fee2e2;border:1px solid #fecaca;color:#b91c1c;font-size:0.62rem;font-weight:700;">
+                            Resident of Danger Zone or Hazard Area
+                        </span>
+                        <div style="font-size:0.58rem;color:#7f1d1d;margin-top:0.2rem;">Required: CDRRMO Certification + ISF situational documentation</div>
+                        {% elif data.applicant.displacement_reason == 'ejected' %}
+                        <span style="display:inline-flex;align-items:center;padding:0.18rem 0.45rem;border-radius:9999px;background:#ffedd5;border:1px solid #fdba74;color:#b45309;font-size:0.62rem;font-weight:700;">
+                            Ejected or Evicted from Prior Residence
+                        </span>
+                        <div style="font-size:0.58rem;color:#9a3412;margin-top:0.2rem;">Required: Court Order / Legal Office / Barangay certification + ISF situational documentation</div>
+                        {% elif data.applicant.displacement_reason == 'relocated' %}
+                        <span style="display:inline-flex;align-items:center;padding:0.18rem 0.45rem;border-radius:9999px;background:#dcfce7;border:1px solid #86efac;color:#047857;font-size:0.62rem;font-weight:700;">
+                            Displaced by Government Project or Infrastructure
+                        </span>
+                        <div style="font-size:0.58rem;color:#065f46;margin-top:0.2rem;">Required: Notice of Relocation / ROW Documentation / Project Order + ISF situational documentation</div>
+                        {% elif data.applicant.displacement_reason == 'not_abc' %}
+                        <span style="display:inline-flex;align-items:center;padding:0.18rem 0.45rem;border-radius:9999px;background:#f1f5f9;border:1px solid #cbd5e1;color:#475569;font-size:0.62rem;font-weight:700;">
+                            None of A, B, or C (Other / not listed)
+                        </span>
+                        {% else %}
+                        <span style="display:inline-flex;align-items:center;padding:0.18rem 0.45rem;border-radius:9999px;background:#fef3c7;border:1px solid #fde68a;color:#92400e;font-size:0.62rem;font-weight:700;">
+                            Not set
+                        </span>
+                        {% endif %}
+                        {% if data.m2_evaluator.blacklist_blocked %}
+                        <span class="m2-readiness-chip blocked">Blocked - Blacklisted</span>
+                        {% elif not data.m2_evaluator.required_docs_complete %}
+                        <span class="m2-readiness-chip pending">Docs Incomplete</span>
+                        {% elif data.m2_evaluator.situation_docs_required and not data.m2_evaluator.situation_docs_ready %}
+                        <span class="m2-readiness-chip pending">Needs Situation Docs</span>
+                        {% elif data.m2_evaluator.certification_status == 'pending' %}
+                        <span class="m2-readiness-chip pending">Pending Certification</span>
+                        {% elif data.m2_evaluator.field_evidence_required and data.m2_evaluator.field_evidence_status == 'missing' %}
+                        <span class="m2-readiness-chip pending">Needs Field Evidence</span>
+                        {% elif data.m2_evaluator.form_generation_ready %}
+                        <span class="m2-readiness-chip ready">Ready for Form</span>
+                        {% else %}
+                        <span class="m2-readiness-chip pending">Under Review</span>
+                        {% endif %}
+                        </div>
                     </td>
                     <td class="col-staff">
                         {% if data.applicant.registered_by %}
@@ -2730,7 +3104,11 @@
                         {% endif %}
                     </td>
                     <td class="col-actions">
-                        <div style="display: flex; gap: 0.25rem; flex-wrap: wrap;">
+                        <div style="display: flex; gap: 0.25rem; flex-wrap: wrap; justify-content: center; align-items: center;">
+                            <button class="action-btn" style="background: #dbeafe; color: #1d4ed8;"
+                                onclick="runEvaluatePrecheck('{{ data.applicant.id }}', '{{ data.applicant.full_name|escapejs }}')">
+                                Evaluate
+                            </button>
                             {% if 'generate_form' in data.user_actions %}
                             <button class="action-btn" style="background: #dcfce7; color: #16a34a;"
                                 onclick="generateFormDirect('{{ data.applicant.id }}')">
@@ -2825,11 +3203,32 @@
 </div>
 
 <div class="modal-overlay" id="flowAlertModal" onclick="closeFlowAlert(event)">
-    <div class="flow-alert-card" onclick="event.stopPropagation()">
-        <h3 class="flow-alert-title" id="flowAlertTitle">Notice</h3>
+    <div class="flow-alert-card" id="flowAlertCard" onclick="event.stopPropagation()">
+        <div class="flow-alert-head">
+            <span class="flow-alert-icon" id="flowAlertIcon" style="display:none;">✓</span>
+            <h3 class="flow-alert-title" id="flowAlertTitle">Notice</h3>
+        </div>
         <p class="flow-alert-message" id="flowAlertMessage"></p>
-        <div class="flow-alert-actions">
+        <div class="flow-alert-actions" id="flowAlertActions">
             <button type="button" class="flow-alert-ok" onclick="confirmFlowAlert()">OK</button>
+            <button type="button" class="flow-alert-next" id="flowAlertNextBtn" onclick="confirmFlowAlertNext()" style="display:none;">Next</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="eligibilityNextModal" onclick="closeEligibilityNextModal(event)">
+    <div class="eligibility-next-modal" onclick="event.stopPropagation()">
+        <div class="eligibility-next-header">
+            <h3 class="eligibility-next-title">Eligibility Evaluation Checklist</h3>
+            <p class="eligibility-next-subtitle" id="eligibilityNextSubtitle">Display-only for now (backend wiring follows next).</p>
+        </div>
+        <div class="eligibility-next-body">
+            <div id="eligibilityNextChecklist"></div>
+            <div id="eligibilityNextDocEvidence"></div>
+        </div>
+        <div class="eligibility-next-footer">
+            <button type="button" class="eligibility-next-back" onclick="backToPrecheckAlert()">Back</button>
+            <button type="button" class="eligibility-next-close" onclick="closeEligibilityNextModal()">Close</button>
         </div>
     </div>
 </div>
@@ -2841,11 +3240,22 @@
     // Page-level state
     const position = '{{ request.user.position }}';
     let flowAlertOnConfirm = null;
+    let flowAlertOnNext = null;
+    let lastPrecheckApplicantName = '';
+    let lastPrecheckApplicantId = '';
+    let lastPrecheckMessage = 'Precheck passed: applicant is not blacklisted and may proceed to eligibility evaluation.';
+    let currentEligibilityApplicantId = '';
+    let lastEligibilitySnapshot = null;
+    const eligibilityManualDecisions = {};
 
-    function showFlowAlert(message, title = 'Notice', onConfirm = null) {
+    function showFlowAlert(message, title = 'Notice', onConfirm = null, tone = 'default', onNext = null) {
         const modal = document.getElementById('flowAlertModal');
+        const card = document.getElementById('flowAlertCard');
         const titleEl = document.getElementById('flowAlertTitle');
         const messageEl = document.getElementById('flowAlertMessage');
+        const iconEl = document.getElementById('flowAlertIcon');
+        const nextBtn = document.getElementById('flowAlertNextBtn');
+        const actionsEl = document.getElementById('flowAlertActions');
         if (!modal || !titleEl || !messageEl) {
             alert(message);
             if (typeof onConfirm === 'function') onConfirm();
@@ -2853,7 +3263,12 @@
         }
         titleEl.textContent = title;
         messageEl.textContent = message || '';
+        if (card) card.classList.toggle('success', tone === 'success');
+        if (iconEl) iconEl.style.display = tone === 'success' ? 'inline-flex' : 'none';
+        if (nextBtn) nextBtn.style.display = (tone === 'success' && title === 'Evaluation Precheck') ? 'inline-flex' : 'none';
+        if (actionsEl) actionsEl.style.justifyContent = (tone === 'success' && title === 'Evaluation Precheck') ? 'space-between' : 'flex-end';
         flowAlertOnConfirm = onConfirm;
+        flowAlertOnNext = onNext;
         modal.classList.add('active');
     }
 
@@ -2866,8 +3281,181 @@
     function confirmFlowAlert() {
         const onConfirm = flowAlertOnConfirm;
         flowAlertOnConfirm = null;
+        flowAlertOnNext = null;
         closeFlowAlert();
         if (typeof onConfirm === 'function') onConfirm();
+    }
+
+    function confirmFlowAlertNext() {
+        const onNext = flowAlertOnNext;
+        flowAlertOnConfirm = null;
+        flowAlertOnNext = null;
+        closeFlowAlert();
+        if (typeof onNext === 'function') onNext();
+    }
+
+    function normalizeEligibilityStatus(status) {
+        const normalized = String(status || '').toLowerCase();
+        if (['passed', 'failed', 'pending', 'not_required'].includes(normalized)) return normalized;
+        return 'pending';
+    }
+
+    function getEligibilityDecisionKey(checkKey) {
+        if (!currentEligibilityApplicantId || !checkKey) return '';
+        return `${currentEligibilityApplicantId}:${checkKey}`;
+    }
+
+    function setEligibilityDecision(checkKey, status) {
+        const key = getEligibilityDecisionKey(checkKey);
+        if (!key) return;
+        const normalized = normalizeEligibilityStatus(status);
+        if (normalized !== 'passed' && normalized !== 'failed') return;
+        eligibilityManualDecisions[key] = normalized;
+        if (lastEligibilitySnapshot) renderEligibilityChecklist(lastEligibilitySnapshot);
+    }
+
+    function renderEligibilityChecklist(snapshot) {
+        const listEl = document.getElementById('eligibilityNextChecklist');
+        const docEvidenceEl = document.getElementById('eligibilityNextDocEvidence');
+        if (!listEl || !docEvidenceEl) return;
+        lastEligibilitySnapshot = snapshot || null;
+
+        const checks = snapshot?.checks || {};
+        const gates = snapshot?.gates || {};
+        const entries = [
+            { key: 'property', is_reviewable: true, ...(checks.property || {}) },
+            { key: 'age_residency', is_reviewable: true, ...(checks.age_residency || {}) },
+            { key: 'income', is_reviewable: true, ...(checks.income || {}) },
+            { key: 'household', is_reviewable: true, ...(checks.household || {}) },
+            { key: 'voter', is_reviewable: true, ...(checks.voter || {}) },
+            { key: 'situation_docs', is_reviewable: false, ...(gates.situation_docs || {}) },
+        ].filter(Boolean);
+
+        listEl.innerHTML = entries.map((entry) => {
+            const decisionKey = getEligibilityDecisionKey(entry.key);
+            const manualStatus = decisionKey ? eligibilityManualDecisions[decisionKey] : '';
+            const status = normalizeEligibilityStatus(manualStatus || entry.status);
+            const title = entry.title || 'Check';
+            const reason = entry.reason || '';
+            const docUrl = entry?.view_document?.url || '';
+            const docName = entry?.view_document?.name || 'Scanned document';
+            const hasManualStatus = manualStatus === 'passed' || manualStatus === 'failed';
+            const manualLabel = manualStatus === 'passed' ? 'Passed' : (manualStatus === 'failed' ? 'Failed' : '');
+            return `
+                <div class="eligibility-next-item">
+                    <div class="line-title">
+                        ${title}
+                        ${hasManualStatus ? `<span class="eligibility-check-chip ${manualStatus}">${manualLabel}</span>` : ''}
+                    </div>
+                    <div class="line-reason">${reason}</div>
+                    ${(Array.isArray(entry.evidence) && entry.evidence.length)
+                        ? `<div class="line-evidence">Evidence: ${entry.evidence.map((e) => String(e || '')).filter(Boolean).join(' | ')}</div>`
+                        : ''}
+                    ${docUrl
+                        ? `<div class="eligibility-evidence-actions">
+                            <a class="eligibility-view-doc-btn" href="${docUrl}" target="_blank" rel="noopener noreferrer" title="${docName}">
+                                View scanned document
+                            </a>
+                        </div>`
+                        : ''
+                    }
+                    ${entry.is_reviewable
+                        ? `<div class="eligibility-decision-actions">
+                            <button type="button" class="eligibility-decision-btn ${manualStatus === 'passed' ? 'active-pass' : ''}" onclick="setEligibilityDecision('${entry.key}', 'passed')">Mark Passed</button>
+                            <button type="button" class="eligibility-decision-btn ${manualStatus === 'failed' ? 'active-fail' : ''}" onclick="setEligibilityDecision('${entry.key}', 'failed')">Mark Failed</button>
+                        </div>`
+                        : ''
+                    }
+                </div>
+            `;
+        }).join('');
+
+        const checklist = snapshot?.document_scan_checklist || {};
+        const rows = (Array.isArray(checklist.rows) ? checklist.rows : []).filter((row) => {
+            const code = String(row?.code || '').toUpperCase();
+            return code !== 'R03' && code !== 'R04' && code !== 'R06';
+        });
+        if (!rows.length) {
+            docEvidenceEl.innerHTML = '';
+            return;
+        }
+        docEvidenceEl.innerHTML = `
+            <div class="eligibility-evidence-card">
+                <div class="eligibility-evidence-head">
+                    Document scan checklist evidence: ${checklist.required_scanned || 0}/${checklist.required_total || 0} required scanned
+                </div>
+                ${rows.map((row) => `
+                    <div class="eligibility-evidence-row">
+                        <span class="eligibility-evidence-code">${row.code || ''}</span>
+                        <span>${row.name || ''}</span>
+                        <span class="eligibility-evidence-scan ${row.scanned ? 'scanned' : 'not-scanned'}">${row.scanned ? 'Scanned' : 'Not scanned'}</span>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    async function fetchEligibilitySnapshot(applicantId) {
+        const listEl = document.getElementById('eligibilityNextChecklist');
+        const docEvidenceEl = document.getElementById('eligibilityNextDocEvidence');
+        if (listEl) listEl.innerHTML = '';
+        if (docEvidenceEl) docEvidenceEl.innerHTML = '';
+        if (!applicantId) {
+            if (listEl) listEl.innerHTML = '<div class="eligibility-next-item"><span class="line-title">No applicant selected.</span></div>';
+            return;
+        }
+        const formData = new FormData();
+        formData.append('applicant_id', applicantId);
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+        try {
+            const response = await fetch('{% url "applications:eligibility_snapshot" request.user.position %}', {
+                method: 'POST',
+                body: formData,
+            });
+            const contentType = (response.headers.get('content-type') || '').toLowerCase();
+            if (response.redirected || !contentType.includes('application/json')) {
+                if (listEl) listEl.innerHTML = '<div class="eligibility-next-item"><span class="line-title">Your session may have expired. Please log in again, then retry.</span></div>';
+                return;
+            }
+            const data = await response.json();
+            if (!data.success) {
+                if (listEl) listEl.innerHTML = `<div class="eligibility-next-item"><span class="line-title">${data.error || 'Unable to load eligibility snapshot.'}</span></div>`;
+                return;
+            }
+            renderEligibilityChecklist(data);
+        } catch (error) {
+            if (listEl) listEl.innerHTML = `<div class="eligibility-next-item"><span class="line-title">Error loading checklist: ${error.message}</span></div>`;
+        }
+    }
+
+    function openEligibilityNextModal(applicantName, applicantId) {
+        currentEligibilityApplicantId = applicantId || '';
+        const subtitle = document.getElementById('eligibilityNextSubtitle');
+        if (subtitle) {
+            subtitle.textContent = applicantName
+                ? `Applicant: ${applicantName}`
+                : 'Applicant: —';
+        }
+        const modal = document.getElementById('eligibilityNextModal');
+        if (modal) modal.classList.add('active');
+        fetchEligibilitySnapshot(applicantId);
+    }
+
+    function closeEligibilityNextModal(event) {
+        if (event && event.target && event.target.id !== 'eligibilityNextModal') return;
+        const modal = document.getElementById('eligibilityNextModal');
+        if (modal) modal.classList.remove('active');
+    }
+
+    function backToPrecheckAlert() {
+        closeEligibilityNextModal();
+        showFlowAlert(
+            lastPrecheckMessage,
+            'Evaluation Precheck',
+            null,
+            'success',
+            () => openEligibilityNextModal(lastPrecheckApplicantName, lastPrecheckApplicantId)
+        );
     }
 
     function mapApplicationStatusToProgressStage(status) {
@@ -4005,6 +4593,52 @@
 
     */
     // Direct form generation from table button
+    async function runEvaluatePrecheck(applicantId, applicantName) {
+        if (!applicantId) return;
+        const formData = new FormData();
+        formData.append('applicant_id', applicantId);
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+        try {
+            const response = await fetch('{% url "applications:evaluate_precheck" request.user.position %}', {
+                method: 'POST',
+                body: formData,
+            });
+            const contentType = (response.headers.get('content-type') || '').toLowerCase();
+            if (response.redirected || !contentType.includes('application/json')) {
+                showFlowAlert(
+                    'Session expired or access changed. Please log in again, then retry Evaluation Precheck.',
+                    'Evaluation Precheck'
+                );
+                return;
+            }
+            const data = await response.json();
+            if (!data.success) {
+                showFlowAlert(
+                    data.error || `Precheck failed for ${applicantName || 'this applicant'}.`,
+                    'Evaluation Precheck'
+                );
+                // If blacklisted auto-disqualification happened, refresh the list.
+                if (String(data.error || '').toLowerCase().includes('blacklist')) {
+                    setTimeout(() => window.location.reload(), 900);
+                }
+                return;
+            }
+            lastPrecheckApplicantName = applicantName || '';
+            lastPrecheckApplicantId = applicantId || '';
+            lastPrecheckMessage = data.message || `Precheck passed for ${applicantName || 'this applicant'}.`;
+            showFlowAlert(
+                lastPrecheckMessage,
+                'Evaluation Precheck',
+                null,
+                'success',
+                () => openEligibilityNextModal(applicantName, applicantId)
+            );
+        } catch (error) {
+            showFlowAlert('Precheck request failed: ' + error.message, 'Evaluation Precheck');
+        }
+    }
+
     async function generateFormDirect(applicantId) {
         if (!confirm('Generate application form for this applicant?')) return;
         const docsUrl = `/applications/staff/${position}/`;

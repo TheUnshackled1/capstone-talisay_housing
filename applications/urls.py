@@ -6,6 +6,8 @@ app_name = 'applications'
 urlpatterns = [
     # Main applications list view (Module 2)
     path('staff/<str:position>/', views.applications_list, name='applications_list'),
+    path('staff/<str:position>/evaluate-precheck/', views.evaluate_precheck, name='evaluate_precheck'),
+    path('staff/<str:position>/eligibility-snapshot/', views.eligibility_snapshot, name='eligibility_snapshot'),
 
     path('staff/<str:position>/update-cdrrmo-certification/', views.update_cdrrmo_certification, name='update_cdrrmo_certification'),
     path('staff/<str:position>/field-verify-cdrrmo/', views.field_verify_cdrrmo, name='field_verify_cdrrmo'),
