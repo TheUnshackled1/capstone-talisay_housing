@@ -3,7 +3,7 @@
 
 {% block title %}Electricity Tracking - Module 2{% endblock %}
 
-{% block nav_applications %}active{% endblock %}
+{% block nav_housing_monitoring %}active{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -423,11 +423,11 @@
 {% block content %}
 <div style="padding: 1.5rem;">
     <!-- Back Link -->
-    <a href="{% url 'applications:applications_list' request.user.position %}" class="back-link">
+    <a href="{% url 'units:housing_units_monitoring' request.user.position %}" class="back-link">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M19 12H5M12 19l-7-7 7-7"/>
         </svg>
-        Back to Applications
+        Back to Housing Units
     </a>
 
     <!-- Page Header -->
@@ -623,7 +623,7 @@
                 </svg>
             </button>
         </div>
-        <form id="updateForm" method="post" action="{% url 'applications:update_electricity' request.user.position %}">
+        <form id="updateForm" method="post" action="{% url 'units:update_electricity' request.user.position %}">
             {% csrf_token %}
             <input type="hidden" name="connection_id" id="connectionId">
             

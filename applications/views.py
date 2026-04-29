@@ -129,19 +129,6 @@ def get_module2_permissions(user):
     return permissions
 
 
-def _active_intake_queue_label(applicant):
-    """Human-readable label from Module 1 QueueEntry (D2 eligibility & queue)."""
-    entries = getattr(applicant, 'active_queue_entries', None) or []
-    if not entries:
-        return '—'
-    qe = entries[0]
-    if qe.queue_type == 'priority':
-        return f'Priority #{qe.position}'
-    if qe.queue_type == 'walk_in':
-        return f'Walk-in #{qe.position}'
-    return f'Queue #{qe.position}'
-
-
 def _ensure_cdrrmo_pending_after_module2_handoff(applicant):
     """
     Self-heal hazard-declared rows after Intake Archives proceed.
@@ -594,11 +581,6 @@ def applications_list(request, position):
             'application__routing_steps',
             queryset=SignatoryRouting.objects.order_by('action_at'),
         ),
-        Prefetch(
-            'queue_entries',
-            queryset=QueueEntry.objects.filter(status='active').order_by('position'),
-            to_attr='active_queue_entries',
-        ),
     ).order_by('module2_handoff_at', 'created_at', 'id')
     
     # Get all requirements for the checklist
@@ -712,8 +694,6 @@ def applications_list(request, position):
         blacklist_policy_note = rules['blacklist_policy_note']
         # Blacklist is advisory-only; do not strip actions.
 
-        intake_queue_label = _active_intake_queue_label(applicant)
-        active_entries = getattr(applicant, 'active_queue_entries', None) or []
         applicants_data.append({
             'applicant': applicant,
             'application': application,
@@ -738,8 +718,6 @@ def applications_list(request, position):
             'm1_voter_eligible': bool(applicant.is_registered_voter_talisay),
             'm1_residency_eligible': bool(rules.get('residency_ok')),
             'household_size': applicant.household_size,
-            'intake_queue_label': intake_queue_label,
-            'active_queue_type': active_entries[0].queue_type if active_entries else '',
             'm2_rules': rules,
             'evaluation_approval_status': applicant.evaluation_approval_status or '',
             'evaluation_approval_status_display': applicant.get_evaluation_approval_status_display() if applicant.evaluation_approval_status else '',
@@ -870,8 +848,6 @@ def application_detail(request, position, application_id):
     _ensure_cdrrmo_pending_after_module2_handoff(applicant)
     _auto_finalize_non_hazard_walkin(applicant, acted_by=request.user)
     applicant.refresh_from_db()
-    applicant.active_queue_entries = list(applicant.queue_entries.filter(status='active').order_by('position'))
-    
     # Build response data
     rules = _module2_eligibility_snapshot(applicant, checked_by=request.user)
 
@@ -925,8 +901,6 @@ def application_detail(request, position, application_id):
         'm1_voter_eligible': bool(applicant.is_registered_voter_talisay),
         'm1_residency_eligible': bool(rules.get('residency_ok')),
         'household_size': applicant.household_size,
-        'intake_queue_label': _active_intake_queue_label(applicant),
-        'active_queue_type': (getattr(applicant, 'active_queue_entries', None) or [None])[0].queue_type if (getattr(applicant, 'active_queue_entries', None) or []) else '',
         'm2_rules': rules,
         'cdrrmo': None,
         'applicant_status': applicant.status,
@@ -2200,50 +2174,10 @@ def award_lot(request, position):
 @verify_position
 def electricity_list(request, position):
     """
-    Electricity connection tracking view.
-
-    URL: /applications/<position>/electricity/
-
-    ACCESS CONTROL:
-    ✅ Joie (2nd Member) - Primary
-    ✅ Laarni (5th Member) - Support
+    Deprecated path kept for backward compatibility.
+    Electricity tracking moved to Housing Units module.
     """
-    allowed_positions = ['second_member', 'fifth_member']
-    if request.user.position not in allowed_positions:
-        messages.error(request, 'Access denied. Electricity tracking is for Joie and Laarni only.')
-        return redirect('applications:applications_list')
-    
-    connections = ElectricityConnection.objects.select_related(
-        'application', 'application__applicant', 'application__lot_awarding', 'applied_by'
-    ).order_by('-created_at')
-    
-    # Status counts
-    status_counts = {
-        'pending': connections.filter(status='pending').count(),
-        'applied': connections.filter(status='applied').count(),
-        'inspection_scheduled': connections.filter(status='inspection_scheduled').count(),
-        'inspection_completed': connections.filter(status='inspection_completed').count(),
-        'connected': connections.filter(status='connected').count(),
-        'issues': connections.filter(status='issues').count(),
-    }
-    
-    # Filter by status
-    filter_status = request.GET.get('status', 'all')
-    if filter_status != 'all':
-        connections = connections.filter(status=filter_status)
-    
-    # Check for overdue (>30 days without connection)
-    overdue_connections = [c for c in connections if c.is_overdue]
-    
-    context = {
-        'connections': connections,
-        'status_counts': status_counts,
-        'filter_status': filter_status,
-        'overdue_count': len(overdue_connections),
-        'total_count': connections.count(),
-    }
-    
-    return render(request, 'applications/electricity_list.html', context)
+    return redirect('units:electricity_list', position=position)
 
 
 @login_required
@@ -2251,77 +2185,8 @@ def electricity_list(request, position):
 @require_POST
 def update_electricity(request, position):
     """
-    Update electricity connection status.
-
-    URL: /applications/<position>/electricity/update/
-
-    ACCESS CONTROL:
-    ✅ Joie (2nd Member) - Primary
-    ✅ Laarni (5th Member) - Support
+    Deprecated path kept for backward compatibility.
+    Electricity tracking moved to Housing Units module.
     """
-    allowed_positions = ['second_member', 'fifth_member']
-    if request.user.position not in allowed_positions:
-        return JsonResponse({
-            'success': False,
-            'error': 'Permission denied. Only Joie or Laarni can update electricity status.'
-        }, status=403)
-    
-    connection_id = request.POST.get('connection_id')
-    new_status = request.POST.get('status')
-    negros_power_ref = request.POST.get('negros_power_reference', '')
-    inspection_date = request.POST.get('inspection_date')
-    inspection_result = request.POST.get('inspection_result', '')
-    meter_number = request.POST.get('meter_number', '')
-    issue_description = request.POST.get('issue_description', '')
-    notes = request.POST.get('notes', '')
-    
-    try:
-        connection = ElectricityConnection.objects.select_related(
-            'application', 'application__applicant'
-        ).get(id=connection_id)
-        handoff_error = _require_intake_archive(connection.application.applicant)
-        if handoff_error:
-            return handoff_error
-        blacklist_error = _require_module2_blacklist_clear(connection.application.applicant)
-        if blacklist_error:
-            return blacklist_error
-        
-        old_status = connection.status
-        connection.status = new_status
-        connection.notes = notes
-        
-        if new_status == 'applied':
-            connection.applied_at = timezone.now()
-            connection.applied_by = request.user
-            connection.negros_power_reference = negros_power_ref
-        elif new_status == 'inspection_scheduled' and inspection_date:
-            from datetime import datetime
-            connection.inspection_date = datetime.strptime(inspection_date, '%Y-%m-%d').date()
-        elif new_status == 'inspection_completed':
-            connection.inspection_result = inspection_result
-        elif new_status == 'connected':
-            connection.connected_at = timezone.now()
-            connection.meter_number = meter_number
-            
-            # Send SMS: Electricity Connected
-            applicant = connection.application.applicant
-            if applicant.phone_number:
-                message = (
-                    f"Great news! Electricity has been connected to your housing unit. "
-                    f"Meter Number: {meter_number}. "
-                    f"Reference: {applicant.reference_number}"
-                )
-                send_sms(applicant.phone_number, message, 'electricity_connected', applicant=applicant, module='applications')
-                
-        elif new_status == 'issues':
-            connection.issue_description = issue_description
-        
-        connection.save()
-        
-        return JsonResponse({
-            'success': True,
-            'new_status': new_status,
-            'message': f'Electricity status updated from {old_status} to {new_status}'
-        })
-    except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)})
+    from units.views import update_electricity as units_update_electricity
+    return units_update_electricity(request, position)

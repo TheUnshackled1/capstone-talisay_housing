@@ -800,6 +800,115 @@ def issue_compliance_notice(request, position):
         }, status=500)
 
 
+@login_required
+@verify_position
+def electricity_list(request, position):
+    """
+    Electricity connection tracking under Housing Units.
+
+    URL: /units/housing-units/<position>/electricity/
+    """
+    allowed_positions = ['second_member', 'fifth_member']
+    if request.user.position not in allowed_positions:
+        messages.error(request, 'Access denied. Electricity tracking is for Joie and Laarni only.')
+        return redirect('units:housing_units_monitoring', position=position)
+
+    connections = ElectricityConnection.objects.select_related(
+        'application', 'application__applicant', 'application__lot_awarding', 'applied_by'
+    ).order_by('-created_at')
+
+    status_counts = {
+        'pending': connections.filter(status='pending').count(),
+        'applied': connections.filter(status='applied').count(),
+        'inspection_scheduled': connections.filter(status='inspection_scheduled').count(),
+        'inspection_completed': connections.filter(status='inspection_completed').count(),
+        'connected': connections.filter(status='connected').count(),
+        'issues': connections.filter(status='issues').count(),
+    }
+
+    filter_status = request.GET.get('status', 'all')
+    if filter_status != 'all':
+        connections = connections.filter(status=filter_status)
+
+    overdue_connections = [c for c in connections if c.is_overdue]
+
+    context = {
+        'connections': connections,
+        'status_counts': status_counts,
+        'filter_status': filter_status,
+        'overdue_count': len(overdue_connections),
+        'total_count': connections.count(),
+    }
+    return render(request, 'applications/electricity_list.html', context)
+
+
+@login_required
+@verify_position
+@require_POST
+def update_electricity(request, position):
+    """
+    Update electricity connection status from Housing Units.
+
+    URL: /units/housing-units/<position>/electricity/update/
+    """
+    allowed_positions = ['second_member', 'fifth_member']
+    if request.user.position not in allowed_positions:
+        return JsonResponse({
+            'success': False,
+            'error': 'Permission denied. Only Joie or Laarni can update electricity status.'
+        }, status=403)
+
+    connection_id = request.POST.get('connection_id')
+    new_status = request.POST.get('status')
+    negros_power_ref = request.POST.get('negros_power_reference', '')
+    inspection_date = request.POST.get('inspection_date')
+    inspection_result = request.POST.get('inspection_result', '')
+    meter_number = request.POST.get('meter_number', '')
+    issue_description = request.POST.get('issue_description', '')
+    notes = request.POST.get('notes', '')
+
+    if not connection_id or not new_status:
+        return JsonResponse({'success': False, 'error': 'Connection ID and status are required'})
+
+    try:
+        connection = ElectricityConnection.objects.select_related('application__applicant').get(id=connection_id)
+
+        old_status = connection.status
+        connection.status = new_status
+        connection.negros_power_reference = negros_power_ref
+        connection.notes = notes
+
+        if inspection_date:
+            try:
+                connection.inspection_date = datetime.strptime(inspection_date, '%Y-%m-%d').date()
+            except ValueError:
+                return JsonResponse({'success': False, 'error': 'Invalid inspection date format'})
+
+        if inspection_result:
+            connection.inspection_result = inspection_result
+
+        if meter_number:
+            connection.meter_number = meter_number
+
+        if issue_description:
+            connection.issue_description = issue_description
+
+        if new_status == 'connected' and old_status != 'connected':
+            connection.connected_at = timezone.now()
+
+        connection.save()
+
+        return JsonResponse({
+            'success': True,
+            'message': f'Electricity status updated to {connection.get_status_display()}'
+        })
+
+    except ElectricityConnection.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Connection not found'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
 # ===================================================================
 # CASE MANAGEMENT (Module 5 - Case Management Dashboard)
 # ===================================================================

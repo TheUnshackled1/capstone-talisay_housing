@@ -2700,7 +2700,7 @@
                             {% elif data.applicant_status == 'pending_cdrrmo' %}
                             {% if data.cdrrmo_status == 'certified' or data.cdrrmo_status == 'not_certified' %}
                             <span style="font-size:0.5625rem;color:#0369a1;font-weight:600;">CDRRMO finalized — awaiting
-                                eligibility and queue assignment</span>
+                                eligibility and assignment</span>
                             {% else %}
                             <span style="font-size:0.5625rem;color:#b45309;font-weight:600;">CDRRMO pending staff
                                 finalization (2.6)</span>
@@ -3309,43 +3309,7 @@
                 return;
             }
 
-            const qp = data.queue_placement;
-            if (qp && qp.queue_type && currentApplicantId) {
-                updateApplicantQueueRow(currentApplicantId, qp);
-            }
-            if (qp && qp.queue_type) {
-                const reasonLabel = data.displacement_reason_display || 'Recorded classification';
-                let header;
-                let body;
-                if (qp.queue_type === 'priority') {
-                    header = 'Applicant aligned to PRIORITY QUEUE';
-                    const lines = [
-                        'Layers 1, 2, and 3 are satisfied for queue placement.',
-                        `Classification on file: ${reasonLabel}.`,
-                        `Queue placement: Priority Queue #${qp.queue_position}.`,
-                    ];
-                    if (qp.requires_cdrrmo && qp.cdrrmo_status && qp.cdrrmo_status !== 'certified') {
-                        lines.push(
-                            'Note: CDRRMO certification may still be pending for hazard-area cases. '
-                            + 'If CDRRMO returns "not certified", routing may revert to Walk-in per policy.'
-                        );
-                    }
-                    lines.push('Proceeding to Layer 4 — Evaluation Approval.');
-                    body = lines.join('\n\n');
-                } else {
-                    header = 'Applicant aligned to WALK-IN QUEUE';
-                    const lines = [
-                        `Classification on file: ${reasonLabel}.`,
-                        `Queue placement: Walk-in Queue #${qp.queue_position}.`,
-                    ];
-                    if (!qp.layer2_clear) {
-                        lines.push('Layer 2 has at least one flag, so Priority is not available.');
-                    }
-                    lines.push('Proceeding to Layer 4 — Evaluation Approval.');
-                    body = lines.join('\n\n');
-                }
-                alert(`${header}\n\n${body}`);
-            }
+            alert('Classification saved. Proceeding to Layer 4 — Evaluation Approval.');
 
             await m2OpenEvaluationApprovalStep();
         } catch (error) {
@@ -3371,7 +3335,7 @@
         // Layer 2 / 2.5 Voter Registration & 2.6 Length of Residence — both are
         // declared at Module 1 registration; we surface them here as eligibility
         // readouts. A failure on either mirrors a Layer 2 flag in the backend
-        // (`_module2_eligibility_snapshot`) and pushes the applicant to Walk-in.
+        // (`_module2_eligibility_snapshot`) and marks a Layer 2 flag.
         const voterClear = !!rules.voter_ok;
         const isRegisteredVoter = !!rules.is_registered_voter_talisay;
         const residencyClear = !!rules.residency_ok;
@@ -3379,15 +3343,15 @@
         const minYearsResidingTalisay = Number(rules.min_years_residing_talisay || 5);
 
         const policy23 =
-            'THA Staff records or confirms the applicant’s property ownership result. The system evaluates whether ownership of real property disqualifies the applicant. If property in Talisay is declared, this is a Layer 2 flag and the applicant goes to the Walk-in queue.';
+            'THA Staff records or confirms the applicant’s property ownership result. The system evaluates whether ownership of real property disqualifies the applicant.';
         const policy24 =
-            'The system retrieves the income details that were already encoded during registration in Module 1. If the declared income exceeds the Module 1 ceiling, this is a Layer 2 flag and the applicant goes to the Walk-in queue. No re-encoding is needed unless correction is necessary.';
+            'The system retrieves the income details that were already encoded during registration in Module 1. If the declared income exceeds the Module 1 ceiling, this is treated as a Layer 2 flag. No re-encoding is needed unless correction is necessary.';
         const policy25 =
-            'THA Staff records or confirms household composition. A registered live-in partner among the household members is a Layer 2 flag and pushes the applicant to the Walk-in queue. The system uses this information as part of eligibility determination and applicant prioritization.';
+            'THA Staff records or confirms household composition. A registered live-in partner among the household members is treated as a Layer 2 flag. The system uses this information as part of eligibility determination.';
         const policy26 =
-            'The system retrieves the voter registration status declared at Module 1 registration. Applicants who are not registered voters in Talisay City are a Layer 2 flag and are routed to the Walk-in queue. No re-encoding is needed unless correction is necessary.';
+            'The system retrieves the voter registration status declared at Module 1 registration. Applicants who are not registered voters in Talisay City are treated as a Layer 2 flag. No re-encoding is needed unless correction is necessary.';
         const policy27 =
-            `Length of residence in Talisay City is declared at Module 1 registration. Applicants below the ${minYearsResidingTalisay}-year minimum are a Layer 2 flag and are routed to the Walk-in queue. No re-encoding is needed unless correction is necessary.`;
+            `Length of residence in Talisay City is declared at Module 1 registration. Applicants below the ${minYearsResidingTalisay}-year minimum are treated as a Layer 2 flag. No re-encoding is needed unless correction is necessary.`;
 
         // Tailwind-based tone config for all check items
         const toneCfg = (tone) => ({
@@ -3451,19 +3415,19 @@
 
         const propDesc = propertyClear
             ? 'Cleared - no Talisay property declared.'
-            : 'Flagged - property in Talisay declared. Layer 2 flag pushes the applicant to the Walk-in queue.';
+            : 'Flagged - property in Talisay declared.';
         const incDesc = incomeClear
             ? 'Cleared - within Module 1 income threshold.'
-            : 'Flagged - over Module 1 income threshold. Layer 2 flag pushes the applicant to the Walk-in queue.';
+            : 'Flagged - over Module 1 income threshold.';
         const hhDesc = householdHasLiveInPartner
-            ? `Flagged - registered household includes a live-in partner${liveInPartnerCount > 1 ? ` (${liveInPartnerCount})` : ''}. Layer 2 flag pushes the applicant to the Walk-in queue.`
+            ? `Flagged - registered household includes a live-in partner${liveInPartnerCount > 1 ? ` (${liveInPartnerCount})` : ''}.`
             : `Cleared - no live-in partner among registered household members (declared ${escapeHtml(declaredHH)} / listed ${escapeHtml(listedHH)}).`;
         const voterDesc = voterClear
             ? 'Cleared - applicant is a registered voter in Talisay City (per Module 1 declaration).'
-            : 'Flagged - applicant is NOT a registered voter in Talisay City (per Module 1 declaration). Layer 2 flag pushes the applicant to the Walk-in queue.';
+            : 'Flagged - applicant is NOT a registered voter in Talisay City (per Module 1 declaration).';
         const residencyDesc = residencyClear
             ? `Cleared - declared ${yearsResiding} year(s) of residence in Talisay City (meets the ${minYearsResidingTalisay}-year minimum).`
-            : `Flagged - declared ${yearsResiding} year(s) of residence in Talisay City is below the ${minYearsResidingTalisay}-year minimum. Layer 2 flag pushes the applicant to the Walk-in queue.`;
+            : `Flagged - declared ${yearsResiding} year(s) of residence in Talisay City is below the ${minYearsResidingTalisay}-year minimum.`;
         const l2Tone23 = propertyClear ? 'pass' : 'fail';
         const l2Icon23 = propertyClear ? '✓' : '!';
         const l2Tone24 = incomeClear ? 'pass' : 'fail';
@@ -3538,9 +3502,6 @@
             } else if (savedReason === 'relocated') {
                 layer3ReadonlyBody +=
                     `<p class="mt-2 text-[0.78rem]"><span class="text-slate-500 font-semibold uppercase tracking-wide text-[0.62rem]">Project designation</span><br>${escAttr(savedProjectName || '—')}</p>`;
-            } else if (savedReason === 'not_abc') {
-                layer3ReadonlyBody +=
-                    `<p class="mt-2 text-[0.78rem] text-slate-600">Walk-in path — Priority is not asserted on displacement grounds alone.</p>`;
             }
             layer3ReadonlyBody += `</div>`;
         }
@@ -3551,7 +3512,7 @@
                         Return to Layer 2
                     </button>
                     <button type="button" class="w-full sm:w-auto flex items-center justify-center gap-2 px-5 sm:px-6 py-2.5 text-[0.8rem] sm:text-sm rounded-md ${layer3Clear ? 'bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white shadow-sm' : 'bg-slate-400 text-white cursor-not-allowed opacity-75'} transition-colors font-semibold uppercase tracking-wide" onclick="m2Layer3ProceedToEvaluation()"${layer3Clear ? '' : ' disabled'}>
-                        ${canVerifyDocs ? 'Confirm queue placement &amp; continue' : 'Continue to Evaluation'}
+                        ${canVerifyDocs ? 'Confirm classification &amp; continue' : 'Continue to Evaluation'}
                         <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                     </button>
                </div>`;
@@ -3613,7 +3574,7 @@
                 )
             ) +
             `</div>` +
-            doneStrip('m2Layer2Done', layer2Clear, layer2Clear ? '✓ Layer 2 complete — Eligibility readouts clear' : '! Layer 2 complete — flag(s) noted; applicant on Walk-in path') +
+            doneStrip('m2Layer2Done', layer2Clear, layer2Clear ? '✓ Layer 2 complete — Eligibility readouts clear' : '! Layer 2 complete — flag(s) noted') +
             `<div id="m2Layer3Block" class="m2-layer3-block" style="display:none;">` +
             `<div class="m2-layer3-shell">` +
             `<div class="m2-layer3-header">` +
@@ -3943,7 +3904,6 @@
 
         const status = data.applicant_status || '';
         let statusLabel = data.applicant_status_display || status || '—';
-        const queueLabel = data.intake_queue_label || '—';
         const channel = data.channel === 'danger_zone' ? 'Channel B - Danger Zone' : 'Channel A - Regular';
         const officeCdrrmoBox = document.getElementById('modalOfficeCdrrmoBox');
         const cdrrmoPendingInfo = document.getElementById('modalCdrrmoPendingInfo');
@@ -3968,20 +3928,18 @@
         }
 
         evalBox.style.display = 'block';
-        const recommendationLabel = recommendedQueue === 'priority' ? 'Priority' : 'Walk-in';
+        const recommendationLabel = recommendedQueue === 'priority' ? 'Track A' : 'Track B';
         const chips = [];
-        chips.push(`<span class="m2-eval-chip ${recommendedQueue === 'priority' ? 'recommend-priority' : 'recommend-walkin'}">Recommended: ${recommendationLabel}</span>`);
+        chips.push(`<span class="m2-eval-chip ${recommendedQueue === 'priority' ? 'recommend-priority' : 'recommend-walkin'}">Recommended processing track: ${recommendationLabel}</span>`);
         if (allowedQueues.includes('priority')) {
-            chips.push('<span class="m2-eval-chip allowed-priority">Allowed: Priority</span>');
+            chips.push('<span class="m2-eval-chip allowed-priority">Track A allowed</span>');
         }
         if (allowedQueues.includes('walk_in')) {
-            chips.push('<span class="m2-eval-chip allowed-walkin">Allowed: Walk-in</span>');
+            chips.push('<span class="m2-eval-chip allowed-walkin">Track B allowed</span>');
         }
 
         let statusHtml =
-            `<strong>Current applicant status:</strong> ${escapeHtml(statusLabel)}<br>` +
-            `<strong>Declared intake channel:</strong> ${escapeHtml(channel)}<br>` +
-            `<strong>Current queue tag:</strong> ${escapeHtml(queueLabel)}` +
+            `<strong>Declared intake channel:</strong> ${escapeHtml(channel)}` +
             workflowNote +
             `<div class="m2-eval-chips">${chips.join('')}</div>`;
         if (blockers.length > 0) {
@@ -4032,13 +3990,13 @@
                 markPriorityBtn.disabled = !canPriority;
                 markPriorityBtn.style.opacity = canPriority ? '1' : '0.6';
                 markPriorityBtn.style.cursor = canPriority ? 'pointer' : 'not-allowed';
-                markPriorityBtn.title = canPriority ? '' : 'Priority qualification requires certified CDRRMO when hazard claim is declared.';
+                markPriorityBtn.title = canPriority ? '' : 'This option is currently unavailable for this record.';
             }
             if (markWalkinBtn) {
                 markWalkinBtn.disabled = !canWalkin;
                 markWalkinBtn.style.opacity = canWalkin ? '1' : '0.6';
                 markWalkinBtn.style.cursor = canWalkin ? 'pointer' : 'not-allowed';
-                markWalkinBtn.title = canWalkin ? '' : 'Resolve eligibility blockers before assigning walk-in queue.';
+                markWalkinBtn.title = canWalkin ? '' : 'Resolve eligibility blockers before proceeding.';
             }
             if (disqualifyBtn) {
                 disqualifyBtn.disabled = false;
@@ -4139,15 +4097,7 @@
         const gatewayBtn = document.getElementById('modalProceedModule3Btn');
         if (!box || !summary || !form || !notesEl) return;
 
-        const applicantStatus = data.applicant_status || '';
-        const queueLabel = data.intake_queue_label || '—';
-        const activeQueueType = data.active_queue_type || '';
-        const hasQueueAssignment = applicantStatus === 'eligible' && (
-            activeQueueType === 'priority' ||
-            activeQueueType === 'walk_in' ||
-            queueLabel !== '—'
-        );
-        const canRecord = canVerifyDocs && hasQueueAssignment;
+        const canRecord = canVerifyDocs;
         if (!window.__m2AllowEval28) {
             box.style.display = 'none';
             return;
@@ -4162,7 +4112,7 @@
         summary.innerHTML = '';
         if (!canRecord) {
             form.style.display = 'none';
-            summary.innerHTML = `<div style="margin-top:.2rem;padding:.45rem .5rem;border-radius:8px;border:1px solid #fde68a;background:#fffbeb;color:#92400e;font-size:.69rem;line-height:1.45;">2.6 will be enabled once Module 2 has finalized the applicant as eligible with an active queue assignment (Priority or Walk-in).</div>`;
+            summary.innerHTML = `<div style="margin-top:.2rem;padding:.45rem .5rem;border-radius:8px;border:1px solid #fde68a;background:#fffbeb;color:#92400e;font-size:.69rem;line-height:1.45;">2.6 is currently unavailable for your role on this record.</div>`;
             if (gatewayWrap) gatewayWrap.style.display = 'none';
             return;
         }
@@ -4417,11 +4367,11 @@
 
         let confirmationMessage = 'Record disqualification for this applicant in Module 2?';
         if (action === 'mark_eligible_priority') {
-            confirmationMessage = 'Mark this applicant as Qualified - Priority and assign Priority queue?';
+            confirmationMessage = 'Mark this applicant as Qualified — Track A?';
         } else if (action === 'mark_eligible_walk_in') {
-            confirmationMessage = 'Mark this applicant as Qualified - Walk-in and assign Walk-in queue?';
+            confirmationMessage = 'Mark this applicant as Qualified — Track B?';
         } else if (action === 'mark_eligible') {
-            confirmationMessage = 'Record eligibility and assign queue entry for this applicant?';
+            confirmationMessage = 'Record eligibility for this applicant?';
         }
         const ok = confirm(confirmationMessage);
         if (!ok) return;
@@ -4479,7 +4429,7 @@
                 return;
             }
             alert(data.message || 'Official CDRRMO office receipt recorded successfully.');
-            // Auto-refresh shortly after 2.6 action so queue tags/counters update without manual reload.
+            // Auto-refresh shortly after 2.6 action so latest state is reflected without manual reload.
             setTimeout(() => location.reload(), 450);
         } catch (error) {
             alert('Error: ' + error.message);
