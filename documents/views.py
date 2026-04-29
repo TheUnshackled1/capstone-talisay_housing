@@ -237,7 +237,7 @@ def document_management(request, position):
         Document.objects
         .select_related('applicant')
         .filter(applicant_id__in=applicant_ids)
-        .order_by('-uploaded_at')
+        .order_by('applicant__created_at', '-uploaded_at')
     )
     disqualified_count = (
         Applicant.objects.filter(status='disqualified')

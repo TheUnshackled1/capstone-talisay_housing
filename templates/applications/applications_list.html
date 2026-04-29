@@ -2653,32 +2653,6 @@
     <!-- Controls Bar (intake-style compact row) -->
     <div class="controls-bar"
         style="display: flex; gap: 0.75rem; margin-bottom: 0.85rem; flex-wrap: wrap; align-items: center; padding: 0.6rem; border: 1px solid #e2e8f0; background: #f8fafc; border-radius: 0.7rem;">
-        <div class="summary-chip-card"
-            style="display: flex; align-items: center; gap: 0.65rem; padding: 0.46rem 0.68rem; background: #f3e8ff; border-radius: 0.55rem; border: 1px solid #e9d5ff;">
-            <svg style="width: 20px; height: 20px; color: #7c3aed;" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2">
-                <path d="M12 3l2.4 4.86 5.36.78-3.88 3.78.92 5.35L12 15.77 7.2 17.77l.92-5.35L4.24 8.64l5.36-.78L12 3z">
-                </path>
-            </svg>
-            <div>
-                <p style="font-size: 0.625rem; color: #6b21a8; margin: 0; text-transform: uppercase; font-weight: 500;">
-                    Priority Queue</p>
-                <p id="m2PriorityQueueCount" style="font-size: 1.25rem; font-weight: 700; color: #7c3aed; margin: 0;">{{ queue_counts.priority|default:0 }}</p>
-            </div>
-        </div>
-        <div class="summary-chip-card"
-            style="display: flex; align-items: center; gap: 0.65rem; padding: 0.46rem 0.68rem; background: #eff6ff; border-radius: 0.55rem; border: 1px solid #bfdbfe;">
-            <svg style="width: 20px; height: 20px; color: #2563eb;" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="8" r="4"></circle>
-                <path d="M4 21a8 8 0 0 1 16 0"></path>
-            </svg>
-            <div>
-                <p style="font-size: 0.625rem; color: #64748b; margin: 0; text-transform: uppercase; font-weight: 500;">
-                    Walk-in Queue</p>
-                <p id="m2WalkInQueueCount" style="font-size: 1.25rem; font-weight: 700; color: #2563eb; margin: 0;">{{ queue_counts.walk_in|default:0 }}</p>
-            </div>
-        </div>
         <div class="search-box" style="flex: 1; min-width: 200px; position: relative;">
             <svg style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); width: 1rem; height: 1rem; color: #94a3b8;"
                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -2695,12 +2669,6 @@
 
     <!-- Applications Table -->
     <div class="applications-table-container">
-        <div class="queue-legend" aria-label="Queue badge legend">
-            <span class="queue-legend-label">Queue legend</span>
-            <span class="queue-badge priority" title="Priority queue (hazard-certified priority path)">Priority</span>
-            <span class="queue-badge walkin" title="Walk-in queue (FIFO regular path)">Walk-in</span>
-            <span class="queue-badge walkin" title="No active Module 2 queue assignment yet">No queue</span>
-        </div>
         {% if applicants_data %}
         <table class="applications-table compact-table">
             <thead>
@@ -2709,11 +2677,9 @@
                     <th class="col-applicant" title="Applicant full name">Applicant record</th>
                     <th class="col-transaction" title="Applicant transaction ID">Transaction #</th>
                     <th class="col-reference" title="Applicant reference number">Reference #</th>
-                    <th class="col-encoded" title="Date and time encoded in Module 1">Encoded at</th>
+                    <th class="col-encoded" title="Date and time proceeded to Application & Evaluation">Proceeded time</th>
 
-                    <th class="col-queue" title="Active Module 2 queue tag">Queue</th>
                     <th class="col-staff" title="Module 1 encoding staff and Module 2 handoff metadata">Staff</th>
-                    <th class="col-gate" title="Module 2 evaluation status">status</th>
                     <th class="col-actions">Actions</th>
                 </tr>
             </thead>
@@ -2757,15 +2723,7 @@
                         <span class="m2-cell-code">{{ data.applicant.reference_number }}</span>
                     </td>
                     <td class="col-encoded">
-                        <span style="font-size:0.6875rem;color:#334155;" title="Date &amp; time (Module 1 record created)">{{ data.applicant.created_at|date:"n/j/Y, P" }}</span>
-                    </td>
-
-                    <td class="col-queue">
-                        {% if data.intake_queue_label != '—' %}
-                        <span class="queue-badge {% if data.active_queue_type == 'priority' %}priority{% else %}walkin{% endif %}" title="{% if data.active_queue_type == 'priority' %}Priority queue (hazard-certified priority path){% elif data.active_queue_type == 'walk_in' %}Walk-in queue (FIFO regular path){% else %}Queue assignment{% endif %}">{{ data.intake_queue_label }}</span>
-                        {% else %}
-                        <span class="queue-badge walkin" title="No active Module 2 queue assignment yet">No queue tag</span>
-                        {% endif %}
+                        <span style="font-size:0.6875rem;color:#334155;" title="Date &amp; time proceeded to Application &amp; Evaluation">{{ data.applicant.module2_handoff_at|default:data.applicant.created_at|date:"n/j/Y, P" }}</span>
                     </td>
                     <td class="col-staff">
                         {% if data.applicant.registered_by %}
@@ -2786,19 +2744,6 @@
                         {% else %}
                         <span style="font-size:0.625rem;color:#94a3b8;">&mdash;</span>
                         {% endif %}
-                    </td>
-                    <td class="col-gate">
-                        <div class="m2-gate-line">
-                            {% if data.blacklist_blocked %}
-                            <span style="color:#b91c1c;font-weight:700;">Blocked</span>
-                            {% elif data.applicant_status == 'pending_cdrrmo' and data.applicant.channel == 'danger_zone' and data.cdrrmo_status != 'certified' and data.cdrrmo_status != 'not_certified' %}
-                            <span style="color:#b45309;">Pending</span>
-                            {% elif data.evaluation_approval_status %}
-                            <span style="color:#1e3a8a;">{{ data.evaluation_approval_status_display }}</span>
-                            {% else %}
-                            <span style="color:#166534;">Clear</span>
-                            {% endif %}
-                        </div>
                     </td>
                     <td class="col-actions">
                         <div style="display: flex; gap: 0.25rem; flex-wrap: wrap;">
@@ -3042,15 +2987,6 @@
     </div>
 </div>
 
-<!-- Electricity Link for authorized users -->
-{% if permissions.can_manage_electricity %}
-<div style="position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 40;">
-    <a href="{% url 'applications:electricity_list' request.user.position %}" class="btn-primary-add">
-        ⚡ Electricity Tracking
-    </a>
-</div>
-{% endif %}
-
 <div class="modal-overlay" id="flowAlertModal" onclick="closeFlowAlert(event)">
     <div class="flow-alert-card" onclick="event.stopPropagation()">
         <h3 class="flow-alert-title" id="flowAlertTitle">Notice</h3>
@@ -3215,46 +3151,6 @@
         const d = document.createElement('div');
         d.textContent = s;
         return d.innerHTML;
-    }
-
-    // Live-update the applicant row's queue badge and the page-level queue
-    // counters when a Module 2 queue placement changes mid-session (e.g.
-    // Layer 3 confirm auto-promotes to Priority). Avoids a full page reload
-    // so staff see the new state immediately even if they close the modal
-    // without proceeding to Layer 4.
-    function updateApplicantQueueRow(applicantId, qp) {
-        if (!applicantId || !qp || !qp.queue_type) return;
-        const row = document.querySelector(`tr[data-applicant-id="${applicantId}"]`);
-        if (!row) return;
-        const badge = row.querySelector('td.col-queue .queue-badge');
-        if (!badge) return;
-
-        const prevText = (badge.textContent || '').trim();
-        const wasPriority = prevText.startsWith('Priority');
-        const wasWalkin = prevText.startsWith('Walk-in');
-        const isPriority = qp.queue_type === 'priority';
-
-        badge.classList.remove('priority', 'walkin');
-        badge.classList.add(isPriority ? 'priority' : 'walkin');
-        badge.textContent = `${isPriority ? 'Priority' : 'Walk-in'} #${qp.queue_position}`;
-        badge.title = isPriority
-            ? 'Priority queue (hazard-certified priority path)'
-            : 'Walk-in queue (FIFO regular path)';
-
-        const priorityCountEl = document.getElementById('m2PriorityQueueCount');
-        const walkinCountEl = document.getElementById('m2WalkInQueueCount');
-        const adjust = (el, delta) => {
-            if (!el) return;
-            const cur = parseInt((el.textContent || '0').trim(), 10) || 0;
-            el.textContent = String(Math.max(0, cur + delta));
-        };
-        if (isPriority) {
-            if (!wasPriority) adjust(priorityCountEl, 1);
-            if (wasWalkin) adjust(walkinCountEl, -1);
-        } else {
-            if (!wasWalkin) adjust(walkinCountEl, 1);
-            if (wasPriority) adjust(priorityCountEl, -1);
-        }
     }
 
     function applyDocProgressFillWidths() {

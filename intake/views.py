@@ -73,7 +73,7 @@ def _archive_requirement_scan_rows(requirements_group_a, scanned_types_set, disp
         scanned_isf = ISF_EXTRA_VAULT_DOC_TYPE in scanned_types_set
         rows.append({
             'code': 'ISF-SIT',
-            'name': 'ISF situational documentation (Options A / B / C)',
+            'name': 'ISF situational documentation (A: Danger Zone/Hazard, B: Evicted, C: Government Project)',
             'group_display': 'Group A - Applicant Requirements',
             # Follow-up only: displayed in checklist but does not affect 7-doc proceed gate.
             'is_required_for_form': False,
