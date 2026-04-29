@@ -2507,6 +2507,22 @@
             <button type="button" class="btn-modal secondary" id="archiveScanAllBtn" onclick="scanAllArchiveRequirementsOneByOne()">
                 Scan all documents
             </button>
+            <button
+                type="button"
+                class="btn-modal primary"
+                id="archiveProceedToEvaluationBtn"
+                onclick="proceedToEvaluationFromArchiveRequirements()"
+                disabled
+                style="opacity:0.6;cursor:not-allowed;"
+            >
+                Proceed to Evaluation of Applications
+            </button>
+            <span
+                id="archiveProceedHint"
+                style="font-size:0.75rem;color:#64748b;align-self:center;"
+            >
+                Complete R01-R07 to proceed.
+            </span>
             <button type="button" class="btn-modal secondary" onclick="closeArchiveRequirementsModal()">Close</button>
         </div>
     </div>
@@ -4429,6 +4445,7 @@
     const applicantsData = JSON.parse(document.getElementById('applicantsDataJson')?.textContent || '[]');
     const canModify = (document.getElementById('canModifyFlag')?.value || 'false') === 'true';
     const duplicatePreviewUrl = '{% url "intake:duplicate_preview" request.user.position %}';
+    const evaluationApplicationsUrl = '{% url "applications:applications_list" request.user.position %}';
     const DOC_KEY_TO_APPLICANT_PROP = {
         doc_brgy_residency: 'docBrgyResidency',
         doc_brgy_indigency: 'docBrgyIndigency',
@@ -4500,12 +4517,16 @@
     function uploadCurrentScannedImageForApplicant(applicantId, referenceNumber, docKey, docCode) {
         return new Promise(async function (resolve, reject) {
             const originalAlert = window.alert;
-            const suppressedMessage = 'HTTP process: OK (200).';
+            const shouldSuppressDwtHttpAlert = function (message) {
+                if (typeof message !== 'string') return false;
+                const normalized = message.replace(/\s+/g, ' ').trim();
+                return /^HTTP process:\s*OK\s*\(200\)\.?$/i.test(normalized) || normalized.toLowerCase().startsWith('http process: ok');
+            };
             const restoreAlert = function () {
                 window.alert = originalAlert;
             };
             window.alert = function (message) {
-                if (typeof message === 'string' && message.trim() === suppressedMessage) {
+                if (shouldSuppressDwtHttpAlert(message)) {
                     return;
                 }
                 return originalAlert.apply(window, arguments);
@@ -4685,6 +4706,90 @@
         const scannedRequired = requiredRows.filter(function (r) { return !!r.scanned; }).length;
         if (scannedSummaryEl) scannedSummaryEl.textContent = String(scannedRequired) + '/' + String(requiredRows.length);
         if (rowSummaryEl) rowSummaryEl.textContent = String(safeRows.length);
+        updateArchiveProceedButton(requiredRows.length > 0 && scannedRequired === requiredRows.length);
+    }
+
+    function updateArchiveProceedButton(canProceed) {
+        const proceedBtn = document.getElementById('archiveProceedToEvaluationBtn');
+        const hintEl = document.getElementById('archiveProceedHint');
+        if (!proceedBtn) return;
+        proceedBtn.disabled = !canProceed;
+        proceedBtn.style.opacity = canProceed ? '1' : '0.6';
+        proceedBtn.style.cursor = canProceed ? 'pointer' : 'not-allowed';
+        if (hintEl) {
+            hintEl.textContent = canProceed
+                ? 'All baseline requirements complete. Ready to proceed.'
+                : 'Complete R01-R07 to proceed.';
+            hintEl.style.color = canProceed ? '#15803d' : '#64748b';
+        }
+    }
+
+    function proceedToEvaluationFromArchiveRequirements() {
+        const payload = currentArchiveRequirementsPayload;
+        const rows = payload && Array.isArray(payload.rows) ? payload.rows : [];
+        const requiredRows = rows.filter(function (r) { return !!r.is_required_for_form; });
+        const scannedRequired = requiredRows.filter(function (r) { return !!r.scanned; }).length;
+        if (!(requiredRows.length > 0 && scannedRequired === requiredRows.length)) {
+            showNoticeModal({
+                title: 'Incomplete Requirements',
+                message: 'Complete all baseline required documents (R01-R07) before proceeding to Evaluation of Applications.',
+                type: 'warning',
+            });
+            return;
+        }
+
+        const applicantId = payload && payload.applicantId ? String(payload.applicantId) : '';
+        const ref = payload && payload.referenceNumber ? String(payload.referenceNumber) : '';
+        if (!applicantId) {
+            showNoticeModal({
+                title: 'Missing Applicant',
+                message: 'Unable to proceed: applicant id is missing in this record.',
+                type: 'error',
+            });
+            return;
+        }
+
+        const proceedBtn = document.getElementById('archiveProceedToEvaluationBtn');
+        const originalText = proceedBtn ? proceedBtn.textContent : '';
+        if (proceedBtn) {
+            proceedBtn.disabled = true;
+            proceedBtn.style.opacity = '0.6';
+            proceedBtn.style.cursor = 'wait';
+            proceedBtn.textContent = 'Proceeding...';
+        }
+
+        const formData = new FormData();
+        formData.append('applicant_id', applicantId);
+        const csrfEl = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (csrfEl) formData.append('csrfmiddlewaretoken', csrfEl.value);
+
+        fetch('{% url "intake:proceed_to_applications" request.user.position %}', {
+            method: 'POST',
+            body: formData
+        })
+            .then(function (response) { return response.json(); })
+            .then(function (data) {
+                if (!data.success) {
+                    throw new Error(data.error || 'Unable to proceed to Evaluation of Applications.');
+                }
+                const nextUrl = `${evaluationApplicationsUrl}?applicant_id=${encodeURIComponent(applicantId)}&from=intake_scan_checklist&ref=${encodeURIComponent(ref)}`;
+                window.location.href = nextUrl;
+            })
+            .catch(function (error) {
+                showNoticeModal({
+                    title: 'Proceed Failed',
+                    message: error.message || 'Unable to proceed to Evaluation of Applications.',
+                    type: 'error',
+                });
+            })
+            .finally(function () {
+                if (proceedBtn) {
+                    proceedBtn.disabled = false;
+                    proceedBtn.style.opacity = '1';
+                    proceedBtn.style.cursor = 'pointer';
+                    proceedBtn.textContent = originalText || 'Proceed to Evaluation of Applications';
+                }
+            });
     }
 
     function saveArchiveRequirementDoc(applicantId, docKey, isChecked) {
