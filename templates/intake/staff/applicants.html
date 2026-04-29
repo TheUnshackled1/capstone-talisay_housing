@@ -5197,7 +5197,8 @@
     }
 
     // Initialize income formatters on page load
-    const TABLE_PAGE_SIZE = 5;
+    const APPLICANTS_TABLE_PAGE_SIZE = 5;
+    const ARCHIVE_TABLE_PAGE_SIZE = 10;
     let applicantsCurrentPage = 1;
     let archiveCurrentPage = 1;
 
@@ -5233,7 +5234,7 @@
         if (applicantsNextBtn) {
             applicantsNextBtn.addEventListener('click', function() {
                 const rows = getFilteredApplicantRows();
-                const totalPages = Math.max(1, Math.ceil(rows.length / TABLE_PAGE_SIZE));
+                const totalPages = Math.max(1, Math.ceil(rows.length / APPLICANTS_TABLE_PAGE_SIZE));
                 if (applicantsCurrentPage < totalPages) {
                     applicantsCurrentPage += 1;
                     filterTable(false);
@@ -5253,7 +5254,7 @@
         if (archiveNextBtn) {
             archiveNextBtn.addEventListener('click', function() {
                 const filteredRows = getFilteredArchiveRows();
-                const totalPages = Math.max(1, Math.ceil(filteredRows.length / TABLE_PAGE_SIZE));
+                const totalPages = Math.max(1, Math.ceil(filteredRows.length / ARCHIVE_TABLE_PAGE_SIZE));
                 if (archiveCurrentPage < totalPages) {
                     archiveCurrentPage += 1;
                     filterArchiveTable(false);
@@ -5331,11 +5332,11 @@
         const allRows = Array.from(document.querySelectorAll('#applicantsTableBody tr'));
         const filteredRows = getFilteredApplicantRows();
         const totalRows = filteredRows.length;
-        const totalPages = Math.max(1, Math.ceil(totalRows / TABLE_PAGE_SIZE));
+        const totalPages = Math.max(1, Math.ceil(totalRows / APPLICANTS_TABLE_PAGE_SIZE));
         applicantsCurrentPage = Math.min(applicantsCurrentPage, totalPages);
 
-        const startIndex = (applicantsCurrentPage - 1) * TABLE_PAGE_SIZE;
-        const endIndex = startIndex + TABLE_PAGE_SIZE;
+        const startIndex = (applicantsCurrentPage - 1) * APPLICANTS_TABLE_PAGE_SIZE;
+        const endIndex = startIndex + APPLICANTS_TABLE_PAGE_SIZE;
         const rowsOnPage = filteredRows.slice(startIndex, endIndex);
 
         allRows.forEach(row => {
@@ -5370,11 +5371,11 @@
         const archiveTotalCountEl = document.getElementById('archiveTotalCount');
         const archiveReportsCountEl = document.getElementById('archiveReportsCount');
         const totalRows = filteredRows.length;
-        const totalPages = Math.max(1, Math.ceil(totalRows / TABLE_PAGE_SIZE));
+        const totalPages = Math.max(1, Math.ceil(totalRows / ARCHIVE_TABLE_PAGE_SIZE));
         archiveCurrentPage = Math.min(archiveCurrentPage, totalPages);
 
-        const startIndex = (archiveCurrentPage - 1) * TABLE_PAGE_SIZE;
-        const endIndex = startIndex + TABLE_PAGE_SIZE;
+        const startIndex = (archiveCurrentPage - 1) * ARCHIVE_TABLE_PAGE_SIZE;
+        const endIndex = startIndex + ARCHIVE_TABLE_PAGE_SIZE;
         const rowsOnPage = filteredRows.slice(startIndex, endIndex);
 
         archiveRows.forEach(row => {

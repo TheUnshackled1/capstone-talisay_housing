@@ -1578,7 +1578,7 @@ def archive_list(request, position):
         })
 
     # Pagination
-    paginator = Paginator(records, 25)  # 25 records per page
+    paginator = Paginator(records, 10)  # 10 records per page
     page_number = request.GET.get('page', 1)
     page_obj = paginator.get_page(page_number)
 
