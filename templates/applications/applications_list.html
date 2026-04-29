@@ -2697,22 +2697,6 @@
                                 <span class="blacklist-source-chip {% if data.blacklist_source == 'Units Blacklist Entries' %}source-units{% else %}source-module1{% endif %}">{{ data.blacklist_source }}</span>
                                 {% endif %}
                             </span>
-                            {% elif data.applicant_status == 'pending_cdrrmo' %}
-                            {% if data.cdrrmo_status == 'certified' or data.cdrrmo_status == 'not_certified' %}
-                            <span style="font-size:0.5625rem;color:#0369a1;font-weight:600;">CDRRMO finalized — awaiting
-                                eligibility and assignment</span>
-                            {% else %}
-                            <span style="font-size:0.5625rem;color:#b45309;font-weight:600;">CDRRMO pending staff
-                                finalization (2.6)</span>
-                            {% endif %}
-                            {% endif %}
-                            {% if data.evaluation_approval_status %}
-                            <span style="font-size:0.5625rem;color:#1e3a8a;font-weight:600;">2.6 {{ data.evaluation_approval_status_display }}</span>
-                            {% endif %}
-                            {% if data.is_delayed %}
-                            <div class="routing-delayed-indicator">
-                                <span>⚠</span> Routing delayed
-                            </div>
                             {% endif %}
                         </div>
                     </td>
@@ -2747,47 +2731,10 @@
                     </td>
                     <td class="col-actions">
                         <div style="display: flex; gap: 0.25rem; flex-wrap: wrap;">
-                            <button class="action-btn js-open-application-modal"
-                                data-applicant-id="{{ data.applicant.id }}"
-                                data-name="{{ data.applicant.full_name|escape }}"
-                                data-reference="{{ data.applicant.reference_number|escape }}"
-                                data-verified-count="{{ data.group_a_verified }}"
-                                data-current-stage="{{ data.current_stage|escape }}"
-                                data-application-id="{{ data.application.id|default:'' }}"
-                                onclick="openApplicationModalFromButton(this)">
-                                <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2">
-                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                                    <circle cx="12" cy="12" r="3" />
-                                </svg>
-                                Open Record
-                            </button>
-
                             {% if 'generate_form' in data.user_actions %}
                             <button class="action-btn" style="background: #dcfce7; color: #16a34a;"
                                 onclick="generateFormDirect('{{ data.applicant.id }}')">
                                 📝 Generate Form
-                            </button>
-                            {% endif %}
-
-                            {% if 'receive_routing' in data.user_actions %}
-                            <button class="action-btn" style="background: #dbeafe; color: #2563eb;"
-                                onclick="updateRouting('{{ data.application.id }}', 'received')">
-                                📨 Receive
-                            </button>
-                            {% endif %}
-
-                            {% if 'forward_to_oic' in data.user_actions %}
-                            <button class="action-btn" style="background: #dbeafe; color: #2563eb;"
-                                onclick="updateRouting('{{ data.application.id }}', 'forwarded_oic')">
-                                ➡️ Forward to OIC
-                            </button>
-                            {% endif %}
-
-                            {% if 'sign_oic' in data.user_actions %}
-                            <button class="action-btn" style="background: #fef3c7; color: #d97706;"
-                                onclick="updateRouting('{{ data.application.id }}', 'signed_oic')">
-                                ✍️ Sign (OIC)
                             </button>
                             {% endif %}
 
@@ -2813,116 +2760,6 @@
             <p>{% if search %}No results match your search "{{ search }}"{% else %}No applicant records available for Module 2 evaluation yet. In Module 1, open the applicant and click "Proceed to Application & Evaluation" to handoff the record.{% endif %}</p>
         </div>
         {% endif %}
-    </div>
-</div>
-
-<!-- Application Detail Modal -->
-<div class="modal-overlay" id="applicationModal">
-    <div class="modal-content">
-        <div class="modal-header" style="position: relative; text-align: center;">
-            <div style="width: 100%;">
-                <h2 id="modalApplicantName">Loading...</h2>
-                <p style="font-size: 0.875rem; color: #6b7280; margin: 0.25rem 0 0 0;">
-                    <span id="modalRefNumber"></span>
-                </p>
-                <p
-                    style="font-size: 0.68rem; color: #94a3b8; margin: 0.35rem 0 0 0; text-transform: uppercase; letter-spacing: .06em;">
-                    Talisay City Housing Authority · Application & Evaluation
-                </p>
-            </div>
-            <button class="modal-close" style="position: absolute; right: 1.5rem; top: 1.5rem;"
-                onclick="closeModal()">&times;</button>
-        </div>
-        <div class="modal-body">
-            <div id="modalWorkflowGates"
-                style="display:none;margin-bottom:1rem;padding:0.75rem;border-radius:8px;font-size:0.75rem;line-height:1.45;">
-            </div>
-            <div id="modalM1EvidencePanel" class="m1-evidence-shell" style="display:none;">
-                <div class="m1-evidence-header">Module 1 encoded form evidence (read-only)</div>
-                <div id="modalM1EvidenceSummary" class="m1-evidence-record"></div>
-            </div>
-            <div id="modalCdrrmoBox"
-                style="display:none;margin-bottom:0.9rem;padding:0.75rem;border:1px solid #cbd5e1;border-radius:10px;background:#ffffff;text-align:center;">
-                <div id="modalCdrrmoSummary" style="font-size:.75rem;color:#334155;line-height:1.45;"></div>
-                <div id="modalCdrrmoNotes" style="display:none;margin-top:.4rem;font-size:.72rem;color:#475569;"></div>
-                <div id="modalCdrrmoPhotosWrap" style="display:none;margin-top:.45rem;">
-                    <p id="modalCdrrmoPhotosCaption" style="font-size:0.65rem;margin:0 0 0.35rem 0;color:#64748b;"></p>
-                    <div id="modalCdrrmoPhotos" style="display:flex;flex-wrap:wrap;gap:0.35rem;"></div>
-                </div>
-            </div>
-            <div id="modalEvaluationApprovalBox" class="m2-eval28-panel mt-3 rounded-2xl bg-white border border-slate-200 shadow-sm overflow-hidden">
-                <!-- Layer 4 header -->
-                <div class="px-3 pt-4 pb-3 sm:px-5 sm:pt-5 sm:pb-4 text-center bg-gradient-to-br from-slate-50 via-white to-slate-50 border-b border-slate-100">
-                    <span class="inline-flex items-center gap-1 sm:gap-1.5 text-[0.58rem] sm:text-[0.65rem] font-extrabold uppercase tracking-[0.1em] sm:tracking-[0.18em] text-indigo-700 bg-indigo-50 border border-indigo-200 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full">
-                        <svg class="w-2.5 h-2.5 sm:w-3 sm:h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
-                        Layer 4 &mdash; Final approval marker
-                    </span>
-                    <h3 class="mt-2 sm:mt-2.5 text-base sm:text-lg font-extrabold text-slate-900 leading-tight">2.6 Record Evaluation Approval Status</h3>
-                    <p class="mt-1 sm:mt-1.5 text-[0.7rem] sm:text-xs text-slate-500 max-w-xs sm:max-w-sm mx-auto leading-relaxed">THA Staff records the evaluation result here. This refers only to the evaluation outcome — full routing happens later in Module 3.</p>
-                </div>
-                <!-- Layer 4 body -->
-                <div class="px-3 sm:px-5 pt-3 sm:pt-4 pb-4 sm:pb-5">
-                    <div id="modalEvaluationApprovalSummary"></div>
-                    <div id="modalEvaluationApprovalForm" class="m2-eval28-form">
-                        <!-- Approval / Disqualify option cards — side-by-side on sm+ -->
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-4">
-                            <button type="button" class="m2-eval28-approve-btn w-full flex items-center gap-3 sm:gap-4 p-3 sm:p-4 bg-emerald-50 border-2 border-emerald-200 rounded-xl cursor-pointer hover:border-emerald-400 hover:bg-emerald-100 active:bg-emerald-200 transition-all font-semibold text-left" onclick="setEvaluationApprovalStatus('approved')">
-                                <div class="w-9 h-9 sm:w-10 sm:h-10 flex-shrink-0 flex items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
-                                    <svg class="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
-                                </div>
-                                <div>
-                                    <div class="text-xs sm:text-sm font-bold text-emerald-800">Approve — Qualified</div>
-                                    <div class="text-[0.68rem] sm:text-xs text-emerald-700 mt-0.5">Record applicant as approved and eligible</div>
-                                </div>
-                            </button>
-                            <button type="button" class="m2-eval28-disqualify-btn w-full flex items-center gap-3 sm:gap-4 p-3 sm:p-4 bg-red-50 border-2 border-red-200 rounded-xl cursor-pointer hover:border-red-400 hover:bg-red-100 active:bg-red-200 transition-all font-semibold text-left" onclick="setEvaluationApprovalStatus('disqualified')">
-                                <div class="w-9 h-9 sm:w-10 sm:h-10 flex-shrink-0 flex items-center justify-center rounded-full bg-red-100 text-red-600">
-                                    <svg class="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-                                </div>
-                                <div>
-                                    <div class="text-xs sm:text-sm font-bold text-red-800">Disqualify</div>
-                                    <div class="text-[0.68rem] sm:text-xs text-red-700 mt-0.5">Record disqualification with reason</div>
-                                </div>
-                            </button>
-                        </div>
-
-                        <!-- Disqualification Reason (hidden by default) -->
-                        <div id="modalDisqualifySection" class="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl" style="display:none;">
-                            <label class="block mb-1.5 text-xs font-bold text-red-700">Disqualification Reason <span class="text-red-500">*</span></label>
-                            <select id="modalDisqualifyReasonSelect" class="w-full px-3 py-2 text-sm border border-red-300 rounded-lg mb-3 focus:outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100 bg-white">
-                                <option value="">Select reason...</option>
-                                <option value="property_owner">Owns property in Talisay</option>
-                                <option value="income_over_ceiling">Income exceeds ceiling</option>
-                                <option value="blacklisted">On blacklist</option>
-                                <option value="household_mismatch">Household member mismatch</option>
-                                <option value="incomplete_documents">Incomplete documents</option>
-                                <option value="other">Other reason</option>
-                            </select>
-                            <label class="block mb-1.5 text-xs font-semibold text-slate-700">Additional Notes</label>
-                            <textarea id="modalDisqualifyNotes" class="m2-dq-notes w-full px-3 py-2 text-sm border border-red-200 rounded-lg focus:outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100 resize-vertical" rows="2" placeholder="Explain the disqualification reason..."></textarea>
-                        </div>
-
-                        <!-- Evaluation notes -->
-                        <div class="mb-4">
-                            <label class="block mb-1.5 text-xs font-semibold text-slate-700">Evaluation Notes <span class="text-slate-400 font-normal">(optional)</span></label>
-                            <textarea id="modalEvaluationApprovalNotes" class="m2-dq-notes w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 resize-vertical" rows="2" placeholder="2.6 remarks (evaluation only; not Module 3 routing)..."></textarea>
-                        </div>
-
-                        <!-- Footer action buttons -->
-                        <div class="flex flex-col-reverse sm:flex-row sm:justify-between gap-2 pt-3 border-t border-slate-200">
-                            <button type="button" class="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 text-sm rounded-xl border border-slate-300 text-slate-700 bg-white hover:bg-slate-50 hover:border-slate-400 active:bg-slate-100 transition-colors font-medium" onclick="m2BackToLayer3Step()">
-                                <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-                                Back
-                            </button>
-                            <button type="button" class="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 text-sm rounded-xl bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 transition-colors font-semibold shadow" onclick="saveAndProceedModule3()">
-                                Save Status &amp; Proceed to Documents
-                                <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 </div>
 
@@ -3001,15 +2838,7 @@
 
 {% block extra_js %}
 <script>
-    // Current applicant/application being viewed
-    let currentApplicantId = null;
-    let currentApplicationId = null;
-    const canVerifyDocs = '{{ permissions.can_verify_documents|yesno:"true,false" }}' === 'true';
-    window.__modalBlacklistBlocked = false;
-    window.__m2AllowEval28 = false;
-    window.__m2LastApplicantData = null;
-    window.__hasApplication = false;
-    window.__applicationNumber = '';
+    // Page-level state
     const position = '{{ request.user.position }}';
     let flowAlertOnConfirm = null;
 
@@ -3052,9 +2881,8 @@
 
     // Filter functions
     function filterByStage(stage) {
-        const eval28 = document.getElementById('eval28Filter')?.value || 'all';
         const search = document.getElementById('searchInput')?.value || '';
-        window.location.href = `?stage=${stage}&eval28=${encodeURIComponent(eval28)}&search=${encodeURIComponent(search)}`;
+        window.location.href = `?stage=${stage}&search=${encodeURIComponent(search)}`;
     }
 
     function handleStageChange() {
@@ -3068,562 +2896,20 @@
         searchTimeout = setTimeout(() => {
             const search = event.target.value;
             const stage = document.getElementById('stageFilter').value;
-            const eval28 = document.getElementById('eval28Filter')?.value || 'all';
-            window.location.href = `?stage=${stage}&eval28=${encodeURIComponent(eval28)}&search=${encodeURIComponent(search)}`;
+            window.location.href = `?stage=${stage}&search=${encodeURIComponent(search)}`;
         }, 500);
     }
 
-    // Modal functions
-    function openApplicationModalFromButton(btn) {
-        if (!btn) return;
-        openApplicationModal(
-            btn.dataset.applicantId || '',
-            btn.dataset.name || '',
-            btn.dataset.reference || '',
-            Number(btn.dataset.verifiedCount || 0),
-            btn.dataset.currentStage || 'Eligibility',
-            btn.dataset.applicationId || '',
-        );
-    }
-
-    function openApplicationModal(applicantId, name, refNumber, verifiedCount, currentStage, applicationId) {
-        currentApplicantId = applicantId;
-        currentApplicationId = applicationId || null;
-        const modal = document.getElementById('applicationModal');
-        modal.classList.add('active');
-
-        // Set applicant info
-        document.getElementById('modalApplicantName').textContent = name;
-        document.getElementById('modalRefNumber').textContent = refNumber;
-
-        // Reset and load state
-        resetModalState();
-        updateGroupACount();
-        updateProgressTrackerFromStage(currentStage);
-
-        // Load actual requirement status from server
-        if (currentApplicantId) {
-            loadApplicantRequirements(currentApplicantId);
-        }
-    }
-
-    function closeModal() {
-        document.getElementById('applicationModal').classList.remove('active');
-        currentApplicantId = null;
-        currentApplicationId = null;
-        window.__modalBlacklistBlocked = false;
-        window.__hasApplication = false;
-        window.__applicationNumber = '';
-    }
-
-    // Close modal on escape key
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
-            closeModal();
             closeAwardModal();
         }
     });
 
-    // Close modal on overlay click
-    document.getElementById('applicationModal').addEventListener('click', (e) => {
-        if (e.target.classList.contains('modal-overlay')) closeModal();
-    });
-
-    function toggleModule1FormEvidence() {
-        const panel = document.getElementById('modalM1EvidencePanel');
-        const btn = document.getElementById('modalToggleM1FormBtn');
-        if (!panel || !btn) return;
-        const show = panel.style.display === 'none' || !panel.style.display;
-        panel.style.display = show ? 'block' : 'none';
-        btn.textContent = show ? 'Hide form evidence' : 'Show form';
+    async function generateForm() {
+        return;
     }
-
-    function setModule1FormEvidenceVisibility(show) {
-        const panel = document.getElementById('modalM1EvidencePanel');
-        const btn = document.getElementById('modalToggleM1FormBtn');
-        if (!panel || !btn) return;
-        panel.style.display = show ? 'block' : 'none';
-        btn.textContent = show ? 'Hide form evidence' : 'Show form';
-    }
-
-    function escapeHtml(s) {
-        if (s == null || s === '') return '';
-        const d = document.createElement('div');
-        d.textContent = s;
-        return d.innerHTML;
-    }
-
-    function applyDocProgressFillWidths() {
-        document.querySelectorAll('.doc-progress-fill[data-progress][data-total]').forEach((node) => {
-            const progress = Number(node.getAttribute('data-progress') || 0);
-            const total = Number(node.getAttribute('data-total') || 0);
-            if (!total || total < 1) {
-                node.style.width = '0%';
-                return;
-            }
-            const pct = Math.max(0, Math.min(100, (progress / total) * 100));
-            node.style.width = `${pct}%`;
-        });
-    }
-
-    applyDocProgressFillWidths();
-
-    function getBlacklistSourceCssClass() {
-        return 'source-units';
-    }
-
-    function renderBlacklistSourceChip(source) {
-        if (!source) return '';
-        return `<span class="blacklist-source-chip ${getBlacklistSourceCssClass(source)}">${escapeHtml(source)}</span>`;
-    }
-
-    function m2ProceedToLayer2Step() {
-        const main = document.getElementById('m2Layer1Main');
-        const done = document.getElementById('m2Layer1Done');
-        const l2 = document.getElementById('m2Layer2Block');
-        if (main) main.style.display = 'none';
-        if (done) done.style.display = 'block';
-        if (l2) {
-            l2.style.display = 'block';
-            l2.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
-    }
-
-    function m2ProceedToLayer3Step() {
-        const l2 = document.getElementById('m2Layer2Block');
-        const l2Done = document.getElementById('m2Layer2Done');
-        const l3 = document.getElementById('m2Layer3Block');
-        if (l2) l2.style.display = 'none';
-        if (l2Done) l2Done.style.display = 'block';
-        if (l3) {
-            l3.style.display = 'block';
-            l3.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
-    }
-
-    function m2BackToLayer1Step() {
-        const main = document.getElementById('m2Layer1Main');
-        const done = document.getElementById('m2Layer1Done');
-        const l2 = document.getElementById('m2Layer2Block');
-        if (l2) l2.style.display = 'none';
-        if (done) done.style.display = 'none';
-        if (main) {
-            main.style.display = 'block';
-            main.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
-    }
-
-    function m2BackToLayer2Step() {
-        const l2 = document.getElementById('m2Layer2Block');
-        const l2Done = document.getElementById('m2Layer2Done');
-        const l3 = document.getElementById('m2Layer3Block');
-        if (l3) l3.style.display = 'none';
-        if (l2Done) l2Done.style.display = 'none';
-        if (l2) {
-            l2.style.display = 'block';
-            l2.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
-    }
-
-    function m2BackToLayer3Step() {
-        const l3 = document.getElementById('m2Layer3Block');
-        const l3Done = document.getElementById('m2Layer3Done');
-        const box = document.getElementById('modalEvaluationApprovalBox');
-        if (box) box.style.display = 'none';
-        if (l3Done) l3Done.style.display = 'none';
-        if (l3) {
-            l3.style.display = 'block';
-            l3.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
-    }
-
-    async function m2OpenEvaluationApprovalStep() {
-        window.__m2AllowEval28 = true;
-        const l3 = document.getElementById('m2Layer3Block');
-        const l3Done = document.getElementById('m2Layer3Done');
-        if (l3) l3.style.display = 'none';
-        if (l3Done) l3Done.style.display = 'block';
-        const gate = document.getElementById('modalWorkflowGates');
-        const box = document.getElementById('modalEvaluationApprovalBox');
-        if (gate && box) {
-            gate.appendChild(box);
-            box.style.display = 'block';
-        }
-        if (currentApplicantId) {
-            try {
-                const response = await fetch(`/applications/staff/${position}/${currentApplicantId}/`);
-                const latest = await response.json();
-                window.__m2LastApplicantData = latest;
-            } catch (error) {
-                // Keep rendering with the last known payload if refresh fails.
-            }
-        }
-        renderEvaluationApproval(window.__m2LastApplicantData || {});
-        if (box) box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
-
-    // Silent variant of `m2OpenEvaluationApprovalStep` for the modal-reopen path.
-    // Skips the extra fetch (we just loaded `data`) and the proceed-time alert,
-    // collapses Layers 1-3 into their done strips, and surfaces Layer 4 directly.
-    function resumeAtEvaluationApproval(data) {
-        window.__m2AllowEval28 = true;
-        const main = document.getElementById('m2Layer1Main');
-        const l1Done = document.getElementById('m2Layer1Done');
-        const l2 = document.getElementById('m2Layer2Block');
-        const l2Done = document.getElementById('m2Layer2Done');
-        const l3 = document.getElementById('m2Layer3Block');
-        const l3Done = document.getElementById('m2Layer3Done');
-        if (main) main.style.display = 'none';
-        if (l1Done) l1Done.style.display = 'block';
-        if (l2) l2.style.display = 'none';
-        if (l2Done) l2Done.style.display = 'block';
-        if (l3) l3.style.display = 'none';
-        if (l3Done) l3Done.style.display = 'block';
-
-        const gate = document.getElementById('modalWorkflowGates');
-        const box = document.getElementById('modalEvaluationApprovalBox');
-        if (gate && box) {
-            gate.appendChild(box);
-            box.style.display = 'block';
-        }
-        renderEvaluationApproval(data || {});
-        if (box) box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
-
-    async function m2Layer3ProceedToEvaluation() {
-        if (!currentApplicantId) return;
-
-        const formData = new FormData();
-        formData.append('applicant_id', currentApplicantId);
-        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
-        formData.append('review_only', '1');
-
-        try {
-            const response = await fetch('{% url "applications:record_displacement_classification" request.user.position %}', {
-                method: 'POST',
-                body: formData,
-            });
-            const data = await response.json();
-            if (!data.success) {
-                alert(data.error || 'Unable to continue from Layer 3.');
-                return;
-            }
-
-            alert('Classification saved. Proceeding to Layer 4 — Evaluation Approval.');
-
-            await m2OpenEvaluationApprovalStep();
-        } catch (error) {
-            alert('Error: ' + error.message);
-        }
-    }
-
-    function renderEligibilityPipeline(data) {
-        const gate = document.getElementById('modalWorkflowGates');
-        if (!gate) return;
-
-        const rules = data.m2_rules || {};
-        const blacklistBlocked = !!data.blacklist_blocked;
-        const sourceChip = data.blacklist_source ? ` ${renderBlacklistSourceChip(data.blacklist_source)}` : '';
-        const propertyClear = !!data.m1_declares_no_property;
-        const incomeClear = !!data.m1_income_eligible;
-        const householdMismatch = !!rules.household_mismatch;
-        const householdHasLiveInPartner = !!rules.household_has_live_in_partner;
-        const liveInPartnerCount = Number(rules.live_in_partner_count || 0);
-        const householdClear = !householdHasLiveInPartner;
-        const declaredHH = rules.declared_household_size != null ? String(rules.declared_household_size) : '—';
-        const listedHH = rules.listed_household_size != null ? String(rules.listed_household_size) : '—';
-        // Layer 2 / 2.5 Voter Registration & 2.6 Length of Residence — both are
-        // declared at Module 1 registration; we surface them here as eligibility
-        // readouts. A failure on either mirrors a Layer 2 flag in the backend
-        // (`_module2_eligibility_snapshot`) and marks a Layer 2 flag.
-        const voterClear = !!rules.voter_ok;
-        const isRegisteredVoter = !!rules.is_registered_voter_talisay;
-        const residencyClear = !!rules.residency_ok;
-        const yearsResiding = Number(rules.years_residing || 0);
-        const minYearsResidingTalisay = Number(rules.min_years_residing_talisay || 5);
-
-        const policy23 =
-            'THA Staff records or confirms the applicant’s property ownership result. The system evaluates whether ownership of real property disqualifies the applicant.';
-        const policy24 =
-            'The system retrieves the income details that were already encoded during registration in Module 1. If the declared income exceeds the Module 1 ceiling, this is treated as a Layer 2 flag. No re-encoding is needed unless correction is necessary.';
-        const policy25 =
-            'THA Staff records or confirms household composition. A registered live-in partner among the household members is treated as a Layer 2 flag. The system uses this information as part of eligibility determination.';
-        const policy26 =
-            'The system retrieves the voter registration status declared at Module 1 registration. Applicants who are not registered voters in Talisay City are treated as a Layer 2 flag. No re-encoding is needed unless correction is necessary.';
-        const policy27 =
-            `Length of residence in Talisay City is declared at Module 1 registration. Applicants below the ${minYearsResidingTalisay}-year minimum are treated as a Layer 2 flag. No re-encoding is needed unless correction is necessary.`;
-
-        // Tailwind-based tone config for all check items
-        const toneCfg = (tone) => ({
-            pass: { card:'border-emerald-200 bg-emerald-50', iconBg:'bg-emerald-100', iconTxt:'text-emerald-700', titleTxt:'text-emerald-900', descTxt:'text-emerald-800', policyBorder:'border-emerald-200', policyTxt:'text-emerald-700', iconPath:`<path d="M20 6L9 17l-5-5"/>` },
-            fail: { card:'border-red-200 bg-red-50',         iconBg:'bg-red-100',     iconTxt:'text-red-700',     titleTxt:'text-red-900',     descTxt:'text-red-800',     policyBorder:'border-red-200',     policyTxt:'text-red-700',     iconPath:`<path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>` },
-            warn: { card:'border-amber-200 bg-amber-50',     iconBg:'bg-amber-100',   iconTxt:'text-amber-700',   titleTxt:'text-amber-900',   descTxt:'text-amber-800',   policyBorder:'border-amber-200',   policyTxt:'text-amber-700',   iconPath:`<circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>` },
-        })[tone] || { card:'border-slate-200 bg-slate-50', iconBg:'bg-slate-100', iconTxt:'text-slate-600', titleTxt:'text-slate-900', descTxt:'text-slate-700', policyBorder:'border-slate-200', policyTxt:'text-slate-600', iconPath:`<circle cx="12" cy="12" r="10"/>` };
-
-        const item = (tone, _icon, title, desc) => {
-            const c = toneCfg(tone);
-            return `<div class="flex items-start gap-3 rounded-xl border ${c.card} p-3 sm:p-4">
-                <div class="w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0 flex items-center justify-center rounded-full ${c.iconBg} ${c.iconTxt}">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-3.5 h-3.5 sm:w-4 sm:h-4">${c.iconPath}</svg>
-                </div>
-                <div class="flex-1 min-w-0">
-                    <div class="text-xs sm:text-sm font-bold ${c.titleTxt} leading-snug mb-0.5">${title}</div>
-                    <div class="text-[0.7rem] sm:text-xs ${c.descTxt} leading-relaxed">${desc}</div>
-                </div>
-            </div>`;
-        };
-
-        const itemStacked = (tone, _icon, title, desc, policyHtml) => {
-            const c = toneCfg(tone);
-            return `<div class="rounded-xl border ${c.card} p-2.5 sm:p-3.5 mb-2 last:mb-0">
-                <div class="flex items-start gap-2.5 sm:gap-3">
-                    <div class="w-6 h-6 sm:w-7 sm:h-7 flex-shrink-0 flex items-center justify-center rounded-full ${c.iconBg} ${c.iconTxt} mt-0.5">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-3 h-3 sm:w-3.5 sm:h-3.5">${c.iconPath}</svg>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <div class="text-xs sm:text-sm font-bold ${c.titleTxt} leading-snug mb-0.5">${title}</div>
-                        <div class="text-[0.7rem] sm:text-xs font-medium ${c.descTxt}">${desc}</div>
-                    </div>
-                </div>
-                <div class="mt-2 pt-2 border-t border-dashed ${c.policyBorder} text-[0.64rem] sm:text-[0.68rem] ${c.policyTxt} leading-relaxed">${policyHtml}</div>
-            </div>`;
-        };
-
-        const itemDescOnly = (tone, _icon, descHtml) => {
-            const c = toneCfg(tone);
-            return `<div class="flex items-start gap-3 rounded-xl border ${c.card} p-3 sm:p-4">
-                <div class="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-full ${c.iconBg} ${c.iconTxt}">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-4 h-4">${c.iconPath}</svg>
-                </div>
-                <p class="text-xs sm:text-sm ${c.descTxt} leading-relaxed self-center">${descHtml}</p>
-            </div>`;
-        };
-
-        gate.style.display = 'block';
-        gate.style.background = 'transparent';
-        gate.style.border = 'none';
-        gate.style.color = '#334155';
-
-        const l1Tone = blacklistBlocked ? 'fail' : 'pass';
-        const l1Icon = blacklistBlocked ? '!' : '✓';
-        const l1Desc = blacklistBlocked
-            ? `Flag noted${sourceChip}. Blacklist match is advisory only in Module 2; processing may continue.${data.blacklist_detail ? ' ' + escapeHtml(data.blacklist_detail) : ''}${data.blacklist_policy_note ? ' ' + escapeHtml(data.blacklist_policy_note) : ''}`
-            : 'Clear. No blacklist match; continue processing.';
-        const l1DoneText = blacklistBlocked
-            ? '✓ Layer 1 complete — 2.1 blacklist advisory noted'
-            : '✓ Layer 1 complete — 2.1 Automatic Blacklist Check clear';
-
-        const propDesc = propertyClear
-            ? 'Cleared - no Talisay property declared.'
-            : 'Flagged - property in Talisay declared.';
-        const incDesc = incomeClear
-            ? 'Cleared - within Module 1 income threshold.'
-            : 'Flagged - over Module 1 income threshold.';
-        const hhDesc = householdHasLiveInPartner
-            ? `Flagged - registered household includes a live-in partner${liveInPartnerCount > 1 ? ` (${liveInPartnerCount})` : ''}.`
-            : `Cleared - no live-in partner among registered household members (declared ${escapeHtml(declaredHH)} / listed ${escapeHtml(listedHH)}).`;
-        const voterDesc = voterClear
-            ? 'Cleared - applicant is a registered voter in Talisay City (per Module 1 declaration).'
-            : 'Flagged - applicant is NOT a registered voter in Talisay City (per Module 1 declaration).';
-        const residencyDesc = residencyClear
-            ? `Cleared - declared ${yearsResiding} year(s) of residence in Talisay City (meets the ${minYearsResidingTalisay}-year minimum).`
-            : `Flagged - declared ${yearsResiding} year(s) of residence in Talisay City is below the ${minYearsResidingTalisay}-year minimum.`;
-        const l2Tone23 = propertyClear ? 'pass' : 'fail';
-        const l2Icon23 = propertyClear ? '✓' : '!';
-        const l2Tone24 = incomeClear ? 'pass' : 'fail';
-        const l2Icon24 = incomeClear ? '✓' : '!';
-        const l2Tone25 = householdHasLiveInPartner ? 'fail' : 'pass';
-        const l2Icon25 = householdHasLiveInPartner ? '!' : '✓';
-        const l2Tone26 = voterClear ? 'pass' : 'fail';
-        const l2Icon26 = voterClear ? '✓' : '!';
-        const l2Tone27 = residencyClear ? 'pass' : 'fail';
-        const l2Icon27 = residencyClear ? '✓' : '!';
-
-        const profile = data.applicant_profile || {};
-        const savedReason = (profile.displacement_reason || '').trim();
-        const savedReasonDisplay = profile.displacement_reason_display || '';
-        const savedHazardType = profile.danger_zone_type || '';
-        const savedHazardLocation = profile.danger_zone_location || '';
-        const savedEjectionType = profile.ejection_type || '';
-        const savedEjectionDate = profile.ejection_date || '';
-        const savedProjectName = profile.project_name || '';
-        const savedEjectionDisplay = profile.ejection_type_display || '';
-        const layer2Clear = !!rules.layer2_clear;
-        const layer3Clear = !!rules.layer3_clear;
-        const qualifiesForPriority = !!rules.qualifies_for_priority;
-        const escAttr = (value) => escapeHtml(String(value == null ? '' : value));
-
-        const hazardLabelPretty = ({
-            flood_prone: 'Flood-prone area',
-            landslide: 'Landslide-prone area',
-            storm_surge: 'Storm surge zone',
-            river_bank: 'River / creek bank',
-            cliff_edge: 'Cliff edge',
-            coastal: 'Coastal erosion',
-            other: 'Other hazard',
-        })[savedHazardType] || (savedHazardType ? savedHazardType.replace(/_/g, ' ') : '—');
-
-        let layer3ReadonlyBody = '';
-        if (!savedReason) {
-            layer3ReadonlyBody =
-                `<div class="rounded-md border border-amber-200 bg-amber-50 p-3 sm:p-4 text-[0.8rem] text-amber-950 leading-snug">
-                    Displacement particulars are not on file. Record <strong>Applicant Situation (A–D)</strong> and the matching particulars during
-                    <strong>Module 1 intake registration</strong> before running Module 2.
-                </div>`;
-        } else {
-            layer3ReadonlyBody =
-                `<p class="text-[0.78rem] sm:text-[0.8rem] text-slate-600 mb-3 text-left leading-relaxed">
-                    Encoded during <strong>Module 1 (Intake) registration</strong>. Supporting documents are verified in Module 3.
-                </p>` +
-                `<div class="rounded-md border border-slate-200 bg-slate-50 p-3 sm:p-4 text-left">` +
-                `<p class="text-sm font-bold text-slate-900">${escAttr(savedReasonDisplay || savedReason)}</p>`;
-            if (savedReason === 'danger_zone') {
-                layer3ReadonlyBody +=
-                    `<dl class="mt-2 space-y-1 text-[0.78rem]">` +
-                    `<dt class="text-slate-500 font-semibold uppercase tracking-wide text-[0.62rem]">Hazard classification</dt>` +
-                    `<dd>${escAttr(hazardLabelPretty)}</dd>` +
-                    `<dt class="text-slate-500 font-semibold uppercase tracking-wide text-[0.62rem] mt-1">Hazard location</dt>` +
-                    `<dd>${escAttr(savedHazardLocation || '—')}</dd>` +
-                    `</dl>` +
-                    `<p class="mt-2 text-[0.7rem] text-slate-500">CDRRMO certification workflow continues elsewhere on this applicant record.</p>`;
-            } else if (savedReason === 'ejected') {
-                const ejDatePretty = savedEjectionDate
-                    ? (savedEjectionDate.indexOf('-') >= 0
-                        ? (function () { try { const p = savedEjectionDate.split('T')[0].split('-'); return p[2] + '/' + p[1] + '/' + p[0]; } catch (e) { return savedEjectionDate; } })()
-                        : savedEjectionDate)
-                    : '—';
-                layer3ReadonlyBody +=
-                    `<dl class="mt-2 space-y-1 text-[0.78rem]">` +
-                    `<dt class="text-slate-500 font-semibold uppercase tracking-wide text-[0.62rem]">Ejection classification</dt>` +
-                    `<dd>${escAttr(savedEjectionDisplay || savedEjectionType || '—')}</dd>` +
-                    `<dt class="text-slate-500 font-semibold uppercase tracking-wide text-[0.62rem] mt-1">Date of notice</dt>` +
-                    `<dd>${escAttr(ejDatePretty)}</dd>` +
-                    `</dl>`;
-            } else if (savedReason === 'relocated') {
-                layer3ReadonlyBody +=
-                    `<p class="mt-2 text-[0.78rem]"><span class="text-slate-500 font-semibold uppercase tracking-wide text-[0.62rem]">Project designation</span><br>${escAttr(savedProjectName || '—')}</p>`;
-            }
-            layer3ReadonlyBody += `</div>`;
-        }
-
-        const layer3FooterNav = `<div class="flex flex-col-reverse sm:flex-row sm:justify-between gap-2 sm:gap-3 mt-6 pt-5 border-t border-slate-200">
-                    <button type="button" class="w-full sm:w-auto flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 text-[0.8rem] sm:text-sm rounded-md border border-slate-300 text-slate-800 bg-white hover:bg-slate-50 hover:border-slate-400 active:bg-slate-100 transition-colors font-semibold uppercase tracking-wide" onclick="m2BackToLayer2Step()">
-                        <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-                        Return to Layer 2
-                    </button>
-                    <button type="button" class="w-full sm:w-auto flex items-center justify-center gap-2 px-5 sm:px-6 py-2.5 text-[0.8rem] sm:text-sm rounded-md ${layer3Clear ? 'bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white shadow-sm' : 'bg-slate-400 text-white cursor-not-allowed opacity-75'} transition-colors font-semibold uppercase tracking-wide" onclick="m2Layer3ProceedToEvaluation()"${layer3Clear ? '' : ' disabled'}>
-                        ${canVerifyDocs ? 'Confirm classification &amp; continue' : 'Continue to Evaluation'}
-                        <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                    </button>
-               </div>`;
-
-        // Reusable nav button builders (w-full on mobile, auto on sm+)
-        const btnBack  = (label, onclick) => `<button type="button" class="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 text-sm rounded-xl border border-slate-300 text-slate-700 bg-white hover:bg-slate-50 hover:border-slate-400 active:bg-slate-100 transition-colors font-medium" onclick="${onclick}"><svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>${label}</button>`;
-        const btnProceed = (label, onclick) => `<button type="button" class="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 text-sm rounded-xl bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 transition-colors font-semibold shadow" onclick="${onclick}">${label}<svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>`;
-        const btnSecondary = (id, label, onclick) => `<button type="button" id="${id}" class="flex items-center justify-center gap-1.5 px-3 py-2 text-xs rounded-lg border border-blue-200 text-blue-700 bg-blue-50 hover:bg-blue-100 active:bg-blue-200 transition-colors font-semibold" onclick="${onclick}"><svg class="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>${label}</button>`;
-        const layerFooterNav = (left, right) => `<div class="flex flex-col-reverse sm:flex-row sm:justify-between gap-2 mt-4 pt-3 border-t border-slate-200">${left}${right}</div>`;
-        const layerCard = (eyebrowCls, eyebrowIcon, eyebrowText, title, subtitle, content) =>
-            `<div class="rounded-2xl bg-white border border-slate-200 shadow-sm overflow-hidden">` +
-            `<div class="px-3 pt-4 pb-3 sm:px-5 sm:pt-5 sm:pb-4 text-center bg-gradient-to-br from-slate-50 via-white to-slate-50 border-b border-slate-100">` +
-            `<span class="inline-flex items-center gap-1 sm:gap-1.5 text-[0.58rem] sm:text-[0.65rem] font-extrabold uppercase tracking-[0.1em] sm:tracking-[0.18em] ${eyebrowCls} px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full"><svg class="w-2.5 h-2.5 sm:w-3 sm:h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">${eyebrowIcon}</svg>${eyebrowText}</span>` +
-            `<h3 class="mt-2 sm:mt-2.5 text-base sm:text-lg font-extrabold text-slate-900 leading-tight">${title}</h3>` +
-            (subtitle ? `<p class="mt-1 sm:mt-1.5 text-[0.7rem] sm:text-xs text-slate-500 max-w-xs sm:max-w-sm mx-auto leading-relaxed">${subtitle}</p>` : '') +
-            `</div>` +
-            `<div class="px-3 sm:px-5 pt-3 sm:pt-4 pb-4 sm:pb-5">${content}</div>` +
-            `</div>`;
-        const doneStrip = (id, clear, text, extraCls) => {
-            const tone = clear ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-amber-50 border-amber-200 text-amber-800';
-            const iconPath = clear ? '<path d="M20 6L9 17l-5-5"/>' : '<circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>';
-            const iconCls = clear ? 'text-emerald-600' : 'text-amber-600';
-            return `<div id="${id}" class="mt-2 px-4 py-2.5 rounded-xl border ${tone} text-xs font-semibold ${extraCls || ''}" style="display:none;"><span style="display:inline-flex;align-items:center;gap:0.4rem;"><svg style="width:0.875rem;height:0.875rem;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="${iconCls}">${iconPath}</svg>${text}</span></div>`;
-        };
-
-        gate.innerHTML =
-            `<div class="m2-pipeline-layers">` +
-            `<div id="m2Layer1Main">` +
-            layerCard(
-                'text-slate-600 bg-slate-100 border border-slate-300',
-                `<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>`,
-                'Layer 1 &mdash; System check',
-                '2.1 Automatic Blacklist Check',
-                'System automatically checks the applicant against the housing-units blacklist registry.',
-                itemDescOnly(l1Tone, l1Icon, l1Desc) +
-                `<div id="m2Layer1CdrrmoPlaceholder" class="mt-3"></div>` +
-                layerFooterNav(
-                    btnBack('Close', 'closeModal()'),
-                    btnProceed('Proceed to Layer 2', 'm2ProceedToLayer2Step()')
-                )
-            ) +
-            `</div>` +
-            doneStrip('m2Layer1Done', !blacklistBlocked, l1DoneText) +
-            `<div id="m2Layer2Block" class="m2-layer2-block mt-3" style="display:none;">` +
-            layerCard(
-                'text-purple-700 bg-purple-50 border border-purple-200',
-                `<path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/>`,
-                'Layer 2 &mdash; Eligibility readouts',
-                '2.2 Property Ownership &middot; 2.3 Income Details &middot; 2.4 Household Composition &middot; 2.5 Voter Registration &middot; 2.6 Length of Residence',
-                '',
-                itemStacked(l2Tone23, l2Icon23, '2.2 Check Property Ownership', propDesc, escapeHtml(policy23)) +
-                itemStacked(l2Tone24, l2Icon24, '2.3 Check Income Details', incDesc, escapeHtml(policy24)) +
-                itemStacked(l2Tone25, l2Icon25, '2.4 Check Household Composition', hhDesc, escapeHtml(policy25)) +
-                itemStacked(l2Tone26, l2Icon26, '2.5 Check Voter Registration in Talisay City', voterDesc, escapeHtml(policy26)) +
-                itemStacked(l2Tone27, l2Icon27, '2.6 Check Length of Residence in Talisay City', residencyDesc, escapeHtml(policy27)) +
-                layerFooterNav(
-                    `<div class="flex gap-2">` + btnBack('Back', 'm2BackToLayer1Step()') + btnSecondary('modalToggleM1FormBtn', 'Show form', 'toggleModule1FormEvidence()') + `</div>`,
-                    btnProceed('Proceed to Layer 3', 'm2ProceedToLayer3Step()')
-                )
-            ) +
-            `</div>` +
-            doneStrip('m2Layer2Done', layer2Clear, layer2Clear ? '✓ Layer 2 complete — Eligibility readouts clear' : '! Layer 2 complete — flag(s) noted') +
-            `<div id="m2Layer3Block" class="m2-layer3-block" style="display:none;">` +
-            `<div class="m2-layer3-shell">` +
-            `<div class="m2-layer3-header">` +
-            `<h3 class="m2-layer3-title">Displacement classification</h3>` +
-            `<p class="m2-layer3-desc text-[0.75rem] sm:text-[0.8rem] text-slate-600 mt-2 max-w-xl mx-auto">Hazard / ejection / project particulars were captured during <strong>Module 1 intake registration</strong>. Review the summary below, then proceed.</p>` +
-            `</div>` +
-            `<div class="m2-layer3-body">` +
-            layer3ReadonlyBody +
-            layer3FooterNav +
-            `</div>` +
-            `</div>` +
-            `</div>` +
-            doneStrip('m2Layer3Done', layer3Clear, layer3Clear ? '✓ Layer 3 — Classification on file (Module 1 intake)' : '! Layer 3 — Classification not recorded at intake') +
-            `</div>`;
-
-    }
-
-    function resetModalState() {
-        const cBox = document.getElementById('modalCdrrmoBox');
-        const eval28Box = document.getElementById('modalEvaluationApprovalBox');
-        const modalBody = document.querySelector('.modal-body');
-        if (cBox) {
-            // Rescue modalCdrrmoBox from being destroyed when modalWorkflowGates is cleared
-            document.querySelector('.modal-body').appendChild(cBox);
-            cBox.style.display = 'none';
-        }
-        if (eval28Box && modalBody) {
-            // Keep Layer 4 panel anchored to modal body after resets.
-            modalBody.appendChild(eval28Box);
-            eval28Box.style.display = 'none';
-        }
-        const g = document.getElementById('modalWorkflowGates');
-        if (g) {
-            g.style.display = 'none';
-            g.innerHTML = '';
-        }
-        const evidencePanel = document.getElementById('modalM1EvidencePanel');
-        const evidenceSummary = document.getElementById('modalM1EvidenceSummary');
-        const toggleBtn = document.getElementById('modalToggleM1FormBtn');
-        if (evidencePanel) evidencePanel.style.display = 'none';
-        if (evidenceSummary) evidenceSummary.innerHTML = '';
-        if (toggleBtn) toggleBtn.textContent = 'Show form';
-        const cSummary = document.getElementById('modalCdrrmoSummary');
-        const cNotes = document.getElementById('modalCdrrmoNotes');
-        const cPhotosWrap = document.getElementById('modalCdrrmoPhotosWrap');
-        const cPhotos = document.getElementById('modalCdrrmoPhotos');
-        const evalBox = document.getElementById('modalEvaluationBox');
-        const evalStatus = document.getElementById('modalEvaluationStatus');
-        const evalActions = document.getElementById('modalEvaluationActions');
+    /*
         const disqualReason = document.getElementById('modalDisqualifyReason');
         const disqualNotes = document.getElementById('modalDisqualifyNotes');
         const officeCdrrmoBox = document.getElementById('modalOfficeCdrrmoBox');
@@ -4337,7 +3623,7 @@
             formData.append('status', status);
             formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
 
-            const response = await fetch('{% url "applications:update_requirement" request.user.position %}', {
+            const response = await fetch('/applications/__removed__/update-requirement/', {
                 method: 'POST',
                 body: formData
             });
@@ -4384,7 +3670,7 @@
             formData.append('notes', notes);
             formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
 
-            const response = await fetch('{% url "applications:evaluate_applicant" request.user.position %}', {
+            const response = await fetch('/applications/__removed__/evaluate-applicant/', {
                 method: 'POST',
                 body: formData,
             });
@@ -4496,7 +3782,7 @@
             }
             formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
 
-            const response = await fetch('{% url "applications:record_evaluation_approval" request.user.position %}', {
+            const response = await fetch('/applications/__removed__/record-evaluation-approval/', {
                 method: 'POST',
                 body: formData,
             });
@@ -4578,7 +3864,7 @@
             }
             formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
 
-            const saveResponse = await fetch('{% url "applications:record_evaluation_approval" request.user.position %}', {
+            const saveResponse = await fetch('/applications/__removed__/record-evaluation-approval/', {
                 method: 'POST',
                 body: formData,
             });
@@ -4717,6 +4003,7 @@
         }
     }
 
+    */
     // Direct form generation from table button
     async function generateFormDirect(applicantId) {
         if (!confirm('Generate application form for this applicant?')) return;
@@ -4731,39 +4018,6 @@
                 window.location.href = docsUrl;
             } else {
                 alert(data.error || 'Failed to generate form');
-            }
-        } catch (error) {
-            alert('Error: ' + error.message);
-        }
-    }
-
-    // Routing update from table button
-    async function updateRouting(applicationId, step) {
-        const stepLabels = {
-            'received': 'Mark endorsement process as received',
-            'forwarded_oic': 'Forward application to OIC for final signature',
-            'signed_oic': 'Confirm OIC signed (final approval)'
-        };
-
-        if (!confirm(`${stepLabels[step]}?`)) return;
-
-        try {
-            const formData = new FormData();
-            formData.append('application_id', applicationId);
-            formData.append('step', step);
-            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
-
-            const response = await fetch('{% url "applications:update_routing" request.user.position %}', {
-                method: 'POST',
-                body: formData
-            });
-            const data = await response.json();
-
-            if (data.success) {
-                alert('Routing updated successfully!');
-                location.reload();
-            } else {
-                alert(data.error || 'Failed to update routing');
             }
         } catch (error) {
             alert('Error: ' + error.message);

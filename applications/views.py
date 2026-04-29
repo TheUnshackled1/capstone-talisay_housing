@@ -612,11 +612,6 @@ def applications_list(request, position):
         ).count(),
     }
     
-    # Check for routing delays (>3 days)
-    delayed_routings = SignatoryRouting.objects.filter(
-        action_at__lt=timezone.now() - timezone.timedelta(days=3)
-    ).select_related('application', 'application__applicant')
-    
     # Prepare applicant data with document counts
     applicants_data = []
     for applicant in applicants:
@@ -638,36 +633,12 @@ def applications_list(request, position):
             current_stage = 'Lot Awarded'
         elif application and application.status in ['oic_signed', 'standby']:
             current_stage = 'Fully Approved'
-        elif application and application.status == 'routing':
-            current_stage = 'Signatory Routing'
-        elif application and application.status in ['draft', 'completed']:
+        elif application and application.status in ['routing', 'draft', 'completed']:
             current_stage = 'Form Released'
         elif group_a_verified > 0:
             current_stage = 'Document Gathering'
         else:
             current_stage = 'Eligibility'
-        
-        # Get routing status
-        routing_status = 'Not Started'
-        latest_routing_step = None
-        if application:
-            latest_routing = application.routing_steps.last()
-            if latest_routing:
-                latest_routing_step = latest_routing.step
-                if latest_routing.step == 'signed_oic':
-                    routing_status = 'Completed'
-                else:
-                    routing_status = 'In Progress'
-        
-        # Check for routing delay
-        is_delayed = False
-        delayed_at = None
-        if application:
-            for step in application.routing_steps.all():
-                if step.is_delayed:
-                    is_delayed = True
-                    delayed_at = step.get_step_display()
-                    break
         
         # Determine what actions this user can take on this applicant
         user_actions = []
@@ -675,12 +646,6 @@ def applications_list(request, position):
             user_actions.append('verify_docs')
         if permissions['can_generate_form'] and can_generate_form and not application:
             user_actions.append('generate_form')
-        if permissions['can_receive_routing'] and application and application.status in ['draft', 'completed']:
-            user_actions.append('receive_routing')
-        if permissions['can_forward_routing'] and application and latest_routing_step == 'received':
-            user_actions.append('forward_to_oic')
-        if permissions['can_sign_oic'] and application and latest_routing_step == 'forwarded_oic':
-            user_actions.append('sign_oic')
         if permissions['can_award_lot'] and application and application.status in ['oic_signed', 'standby']:
             user_actions.append('award_lot')
         if permissions['can_manage_electricity'] and application and application.status == 'awarded':
@@ -704,10 +669,6 @@ def applications_list(request, position):
             'can_generate_form': can_generate_form and application is None,
             'form_generated': application is not None,
             'current_stage': current_stage,
-            'routing_status': routing_status,
-            'latest_routing_step': latest_routing_step,
-            'is_delayed': is_delayed,
-            'delayed_at': delayed_at,
             'user_actions': user_actions,
             'blacklist_blocked': blacklist_blocked,
             'blacklist_detail': blacklist_detail,
@@ -719,8 +680,6 @@ def applications_list(request, position):
             'm1_residency_eligible': bool(rules.get('residency_ok')),
             'household_size': applicant.household_size,
             'm2_rules': rules,
-            'evaluation_approval_status': applicant.evaluation_approval_status or '',
-            'evaluation_approval_status_display': applicant.get_evaluation_approval_status_display() if applicant.evaluation_approval_status else '',
         })
     
     # Filter by stage if requested
@@ -738,13 +697,6 @@ def applications_list(request, position):
         if target_stage:
             applicants_data = [a for a in applicants_data if a['current_stage'] == target_stage]
 
-    filter_eval28 = request.GET.get('eval28', 'all')
-    if filter_eval28 != 'all':
-        if filter_eval28 == 'not_recorded':
-            applicants_data = [a for a in applicants_data if not (a.get('evaluation_approval_status') or '').strip()]
-        elif filter_eval28 in ('approved', 'for_review'):
-            applicants_data = [a for a in applicants_data if a.get('evaluation_approval_status') == filter_eval28]
-    
     # Search filter
     search = request.GET.get('search', '')
     if search:
@@ -763,9 +715,7 @@ def applications_list(request, position):
         'requirements': requirements,
         'group_a_requirements': group_a_requirements,
         'group_b_requirements': group_b_requirements,
-        'delayed_routings': delayed_routings,
         'filter_stage': filter_stage,
-        'filter_eval28': filter_eval28,
         'search': search,
         'total_eligible': applicants.count(),
         'permissions': permissions,

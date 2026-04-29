@@ -7,23 +7,12 @@ urlpatterns = [
     # Main applications list view (Module 2)
     path('staff/<str:position>/', views.applications_list, name='applications_list'),
 
-    # Application detail (AJAX endpoint for modal)
-    path('staff/<str:position>/<uuid:application_id>/', views.application_detail, name='application_detail'),
-
-    # Document verification (Jocel, Joie)
-    path('staff/<str:position>/update-requirement/', views.update_requirement, name='update_requirement'),
-    path('staff/<str:position>/evaluate-applicant/', views.evaluate_applicant, name='evaluate_applicant'),
-    path('staff/<str:position>/record-evaluation-approval/', views.record_evaluation_approval, name='record_evaluation_approval'),
     path('staff/<str:position>/update-cdrrmo-certification/', views.update_cdrrmo_certification, name='update_cdrrmo_certification'),
-    path('staff/<str:position>/record-displacement-classification/', views.record_displacement_classification, name='record_displacement_classification'),
     path('staff/<str:position>/field-verify-cdrrmo/', views.field_verify_cdrrmo, name='field_verify_cdrrmo'),
     path('staff/<str:position>/update-cdrrmo-status/', views.update_cdrrmo_status, name='update_cdrrmo_status'),
 
     # Form generation (Jocel, Joie)
     path('staff/<str:position>/generate-form/<uuid:applicant_id>/', views.generate_form, name='generate_form'),
-
-    # Signatory routing (Jocel/Joie, OIC)
-    path('staff/<str:position>/update-routing/', views.update_routing, name='update_routing'),
 
     # Move to standby queue (Jocel, Joie)
     path('staff/<str:position>/move-to-standby/', views.move_to_standby, name='move_to_standby'),
