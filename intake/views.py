@@ -1121,6 +1121,66 @@ def applicants_list(request, position):
         }
         for r in archive_records
     }
+
+    archive_form_modal = {}
+    for archive in archives:
+        ref = archive.reference_number_snapshot or ''
+        applicant = getattr(archive, 'applicant', None)
+        if not ref or not applicant:
+            continue
+
+        displacement_reason = (applicant.displacement_reason or '').strip()
+        displacement_map = {
+            'danger_zone': (
+                'Option A',
+                'Resident of Danger Zone or Hazard Area',
+                'Applicant resides in a flood-prone, landslide, storm-surge, riverbank, cliff-edge, or coastal hazard area requiring relocation for safety.',
+            ),
+            'ejected': (
+                'Option B',
+                'Ejected or Evicted from Prior Residence',
+                'Applicant has been evicted or displaced through private land eviction, court order, landowner recovery, or analogous proceedings.',
+            ),
+            'relocated': (
+                'Option C',
+                'Displaced by Government Project or Infrastructure',
+                'Applicant is required to relocate due to a road-widening, drainage, infrastructure, or other government-initiated project.',
+            ),
+            'not_abc': (
+                'Option D',
+                'None of A, B, or C (Other / not listed)',
+                'The situation does not fall under a hazard area, ejection, or a government project. The applicant is recorded for the Walk-in path (no Priority on this ground).',
+            ),
+        }
+        disp_label, disp_title, disp_desc = displacement_map.get(
+            displacement_reason,
+            ('N/A', 'Not recorded', 'Applicant situation has not been recorded.'),
+        )
+
+        archive_form_modal[ref] = {
+            'fullName': archive.full_name_snapshot or '',
+            'referenceNumber': ref,
+            'dateRegistered': timezone.localtime(archive.archived_at).strftime('%Y-%m-%d') if archive.archived_at else '',
+            'lastName': archive.last_name_snapshot or '',
+            'firstName': archive.first_name_snapshot or '',
+            'middleName': archive.middle_name_snapshot or '',
+            'extensionName': archive.extension_name_snapshot or '',
+            'sex': applicant.sex or '',
+            'age': applicant.age,
+            'dateOfBirthDisplay': archive.date_of_birth_snapshot.strftime('%m/%d/%Y') if archive.date_of_birth_snapshot else '',
+            'isRegisteredVoter': applicant.is_registered_voter_talisay,
+            'currentAddress': applicant.current_address or '',
+            'barangay': archive.barangay_name_snapshot or '',
+            'phoneNumber': applicant.phone_number or '',
+            'yearsResiding': applicant.years_residing,
+            'householdSize': applicant.household_size,
+            'occupation': applicant.occupation or '',
+            'employmentStatus': applicant.get_employment_status_display() if applicant.employment_status else '',
+            'monthlyIncome': str(applicant.monthly_income or ''),
+            'displacementOptionLabel': disp_label,
+            'displacementTitle': disp_title,
+            'displacementDescription': disp_desc,
+        }
     
     # Sort all applicants by dateRegistered (FIFO - oldest first)
     applicants.sort(key=lambda x: x['dateRegistered'])
@@ -1164,6 +1224,7 @@ def applicants_list(request, position):
         },
         'archive_records': archive_records,
         'archive_documents_modal': archive_documents_modal,
+        'archive_form_modal': json.dumps(archive_form_modal),
     }
     return render(request, 'intake/staff/applicants.html', context)
 

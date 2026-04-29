@@ -2102,6 +2102,99 @@
     }
 
     /* ============================================================
+       Archive Form View Modal — mirror review modal polish
+       ============================================================ */
+    #archiveFormViewModal .modal-content.tha-review-modal {
+        border: 1px solid #cbd5e1;
+        border-radius: 1rem;
+        box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.28);
+        overflow: hidden;
+    }
+    #archiveFormViewModal .modal-content.tha-review-modal::before {
+        content: '';
+        position: sticky;
+        top: 0;
+        display: block;
+        height: 4px;
+        background: linear-gradient(90deg, #1e3a8a 0%, #2563eb 25%, #16a34a 50%, #d97706 75%, #7c3aed 100%);
+        z-index: 11;
+    }
+    #archiveFormViewModal .modal-header {
+        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        border-bottom: 2px solid #e2e8f0;
+        padding: 1.1rem 1.5rem 1rem;
+    }
+    #archiveFormViewModal .tha-review-modal-kicker {
+        font-size: 0.6rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: #1e3a8a;
+        margin: 0 0 0.4rem 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+    #archiveFormViewModal .tha-review-modal-kicker::before {
+        content: '';
+        width: 0.5rem;
+        height: 0.5rem;
+        background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+        border-radius: 50%;
+        box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.12);
+    }
+    #archiveFormViewModal .modal-title {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #0f172a;
+        letter-spacing: -0.02em;
+    }
+    #archiveFormViewModal .modal-subtitle {
+        font-size: 0.78rem;
+        color: #475569;
+        margin-top: 0.3rem;
+    }
+    #archiveFormViewModal .modal-body {
+        padding: 1.25rem 1.5rem;
+        background: #fafbfc;
+    }
+    #archiveFormViewModal .archive-form-section {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.75rem;
+        padding: 1.1rem 1.2rem !important;
+        margin-bottom: 0.85rem !important;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+    #archiveFormViewModal .archive-form-section-title {
+        font-size: 0.78rem !important;
+        font-weight: 800 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.12em !important;
+        margin: 0 0 1rem 0 !important;
+        color: #334155 !important;
+    }
+    #archiveFormViewModal .form-input[readonly] {
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border: 1px solid #cbd5e1;
+        color: #0f172a;
+        font-weight: 500;
+    }
+    #archiveFormViewModal .archive-situation-card {
+        background: linear-gradient(135deg, #f0f9ff 0%, #f1f5f9 100%);
+        border: 2px solid #cbd5e1;
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        margin-bottom: 1rem;
+    }
+    #archiveFormViewModal .modal-footer {
+        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        border-top: 1px solid #e2e8f0;
+        padding: 0.85rem 1.5rem;
+    }
+
+    /* ============================================================
        Handoff Summary Modal — Applicant Journey timeline
        ============================================================ */
     #archiveSummaryModal .modal-content.archive-summary-modal {
@@ -2803,7 +2896,12 @@
                 </td>
                 <td>
                     <!-- Review button - opens modal -->
-                    <button type="button" class="btn-review btn-review-walkin js-open-review" data-applicant-index="{{ forloop.counter0 }}">
+                    <button
+                        type="button"
+                        class="btn-review btn-review-walkin js-open-review"
+                        data-applicant-index="{{ forloop.counter0 }}"
+                        {% if not forloop.first %}title="Review applicant #1 first before reviewing the next record."{% endif %}
+                    >
                         <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
                             <circle cx="9" cy="7" r="4"></circle>
@@ -2901,6 +2999,7 @@
                 <th>DOB</th>
                 <th>Barangay</th>
                 <th>Documents</th>
+                <th>VIEW Sheet</th>
             </tr>
         </thead>
         <tbody id="archiveTableBody">
@@ -2955,16 +3054,37 @@
                         type="button"
                         class="btn-archive-docs {% if row.scannedCount == row.requirementsTotal %}btn-archive-docs--done{% elif row.scannedCount > 0 %}btn-archive-docs--partial{% else %}btn-archive-docs--none{% endif %}"
                         onclick="openArchiveRequirementsModal(this)"
+                        data-archive-index="{{ forloop.counter0 }}"
                         data-reference="{{ row.referenceNumber }}"
                         title="Applicant requirement scan checklist — {{ row.scannedCount }} of {{ row.requirementsTotal }} digitally filed"
                     >
                         Requirements {{ row.scannedCount }}/{{ row.requirementsTotal }}
                     </button>
                 </td>
+                <td style="vertical-align: middle;">
+                    {% if row.module3ApplicationNumber %}
+                    <span style="display:inline-flex;align-items:center;gap:0.2rem;padding:0.14rem 0.42rem;background:#dcfce7;color:#166534;border-radius:9999px;font-size:0.5625rem;font-weight:600;">
+                        Generated
+                    </span>
+                    <div style="font-size:0.56rem;color:#1e40af;margin-top:0.18rem;">
+                        #{{ row.module3ApplicationNumber }}
+                    </div>
+                    {% else %}
+                    <button
+                        type="button"
+                        class="btn-archive-action"
+                        data-reference="{{ row.referenceNumber }}"
+                        onclick="openArchiveFormViewModal(this)"
+                        style="padding:0.25rem 0.55rem;font-size:0.62rem;"
+                    >
+                        View
+                    </button>
+                    {% endif %}
+                </td>
             </tr>
             {% empty %}
             <tr id="archiveEmptyRow">
-                <td colspan="10" style="text-align:center; color:#64748b; font-size:0.75rem; padding:1rem;">
+                <td colspan="11" style="text-align:center; color:#64748b; font-size:0.75rem; padding:1rem;">
                     No proceeded records yet.
                 </td>
             </tr>
@@ -4508,7 +4628,72 @@
     </div>
 </div>
 
+<!-- Archive Form View Modal (read-only, styled like applicant review sections) -->
+<div class="modal-overlay" id="archiveFormViewModal" onclick="closeArchiveFormViewModal()">
+    <div class="modal-content tha-review-modal" style="max-width: 48rem; max-height: 90vh; overflow-y: auto;" onclick="event.stopPropagation()">
+        <div class="modal-header" style="position: sticky; top: 0; background: white; z-index: 10; justify-content: center;">
+            <div style="text-align: center;">
+                <p class="tha-review-modal-kicker">Talisay City Housing Authority Applicant record</p>
+                <h2 class="modal-title" id="archiveFormViewName">—</h2>
+                <p class="modal-subtitle" id="archiveFormViewReference">—</p>
+            </div>
+            <button class="btn-close" onclick="closeArchiveFormViewModal()" style="position: absolute; right: 1.5rem;">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="archive-form-section">
+                <h4 class="archive-form-section-title">A. Application identity</h4>
+                <div class="form-grid identity-grid" style="margin-bottom: 1rem;">
+                    <div class="form-group"><label class="form-label">Last name</label><input type="text" class="form-input" id="archiveViewLastName" readonly></div>
+                    <div class="form-group"><label class="form-label">First name</label><input type="text" class="form-input" id="archiveViewFirstName" readonly></div>
+                    <div class="form-group"><label class="form-label">Middle name</label><input type="text" class="form-input" id="archiveViewMiddleName" readonly></div>
+                    <div class="form-group"><label class="form-label">Extension name</label><input type="text" class="form-input" id="archiveViewExtensionName" readonly></div>
+                    <div class="form-group"><label class="form-label">Sex</label><input type="text" class="form-input" id="archiveViewSex" readonly></div>
+                    <div class="form-group"><label class="form-label">Age</label><input type="text" class="form-input" id="archiveViewAge" readonly></div>
+                    <div class="form-group"><label class="form-label">Date of birth</label><input type="text" class="form-input" id="archiveViewDob" readonly></div>
+                    <div class="form-group"><label class="form-label">Registered voter in Talisay City</label><input type="text" class="form-input" id="archiveViewVoter" readonly></div>
+                    <div class="form-group" style="grid-column: span 2;"><label class="form-label">Present address</label><input type="text" class="form-input" id="archiveViewAddress" readonly></div>
+                    <div class="form-group"><label class="form-label">Barangay of residence</label><input type="text" class="form-input" id="archiveViewBarangay" readonly></div>
+                    <div class="form-group"><label class="form-label">Mobile / contact number</label><input type="text" class="form-input" id="archiveViewPhone" readonly></div>
+                    <div class="form-group"><label class="form-label">Years of residence in Talisay City</label><input type="text" class="form-input" id="archiveViewYears" readonly></div>
+                </div>
+            </div>
+
+            <div class="archive-form-section">
+                <h4 class="archive-form-section-title">B. Household members</h4>
+                <div id="archiveViewHouseholdNote" style="margin-bottom: 0.75rem; font-size: 0.8125rem; color: #475569;">No household members declared (applicant counts as one).</div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Declared household size</label>
+                        <input type="text" class="form-input" id="archiveViewHouseholdSize" readonly>
+                    </div>
+                </div>
+            </div>
+
+            <div class="archive-form-section">
+                <h4 class="archive-form-section-title">C. Household income</h4>
+                <div class="form-grid">
+                    <div class="form-group"><label class="form-label">Principal occupation</label><input type="text" class="form-input" id="archiveViewOccupation" readonly></div>
+                    <div class="form-group"><label class="form-label">Employment status</label><input type="text" class="form-input" id="archiveViewEmployment" readonly></div>
+                    <div class="form-group"><label class="form-label">Declared monthly household income (PHP)</label><input type="text" class="form-input" id="archiveViewIncome" readonly></div>
+                </div>
+            </div>
+
+            <div class="archive-form-section">
+                <h4 class="archive-form-section-title">D. Applicant Situation</h4>
+                <div class="archive-situation-card">
+                    <p id="archiveViewSituationLine" style="font-size: 1rem; font-weight: 700; color: #1e293b; margin: 0 0 0.5rem 0;">ℹ️ —</p>
+                    <p id="archiveViewSituationDescription" style="font-size: 0.875rem; color: #475569; margin: 0; line-height: 1.6;">—</p>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-modal secondary" onclick="closeArchiveFormViewModal()">Close</button>
+        </div>
+    </div>
+</div>
+
 <script id="applicantsDataJson" type="application/json">{{ applicants_json|safe }}</script>
+<script id="archiveFormDataJson" type="application/json">{{ archive_form_modal|safe }}</script>
 <input type="hidden" id="canModifyFlag" value="{{ can_modify|yesno:'true,false' }}">
 <script src="{% static 'Dynamic Web TWAIN SDK 19.3.3/Resources/dynamsoft.webtwain.initiate.js' %}"></script>
 <script src="{% static 'Dynamic Web TWAIN SDK 19.3.3/Resources/dynamsoft.webtwain.config.js' %}"></script>
@@ -4517,6 +4702,71 @@
 <script>
     // Store applicants data in JavaScript
     const applicantsData = JSON.parse(document.getElementById('applicantsDataJson')?.textContent || '[]');
+    const archiveFormData = JSON.parse(document.getElementById('archiveFormDataJson')?.textContent || '{}');
+    function openArchiveFormViewModal(buttonEl) {
+        const ref = buttonEl?.dataset?.reference || '';
+        const payload = archiveFormData[ref];
+        if (!payload) {
+            showNoticeModal({
+                title: 'Record Unavailable',
+                message: 'Unable to load this applicant form snapshot.',
+                type: 'warning',
+            });
+            return;
+        }
+
+        const setValue = (id, value) => {
+            const el = document.getElementById(id);
+            if (el) el.value = value == null || value === '' ? 'N/A' : String(value);
+        };
+        const setText = (id, value) => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = value == null || value === '' ? 'N/A' : String(value);
+        };
+
+        const voter = payload.isRegisteredVoter === true ? 'Yes' : (payload.isRegisteredVoter === false ? 'No' : 'N/A');
+        const incomeRaw = Number(String(payload.monthlyIncome || '').replace(/,/g, ''));
+        const incomeText = Number.isFinite(incomeRaw) && !Number.isNaN(incomeRaw)
+            ? incomeRaw.toLocaleString('en-PH')
+            : 'N/A';
+        const householdSize = Number(payload.householdSize || 0);
+
+        setText('archiveFormViewName', payload.fullName || 'N/A');
+        setText('archiveFormViewReference', `${payload.referenceNumber || 'N/A'} · Reg. ${payload.dateRegistered || 'N/A'}`);
+        setValue('archiveViewLastName', payload.lastName);
+        setValue('archiveViewFirstName', payload.firstName);
+        setValue('archiveViewMiddleName', payload.middleName);
+        setValue('archiveViewExtensionName', payload.extensionName);
+        setValue('archiveViewSex', payload.sex);
+        setValue('archiveViewAge', payload.age);
+        setValue('archiveViewDob', payload.dateOfBirthDisplay);
+        setValue('archiveViewVoter', voter);
+        setValue('archiveViewAddress', payload.currentAddress);
+        setValue('archiveViewBarangay', payload.barangay);
+        setValue('archiveViewPhone', payload.phoneNumber);
+        setValue('archiveViewYears', payload.yearsResiding);
+        setValue('archiveViewHouseholdSize', payload.householdSize);
+        setValue('archiveViewOccupation', payload.occupation);
+        setValue('archiveViewEmployment', payload.employmentStatus);
+        setValue('archiveViewIncome', incomeText);
+        setText('archiveViewSituationLine', `ℹ️ ${payload.displacementOptionLabel || 'N/A'}`);
+        setText('archiveViewSituationDescription', payload.displacementDescription || 'Not recorded');
+        setText(
+            'archiveViewHouseholdNote',
+            householdSize <= 1
+                ? 'No household members declared (applicant counts as one).'
+                : 'Household members were declared during registration.',
+        );
+
+        const modal = document.getElementById('archiveFormViewModal');
+        if (modal) modal.classList.add('active');
+    }
+
+    function closeArchiveFormViewModal() {
+        const modal = document.getElementById('archiveFormViewModal');
+        if (modal) modal.classList.remove('active');
+    }
+    const FIRST_REVIEW_INDEX = applicantsData.length > 0 ? 0 : -1;
     const canModify = (document.getElementById('canModifyFlag')?.value || 'false') === 'true';
     const duplicatePreviewUrl = '{% url "intake:duplicate_preview" request.user.position %}';
     const evaluationApplicationsUrl = '{% url "applications:applications_list" request.user.position %}';
@@ -4968,8 +5218,24 @@
     }
 
 
+    function canOpenArchiveRequirements(buttonEl) {
+        if (!buttonEl || !buttonEl.dataset) return false;
+        const idx = Number(buttonEl.dataset.archiveIndex);
+        if (Number.isNaN(idx)) return false;
+        return idx === 0;
+    }
+
     function openArchiveRequirementsModal(buttonEl) {
         if (!buttonEl) return;
+        if (!canOpenArchiveRequirements(buttonEl)) {
+            showNoticeModal({
+                title: 'FIFO LIST OF APPLICANTS Order',
+                message: 'Please complete the first record in LIST OF APPLICANTS before opening the next record.',
+                type: 'warning',
+                primaryText: 'Understood',
+            });
+            return;
+        }
         let payloadMap = {};
         const scriptEl = document.getElementById('archive-pages-documents-payload');
         if (scriptEl && scriptEl.textContent) {
@@ -5410,8 +5676,22 @@
     let currentApplicant = null;
     let isEditMode = false;
     
+    function canReviewApplicantIndex(index) {
+        if (FIRST_REVIEW_INDEX < 0) return false;
+        return Number(index) === FIRST_REVIEW_INDEX;
+    }
+
     function openReviewModal(index) {
         try {
+            if (!canReviewApplicantIndex(index)) {
+                showNoticeModal({
+                    title: 'FIFO Review Order',
+                    message: 'Please review and proceed applicant #1 first. The next applicant unlocks automatically after the first is completed.',
+                    type: 'warning',
+                    primaryText: 'Understood',
+                });
+                return;
+            }
             currentApplicant = applicantsData[index];
             if (!currentApplicant) {
                 console.error('No applicant data at index:', index);
