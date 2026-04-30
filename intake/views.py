@@ -35,6 +35,7 @@ MODULE1_MIN_YEARS_RESIDING_TALISAY = 5
 # Applicant Situation Options A/B/C need an extra vault slot (ISF situational documentation).
 DISPLACEMENT_PATHS_NEED_ISF_EXTRA = frozenset({'danger_zone', 'ejected', 'relocated'})
 ISF_EXTRA_VAULT_DOC_TYPE = 'isf_situational_docs'
+VOTER_CERT_VAULT_DOC_TYPE = 'voter_certification'
 
 
 def _archive_requirement_scan_rows(requirements_group_a, scanned_types_set, displacement_reason='', latest_doc_by_type=None):
@@ -87,6 +88,19 @@ def _archive_requirement_scan_rows(requirements_group_a, scanned_types_set, disp
             'latest_file_url': latest_isf.get('url', ''),
             'latest_file_name': latest_isf.get('name', ''),
         })
+
+    latest_voter = latest_doc_by_type.get(VOTER_CERT_VAULT_DOC_TYPE, {})
+    rows.append({
+        'code': 'RVT',
+        'name': 'Voter Certification (COMELEC / Barangay voter record)',
+        'group_display': 'Group A - Applicant Requirements',
+        # Optional supporting evidence for the registered-voter eligibility check.
+        'is_required_for_form': False,
+        'is_active': True,
+        'scanned': VOTER_CERT_VAULT_DOC_TYPE in scanned_types_set,
+        'latest_file_url': latest_voter.get('url', ''),
+        'latest_file_name': latest_voter.get('name', ''),
+    })
 
     return rows, scanned_count, trackable_total
 
@@ -511,6 +525,7 @@ def upload_scanned_requirement(request, position):
         'doc_2x2_picture': 'photo_2x2',
         'doc_sketch_location': 'house_sketch',
         'doc_isf_situational': 'isf_situational_docs',
+        'doc_voter_cert': 'voter_certification',
     }
 
     if not applicant_id or doc_key not in key_to_document_type:

@@ -20,7 +20,7 @@ from documents.models import (
     SignatoryRouting,
 )
 from .models import (
-    Application, QueueEntry, CDRRMOCertificationProxy, CDRRMOCertification, FieldVerificationPhoto,
+    Application, QueueEntry, CDRRMOCertificationProxy, CDRRMOCertification, FieldVerificationPhoto, EligibilityCheckDecision,
 )
 from .utils import check_blacklist_module2, send_sms_for_applications
 
@@ -31,6 +31,7 @@ MODULE2_LIST_PER_PAGE = 20
 # Mirror of `MODULE1_MIN_YEARS_RESIDING_TALISAY` in intake/views.py — keep in sync.
 MODULE1_MIN_YEARS_RESIDING_TALISAY = 5
 EVAL28_APPROVED_SMS_EVENT = 'evaluation_approval_approved'
+ELIGIBILITY_CHECK_KEYS = frozenset({'property', 'age_residency', 'income', 'household', 'voter'})
 
 
 def send_sms(recipient_phone, message_content, trigger_event, applicant=None, module='applications'):
@@ -1698,6 +1699,8 @@ def eligibility_snapshot(request, position):
     income_evidence_ready = _req_scanned('R02')
     household_evidence_ready = _req_scanned('R03')
     voter_value_known = applicant.is_registered_voter_talisay is not None
+    voter_evidence_ready = bool(applicant.documents.filter(document_type='voter_certification').exists())
+    voter_doc_latest = doc_type_to_latest_file.get('voter_certification', {'url': '', 'name': ''})
 
     checks = {
         'property': {
@@ -1760,7 +1763,7 @@ def eligibility_snapshot(request, position):
         },
         'voter': {
             'title': 'Check Registered voters',
-            'status': _status(bool(rules.get('voter_ok')), pending=not voter_value_known),
+            'status': _status(bool(rules.get('voter_ok')), pending=(not voter_value_known or not voter_evidence_ready)),
             'reason': (
                 'Registered voter in Talisay City.'
                 if rules.get('voter_ok')
@@ -1768,10 +1771,20 @@ def eligibility_snapshot(request, position):
             ),
             'evidence': [
                 f'Profile voter flag: {"Yes" if applicant.is_registered_voter_talisay else "No"}',
-                'Source: Module 1 applicant profile (no dedicated voter document row in R01-R07 checklist).',
+                f'Voter certification document: {"Scanned" if voter_evidence_ready else "Not scanned"}',
             ],
+            'view_document': voter_doc_latest,
         },
     }
+
+    saved_decisions = {}
+    for decision in EligibilityCheckDecision.objects.filter(applicant=applicant):
+        saved_decisions[decision.check_key] = {
+            'status': decision.status,
+            'failure_reason': decision.failure_reason or '',
+            'reviewed_by': decision.reviewed_by.get_full_name() if decision.reviewed_by else '',
+            'reviewed_at': decision.reviewed_at.isoformat() if decision.reviewed_at else '',
+        }
 
     gates = {
         'required_docs': {
@@ -1794,12 +1807,46 @@ def eligibility_snapshot(request, position):
         },
     }
 
+    displacement_reason = (applicant.displacement_reason or '').strip()
+    situation_map = {
+        'danger_zone': {
+            'option': 'Option A',
+            'title': 'Resident of Danger Zone or Hazard Area',
+            'description': 'Applicant resides in a flood-prone, landslide, storm-surge, riverbank, cliff-edge, or coastal hazard area requiring relocation for safety.',
+        },
+        'ejected': {
+            'option': 'Option B',
+            'title': 'Ejected or Evicted from Prior Residence',
+            'description': 'Applicant has been evicted or displaced through private land eviction, court order, landowner recovery, or analogous proceedings.',
+        },
+        'relocated': {
+            'option': 'Option C',
+            'title': 'Displaced by Government Project or Infrastructure',
+            'description': 'Applicant is required to relocate due to a road-widening, drainage, infrastructure, or other government-initiated project.',
+        },
+        'not_abc': {
+            'option': 'Option D',
+            'title': 'None of A, B, or C (Other / not listed)',
+            'description': 'The situation does not fall under a hazard area, ejection, or a government project. The applicant is recorded for the Walk-in path (no Priority on this ground).',
+        },
+    }
+    situation_payload = situation_map.get(displacement_reason, {
+        'option': 'Not set',
+        'title': 'Applicant Situation is not yet declared',
+        'description': 'No applicant situation has been recorded for this applicant.',
+    })
+
     return JsonResponse({
         'success': True,
         'applicant_id': str(applicant.id),
         'auto_disqualified': bool(auto_disqualified),
         'checks': checks,
+        'saved_decisions': saved_decisions,
         'gates': gates,
+        'situation': {
+            'code': displacement_reason,
+            **situation_payload,
+        },
         'document_scan_checklist': {
             'required_scanned': int(rules.get('required_docs_scanned', 0)),
             'required_total': int(rules.get('required_docs_total', 0)),
@@ -1815,6 +1862,139 @@ def eligibility_snapshot(request, position):
         },
         'blockers': list(rules.get('blockers') or []),
         'advisories': list(rules.get('advisories') or []),
+    })
+
+
+@login_required
+@verify_position
+@require_POST
+def save_eligibility_check_decision(request, position):
+    allowed_positions = ['fourth_member', 'second_member', 'oic']
+    if request.user.position not in allowed_positions:
+        return JsonResponse({'success': False, 'error': 'Permission denied.'}, status=403)
+
+    applicant_id = request.POST.get('applicant_id')
+    check_key = (request.POST.get('check_key') or '').strip()
+    status = (request.POST.get('status') or '').strip().lower()
+    failure_reason = (request.POST.get('failure_reason') or '').strip()
+    if not applicant_id:
+        return JsonResponse({'success': False, 'error': 'Missing applicant_id.'}, status=400)
+    if check_key not in ELIGIBILITY_CHECK_KEYS:
+        return JsonResponse({'success': False, 'error': 'Invalid checklist key.'}, status=400)
+    if status not in ('passed', 'failed'):
+        return JsonResponse({'success': False, 'error': 'Invalid decision status.'}, status=400)
+    if status == 'failed' and len(failure_reason) < 5:
+        return JsonResponse({'success': False, 'error': 'Please provide a clear failure reason.'}, status=400)
+    if status == 'passed':
+        failure_reason = ''
+
+    applicant = get_object_or_404(Applicant, id=applicant_id)
+    handoff_error = _require_intake_archive(applicant)
+    if handoff_error:
+        return handoff_error
+
+    decision, _created = EligibilityCheckDecision.objects.update_or_create(
+        applicant=applicant,
+        check_key=check_key,
+        defaults={
+            'status': status,
+            'failure_reason': failure_reason,
+            'reviewed_by': request.user,
+        },
+    )
+    return JsonResponse({
+        'success': True,
+        'decision': {
+            'check_key': decision.check_key,
+            'status': decision.status,
+            'failure_reason': decision.failure_reason or '',
+            'reviewed_by': decision.reviewed_by.get_full_name() if decision.reviewed_by else '',
+            'reviewed_at': decision.reviewed_at.isoformat() if decision.reviewed_at else '',
+        },
+    })
+
+
+@login_required
+@verify_position
+@require_POST
+def notify_ronda_for_situation(request, position):
+    allowed_positions = ['fourth_member', 'second_member', 'oic']
+    if request.user.position not in allowed_positions:
+        return JsonResponse({'success': False, 'error': 'Permission denied.'}, status=403)
+
+    applicant_id = request.POST.get('applicant_id')
+    if not applicant_id:
+        return JsonResponse({'success': False, 'error': 'Missing applicant_id.'}, status=400)
+
+    applicant = get_object_or_404(Applicant, id=applicant_id)
+    handoff_error = _require_intake_archive(applicant)
+    if handoff_error:
+        return handoff_error
+
+    displacement_reason = (applicant.displacement_reason or '').strip()
+    if displacement_reason != 'danger_zone':
+        return JsonResponse({'success': False, 'error': 'Notify Ronda is only available for Option A (danger zone).'}, status=400)
+
+    cert = getattr(applicant, 'cdrrmo_certification', None)
+    if cert is None:
+        cert = CDRRMOCertification.objects.create(
+            applicant=applicant,
+            requested_by=request.user,
+            status='pending',
+            declared_location=(applicant.danger_zone_location or applicant.danger_zone_type or '').strip() or 'Declared hazard area',
+            disposition_source='pending',
+        )
+    elif cert.status != 'pending':
+        cert.status = 'pending'
+        cert.disposition_source = 'pending'
+        cert.result_recorded_by = None
+        cert.certified_at = None
+        cert.certification_notes = ''
+        cert.office_intake_notes = ''
+        cert.save(update_fields=['status', 'disposition_source', 'result_recorded_by', 'certified_at', 'certification_notes', 'office_intake_notes'])
+
+    applicant.status = 'pending_cdrrmo'
+    applicant.save(update_fields=['status', 'updated_at'])
+    return JsonResponse({
+        'success': True,
+        'message': 'Ronda has been notified. Applicant is now pending CDRRMO field verification.',
+    })
+
+
+@login_required
+@verify_position
+@require_POST
+def mark_situation_certified(request, position):
+    allowed_positions = ['fourth_member', 'second_member', 'oic']
+    if request.user.position not in allowed_positions:
+        return JsonResponse({'success': False, 'error': 'Permission denied.'}, status=403)
+
+    applicant_id = request.POST.get('applicant_id')
+    notes = (request.POST.get('notes') or '').strip()
+    if not applicant_id:
+        return JsonResponse({'success': False, 'error': 'Missing applicant_id.'}, status=400)
+
+    applicant = get_object_or_404(Applicant, id=applicant_id)
+    handoff_error = _require_intake_archive(applicant)
+    if handoff_error:
+        return handoff_error
+
+    displacement_reason = (applicant.displacement_reason or '').strip()
+    if displacement_reason not in ('danger_zone', 'ejected', 'relocated', 'not_abc'):
+        return JsonResponse({'success': False, 'error': 'Applicant Situation is not set yet.'}, status=400)
+
+    queue_placement = _layer3_queue_placement_bundle(applicant, request.user)
+    applicant.status = 'eligible'
+    applicant.eligibility_checked_by = request.user
+    applicant.eligibility_checked_at = timezone.now()
+    if notes:
+        applicant.evaluation_approval_notes = notes
+    applicant.save(update_fields=['status', 'eligibility_checked_by', 'eligibility_checked_at', 'evaluation_approval_notes', 'updated_at'])
+
+    return JsonResponse({
+        'success': True,
+        'message': 'Applicant Situation certified and queue placement updated.',
+        'queue_placement': queue_placement,
     })
 
 

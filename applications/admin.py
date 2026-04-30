@@ -1,7 +1,7 @@
 from django.contrib import admin
 from .models import (
     Application,
-    QueueEntry, SMSLog, CDRRMOCertificationProxy, CDRRMOCertification,
+    QueueEntry, SMSLog, CDRRMOCertificationProxy, CDRRMOCertification, EligibilityCheckDecision,
 )
 
 @admin.register(Application)
@@ -112,3 +112,11 @@ class SMSLogAdmin(admin.ModelAdmin):
             'classes': ('collapse',),
         }),
     )
+
+
+@admin.register(EligibilityCheckDecision)
+class EligibilityCheckDecisionAdmin(admin.ModelAdmin):
+    list_display = ('applicant', 'check_key', 'status', 'reviewed_by', 'reviewed_at')
+    list_filter = ('status', 'check_key', 'reviewed_at')
+    search_fields = ('applicant__full_name', 'applicant__reference_number', 'failure_reason')
+    readonly_fields = ('reviewed_at',)

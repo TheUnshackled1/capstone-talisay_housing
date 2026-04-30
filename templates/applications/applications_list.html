@@ -3384,7 +3384,7 @@
     <div class="eligibility-next-modal" onclick="event.stopPropagation()">
         <div class="eligibility-next-header">
             <h3 class="eligibility-next-title">Eligibility Evaluation Checklist</h3>
-            <p class="eligibility-next-subtitle" id="eligibilityNextSubtitle">Display-only for now (backend wiring follows next).</p>
+            <p class="eligibility-next-subtitle" id="eligibilityNextSubtitle">Review each check, then mark Passed or Failed.</p>
         </div>
         <div class="eligibility-next-body">
             <div id="eligibilityNextChecklist"></div>
@@ -3392,7 +3392,45 @@
         </div>
         <div class="eligibility-next-footer">
             <button type="button" class="eligibility-next-back" onclick="backToPrecheckAlert()">Back</button>
-            <button type="button" class="eligibility-next-close" onclick="closeEligibilityNextModal()">Close</button>
+            <button type="button" class="eligibility-next-close" id="eligibilityNextBtn" onclick="openSituationCertificationModal()">Next</button>
+        </div>
+    </div>
+</div>
+<input type="file" id="eligibilityVoterDocFileInput" accept="image/*,application/pdf,.pdf" style="display:none;" />
+
+<div class="modal-overlay" id="situationCertificationModal" onclick="closeSituationCertificationModal(event)">
+    <div class="eligibility-next-modal" style="max-width: 42rem;" onclick="event.stopPropagation()">
+        <div class="eligibility-next-header">
+            <h3 class="eligibility-next-title">Applicant Situation Certification</h3>
+            <p class="eligibility-next-subtitle" id="situationCertificationSubtitle">Review applicant situation and continue certification path.</p>
+        </div>
+        <div class="eligibility-next-body">
+            <div id="situationCertificationContent"></div>
+            <textarea id="situationCertificationNotes" rows="3" placeholder="Optional notes for situation certification..." style="width:100%;padding:0.6rem;border:1px solid #cbd5e1;border-radius:0.5rem;font-size:0.8rem;resize:vertical;"></textarea>
+        </div>
+        <div class="eligibility-next-footer">
+            <button type="button" class="eligibility-next-back" onclick="backToEligibilityChecklistModal()">Back</button>
+            <button type="button" class="eligibility-next-close" id="notifyRondaBtn" onclick="notifyRondaFromSituationModal()">Notify Ronda</button>
+            <button type="button" class="eligibility-next-close" onclick="markSituationCertifiedFromModal()">Mark Situation Certified</button>
+            <button type="button" class="eligibility-next-close" onclick="closeSituationCertificationModal()">Close</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="eligibilityFailReasonModal" onclick="closeEligibilityFailReasonModal(event)">
+    <div class="eligibility-next-modal" style="max-width: 34rem;" onclick="event.stopPropagation()">
+        <div class="eligibility-next-header">
+            <h3 class="eligibility-next-title">Mark Check as Failed</h3>
+            <p class="eligibility-next-subtitle">Provide a reason before saving this failed decision.</p>
+        </div>
+        <div class="eligibility-next-body">
+            <label for="eligibilityFailReasonInput" style="display:block;font-size:0.75rem;font-weight:700;color:#334155;margin-bottom:0.4rem;">Failure reason</label>
+            <textarea id="eligibilityFailReasonInput" rows="4" placeholder="Example: Submitted certificate is expired and does not match current applicant profile." style="width:100%;padding:0.6rem;border:1px solid #cbd5e1;border-radius:0.5rem;font-size:0.8rem;resize:vertical;"></textarea>
+            <div id="eligibilityFailReasonError" style="display:none;color:#b91c1c;font-size:0.72rem;margin-top:0.4rem;"></div>
+        </div>
+        <div class="eligibility-next-footer">
+            <button type="button" class="eligibility-next-back" onclick="closeEligibilityFailReasonModal()">Cancel</button>
+            <button type="button" class="eligibility-next-close" onclick="submitEligibilityFailedReason()">Save Failed Decision</button>
         </div>
     </div>
 </div>
@@ -3411,6 +3449,8 @@
     let currentEligibilityApplicantId = '';
     let lastEligibilitySnapshot = null;
     const eligibilityManualDecisions = {};
+    let pendingFailedCheckKey = '';
+    let eligibilityVoterDocBusy = false;
 
     function showFlowAlert(message, title = 'Notice', onConfirm = null, tone = 'default', onNext = null) {
         const modal = document.getElementById('flowAlertModal');
@@ -3469,13 +3509,156 @@
         return `${currentEligibilityApplicantId}:${checkKey}`;
     }
 
-    function setEligibilityDecision(checkKey, status) {
+    async function setEligibilityDecision(checkKey, status) {
         const key = getEligibilityDecisionKey(checkKey);
         if (!key) return;
         const normalized = normalizeEligibilityStatus(status);
         if (normalized !== 'passed' && normalized !== 'failed') return;
-        eligibilityManualDecisions[key] = normalized;
-        if (lastEligibilitySnapshot) renderEligibilityChecklist(lastEligibilitySnapshot);
+        if (normalized === 'failed') {
+            openEligibilityFailReasonModal(checkKey);
+            return;
+        }
+        await saveEligibilityDecision(checkKey, 'passed', '');
+    }
+
+    function getManualDecision(checkKey) {
+        const key = getEligibilityDecisionKey(checkKey);
+        if (!key) return null;
+        const raw = eligibilityManualDecisions[key];
+        if (!raw || typeof raw !== 'object') return null;
+        if (!['passed', 'failed'].includes(String(raw.status || '').toLowerCase())) return null;
+        return raw;
+    }
+
+    async function saveEligibilityDecision(checkKey, status, failureReason) {
+        const applicantId = currentEligibilityApplicantId;
+        if (!applicantId || !checkKey) return;
+        const formData = new FormData();
+        formData.append('applicant_id', applicantId);
+        formData.append('check_key', checkKey);
+        formData.append('status', status);
+        formData.append('failure_reason', failureReason || '');
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+        try {
+            const response = await fetch('{% url "applications:save_eligibility_check_decision" request.user.position %}', {
+                method: 'POST',
+                body: formData,
+            });
+            const data = await response.json();
+            if (!data.success) {
+                showFlowAlert(data.error || 'Unable to save checklist decision.');
+                return;
+            }
+            const decisionKey = getEligibilityDecisionKey(checkKey);
+            if (decisionKey) {
+                eligibilityManualDecisions[decisionKey] = {
+                    status: data.decision.status,
+                    failure_reason: data.decision.failure_reason || '',
+                };
+            }
+            if (lastEligibilitySnapshot) renderEligibilityChecklist(lastEligibilitySnapshot);
+        } catch (error) {
+            showFlowAlert(error.message || 'Unable to save checklist decision.');
+        }
+    }
+
+    function triggerEligibilityVoterDocUpload() {
+        if (!currentEligibilityApplicantId) return;
+        const input = document.getElementById('eligibilityVoterDocFileInput');
+        if (!input) return;
+        input.value = '';
+        input.click();
+    }
+
+    async function uploadEligibilityVoterDocFile(file) {
+        if (!file || !currentEligibilityApplicantId || eligibilityVoterDocBusy) return;
+        eligibilityVoterDocBusy = true;
+        try {
+            const formData = new FormData();
+            formData.append('applicant_id', currentEligibilityApplicantId);
+            formData.append('doc_key', 'doc_voter_cert');
+            formData.append('doc_code', 'RVT');
+            formData.append('file', file);
+            const response = await fetch('{% url "intake:upload_scanned_requirement" request.user.position %}', {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin',
+            });
+            const data = await response.json();
+            if (!data.success) {
+                throw new Error(data.error || 'Unable to upload voter certification document.');
+            }
+            await fetchEligibilitySnapshot(currentEligibilityApplicantId);
+        } catch (error) {
+            showFlowAlert(error.message || 'Unable to upload voter certification document.');
+        } finally {
+            eligibilityVoterDocBusy = false;
+        }
+    }
+
+    async function scanEligibilityVoterDoc() {
+        if (eligibilityVoterDocBusy || !currentEligibilityApplicantId) return;
+        const canUseScanner = typeof window.waitForDwtReady === 'function'
+            && typeof window.acquireImageWithDwt === 'function'
+            && typeof window.uploadCurrentScannedImageForApplicant === 'function';
+        if (!canUseScanner) {
+            showFlowAlert('Scanner is not initialized in this view. Upload file will open instead.');
+            triggerEligibilityVoterDocUpload();
+            return;
+        }
+        eligibilityVoterDocBusy = true;
+        try {
+            const dwt = await window.waitForDwtReady();
+            if (!dwt) throw new Error('Scanner SDK is not ready yet.');
+            await dwt.SelectSourceAsync();
+            await window.acquireImageWithDwt({ selectSource: false, closeSourceAfterAcquire: false });
+            await window.uploadCurrentScannedImageForApplicant(currentEligibilityApplicantId, currentEligibilityApplicantId, 'doc_voter_cert', 'RVT');
+            if (typeof dwt.CloseSource === 'function') {
+                try { dwt.CloseSource(); } catch (_err) {}
+            }
+            await fetchEligibilitySnapshot(currentEligibilityApplicantId);
+        } catch (error) {
+            showFlowAlert(error.message || 'Unable to scan voter certification document.');
+        } finally {
+            eligibilityVoterDocBusy = false;
+        }
+    }
+
+    function openEligibilityFailReasonModal(checkKey) {
+        pendingFailedCheckKey = String(checkKey || '');
+        const inputEl = document.getElementById('eligibilityFailReasonInput');
+        const errorEl = document.getElementById('eligibilityFailReasonError');
+        const existing = getManualDecision(checkKey);
+        if (inputEl) inputEl.value = existing && existing.status === 'failed' ? (existing.failure_reason || '') : '';
+        if (errorEl) {
+            errorEl.style.display = 'none';
+            errorEl.textContent = '';
+        }
+        const modal = document.getElementById('eligibilityFailReasonModal');
+        if (modal) modal.classList.add('active');
+    }
+
+    function closeEligibilityFailReasonModal(event) {
+        if (event && event.target && event.target.id !== 'eligibilityFailReasonModal') return;
+        pendingFailedCheckKey = '';
+        const modal = document.getElementById('eligibilityFailReasonModal');
+        if (modal) modal.classList.remove('active');
+    }
+
+    async function submitEligibilityFailedReason() {
+        const checkKey = pendingFailedCheckKey;
+        const inputEl = document.getElementById('eligibilityFailReasonInput');
+        const errorEl = document.getElementById('eligibilityFailReasonError');
+        const reason = String(inputEl ? inputEl.value : '').trim();
+        if (reason.length < 5) {
+            if (errorEl) {
+                errorEl.textContent = 'Please enter a clear reason (at least 5 characters).';
+                errorEl.style.display = 'block';
+            }
+            return;
+        }
+        await saveEligibilityDecision(checkKey, 'failed', reason);
+        closeEligibilityFailReasonModal();
     }
 
     function renderEligibilityChecklist(snapshot) {
@@ -3494,12 +3677,52 @@
             { key: 'voter', is_reviewable: true, ...(checks.voter || {}) },
         ].filter(Boolean);
 
-        listEl.innerHTML = entries.map((entry) => {
+        const failedChecks = entries.filter((entry) => {
+            const d = getManualDecision(entry.key);
+            return d && d.status === 'failed';
+        });
+        const undecidedChecks = entries.filter((entry) => {
+            const d = getManualDecision(entry.key);
+            return !(d && (d.status === 'passed' || d.status === 'failed'));
+        });
+        const warningBanner = undecidedChecks.length
+            ? `<div class="eligibility-next-item" style="border-color:#fde68a;background:#fffbeb;">
+                <div class="line-title" style="color:#92400e;">Pending: ${undecidedChecks.length} check(s) not yet marked</div>
+                <div class="line-evidence" style="color:#92400e;">Mark each check as Passed or Failed to enable Next.</div>
+              </div>`
+            : (failedChecks.length
+            ? `<div class="eligibility-next-item" style="border-color:#fecaca;background:#fef2f2;">
+                <div class="line-title" style="color:#991b1b;">Warning: ${failedChecks.length} check(s) marked Failed</div>
+                <div class="line-evidence" style="color:#7f1d1d;">Failed checks are reviewer findings. You may proceed once all checks are marked.</div>
+              </div>`
+            : '');
+
+        const nextBtn = document.getElementById('eligibilityNextBtn');
+        if (nextBtn) {
+            const shouldDisable = undecidedChecks.length > 0;
+            nextBtn.disabled = shouldDisable;
+            if (shouldDisable) {
+                nextBtn.setAttribute('disabled', 'disabled');
+            } else {
+                nextBtn.removeAttribute('disabled');
+            }
+            nextBtn.style.opacity = undecidedChecks.length > 0 ? '0.6' : '1';
+            nextBtn.style.cursor = undecidedChecks.length > 0 ? 'not-allowed' : 'pointer';
+            nextBtn.title = undecidedChecks.length > 0
+                ? `Mark all checks first (${undecidedChecks.length} remaining)`
+                : '';
+        }
+
+        listEl.innerHTML = warningBanner + entries.map((entry) => {
             const decisionKey = getEligibilityDecisionKey(entry.key);
-            const manualStatus = decisionKey ? eligibilityManualDecisions[decisionKey] : '';
+            const manualDecision = getManualDecision(entry.key);
+            const manualStatus = manualDecision ? manualDecision.status : '';
             const status = normalizeEligibilityStatus(manualStatus || entry.status);
             const title = entry.title || 'Check';
             const reason = entry.reason || '';
+            const failedReason = manualDecision && manualDecision.status === 'failed'
+                ? (manualDecision.failure_reason || '')
+                : '';
             const docUrl = entry?.view_document?.url || '';
             const docName = entry?.view_document?.name || 'Scanned document';
             const hasManualStatus = manualStatus === 'passed' || manualStatus === 'failed';
@@ -3511,14 +3734,22 @@
                         ${hasManualStatus ? `<span class="eligibility-check-chip ${manualStatus}">${manualLabel}</span>` : ''}
                     </div>
                     <div class="line-reason">${reason}</div>
+                    ${failedReason ? `<div class="line-evidence" style="color:#b91c1c;">Failure reason: ${failedReason}</div>` : ''}
                     ${(Array.isArray(entry.evidence) && entry.evidence.length)
                         ? `<div class="line-evidence">Evidence: ${entry.evidence.map((e) => String(e || '')).filter(Boolean).join(' | ')}</div>`
                         : ''}
                     ${docUrl
                         ? `<div class="eligibility-evidence-actions">
                             <a class="eligibility-view-doc-btn" href="${docUrl}" target="_blank" rel="noopener noreferrer" title="${docName}">
-                                View scanned document
+                                View Document
                             </a>
+                        </div>`
+                        : ''
+                    }
+                    ${entry.key === 'voter'
+                        ? `<div class="eligibility-evidence-actions">
+                            <button type="button" class="eligibility-view-doc-btn" onclick="triggerEligibilityVoterDocUpload()">Upload file</button>
+                            <button type="button" class="eligibility-view-doc-btn" onclick="scanEligibilityVoterDoc()">Scan</button>
                         </div>`
                         : ''
                     }
@@ -3586,6 +3817,22 @@
                 if (listEl) listEl.innerHTML = `<div class="eligibility-next-item"><span class="line-title">${data.error || 'Unable to load eligibility snapshot.'}</span></div>`;
                 return;
             }
+            Object.keys(eligibilityManualDecisions).forEach((key) => {
+                if (key.startsWith(`${currentEligibilityApplicantId}:`)) delete eligibilityManualDecisions[key];
+            });
+            const savedDecisions = data.saved_decisions || {};
+            Object.keys(savedDecisions).forEach((checkKey) => {
+                const decisionKey = getEligibilityDecisionKey(checkKey);
+                if (!decisionKey) return;
+                const d = savedDecisions[checkKey] || {};
+                const normalized = normalizeEligibilityStatus(d.status);
+                if (normalized === 'passed' || normalized === 'failed') {
+                    eligibilityManualDecisions[decisionKey] = {
+                        status: normalized,
+                        failure_reason: String(d.failure_reason || ''),
+                    };
+                }
+            });
             renderEligibilityChecklist(data);
         } catch (error) {
             if (listEl) listEl.innerHTML = `<div class="eligibility-next-item"><span class="line-title">Error loading checklist: ${error.message}</span></div>`;
@@ -3605,11 +3852,115 @@
         fetchEligibilitySnapshot(applicantId);
     }
 
+    function backToEligibilityChecklistModal() {
+        closeSituationCertificationModal();
+        const modal = document.getElementById('eligibilityNextModal');
+        if (modal) modal.classList.add('active');
+    }
+
+    function openSituationCertificationModal() {
+        if (!lastEligibilitySnapshot) {
+            showFlowAlert('Load the eligibility checklist first before proceeding.');
+            return;
+        }
+        const modal = document.getElementById('situationCertificationModal');
+        const content = document.getElementById('situationCertificationContent');
+        const subtitle = document.getElementById('situationCertificationSubtitle');
+        const situation = lastEligibilitySnapshot.situation || {};
+        const option = situation.option || 'Not set';
+        const code = situation.code || '';
+        const title = situation.title || 'Applicant Situation is not yet declared';
+        const desc = situation.description || 'No situation details are available.';
+        if (subtitle) subtitle.textContent = `${option} · ${title}`;
+        const notifyBtn = document.getElementById('notifyRondaBtn');
+        if (notifyBtn) notifyBtn.style.display = code === 'danger_zone' ? 'inline-flex' : 'none';
+        if (content) {
+            content.innerHTML = `
+                <div class="eligibility-next-item">
+                    <div class="line-title">${option}</div>
+                    <div class="line-reason">${title}</div>
+                    <div class="line-evidence">${desc}</div>
+                </div>
+                <div class="eligibility-next-item">
+                    <div class="line-title">Certification Path Notes</div>
+                    <div class="line-evidence">
+                        Option A triggers Ronda evidence workflow.<br>
+                        Option B/C require situation supporting documents plus ISF situational documentation.<br>
+                        Option D follows Walk-in path (no priority on this ground).
+                    </div>
+                </div>
+            `;
+        }
+        const eligibilityModal = document.getElementById('eligibilityNextModal');
+        if (eligibilityModal) eligibilityModal.classList.remove('active');
+        if (modal) modal.classList.add('active');
+    }
+
+    async function notifyRondaFromSituationModal() {
+        if (!currentEligibilityApplicantId) return;
+        const formData = new FormData();
+        formData.append('applicant_id', currentEligibilityApplicantId);
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+        try {
+            const response = await fetch('{% url "applications:notify_ronda_for_situation" request.user.position %}', {
+                method: 'POST',
+                body: formData,
+            });
+            const data = await response.json();
+            if (!data.success) throw new Error(data.error || 'Unable to notify Ronda.');
+            showFlowAlert(data.message || 'Ronda notification recorded.', 'Situation Certification', null, 'success');
+            await fetchEligibilitySnapshot(currentEligibilityApplicantId);
+        } catch (error) {
+            showFlowAlert(error.message || 'Unable to notify Ronda.');
+        }
+    }
+
+    async function markSituationCertifiedFromModal() {
+        if (!currentEligibilityApplicantId) return;
+        const notesEl = document.getElementById('situationCertificationNotes');
+        const formData = new FormData();
+        formData.append('applicant_id', currentEligibilityApplicantId);
+        formData.append('notes', notesEl ? notesEl.value : '');
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+        try {
+            const response = await fetch('{% url "applications:mark_situation_certified" request.user.position %}', {
+                method: 'POST',
+                body: formData,
+            });
+            const data = await response.json();
+            if (!data.success) throw new Error(data.error || 'Unable to mark situation certified.');
+            showFlowAlert(data.message || 'Situation certified.', 'Situation Certification', null, 'success');
+            await fetchEligibilitySnapshot(currentEligibilityApplicantId);
+        } catch (error) {
+            showFlowAlert(error.message || 'Unable to mark situation certified.');
+        }
+    }
+
+    function closeSituationCertificationModal(event) {
+        if (event && event.target && event.target.id !== 'situationCertificationModal') return;
+        const modal = document.getElementById('situationCertificationModal');
+        if (modal) modal.classList.remove('active');
+    }
+
     function closeEligibilityNextModal(event) {
         if (event && event.target && event.target.id !== 'eligibilityNextModal') return;
         const modal = document.getElementById('eligibilityNextModal');
         if (modal) modal.classList.remove('active');
+        closeEligibilityFailReasonModal();
+        closeSituationCertificationModal();
     }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const voterInput = document.getElementById('eligibilityVoterDocFileInput');
+        if (voterInput) {
+            voterInput.addEventListener('change', function (e) {
+                const file = e.target && e.target.files ? e.target.files[0] : null;
+                if (!file) return;
+                uploadEligibilityVoterDocFile(file);
+                e.target.value = '';
+            });
+        }
+    });
 
     function backToPrecheckAlert() {
         closeEligibilityNextModal();

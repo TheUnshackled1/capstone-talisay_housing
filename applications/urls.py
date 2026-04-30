@@ -8,6 +8,9 @@ urlpatterns = [
     path('staff/<str:position>/', views.applications_list, name='applications_list'),
     path('staff/<str:position>/evaluate-precheck/', views.evaluate_precheck, name='evaluate_precheck'),
     path('staff/<str:position>/eligibility-snapshot/', views.eligibility_snapshot, name='eligibility_snapshot'),
+    path('staff/<str:position>/save-eligibility-check-decision/', views.save_eligibility_check_decision, name='save_eligibility_check_decision'),
+    path('staff/<str:position>/notify-ronda/', views.notify_ronda_for_situation, name='notify_ronda_for_situation'),
+    path('staff/<str:position>/mark-situation-certified/', views.mark_situation_certified, name='mark_situation_certified'),
 
     path('staff/<str:position>/update-cdrrmo-certification/', views.update_cdrrmo_certification, name='update_cdrrmo_certification'),
     path('staff/<str:position>/field-verify-cdrrmo/', views.field_verify_cdrrmo, name='field_verify_cdrrmo'),

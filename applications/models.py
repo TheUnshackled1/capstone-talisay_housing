@@ -131,6 +131,45 @@ class SMSLog(models.Model):
         return f"SMS to {self.recipient_phone} - {self.trigger_event} ({self.status})"
 
 
+class EligibilityCheckDecision(models.Model):
+    """
+    Stores reviewer decisions for each checklist line item in Module 2 eligibility.
+    """
+    STATUS_CHOICES = [
+        ('passed', 'Passed'),
+        ('failed', 'Failed'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    applicant = models.ForeignKey(
+        'intake.Applicant',
+        on_delete=models.CASCADE,
+        related_name='eligibility_check_decisions',
+    )
+    check_key = models.CharField(max_length=40)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES)
+    failure_reason = models.TextField(blank=True, default='')
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='eligibility_check_decisions_reviewed',
+    )
+    reviewed_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['applicant', 'check_key']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['applicant', 'check_key'],
+                name='unique_applicant_eligibility_check_decision',
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.applicant.full_name} - {self.check_key} ({self.status})"
+
+
 
 # =============================================================================
 # MODULE 2 OWNERSHIP WRAPPERS (NO DB MOVE RISK)
