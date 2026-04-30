@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.db.models import Count, Q, Prefetch, Max
@@ -24,6 +25,8 @@ from .models import (
 from .utils import check_blacklist_module2, send_sms_for_applications
 
 MODULE1_MONTHLY_INCOME_CEILING_PESO = 10000
+# Application & Evaluation list: records per page (Module 2 ledger)
+MODULE2_LIST_PER_PAGE = 20
 # Minimum years of residence in Talisay City for Module 2 Layer 2 (2.6) eligibility.
 # Mirror of `MODULE1_MIN_YEARS_RESIDING_TALISAY` in intake/views.py — keep in sync.
 MODULE1_MIN_YEARS_RESIDING_TALISAY = 5
@@ -379,15 +382,11 @@ def _module2_eligibility_snapshot(applicant, checked_by=None):
         if blacklist_policy_note:
             advisories.append(blacklist_policy_note)
 
+    # Layer 2 profile checks — kept for API / Evaluate modal (passed vs failed).
+    # Policy: these do NOT restrict Priority vs Walk-in queue placement.
     income_ok = bool(applicant.is_income_eligible)
-    if not income_ok:
-        advisories.append(
-            f'Declared monthly income ₱{applicant.monthly_income:,.2f} exceeds Module 1 ceiling of ₱{MODULE1_MONTHLY_INCOME_CEILING_PESO:,.0f}.'
-        )
 
     property_ok = not bool(applicant.has_property_in_talisay)
-    if not property_ok:
-        advisories.append('Applicant is flagged as owning property in Talisay City.')
 
     declared_household = int(applicant.household_size or 0)
     listed_household = applicant.household_members.count() + 1
@@ -395,44 +394,19 @@ def _module2_eligibility_snapshot(applicant, checked_by=None):
     if not has_min_household:
         advisories.append('Declared household size must be at least 1.')
 
-    # Layer 2 / 2.4 Household Composition: a registered "live-in partner"
-    # household member triggers the Household Composition flag and pushes the
-    # applicant to the walk-in queue (Module 2 policy).
     live_in_partner_count = applicant.household_members.filter(
         relationship='live_in_partner'
     ).count()
     household_has_live_in_partner = live_in_partner_count > 0
     household_ok = has_min_household and not household_has_live_in_partner
-    if household_has_live_in_partner:
-        advisories.append(
-            'Household Composition flagged: registered household includes a live-in partner '
-            '(walk-in path under Module 2 policy).'
-        )
 
-    # Layer 2 / 2.5 Voter Registration: applicant must be a registered voter
-    # in Talisay City (declared at Module 1 registration). Any non-registered
-    # applicant is a Layer 2 flag and pushes them to the walk-in queue.
     voter_ok = bool(applicant.is_registered_voter_talisay)
-    if not voter_ok:
-        advisories.append(
-            'Voter Registration flagged: applicant is not a registered voter in Talisay City '
-            '(walk-in path under Module 2 policy).'
-        )
 
-    # Layer 2 / 2.6 Length of Residence: applicant must have resided in
-    # Talisay City for at least `MODULE1_MIN_YEARS_RESIDING_TALISAY` years.
-    # Below threshold is a Layer 2 flag (walk-in path).
     try:
         years_residing_int = int(applicant.years_residing or 0)
     except (TypeError, ValueError):
         years_residing_int = 0
     residency_ok = years_residing_int >= MODULE1_MIN_YEARS_RESIDING_TALISAY
-    if not residency_ok:
-        advisories.append(
-            f'Length of Residence flagged: declared {years_residing_int} year(s) in Talisay City '
-            f'is below the {MODULE1_MIN_YEARS_RESIDING_TALISAY}-year minimum '
-            '(walk-in path under Module 2 policy).'
-        )
 
     # Retained for any legacy templates/consumers; queue policy no longer
     # depends on size mismatch.
@@ -459,25 +433,22 @@ def _module2_eligibility_snapshot(applicant, checked_by=None):
         except CDRRMOCertification.DoesNotExist:
             cdrrmo_status = None
 
-    # Queue mapping policy (Module 2):
-    # - Layer 1 (blacklist) is advisory only; it does not affect queue placement.
-    # - Layer 2 (2.2 property, 2.3 income, 2.4 household composition,
-    #   2.5 voter registration, 2.6 length of residence) — any flag here
-    #   pushes the applicant to the walk-in queue.
-    # - Layer 3 — A, B, C, or D. Option D (not_abc) always routes to Walk-in;
-    #   A/B/C with Layer 2 clean may route to Priority. Document verification
-    #   for A/B/C still happens in Module 3.
+    # Informational: all Layer 2 profile checks pass (for dashboards / detail API).
     layer2_clear = bool(
         property_ok and income_ok and household_ok and voter_ok and residency_ok
     )
     layer3_clear = bool(displacement_classified)
-    qualifies_for_priority = bool(
-        layer2_clear
-        and (displacement_reason in displacement_reasons_priority)
-    )
 
-    if qualifies_for_priority:
-        allowed_queue_types = ['priority']
+    # Queue mapping policy (Module 2):
+    # - Layer 1 (blacklist): advisory for staff; see blockers in API.
+    # - Layer 2: does NOT determine Priority vs Walk-in (income, property, voter,
+    #   residency, live-in partner are not routing constraints).
+    # - Applicant Situation (A/B/C vs D) drives queue: A/B/C may use Priority
+    #   (recommended) or Walk-in; Option D is Walk-in only.
+    qualifies_for_priority = bool(displacement_reason in displacement_reasons_priority)
+
+    if displacement_reason in displacement_reasons_priority:
+        allowed_queue_types = ['priority', 'walk_in']
         recommended_queue_type = 'priority'
     else:
         allowed_queue_types = ['walk_in']
@@ -531,7 +502,8 @@ def _module2_eligibility_snapshot(applicant, checked_by=None):
 
     active_queue = applicant.queue_entries.filter(status='active').exists()
     queue_ready = bool(active_queue or applicant.status != 'eligible')
-    basic_eligibility_ok = bool(layer2_clear)
+    # Layer 2 no longer gates "readiness" for queue / workflow handoffs.
+    basic_eligibility_ok = True
     certification_ready = certification_status in ('not_required', 'certified', 'not_certified')
     field_evidence_ready = field_evidence_status in ('not_required', 'available', 'pending')
     # Applicant Situation documentary evidence:
@@ -847,11 +819,27 @@ def applications_list(request, position):
                search.lower() in a['applicant'].reference_number.lower()
         ]
 
+    paginator = Paginator(applicants_data, MODULE2_LIST_PER_PAGE)
+    page_number = request.GET.get('page', 1)
+    try:
+        page_obj = paginator.page(page_number)
+    except PageNotAnInteger:
+        page_obj = paginator.page(1)
+    except EmptyPage:
+        page_obj = paginator.page(paginator.num_pages or 1)
+
+    # Preserve filter query string for pagination links (exclude `page`)
+    _q = request.GET.copy()
+    _q.pop('page', None)
+    pagination_query = _q.urlencode()
+
     from_intake_handoff = request.GET.get('from') == 'intake_scan_checklist'
     intake_handoff_ref = (request.GET.get('ref') or '').strip()[:120]
 
     context = {
-        'applicants_data': applicants_data,
+        'applicants_data': list(page_obj),
+        'page_obj': page_obj,
+        'pagination_query': pagination_query,
         'stage_counts': stage_counts,
         'requirements': requirements,
         'group_a_requirements': group_a_requirements,

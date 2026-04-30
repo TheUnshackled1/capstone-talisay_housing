@@ -388,13 +388,13 @@
         border-color: #3b82f6;
     }
 
-    /* Applications Table — Institutional UX redesign */
+    /* Applications table — parity with Module 1 `intake/staff/applicants.html` `.applicants-table` */
     .applications-table-container {
         background: white;
-        border-radius: 14px;
         border: 1px solid #e2e8f0;
+        border-radius: 0.85rem;
         overflow: hidden;
-        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 4px 16px rgba(15, 23, 42, 0.04);
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 4px 14px rgba(15, 23, 42, 0.04);
         position: relative;
     }
 
@@ -414,6 +414,12 @@
         table-layout: fixed;
         border-collapse: separate;
         border-spacing: 0;
+        min-width: 0;
+        background: white;
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
+        position: relative;
     }
 
     .applications-table thead {
@@ -425,22 +431,25 @@
     }
 
     .applications-table th {
-        padding: 0.85rem 0.85rem;
+        padding: 0.7rem 0.45rem;
         text-align: left;
-        font-size: 0.625rem;
+        font-size: 0.58rem;
         font-weight: 700;
         color: #475569;
         text-transform: uppercase;
-        letter-spacing: 0.08em;
-        border-right: 1px solid #e2e8f0;
+        letter-spacing: 0.085em;
         white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        border-right: 1px solid #e2e8f0;
+        border-bottom: 1px solid #cbd5e1;
         position: relative;
     }
 
     .applications-table th::after {
         content: '';
         position: absolute;
-        bottom: -2px;
+        bottom: -1px;
         left: 0;
         right: 0;
         height: 2px;
@@ -513,18 +522,20 @@
     }
 
     .applications-table td {
-        padding: 0.75rem 0.85rem;
+        padding: 0.55rem 0.45rem;
         border-bottom: 1px solid #eef2f7;
         border-right: 1px solid #f1f5f9;
         vertical-align: middle;
-        font-size: 0.6875rem;
+        font-size: 0.625rem;
         color: #334155;
+        white-space: normal;
+        overflow-wrap: anywhere;
         overflow: hidden;
         position: relative;
     }
 
     .applications-table tbody tr {
-        transition: background 0.18s ease, box-shadow 0.18s ease, transform 0.12s ease;
+        transition: background 0.18s ease, box-shadow 0.18s ease;
         position: relative;
     }
 
@@ -596,19 +607,39 @@
         text-align: center;
     }
 
-    /* Compact Module 2 ledger (few columns, stacked detail) */
+    /* Compact Module 2 ledger — cell rhythm matches intake applicants ledger */
     .applications-table.compact-table th,
     .applications-table.compact-table td {
-        padding: 0.5rem 0.55rem;
+        padding: 0.55rem 0.45rem;
         vertical-align: middle;
         word-break: break-word;
-        text-align: center;
+        text-align: left;
     }
 
     .applications-table.compact-table th {
-        white-space: normal;
+        padding: 0.7rem 0.45rem;
+        font-size: 0.58rem;
+        letter-spacing: 0.085em;
+        white-space: nowrap;
         line-height: 1.35;
-        max-width: 14rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .applications-table.compact-table td.col-num,
+    .applications-table.compact-table th.col-num,
+    .applications-table.compact-table td.col-actions,
+    .applications-table.compact-table th.col-actions {
+        text-align: center;
+    }
+
+    .applications-table.compact-table td.col-status,
+    .applications-table.compact-table td.col-applicant {
+        text-align: center;
+    }
+
+    .applications-table.compact-table td.col-staff:not(.col-status) {
+        text-align: left;
     }
 
     .applications-table.compact-table .col-num {
@@ -676,16 +707,45 @@
     .applications-table.compact-table .m2-staff-row {
         display: flex;
         align-items: center;
-        justify-content: center;
-        gap: 0.35rem;
+        justify-content: flex-start;
+        gap: 0.375rem;
         font-size: 0.625rem;
         line-height: 1.35;
-        text-align: center;
+        text-align: left;
+    }
+
+    /* Match intake `.handled-by-avatar` (LIST OF APPLICANTS / live ledger) */
+    .applications-table .handled-by-avatar {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.6rem;
+        font-weight: 700;
+        flex-shrink: 0;
+        box-shadow: 0 2px 4px rgba(15, 23, 42, 0.18), inset 0 0 0 2px #ffffff;
+        letter-spacing: 0.02em;
+    }
+
+    .applications-table .handled-by-avatar.second-member {
+        background: linear-gradient(135deg, #4f46e5 0%, #2563eb 100%);
+    }
+
+    .applications-table .handled-by-avatar.fourth-member {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    }
+
+    .applications-table .handled-by-avatar.other {
+        background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);
     }
 
     .applications-table.compact-table .m2-staff-avatar {
-        width: 1.75rem;
-        height: 1.75rem;
+        /* Legacy alias — prefer .handled-by-avatar */
+        width: 26px;
+        height: 26px;
         border-radius: 9999px;
         background: linear-gradient(135deg, #4f46e5 0%, #2563eb 100%);
         color: #ffffff;
@@ -1821,6 +1881,54 @@
         outline-offset: 2px;
     }
 
+    /* Primary row action — matches intake `.btn-review` / `.btn-review-walkin` (LIST OF APPLICANTS) */
+    .btn-review {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.45rem 0.78rem;
+        background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+        color: white;
+        border: 1px solid #1e3a8a;
+        border-radius: 0.5rem;
+        font-size: 0.6875rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        cursor: pointer;
+        transition: all 0.18s ease;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        text-decoration: none;
+        white-space: nowrap;
+    }
+
+    .btn-review:hover {
+        box-shadow: 0 4px 14px rgba(37, 99, 235, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+        transform: translateY(-1px);
+        color: white;
+        text-decoration: none;
+        background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+    }
+
+    .btn-review:focus-visible {
+        outline: 2px solid #93c5fd;
+        outline-offset: 2px;
+    }
+
+    .btn-review-walkin {
+        background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
+        border-color: #0f766e;
+    }
+
+    .btn-review-walkin:hover {
+        background: linear-gradient(135deg, #0f766e 0%, #115e59 100%);
+        box-shadow: 0 4px 14px rgba(13, 148, 136, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    }
+
+    .btn-review .btn-icon {
+        width: 0.875rem;
+        height: 0.875rem;
+    }
+
     .action-btn .eye-icon {
         width: 0.85rem;
         height: 0.85rem;
@@ -1848,17 +1956,70 @@
         border-color: #6d28d9;
     }
 
-    /* Table Footer */
+    /* Table Footer — parity with Module 1 ledger pagination */
     .table-footer {
-        padding: 0.75rem 1rem;
-        border-top: 1px solid #f1f5f9;
-        background: #f8fafc;
+        padding: 0.54rem 0.85rem;
+        border-top: 1px solid #eef2f7;
+        background: #fafbfc;
     }
 
     .table-footer p {
         font-size: 0.6875rem;
         color: #64748b;
         margin: 0;
+    }
+
+    .applications-table-container .table-pagination {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .applications-table-container .table-pagination-info {
+        font-size: 0.6875rem;
+        color: #64748b;
+        font-weight: 500;
+    }
+
+    .applications-table-container .table-pagination-controls {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+    }
+
+    .applications-table-container .btn-page {
+        border: 1px solid #cbd5e1;
+        border-radius: 0.375rem;
+        background: #f8fafc;
+        color: #334155;
+        font-size: 0.64rem;
+        font-weight: 600;
+        padding: 0.22rem 0.48rem;
+        cursor: pointer;
+        text-decoration: none;
+        transition: all 0.15s ease;
+    }
+
+    .applications-table-container .btn-page:hover:not(.is-disabled) {
+        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        border-color: #93c5fd;
+        color: #1d4ed8;
+        box-shadow: 0 2px 4px rgba(37, 99, 235, 0.1);
+        transform: translateY(-1px);
+    }
+
+    .applications-table-container .btn-page.is-disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+
+    .applications-table-container .page-indicator {
+        font-size: 0.6875rem;
+        font-weight: 600;
+        color: #475569;
     }
 
     /* Modal Styles */
@@ -2706,30 +2867,6 @@
         font-size: 0.75rem;
     }
 
-    .applications-table-container {
-        border-color: #dbe2ea;
-    }
-
-    .applications-table th {
-        padding: 0.5rem 0.62rem;
-        font-size: 0.58rem;
-        font-weight: 700;
-    }
-
-    .applications-table td {
-        padding: 0.4rem 0.6rem;
-    }
-
-    .applications-table.compact-table th,
-    .applications-table.compact-table td {
-        padding: 0.34rem 0.44rem;
-    }
-
-    .action-btn {
-        padding: 0.3rem 0.5rem;
-        font-size: 0.58rem;
-    }
-
     /* Responsive */
     @media (max-width: 768px) {
         .stages-grid {
@@ -2837,27 +2974,12 @@
         border-radius: 9px;
     }
 
-    .applications-table-container {
-        border-radius: 11px;
-    }
-
-    .applications-table th {
-        font-size: 0.56rem;
-        padding: 0.48rem 0.54rem;
-        letter-spacing: 0.052em;
-    }
-
-    .applications-table td {
-        font-size: 0.64rem;
-        padding: 0.36rem 0.52rem;
-    }
-
     .applications-table .badge,
     .queue-badge {
         font-size: 0.56rem;
     }
 
-    .action-btn {
+    .action-btn:not(.btn-review) {
         min-height: 28px;
         border-radius: 7px;
         font-size: 0.56rem;
@@ -3037,7 +3159,7 @@
             <tbody>
                 {% for data in applicants_data %}
                 <tr data-applicant-id="{{ data.applicant.id }}" class="scroll-animate-left" {% if data.blacklist_blocked %}style="background:#fef2f2;"{% endif %}>
-                    <td class="col-num" style="font-weight:700;color:#1e293b;">{{ forloop.counter }}</td>
+                    <td class="col-num" style="font-weight:700;color:#1e293b;">{{ page_obj.start_index|add:forloop.counter0 }}</td>
                     <td class="col-applicant">
                         <div class="applicant-cell">
                             <span class="applicant-name {% if data.applicant.displacement_reason == 'danger_zone' %}option-a{% elif data.applicant.displacement_reason == 'ejected' %}option-b{% elif data.applicant.displacement_reason == 'relocated' %}option-c{% elif data.applicant.displacement_reason == 'not_abc' %}option-d{% endif %}">{{ data.applicant.full_name }}</span>
@@ -3106,7 +3228,7 @@
                     <td class="col-staff">
                         {% if data.applicant.registered_by %}
                         <div class="m2-staff-row">
-                            <div class="m2-staff-avatar">{{ data.applicant.registered_by.first_name|default:''|slice:':1'|upper }}{{ data.applicant.registered_by.last_name|default:''|slice:':1'|upper }}</div>
+                            <div class="handled-by-avatar {% if data.applicant.registered_by.position == 'second_member' %}second-member{% elif data.applicant.registered_by.position == 'fourth_member' %}fourth-member{% else %}other{% endif %}">{{ data.applicant.registered_by.first_name|default:''|slice:':1'|upper }}{{ data.applicant.registered_by.last_name|default:''|slice:':1'|upper }}</div>
                             <div style="min-width:0;">
                                 <div style="font-weight:500;color:#1e293b;">{{ data.applicant.registered_by.get_full_name }}</div>
                                 <div style="color:#64748b;">{{ data.applicant.registered_by.get_position_display }}
@@ -3125,8 +3247,13 @@
                     </td>
                     <td class="col-actions">
                         <div style="display: flex; gap: 0.25rem; flex-wrap: wrap; justify-content: center; align-items: center;">
-                            <button class="action-btn" style="background: #dbeafe; color: #1d4ed8;"
+                            <button type="button" class="btn-review btn-review-walkin"
                                 onclick="runEvaluatePrecheck('{{ data.applicant.id }}', '{{ data.applicant.full_name|escapejs }}')">
+                                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="9" cy="7" r="4"></circle>
+                                    <polyline points="16 11 18 13 22 9"></polyline>
+                                </svg>
                                 Evaluate
                             </button>
                             {% if 'generate_form' in data.user_actions %}
@@ -3149,7 +3276,24 @@
             </tbody>
         </table>
         <div class="table-footer">
-            <p>Showing {{ applicants_data|length }} applicant record{{ applicants_data|length|pluralize }}</p>
+            <div class="table-pagination">
+                <span class="table-pagination-info">
+                    Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count }} applicant record{{ page_obj.paginator.count|pluralize }}
+                </span>
+                <div class="table-pagination-controls">
+                    {% if page_obj.has_previous %}
+                    <a class="btn-page" href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.previous_page_number }}">Prev</a>
+                    {% else %}
+                    <span class="btn-page is-disabled">Prev</span>
+                    {% endif %}
+                    <span class="page-indicator">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                    {% if page_obj.has_next %}
+                    <a class="btn-page" href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.next_page_number }}">Next</a>
+                    {% else %}
+                    <span class="btn-page is-disabled">Next</span>
+                    {% endif %}
+                </div>
+            </div>
         </div>
         {% else %}
         <div class="empty-state">
@@ -3490,7 +3634,7 @@
     // Filter functions
     function filterByStage(stage) {
         const search = document.getElementById('searchInput')?.value || '';
-        window.location.href = `?stage=${stage}&search=${encodeURIComponent(search)}`;
+        window.location.href = `?stage=${stage}&search=${encodeURIComponent(search)}&page=1`;
     }
 
     function handleStageChange() {
@@ -3503,8 +3647,10 @@
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(() => {
             const search = event.target.value;
-            const stage = document.getElementById('stageFilter').value;
-            window.location.href = `?stage=${stage}&search=${encodeURIComponent(search)}`;
+            const stage = document.getElementById('stageFilter')?.value
+                || new URLSearchParams(window.location.search).get('stage')
+                || 'all';
+            window.location.href = `?stage=${stage}&search=${encodeURIComponent(search)}&page=1`;
         }, 500);
     }
 
@@ -3667,7 +3813,7 @@
         const summary = document.getElementById('modalM1EvidenceSummary');
         if (!box || !summary || !profile) return;
 
-        // Get check results from data (must mirror `_module2_eligibility_snapshot` / Layer 2 readouts)
+        // Get check results from data (must mirror `_module2_eligibility_snapshot` profile readouts; queue is separate)
         const incomeClear = !!(data && data.m1_income_eligible);
         const propertyClear = !!(data && data.m1_declares_no_property);
         const voterClear = !!(data && data.m1_voter_eligible);
