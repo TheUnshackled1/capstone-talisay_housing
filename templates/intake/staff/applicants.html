@@ -3966,6 +3966,27 @@
                     padding-bottom: 0.5rem;
                     border-bottom: 1px solid #cbd5e1;
                 }
+                .tha-reg-modal .tha-section-header-with-action {
+                    position: relative;
+                    display: flex;
+                    justify-content: flex-end;
+                    align-items: center;
+                    margin-bottom: 1rem;
+                    flex-wrap: wrap;
+                    gap: 0.5rem;
+                    padding-bottom: 0.75rem;
+                    border-bottom: 1px solid #cbd5e1;
+                    min-height: 2rem;
+                }
+                .tha-reg-modal .tha-section-header-with-action .tha-section-title {
+                    position: absolute;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    margin: 0;
+                    padding: 0;
+                    border-bottom: none;
+                    text-align: center;
+                }
                 .tha-reg-modal .tha-section-block {
                     margin-bottom: 1.5rem;
                     padding-bottom: 1rem;
@@ -4135,6 +4156,7 @@
                     background: #ffffff;
                     border-radius: 0.5rem;
                     padding: 0.75rem 0.85rem;
+                    text-align: center;
                 }
                 .tha-reg-modal .tha-layer-card.option-a { border-left: 4px solid #b91c1c; }
                 .tha-reg-modal .tha-layer-card.option-b { border-left: 4px solid #b45309; }
@@ -4177,6 +4199,8 @@
                     gap: 0.45rem;
                     margin-bottom: 0.35rem;
                     position: relative;
+                    justify-content: center;
+                    width: 100%;
                 }
                 .tha-reg-modal .tha-layer-check input {
                     position: absolute;
@@ -4216,7 +4240,23 @@
                 .tha-reg-modal .tha-layer-stack .danger-warning {
                     margin-top: 0;
                 }
+                .tha-reg-modal .tha-reg-disp-panel {
+                    text-align: center;
+                }
+                .tha-reg-modal .tha-reg-disp-panel .section-label,
+                .tha-reg-modal .tha-reg-disp-panel .form-label,
+                .tha-reg-modal .tha-reg-disp-panel .info-note p {
+                    text-align: center;
+                }
+                .tha-reg-modal .tha-reg-disp-panel .form-input,
+                .tha-reg-modal .tha-reg-disp-panel .form-select {
+                    text-align: center;
+                }
                 .tha-reg-modal .help-text { font-size: 0.6875rem; color: #64748b; margin-top: 0.25rem; display: block; letter-spacing: 0.01em; }
+                .tha-reg-modal .modal-title,
+                .tha-reg-modal .tha-section-title {
+                    text-align: center;
+                }
                 .tha-reg-modal #addApplicantForm .form-input,
                 .tha-reg-modal #addApplicantForm .form-select { text-transform: none; border-radius: 2px; }
                 .tha-reg-modal #addApplicantForm .form-input,
@@ -4229,6 +4269,13 @@
                 }
                 #addModal .modal-content.tha-reg-modal {
                     margin: 0 auto;
+                }
+                #addModal .modal-footer {
+                    justify-content: center;
+                }
+                #addModal .modal-footer .btn-modal {
+                    min-width: 220px;
+                    justify-content: center;
                 }
                 @media (max-width: 1023px) {
                     #addModal {
@@ -4522,7 +4569,7 @@
 
                 <!-- Section B -->
                 <div class="tha-section-block">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem; padding-bottom: 0.75rem; border-bottom: 1px solid #cbd5e1;">
+                    <div class="tha-section-header-with-action">
                         <h3 class="tha-section-title" style="margin-bottom: 0; padding-bottom: 0; border-bottom: none;">Household members</h3>
                         <button type="button" class="tha-btn-add-member" onclick="addHouseholdMember()">Add household member</button>
                     </div>
@@ -4682,7 +4729,7 @@
                 </svg>
                 Submit and run eligibility check
             </button>
-            <button type="button" class="btn-modal secondary" onclick="closeAddModal()">
+            <button type="button" class="btn-modal danger" onclick="closeAddModal()">
                 Close without saving
             </button>
         </div>
@@ -6382,6 +6429,8 @@
                 populateEligibilityChecksB(currentApplicant, isInDangerZoneB);
 
                 // Populate Applicant Situation (D. section)
+                const situationCard = document.getElementById('reviewApplicantSituationCard');
+                const situationIcon = document.getElementById('situationIcon');
                 const situationLabel = document.getElementById('reviewSituationLabel');
                 const situationDesc = document.getElementById('reviewSituationDescription');
                 const displacementReason = currentApplicant.displacementReason || '';
@@ -6403,6 +6452,60 @@
                         situationLabel.textContent = '—';
                         situationDesc.textContent = 'Applicant situation not recorded.';
                     }
+                }
+
+                // Color-code Applicant Situation card by selected option (A/B/C/D)
+                const situationTheme = {
+                    danger_zone: {
+                        cardBg: 'linear-gradient(135deg, #fef2f2 0%, #fff7ed 100%)',
+                        cardBorder: '#fecaca',
+                        iconBg: '#fee2e2',
+                        labelColor: '#b91c1c',
+                        descColor: '#7f1d1d',
+                    },
+                    ejected: {
+                        cardBg: 'linear-gradient(135deg, #fff7ed 0%, #fffbeb 100%)',
+                        cardBorder: '#fdba74',
+                        iconBg: '#ffedd5',
+                        labelColor: '#b45309',
+                        descColor: '#9a3412',
+                    },
+                    relocated: {
+                        cardBg: 'linear-gradient(135deg, #f0fdf4 0%, #ecfeff 100%)',
+                        cardBorder: '#86efac',
+                        iconBg: '#dcfce7',
+                        labelColor: '#047857',
+                        descColor: '#065f46',
+                    },
+                    not_abc: {
+                        cardBg: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+                        cardBorder: '#cbd5e1',
+                        iconBg: '#e2e8f0',
+                        labelColor: '#475569',
+                        descColor: '#334155',
+                    },
+                    default: {
+                        cardBg: 'linear-gradient(135deg, #f0f9ff 0%, #f1f5f9 100%)',
+                        cardBorder: '#cbd5e1',
+                        iconBg: '#e0f2fe',
+                        labelColor: '#1e293b',
+                        descColor: '#475569',
+                    },
+                };
+
+                const appliedTheme = situationTheme[displacementReason] || situationTheme.default;
+                if (situationCard) {
+                    situationCard.style.background = appliedTheme.cardBg;
+                    situationCard.style.borderColor = appliedTheme.cardBorder;
+                }
+                if (situationIcon) {
+                    situationIcon.style.background = appliedTheme.iconBg;
+                }
+                if (situationLabel) {
+                    situationLabel.style.color = appliedTheme.labelColor;
+                }
+                if (situationDesc) {
+                    situationDesc.style.color = appliedTheme.descColor;
                 }
 
                 // Show/hide danger zone sections based on displacement reason
