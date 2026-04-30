@@ -1892,6 +1892,33 @@
         background: #fafbfc;
     }
 
+    /* Module 1 policy mismatch — income / voter / residency / property (review emphasis only) */
+    #reviewModal .form-group.tha-layer2-violation {
+        position: relative;
+        padding: 0.5rem 0.65rem;
+        margin: -0.15rem -0.35rem 0.4rem;
+        border-radius: 0.5rem;
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        box-shadow: inset 3px 0 0 #dc2626;
+    }
+
+    #reviewModal .form-group.tha-layer2-violation .form-label {
+        color: #991b1b;
+        font-weight: 700;
+    }
+
+    #reviewModal .form-group.tha-layer2-violation .form-input,
+    #reviewModal .form-group.tha-layer2-violation .form-select {
+        border-color: #fca5a5 !important;
+        background: #ffffff !important;
+        color: #7f1d1d !important;
+    }
+
+    #reviewModal .modal-content.tha-review-modal.tha-review-modal--policy-alert::before {
+        background: linear-gradient(90deg, #991b1b 0%, #dc2626 40%, #f97316 100%);
+    }
+
     /* Status badge above the form — refined institutional pill */
     #reviewModal .status-badge {
         display: inline-flex;
@@ -3157,7 +3184,10 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Registered voter in Talisay City</label>
-                                <input type="text" class="form-input" id="reviewVoterB" readonly>
+                                <select class="form-select" id="reviewVoterB" name="is_registered_voter_talisay_b" disabled>
+                                    <option value="no">No</option>
+                                    <option value="yes">Yes</option>
+                                </select>
                             </div>
                             <div class="form-group" style="grid-column: span 2;">
                                 <label class="form-label">Present address</label>
@@ -3179,6 +3209,13 @@
                             <div class="form-group">
                                 <label class="form-label">Years of residence in Talisay City</label>
                                 <input type="number" class="form-input" id="reviewYearsB" name="years_residing_b" min="0" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Has Property Ownership in Talisay City</label>
+                                <select class="form-select" id="reviewPropertyB" name="has_property_in_talisay_b" disabled>
+                                    <option value="no">No</option>
+                                    <option value="yes">Yes</option>
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -3525,7 +3562,7 @@
                             <polyline points="17 21 17 13 7 13 7 21"></polyline>
                             <polyline points="7 3 7 8 15 8"></polyline>
                         </svg>
-                        Save amendments
+                        Save Edit
                     </button>
                     <button type="button" class="btn-modal secondary" onclick="cancelEdit()">
                         Discard changes
@@ -5366,6 +5403,120 @@
 
     /** Module 1 income rule — must match `Applicant.is_income_eligible` / `update_eligibility` in intake/views.py */
     const MODULE1_INCOME_CEILING = 10000;
+    /** Mirror `MODULE1_MIN_YEARS_RESIDING_TALISAY` in intake/views.py */
+    const MODULE1_MIN_YEARS_RESIDING = 5;
+
+    function clearLayer2ViolationClasses(scopeRoot) {
+        if (!scopeRoot) return;
+        scopeRoot.querySelectorAll('.tha-layer2-violation').forEach(function (el) {
+            el.classList.remove('tha-layer2-violation');
+        });
+    }
+
+    function parseMonthlyIncomeLayer2(raw) {
+        if (raw == null || raw === '') return NaN;
+        if (typeof raw === 'number' && Number.isFinite(raw)) return raw;
+        const n = parseFloat(String(raw).replace(/,/g, '').trim());
+        return Number.isFinite(n) ? n : NaN;
+    }
+
+    function getLayer2ViolationFlags(applicant) {
+        if (!applicant) {
+            return { income: false, residency: false, voter: false, property: false, any: false };
+        }
+        const incomeNum = parseMonthlyIncomeLayer2(applicant.monthlyIncome);
+        const ceiling = Number(applicant.incomeCeilingPeso) > 0 ? Number(applicant.incomeCeilingPeso) : MODULE1_INCOME_CEILING;
+        const incomeViolates = Number.isFinite(incomeNum) && incomeNum > ceiling;
+
+        const years = parseInt(applicant.yearsResiding, 10);
+        const yearsNum = Number.isFinite(years) ? years : 0;
+        const residencyViolates = yearsNum < MODULE1_MIN_YEARS_RESIDING;
+
+        const voterViolates = !applicant.isRegisteredVoterTalisay;
+
+        const hp = applicant.hasPropertyInTalisay;
+        const propertyViolates = hp === true || hp === 'true' || hp === 1;
+
+        const any = !!(incomeViolates || residencyViolates || voterViolates || propertyViolates);
+        return {
+            income: incomeViolates,
+            residency: residencyViolates,
+            voter: voterViolates,
+            property: propertyViolates,
+            any: any,
+        };
+    }
+
+    function getApplicantSnapshotForLayer2FromDangerZoneForm(baseApplicant) {
+        const a = Object.assign({}, baseApplicant || {});
+        const incEl = document.getElementById('reviewIncomeB');
+        const yrEl = document.getElementById('reviewYearsB');
+        const voterEl = document.getElementById('reviewVoterB');
+        const propEl = document.getElementById('reviewPropertyB');
+        if (incEl && incEl.value !== undefined) {
+            const raw = String(incEl.value || '').replace(/,/g, '');
+            const n = parseFloat(raw);
+            if (Number.isFinite(n)) a.monthlyIncome = n;
+        }
+        if (yrEl && yrEl.value !== undefined && yrEl.value !== '') {
+            const n = parseInt(yrEl.value, 10);
+            if (Number.isFinite(n)) a.yearsResiding = n;
+        }
+        if (voterEl && voterEl.value !== undefined) {
+            const v = String(voterEl.value || '').trim().toLowerCase();
+            a.isRegisteredVoterTalisay = v === 'yes' || v === 'true' || v === '1';
+        }
+        if (propEl && propEl.value !== undefined) {
+            const v = String(propEl.value || '').trim().toLowerCase();
+            a.hasPropertyInTalisay = v === 'yes' || v === 'true' || v === '1';
+        }
+        return a;
+    }
+
+    function applyLayer2ViolationHighlights(applicant, scopeRoot) {
+        clearLayer2ViolationClasses(scopeRoot);
+        if (!applicant || !scopeRoot) return;
+        const flags = getLayer2ViolationFlags(applicant);
+        function mark(inputId, violated) {
+            const input = document.getElementById(inputId);
+            const wrap = input && input.closest('.form-group');
+            if (wrap && violated) wrap.classList.add('tha-layer2-violation');
+        }
+        mark('reviewIncomeB', flags.income);
+        mark('reviewVoterB', flags.voter);
+        mark('reviewYearsB', flags.residency);
+        mark('reviewPropertyB', flags.property);
+    }
+
+    function updateReviewModalPolicyAlert(applicant) {
+        const shell = document.querySelector('#reviewModal .modal-content.tha-review-modal');
+        if (!shell) return;
+        const flags = getLayer2ViolationFlags(applicant);
+        shell.classList.toggle('tha-review-modal--policy-alert', flags.any);
+    }
+
+    /** Recompute red violation boxes from current Channel B form values (live while editing). */
+    function refreshLayer2ViolationsFromDangerZoneForm() {
+        const dzRoot = document.getElementById('dangerZoneReviewSection');
+        if (!dzRoot || !currentApplicant || currentApplicant.channel !== 'B') return;
+        const snap = getApplicantSnapshotForLayer2FromDangerZoneForm(currentApplicant);
+        applyLayer2ViolationHighlights(snap, dzRoot);
+        updateReviewModalPolicyAlert(snap);
+    }
+
+    (function bindDangerZoneLayer2LiveListeners() {
+        const root = document.getElementById('dangerZoneReviewSection');
+        if (!root || root.dataset.thaLayer2LiveBound === '1') return;
+        root.dataset.thaLayer2LiveBound = '1';
+        const watched = { reviewIncomeB: 1, reviewYearsB: 1, reviewVoterB: 1, reviewPropertyB: 1 };
+        function onLayer2Field(ev) {
+            const id = ev.target && ev.target.id;
+            if (!id || !watched[id]) return;
+            refreshLayer2ViolationsFromDangerZoneForm();
+        }
+        root.addEventListener('input', onLayer2Field);
+        root.addEventListener('change', onLayer2Field);
+    })();
 
     function incomeCheckState(applicant) {
         const income = Number(applicant.monthlyIncome) || 0;
@@ -5903,6 +6054,8 @@
 
                 // Mirror Registration Sheet identity / household / income fields (read-only)
                 populateChannelBRegistrationMirror(currentApplicant);
+                applyLayer2ViolationHighlights(currentApplicant, dangerZoneSection);
+                updateReviewModalPolicyAlert(currentApplicant);
 
                 // CDRRMO summary strip — only while disposition is still pending (final UI from populateCdrrmoSection)
                 const cdrrmoBox = document.getElementById('cdrrmoStatusBox');
@@ -6263,7 +6416,12 @@
         setValue('reviewAgeB', applicant.age);
         setValue('reviewDateOfBirthB', applicant.dateOfBirth);
         const voterEl = document.getElementById('reviewVoterB');
-        if (voterEl) voterEl.value = applicant.isRegisteredVoterTalisay ? 'Yes' : 'No';
+        if (voterEl) voterEl.value = applicant.isRegisteredVoterTalisay ? 'yes' : 'no';
+        const propEl = document.getElementById('reviewPropertyB');
+        if (propEl) {
+            const hp = applicant.hasPropertyInTalisay;
+            propEl.value = (hp === true || hp === 'true' || hp === 1) ? 'yes' : 'no';
+        }
         setValue('reviewOccupationB', applicant.occupation);
         setValue('reviewEmploymentStatusB', applicant.employmentStatus);
 
@@ -6817,6 +6975,10 @@
     function closeReviewModal() {
         const modal = document.getElementById('reviewModal');
         if (modal) modal.classList.remove('active');
+        const shell = document.querySelector('#reviewModal .modal-content.tha-review-modal');
+        if (shell) shell.classList.remove('tha-review-modal--policy-alert');
+        const dzRoot = document.getElementById('dangerZoneReviewSection');
+        if (dzRoot) clearLayer2ViolationClasses(dzRoot);
         currentApplicant = null;
         isEditMode = false;
     }
@@ -6833,7 +6995,7 @@
         
         // Channel B (Danger Zone) fields
         const dangerZoneFields = ['reviewFullNameB', 'reviewIncomeB', 'reviewHouseholdB', 'reviewYearsB', 'reviewPhoneB', 'reviewAddressB', 'reviewDangerLocation'];
-        const selectFieldsB = ['reviewBarangayB', 'reviewDangerType'];
+        const selectFieldsB = ['reviewBarangayB', 'reviewDangerType', 'reviewVoterB', 'reviewPropertyB'];
         
         // Channel A landowner fields
         const landownerFields = ['reviewLandownerName', 'reviewLandownerPhone', 'reviewPropertyAddress', 'reviewSubmissionBarangay'];
@@ -6886,7 +7048,7 @@
         const editActions = document.getElementById('editActions');
         const reviewActions = document.getElementById('reviewActions');
         
-        if (editToggleText) editToggleText.textContent = isEditMode ? 'Cancel amendment' : 'EDIT record';
+        if (editToggleText) editToggleText.textContent = isEditMode ? 'Cancel Edit' : 'EDIT record';
         if (editActions) editActions.style.display = isEditMode ? 'flex' : 'none';
         
         // When leaving edit mode, re-apply role/path-based button gating.
@@ -6903,6 +7065,12 @@
             if (currentApplicant.channel === 'A') {
                 // Channel A uses static form fields - just update document checklist
                 populateDocumentChecklistA(currentApplicant);
+            }
+            if (currentApplicant.channel === 'B') {
+                const dzRoot = document.getElementById('dangerZoneReviewSection');
+                const snap = getApplicantSnapshotForLayer2FromDangerZoneForm(currentApplicant);
+                applyLayer2ViolationHighlights(snap, dzRoot);
+                updateReviewModalPolicyAlert(snap);
             }
         }
     }
@@ -7036,6 +7204,9 @@
                 if (dangerTypeEl) dangerTypeEl.value = currentApplicant.dangerZoneType || '';
                 if (dangerLocEl) dangerLocEl.value = currentApplicant.dangerZoneLocation || '';
                 populateChannelBRegistrationMirror(currentApplicant);
+                const dzRoot = document.getElementById('dangerZoneReviewSection');
+                applyLayer2ViolationHighlights(currentApplicant, dzRoot);
+                updateReviewModalPolicyAlert(currentApplicant);
             } else {
                 const fullNameEl = document.getElementById('reviewFullName');
                 const barangayEl = document.getElementById('reviewBarangay');
@@ -7241,8 +7412,14 @@
             formData.append('years_residing', document.getElementById('reviewYearsB').value);
             formData.append('phone_number', document.getElementById('reviewPhoneB').value);
             formData.append('current_address', document.getElementById('reviewAddressB').value);
-            formData.append('danger_zone_type', document.getElementById('reviewDangerType').value);
-            formData.append('danger_zone_location', document.getElementById('reviewDangerLocation').value);
+            const dzTypeEl = document.getElementById('reviewDangerType');
+            const dzLocEl = document.getElementById('reviewDangerLocation');
+            formData.append('danger_zone_type', dzTypeEl ? dzTypeEl.value : '');
+            formData.append('danger_zone_location', dzLocEl ? dzLocEl.value : '');
+            const voterB = document.getElementById('reviewVoterB');
+            const propB = document.getElementById('reviewPropertyB');
+            if (voterB) formData.append('is_registered_voter_talisay', voterB.value);
+            if (propB) formData.append('has_property_in_talisay', propB.value);
             
         } else {
             // Channel C: Regular walk-in applicant data
@@ -7263,8 +7440,9 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                showFlowAlert('Changes saved successfully.', 'Success', null, 'success');
-                location.reload();
+                showFlowAlert('Changes saved successfully.', 'Success', function () {
+                    location.reload();
+                }, 'success');
             } else {
                 showFlowAlert('Error: ' + (data.error || 'Unknown error'));
             }

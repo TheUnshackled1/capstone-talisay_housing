@@ -380,12 +380,14 @@ def update_applicant(request, position):
         old_danger_zone_type = (applicant.danger_zone_type or '').strip()
         old_danger_zone_location = (applicant.danger_zone_location or '').strip()
         old_declared = bool(old_danger_zone_type)
-        if applicant.status != 'pending_cdrrmo':
+        # Walk-in registrations start as `pending`; hazard claims may move to `pending_cdrrmo`.
+        _intake_amendment_statuses = frozenset({'pending', 'pending_cdrrmo'})
+        if applicant.status not in _intake_amendment_statuses:
             return JsonResponse({
                 'success': False,
                 'error': (
-                    f'This record is not pending CDRRMO processing (current status: {applicant.get_status_display()}). '
-                    'Field verification is disabled for non-pending records.'
+                    f'Amendments are only allowed while the record is pending intake review '
+                    f'(current status: {applicant.get_status_display()}).'
                 ),
             })
 
@@ -409,12 +411,27 @@ def update_applicant(request, position):
             applicant.monthly_income = Decimal(monthly_income)
         if household_size:
             applicant.household_size = int(household_size)
-        if years_residing:
-            applicant.years_residing = int(years_residing)
+        if years_residing is not None and str(years_residing).strip() != '':
+            try:
+                applicant.years_residing = int(years_residing)
+            except (TypeError, ValueError):
+                pass
         if phone_number:
             applicant.phone_number = phone_number
         if current_address:
             applicant.current_address = current_address
+
+        voter_raw = (request.POST.get('is_registered_voter_talisay') or '').strip().lower()
+        if voter_raw in ('yes', 'true', '1', 'on'):
+            applicant.is_registered_voter_talisay = True
+        elif voter_raw in ('no', 'false', '0', 'off'):
+            applicant.is_registered_voter_talisay = False
+
+        prop_raw = (request.POST.get('has_property_in_talisay') or '').strip().lower()
+        if prop_raw in ('yes', 'true', '1'):
+            applicant.has_property_in_talisay = True
+        elif prop_raw in ('no', 'false', '0'):
+            applicant.has_property_in_talisay = False
 
         # Channel B specific: Danger zone fields
         if channel == 'B':
@@ -433,14 +450,10 @@ def update_applicant(request, position):
                     })
                 applicant.danger_zone_location = danger_zone_location
 
-        # Update document checklist
-        applicant.doc_brgy_residency = request.POST.get('doc_brgy_residency') == 'true'
-        applicant.doc_brgy_indigency = request.POST.get('doc_brgy_indigency') == 'true'
-        applicant.doc_cedula = request.POST.get('doc_cedula') == 'true'
-        applicant.doc_police_clearance = request.POST.get('doc_police_clearance') == 'true'
-        applicant.doc_no_property = request.POST.get('doc_no_property') == 'true'
-        applicant.doc_2x2_picture = request.POST.get('doc_2x2_picture') == 'true'
-        applicant.doc_sketch_location = request.POST.get('doc_sketch_location') == 'true'
+        # Update document checklist only for keys sent (Channel B save omits them — do not wipe).
+        for field in doc_fields:
+            if field in request.POST:
+                setattr(applicant, field, request.POST.get(field) == 'true')
 
         applicant.save()
 
@@ -927,6 +940,7 @@ def applicants_list(request, position):
             'extensionName': app.extension_name or '',
             'sex': app.sex or '',
             'isRegisteredVoterTalisay': bool(app.is_registered_voter_talisay),
+            'hasPropertyInTalisay': bool(app.has_property_in_talisay),
             'age': app.age or 0,
             'dateOfBirth': app.date_of_birth.isoformat() if app.date_of_birth else '',
             'barangay': app.barangay.name if app.barangay else 'Unknown',
