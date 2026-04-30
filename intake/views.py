@@ -37,7 +37,7 @@ DISPLACEMENT_PATHS_NEED_ISF_EXTRA = frozenset({'danger_zone', 'ejected', 'reloca
 ISF_EXTRA_VAULT_DOC_TYPE = 'isf_situational_docs'
 
 
-def _archive_requirement_scan_rows(requirements_group_a, scanned_types_set, displacement_reason=''):
+def _archive_requirement_scan_rows(requirements_group_a, scanned_types_set, displacement_reason='', latest_doc_by_type=None):
     """
     Build checklist rows from `documents.Requirement` rows; `scanned` is True when this
     requirement's `vault_document_type` matches an uploaded Applicant Document.
@@ -46,10 +46,12 @@ def _archive_requirement_scan_rows(requirements_group_a, scanned_types_set, disp
     `ISF_EXTRA_VAULT_DOC_TYPE` (Option D keeps the base count only).
     """
     scanned_types_set = scanned_types_set or set()
+    latest_doc_by_type = latest_doc_by_type or {}
     rows = []
     for req in requirements_group_a:
         dtype = (getattr(req, 'vault_document_type', None) or '').strip()
         scanned = bool(dtype and dtype in scanned_types_set)
+        latest_meta = latest_doc_by_type.get(dtype, {}) if dtype else {}
         rows.append({
             'code': req.code,
             'name': req.name,
@@ -57,6 +59,8 @@ def _archive_requirement_scan_rows(requirements_group_a, scanned_types_set, disp
             'is_required_for_form': req.is_required_for_form,
             'is_active': req.is_active,
             'scanned': scanned,
+            'latest_file_url': latest_meta.get('url', ''),
+            'latest_file_name': latest_meta.get('name', ''),
         })
     scanned_count = 0
     trackable_total = 0
@@ -71,6 +75,7 @@ def _archive_requirement_scan_rows(requirements_group_a, scanned_types_set, disp
     dr = (displacement_reason or '').strip()
     if dr in DISPLACEMENT_PATHS_NEED_ISF_EXTRA:
         scanned_isf = ISF_EXTRA_VAULT_DOC_TYPE in scanned_types_set
+        latest_isf = latest_doc_by_type.get(ISF_EXTRA_VAULT_DOC_TYPE, {})
         rows.append({
             'code': 'ISF-SIT',
             'name': 'ISF situational documentation (A: Danger Zone/Hazard, B: Evicted, C: Government Project)',
@@ -79,6 +84,8 @@ def _archive_requirement_scan_rows(requirements_group_a, scanned_types_set, disp
             'is_required_for_form': False,
             'is_active': True,
             'scanned': scanned_isf,
+            'latest_file_url': latest_isf.get('url', ''),
+            'latest_file_name': latest_isf.get('name', ''),
         })
 
     return rows, scanned_count, trackable_total
@@ -1042,11 +1049,32 @@ def applicants_list(request, position):
 
     applicant_ids_for_docs = [a.applicant_id for a in archives if a.applicant_id]
     docs_by_applicant_id = defaultdict(set)
+    latest_doc_meta_by_applicant_id = defaultdict(dict)
     if applicant_ids_for_docs:
         for aid, doc_type in Document.objects.filter(
             applicant_id__in=applicant_ids_for_docs,
         ).values_list('applicant_id', 'document_type'):
             docs_by_applicant_id[aid].add(doc_type)
+        latest_docs = (
+            Document.objects.filter(applicant_id__in=applicant_ids_for_docs)
+            .exclude(file='')
+            .order_by('applicant_id', 'document_type', '-uploaded_at')
+        )
+        for doc in latest_docs:
+            dtype = (doc.document_type or '').strip()
+            if not dtype:
+                continue
+            slot = latest_doc_meta_by_applicant_id[doc.applicant_id]
+            if dtype in slot:
+                continue
+            try:
+                file_url = request.build_absolute_uri(doc.file.url)
+            except (ValueError, AttributeError):
+                file_url = ''
+            slot[dtype] = {
+                'url': file_url,
+                'name': (doc.file_name or doc.title or doc.get_document_type_display() or '').strip(),
+            }
 
     requirements_group_a = list(Requirement.objects.filter(group='A').order_by('order', 'code'))
 
@@ -1092,6 +1120,7 @@ def applicants_list(request, position):
             requirements_group_a,
             scanned_types,
             displacement_reason=disp_snapshot,
+            latest_doc_by_type=latest_doc_meta_by_applicant_id.get(archive.applicant_id, {}),
         )
         requirements_total = trackable_total if trackable_total > 0 else max(len(requirement_scan_rows), 1)
 

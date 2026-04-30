@@ -796,16 +796,6 @@
     #archiveRequirementsModal .archive-req-table-group {
         color: #475569;
     }
-    #archiveRequirementsModal .archive-req-footnote {
-        margin: 0.7rem 0 0;
-        font-size: 0.67rem;
-        color: #64748b;
-        line-height: 1.45;
-        background: #fff;
-        border: 1px solid #e2e8f0;
-        border-radius: 0.65rem;
-        padding: 0.55rem 0.7rem;
-    }
     #archiveRequirementsModal .archive-req-footer {
         background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
         border-top: 1px solid #e2e8f0;
@@ -841,10 +831,49 @@
         border-color: #93c5fd;
         color: #1d4ed8;
         background: #eff6ff;
+        font-size: 0.72rem;
+        padding: 0.28rem 0.55rem;
+        border-radius: 0.4rem;
+        line-height: 1.2;
     }
     #archiveRequirementsModal #archiveScanAllBtn:hover {
         border-color: #60a5fa;
         background: #dbeafe;
+    }
+    #archiveRequirementsModal .archive-req-table-actions {
+        white-space: nowrap;
+        vertical-align: middle;
+    }
+    #archiveRequirementsModal .archive-req-actions-group {
+        display: inline-flex;
+        gap: 0.3rem;
+        flex-wrap: wrap;
+    }
+    #archiveRequirementsModal .archive-req-upload-btn {
+        font-size: 0.72rem;
+        padding: 0.28rem 0.55rem;
+        border-radius: 0.4rem;
+        line-height: 1.2;
+        min-width: 6.25rem;
+        justify-content: center;
+        border-color: #93c5fd;
+        color: #1d4ed8;
+        background: #eff6ff;
+    }
+    #archiveRequirementsModal .archive-req-upload-btn:hover {
+        border-color: #60a5fa;
+        background: #dbeafe;
+    }
+    #archiveRequirementsModal .archive-req-row-scan-btn {
+        min-width: 6.25rem;
+        justify-content: center;
+        border-color: #86efac;
+        color: #166534;
+        background: #f0fdf4;
+    }
+    #archiveRequirementsModal .archive-req-row-scan-btn:hover {
+        border-color: #4ade80;
+        background: #dcfce7;
     }
     #archiveRequirementsModal .archive-proceed-hint {
         display: inline-flex;
@@ -2684,9 +2713,9 @@
                             <tr>
                                 <th>Code</th>
                                 <th>Name</th>
-                                <th>Group</th>
                                 <th>Is required for form</th>
                                 <th>Is active</th>
+                                <th>Actions</th>
                                 <th>Scanned</th>
                             </tr>
                         </thead>
@@ -2694,14 +2723,9 @@
                     </table>
                 </div>
             </div>
-            <p class="archive-req-footnote">
-                “Scanned” means at least one digital file exists in the applicant’s vault for that row. When registration Applicant Situation is Option A, B, or C, an eighth row (“ISF situational documentation”) is shown for follow-up tracking but does not change the 7 required baseline gate.
-            </p>
+            <input type="file" id="archiveRequirementFileInput" accept="image/*,application/pdf,.pdf" tabindex="-1" aria-hidden="true" style="position:absolute;width:0;height:0;opacity:0;pointer-events:none;">
         </div>
         <div class="archive-req-footer">
-            <button type="button" class="btn-modal secondary" id="archiveScanAllBtn" onclick="scanAllArchiveRequirementsOneByOne()">
-                Scan all documents
-            </button>
             <button
                 type="button"
                 class="btn-modal primary"
@@ -2767,7 +2791,6 @@
                                 <th>Checked</th>
                                 <th>Code</th>
                                 <th>Name</th>
-                                <th>Group</th>
                                 <th>Is required for form</th>
                                 <th>Is active</th>
                                 <th>Scanned</th>
@@ -5050,6 +5073,7 @@
     }
 
     function closeArchiveRequirementsModal() {
+        pendingArchiveUploadContext = null;
         const modal = document.getElementById('archiveRequirementsModal');
         if (modal) modal.classList.remove('active');
     }
@@ -5067,6 +5091,98 @@
         return String(code || '').toUpperCase() === 'ISF-SIT';
     }
     let currentArchiveRequirementsPayload = null;
+    let pendingArchiveUploadContext = null;
+    let archiveRowUploadBusyButton = null;
+
+    function triggerArchiveRowDocumentUpload(codeRaw) {
+        const code = String(codeRaw || '').trim().toUpperCase();
+        const docKey = ARCHIVE_DOC_KEY_BY_CODE[code];
+        if (!docKey) {
+            showFlowAlert('This row cannot be uploaded from this checklist.');
+            return;
+        }
+        const payload = currentArchiveRequirementsPayload;
+        if (!payload || !payload.applicantId) {
+            showFlowAlert('No applicant loaded.');
+            return;
+        }
+        pendingArchiveUploadContext = {
+            applicantId: String(payload.applicantId),
+            referenceNumber: payload.referenceNumber || '',
+            code: code,
+            docKey: docKey,
+        };
+        const fileInput = document.getElementById('archiveRequirementFileInput');
+        if (!fileInput) return;
+        fileInput.value = '';
+        fileInput.click();
+    }
+    window.triggerArchiveRowDocumentUpload = triggerArchiveRowDocumentUpload;
+
+    function handleArchiveRequirementFileSelected(ev) {
+        const input = ev.target;
+        const file = input.files && input.files[0];
+        const ctx = pendingArchiveUploadContext;
+        pendingArchiveUploadContext = null;
+        if (!file || !ctx) {
+            if (input) input.value = '';
+            return;
+        }
+        const formData = new FormData();
+        formData.append('applicant_id', ctx.applicantId);
+        formData.append('doc_key', ctx.docKey);
+        formData.append('doc_code', ctx.code);
+        formData.append('file', file);
+
+        const uploadUrl = '{% url "intake:upload_scanned_requirement" request.user.position %}';
+        const uploadBtn = document.querySelector(
+            '#archiveRequirementsModal button.archive-req-upload-btn[data-archive-upload-code="' + ctx.code + '"]'
+        );
+        archiveRowUploadBusyButton = uploadBtn || null;
+        if (uploadBtn) {
+            uploadBtn.disabled = true;
+            uploadBtn.textContent = 'Uploading...';
+        }
+
+        fetch(uploadUrl, {
+            method: 'POST',
+            body: formData,
+            credentials: 'same-origin',
+        })
+            .then(function (response) { return response.json(); })
+            .then(function (data) {
+                if (!data.success) {
+                    throw new Error(data.error || 'Upload failed.');
+                }
+                const payload = currentArchiveRequirementsPayload;
+                if (payload && Array.isArray(payload.rows)) {
+                    payload.rows.forEach(function (row) {
+                        if (String(row.code || '').toUpperCase() === ctx.code) {
+                            row.scanned = true;
+                        }
+                    });
+                }
+                const statusEl = document.querySelector('[data-archive-code="' + ctx.code + '"] .req-scan');
+                if (statusEl) {
+                    statusEl.className = 'req-scan req-scan-done';
+                    statusEl.textContent = 'Scanned';
+                }
+                if (payload && payload.rows) {
+                    updateArchiveRequirementsSummary(payload.rows);
+                }
+            })
+            .catch(function (err) {
+                showFlowAlert(err.message || 'Upload failed.');
+            })
+            .finally(function () {
+                if (input) input.value = '';
+                if (archiveRowUploadBusyButton) {
+                    archiveRowUploadBusyButton.disabled = false;
+                    archiveRowUploadBusyButton.textContent = 'Upload file';
+                    archiveRowUploadBusyButton = null;
+                }
+            });
+    }
 
     function setArchiveScanButtonBusy(isBusy) {
         const strictBtn = document.getElementById('archiveScanAllBtn');
@@ -5076,6 +5192,17 @@
             strictBtn.style.cursor = isBusy ? 'wait' : 'pointer';
             strictBtn.textContent = isBusy ? 'Scanning documents...' : 'Scan all documents';
         }
+        document.querySelectorAll('#archiveRequirementsModal .archive-req-upload-btn, #archiveRequirementsModal .archive-req-row-scan-btn').forEach(function (btn) {
+            btn.disabled = isBusy;
+            btn.style.opacity = isBusy ? '0.6' : '1';
+            btn.style.cursor = isBusy ? 'wait' : 'pointer';
+            if (!isBusy && btn.classList.contains('archive-req-upload-btn') && btn.textContent === 'Uploading...') {
+                btn.textContent = 'Upload file';
+            }
+            if (!isBusy && btn.classList.contains('archive-req-row-scan-btn') && btn.textContent === 'Scanning...') {
+                btn.textContent = 'Scan all documents';
+            }
+        });
     }
 
     function updateArchiveRequirementsSummary(rows) {
@@ -5309,17 +5436,22 @@
                 var scanCell = r.scanned
                     ? '<span class="req-scan req-scan-done">Scanned</span>'
                     : '<span class="req-scan req-scan-pending">Not scanned</span>';
-                var code = escapeHtml(String(r.code || '')).toUpperCase();
+                var rawCode = String(r.code || '').trim().toUpperCase();
+                var code = escapeHtml(rawCode);
                 var followUpBadge = code === 'ISF-SIT'
                     ? '<span class="req-badge req-badge-no" style="margin-left:0.45rem;">Follow-up</span>'
                     : '';
                 var rowStyle = code === 'ISF-SIT' ? ' style="background:#f8fafc;"' : '';
+                var hasUpload = !!ARCHIVE_DOC_KEY_BY_CODE[rawCode];
+                var actionsCell = hasUpload
+                    ? '<td class="archive-req-table-actions"><div class="archive-req-actions-group"><button type="button" class="btn-modal secondary archive-req-upload-btn" data-archive-upload-code="' + code + '" onclick="triggerArchiveRowDocumentUpload(this.getAttribute(\'data-archive-upload-code\'))">Upload file</button><button type="button" class="btn-modal secondary archive-req-row-scan-btn" onclick="scanAllArchiveRequirementsOneByOne()">Scan all</button></div></td>'
+                    : '<td class="archive-req-table-actions"><span style="color:#94a3b8;font-size:0.75rem;">—</span></td>';
                 return '<tr data-archive-code="' + code + '"' + rowStyle + '>'
                     + '<td class="archive-req-table-code">' + escapeHtml(String(r.code || '')) + '</td>'
                     + '<td class="archive-req-table-name">' + escapeHtml(String(r.name || '')) + followUpBadge + '</td>'
-                    + '<td class="archive-req-table-group">' + escapeHtml(String(r.group_display || '')) + '</td>'
                     + '<td>' + reqBadge + '</td>'
                     + '<td>' + activeBadge + '</td>'
+                    + actionsCell
                     + '<td>' + scanCell + '</td>'
                     + '</tr>';
             }).join('');
@@ -5332,6 +5464,10 @@
     window.openArchiveRequirementsModal = openArchiveRequirementsModal;
 
     document.addEventListener('DOMContentLoaded', function() {
+        const archiveReqFileInput = document.getElementById('archiveRequirementFileInput');
+        if (archiveReqFileInput) {
+            archiveReqFileInput.addEventListener('change', handleArchiveRequirementFileSelected);
+        }
         const primaryBtn = document.getElementById('noticePrimaryBtn');
         const secondaryBtn = document.getElementById('noticeSecondaryBtn');
         if (primaryBtn) {
@@ -6793,7 +6929,6 @@
                     ${escapeHtml(req.name)}
                     ${isFollowUpRequirement(req.code) ? '<span class="req-badge req-badge-no" style="margin-left:0.45rem;">Follow-up</span>' : ''}
                 </td>
-                <td>${escapeHtml(req.group || 'Group A - Applicant Requirements')}</td>
                 <td>
                     <span class="${req.isRequired ? 'req-badge req-badge-yes' : 'req-badge req-badge-no'}">
                         ${req.isRequired ? 'Required' : 'Optional'}
