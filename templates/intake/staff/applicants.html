@@ -867,6 +867,10 @@
     #archiveRequirementsModal .archive-req-row-scan-btn {
         min-width: 6.25rem;
         justify-content: center;
+        font-size: 0.72rem;
+        padding: 0.28rem 0.55rem;
+        border-radius: 0.4rem;
+        line-height: 1.2;
         border-color: #86efac;
         color: #166534;
         background: #f0fdf4;
@@ -942,6 +946,12 @@
         color: #64748b;
         background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
         border-color: #cbd5e1;
+    }
+    #archiveRequirementsModal .archive-req-scan-link {
+        cursor: pointer;
+    }
+    #archiveRequirementsModal .archive-req-scan-link:hover {
+        filter: brightness(0.98);
     }
     @media (max-width: 640px) {
         #archiveRequirementsModal .archive-req-body {
@@ -4900,6 +4910,22 @@
             const restoreAlert = function () {
                 window.alert = originalAlert;
             };
+            const parseUploadResponse = function (rawResponse) {
+                if (!rawResponse) return { ok: true, document_url: '', document_name: '' };
+                try {
+                    const parsed = typeof rawResponse === 'string' ? JSON.parse(rawResponse) : rawResponse;
+                    if (parsed && typeof parsed === 'object') {
+                        return {
+                            ok: parsed.success !== false,
+                            document_url: parsed.document_url || '',
+                            document_name: parsed.document_name || '',
+                        };
+                    }
+                } catch (_err) {
+                    // keep default fallback
+                }
+                return { ok: true, document_url: '', document_name: '' };
+            };
             window.alert = function (message) {
                 if (shouldSuppressDwtHttpAlert(message)) {
                     return;
@@ -4931,16 +4957,25 @@
                     Dynamsoft.DWT.EnumDWT_ImageType.IT_PNG,
                     Dynamsoft.DWT.EnumDWT_UploadDataFormat.Binary,
                     fileName,
-                    function () {
+                    function (httpResponse) {
                         restoreAlert();
-                        resolve(true);
+                        resolve(parseUploadResponse(httpResponse));
                     },
                     function (_errorCode, errorString, httpResponse) {
                         restoreAlert();
                         let message = errorString || 'Upload failed.';
+                        const normalizedError = String(message || '').replace(/\s+/g, ' ').trim();
+                        if (/^HTTP process:\s*OK\s*\(200\)\.?$/i.test(normalizedError) || normalizedError.toLowerCase().startsWith('http process: ok')) {
+                            resolve(parseUploadResponse(httpResponse));
+                            return;
+                        }
                         if (httpResponse) {
                             try {
                                 const parsed = JSON.parse(httpResponse);
+                                if (parsed && parsed.success) {
+                                    resolve(parseUploadResponse(parsed));
+                                    return;
+                                }
                                 if (parsed && parsed.error) message = parsed.error;
                             } catch (_err) {
                                 // keep fallback message
@@ -5086,6 +5121,7 @@
         R05: 'doc_no_property',
         R06: 'doc_2x2_picture',
         R07: 'doc_sketch_location',
+        'ISF-SIT': 'doc_isf_situational',
     };
     function isFollowUpRequirement(code) {
         return String(code || '').toUpperCase() === 'ISF-SIT';
@@ -5118,6 +5154,111 @@
         fileInput.click();
     }
     window.triggerArchiveRowDocumentUpload = triggerArchiveRowDocumentUpload;
+
+    async function scanArchiveRequirementByCode(codeRaw) {
+        const code = String(codeRaw || '').trim().toUpperCase();
+        const docKey = ARCHIVE_DOC_KEY_BY_CODE[code];
+        const payload = currentArchiveRequirementsPayload;
+        const applicantId = payload ? payload.applicantId : '';
+        const referenceNumber = payload ? payload.referenceNumber : '';
+        if (!docKey || !applicantId) {
+            showFlowAlert('Unable to scan this requirement.');
+            return;
+        }
+
+        const rowScanBtn = document.querySelector(
+            '#archiveRequirementsModal button.archive-req-row-scan-btn[data-archive-scan-code="' + code + '"]'
+        );
+        if (rowScanBtn) {
+            rowScanBtn.disabled = true;
+            rowScanBtn.textContent = 'Scanning...';
+        }
+        try {
+            const dwt = await waitForDwtReady();
+            if (!dwt) throw new Error('Scanner SDK is not ready yet. Refresh the page and try again.');
+            await dwt.SelectSourceAsync();
+            await acquireImageWithDwt({ selectSource: false, closeSourceAfterAcquire: false });
+            const uploadResult = await uploadCurrentScannedImageForApplicant(applicantId, referenceNumber, docKey, code);
+            const isSaved = await saveArchiveRequirementDoc(applicantId, docKey, true);
+            if (!isSaved) {
+                console.warn('Checklist flag sync fallback failed after successful vault upload for', code);
+            }
+            if (payload && Array.isArray(payload.rows)) {
+                payload.rows.forEach(function (row) {
+                    if (String(row.code || '').trim().toUpperCase() === code) {
+                        row.scanned = true;
+                        if (uploadResult && uploadResult.document_url) row.latest_file_url = uploadResult.document_url;
+                        if (uploadResult && uploadResult.document_name) row.latest_file_name = uploadResult.document_name;
+                    }
+                });
+                updateArchiveRequirementsSummary(payload.rows);
+            }
+            renderArchiveRowStatusAndActions(code);
+            forceArchiveRowScannedDom(code, uploadResult && uploadResult.document_url ? uploadResult.document_url : '');
+            if (typeof dwt.CloseSource === 'function') {
+                try { dwt.CloseSource(); } catch (_err) {}
+            }
+        } catch (error) {
+            showFlowAlert(error.message || 'Unable to scan this requirement.');
+        } finally {
+            if (rowScanBtn) {
+                rowScanBtn.disabled = false;
+                rowScanBtn.textContent = 'Scan all';
+            }
+        }
+    }
+    window.scanArchiveRequirementByCode = scanArchiveRequirementByCode;
+    function openArchiveRequirementDocument(url) {
+        const safeUrl = String(url || '').trim();
+        if (!safeUrl) return;
+        window.open(safeUrl, '_blank', 'noopener');
+    }
+    window.openArchiveRequirementDocument = openArchiveRequirementDocument;
+
+    function renderArchiveRowStatusAndActions(code) {
+        const safeCode = String(code || '').trim().toUpperCase();
+        if (!safeCode) return;
+        const payload = currentArchiveRequirementsPayload;
+        const row = payload && Array.isArray(payload.rows)
+            ? payload.rows.find(function (r) { return String(r.code || '').trim().toUpperCase() === safeCode; })
+            : null;
+        if (!row) return;
+        const rowEl = document.querySelector('#archiveRequirementsTableBody tr[data-archive-code="' + safeCode + '"]');
+        if (!rowEl) return;
+        const cells = rowEl.querySelectorAll('td');
+        if (cells.length < 6) return;
+        const hasUpload = !!ARCHIVE_DOC_KEY_BY_CODE[safeCode];
+        const latestFileUrl = String(row.latest_file_url || '').trim();
+        const safeLatestFileUrl = escapeHtml(latestFileUrl);
+        const actionsHtml = !hasUpload
+            ? '<span style="color:#94a3b8;font-size:0.75rem;">—</span>'
+            : row.scanned
+                ? '<span style="color:#64748b;font-size:0.75rem;font-weight:600;">Completed</span>'
+                : '<div class="archive-req-actions-group"><button type="button" class="btn-modal secondary archive-req-upload-btn" data-archive-upload-code="' + safeCode + '" onclick="triggerArchiveRowDocumentUpload(this.getAttribute(\'data-archive-upload-code\'))">Upload file</button><button type="button" class="btn-modal secondary archive-req-row-scan-btn" data-archive-scan-code="' + safeCode + '" onclick="scanArchiveRequirementByCode(this.getAttribute(\'data-archive-scan-code\'))">Scan all</button></div>';
+        const scanHtml = row.scanned
+            ? (latestFileUrl
+                ? '<button type="button" class="req-scan req-scan-done archive-req-scan-link" data-archive-view-url="' + safeLatestFileUrl + '" onclick="openArchiveRequirementDocument(this.getAttribute(\'data-archive-view-url\'))">Scanned</button>'
+                : '<span class="req-scan req-scan-done">Scanned</span>')
+            : '<span class="req-scan req-scan-pending">Not scanned</span>';
+        cells[4].innerHTML = actionsHtml;
+        cells[5].innerHTML = scanHtml;
+    }
+
+    function forceArchiveRowScannedDom(code, documentUrl) {
+        const safeCode = String(code || '').trim().toUpperCase();
+        if (!safeCode) return;
+        const rowEl = document.querySelector('#archiveRequirementsTableBody tr[data-archive-code="' + safeCode + '"]');
+        if (!rowEl) return;
+        const cells = rowEl.querySelectorAll('td');
+        if (cells.length < 6) return;
+        cells[4].innerHTML = '<span style="color:#64748b;font-size:0.75rem;font-weight:600;">Completed</span>';
+        const safeDocUrl = String(documentUrl || '').trim();
+        if (safeDocUrl) {
+            cells[5].innerHTML = '<button type="button" class="req-scan req-scan-done archive-req-scan-link" data-archive-view-url="' + escapeHtml(safeDocUrl) + '" onclick="openArchiveRequirementDocument(this.getAttribute(\'data-archive-view-url\'))">Scanned</button>';
+        } else {
+            cells[5].innerHTML = '<span class="req-scan req-scan-done">Scanned</span>';
+        }
+    }
 
     function handleArchiveRequirementFileSelected(ev) {
         const input = ev.target;
@@ -5159,14 +5300,12 @@
                     payload.rows.forEach(function (row) {
                         if (String(row.code || '').toUpperCase() === ctx.code) {
                             row.scanned = true;
+                            if (data.document_url) row.latest_file_url = data.document_url;
+                            if (data.document_name) row.latest_file_name = data.document_name;
                         }
                     });
                 }
-                const statusEl = document.querySelector('[data-archive-code="' + ctx.code + '"] .req-scan');
-                if (statusEl) {
-                    statusEl.className = 'req-scan req-scan-done';
-                    statusEl.textContent = 'Scanned';
-                }
+                renderArchiveRowStatusAndActions(ctx.code);
                 if (payload && payload.rows) {
                     updateArchiveRequirementsSummary(payload.rows);
                 }
@@ -5205,6 +5344,26 @@
         });
     }
 
+    function syncArchiveRequirementsButtonSummary(scannedRequired, totalRequired) {
+        const payload = currentArchiveRequirementsPayload;
+        const ref = payload && payload.referenceNumber ? String(payload.referenceNumber) : '';
+        if (!ref) return;
+        const btn = document.querySelector('.btn-archive-docs[data-reference="' + ref + '"]');
+        if (!btn) return;
+        const scanned = Number(scannedRequired) || 0;
+        const total = Number(totalRequired) || 0;
+        btn.textContent = 'Requirements ' + scanned + '/' + total;
+        btn.title = 'Applicant requirement scan checklist — ' + scanned + ' of ' + total + ' digitally filed';
+        btn.classList.remove('btn-archive-docs--done', 'btn-archive-docs--partial', 'btn-archive-docs--none');
+        if (total > 0 && scanned >= total) {
+            btn.classList.add('btn-archive-docs--done');
+        } else if (scanned > 0) {
+            btn.classList.add('btn-archive-docs--partial');
+        } else {
+            btn.classList.add('btn-archive-docs--none');
+        }
+    }
+
     function updateArchiveRequirementsSummary(rows) {
         const scannedSummaryEl = document.getElementById('archiveRequirementsScannedSummary');
         const rowSummaryEl = document.getElementById('archiveRequirementsRowSummary');
@@ -5213,6 +5372,7 @@
         const scannedRequired = requiredRows.filter(function (r) { return !!r.scanned; }).length;
         if (scannedSummaryEl) scannedSummaryEl.textContent = String(scannedRequired) + '/' + String(requiredRows.length);
         if (rowSummaryEl) rowSummaryEl.textContent = String(safeRows.length);
+        syncArchiveRequirementsButtonSummary(scannedRequired, requiredRows.length);
         updateArchiveProceedButton(requiredRows.length > 0 && scannedRequired === requiredRows.length);
     }
 
@@ -5345,7 +5505,7 @@
                 const code = String(row.code || '').toUpperCase();
                 const docKey = ARCHIVE_DOC_KEY_BY_CODE[code];
                 await acquireImageWithDwt({ selectSource: false, closeSourceAfterAcquire: false });
-                await uploadCurrentScannedImageForApplicant(applicantId, referenceNumber, docKey, code);
+                const uploadResult = await uploadCurrentScannedImageForApplicant(applicantId, referenceNumber, docKey, code);
 
                 // Backward-compatible checklist flag sync.
                 const isSaved = await saveArchiveRequirementDoc(applicantId, docKey, true);
@@ -5354,11 +5514,10 @@
                 }
 
                 row.scanned = true;
-                const statusEl = document.querySelector('[data-archive-code="' + code + '"] .req-scan');
-                if (statusEl) {
-                    statusEl.className = 'req-scan req-scan-done';
-                    statusEl.textContent = 'Scanned';
-                }
+                if (uploadResult && uploadResult.document_url) row.latest_file_url = uploadResult.document_url;
+                if (uploadResult && uploadResult.document_name) row.latest_file_name = uploadResult.document_name;
+                renderArchiveRowStatusAndActions(code);
+                forceArchiveRowScannedDom(code, uploadResult && uploadResult.document_url ? uploadResult.document_url : '');
                 updateArchiveRequirementsSummary(rows);
                 await new Promise(function (resolve) { setTimeout(resolve, 120); });
             }
@@ -5433,9 +5592,6 @@
                 var activeBadge = r.is_active
                     ? '<span class="req-badge req-badge-yes">Active</span>'
                     : '<span class="req-badge req-badge-no">Inactive</span>';
-                var scanCell = r.scanned
-                    ? '<span class="req-scan req-scan-done">Scanned</span>'
-                    : '<span class="req-scan req-scan-pending">Not scanned</span>';
                 var rawCode = String(r.code || '').trim().toUpperCase();
                 var code = escapeHtml(rawCode);
                 var followUpBadge = code === 'ISF-SIT'
@@ -5443,9 +5599,18 @@
                     : '';
                 var rowStyle = code === 'ISF-SIT' ? ' style="background:#f8fafc;"' : '';
                 var hasUpload = !!ARCHIVE_DOC_KEY_BY_CODE[rawCode];
-                var actionsCell = hasUpload
-                    ? '<td class="archive-req-table-actions"><div class="archive-req-actions-group"><button type="button" class="btn-modal secondary archive-req-upload-btn" data-archive-upload-code="' + code + '" onclick="triggerArchiveRowDocumentUpload(this.getAttribute(\'data-archive-upload-code\'))">Upload file</button><button type="button" class="btn-modal secondary archive-req-row-scan-btn" onclick="scanAllArchiveRequirementsOneByOne()">Scan all</button></div></td>'
-                    : '<td class="archive-req-table-actions"><span style="color:#94a3b8;font-size:0.75rem;">—</span></td>';
+                var latestFileUrl = String(r.latest_file_url || '').trim();
+                var safeLatestFileUrl = escapeHtml(latestFileUrl);
+                var actionsCell = !hasUpload
+                    ? '<td class="archive-req-table-actions"><span style="color:#94a3b8;font-size:0.75rem;">—</span></td>'
+                    : (r.scanned
+                        ? '<td class="archive-req-table-actions"><span style="color:#64748b;font-size:0.75rem;font-weight:600;">Completed</span></td>'
+                        : '<td class="archive-req-table-actions"><div class="archive-req-actions-group"><button type="button" class="btn-modal secondary archive-req-upload-btn" data-archive-upload-code="' + code + '" onclick="triggerArchiveRowDocumentUpload(this.getAttribute(\'data-archive-upload-code\'))">Upload file</button><button type="button" class="btn-modal secondary archive-req-row-scan-btn" data-archive-scan-code="' + code + '" onclick="scanArchiveRequirementByCode(this.getAttribute(\'data-archive-scan-code\'))">Scan all</button></div></td>');
+                var scanCell = r.scanned
+                    ? (latestFileUrl
+                        ? '<button type="button" class="req-scan req-scan-done archive-req-scan-link" data-archive-view-url="' + safeLatestFileUrl + '" onclick="openArchiveRequirementDocument(this.getAttribute(\'data-archive-view-url\'))">Scanned</button>'
+                        : '<span class="req-scan req-scan-done">Scanned</span>')
+                    : '<span class="req-scan req-scan-pending">Not scanned</span>';
                 return '<tr data-archive-code="' + code + '"' + rowStyle + '>'
                     + '<td class="archive-req-table-code">' + escapeHtml(String(r.code || '')) + '</td>'
                     + '<td class="archive-req-table-name">' + escapeHtml(String(r.name || '')) + followUpBadge + '</td>'

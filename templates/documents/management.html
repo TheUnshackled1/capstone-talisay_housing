@@ -323,7 +323,7 @@
                     <th class="col-transaction">Transaction #</th>
                     <th class="col-requirements">Applicant Requirements</th>
                     <th class="col-ronda">Ronda Evidence</th>
-                    <th class="col-cdrrmo">CDRRMO Cert</th>
+                    <th class="col-cdrrmo">Certificate</th>
                     <th class="col-documents">Documents</th>
                 </tr>
             </thead>
@@ -342,13 +342,17 @@
                         <span style="color: #94a3b8; font-size: 0.875rem;">—</span>
                     </td>
                     <td class="col-cdrrmo">
-                        {% for doc in applicant_group.list %}
-                            {% if doc.document_type == "cdrrmo_cert" %}
-                                <span style="display: inline-block; padding: 0.25rem 0.5rem; background: #dcfce7; color: #166534; border-radius: 4px; font-weight: 600; font-size: 0.75rem;">✓</span>
-                            {% endif %}
-                        {% empty %}
+                        {% if applicant_group.grouper.displacement_reason == 'danger_zone' or applicant_group.grouper.displacement_reason == 'ejected' or applicant_group.grouper.displacement_reason == 'relocated' %}
+                            {% for doc in applicant_group.list %}
+                                {% if doc.document_type == "cdrrmo_cert" or doc.document_type == "isf_situational_docs" %}
+                                    <span style="display: inline-block; padding: 0.25rem 0.5rem; background: #dcfce7; color: #166534; border-radius: 4px; font-weight: 600; font-size: 0.75rem;">✓</span>
+                                {% endif %}
+                            {% empty %}
+                                <span style="color: #94a3b8; font-size: 0.875rem;">—</span>
+                            {% endfor %}
+                        {% else %}
                             <span style="color: #94a3b8; font-size: 0.875rem;">—</span>
-                        {% endfor %}
+                        {% endif %}
                     </td>
                     <td class="col-documents">
                         <span style="display: inline-block; padding: 0.35rem 0.65rem; background: #eff6ff; color: #1e40af; border-radius: 4px; font-weight: 600; font-size: 0.75rem;">{{ applicant_group.list|length }}</span>
@@ -403,6 +407,7 @@
                             <option value="no_property">Certificate of No Property</option>
                             <option value="photo_2x2">2x2 Picture</option>
                             <option value="house_sketch">Sketch of House Location</option>
+                            <option value="isf_situational_docs">ISF situational documentation (Options A/B/C)</option>
                         </optgroup>
                         <optgroup label="Office-Generated">
                             <option value="application_form">Application Form</option>

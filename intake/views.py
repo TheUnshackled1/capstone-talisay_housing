@@ -510,6 +510,7 @@ def upload_scanned_requirement(request, position):
         'doc_no_property': 'no_property',
         'doc_2x2_picture': 'photo_2x2',
         'doc_sketch_location': 'house_sketch',
+        'doc_isf_situational': 'isf_situational_docs',
     }
 
     if not applicant_id or doc_key not in key_to_document_type:
@@ -554,6 +555,8 @@ def upload_scanned_requirement(request, position):
         'created': created,
         'doc_code': doc_code,
         'doc_type': document_type,
+        'document_url': doc.file.url if getattr(doc, 'file', None) else '',
+        'document_name': doc.file_name or (uploaded_file.name if uploaded_file else ''),
     })
 
 
