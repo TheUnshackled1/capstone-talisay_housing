@@ -2389,6 +2389,109 @@
         font-size: 0.62rem;
         border-radius: 6px;
     }
+
+    /* ===================================================================
+       Section card themes — distinct color identity per workflow stage:
+       • ISF Registration   → Blue    (intake / new entries)
+       • List of Applicants → Emerald (active / proceeded records)
+       • Archives launcher  → Amber   (records / handoff history)
+       =================================================================== */
+    .applicants-container--isf,
+    .applicants-container--list {
+        position: relative;
+        overflow: hidden;
+    }
+    .applicants-container--isf::before,
+    .applicants-container--list::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        z-index: 1;
+    }
+
+    /* --- ISF Registration: Blue --- */
+    .applicants-container--isf {
+        background: linear-gradient(180deg, #f0f7ff 0%, #ffffff 16%);
+        border-color: #bfdbfe;
+        box-shadow: 0 2px 6px rgba(30, 64, 175, 0.07), 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+    .applicants-container--isf::before {
+        background: linear-gradient(90deg, #1e3a8a 0%, #2563eb 50%, #60a5fa 100%);
+    }
+    .applicants-container--isf .page-title {
+        color: #1e3a8a;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.55rem;
+    }
+    .applicants-container--isf .page-title::before {
+        content: '';
+        width: 0.55rem;
+        height: 0.55rem;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+    }
+
+    /* --- List of Applicants: Emerald --- */
+    .applicants-container--list {
+        background: linear-gradient(180deg, #ecfdf5 0%, #ffffff 16%);
+        border-color: #a7f3d0;
+        box-shadow: 0 2px 6px rgba(5, 150, 105, 0.07), 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+    .applicants-container--list::before {
+        background: linear-gradient(90deg, #047857 0%, #10b981 50%, #6ee7b7 100%);
+    }
+    .section-title-list {
+        color: #065f46 !important;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.55rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    .section-title-list::before {
+        content: '';
+        width: 0.55rem;
+        height: 0.55rem;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.18);
+    }
+
+    /* --- Themed summary-chip variants --- */
+    .summary-chip-card--blue {
+        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
+        border-color: #93c5fd !important;
+    }
+    .summary-chip-card--blue svg { color: #1e40af !important; }
+    .summary-chip-card--blue p:first-of-type { color: #1e40af !important; }
+    .summary-chip-card--blue p:last-of-type { color: #1e3a8a !important; }
+
+    .summary-chip-card--emerald {
+        background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%) !important;
+        border-color: #6ee7b7 !important;
+    }
+    .summary-chip-card--emerald svg { color: #047857 !important; }
+    .summary-chip-card--emerald p:first-of-type { color: #047857 !important; }
+    .summary-chip-card--emerald p:last-of-type { color: #065f46 !important; }
+
+    /* --- Archives launcher button: Amber --- */
+    .btn-primary-add--archives {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+        border-color: #d97706 !important;
+        color: #ffffff !important;
+        box-shadow: 0 2px 6px rgba(217, 119, 6, 0.25);
+        transition: all 0.18s ease;
+    }
+    .btn-primary-add--archives:hover {
+        background: linear-gradient(135deg, #d97706 0%, #b45309 100%) !important;
+        box-shadow: 0 4px 10px rgba(217, 119, 6, 0.35);
+        transform: translateY(-1px);
+    }
 </style>
 {% endblock %}
 
@@ -2706,7 +2809,7 @@
 
 {{ archive_documents_modal|json_script:"archive-pages-documents-payload" }}
 
-<div class="applicants-container">
+<div class="applicants-container applicants-container--isf">
     <!-- Header -->
     <div class="page-header">
         <div style="flex: 1;"></div>
@@ -2745,7 +2848,7 @@
 
     <!-- Controls -->
     <div class="controls-bar">
-        <div class="summary-chip-card">
+        <div class="summary-chip-card summary-chip-card--blue">
             <svg style="width: 20px; height: 20px; color: #2563eb;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                 <circle cx="9" cy="7" r="4"></circle>
@@ -2865,16 +2968,16 @@
 <hr class="section-divider" aria-hidden="true">
 
 <!-- Archive / Receipt Table (read-only reporting) -->
-<div class="applicants-container" id="archiveSection" style="padding-top: 0.65rem;">
+<div class="applicants-container applicants-container--list" id="archiveSection" style="padding-top: 0.85rem;">
     <div style="display:flex; align-items:center; justify-content:center; margin:0 0 0.5rem 0; gap:0.75rem; flex-wrap:wrap;">
-        <h3 style="margin:0; font-size:0.95rem; color:#1e293b; font-weight:600; text-align: center;">LIST OF APPLICANTS</h3>
+        <h3 class="section-title-list" style="margin:0; font-size:0.95rem; font-weight:700; text-align: center;">LIST OF APPLICANTS</h3>
     </div>
 
     <!-- Archive Controls Bar -->
     <div class="controls-bar" style="margin-bottom: 0.75rem;">
         <!-- Total Count Badge -->
-        <div class="summary-chip-card">
-            <svg style="width: 20px; height: 20px; color: #2563eb;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <div class="summary-chip-card summary-chip-card--emerald">
+            <svg style="width: 20px; height: 20px; color: #047857;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                 <circle cx="9" cy="7" r="4"></circle>
                 <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
@@ -2882,7 +2985,7 @@
             </svg>
             <div>
                 <p style="font-size: 0.625rem; color: #64748b; margin: 0; text-transform: uppercase; font-weight: 500;">Total List</p>
-                <p style="font-size: 1.25rem; font-weight: 700; color: #2563eb; margin: 0;" id="archiveTotalCount">{{ archive_records|length }}</p>
+                <p style="font-size: 1.25rem; font-weight: 700; color: #047857; margin: 0;" id="archiveTotalCount">{{ archive_records|length }}</p>
             </div>
         </div>
 
@@ -2909,7 +3012,7 @@
             {% endfor %}
         </select>
 
-        <a href="{% url 'intake:archive_list' request.user.position %}" class="btn-primary-add" style="margin-left: auto;">
+        <a href="{% url 'intake:archive_list' request.user.position %}" class="btn-primary-add btn-primary-add--archives" style="margin-left: auto;">
             🗂️ Archives
         </a>
     </div>
@@ -4300,6 +4403,108 @@
                     .tha-reg-modal .tha-layer-body { padding: 0.85rem 0.85rem 0.95rem; }
                     .tha-reg-modal .tha-layer-grid { grid-template-columns: 1fr; }
                 }
+
+                /* ===========================================================
+                   Inline-radio utility — keeps label + Yes/No pills on the
+                   same row. Applied to Sex / Voter / Property Ownership only,
+                   so other form-groups (e.g. Years of residence input) stay
+                   stacked and the 3-col grid layout is preserved.
+                   =========================================================== */
+                .tha-reg-modal .form-group--inline-radio {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.6rem 0.75rem;
+                    flex-wrap: wrap;
+                }
+                .tha-reg-modal .form-group--inline-radio > .form-label {
+                    margin: 0 !important;
+                    flex: 0 0 auto;
+                    line-height: 1.3;
+                }
+                .tha-reg-modal .form-group--inline-radio > .tha-hazard-radio-group {
+                    margin: 0;
+                    flex: 0 1 auto;
+                    justify-content: flex-start !important;
+                    gap: 0.5rem;
+                }
+                .tha-reg-modal .form-group--inline-radio > .tha-hazard-radio-group .tha-hazard-radio {
+                    padding: 0.38rem 0.7rem;
+                    font-size: 0.78rem;
+                }
+                @media (max-width: 640px) {
+                    .tha-reg-modal .form-group--inline-radio { align-items: flex-start; flex-direction: column; gap: 0.4rem; }
+                }
+
+                /* ===========================================================
+                   Section card themes — distinct color identity per section.
+                   Each .tha-section-block becomes a soft tinted card with a
+                   4px left accent and a colored section title.
+                   =========================================================== */
+                .tha-reg-modal #addApplicantForm .tha-section-block {
+                    margin-bottom: 1.1rem;
+                    padding: 0.95rem 1.1rem 0.9rem;
+                    border: 1px solid #e2e8f0;
+                    border-left-width: 4px;
+                    border-radius: 0 0.65rem 0.65rem 0;
+                    background: #ffffff;
+                    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+                }
+                .tha-reg-modal #addApplicantForm .tha-section-block .tha-section-title {
+                    margin: 0 0 0.95rem 0;
+                    padding-bottom: 0.5rem;
+                    border-bottom: 1px solid #e2e8f0;
+                }
+                /* Applicant Identity → Blue */
+                .tha-reg-modal #addApplicantForm .tha-section-block--identity {
+                    border-left-color: #2563eb;
+                    background: linear-gradient(180deg, #f0f7ff 0%, #ffffff 22%);
+                }
+                .tha-reg-modal #addApplicantForm .tha-section-block--identity .tha-section-title {
+                    color: #1e40af;
+                    border-bottom-color: #bfdbfe;
+                }
+                /* Household Members → Emerald */
+                .tha-reg-modal #addApplicantForm .tha-section-block--household {
+                    border-left-color: #10b981;
+                    background: linear-gradient(180deg, #ecfdf5 0%, #ffffff 22%);
+                }
+                .tha-reg-modal #addApplicantForm .tha-section-block--household .tha-section-title {
+                    color: #047857;
+                    border-bottom-color: #a7f3d0;
+                }
+                .tha-reg-modal #addApplicantForm .tha-section-block--household .tha-section-header-with-action {
+                    border-bottom-color: #a7f3d0;
+                }
+                .tha-reg-modal #addApplicantForm .tha-section-block--household .tha-btn-add-member {
+                    background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+                    color: #ffffff;
+                    border-color: #047857;
+                }
+                .tha-reg-modal #addApplicantForm .tha-section-block--household .tha-btn-add-member:hover {
+                    background: linear-gradient(135deg, #059669 0%, #065f46 100%);
+                    border-color: #065f46;
+                    color: #ffffff;
+                }
+                /* Household Income → Amber */
+                .tha-reg-modal #addApplicantForm .tha-section-block--income {
+                    border-left-color: #d97706;
+                    background: linear-gradient(180deg, #fffbeb 0%, #ffffff 22%);
+                }
+                .tha-reg-modal #addApplicantForm .tha-section-block--income .tha-section-title {
+                    color: #b45309;
+                    border-bottom-color: #fde68a;
+                }
+                /* Applicant Situation → Violet */
+                .tha-reg-modal #addApplicantForm .tha-section-block--situation {
+                    border-left-color: #7c3aed;
+                    background: linear-gradient(180deg, #f5f3ff 0%, #ffffff 22%);
+                    padding: 0.85rem 0.95rem 0.95rem;
+                }
+
+                /* Header polish — subtle gradient instead of flat navy */
+                .tha-reg-modal .tha-form-header {
+                    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+                }
             </style>
 
             <form id="addApplicantForm" method="post" onsubmit="submitAddApplicant(event)">
@@ -4316,7 +4521,7 @@
                 <input type="hidden" id="channelInput" name="channel" value="danger_zone">
 
                 <!-- Section A -->
-                <div class="tha-section-block">
+                <div class="tha-section-block tha-section-block--identity">
                     <h3 class="tha-section-title">Applicant identity</h3>
 
                     <!-- Name (Last, First, Middle) -->
@@ -4341,9 +4546,9 @@
 
                     <!-- Sex & Years Residing in Talisay -->
                     <div class="form-row three-cols">
-                        <div class="form-group">
+                        <div class="form-group form-group--inline-radio">
                             <label class="form-label">Sex <span style="color: #dc2626;">*</span></label>
-                            <div class="tha-hazard-radio-group" role="radiogroup" aria-label="Sex" style="justify-content:flex-start;">
+                            <div class="tha-hazard-radio-group" role="radiogroup" aria-label="Sex">
                                 <label class="tha-hazard-radio" for="sexMale">
                                     <input type="radio" name="sex" id="sexMale" value="M" required>
                                     <span>Male</span>
@@ -4354,9 +4559,9 @@
                                 </label>
                             </div>
                         </div>
-                        <div class="form-group">
+                        <div class="form-group form-group--inline-radio">
                             <label class="form-label">Registered voter in Talisay City <span style="color: #dc2626;">*</span></label>
-                            <div class="tha-hazard-radio-group" role="radiogroup" aria-label="Registered voter in Talisay City" style="justify-content:flex-start;">
+                            <div class="tha-hazard-radio-group" role="radiogroup" aria-label="Registered voter in Talisay City">
                                 <label class="tha-hazard-radio" for="voterYes">
                                     <input type="radio" name="is_registered_voter_talisay" id="voterYes" value="true" required>
                                     <span>Yes</span>
@@ -4399,9 +4604,9 @@
                             <input type="text" class="form-input" placeholder="House no., street, sitio/purok, Talisay City" name="current_address" id="presentAddress" minlength="10" maxlength="500" required>
                             <span class="help-text">Enter address details here. Select the barangay below so it is stored in a structured field.</span>
                         </div>
-                        <div class="form-group">
+                        <div class="form-group form-group--inline-radio">
                             <label class="form-label" id="propertyOwnershipLabel">Has Property Ownership in Talisay City <span style="color: #dc2626;">*</span></label>
-                            <div class="tha-hazard-radio-group" role="radiogroup" aria-labelledby="propertyOwnershipLabel" style="justify-content:flex-start;">
+                            <div class="tha-hazard-radio-group" role="radiogroup" aria-labelledby="propertyOwnershipLabel">
                                 <label class="tha-hazard-radio" for="hasPropertyYes">
                                     <input type="radio" id="hasPropertyYes" name="has_property_in_talisay" value="yes">
                                     <span>Yes</span>
@@ -4446,7 +4651,7 @@
                 </div>
 
                 <!-- Section B -->
-                <div class="tha-section-block">
+                <div class="tha-section-block tha-section-block--household">
                     <div class="tha-section-header-with-action">
                         <h3 class="tha-section-title" style="margin-bottom: 0; padding-bottom: 0; border-bottom: none;">Household members</h3>
                         <button type="button" class="tha-btn-add-member" onclick="addHouseholdMember()">Add household member</button>
@@ -4463,7 +4668,7 @@
                 </div>
 
                 <!-- Section C -->
-                <div class="tha-section-block">
+                <div class="tha-section-block tha-section-block--income">
                     <h3 class="tha-section-title">Household income</h3>
 
                     <div class="form-row">
@@ -4491,7 +4696,7 @@
                     </div>
                 </div>
 
-                <div class="tha-section-block">
+                <div class="tha-section-block tha-section-block--situation">
                     <div class="tha-layer-shell">
                         <div class="tha-layer-header">
                             <h3 class="tha-layer-title">Applicant Situation</h3>
@@ -5300,7 +5505,10 @@
         const scannedRequired = requiredRows.filter(function (r) { return !!r.scanned; }).length;
         if (scannedSummaryEl) scannedSummaryEl.textContent = String(scannedRequired) + '/' + String(requiredRows.length);
         if (rowSummaryEl) rowSummaryEl.textContent = String(safeRows.length);
-        syncArchiveRequirementsButtonSummary(scannedRequired, requiredRows.length);
+        // LIST OF APPLICANTS badge: count every checklist row (incl. optional ISF-SIT for Options A/B/C).
+        const scannedAll = safeRows.filter(function (r) { return !!r.scanned; }).length;
+        const totalAll = safeRows.length;
+        syncArchiveRequirementsButtonSummary(scannedAll, totalAll);
         updateArchiveProceedButton(requiredRows.length > 0 && scannedRequired === requiredRows.length);
     }
 

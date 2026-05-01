@@ -170,6 +170,10 @@ def _archive_requirement_scan_rows(requirements_group_a, scanned_types_set, disp
             'latest_file_url': latest_isf.get('url', ''),
             'latest_file_name': latest_isf.get('name', ''),
         })
+        # LIST OF APPLICANTS badge + parity with modal row count (R01–RVT + optional ISF-SIT).
+        trackable_total += 1
+        if scanned_isf:
+            scanned_count += 1
 
     return rows, scanned_count, trackable_total
 
@@ -960,17 +964,28 @@ def applicants_list(request, position):
     
     # ====== CHANNEL B: Danger Zone Applicants + ALL OTHER APPLICANTS ======
     # Active "Total List": applicants not yet in Intake Archives (proceed button creates Archive only).
-    walk_in_applicants = Applicant.objects.filter(
-        archives__isnull=True,
-    ).select_related(
-        'barangay', 'eligibility_checked_by', 'registered_by'
-    ).prefetch_related(
-        Prefetch(
-            'queue_entries',
-            queryset=QueueEntry.objects.filter(status='active'),
-            to_attr='active_queue',
-        ),
-    ).order_by('created_at')
+    walk_in_applicants = list(
+        Applicant.objects.filter(
+            archives__isnull=True,
+        ).select_related(
+            'barangay', 'eligibility_checked_by', 'registered_by'
+        ).prefetch_related(
+            Prefetch(
+                'queue_entries',
+                queryset=QueueEntry.objects.filter(status='active'),
+                to_attr='active_queue',
+            ),
+        ).order_by('created_at')
+    )
+    walk_in_ids = [a.id for a in walk_in_applicants]
+    walk_in_has_isf_doc = set()
+    if walk_in_ids:
+        walk_in_has_isf_doc = set(
+            Document.objects.filter(
+                applicant_id__in=walk_in_ids,
+                document_type=ISF_EXTRA_VAULT_DOC_TYPE,
+            ).values_list('applicant_id', flat=True).distinct()
+        )
 
     for app in walk_in_applicants:
         # Determine eligibility status display
@@ -1100,18 +1115,32 @@ def applicants_list(request, position):
             'handledBy': app.registered_by.get_full_name() if app.registered_by else 'Unknown',
             'handledByPosition': app.registered_by.get_position_display_short() if app.registered_by else '',
             'handledByInitials': (app.registered_by.first_name[:1] + app.registered_by.last_name[:1]).upper() if app.registered_by else '??',
-            # Document checklist count (baseline requirements including voter certification)
-            'docsCount': sum([
-                app.doc_brgy_residency,
-                app.doc_brgy_indigency,
-                app.doc_cedula,
-                app.doc_police_clearance,
-                app.doc_no_property,
-                app.doc_2x2_picture,
-                app.doc_sketch_location,
-                app.doc_voter_cert,
-            ]),
-            'docsTotal': 8,
+            # Document checklist count (baseline + optional ISF situational vault slot for Options A/B/C)
+            'docsCount': (
+                sum([
+                    app.doc_brgy_residency,
+                    app.doc_brgy_indigency,
+                    app.doc_cedula,
+                    app.doc_police_clearance,
+                    app.doc_no_property,
+                    app.doc_2x2_picture,
+                    app.doc_sketch_location,
+                    app.doc_voter_cert,
+                ])
+                + (
+                    1
+                    if (
+                        (app.displacement_reason or '').strip() in DISPLACEMENT_PATHS_NEED_ISF_EXTRA
+                        and app.id in walk_in_has_isf_doc
+                    )
+                    else 0
+                )
+            ),
+            'docsTotal': (
+                9
+                if (app.displacement_reason or '').strip() in DISPLACEMENT_PATHS_NEED_ISF_EXTRA
+                else 8
+            ),
             # Individual document states for modal checkboxes
             'docBrgyResidency': app.doc_brgy_residency,
             'docBrgyIndigency': app.doc_brgy_indigency,

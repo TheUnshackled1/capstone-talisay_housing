@@ -260,6 +260,51 @@
         background: #fee2e2;
         color: #991b1b;
     }
+    /* ===================================================================
+       Archives card theme — Amber identity (records / handoff history)
+       =================================================================== */
+    .applicants-container--archives {
+        position: relative;
+        overflow: hidden;
+        background: linear-gradient(180deg, #fffbeb 0%, #ffffff 16%);
+        border-color: #fcd34d;
+        box-shadow: 0 2px 6px rgba(217, 119, 6, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+    .applicants-container--archives::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #b45309 0%, #d97706 50%, #fbbf24 100%);
+        z-index: 1;
+    }
+    .section-title-archives {
+        color: #92400e !important;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.55rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        font-weight: 700 !important;
+    }
+    .section-title-archives::before {
+        content: '';
+        width: 0.55rem;
+        height: 0.55rem;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%);
+        box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+    }
+    .summary-chip-card--amber {
+        background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%) !important;
+        border-color: #fcd34d !important;
+    }
+    .summary-chip-card--amber svg { color: #b45309 !important; }
+    .summary-chip-card--amber p:first-of-type { color: #b45309 !important; }
+    .summary-chip-card--amber p:last-of-type { color: #92400e !important; }
+
     @media (max-width: 1200px) {
         .controls-bar {
             display: grid;
@@ -302,19 +347,19 @@
 {% endblock %}
 
 {% block content %}
-<div class="applicants-container">
+<div class="applicants-container applicants-container--archives" style="padding-top: 0.85rem;">
     <div style="display:flex; align-items:center; justify-content:center; margin:0 0 0.5rem 0; gap:0.75rem; flex-wrap:wrap;">
-        <h3 style="margin:0; font-size:0.95rem; color:#1e293b; font-weight:600; text-align: center;">ARCHIVES</h3>
+        <h3 class="section-title-archives" style="margin:0; font-size:0.95rem; text-align: center;">ARCHIVES</h3>
     </div>
 
     <form class="controls-bar" method="get">
-        <div class="summary-chip-card">
-            <svg style="width: 20px; height: 20px; color: #2563eb;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <div class="summary-chip-card summary-chip-card--amber">
+            <svg style="width: 20px; height: 20px; color: #b45309;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
             </svg>
             <div>
-                <p style="font-size: 0.625rem; color: #64748b; margin: 0; text-transform: uppercase; font-weight: 500;">Total Archived</p>
-                <p style="font-size: 1.25rem; font-weight: 700; color: #2563eb; margin: 0;">{{ total_archived }}</p>
+                <p style="font-size: 0.625rem; color: #b45309; margin: 0; text-transform: uppercase; font-weight: 600;">Total Archived</p>
+                <p style="font-size: 1.25rem; font-weight: 700; color: #92400e; margin: 0;">{{ total_archived }}</p>
             </div>
         </div>
         <div class="search-box">

@@ -7,7 +7,9 @@ from django.views.decorators.http import require_POST
 from django.db.models import Count, Q, Prefetch, Max
 from django.db import IntegrityError, transaction
 from django.utils import timezone
+from django.urls import reverse
 from functools import wraps
+from urllib.parse import urlencode
 from intake.models import Applicant
 from intake import sms_workflow
 from documents.models import (
@@ -431,7 +433,7 @@ def _module2_eligibility_snapshot(applicant, checked_by=None):
         advisories.append('Module 2 Layer 3 displacement classification has not been recorded yet.')
     if displacement_reason == 'not_abc':
         advisories.append(
-            'Option D (none of A, B, or C): applicant is on the Walk-in path; Priority is not available for this ground.'
+            'Option D (none of A, B, or C): hazard-area, ejection, and government-project situations do not apply.'
         )
 
     requires_cdrrmo = bool((applicant.danger_zone_type or '').strip() or (applicant.danger_zone_location or '').strip())
@@ -655,6 +657,184 @@ def _module2_eligibility_snapshot(applicant, checked_by=None):
     }
 
 
+def _module2_run_handoff_preflight(request_user):
+    """Self-heal handoff/CDRRMO/queue rows before Module 2 list views."""
+    Applicant.objects.filter(
+        channel='danger_zone',
+        status='pending_cdrrmo',
+        danger_zone_type='',
+        danger_zone_location='',
+    ).update(status='pending', updated_at=timezone.now())
+
+    hazard_handoff_candidates = Applicant.objects.filter(
+        channel='danger_zone',
+        module2_handoff_at__isnull=False,
+        status__in=['pending', 'pending_cdrrmo'],
+    ).select_related(
+        'registered_by',
+        'module2_handoff_by',
+        'eligibility_checked_by',
+    )
+    for candidate in hazard_handoff_candidates:
+        _ensure_cdrrmo_pending_after_module2_handoff(candidate)
+
+    non_hazard_handoff_candidates = Applicant.objects.filter(
+        module2_handoff_at__isnull=False,
+        status__in=['pending', 'eligible'],
+    ).filter(
+        Q(danger_zone_type__isnull=True) | Q(danger_zone_type=''),
+        Q(danger_zone_location__isnull=True) | Q(danger_zone_location=''),
+    ).exclude(
+        queue_entries__status='active',
+    ).distinct().select_related('eligibility_checked_by')
+    for candidate in non_hazard_handoff_candidates:
+        _auto_finalize_non_hazard_walkin(candidate, acted_by=request_user)
+
+
+def _module2_evaluations_applicants_queryset():
+    """
+    Applicants shown on Application & Evaluation (Module 2 handoff + baseline Group A scans).
+    """
+    applicants = Applicant.objects.filter(
+        status__in=[
+            'pending',
+            'pending_cdrrmo',
+            'pending_followup',
+            'eligible',
+            'requirements',
+            'application',
+            'standby',
+            'awarded',
+        ]
+    ).filter(
+        Q(module2_handoff_at__isnull=False) | Q(application__isnull=False)
+    ).exclude(
+        evaluation_approval_status='approved'
+    )
+
+    required_group_a_doc_types = list(
+        Requirement.objects.filter(
+            group='A',
+            is_active=True,
+            is_required_for_form=True,
+        ).exclude(
+            vault_document_type='',
+        ).values_list('vault_document_type', flat=True)
+    )
+    required_group_a_total = len(required_group_a_doc_types)
+    if required_group_a_total > 0:
+        applicants = applicants.annotate(
+            scanned_required_group_a=Count(
+                'documents',
+                filter=Q(documents__document_type__in=required_group_a_doc_types),
+                distinct=True,
+            )
+        ).filter(
+            scanned_required_group_a__gte=required_group_a_total
+        )
+
+    return applicants.select_related(
+        'application',
+        'cdrrmo_certification',
+        'registered_by',
+        'module2_handoff_by',
+    ).prefetch_related(
+        'requirement_submissions',
+        'requirement_submissions__requirement',
+        Prefetch(
+            'application__routing_steps',
+            queryset=SignatoryRouting.objects.order_by('action_at'),
+        ),
+    ).order_by('module2_handoff_at', 'created_at', 'id')
+
+
+def _module2_applicant_row_payload(applicant, permissions, required_group_a_submission_total, acted_by_user):
+    """
+    Build one Application & Evaluation row dict.
+    Returns None if the applicant is blacklist-gated out of the payload.
+    """
+    rules = _module2_eligibility_snapshot(applicant, checked_by=acted_by_user)
+    blacklist_blocked = rules['blacklist_blocked']
+    blacklist_detail = rules['blacklist_detail']
+    blacklist_source = rules['blacklist_source']
+    blacklist_policy_note = rules['blacklist_policy_note']
+
+    if blacklist_blocked:
+        _, bl_entry = check_blacklist_module2(
+            applicant.full_name,
+            applicant.phone_number or None,
+            applicant_id=applicant.id,
+            last_name=applicant.last_name,
+            first_name=applicant.first_name,
+            date_of_birth=applicant.date_of_birth,
+            barangay_id=applicant.barangay_id,
+        )
+        _auto_disqualify_if_blacklisted(applicant, bl_entry, checked_by=acted_by_user)
+        return None
+
+    application = getattr(applicant, 'application', None)
+
+    # RequirementSubmission counts reflect Module 1 “List of Applicants” only — informational on this screen.
+    group_a_verified = RequirementSubmission.objects.filter(
+        applicant_id=applicant.id,
+        requirement__group='A',
+        status='verified',
+    ).count()
+
+    can_generate_form = (
+        permissions['can_generate_form']
+        and application is None
+        and rules.get('form_generation_ready')
+    )
+
+    if application and application.status == 'awarded':
+        current_stage = 'Lot Awarded'
+    elif application and application.status in ['oic_signed', 'standby']:
+        current_stage = 'Fully Approved'
+    elif application and application.status in ['routing', 'draft', 'completed']:
+        current_stage = 'Form Released'
+    elif rules.get('form_generation_ready'):
+        current_stage = 'Document Gathering'
+    elif applicant.module2_handoff_at:
+        current_stage = 'Document Gathering'
+    else:
+        current_stage = 'Eligibility'
+
+    user_actions = []
+    if permissions['can_verify_documents'] and not application:
+        user_actions.append('verify_docs')
+    if can_generate_form:
+        user_actions.append('generate_form')
+    if permissions['can_award_lot'] and application and application.status in ['oic_signed', 'standby']:
+        user_actions.append('award_lot')
+    if permissions['can_manage_electricity'] and application and application.status == 'awarded':
+        user_actions.append('manage_electricity')
+
+    return {
+        'applicant': applicant,
+        'application': application,
+        'applicant_status': applicant.status,
+        'applicant_status_display': applicant.get_status_display(),
+        'cdrrmo_status': getattr(getattr(applicant, 'cdrrmo_certification', None), 'status', None),
+        'group_a_verified': group_a_verified,
+        'can_generate_form': can_generate_form and application is None,
+        'form_generated': application is not None,
+        'current_stage': current_stage,
+        'user_actions': user_actions,
+        'blacklist_blocked': blacklist_blocked,
+        'blacklist_detail': blacklist_detail,
+        'blacklist_source': blacklist_source,
+        'blacklist_policy_note': blacklist_policy_note,
+        'm1_income_eligible': applicant.is_income_eligible,
+        'm1_declares_no_property': not applicant.has_property_in_talisay,
+        'm1_voter_eligible': bool(applicant.is_registered_voter_talisay),
+        'm1_residency_eligible': bool(rules.get('residency_ok')),
+        'household_size': applicant.household_size,
+        'm2_rules': rules,
+        'm2_evaluator': rules,
+    }
+
+
 # =============================================================================
 # MAIN APPLICATIONS LIST VIEW
 # =============================================================================
@@ -684,99 +864,9 @@ def applications_list(request, position):
     # Get user permissions
     permissions = get_module2_permissions(request.user)
 
-    # Self-heal records declared as non-hazard in Module 1 but left in pending_cdrrmo.
-    Applicant.objects.filter(
-        channel='danger_zone',
-        status='pending_cdrrmo',
-        danger_zone_type='',
-        danger_zone_location='',
-    ).update(status='pending', updated_at=timezone.now())
+    _module2_run_handoff_preflight(request.user)
 
-    # Legacy safety net: older Module 2 handoffs may have hazard declaration but
-    # no pending CDRRMO row yet. Normalize these rows before rendering.
-    hazard_handoff_candidates = Applicant.objects.filter(
-        channel='danger_zone',
-        module2_handoff_at__isnull=False,
-        status__in=['pending', 'pending_cdrrmo'],
-    ).select_related(
-        'registered_by',
-        'module2_handoff_by',
-        'eligibility_checked_by',
-    )
-    for candidate in hazard_handoff_candidates:
-        _ensure_cdrrmo_pending_after_module2_handoff(candidate)
-
-    # Auto-heal non-hazard handoff rows that were never queue-assigned.
-    non_hazard_handoff_candidates = Applicant.objects.filter(
-        module2_handoff_at__isnull=False,
-        status__in=['pending', 'eligible'],
-    ).filter(
-        Q(danger_zone_type__isnull=True) | Q(danger_zone_type=''),
-        Q(danger_zone_location__isnull=True) | Q(danger_zone_location=''),
-    ).exclude(
-        queue_entries__status='active',
-    ).distinct().select_related('eligibility_checked_by')
-    for candidate in non_hazard_handoff_candidates:
-        _auto_finalize_non_hazard_walkin(candidate, acted_by=request.user)
-    
-    # Module 2 shows only records explicitly handed off from Module 1
-    # (plus records already attached to an application object).
-    # Once an applicant is 2.6-approved, they leave the Module 2 list and live
-    # in Module 3 (documents/<position>/management/) only.
-    applicants = Applicant.objects.filter(
-        status__in=[
-            'pending',
-            'pending_cdrrmo',
-            'pending_followup',
-            'eligible',
-            'requirements',
-            'application',
-            'standby',
-            'awarded',
-        ]
-    ).filter(
-        Q(module2_handoff_at__isnull=False) | Q(application__isnull=False)
-    ).exclude(
-        evaluation_approval_status='approved'
-    )
-
-    # Display Applicant for Evaluation:
-    # Read Applicant Profiles from intake + Document Records from documents.
-    # Only include rows with complete baseline Group A required document scans.
-    required_group_a_doc_types = list(
-        Requirement.objects.filter(
-            group='A',
-            is_active=True,
-            is_required_for_form=True,
-        ).exclude(
-            vault_document_type='',
-        ).values_list('vault_document_type', flat=True)
-    )
-    required_group_a_total = len(required_group_a_doc_types)
-    if required_group_a_total > 0:
-        applicants = applicants.annotate(
-            scanned_required_group_a=Count(
-                'documents',
-                filter=Q(documents__document_type__in=required_group_a_doc_types),
-                distinct=True,
-            )
-        ).filter(
-            scanned_required_group_a__gte=required_group_a_total
-        )
-
-    applicants = applicants.select_related(
-        'application',
-        'cdrrmo_certification',
-        'registered_by',
-        'module2_handoff_by',
-    ).prefetch_related(
-        'requirement_submissions',
-        'requirement_submissions__requirement',
-        Prefetch(
-            'application__routing_steps',
-            queryset=SignatoryRouting.objects.order_by('action_at'),
-        ),
-    ).order_by('module2_handoff_at', 'created_at', 'id')
+    applicants = _module2_evaluations_applicants_queryset()
     
     # Get all requirements for the checklist
     requirements = Requirement.objects.filter(is_active=True).order_by('group', 'order')
@@ -815,85 +905,20 @@ def applications_list(request, position):
 
     # Prepare applicant data with document counts
     applicants_data = []
+    ready_for_form_queue_count = 0
     for applicant in applicants:
-        # Count verified Group A documents
-        group_a_verified = applicant.requirement_submissions.filter(
-            requirement__group='A',
-            status='verified'
-        ).count()
-
-        can_generate_form = group_a_verified >= required_group_a_submission_total
-        
-        # Get application status if exists
-        application = getattr(applicant, 'application', None)
-        application_status = application.status if application else None
-        
-        # Determine current stage
-        if application and application.status == 'awarded':
-            current_stage = 'Lot Awarded'
-        elif application and application.status in ['oic_signed', 'standby']:
-            current_stage = 'Fully Approved'
-        elif application and application.status in ['routing', 'draft', 'completed']:
-            current_stage = 'Form Released'
-        elif group_a_verified > 0:
-            current_stage = 'Document Gathering'
-        else:
-            current_stage = 'Eligibility'
-        
-        # Determine what actions this user can take on this applicant
-        user_actions = []
-        if permissions['can_verify_documents'] and not application:
-            user_actions.append('verify_docs')
-        if permissions['can_generate_form'] and can_generate_form and not application:
-            user_actions.append('generate_form')
-        if permissions['can_award_lot'] and application and application.status in ['oic_signed', 'standby']:
-            user_actions.append('award_lot')
-        if permissions['can_manage_electricity'] and application and application.status == 'awarded':
-            user_actions.append('manage_electricity')
-
-        # --- Central Module 2 eligibility rules snapshot ---
-        rules = _module2_eligibility_snapshot(applicant, checked_by=request.user)
-        blacklist_blocked = rules['blacklist_blocked']
-        blacklist_detail = rules['blacklist_detail']
-        blacklist_source = rules['blacklist_source']
-        blacklist_policy_note = rules['blacklist_policy_note']
-        # Hard gate: immediately disqualify + exclude from Module 2 list payload.
-        if blacklist_blocked:
-            _, bl_entry = check_blacklist_module2(
-                applicant.full_name,
-                applicant.phone_number or None,
-                applicant_id=applicant.id,
-                last_name=applicant.last_name,
-                first_name=applicant.first_name,
-                date_of_birth=applicant.date_of_birth,
-                barangay_id=applicant.barangay_id,
-            )
-            _auto_disqualify_if_blacklisted(applicant, bl_entry, checked_by=request.user)
+        row = _module2_applicant_row_payload(
+            applicant,
+            permissions,
+            required_group_a_submission_total,
+            request.user,
+        )
+        if row is None:
             continue
-
-        applicants_data.append({
-            'applicant': applicant,
-            'application': application,
-            'applicant_status': applicant.status,
-            'applicant_status_display': applicant.get_status_display(),
-            'cdrrmo_status': getattr(getattr(applicant, 'cdrrmo_certification', None), 'status', None),
-            'group_a_verified': group_a_verified,
-            'can_generate_form': can_generate_form and application is None,
-            'form_generated': application is not None,
-            'current_stage': current_stage,
-            'user_actions': user_actions,
-            'blacklist_blocked': blacklist_blocked,
-            'blacklist_detail': blacklist_detail,
-            'blacklist_source': blacklist_source,
-            'blacklist_policy_note': blacklist_policy_note,
-            'm1_income_eligible': applicant.is_income_eligible,
-            'm1_declares_no_property': not applicant.has_property_in_talisay,
-            'm1_voter_eligible': bool(applicant.is_registered_voter_talisay),
-            'm1_residency_eligible': bool(rules.get('residency_ok')),
-            'household_size': applicant.household_size,
-            'm2_rules': rules,
-            'm2_evaluator': rules,
-        })
+        ev = row['m2_evaluator']
+        if ev.get('form_generation_ready') and 'generate_form' in row['user_actions']:
+            ready_for_form_queue_count += 1
+        applicants_data.append(row)
     
     # Filter by stage if requested
     filter_stage = request.GET.get('stage', 'all')
@@ -951,9 +976,91 @@ def applications_list(request, position):
         'user_position': request.user.position,
         'from_intake_handoff': from_intake_handoff,
         'intake_handoff_ref': intake_handoff_ref,
+        'ready_for_form_queue_count': ready_for_form_queue_count,
     }
     
     return render(request, 'applications/applications_list.html', context)
+
+
+@login_required
+@verify_position
+def ready_for_form_queue(request, position):
+    """
+    Focused queue: applicants who are evaluator-ready AND staff may Generate Form.
+    URL: /applications/<position>/ready-for-form/
+    """
+    allowed_positions = ['fourth_member', 'second_member', 'fifth_member', 'oic']
+    if request.user.position not in allowed_positions:
+        messages.error(request, 'Access denied. Module 2 is for authorized staff only.')
+        return redirect('accounts:dashboard')
+
+    permissions = get_module2_permissions(request.user)
+    if not permissions.get('can_generate_form'):
+        messages.error(request, 'You do not have permission to generate application forms.')
+        return redirect('applications:applications_list', position=position)
+
+    _module2_run_handoff_preflight(request.user)
+    applicants = _module2_evaluations_applicants_queryset()
+
+    requirements = Requirement.objects.filter(is_active=True).order_by('group', 'order')
+    group_a_requirements = requirements.filter(group='A')
+    group_b_requirements = requirements.filter(group='B')
+
+    required_group_a_submission_total = Requirement.objects.filter(
+        group='A',
+        is_active=True,
+        is_required_for_form=True,
+    ).count()
+
+    applicants_data = []
+    for applicant in applicants:
+        row = _module2_applicant_row_payload(
+            applicant,
+            permissions,
+            required_group_a_submission_total,
+            request.user,
+        )
+        if row is None:
+            continue
+        ev = row['m2_evaluator']
+        if ev.get('form_generation_ready') and 'generate_form' in row['user_actions']:
+            applicants_data.append(row)
+
+    search = request.GET.get('search', '').strip()
+    if search:
+        search_lower = search.lower()
+        applicants_data = [
+            a for a in applicants_data
+            if search_lower in a['applicant'].full_name.lower()
+            or search_lower in (a['applicant'].reference_number or '').lower()
+        ]
+
+    paginator = Paginator(applicants_data, MODULE2_LIST_PER_PAGE)
+    page_number = request.GET.get('page', 1)
+    try:
+        page_obj = paginator.page(page_number)
+    except PageNotAnInteger:
+        page_obj = paginator.page(1)
+    except EmptyPage:
+        page_obj = paginator.page(paginator.num_pages or 1)
+
+    _q = request.GET.copy()
+    _q.pop('page', None)
+    pagination_query = _q.urlencode()
+
+    context = {
+        'applicants_data': list(page_obj),
+        'page_obj': page_obj,
+        'pagination_query': pagination_query,
+        'search': search,
+        'permissions': permissions,
+        'user_position': request.user.position,
+        'queue_total': len(applicants_data),
+        'requirements': requirements,
+        'group_a_requirements': group_a_requirements,
+        'group_b_requirements': group_b_requirements,
+    }
+    return render(request, 'applications/ready_for_form_list.html', context)
 
 
 # =============================================================================
@@ -1702,7 +1809,7 @@ def evaluate_precheck(request, position):
 def _situation_certification_gate(applicant):
     """
     Required uploads/evidence before Module 2 staff finish the situation step.
-    Option D (Walk-in): informational only — no situation-specific vault uploads; staff uses Continue.
+    Option D: informational only — no situation-specific vault uploads; staff uses Continue.
     Option A: CDRRMO certification document + at least one Ronda/field verification photo.
     Options B/C: at least one ISF situational supporting document with labels keyed to situation.
     """
@@ -1727,10 +1834,9 @@ def _situation_certification_gate(applicant):
         base['walk_in_informational'] = True
         base['checks'] = [{
             'key': 'option_d_walk_in',
-            'label': 'Walk-in path (Option D)',
+            'label': 'Option D review',
             'detail': (
-                'This applicant is classified as Option D — none of A, B, or C — and is on the Walk-in path '
-                '(no Priority on hazard, ejection, or government-project grounds). '
+                'Applicant Situation is Option D — none of A, B, or C. '
                 'No situation-specific supporting uploads apply.'
             ),
             'done': True,
@@ -1751,6 +1857,7 @@ def _situation_certification_gate(applicant):
                 'label': 'CDRRMO certification (uploaded or scanned)',
                 'detail': 'File applicant vault entry with document type “CDRRMO Certification”.',
                 'done': bool(has_cdrrmo_doc),
+                'vault_document_type': 'cdrrmo_cert',
             },
             {
                 'key': 'ronda_field_photos',
@@ -1779,6 +1886,7 @@ def _situation_certification_gate(applicant):
             ),
             'done': done,
             'files_count': n,
+            'vault_document_type': 'isf_situational_docs',
         }]
         base['ready'] = done
         if not done:
@@ -1801,6 +1909,7 @@ def _situation_certification_gate(applicant):
             ),
             'done': done,
             'files_count': n,
+            'vault_document_type': 'isf_situational_docs',
         }]
         base['ready'] = done
         if not done:
@@ -1990,6 +2099,31 @@ def eligibility_snapshot(request, position):
         },
     }
 
+    # Deep links to Document Vault upload modal (prefilled applicant + document type).
+    _eligibility_check_vault_types = {
+        'property': 'no_property',
+        'age_residency': 'barangay_residency',
+        'income': 'barangay_indigency',
+        'household': 'cedula',
+        'voter': 'voter_certification',
+    }
+    _vault_mgmt_elig = reverse('documents:management', kwargs={'position': request.user.position})
+    _vault_search_elig = ((applicant.reference_number or '').strip() or str(applicant.pk)).strip()
+    for _ck, _dt in _eligibility_check_vault_types.items():
+        if _ck in checks:
+            _base_elig_q = {
+                'search': _vault_search_elig,
+                'applicant_id': str(applicant.pk),
+                'open_upload': '1',
+                'document_type': _dt,
+            }
+            checks[_ck]['vault_upload_url'] = (
+                f'{_vault_mgmt_elig}?{urlencode({**_base_elig_q, "intent": "upload"})}'
+            )
+            checks[_ck]['vault_scan_url'] = (
+                f'{_vault_mgmt_elig}?{urlencode({**_base_elig_q, "intent": "scan"})}'
+            )
+
     saved_decisions = {}
     for decision in EligibilityCheckDecision.objects.filter(applicant=applicant):
         saved_decisions[decision.check_key] = {
@@ -2040,7 +2174,10 @@ def eligibility_snapshot(request, position):
         'not_abc': {
             'option': 'Option D',
             'title': 'None of A, B, or C (Other / not listed)',
-            'description': 'The situation does not fall under a hazard area, ejection, or a government project. The applicant is recorded for the Walk-in path (no Priority on this ground).',
+            'description': (
+                'The situation does not fall under a hazard area, private eviction/ejection, '
+                'or a government infrastructure project.'
+            ),
         },
     }
     situation_payload = situation_map.get(displacement_reason, {
@@ -2050,10 +2187,41 @@ def eligibility_snapshot(request, position):
     })
 
     situation_cert_gate = _situation_certification_gate(applicant)
+    vault_mgmt_path = reverse('documents:management', kwargs={'position': request.user.position})
+    vault_search_term = ((applicant.reference_number or '').strip() or str(applicant.pk)).strip()
+    for _cert_row in situation_cert_gate.get('checks') or []:
+        dt = (_cert_row.get('vault_document_type') or '').strip()
+        if dt:
+            _base_cert_q = {
+                'search': vault_search_term,
+                'applicant_id': str(applicant.pk),
+                'open_upload': '1',
+                'document_type': dt,
+            }
+            _cert_row['vault_upload_url'] = (
+                f'{vault_mgmt_path}?{urlencode({**_base_cert_q, "intent": "upload"})}'
+            )
+            _cert_row['vault_scan_url'] = (
+                f'{vault_mgmt_path}?{urlencode({**_base_cert_q, "intent": "scan"})}'
+            )
+            doc = applicant.documents.exclude(file='').filter(document_type=dt).order_by('-uploaded_at').first()
+            if doc:
+                try:
+                    doc_url = request.build_absolute_uri(doc.file.url)
+                except (ValueError, AttributeError):
+                    doc_url = ''
+                if doc_url:
+                    _cert_row['view_document'] = {
+                        'url': doc_url,
+                        'name': (doc.file_name or doc.title or doc.get_document_type_display() or '').strip(),
+                    }
+        if _cert_row.get('key') == 'ronda_field_photos':
+            _cert_row['field_portal_url'] = reverse('accounts:dashboard_field')
 
     return JsonResponse({
         'success': True,
         'applicant_id': str(applicant.id),
+        'reference_number': ((applicant.reference_number or '').strip() or str(applicant.pk)),
         'auto_disqualified': bool(auto_disqualified),
         'checks': checks,
         'saved_decisions': saved_decisions,
@@ -2216,7 +2384,6 @@ def mark_situation_certified(request, position):
         return JsonResponse({'success': False, 'error': 'Applicant Situation is not set yet.'}, status=400)
 
     situation_gate = _situation_certification_gate(applicant)
-    # Walk-in (Option D): same eligibility transition as other paths; gate flags informational UX only.
     if situation_gate.get('requires_documents') and not situation_gate.get('ready'):
         return JsonResponse({
             'success': False,
@@ -2238,11 +2405,11 @@ def mark_situation_certified(request, position):
 
     if has_failed_checks:
         if displacement_reason == 'not_abc':
-            message = 'Walk-in review noted. Marked Pending Follow-up due to failed eligibility check(s).'
+            message = 'Applicant Situation step noted. Marked Pending Follow-up due to failed eligibility check(s).'
         else:
             message = 'Applicant Situation certified. Marked Pending Follow-up due to failed eligibility check(s).'
     elif displacement_reason == 'not_abc':
-        message = 'Walk-in path confirmed and queue placement updated.'
+        message = 'Applicant Situation step completed and eligibility recorded.'
     else:
         message = 'Applicant Situation certified and queue placement updated.'
 
@@ -2602,7 +2769,7 @@ def generate_form(request, position, applicant_id):
     if blacklist_error:
         return blacklist_error
 
-    rules = _module2_eligibility_snapshot(applicant)
+    rules = _module2_eligibility_snapshot(applicant, checked_by=request.user)
     # Eligibility checks are advisory-only (red indicator); they do not block form generation.
 
     # Module 1 should have placed every eligible applicant into FIFO queue.
@@ -2621,27 +2788,18 @@ def generate_form(request, position, applicant_id):
                 f"Reference: {applicant.reference_number}"
             )
             send_sms(applicant.phone_number, msg, 'eligibility_passed', applicant=applicant, module='applications')
-    
-    required_ga_verified_target = Requirement.objects.filter(
-        group='A',
-        is_active=True,
-        is_required_for_form=True,
-    ).count()
 
-    group_a_count = applicant.requirement_submissions.filter(
-        requirement__group='A',
-        status='verified'
-    ).count()
-
-    if required_ga_verified_target > 0 and group_a_count < required_ga_verified_target:
+    if not rules.get('form_generation_ready'):
+        hint = (rules.get('readiness_hint') or '').strip()
         return JsonResponse({
             'success': False,
-            'error': (
-                f'Only {group_a_count}/{required_ga_verified_target} requirements verified. '
-                'All required Group A items must be complete.'
+            'error': hint
+            or (
+                'Applicant is not ready for form generation yet. '
+                'Complete Module 2 evaluation (required documents vault, eligibility checks, and certification) first.'
             ),
         })
-    
+
     # Check if application already exists
     if hasattr(applicant, 'application'):
         return JsonResponse({

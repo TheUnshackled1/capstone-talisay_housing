@@ -1,0 +1,298 @@
+{% extends 'staff_base.html' %}
+{% load static %}
+
+{% block title %}Ready for Form queue{% endblock %}
+
+{% block nav_applications %}{% endblock %}
+{% block nav_ready_for_form %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+    .rfq-shell {
+        position: relative;
+        overflow: hidden;
+        padding: 1.05rem 1rem 1.2rem;
+        max-width: 100%;
+        background: linear-gradient(180deg, #ecfeff 0%, #ffffff 16%);
+        border: 1px solid #a5f3fc;
+        border-radius: 0.85rem;
+        box-shadow: 0 2px 6px rgba(8, 145, 178, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
+        margin-bottom: 0.95rem;
+    }
+    .rfq-shell::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #155e75 0%, #0891b2 50%, #67e8f9 100%);
+        z-index: 1;
+    }
+    .rfq-head {
+        text-align: center;
+        margin-bottom: 0.75rem;
+    }
+    .rfq-head h1 {
+        font-size: 1.02rem;
+        font-weight: 700;
+        color: #155e75;
+        margin: 0 0 0.35rem 0;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.55rem;
+    }
+    .rfq-head h1::before {
+        content: '';
+        width: 0.55rem;
+        height: 0.55rem;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #06b6d4 0%, #0e7490 100%);
+        box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.2);
+    }
+    .rfq-head p {
+        margin: 0;
+        font-size: 0.78rem;
+        color: #475569;
+        max-width: 42rem;
+        margin-left: auto;
+        margin-right: auto;
+        line-height: 1.45;
+    }
+    .rfq-controls {
+        display: flex;
+        gap: 0.65rem;
+        margin-bottom: 0.85rem;
+        flex-wrap: wrap;
+        align-items: center;
+        padding: 0.55rem 0.65rem;
+        border: 1px solid #e2e8f0;
+        background: #f8fafc;
+        border-radius: 0.65rem;
+    }
+    .rfq-search {
+        flex: 1;
+        min-width: 200px;
+        padding: 0.52rem 0.72rem;
+        border: 1px solid #cbd5e1;
+        border-radius: 0.5rem;
+        font-size: 0.78rem;
+        outline: none;
+        box-sizing: border-box;
+    }
+    .rfq-table-wrap {
+        overflow-x: auto;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.65rem;
+    }
+    .rfq-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.78rem;
+    }
+    .rfq-table th {
+        text-align: left;
+        padding: 0.55rem 0.65rem;
+        background: #f1f5f9;
+        color: #475569;
+        font-weight: 700;
+        font-size: 0.62rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        border-bottom: 1px solid #e2e8f0;
+        white-space: nowrap;
+    }
+    .rfq-table td {
+        padding: 0.55rem 0.65rem;
+        border-bottom: 1px solid #f1f5f9;
+        vertical-align: top;
+        color: #334155;
+    }
+    .rfq-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+    .rfq-name {
+        font-weight: 600;
+        color: #0f172a;
+        font-size: 0.82rem;
+    }
+    .rfq-chip {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.18rem 0.45rem;
+        border-radius: 9999px;
+        background: #dcfce7;
+        border: 1px solid #86efac;
+        color: #166534;
+        font-size: 0.62rem;
+        font-weight: 700;
+    }
+    .rfq-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.42rem 0.72rem;
+        border-radius: 0.45rem;
+        border: none;
+        font-size: 0.72rem;
+        font-weight: 600;
+        cursor: pointer;
+        background: #16a34a;
+        color: #fff;
+    }
+    .rfq-btn:hover {
+        background: #15803d;
+    }
+    .rfq-muted {
+        font-size: 0.68rem;
+        color: #64748b;
+        font-family: ui-monospace, monospace;
+        word-break: break-all;
+    }
+    .rfq-pagination {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 0.75rem;
+        font-size: 0.72rem;
+        color: #475569;
+    }
+    .rfq-pagination a {
+        color: #1d4ed8;
+        font-weight: 600;
+        text-decoration: none;
+    }
+    .rfq-pagination a:hover {
+        text-decoration: underline;
+    }
+    .rfq-empty {
+        text-align: center;
+        padding: 2rem 1rem;
+        color: #64748b;
+        font-size: 0.84rem;
+    }
+    .rfq-link-back {
+        font-size: 0.76rem;
+        font-weight: 600;
+        color: #1d4ed8;
+        text-decoration: none;
+    }
+    .rfq-link-back:hover {
+        text-decoration: underline;
+    }
+</style>
+{% endblock %}
+
+{% block page_title %}Staff Portal{% endblock %}
+
+{% block content %}
+<div class="rfq-shell">
+    <div class="rfq-head">
+        <h1>Ready for Form queue</h1>
+        <p>
+            Applicants who passed Module&nbsp;2 readiness (<strong>Ready for Form</strong>) and have all Group&nbsp;A requirement submissions verified so you can run <strong>Generate Form</strong>.
+            Print for signatures, then scan signed documents back when your workflow adds that step.
+        </p>
+        <p style="margin-top:0.45rem;">
+            <a class="rfq-link-back" href="{% url 'applications:applications_list' request.user.position %}">← Application &amp; Evaluation (full ledger)</a>
+        </p>
+    </div>
+
+    <form method="get" action="" class="rfq-controls">
+        <input type="text" name="search" value="{{ search }}" class="rfq-search"
+            placeholder="Name or reference #…" aria-label="Search queue">
+        <button type="submit" class="rfq-btn" style="background:#1e40af;">Search</button>
+    </form>
+
+    {% if applicants_data %}
+    <div class="rfq-table-wrap">
+        <table class="rfq-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Applicant</th>
+                    <th>Reference #</th>
+                    <th>Proceeded time</th>
+                    <th>Situation</th>
+                    <th style="text-align:center;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for data in applicants_data %}
+                <tr>
+                    <td style="font-weight:700;color:#1e293b;">{{ page_obj.start_index|add:forloop.counter0 }}</td>
+                    <td>
+                        <div class="rfq-name">{{ data.applicant.full_name }}</div>
+                        <div class="rfq-muted">APP-{{ data.applicant.id }}</div>
+                    </td>
+                    <td><span class="rfq-muted">{{ data.applicant.reference_number }}</span></td>
+                    <td>{{ data.applicant.module2_handoff_at|default:data.applicant.created_at|date:"n/j/Y, P" }}</td>
+                    <td style="font-size:0.72rem;color:#475569;">
+                        {{ data.applicant.get_displacement_reason_display }}
+                    </td>
+                    <td style="text-align:center;">
+                        <span class="rfq-chip">Ready + verified</span>
+                        <div style="margin-top:0.45rem;">
+                            <button type="button" class="rfq-btn"
+                                onclick="generateFormFromQueue('{{ data.applicant.id }}')">Generate Form</button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="rfq-pagination">
+        <span>
+            Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ queue_total }} in queue
+            {% if search %} (filtered){% endif %}
+        </span>
+        <span>
+            {% if page_obj.has_previous %}
+            <a href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.previous_page_number }}">Prev</a>
+            {% else %}<span style="opacity:0.45;">Prev</span>{% endif %}
+            &nbsp;·&nbsp;Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+            &nbsp;·&nbsp;
+            {% if page_obj.has_next %}
+            <a href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.next_page_number }}">Next</a>
+            {% else %}<span style="opacity:0.45;">Next</span>{% endif %}
+        </span>
+    </div>
+    {% else %}
+    <div class="rfq-empty">
+        {% if search %}
+        No applicants in this queue match your search.
+        {% else %}
+        No applicants are currently both <strong>Ready for Form</strong> and cleared for form generation (verified Group&nbsp;A submissions). Finish evaluation steps on <a href="{% url 'applications:applications_list' request.user.position %}">Application &amp; Evaluation</a>.
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const position = '{{ request.user.position }}';
+    const queueUrl = '{% url "applications:ready_for_form_queue" request.user.position %}';
+
+    async function generateFormFromQueue(applicantId) {
+        if (!confirm('Generate application form for this applicant?')) return;
+        try {
+            const response = await fetch(`/applications/staff/${position}/generate-form/${applicantId}/`);
+            const data = await response.json();
+            if (data.success) {
+                alert('Form generated! Application #' + data.application_number + '\nReturning to this queue…');
+                window.location.href = queueUrl;
+            } else {
+                alert(data.error || 'Failed to generate form');
+            }
+        } catch (error) {
+            alert('Error: ' + error.message);
+        }
+    }
+</script>
+{% endblock %}

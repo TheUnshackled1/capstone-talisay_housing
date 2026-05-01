@@ -6,6 +6,11 @@ app_name = 'applications'
 urlpatterns = [
     # Main applications list view (Module 2)
     path('staff/<str:position>/', views.applications_list, name='applications_list'),
+    path(
+        'staff/<str:position>/ready-for-form/',
+        views.ready_for_form_queue,
+        name='ready_for_form_queue',
+    ),
     path('staff/<str:position>/evaluate-precheck/', views.evaluate_precheck, name='evaluate_precheck'),
     path('staff/<str:position>/eligibility-snapshot/', views.eligibility_snapshot, name='eligibility_snapshot'),
     path('staff/<str:position>/save-eligibility-check-decision/', views.save_eligibility_check_decision, name='save_eligibility_check_decision'),

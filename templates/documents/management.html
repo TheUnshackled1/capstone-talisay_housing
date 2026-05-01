@@ -265,17 +265,61 @@
         width: 10%;
         text-align: center;
     }
+
+    /* ===================================================================
+       Page card theme — Document Management (Module 3): Teal
+       =================================================================== */
+    .docs-shell {
+        position: relative;
+        overflow: hidden;
+        padding: 1.05rem 1rem 0.9rem;
+        max-width: 100%;
+        background: linear-gradient(180deg, #f0fdfa 0%, #ffffff 16%);
+        border: 1px solid #99f6e4;
+        border-radius: 0.85rem;
+        box-shadow: 0 2px 6px rgba(13, 148, 136, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
+        margin-bottom: 0.95rem;
+    }
+    .docs-shell::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #115e59 0%, #0d9488 50%, #5eead4 100%);
+        z-index: 1;
+    }
+    .docs-page-title {
+        font-size: 1.02rem !important;
+        font-weight: 700 !important;
+        color: #115e59 !important;
+        margin: 0 !important;
+        letter-spacing: 0.04em !important;
+        text-transform: uppercase !important;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.55rem;
+    }
+    .docs-page-title::before {
+        content: '';
+        width: 0.55rem;
+        height: 0.55rem;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #14b8a6 0%, #0f766e 100%);
+        box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.2);
+    }
 </style>
 {% endblock %}
 
 {% block content %}
 {% csrf_token %}
 
-<div style="padding: 1rem 1rem 0.9rem; max-width: 100%; background: #ffffff; border: 1px solid #dbe2ea; border-radius: 0.85rem; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06); margin-bottom: 0.95rem;">
+<div class="docs-shell">
     <!-- Page Header -->
     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.95rem; gap: 1rem; flex-wrap: wrap;">
         <div>
-            <h1 style="font-size: 1.02rem; font-weight: 700; color: #0f172a; margin: 0; letter-spacing: 0.04em; text-transform: uppercase;">Document Management</h1>
+            <h1 class="docs-page-title">Document Management</h1>
         </div>
         <button onclick="openUploadModal()" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.52rem 0.88rem; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; border: none; border-radius: 0.5rem; font-size: 0.72rem; font-weight: 700; cursor: pointer; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); white-space: nowrap;">
             ⬆️ Upload Document
@@ -373,9 +417,10 @@
     <div onclick="event.stopPropagation();" style="background: white; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto; display: flex; flex-direction: column;">
         <!-- Modal Header -->
         <div style="display: flex; justify-content: space-between; align-items: center; padding: 1.5rem; border-bottom: 1px solid #e5e7eb; background: linear-gradient(135deg, #ffffff 0%, #f3f4f6 100%);">
-            <h2 style="margin: 0; font-size: 1.25rem; font-weight: 700; background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">📁 Upload Document</h2>
+            <h2 id="uploadModalTitle" style="margin: 0; font-size: 1.25rem; font-weight: 700; background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">📁 Upload Document</h2>
             <button onclick="closeUploadModal()" style="padding: 0.25rem; background: transparent; border: none; color: #9ca3af; font-size: 1.5rem; cursor: pointer; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; transition: all 150ms ease; border-radius: 6px;" onmouseover="this.style.color='#ef4444'; this.style.backgroundColor='#fee2e2'" onmouseout="this.style.color='#9ca3af'; this.style.backgroundColor='transparent'" title="Close">✕</button>
         </div>
+        <p id="uploadModalIntentHint" style="display: none; margin: 0 1.5rem 0.65rem; font-size: 0.78rem; color: #475569; line-height: 1.45;"></p>
 
         <!-- Modal Body -->
         <div style="flex: 1; padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; overflow-y: auto;">
@@ -397,7 +442,7 @@
                 <!-- Document Type -->
                 <div style="display: flex; flex-direction: column; gap: 0.5rem;">
                     <label style="font-size: 0.75rem; font-weight: 600; color: #1f2937; text-transform: uppercase; letter-spacing: 0.05em;">Document Type *</label>
-                    <select name="document_type" required style="padding: 0.625rem; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 0.875rem; color: #111827; transition: all 200ms ease; background: white;" onfocus="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 3px rgba(59, 130, 246, 0.1)'; this.style.backgroundColor='white'" onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'">
+                    <select id="uploadDocumentTypeSelect" name="document_type" required style="padding: 0.625rem; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 0.875rem; color: #111827; transition: all 200ms ease; background: white;" onfocus="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 3px rgba(59, 130, 246, 0.1)'; this.style.backgroundColor='white'" onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'">
                         <option value="">— Select Type —</option>
                         <optgroup label="Applicant Requirements">
                             <option value="barangay_residency">Barangay Certificate of Residency</option>
@@ -476,6 +521,19 @@ function closeUploadModal(e) {
     document.getElementById('uploadModal').style.display = 'none';
     document.getElementById('uploadForm').reset();
     document.getElementById('fileName').textContent = '';
+    const titleEl = document.getElementById('uploadModalTitle');
+    const hintEl = document.getElementById('uploadModalIntentHint');
+    if (titleEl) {
+        titleEl.textContent = '📁 Upload Document';
+        titleEl.style.background = 'linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%)';
+        titleEl.style.webkitBackgroundClip = 'text';
+        titleEl.style.backgroundClip = 'text';
+        titleEl.style.webkitTextFillColor = 'transparent';
+    }
+    if (hintEl) {
+        hintEl.style.display = 'none';
+        hintEl.textContent = '';
+    }
 }
 
 function submitUpload() {
@@ -548,6 +606,65 @@ document.getElementById('searchInput').addEventListener('input', (e) => {
 
 document.addEventListener('keydown', e => {
     if (e.key === 'Escape') closeUploadModal();
+});
+
+// Deep link from Module 2 Applicant Situation Certification (vault upload shortcuts).
+document.addEventListener('DOMContentLoaded', () => {
+    const params = new URLSearchParams(window.location.search);
+    const search = params.get('search');
+    const applicantId = params.get('applicant_id');
+    const openUpload = params.get('open_upload');
+    const docType = params.get('document_type');
+    const intent = params.get('intent');
+
+    const searchInput = document.getElementById('searchInput');
+    if (search && searchInput) {
+        searchInput.value = search;
+        searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+
+    if (openUpload === '1') {
+        openUploadModal();
+        const titleEl = document.getElementById('uploadModalTitle');
+        const hintEl = document.getElementById('uploadModalIntentHint');
+        if (titleEl && hintEl) {
+            if (intent === 'scan') {
+                titleEl.textContent = '📷 Scan document';
+                titleEl.style.background = 'linear-gradient(135deg, #6d28d9 0%, #7c3aed 100%)';
+                titleEl.style.webkitBackgroundClip = 'text';
+                titleEl.style.backgroundClip = 'text';
+                titleEl.style.webkitTextFillColor = 'transparent';
+                hintEl.textContent = 'Use when attaching a scan from the office scanner or camera.';
+                hintEl.style.display = 'block';
+            } else if (intent === 'upload') {
+                titleEl.textContent = '📁 Upload document';
+                titleEl.style.background = 'linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%)';
+                titleEl.style.webkitBackgroundClip = 'text';
+                titleEl.style.backgroundClip = 'text';
+                titleEl.style.webkitTextFillColor = 'transparent';
+                hintEl.textContent = 'Use when attaching a file already saved on this device.';
+                hintEl.style.display = 'block';
+            }
+        }
+        const applicantSelect = document.getElementById('applicantSelect');
+        if (applicantSelect && applicantId) {
+            for (let i = 0; i < applicantSelect.options.length; i++) {
+                if (applicantSelect.options[i].value === applicantId) {
+                    applicantSelect.selectedIndex = i;
+                    break;
+                }
+            }
+        }
+        const typeSel = document.getElementById('uploadDocumentTypeSelect');
+        if (typeSel && docType) {
+            for (let i = 0; i < typeSel.options.length; i++) {
+                if (typeSel.options[i].value === docType) {
+                    typeSel.selectedIndex = i;
+                    break;
+                }
+            }
+        }
+    }
 });
 
 // Show subtle handoff toast when redirected from Module 2 requirement gate.

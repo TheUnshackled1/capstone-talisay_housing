@@ -5,14 +5,62 @@
 
 {% block page_title %}Staff Portal{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* ===================================================================
+       Page card theme — Housing Units Monitoring (Module 4): Sky
+       =================================================================== */
+    .units-shell {
+        position: relative;
+        overflow: hidden;
+        padding: 1.05rem 1rem 0.9rem;
+        max-width: 100%;
+        background: linear-gradient(180deg, #f0f9ff 0%, #ffffff 16%);
+        border: 1px solid #bae6fd;
+        border-radius: 0.85rem;
+        box-shadow: 0 2px 6px rgba(2, 132, 199, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
+        margin-bottom: 0.95rem;
+    }
+    .units-shell::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #0c4a6e 0%, #0284c7 50%, #7dd3fc 100%);
+        z-index: 1;
+    }
+    .units-page-title {
+        font-size: 1.02rem !important;
+        font-weight: 700 !important;
+        color: #0c4a6e !important;
+        margin: 0 !important;
+        letter-spacing: 0.04em !important;
+        text-transform: uppercase !important;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.55rem;
+    }
+    .units-page-title::before {
+        content: '';
+        width: 0.55rem;
+        height: 0.55rem;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #0ea5e9 0%, #075985 100%);
+        box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.2);
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 {% csrf_token %}
 
-<div style="padding: 1rem 1rem 0.9rem; max-width: 100%; background: #ffffff; border: 1px solid #dbe2ea; border-radius: 0.85rem; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06); margin-bottom: 0.95rem;">
+<div class="units-shell">
     <!-- Page Header -->
     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.95rem; gap: 1rem; flex-wrap: wrap;">
         <div>
-            <h1 style="font-size: 1.02rem; font-weight: 700; color: #0f172a; margin: 0; letter-spacing: 0.04em; text-transform: uppercase;">Housing Unit & Occupancy Monitoring</h1>
+            <h1 class="units-page-title">Housing Unit & Occupancy Monitoring</h1>
             <p style="font-size: 0.75rem; color: #64748b; margin-top: 0.2rem;">Module 4 — GK Cabatangan · {{ total_units }} total units · Weekly caretaker reports</p>
         </div>
         <div style="display: flex; gap: 0.5rem;">

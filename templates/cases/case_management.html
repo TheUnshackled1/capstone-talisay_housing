@@ -5,14 +5,62 @@
 
 {% block page_title %}Staff Portal{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* ===================================================================
+       Page card theme — Case Management (Module 5): Rose
+       =================================================================== */
+    .cases-shell {
+        position: relative;
+        overflow: hidden;
+        padding: 1.05rem 1rem 0.9rem;
+        max-width: 100%;
+        background: linear-gradient(180deg, #fff1f2 0%, #ffffff 16%);
+        border: 1px solid #fda4af;
+        border-radius: 0.85rem;
+        box-shadow: 0 2px 6px rgba(190, 18, 60, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
+        margin-bottom: 0.95rem;
+    }
+    .cases-shell::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #881337 0%, #be123c 50%, #fb7185 100%);
+        z-index: 1;
+    }
+    .cases-page-title {
+        font-size: 1.02rem !important;
+        font-weight: 700 !important;
+        color: #881337 !important;
+        margin: 0 !important;
+        letter-spacing: 0.04em !important;
+        text-transform: uppercase !important;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.55rem;
+    }
+    .cases-page-title::before {
+        content: '';
+        width: 0.55rem;
+        height: 0.55rem;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #f43f5e 0%, #9f1239 100%);
+        box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.2);
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 {% csrf_token %}
 
-<div style="padding: 1rem 1rem 0.9rem; max-width: 100%; background: #ffffff; border: 1px solid #dbe2ea; border-radius: 0.85rem; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06); margin-bottom: 0.95rem;">
+<div class="cases-shell">
     <!-- Page Header -->
     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.95rem; gap: 1rem; flex-wrap: wrap;">
         <div>
-            <h1 style="font-size: 1.02rem; font-weight: 700; color: #0f172a; margin: 0; letter-spacing: 0.04em; text-transform: uppercase;">Case Management</h1>
+            <h1 class="cases-page-title">Case Management</h1>
             <p style="font-size: 0.75rem; color: #64748b; margin-top: 0.2rem;">Module 5 — Every complaint gets a case record · No verbal-only handling</p>
         </div>
         <button onclick="openNewCaseModal()" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.52rem 0.88rem; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; border: none; border-radius: 0.5rem; font-size: 0.72rem; font-weight: 700; cursor: pointer; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); white-space: nowrap;">
