@@ -3402,8 +3402,8 @@
 
     {% if permissions.can_generate_form and ready_for_form_queue_count > 0 %}
     <div style="margin-bottom:0.85rem;padding:0.65rem 0.85rem;background:linear-gradient(135deg,#ecfdf5 0%,#d1fae5 100%);border:1px solid #86efac;border-radius:0.65rem;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:0.5rem;font-size:0.78rem;color:#065f46;text-align:center;">
-        <span><strong>{{ ready_for_form_queue_count }}</strong> applicant{{ ready_for_form_queue_count|pluralize }} in Ready for Form queue.</span>
-        <a href="{% url 'applications:ready_for_form_queue' request.user.position %}" style="font-weight:700;color:#047857;text-decoration:underline;">Open Ready for Form queue</a>
+        <span><strong>{{ ready_for_form_queue_count }}</strong> applicant{{ ready_for_form_queue_count|pluralize }} in Go to Form.</span>
+        <a href="{% url 'applications:ready_for_form_queue' request.user.position %}" style="font-weight:700;color:#047857;text-decoration:underline;">Open Go to Form</a>
     </div>
     {% endif %}
 
@@ -3425,7 +3425,7 @@
             <a href="{% url 'applications:ready_for_form_queue' request.user.position %}"
                 style="display:inline-flex;align-items:center;gap:0.35rem;padding:0.5rem 0.85rem;background:#15803d;color:#fff;border-radius:0.5rem;font-size:0.74rem;font-weight:700;text-decoration:none;border:1px solid #166534;white-space:nowrap;box-shadow:0 1px 2px rgba(15,23,42,0.08);"
                 title="Open the focused list of applicants who are Ready for Form and cleared to Generate Form">
-                Ready for Form queue
+                Go to Form
                 {% if ready_for_form_queue_count > 0 %}
                 <span style="background:rgba(255,255,255,0.28);padding:0.1rem 0.42rem;border-radius:9999px;font-size:0.66rem;line-height:1;">{{ ready_for_form_queue_count }}</span>
                 {% endif %}
@@ -4300,10 +4300,17 @@
                     failure_reason: data.decision.failure_reason || '',
                 };
             }
-            if (lastEligibilitySnapshot) renderEligibilityChecklist(lastEligibilitySnapshot);
-            await fetchEligibilitySnapshot(applicantId);
-            if (lastEligibilitySnapshot && lastEligibilitySnapshot.overall) {
-                updateApplicantRowEligibilityStatus(applicantId, lastEligibilitySnapshot.overall);
+            // Fast local update: keep modal stable (no full content clear/flicker).
+            if (lastEligibilitySnapshot) {
+                renderEligibilityChecklist(lastEligibilitySnapshot);
+            }
+            // Silent sync: refresh backend snapshot without wiping/repainting modal content.
+            const freshSnapshot = await fetchEligibilitySnapshot(applicantId, {
+                preserveContent: true,
+                renderChecklist: false,
+            });
+            if (freshSnapshot && freshSnapshot.overall) {
+                updateApplicantRowEligibilityStatus(applicantId, freshSnapshot.overall);
             }
             return data;
         } catch (error) {
@@ -4504,14 +4511,18 @@
         `;
     }
 
-    async function fetchEligibilitySnapshot(applicantId) {
+    async function fetchEligibilitySnapshot(applicantId, opts = {}) {
+        const preserveContent = !!opts.preserveContent;
+        const renderChecklist = opts.renderChecklist !== false;
         const listEl = document.getElementById('eligibilityNextChecklist');
         const docEvidenceEl = document.getElementById('eligibilityNextDocEvidence');
-        if (listEl) listEl.innerHTML = '';
-        if (docEvidenceEl) docEvidenceEl.innerHTML = '';
+        if (!preserveContent) {
+            if (listEl) listEl.innerHTML = '';
+            if (docEvidenceEl) docEvidenceEl.innerHTML = '';
+        }
         if (!applicantId) {
             if (listEl) listEl.innerHTML = '<div class="eligibility-next-item"><span class="line-title">No applicant selected.</span></div>';
-            return;
+            return null;
         }
         const formData = new FormData();
         formData.append('applicant_id', applicantId);
@@ -4529,7 +4540,7 @@
             const data = await response.json();
             if (!data.success) {
                 if (listEl) listEl.innerHTML = `<div class="eligibility-next-item"><span class="line-title">${data.error || 'Unable to load eligibility snapshot.'}</span></div>`;
-                return;
+                return null;
             }
             Object.keys(eligibilityManualDecisions).forEach((key) => {
                 if (key.startsWith(`${currentEligibilityApplicantId}:`)) delete eligibilityManualDecisions[key];
@@ -4547,9 +4558,14 @@
                     };
                 }
             });
-            renderEligibilityChecklist(data);
+            if (renderChecklist) renderEligibilityChecklist(data);
+            else lastEligibilitySnapshot = data || null;
+            return data;
         } catch (error) {
-            if (listEl) listEl.innerHTML = `<div class="eligibility-next-item"><span class="line-title">Error loading checklist: ${error.message}</span></div>`;
+            if (!preserveContent && listEl) {
+                listEl.innerHTML = `<div class="eligibility-next-item"><span class="line-title">Error loading checklist: ${error.message}</span></div>`;
+            }
+            return null;
         }
     }
 
