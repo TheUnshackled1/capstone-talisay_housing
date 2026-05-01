@@ -10,6 +10,7 @@ from django.utils import timezone
 from django.urls import reverse
 from functools import wraps
 from urllib.parse import urlencode
+import logging
 from intake.models import Applicant
 from intake import sms_workflow
 from documents.models import (
@@ -41,6 +42,8 @@ ELIGIBILITY_CHECK_LABELS = {
     'household': 'Household composition',
     'voter': 'Registered voters',
 }
+
+logger = logging.getLogger(__name__)
 
 
 def send_sms(recipient_phone, message_content, trigger_event, applicant=None, module='applications'):
@@ -784,6 +787,7 @@ def _module2_applicant_row_payload(applicant, permissions, required_group_a_subm
         permissions['can_generate_form']
         and application is None
         and rules.get('form_generation_ready')
+        and (applicant.displacement_reason or '').strip() in {'danger_zone', 'ejected', 'relocated', 'not_abc'}
     )
 
     if application and application.status == 'awarded':
@@ -812,6 +816,8 @@ def _module2_applicant_row_payload(applicant, permissions, required_group_a_subm
     return {
         'applicant': applicant,
         'application': application,
+        'form_queue_routed_at': applicant.form_queue_routed_at,
+        'form_queue_routed_by': applicant.form_queue_routed_by,
         'applicant_status': applicant.status,
         'applicant_status_display': applicant.get_status_display(),
         'cdrrmo_status': getattr(getattr(applicant, 'cdrrmo_certification', None), 'status', None),
@@ -915,8 +921,12 @@ def applications_list(request, position):
         if row is None:
             continue
         ev = row['m2_evaluator']
-        if ev.get('form_generation_ready') and 'generate_form' in row['user_actions']:
+        is_routed_to_queue = bool(applicant.form_queue_routed_at) and row['application'] is None
+        if ev.get('form_generation_ready') and is_routed_to_queue and 'generate_form' in row['user_actions']:
             ready_for_form_queue_count += 1
+        # True handoff behavior: once routed to Ready for Form queue, hide from main ledger.
+        if is_routed_to_queue:
+            continue
         applicants_data.append(row)
     
     # Filter by stage if requested
@@ -994,9 +1004,6 @@ def ready_for_form_queue(request, position):
         return redirect('accounts:dashboard')
 
     permissions = get_module2_permissions(request.user)
-    if not permissions.get('can_generate_form'):
-        messages.error(request, 'You do not have permission to generate application forms.')
-        return redirect('applications:applications_list', position=position)
 
     _module2_run_handoff_preflight(request.user)
     applicants = _module2_evaluations_applicants_queryset()
@@ -1021,10 +1028,13 @@ def ready_for_form_queue(request, position):
         )
         if row is None:
             continue
-        ev = row['m2_evaluator']
-        if ev.get('form_generation_ready') and 'generate_form' in row['user_actions']:
+        if row['application'] is None and bool(applicant.form_queue_routed_at):
             applicants_data.append(row)
 
+    ready_queue_total = len(applicants_data)
+
+    selected_applicant_id = (request.GET.get('applicant_id') or '').strip()
+    from_source = (request.GET.get('from') or '').strip()
     search = request.GET.get('search', '').strip()
     if search:
         search_lower = search.lower()
@@ -1033,6 +1043,38 @@ def ready_for_form_queue(request, position):
             if search_lower in a['applicant'].full_name.lower()
             or search_lower in (a['applicant'].reference_number or '').lower()
         ]
+
+    selected_row_included = False
+    selected_not_ready_reason = ''
+
+    # If the user came from Module 2 list with a target applicant, pin it to
+    # the first slot before pagination so it is immediately visible.
+    if selected_applicant_id:
+        selected_idx = next(
+            (i for i, row in enumerate(applicants_data) if str(getattr(row['applicant'], 'id', '')) == selected_applicant_id),
+            None,
+        )
+        if selected_idx is not None:
+            selected_row = applicants_data.pop(selected_idx)
+            applicants_data.insert(0, selected_row)
+            selected_row_included = True
+        else:
+            selected_candidate = Applicant.objects.filter(id=selected_applicant_id).first()
+            if selected_candidate is not None:
+                selected_payload = _module2_applicant_row_payload(
+                    selected_candidate,
+                    permissions,
+                    required_group_a_submission_total,
+                    request.user,
+                )
+                if selected_payload is not None:
+                    selected_payload['selected_out_of_queue'] = True
+                    applicants_data.insert(0, selected_payload)
+                    selected_row_included = True
+                    selected_not_ready_reason = (
+                        selected_payload.get('m2_evaluator', {}).get('readiness_hint')
+                        or 'Selected applicant is not currently ready for form generation.'
+                    )
 
     paginator = Paginator(applicants_data, MODULE2_LIST_PER_PAGE)
     page_number = request.GET.get('page', 1)
@@ -1054,12 +1096,90 @@ def ready_for_form_queue(request, position):
         'search': search,
         'permissions': permissions,
         'user_position': request.user.position,
-        'queue_total': len(applicants_data),
+        'queue_total': ready_queue_total,
         'requirements': requirements,
         'group_a_requirements': group_a_requirements,
         'group_b_requirements': group_b_requirements,
+        'selected_applicant_id': selected_applicant_id,
+        'from_source': from_source,
+        'selected_row_included': selected_row_included,
+        'selected_not_ready_reason': selected_not_ready_reason,
     }
     return render(request, 'applications/ready_for_form_list.html', context)
+
+
+# =============================================================================
+# READY FOR FORM QUEUE ROUTING
+# =============================================================================
+
+@login_required
+@verify_position
+@require_POST
+def proceed_to_form_queue(request, position):
+    allowed_positions = ['fourth_member', 'second_member']
+    if request.user.position not in allowed_positions:
+        return JsonResponse({'success': False, 'error': 'Permission denied.'}, status=403)
+
+    applicant_id = request.POST.get('applicant_id')
+    if not applicant_id:
+        return JsonResponse({'success': False, 'error': 'Missing applicant_id.'}, status=400)
+
+    applicant = get_object_or_404(Applicant, id=applicant_id)
+    handoff_error = _require_intake_archive(applicant)
+    if handoff_error:
+        return handoff_error
+    blacklist_error = _require_module2_blacklist_clear(applicant)
+    if blacklist_error:
+        return blacklist_error
+    if hasattr(applicant, 'application'):
+        return JsonResponse({'success': False, 'error': 'Application form already generated.'}, status=400)
+    if (applicant.displacement_reason or '').strip() not in {'danger_zone', 'ejected', 'relocated', 'not_abc'}:
+        return JsonResponse({
+            'success': False,
+            'error': 'Proceed to Form is available only when Applicant Situation is set (Option A, B, C, or D).',
+        }, status=400)
+
+    rules = _module2_eligibility_snapshot(applicant, checked_by=request.user)
+    if not rules.get('form_generation_ready'):
+        hint = (rules.get('readiness_hint') or '').strip()
+        return JsonResponse({
+            'success': False,
+            'error': hint or 'Applicant is not ready for form generation yet.',
+        }, status=400)
+
+    applicant.form_queue_routed_at = timezone.now()
+    applicant.form_queue_routed_by = request.user
+    applicant.save(update_fields=['form_queue_routed_at', 'form_queue_routed_by', 'updated_at'])
+
+    sms_plan_payload = {
+        'active': False,
+        'provider': 'Semaphore',
+        'has_phone': bool((applicant.phone_number or '').strip()),
+        'note': 'Console-only trigger plan. No SMS sent on Proceed to Form yet.',
+    }
+    # Server terminal trace for local testing (runserver console).
+    print(
+        '[Proceed To Form SMS Plan]',
+        {
+            'applicant_id': str(applicant.id),
+            'reference_number': applicant.reference_number,
+            **sms_plan_payload,
+        },
+    )
+    logger.info(
+        'Proceed To Form SMS Plan applicant=%s ref=%s active=%s provider=%s has_phone=%s',
+        applicant.id,
+        applicant.reference_number,
+        sms_plan_payload['active'],
+        sms_plan_payload['provider'],
+        sms_plan_payload['has_phone'],
+    )
+
+    return JsonResponse({
+        'success': True,
+        'message': 'Applicant moved to Ready for Form queue.',
+        'sms_plan': sms_plan_payload,
+    })
 
 
 # =============================================================================

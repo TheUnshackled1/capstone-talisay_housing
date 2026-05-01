@@ -17,8 +17,6 @@ from .forms import (
     HouseholdMemberForm,
     WalkInApplicantForm
 )
-from .utils import send_sms
-from . import sms_workflow
 import json
 import re
 from collections import defaultdict
@@ -722,66 +720,6 @@ def delete_applicant(request, position):
 
     except Applicant.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Applicant not found'})
-    except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)})
-
-
-@login_required
-@verify_position
-@require_POST
-def resend_sms(request, position):
-    """
-    Resend SMS notification to applicant.
-    Handles Channel B/C (Applicants) walk-in registrations.
-
-    URL Route: /intake/staff/<position>/resend-sms/
-
-    Accessible to: Second Member (Joie), Fourth Member (Jocel)
-    """
-    allowed_positions = ['second_member', 'fourth_member']
-    if request.user.position not in allowed_positions:
-        return JsonResponse({'success': False, 'error': 'Access denied'})
-    
-    channel = request.POST.get('channel')
-    record_id = request.POST.get('id')
-    sms_type = request.POST.get('sms_type', 'registration')  # 'registration' or 'eligibility'
-    
-    if not channel or not record_id:
-        return JsonResponse({'success': False, 'error': 'Missing channel or id'})
-    
-    try:
-        record = Applicant.objects.get(id=record_id)
-        if not record.phone_number:
-            return JsonResponse({'success': False, 'error': 'No phone number on record'})
-
-        if sms_type == 'registration':
-            if not record.archives.exists():
-                return JsonResponse({
-                    'success': False,
-                    'error': 'SMS for this type is only allowed after the record is proceeded to Archives.',
-                })
-            handoff_message = sms_workflow.message_proceed_to_evaluation(record)
-            sent = send_sms(
-                record.phone_number,
-                handoff_message,
-                sms_workflow.PROCEED_TO_EVALUATION,
-                applicant=record,
-            )
-            if not sent:
-                return JsonResponse({'success': False, 'error': 'Failed to send SMS'})
-            record.registration_sms_sent = True
-            record.save(update_fields=['registration_sms_sent', 'updated_at'])
-        else:
-            record.eligibility_sms_sent = False
-            record.send_eligibility_sms(eligible=record.status == 'eligible')
-
-        return JsonResponse({
-            'success': True,
-            'message': f'{sms_type.title()} SMS resent successfully'
-        })
-
-    except Applicant.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'Record not found'})
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
 

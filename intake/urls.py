@@ -21,5 +21,4 @@ urlpatterns = [
     path('staff/<str:position>/upload-scanned-requirement/', views.upload_scanned_requirement, name='upload_scanned_requirement'),
     path('staff/<str:position>/proceed-to-applications/', views.proceed_to_applications, name='proceed_to_applications'),
     path('staff/<str:position>/delete-applicant/', views.delete_applicant, name='delete_applicant'),
-    path('staff/<str:position>/resend-sms/', views.resend_sms, name='resend_sms'),
 ]

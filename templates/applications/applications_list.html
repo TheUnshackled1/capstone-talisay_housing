@@ -6,6 +6,7 @@
 {% block nav_applications %}active{% endblock %}
 
 {% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/module2-proceed-alert.css' %}">
 <style>
     /* Stage Summary Cards - Matching Figma */
     .stages-grid {
@@ -3401,7 +3402,7 @@
 
     {% if permissions.can_generate_form and ready_for_form_queue_count > 0 %}
     <div style="margin-bottom:0.85rem;padding:0.65rem 0.85rem;background:linear-gradient(135deg,#ecfdf5 0%,#d1fae5 100%);border:1px solid #86efac;border-radius:0.65rem;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:0.5rem;font-size:0.78rem;color:#065f46;text-align:center;">
-        <span><strong>{{ ready_for_form_queue_count }}</strong> applicant{{ ready_for_form_queue_count|pluralize }} ready for form generation.</span>
+        <span><strong>{{ ready_for_form_queue_count }}</strong> applicant{{ ready_for_form_queue_count|pluralize }} in Ready for Form queue.</span>
         <a href="{% url 'applications:ready_for_form_queue' request.user.position %}" style="font-weight:700;color:#047857;text-decoration:underline;">Open Ready for Form queue</a>
     </div>
     {% endif %}
@@ -3452,7 +3453,13 @@
             </thead>
             <tbody>
                 {% for data in applicants_data %}
-                <tr data-applicant-id="{{ data.applicant.id }}" class="scroll-animate-left" {% if data.blacklist_blocked %}style="background:#fef2f2;"{% endif %}>
+                <tr
+                    data-applicant-id="{{ data.applicant.id }}"
+                    data-has-application="{% if data.form_generated %}1{% else %}0{% endif %}"
+                    data-displacement-reason="{{ data.applicant.displacement_reason|default:'' }}"
+                    class="scroll-animate-left"
+                    {% if data.blacklist_blocked %}style="background:#fef2f2;"{% endif %}
+                >
                     <td class="col-num" style="font-weight:700;color:#1e293b;">{{ page_obj.start_index|add:forloop.counter0 }}</td>
                     <td class="col-applicant">
                         <div class="applicant-cell">
@@ -3561,8 +3568,8 @@
                             </button>
                             {% if 'generate_form' in data.user_actions %}
                             <button class="action-btn" style="background: #dcfce7; color: #16a34a;"
-                                onclick="generateFormDirect('{{ data.applicant.id }}')">
-                                📝 Generate Form
+                                onclick="proceedToFormQueue('{{ data.applicant.id }}')">
+                                Proceed to Form
                             </button>
                             {% endif %}
 
@@ -3751,6 +3758,7 @@
 <script>
     // Page-level state
     const position = '{{ request.user.position }}';
+    const MODULE2_PROCEED_TO_FORM_QUEUE_URL = '{% url "applications:proceed_to_form_queue" request.user.position %}';
     const MODULE2_CAN_DWT_SCAN = {{ permissions.can_verify_documents|yesno:"true,false" }};
     const MODULE2_INTAKE_UPLOAD_SCAN_URL = '{% url "intake:upload_scanned_requirement" request.user.position %}';
     let flowAlertOnConfirm = null;
@@ -4105,8 +4113,11 @@
         }
         titleEl.textContent = title;
         messageEl.textContent = message || '';
-        if (card) card.classList.toggle('success', tone === 'success');
-        if (iconEl) iconEl.style.display = tone === 'success' ? 'inline-flex' : 'none';
+        if (card) {
+            card.classList.toggle('success', tone === 'success');
+            card.classList.toggle('proceed-success', tone === 'proceed_success');
+        }
+        if (iconEl) iconEl.style.display = (tone === 'success' || tone === 'proceed_success') ? 'inline-flex' : 'none';
         if (nextBtn) nextBtn.style.display = (tone === 'success' && title === 'Evaluation Precheck') ? 'inline-flex' : 'none';
         if (actionsEl) actionsEl.style.justifyContent = (tone === 'success' && title === 'Evaluation Precheck') ? 'space-between' : 'flex-end';
         flowAlertOnConfirm = onConfirm;
@@ -4168,6 +4179,98 @@
         return raw;
     }
 
+    function getEligibilityStatusUi(overall) {
+        const data = overall || {};
+        if (data.blacklist_blocked) return { label: 'Blocked - Blacklisted', cls: 'blocked', title: '' };
+        if (!data.required_docs_complete) return { label: 'Docs Incomplete', cls: 'pending', title: '' };
+        if (data.situation_docs_ready === false) return { label: 'Needs Situation Docs', cls: 'pending', title: '' };
+        if (String(data.certification_status || '') === 'pending') return { label: 'Pending Certification', cls: 'pending', title: '' };
+        if (String(data.field_evidence_status || '') === 'missing') return { label: 'Needs Field Evidence', cls: 'pending', title: '' };
+        if (data.has_failed_checks) {
+            return {
+                label: 'Pending Follow-up',
+                cls: 'followup',
+                title: 'One or more eligibility checks marked Failed — reviewer follow-up required.',
+            };
+        }
+        if (data.form_generation_ready) return { label: 'Ready for Form', cls: 'ready', title: '' };
+        return { label: 'Under Review', cls: 'pending', title: '' };
+    }
+
+    function updateApplicantRowEligibilityStatus(applicantId, overall) {
+        const id = String(applicantId || '').trim();
+        if (!id) return;
+        const row = document.querySelector(`tr[data-applicant-id="${id}"]`);
+        if (!row) return;
+        const container = row.querySelector('.col-eligibility .col-status-wrap');
+        if (!container) return;
+        const status = getEligibilityStatusUi(overall || {});
+        const hint = String((overall && overall.readiness_hint) || '').trim();
+        container.innerHTML = `
+            <span class="m2-readiness-chip ${status.cls}"${status.title ? ` title="${escapeHtml(status.title)}"` : ''}>${escapeHtml(status.label)}</span>
+            ${hint ? `<div class="m2-readiness-hint">${escapeHtml(hint)}</div>` : ''}
+        `;
+        syncApplicantRowGenerateFormAction(id, overall || {});
+    }
+
+    function syncApplicantRowGenerateFormAction(applicantId, overall) {
+        const id = String(applicantId || '').trim();
+        if (!id) return;
+        const row = document.querySelector(`tr[data-applicant-id="${id}"]`);
+        if (!row) return;
+        const actionsWrap = row.querySelector('.col-actions > div');
+        if (!actionsWrap) return;
+        const hasApplication = String(row.dataset.hasApplication || '0') === '1';
+        const displacementReason = String(row.dataset.displacementReason || '').trim();
+        const allowedSituations = new Set(['danger_zone', 'ejected', 'relocated', 'not_abc']);
+
+        const existingBtn = actionsWrap.querySelector(`button[onclick*="proceedToFormQueue('${id}')"]`);
+        const alreadyGenerated = !!(existingBtn && String(existingBtn.textContent || '').trim().toLowerCase() === 'form generated');
+        if (alreadyGenerated) return;
+
+        const canShowGenerate = !!(
+            overall
+            && overall.form_generation_ready
+            && !overall.blacklist_blocked
+            && !hasApplication
+            && allowedSituations.has(displacementReason)
+        );
+        if (!canShowGenerate) {
+            if (existingBtn) existingBtn.remove();
+            return;
+        }
+        if (existingBtn) return;
+
+        const btn = document.createElement('button');
+        btn.className = 'action-btn';
+        btn.style.background = '#dcfce7';
+        btn.style.color = '#16a34a';
+        btn.textContent = 'Proceed to Form';
+        btn.setAttribute('onclick', `proceedToFormQueue('${id}')`);
+        actionsWrap.appendChild(btn);
+    }
+
+    function markApplicantRowFormGenerated(applicantId, applicationNumber) {
+        const id = String(applicantId || '').trim();
+        if (!id) return;
+        const row = document.querySelector(`tr[data-applicant-id="${id}"]`);
+        if (!row) return;
+        row.dataset.hasApplication = '1';
+        const actionsCell = row.querySelector('.col-actions > div');
+        if (!actionsCell) return;
+
+        const generateBtn = actionsCell.querySelector(`button[onclick*="proceedToFormQueue('${id}')"]`);
+        if (generateBtn) {
+            generateBtn.disabled = true;
+            generateBtn.style.opacity = '0.7';
+            generateBtn.style.cursor = 'not-allowed';
+            generateBtn.textContent = 'Form Generated';
+            generateBtn.title = applicationNumber
+                ? `Application #${applicationNumber} has been generated.`
+                : 'Application form already generated.';
+        }
+    }
+
     async function saveEligibilityDecision(checkKey, status, failureReason, opts = {}) {
         const applicantId = currentEligibilityApplicantId;
         if (!applicantId || !checkKey) return null;
@@ -4198,6 +4301,10 @@
                 };
             }
             if (lastEligibilitySnapshot) renderEligibilityChecklist(lastEligibilitySnapshot);
+            await fetchEligibilitySnapshot(applicantId);
+            if (lastEligibilitySnapshot && lastEligibilitySnapshot.overall) {
+                updateApplicantRowEligibilityStatus(applicantId, lastEligibilitySnapshot.overall);
+            }
             return data;
         } catch (error) {
             showFlowAlert(error.message || 'Unable to save checklist decision.');
@@ -4615,6 +4722,9 @@
             if (!data.success) throw new Error(data.error || 'Unable to notify Ronda.');
             showFlowAlert(data.message || 'Ronda notification recorded.', 'Situation Certification', null, 'success');
             await fetchEligibilitySnapshot(currentEligibilityApplicantId);
+            if (lastEligibilitySnapshot && lastEligibilitySnapshot.overall) {
+                updateApplicantRowEligibilityStatus(currentEligibilityApplicantId, lastEligibilitySnapshot.overall);
+            }
         } catch (error) {
             showFlowAlert(error.message || 'Unable to notify Ronda.');
         }
@@ -4635,6 +4745,9 @@
             if (!data.success) throw new Error(data.error || 'Unable to mark situation certified.');
             showFlowAlert(data.message || 'Situation certified.', 'Situation Certification', null, 'success');
             await fetchEligibilitySnapshot(currentEligibilityApplicantId);
+            if (lastEligibilitySnapshot && lastEligibilitySnapshot.overall) {
+                updateApplicantRowEligibilityStatus(currentEligibilityApplicantId, lastEligibilitySnapshot.overall);
+            }
         } catch (error) {
             showFlowAlert(error.message || 'Unable to mark situation certified.');
         }
@@ -5848,22 +5961,39 @@
         }
     }
 
-    async function generateFormDirect(applicantId) {
-        if (!confirm('Generate application form for this applicant?')) return;
-        const docsUrl = `/applications/staff/${position}/`;
-
+    async function proceedToFormQueue(applicantId) {
+        if (!applicantId) return;
+        const formData = new FormData();
+        formData.append('applicant_id', applicantId);
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
         try {
-            const response = await fetch(`/applications/staff/${position}/generate-form/${applicantId}/`);
+            const response = await fetch(MODULE2_PROCEED_TO_FORM_QUEUE_URL, {
+                method: 'POST',
+                body: formData,
+            });
             const data = await response.json();
-
-            if (data.success) {
-                alert(`Form generated! Application #${data.application_number}\nReturning to Applications...`);
-                window.location.href = docsUrl;
-            } else {
-                alert(data.error || 'Failed to generate form');
+            if (!data.success) {
+                throw new Error(data.error || 'Unable to proceed applicant to Ready for Form queue.');
             }
+            const smsPlan = data.sms_plan || {};
+            console.info('[Proceed To Form SMS Plan]', {
+                flow: 'proceed_to_form_queue',
+                applicantId: applicantId,
+                endpoint: MODULE2_PROCEED_TO_FORM_QUEUE_URL,
+                smsActive: !!smsPlan.active,
+                provider: smsPlan.provider || 'Semaphore',
+                note: smsPlan.note || 'Console-only trace for now.',
+                hasPhone: !!smsPlan.has_phone,
+            });
+            const nextUrl = `/applications/staff/${position}/ready-for-form/?applicant_id=${encodeURIComponent(applicantId)}&from=applications_list`;
+            showFlowAlert(
+                data.message || 'Applicant moved to Ready for Form queue.',
+                'Proceed to Form',
+                () => { window.location.href = nextUrl; },
+                'proceed_success'
+            );
         } catch (error) {
-            alert('Error: ' + error.message);
+            showFlowAlert(error.message || 'Unable to proceed to Ready for Form queue.', 'Proceed to Form');
         }
     }
 

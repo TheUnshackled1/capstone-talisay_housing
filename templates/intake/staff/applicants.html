@@ -5527,6 +5527,21 @@
         }
     }
 
+    function logSmsDispatchPlan(flowName, details) {
+        const info = details || {};
+        console.info('[Intake SMS Plan]', {
+            flow: flowName,
+            endpoint: 'intake:proceed_to_applications',
+            provider: 'Semaphore',
+            providerReady: false, // Future integration target
+            smsActive: false,
+            note: 'Console-only trace for now. SMS dispatch is intentionally disabled.',
+            applicantId: info.applicantId || '',
+            referenceNumber: info.referenceNumber || '',
+            promote_to_module2: !!info.promoteToModule2,
+        });
+    }
+
     function proceedToEvaluationFromArchiveRequirements() {
         const payload = currentArchiveRequirementsPayload;
         const rows = payload && Array.isArray(payload.rows) ? payload.rows : [];
@@ -5565,6 +5580,11 @@
         formData.append('promote_to_module2', '1');
         const csrfEl = document.querySelector('[name=csrfmiddlewaretoken]');
         if (csrfEl) formData.append('csrfmiddlewaretoken', csrfEl.value);
+        logSmsDispatchPlan('Proceed to Application & Eligibility', {
+            applicantId: applicantId,
+            referenceNumber: ref,
+            promoteToModule2: true,
+        });
 
         fetch('{% url "intake:proceed_to_applications" request.user.position %}', {
             method: 'POST',
@@ -7108,6 +7128,11 @@
         const formData = new FormData();
         formData.append('applicant_id', target.applicantId || target.id);
         formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+        logSmsDispatchPlan('Proceed to LIST OF APPLICANTS', {
+            applicantId: target.applicantId || target.id,
+            referenceNumber: target.referenceNumber || '',
+            promoteToModule2: false,
+        });
 
         archiveProceedInFlight = true;
 

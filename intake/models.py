@@ -273,6 +273,18 @@ class Applicant(models.Model):
         blank=True,
         related_name='module2_handed_off_applicants'
     )
+    form_queue_routed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Timestamp when staff moved this record to the Ready for Form queue."
+    )
+    form_queue_routed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='form_queue_routed_applicants'
+    )
     
     # Document Checklist (8 required baseline documents including voter certification)
     doc_brgy_residency = models.BooleanField(default=False, verbose_name="Brgy. Certificate of Residency")
@@ -369,39 +381,6 @@ class Applicant(models.Model):
         # Return declared size if larger (members not yet added individually)
         return max(actual_count, self.household_size or 1)
     
-    def send_registration_sms(self):
-        """Legacy helper: sends the Module 1 handoff SMS message."""
-        from .utils import send_sms
-        from . import sms_workflow
-        if not self.phone_number:
-            return False
-        message = sms_workflow.message_proceed_to_evaluation(self)
-        if send_sms(self.phone_number, message, sms_workflow.PROCEED_TO_EVALUATION, applicant=self):
-            self.registration_sms_sent = True
-            self.save(update_fields=['registration_sms_sent'])
-            return True
-        return False
-    
-    def send_eligibility_sms(self, eligible=True):
-        """Send SMS notification of eligibility result."""
-        from .utils import send_sms
-        if not self.phone_number:
-            return False
-        if eligible:
-            message = (
-                'Congratulations! You passed eligibility. Please visit the Talisay Housing Authority office '
-                f'to submit your required applicant documents. Reference: {self.reference_number}'
-            )
-        else:
-            message = f"Your housing application could not be processed. Reason: {self.disqualification_reason or 'See office for details'}. Reference: {self.reference_number}"
-        
-        if send_sms(self.phone_number, message, 'eligibility_result', applicant=self):
-            self.eligibility_sms_sent = True
-            self.save(update_fields=['eligibility_sms_sent'])
-            return True
-        return False
-
-
 class HouseholdMember(models.Model):
     """
     Family members of an applicant.
