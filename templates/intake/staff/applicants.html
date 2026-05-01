@@ -261,121 +261,10 @@
         background-position: right 0.5rem center;
     }
 
-    .applicants-table {
-        width: 100%;
-        table-layout: fixed;
-        min-width: 0;
-        background: white;
-        border: 1px solid #e2e8f0;
-        border-radius: 0.85rem;
-        border-collapse: separate;
-        border-spacing: 0;
-        overflow: hidden;
-        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 4px 14px rgba(15, 23, 42, 0.04);
-        position: relative;
-    }
-
-    .applicants-table::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 3px;
-        background: linear-gradient(90deg, #1e3a8a 0%, #2563eb 35%, #0ea5e9 70%, #06b6d4 100%);
-        z-index: 1;
-    }
-
-    .table-scroll {
-        width: 100%;
-        overflow-x: hidden;
-        overflow-y: hidden;
-        border-radius: 0.85rem;
-    }
-
-    .table-scroll .applicants-table {
-        margin: 0;
-    }
-
-    .applicants-table--archive {
-        min-width: 0;
-    }
-
-    .applicants-table thead {
-        background: linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
-        border-bottom: 2px solid #cbd5e1;
-        position: sticky;
-        top: 0;
-        z-index: 2;
-    }
-
-    .applicants-table th {
-        padding: 0.7rem 0.45rem;
-        text-align: left;
-        font-size: 0.58rem;
-        font-weight: 700;
-        color: #475569;
-        text-transform: uppercase;
-        letter-spacing: 0.085em;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        border-right: 1px solid #e2e8f0;
-        border-bottom: 1px solid #cbd5e1;
-        position: relative;
-    }
-
-    .applicants-table th::after {
-        content: '';
-        position: absolute;
-        bottom: -1px;
-        left: 0;
-        right: 0;
-        height: 2px;
-        background: transparent;
-        transition: background 0.2s ease;
-    }
-
-    .applicants-table th:hover::after {
-        background: #2563eb;
-    }
-
-    .applicants-table tbody tr {
-        transition: background 0.18s ease, box-shadow 0.18s ease;
-    }
-
-    .applicants-table tbody tr:nth-child(even) {
-        background: #fafbfc;
-    }
-
-    .applicants-table tbody tr:hover {
-        background: #eff6ff;
-        box-shadow: inset 3px 0 0 #2563eb;
-    }
-
-    .applicants-table tbody tr:hover td:first-child {
-        color: #1e3a8a;
-    }
-
-    .applicants-table td {
-        padding: 0.55rem 0.45rem;
-        font-size: 0.625rem;
-        color: #334155;
-        vertical-align: middle;
-        border-right: 1px solid #f1f5f9;
-        border-bottom: 1px solid #eef2f7;
-        white-space: normal;
-        overflow-wrap: anywhere;
-    }
-
-    .applicants-table th:last-child,
-    .applicants-table td:last-child {
-        border-right: none;
-    }
-
-    .applicants-table tbody tr:last-child td {
-        border-bottom: none;
-    }
+    /* Visual styling moved to .formal-table in dashboard.css.
+       This template keeps only the column-width modifiers
+       (.applicants-table--active / --archive) further below. */
+    .applicants-table { table-layout: fixed; width: 100%; }
 
     .section-divider {
         border: none;
@@ -2491,20 +2380,6 @@
         border-radius: 9px;
     }
 
-    .applicants-table {
-        border-radius: 0.68rem;
-    }
-
-    .applicants-table th {
-        font-size: 0.54rem;
-        padding: 0.45rem 0.34rem;
-    }
-
-    .applicants-table td {
-        font-size: 0.6rem;
-        padding: 0.34rem 0.3rem;
-    }
-
     .table-pagination {
         padding-top: 0.46rem;
     }
@@ -2749,7 +2624,7 @@
                 id="archiveProceedHint"
                 class="archive-proceed-hint"
             >
-                Complete R01-R07 to proceed.
+                Complete all baseline required scans (R01–R07 and RVT) to proceed.
             </span>
             <button type="button" class="btn-modal secondary" onclick="closeArchiveRequirementsModal()">Close</button>
         </div>
@@ -2776,11 +2651,11 @@
             <div class="docscan-summary">
                 <div class="docscan-chip">
                     <span class="docscan-chip-label">Required Scanned</span>
-                    <span class="docscan-chip-value" id="documentScanProgress">0/7</span>
+                    <span class="docscan-chip-value" id="documentScanProgress">0/8</span>
                 </div>
                 <div class="docscan-chip">
                     <span class="docscan-chip-label">Rows</span>
-                    <span class="docscan-chip-value" id="documentScanRows">7</span>
+                    <span class="docscan-chip-value" id="documentScanRows">8</span>
                 </div>
                 <div class="docscan-chip">
                     <span class="docscan-chip-label">Readiness</span>
@@ -2813,7 +2688,7 @@
             </div>
 
             <p class="docscan-footnote">
-                Applicant can proceed only when all seven baseline requirements (R01-R07) are scanned. If Applicant Situation is Option A, B, or C, the ISF-SIT row is shown but remains optional for this proceed gate.
+                Applicant can proceed only when all eight baseline requirements (R01–R07 and voter certification RVT) are scanned. If Applicant Situation is Option A, B, or C, the ISF-SIT row is shown but remains optional for this proceed gate.
             </p>
         </div>
 
@@ -2906,8 +2781,9 @@
     </div>
 
     <!-- Table -->
-    <div class="table-scroll">
-    <table class="applicants-table applicants-table--active">
+    <div class="formal-table-card">
+    <div class="formal-table-scroll">
+    <table class="formal-table compact applicants-table applicants-table--active">
         <thead>
             <tr>
                 <th>#</th>
@@ -2975,6 +2851,7 @@
         </tbody>
     </table>
     </div>
+    </div>
     <div class="table-pagination" id="applicantsPagination">
         <span class="table-pagination-info" id="applicantsPaginationInfo">Showing 0-0 of 0</span>
         <div class="table-pagination-controls">
@@ -3036,8 +2913,9 @@
             🗂️ Archives
         </a>
     </div>
-    <div class="table-scroll">
-    <table class="applicants-table applicants-table--archive">
+    <div class="formal-table-card">
+    <div class="formal-table-scroll">
+    <table class="formal-table compact applicants-table applicants-table--archive">
         <thead>
             <tr>
                 <th>#</th>
@@ -3105,7 +2983,6 @@
                         type="button"
                         class="btn-archive-docs {% if row.scannedCount == row.requirementsTotal %}btn-archive-docs--done{% elif row.scannedCount > 0 %}btn-archive-docs--partial{% else %}btn-archive-docs--none{% endif %}"
                         onclick="openArchiveRequirementsModal(this)"
-                        data-archive-index="{{ forloop.counter0 }}"
                         data-reference="{{ row.referenceNumber }}"
                         title="Applicant requirement scan checklist — {{ row.scannedCount }} of {{ row.requirementsTotal }} digitally filed"
                     >
@@ -3142,6 +3019,7 @@
             {% endfor %}
         </tbody>
     </table>
+    </div>
     </div>
     <div class="table-pagination" id="archivePagination">
         <span class="table-pagination-info" id="archivePaginationInfo">Showing 0-0 of 0</span>
@@ -3894,7 +3772,7 @@
 
 <!-- Add Applicant Modal -->
 <div class="modal-overlay" id="addModal" onclick="closeAddModal()">
-    <div class="modal-content tha-reg-modal" style="width: min(95%, 88rem); max-width: min(95%, 88rem);" onclick="event.stopPropagation()">
+    <div class="modal-content tha-reg-modal" style="width: min(94%, 64rem); max-width: min(94%, 64rem);" onclick="event.stopPropagation()">
         <div class="modal-header">
             <h2 class="modal-title">Applicant registration</h2>
             <button type="button" class="btn-close" onclick="closeAddModal()" aria-label="Close registration form">
@@ -4886,6 +4764,7 @@
         doc_no_property: 'docNoProperty',
         doc_2x2_picture: 'doc2x2Picture',
         doc_sketch_location: 'docSketchLocation',
+        doc_voter_cert: 'docVoterCert',
     };
     let DWTObject = null;
     if (window.Dynamsoft?.DWT) {
@@ -4933,7 +4812,8 @@
             currentApplicant.docPoliceClearance,
             currentApplicant.docNoProperty,
             currentApplicant.doc2x2Picture,
-            currentApplicant.docSketchLocation
+            currentApplicant.docSketchLocation,
+            currentApplicant.docVoterCert,
         ].filter(Boolean).length;
 
         const currentId = String(currentApplicant.applicantId || currentApplicant.id || '');
@@ -5433,7 +5313,7 @@
         if (hintEl) {
             hintEl.textContent = canProceed
                 ? 'All baseline requirements complete. Ready to proceed.'
-                : 'Complete R01-R07 to proceed.';
+                : 'Complete all baseline required scans (R01–R07 and RVT) to proceed.';
             hintEl.classList.toggle('is-ready', !!canProceed);
         }
     }
@@ -5446,7 +5326,7 @@
         if (!(requiredRows.length > 0 && scannedRequired === requiredRows.length)) {
             showNoticeModal({
                 title: 'Incomplete Requirements',
-                message: 'Complete all baseline required documents (R01-R07) before proceeding to Application & Eligibility.',
+                message: 'Complete all baseline required documents (R01–R07 and voter certification RVT) before proceeding to Application & Eligibility.',
                 type: 'warning',
             });
             return;
@@ -5579,25 +5459,23 @@
         }
     }
 
-
-    function canOpenArchiveRequirements(buttonEl) {
-        if (!buttonEl || !buttonEl.dataset) return false;
-        const idx = Number(buttonEl.dataset.archiveIndex);
-        if (Number.isNaN(idx)) return false;
-        return idx === 0;
+    /** Match intake `_isf_situational_row_display_name` for modal rows (covers stale embedded JSON). */
+    function archiveModalIsfSitRowLabel(displacementReason) {
+        var dr = String(displacementReason || '').trim();
+        if (dr === 'danger_zone') {
+            return 'Option A — Resident of Danger Zone or Hazard Area — ISF situational documentation';
+        }
+        if (dr === 'ejected') {
+            return 'Option B — Ejected or Evicted from Prior Residence — ISF situational documentation';
+        }
+        if (dr === 'relocated') {
+            return 'Option C — Displaced by Government Project or Infrastructure — ISF situational documentation';
+        }
+        return '';
     }
 
     function openArchiveRequirementsModal(buttonEl) {
         if (!buttonEl) return;
-        if (!canOpenArchiveRequirements(buttonEl)) {
-            showNoticeModal({
-                title: 'FIFO LIST OF APPLICANTS Order',
-                message: 'Please complete the first record in LIST OF APPLICANTS before opening the next record.',
-                type: 'warning',
-                primaryText: 'Understood',
-            });
-            return;
-        }
         let payloadMap = {};
         const scriptEl = document.getElementById('archive-pages-documents-payload');
         if (scriptEl && scriptEl.textContent) {
@@ -5642,6 +5520,14 @@
                     : '<span class="req-badge req-badge-no">Inactive</span>';
                 var rawCode = String(r.code || '').trim().toUpperCase();
                 var code = escapeHtml(rawCode);
+                var dispReason = payload && payload.displacementReason ? String(payload.displacementReason).trim() : '';
+                var rowLabel = String(r.name || '');
+                if (rawCode === 'ISF-SIT' && dispReason) {
+                    var situLabel = archiveModalIsfSitRowLabel(dispReason);
+                    if (situLabel) rowLabel = situLabel;
+                }
+                var tip = String(r.policy_tooltip || '').trim();
+                var nameTitleAttr = tip ? ' title="' + escapeHtml(tip) + '"' : '';
                 var followUpBadge = code === 'ISF-SIT'
                     ? '<span class="req-badge req-badge-no" style="margin-left:0.45rem;">Follow-up</span>'
                     : '';
@@ -5661,7 +5547,7 @@
                     : '<span class="req-scan req-scan-pending">Not scanned</span>';
                 return '<tr data-archive-code="' + code + '"' + rowStyle + '>'
                     + '<td class="archive-req-table-code">' + escapeHtml(String(r.code || '')) + '</td>'
-                    + '<td class="archive-req-table-name">' + escapeHtml(String(r.name || '')) + followUpBadge + '</td>'
+                    + '<td class="archive-req-table-name"' + nameTitleAttr + '>' + escapeHtml(rowLabel) + (followUpBadge ? ' ' + followUpBadge : '') + '</td>'
                     + '<td>' + reqBadge + '</td>'
                     + '<td>' + activeBadge + '</td>'
                     + actionsCell
@@ -6776,7 +6662,8 @@
                     'doc_police_clearance': 'docPoliceClearance',
                     'doc_no_property': 'docNoProperty',
                     'doc_2x2_picture': 'doc2x2Picture',
-                    'doc_sketch_location': 'docSketchLocation'
+                    'doc_sketch_location': 'docSketchLocation',
+                    'doc_voter_cert': 'docVoterCert',
                 };
                 if (keyMap[docKey]) {
                     currentApplicant[keyMap[docKey]] = isChecked;
@@ -6788,7 +6675,8 @@
                         currentApplicant.docPoliceClearance,
                         currentApplicant.docNoProperty,
                         currentApplicant.doc2x2Picture,
-                        currentApplicant.docSketchLocation
+                        currentApplicant.docSketchLocation,
+                        currentApplicant.docVoterCert,
                     ].filter(Boolean).length;
                 }
                 console.log('Document saved:', docKey, isChecked);
@@ -7134,10 +7022,31 @@
                 scanned: !!applicant.docSketchLocation,
             },
         ];
+        requirements.push({
+            code: 'RVT',
+            name: 'Voter Certification (COMELEC / Barangay voter record)',
+            group: 'Applicant Requirements',
+            dbKey: 'doc_voter_cert',
+            isRequired: true,
+            isActive: true,
+            scanned: !!applicant.docVoterCert,
+        });
         if (['danger_zone', 'ejected', 'relocated'].includes(applicant.displacementReason)) {
             requirements.push({
                 code: 'ISF-SIT',
-                name: 'ISF situational documentation (A: Danger Zone/Hazard, B: Evicted, C: Government Project)',
+                name: (function () {
+                    var dr = String(applicant.displacementReason || '').trim();
+                    if (dr === 'danger_zone') {
+                        return 'Option A — Resident of Danger Zone or Hazard Area — ISF situational documentation';
+                    }
+                    if (dr === 'ejected') {
+                        return 'Option B — Ejected or Evicted from Prior Residence — ISF situational documentation';
+                    }
+                    if (dr === 'relocated') {
+                        return 'Option C — Displaced by Government Project or Infrastructure — ISF situational documentation';
+                    }
+                    return 'ISF situational documentation (Applicant Situation Options A, B, or C)';
+                })(),
                 group: 'Applicant Requirements',
                 dbKey: '',
                 isRequired: false,
@@ -8790,7 +8699,7 @@
             app.eligibilityStatus || '',
             app.queueType || 'N/A',
             app.queuePosition || '',
-            `${app.docsCount || 0}/7`,
+            `${app.docsCount || 0}/${app.docsTotal || 8}`,
             app.dateRegistered || '',
             app.handledBy || ''
         ]);

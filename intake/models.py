@@ -87,6 +87,7 @@ class Applicant(models.Model):
     STATUS_CHOICES = [
         ('pending', 'Pending eligibility check'),
         ('pending_cdrrmo', 'Pending CDRRMO verification (hazard claim)'),
+        ('pending_followup', 'Pending Follow-up (failed eligibility check)'),
         ('eligible', 'Eligible - In Queue'),
         ('disqualified', 'Disqualified'),
         ('requirements', 'Submitting Requirements'),
@@ -273,7 +274,7 @@ class Applicant(models.Model):
         related_name='module2_handed_off_applicants'
     )
     
-    # Document Checklist (7 required documents)
+    # Document Checklist (8 required baseline documents including voter certification)
     doc_brgy_residency = models.BooleanField(default=False, verbose_name="Brgy. Certificate of Residency")
     doc_brgy_indigency = models.BooleanField(default=False, verbose_name="Brgy. Certificate of Indigency")
     doc_cedula = models.BooleanField(default=False, verbose_name="Cedula")
@@ -281,19 +282,20 @@ class Applicant(models.Model):
     doc_no_property = models.BooleanField(default=False, verbose_name="Certificate of No Property")
     doc_2x2_picture = models.BooleanField(default=False, verbose_name="2x2 Picture")
     doc_sketch_location = models.BooleanField(default=False, verbose_name="Sketch of House Location")
+    doc_voter_cert = models.BooleanField(default=False, verbose_name="Voter Certification")
 
     # Document submission deadline tracking
     document_deadline = models.DateTimeField(
         null=True,
         blank=True,
         verbose_name="Document Submission Deadline",
-        help_text="Deadline by which all 7 documents must be submitted"
+        help_text="Deadline by which all baseline required documents must be submitted"
     )
     documents_submitted_at = models.DateTimeField(
         null=True,
         blank=True,
         verbose_name="Documents Completed Date",
-        help_text="When all 7 documents were completed"
+        help_text="When all baseline required documents were completed"
     )
 
     # SMS tracking
@@ -386,7 +388,10 @@ class Applicant(models.Model):
         if not self.phone_number:
             return False
         if eligible:
-            message = f"Congratulations! You passed eligibility. Please visit the Talisay Housing Authority office to submit your 7 requirements. Reference: {self.reference_number}"
+            message = (
+                'Congratulations! You passed eligibility. Please visit the Talisay Housing Authority office '
+                f'to submit your required applicant documents. Reference: {self.reference_number}'
+            )
         else:
             message = f"Your housing application could not be processed. Reason: {self.disqualification_reason or 'See office for details'}. Reference: {self.reference_number}"
         

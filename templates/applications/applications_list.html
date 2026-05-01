@@ -583,6 +583,11 @@
         width: 9%;
     }
 
+    .applications-table .col-eligibility {
+        width: 11%;
+        text-align: center;
+    }
+
     .applications-table .col-channel {
         width: 12%;
         text-align: center;
@@ -634,6 +639,7 @@
     }
 
     .applications-table.compact-table td.col-status,
+    .applications-table.compact-table td.col-eligibility,
     .applications-table.compact-table td.col-applicant {
         text-align: center;
     }
@@ -667,7 +673,11 @@
     }
 
     .applications-table.compact-table .col-encoded {
-        width: 11%;
+        width: 10%;
+    }
+
+    .applications-table.compact-table .col-eligibility {
+        width: 12%;
     }
 
     .applications-table.compact-table .col-channel {
@@ -679,7 +689,7 @@
     }
 
     .applications-table.compact-table .col-staff {
-        width: 17%;
+        width: 15%;
     }
 
     .applications-table.compact-table .col-gate {
@@ -805,7 +815,8 @@
     }
 
     .applications-table td.col-applicant,
-    .applications-table td.col-status {
+    .applications-table td.col-status,
+    .applications-table td.col-eligibility {
         vertical-align: middle;
     }
 
@@ -830,7 +841,17 @@
     }
     .m2-readiness-chip.ready { background: #dcfce7; border-color: #86efac; color: #166534; }
     .m2-readiness-chip.pending { background: #fef3c7; border-color: #fde68a; color: #92400e; }
+    .m2-readiness-chip.followup { background: #ffedd5; border-color: #fdba74; color: #9a3412; }
     .m2-readiness-chip.blocked { background: #fee2e2; border-color: #fecaca; color: #991b1b; }
+
+    .m2-readiness-hint {
+        margin-top: 0.28rem;
+        font-size: 0.58rem;
+        font-weight: 500;
+        color: #475569;
+        line-height: 1.38;
+        max-width: 14rem;
+    }
 
     .applicant-name {
         font-size: 0.78rem;
@@ -3153,6 +3174,7 @@
                     <th class="col-encoded" title="Date and time proceeded to Application & Evaluation">Proceeded time</th>
                     <th class="col-staff" title="Applicant Situation selected during intake">Situation Status</th>
                     <th class="col-staff" title="Module 1 encoding staff and Module 2 handoff metadata">Staff</th>
+                    <th class="col-eligibility" title="Module 2 eligibility evaluation readiness (documents, checks, certification)">Eligibility status</th>
                     <th class="col-actions">Actions</th>
                 </tr>
             </thead>
@@ -3188,7 +3210,7 @@
                         <span style="display:inline-flex;align-items:center;padding:0.18rem 0.45rem;border-radius:9999px;background:#fee2e2;border:1px solid #fecaca;color:#b91c1c;font-size:0.62rem;font-weight:700;">
                             Resident of Danger Zone or Hazard Area
                         </span>
-                        <div style="font-size:0.58rem;color:#7f1d1d;margin-top:0.2rem;">Required: CDRRMO Certification + ISF situational documentation</div>
+                        <div style="font-size:0.58rem;color:#7f1d1d;margin-top:0.2rem;">Required: CDRRMO certification + Ronda / field photo evidence</div>
                         {% elif data.applicant.displacement_reason == 'ejected' %}
                         <span style="display:inline-flex;align-items:center;padding:0.18rem 0.45rem;border-radius:9999px;background:#ffedd5;border:1px solid #fdba74;color:#b45309;font-size:0.62rem;font-weight:700;">
                             Ejected or Evicted from Prior Residence
@@ -3207,21 +3229,6 @@
                         <span style="display:inline-flex;align-items:center;padding:0.18rem 0.45rem;border-radius:9999px;background:#fef3c7;border:1px solid #fde68a;color:#92400e;font-size:0.62rem;font-weight:700;">
                             Not set
                         </span>
-                        {% endif %}
-                        {% if data.m2_evaluator.blacklist_blocked %}
-                        <span class="m2-readiness-chip blocked">Blocked - Blacklisted</span>
-                        {% elif not data.m2_evaluator.required_docs_complete %}
-                        <span class="m2-readiness-chip pending">Docs Incomplete</span>
-                        {% elif data.m2_evaluator.situation_docs_required and not data.m2_evaluator.situation_docs_ready %}
-                        <span class="m2-readiness-chip pending">Needs Situation Docs</span>
-                        {% elif data.m2_evaluator.certification_status == 'pending' %}
-                        <span class="m2-readiness-chip pending">Pending Certification</span>
-                        {% elif data.m2_evaluator.field_evidence_required and data.m2_evaluator.field_evidence_status == 'missing' %}
-                        <span class="m2-readiness-chip pending">Needs Field Evidence</span>
-                        {% elif data.m2_evaluator.form_generation_ready %}
-                        <span class="m2-readiness-chip ready">Ready for Form</span>
-                        {% else %}
-                        <span class="m2-readiness-chip pending">Under Review</span>
                         {% endif %}
                         </div>
                     </td>
@@ -3244,6 +3251,30 @@
                         {% else %}
                         <span style="font-size:0.625rem;color:#94a3b8;">&mdash;</span>
                         {% endif %}
+                    </td>
+                    <td class="col-eligibility">
+                        <div class="col-status-wrap">
+                        {% if data.m2_evaluator.blacklist_blocked %}
+                        <span class="m2-readiness-chip blocked">Blocked - Blacklisted</span>
+                        {% elif not data.m2_evaluator.required_docs_complete %}
+                        <span class="m2-readiness-chip pending">Docs Incomplete</span>
+                        {% elif data.m2_evaluator.situation_docs_required and not data.m2_evaluator.situation_docs_ready %}
+                        <span class="m2-readiness-chip pending">Needs Situation Docs</span>
+                        {% elif data.m2_evaluator.certification_status == 'pending' %}
+                        <span class="m2-readiness-chip pending">Pending Certification</span>
+                        {% elif data.m2_evaluator.field_evidence_required and data.m2_evaluator.field_evidence_status == 'missing' %}
+                        <span class="m2-readiness-chip pending">Needs Field Evidence</span>
+                        {% elif data.m2_evaluator.has_failed_checks %}
+                        <span class="m2-readiness-chip followup" title="One or more eligibility checks marked Failed — reviewer follow-up required.">Pending Follow-up</span>
+                        {% elif data.m2_evaluator.form_generation_ready %}
+                        <span class="m2-readiness-chip ready">Ready for Form</span>
+                        {% else %}
+                        <span class="m2-readiness-chip pending">Under Review</span>
+                        {% endif %}
+                        {% if data.m2_evaluator.readiness_hint %}
+                        <div class="m2-readiness-hint">{{ data.m2_evaluator.readiness_hint }}</div>
+                        {% endif %}
+                        </div>
                     </td>
                     <td class="col-actions">
                         <div style="display: flex; gap: 0.25rem; flex-wrap: wrap; justify-content: center; align-items: center;">
@@ -3396,7 +3427,6 @@
         </div>
     </div>
 </div>
-<input type="file" id="eligibilityVoterDocFileInput" accept="image/*,application/pdf,.pdf" style="display:none;" />
 
 <div class="modal-overlay" id="situationCertificationModal" onclick="closeSituationCertificationModal(event)">
     <div class="eligibility-next-modal" style="max-width: 42rem;" onclick="event.stopPropagation()">
@@ -3411,7 +3441,7 @@
         <div class="eligibility-next-footer">
             <button type="button" class="eligibility-next-back" onclick="backToEligibilityChecklistModal()">Back</button>
             <button type="button" class="eligibility-next-close" id="notifyRondaBtn" onclick="notifyRondaFromSituationModal()">Notify Ronda</button>
-            <button type="button" class="eligibility-next-close" onclick="markSituationCertifiedFromModal()">Mark Situation Certified</button>
+            <button type="button" class="eligibility-next-close" id="markSituationCertifiedBtn" onclick="markSituationCertifiedFromModal()">Mark Situation Certified</button>
             <button type="button" class="eligibility-next-close" onclick="closeSituationCertificationModal()">Close</button>
         </div>
     </div>
@@ -3450,7 +3480,12 @@
     let lastEligibilitySnapshot = null;
     const eligibilityManualDecisions = {};
     let pendingFailedCheckKey = '';
-    let eligibilityVoterDocBusy = false;
+
+    function escapeHtml(text) {
+        const s = text == null ? '' : String(text);
+        const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+        return s.replace(/[&<>"']/g, (m) => map[m]);
+    }
 
     function showFlowAlert(message, title = 'Notice', onConfirm = null, tone = 'default', onNext = null) {
         const modal = document.getElementById('flowAlertModal');
@@ -3562,68 +3597,6 @@
         }
     }
 
-    function triggerEligibilityVoterDocUpload() {
-        if (!currentEligibilityApplicantId) return;
-        const input = document.getElementById('eligibilityVoterDocFileInput');
-        if (!input) return;
-        input.value = '';
-        input.click();
-    }
-
-    async function uploadEligibilityVoterDocFile(file) {
-        if (!file || !currentEligibilityApplicantId || eligibilityVoterDocBusy) return;
-        eligibilityVoterDocBusy = true;
-        try {
-            const formData = new FormData();
-            formData.append('applicant_id', currentEligibilityApplicantId);
-            formData.append('doc_key', 'doc_voter_cert');
-            formData.append('doc_code', 'RVT');
-            formData.append('file', file);
-            const response = await fetch('{% url "intake:upload_scanned_requirement" request.user.position %}', {
-                method: 'POST',
-                body: formData,
-                credentials: 'same-origin',
-            });
-            const data = await response.json();
-            if (!data.success) {
-                throw new Error(data.error || 'Unable to upload voter certification document.');
-            }
-            await fetchEligibilitySnapshot(currentEligibilityApplicantId);
-        } catch (error) {
-            showFlowAlert(error.message || 'Unable to upload voter certification document.');
-        } finally {
-            eligibilityVoterDocBusy = false;
-        }
-    }
-
-    async function scanEligibilityVoterDoc() {
-        if (eligibilityVoterDocBusy || !currentEligibilityApplicantId) return;
-        const canUseScanner = typeof window.waitForDwtReady === 'function'
-            && typeof window.acquireImageWithDwt === 'function'
-            && typeof window.uploadCurrentScannedImageForApplicant === 'function';
-        if (!canUseScanner) {
-            showFlowAlert('Scanner is not initialized in this view. Upload file will open instead.');
-            triggerEligibilityVoterDocUpload();
-            return;
-        }
-        eligibilityVoterDocBusy = true;
-        try {
-            const dwt = await window.waitForDwtReady();
-            if (!dwt) throw new Error('Scanner SDK is not ready yet.');
-            await dwt.SelectSourceAsync();
-            await window.acquireImageWithDwt({ selectSource: false, closeSourceAfterAcquire: false });
-            await window.uploadCurrentScannedImageForApplicant(currentEligibilityApplicantId, currentEligibilityApplicantId, 'doc_voter_cert', 'RVT');
-            if (typeof dwt.CloseSource === 'function') {
-                try { dwt.CloseSource(); } catch (_err) {}
-            }
-            await fetchEligibilitySnapshot(currentEligibilityApplicantId);
-        } catch (error) {
-            showFlowAlert(error.message || 'Unable to scan voter certification document.');
-        } finally {
-            eligibilityVoterDocBusy = false;
-        }
-    }
-
     function openEligibilityFailReasonModal(checkKey) {
         pendingFailedCheckKey = String(checkKey || '');
         const inputEl = document.getElementById('eligibilityFailReasonInput');
@@ -3691,9 +3664,9 @@
                 <div class="line-evidence" style="color:#92400e;">Mark each check as Passed or Failed to enable Next.</div>
               </div>`
             : (failedChecks.length
-            ? `<div class="eligibility-next-item" style="border-color:#fecaca;background:#fef2f2;">
-                <div class="line-title" style="color:#991b1b;">Warning: ${failedChecks.length} check(s) marked Failed</div>
-                <div class="line-evidence" style="color:#7f1d1d;">Failed checks are reviewer findings. You may proceed once all checks are marked.</div>
+            ? `<div class="eligibility-next-item" style="border-color:#fdba74;background:#fff7ed;">
+                <div class="line-title" style="color:#9a3412;">Warning: ${failedChecks.length} check(s) marked Failed</div>
+                <div class="line-evidence" style="color:#7c2d12;">You may proceed to Applicant Situation Certification, but this applicant will be marked <strong>Pending Follow-up</strong> and cannot reach <em>Ready for Form</em> until each failed check is resolved (re-marked Passed).</div>
               </div>`
             : '');
 
@@ -3743,13 +3716,6 @@
                             <a class="eligibility-view-doc-btn" href="${docUrl}" target="_blank" rel="noopener noreferrer" title="${docName}">
                                 View Document
                             </a>
-                        </div>`
-                        : ''
-                    }
-                    ${entry.key === 'voter'
-                        ? `<div class="eligibility-evidence-actions">
-                            <button type="button" class="eligibility-view-doc-btn" onclick="triggerEligibilityVoterDocUpload()">Upload file</button>
-                            <button type="button" class="eligibility-view-doc-btn" onclick="scanEligibilityVoterDoc()">Scan</button>
                         </div>`
                         : ''
                     }
@@ -3858,15 +3824,22 @@
         if (modal) modal.classList.add('active');
     }
 
-    function openSituationCertificationModal() {
-        if (!lastEligibilitySnapshot) {
+    async function openSituationCertificationModal() {
+        if (!currentEligibilityApplicantId) {
             showFlowAlert('Load the eligibility checklist first before proceeding.');
+            return;
+        }
+        await fetchEligibilitySnapshot(currentEligibilityApplicantId);
+        const snap = lastEligibilitySnapshot;
+        if (!snap) {
+            showFlowAlert('Unable to load eligibility data for situation certification.');
             return;
         }
         const modal = document.getElementById('situationCertificationModal');
         const content = document.getElementById('situationCertificationContent');
         const subtitle = document.getElementById('situationCertificationSubtitle');
-        const situation = lastEligibilitySnapshot.situation || {};
+        const situation = snap.situation || {};
+        const sc = snap.situation_certification || {};
         const option = situation.option || 'Not set';
         const code = situation.code || '';
         const title = situation.title || 'Applicant Situation is not yet declared';
@@ -3874,22 +3847,68 @@
         if (subtitle) subtitle.textContent = `${option} · ${title}`;
         const notifyBtn = document.getElementById('notifyRondaBtn');
         if (notifyBtn) notifyBtn.style.display = code === 'danger_zone' ? 'inline-flex' : 'none';
+        const walkInInformational = !!sc.walk_in_informational;
+        const checks = Array.isArray(sc.checks) ? sc.checks : [];
+        const checksHtml = checks.map(function (c) {
+            const ok = !!c.done;
+            const detail = c.detail ? `<div class="line-evidence" style="margin-top:0.35rem;">${escapeHtml(String(c.detail))}</div>` : '';
+            return `
+                <div class="situation-cert-check eligibility-next-item" style="text-align:left;">
+                    <div class="line-title" style="display:flex;justify-content:space-between;gap:0.5rem;align-items:flex-start;">
+                        <span>${escapeHtml(String(c.label || ''))}</span>
+                        <span class="eligibility-evidence-scan ${ok ? 'scanned' : 'not-scanned'}" style="flex-shrink:0;">${ok ? 'Complete' : 'Missing'}</span>
+                    </div>
+                    ${detail}
+                </div>
+            `;
+        }).join('');
+        const reqIntro = walkInInformational
+            ? 'Walk-in classification (Option D). No situation-specific document requirements apply.'
+            : 'Based on Applicant Situation; uploads use the applicant document vault (and CDRRMO / Ronda workflows where applicable).';
+        let gateHint = '';
+        if (walkInInformational) {
+            gateHint = '<div class="line-evidence" style="color:#1e40af;margin-top:0.55rem;font-weight:600;">When finished reviewing, click Continue to proceed with Module 2 eligibility (Walk-in queue).</div>';
+        } else if (sc.ready) {
+            gateHint = '<div class="line-evidence" style="color:#166534;margin-top:0.55rem;font-weight:600;">All situation certification requirements are complete.</div>';
+        } else {
+            gateHint = `<div class="line-evidence" style="color:#b45309;margin-top:0.55rem;">${escapeHtml(String(sc.blocking_summary || 'Complete the items marked Missing before marking certified.'))}</div>`;
+        }
+
         if (content) {
             content.innerHTML = `
                 <div class="eligibility-next-item">
-                    <div class="line-title">${option}</div>
-                    <div class="line-reason">${title}</div>
-                    <div class="line-evidence">${desc}</div>
+                    <div class="line-title">${escapeHtml(option)}</div>
+                    <div class="line-reason">${escapeHtml(title)}</div>
+                    <div class="line-evidence">${escapeHtml(desc)}</div>
                 </div>
                 <div class="eligibility-next-item">
-                    <div class="line-title">Certification Path Notes</div>
-                    <div class="line-evidence">
-                        Option A triggers Ronda evidence workflow.<br>
-                        Option B/C require situation supporting documents plus ISF situational documentation.<br>
-                        Option D follows Walk-in path (no priority on this ground).
-                    </div>
+                    <div class="line-title">${walkInInformational ? 'Applicant Situation (informational)' : 'Situation certification requirements'}</div>
+                    <div class="line-evidence">${escapeHtml(reqIntro)}</div>
+                    ${checksHtml || '<div class="line-evidence">No checklist rows returned.</div>'}
+                    ${gateHint}
                 </div>
             `;
+        }
+        const certifyBtn = document.getElementById('markSituationCertifiedBtn');
+        if (certifyBtn) {
+            if (walkInInformational) {
+                certifyBtn.textContent = 'Continue';
+                certifyBtn.disabled = false;
+                certifyBtn.style.opacity = '1';
+                certifyBtn.style.cursor = 'pointer';
+                certifyBtn.title = 'Proceed with Walk-in eligibility (same queue placement as finishing this step)';
+            } else {
+                certifyBtn.textContent = 'Mark Situation Certified';
+                certifyBtn.disabled = !sc.ready;
+                certifyBtn.style.opacity = certifyBtn.disabled ? '0.55' : '1';
+                certifyBtn.style.cursor = certifyBtn.disabled ? 'not-allowed' : 'pointer';
+                certifyBtn.title = sc.ready ? '' : String(sc.blocking_summary || 'Complete situation certification requirements');
+            }
+        }
+        const notesTa = document.getElementById('situationCertificationNotes');
+        if (notesTa) {
+            notesTa.style.display = walkInInformational ? 'none' : '';
+            if (walkInInformational) notesTa.value = '';
         }
         const eligibilityModal = document.getElementById('eligibilityNextModal');
         if (eligibilityModal) eligibilityModal.classList.remove('active');
@@ -3949,18 +3968,6 @@
         closeEligibilityFailReasonModal();
         closeSituationCertificationModal();
     }
-
-    document.addEventListener('DOMContentLoaded', function () {
-        const voterInput = document.getElementById('eligibilityVoterDocFileInput');
-        if (voterInput) {
-            voterInput.addEventListener('change', function (e) {
-                const file = e.target && e.target.files ? e.target.files[0] : null;
-                if (!file) return;
-                uploadEligibilityVoterDocFile(file);
-                e.target.value = '';
-            });
-        }
-    });
 
     function backToPrecheckAlert() {
         closeEligibilityNextModal();

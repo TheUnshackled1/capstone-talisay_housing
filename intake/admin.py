@@ -37,7 +37,7 @@ class ApplicantAdmin(admin.ModelAdmin):
             'classes': ('collapse',),
             'description': 'Only applies when Channel is "Danger Zone Walk-in"',
         }),
-        ('📄 DOCUMENT CHECKLIST (7 Required)', {
+        ('📄 DOCUMENT CHECKLIST (8 baseline required)', {
             'fields': (
                 'doc_brgy_residency',
                 'doc_brgy_indigency',
@@ -46,6 +46,7 @@ class ApplicantAdmin(admin.ModelAdmin):
                 'doc_no_property',
                 'doc_2x2_picture',
                 'doc_sketch_location',
+                'doc_voter_cert',
             ),
             'description': 'Check off documents as they are submitted by the applicant',
         }),

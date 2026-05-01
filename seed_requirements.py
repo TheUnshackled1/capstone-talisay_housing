@@ -14,7 +14,7 @@ django.setup()
 from documents.models import Requirement
 
 def seed_requirements():
-    """Create the 7 Group A requirements if they don't exist."""
+    """Create Group A requirements (R01-R07 + RVT) if none exist."""
     
     # Check if requirements already exist
     existing = Requirement.objects.count()
@@ -30,6 +30,14 @@ def seed_requirements():
             ('R05', 'Certificate of No Property', 'A', 5, True, 'no_property'),
             ('R06', '2x2 Picture', 'A', 6, True, 'photo_2x2'),
             ('R07', 'Sketch of House Location', 'A', 7, True, 'house_sketch'),
+            (
+                'RVT',
+                'Voter Certification (COMELEC / Barangay voter record)',
+                'A',
+                99,
+                True,
+                'voter_certification',
+            ),
         ]
         
         for code, name, group, order, required, vault in requirements:

@@ -7,7 +7,9 @@
     <meta name="description" content="{% block meta_description %}THA OIC Portal{% endblock %}">
     <title>{% block title %}OIC Portal{% endblock %} | THA</title>
     <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}">
+    <link rel="stylesheet" href="{% static 'css/tailwind.css' %}">
     <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'css/flow-alert.css' %}">
 
     <!-- Page-specific styles -->
     {% block extra_css %}{% endblock %}
@@ -137,21 +139,36 @@
         </div>
     </aside>
 
-    <!-- Mobile Menu Toggle -->
-    <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle menu">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="3" y1="6" x2="21" y2="6"/>
-            <line x1="3" y1="12" x2="21" y2="12"/>
-            <line x1="3" y1="18" x2="21" y2="18"/>
-        </svg>
-    </button>
-
-    <!-- Main Content -->
+    <!-- Main Content Area -->
     <main class="main-content">
-        {% block content %}{% endblock %}
+        <!-- Top Bar -->
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="mobile-menu-btn" id="mobileMenuToggle" aria-label="Toggle menu" aria-expanded="false">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="3" y1="6" x2="21" y2="6"/>
+                        <line x1="3" y1="12" x2="21" y2="12"/>
+                        <line x1="3" y1="18" x2="21" y2="18"/>
+                    </svg>
+                </button>
+                <div class="page-header-content">
+                    <h1 class="page-title">{% block page_title %}OIC Portal{% endblock %}</h1>
+                    {% block page_description %}<p class="page-subtitle"></p>{% endblock %}
+                </div>
+            </div>
+            <div class="topbar-right">
+                <div class="date-badge" id="currentDateBadge"></div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="content-area">
+            {% block content %}{% endblock %}
+        </div>
     </main>
 
     <!-- Scripts -->
+    <script src="{% static 'js/dashboard.js' %}"></script>
     <script>
         // Mobile menu toggle
         const mobileMenuToggle = document.getElementById('mobileMenuToggle');

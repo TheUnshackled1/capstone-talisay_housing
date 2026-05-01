@@ -35,7 +35,50 @@ MODULE1_MIN_YEARS_RESIDING_TALISAY = 5
 # Applicant Situation Options A/B/C need an extra vault slot (ISF situational documentation).
 DISPLACEMENT_PATHS_NEED_ISF_EXTRA = frozenset({'danger_zone', 'ejected', 'relocated'})
 ISF_EXTRA_VAULT_DOC_TYPE = 'isf_situational_docs'
-VOTER_CERT_VAULT_DOC_TYPE = 'voter_certification'
+
+
+def _isf_situational_row_display_name(displacement_reason=''):
+    """
+    Human-facing checklist row title for ISF situational docs, keyed to Applicant Situation A/B/C.
+    """
+    dr = (displacement_reason or '').strip()
+    if dr == 'danger_zone':
+        return (
+            'Option A — Resident of Danger Zone or Hazard Area — '
+            'ISF situational documentation'
+        )
+    if dr == 'ejected':
+        return (
+            'Option B — Ejected or Evicted from Prior Residence — '
+            'ISF situational documentation'
+        )
+    if dr == 'relocated':
+        return (
+            'Option C — Displaced by Government Project or Infrastructure — '
+            'ISF situational documentation'
+        )
+    return 'ISF situational documentation (Applicant Situation Options A, B, or C)'
+
+
+def _isf_situational_policy_tooltip(displacement_reason=''):
+    """Long description for checklist tooltips (Applicant Situation A/B/C)."""
+    dr = (displacement_reason or '').strip()
+    if dr == 'danger_zone':
+        return (
+            'Applicant resides in a flood-prone, landslide, storm-surge, riverbank, cliff-edge, '
+            'or coastal hazard area requiring relocation for safety.'
+        )
+    if dr == 'ejected':
+        return (
+            'Applicant has been evicted or displaced through private land eviction, court order, '
+            'landowner recovery, or analogous proceedings.'
+        )
+    if dr == 'relocated':
+        return (
+            'Applicant is required to relocate due to a road-widening, drainage, infrastructure, '
+            'or other government-initiated project.'
+        )
+    return ''
 
 
 def _archive_requirement_scan_rows(requirements_group_a, scanned_types_set, displacement_reason='', latest_doc_by_type=None):
@@ -45,11 +88,29 @@ def _archive_requirement_scan_rows(requirements_group_a, scanned_types_set, disp
 
     When displacement is Options A, B, or C, one extra trackable row is appended for
     `ISF_EXTRA_VAULT_DOC_TYPE` (Option D keeps the base count only).
+
+    Requirement `RVT` (voter certification) is rendered immediately after R01–R07; the optional
+    ISF-SIT row follows when displacement is Options A, B, or C.
     """
     scanned_types_set = scanned_types_set or set()
     latest_doc_by_type = latest_doc_by_type or {}
-    rows = []
+
+    base_reqs = []
+    rvt_req = None
     for req in requirements_group_a:
+        code = getattr(req, 'code', None)
+        vault_t = (getattr(req, 'vault_document_type', None) or '').strip()
+        if code == 'RVT':
+            rvt_req = req
+            continue
+        # ISF situational slot is synthetic (with situational label); ignore DB rows so a
+        # catalog/admin name like "(A: Danger Zone/Hazard, …)" never overrides it.
+        if code == 'ISF-SIT' or vault_t == ISF_EXTRA_VAULT_DOC_TYPE:
+            continue
+        base_reqs.append(req)
+
+    rows = []
+    for req in base_reqs:
         dtype = (getattr(req, 'vault_document_type', None) or '').strip()
         scanned = bool(dtype and dtype in scanned_types_set)
         latest_meta = latest_doc_by_type.get(dtype, {}) if dtype else {}
@@ -63,9 +124,10 @@ def _archive_requirement_scan_rows(requirements_group_a, scanned_types_set, disp
             'latest_file_url': latest_meta.get('url', ''),
             'latest_file_name': latest_meta.get('name', ''),
         })
+
     scanned_count = 0
     trackable_total = 0
-    for req in requirements_group_a:
+    for req in base_reqs:
         dtype = (getattr(req, 'vault_document_type', None) or '').strip()
         if not dtype:
             continue
@@ -73,34 +135,41 @@ def _archive_requirement_scan_rows(requirements_group_a, scanned_types_set, disp
         if dtype in scanned_types_set:
             scanned_count += 1
 
+    if rvt_req is not None:
+        dtype = (getattr(rvt_req, 'vault_document_type', None) or '').strip()
+        scanned = bool(dtype and dtype in scanned_types_set)
+        latest_meta = latest_doc_by_type.get(dtype, {}) if dtype else {}
+        rows.append({
+            'code': rvt_req.code,
+            'name': rvt_req.name,
+            'group_display': rvt_req.get_group_display(),
+            'is_required_for_form': rvt_req.is_required_for_form,
+            'is_active': rvt_req.is_active,
+            'scanned': scanned,
+            'latest_file_url': latest_meta.get('url', ''),
+            'latest_file_name': latest_meta.get('name', ''),
+        })
+        if dtype:
+            trackable_total += 1
+            if dtype in scanned_types_set:
+                scanned_count += 1
+
     dr = (displacement_reason or '').strip()
     if dr in DISPLACEMENT_PATHS_NEED_ISF_EXTRA:
         scanned_isf = ISF_EXTRA_VAULT_DOC_TYPE in scanned_types_set
         latest_isf = latest_doc_by_type.get(ISF_EXTRA_VAULT_DOC_TYPE, {})
         rows.append({
             'code': 'ISF-SIT',
-            'name': 'ISF situational documentation (A: Danger Zone/Hazard, B: Evicted, C: Government Project)',
+            'name': _isf_situational_row_display_name(dr),
+            'policy_tooltip': _isf_situational_policy_tooltip(dr),
             'group_display': 'Group A - Applicant Requirements',
-            # Follow-up only: displayed in checklist but does not affect 7-doc proceed gate.
+            # Follow-up only: displayed in checklist but does not affect baseline proceed gate.
             'is_required_for_form': False,
             'is_active': True,
             'scanned': scanned_isf,
             'latest_file_url': latest_isf.get('url', ''),
             'latest_file_name': latest_isf.get('name', ''),
         })
-
-    latest_voter = latest_doc_by_type.get(VOTER_CERT_VAULT_DOC_TYPE, {})
-    rows.append({
-        'code': 'RVT',
-        'name': 'Voter Certification (COMELEC / Barangay voter record)',
-        'group_display': 'Group A - Applicant Requirements',
-        # Optional supporting evidence for the registered-voter eligibility check.
-        'is_required_for_form': False,
-        'is_active': True,
-        'scanned': VOTER_CERT_VAULT_DOC_TYPE in scanned_types_set,
-        'latest_file_url': latest_voter.get('url', ''),
-        'latest_file_name': latest_voter.get('name', ''),
-    })
 
     return rows, scanned_count, trackable_total
 
@@ -383,7 +452,8 @@ def update_applicant(request, position):
     # Document field mapping
     doc_fields = [
         'doc_brgy_residency', 'doc_brgy_indigency', 'doc_cedula',
-        'doc_police_clearance', 'doc_no_property', 'doc_2x2_picture', 'doc_sketch_location'
+        'doc_police_clearance', 'doc_no_property', 'doc_2x2_picture', 'doc_sketch_location',
+        'doc_voter_cert',
     ]
     
     try:
@@ -526,6 +596,7 @@ def upload_scanned_requirement(request, position):
         'doc_sketch_location': 'house_sketch',
         'doc_isf_situational': 'isf_situational_docs',
         'doc_voter_cert': 'voter_certification',
+        'doc_cdrrmo': 'cdrrmo_cert',
     }
 
     if not applicant_id or doc_key not in key_to_document_type:
@@ -729,7 +800,7 @@ def proceed_to_applications(request, position):
             }
         )
         # Optional promotion path used by the archive checklist CTA:
-        # once baseline R01-R07 are complete, mark as handed off for Module 2 list visibility.
+        # once baseline required scans (including RVT) are complete, mark as handed off for Module 2 list visibility.
         if promote_to_module2 and applicant.module2_handoff_at is None:
             applicant.module2_handoff_at = timezone.now()
             applicant.module2_handoff_by = request.user
@@ -860,7 +931,7 @@ def applicants_list(request, position):
                                  (isf.eligibility_checked_by.get_position_display_short() if isf.eligibility_checked_by else 'Public')),
             'handledByInitials': ((isf.submitted_by_staff.first_name[:1] + isf.submitted_by_staff.last_name[:1]).upper() if isf.submitted_by_staff else
                                  ((isf.eligibility_checked_by.first_name[:1] + isf.eligibility_checked_by.last_name[:1]).upper() if isf.eligibility_checked_by else 'LP')),
-            # Document checklist count (7 documents)
+            # Document checklist count (baseline requirements)
             'docsCount': sum([
                 isf.doc_brgy_residency,
                 isf.doc_brgy_indigency,
@@ -869,8 +940,9 @@ def applicants_list(request, position):
                 isf.doc_no_property,
                 isf.doc_2x2_picture,
                 isf.doc_sketch_location,
+                getattr(isf, 'doc_voter_cert', False),
             ]),
-            'docsTotal': 7,
+            'docsTotal': 8,
             # Individual document states for modal checkboxes
             'docBrgyResidency': isf.doc_brgy_residency,
             'docBrgyIndigency': isf.doc_brgy_indigency,
@@ -879,6 +951,7 @@ def applicants_list(request, position):
             'docNoProperty': isf.doc_no_property,
             'doc2x2Picture': isf.doc_2x2_picture,
             'docSketchLocation': isf.doc_sketch_location,
+            'docVoterCert': getattr(isf, 'doc_voter_cert', False),
             # SMS status
             'registrationSmsSent': isf.registration_sms_sent,
             'eligibilitySmsSent': isf.eligibility_sms_sent,
@@ -1027,7 +1100,7 @@ def applicants_list(request, position):
             'handledBy': app.registered_by.get_full_name() if app.registered_by else 'Unknown',
             'handledByPosition': app.registered_by.get_position_display_short() if app.registered_by else '',
             'handledByInitials': (app.registered_by.first_name[:1] + app.registered_by.last_name[:1]).upper() if app.registered_by else '??',
-            # Document checklist count (7 documents)
+            # Document checklist count (baseline requirements including voter certification)
             'docsCount': sum([
                 app.doc_brgy_residency,
                 app.doc_brgy_indigency,
@@ -1036,8 +1109,9 @@ def applicants_list(request, position):
                 app.doc_no_property,
                 app.doc_2x2_picture,
                 app.doc_sketch_location,
+                app.doc_voter_cert,
             ]),
-            'docsTotal': 7,
+            'docsTotal': 8,
             # Individual document states for modal checkboxes
             'docBrgyResidency': app.doc_brgy_residency,
             'docBrgyIndigency': app.doc_brgy_indigency,
@@ -1046,6 +1120,7 @@ def applicants_list(request, position):
             'docNoProperty': app.doc_no_property,
             'doc2x2Picture': app.doc_2x2_picture,
             'docSketchLocation': app.doc_sketch_location,
+            'docVoterCert': app.doc_voter_cert,
             # SMS status
             'registrationSmsSent': app.registration_sms_sent,
             'eligibilitySmsSent': app.eligibility_sms_sent,
@@ -1171,6 +1246,7 @@ def applicants_list(request, position):
             'scannedCount': scanned_count,
             'requirementsTotal': requirements_total,
             'applicantId': str(archive.applicant_id) if archive.applicant_id else '',
+            'displacementReason': disp_snapshot,
         })
 
     archive_documents_modal = {
@@ -1178,6 +1254,7 @@ def applicants_list(request, position):
             'referenceNumber': r['referenceNumber'],
             'fullName': r['fullName'],
             'applicantId': r.get('applicantId', ''),
+            'displacementReason': r.get('displacementReason', ''),
             'rows': r['requirementScanRows'],
         }
         for r in archive_records
@@ -1466,6 +1543,7 @@ def walkin_register(request, position):
         doc_no_property=request.POST.get('doc_no_property') == 'true',
         doc_2x2_picture=request.POST.get('doc_2x2_picture') == 'true',
         doc_sketch_location=request.POST.get('doc_sketch_location') == 'true',
+        doc_voter_cert=request.POST.get('doc_voter_cert') == 'true',
     )
 
     # Process household members from form
@@ -1517,6 +1595,7 @@ def walkin_register(request, position):
             'doc_no_property': 'Certificate of No Property',
             'doc_2x2_picture': '2x2 Picture',
             'doc_sketch_location': 'Sketch of House Location',
+            'doc_voter_cert': 'Voter Certification (COMELEC / Barangay voter record)',
         }
 
         documents_submitted = {}

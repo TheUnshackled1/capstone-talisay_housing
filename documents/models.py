@@ -18,6 +18,10 @@ class Document(models.Model):
         ('photo_2x2', '2x2 Picture'),
         ('house_sketch', 'Sketch of House Location'),
         (
+            'voter_certification',
+            'Voter Certification (COMELEC / Barangay voter record)',
+        ),
+        (
             'isf_situational_docs',
             'ISF situational documentation (Applicant Situation Options A/B/C)',
         ),

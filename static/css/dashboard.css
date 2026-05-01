@@ -18,7 +18,12 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     line-height: 1.5;
     color: #1f2937;
-    background: #f3f4f6;
+    background-color: #eef2f7;
+    background-image:
+        radial-gradient(circle at 1px 1px, rgba(15, 36, 71, 0.06) 1px, transparent 0),
+        linear-gradient(180deg, #f4f7fb 0%, #e8eef5 100%);
+    background-size: 22px 22px, 100% 100%;
+    background-attachment: fixed;
     min-height: 100vh;
 }
 
@@ -386,6 +391,17 @@ button {
     top: 0;
     z-index: 50;
     gap: 1rem;
+    box-shadow: 0 1px 3px rgba(15, 36, 71, 0.04), 0 1px 2px rgba(15, 36, 71, 0.03);
+}
+
+.topbar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary-700) 0%, var(--primary-500) 50%, var(--primary-300) 100%);
 }
 
 .topbar-left {
@@ -419,12 +435,26 @@ button {
     display: flex;
     flex-direction: column;
     gap: 0.125rem;
+    position: relative;
+    padding-left: 0.875rem;
+}
+
+.page-header-content::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.2rem;
+    bottom: 0.2rem;
+    width: 4px;
+    border-radius: 2px;
+    background: linear-gradient(180deg, var(--primary-600) 0%, var(--primary-800) 100%);
 }
 
 .page-title {
     font-size: 1.35rem;
     font-weight: 700;
     color: var(--gray-900);
+    letter-spacing: -0.01em;
 }
 
 .page-subtitle {
@@ -446,30 +476,38 @@ button {
 }
 
 .date-badge {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    background: transparent;
-    border-radius: 0.5rem;
-    font-size: 0.85rem;
-    font-weight: 500;
-    color: var(--gray-600);
-    box-shadow: none;
-    border: none;
+    padding: 0.45rem 0.875rem;
+    background: var(--primary-50);
+    border-radius: 9999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--primary-700);
+    border: 1px solid var(--primary-100);
     transition: all var(--transition-fast);
     white-space: nowrap;
 }
 
+.date-badge::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--primary-500);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
+}
+
 .date-badge:hover {
-    background: transparent;
-    box-shadow: none;
+    background: var(--primary-100);
+    border-color: var(--primary-200);
 }
 
 .date-badge svg {
-    width: 16px;
-    height: 16px;
-    color: var(--gray-600);
+    width: 14px;
+    height: 14px;
+    color: var(--primary-600);
 }
 
 @media (min-width: 640px) {
@@ -523,11 +561,29 @@ button {
 .content-area {
     flex: 1;
     padding: 1.5rem;
+    position: relative;
 }
 
 @media (min-width: 768px) {
     .content-area {
         padding: 2rem;
+    }
+}
+
+/* Generic surface panel — wrap loose page sections in this for a consistent
+   elevated card look (used implicitly by .card / .table-card / .stat-card).
+   Plain pages (forms, lists) can opt in with class="surface". */
+.surface {
+    background: var(--white);
+    border-radius: 14px;
+    border: 1px solid var(--gray-200);
+    box-shadow: 0 1px 3px rgba(15, 36, 71, 0.05), 0 1px 2px rgba(15, 36, 71, 0.03);
+    padding: 1.5rem;
+}
+
+@media (min-width: 768px) {
+    .surface {
+        padding: 1.75rem;
     }
 }
 
@@ -950,6 +1006,182 @@ button {
     border-bottom: none;
 }
 
+/* ==========================================
+   Formal Table (unified module list tables)
+   --------------------------------------------------
+   One source of truth for the listing tables in
+   intake / applications / documents / units / etc.
+   Use:
+     <div class="formal-table-card">
+       <table class="formal-table">                ← default density
+       <table class="formal-table compact">        ← dense (8+ columns)
+   ========================================== */
+.formal-table-card {
+    position: relative;
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(15, 36, 71, 0.05), 0 4px 16px rgba(15, 36, 71, 0.04);
+    overflow: hidden;
+    margin-bottom: 1.25rem;
+}
+
+.formal-table-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary-700) 0%, var(--primary-500) 50%, var(--primary-300) 100%);
+    z-index: 1;
+}
+
+.formal-table-card__header {
+    padding: 0.85rem 1.1rem;
+    border-bottom: 1px solid var(--gray-100);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    background: var(--white);
+}
+
+.formal-table-card__title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin: 0;
+}
+
+.formal-table-card__subtitle {
+    font-size: 0.72rem;
+    color: var(--gray-500);
+    margin: 0;
+}
+
+.formal-table-scroll {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.formal-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.78rem;
+    color: var(--gray-700);
+}
+
+.formal-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
+    color: var(--gray-700);
+    font-weight: 700;
+    font-size: 0.62rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    text-align: left;
+    padding: 0.7rem 0.85rem;
+    border-bottom: 2px solid #cbd5e1;
+    border-right: 1px solid #e2e8f0;
+    white-space: nowrap;
+}
+
+.formal-table thead th:last-child {
+    border-right: none;
+}
+
+.formal-table tbody td {
+    padding: 0.7rem 0.85rem;
+    border-bottom: 1px solid #eef2f7;
+    border-right: 1px solid #f1f5f9;
+    vertical-align: middle;
+    color: var(--gray-700);
+}
+
+.formal-table tbody td:last-child {
+    border-right: none;
+}
+
+.formal-table tbody tr {
+    background: var(--white);
+    transition: background var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.formal-table tbody tr:nth-child(even) {
+    background: #fafbfc;
+}
+
+.formal-table tbody tr:hover {
+    background: var(--primary-50);
+    box-shadow: inset 3px 0 0 var(--primary-600);
+}
+
+.formal-table tbody tr:hover td:first-child {
+    color: var(--gray-900);
+    font-weight: 600;
+}
+
+.formal-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Index column: muted, narrow */
+.formal-table .col-index,
+.formal-table thead th:first-child {
+    width: 2.5rem;
+    color: var(--gray-500);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Empty state row */
+.formal-table tbody .formal-table-empty td {
+    padding: 2.25rem 1rem;
+    text-align: center;
+    color: var(--gray-500);
+    font-size: 0.8rem;
+    background: var(--white);
+}
+
+.formal-table tbody .formal-table-empty:hover {
+    background: var(--white);
+    box-shadow: none;
+}
+
+/* Compact variant — for dense layouts (8+ columns) */
+.formal-table.compact {
+    font-size: 0.72rem;
+}
+
+.formal-table.compact thead th {
+    font-size: 0.58rem;
+    padding: 0.55rem 0.55rem;
+}
+
+.formal-table.compact tbody td {
+    padding: 0.5rem 0.55rem;
+}
+
+/* Footer row inside the card (pagination, summary, etc.) */
+.formal-table-card__footer {
+    padding: 0.65rem 1.1rem;
+    border-top: 1px solid var(--gray-100);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    font-size: 0.72rem;
+    color: var(--gray-600);
+    background: var(--gray-50);
+}
+
 /* Status Badges */
 .status-badge {
     display: inline-flex;
@@ -988,8 +1220,8 @@ button {
 .card {
     background: var(--white);
     border-radius: 12px;
-    box-shadow: var(--shadow);
-    border: 1px solid var(--gray-100);
+    box-shadow: 0 1px 3px rgba(15, 36, 71, 0.06), 0 1px 2px rgba(15, 36, 71, 0.04);
+    border: 1px solid var(--gray-200);
     overflow: hidden;
 }
 

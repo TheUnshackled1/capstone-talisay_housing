@@ -7,17 +7,12 @@
     <meta name="description" content="{% block meta_description %}THA Field Personnel Portal{% endblock %}">
     <title>{% block title %}Field verification desk{% endblock %} | THA</title>
     <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}">
+    <link rel="stylesheet" href="{% static 'css/tailwind.css' %}">
     <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'css/flow-alert.css' %}">
 
     <!-- Page-specific styles -->
     {% block extra_css %}{% endblock %}
-
-    <style>
-        .main-content { margin-left: 250px; }
-        @media (max-width: 768px) {
-            .main-content { margin-left: 0; }
-        }
-    </style>
 </head>
 <body>
     <!-- Sidebar Overlay for Mobile -->
@@ -123,32 +118,33 @@
         </div>
     </aside>
 
-    <!-- Main Content -->
-    <div class="main-content">
-        {% block content %}{% endblock %}
-    </div>
+    <!-- Main Content Area -->
+    <main class="main-content">
+        <!-- Top Bar -->
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu" aria-expanded="false">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 12h18M3 6h18M3 18h18"/>
+                    </svg>
+                </button>
+                <div class="page-header-content">
+                    <h1 class="page-title">{% block page_title %}Field Verification Desk{% endblock %}</h1>
+                    {% block page_description %}<p class="page-subtitle"></p>{% endblock %}
+                </div>
+            </div>
+            <div class="topbar-right">
+                <div class="date-badge" id="currentDateBadge"></div>
+            </div>
+        </header>
 
-    <script>
-        // Mobile sidebar toggle
-        document.addEventListener('DOMContentLoaded', function() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('sidebarOverlay');
-            const toggleBtn = document.querySelector('[data-sidebar-toggle]');
+        <!-- Main Content -->
+        <div class="content-area">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
 
-            if (toggleBtn) {
-                toggleBtn.addEventListener('click', function() {
-                    sidebar.classList.toggle('active');
-                    overlay.classList.toggle('active');
-                });
-            }
-
-            overlay.addEventListener('click', function() {
-                sidebar.classList.remove('active');
-                overlay.classList.remove('active');
-            });
-        });
-    </script>
-
+    <script src="{% static 'js/dashboard.js' %}"></script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

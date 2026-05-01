@@ -32,6 +32,14 @@ MODULE2_LIST_PER_PAGE = 20
 MODULE1_MIN_YEARS_RESIDING_TALISAY = 5
 EVAL28_APPROVED_SMS_EVENT = 'evaluation_approval_approved'
 ELIGIBILITY_CHECK_KEYS = frozenset({'property', 'age_residency', 'income', 'household', 'voter'})
+# Short labels for readiness hints (Application & Evaluation table).
+ELIGIBILITY_CHECK_LABELS = {
+    'property': 'Property ownership',
+    'age_residency': 'Age and residency',
+    'income': 'Income details',
+    'household': 'Household composition',
+    'voter': 'Registered voters',
+}
 
 
 def send_sms(recipient_phone, message_content, trigger_event, applicant=None, module='applications'):
@@ -508,10 +516,23 @@ def _module2_eligibility_snapshot(applicant, checked_by=None):
     certification_ready = certification_status in ('not_required', 'certified', 'not_certified')
     field_evidence_ready = field_evidence_status in ('not_required', 'available', 'pending')
     # Applicant Situation documentary evidence:
-    # Options A/B/C require at least one ISF situational supporting document.
-    situation_docs_required = displacement_reason in ('danger_zone', 'ejected', 'relocated')
+    # Option A uses CDRRMO + field verification gates (not ISF situational uploads).
+    # Options B/C require at least one ISF situational supporting document.
+    situation_docs_required = displacement_reason in ('ejected', 'relocated')
     situation_docs_count = applicant.documents.filter(document_type='isf_situational_docs').count() if situation_docs_required else 0
     situation_docs_ready = (not situation_docs_required) or (situation_docs_count > 0)
+
+    # Module 2 eligibility checklist aggregation.
+    # The 5 reviewer checks each persist as an EligibilityCheckDecision row.
+    # Any row with status='failed' puts the applicant in Pending Follow-up;
+    # form generation is blocked until all 5 are decided AND none are failed.
+    check_decisions = list(applicant.eligibility_check_decisions.all())
+    decided_check_keys = {d.check_key for d in check_decisions}
+    failed_check_decisions = [d for d in check_decisions if d.status == 'failed']
+    has_failed_checks = bool(failed_check_decisions)
+    all_checks_decided = decided_check_keys.issuperset(ELIGIBILITY_CHECK_KEYS)
+    failed_check_keys = sorted(d.check_key for d in failed_check_decisions)
+
     form_generation_ready = bool(
         required_docs_complete
         and not is_bl
@@ -520,7 +541,65 @@ def _module2_eligibility_snapshot(applicant, checked_by=None):
         and field_evidence_ready
         and situation_docs_ready
         and queue_ready
+        and all_checks_decided
+        and not has_failed_checks
     )
+
+    # Subtitle under Eligibility status chip — mirrors template branch order.
+    readiness_hint = ''
+    if not is_bl:
+        if not required_docs_complete:
+            readiness_hint = (
+                f'Compliance: finish baseline scans ({scanned_required_docs}/{required_docs_total} required document types in vault).'
+            )
+        elif situation_docs_required and not situation_docs_ready:
+            readiness_hint = (
+                'Compliance: upload ISF situational documentation for this applicant situation (Options B or C).'
+            )
+        elif certification_status == 'pending':
+            readiness_hint = (
+                'Compliance: complete or await CDRRMO certification for hazard-area applicants.'
+            )
+        elif field_evidence_required and field_evidence_status == 'missing':
+            readiness_hint = (
+                'Compliance: attach at least one Ronda / field verification photo on the CDRRMO record.'
+            )
+        elif has_failed_checks:
+            labels = [ELIGIBILITY_CHECK_LABELS.get(k, k.replace('_', ' ')) for k in failed_check_keys]
+            readiness_hint = (
+                'Compliance: failed checklist — '
+                + ', '.join(labels)
+                + '. Correct records or documents, then re-mark each as Passed to reach Ready for Form.'
+            )
+        elif form_generation_ready:
+            readiness_hint = ''
+        else:
+            if not displacement_classified:
+                readiness_hint = (
+                    'Compliance: record Applicant Situation (Option A/B/C/D) before readiness can finalize.'
+                )
+            elif not queue_ready:
+                readiness_hint = (
+                    'Compliance: finish the Applicant Situation step from Evaluate '
+                    '(checklist → situation modal → Continue / certify).'
+                )
+            elif not all_checks_decided:
+                pending_n = len(ELIGIBILITY_CHECK_KEYS - decided_check_keys)
+                readiness_hint = (
+                    f'Compliance: decide all five eligibility checks ({pending_n} still not marked Passed or Failed).'
+                )
+            elif not certification_ready:
+                readiness_hint = (
+                    'Compliance: resolve CDRRMO certification status for this applicant.'
+                )
+            elif not field_evidence_ready:
+                readiness_hint = (
+                    'Compliance: complete required field verification evidence.'
+                )
+            else:
+                readiness_hint = (
+                    'Compliance: finish remaining Module 2 evaluation steps before Ready for Form.'
+                )
 
     return {
         'eligible': len(blockers) == 0,
@@ -566,7 +645,13 @@ def _module2_eligibility_snapshot(applicant, checked_by=None):
         'situation_docs_count': situation_docs_count,
         'situation_docs_ready': situation_docs_ready,
         'queue_ready': queue_ready,
+        'has_failed_checks': has_failed_checks,
+        'failed_check_keys': failed_check_keys,
+        'all_checks_decided': all_checks_decided,
+        'decided_check_count': len(decided_check_keys),
+        'required_check_count': len(ELIGIBILITY_CHECK_KEYS),
         'form_generation_ready': form_generation_ready,
+        'readiness_hint': readiness_hint,
     }
 
 
@@ -639,7 +724,16 @@ def applications_list(request, position):
     # Once an applicant is 2.6-approved, they leave the Module 2 list and live
     # in Module 3 (documents/<position>/management/) only.
     applicants = Applicant.objects.filter(
-        status__in=['pending', 'pending_cdrrmo', 'eligible', 'requirements', 'application', 'standby', 'awarded']
+        status__in=[
+            'pending',
+            'pending_cdrrmo',
+            'pending_followup',
+            'eligible',
+            'requirements',
+            'application',
+            'standby',
+            'awarded',
+        ]
     ).filter(
         Q(module2_handoff_at__isnull=False) | Q(application__isnull=False)
     ).exclude(
@@ -713,6 +807,12 @@ def applications_list(request, position):
         ).count(),
     }
     
+    required_group_a_submission_total = Requirement.objects.filter(
+        group='A',
+        is_active=True,
+        is_required_for_form=True,
+    ).count()
+
     # Prepare applicant data with document counts
     applicants_data = []
     for applicant in applicants:
@@ -721,9 +821,8 @@ def applications_list(request, position):
             requirement__group='A',
             status='verified'
         ).count()
-        
-        # Check if form can be generated (all 7 Group A verified)
-        can_generate_form = group_a_verified >= 7
+
+        can_generate_form = group_a_verified >= required_group_a_submission_total
         
         # Get application status if exists
         application = getattr(applicant, 'application', None)
@@ -1600,6 +1699,120 @@ def evaluate_precheck(request, position):
     })
 
 
+def _situation_certification_gate(applicant):
+    """
+    Required uploads/evidence before Module 2 staff finish the situation step.
+    Option D (Walk-in): informational only — no situation-specific vault uploads; staff uses Continue.
+    Option A: CDRRMO certification document + at least one Ronda/field verification photo.
+    Options B/C: at least one ISF situational supporting document with labels keyed to situation.
+    """
+    dr = (applicant.displacement_reason or '').strip()
+    unknown = dr not in ('danger_zone', 'ejected', 'relocated', 'not_abc')
+    base = {
+        'option_code': dr,
+        'requires_documents': False,
+        'ready': False,
+        'option_d_auto': False,
+        'checks': [],
+        'blocking_summary': '',
+    }
+    if unknown:
+        base['blocking_summary'] = 'Applicant Situation must be declared before situation certification.'
+        return base
+
+    if dr == 'not_abc':
+        base['requires_documents'] = False
+        base['ready'] = True
+        base['option_d_auto'] = True
+        base['walk_in_informational'] = True
+        base['checks'] = [{
+            'key': 'option_d_walk_in',
+            'label': 'Walk-in path (Option D)',
+            'detail': (
+                'This applicant is classified as Option D — none of A, B, or C — and is on the Walk-in path '
+                '(no Priority on hazard, ejection, or government-project grounds). '
+                'No situation-specific supporting uploads apply.'
+            ),
+            'done': True,
+        }]
+        return base
+
+    if dr == 'danger_zone':
+        base['requires_documents'] = True
+        has_cdrrmo_doc = applicant.documents.filter(document_type='cdrrmo_cert').exists()
+        photo_count = 0
+        try:
+            photo_count = applicant.cdrrmo_certification.field_photos.count()
+        except CDRRMOCertification.DoesNotExist:
+            photo_count = 0
+        checks = [
+            {
+                'key': 'cdrrmo_cert_document',
+                'label': 'CDRRMO certification (uploaded or scanned)',
+                'detail': 'File applicant vault entry with document type “CDRRMO Certification”.',
+                'done': bool(has_cdrrmo_doc),
+            },
+            {
+                'key': 'ronda_field_photos',
+                'label': 'Ronda / field photo documentation',
+                'detail': 'At least one on-site verification photo attached to this applicant’s CDRRMO record.',
+                'done': photo_count >= 1,
+            },
+        ]
+        base['checks'] = checks
+        base['ready'] = all(c['done'] for c in checks)
+        if not base['ready']:
+            missing = [c['label'] for c in checks if not c['done']]
+            base['blocking_summary'] = 'Complete before certifying: ' + '; '.join(missing) + '.'
+        return base
+
+    if dr == 'ejected':
+        base['requires_documents'] = True
+        n = applicant.documents.filter(document_type='isf_situational_docs').count()
+        done = n >= 1
+        base['checks'] = [{
+            'key': 'option_b_supporting',
+            'label': 'Supporting documentation',
+            'detail': (
+                f'{n} file(s) on record under ISF situational documentation '
+                '(Court Order, Legal Office certification, or Barangay certification).'
+            ),
+            'done': done,
+            'files_count': n,
+        }]
+        base['ready'] = done
+        if not done:
+            base['blocking_summary'] = (
+                'Upload at least one supporting document (Court Order, Legal Office certification, '
+                'or Barangay certification) as ISF situational documentation.'
+            )
+        return base
+
+    if dr == 'relocated':
+        base['requires_documents'] = True
+        n = applicant.documents.filter(document_type='isf_situational_docs').count()
+        done = n >= 1
+        base['checks'] = [{
+            'key': 'option_c_supporting',
+            'label': 'Supporting documentation',
+            'detail': (
+                f'{n} file(s) on record under ISF situational documentation '
+                '(Notice of Relocation, ROW documentation, or Project Order).'
+            ),
+            'done': done,
+            'files_count': n,
+        }]
+        base['ready'] = done
+        if not done:
+            base['blocking_summary'] = (
+                'Upload at least one supporting document (Notice of Relocation, ROW documentation, '
+                'or Project Order) as ISF situational documentation.'
+            )
+        return base
+
+    return base
+
+
 @login_required
 @verify_position
 @require_POST
@@ -1699,8 +1912,8 @@ def eligibility_snapshot(request, position):
     income_evidence_ready = _req_scanned('R02')
     household_evidence_ready = _req_scanned('R03')
     voter_value_known = applicant.is_registered_voter_talisay is not None
-    voter_evidence_ready = bool(applicant.documents.filter(document_type='voter_certification').exists())
-    voter_doc_latest = doc_type_to_latest_file.get('voter_certification', {'url': '', 'name': ''})
+    voter_evidence_ready = _req_scanned('RVT')
+    voter_doc_latest = _latest_doc_for_req('RVT')
 
     checks = {
         'property': {
@@ -1788,7 +2001,7 @@ def eligibility_snapshot(request, position):
 
     gates = {
         'required_docs': {
-            'title': 'Required baseline scans (R01-R07)',
+            'title': 'Required baseline scans (Group A, incl. voter certification)',
             'status': 'passed' if rules.get('required_docs_complete') else 'pending',
             'reason': f'{rules.get("required_docs_scanned", 0)}/{rules.get("required_docs_total", 0)} scanned.',
         },
@@ -1836,6 +2049,8 @@ def eligibility_snapshot(request, position):
         'description': 'No applicant situation has been recorded for this applicant.',
     })
 
+    situation_cert_gate = _situation_certification_gate(applicant)
+
     return JsonResponse({
         'success': True,
         'applicant_id': str(applicant.id),
@@ -1847,6 +2062,7 @@ def eligibility_snapshot(request, position):
             'code': displacement_reason,
             **situation_payload,
         },
+        'situation_certification': situation_cert_gate,
         'document_scan_checklist': {
             'required_scanned': int(rules.get('required_docs_scanned', 0)),
             'required_total': int(rules.get('required_docs_total', 0)),
@@ -1859,6 +2075,8 @@ def eligibility_snapshot(request, position):
             'certification_status': rules.get('certification_status'),
             'field_evidence_status': rules.get('field_evidence_status'),
             'situation_docs_ready': bool(rules.get('situation_docs_ready')),
+            'readiness_hint': rules.get('readiness_hint') or '',
+            'has_failed_checks': bool(rules.get('has_failed_checks')),
         },
         'blockers': list(rules.get('blockers') or []),
         'advisories': list(rules.get('advisories') or []),
@@ -1902,6 +2120,19 @@ def save_eligibility_check_decision(request, position):
             'reviewed_by': request.user,
         },
     )
+
+    # Keep Applicant.status in sync once the applicant has already been through
+    # situation certification. Pre-certification applicants stay 'pending' until
+    # the reviewer hits Mark Situation Certified.
+    status_synced_to = None
+    if applicant.status in ('eligible', 'pending_followup'):
+        has_failed_checks_now = applicant.eligibility_check_decisions.filter(status='failed').exists()
+        new_status = 'pending_followup' if has_failed_checks_now else 'eligible'
+        if new_status != applicant.status:
+            applicant.status = new_status
+            applicant.save(update_fields=['status', 'updated_at'])
+            status_synced_to = new_status
+
     return JsonResponse({
         'success': True,
         'decision': {
@@ -1911,6 +2142,7 @@ def save_eligibility_check_decision(request, position):
             'reviewed_by': decision.reviewed_by.get_full_name() if decision.reviewed_by else '',
             'reviewed_at': decision.reviewed_at.isoformat() if decision.reviewed_at else '',
         },
+        'applicant_status_synced_to': status_synced_to,
     })
 
 
@@ -1983,17 +2215,41 @@ def mark_situation_certified(request, position):
     if displacement_reason not in ('danger_zone', 'ejected', 'relocated', 'not_abc'):
         return JsonResponse({'success': False, 'error': 'Applicant Situation is not set yet.'}, status=400)
 
+    situation_gate = _situation_certification_gate(applicant)
+    # Walk-in (Option D): same eligibility transition as other paths; gate flags informational UX only.
+    if situation_gate.get('requires_documents') and not situation_gate.get('ready'):
+        return JsonResponse({
+            'success': False,
+            'error': situation_gate.get('blocking_summary') or 'Situation certification requirements are not complete.',
+        }, status=400)
+
     queue_placement = _layer3_queue_placement_bundle(applicant, request.user)
-    applicant.status = 'eligible'
+
+    # If any reviewer check is marked failed, the applicant moves to Pending
+    # Follow-up instead of Eligible. They keep their queue placement so they can
+    # resume once the failed check(s) are resolved by re-marking Passed.
+    has_failed_checks = applicant.eligibility_check_decisions.filter(status='failed').exists()
+    applicant.status = 'pending_followup' if has_failed_checks else 'eligible'
     applicant.eligibility_checked_by = request.user
     applicant.eligibility_checked_at = timezone.now()
     if notes:
         applicant.evaluation_approval_notes = notes
     applicant.save(update_fields=['status', 'eligibility_checked_by', 'eligibility_checked_at', 'evaluation_approval_notes', 'updated_at'])
 
+    if has_failed_checks:
+        if displacement_reason == 'not_abc':
+            message = 'Walk-in review noted. Marked Pending Follow-up due to failed eligibility check(s).'
+        else:
+            message = 'Applicant Situation certified. Marked Pending Follow-up due to failed eligibility check(s).'
+    elif displacement_reason == 'not_abc':
+        message = 'Walk-in path confirmed and queue placement updated.'
+    else:
+        message = 'Applicant Situation certified and queue placement updated.'
+
     return JsonResponse({
         'success': True,
-        'message': 'Applicant Situation certified and queue placement updated.',
+        'message': message,
+        'pending_followup': has_failed_checks,
         'queue_placement': queue_placement,
     })
 
@@ -2278,27 +2534,37 @@ def update_requirement(request, position):
                 submission.submitted_at = timezone.now()
             submission.save()
         
-        # Check if all 7 Group A documents are now verified
+        required_ga_verified_target = Requirement.objects.filter(
+            group='A',
+            is_active=True,
+            is_required_for_form=True,
+        ).count()
+
         group_a_verified = applicant.requirement_submissions.filter(
             requirement__group='A',
             status='verified'
         ).count()
-        
-        # Send SMS when all 7 verified
-        if group_a_verified >= 7 and applicant.phone_number:
-            # Check if we already sent this notification
+
+        if (
+            required_ga_verified_target > 0
+            and group_a_verified >= required_ga_verified_target
+            and applicant.phone_number
+        ):
             existing_app = hasattr(applicant, 'application')
             if not existing_app:
                 message = (
-                    f"All 7 requirements verified! Please visit Talisay Housing Authority "
-                    f"to sign your application form. Reference: {applicant.reference_number}"
+                    'All required applicant documents are verified! Please visit Talisay Housing Authority '
+                    f'to sign your application form. Reference: {applicant.reference_number}'
                 )
                 send_sms(applicant.phone_number, message, 'documents_complete', applicant=applicant, module='applications')
-        
+
         return JsonResponse({
             'success': True,
             'group_a_verified': group_a_verified,
-            'all_verified': group_a_verified >= 7,
+            'all_verified': (
+                required_ga_verified_target > 0
+                and group_a_verified >= required_ga_verified_target
+            ),
         })
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
@@ -2356,16 +2622,24 @@ def generate_form(request, position, applicant_id):
             )
             send_sms(applicant.phone_number, msg, 'eligibility_passed', applicant=applicant, module='applications')
     
-    # Check if all Group A requirements are verified
+    required_ga_verified_target = Requirement.objects.filter(
+        group='A',
+        is_active=True,
+        is_required_for_form=True,
+    ).count()
+
     group_a_count = applicant.requirement_submissions.filter(
         requirement__group='A',
         status='verified'
     ).count()
-    
-    if group_a_count < 7:
+
+    if required_ga_verified_target > 0 and group_a_count < required_ga_verified_target:
         return JsonResponse({
             'success': False,
-            'error': f'Only {group_a_count}/7 requirements verified. All 7 must be complete.'
+            'error': (
+                f'Only {group_a_count}/{required_ga_verified_target} requirements verified. '
+                'All required Group A items must be complete.'
+            ),
         })
     
     # Check if application already exists

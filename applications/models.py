@@ -6,7 +6,7 @@ import uuid
 class Application(models.Model):
     """
     Housing application form data.
-    Generated only after all 7 Group A requirements are verified.
+    Generated only after all required Group A requirements are verified.
     """
     STATUS_CHOICES = [
         ('draft', 'Draft - Form Generated'),
