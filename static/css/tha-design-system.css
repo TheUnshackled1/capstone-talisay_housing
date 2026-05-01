@@ -1156,3 +1156,863 @@ textarea.form-input:focus-visible {
     color: var(--tha-color-danger);
     border-color: #fecaca;
 }
+
+/* ===================================================================
+   PHASE 5 — Form & modal primitive polish
+   ===================================================================
+   Refines the shared building blocks of every modal/form (.form-input,
+   .form-select, .form-label, .modal-overlay, .btn-modal). Cascade-
+   respectful: pages with their own inline overrides (registration
+   modal, eligibility review modal, etc.) keep their custom look —
+   these rules only show where the page hasn't customized.
+
+   No markup changes. No validation-logic touch points. No !important
+   except for accessibility-mandated focus rings.
+   =================================================================== */
+
+/* -------------------------------------------------------------------
+   5.1  Shared form primitives — typography + focus polish
+       Targets the .form-input/.form-select/.form-textarea/.form-label
+       defined in dashboard.css. Pages that redefine these (e.g.
+       applicants.html sets a tighter font-size for modal use) still
+       win because their inline <style> loads after this file.
+   ------------------------------------------------------------------- */
+
+.form-label {
+    font-family: var(--tha-font-ui);
+    color: var(--tha-navy-700);
+    font-weight: 600;
+    letter-spacing: 0.01em;
+}
+
+.form-input,
+.form-select,
+.form-textarea {
+    font-family: var(--tha-font-ui);
+    color: var(--tha-navy-800);
+    border-color: var(--tha-color-border-strong);
+    background: #ffffff;
+    transition:
+        border-color var(--tha-duration) var(--tha-ease),
+        box-shadow var(--tha-duration) var(--tha-ease),
+        background var(--tha-duration) var(--tha-ease);
+    font-variant-numeric: tabular-nums;
+}
+
+.form-input::placeholder,
+.form-select::placeholder,
+.form-textarea::placeholder {
+    color: var(--tha-navy-300);
+}
+
+.form-input:hover,
+.form-select:hover,
+.form-textarea:hover {
+    border-color: var(--tha-navy-300);
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+    border-color: var(--tha-blue-700);
+    box-shadow:
+        0 0 0 3px rgba(37, 99, 235, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    background: #ffffff;
+}
+
+/* Read-only / disabled — clear "this is not editable" cue */
+.form-input[readonly],
+.form-input:disabled,
+.form-select:disabled,
+.form-textarea[readonly],
+.form-textarea:disabled {
+    background: var(--tha-color-surface-muted);
+    color: var(--tha-navy-600);
+    cursor: not-allowed;
+}
+
+/* Helper text below an input */
+.form-help {
+    font-family: var(--tha-font-ui);
+    font-size: var(--tha-text-xs);
+    color: var(--tha-color-text-subtle);
+    line-height: var(--tha-lh-snug);
+}
+
+/* Inline form error */
+.form-error {
+    font-family: var(--tha-font-ui);
+    font-size: var(--tha-text-xs);
+    font-weight: 600;
+    color: var(--tha-color-danger);
+    letter-spacing: 0.005em;
+}
+
+/* -------------------------------------------------------------------
+   5.2  Modal overlay — refined backdrop with subtle blur
+       Light-touch: just polishes the existing rgba black backdrop.
+       Pages with their own overlay (e.g. notice-modal-overlay) keep
+       their values because they use a different class name.
+   ------------------------------------------------------------------- */
+
+.modal-overlay {
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+}
+
+/* -------------------------------------------------------------------
+   5.3  Modal buttons (.btn-modal) — refined, cascade-respectful
+       The base .btn-modal is defined inline in templates. My rules
+       have the same specificity, so where pages customize per-modal
+       (e.g. #reviewModal .btn-modal.primary), those still win.
+   ------------------------------------------------------------------- */
+
+.btn-modal {
+    font-family: var(--tha-font-ui);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    transition: all var(--tha-duration) var(--tha-ease);
+}
+
+.btn-modal.primary {
+    background: linear-gradient(135deg,
+        var(--tha-blue-700) 0%,
+        var(--tha-blue-800) 100%);
+    color: #ffffff;
+    border-color: var(--tha-blue-800);
+    box-shadow:
+        var(--tha-shadow-xs),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+.btn-modal.primary:hover {
+    background: linear-gradient(135deg,
+        var(--tha-blue-800) 0%,
+        var(--tha-blue-900) 100%);
+    box-shadow:
+        var(--tha-shadow-md),
+        inset 0 1px 0 rgba(255, 255, 255, 0.16);
+    transform: translateY(-1px);
+}
+
+.btn-modal.secondary {
+    background: #ffffff;
+    color: var(--tha-navy-600);
+    border-color: var(--tha-color-border-strong);
+}
+.btn-modal.secondary:hover {
+    background: var(--tha-color-surface-muted);
+    border-color: var(--tha-navy-300);
+    color: var(--tha-navy-800);
+    box-shadow: var(--tha-shadow-xs);
+    transform: translateY(-1px);
+}
+
+.btn-modal.danger {
+    background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
+    color: #ffffff;
+    border-color: #991b1b;
+    box-shadow:
+        var(--tha-shadow-xs),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+.btn-modal.danger:hover {
+    background: linear-gradient(135deg, #991b1b 0%, #7f1d1d 100%);
+    box-shadow: var(--tha-shadow-md);
+    transform: translateY(-1px);
+}
+
+.btn-modal.success {
+    background: linear-gradient(135deg,
+        var(--tha-emerald-600) 0%,
+        var(--tha-emerald-700) 100%);
+    color: #ffffff;
+    border-color: var(--tha-emerald-700);
+    box-shadow:
+        var(--tha-shadow-xs),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+.btn-modal.success:hover {
+    background: linear-gradient(135deg,
+        var(--tha-emerald-700) 0%,
+        var(--tha-emerald-800) 100%);
+    box-shadow: var(--tha-shadow-md);
+    transform: translateY(-1px);
+}
+
+/* -------------------------------------------------------------------
+   5.4  Bare .modal-title typography
+       Pages with custom modal headers (registration, review, archive)
+       override .modal-title in their inline <style>, so this only
+       takes effect on plain modals.
+   ------------------------------------------------------------------- */
+
+.modal-title {
+    font-family: var(--tha-font-display);
+    font-weight: 700;
+    color: var(--tha-navy-800);
+    letter-spacing: -0.005em;
+}
+
+.modal-subtitle {
+    font-family: var(--tha-font-ui);
+    color: var(--tha-color-text-subtle);
+    letter-spacing: 0.005em;
+}
+
+/* -------------------------------------------------------------------
+   5.5  Refined .btn-close (the X button on modal headers)
+       Defined inline in many templates. My rules have equal
+       specificity; per-modal overrides still win.
+   ------------------------------------------------------------------- */
+
+.btn-close {
+    transition:
+        background var(--tha-duration) var(--tha-ease),
+        color var(--tha-duration) var(--tha-ease),
+        transform var(--tha-duration) var(--tha-ease);
+}
+.btn-close:hover {
+    background: var(--tha-color-surface-muted);
+    color: var(--tha-navy-700);
+}
+.btn-close:focus-visible {
+    outline: 2px solid var(--tha-blue-600);
+    outline-offset: 2px;
+    border-radius: var(--tha-radius-sm);
+}
+
+/* -------------------------------------------------------------------
+   5.6  Required-field asterisk — visual treatment
+       Many forms use <span style="color: #dc2626;">*</span> next to
+       required labels. This styles the standalone .required class
+       too if any future form opts in.
+   ------------------------------------------------------------------- */
+
+.form-label .required,
+.form-label.is-required::after {
+    color: var(--tha-color-danger);
+    font-weight: 700;
+    margin-left: 0.2rem;
+}
+.form-label.is-required::after {
+    content: '*';
+}
+
+/* -------------------------------------------------------------------
+   5.7  Reusable .tha-form-section — official document feel for
+       any new section block (for future use). Pages can opt in:
+         <div class="tha-form-section tha-form-section--blue">
+           <h3 class="tha-form-section__title">...</h3>
+           ...
+         </div>
+   ------------------------------------------------------------------- */
+
+.tha-form-section {
+    position: relative;
+    background: #ffffff;
+    border: 1px solid var(--tha-color-border);
+    border-left-width: 4px;
+    border-left-color: var(--tha-blue-600);
+    border-radius: 0 var(--tha-radius-md) var(--tha-radius-md) 0;
+    padding: 1rem 1.15rem 0.95rem;
+    margin-bottom: 1.1rem;
+    box-shadow: var(--tha-shadow-xs);
+}
+.tha-form-section__title {
+    margin: 0 0 0.85rem 0;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--tha-color-border);
+    font-family: var(--tha-font-ui);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--tha-blue-800);
+}
+.tha-form-section--blue    { border-left-color: var(--tha-blue-600); }
+.tha-form-section--blue    .tha-form-section__title { color: var(--tha-blue-800); border-bottom-color: var(--tha-blue-200); }
+.tha-form-section--emerald { border-left-color: var(--tha-emerald-500); background: linear-gradient(180deg, var(--tha-emerald-50) 0%, #ffffff 22%); }
+.tha-form-section--emerald .tha-form-section__title { color: var(--tha-emerald-700); border-bottom-color: var(--tha-emerald-200); }
+.tha-form-section--amber   { border-left-color: var(--tha-amber-600); background: linear-gradient(180deg, var(--tha-amber-50) 0%, #ffffff 22%); }
+.tha-form-section--amber   .tha-form-section__title { color: var(--tha-amber-700); border-bottom-color: var(--tha-amber-200); }
+.tha-form-section--violet  { border-left-color: var(--tha-violet-600); background: linear-gradient(180deg, var(--tha-violet-50) 0%, #ffffff 22%); }
+.tha-form-section--violet  .tha-form-section__title { color: var(--tha-violet-800); border-bottom-color: var(--tha-violet-200); }
+.tha-form-section--rose    { border-left-color: var(--tha-rose-600); background: linear-gradient(180deg, var(--tha-rose-50) 0%, #ffffff 22%); }
+.tha-form-section--rose    .tha-form-section__title { color: var(--tha-rose-800); border-bottom-color: var(--tha-rose-200); }
+
+/* -------------------------------------------------------------------
+   5.8  Opt-in .tha-modal--official — Republic accent stripe + display
+       title. Pages can add this class to .modal-content to get the
+       government-document look without page-specific CSS.
+       Example:
+         <div class="modal-content tha-modal--official">
+   ------------------------------------------------------------------- */
+
+.tha-modal--official {
+    position: relative;
+    border-top-left-radius: 1rem;
+    border-top-right-radius: 1rem;
+    overflow: hidden;
+}
+.tha-modal--official::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg,
+        var(--tha-amber-500) 0%,
+        var(--tha-amber-300) 50%,
+        var(--tha-amber-500) 100%);
+    z-index: 11;
+    pointer-events: none;
+}
+.tha-modal--official .modal-header {
+    background: linear-gradient(180deg,
+        rgba(251, 191, 36, 0.05) 0%,
+        #ffffff 60%);
+    border-bottom-color: var(--tha-color-border);
+}
+.tha-modal--official .modal-title {
+    font-family: var(--tha-font-display);
+    color: var(--tha-navy-800);
+    font-weight: 700;
+}
+
+/* -------------------------------------------------------------------
+   5.9  Reusable .tha-doc-header — official document banner for
+       printed-form-style headers (matches the registration sheet).
+       Drop-in replacement for ad-hoc dark navy headers.
+   ------------------------------------------------------------------- */
+
+.tha-doc-header {
+    background: linear-gradient(135deg,
+        var(--tha-navy-800) 0%,
+        var(--tha-navy-700) 50%,
+        var(--tha-navy-800) 100%);
+    color: var(--tha-color-text-invert);
+    padding: 1.4rem 1.5rem 1.25rem;
+    text-align: center;
+    border-bottom: 3px solid var(--tha-amber-700);
+    position: relative;
+}
+.tha-doc-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg,
+        var(--tha-amber-500) 0%,
+        var(--tha-amber-300) 50%,
+        var(--tha-amber-500) 100%);
+}
+.tha-doc-header__crest {
+    width: 3rem;
+    height: 3rem;
+    margin: 0 auto 0.65rem;
+    background: var(--tha-color-text-invert);
+    color: var(--tha-navy-800);
+    border: 2px solid rgba(251, 191, 36, 0.6);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--tha-font-display);
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    line-height: 1.15;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3),
+                0 0 0 4px rgba(251, 191, 36, 0.08);
+}
+.tha-doc-header__title {
+    margin: 0;
+    font-family: var(--tha-font-display);
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+.tha-doc-header__subtitle {
+    margin: 0.35rem 0 0;
+    font-family: var(--tha-font-ui);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #fde68a;
+    opacity: 0.9;
+}
+
+/* ===================================================================
+   PHASE 6 — Dashboard widget primitives
+   ===================================================================
+   Polishes the building blocks defined in dashboard_widgets.css that
+   the per-position dashboards (second_member, fourth_member, fifth_
+   member, oic, field) are made of: queue lists, pending lists,
+   requirements lists, progress bars, badges, awarding summary,
+   custodian stats, empty states, etc.
+
+   Cascade: dashboard.css → dashboard_widgets.css → tha-design-system
+   .css → page-level inline <style>. My rules win over the widgets
+   sheet without forcing per-page changes. The off-brand indigo
+   (#6366f1) used throughout dashboard_widgets.css is replaced with
+   design-system blue.
+   =================================================================== */
+
+/* -------------------------------------------------------------------
+   6.1  Badges — design-system palette + subtle borders
+   ------------------------------------------------------------------- */
+.badge {
+    font-family: var(--tha-font-ui);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-size: 0.62rem;
+    border: 1px solid transparent;
+    padding: 0.22rem 0.55rem;
+    border-radius: var(--tha-radius-pill);
+}
+.badge-primary,
+.badge-blue {
+    background: var(--tha-blue-50);
+    color: var(--tha-blue-800);
+    border-color: var(--tha-blue-200);
+}
+.badge-green {
+    background: var(--tha-emerald-50);
+    color: var(--tha-emerald-800);
+    border-color: var(--tha-emerald-200);
+}
+.badge-amber,
+.badge-warning {
+    background: var(--tha-amber-50);
+    color: var(--tha-amber-800);
+    border-color: var(--tha-amber-200);
+}
+.badge-danger {
+    background: var(--tha-color-danger-bg);
+    color: var(--tha-color-danger);
+    border-color: #fecaca;
+}
+.badge-purple {
+    background: var(--tha-violet-50);
+    color: var(--tha-violet-800);
+    border-color: var(--tha-violet-200);
+}
+.badge-dark {
+    background: var(--tha-navy-100);
+    color: var(--tha-navy-800);
+    border-color: var(--tha-navy-200);
+}
+.badge-secondary {
+    background: var(--tha-navy-50);
+    color: var(--tha-navy-600);
+    border-color: var(--tha-navy-100);
+}
+
+/* -------------------------------------------------------------------
+   6.2  Queue list (Priority Queue, Walk-in FIFO)
+   ------------------------------------------------------------------- */
+.queue-item {
+    border-bottom-color: var(--tha-color-border);
+    transition:
+        background var(--tha-duration) var(--tha-ease),
+        box-shadow var(--tha-duration) var(--tha-ease);
+}
+.queue-item:hover {
+    background: var(--tha-blue-50);
+    box-shadow: inset 3px 0 0 var(--tha-blue-600);
+}
+.queue-number {
+    background: linear-gradient(135deg,
+        var(--tha-navy-700) 0%,
+        var(--tha-navy-800) 100%);
+    color: #ffffff;
+    font-family: var(--tha-font-ui);
+    font-weight: 800;
+    box-shadow:
+        var(--tha-shadow-xs),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    font-variant-numeric: tabular-nums;
+}
+.queue-name {
+    font-family: var(--tha-font-ui);
+    color: var(--tha-navy-800);
+    font-weight: 600;
+    letter-spacing: -0.005em;
+}
+.queue-tag {
+    font-family: var(--tha-font-ui);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-size: 0.6rem;
+    border: 1px solid transparent;
+    padding: 0.18rem 0.5rem;
+    border-radius: var(--tha-radius-pill);
+}
+.queue-tag.tag-priority {
+    background: var(--tha-rose-50);
+    color: var(--tha-rose-800);
+    border-color: var(--tha-rose-200);
+}
+.queue-tag.tag-walkin {
+    background: var(--tha-blue-50);
+    color: var(--tha-blue-800);
+    border-color: var(--tha-blue-200);
+}
+.queue-date {
+    color: var(--tha-color-text-subtle);
+    font-variant-numeric: tabular-nums;
+}
+.queue-action {
+    background: #ffffff;
+    color: var(--tha-blue-700);
+    border: 1px solid var(--tha-blue-300);
+    font-family: var(--tha-font-ui);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    transition: all var(--tha-duration) var(--tha-ease);
+}
+.queue-action:hover {
+    background: linear-gradient(135deg,
+        var(--tha-blue-700) 0%,
+        var(--tha-blue-800) 100%);
+    color: #ffffff;
+    border-color: var(--tha-blue-800);
+    box-shadow: var(--tha-shadow-sm);
+    transform: translateY(-1px);
+}
+
+/* -------------------------------------------------------------------
+   6.3  Pending list (CDRRMO Pending Certification)
+   ------------------------------------------------------------------- */
+.pending-item {
+    border-bottom-color: var(--tha-color-border);
+    transition: background var(--tha-duration) var(--tha-ease);
+}
+.pending-item.item-urgent {
+    background: linear-gradient(90deg,
+        var(--tha-color-danger-bg) 0%,
+        rgba(254, 242, 242, 0.4) 100%);
+    box-shadow: inset 3px 0 0 var(--tha-color-danger);
+}
+.pending-name {
+    font-family: var(--tha-font-ui);
+    color: var(--tha-navy-800);
+    font-weight: 600;
+}
+.pending-location {
+    color: var(--tha-color-text-subtle);
+    font-size: 0.78rem;
+}
+.pending-action {
+    background: linear-gradient(135deg,
+        var(--tha-blue-700) 0%,
+        var(--tha-blue-800) 100%);
+    font-family: var(--tha-font-ui);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    box-shadow:
+        var(--tha-shadow-xs),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    transition: all var(--tha-duration) var(--tha-ease);
+}
+.pending-action:hover {
+    background: linear-gradient(135deg,
+        var(--tha-blue-800) 0%,
+        var(--tha-blue-900) 100%);
+    box-shadow: var(--tha-shadow-md);
+    transform: translateY(-1px);
+}
+
+/* -------------------------------------------------------------------
+   6.4  Requirements list (Incomplete Requirements widget)
+   ------------------------------------------------------------------- */
+.requirements-item {
+    border-bottom-color: var(--tha-color-border);
+    transition: background var(--tha-duration) var(--tha-ease);
+}
+.requirements-item:hover {
+    background: var(--tha-blue-50);
+}
+.requirements-name {
+    font-family: var(--tha-font-ui);
+    color: var(--tha-navy-800);
+    font-weight: 600;
+}
+.requirements-missing {
+    color: var(--tha-color-text-subtle);
+    font-size: 0.78rem;
+    font-family: var(--tha-font-mono);
+    letter-spacing: 0.005em;
+}
+.progress-bar-mini {
+    background: var(--tha-navy-100);
+    border-radius: var(--tha-radius-pill);
+    height: 7px;
+    overflow: hidden;
+}
+.progress-fill-mini {
+    background: linear-gradient(90deg,
+        var(--tha-blue-600) 0%,
+        var(--tha-blue-800) 100%);
+    border-radius: var(--tha-radius-pill);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+.progress-text {
+    color: var(--tha-navy-700);
+    font-family: var(--tha-font-mono);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    font-size: 0.7rem;
+}
+.requirements-action {
+    background: #ffffff;
+    color: var(--tha-blue-700);
+    border: 1px solid var(--tha-blue-300);
+    font-family: var(--tha-font-ui);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    transition: all var(--tha-duration) var(--tha-ease);
+}
+.requirements-action:hover {
+    background: linear-gradient(135deg,
+        var(--tha-blue-700) 0%,
+        var(--tha-blue-800) 100%);
+    color: #ffffff;
+    border-color: var(--tha-blue-800);
+    box-shadow: var(--tha-shadow-sm);
+    transform: translateY(-1px);
+}
+
+/* -------------------------------------------------------------------
+   6.5  Wider progress bar (used in Electricity Connections etc.)
+   ------------------------------------------------------------------- */
+.progress-bar {
+    background: var(--tha-navy-100);
+    border-radius: var(--tha-radius-pill);
+}
+.progress-fill {
+    background: linear-gradient(90deg,
+        var(--tha-blue-600) 0%,
+        var(--tha-blue-800) 100%);
+    border-radius: var(--tha-radius-pill);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+.progress-status {
+    font-family: var(--tha-font-ui);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-size: 0.6rem;
+    border: 1px solid transparent;
+}
+.progress-status.status-pending {
+    background: var(--tha-amber-50);
+    color: var(--tha-amber-800);
+    border-color: var(--tha-amber-200);
+}
+.progress-status.status-progress {
+    background: var(--tha-blue-50);
+    color: var(--tha-blue-800);
+    border-color: var(--tha-blue-200);
+}
+.progress-status.status-complete {
+    background: var(--tha-emerald-50);
+    color: var(--tha-emerald-800);
+    border-color: var(--tha-emerald-200);
+}
+
+/* -------------------------------------------------------------------
+   6.6  Awarding summary (Lot Awarding widget)
+   ------------------------------------------------------------------- */
+.awarding-summary {
+    background: linear-gradient(180deg,
+        var(--tha-color-surface-muted) 0%,
+        #ffffff 100%);
+    border-radius: var(--tha-radius);
+    padding: 1.25rem 0;
+}
+.summary-item {
+    flex: 1;
+}
+.summary-label {
+    font-family: var(--tha-font-ui);
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--tha-navy-500);
+}
+.summary-value {
+    font-family: var(--tha-font-display);
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--tha-navy-800);
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+}
+.summary-value.highlight {
+    color: var(--tha-blue-700);
+}
+.summary-divider {
+    background: var(--tha-color-border);
+}
+
+/* -------------------------------------------------------------------
+   6.7  Custodian stats (Property Custodian widget)
+   ------------------------------------------------------------------- */
+.custodian-stats .stat-row {
+    background: var(--tha-color-surface-muted);
+    border: 1px solid var(--tha-color-border);
+    border-radius: var(--tha-radius);
+    transition:
+        background var(--tha-duration) var(--tha-ease),
+        border-color var(--tha-duration) var(--tha-ease);
+}
+.custodian-stats .stat-row:hover {
+    background: #ffffff;
+    border-color: var(--tha-color-border-strong);
+    box-shadow: var(--tha-shadow-xs);
+}
+.custodian-stats .stat-label {
+    font-family: var(--tha-font-ui);
+    color: var(--tha-color-text-subtle);
+    font-size: 0.78rem;
+    font-weight: 500;
+}
+.custodian-stats .stat-value {
+    font-family: var(--tha-font-display);
+    color: var(--tha-navy-800);
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+}
+
+/* -------------------------------------------------------------------
+   6.8  Empty state — small variant inside cards
+   ------------------------------------------------------------------- */
+.empty-state-sm {
+    padding: 2.25rem 1rem;
+}
+.empty-state-sm svg {
+    color: var(--tha-navy-200);
+    width: 56px;
+    height: 56px;
+}
+.empty-state-sm p {
+    font-family: var(--tha-font-ui);
+    color: var(--tha-color-text-subtle);
+    font-size: 0.82rem;
+    font-weight: 500;
+    letter-spacing: 0.005em;
+}
+
+/* -------------------------------------------------------------------
+   6.9  View-all link / Card title icons / View buttons
+   ------------------------------------------------------------------- */
+.view-all-link {
+    color: var(--tha-blue-700);
+    font-family: var(--tha-font-ui);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    transition: color var(--tha-duration) var(--tha-ease);
+}
+.view-all-link:hover {
+    color: var(--tha-blue-900);
+    text-decoration: none;
+    transform: translateX(2px);
+}
+
+/* The .btn-block / .btn-outline used inside widget cards */
+.btn-outline {
+    background: #ffffff;
+    color: var(--tha-blue-700);
+    border: 1px solid var(--tha-blue-300);
+}
+.btn-outline:hover {
+    background: linear-gradient(135deg,
+        var(--tha-blue-700) 0%,
+        var(--tha-blue-800) 100%);
+    color: #ffffff;
+    border-color: var(--tha-blue-800);
+}
+
+/* -------------------------------------------------------------------
+   6.10  Card titles inside widgets (with icon prefix)
+        The widget card-title contains an inline svg + text. The svg
+        size and color stay as authored; we just refine typography.
+   ------------------------------------------------------------------- */
+.card .card-title {
+    font-family: var(--tha-font-display);
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--tha-navy-800);
+    letter-spacing: -0.005em;
+}
+.card .card-title svg {
+    color: var(--tha-blue-700);
+}
+
+/* Card hover lift — subtle */
+.dashboard-grid .card,
+.widgets-grid .card,
+.grid .card {
+    transition:
+        transform var(--tha-duration) var(--tha-ease),
+        box-shadow var(--tha-duration) var(--tha-ease);
+}
+.dashboard-grid .card:hover,
+.widgets-grid .card:hover,
+.grid .card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--tha-shadow-md);
+}
+
+/* -------------------------------------------------------------------
+   6.11  Task list (used in some dashboards) — cleaner navy primary
+   ------------------------------------------------------------------- */
+.task-action {
+    background: linear-gradient(135deg,
+        var(--tha-blue-700) 0%,
+        var(--tha-blue-800) 100%);
+    font-family: var(--tha-font-ui);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    box-shadow:
+        var(--tha-shadow-xs),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    transition: all var(--tha-duration) var(--tha-ease);
+}
+.task-action:hover {
+    background: linear-gradient(135deg,
+        var(--tha-blue-800) 0%,
+        var(--tha-blue-900) 100%);
+    box-shadow: var(--tha-shadow-md);
+    transform: translateY(-1px);
+}
+.task-title {
+    font-family: var(--tha-font-ui);
+    font-weight: 600;
+    color: var(--tha-navy-800);
+    letter-spacing: -0.005em;
+}
+.task-meta {
+    color: var(--tha-color-text-subtle);
+    font-size: 0.78rem;
+}
+.task-icon.amber {
+    background: linear-gradient(135deg,
+        var(--tha-amber-100) 0%,
+        var(--tha-amber-200) 100%);
+    color: var(--tha-amber-700);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
