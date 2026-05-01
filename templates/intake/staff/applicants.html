@@ -2791,7 +2791,7 @@
             </div>
 
             <p class="docscan-footnote">
-                Applicant can proceed only when all eight baseline requirements (R01–R07 and voter certification RVT) are scanned. If Applicant Situation is Option A, B, or C, the ISF-SIT row is shown but remains optional for this proceed gate.
+                Applicant can proceed only when all eight baseline requirements (R01–R07 and voter certification RVT) are scanned. If Applicant Situation is Option A, B, or C, one optional situational row is shown (Option A: CDRRMO; Option B/C: ISF-SIT).
             </p>
         </div>
 
@@ -5253,6 +5253,7 @@
         R05: 'doc_no_property',
         R06: 'doc_2x2_picture',
         R07: 'doc_sketch_location',
+        CDRRMO: 'doc_cdrrmo',
         'ISF-SIT': 'doc_isf_situational',
         RVT: 'doc_voter_cert',
     };
@@ -5505,7 +5506,7 @@
         const scannedRequired = requiredRows.filter(function (r) { return !!r.scanned; }).length;
         if (scannedSummaryEl) scannedSummaryEl.textContent = String(scannedRequired) + '/' + String(requiredRows.length);
         if (rowSummaryEl) rowSummaryEl.textContent = String(safeRows.length);
-        // LIST OF APPLICANTS badge: count every checklist row (incl. optional ISF-SIT for Options A/B/C).
+        // LIST OF APPLICANTS badge: count every checklist row (incl. optional situational row for Options A/B/C).
         const scannedAll = safeRows.filter(function (r) { return !!r.scanned; }).length;
         const totalAll = safeRows.length;
         syncArchiveRequirementsButtonSummary(scannedAll, totalAll);
@@ -5667,11 +5668,11 @@
         }
     }
 
-    /** Match intake `_isf_situational_row_display_name` for modal rows (covers stale embedded JSON). */
+    /** Match intake situational-row labels for modal rows (covers stale embedded JSON). */
     function archiveModalIsfSitRowLabel(displacementReason) {
         var dr = String(displacementReason || '').trim();
         if (dr === 'danger_zone') {
-            return 'Option A — Resident of Danger Zone or Hazard Area — ISF situational documentation';
+            return 'Option A — Resident of Danger Zone or Hazard Area — CDRRMO certification';
         }
         if (dr === 'ejected') {
             return 'Option B — Ejected or Evicted from Prior Residence — ISF situational documentation';
@@ -7240,12 +7241,14 @@
             scanned: !!applicant.docVoterCert,
         });
         if (['danger_zone', 'ejected', 'relocated'].includes(applicant.displacementReason)) {
+            var situCode = String(applicant.displacementReason || '').trim() === 'danger_zone' ? 'CDRRMO' : 'ISF-SIT';
+            var situDbKey = String(applicant.displacementReason || '').trim() === 'danger_zone' ? 'doc_cdrrmo' : 'doc_isf_situational';
             requirements.push({
-                code: 'ISF-SIT',
+                code: situCode,
                 name: (function () {
                     var dr = String(applicant.displacementReason || '').trim();
                     if (dr === 'danger_zone') {
-                        return 'Option A — Resident of Danger Zone or Hazard Area — ISF situational documentation';
+                        return 'Option A — Resident of Danger Zone or Hazard Area — CDRRMO certification';
                     }
                     if (dr === 'ejected') {
                         return 'Option B — Ejected or Evicted from Prior Residence — ISF situational documentation';
@@ -7256,7 +7259,7 @@
                     return 'ISF situational documentation (Applicant Situation Options A, B, or C)';
                 })(),
                 group: 'Applicant Requirements',
-                dbKey: '',
+                dbKey: situDbKey,
                 isRequired: false,
                 isActive: true,
                 scanned: false,

@@ -32,7 +32,6 @@ MODULE2_LIST_PER_PAGE = 20
 # Minimum years of residence in Talisay City for Module 2 Layer 2 (2.6) eligibility.
 # Mirror of `MODULE1_MIN_YEARS_RESIDING_TALISAY` in intake/views.py — keep in sync.
 MODULE1_MIN_YEARS_RESIDING_TALISAY = 5
-EVAL28_APPROVED_SMS_EVENT = 'evaluation_approval_approved'
 ELIGIBILITY_CHECK_KEYS = frozenset({'property', 'age_residency', 'income', 'household', 'voter'})
 # Short labels for readiness hints (Application & Evaluation table).
 ELIGIBILITY_CHECK_LABELS = {
@@ -47,7 +46,7 @@ ELIGIBILITY_CHECK_LABELS = {
 def send_sms(recipient_phone, message_content, trigger_event, applicant=None, module='applications'):
     """
     Applications-module SMS policy:
-    Send ISF SMS only after Layer 4 (2.8) is saved as Approved.
+    Delegates to ``send_sms_for_applications`` (``eligibility_check_failed`` only).
     """
     if module != 'applications':
         return False
@@ -2289,6 +2288,28 @@ def save_eligibility_check_decision(request, position):
         },
     )
 
+    sms_sent = False
+    sms_detail = ''
+    notify_flag = str(request.POST.get('notify_applicant_sms') or '').strip().lower() in ('1', 'true', 'yes', 'on')
+    if status == 'failed' and notify_flag:
+        phone = (applicant.phone_number or '').strip()
+        if not phone:
+            sms_detail = 'No mobile number on file; SMS not sent.'
+        else:
+            ref = ((applicant.reference_number or '').strip() or str(applicant.pk))
+            check_label = ELIGIBILITY_CHECK_LABELS.get(check_key, check_key.replace('_', ' '))
+            body = (
+                f'[{ref}] Eligibility ({check_label}): {failure_reason}'.strip()
+            )
+            if len(body) > 480:
+                body = body[:477].rstrip() + '...'
+            sms_sent = bool(send_sms(phone, body, 'eligibility_check_failed', applicant=applicant))
+            sms_detail = (
+                'SMS sent to applicant.'
+                if sms_sent
+                else 'SMS could not be sent (invalid number format or gateway error).'
+            )
+
     # Keep Applicant.status in sync once the applicant has already been through
     # situation certification. Pre-certification applicants stay 'pending' until
     # the reviewer hits Mark Situation Certified.
@@ -2301,7 +2322,7 @@ def save_eligibility_check_decision(request, position):
             applicant.save(update_fields=['status', 'updated_at'])
             status_synced_to = new_status
 
-    return JsonResponse({
+    response_payload = {
         'success': True,
         'decision': {
             'check_key': decision.check_key,
@@ -2311,7 +2332,12 @@ def save_eligibility_check_decision(request, position):
             'reviewed_at': decision.reviewed_at.isoformat() if decision.reviewed_at else '',
         },
         'applicant_status_synced_to': status_synced_to,
-    })
+    }
+    if status == 'failed':
+        response_payload['sms_sent'] = sms_sent
+        response_payload['sms_detail'] = sms_detail
+        response_payload['sms_requested'] = notify_flag
+    return JsonResponse(response_payload)
 
 
 @login_required
@@ -2538,7 +2564,6 @@ def record_evaluation_approval(request, position):
     applicant_id = request.POST.get('applicant_id')
     approval_status = request.POST.get('approval_status', '').strip()
     notes = request.POST.get('notes', '').strip()
-    force_sms = str(request.POST.get('force_sms', '')).strip().lower() in {'1', 'true', 'yes', 'on'}
 
     if not applicant_id:
         return JsonResponse({'success': False, 'error': 'Missing applicant_id.'}, status=400)
@@ -2553,8 +2578,6 @@ def record_evaluation_approval(request, position):
     blacklist_error = _require_module2_blacklist_clear(applicant)
     if blacklist_error:
         return blacklist_error
-
-    previous_eval28_status = applicant.evaluation_approval_status or ''
 
     # Validate base Module 2 state for 2.8 action.
     if applicant.status != 'eligible':
@@ -2587,24 +2610,8 @@ def record_evaluation_approval(request, position):
 
     applicant.save(update_fields=update_fields)
 
-    sms_dispatched = None
-    should_send_eval28_sms = approval_status == 'approved' and applicant.phone_number and (
-        previous_eval28_status != approval_status or force_sms
-    )
-    if should_send_eval28_sms:
-        queue_label = 'Priority Queue' if (active_queue and active_queue.queue_type == 'priority') else 'Walk-in Queue'
-        queue_pos = active_queue.position if active_queue else '?'
-        sms_msg = (
-            "THA update: Your Module 2 eligibility approval has been recorded. "
-            f"Queue assignment: {queue_label} position #{queue_pos}. "
-            f"Ref: {applicant.reference_number}."
-        )
-        sms_dispatched = send_sms_for_applications(
-            applicant.phone_number,
-            sms_msg,
-            EVAL28_APPROVED_SMS_EVENT,
-            applicant=applicant,
-        )
+    # Applicant SMS for Module 2 is limited to `eligibility_check_failed` only (see send_sms_for_applications).
+    sms_dispatched = False
 
     return JsonResponse({
         'success': True,

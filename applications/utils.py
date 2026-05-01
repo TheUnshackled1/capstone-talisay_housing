@@ -142,10 +142,11 @@ def send_sms_for_applications(recipient_phone, message_content, trigger_event, a
     """
     Module 2 SMS gateway wrapper.
 
-    Policy: only 2.8 approved event should send applicant-facing SMS
-    from Applications module.
+    Applicant-facing SMS is only sent for eligibility checklist failures when
+    staff opts in (`eligibility_check_failed`). Other triggers are not sent via
+    this module.
     """
-    if trigger_event != 'evaluation_approval_approved':
+    if trigger_event != 'eligibility_check_failed':
         return False
     return _base_send_sms(
         recipient_phone,

@@ -3727,6 +3727,10 @@
         <div class="eligibility-next-body">
             <label for="eligibilityFailReasonInput" style="display:block;font-size:0.75rem;font-weight:700;color:#334155;margin-bottom:0.4rem;">Failure reason</label>
             <textarea id="eligibilityFailReasonInput" rows="4" placeholder="Example: Submitted certificate is expired and does not match current applicant profile." style="width:100%;padding:0.6rem;border:1px solid #cbd5e1;border-radius:0.5rem;font-size:0.8rem;resize:vertical;"></textarea>
+            <label style="display:flex;align-items:flex-start;gap:0.45rem;margin-top:0.55rem;font-size:0.72rem;color:#334155;line-height:1.35;cursor:pointer;">
+                <input type="checkbox" id="eligibilityFailNotifySms" checked style="margin-top:0.12rem;flex-shrink:0;">
+                <span>Send SMS to the applicant using the failure reason above (requires a valid PH mobile number on file).</span>
+            </label>
             <div id="eligibilityFailReasonError" style="display:none;color:#b91c1c;font-size:0.72rem;margin-top:0.4rem;"></div>
         </div>
         <div class="eligibility-next-footer">
@@ -4164,14 +4168,17 @@
         return raw;
     }
 
-    async function saveEligibilityDecision(checkKey, status, failureReason) {
+    async function saveEligibilityDecision(checkKey, status, failureReason, opts = {}) {
         const applicantId = currentEligibilityApplicantId;
-        if (!applicantId || !checkKey) return;
+        if (!applicantId || !checkKey) return null;
         const formData = new FormData();
         formData.append('applicant_id', applicantId);
         formData.append('check_key', checkKey);
         formData.append('status', status);
         formData.append('failure_reason', failureReason || '');
+        if (status === 'failed') {
+            formData.append('notify_applicant_sms', opts.notifyApplicantSms ? '1' : '0');
+        }
         formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
         try {
             const response = await fetch('{% url "applications:save_eligibility_check_decision" request.user.position %}', {
@@ -4181,7 +4188,7 @@
             const data = await response.json();
             if (!data.success) {
                 showFlowAlert(data.error || 'Unable to save checklist decision.');
-                return;
+                return null;
             }
             const decisionKey = getEligibilityDecisionKey(checkKey);
             if (decisionKey) {
@@ -4191,8 +4198,10 @@
                 };
             }
             if (lastEligibilitySnapshot) renderEligibilityChecklist(lastEligibilitySnapshot);
+            return data;
         } catch (error) {
             showFlowAlert(error.message || 'Unable to save checklist decision.');
+            return null;
         }
     }
 
@@ -4206,6 +4215,8 @@
             errorEl.style.display = 'none';
             errorEl.textContent = '';
         }
+        const smsCb = document.getElementById('eligibilityFailNotifySms');
+        if (smsCb) smsCb.checked = true;
         const modal = document.getElementById('eligibilityFailReasonModal');
         if (modal) modal.classList.add('active');
     }
@@ -4229,8 +4240,21 @@
             }
             return;
         }
-        await saveEligibilityDecision(checkKey, 'failed', reason);
+        const smsCb = document.getElementById('eligibilityFailNotifySms');
+        const notifySms = smsCb ? smsCb.checked : false;
+        const data = await saveEligibilityDecision(checkKey, 'failed', reason, { notifyApplicantSms: notifySms });
+        if (!data) return;
         closeEligibilityFailReasonModal();
+        let msg = 'Failed decision saved.';
+        if (notifySms) {
+            if (data.sms_sent) {
+                msg += ' ' + (data.sms_detail || 'SMS sent to applicant.');
+            } else {
+                msg += ' ' + (data.sms_detail || 'SMS was not sent.');
+            }
+        }
+        const alertTone = (!notifySms || data.sms_sent) ? 'success' : 'default';
+        showFlowAlert(msg, 'Eligibility', null, alertTone);
     }
 
     function renderEligibilityChecklist(snapshot) {

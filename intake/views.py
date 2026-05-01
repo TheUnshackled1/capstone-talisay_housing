@@ -32,21 +32,19 @@ MODULE1_MONTHLY_INCOME_CEILING_PESO = 10000
 # and submit. The flag is surfaced for downstream eligibility evaluation.
 MODULE1_MIN_YEARS_RESIDING_TALISAY = 5
 
-# Applicant Situation Options A/B/C need an extra vault slot (ISF situational documentation).
+# Applicant Situation Options A/B/C need one extra situational vault slot.
 DISPLACEMENT_PATHS_NEED_ISF_EXTRA = frozenset({'danger_zone', 'ejected', 'relocated'})
 ISF_EXTRA_VAULT_DOC_TYPE = 'isf_situational_docs'
+CDRRMO_EXTRA_VAULT_DOC_TYPE = 'cdrrmo_cert'
 
 
 def _isf_situational_row_display_name(displacement_reason=''):
     """
-    Human-facing checklist row title for ISF situational docs, keyed to Applicant Situation A/B/C.
+    Human-facing checklist row title for situational follow-up docs.
     """
     dr = (displacement_reason or '').strip()
     if dr == 'danger_zone':
-        return (
-            'Option A — Resident of Danger Zone or Hazard Area — '
-            'ISF situational documentation'
-        )
+        return 'Option A — Resident of Danger Zone or Hazard Area — CDRRMO certification'
     if dr == 'ejected':
         return (
             'Option B — Ejected or Evicted from Prior Residence — '
@@ -86,11 +84,13 @@ def _archive_requirement_scan_rows(requirements_group_a, scanned_types_set, disp
     Build checklist rows from `documents.Requirement` rows; `scanned` is True when this
     requirement's `vault_document_type` matches an uploaded Applicant Document.
 
-    When displacement is Options A, B, or C, one extra trackable row is appended for
-    `ISF_EXTRA_VAULT_DOC_TYPE` (Option D keeps the base count only).
+    When displacement is Option A/B/C, one extra trackable row is appended:
+    - Option A: CDRRMO certification
+    - Option B/C: ISF situational documentation
+    (Option D keeps the base count only).
 
-    Requirement `RVT` (voter certification) is rendered immediately after R01–R07; the optional
-    ISF-SIT row follows when displacement is Options A, B, or C.
+    Requirement `RVT` (voter certification) is rendered immediately after R01–R07; one optional
+    situational row follows when displacement is Options A, B, or C.
     """
     scanned_types_set = scanned_types_set or set()
     latest_doc_by_type = latest_doc_by_type or {}
@@ -155,7 +155,26 @@ def _archive_requirement_scan_rows(requirements_group_a, scanned_types_set, disp
                 scanned_count += 1
 
     dr = (displacement_reason or '').strip()
-    if dr in DISPLACEMENT_PATHS_NEED_ISF_EXTRA:
+    if dr == 'danger_zone':
+        scanned_cdrrmo = CDRRMO_EXTRA_VAULT_DOC_TYPE in scanned_types_set
+        latest_cdrrmo = latest_doc_by_type.get(CDRRMO_EXTRA_VAULT_DOC_TYPE, {})
+        rows.append({
+            'code': 'CDRRMO',
+            'name': 'Option A — Resident of Danger Zone or Hazard Area — CDRRMO certification',
+            'policy_tooltip': _isf_situational_policy_tooltip(dr),
+            'group_display': 'Group A - Applicant Requirements',
+            # Follow-up only: displayed in checklist but does not affect baseline proceed gate.
+            'is_required_for_form': False,
+            'is_active': True,
+            'scanned': scanned_cdrrmo,
+            'latest_file_url': latest_cdrrmo.get('url', ''),
+            'latest_file_name': latest_cdrrmo.get('name', ''),
+        })
+        # LIST OF APPLICANTS badge + parity with modal row count (R01–RVT + optional situational row).
+        trackable_total += 1
+        if scanned_cdrrmo:
+            scanned_count += 1
+    elif dr in ('ejected', 'relocated'):
         scanned_isf = ISF_EXTRA_VAULT_DOC_TYPE in scanned_types_set
         latest_isf = latest_doc_by_type.get(ISF_EXTRA_VAULT_DOC_TYPE, {})
         rows.append({
@@ -170,7 +189,7 @@ def _archive_requirement_scan_rows(requirements_group_a, scanned_types_set, disp
             'latest_file_url': latest_isf.get('url', ''),
             'latest_file_name': latest_isf.get('name', ''),
         })
-        # LIST OF APPLICANTS badge + parity with modal row count (R01–RVT + optional ISF-SIT).
+        # LIST OF APPLICANTS badge + parity with modal row count (R01–RVT + optional situational row).
         trackable_total += 1
         if scanned_isf:
             scanned_count += 1
@@ -978,14 +997,13 @@ def applicants_list(request, position):
         ).order_by('created_at')
     )
     walk_in_ids = [a.id for a in walk_in_applicants]
-    walk_in_has_isf_doc = set()
+    walk_in_extra_doc_types_by_applicant = defaultdict(set)
     if walk_in_ids:
-        walk_in_has_isf_doc = set(
-            Document.objects.filter(
-                applicant_id__in=walk_in_ids,
-                document_type=ISF_EXTRA_VAULT_DOC_TYPE,
-            ).values_list('applicant_id', flat=True).distinct()
-        )
+        for aid, doc_type in Document.objects.filter(
+            applicant_id__in=walk_in_ids,
+            document_type__in=(ISF_EXTRA_VAULT_DOC_TYPE, CDRRMO_EXTRA_VAULT_DOC_TYPE),
+        ).values_list('applicant_id', 'document_type'):
+            walk_in_extra_doc_types_by_applicant[aid].add(doc_type)
 
     for app in walk_in_applicants:
         # Determine eligibility status display
@@ -1115,7 +1133,7 @@ def applicants_list(request, position):
             'handledBy': app.registered_by.get_full_name() if app.registered_by else 'Unknown',
             'handledByPosition': app.registered_by.get_position_display_short() if app.registered_by else '',
             'handledByInitials': (app.registered_by.first_name[:1] + app.registered_by.last_name[:1]).upper() if app.registered_by else '??',
-            # Document checklist count (baseline + optional ISF situational vault slot for Options A/B/C)
+            # Document checklist count (baseline + one optional situational slot for Options A/B/C).
             'docsCount': (
                 sum([
                     app.doc_brgy_residency,
@@ -1130,8 +1148,14 @@ def applicants_list(request, position):
                 + (
                     1
                     if (
-                        (app.displacement_reason or '').strip() in DISPLACEMENT_PATHS_NEED_ISF_EXTRA
-                        and app.id in walk_in_has_isf_doc
+                        (
+                            (app.displacement_reason or '').strip() == 'danger_zone'
+                            and CDRRMO_EXTRA_VAULT_DOC_TYPE in walk_in_extra_doc_types_by_applicant.get(app.id, set())
+                        )
+                        or (
+                            (app.displacement_reason or '').strip() in ('ejected', 'relocated')
+                            and ISF_EXTRA_VAULT_DOC_TYPE in walk_in_extra_doc_types_by_applicant.get(app.id, set())
+                        )
                     )
                     else 0
                 )
