@@ -1,0 +1,1158 @@
+/* ===================================================================
+   THA Design System — Phase 1: tokens + typography
+   ===================================================================
+   Government-grade visual identity. Additive only — does not override
+   layout-affecting properties on existing components. Promotes the
+   per-module palette already used across pages into CSS custom
+   properties so the rest of the codebase can reference them.
+
+   Loaded after dashboard.css from staff_base / field_base / oic_base.
+   =================================================================== */
+
+/* -------------------------------------------------------------------
+   1. Typography — Inter (UI) + Source Serif Pro (display) via Google
+      Fonts. System fonts fall back if the network is unavailable so
+      offline kiosks still render legibly.
+   ------------------------------------------------------------------- */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Source+Serif+Pro:wght@600;700&family=JetBrains+Mono:wght@500;600&display=swap');
+
+:root {
+    /* ---- Font stacks ---- */
+    --tha-font-ui: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+        'Helvetica Neue', Arial, sans-serif;
+    --tha-font-display: 'Source Serif Pro', Georgia, 'Times New Roman', Times, serif;
+    --tha-font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+    /* ---- Type scale (1.125 ratio, anchored at 14px body) ---- */
+    --tha-text-2xs: 0.625rem;   /* 10px — meta labels */
+    --tha-text-xs:  0.6875rem;  /* 11px — table footnotes */
+    --tha-text-sm:  0.78125rem; /* 12.5px — secondary */
+    --tha-text-base:0.875rem;   /* 14px — body */
+    --tha-text-md:  0.9375rem;  /* 15px — emphasized body */
+    --tha-text-lg:  1.0625rem;  /* 17px — section titles */
+    --tha-text-xl:  1.25rem;    /* 20px — page titles */
+    --tha-text-2xl: 1.5rem;     /* 24px — display */
+
+    /* ---- Line heights ---- */
+    --tha-lh-tight: 1.25;
+    --tha-lh-snug: 1.4;
+    --tha-lh-normal: 1.55;
+    --tha-lh-relaxed: 1.7;
+
+    /* ---- Tracking ---- */
+    --tha-track-tight: -0.01em;
+    --tha-track-normal: 0;
+    --tha-track-wide: 0.04em;
+    --tha-track-wider: 0.08em;
+    --tha-track-widest: 0.14em;
+
+    /* -----------------------------------------------------------------
+       2. Color tokens — Government identity palette
+       ----------------------------------------------------------------- */
+    /* Authority navy (THA primary) */
+    --tha-navy-50:  #f1f5f9;
+    --tha-navy-100: #e2e8f0;
+    --tha-navy-200: #cbd5e1;
+    --tha-navy-300: #94a3b8;
+    --tha-navy-400: #64748b;
+    --tha-navy-500: #475569;
+    --tha-navy-600: #334155;
+    --tha-navy-700: #1e293b;
+    --tha-navy-800: #0f172a;
+    --tha-navy-900: #020617;
+
+    /* Module palettes — already used on the 8 pages we themed */
+    --tha-blue-50:   #eff6ff;
+    --tha-blue-100:  #dbeafe;
+    --tha-blue-200:  #bfdbfe;
+    --tha-blue-300:  #93c5fd;
+    --tha-blue-500:  #3b82f6;
+    --tha-blue-600:  #2563eb;
+    --tha-blue-700:  #1d4ed8;
+    --tha-blue-800:  #1e40af;
+    --tha-blue-900:  #1e3a8a;
+
+    --tha-emerald-50:  #ecfdf5;
+    --tha-emerald-100: #d1fae5;
+    --tha-emerald-200: #a7f3d0;
+    --tha-emerald-300: #6ee7b7;
+    --tha-emerald-500: #10b981;
+    --tha-emerald-600: #059669;
+    --tha-emerald-700: #047857;
+    --tha-emerald-800: #065f46;
+
+    --tha-amber-50:  #fffbeb;
+    --tha-amber-100: #fef3c7;
+    --tha-amber-200: #fde68a;
+    --tha-amber-300: #fcd34d;
+    --tha-amber-400: #fbbf24;
+    --tha-amber-500: #f59e0b;
+    --tha-amber-600: #d97706;
+    --tha-amber-700: #b45309;
+    --tha-amber-800: #92400e;
+
+    --tha-violet-50:  #f5f3ff;
+    --tha-violet-100: #ede9fe;
+    --tha-violet-200: #ddd6fe;
+    --tha-violet-300: #c4b5fd;
+    --tha-violet-500: #8b5cf6;
+    --tha-violet-600: #7c3aed;
+    --tha-violet-700: #6d28d9;
+    --tha-violet-800: #5b21b6;
+    --tha-violet-900: #4c1d95;
+
+    --tha-cyan-50:  #ecfeff;
+    --tha-cyan-100: #cffafe;
+    --tha-cyan-200: #a5f3fc;
+    --tha-cyan-300: #67e8f9;
+    --tha-cyan-500: #06b6d4;
+    --tha-cyan-600: #0891b2;
+    --tha-cyan-700: #0e7490;
+    --tha-cyan-800: #155e75;
+
+    --tha-teal-50:  #f0fdfa;
+    --tha-teal-100: #ccfbf1;
+    --tha-teal-200: #99f6e4;
+    --tha-teal-300: #5eead4;
+    --tha-teal-500: #14b8a6;
+    --tha-teal-600: #0d9488;
+    --tha-teal-700: #0f766e;
+    --tha-teal-800: #115e59;
+
+    --tha-sky-50:  #f0f9ff;
+    --tha-sky-100: #e0f2fe;
+    --tha-sky-200: #bae6fd;
+    --tha-sky-300: #7dd3fc;
+    --tha-sky-500: #0ea5e9;
+    --tha-sky-600: #0284c7;
+    --tha-sky-700: #0369a1;
+    --tha-sky-800: #075985;
+    --tha-sky-900: #0c4a6e;
+
+    --tha-rose-50:  #fff1f2;
+    --tha-rose-100: #ffe4e6;
+    --tha-rose-200: #fecdd3;
+    --tha-rose-300: #fda4af;
+    --tha-rose-500: #f43f5e;
+    --tha-rose-600: #e11d48;
+    --tha-rose-700: #be123c;
+    --tha-rose-800: #9f1239;
+    --tha-rose-900: #881337;
+
+    /* ---- Semantic aliases ---- */
+    --tha-color-text:        var(--tha-navy-800);
+    --tha-color-text-muted:  var(--tha-navy-400);
+    --tha-color-text-subtle: var(--tha-navy-500);
+    --tha-color-text-invert: #f8fafc;
+    --tha-color-border:      var(--tha-navy-100);
+    --tha-color-border-strong: var(--tha-navy-200);
+    --tha-color-surface:     #ffffff;
+    --tha-color-surface-muted: var(--tha-navy-50);
+    --tha-color-link:        var(--tha-blue-700);
+    --tha-color-link-hover:  var(--tha-blue-900);
+
+    --tha-color-success:     var(--tha-emerald-700);
+    --tha-color-success-bg:  var(--tha-emerald-50);
+    --tha-color-warning:     var(--tha-amber-700);
+    --tha-color-warning-bg:  var(--tha-amber-50);
+    --tha-color-danger:      #b91c1c;
+    --tha-color-danger-bg:   #fef2f2;
+    --tha-color-info:        var(--tha-blue-700);
+    --tha-color-info-bg:     var(--tha-blue-50);
+
+    /* -----------------------------------------------------------------
+       3. Effects — radii, shadows, focus rings
+       ----------------------------------------------------------------- */
+    --tha-radius-xs: 0.25rem;
+    --tha-radius-sm: 0.375rem;
+    --tha-radius:    0.5rem;
+    --tha-radius-md: 0.625rem;
+    --tha-radius-lg: 0.85rem;
+    --tha-radius-xl: 1rem;
+    --tha-radius-pill: 9999px;
+
+    --tha-shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.05);
+    --tha-shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.07), 0 1px 2px rgba(15, 23, 42, 0.04);
+    --tha-shadow-md: 0 4px 10px -2px rgba(15, 23, 42, 0.10), 0 2px 4px rgba(15, 23, 42, 0.05);
+    --tha-shadow-lg: 0 10px 25px -8px rgba(15, 23, 42, 0.18), 0 4px 8px rgba(15, 23, 42, 0.06);
+    --tha-shadow-focus-blue:    0 0 0 3px rgba(37, 99, 235, 0.22);
+    --tha-shadow-focus-emerald: 0 0 0 3px rgba(16, 185, 129, 0.22);
+    --tha-shadow-focus-amber:   0 0 0 3px rgba(217, 119, 6, 0.22);
+    --tha-shadow-focus-rose:    0 0 0 3px rgba(225, 29, 72, 0.22);
+
+    /* Government accessibility — visible focus ring (WCAG 2.4.7) */
+    --tha-ring-focus: 0 0 0 3px rgba(37, 99, 235, 0.35);
+
+    /* -----------------------------------------------------------------
+       4. Motion
+       ----------------------------------------------------------------- */
+    --tha-ease: cubic-bezier(0.4, 0, 0.2, 1);
+    --tha-duration-fast: 120ms;
+    --tha-duration: 180ms;
+    --tha-duration-slow: 260ms;
+}
+
+/* -------------------------------------------------------------------
+   5. Base typography — applied to body, propagates everywhere.
+      Component-specific font-family declarations elsewhere still win
+      because they are more specific.
+   ------------------------------------------------------------------- */
+body {
+    font-family: var(--tha-font-ui);
+    font-size: var(--tha-text-base);
+    line-height: var(--tha-lh-normal);
+    color: var(--tha-color-text);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    /* Tabular numerals everywhere by default — important for IDs,
+       reference numbers, money, dates in a government system. */
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+}
+
+/* Allow proportional numerals where natural prose flows (paragraphs),
+   so body copy still reads warmly. */
+p, li, blockquote {
+    font-variant-numeric: normal;
+}
+
+/* Display-quality headings — used by official-document headers like
+   "THA Applicant Registration Sheet" already; this just nudges other
+   h1/h2 toward the same family without forcing it. */
+.tha-display,
+.tha-form-header h2,
+.tha-layer-title {
+    font-family: var(--tha-font-display);
+    letter-spacing: var(--tha-track-tight);
+}
+
+/* Monospace runs — reference numbers, transaction IDs, money amounts */
+.tha-mono,
+.m2-cell-code,
+code, kbd, pre, samp {
+    font-family: var(--tha-font-mono);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Tabular numerals on data tables (covers .applicants-table, .formal-
+   table, .documents-table, .rfq-table, .applications-table) — without
+   changing layout. */
+table.applicants-table,
+table.applications-table,
+table.documents-table,
+table.formal-table,
+table.rfq-table,
+.units-shell table,
+.cases-shell table,
+.docs-shell table {
+    font-variant-numeric: tabular-nums;
+}
+
+/* -------------------------------------------------------------------
+   6. Accessible focus ring — applies to interactive controls that
+      don't already define :focus-visible. We only target :focus-
+      visible (keyboard) so mouse clicks don't show a halo. Government
+      systems must be keyboard-navigable.
+   ------------------------------------------------------------------- */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+    outline: 2px solid var(--tha-blue-600);
+    outline-offset: 2px;
+    border-radius: var(--tha-radius-sm);
+}
+
+/* Inputs/selects already inside our forms get a softer combined
+   border + halo when keyboard-focused, without the harsh outline. */
+input.form-input:focus-visible,
+select.form-select:focus-visible,
+textarea.form-input:focus-visible {
+    outline: none;
+    border-color: var(--tha-blue-600);
+    box-shadow: var(--tha-ring-focus);
+}
+
+/* -------------------------------------------------------------------
+   7. Reusable utility primitives — for future phases. Available now
+      so any new card/chip you add picks up the system automatically.
+      None of these classes are applied to existing markup in Phase 1
+      so layouts are not affected.
+   ------------------------------------------------------------------- */
+.tha-card {
+    background: var(--tha-color-surface);
+    border: 1px solid var(--tha-color-border);
+    border-radius: var(--tha-radius-lg);
+    box-shadow: var(--tha-shadow-sm);
+    padding: 1rem;
+}
+
+.tha-stat-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 0.65rem;
+    border-radius: var(--tha-radius);
+    background: var(--tha-color-surface-muted);
+    border: 1px solid var(--tha-color-border);
+    font-size: var(--tha-text-xs);
+    color: var(--tha-color-text-subtle);
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.tha-stat-chip__value {
+    font-size: var(--tha-text-xl);
+    font-weight: 700;
+    color: var(--tha-color-text);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+.tha-divider {
+    border: none;
+    border-top: 1px solid var(--tha-color-border);
+    margin: 1rem 0;
+}
+
+.tha-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.18rem 0.55rem;
+    border-radius: var(--tha-radius-pill);
+    font-size: var(--tha-text-2xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: var(--tha-track-wider);
+    line-height: 1.4;
+    border: 1px solid transparent;
+}
+
+.tha-pill--success { color: var(--tha-emerald-700); background: var(--tha-emerald-50); border-color: var(--tha-emerald-200); }
+.tha-pill--warning { color: var(--tha-amber-700);   background: var(--tha-amber-50);   border-color: var(--tha-amber-200); }
+.tha-pill--danger  { color: var(--tha-color-danger); background: var(--tha-color-danger-bg); border-color: #fecaca; }
+.tha-pill--info    { color: var(--tha-blue-700);    background: var(--tha-blue-50);    border-color: var(--tha-blue-200); }
+.tha-pill--neutral { color: var(--tha-navy-600);    background: var(--tha-navy-50);    border-color: var(--tha-navy-100); }
+
+/* -------------------------------------------------------------------
+   8. Print refinement — important for government work. Reference
+      sheets, registration forms, and handoff summaries get printed.
+   ------------------------------------------------------------------- */
+@media print {
+    body {
+        font-size: 10.5pt;
+        line-height: 1.4;
+        color: #000;
+        background: #fff;
+    }
+    .sidebar,
+    .topbar,
+    .modal-overlay,
+    .btn-primary-add,
+    .btn-export {
+        display: none !important;
+    }
+    .applicants-container,
+    .docs-shell,
+    .units-shell,
+    .cases-shell,
+    .rfq-shell {
+        box-shadow: none !important;
+        border-color: #000 !important;
+    }
+    a { color: #000 !important; text-decoration: underline; }
+}
+
+/* -------------------------------------------------------------------
+   9. Reduced-motion respect — required for accessibility compliance.
+   ------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* ===================================================================
+   PHASE 2 — Sidebar + Topbar polish
+   ===================================================================
+   Government-grade chrome for the staff portal. Refines the existing
+   sidebar/topbar from dashboard.css without changing layout or
+   positioning. All rules are scoped to the existing class names so
+   they cascade cleanly and can be removed by deleting this section.
+   =================================================================== */
+
+/* -------------------------------------------------------------------
+   2.1  Sidebar — Philippine government accent + serif crest
+   ------------------------------------------------------------------- */
+
+/* A subtle 3px Republic accent stripe at the very top of the sidebar
+   (navy → amber → navy). Evokes official government branding without
+   being garish. Sits above the gradient background. */
+.sidebar {
+    background: linear-gradient(180deg, #0f2447 0%, #0a1a35 100%);
+    box-shadow: 4px 0 24px -12px rgba(15, 36, 71, 0.45);
+}
+.sidebar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg,
+        var(--tha-amber-500) 0%,
+        var(--tha-amber-400, #fbbf24) 35%,
+        #fde68a 50%,
+        var(--tha-amber-400, #fbbf24) 65%,
+        var(--tha-amber-500) 100%);
+    z-index: 2;
+    pointer-events: none;
+}
+
+/* Sidebar header — a thin separator that fades out, more refined than
+   the flat 1px white-alpha line. */
+.sidebar-header {
+    border-bottom: 1px solid rgba(251, 191, 36, 0.18);
+    background: linear-gradient(180deg,
+        rgba(251, 191, 36, 0.05) 0%,
+        rgba(251, 191, 36, 0) 100%);
+}
+
+/* Logo crest — slightly more refined: subtle inner ring + amber halo.
+   Reads as an official seal at sidebar-corner glance. */
+.logo-circle {
+    background: linear-gradient(135deg,
+        rgba(255, 255, 255, 0.18) 0%,
+        rgba(255, 255, 255, 0.08) 100%);
+    border: 1px solid rgba(251, 191, 36, 0.45);
+    box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.05),
+        0 2px 8px rgba(15, 36, 71, 0.4),
+        0 0 0 3px rgba(251, 191, 36, 0.06);
+}
+.logo-icon {
+    color: #fde68a;  /* warm cream — picks up the amber accent */
+}
+
+/* Logo wordmark in display serif so the corner reads as an
+   institutional mark, not a generic SaaS logo. */
+.logo-title {
+    font-family: var(--tha-font-display);
+    font-weight: 700;
+    font-size: 1rem;
+    letter-spacing: var(--tha-track-tight);
+    color: #ffffff;
+}
+.logo-subtitle {
+    font-family: var(--tha-font-ui);
+    font-size: 0.66rem;
+    font-weight: 500;
+    letter-spacing: var(--tha-track-wide);
+    text-transform: uppercase;
+    color: #fde68a;       /* amber wash — secondary line */
+    opacity: 0.78;
+}
+
+/* -------------------------------------------------------------------
+   2.2  Sidebar navigation — refined hover/active states
+   ------------------------------------------------------------------- */
+
+.nav-section-title {
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: var(--tha-track-widest);
+    color: rgba(253, 230, 138, 0.55);  /* warm amber, low alpha */
+}
+
+.nav-link {
+    font-family: var(--tha-font-ui);
+    font-size: 0.815rem;
+    font-weight: 500;
+    letter-spacing: 0.005em;
+    transition:
+        background var(--tha-duration) var(--tha-ease),
+        color var(--tha-duration) var(--tha-ease),
+        transform var(--tha-duration) var(--tha-ease),
+        box-shadow var(--tha-duration) var(--tha-ease);
+}
+.nav-link:hover {
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateX(2px);
+}
+
+/* Active nav-link — replace the default 3px primary-300 indicator
+   with a warm amber Republic accent. Reads as "you are here" with
+   government chrome instead of generic blue. */
+.nav-link.active {
+    background: linear-gradient(90deg,
+        rgba(251, 191, 36, 0.14) 0%,
+        rgba(255, 255, 255, 0.08) 100%);
+    color: #ffffff;
+    box-shadow: inset 0 0 0 1px rgba(251, 191, 36, 0.18);
+}
+.nav-link.active::before {
+    width: 3px;
+    height: 70%;
+    background: linear-gradient(180deg, #fbbf24 0%, #f59e0b 100%);
+    border-radius: 0 2px 2px 0;
+    box-shadow: 0 0 8px rgba(251, 191, 36, 0.6);
+}
+.nav-link.active .nav-icon {
+    color: #fde68a;
+    opacity: 1;
+}
+
+/* Keyboard focus on nav links — visible amber ring (override the
+   generic blue ring from Phase 1 for sidebar context) */
+.nav-link:focus-visible {
+    outline: 2px solid #fbbf24;
+    outline-offset: -2px;
+}
+
+/* -------------------------------------------------------------------
+   2.3  Sidebar footer — user card + logout
+   ------------------------------------------------------------------- */
+
+.sidebar-footer {
+    border-top: 1px solid rgba(251, 191, 36, 0.18);
+    background: linear-gradient(180deg,
+        rgba(251, 191, 36, 0) 0%,
+        rgba(251, 191, 36, 0.04) 100%);
+}
+
+.user-info {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: all var(--tha-duration) var(--tha-ease);
+}
+.user-info:hover {
+    background: rgba(255, 255, 255, 0.10);
+    border-color: rgba(251, 191, 36, 0.25);
+    box-shadow: 0 4px 12px rgba(15, 36, 71, 0.35);
+}
+
+.user-avatar {
+    background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
+    color: #1a1207;     /* warm brown-black on amber for AA contrast */
+    font-weight: 800;
+    box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.25),
+        0 2px 6px rgba(217, 119, 6, 0.4);
+}
+
+.user-name {
+    font-weight: 600;
+    letter-spacing: 0.005em;
+    color: #ffffff;
+}
+.user-role {
+    font-size: 0.66rem;
+    font-weight: 500;
+    letter-spacing: var(--tha-track-wide);
+    text-transform: uppercase;
+    color: rgba(253, 230, 138, 0.85);
+}
+
+.logout-btn {
+    font-weight: 600;
+    letter-spacing: var(--tha-track-wide);
+    text-transform: uppercase;
+    font-size: 0.66rem;
+    background: rgba(239, 68, 68, 0.10);
+    color: #fca5a5;
+    border: 1px solid rgba(239, 68, 68, 0.18);
+    transition: all var(--tha-duration) var(--tha-ease);
+}
+.logout-btn:hover {
+    background: rgba(239, 68, 68, 0.22);
+    color: #fee2e2;
+    border-color: rgba(239, 68, 68, 0.4);
+    box-shadow: 0 4px 10px rgba(220, 38, 38, 0.25);
+}
+
+/* -------------------------------------------------------------------
+   2.4  Topbar — official-document feel
+   ------------------------------------------------------------------- */
+
+.topbar {
+    /* Tight, slightly stronger shadow with a hint of warmth so the
+       topbar looks like a paper sheet over the workspace. */
+    box-shadow:
+        0 1px 0 rgba(15, 36, 71, 0.04),
+        0 4px 12px -8px rgba(15, 36, 71, 0.10);
+}
+
+/* The 3px gradient strip already exists; promote it to navy → amber
+   so it matches the Republic accent on the sidebar. Subtle. */
+.topbar::before {
+    background: linear-gradient(90deg,
+        #0f2447 0%,
+        #1e4d8c 35%,
+        #d97706 70%,
+        #fbbf24 100%);
+    height: 3px;
+    z-index: 1;
+}
+
+/* Page title — Inter for legibility, slightly tighter tracking,
+   stronger weight — reads as the document section title. */
+.page-title {
+    font-family: var(--tha-font-ui);
+    font-weight: 700;
+    font-size: 1.32rem;
+    letter-spacing: -0.015em;
+    color: var(--tha-navy-800);
+    line-height: 1.2;
+}
+.page-subtitle {
+    font-size: 0.78rem;
+    color: var(--tha-color-text-muted);
+    letter-spacing: 0;
+    line-height: 1.4;
+}
+
+/* The 4px gradient bar before the page title — promote to navy gradient
+   so it matches the Republic accent. */
+.page-header-content::before {
+    background: linear-gradient(180deg,
+        #1e4d8c 0%,
+        #0f2447 50%,
+        #d97706 100%);
+}
+
+/* Mobile menu button — slightly more refined */
+.mobile-menu-btn {
+    transition: all var(--tha-duration) var(--tha-ease);
+}
+.mobile-menu-btn:hover {
+    background: var(--tha-navy-50);
+    color: var(--tha-navy-700);
+    box-shadow: var(--tha-shadow-xs);
+}
+
+/* -------------------------------------------------------------------
+   2.5  Date badge — official date stamp aesthetic
+   ------------------------------------------------------------------- */
+
+.date-badge {
+    background: linear-gradient(135deg,
+        var(--tha-blue-50) 0%,
+        #ffffff 100%);
+    border: 1px solid var(--tha-blue-200);
+    color: var(--tha-blue-800);
+    font-weight: 600;
+    font-size: 0.78rem;
+    letter-spacing: 0.005em;
+    padding: 0.42rem 0.85rem;
+    border-radius: var(--tha-radius);
+    box-shadow:
+        var(--tha-shadow-xs),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    font-variant-numeric: tabular-nums;
+    transition: all var(--tha-duration) var(--tha-ease);
+}
+.date-badge::before {
+    background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+    width: 7px;
+    height: 7px;
+}
+.date-badge:hover {
+    background: linear-gradient(135deg,
+        var(--tha-blue-100) 0%,
+        var(--tha-blue-50) 100%);
+    border-color: var(--tha-blue-300);
+    box-shadow: var(--tha-shadow-sm);
+    transform: translateY(-1px);
+}
+.date-badge svg {
+    color: var(--tha-blue-700);
+}
+
+.current-date {
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--tha-color-text-subtle);
+    letter-spacing: 0;
+    font-variant-numeric: tabular-nums;
+}
+
+/* -------------------------------------------------------------------
+   2.6  Subtle texture on body background — slightly more refined
+       than the existing dot grid, but layered on top so we don't
+       fight the existing rule. Phase 1 already loaded a body color
+       via tokens; here we just nudge the texture density.
+   ------------------------------------------------------------------- */
+@media (min-width: 1024px) {
+    body {
+        /* Inherit existing background from dashboard.css; do not redefine.
+           This breakpoint exists for future use. */
+    }
+}
+
+/* ===================================================================
+   PHASE 4 — Dashboard cards consolidation
+   ===================================================================
+   Refines the dashboard primitives from dashboard.css (welcome-banner,
+   stat-card, action-card, section-header, btn-primary, etc.) using
+   design-system tokens. NO markup changes. NO layout changes (no
+   grid-template-columns, padding-X, or flex direction shifts). Only
+   colors, typography, hover states, shadows, and transitions.
+
+   The cascade order (dashboard.css → tha-design-system.css) means
+   these rules win where specificity matches.
+   =================================================================== */
+
+/* -------------------------------------------------------------------
+   4.1  Welcome banner — Republic accent + display typography
+   ------------------------------------------------------------------- */
+
+.welcome-banner {
+    background:
+        linear-gradient(180deg,
+            rgba(251, 191, 36, 0.07) 0%,
+            rgba(251, 191, 36, 0) 35%),
+        linear-gradient(135deg,
+            #1a3a6b 0%,
+            #0f2447 100%);
+    box-shadow:
+        0 12px 28px -10px rgba(15, 36, 71, 0.45),
+        0 4px 8px -2px rgba(15, 36, 71, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    border-radius: 18px;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Amber Republic accent stripe at the top of the banner */
+.welcome-banner::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg,
+        var(--tha-amber-500) 0%,
+        var(--tha-amber-300) 50%,
+        var(--tha-amber-500) 100%);
+    z-index: 1;
+}
+
+.welcome-content h2 {
+    font-family: var(--tha-font-display);
+    font-size: 1.65rem;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    color: #ffffff;
+    line-height: 1.2;
+}
+
+.welcome-role {
+    font-family: var(--tha-font-ui);
+    font-size: 0.74rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #fde68a;
+    margin-top: 0.35rem;
+}
+
+.welcome-date {
+    font-family: var(--tha-font-ui);
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: rgba(253, 230, 138, 0.85);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.005em;
+}
+
+/* -------------------------------------------------------------------
+   4.2  Stat cards — always-on color stripe, refined typography
+   ------------------------------------------------------------------- */
+
+.stat-card {
+    border-radius: var(--tha-radius-lg);
+    border: 1px solid var(--tha-color-border);
+    box-shadow: var(--tha-shadow-sm);
+    transition:
+        transform var(--tha-duration) var(--tha-ease),
+        box-shadow var(--tha-duration) var(--tha-ease),
+        border-color var(--tha-duration) var(--tha-ease);
+}
+
+/* Top stripe — fully visible by default (was: appears on hover only).
+   Reads as a clear color identity at a glance. */
+.stat-card::before {
+    height: 4px;
+    opacity: 1;
+    background: var(--tha-blue-500);
+}
+
+.stat-card:hover {
+    box-shadow: var(--tha-shadow-md);
+    transform: translateY(-3px);
+    border-color: var(--tha-color-border-strong);
+}
+
+/* Color variants — promoted to design tokens. Each uses a gradient so
+   the stripe reads as a confident accent rather than a flat slab. */
+.stat-card.blue::before {
+    background: linear-gradient(90deg, var(--tha-blue-700) 0%, var(--tha-blue-500) 100%);
+}
+.stat-card.green::before {
+    background: linear-gradient(90deg, var(--tha-emerald-700) 0%, var(--tha-emerald-500) 100%);
+}
+.stat-card.amber::before {
+    background: linear-gradient(90deg, var(--tha-amber-700) 0%, var(--tha-amber-500) 100%);
+}
+.stat-card.purple::before {
+    background: linear-gradient(90deg, var(--tha-violet-700) 0%, var(--tha-violet-500) 100%);
+}
+
+/* Icon wrappers — refined gradient + subtle inner highlight */
+.stat-icon-wrapper {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    transition: transform var(--tha-duration) var(--tha-ease);
+}
+.stat-card:hover .stat-icon-wrapper {
+    transform: scale(1.05);
+}
+.stat-icon-wrapper.blue {
+    background: linear-gradient(135deg, var(--tha-blue-100) 0%, var(--tha-blue-200) 100%);
+    color: var(--tha-blue-800);
+}
+.stat-icon-wrapper.green {
+    background: linear-gradient(135deg, var(--tha-emerald-100) 0%, var(--tha-emerald-200) 100%);
+    color: var(--tha-emerald-800);
+}
+.stat-icon-wrapper.amber {
+    background: linear-gradient(135deg, var(--tha-amber-100) 0%, var(--tha-amber-200) 100%);
+    color: var(--tha-amber-800);
+}
+.stat-icon-wrapper.purple {
+    background: linear-gradient(135deg, var(--tha-violet-100) 0%, var(--tha-violet-200) 100%);
+    color: var(--tha-violet-800);
+}
+
+/* Big number — display font, tabular numerals (so 1,000 vs 999 align) */
+.stat-value {
+    font-family: var(--tha-font-display);
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--tha-navy-800);
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+}
+
+.stat-label {
+    font-family: var(--tha-font-ui);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--tha-navy-500);
+    margin-top: 0.35rem;
+}
+
+/* Stat trend pill — keep semantics, refine palette */
+.stat-trend.up {
+    background: var(--tha-emerald-50);
+    color: var(--tha-emerald-700);
+    border: 1px solid var(--tha-emerald-200);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+.stat-trend.down {
+    background: var(--tha-color-danger-bg);
+    color: var(--tha-color-danger);
+    border: 1px solid #fecaca;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
+/* -------------------------------------------------------------------
+   4.3  Section headers — government document feel
+   ------------------------------------------------------------------- */
+
+.section-title {
+    font-family: var(--tha-font-display);
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--tha-navy-800);
+    letter-spacing: -0.005em;
+}
+
+.section-link {
+    font-family: var(--tha-font-ui);
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--tha-blue-700);
+    text-transform: uppercase;
+}
+.section-link:hover {
+    color: var(--tha-blue-900);
+}
+
+/* -------------------------------------------------------------------
+   4.4  Action cards (Quick actions) — refined hover with module accent
+   ------------------------------------------------------------------- */
+
+.action-card {
+    border-radius: var(--tha-radius-lg);
+    border: 1.5px solid var(--tha-color-border);
+    box-shadow: var(--tha-shadow-sm);
+    transition:
+        transform var(--tha-duration) var(--tha-ease),
+        box-shadow var(--tha-duration) var(--tha-ease),
+        border-color var(--tha-duration) var(--tha-ease);
+}
+.action-card:hover {
+    border-color: var(--tha-blue-500);
+    box-shadow:
+        var(--tha-shadow-md),
+        0 0 0 4px rgba(37, 99, 235, 0.06);
+    transform: translateY(-3px);
+}
+
+.action-icon-wrapper {
+    background: linear-gradient(135deg, var(--tha-navy-50) 0%, var(--tha-navy-100) 100%);
+    color: var(--tha-navy-700);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    transition: all var(--tha-duration) var(--tha-ease);
+}
+.action-card:hover .action-icon-wrapper {
+    background: linear-gradient(135deg, var(--tha-blue-100) 0%, var(--tha-blue-200) 100%);
+    color: var(--tha-blue-700);
+    transform: scale(1.05);
+}
+
+.action-text h4 {
+    font-family: var(--tha-font-ui);
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--tha-navy-800);
+    letter-spacing: -0.005em;
+}
+.action-text p {
+    font-family: var(--tha-font-ui);
+    font-size: 0.74rem;
+    color: var(--tha-color-text-subtle);
+    line-height: 1.4;
+}
+
+/* -------------------------------------------------------------------
+   4.5  Generic .card — consistent surface for ad-hoc panels
+   ------------------------------------------------------------------- */
+
+.card {
+    border-radius: var(--tha-radius-lg);
+    border: 1px solid var(--tha-color-border);
+    box-shadow: var(--tha-shadow-sm);
+}
+.card-title {
+    font-family: var(--tha-font-display);
+    font-weight: 700;
+    color: var(--tha-navy-800);
+    letter-spacing: -0.005em;
+}
+.card-footer {
+    background: var(--tha-color-surface-muted);
+}
+
+/* -------------------------------------------------------------------
+   4.6  Table card / Formal table — subtle refinements
+       (only color / typography; the table layout itself is sacred)
+   ------------------------------------------------------------------- */
+
+.table-card,
+.formal-table-card {
+    border-radius: var(--tha-radius-lg);
+    border: 1px solid var(--tha-color-border);
+    box-shadow: var(--tha-shadow-sm);
+}
+
+.table-title,
+.formal-table-card__title {
+    font-family: var(--tha-font-display);
+    color: var(--tha-navy-800);
+    letter-spacing: -0.005em;
+}
+
+.formal-table-card__subtitle {
+    color: var(--tha-color-text-subtle);
+}
+
+/* The 3px top stripe on formal tables — promote to navy → amber so
+   it ties to the Republic accent on sidebar/topbar. */
+.formal-table-card::before {
+    background: linear-gradient(90deg,
+        var(--tha-navy-800) 0%,
+        var(--tha-blue-700) 35%,
+        var(--tha-amber-600) 70%,
+        var(--tha-amber-400) 100%);
+}
+
+/* Data table headers — refined */
+.data-table th {
+    font-family: var(--tha-font-ui);
+    color: var(--tha-navy-500);
+    background: var(--tha-color-surface-muted);
+}
+
+/* Hover row highlight — softer, on-brand */
+.data-table tbody tr:hover {
+    background: var(--tha-blue-50);
+}
+
+/* -------------------------------------------------------------------
+   4.7  Buttons — gradient navy primary, refined secondary
+       Only applies to .btn / .btn-primary / .btn-secondary defined in
+       dashboard.css. Page-specific .btn-primary-add etc. are NOT
+       affected (they have their own styles).
+   ------------------------------------------------------------------- */
+
+.btn {
+    font-family: var(--tha-font-ui);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    transition: all var(--tha-duration) var(--tha-ease);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg,
+        var(--tha-blue-700) 0%,
+        var(--tha-blue-800) 100%);
+    box-shadow:
+        var(--tha-shadow-xs),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+.btn-primary:hover {
+    background: linear-gradient(135deg,
+        var(--tha-blue-800) 0%,
+        var(--tha-blue-900) 100%);
+    box-shadow:
+        var(--tha-shadow-md),
+        inset 0 1px 0 rgba(255, 255, 255, 0.16);
+    transform: translateY(-1px);
+}
+
+.btn-secondary {
+    border: 1px solid var(--tha-color-border-strong);
+    color: var(--tha-navy-700);
+    background: #ffffff;
+}
+.btn-secondary:hover {
+    background: var(--tha-color-surface-muted);
+    border-color: var(--tha-navy-300);
+    color: var(--tha-navy-800);
+    box-shadow: var(--tha-shadow-xs);
+}
+
+.btn-success {
+    background: linear-gradient(135deg,
+        var(--tha-emerald-600) 0%,
+        var(--tha-emerald-700) 100%);
+    box-shadow:
+        var(--tha-shadow-xs),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+.btn-success:hover {
+    background: linear-gradient(135deg,
+        var(--tha-emerald-700) 0%,
+        var(--tha-emerald-800) 100%);
+    box-shadow:
+        var(--tha-shadow-md),
+        inset 0 1px 0 rgba(255, 255, 255, 0.16);
+    transform: translateY(-1px);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
+    box-shadow:
+        var(--tha-shadow-xs),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+.btn-danger:hover {
+    background: linear-gradient(135deg, #991b1b 0%, #7f1d1d 100%);
+    box-shadow: var(--tha-shadow-md);
+    transform: translateY(-1px);
+}
+
+/* -------------------------------------------------------------------
+   4.8  Status badges — refined to design system palette
+   ------------------------------------------------------------------- */
+
+.status-badge {
+    font-family: var(--tha-font-ui);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-size: 0.62rem;
+    border: 1px solid transparent;
+}
+.status-badge.pending {
+    background: var(--tha-amber-50);
+    color: var(--tha-amber-700);
+    border-color: var(--tha-amber-200);
+}
+.status-badge.approved {
+    background: var(--tha-emerald-50);
+    color: var(--tha-emerald-700);
+    border-color: var(--tha-emerald-200);
+}
+.status-badge.rejected {
+    background: var(--tha-color-danger-bg);
+    color: var(--tha-color-danger);
+    border-color: #fecaca;
+}
+.status-badge.processing {
+    background: var(--tha-blue-50);
+    color: var(--tha-blue-700);
+    border-color: var(--tha-blue-200);
+}
+
+/* -------------------------------------------------------------------
+   4.9  Alerts — promoted to design system colors
+       (already styled in dashboard.css; just refine border/typography)
+   ------------------------------------------------------------------- */
+
+.content-area .alert {
+    font-family: var(--tha-font-ui);
+    font-weight: 500;
+    border-width: 1px;
+    border-radius: var(--tha-radius);
+    box-shadow: var(--tha-shadow-xs);
+}
+.content-area .alert-success {
+    background: var(--tha-emerald-50);
+    color: var(--tha-emerald-800);
+    border-color: var(--tha-emerald-200);
+}
+.content-area .alert-info {
+    background: var(--tha-blue-50);
+    color: var(--tha-blue-800);
+    border-color: var(--tha-blue-200);
+}
+.content-area .alert-warning {
+    background: var(--tha-amber-50);
+    color: var(--tha-amber-800);
+    border-color: var(--tha-amber-200);
+}
+.content-area .alert-error {
+    background: var(--tha-color-danger-bg);
+    color: var(--tha-color-danger);
+    border-color: #fecaca;
+}
