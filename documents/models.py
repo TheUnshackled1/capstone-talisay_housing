@@ -36,6 +36,7 @@ class Document(models.Model):
         ('lot_award', 'Lot Award Document'),
         ('electricity_app', 'Electricity Connection Application'),
         ('cdrrmo_cert', 'CDRRMO Certification'),
+        ('incident_report', 'Incident report'),
         ('explanation_letter', 'Explanation Letter'),
         
         # Other

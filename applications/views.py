@@ -567,7 +567,7 @@ def _module2_eligibility_snapshot(applicant, checked_by=None):
             )
         elif field_evidence_required and field_evidence_status == 'missing':
             readiness_hint = (
-                'Compliance: attach at least one Ronda / field verification photo on the CDRRMO record.'
+                'Compliance: attach at least one on-site verification photo on the CDRRMO record (Field Verification Desk).'
             )
         elif has_failed_checks:
             labels = [ELIGIBILITY_CHECK_LABELS.get(k, k.replace('_', ' ')) for k in failed_check_keys]
@@ -1933,7 +1933,9 @@ def _situation_certification_gate(applicant):
     """
     Required uploads/evidence before Module 2 staff finish the situation step.
     Option D: informational only — no situation-specific vault uploads; staff uses Continue.
-    Option A: CDRRMO certification document + at least one Ronda/field verification photo.
+    Option A: (1) vault “CDRRMO Certification”; (2) vault “Incident report” (written report,
+    scan/upload by intake staff); (3) “Site photographs” on the CDRRMO field record from the
+    Field verification desk — complementary evidence (photos are not stored as vault Document rows).
     Options B/C: at least one ISF situational supporting document with labels keyed to situation.
     """
     dr = (applicant.displacement_reason or '').strip()
@@ -1969,24 +1971,43 @@ def _situation_certification_gate(applicant):
     if dr == 'danger_zone':
         base['requires_documents'] = True
         has_cdrrmo_doc = applicant.documents.filter(document_type='cdrrmo_cert').exists()
-        photo_count = 0
+        has_incident_report = applicant.documents.filter(document_type='incident_report').exists()
+        field_photo_count = 0
         try:
-            photo_count = applicant.cdrrmo_certification.field_photos.count()
+            field_photo_count = applicant.cdrrmo_certification.field_photos.count()
         except CDRRMOCertification.DoesNotExist:
-            photo_count = 0
+            field_photo_count = 0
         checks = [
             {
                 'key': 'cdrrmo_cert_document',
                 'label': 'CDRRMO certification (uploaded or scanned)',
-                'detail': 'File applicant vault entry with document type “CDRRMO Certification”.',
+                'detail': (
+                    'Separate vault slot: upload or scan as document type “CDRRMO Certification” '
+                    '(not the incident report).'
+                ),
                 'done': bool(has_cdrrmo_doc),
                 'vault_document_type': 'cdrrmo_cert',
             },
             {
-                'key': 'ronda_field_photos',
-                'label': 'Ronda / field photo documentation',
-                'detail': 'At least one on-site verification photo attached to this applicant’s CDRRMO record.',
-                'done': photo_count >= 1,
+                'key': 'incident_report_vault',
+                'label': 'Incident report',
+                'detail': (
+                    'Vault document type “Incident report” — formal written / scanned incident report. '
+                    'On-site images are attached separately via Field verification desk (next row).'
+                ),
+                'done': bool(has_incident_report),
+                'vault_document_type': 'incident_report',
+            },
+            {
+                'key': 'field_site_photos',
+                'label': 'Site photographs (field verification)',
+                'detail': (
+                    f'{field_photo_count} photo(s) on the applicant’s CDRRMO field record. '
+                    'Field inspectors attach images under Site photographs (supporting evidence) when submitting '
+                    'field certification (Dashboard → Field verification desk — post-Module 2 handoff). '
+                    'These are not the same files as vault type “Incident report”.'
+                ),
+                'done': field_photo_count >= 1,
             },
         ]
         base['checks'] = checks
@@ -2338,9 +2359,20 @@ def eligibility_snapshot(request, position):
                         'url': doc_url,
                         'name': (doc.file_name or doc.title or doc.get_document_type_display() or '').strip(),
                     }
-        if _cert_row.get('key') == 'ronda_field_photos':
-            _cert_row['field_portal_url'] = reverse('accounts:dashboard_field')
-
+    for _cert_row in situation_cert_gate.get('checks') or []:
+        if (_cert_row.get('key') or '').strip() == 'field_site_photos':
+            photo_urls = []
+            try:
+                cert = applicant.cdrrmo_certification
+                for ph in cert.field_photos.all():
+                    if ph.image:
+                        try:
+                            photo_urls.append(request.build_absolute_uri(ph.image.url))
+                        except (ValueError, AttributeError):
+                            pass
+            except CDRRMOCertification.DoesNotExist:
+                pass
+            _cert_row['field_photo_urls'] = photo_urls
     return JsonResponse({
         'success': True,
         'applicant_id': str(applicant.id),
@@ -2462,53 +2494,6 @@ def save_eligibility_check_decision(request, position):
         response_payload['sms_detail'] = sms_detail
         response_payload['sms_requested'] = notify_flag
     return JsonResponse(response_payload)
-
-
-@login_required
-@verify_position
-@require_POST
-def notify_ronda_for_situation(request, position):
-    allowed_positions = ['fourth_member', 'second_member', 'oic']
-    if request.user.position not in allowed_positions:
-        return JsonResponse({'success': False, 'error': 'Permission denied.'}, status=403)
-
-    applicant_id = request.POST.get('applicant_id')
-    if not applicant_id:
-        return JsonResponse({'success': False, 'error': 'Missing applicant_id.'}, status=400)
-
-    applicant = get_object_or_404(Applicant, id=applicant_id)
-    handoff_error = _require_intake_archive(applicant)
-    if handoff_error:
-        return handoff_error
-
-    displacement_reason = (applicant.displacement_reason or '').strip()
-    if displacement_reason != 'danger_zone':
-        return JsonResponse({'success': False, 'error': 'Notify Ronda is only available for Option A (danger zone).'}, status=400)
-
-    cert = getattr(applicant, 'cdrrmo_certification', None)
-    if cert is None:
-        cert = CDRRMOCertification.objects.create(
-            applicant=applicant,
-            requested_by=request.user,
-            status='pending',
-            declared_location=(applicant.danger_zone_location or applicant.danger_zone_type or '').strip() or 'Declared hazard area',
-            disposition_source='pending',
-        )
-    elif cert.status != 'pending':
-        cert.status = 'pending'
-        cert.disposition_source = 'pending'
-        cert.result_recorded_by = None
-        cert.certified_at = None
-        cert.certification_notes = ''
-        cert.office_intake_notes = ''
-        cert.save(update_fields=['status', 'disposition_source', 'result_recorded_by', 'certified_at', 'certification_notes', 'office_intake_notes'])
-
-    applicant.status = 'pending_cdrrmo'
-    applicant.save(update_fields=['status', 'updated_at'])
-    return JsonResponse({
-        'success': True,
-        'message': 'Ronda has been notified. Applicant is now pending CDRRMO field verification.',
-    })
 
 
 @login_required

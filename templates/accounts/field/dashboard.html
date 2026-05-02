@@ -1482,6 +1482,9 @@
                             ? '\n\nA status SMS was queued for the applicant’s contact number (check SMSLog / server output if using console mode).'
                             : '\n\nNo SMS was queued (missing or invalid mobile number, or gateway error).';
                     }
+                    try {
+                        localStorage.setItem('tha_field_cert_sync', String(Date.now()));
+                    } catch (ignoreLs) { /* private mode / quota */ }
                     alert(data.message + photoMsg + smsMsg + '\n\nThe field certification has been recorded and is now available in Module 2 (Application & Eligibility) for staff review.');
                     closeVerificationModal();
                     setTimeout(() => location.reload(), 1000);

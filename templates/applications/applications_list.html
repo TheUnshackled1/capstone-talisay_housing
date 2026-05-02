@@ -2063,6 +2063,45 @@
         visibility: visible;
     }
 
+    .m2-field-photo-gallery-overlay {
+        z-index: 1100;
+    }
+
+    .m2-field-photo-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+        gap: 0.85rem;
+        align-items: start;
+    }
+
+    .m2-field-photo-item {
+        margin: 0;
+        text-align: center;
+    }
+
+    .m2-field-photo-item a {
+        display: block;
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1px solid #e2e8f0;
+        background: #f8fafc;
+    }
+
+    .m2-field-photo-item img {
+        width: 100%;
+        height: auto;
+        vertical-align: middle;
+        display: block;
+        max-height: 280px;
+        object-fit: contain;
+    }
+
+    .m2-field-photo-item figcaption {
+        margin-top: 0.35rem;
+        font-size: 0.75rem;
+        color: #64748b;
+    }
+
     .modal-content {
         background: white;
         border-radius: 16px;
@@ -3718,9 +3757,23 @@
         </div>
         <div class="eligibility-next-footer">
             <button type="button" class="eligibility-next-back" onclick="backToEligibilityChecklistModal()">Back</button>
-            <button type="button" class="eligibility-next-close" id="notifyRondaBtn" onclick="notifyRondaFromSituationModal()">Notify Ronda</button>
             <button type="button" class="eligibility-next-close" id="markSituationCertifiedBtn" onclick="markSituationCertifiedFromModal()">Mark Situation Certified</button>
             <button type="button" class="eligibility-next-close" onclick="closeSituationCertificationModal()">Close</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay m2-field-photo-gallery-overlay" id="m2FieldPhotoGalleryModal" onclick="m2CloseSituationFieldPhotoGallery(event)" aria-hidden="true">
+    <div class="eligibility-next-modal m2-field-photo-gallery-panel" style="max-width: min(52rem, 96vw); max-height: 92vh;" onclick="event.stopPropagation()">
+        <div class="eligibility-next-header">
+            <h3 class="eligibility-next-title" id="m2FieldPhotoGalleryTitle">Site photographs</h3>
+            <p class="eligibility-next-subtitle" id="m2FieldPhotoGallerySubtitle">Field verification — supporting evidence</p>
+        </div>
+        <div class="eligibility-next-body" style="overflow:auto;max-height:70vh;">
+            <div class="m2-field-photo-grid" id="m2FieldPhotoGalleryGrid"></div>
+        </div>
+        <div class="eligibility-next-footer">
+            <button type="button" class="eligibility-next-close" id="m2FieldPhotoGalleryCloseBtn" onclick="m2CloseSituationFieldPhotoGallery()">Close</button>
         </div>
     </div>
 </div>
@@ -3782,6 +3835,7 @@
     };
     const M2_VAULT_DOCUMENT_TYPE_TO_INTAKE_DOC = {
         cdrrmo_cert: { doc_key: 'doc_cdrrmo', doc_code: 'CDRRMO' },
+        incident_report: { doc_key: 'doc_incident_report', doc_code: 'INCRPT' },
         isf_situational_docs: { doc_key: 'doc_isf_situational', doc_code: 'ISF-SIT' },
     };
 
@@ -4065,6 +4119,58 @@
         const s = text == null ? '' : String(text);
         const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
         return s.replace(/[&<>"']/g, (m) => map[m]);
+    }
+
+    function m2EscapeAttrJson(jsonStr) {
+        return String(jsonStr).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+    }
+
+    function m2OpenSituationFieldPhotoGalleryFromBtn(btn) {
+        const raw = btn && btn.getAttribute('data-m2-field-photos');
+        if (!raw) return;
+        let urls;
+        try {
+            urls = JSON.parse(raw);
+        } catch (e1) {
+            return;
+        }
+        if (!Array.isArray(urls) || !urls.length) return;
+        m2OpenSituationFieldPhotoGallery(urls);
+    }
+
+    function m2OpenSituationFieldPhotoGallery(urls) {
+        const overlay = document.getElementById('m2FieldPhotoGalleryModal');
+        const grid = document.getElementById('m2FieldPhotoGalleryGrid');
+        const titleEl = document.getElementById('m2FieldPhotoGalleryTitle');
+        const subEl = document.getElementById('m2FieldPhotoGallerySubtitle');
+        if (!overlay || !grid) return;
+        const n = urls.length;
+        if (titleEl) titleEl.textContent = n === 1 ? 'Site photograph' : 'Site photographs';
+        if (subEl) subEl.textContent = n === 1 ? '1 image on file' : `${n} images on file`;
+        grid.innerHTML = urls.map(function (u, i) {
+            const safe = escapeHtml(u);
+            const num = i + 1;
+            return (
+                '<figure class="m2-field-photo-item">'
+                + '<a href="' + safe + '" target="_blank" rel="noopener noreferrer" title="Open full size in a new tab">'
+                + '<img src="' + safe + '" alt="Site photograph ' + num + ' of ' + n + '" loading="lazy" />'
+                + '</a>'
+                + '<figcaption>Photo ' + num + ' of ' + n + '</figcaption>'
+                + '</figure>'
+            );
+        }).join('');
+        overlay.classList.add('active');
+        overlay.setAttribute('aria-hidden', 'false');
+    }
+
+    function m2CloseSituationFieldPhotoGallery(event) {
+        if (event && event.target && event.target.id !== 'm2FieldPhotoGalleryModal') return;
+        const overlay = document.getElementById('m2FieldPhotoGalleryModal');
+        if (!overlay) return;
+        overlay.classList.remove('active');
+        overlay.setAttribute('aria-hidden', 'true');
+        const grid = document.getElementById('m2FieldPhotoGalleryGrid');
+        if (grid) grid.innerHTML = '';
     }
 
     function formatM2EvidenceHtml(lines) {
@@ -4588,12 +4694,16 @@
         if (modal) modal.classList.add('active');
     }
 
-    async function openSituationCertificationModal() {
+    async function openSituationCertificationModal(opts) {
+        opts = opts || {};
+        const skipFetch = !!opts.skipFetch;
         if (!currentEligibilityApplicantId) {
             showFlowAlert('Load the eligibility checklist first before proceeding.');
             return;
         }
-        await fetchEligibilitySnapshot(currentEligibilityApplicantId);
+        if (!skipFetch) {
+            await fetchEligibilitySnapshot(currentEligibilityApplicantId);
+        }
         const snap = lastEligibilitySnapshot;
         if (!snap) {
             showFlowAlert('Unable to load eligibility data for situation certification.');
@@ -4609,8 +4719,6 @@
         const title = situation.title || 'Applicant Situation is not yet declared';
         const desc = situation.description || 'No situation details are available.';
         if (subtitle) subtitle.textContent = `${option} · ${title}`;
-        const notifyBtn = document.getElementById('notifyRondaBtn');
-        if (notifyBtn) notifyBtn.style.display = code === 'danger_zone' ? 'inline-flex' : 'none';
         const walkInInformational = !!sc.walk_in_informational;
         const checks = Array.isArray(sc.checks) ? sc.checks : [];
 
@@ -4655,7 +4763,12 @@
                         : (vaultUploadUrl
                             ? `<a class="m2-elig-upload-btn m2-sit-action-upload" href="${safeVaultUploadHref}" target="_blank" rel="noopener noreferrer" title="Open Document Vault — upload a file">Upload</a>`
                             : '');
-                    const fieldUrl = typeof c.field_portal_url === 'string' ? c.field_portal_url.trim() : '';
+                    const isFieldSitePhotosRow = String(c.key || '').trim() === 'field_site_photos';
+                    const fieldPhotoUrls = Array.isArray(c.field_photo_urls) ? c.field_photo_urls.filter(function (u) { return u && String(u).trim(); }) : [];
+                    const fieldPhotosAttr = fieldPhotoUrls.length ? m2EscapeAttrJson(JSON.stringify(fieldPhotoUrls)) : '';
+                    const viewFieldPhotosHtml = (isFieldSitePhotosRow && fieldPhotoUrls.length && fieldPhotosAttr)
+                        ? `<button type="button" class="eligibility-view-doc-btn m2-sit-action-view-photos" data-m2-field-photos="${fieldPhotosAttr}" onclick="m2OpenSituationFieldPhotoGalleryFromBtn(this)" title="View all ${fieldPhotoUrls.length} photograph(s) in a gallery">View photos</button>`
+                        : '';
                     const evidenceHtml = formatM2EvidenceHtml(splitSituationDetailForEvidence(c.detail));
                     let cardClass = 'm2-elig-card';
                     if (ok) cardClass += ' m2-elig-card--pass';
@@ -4663,10 +4776,15 @@
                     const chipClass = ok ? 'passed' : 'failed';
                     const chipLabel = ok ? 'Done' : 'Missing';
                     const reasonLine = situationCertReasonForCheck(checks, sc, idx, ok, suppressReasonDup);
-                    const fieldPortalHref = (c.key === 'ronda_field_photos' && fieldUrl && !ok) ? fieldUrl.replace(/"/g, '&quot;') : '';
                     const markPassedTitle = ok
                         ? 'Requirement satisfied on record. When every row shows Done, click Mark Situation Certified below.'
-                        : 'Upload or scan required documents in the vault (or Field Portal for photos) until this row shows Done.';
+                        : 'Upload or scan the required document in the vault until this row shows Done.';
+                    const markPassedButtonsHtml = isFieldSitePhotosRow
+                        ? ''
+                        : (ok
+                            ? `<button type="button" class="eligibility-decision-btn m2-sit-mark-passed active-pass" title="${escapeHtml(markPassedTitle)}"
+                             onclick="showFlowAlert('This requirement is satisfied on record. When every row shows Done, click Mark Situation Certified below.', 'Situation Certification', null, 'success')">Mark Passed</button>`
+                            : `<button type="button" class="eligibility-decision-btn m2-sit-mark-passed" disabled title="${escapeHtml(markPassedTitle)}">Mark Passed</button>`);
                     const actionsRow = `
                         <div class="m2-elig-actions m2-sit-actions">
                             ${docUrl
@@ -4675,15 +4793,8 @@
                             }
                             ${sitUploadHtml}
                             ${sitScanControlHtml}
-                            ${fieldPortalHref
-                        ? `<a class="eligibility-view-doc-btn m2-sit-action-field" href="${fieldPortalHref}" target="_blank" rel="noopener noreferrer" title="Field / Ronda portal — attach verification photos">Field Portal</a>`
-                        : ''
-                            }
-                            ${ok
-                        ? `<button type="button" class="eligibility-decision-btn m2-sit-mark-passed active-pass" title="${escapeHtml(markPassedTitle)}"
-                             onclick="showFlowAlert('This requirement is satisfied on record. When every row shows Done, click Mark Situation Certified below.', 'Situation Certification', null, 'success')">Mark Passed</button>`
-                        : `<button type="button" class="eligibility-decision-btn m2-sit-mark-passed" disabled title="${escapeHtml(markPassedTitle)}">Mark Passed</button>`
-                            }
+                            ${viewFieldPhotosHtml}
+                            ${markPassedButtonsHtml}
                         </div>`;
                     return `
                         <div class="${cardClass}">
@@ -4724,27 +4835,41 @@
         if (modal) modal.classList.add('active');
     }
 
-    async function notifyRondaFromSituationModal() {
-        if (!currentEligibilityApplicantId) return;
-        const formData = new FormData();
-        formData.append('applicant_id', currentEligibilityApplicantId);
-        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
-        try {
-            const response = await fetch('{% url "applications:notify_ronda_for_situation" request.user.position %}', {
-                method: 'POST',
-                body: formData,
-            });
-            const data = await response.json();
-            if (!data.success) throw new Error(data.error || 'Unable to notify Ronda.');
-            showFlowAlert(data.message || 'Ronda notification recorded.', 'Situation Certification', null, 'success');
-            await fetchEligibilitySnapshot(currentEligibilityApplicantId);
-            if (lastEligibilitySnapshot && lastEligibilitySnapshot.overall) {
-                updateApplicantRowEligibilityStatus(currentEligibilityApplicantId, lastEligibilitySnapshot.overall);
-            }
-        } catch (error) {
-            showFlowAlert(error.message || 'Unable to notify Ronda.');
+    /** Cross-tab + focus sync: field desk submits photos → Module 2 situation modal refreshes without manual reload. */
+    const M2_FIELD_CERT_SYNC_KEY = 'tha_field_cert_sync';
+    let m2EligibilitySyncTimer = null;
+    function scheduleM2EligibilityOpenViewsRefresh() {
+        if (m2EligibilitySyncTimer) clearTimeout(m2EligibilitySyncTimer);
+        m2EligibilitySyncTimer = setTimeout(function () {
+            m2EligibilitySyncTimer = null;
+            refreshM2EligibilityOpenViews();
+        }, 250);
+    }
+    async function refreshM2EligibilityOpenViews() {
+        const id = currentEligibilityApplicantId;
+        if (!id) return;
+        const sit = document.getElementById('situationCertificationModal');
+        const elig = document.getElementById('eligibilityNextModal');
+        const sitOpen = sit && sit.classList.contains('active');
+        const eligOpen = elig && elig.classList.contains('active');
+        if (!sitOpen && !eligOpen) return;
+        const data = await fetchEligibilitySnapshot(id);
+        if (!data) return;
+        if (sitOpen) {
+            await openSituationCertificationModal({ skipFetch: true });
         }
     }
+    window.addEventListener('storage', function (e) {
+        if (e.key !== M2_FIELD_CERT_SYNC_KEY || e.newValue == null) return;
+        scheduleM2EligibilityOpenViewsRefresh();
+    });
+    document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState !== 'visible') return;
+        scheduleM2EligibilityOpenViewsRefresh();
+    });
+    window.addEventListener('pageshow', function (ev) {
+        if (ev.persisted) scheduleM2EligibilityOpenViewsRefresh();
+    });
 
     async function markSituationCertifiedFromModal() {
         if (!currentEligibilityApplicantId) return;

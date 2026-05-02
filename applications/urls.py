@@ -14,7 +14,6 @@ urlpatterns = [
     path('staff/<str:position>/evaluate-precheck/', views.evaluate_precheck, name='evaluate_precheck'),
     path('staff/<str:position>/eligibility-snapshot/', views.eligibility_snapshot, name='eligibility_snapshot'),
     path('staff/<str:position>/save-eligibility-check-decision/', views.save_eligibility_check_decision, name='save_eligibility_check_decision'),
-    path('staff/<str:position>/notify-ronda/', views.notify_ronda_for_situation, name='notify_ronda_for_situation'),
     path('staff/<str:position>/mark-situation-certified/', views.mark_situation_certified, name='mark_situation_certified'),
     path('staff/<str:position>/proceed-to-form-queue/', views.proceed_to_form_queue, name='proceed_to_form_queue'),
 

@@ -618,6 +618,7 @@ def upload_scanned_requirement(request, position):
         'doc_isf_situational': 'isf_situational_docs',
         'doc_voter_cert': 'voter_certification',
         'doc_cdrrmo': 'cdrrmo_cert',
+        'doc_incident_report': 'incident_report',
     }
 
     if not applicant_id or doc_key not in key_to_document_type:
