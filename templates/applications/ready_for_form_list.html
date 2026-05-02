@@ -49,7 +49,7 @@
                     <th>#</th>
                     <th>Applicant</th>
                     <th>Reference #</th>
-                    <th>Proceeded time</th>
+                    <th>Routed Date &amp; Time</th>
                     <th>Situation</th>
                     <th style="text-align:center;">Actions</th>
                 </tr>
@@ -63,7 +63,14 @@
                         <div class="rfq-muted">APP-{{ data.applicant.id }}</div>
                     </td>
                     <td><span class="rfq-muted">{{ data.applicant.reference_number }}</span></td>
-                    <td>{{ data.applicant.module2_handoff_at|default:data.applicant.created_at|date:"n/j/Y, P" }}</td>
+                    <td style="font-size:0.72rem;color:#475569;line-height:1.45;">
+                        {% if data.form_queue_routed_at %}
+                        Routed {{ data.form_queue_routed_at|date:"n/j/Y, P" }}
+                        {% if data.form_queue_routed_by %}by {{ data.form_queue_routed_by.get_full_name }}{% endif %}
+                        {% else %}
+                        <span class="rfq-muted">—</span>
+                        {% endif %}
+                    </td>
                     <td style="font-size:0.72rem;color:#475569;">
                         {{ data.applicant.get_displacement_reason_display }}
                     </td>
@@ -72,12 +79,6 @@
                         <span class="rfq-chip followup">Needs follow-up</span>
                         {% else %}
                         <span class="rfq-chip">Ready + verified</span>
-                        {% endif %}
-                        {% if data.form_queue_routed_at %}
-                        <div style="margin-top:0.35rem;font-size:0.66rem;color:#475569;">
-                            Routed {{ data.form_queue_routed_at|date:"n/j/Y, P" }}
-                            {% if data.form_queue_routed_by %}by {{ data.form_queue_routed_by.get_full_name }}{% endif %}
-                        </div>
                         {% endif %}
                         <div style="margin-top:0.45rem;">
                             {% if 'generate_form' in data.user_actions %}

@@ -159,15 +159,18 @@
     }
 
     .documents-table th {
-        padding: 0.75rem 0.75rem;
+        padding: 0.6rem 0.55rem;
         text-align: left;
-        font-size: 0.625rem;
+        font-size: 0.58rem;
         font-weight: 700;
         color: #475569;
         text-transform: uppercase;
-        letter-spacing: 0.05em;
+        letter-spacing: 0.04em;
         border-right: 1px solid #e2e8f0;
-        white-space: nowrap;
+        white-space: normal;
+        word-break: normal;
+        line-height: 1.25;
+        vertical-align: bottom;
         position: relative;
     }
 
@@ -234,36 +237,60 @@
     }
 
     .documents-table .col-applicant {
-        width: 18%;
+        width: 15%;
     }
 
     .documents-table .col-reference {
-        width: 14%;
+        width: 11%;
     }
 
     .documents-table .col-transaction {
-        width: 16%;
+        width: 13%;
         font-family: ui-monospace, monospace;
+        font-size: 0.62rem;
     }
 
     .documents-table .col-requirements {
-        width: 12%;
+        width: 10%;
         text-align: center;
     }
 
     .documents-table .col-ronda {
-        width: 10%;
+        width: 8%;
         text-align: center;
     }
 
     .documents-table .col-cdrrmo {
-        width: 12%;
+        width: 9%;
         text-align: center;
     }
 
     .documents-table .col-documents {
-        width: 10%;
+        width: 8%;
         text-align: center;
+    }
+
+    .documents-table .col-actions {
+        width: 23%;
+        overflow: visible;
+        text-align: left;
+    }
+    .documents-table td.col-actions {
+        white-space: normal;
+        overflow: visible;
+    }
+    .documents-table td.col-actions > div {
+        overflow: visible;
+        word-break: normal;
+    }
+
+    /* Horizontal scroll fallback when viewport is too narrow to fit
+       all 9 columns at their fixed widths. */
+    .documents-table-container {
+        overflow-x: auto;
+    }
+    .documents-table {
+        min-width: 1100px;
     }
 
     /* ===================================================================
@@ -365,10 +392,11 @@
                     <th class="col-applicant">Applicant</th>
                     <th class="col-reference">Reference #</th>
                     <th class="col-transaction">Transaction #</th>
-                    <th class="col-requirements">Applicant Requirements</th>
-                    <th class="col-ronda">Ronda Evidence</th>
-                    <th class="col-cdrrmo">Certificate</th>
-                    <th class="col-documents">Documents</th>
+                    <th class="col-requirements" title="Applicant requirements scanned (7-step intake checklist)">Requirements</th>
+                    <th class="col-ronda" title="Ronda field-verification evidence">Ronda</th>
+                    <th class="col-cdrrmo" title="CDRRMO / situational certificate">Certificate</th>
+                    <th class="col-documents" title="Total documents on file">Docs</th>
+                    <th class="col-actions">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -401,10 +429,38 @@
                     <td class="col-documents">
                         <span style="display: inline-block; padding: 0.35rem 0.65rem; background: #eff6ff; color: #1e40af; border-radius: 4px; font-weight: 600; font-size: 0.75rem;">{{ applicant_group.list|length }}</span>
                     </td>
+                    <td class="col-actions" style="vertical-align: top; padding-top: 0.6rem;">
+                        <!-- Stacked: status pill → audit line → action button -->
+                        <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.32rem; min-width: 8rem;">
+                            {% if applicant_group.list|length >= 7 %}
+                            <span style="display:inline-flex;align-items:center;gap:0.18rem;padding:0.14rem 0.42rem;background:#dcfce7;color:#166534;border:1px solid #86efac;border-radius:9999px;font-size:0.5625rem;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;">Complete</span>
+                            {% elif applicant_group.list|length > 0 %}
+                            <span style="display:inline-flex;align-items:center;gap:0.18rem;padding:0.14rem 0.42rem;background:#fef3c7;color:#92400e;border:1px solid #fde68a;border-radius:9999px;font-size:0.5625rem;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;">Partial</span>
+                            {% else %}
+                            <span style="display:inline-flex;align-items:center;gap:0.18rem;padding:0.14rem 0.42rem;background:#fee2e2;color:#991b1b;border:1px solid #fecaca;border-radius:9999px;font-size:0.5625rem;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;">Pending</span>
+                            {% endif %}
+                            <div style="font-size:0.5625rem;color:#64748b;line-height:1.4;">
+                                {% with last_doc=applicant_group.list|last %}
+                                {% if last_doc %}
+                                Last upload {{ last_doc.uploaded_at|date:"n/j/Y, P" }}
+                                {% if last_doc.uploaded_by %}<br>by {{ last_doc.uploaded_by.get_full_name }}{% endif %}
+                                {% else %}
+                                No uploads yet
+                                {% endif %}
+                                {% endwith %}
+                            </div>
+                            <button type="button"
+                                onclick="openUploadModalForApplicant('{{ applicant_group.grouper.id }}', '{{ applicant_group.grouper.full_name|escapejs }}')"
+                                style="display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.34rem 0.6rem; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; border: 1px solid #1d4ed8; border-radius: 0.4rem; font-size: 0.66rem; font-weight: 700; cursor: pointer; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); white-space: nowrap; letter-spacing: 0.02em;">
+                                <svg style="width: 0.85rem; height: 0.85rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                Manage docs
+                            </button>
+                        </div>
+                    </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="8" style="padding: 1.25rem 1rem; font-size: 0.8125rem; color: #64748b; text-align: center;">No documents found</td>
+                    <td colspan="9" style="padding: 1.25rem 1rem; font-size: 0.8125rem; color: #64748b; text-align: center;">No documents found</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -514,6 +570,21 @@
 <script>
 function openUploadModal() {
     document.getElementById('uploadModal').style.display = 'flex';
+}
+
+function openUploadModalForApplicant(applicantId, applicantName) {
+    // Pre-select the applicant in the upload form, then open the modal.
+    const applicantSelect = document.querySelector('[name="applicant_id"]');
+    if (applicantSelect) {
+        applicantSelect.value = applicantId;
+        // Fire a change event so any listeners (e.g. document-type filter) update.
+        applicantSelect.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    const searchInput = document.querySelector('#applicantSearchInput, input[placeholder*="Search applicant"]');
+    if (searchInput && applicantName) {
+        searchInput.value = applicantName;
+    }
+    openUploadModal();
 }
 
 function closeUploadModal(e) {
