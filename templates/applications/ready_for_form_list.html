@@ -119,6 +119,90 @@
     </div>
     {% endif %}
 </div>
+
+<!-- Custom confirmation modal — replaces native confirm() so we can
+     style it as part of the THA design system. -->
+<div class="rfq-confirm-overlay" id="rfqConfirmOverlay" role="dialog" aria-modal="true" aria-labelledby="rfqConfirmTitle">
+    <div class="rfq-confirm-card">
+        <div class="rfq-confirm-stripe" aria-hidden="true"></div>
+        <div class="rfq-confirm-body">
+            <p class="rfq-confirm-kicker">Application Form</p>
+            <h3 class="rfq-confirm-title" id="rfqConfirmTitle">Generate application form?</h3>
+            <p class="rfq-confirm-message" id="rfqConfirmMessage">
+                The form will be generated for this applicant and an application number assigned.
+            </p>
+        </div>
+        <div class="rfq-confirm-actions">
+            <button type="button" class="tha-btn tha-btn-secondary" id="rfqConfirmCancel">Cancel</button>
+            <button type="button" class="tha-btn tha-btn-success" id="rfqConfirmOk">Generate Form</button>
+        </div>
+    </div>
+</div>
+
+<style>
+    .rfq-confirm-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.55);
+        backdrop-filter: blur(2px);
+        -webkit-backdrop-filter: blur(2px);
+        z-index: 1100;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+    }
+    .rfq-confirm-overlay.active { display: flex; }
+    .rfq-confirm-card {
+        width: min(28rem, 100%);
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 14px;
+        box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.4),
+                    0 16px 32px -8px rgba(15, 23, 42, 0.18);
+        position: relative;
+        overflow: hidden;
+    }
+    .rfq-confirm-stripe {
+        height: 4px;
+        background: linear-gradient(90deg, #047857 0%, #10b981 50%, #6ee7b7 100%);
+    }
+    .rfq-confirm-body {
+        padding: 1.25rem 1.5rem 0.85rem;
+        text-align: center;
+    }
+    .rfq-confirm-kicker {
+        margin: 0 0 0.45rem;
+        font-size: 0.62rem;
+        font-weight: 800;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: #047857;
+    }
+    .rfq-confirm-title {
+        margin: 0 0 0.5rem;
+        font-family: 'Source Serif Pro', Georgia, serif;
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #0f172a;
+        letter-spacing: -0.01em;
+    }
+    .rfq-confirm-message {
+        margin: 0;
+        font-size: 0.84rem;
+        color: #475569;
+        line-height: 1.5;
+    }
+    .rfq-confirm-actions {
+        display: flex;
+        gap: 0.65rem;
+        padding: 0.95rem 1.25rem 1.15rem;
+        justify-content: center;
+        border-top: 1px solid #f1f5f9;
+        background: #fafbfc;
+    }
+    .rfq-confirm-actions .tha-btn { min-width: 8rem; }
+</style>
 {% endblock %}
 
 {% block extra_js %}
@@ -127,20 +211,66 @@
     const queueUrl = '{% url "applications:ready_for_form_queue" request.user.position %}';
     const selectedApplicantId = '{{ selected_applicant_id|default:""|escapejs }}';
 
-    async function generateFormFromQueue(applicantId) {
-        if (!confirm('Generate application form for this applicant?')) return;
-        try {
-            const response = await fetch(`/applications/staff/${position}/generate-form/${applicantId}/`);
-            const data = await response.json();
-            if (data.success) {
-                alert('Form generated! Application #' + data.application_number + '\nReturning to this queue…');
-                window.location.href = queueUrl;
-            } else {
-                alert(data.error || 'Failed to generate form');
-            }
-        } catch (error) {
-            alert('Error: ' + error.message);
+    // ---- Custom confirmation modal helpers ----
+    function rfqShowConfirm(message, onOk) {
+        const overlay = document.getElementById('rfqConfirmOverlay');
+        const messageEl = document.getElementById('rfqConfirmMessage');
+        const okBtn = document.getElementById('rfqConfirmOk');
+        const cancelBtn = document.getElementById('rfqConfirmCancel');
+        if (!overlay || !messageEl || !okBtn || !cancelBtn) {
+            if (window.confirm(message)) onOk && onOk();
+            return;
         }
+        if (message) messageEl.textContent = message;
+        overlay.classList.add('active');
+
+        const cleanup = () => {
+            overlay.classList.remove('active');
+            okBtn.removeEventListener('click', handleOk);
+            cancelBtn.removeEventListener('click', handleCancel);
+            overlay.removeEventListener('click', handleBackdrop);
+            document.removeEventListener('keydown', handleEsc);
+        };
+        const handleOk = () => { cleanup(); onOk && onOk(); };
+        const handleCancel = () => { cleanup(); };
+        const handleBackdrop = (e) => { if (e.target === overlay) cleanup(); };
+        const handleEsc = (e) => { if (e.key === 'Escape') cleanup(); };
+        okBtn.addEventListener('click', handleOk);
+        cancelBtn.addEventListener('click', handleCancel);
+        overlay.addEventListener('click', handleBackdrop);
+        document.addEventListener('keydown', handleEsc);
+    }
+
+    function rfqShowAlert(message, title, variant) {
+        if (typeof window.showFlowAlert === 'function') {
+            window.showFlowAlert(message, title || 'Notice', null, variant || 'default');
+        } else {
+            window.alert(message);
+        }
+    }
+
+    async function generateFormFromQueue(applicantId) {
+        rfqShowConfirm(
+            'The form will be generated for this applicant and an application number assigned.',
+            async () => {
+                try {
+                    const response = await fetch(`/applications/staff/${position}/generate-form/${applicantId}/`);
+                    const data = await response.json();
+                    if (data.success) {
+                        rfqShowAlert(
+                            'Application #' + data.application_number + ' generated. Returning to this queue…',
+                            'Form generated',
+                            'success'
+                        );
+                        setTimeout(() => { window.location.href = queueUrl; }, 1200);
+                    } else {
+                        rfqShowAlert(data.error || 'Failed to generate form', 'Generation failed', 'default');
+                    }
+                } catch (error) {
+                    rfqShowAlert('Error: ' + error.message, 'Network error', 'default');
+                }
+            }
+        );
     }
 
     document.addEventListener('DOMContentLoaded', function () {

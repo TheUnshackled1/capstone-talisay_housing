@@ -399,8 +399,8 @@ textarea.form-input:focus-visible {
    (navy → amber → navy). Evokes official government branding without
    being garish. Sits above the gradient background. */
 .sidebar {
-    background: linear-gradient(180deg, #0f2447 0%, #0a1a35 100%);
-    box-shadow: 4px 0 24px -12px rgba(15, 36, 71, 0.45);
+    background: linear-gradient(180deg, #1e4d8c 0%, #1a3a6b 60%, #15305c 100%);
+    box-shadow: 4px 0 24px -12px rgba(15, 36, 71, 0.4);
 }
 .sidebar::after {
     content: '';
@@ -2722,4 +2722,919 @@ textarea.form-input:focus-visible {
 }
 .footer-bottom-content p {
     margin: 0;
+}
+
+/* ===================================================================
+   PHASE 8 — Cross-page button & alert consistency
+   ===================================================================
+   Refines the buttons and pills scattered across:
+   - intake list (.btn-review, .btn-primary-add, .btn-archive-action,
+     .btn-archive-docs)
+   - archives (.btn-export, .btn-archive-action)
+   - documents (Upload Document modal, Upload file pills)
+   - applications (Generate Form, Review)
+   - ready-for-form (Generate Form)
+   - shared pagination (.btn-page)
+
+   Strategy: use higher-specificity selectors (e.g. body .btn-primary-
+   add) to win over the inline <style> definitions in each template,
+   without editing per-page CSS. Color tokens come from the design
+   system so the whole system reads as one identity.
+
+   Native browser confirm() / alert() / prompt() dialogs cannot be
+   styled with CSS. Those must be replaced with a custom modal in
+   JavaScript (handled separately).
+   =================================================================== */
+
+/* -------------------------------------------------------------------
+   8.1  Pagination buttons (.btn-page) — used on every list page
+        Override the per-template inline styles using body-prefix
+        for higher specificity.
+   ------------------------------------------------------------------- */
+body .btn-page {
+    font-family: var(--tha-font-ui);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    border: 1px solid var(--tha-color-border-strong);
+    background: #ffffff;
+    color: var(--tha-navy-700);
+    transition: all var(--tha-duration) var(--tha-ease);
+}
+body .btn-page:hover:not(:disabled):not([aria-disabled="true"]) {
+    background: var(--tha-blue-50);
+    border-color: var(--tha-blue-300);
+    color: var(--tha-blue-800);
+    box-shadow: var(--tha-shadow-xs);
+    transform: translateY(-1px);
+}
+body .btn-page:disabled,
+body .btn-page[aria-disabled="true"] {
+    opacity: 0.45;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* -------------------------------------------------------------------
+   8.2  Primary "Add" button (.btn-primary-add) — used as page-level
+        primary action (Register applicant, etc.)
+   ------------------------------------------------------------------- */
+body .btn-primary-add {
+    font-family: var(--tha-font-ui);
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    background: linear-gradient(135deg,
+        var(--tha-blue-700) 0%,
+        var(--tha-blue-800) 100%);
+    color: #ffffff;
+    border: 1px solid var(--tha-blue-800);
+    box-shadow:
+        var(--tha-shadow-xs),
+        inset 0 1px 0 rgba(255, 255, 255, 0.16);
+    transition: all var(--tha-duration) var(--tha-ease);
+}
+body .btn-primary-add:hover {
+    background: linear-gradient(135deg,
+        var(--tha-blue-800) 0%,
+        var(--tha-blue-900) 100%);
+    box-shadow:
+        var(--tha-shadow-md),
+        inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    transform: translateY(-1px);
+}
+
+/* The amber Archives launcher variant (already polished in earlier
+   passes) keeps its identity — selector below has equal specificity
+   so the more specific class wins. */
+body .btn-primary-add.btn-primary-add--archives {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    border-color: #d97706;
+    color: #ffffff;
+}
+body .btn-primary-add.btn-primary-add--archives:hover {
+    background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+}
+
+/* -------------------------------------------------------------------
+   8.3  Export CSV (.btn-export) — emerald (data-out action)
+   ------------------------------------------------------------------- */
+body .btn-export {
+    font-family: var(--tha-font-ui);
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    background: linear-gradient(135deg,
+        var(--tha-emerald-600) 0%,
+        var(--tha-emerald-700) 100%) !important;
+    color: #ffffff !important;
+    border: 1px solid var(--tha-emerald-700) !important;
+    box-shadow:
+        var(--tha-shadow-xs),
+        inset 0 1px 0 rgba(255, 255, 255, 0.16);
+    transition: all var(--tha-duration) var(--tha-ease);
+}
+body .btn-export:hover {
+    background: linear-gradient(135deg,
+        var(--tha-emerald-700) 0%,
+        var(--tha-emerald-800) 100%) !important;
+    box-shadow: var(--tha-shadow-md);
+    transform: translateY(-1px);
+}
+
+/* -------------------------------------------------------------------
+   8.4  Archive table action pills (.btn-archive-action,
+        .btn-archive-docs) — Handoff Summary, Requirements X/Y
+   ------------------------------------------------------------------- */
+body .btn-archive-action {
+    font-family: var(--tha-font-ui);
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    color: var(--tha-blue-800);
+    background: var(--tha-blue-50);
+    border: 1px solid var(--tha-blue-200);
+    transition: all var(--tha-duration) var(--tha-ease);
+}
+body .btn-archive-action:hover {
+    background: var(--tha-blue-100);
+    border-color: var(--tha-blue-300);
+    color: var(--tha-blue-900);
+    box-shadow: var(--tha-shadow-xs);
+    transform: translateY(-1px);
+}
+
+body .btn-archive-docs {
+    font-family: var(--tha-font-ui);
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    transition: all var(--tha-duration) var(--tha-ease);
+}
+body .btn-archive-docs--done {
+    color: var(--tha-emerald-800);
+    background: var(--tha-emerald-50);
+    border: 1px solid var(--tha-emerald-200);
+}
+body .btn-archive-docs--done:hover {
+    background: var(--tha-emerald-100);
+    border-color: var(--tha-emerald-300);
+}
+body .btn-archive-docs--partial {
+    color: var(--tha-amber-800);
+    background: var(--tha-amber-50);
+    border: 1px solid var(--tha-amber-200);
+}
+body .btn-archive-docs--partial:hover {
+    background: var(--tha-amber-100);
+    border-color: var(--tha-amber-300);
+}
+body .btn-archive-docs--none {
+    color: var(--tha-navy-600);
+    background: var(--tha-navy-50);
+    border: 1px solid var(--tha-navy-200);
+}
+body .btn-archive-docs--none:hover {
+    background: var(--tha-navy-100);
+    border-color: var(--tha-navy-300);
+}
+
+/* -------------------------------------------------------------------
+   8.5  Review action button (.btn-review, .btn-review-walkin,
+        .btn-review-landowner) — entry into the eligibility review
+        modal. Emerald (begin assessment) reads as a positive
+        "proceed" action across the system.
+   ------------------------------------------------------------------- */
+body .btn-review {
+    font-family: var(--tha-font-ui);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: var(--tha-emerald-800);
+    background: var(--tha-emerald-50);
+    border: 1px solid var(--tha-emerald-200);
+    transition: all var(--tha-duration) var(--tha-ease);
+}
+body .btn-review:hover:not(:disabled) {
+    background: var(--tha-emerald-100);
+    border-color: var(--tha-emerald-300);
+    color: var(--tha-emerald-900, #064e3b);
+    box-shadow: var(--tha-shadow-xs);
+    transform: translateY(-1px);
+}
+body .btn-review:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+/* -------------------------------------------------------------------
+   8.6  Generic alert / message-card system messages
+        Targets the top-right toast cards used in many list pages.
+   ------------------------------------------------------------------- */
+.message-card {
+    font-family: var(--tha-font-ui);
+    border-radius: var(--tha-radius);
+    border: 1px solid transparent;
+    box-shadow: var(--tha-shadow-md);
+}
+.message-card.success {
+    background: linear-gradient(135deg,
+        var(--tha-emerald-50) 0%,
+        #ffffff 100%);
+    color: var(--tha-emerald-800);
+    border-color: var(--tha-emerald-200);
+}
+.message-card.error {
+    background: linear-gradient(135deg,
+        var(--tha-color-danger-bg) 0%,
+        #ffffff 100%);
+    color: var(--tha-color-danger);
+    border-color: #fecaca;
+}
+.message-card.warning {
+    background: linear-gradient(135deg,
+        var(--tha-amber-50) 0%,
+        #ffffff 100%);
+    color: var(--tha-amber-800);
+    border-color: var(--tha-amber-200);
+}
+.message-card.info {
+    background: linear-gradient(135deg,
+        var(--tha-blue-50) 0%,
+        #ffffff 100%);
+    color: var(--tha-blue-800);
+    border-color: var(--tha-blue-200);
+}
+
+/* -------------------------------------------------------------------
+   8.7  Reusable primary action classes (.tha-btn-*)
+        Drop-in classes for any new action button. Use them like:
+          <button class="tha-btn tha-btn-primary">Submit</button>
+   ------------------------------------------------------------------- */
+.tha-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    font-family: var(--tha-font-ui);
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    font-size: 0.78rem;
+    padding: 0.55rem 1rem;
+    border-radius: var(--tha-radius);
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all var(--tha-duration) var(--tha-ease);
+    text-decoration: none;
+    white-space: nowrap;
+}
+.tha-btn-primary {
+    background: linear-gradient(135deg,
+        var(--tha-blue-700) 0%,
+        var(--tha-blue-800) 100%);
+    color: #ffffff;
+    border-color: var(--tha-blue-800);
+    box-shadow:
+        var(--tha-shadow-xs),
+        inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+.tha-btn-primary:hover {
+    background: linear-gradient(135deg,
+        var(--tha-blue-800) 0%,
+        var(--tha-blue-900) 100%);
+    box-shadow: var(--tha-shadow-md);
+    transform: translateY(-1px);
+}
+.tha-btn-success {
+    background: linear-gradient(135deg,
+        var(--tha-emerald-600) 0%,
+        var(--tha-emerald-700) 100%);
+    color: #ffffff;
+    border-color: var(--tha-emerald-700);
+    box-shadow:
+        var(--tha-shadow-xs),
+        inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+.tha-btn-success:hover {
+    background: linear-gradient(135deg,
+        var(--tha-emerald-700) 0%,
+        var(--tha-emerald-800) 100%);
+    box-shadow: var(--tha-shadow-md);
+    transform: translateY(-1px);
+}
+.tha-btn-secondary {
+    background: #ffffff;
+    color: var(--tha-navy-700);
+    border-color: var(--tha-color-border-strong);
+}
+.tha-btn-secondary:hover {
+    background: var(--tha-color-surface-muted);
+    border-color: var(--tha-navy-300);
+    color: var(--tha-navy-800);
+    box-shadow: var(--tha-shadow-xs);
+    transform: translateY(-1px);
+}
+.tha-btn-danger {
+    background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
+    color: #ffffff;
+    border-color: #991b1b;
+    box-shadow:
+        var(--tha-shadow-xs),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+.tha-btn-danger:hover {
+    background: linear-gradient(135deg, #991b1b 0%, #7f1d1d 100%);
+    box-shadow: var(--tha-shadow-md);
+    transform: translateY(-1px);
+}
+.tha-btn:disabled,
+.tha-btn[aria-disabled="true"] {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* -------------------------------------------------------------------
+   8.8  Generate Form button (used on ready-for-form queue)
+        Refine the inline-styled green button via higher specificity.
+        The button uses inline style="background:#15803d;..." so we
+        target by attribute selector to win.
+   ------------------------------------------------------------------- */
+button[onclick*="generateForm"],
+a[href*="generate-form"],
+.generate-form-btn {
+    background: linear-gradient(135deg,
+        var(--tha-emerald-600) 0%,
+        var(--tha-emerald-700) 100%) !important;
+    border-color: var(--tha-emerald-700) !important;
+    color: #ffffff !important;
+    box-shadow:
+        var(--tha-shadow-xs),
+        inset 0 1px 0 rgba(255, 255, 255, 0.16) !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.03em !important;
+    transition: all var(--tha-duration) var(--tha-ease) !important;
+}
+button[onclick*="generateForm"]:hover,
+a[href*="generate-form"]:hover,
+.generate-form-btn:hover {
+    background: linear-gradient(135deg,
+        var(--tha-emerald-700) 0%,
+        var(--tha-emerald-800) 100%) !important;
+    box-shadow: var(--tha-shadow-md) !important;
+    transform: translateY(-1px);
+}
+
+/* -------------------------------------------------------------------
+   8.9  Requirements modal — row action buttons & footer
+        (#archiveRequirementsModal: Upload file / Scan all / Proceed
+         to Application & Eligibility / Complete-baseline hint)
+
+        These selectors use higher specificity than the page-level
+        inline styles (which scope to #archiveRequirementsModal
+        already), so we prefix with `body` to win cleanly.
+   ------------------------------------------------------------------- */
+
+/* Row "Upload file" button — refined blue pill */
+body #archiveRequirementsModal .archive-req-upload-btn {
+    font-family: var(--tha-font-ui);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    background: linear-gradient(135deg,
+        var(--tha-blue-50) 0%,
+        var(--tha-blue-100) 100%);
+    color: var(--tha-blue-800);
+    border: 1px solid var(--tha-blue-300);
+    box-shadow:
+        var(--tha-shadow-xs),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    transition: all var(--tha-duration) var(--tha-ease);
+}
+body #archiveRequirementsModal .archive-req-upload-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg,
+        var(--tha-blue-100) 0%,
+        var(--tha-blue-200) 100%);
+    border-color: var(--tha-blue-500);
+    color: var(--tha-blue-900);
+    box-shadow: var(--tha-shadow-sm);
+    transform: translateY(-1px);
+}
+
+/* Row "Scan all" button — refined emerald pill */
+body #archiveRequirementsModal .archive-req-row-scan-btn {
+    font-family: var(--tha-font-ui);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    background: linear-gradient(135deg,
+        var(--tha-emerald-50) 0%,
+        var(--tha-emerald-100) 100%);
+    color: var(--tha-emerald-800);
+    border: 1px solid var(--tha-emerald-300);
+    box-shadow:
+        var(--tha-shadow-xs),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    transition: all var(--tha-duration) var(--tha-ease);
+}
+body #archiveRequirementsModal .archive-req-row-scan-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg,
+        var(--tha-emerald-100) 0%,
+        var(--tha-emerald-200) 100%);
+    border-color: var(--tha-emerald-500);
+    color: var(--tha-emerald-800);
+    box-shadow: var(--tha-shadow-sm);
+    transform: translateY(-1px);
+}
+
+/* Top "Scan all documents" button (singular header button) */
+body #archiveRequirementsModal #archiveScanAllBtn {
+    font-family: var(--tha-font-ui);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    background: linear-gradient(135deg,
+        var(--tha-emerald-50) 0%,
+        var(--tha-emerald-100) 100%);
+    color: var(--tha-emerald-800);
+    border: 1px solid var(--tha-emerald-300);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    transition: all var(--tha-duration) var(--tha-ease);
+}
+body #archiveRequirementsModal #archiveScanAllBtn:hover {
+    background: linear-gradient(135deg,
+        var(--tha-emerald-100) 0%,
+        var(--tha-emerald-200) 100%);
+    border-color: var(--tha-emerald-500);
+    box-shadow: var(--tha-shadow-sm);
+    transform: translateY(-1px);
+}
+
+/* "Proceed to Application & Eligibility" — disabled state reads
+   clearly as not-ready, ready state pops as primary blue. */
+body #archiveRequirementsModal #archiveProceedToEvaluationBtn {
+    font-family: var(--tha-font-ui);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    background: linear-gradient(180deg,
+        var(--tha-navy-50) 0%,
+        var(--tha-navy-100) 100%);
+    color: var(--tha-navy-400);
+    border: 1px solid var(--tha-navy-200);
+    box-shadow: none;
+    transition: all var(--tha-duration) var(--tha-ease);
+}
+body #archiveRequirementsModal #archiveProceedToEvaluationBtn[disabled] {
+    cursor: not-allowed;
+    opacity: 1;
+    box-shadow: none;
+}
+body #archiveRequirementsModal #archiveProceedToEvaluationBtn.is-ready {
+    color: #ffffff;
+    background: linear-gradient(135deg,
+        var(--tha-blue-700) 0%,
+        var(--tha-blue-800) 100%);
+    border-color: var(--tha-blue-800);
+    box-shadow:
+        var(--tha-shadow-sm),
+        0 8px 20px rgba(37, 99, 235, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.16);
+    cursor: pointer;
+}
+body #archiveRequirementsModal #archiveProceedToEvaluationBtn.is-ready:hover {
+    background: linear-gradient(135deg,
+        var(--tha-blue-800) 0%,
+        var(--tha-blue-900) 100%);
+    box-shadow:
+        var(--tha-shadow-md),
+        0 12px 28px rgba(37, 99, 235, 0.30),
+        inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    transform: translateY(-1px);
+}
+
+/* "Complete all baseline required scans..." helper pill */
+body #archiveRequirementsModal .archive-proceed-hint {
+    font-family: var(--tha-font-ui);
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    background: linear-gradient(135deg,
+        var(--tha-amber-50) 0%,
+        #ffffff 100%);
+    border: 1px solid var(--tha-amber-200);
+    color: var(--tha-amber-800);
+    padding: 0.45rem 0.75rem;
+    box-shadow: var(--tha-shadow-xs);
+}
+body #archiveRequirementsModal .archive-proceed-hint.is-ready {
+    background: linear-gradient(135deg,
+        var(--tha-emerald-50) 0%,
+        #ffffff 100%);
+    border-color: var(--tha-emerald-200);
+    color: var(--tha-emerald-800);
+}
+
+/* Document Scan modal — same row buttons (Upload file / Scan all)
+   appear here too. Apply matching polish. */
+body #documentScanModal .archive-req-upload-btn,
+body #documentScanModal .docscan-upload-btn {
+    font-family: var(--tha-font-ui);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    background: linear-gradient(135deg,
+        var(--tha-blue-50) 0%,
+        var(--tha-blue-100) 100%);
+    color: var(--tha-blue-800);
+    border: 1px solid var(--tha-blue-300);
+}
+body #documentScanModal .archive-req-row-scan-btn,
+body #documentScanModal .docscan-scan-btn {
+    font-family: var(--tha-font-ui);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    background: linear-gradient(135deg,
+        var(--tha-emerald-50) 0%,
+        var(--tha-emerald-100) 100%);
+    color: var(--tha-emerald-800);
+    border: 1px solid var(--tha-emerald-300);
+}
+
+/* -------------------------------------------------------------------
+   8.10  #reviewModal footer buttons — color identity per action role
+        Each button gets a distinct color so the user immediately
+        understands intent: Edit = amber (modify), Save = emerald
+        (commit), Discard = slate (cancel), Proceed = blue (forward),
+        Delete = red (destructive), Dismiss = slate (close).
+
+        Cascade-respectful: page-level inline rules in applicants.html
+        are ID-scoped (#reviewModal .btn-modal.*); we win by adding
+        body prefix and targeting specific button IDs.
+   ------------------------------------------------------------------- */
+
+/* EDIT record / CANCEL EDIT toggle — amber "modify" identity.
+   Same button serves both states (text swaps via JS). */
+body #reviewModal #btnEditToggle {
+    color: var(--tha-amber-800) !important;
+    background: linear-gradient(135deg,
+        var(--tha-amber-50) 0%,
+        #ffffff 100%) !important;
+    border-color: var(--tha-amber-300) !important;
+    box-shadow:
+        var(--tha-shadow-xs),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
+    transition: all var(--tha-duration) var(--tha-ease);
+}
+body #reviewModal #btnEditToggle:hover {
+    color: var(--tha-amber-900, #78350f) !important;
+    background: linear-gradient(135deg,
+        var(--tha-amber-100) 0%,
+        var(--tha-amber-50) 100%) !important;
+    border-color: var(--tha-amber-500) !important;
+    box-shadow:
+        var(--tha-shadow-sm),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
+    transform: translateY(-1px);
+}
+body #reviewModal #btnEditToggle .btn-icon {
+    color: var(--tha-amber-700);
+}
+
+/* SAVE EDIT — primary commit action, emerald gradient */
+body #reviewModal #editActions button[type="submit"],
+body #reviewModal #editActions .btn-modal.primary {
+    background: linear-gradient(135deg,
+        var(--tha-emerald-600) 0%,
+        var(--tha-emerald-700) 100%) !important;
+    color: #ffffff !important;
+    border-color: var(--tha-emerald-700) !important;
+    box-shadow:
+        var(--tha-shadow-xs),
+        inset 0 1px 0 rgba(255, 255, 255, 0.16) !important;
+    transition: all var(--tha-duration) var(--tha-ease);
+}
+body #reviewModal #editActions button[type="submit"]:hover,
+body #reviewModal #editActions .btn-modal.primary:hover {
+    background: linear-gradient(135deg,
+        var(--tha-emerald-700) 0%,
+        var(--tha-emerald-800) 100%) !important;
+    box-shadow:
+        var(--tha-shadow-md),
+        0 8px 20px rgba(16, 185, 129, 0.22) !important;
+    transform: translateY(-1px);
+}
+
+/* DISCARD CHANGES — secondary cancel (no destructive intent),
+   slate outline with subtle hint */
+body #reviewModal #editActions .btn-modal.secondary {
+    background: #ffffff !important;
+    color: var(--tha-navy-600) !important;
+    border-color: var(--tha-color-border-strong) !important;
+    transition: all var(--tha-duration) var(--tha-ease);
+}
+body #reviewModal #editActions .btn-modal.secondary:hover {
+    background: var(--tha-color-surface-muted) !important;
+    color: var(--tha-navy-800) !important;
+    border-color: var(--tha-navy-300) !important;
+    box-shadow: var(--tha-shadow-xs);
+    transform: translateY(-1px);
+}
+
+/* PROCEED TO LIST OF APPLICANTS — primary forward action, deeper
+   navy gradient with confident shadow */
+body #reviewModal #btnProceedModule2 {
+    background: linear-gradient(135deg,
+        var(--tha-blue-700) 0%,
+        var(--tha-blue-800) 100%) !important;
+    color: #ffffff !important;
+    border-color: var(--tha-blue-800) !important;
+    box-shadow:
+        var(--tha-shadow-xs),
+        0 6px 16px rgba(37, 99, 235, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.16) !important;
+    transition: all var(--tha-duration) var(--tha-ease);
+}
+body #reviewModal #btnProceedModule2:hover {
+    background: linear-gradient(135deg,
+        var(--tha-blue-800) 0%,
+        var(--tha-blue-900) 100%) !important;
+    box-shadow:
+        var(--tha-shadow-md),
+        0 12px 28px rgba(37, 99, 235, 0.30) !important;
+    transform: translateY(-1px);
+}
+
+/* DELETE record — destructive red, layered shadow */
+body #reviewModal #btnDelete {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
+    color: #ffffff !important;
+    border-color: #b91c1c !important;
+    box-shadow:
+        var(--tha-shadow-xs),
+        0 6px 16px rgba(220, 38, 38, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+    transition: all var(--tha-duration) var(--tha-ease);
+}
+body #reviewModal #btnDelete:hover {
+    background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%) !important;
+    box-shadow:
+        var(--tha-shadow-md),
+        0 12px 28px rgba(220, 38, 38, 0.30) !important;
+    transform: translateY(-1px);
+}
+
+/* DISMISS — quiet close action, slate ghost */
+body #reviewModal .modal-footer > .btn-modal.secondary[onclick*="closeReviewModal"] {
+    background: #ffffff !important;
+    color: var(--tha-navy-500) !important;
+    border-color: var(--tha-color-border-strong) !important;
+    transition: all var(--tha-duration) var(--tha-ease);
+}
+body #reviewModal .modal-footer > .btn-modal.secondary[onclick*="closeReviewModal"]:hover {
+    background: var(--tha-color-surface-muted) !important;
+    color: var(--tha-navy-700) !important;
+    border-color: var(--tha-navy-300) !important;
+    box-shadow: var(--tha-shadow-xs);
+    transform: translateY(-1px);
+}
+
+/* -------------------------------------------------------------------
+   8.11  Eligibility Evaluation Checklist — action button colors
+        Each row's actions get a distinct color identity:
+          View          → blue   (read/inspect)
+          Upload        → emerald (add evidence)
+          Scan          → violet  (capture via TWAIN)
+          Mark Passed   → emerald-ghost → emerald-active when clicked
+          Mark Failed   → rose-ghost → rose-active when clicked
+        Cascade-respectful: page-level inline rules in
+        applications_list.html load after this file, so we use the
+        body prefix for higher specificity.
+   ------------------------------------------------------------------- */
+
+/* View — blue ghost with subtle gradient */
+body .eligibility-view-doc-btn {
+    font-family: var(--tha-font-ui);
+    background: linear-gradient(135deg,
+        var(--tha-blue-50) 0%,
+        var(--tha-blue-100) 100%);
+    color: var(--tha-blue-800);
+    border: 1px solid var(--tha-blue-300);
+    box-shadow:
+        var(--tha-shadow-xs),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    transition: all var(--tha-duration) var(--tha-ease);
+}
+body .eligibility-view-doc-btn:hover {
+    background: linear-gradient(135deg,
+        var(--tha-blue-100) 0%,
+        var(--tha-blue-200) 100%);
+    border-color: var(--tha-blue-500);
+    color: var(--tha-blue-900);
+    box-shadow: var(--tha-shadow-sm);
+    transform: translateY(-1px);
+}
+
+/* Upload — emerald ghost (add evidence) */
+body .m2-elig-upload-btn {
+    font-family: var(--tha-font-ui);
+    background: linear-gradient(135deg,
+        var(--tha-emerald-50) 0%,
+        var(--tha-emerald-100) 100%);
+    color: var(--tha-emerald-800);
+    border: 1px solid var(--tha-emerald-300);
+    box-shadow:
+        var(--tha-shadow-xs),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    transition: all var(--tha-duration) var(--tha-ease);
+}
+body .m2-elig-upload-btn:hover {
+    background: linear-gradient(135deg,
+        var(--tha-emerald-100) 0%,
+        var(--tha-emerald-200) 100%);
+    border-color: var(--tha-emerald-500);
+    color: var(--tha-emerald-800);
+    box-shadow: var(--tha-shadow-sm);
+    transform: translateY(-1px);
+}
+
+/* Scan — violet ghost (capture via scanner) */
+body .m2-elig-scan-btn {
+    font-family: var(--tha-font-ui);
+    background: linear-gradient(135deg,
+        var(--tha-violet-50) 0%,
+        var(--tha-violet-100) 100%);
+    color: var(--tha-violet-800);
+    border: 1px solid var(--tha-violet-300);
+    box-shadow:
+        var(--tha-shadow-xs),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    transition: all var(--tha-duration) var(--tha-ease);
+}
+body .m2-elig-scan-btn:hover {
+    background: linear-gradient(135deg,
+        var(--tha-violet-100) 0%,
+        var(--tha-violet-200) 100%);
+    border-color: var(--tha-violet-500);
+    color: var(--tha-violet-800);
+    box-shadow: var(--tha-shadow-sm);
+    transform: translateY(-1px);
+}
+
+/* Mark Passed — emerald-tinted ghost (pre-decision), shifts to
+   active emerald gradient once the staff member commits. */
+body .eligibility-decision-btn[onclick*="passed"],
+body button.eligibility-decision-btn[onclick*="'passed'"],
+body .eligibility-decision-btn:not(.active-fail):not(.active-pass)[onclick*="passed"] {
+    font-family: var(--tha-font-ui);
+    background: linear-gradient(135deg,
+        var(--tha-emerald-50) 0%,
+        #ffffff 100%);
+    color: var(--tha-emerald-800);
+    border: 1px solid var(--tha-emerald-200);
+    transition: all var(--tha-duration) var(--tha-ease);
+}
+body .eligibility-decision-btn[onclick*="passed"]:hover:not(.active-pass) {
+    background: linear-gradient(135deg,
+        var(--tha-emerald-100) 0%,
+        var(--tha-emerald-50) 100%);
+    border-color: var(--tha-emerald-500);
+    color: var(--tha-emerald-900, #064e3b);
+    box-shadow: var(--tha-shadow-xs);
+    transform: translateY(-1px);
+}
+body .eligibility-decision-btn.active-pass {
+    background: linear-gradient(135deg,
+        var(--tha-emerald-600) 0%,
+        var(--tha-emerald-700) 100%) !important;
+    color: #ffffff !important;
+    border-color: var(--tha-emerald-700) !important;
+    box-shadow:
+        var(--tha-shadow-sm),
+        0 4px 12px rgba(16, 185, 129, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.16) !important;
+}
+
+/* Mark Failed — rose-tinted ghost (pre-decision), shifts to active
+   rose gradient once committed. */
+body .eligibility-decision-btn[onclick*="failed"],
+body button.eligibility-decision-btn[onclick*="'failed'"],
+body .eligibility-decision-btn:not(.active-pass):not(.active-fail)[onclick*="failed"] {
+    font-family: var(--tha-font-ui);
+    background: linear-gradient(135deg,
+        var(--tha-rose-50) 0%,
+        #ffffff 100%);
+    color: var(--tha-rose-800);
+    border: 1px solid var(--tha-rose-200);
+    transition: all var(--tha-duration) var(--tha-ease);
+}
+body .eligibility-decision-btn[onclick*="failed"]:hover:not(.active-fail) {
+    background: linear-gradient(135deg,
+        var(--tha-rose-100) 0%,
+        var(--tha-rose-50) 100%);
+    border-color: var(--tha-rose-500);
+    color: var(--tha-rose-900);
+    box-shadow: var(--tha-shadow-xs);
+    transform: translateY(-1px);
+}
+body .eligibility-decision-btn.active-fail {
+    background: linear-gradient(135deg,
+        var(--tha-rose-600) 0%,
+        var(--tha-rose-700) 100%) !important;
+    color: #ffffff !important;
+    border-color: var(--tha-rose-700) !important;
+    box-shadow:
+        var(--tha-shadow-sm),
+        0 4px 12px rgba(225, 29, 72, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.16) !important;
+}
+
+/* -------------------------------------------------------------------
+   8.12  Evidence panel — readability polish
+        The .m2-elig-evidence-box rows were 0.71rem (~11px) which is
+        too small for office reading. Bump font size, increase
+        contrast on labels, give values stronger weight, add more
+        breathing room. Cascade-respectful via body prefix.
+   ------------------------------------------------------------------- */
+body .m2-elig-evidence-box {
+    margin-top: 0.6rem;
+    padding: 0.7rem 0.85rem 0.75rem;
+    border-radius: var(--tha-radius);
+    background: linear-gradient(180deg,
+        var(--tha-color-surface-muted) 0%,
+        #ffffff 100%);
+    border: 1px solid var(--tha-color-border);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+/* "EVIDENCE" header — slightly larger, tracked uppercase, higher
+   contrast slate so it reads as a clear section label. */
+body .m2-elig-evidence-label {
+    font-family: var(--tha-font-ui);
+    font-size: 0.66rem;            /* up from 0.61rem */
+    font-weight: 800;
+    letter-spacing: 0.1em;          /* slightly wider for legibility */
+    text-transform: uppercase;
+    color: var(--tha-navy-500);
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--tha-color-border);
+}
+
+/* Row — bigger, more breathing room, dashed separator between rows */
+body .m2-ev-grid-row {
+    font-size: 0.82rem;             /* up from 0.71rem (~31% larger) */
+    line-height: 1.45;
+    padding: 0.42rem 0;
+    border-bottom: 1px dashed var(--tha-navy-100);
+    gap: 0.35rem 1rem;
+    align-items: start;
+}
+body .m2-ev-grid-row:last-child {
+    border-bottom: none;
+    padding-bottom: 0.15rem;
+}
+
+/* Label (left) — readable navy-500, weight 600 */
+body .m2-ev-grid-label {
+    font-family: var(--tha-font-ui);
+    color: var(--tha-navy-500);
+    font-weight: 600;
+    letter-spacing: 0.005em;
+}
+
+/* Value (right) — strong navy-800, weight 700, tabular numerals
+   so columns line up across rows */
+body .m2-ev-grid-value {
+    font-family: var(--tha-font-ui);
+    color: var(--tha-navy-800);
+    font-weight: 700;
+    text-align: right;
+    word-break: break-word;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.005em;
+}
+
+/* Full-width row (e.g. "1 file(s) on record under ISF situational
+   documentation...") — readable navy-700, slightly larger and looser */
+body .m2-ev-grid-row-full {
+    font-family: var(--tha-font-ui);
+    font-size: 0.82rem;
+    color: var(--tha-navy-700);
+    padding: 0.42rem 0;
+    line-height: 1.55;
+    font-weight: 500;
+}
+
+/* When the value is a status word ("Scanned", "Yes", "No property in
+   Talisay City"), give it a subtle pill treatment so it reads like a
+   confirmed datum rather than free text. */
+body .m2-ev-grid-value.is-status-scanned,
+body .m2-ev-grid-value.is-status-yes {
+    color: var(--tha-emerald-700);
+}
+body .m2-ev-grid-value.is-status-missing,
+body .m2-ev-grid-value.is-status-no {
+    color: var(--tha-color-danger);
+}
+
+/* Mobile: stack label/value to keep readability on narrow screens */
+@media (max-width: 640px) {
+    body .m2-ev-grid-row {
+        grid-template-columns: 1fr;
+        gap: 0.15rem;
+    }
+    body .m2-ev-grid-value {
+        text-align: left;
+    }
 }
