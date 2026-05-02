@@ -4069,6 +4069,7 @@
                 .tha-reg-modal .form-row.full { grid-template-columns: 1fr; }
                 .tha-reg-modal .form-row.identity-row { grid-template-columns: repeat(4, 1fr); }
                 .tha-reg-modal .form-row.three-cols { grid-template-columns: repeat(3, 1fr); }
+                .tha-reg-modal .form-row.four-cols { grid-template-columns: repeat(4, minmax(0, 1fr)); }
                 .tha-reg-modal .danger-zone-box { background: #fffbeb; border: 1px solid #fcd34d; border-left: 4px solid #b45309; padding: 1rem; border-radius: 2px; margin: 1rem 0; }
                 .tha-reg-modal .danger-zone-box .section-label { color: #78350f; margin-top: 0; }
                 .tha-reg-modal .document-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin-bottom: 1rem; }
@@ -4386,11 +4387,14 @@
                         display: contents;
                     }
                 }
+                @media (max-width: 1100px) {
+                    .tha-reg-modal .form-row.four-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+                }
                 @media (max-width: 640px) {
                     .tha-reg-modal .form-row { grid-template-columns: 1fr; }
                     .tha-reg-modal .channel-selector { grid-template-columns: 1fr; }
                     .tha-reg-modal .document-grid { grid-template-columns: 1fr; }
-                    .tha-reg-modal .identity-row, .tha-reg-modal .three-cols { grid-template-columns: 1fr; }
+                    .tha-reg-modal .identity-row, .tha-reg-modal .three-cols, .tha-reg-modal .four-cols { grid-template-columns: 1fr; }
                     .tha-reg-modal .hh-member-row {
                         grid-template-columns: 1fr;
                         padding: 0.75rem;
@@ -4405,16 +4409,23 @@
                 }
 
                 /* ===========================================================
-                   Inline-radio utility — keeps label + Yes/No pills on the
-                   same row. Applied to Sex / Voter / Property Ownership only,
-                   so other form-groups (e.g. Years of residence input) stay
-                   stacked and the 3-col grid layout is preserved.
+                   Inline-radio utility — label + radio pills. In `.four-cols`
+                   (Sex / Voter / Property) stack label above controls so four
+                   columns stay readable; Years column stays a normal stacked input.
                    =========================================================== */
                 .tha-reg-modal .form-group--inline-radio {
                     display: flex;
                     align-items: center;
                     gap: 0.6rem 0.75rem;
                     flex-wrap: wrap;
+                }
+                .tha-reg-modal .form-row.four-cols .form-group--inline-radio {
+                    flex-direction: column;
+                    align-items: flex-start;
+                    gap: 0.35rem;
+                }
+                .tha-reg-modal .form-row.four-cols .form-group--inline-radio > .form-label {
+                    margin: 0 !important;
                 }
                 .tha-reg-modal .form-group--inline-radio > .form-label {
                     margin: 0 !important;
@@ -4474,6 +4485,35 @@
                 }
                 .tha-reg-modal #addApplicantForm .tha-section-block--household .tha-section-header-with-action {
                     border-bottom-color: #a7f3d0;
+                }
+                .tha-reg-modal #addApplicantForm .tha-section-block--household .tha-household-header-actions {
+                    display: flex;
+                    align-items: flex-end;
+                    gap: 0.85rem;
+                    flex-wrap: wrap;
+                    justify-content: flex-end;
+                }
+                .tha-reg-modal #addApplicantForm .tha-declared-household-inline {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 0.28rem;
+                    align-items: flex-start;
+                    min-width: 0;
+                }
+                .tha-reg-modal #addApplicantForm .tha-declared-household-inline .form-label {
+                    margin: 0 !important;
+                    font-size: 0.72rem;
+                    font-weight: 700;
+                    color: #334155;
+                    line-height: 1.2;
+                    white-space: nowrap;
+                }
+                .tha-reg-modal #addApplicantForm .tha-declared-household-inline .form-input {
+                    width: 100%;
+                    max-width: 5.25rem;
+                    padding: 0.38rem 0.5rem;
+                    font-weight: 700;
+                    text-align: center;
                 }
                 .tha-reg-modal #addApplicantForm .tha-section-block--household .tha-btn-add-member {
                     background: linear-gradient(135deg, #10b981 0%, #047857 100%);
@@ -4544,8 +4584,8 @@
                         </div>
                     </div>
 
-                    <!-- Sex & Years Residing in Talisay -->
-                    <div class="form-row three-cols">
+                    <!-- Sex, voter, property ownership, years residing — one row (responsive: 2×2 then stack) -->
+                    <div class="form-row four-cols">
                         <div class="form-group form-group--inline-radio">
                             <label class="form-label">Sex <span style="color: #dc2626;">*</span></label>
                             <div class="tha-hazard-radio-group" role="radiogroup" aria-label="Sex">
@@ -4572,14 +4612,32 @@
                                 </label>
                             </div>
                         </div>
+                        <div class="form-group form-group--inline-radio">
+                            <label class="form-label" id="propertyOwnershipLabel">Has Property Ownership in Talisay City <span style="color: #dc2626;">*</span></label>
+                            <div class="tha-hazard-radio-group" role="radiogroup" aria-labelledby="propertyOwnershipLabel">
+                                <label class="tha-hazard-radio" for="hasPropertyYes">
+                                    <input type="radio" id="hasPropertyYes" name="has_property_in_talisay" value="yes">
+                                    <span>Yes</span>
+                                </label>
+                                <label class="tha-hazard-radio" for="hasPropertyNo">
+                                    <input type="radio" id="hasPropertyNo" name="has_property_in_talisay" value="no">
+                                    <span>No</span>
+                                </label>
+                            </div>
+                        </div>
                         <div class="form-group">
                             <label class="form-label">Years of residence in Talisay City <span style="color: #dc2626;">*</span></label>
                             <input type="number" class="form-input" placeholder="Whole number of years" name="years_residing" id="yearsResiding" min="0" required>
                         </div>
                     </div>
 
-                    <!-- Date of Birth & Age (Integrated) -->
-                    <div class="form-row">
+                    <!-- Mobile, date of birth, age — one row -->
+                    <div class="form-row three-cols">
+                        <div class="form-group">
+                            <label class="form-label">Applicant mobile number <span style="color: #dc2626;">*</span></label>
+                            <input type="tel" class="form-input ph-phone" placeholder="09XXXXXXXXXX" pattern="09[0-9]{9}" maxlength="11" minlength="11" inputmode="numeric" autocomplete="tel-national" name="phone_number" id="phoneNumber" required>
+                            <span class="help-text">Philippine mobile format: 11 digits beginning with 09. Whole numbers only.</span>
+                        </div>
                         <div class="form-group">
                             <label class="form-label">Date of birth <span style="color: #dc2626;">*</span></label>
                             <input type="date" class="form-input" name="date_of_birth" id="dateOfBirth" onchange="calculateAge()" required>
@@ -4597,30 +4655,13 @@
                         </div>
                     </div>
 
-                    <!-- Present Address + Property Ownership Declaration -->
+                    <!-- Present address & barangay — one row (stack on small screens) -->
                     <div class="form-row">
                         <div class="form-group">
                             <label class="form-label">Present address <span style="color: #dc2626;">*</span></label>
                             <input type="text" class="form-input" placeholder="House no., street, sitio/purok, Talisay City" name="current_address" id="presentAddress" minlength="10" maxlength="500" required>
-                            <span class="help-text">Enter address details here. Select the barangay below so it is stored in a structured field.</span>
+                            <span class="help-text">Enter address details here. Choose barangay in the field beside this one so it is stored in a structured field.</span>
                         </div>
-                        <div class="form-group form-group--inline-radio">
-                            <label class="form-label" id="propertyOwnershipLabel">Has Property Ownership in Talisay City <span style="color: #dc2626;">*</span></label>
-                            <div class="tha-hazard-radio-group" role="radiogroup" aria-labelledby="propertyOwnershipLabel">
-                                <label class="tha-hazard-radio" for="hasPropertyYes">
-                                    <input type="radio" id="hasPropertyYes" name="has_property_in_talisay" value="yes">
-                                    <span>Yes</span>
-                                </label>
-                                <label class="tha-hazard-radio" for="hasPropertyNo">
-                                    <input type="radio" id="hasPropertyNo" name="has_property_in_talisay" value="no">
-                                    <span>No</span>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Barangay & Applicant Contact Number -->
-                    <div class="form-row">
                         <div class="form-group">
                             <label class="form-label">Barangay of present address <span style="color: #dc2626;">*</span></label>
                             <select class="form-select" name="barangay" id="barangay" required>
@@ -4630,11 +4671,6 @@
                                 {% endfor %}
                             </select>
                             <span class="help-text">Select once here (no need to repeat barangay in the address text).</span>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Applicant mobile number <span style="color: #dc2626;">*</span></label>
-                            <input type="tel" class="form-input ph-phone" placeholder="09XXXXXXXXXX" pattern="09[0-9]{9}" maxlength="11" minlength="11" inputmode="numeric" autocomplete="tel-national" name="phone_number" id="phoneNumber" required>
-                            <span class="help-text">Philippine mobile format: 11 digits beginning with 09. Whole numbers only.</span>
                         </div>
                     </div>
                     <div id="duplicatePreview" class="duplicate-preview" aria-live="polite">
@@ -4654,24 +4690,24 @@
                 <div class="tha-section-block tha-section-block--household">
                     <div class="tha-section-header-with-action">
                         <h3 class="tha-section-title" style="margin-bottom: 0; padding-bottom: 0; border-bottom: none;">Household members</h3>
-                        <button type="button" class="tha-btn-add-member" onclick="addHouseholdMember()">Add household member</button>
+                        <div class="tha-household-header-actions">
+                            <button type="button" class="tha-btn-add-member" onclick="addHouseholdMember()">Add household member</button>
+                            <div class="tha-declared-household-inline">
+                                <label class="form-label" for="householdSize">Declared household size <span style="color: #dc2626;">*</span></label>
+                                <input type="number" class="form-input" name="household_size" id="householdSize" min="1" value="1" readonly style="background-color: #f1f5f9; cursor: not-allowed;">
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Household Members Container -->
                     <div id="householdMembersContainer"></div>
-
-                    <div class="form-group" style="margin-top: 1rem;">
-                        <label class="form-label">Declared household size <span style="color: #dc2626;">*</span></label>
-                        <input type="number" class="form-input" placeholder="Includes applicant" name="household_size" id="householdSize" min="1" value="1" readonly style="background-color: #f1f5f9; cursor: not-allowed;">
-                        <span class="help-text">Updated automatically from members listed above (applicant counts as one).</span>
-                    </div>
                 </div>
 
                 <!-- Section C -->
                 <div class="tha-section-block tha-section-block--income">
                     <h3 class="tha-section-title">Household income</h3>
 
-                    <div class="form-row">
+                    <div class="form-row three-cols">
                         <div class="form-group">
                             <label class="form-label">Principal occupation <span style="color: #dc2626;">*</span></label>
                             <input type="text" class="form-input" placeholder="Primary livelihood or post (e.g., vendor, factory worker)" name="occupation" id="occupation" maxlength="255" required>
@@ -4686,9 +4722,6 @@
                                 <option value="retired">Retired</option>
                             </select>
                         </div>
-                    </div>
-
-                    <div class="form-row">
                         <div class="form-group">
                             <label class="form-label">Gross monthly household income (PHP) <span style="color: #dc2626;">*</span></label>
                             <input type="text" class="form-input" placeholder="Amount in pesos" name="monthly_income" id="monthlyIncome" inputmode="decimal" autocomplete="off" required>
