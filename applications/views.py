@@ -11,6 +11,7 @@ from django.urls import reverse
 from functools import wraps
 from urllib.parse import urlencode
 import logging
+from accounts.models import FIELD_DESK_POSITIONS
 from intake.models import Applicant
 from intake import sms_workflow
 from documents.models import (
@@ -1697,10 +1698,13 @@ def record_displacement_classification(request, position):
 @require_POST
 def field_verify_cdrrmo(request, position):
     """
-    Module 2 endpoint for Ronda/Field on-site verification findings.
+    Module 2 endpoint for field desk on-site verification findings (ronda and field).
     """
-    if request.user.position not in ['ronda', 'field']:
-        return JsonResponse({'success': False, 'error': 'Permission denied. Only field personnel can verify.'}, status=403)
+    if request.user.position not in FIELD_DESK_POSITIONS:
+        return JsonResponse(
+            {'success': False, 'error': 'Permission denied. Only field desk staff can verify.'},
+            status=403,
+        )
 
     try:
         applicant_id = request.POST.get('applicant_id')

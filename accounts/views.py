@@ -4,8 +4,11 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
 from django.db.models import Q, OuterRef, Subquery, Prefetch
+from django.urls import reverse
 from datetime import timedelta, date
+from urllib.parse import urlencode
 from .forms import LoginForm
+from .models import FIELD_DESK_POSITIONS
 from intake.models import Applicant, SMSLog
 from applications.models import CDRRMOCertification
 from units.models import Blacklist as UnitsBlacklist
@@ -14,6 +17,14 @@ from documents.models import SignatoryRouting, RequirementSubmission
 from units.models import ComplianceNotice, HousingUnit, ElectricityConnection
 from cases.models import Case
 import json
+
+
+def _redirect_login_preserving_role(request):
+    """Return to login; keep ?role= so the portal badge and rules stay in sync after a failed check."""
+    role = request.GET.get('role', '')
+    if role:
+        return redirect(f"{reverse('accounts:login')}?{urlencode({'role': role})}")
+    return redirect('accounts:login')
 
 
 def _applicant_missing_intake_doc_q():
@@ -176,16 +187,20 @@ def login_view(request):
     
     # Get the requested role from URL parameter
     role = request.GET.get('role', '')
+    # Legacy ?role=caretaker merged into ronda — treat as unified field desk
+    if role == 'caretaker':
+        role = 'field_desk'
     role_display = None
-    
+
     # Map role codes to display names
     role_map = {
         'oic': 'OIC-THA',
         'second_member': 'Second Member',
         'fourth_member': 'Fourth Member',
         'fifth_member': 'Fifth Member',
-        'caretaker': 'Caretaker',
         'ronda': 'Ronda / Field Personnel',
+        'field': 'Field Personnel',
+        'field_desk': 'Field verification desk',
     }
     role_display = role_map.get(role, None)
     
@@ -198,14 +213,22 @@ def login_view(request):
             user = authenticate(request, username=username, password=password)
             
             if user is not None:
-                # ENFORCE: Verify the user's position matches the requested role
-                if role and user.position != role:
-                    messages.error(
-                        request, 
-                        f'Access Denied: Your account is registered as {user.get_position_display()}, '
-                        f'not {role_display}. Please use the correct login portal for your position.'
-                    )
-                    return redirect('accounts:login')  # Return to login without authenticating
+                # ENFORCE: Portal must match the user's position (or unified field desk).
+                if role:
+                    if role == 'field_desk':
+                        if user.position not in FIELD_DESK_POSITIONS:
+                            messages.error(
+                                request,
+                                'Access denied: this portal is only for field desk staff (Ronda or Field).',
+                            )
+                            return _redirect_login_preserving_role(request)
+                    elif user.position != role:
+                        messages.error(
+                            request,
+                            f'Access Denied: Your account is registered as {user.get_position_display()}, '
+                            f'not {role_display}. Please use the correct login portal for your position.',
+                        )
+                        return _redirect_login_preserving_role(request)
                 
                 login(request, user)
                 messages.success(request, f'Welcome back, {user.first_name or user.username}!')
@@ -247,7 +270,6 @@ def dashboard_redirect(request):
         'second_member': 'accounts:dashboard_second_member',
         'fourth_member': 'accounts:dashboard_fourth_member',
         'fifth_member': 'accounts:dashboard_fifth_member',
-        'caretaker': 'accounts:dashboard_caretaker',
         'ronda': 'accounts:dashboard_field',
         'field': 'accounts:dashboard_field',
     }
@@ -1007,33 +1029,24 @@ def dashboard_fifth_member(request):
 
 @login_required
 def dashboard_caretaker(request):
-    """
-    Dashboard for Caretaker (Arcadio Lobaton)
-    Responsibilities: Site monitoring, weekly occupancy reports
-    """
-    if request.user.position != 'caretaker':
-        messages.error(request, 'Access denied. This dashboard is for the Caretaker position only.')
+    """Legacy URL name; field desk (ronda / field) redirects to dashboard_field."""
+    if request.user.position not in FIELD_DESK_POSITIONS:
+        messages.error(request, 'Access denied.')
         return redirect('accounts:dashboard')
-    
-    context = {
-        'page_title': 'Caretaker Dashboard',
-        'user_position': 'caretaker',
-        'occupied_units': 0,  # TODO: Currently occupied units
-        'vacant_units': 0,  # TODO: Vacant units
-        'weekly_reports_due': 0,  # TODO: Weekly reports due
-        'site_issues': 0,  # TODO: Reported site issues
-    }
-    return render(request, 'accounts/dashboard.html', context)
+    return redirect('accounts:dashboard_field')
 
 
 @login_required
 def dashboard_field(request):
     """
-    Dashboard for Field Personnel (Ronda - Paul Betila, Roberto Dreyfus, Nonoy)
-    Responsibilities: Post-Module 2 handoff - Channel B danger-zone field verification
+    Unified field desk: Ronda (includes on-site / caretaker duties) and Field personnel.
+    Channel B danger-zone field verification (CDRRMO) after Module 2 handoff.
     """
-    if request.user.position not in ['ronda', 'field']:
-        messages.error(request, 'Access denied. This dashboard is for Field Personnel only.')
+    if request.user.position not in FIELD_DESK_POSITIONS:
+        messages.error(
+            request,
+            'Access denied. This dashboard is for field desk staff (Ronda or Field) only.',
+        )
         return redirect('accounts:dashboard')
 
     # ==================== CHANNEL B FIELD VERIFICATION ====================
@@ -1141,7 +1154,7 @@ def dashboard_field(request):
 
     aging_count = len(aging_verifications)
 
-    # Team workload (assuming 3 field team members)
+    # Team workload (field desk roles; ronda subsumes former caretaker)
     FIELD_TEAM_SIZE = 3
     avg_per_member = int(total_pending / FIELD_TEAM_SIZE) if total_pending > 0 else 0
 

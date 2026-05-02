@@ -18,6 +18,17 @@ from units.models import (
     HousingUnit, LotAward, RelocationSite, ComplianceNotice,
     OccupancyReport, OccupancyReportDetail, CaseRecord, CaseUpdate, WeeklyReport
 )
+from accounts.models import FIELD_DESK_POSITIONS
+
+
+def _user_can_submit_occupancy(user, site):
+    """Field desk may submit only when assigned as this site's caretaker (RelocationSite.caretaker FK)."""
+    pos = getattr(user, 'position', None)
+    if pos not in FIELD_DESK_POSITIONS or site is None:
+        return False
+    if site.caretaker_id is None:
+        return False
+    return site.caretaker_id == user.id
 
 
 # =============================================================================
@@ -203,71 +214,65 @@ def process_compliance_notice(request, position):
 def occupancy_report_form(request, position):
     """
     UI #22: Occupancy Report Form
-    Process 8: Occupancy Validation - Weekly caretaker report
+    Process 8: Occupancy Validation — weekly report by site-assigned ronda (caretaker duties).
 
-    Actor: Caretaker (e.g., Arcadio Lobaton at GK Cabatangan)
-    Purpose: Submit weekly occupancy status for all units at the site
-
-    GET: Display form with all units at caretaker's site
-         Pre-fill with last week's report if exists
+    GET: Display form with all units at the user's assigned relocation site.
 
     URL Route: /units/occupancy-report/<position>/
     """
 
-    # Get caretaker's assigned site
-    # Try to get site from user profile or request
     try:
-        # For caretaker: they should have site assignment
-        # For staff: they might not have a specific site
-        caretaker_site = getattr(request.user, 'caretaker_site', None)
+        site = RelocationSite.objects.filter(caretaker=request.user).first()
 
-        if not caretaker_site:
-            # Check if user is caretaker role
-            if not hasattr(request.user, 'position') or request.user.position != 'caretaker':
-                # Non-caretaker can view but not submit
-                sites = RelocationSite.objects.all()
-                caretaker_site = sites.first() if sites.exists() else None
-            else:
-                return render(request, 'staff/access_denied.html',
-                              {'message': 'No site assigned to your account.'}, status=403)
-    except:
-        caretaker_site = RelocationSite.objects.first()
+        if not site:
+            pos = getattr(request.user, 'position', None)
+            if pos in FIELD_DESK_POSITIONS:
+                return render(
+                    request,
+                    'staff/access_denied.html',
+                    {
+                        'message': (
+                            'No relocation site lists your account as site caretaker. '
+                            'Ask an administrator to assign you on the relocation site record.'
+                        ),
+                    },
+                    status=403,
+                )
+            sites = RelocationSite.objects.all()
+            site = sites.first() if sites.exists() else None
+    except Exception:
+        site = RelocationSite.objects.first()
 
-    if not caretaker_site:
+    if not site:
         return render(request, 'staff/error.html',
                       {'error': 'No sites configured in system.'}, status=404)
 
-    # Get all units at site (regardless of status)
-    units = HousingUnit.objects.filter(site=caretaker_site).order_by('block_number', 'lot_number')
+    units = HousingUnit.objects.filter(site=site).order_by('block_number', 'lot_number')
 
-    # Get this week's dates
     today = timezone.now().date()
-    week_start = today - timedelta(days=today.weekday())  # Monday
-    week_end = week_start + timedelta(days=4)  # Friday
+    week_start = today - timedelta(days=today.weekday())
+    week_end = week_start + timedelta(days=4)
 
-    # Check if report already exists for this week
     existing_report = OccupancyReport.objects.filter(
-        site=caretaker_site,
+        site=site,
         report_week_start=week_start
     ).first()
 
-    # Get last week's report for pre-fill
     last_week_start = week_start - timedelta(days=7)
     last_week_report = OccupancyReport.objects.filter(
-        site=caretaker_site,
+        site=site,
         report_week_start=last_week_start
     ).prefetch_related('details').first()
 
-    # Prepare context
     context = {
-        'site': caretaker_site,
+        'site': site,
         'units': units,
         'week_start': week_start,
         'week_end': week_end,
         'existing_report': existing_report,
         'last_week_report': last_week_report,
         'unit_count': units.count(),
-        'can_submit': request.user.position == 'caretaker' if hasattr(request.user, 'position') else False,
+        'can_submit': _user_can_submit_occupancy(request.user, site),
     }
 
     return render(request, 'units/occupancy_report_form.html', context)
@@ -305,13 +310,13 @@ def submit_occupancy_report(request, position):
         week_start = datetime.strptime(report_week_start_str, '%Y-%m-%d').date()
         week_end = week_start + timedelta(days=4)
 
-        # Get site
         site = RelocationSite.objects.get(id=site_id)
 
-        # Authorization: Only caretaker assigned to this site can submit
-        if hasattr(request.user, 'position') and request.user.position == 'caretaker':
-            if not hasattr(request.user, 'caretaker_site') or request.user.caretaker_site.id != site_id:
-                return JsonResponse({'success': False, 'error': 'Not authorized for this site'})
+        pos = getattr(request.user, 'position', None)
+        if pos not in FIELD_DESK_POSITIONS:
+            return JsonResponse({'success': False, 'error': 'Not authorized'}, status=403)
+        if site.caretaker_id != request.user.id:
+            return JsonResponse({'success': False, 'error': 'Not authorized for this site'}, status=403)
 
         # Delete existing report for this week (if any)
         OccupancyReport.objects.filter(
@@ -395,7 +400,7 @@ def occupancy_review_list(request, position):
     Process 8: Occupancy Validation - Field team perspective
 
     Actor: Field Team (Paul, Roberto, Nonoy)
-    Purpose: Review and confirm/flag caretaker occupancy reports
+    Purpose: Review and confirm/flag ronda / site occupancy reports
 
     GET: Display all pending occupancy reports awaiting field team confirmation
 

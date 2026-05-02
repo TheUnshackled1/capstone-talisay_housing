@@ -42,15 +42,14 @@ class Command(BaseCommand):
                 'last_name': 'Hellera',
                 'position': 'fifth_member',
             },
-            # Caretaker
+            # Field desk — ronda includes former caretaker duties; FIELD_DESK_POSITIONS = ronda + field.
             {
-                'username': 'nonoy.caretaker',
+                'username': 'nonoy.cura',
                 'email': 'nonoy@talisayhousing.gov.ph',
                 'first_name': 'Nonoy',
                 'last_name': 'Cura',
-                'position': 'caretaker',
+                'position': 'ronda',
             },
-            # Ronda / Field Personnel
             {
                 'username': 'paul.betila',
                 'email': 'paul.betila@talisayhousing.gov.ph',
@@ -64,13 +63,6 @@ class Command(BaseCommand):
                 'first_name': 'Roberto',
                 'last_name': 'Dreyfus',
                 'position': 'ronda',
-            },
-            {
-                'username': 'field.team',
-                'email': 'field@talisayhousing.gov.ph',
-                'first_name': 'Field',
-                'last_name': 'Team',
-                'position': 'field',
             },
         ]
 
