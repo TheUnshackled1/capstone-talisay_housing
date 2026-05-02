@@ -5,6 +5,7 @@ app_name = 'documents'
 
 urlpatterns = [
     path('<str:position>/management/', views.document_management, name='management'),
+    path('<str:position>/blob/<uuid:doc_id>/', views.download_document_blob, name='blob_download'),
     path('<str:position>/api/upload/', views.upload_document, name='upload'),
     path('<str:position>/api/mark-present/', views.mark_document_present, name='mark_present'),
     path('<str:position>/api/applicant-documents/', views.get_applicant_documents, name='get_documents'),

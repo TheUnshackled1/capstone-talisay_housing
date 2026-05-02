@@ -1,12 +1,30 @@
-from django.db import models
+from django.db import models, transaction
 from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
 import uuid
+
+
+class DocumentQuerySet(models.QuerySet):
+    def with_file_payload(self):
+        return self.filter(
+            models.Q(blob_record__isnull=False)
+            | (models.Q(file__isnull=False) & ~models.Q(file=''))
+        )
+
+
+DocumentManager = models.Manager.from_queryset(DocumentQuerySet)
 
 
 class Document(models.Model):
     """
     Centralized digital archive for all applicant/beneficiary documents.
     Replaces physical folders as primary working reference.
+
+    Hazard / Option A invariant — do not collapse these into one vault slot:
+    - ``document_type='incident_report'``: written or scanned incident report in the vault only.
+    - On-site verification photographs: stored as ``applications.FieldVerificationPhoto`` on the
+      applicant's ``CDRRMOCertification`` (``field_photos``), never as ``Document(incident_report)``.
+      Field desk code must not create ``Document`` rows for those images.
     """
     DOCUMENT_TYPE_CHOICES = [
         # Group A - Applicant Requirements
@@ -65,8 +83,8 @@ class Document(models.Model):
     title = models.CharField(max_length=255, blank=True)
     description = models.TextField(blank=True)
     
-    # File storage
-    file = models.FileField(upload_to='documents/%Y/%m/')
+    # File storage (nullable when payload lives in DocumentBlob — e.g. intake scans)
+    file = models.FileField(upload_to='documents/%Y/%m/', null=True, blank=True)
     file_name = models.CharField(max_length=255)
     file_size = models.PositiveIntegerField(help_text="File size in bytes")
     mime_type = models.CharField(max_length=100, blank=True)
@@ -81,7 +99,9 @@ class Document(models.Model):
     )
     
     notes = models.TextField(blank=True)
-    
+
+    objects = DocumentManager()
+
     class Meta:
         ordering = ['-uploaded_at']
         verbose_name = "Document"
@@ -107,6 +127,92 @@ class Document(models.Model):
             return f"{self.file_size / 1024:.1f} KB"
         else:
             return f"{self.file_size / (1024 * 1024):.1f} MB"
+
+    def absolute_download_url(self, request):
+        """Staff-facing absolute URL: blob endpoint or MEDIA file URL."""
+        from django.urls import reverse
+
+        user = getattr(request, 'user', None)
+        position = getattr(user, 'position', None) if user else None
+        if position:
+            try:
+                self.blob_record
+            except ObjectDoesNotExist:
+                pass
+            else:
+                path = reverse(
+                    'documents:blob_download',
+                    kwargs={'position': position, 'doc_id': self.pk},
+                )
+                return request.build_absolute_uri(path)
+        if self.file:
+            return request.build_absolute_uri(self.file.url)
+        return ''
+
+
+class DocumentBlob(models.Model):
+    """Binary vault payload linked 1:1 to Document (used by intake scanner uploads)."""
+
+    document = models.OneToOneField(
+        Document,
+        on_delete=models.CASCADE,
+        related_name='blob_record',
+    )
+    data = models.BinaryField()
+
+    class Meta:
+        verbose_name = 'Document blob'
+        verbose_name_plural = 'Document blobs'
+
+    def __str__(self):
+        return f'Blob for {self.document_id}'
+
+
+@transaction.atomic
+def upsert_document_vault_upload(
+    *,
+    applicant,
+    document_type,
+    uploaded_file,
+    title,
+    uploaded_by,
+):
+    """
+    Create or replace a vault Document for this applicant/type.
+    Stores bytes in DocumentBlob and clears FileField so scans do not require disk writes.
+
+    When ``document_type == 'incident_report'``, this must remain the formal incident-report file only —
+    not Ronda/field verification photos (those stay ``FieldVerificationPhoto`` records).
+    """
+    raw = uploaded_file.read()
+    if not raw:
+        raise ValueError('Empty upload')
+
+    existing = Document.objects.filter(
+        applicant=applicant,
+        document_type=document_type,
+    ).first()
+    if existing and existing.file:
+        existing.file.delete(save=False)
+
+    doc, created = Document.objects.update_or_create(
+        applicant=applicant,
+        document_type=document_type,
+        defaults={
+            'title': title,
+            'file_name': uploaded_file.name,
+            'file_size': len(raw),
+            'mime_type': getattr(uploaded_file, 'content_type', '') or '',
+            'uploaded_by': uploaded_by,
+            'file': None,
+        },
+    )
+
+    DocumentBlob.objects.update_or_create(
+        document=doc,
+        defaults={'data': raw},
+    )
+    return doc, created
 
 
 class Requirement(models.Model):

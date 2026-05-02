@@ -14,6 +14,7 @@ urlpatterns = [
     path('staff/<str:position>/evaluate-precheck/', views.evaluate_precheck, name='evaluate_precheck'),
     path('staff/<str:position>/eligibility-snapshot/', views.eligibility_snapshot, name='eligibility_snapshot'),
     path('staff/<str:position>/save-eligibility-check-decision/', views.save_eligibility_check_decision, name='save_eligibility_check_decision'),
+    path('staff/<str:position>/notify-ronda/', views.notify_ronda_for_situation, name='notify_ronda_for_situation'),
     path('staff/<str:position>/mark-situation-certified/', views.mark_situation_certified, name='mark_situation_certified'),
     path('staff/<str:position>/proceed-to-form-queue/', views.proceed_to_form_queue, name='proceed_to_form_queue'),
 
@@ -23,6 +24,11 @@ urlpatterns = [
 
     # Form generation (Jocel, Joie)
     path('staff/<str:position>/generate-form/<uuid:applicant_id>/', views.generate_form, name='generate_form'),
+    path(
+        'staff/<str:position>/application-form-pdf/<uuid:applicant_id>/',
+        views.application_form_pdf,
+        name='application_form_pdf',
+    ),
 
     # Move to standby queue (Jocel, Joie)
     path('staff/<str:position>/move-to-standby/', views.move_to_standby, name='move_to_standby'),

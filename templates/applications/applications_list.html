@@ -3478,7 +3478,7 @@
 
     {% if permissions.can_generate_form and ready_for_form_queue_count > 0 %}
     <div style="margin-bottom:0.85rem;padding:0.65rem 0.85rem;background:linear-gradient(135deg,#ecfdf5 0%,#d1fae5 100%);border:1px solid #86efac;border-radius:0.65rem;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:0.5rem;font-size:0.78rem;color:#065f46;text-align:center;">
-        <span><strong>{{ ready_for_form_queue_count }}</strong> applicant{{ ready_for_form_queue_count|pluralize }} in Go to Form.</span>
+        <span><strong>{{ ready_for_form_queue_count }}</strong> routed applicant{{ ready_for_form_queue_count|pluralize }} on <strong>Go to Form</strong> (generate / print-sign pipeline).</span>
         <a href="{% url 'applications:ready_for_form_queue' request.user.position %}" style="font-weight:700;color:#047857;text-decoration:underline;">Open Go to Form</a>
     </div>
     {% endif %}
@@ -3500,7 +3500,7 @@
             {% if permissions.can_generate_form %}
             <a href="{% url 'applications:ready_for_form_queue' request.user.position %}"
                 style="display:inline-flex;align-items:center;gap:0.35rem;padding:0.5rem 0.85rem;background:#15803d;color:#fff;border-radius:0.5rem;font-size:0.74rem;font-weight:700;text-decoration:none;border:1px solid #166534;white-space:nowrap;box-shadow:0 1px 2px rgba(15,23,42,0.08);"
-                title="Open the focused list of applicants who are Ready for Form and cleared to Generate Form">
+                title="Routed Proceed-to-Form queue: Generate Form or continue print-and-sign until Fully Approved">
                 Go to Form
                 {% if ready_for_form_queue_count > 0 %}
                 <span style="background:rgba(255,255,255,0.28);padding:0.1rem 0.42rem;border-radius:9999px;font-size:0.66rem;line-height:1;">{{ ready_for_form_queue_count }}</span>
@@ -3611,6 +3611,8 @@
                         <div class="col-status-wrap">
                         {% if data.m2_evaluator.blacklist_blocked %}
                         <span class="m2-readiness-chip blocked">Blocked - Blacklisted</span>
+                        {% elif data.form_generated %}
+                        <span class="m2-readiness-chip {% if data.application.status == 'routing' %}pending{% elif data.application.status == 'awarded' %}followup{% else %}ready{% endif %}">{{ data.current_stage }}</span>
                         {% elif not data.m2_evaluator.required_docs_complete %}
                         <span class="m2-readiness-chip pending">Docs Incomplete</span>
                         {% elif data.m2_evaluator.situation_docs_required and not data.m2_evaluator.situation_docs_ready %}
@@ -3626,51 +3628,37 @@
                         {% else %}
                         <span class="m2-readiness-chip pending">Under Review</span>
                         {% endif %}
-                        {% if data.m2_evaluator.readiness_hint %}
+                        {% if data.form_generated %}
+                        <div class="m2-readiness-hint">{{ data.application.application_number }}</div>
+                        {% elif data.m2_evaluator.readiness_hint %}
                         <div class="m2-readiness-hint">{{ data.m2_evaluator.readiness_hint }}</div>
                         {% endif %}
                         </div>
                     </td>
-                    <td class="col-actions" style="vertical-align: top; padding-top: 0.5rem;">
-                        <!-- Stacked: workflow status → handoff audit → action buttons -->
-                        <div style="display: flex; flex-direction: column; align-items: center; gap: 0.32rem; min-width: 7.5rem;">
-                            {% if data.m2_evaluator.form_generation_ready %}
-                            <span style="display:inline-flex;align-items:center;gap:0.18rem;padding:0.14rem 0.42rem;background:#dcfce7;color:#166534;border:1px solid #86efac;border-radius:9999px;font-size:0.5625rem;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;">Ready for Form</span>
-                            {% elif data.m2_evaluator.blacklist_blocked %}
-                            <span style="display:inline-flex;align-items:center;gap:0.18rem;padding:0.14rem 0.42rem;background:#fee2e2;color:#991b1b;border:1px solid #fecaca;border-radius:9999px;font-size:0.5625rem;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;">Blacklist</span>
-                            {% elif data.m2_evaluator.has_failed_checks %}
-                            <span style="display:inline-flex;align-items:center;gap:0.18rem;padding:0.14rem 0.42rem;background:#fef3c7;color:#92400e;border:1px solid #fde68a;border-radius:9999px;font-size:0.5625rem;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;">Follow-up</span>
-                            {% else %}
-                            <span style="display:inline-flex;align-items:center;gap:0.18rem;padding:0.14rem 0.42rem;background:#dbeafe;color:#1e40af;border:1px solid #93c5fd;border-radius:9999px;font-size:0.5625rem;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;">In review</span>
+                    <td class="col-actions">
+                        <div style="display: flex; gap: 0.25rem; flex-wrap: wrap; justify-content: center; align-items: center;">
+                            <button type="button" class="btn-review btn-review-walkin"
+                                onclick="runEvaluatePrecheck('{{ data.applicant.id }}', '{{ data.applicant.full_name|escapejs }}')">
+                                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="9" cy="7" r="4"></circle>
+                                    <polyline points="16 11 18 13 22 9"></polyline>
+                                </svg>
+                                Evaluate
+                            </button>
+                            {% if 'generate_form' in data.user_actions %}
+                            <button class="action-btn" style="background: #dcfce7; color: #16a34a;"
+                                onclick="proceedToFormQueue('{{ data.applicant.id }}')">
+                                Proceed to Form
+                            </button>
                             {% endif %}
-                            <div style="font-size:0.5625rem;color:#64748b;line-height:1.4;text-align:center;">
-                                Handed off {{ data.applicant.module2_handoff_at|default:data.applicant.created_at|date:"n/j/Y, P" }}
-                                {% if data.applicant.module2_handoff_by %}<br>by {{ data.applicant.module2_handoff_by.get_full_name }}{% endif %}
-                            </div>
-                            <div style="display: flex; gap: 0.25rem; flex-wrap: wrap; justify-content: center; align-items: center;">
-                                <button type="button" class="btn-review btn-review-walkin"
-                                    onclick="runEvaluatePrecheck('{{ data.applicant.id }}', '{{ data.applicant.full_name|escapejs }}')">
-                                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
-                                        <circle cx="9" cy="7" r="4"></circle>
-                                        <polyline points="16 11 18 13 22 9"></polyline>
-                                    </svg>
-                                    Evaluate
-                                </button>
-                                {% if 'generate_form' in data.user_actions %}
-                                <button class="action-btn" style="background: #dcfce7; color: #16a34a;"
-                                    onclick="proceedToFormQueue('{{ data.applicant.id }}')">
-                                    Proceed to Form
-                                </button>
-                                {% endif %}
 
-                                {% if 'award_lot' in data.user_actions %}
-                                <button class="action-btn" style="background: #f3e8ff; color: #7c3aed;"
-                                    onclick="openAwardModal('{{ data.application.id }}', '{{ data.applicant.full_name }}')">
-                                    🏠 Award Lot
-                                </button>
-                                {% endif %}
-                            </div>
+                            {% if 'award_lot' in data.user_actions %}
+                            <button class="action-btn" style="background: #f3e8ff; color: #7c3aed;"
+                                onclick="openAwardModal('{{ data.application.id }}', '{{ data.applicant.full_name }}')">
+                                🏠 Award Lot
+                            </button>
+                            {% endif %}
                         </div>
                     </td>
                 </tr>
@@ -4341,6 +4329,14 @@
     function getEligibilityStatusUi(overall) {
         const data = overall || {};
         if (data.blacklist_blocked) return { label: 'Blocked - Blacklisted', cls: 'blocked', title: '' };
+        if (data.has_application) {
+            const label = String(data.application_stage_label || 'Form Released').trim() || 'Form Released';
+            const st = String(data.application_status || '').trim();
+            let cls = 'ready';
+            if (st === 'routing') cls = 'pending';
+            else if (st === 'awarded') cls = 'followup';
+            return { label, cls, title: '' };
+        }
         if (!data.required_docs_complete) return { label: 'Docs Incomplete', cls: 'pending', title: '' };
         if (data.situation_docs_ready === false) return { label: 'Needs Situation Docs', cls: 'pending', title: '' };
         if (String(data.certification_status || '') === 'pending') return { label: 'Pending Certification', cls: 'pending', title: '' };
@@ -4364,7 +4360,10 @@
         const container = row.querySelector('.col-eligibility .col-status-wrap');
         if (!container) return;
         const status = getEligibilityStatusUi(overall || {});
-        const hint = String((overall && overall.readiness_hint) || '').trim();
+        let hint = String((overall && overall.readiness_hint) || '').trim();
+        if (overall && overall.has_application) {
+            hint = String((overall.application_number || '')).trim();
+        }
         container.innerHTML = `
             <span class="m2-readiness-chip ${status.cls}"${status.title ? ` title="${escapeHtml(status.title)}"` : ''}>${escapeHtml(status.label)}</span>
             ${hint ? `<div class="m2-readiness-hint">${escapeHtml(hint)}</div>` : ''}

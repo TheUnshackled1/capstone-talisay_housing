@@ -12,7 +12,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from functools import wraps
 from .models import Applicant, Barangay, Archive, SMSLog
 from applications.models import QueueEntry
-from documents.models import Document, Requirement
+from documents.models import Document, Requirement, upsert_document_vault_upload
 from .forms import (
     HouseholdMemberForm,
     WalkInApplicantForm
@@ -639,17 +639,12 @@ def upload_scanned_requirement(request, position):
     label_map = dict(Document.DOCUMENT_TYPE_CHOICES)
     doc_title = f"{applicant.full_name} - {label_map.get(document_type, document_type)}"
 
-    doc, created = Document.objects.update_or_create(
+    doc, created = upsert_document_vault_upload(
         applicant=applicant,
         document_type=document_type,
-        defaults={
-            'title': doc_title,
-            'file': uploaded_file,
-            'file_name': uploaded_file.name,
-            'file_size': uploaded_file.size,
-            'mime_type': getattr(uploaded_file, 'content_type', '') or '',
-            'uploaded_by': request.user,
-        },
+        uploaded_file=uploaded_file,
+        title=doc_title,
+        uploaded_by=request.user,
     )
 
     if hasattr(applicant, doc_key):
@@ -663,7 +658,7 @@ def upload_scanned_requirement(request, position):
         'created': created,
         'doc_code': doc_code,
         'doc_type': document_type,
-        'document_url': doc.file.url if getattr(doc, 'file', None) else '',
+        'document_url': doc.absolute_download_url(request),
         'document_name': doc.file_name or (uploaded_file.name if uploaded_file else ''),
     })
 
@@ -1142,7 +1137,8 @@ def applicants_list(request, position):
             docs_by_applicant_id[aid].add(doc_type)
         latest_docs = (
             Document.objects.filter(applicant_id__in=applicant_ids_for_docs)
-            .exclude(file='')
+            .with_file_payload()
+            .select_related('blob_record')
             .order_by('applicant_id', 'document_type', '-uploaded_at')
         )
         for doc in latest_docs:
@@ -1152,12 +1148,8 @@ def applicants_list(request, position):
             slot = latest_doc_meta_by_applicant_id[doc.applicant_id]
             if dtype in slot:
                 continue
-            try:
-                file_url = request.build_absolute_uri(doc.file.url)
-            except (ValueError, AttributeError):
-                file_url = ''
             slot[dtype] = {
-                'url': file_url,
+                'url': doc.absolute_download_url(request),
                 'name': (doc.file_name or doc.title or doc.get_document_type_display() or '').strip(),
             }
 

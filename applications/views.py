@@ -2,7 +2,9 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
-from django.http import JsonResponse
+import io
+
+from django.http import FileResponse, JsonResponse
 from django.views.decorators.http import require_POST
 from django.db.models import Count, Q, Prefetch, Max
 from django.db import IntegrityError, transaction
@@ -27,10 +29,13 @@ from .models import (
     Application, QueueEntry, CDRRMOCertificationProxy, CDRRMOCertification, FieldVerificationPhoto, EligibilityCheckDecision,
 )
 from .utils import check_blacklist_module2, send_sms_for_applications
+from .application_form_pdf import build_filled_application_pdf
 
 MODULE1_MONTHLY_INCOME_CEILING_PESO = 10000
 # Application & Evaluation list: records per page (Module 2 ledger)
 MODULE2_LIST_PER_PAGE = 20
+# Routed “Proceed to Form” applicants stay on Ready for Form until Application leaves this pipeline.
+_MODULE2_FORM_PIPELINE_STATUSES = frozenset({'draft', 'routing', 'completed'})
 # Minimum years of residence in Talisay City for Module 2 Layer 2 (2.6) eligibility.
 # Mirror of `MODULE1_MIN_YEARS_RESIDING_TALISAY` in intake/views.py — keep in sync.
 MODULE1_MIN_YEARS_RESIDING_TALISAY = 5
@@ -567,7 +572,7 @@ def _module2_eligibility_snapshot(applicant, checked_by=None):
             )
         elif field_evidence_required and field_evidence_status == 'missing':
             readiness_hint = (
-                'Compliance: attach at least one on-site verification photo on the CDRRMO record (Field Verification Desk).'
+                'Compliance: attach at least one Ronda / field verification photo on the CDRRMO record.'
             )
         elif has_failed_checks:
             labels = [ELIGIBILITY_CHECK_LABELS.get(k, k.replace('_', ' ')) for k in failed_check_keys]
@@ -751,6 +756,42 @@ def _module2_evaluations_applicants_queryset():
     ).order_by('module2_handoff_at', 'created_at', 'id')
 
 
+def _module2_application_overall_snapshot(application):
+    """Fields merged into eligibility_snapshot ``overall`` for ledger / polling parity."""
+    if not application:
+        return {
+            'has_application': False,
+            'application_number': '',
+            'application_status': '',
+            'application_stage_label': '',
+        }
+    st = (application.status or '').strip()
+    num = (application.application_number or '').strip()
+    if st == 'awarded':
+        stage = 'Lot Awarded'
+    elif st in ('oic_signed', 'standby'):
+        stage = 'Fully Approved'
+    elif st in ('routing', 'draft', 'completed'):
+        stage = 'Form Released'
+    else:
+        stage = 'Form Released'
+    return {
+        'has_application': True,
+        'application_number': num,
+        'application_status': st,
+        'application_stage_label': stage,
+    }
+
+
+def _module2_on_ready_for_form_queue_track(applicant, application):
+    """True while the applicant belongs on Ready for Form (hidden from the main ledger)."""
+    if not getattr(applicant, 'form_queue_routed_at', None):
+        return False
+    if application is None:
+        return True
+    return application.status in _MODULE2_FORM_PIPELINE_STATUSES
+
+
 def _module2_applicant_row_payload(applicant, permissions, required_group_a_submission_total, acted_by_user):
     """
     Build one Application & Evaluation row dict.
@@ -891,9 +932,14 @@ def applications_list(request, position):
         ).count(),
         'form_released': applicants.filter(
             application__status__in=['draft', 'completed']
+        ).exclude(
+            form_queue_routed_at__isnull=False,
+            application__status__in=['draft', 'completed'],
         ).count(),
         'signatory_routing': applicants.filter(
             application__status='routing'
+        ).exclude(
+            form_queue_routed_at__isnull=False,
         ).count(),
         'fully_approved': applicants.filter(
             application__status__in=['oic_signed', 'standby']
@@ -921,12 +967,11 @@ def applications_list(request, position):
         )
         if row is None:
             continue
-        ev = row['m2_evaluator']
-        is_routed_to_queue = bool(applicant.form_queue_routed_at) and row['application'] is None
-        if ev.get('form_generation_ready') and is_routed_to_queue and 'generate_form' in row['user_actions']:
+        on_rfq_track = _module2_on_ready_for_form_queue_track(applicant, row['application'])
+        if on_rfq_track:
             ready_for_form_queue_count += 1
-        # True handoff behavior: once routed to Ready for Form queue, hide from main ledger.
-        if is_routed_to_queue:
+        # Routed Proceed-to-Form applicants stay on Ready for Form until Application advances past draft/routing/completed.
+        if on_rfq_track:
             continue
         applicants_data.append(row)
     
@@ -996,7 +1041,8 @@ def applications_list(request, position):
 @verify_position
 def ready_for_form_queue(request, position):
     """
-    Focused queue: applicants who are evaluator-ready AND staff may Generate Form.
+    Routed Proceed-to-Form queue: pending Generate Form, then Form Released pipeline (draft/routing/completed)
+    until fully approved — hidden from the main Application & Evaluation ledger during that window.
     URL: /applications/<position>/ready-for-form/
     """
     allowed_positions = ['fourth_member', 'second_member', 'fifth_member', 'oic']
@@ -1029,7 +1075,7 @@ def ready_for_form_queue(request, position):
         )
         if row is None:
             continue
-        if row['application'] is None and bool(applicant.form_queue_routed_at):
+        if _module2_on_ready_for_form_queue_track(applicant, row['application']):
             applicants_data.append(row)
 
     ready_queue_total = len(applicants_data)
@@ -1744,6 +1790,7 @@ def field_verify_cdrrmo(request, position):
         cert.certification_notes = verification_notes if verification_notes else ''
         cert.save()
 
+        # Evidence photos MUST stay FieldVerificationPhoto rows only — never Document(incident_report).
         photos = request.FILES.getlist('evidence_photos')
         max_photos = 12
         max_bytes = 6 * 1024 * 1024
@@ -1934,8 +1981,8 @@ def _situation_certification_gate(applicant):
     Required uploads/evidence before Module 2 staff finish the situation step.
     Option D: informational only — no situation-specific vault uploads; staff uses Continue.
     Option A: (1) vault “CDRRMO Certification”; (2) vault “Incident report” (written report,
-    scan/upload by intake staff); (3) “Site photographs” on the CDRRMO field record from the
-    Field verification desk — complementary evidence (photos are not stored as vault Document rows).
+    scan/upload only — separate from photos); (3) site photographs on the CDRRMO field record via
+    FieldVerificationPhoto (never vault incident_report — no shared vault slot).
     Options B/C: at least one ISF situational supporting document with labels keyed to situation.
     """
     dr = (applicant.displacement_reason or '').strip()
@@ -2003,8 +2050,8 @@ def _situation_certification_gate(applicant):
                 'label': 'Site photographs (field verification)',
                 'detail': (
                     f'{field_photo_count} photo(s) on the applicant’s CDRRMO field record. '
-                    'Field inspectors attach images under Site photographs (supporting evidence) when submitting '
-                    'field certification (Dashboard → Field verification desk — post-Module 2 handoff). '
+                    'Field inspectors attach images when submitting field certification '
+                    '(Dashboard → Field verification desk). '
                     'These are not the same files as vault type “Incident report”.'
                 ),
                 'done': field_photo_count >= 1,
@@ -2348,10 +2395,10 @@ def eligibility_snapshot(request, position):
             _cert_row['vault_scan_url'] = (
                 f'{vault_mgmt_path}?{urlencode({**_base_cert_q, "intent": "scan"})}'
             )
-            doc = applicant.documents.exclude(file='').filter(document_type=dt).order_by('-uploaded_at').first()
+            doc = applicant.documents.filter(document_type=dt).order_by('-uploaded_at').first()
             if doc:
                 try:
-                    doc_url = request.build_absolute_uri(doc.file.url)
+                    doc_url = doc.absolute_download_url(request)
                 except (ValueError, AttributeError):
                     doc_url = ''
                 if doc_url:
@@ -2359,13 +2406,14 @@ def eligibility_snapshot(request, position):
                         'url': doc_url,
                         'name': (doc.file_name or doc.title or doc.get_document_type_display() or '').strip(),
                     }
-    for _cert_row in situation_cert_gate.get('checks') or []:
-        if (_cert_row.get('key') or '').strip() == 'field_site_photos':
+        sit_key = (_cert_row.get('key') or '').strip()
+        if sit_key == 'field_site_photos':
+            _cert_row['field_portal_url'] = reverse('accounts:dashboard_field')
             photo_urls = []
             try:
                 cert = applicant.cdrrmo_certification
                 for ph in cert.field_photos.all():
-                    if ph.image:
+                    if getattr(ph, 'image', None):
                         try:
                             photo_urls.append(request.build_absolute_uri(ph.image.url))
                         except (ValueError, AttributeError):
@@ -2373,6 +2421,7 @@ def eligibility_snapshot(request, position):
             except CDRRMOCertification.DoesNotExist:
                 pass
             _cert_row['field_photo_urls'] = photo_urls
+
     return JsonResponse({
         'success': True,
         'applicant_id': str(applicant.id),
@@ -2400,6 +2449,7 @@ def eligibility_snapshot(request, position):
             'situation_docs_ready': bool(rules.get('situation_docs_ready')),
             'readiness_hint': rules.get('readiness_hint') or '',
             'has_failed_checks': bool(rules.get('has_failed_checks')),
+            **_module2_application_overall_snapshot(getattr(applicant, 'application', None)),
         },
         'blockers': list(rules.get('blockers') or []),
         'advisories': list(rules.get('advisories') or []),
@@ -2494,6 +2544,53 @@ def save_eligibility_check_decision(request, position):
         response_payload['sms_detail'] = sms_detail
         response_payload['sms_requested'] = notify_flag
     return JsonResponse(response_payload)
+
+
+@login_required
+@verify_position
+@require_POST
+def notify_ronda_for_situation(request, position):
+    allowed_positions = ['fourth_member', 'second_member', 'oic']
+    if request.user.position not in allowed_positions:
+        return JsonResponse({'success': False, 'error': 'Permission denied.'}, status=403)
+
+    applicant_id = request.POST.get('applicant_id')
+    if not applicant_id:
+        return JsonResponse({'success': False, 'error': 'Missing applicant_id.'}, status=400)
+
+    applicant = get_object_or_404(Applicant, id=applicant_id)
+    handoff_error = _require_intake_archive(applicant)
+    if handoff_error:
+        return handoff_error
+
+    displacement_reason = (applicant.displacement_reason or '').strip()
+    if displacement_reason != 'danger_zone':
+        return JsonResponse({'success': False, 'error': 'Notify Ronda is only available for Option A (danger zone).'}, status=400)
+
+    cert = getattr(applicant, 'cdrrmo_certification', None)
+    if cert is None:
+        cert = CDRRMOCertification.objects.create(
+            applicant=applicant,
+            requested_by=request.user,
+            status='pending',
+            declared_location=(applicant.danger_zone_location or applicant.danger_zone_type or '').strip() or 'Declared hazard area',
+            disposition_source='pending',
+        )
+    elif cert.status != 'pending':
+        cert.status = 'pending'
+        cert.disposition_source = 'pending'
+        cert.result_recorded_by = None
+        cert.certified_at = None
+        cert.certification_notes = ''
+        cert.office_intake_notes = ''
+        cert.save(update_fields=['status', 'disposition_source', 'result_recorded_by', 'certified_at', 'certification_notes', 'office_intake_notes'])
+
+    applicant.status = 'pending_cdrrmo'
+    applicant.save(update_fields=['status', 'updated_at'])
+    return JsonResponse({
+        'success': True,
+        'message': 'Ronda has been notified. Applicant is now pending CDRRMO field verification.',
+    })
 
 
 @login_required
@@ -2877,7 +2974,10 @@ def generate_form(request, position, applicant_id):
             'error': 'Permission denied. Only Jocel or Joie can generate forms.'
         }, status=403)
     
-    applicant = get_object_or_404(Applicant, id=applicant_id)
+    applicant = get_object_or_404(
+        Applicant.objects.select_related('barangay').prefetch_related('household_members'),
+        id=applicant_id,
+    )
     handoff_error = _require_intake_archive(applicant)
     if handoff_error:
         return handoff_error
@@ -2922,29 +3022,78 @@ def generate_form(request, position, applicant_id):
             'success': False,
             'error': 'Application form already generated.'
         })
-    
-    # Create application
-    application = Application.objects.create(
-        applicant=applicant,
-        form_generated_by=request.user,
-        status='draft'
-    )
-    
-    # Update applicant status
-    applicant.status = 'application'
-    applicant.save()
-    
-    # Send SMS notification
+
+    try:
+        with transaction.atomic():
+            application = Application.objects.create(
+                applicant=applicant,
+                form_generated_by=request.user,
+                status='draft'
+            )
+            applicant.status = 'application'
+            applicant.save(update_fields=['status'])
+            build_filled_application_pdf(applicant, application)
+    except FileNotFoundError as exc:
+        logger.error('generate_form missing PDF template: %s', exc)
+        return JsonResponse({'success': False, 'error': str(exc)}, status=500)
+    except Exception as exc:
+        logger.exception('generate_form PDF build failed')
+        return JsonResponse(
+            {'success': False, 'error': f'Could not produce application PDF: {exc}'},
+            status=500,
+        )
+
     if applicant.phone_number:
-        from intake import sms_workflow
         message = sms_workflow.message_proceed_to_evaluation(applicant)
         send_sms(applicant.phone_number, message, sms_workflow.PROCEED_TO_EVALUATION, applicant=applicant, module='applications')
-    
+
+    pdf_url = reverse(
+        'applications:application_form_pdf',
+        kwargs={'position': request.user.position, 'applicant_id': applicant.id},
+    )
     return JsonResponse({
         'success': True,
         'application_number': application.application_number,
-        'message': f'Application form {application.application_number} generated successfully.'
+        'pdf_url': pdf_url,
+        'message': f'Application form {application.application_number} generated successfully.',
     })
+
+
+@login_required
+@verify_position
+def application_form_pdf(request, position, applicant_id):
+    """
+    Stream filled APPLICATION-FORM-THA.pdf for viewing or printing.
+
+    Requires an existing Application row (after Generate Form).
+    """
+    allowed_positions = ['fourth_member', 'second_member']
+    if request.user.position not in allowed_positions:
+        return JsonResponse({'success': False, 'error': 'Permission denied.'}, status=403)
+
+    applicant = get_object_or_404(
+        Applicant.objects.select_related('barangay').prefetch_related('household_members'),
+        id=applicant_id,
+    )
+    application = getattr(applicant, 'application', None)
+    if application is None:
+        return JsonResponse(
+            {'success': False, 'error': 'Application form has not been generated for this applicant.'},
+            status=404,
+        )
+
+    try:
+        pdf_bytes = build_filled_application_pdf(applicant, application)
+    except FileNotFoundError as exc:
+        return JsonResponse({'success': False, 'error': str(exc)}, status=500)
+    except Exception as exc:
+        logger.exception('application_form_pdf')
+        return JsonResponse({'success': False, 'error': str(exc)}, status=500)
+
+    filename = f'THA-Application-{application.application_number}.pdf'
+    response = FileResponse(io.BytesIO(pdf_bytes), as_attachment=False, filename=filename)
+    response['Content-Type'] = 'application/pdf'
+    return response
 
 
 # =============================================================================

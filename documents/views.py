@@ -1,8 +1,8 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q, Prefetch
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse, Http404
 from django.views.decorators.http import require_http_methods, require_POST
 from functools import wraps
 import json
@@ -11,6 +11,7 @@ from units.models import LotAward
 from applications.models import QueueEntry
 from documents.models import (
     Document,
+    DocumentBlob,
     RequirementSubmission,
     EndorsementRoutingStep,
 )
@@ -227,7 +228,6 @@ def document_management(request, position):
                 ('lot_award', 'Lot Award Document'),
                 ('electricity_app', 'Electricity Connection Application'),
                 ('cdrrmo_cert', 'CDRRMO Certification'),
-                ('incident_report', 'Incident report'),
                 ('explanation_letter', 'Explanation Letter (compliance)'),
             ]
         }
@@ -277,6 +277,30 @@ def document_management(request, position):
 
 @login_required
 @verify_position
+@require_http_methods(["GET"])
+def download_document_blob(request, position, doc_id):
+    """Serve vault bytes stored on DocumentBlob (intake scans)."""
+    if not request.user.is_staff:
+        return JsonResponse({'success': False, 'error': 'Access denied'}, status=403)
+
+    doc = get_object_or_404(
+        Document.objects.select_related('blob_record'),
+        id=doc_id,
+    )
+    try:
+        blob = doc.blob_record
+    except DocumentBlob.DoesNotExist:
+        raise Http404('No file payload for this document')
+
+    ctype = doc.mime_type or 'application/octet-stream'
+    response = HttpResponse(blob.data, content_type=ctype)
+    fname = doc.file_name or 'document'
+    response['Content-Disposition'] = f'attachment; filename="{fname}"'
+    return response
+
+
+@login_required
+@verify_position
 @require_http_methods(["POST"])
 def upload_document(request, position):
     """
@@ -284,6 +308,9 @@ def upload_document(request, position):
     Returns JSON response with upload status.
 
     URL: /documents/<position>/upload/
+
+    Staff-facing: ``incident_report`` is for the incident report document only; field verification
+    photos belong on the CDRRMO record as FieldVerificationPhoto, not this vault type.
     """
     if not request.user.is_staff:
         return JsonResponse({'success': False, 'error': 'Access denied'}, status=403)
@@ -299,8 +326,9 @@ def upload_document(request, position):
         # Get applicant
         applicant = Applicant.objects.get(id=applicant_id)
 
-        # Check if document of this type already exists
         existing_doc = Document.objects.filter(applicant=applicant, document_type=doc_type).first()
+        if existing_doc:
+            DocumentBlob.objects.filter(document_id=existing_doc.pk).delete()
 
         # Create or update document
         doc, created = Document.objects.update_or_create(
@@ -398,7 +426,7 @@ def get_applicant_documents(request, position):
                 'file_size': doc.file_size_display,
                 'uploaded_at': doc.uploaded_at.isoformat(),
                 'uploaded_by': doc.uploaded_by.get_full_name() if doc.uploaded_by else 'Unknown',
-                'url': doc.file.url if doc.file else None,
+                'url': doc.absolute_download_url(request) or None,
             }
 
         return JsonResponse({

@@ -2936,17 +2936,11 @@
                 <td style="vertical-align: top; padding-top: 0.5rem;">
                     <!-- Stacked: status pill → audit line → Review button -->
                     <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.32rem; min-width: 7.5rem;">
-                        {% if applicant.readyForModule2 %}
-                        <span style="display:inline-flex;align-items:center;gap:0.18rem;padding:0.14rem 0.42rem;background:#dcfce7;color:#166534;border:1px solid #86efac;border-radius:9999px;font-size:0.5625rem;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;">Ready for M2</span>
-                        {% elif applicant.eligibilityStatus == 'disqualified' %}
+                        {% if applicant.eligibilityStatus == 'disqualified' %}
                         <span style="display:inline-flex;align-items:center;gap:0.18rem;padding:0.14rem 0.42rem;background:#fee2e2;color:#991b1b;border:1px solid #fecaca;border-radius:9999px;font-size:0.5625rem;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;">Disqualified</span>
-                        {% else %}
+                        {% elif not applicant.readyForModule2 %}
                         <span style="display:inline-flex;align-items:center;gap:0.18rem;padding:0.14rem 0.42rem;background:#dbeafe;color:#1e40af;border:1px solid #93c5fd;border-radius:9999px;font-size:0.5625rem;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;">Encoded</span>
                         {% endif %}
-                        <div style="font-size:0.5625rem;color:#64748b;line-height:1.4;">
-                            Encoded {{ applicant.dateTime }}
-                            {% if applicant.handledBy %}<br>by {{ applicant.handledBy }}{% endif %}
-                        </div>
                         <button
                             type="button"
                             class="btn-review btn-review-walkin js-open-review"
