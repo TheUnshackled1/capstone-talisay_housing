@@ -171,8 +171,8 @@
     .widget {
         background: #ffffff;
         border: 1px solid #e2e8f0;
-        border-radius: 14px;
-        padding: 24px;
+        border-radius: 12px;
+        padding: 16px 18px;
         box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06), 0 4px 14px rgba(15, 23, 42, 0.04);
         transition: box-shadow 0.25s ease, border-color 0.25s ease, transform 0.25s ease;
         display: flex;
@@ -184,6 +184,26 @@
         box-shadow: 0 4px 6px rgba(15, 23, 42, 0.05), 0 12px 28px rgba(30, 64, 175, 0.08);
         border-color: #cbd5e1;
         transform: translateY(-2px);
+    }
+
+    /* Force exactly 3 cards per row at desktop, 2 at tablet, 1 at mobile.
+       Override the global .widgets-grid auto-fit minmax(350px, 1fr). */
+    .widgets-grid,
+    .workflow-grid {
+        grid-template-columns: 1fr !important;
+        gap: 14px;
+    }
+    @media (min-width: 768px) {
+        .widgets-grid,
+        .workflow-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+        }
+    }
+    @media (min-width: 1024px) {
+        .widgets-grid,
+        .workflow-grid {
+            grid-template-columns: repeat(3, 1fr) !important;
+        }
     }
 
     /* ===== STAT CARDS WITH COLOR VARIANTS ===== */
@@ -216,32 +236,35 @@
     }
 
     .widget-title {
-        font-size: 13px;
+        font-size: 11px;
         font-weight: 700;
-        color: #6b7280;
+        color: #475569;
         text-transform: uppercase;
         letter-spacing: 0.7px;
-        margin: 0 0 16px 0;
+        margin: 0 0 8px 0;
     }
 
     .metric-value {
-        font-size: 38px;
+        font-size: 28px;
         font-weight: 800;
-        color: #1f2937;
+        color: #0f172a;
         transition: all 0.2s ease;
-        margin-bottom: 8px;
+        margin-bottom: 4px;
+        line-height: 1.05;
+        font-variant-numeric: tabular-nums;
     }
 
     .stat-card:hover .metric-value {
         color: #000;
-        font-size: 42px;
+        font-size: 30px;
     }
 
     .metric-label {
-        font-size: 13px;
-        color: #9ca3af;
+        font-size: 12px;
+        color: #64748b;
         margin: 0;
         font-weight: 500;
+        line-height: 1.35;
     }
 
     /* ===== ALERT ANIMATIONS ===== */
@@ -989,7 +1012,7 @@
             <p class="widget-title">Pending field certification</p>
             <div class="metric-value">{{ total_pending }}</div>
             <div class="metric-label">Awaiting on-site verification</div>
-            <div style="margin-top: 12px; font-size: 11px; color: #6b7280; padding: 8px; background: #f0f9ff; border-left: 2px solid #3b82f6; border-radius: 4px;">
+            <div style="margin-top: 8px; font-size: 11px; color: #475569; padding: 6px 8px; background: #f0f9ff; border-left: 2px solid #3b82f6; border-radius: 4px; line-height: 1.4;">
                 Applicants who declared residence within a mapped hazard area (CDRRMO pathway).
             </div>
         </div>
@@ -999,7 +1022,7 @@
             <p class="widget-title">Certified — hazard sustained</p>
             <div class="metric-value" style="color: #10b981;">{{ certified_count }}</div>
             <div class="metric-label">Eligible for priority queue processing</div>
-            <div style="margin-top: 12px; font-size: 11px; color: #6b7280; padding: 8px; background: #f0fdf4; border-left: 2px solid #10b981; border-radius: 4px;">
+            <div style="margin-top: 8px; font-size: 11px; color: #475569; padding: 6px 8px; background: #f0fdf4; border-left: 2px solid #10b981; border-radius: 4px; line-height: 1.4;">
                 Field inspection supports the declared hazard-area classification.
             </div>
         </div>
@@ -1009,7 +1032,7 @@
             <p class="widget-title">Not certified — claim not sustained</p>
             <div class="metric-value" style="color: #ef4444;">{{ not_certified_count }}</div>
             <div class="metric-label">Referred to general walk-in queue</div>
-            <div style="margin-top: 12px; font-size: 11px; color: #6b7280; padding: 8px; background: #fee2e2; border-left: 2px solid #ef4444; border-radius: 4px;">
+            <div style="margin-top: 8px; font-size: 11px; color: #475569; padding: 6px 8px; background: #fee2e2; border-left: 2px solid #ef4444; border-radius: 4px; line-height: 1.4;">
                 On-site findings do not support hazard-area status as declared.
             </div>
         </div>
@@ -1112,22 +1135,22 @@
     <div class="section scroll-animate-scale scroll-delay-2">
         <div class="section-title">Field verification workflow</div>
         <div class="widget">
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
-                <div style="padding: 18px; background: linear-gradient(135deg, #f0f9ff 0%, #ffffff 100%); border-radius: 10px; border-left: 4px solid #3b82f6; border: 1px solid #dbeafe; transition: all 0.3s ease;">
-                    <strong style="color: #1e40af; font-size: 15px; display: block; margin-bottom: 8px;">Step 1 — Site inspection</strong>
-                    <p style="font-size: 13px; color: #1e3a8a; margin: 0; line-height: 1.5;">
+            <div style="display: grid; grid-template-columns: 1fr; gap: 12px;" class="workflow-grid">
+                <div style="padding: 12px 14px; background: linear-gradient(135deg, #f0f9ff 0%, #ffffff 100%); border-radius: 10px; border-left: 4px solid #3b82f6; border: 1px solid #dbeafe; transition: all 0.3s ease;">
+                    <strong style="color: #1e40af; font-size: 13px; display: block; margin-bottom: 4px; letter-spacing: -0.005em;">Step 1 — Site inspection</strong>
+                    <p style="font-size: 12px; color: #1e3a8a; margin: 0; line-height: 1.45;">
                         Proceed to the declared address. Observe conditions, structural exposure, and proximity to the reported hazard in accordance with THA–CDRRMO coordination.
                     </p>
                 </div>
-                <div style="padding: 18px; background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%); border-radius: 10px; border-left: 4px solid #10b981; border: 1px solid #dcfce7; transition: all 0.3s ease;">
-                    <strong style="color: #15803d; font-size: 15px; display: block; margin-bottom: 8px;">Step 2 — Record findings</strong>
-                    <p style="font-size: 13px; color: #166534; margin: 0; line-height: 1.5;">
+                <div style="padding: 12px 14px; background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%); border-radius: 10px; border-left: 4px solid #10b981; border: 1px solid #dcfce7; transition: all 0.3s ease;">
+                    <strong style="color: #15803d; font-size: 13px; display: block; margin-bottom: 4px; letter-spacing: -0.005em;">Step 2 — Record findings</strong>
+                    <p style="font-size: 12px; color: #166534; margin: 0; line-height: 1.45;">
                         Prepare objective notes and, where practicable, site photographs. Indicate whether the hazard-area claim is supported by physical evidence on the ground.
                     </p>
                 </div>
-                <div style="padding: 18px; background: linear-gradient(135deg, #fffbeb 0%, #ffffff 100%); border-radius: 10px; border-left: 4px solid #f59e0b; border: 1px solid #fef3c7; transition: all 0.3s ease;">
-                    <strong style="color: #92400e; font-size: 15px; display: block; margin-bottom: 8px;">Step 3 — Lodge certification</strong>
-                    <p style="font-size: 13px; color: #b45309; margin: 0; line-height: 1.5;">
+                <div style="padding: 12px 14px; background: linear-gradient(135deg, #fffbeb 0%, #ffffff 100%); border-radius: 10px; border-left: 4px solid #f59e0b; border: 1px solid #fef3c7; transition: all 0.3s ease;">
+                    <strong style="color: #92400e; font-size: 13px; display: block; margin-bottom: 4px; letter-spacing: -0.005em;">Step 3 — Lodge certification</strong>
+                    <p style="font-size: 12px; color: #b45309; margin: 0; line-height: 1.45;">
                         Use <strong>Open verification</strong> on the queue row, complete the certification form, attach evidence, and submit. Module 2 staff receive the record for supervisory review.
                     </p>
                 </div>
