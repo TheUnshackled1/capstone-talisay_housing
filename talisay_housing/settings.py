@@ -226,7 +226,6 @@ JAZZMIN_SETTINGS = {
         "units": "fas fa-building",
         "units.HousingUnit": "fas fa-home",
         "units.LotAward": "fas fa-home",
-        "units.OccupancyReport": "fas fa-chart-bar",
         "cases": "fas fa-briefcase",
         "cases.Case": "fas fa-gavel",
         "accounts": "fas fa-lock",

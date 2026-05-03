@@ -14,7 +14,7 @@ from applications.models import CDRRMOCertification
 from units.models import Blacklist as UnitsBlacklist
 from applications.models import QueueEntry, Application
 from documents.models import SignatoryRouting, RequirementSubmission
-from units.models import ComplianceNotice, HousingUnit, ElectricityConnection
+from units.models import HousingUnit, ElectricityConnection
 from cases.models import Case
 import json
 
@@ -346,38 +346,10 @@ def dashboard_oic(request):
     # Failed SMS alerts (last 10)
     failed_sms_list = SMSLog.objects.filter(status='failed').order_by('-sent_at')[:10]
 
-    # ==================== MODULE 4: COMPLIANCE DECISIONS ====================
-    from units.models import ComplianceNotice
-
-    # Active compliance notices awaiting OIC decision
-    active_compliance_notices = ComplianceNotice.objects.filter(
-        status='active'
-    ).select_related('lot_award__application__applicant', 'unit').order_by('deadline')
-
-    # Enrich with decision tracking
+    # ==================== MODULE 4: COMPLIANCE DECISIONS (retired standalone notices UI) ====================
     pending_compliance_decisions = []
-    urgent_compliance_count = 0  # Approaching deadline (<= 5 days)
-
-    for notice in active_compliance_notices:
-        is_approaching = notice.is_approaching_deadline
-        is_overdue = notice.is_overdue
-
-        pending_compliance_decisions.append({
-            'notice': notice,
-            'applicant_name': notice.lot_award.application.applicant.full_name,
-            'unit_display': str(notice.unit),
-            'notice_type': notice.get_notice_type_display(),
-            'days_remaining': notice.days_remaining,
-            'is_approaching_deadline': is_approaching,
-            'is_overdue': is_overdue,
-            'deadline': notice.deadline,
-            'reason': notice.reason,
-        })
-
-        if is_approaching or is_overdue:
-            urgent_compliance_count += 1
-
-    compliance_decision_count = len(pending_compliance_decisions)
+    urgent_compliance_count = 0
+    compliance_decision_count = 0
 
     # ==================== CDRRMO & BLACKLIST ====================
     # CDRRMO metrics
@@ -515,63 +487,13 @@ def dashboard_oic(request):
             'is_exceeding_sla': avg_turnaround > 3 if completed_count > 0 else False,
         })
 
-    # ==================== MODULE 6: COMPLIANCE RATE ANALYTICS (M4/M6) ====================
-    # Calculate overall compliance metrics
-    complied_count = ComplianceNotice.objects.filter(status='complied').count()
-    escalated_count = ComplianceNotice.objects.filter(status='escalated').count()
-    active_count = ComplianceNotice.objects.filter(status='active').count()
-    cancelled_count = ComplianceNotice.objects.filter(status='cancelled').count()
-
-    # Total notices (all statuses)
-    total_notices = complied_count + escalated_count + active_count + cancelled_count
-
-    # Calculate compliance rate: complied / (complied + escalated)
-    # Only count resolved cases (complied + escalated), NOT active
-    resolved_count = complied_count + escalated_count
-    if resolved_count > 0:
-        compliance_rate = int((complied_count / resolved_count) * 100)
-        escalation_rate = int((escalated_count / resolved_count) * 100)
-    else:
-        compliance_rate = 0
-        escalation_rate = 0
-
-    # Calculate average resolution time for complied notices
-    from django.db.models import F
-    from datetime import timedelta as td
-
-    complied_notices = ComplianceNotice.objects.filter(
-        status='complied',
-        resolved_at__isnull=False
-    ).select_related('lot_award__application__applicant')
-
-    resolution_times = []
-    for notice in complied_notices:
-        if notice.resolved_at and notice.issued_at:
-            resolution_days = (notice.resolved_at - notice.issued_at).days
-            resolution_times.append(resolution_days)
-
-    if resolution_times:
-        avg_resolution_days = int(sum(resolution_times) / len(resolution_times))
-        fastest_resolution = min(resolution_times)
-        slowest_resolution = max(resolution_times)
-    else:
-        avg_resolution_days = 0
-        fastest_resolution = 0
-        slowest_resolution = 0
-
-    # Compliance performance rating
-    if compliance_rate >= 90:
-        compliance_rating = '🟢 EXCELLENT'
-        compliance_color = '#10b981'
-    elif compliance_rate >= 75:
-        compliance_rating = '🟡 GOOD'
-        compliance_color = '#f59e0b'
-    elif compliance_rate >= 50:
-        compliance_rating = '⚠️ FAIR'
-        compliance_color = '#f59e0b'
-    else:
-        compliance_rating = '🔴 POOR'
-        compliance_color = '#ef4444'
+    # ==================== MODULE 6: COMPLIANCE RATE ANALYTICS (stub — ComplianceNotice removed) ====================
+    complied_count = escalated_count = active_count = cancelled_count = total_notices = resolved_count = 0
+    compliance_rate = 0
+    escalation_rate = 0
+    avg_resolution_days = fastest_resolution = slowest_resolution = 0
+    compliance_rating = '—'
+    compliance_color = '#94a3b8'
 
     # ==================== SHARED DASHBOARD STATS ====================
     # Total housing units (for dashboard stat cards)
@@ -661,6 +583,7 @@ def dashboard_oic(request):
         'avg_resolution_days': avg_resolution_days,
         'fastest_resolution': fastest_resolution,
         'slowest_resolution': slowest_resolution,
+        'compliance_decisions': compliance_decision_count,
 
         # ========== MODULE 1: SYSTEM HEALTH METRICS ==========
         'total_in_queue': total_in_queue,
@@ -671,6 +594,7 @@ def dashboard_oic(request):
         'sms_pending': pending_sms,
         'sms_total': total_sms,
         'success_rate': success_rate,
+        'sms_success_rate': success_rate,
         'failed_sms_list': failed_sms_list,
         'pending_cdrrmo': pending_cdrrmo,
         'overdue_cdrrmo': overdue_cdrrmo,
@@ -701,38 +625,10 @@ def dashboard_second_member(request):
         messages.error(request, 'Access denied. This dashboard is for the Second Member position only.')
         return redirect('accounts:dashboard')
 
-    # ==================== MODULE 4: COMPLIANCE NOTICES (M4) ====================
-    # Active compliance notices awaiting decision or response
-    pending_notices = ComplianceNotice.objects.filter(
-        status='active'
-    ).select_related('lot_award__application__applicant', 'unit').order_by('issued_at')
-
-    # Enrich with details for display
-    notices_to_prepare = []
+    # ==================== MODULE 4: legacy compliance notices list removed ====================
+    pending_notices_count = 0
     urgent_notices_count = 0
-
-    for notice in pending_notices:
-        is_approaching_deadline = notice.is_approaching_deadline  # <= 5 days
-        is_overdue = notice.is_overdue
-
-        notices_to_prepare.append({
-            'type': notice.get_notice_type_display(),
-            'type_display': notice.get_notice_type_display(),
-            'type_code': notice.notice_type,
-            'beneficiary': notice.lot_award.application.applicant.full_name if notice.lot_award else 'N/A',
-            'beneficiary_name': notice.lot_award.application.applicant.full_name if notice.lot_award else 'N/A',
-            'block': notice.unit.block_number if notice.unit else '—',
-            'lot': notice.unit.lot_number if notice.unit else '—',
-            'deadline': notice.deadline,
-            'days_remaining': notice.days_remaining,
-            'is_approaching': is_approaching_deadline,
-            'is_overdue': is_overdue,
-        })
-
-        if is_approaching_deadline or is_overdue:
-            urgent_notices_count += 1
-
-    pending_notices_count = len(notices_to_prepare)
+    notices_to_prepare = []
 
     # ==================== MODULE 2: ELECTRICITY CONNECTIONS (M2) — units.ElectricityConnection ====================
     electricity_connections = (
@@ -1003,7 +899,7 @@ def dashboard_fifth_member(request):
             row['days_pending'] = 0
         negros_power_pending.append(row)
 
-    monthly_notices = ComplianceNotice.objects.filter(issued_at__gte=this_month_start).count()
+    monthly_notices = 0
     docs_submitted = RequirementSubmission.objects.filter(
         status='verified',
         verified_at__gte=this_month_start,

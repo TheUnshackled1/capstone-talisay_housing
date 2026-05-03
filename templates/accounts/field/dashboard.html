@@ -171,8 +171,8 @@
     .widget {
         background: #ffffff;
         border: 1px solid #e2e8f0;
-        border-radius: 10px;
-        padding: 12px 14px;
+        border-radius: 11px;
+        padding: 16px 18px;
         box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06), 0 4px 14px rgba(15, 23, 42, 0.04);
         transition: box-shadow 0.25s ease, border-color 0.25s ease, transform 0.25s ease;
         display: flex;
@@ -185,21 +185,90 @@
         transform: translateY(-2px);
     }
 
-    /* Force exactly 3 cards per row at desktop, 2 at tablet, 1 at mobile.
-       Override the global .widgets-grid auto-fit minmax(350px, 1fr). */
-    .widgets-grid,
+    /* ===== PRIMARY WORK AREA — Pending Verifications ===== */
+    .field-work-area {
+        margin-top: 28px;
+    }
+    .field-work-area-wrap {
+        position: relative;
+        background: #ffffff;
+        border: 2px solid #10b981;
+        border-radius: 14px;
+        overflow: hidden;
+        box-shadow:
+            0 0 0 4px rgba(16, 185, 129, 0.10),
+            0 8px 24px -8px rgba(16, 185, 129, 0.18),
+            0 4px 10px rgba(15, 23, 42, 0.06);
+        animation: field-work-area-pulse 4s ease-in-out infinite;
+    }
+    @keyframes field-work-area-pulse {
+        0%, 100% { box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.10), 0 8px 24px -8px rgba(16, 185, 129, 0.18), 0 4px 10px rgba(15, 23, 42, 0.06); }
+        50%      { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.16), 0 12px 32px -8px rgba(16, 185, 129, 0.28), 0 4px 10px rgba(15, 23, 42, 0.06); }
+    }
+    .field-work-area-stripe {
+        height: 4px;
+        background: linear-gradient(90deg, #047857 0%, #10b981 30%, #fbbf24 60%, #10b981 90%, #047857 100%);
+    }
+    .field-work-area-header {
+        padding: 16px 20px 14px;
+        background: linear-gradient(180deg, #ecfdf5 0%, #f0fdf4 60%, #ffffff 100%);
+        border-bottom: 1px solid #d1fae5;
+    }
+    .field-work-area-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        color: #ffffff;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        border-radius: 6px;
+        box-shadow: 0 2px 6px rgba(5, 150, 105, 0.25);
+        margin-bottom: 8px;
+    }
+    .field-work-area-title {
+        margin: 0 0 6px 0;
+        font-size: 18px;
+        font-weight: 800;
+        color: #064e3b;
+        letter-spacing: -0.01em;
+        line-height: 1.25;
+    }
+    .field-work-area-helper {
+        margin: 0;
+        font-size: 13px;
+        color: #047857;
+        line-height: 1.55;
+        font-weight: 500;
+    }
+    .field-work-area-helper strong {
+        color: #064e3b;
+        font-weight: 700;
+    }
+
+    /* Top metric row now has 2 cards (Pending, Certified). Lock to 2 cols
+       at desktop so they fill the row evenly. Workflow grid keeps 3 cols. */
+    .widgets-grid {
+        grid-template-columns: 1fr !important;
+        gap: 14px;
+    }
+    @media (min-width: 768px) {
+        .widgets-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+        }
+    }
+
     .workflow-grid {
         grid-template-columns: 1fr !important;
         gap: 14px;
     }
     @media (min-width: 768px) {
-        .widgets-grid,
         .workflow-grid {
             grid-template-columns: repeat(2, 1fr) !important;
         }
     }
     @media (min-width: 1024px) {
-        .widgets-grid,
         .workflow-grid {
             grid-template-columns: repeat(3, 1fr) !important;
         }
@@ -235,35 +304,36 @@
     }
 
     .widget-title {
-        font-size: 10px;
+        font-size: 11.5px;
         font-weight: 700;
-        color: #475569;
+        color: #334155;
         text-transform: uppercase;
-        letter-spacing: 0.6px;
-        margin: 0 0 6px 0;
+        letter-spacing: 0.7px;
+        margin: 0 0 8px 0;
     }
 
     .metric-value {
-        font-size: 24px;
+        font-size: 30px;
         font-weight: 800;
         color: #0f172a;
         transition: all 0.2s ease;
-        margin-bottom: 2px;
+        margin-bottom: 4px;
         line-height: 1.05;
         font-variant-numeric: tabular-nums;
+        letter-spacing: -0.01em;
     }
 
     .stat-card:hover .metric-value {
         color: #000;
-        font-size: 26px;
+        font-size: 32px;
     }
 
     .metric-label {
-        font-size: 11px;
-        color: #64748b;
+        font-size: 12.5px;
+        color: #475569;
         margin: 0;
         font-weight: 500;
-        line-height: 1.3;
+        line-height: 1.4;
     }
 
     /* ===== ALERT ANIMATIONS ===== */
@@ -313,6 +383,185 @@
 
     .alert-amber strong {
         color: #92400e;
+    }
+
+    /* ===== FIELD DESK ALERT BANNER (aging queue) ===== */
+    .field-alert-banner.alert-box {
+        align-items: flex-start;
+        padding: 1rem 1.125rem;
+        border-radius: 12px;
+        border-left-width: 5px;
+        box-shadow: 0 4px 14px rgba(245, 158, 11, 0.12);
+    }
+
+    .field-alert-banner__icon {
+        flex-shrink: 0;
+        width: 44px;
+        height: 44px;
+        border-radius: 11px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(145deg, #fef3c7 0%, #fde68a 100%);
+        border: 1px solid #fcd34d;
+        color: #b45309;
+    }
+
+    .field-alert-banner__icon svg {
+        width: 22px;
+        height: 22px;
+    }
+
+    .field-alert-banner__body {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.375rem;
+    }
+
+    .field-alert-banner__eyebrow {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 0.125rem;
+    }
+
+    .field-alert-banner__pill {
+        display: inline-flex;
+        align-items: center;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: #92400e;
+        background: rgba(251, 191, 36, 0.35);
+        border: 1px solid rgba(217, 119, 6, 0.35);
+        padding: 0.2rem 0.55rem;
+        border-radius: 999px;
+    }
+
+    .field-alert-banner__title {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 700;
+        color: #78350f;
+        line-height: 1.35;
+        letter-spacing: -0.02em;
+    }
+
+    .field-alert-banner__text {
+        margin: 0;
+        font-size: 13px;
+        color: #92400e;
+        line-height: 1.55;
+        max-width: 62rem;
+    }
+
+    /* ===== OFFICIAL NOTICE CARD (mandate / procedure) ===== */
+    .field-official-notice {
+        margin-top: 32px;
+        padding: 0;
+        border-radius: 14px;
+        overflow: hidden;
+        border: 1px solid #a7f3d0;
+        box-shadow:
+            0 1px 2px rgba(15, 118, 110, 0.06),
+            0 12px 32px -12px rgba(16, 185, 129, 0.22);
+        background: #ffffff;
+    }
+
+    .field-official-notice__accent {
+        height: 4px;
+        background: linear-gradient(90deg, #059669 0%, #10b981 45%, #34d399 100%);
+    }
+
+    .field-official-notice__inner {
+        padding: 1.35rem 1.5rem 1.5rem;
+        background: linear-gradient(165deg, #ecfdf5 0%, #ffffff 42%, #ffffff 100%);
+    }
+
+    .field-official-notice__header {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        margin-bottom: 1.25rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .field-official-notice__icon-wrap {
+        flex-shrink: 0;
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(145deg, #d1fae5 0%, #a7f3d0 100%);
+        border: 1px solid #6ee7b7;
+        color: #047857;
+    }
+
+    .field-official-notice__icon-wrap svg {
+        width: 26px;
+        height: 26px;
+    }
+
+    .field-official-notice__title {
+        margin: 0;
+        font-size: 1.125rem;
+        font-weight: 800;
+        color: #065f46;
+        letter-spacing: -0.025em;
+        line-height: 1.25;
+    }
+
+    .field-official-notice__subtitle {
+        margin: 0.35rem 0 0;
+        font-size: 13px;
+        font-weight: 500;
+        color: #0f766e;
+        line-height: 1.45;
+    }
+
+    .field-official-notice__grid {
+        display: grid;
+        gap: 0.75rem;
+    }
+
+    @media (min-width: 720px) {
+        .field-official-notice__grid {
+            grid-template-columns: 1fr 1fr;
+            gap: 0.875rem 1.25rem;
+        }
+    }
+
+    .field-official-notice__item {
+        margin: 0;
+        padding: 0.875rem 1rem;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.92);
+        border: 1px solid rgba(167, 243, 208, 0.85);
+        box-shadow: 0 1px 3px rgba(15, 118, 110, 0.05);
+    }
+
+    .field-official-notice__label {
+        display: inline-block;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #047857;
+        margin-bottom: 0.35rem;
+    }
+
+    .field-official-notice__item p {
+        margin: 0;
+        font-size: 13px;
+        color: #166534;
+        line-height: 1.6;
     }
 
     /* ===== LIST STYLING WITH HOVER EFFECTS ===== */
@@ -1004,47 +1253,104 @@
         </div>
     </div>
 
-    <!-- MODULE 1: FIELD VERIFICATION METRICS -->
-    <div class="widgets-grid">
-        <!-- Pending Verifications -->
-        <div class="widget scroll-animate scroll-delay-1">
-            <p class="widget-title">Pending field certification</p>
-            <div class="metric-value">{{ total_pending }}</div>
-            <div class="metric-label">Awaiting on-site verification</div>
-            <div style="margin-top: 6px; font-size: 10.5px; color: #475569; padding: 5px 7px; background: #f0f9ff; border-left: 2px solid #3b82f6; border-radius: 4px; line-height: 1.35;">
-                Applicants who declared residence within a mapped hazard area (CDRRMO pathway).
-            </div>
-        </div>
+    <!-- COMBINED: STATUS + PERFORMANCE + WORKFLOW
+         All four metrics inline in one row, then workflow steps below.
+         One unified panel for the field verification desk overview. -->
+    <div class="section scroll-animate-scale scroll-delay-2" style="margin-bottom: 1rem;">
+        <div class="section-title">Field verification &mdash; status, performance &amp; workflow</div>
+        <div class="widget combined-panel" style="padding: 18px 20px;">
 
-        <!-- Verified (Certified) -->
-        <div class="widget scroll-animate scroll-delay-2">
-            <p class="widget-title">Certified — hazard sustained</p>
-            <div class="metric-value" style="color: #10b981;">{{ certified_count }}</div>
-            <div class="metric-label">Eligible for priority queue processing</div>
-            <div style="margin-top: 6px; font-size: 10.5px; color: #475569; padding: 5px 7px; background: #f0fdf4; border-left: 2px solid #10b981; border-radius: 4px; line-height: 1.35;">
-                Field inspection supports the declared hazard-area classification.
-            </div>
-        </div>
+            <!-- 4 INLINE METRICS — Status (Pending + Certified) + Performance (Total + Success Rate) -->
+            <div class="combined-kpis" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;">
+                <!-- Status: Pending field certification -->
+                <div class="combined-kpi" title="Applicants who declared residence within a mapped hazard area (CDRRMO pathway)." style="padding: 14px 16px; background: linear-gradient(135deg, #eff6ff 0%, #ffffff 100%); border: 1px solid #dbeafe; border-radius: 9px; border-left: 4px solid #3b82f6;">
+                    <p class="widget-title" style="margin: 0 0 6px 0;">Pending field certification</p>
+                    <div class="metric-value">{{ total_pending }}</div>
+                    <div class="metric-label">Awaiting on-site verification</div>
+                </div>
 
-        <!-- Not Certified -->
-        <div class="widget scroll-animate scroll-delay-3">
-            <p class="widget-title">Not certified — claim not sustained</p>
-            <div class="metric-value" style="color: #ef4444;">{{ not_certified_count }}</div>
-            <div class="metric-label">Referred to general walk-in queue</div>
-            <div style="margin-top: 6px; font-size: 10.5px; color: #475569; padding: 5px 7px; background: #fee2e2; border-left: 2px solid #ef4444; border-radius: 4px; line-height: 1.35;">
-                On-site findings do not support hazard-area status as declared.
+                <!-- Status: Certified -->
+                <div class="combined-kpi" title="Field inspection supports the declared hazard-area classification." style="padding: 14px 16px; background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%); border: 1px solid #dcfce7; border-radius: 9px; border-left: 4px solid #10b981;">
+                    <p class="widget-title" style="margin: 0 0 6px 0;">Certified &mdash; hazard sustained</p>
+                    <div class="metric-value" style="color: #10b981;">{{ certified_count }}</div>
+                    <div class="metric-label">Eligible for priority queue processing</div>
+                </div>
+
+                <!-- Performance: Total Processed -->
+                <div class="combined-kpi" style="padding: 14px 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 9px; border-left: 4px solid #1e40af;">
+                    <p class="widget-title" style="margin: 0 0 6px 0;">Total Processed</p>
+                    <div class="metric-value">{{ certified_count|add:not_certified_count }}</div>
+                    <div class="metric-label">Danger zone verifications completed</div>
+                </div>
+
+                <!-- Performance: Success Rate -->
+                <div class="combined-kpi" style="padding: 14px 16px; background: linear-gradient(135deg, #ecfdf5 0%, #ffffff 100%); border: 1px solid #d1fae5; border-radius: 9px; border-left: 4px solid #059669;">
+                    <p class="widget-title" style="margin: 0 0 6px 0;">Success Rate</p>
+                    <div class="metric-value" style="color: #10b981;">
+                        {% if certified_count|add:not_certified_count > 0 %}{{ verified_percentage }}%{% else %}0%{% endif %}
+                    </div>
+                    <div class="metric-label">Share of cases certified as hazard-area</div>
+                </div>
+            </div>
+
+            <!-- DIVIDER -->
+            <div class="combined-divider" style="position: relative; margin: 22px 0 18px; height: 1px; background: linear-gradient(90deg, transparent 0%, #e2e8f0 25%, #cbd5e1 50%, #e2e8f0 75%, transparent 100%);">
+                <span style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); padding: 0 14px; background: #ffffff; font-size: 11px; font-weight: 700; color: #475569; letter-spacing: 0.14em; text-transform: uppercase;">Workflow guide</span>
+            </div>
+
+            <!-- WORKFLOW STEPS (bottom half) — 3 columns mirroring KPI grid -->
+            <div class="combined-workflow workflow-grid" style="display: grid; grid-template-columns: 1fr; gap: 12px;">
+                <div style="padding: 14px 16px; background: linear-gradient(135deg, #f0f9ff 0%, #ffffff 100%); border-radius: 9px; border-left: 4px solid #3b82f6; border: 1px solid #dbeafe; transition: all 0.3s ease;">
+                    <strong style="color: #1e40af; font-size: 13.5px; display: block; margin-bottom: 5px; letter-spacing: -0.005em; line-height: 1.3;">Step 1 — Site inspection</strong>
+                    <p style="font-size: 12.5px; color: #1e3a8a; margin: 0; line-height: 1.55;">
+                        Proceed to the declared address. Observe conditions, structural exposure, and proximity to the reported hazard in accordance with THA–CDRRMO coordination.
+                    </p>
+                </div>
+                <div style="padding: 14px 16px; background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%); border-radius: 9px; border-left: 4px solid #10b981; border: 1px solid #dcfce7; transition: all 0.3s ease;">
+                    <strong style="color: #15803d; font-size: 13.5px; display: block; margin-bottom: 5px; letter-spacing: -0.005em; line-height: 1.3;">Step 2 — Record findings</strong>
+                    <p style="font-size: 12.5px; color: #166534; margin: 0; line-height: 1.55;">
+                        Prepare objective notes and, where practicable, site photographs. Indicate whether the hazard-area claim is supported by physical evidence on the ground.
+                    </p>
+                </div>
+                <div style="padding: 14px 16px; background: linear-gradient(135deg, #fffbeb 0%, #ffffff 100%); border-radius: 9px; border-left: 4px solid #f59e0b; border: 1px solid #fef3c7; transition: all 0.3s ease;">
+                    <strong style="color: #92400e; font-size: 13.5px; display: block; margin-bottom: 5px; letter-spacing: -0.005em; line-height: 1.3;">Step 3 — Lodge certification</strong>
+                    <p style="font-size: 12.5px; color: #b45309; margin: 0; line-height: 1.55;">
+                        Use <strong>Open verification</strong> on the queue row, complete the certification form, attach evidence, and submit. Module 2 staff receive the record for supervisory review.
+                    </p>
+                </div>
             </div>
         </div>
     </div>
+
+    <style>
+        /* Combined panel responsive — KPIs collapse to 1 column on mobile */
+        @media (max-width: 768px) {
+            .combined-kpis {
+                grid-template-columns: 1fr !important;
+            }
+        }
+    </style>
 
     <!-- CRITICAL ALERTS -->
     {% if aging_verifications %}
     <div class="section scroll-animate scroll-delay-2">
         <div class="section-title">Aging verifications (follow-up)</div>
         <div class="widget">
-            <div class="alert-box alert-amber">
-                <strong>{{ aging_verifications|length }} case(s) pending beyond seven (7) days</strong>
-                <span>Escalation may apply at fourteen (14) days. Please prioritise site visit and submission.</span>
+            <div class="field-alert-banner alert-box alert-amber" role="alert" aria-live="polite">
+                <div class="field-alert-banner__icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                        <line x1="12" y1="9" x2="12" y2="13"/>
+                        <line x1="12" y1="17" x2="12.01" y2="17"/>
+                    </svg>
+                </div>
+                <div class="field-alert-banner__body">
+                    <div class="field-alert-banner__eyebrow">
+                        <span class="field-alert-banner__pill">Follow-up required</span>
+                    </div>
+                    <strong class="field-alert-banner__title">{{ aging_verifications|length }} verification{% if aging_verifications|length != 1 %}s{% endif %} pending beyond seven (7) days</strong>
+                    <p class="field-alert-banner__text">Escalation may apply at fourteen (14) days. Prioritise the site visit, complete findings, and submit certification through <strong>Open verification</strong> so Module 2 can proceed.</p>
+                </div>
             </div>
             <div class="list-container">
                 {% for cert in aging_verifications %}
@@ -1066,10 +1372,26 @@
     </div>
     {% endif %}
 
-    <!-- PENDING VERIFICATIONS LIST -->
-    <div class="section scroll-animate-right scroll-delay-1">
-        <div class="section-title">Pending verifications (ready for field visit)</div>
-        <div class="widget">
+    <!-- PENDING VERIFICATIONS LIST — PRIMARY WORK AREA
+         Visually elevated (emerald Republic accent + work-area banner) so
+         field staff immediately understand this table is where their core
+         duty is performed. -->
+    <div class="section scroll-animate-right scroll-delay-1 field-work-area">
+        <div class="field-work-area-wrap">
+            <!-- Top accent stripe -->
+            <div class="field-work-area-stripe"></div>
+
+            <!-- Section header bar with badge + title + helper line -->
+            <div class="field-work-area-header">
+                <span class="field-work-area-badge">▸ FIELD VERIFICATION DESK</span>
+                <h3 class="field-work-area-title">Pending verifications &mdash; ready for field visit</h3>
+                <p class="field-work-area-helper">
+                    This is your <strong>active work queue</strong>. For each row, conduct the on-site inspection, then click
+                    <strong>Open verification</strong> to record findings and submit certification.
+                </p>
+            </div>
+
+            <div class="widget" style="margin-top: 0; border-top-left-radius: 0; border-top-right-radius: 0; border-top: none;">
             {% if pending_verifications %}
             <div style="overflow-x: auto;">
                 <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
@@ -1127,73 +1449,45 @@
                 No pending hazard-area verifications. All active Channel B cases in this queue are cleared.
             </p>
             {% endif %}
-        </div>
-    </div>
-
-    <!-- WORKFLOW GUIDE -->
-    <div class="section scroll-animate-scale scroll-delay-2">
-        <div class="section-title">Field verification workflow</div>
-        <div class="widget" style="padding: 10px 12px;">
-            <div style="display: grid; grid-template-columns: 1fr; gap: 10px;" class="workflow-grid">
-                <div style="padding: 10px 12px; background: linear-gradient(135deg, #f0f9ff 0%, #ffffff 100%); border-radius: 8px; border-left: 3px solid #3b82f6; border: 1px solid #dbeafe; transition: all 0.3s ease;">
-                    <strong style="color: #1e40af; font-size: 12px; display: block; margin-bottom: 3px; letter-spacing: -0.005em;">Step 1 — Site inspection</strong>
-                    <p style="font-size: 11.5px; color: #1e3a8a; margin: 0; line-height: 1.4;">
-                        Proceed to the declared address. Observe conditions, structural exposure, and proximity to the reported hazard in accordance with THA–CDRRMO coordination.
-                    </p>
-                </div>
-                <div style="padding: 10px 12px; background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%); border-radius: 8px; border-left: 3px solid #10b981; border: 1px solid #dcfce7; transition: all 0.3s ease;">
-                    <strong style="color: #15803d; font-size: 12px; display: block; margin-bottom: 3px; letter-spacing: -0.005em;">Step 2 — Record findings</strong>
-                    <p style="font-size: 11.5px; color: #166534; margin: 0; line-height: 1.4;">
-                        Prepare objective notes and, where practicable, site photographs. Indicate whether the hazard-area claim is supported by physical evidence on the ground.
-                    </p>
-                </div>
-                <div style="padding: 10px 12px; background: linear-gradient(135deg, #fffbeb 0%, #ffffff 100%); border-radius: 8px; border-left: 3px solid #f59e0b; border: 1px solid #fef3c7; transition: all 0.3s ease;">
-                    <strong style="color: #92400e; font-size: 12px; display: block; margin-bottom: 3px; letter-spacing: -0.005em;">Step 3 — Lodge certification</strong>
-                    <p style="font-size: 11.5px; color: #b45309; margin: 0; line-height: 1.4;">
-                        Use <strong>Open verification</strong> on the queue row, complete the certification form, attach evidence, and submit. Module 2 staff receive the record for supervisory review.
-                    </p>
-                </div>
             </div>
         </div>
     </div>
 
-    <!-- VERIFICATION SUMMARY STATS -->
-    <div class="section scroll-animate scroll-delay-3">
-        <div class="section-title">Verification summary</div>
-        <div class="widgets-grid scroll-animate-scale">
-            <div class="widget">
-                <p class="widget-title">Total Processed</p>
-                <div class="metric-value">{{ certified_count|add:not_certified_count }}</div>
-                <div class="metric-label">Danger zone verifications completed</div>
-            </div>
-            <div class="widget">
-                <p class="widget-title">Success Rate</p>
-                <div class="metric-value" style="color: #10b981;">
-                    {% if certified_count|add:not_certified_count > 0 %}
-                        {{ verified_percentage }}%
-                    {% else %}
-                        0%
-                    {% endif %}
+    <!-- Official mandate notice -->
+    <div class="scroll-animate-left scroll-delay-4 field-official-notice" role="region" aria-labelledby="fieldOfficialNoticeHeading">
+        <div class="field-official-notice__accent" aria-hidden="true"></div>
+        <div class="field-official-notice__inner">
+            <div class="field-official-notice__header">
+                <div class="field-official-notice__icon-wrap" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                        <path d="M9 12l2 2 4-4"/>
+                    </svg>
                 </div>
-                <div class="metric-label">Share of cases certified as hazard-area</div>
+                <div>
+                    <h2 id="fieldOfficialNoticeHeading" class="field-official-notice__title">Official notice to field personnel</h2>
+                    <p class="field-official-notice__subtitle">Channel B hazard-area pathway · Field certification under THA–CDRRMO coordination</p>
+                </div>
             </div>
-            <div class="widget">
-                <p class="widget-title">False Alarms</p>
-                <div class="metric-value" style="color: #ef4444;">{{ not_certified_count }}</div>
-                <div class="metric-label">Claims not sustained on inspection</div>
+            <div class="field-official-notice__grid">
+                <article class="field-official-notice__item">
+                    <span class="field-official-notice__label">Mandate</span>
+                    <p>You certify, on behalf of the Talisay City Housing Authority field unit, whether the applicant’s declared hazard-area status is supported by on-site inspection.</p>
+                </article>
+                <article class="field-official-notice__item">
+                    <span class="field-official-notice__label">Procedure</span>
+                    <p>Open <strong>Open verification</strong> from the queue, record a clear affirmative or negative certification, attach photographic evidence when practicable, and submit.</p>
+                </article>
+                <article class="field-official-notice__item">
+                    <span class="field-official-notice__label">Effect of record</span>
+                    <p>A sustained hazard finding supports priority-queue processing; a negative finding routes the case to the general walk-in queue in line with THA rules.</p>
+                </article>
+                <article class="field-official-notice__item">
+                    <span class="field-official-notice__label">Escalation</span>
+                    <p>Matters pending beyond fourteen (14) days may be administratively re-queued to protect programme integrity.</p>
+                </article>
             </div>
         </div>
-    </div>
-
-    <!-- INSTRUCTIONS -->
-    <div class="scroll-animate-left scroll-delay-4" style="margin-top: 32px; padding: 20px; background: linear-gradient(135deg, #ecfdf5 0%, #ffffff 100%); border: 2px solid #d1fae5; border-radius: 12px; border-left: 4px solid #10b981;">
-        <strong style="color: #065f46; font-size: 16px; display: block; margin-bottom: 12px;">Official notice to field personnel</strong>
-        <p style="font-size: 14px; color: #047857; margin: 0; line-height: 1.7;">
-            • <strong>Mandate:</strong> You certify, on behalf of the Talisay City Housing Authority field unit, whether the applicant’s declared hazard-area status is supported by inspection.<br>
-            • <strong>Procedure:</strong> Open the verification form from the queue, record a clear affirmative or negative certification, attach photographic evidence when available, and submit.<br>
-            • <strong>Effect of record:</strong> A sustained hazard finding supports priority-queue processing; a negative finding routes the case to the general walk-in queue in line with THA rules.<br>
-            • <strong>Escalation:</strong> Matters pending beyond fourteen (14) days may be administratively re-queued to protect programme integrity.
-        </p>
     </div>
 </div>
 

@@ -2160,16 +2160,19 @@ def eligibility_snapshot(request, position):
     )
     req_scan_by_code = {}
     requirement_rows = []
+    # Latest vault payload per document_type — include blob-only scans (FileField cleared).
     doc_type_to_latest_file = {}
-    for doc in applicant.documents.exclude(file='').order_by('-uploaded_at'):
+    for doc in applicant.documents.select_related('blob_record').order_by('-uploaded_at'):
         if doc.document_type in doc_type_to_latest_file:
             continue
         try:
-            file_url = request.build_absolute_uri(doc.file.url)
+            doc_url = doc.absolute_download_url(request)
         except (ValueError, AttributeError):
-            file_url = ''
+            doc_url = ''
+        if not doc_url:
+            continue
         doc_type_to_latest_file[doc.document_type] = {
-            'url': file_url,
+            'url': doc_url,
             'name': (doc.file_name or doc.title or doc.get_document_type_display() or '').strip(),
         }
     for row in required_rows:

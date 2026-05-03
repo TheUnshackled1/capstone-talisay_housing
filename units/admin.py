@@ -1,8 +1,8 @@
 from django.contrib import admin
 from .models import (
     RelocationSite, HousingUnit, WeeklyReport, LotAward,
-    ElectricityConnection, ComplianceNotice, Blacklist,
-    OccupancyReport, OccupancyReportDetail, CaseRecord, CaseUpdate, SMSLog
+    ElectricityConnection, Blacklist,
+    CaseRecord, CaseUpdate, SMSLog,
 )
 
 
@@ -138,34 +138,6 @@ class ElectricityConnectionAdmin(admin.ModelAdmin):
     )
 
 
-@admin.register(ComplianceNotice)
-class ComplianceNoticeAdmin(admin.ModelAdmin):
-    list_display = ('unit', 'notice_type', 'status', 'deadline', 'issued_at')
-    list_filter = ('notice_type', 'status', 'issued_at', 'deadline')
-    search_fields = ('unit__lot_number', 'reason')
-    readonly_fields = ('issued_at',)
-
-    fieldsets = (
-        ('📜 COMPLIANCE NOTICE', {
-            'fields': ('lot_award', 'unit', 'notice_type', 'status'),
-        }),
-        ('📝 REASON', {
-            'fields': ('reason',),
-        }),
-        ('⏰ TIMELINE', {
-            'fields': ('issued_at', 'issued_by', 'days_granted', 'deadline'),
-        }),
-        ('📋 RESPONSE', {
-            'fields': ('response_received_at', 'response_received_by', 'response_notes'),
-            'classes': ('collapse',),
-        }),
-        ('✅ RESOLUTION', {
-            'fields': ('resolved_at', 'resolution_decision', 'decided_by'),
-            'classes': ('collapse',),
-        }),
-    )
-
-
 @admin.register(Blacklist)
 class BlacklistAdmin(admin.ModelAdmin):
     list_display = ('applicant', 'reason', 'blacklisted_at', 'blacklisted_by')
@@ -186,51 +158,6 @@ class BlacklistAdmin(admin.ModelAdmin):
         ('🔏 AUDIT TRAIL', {
             'fields': ('blacklisted_at', 'blacklisted_by', 'supporting_notes'),
             'classes': ('collapse',),
-        }),
-    )
-
-
-@admin.register(OccupancyReport)
-class OccupancyReportAdmin(admin.ModelAdmin):
-    list_display = ('site', 'report_week_start', 'status', 'submitted_by')
-    list_filter = ('status', 'report_week_start')
-    search_fields = ('site__name',)
-    readonly_fields = ('submitted_at',)
-
-    fieldsets = (
-        ('📋 OCCUPANCY REPORT', {
-            'fields': ('site', 'report_week_start', 'report_week_end', 'status'),
-        }),
-        ('📊 CARETAKER COUNTS', {
-            'fields': ('reported_occupied', 'reported_vacant', 'reported_concerns'),
-        }),
-        ('🔍 FIELD TEAM REVIEW', {
-            'fields': ('reviewed_at', 'reviewed_by', 'confirmed_occupied', 'confirmed_vacant'),
-            'classes': ('collapse',),
-        }),
-        ('📝 NOTES', {
-            'fields': ('notes', 'discrepancy_notes'),
-            'classes': ('collapse',),
-        }),
-        ('🔏 AUDIT', {
-            'fields': ('submitted_at', 'submitted_by'),
-            'classes': ('collapse',),
-        }),
-    )
-
-
-@admin.register(OccupancyReportDetail)
-class OccupancyReportDetailAdmin(admin.ModelAdmin):
-    list_display = ('report', 'unit', 'reported_status')
-    list_filter = ('reported_status',)
-    search_fields = ('report__site__name', 'unit__lot_number')
-
-    fieldsets = (
-        ('📋 REPORT DETAIL', {
-            'fields': ('report', 'unit', 'reported_status'),
-        }),
-        ('📝 NOTES', {
-            'fields': ('concern_notes',),
         }),
     )
 

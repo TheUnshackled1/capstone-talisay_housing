@@ -6,6 +6,8 @@ from django.http import JsonResponse, HttpResponse, Http404
 from django.views.decorators.http import require_http_methods, require_POST
 from functools import wraps
 import json
+import mimetypes
+import os
 from intake.models import Applicant
 from units.models import LotAward
 from applications.models import QueueEntry
@@ -15,6 +17,32 @@ from documents.models import (
     RequirementSubmission,
     EndorsementRoutingStep,
 )
+
+
+def _normalize_blob_content_type(declared: str, filename: str) -> str:
+    """Fill in a concrete MIME type when stored value is missing or octet-stream."""
+    ct = (declared or '').strip()
+    base = ct.split(';')[0].strip().lower() if ct else ''
+    if base and base != 'application/octet-stream':
+        return ct.split(';')[0].strip()
+    guessed, _ = mimetypes.guess_type(os.path.basename(filename or ''))
+    if guessed:
+        return guessed
+    return base or 'application/octet-stream'
+
+
+def _blob_disposition_inline_ok(content_type: str, filename: str) -> bool:
+    """Whether the browser can reasonably display this inline (new tab / embedded)."""
+    ct = (content_type or '').split(';')[0].strip().lower()
+    if ct.startswith('image/'):
+        return True
+    if ct in ('application/pdf', 'text/plain'):
+        return True
+    ext = os.path.splitext(filename or '')[1].lower()
+    return ext in (
+        '.pdf', '.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg',
+        '.bmp', '.tif', '.tiff',
+    )
 
 
 # =============================================================================
@@ -279,7 +307,11 @@ def document_management(request, position):
 @verify_position
 @require_http_methods(["GET"])
 def download_document_blob(request, position, doc_id):
-    """Serve vault bytes stored on DocumentBlob (intake scans)."""
+    """Serve vault bytes stored on DocumentBlob (intake scans).
+
+    PDF and images open inline in the browser by default so staff can review uploads.
+    Append ``?download=1`` to force a download (``Content-Disposition: attachment``).
+    """
     if not request.user.is_staff:
         return JsonResponse({'success': False, 'error': 'Access denied'}, status=403)
 
@@ -292,10 +324,22 @@ def download_document_blob(request, position, doc_id):
     except DocumentBlob.DoesNotExist:
         raise Http404('No file payload for this document')
 
-    ctype = doc.mime_type or 'application/octet-stream'
+    fname_raw = doc.file_name or 'document'
+    fname_safe = (
+        os.path.basename(fname_raw)
+        .replace('"', "'")
+        .replace('\r', '')
+        .replace('\n', '')
+    ) or 'document'
+
+    ctype = _normalize_blob_content_type(doc.mime_type or '', fname_safe)
+    force_download = request.GET.get('download') in ('1', 'true', 'yes')
+
     response = HttpResponse(blob.data, content_type=ctype)
-    fname = doc.file_name or 'document'
-    response['Content-Disposition'] = f'attachment; filename="{fname}"'
+    if force_download or not _blob_disposition_inline_ok(ctype, fname_safe):
+        response['Content-Disposition'] = f'attachment; filename="{fname_safe}"'
+    else:
+        response['Content-Disposition'] = f'inline; filename="{fname_safe}"'
     return response
 
 
