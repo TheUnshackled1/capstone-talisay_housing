@@ -1,7 +1,7 @@
 {% extends 'oic_base.html' %}
 {% load static %}
 
-{% block title %}Pending Signatures - OIC{% endblock %}
+{% block title %}Awaiting OIC approval - OIC{% endblock %}
 
 {% block nav_oic_pending_sig %}active{% endblock %}
 
@@ -240,6 +240,15 @@
         margin: 0;
     }
 
+    .empty-state-hint {
+        font-size: 0.8125rem;
+        color: #64748b;
+        line-height: 1.5;
+        max-width: 36rem;
+        margin: 1rem auto 0;
+        text-align: left;
+    }
+
     /* Animations */
     @keyframes slideUp {
         from {
@@ -278,10 +287,14 @@
 
 {% block content %}
 <div class="pending-container">
+    <div class="hidden" aria-hidden="true">{% csrf_token %}</div>
     <!-- Page Header -->
     <div class="page-header">
-        <h1 class="page-title">Applications Pending Signature</h1>
-        <p class="page-subtitle">Applications at the OIC routing step (forwarded to you, not yet signed)</p>
+        <h1 class="page-title">Awaiting OIC full approval</h1>
+        <p class="page-subtitle">
+            This list shows applications where the <strong>physically signed form scan is already in the document vault</strong>
+            (system status <strong>completed</strong>). There is no separate “signature” step here—only records that finished scanning appear below.
+        </p>
     </div>
 
     {% include 'accounts/partials/m2_signatory_pipeline_strip.html' %}
@@ -290,7 +303,7 @@
     <div class="stats-grid">
         <div class="stat-card warning scroll-animate-scale scroll-delay-1">
             <div class="stat-value amber">{{ total_pending }}</div>
-            <div class="stat-label">Total Pending</div>
+            <div class="stat-label">In your queue</div>
         </div>
 
         <div class="stat-card danger scroll-animate-scale scroll-delay-2">
@@ -307,7 +320,7 @@
                 <!-- Application Number & Status -->
                 <div class="application-meta">
                     <span class="application-number">{{ app.application_number }}</span>
-                    <span class="badge badge-info">Awaiting Signature</span>
+                    <span class="badge badge-info">Scan on file · needs approval</span>
                     {% if app.days_pending >= 7 %}
                         <span class="badge badge-danger">🔴 URGENT</span>
                     {% elif app.days_pending >= 3 %}
@@ -333,15 +346,85 @@
 
             <!-- Action Button -->
             <div class="button-group">
-                <button class="btn-review">Review & Sign</button>
+                <button type="button"
+                    class="btn-review js-oic-record-approval"
+                    data-application-id="{{ app.application_id }}"
+                    data-app-number="{{ app.application_number|default:''|escape }}">
+                    Record full approval
+                </button>
             </div>
         </div>
         {% empty %}
         <div class="empty-state">
             <div class="empty-state-icon">✅</div>
-            <p class="empty-state-text">No applications pending your signature</p>
+            <p class="empty-state-text">No applications are ready for your approval right now.</p>
+            {% if m2_pipeline %}
+            <p class="empty-state-hint">
+                Records appear here only <strong>after</strong> staff upload the signed application to the vault
+                (“Physically signed application (scan)”). Until then the application stays <strong>draft</strong>.
+                The pipeline above shows <strong>{{ m2_pipeline.draft_forms }}</strong> still waiting for that scan
+                and <strong>{{ m2_pipeline.awaiting_oic }}</strong> ready for you—those numbers match what you see here when non-zero.
+            </p>
+            {% endif %}
         </div>
         {% endfor %}
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    const approveUrl = '{% url "applications:update_routing" request.user.position %}';
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return '';
+    }
+    const csrftoken =
+        document.querySelector('input[name=csrfmiddlewaretoken]')?.value ||
+        getCookie('csrftoken') ||
+        '';
+
+    document.querySelectorAll('.js-oic-record-approval').forEach(function (btn) {
+        btn.addEventListener('click', async function () {
+            const applicationId = (btn.getAttribute('data-application-id') || '').trim();
+            const appNumber = btn.getAttribute('data-app-number') || '';
+            if (!applicationId) return;
+
+            const ok = window.confirm(
+                'Record OIC full approval for ' + (appNumber ? 'application ' + appNumber : 'this application') + '?\n\n' +
+                'The applicant will be marked fully approved (and notified by SMS if a mobile number is on file).'
+            );
+            if (!ok) return;
+
+            btn.disabled = true;
+            const formData = new FormData();
+            formData.append('application_id', applicationId);
+            formData.append('step', 'signed_oic');
+            formData.append('notes', '');
+
+            try {
+                const response = await fetch(approveUrl, {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'same-origin',
+                    headers: { 'X-CSRFToken': csrftoken },
+                });
+                const data = await response.json().catch(function () { return {}; });
+                if (!response.ok || !data.success) {
+                    window.alert(data.error || 'Unable to record approval. Please try again or use Module 2.');
+                    btn.disabled = false;
+                    return;
+                }
+                window.location.reload();
+            } catch (e) {
+                window.alert(e.message || 'Network error.');
+                btn.disabled = false;
+            }
+        });
+    });
+})();
+</script>
 {% endblock %}

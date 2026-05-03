@@ -99,6 +99,183 @@
     text-align: center;
 }
 
+.rfq-table td.rfq-col-actions {
+    vertical-align: middle;
+}
+
+.rfq-table th.rfq-col-actions,
+.rfq-table td.rfq-col-actions {
+    min-width: 37rem;
+}
+
+/* Actions: 3-column grid so "View" aligns down the column; middle slot empty when only 2 actions */
+.rfq-actions-inline {
+    display: grid;
+    grid-template-columns: repeat(3, 11.75rem);
+    justify-content: center;
+    column-gap: 0.5rem;
+    row-gap: 0.4rem;
+    padding: 0.4rem 0.2rem;
+    margin: 0 auto;
+    box-sizing: border-box;
+}
+
+.rfq-action-slot-1 {
+    grid-column: 1;
+}
+
+.rfq-action-slot-2 {
+    grid-column: 2;
+}
+
+.rfq-action-slot-3 {
+    grid-column: 3;
+}
+
+/* Middle column hint when form is not generated yet (replaced by Upload link once PDF exists) */
+.rfq-action-placeholder {
+    box-sizing: border-box;
+    min-height: 2.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 0.2rem 0.35rem;
+    font-size: 0.62rem;
+    font-weight: 600;
+    line-height: 1.3;
+    color: #64748b;
+    background: #f1f5f9;
+    border: 1px dashed #cbd5e1;
+    border-radius: 0.5rem;
+}
+
+/* Upload + pre-upload hint — lighter blue than Search bar for readability */
+.rfq-action-placeholder.rfq-action-placeholder--scan {
+    color: #fff;
+    background: #2563eb;
+    border: none;
+    cursor: default;
+    white-space: normal;
+}
+
+.rfq-actions-muted {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    font-size: 0.65rem;
+    color: #64748b;
+    font-weight: 500;
+    line-height: 1.35;
+    text-align: center;
+    padding: 0.1rem 0.25rem 0;
+    margin: 0;
+}
+
+.rfq-actions-inline:has(.rfq-actions-muted) .rfq-action-slot-3 {
+    grid-row: 2;
+}
+
+.rfq-action-btn {
+    appearance: none;
+    -webkit-appearance: none;
+    font-family: inherit;
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    min-height: 2.25rem;
+    padding: 0 0.5rem;
+    margin: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    border-radius: 0.5rem;
+    border: 1px solid #0f766e;
+    font-size: 0.65625rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    line-height: 1.15;
+    cursor: pointer;
+    text-decoration: none;
+    text-align: center;
+    white-space: nowrap;
+    background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
+    color: #fff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+
+.rfq-action-btn:hover {
+    filter: brightness(1.06);
+    box-shadow: 0 4px 14px rgba(13, 148, 136, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    transform: translateY(-1px);
+    color: #fff;
+    text-decoration: none;
+}
+
+.rfq-action-btn.rfq-action-btn--scan {
+    border: none;
+    background: #2563eb;
+    color: #fff;
+    box-shadow: none;
+}
+
+.rfq-action-btn.rfq-action-btn--scan:hover {
+    filter: none;
+    background: #3b82f6;
+    box-shadow: none;
+    color: #fff;
+    transform: translateY(-1px);
+    text-decoration: none;
+}
+
+.rfq-action-btn.rfq-action-btn--scan:focus-visible {
+    outline: 2px solid #60a5fa;
+    outline-offset: 2px;
+}
+
+/* View — yellow / gold (Ready for Form queue) */
+.rfq-action-btn--view-gold {
+    border-color: #b45309;
+    background: linear-gradient(135deg, #fde68a 0%, #fbbf24 45%, #d97706 100%);
+    color: #422006;
+    box-shadow:
+        0 1px 2px rgba(66, 32, 6, 0.14),
+        inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.rfq-action-btn.rfq-action-btn--view-gold:hover {
+    filter: brightness(1.05);
+    box-shadow:
+        0 4px 14px rgba(217, 119, 6, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    color: #292524;
+}
+
+.rfq-action-btn.rfq-action-btn--view-gold:focus-visible {
+    outline: 2px solid #d97706;
+    outline-offset: 2px;
+}
+
+.rfq-action-btn:focus-visible {
+    outline: 2px solid #5eead4;
+    outline-offset: 2px;
+}
+
+.rfq-action-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.rfq-action-btn-icon {
+    width: 0.875rem;
+    height: 0.875rem;
+    flex-shrink: 0;
+}
+
 .rfq-table th {
     text-align: left;
     padding: 0.55rem 0.65rem;
@@ -171,19 +348,6 @@
     background: #15803d;
 }
 
-a.rfq-btn-outline {
-    text-decoration: none;
-    box-sizing: border-box;
-    background: #f8fafc;
-    color: #334155;
-    border: 1px solid #cbd5e1;
-}
-
-a.rfq-btn-outline:hover {
-    background: #f1f5f9;
-    color: #0f172a;
-}
-
 .rfq-btn-search {
     background: #1e40af;
 }
@@ -253,5 +417,189 @@ a.rfq-btn-outline:hover {
     border-radius: 0.45rem;
     padding: 0.4rem 0.55rem;
     display: inline-block;
+}
+
+/* Applicant detail modal (fields removed from slim queue table) */
+.rfq-detail-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 1150;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+}
+
+.rfq-detail-overlay.active {
+    display: flex;
+}
+
+.rfq-detail-card {
+    width: min(26rem, 100%);
+    max-height: min(90vh, 36rem);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 14px;
+    box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.35),
+                0 16px 32px -8px rgba(15, 23, 42, 0.18);
+}
+
+.rfq-detail-stripe {
+    height: 4px;
+    flex-shrink: 0;
+    background: linear-gradient(90deg, #0d9488 0%, #14b8a6 45%, #5eead4 100%);
+}
+
+.rfq-detail-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 1rem 1.15rem 0.65rem;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.rfq-detail-kicker {
+    margin: 0 0 0.2rem;
+    font-size: 0.58rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #0f766e;
+}
+
+.rfq-detail-title {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: -0.02em;
+    line-height: 1.25;
+    word-break: break-word;
+}
+
+.rfq-detail-close {
+    flex-shrink: 0;
+    width: 2rem;
+    height: 2rem;
+    border: none;
+    border-radius: 0.45rem;
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 1.35rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.rfq-detail-close:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+
+.rfq-detail-body {
+    padding: 0.85rem 1.15rem 1rem;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.rfq-detail-section {
+    margin-bottom: 1rem;
+}
+
+.rfq-detail-section:last-of-type {
+    margin-bottom: 0;
+}
+
+.rfq-detail-section-label {
+    margin: 0 0 0.35rem;
+    font-size: 0.58rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #64748b;
+}
+
+.rfq-detail-name {
+    font-weight: 600;
+    font-size: 0.88rem;
+    color: #0f172a;
+    line-height: 1.35;
+}
+
+.rfq-detail-muted {
+    margin-top: 0.25rem;
+    font-size: 0.68rem;
+    color: #64748b;
+    line-height: 1.45;
+    word-break: break-word;
+}
+
+.rfq-detail-muted.mono {
+    font-family: ui-monospace, monospace;
+}
+
+.rfq-detail-grid {
+    margin: 0 0 1rem;
+    padding: 0;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #fafbfc;
+}
+
+.rfq-detail-row {
+    display: grid;
+    grid-template-columns: minmax(0, 34%) minmax(0, 1fr);
+    gap: 0.5rem 0.85rem;
+    padding: 0.55rem 0.72rem;
+    border-bottom: 1px solid #e8eef5;
+}
+
+.rfq-detail-row:last-child {
+    border-bottom: none;
+}
+
+.rfq-detail-row dt {
+    margin: 0;
+    font-size: 0.58rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #64748b;
+    align-self: start;
+}
+
+.rfq-detail-row dd {
+    margin: 0;
+    font-size: 0.74rem;
+    color: #334155;
+    line-height: 1.45;
+}
+
+.rfq-detail-status {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+}
+
+.rfq-detail-ha-wrap:not([hidden]) {
+    margin-top: 0.1rem;
+}
+
+.rfq-detail-footer {
+    flex-shrink: 0;
+    padding: 0.75rem 1.15rem 1rem;
+    border-top: 1px solid #f1f5f9;
+    background: #fafbfc;
+    display: flex;
+    justify-content: flex-end;
 }
 

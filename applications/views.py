@@ -6,7 +6,7 @@ import io
 
 from django.http import FileResponse, JsonResponse
 from django.views.decorators.http import require_POST
-from django.db.models import Count, Q, Prefetch, Max
+from django.db.models import Count, Exists, OuterRef, Q, Prefetch, Max
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 from django.urls import reverse
@@ -28,6 +28,7 @@ from documents.models import (
 from .models import (
     Application, QueueEntry, CDRRMOCertificationProxy, CDRRMOCertification, FieldVerificationPhoto, EligibilityCheckDecision,
 )
+from .form_pipeline import applicant_has_signed_application_payload
 from .utils import check_blacklist_module2, send_sms_for_applications
 from .application_form_pdf import build_filled_application_pdf
 
@@ -35,7 +36,7 @@ MODULE1_MONTHLY_INCOME_CEILING_PESO = 10000
 # Application & Evaluation list: records per page (Module 2 ledger)
 MODULE2_LIST_PER_PAGE = 20
 # Routed “Proceed to Form” applicants stay on Ready for Form until Application leaves this pipeline.
-_MODULE2_FORM_PIPELINE_STATUSES = frozenset({'draft', 'routing', 'completed'})
+_MODULE2_FORM_PIPELINE_STATUSES = frozenset({'draft', 'completed'})
 # Minimum years of residence in Talisay City for Module 2 Layer 2 (2.6) eligibility.
 # Mirror of `MODULE1_MIN_YEARS_RESIDING_TALISAY` in intake/views.py — keep in sync.
 MODULE1_MIN_YEARS_RESIDING_TALISAY = 5
@@ -771,7 +772,7 @@ def _module2_application_overall_snapshot(application):
         stage = 'Lot Awarded'
     elif st in ('oic_signed', 'standby'):
         stage = 'Fully Approved'
-    elif st in ('routing', 'draft', 'completed'):
+    elif st in ('draft', 'completed'):
         stage = 'Form Released'
     else:
         stage = 'Form Released'
@@ -836,8 +837,10 @@ def _module2_applicant_row_payload(applicant, permissions, required_group_a_subm
         current_stage = 'Lot Awarded'
     elif application and application.status in ['oic_signed', 'standby']:
         current_stage = 'Fully Approved'
-    elif application and application.status in ['routing', 'draft', 'completed']:
-        current_stage = 'Form Released'
+    elif application and application.status == 'draft':
+        current_stage = 'Form Released · awaiting signed scan'
+    elif application and application.status == 'completed':
+        current_stage = 'Awaiting OIC approval'
     elif rules.get('form_generation_ready'):
         current_stage = 'Document Gathering'
     elif applicant.module2_handoff_at:
@@ -854,6 +857,26 @@ def _module2_applicant_row_payload(applicant, permissions, required_group_a_subm
         user_actions.append('award_lot')
     if permissions['can_manage_electricity'] and application and application.status == 'awarded':
         user_actions.append('manage_electricity')
+
+    signed_scan_present = (
+        applicant_has_signed_application_payload(applicant)
+        if application is not None
+        else False
+    )
+
+    signed_form_vault_url = ''
+    if application is not None and application.status == 'draft':
+        _vault_q = {
+            'search': ((applicant.reference_number or '').strip() or str(applicant.pk)),
+            'applicant_id': str(applicant.pk),
+            'open_upload': '1',
+            'document_type': 'signed_application',
+            'intent': 'upload',
+        }
+        signed_form_vault_url = (
+            f"{reverse('documents:management', kwargs={'position': acted_by_user.position})}"
+            f"?{urlencode(_vault_q)}"
+        )
 
     return {
         'applicant': applicant,
@@ -879,6 +902,8 @@ def _module2_applicant_row_payload(applicant, permissions, required_group_a_subm
         'household_size': applicant.household_size,
         'm2_rules': rules,
         'm2_evaluator': rules,
+        'signed_application_scan_present': signed_scan_present,
+        'signed_form_vault_url': signed_form_vault_url,
     }
 
 
@@ -891,16 +916,15 @@ def _module2_applicant_row_payload(applicant, permissions, required_group_a_subm
 def applications_list(request, position):
     """
     Module 2 - Housing Application & Eligibility
-    Shows eligible applicants with document checklist progress, signatory routing, etc.
+    Shows eligible applicants with document checklist progress and application workflow stages.
 
     URL: /applications/<position>/list/
 
     ACCESS CONTROL:
     ✅ Jocel (4th Member) - Full access: verify docs, generate forms, award lots
-    ✅ Jay (3rd Member) - View + routing actions
     ✅ Joie (2nd Member) - Supervisor: verify docs, electricity tracking
     ✅ Laarni (5th Member) - Electricity tracking only
-    ✅ Victor (OIC) - View + OIC signature
+    ✅ Victor (OIC) - View + OIC full approval once applicant-signed scan is on file
     """
     # Check access
     allowed_positions = ['fourth_member', 'second_member', 'fifth_member', 'oic']
@@ -914,7 +938,14 @@ def applications_list(request, position):
     _module2_run_handoff_preflight(request.user)
 
     applicants = _module2_evaluations_applicants_queryset()
-    
+
+    _awaiting_oic_q = Exists(
+        SignatoryRouting.objects.filter(
+            application__applicant_id=OuterRef('pk'),
+            step='signed_oic',
+        )
+    )
+
     # Get all requirements for the checklist
     requirements = Requirement.objects.filter(is_active=True).order_by('group', 'order')
     group_a_requirements = requirements.filter(group='A')
@@ -936,11 +967,11 @@ def applications_list(request, position):
             form_queue_routed_at__isnull=False,
             application__status__in=['draft', 'completed'],
         ).count(),
-        'signatory_routing': applicants.filter(
-            application__status='routing'
-        ).exclude(
-            form_queue_routed_at__isnull=False,
-        ).count(),
+        'awaiting_oic': applicants.filter(application__status='completed')
+        .annotate(_has_signed_oic=_awaiting_oic_q)
+        .filter(_has_signed_oic=False)
+        .distinct()
+        .count(),
         'fully_approved': applicants.filter(
             application__status__in=['oic_signed', 'standby']
         ).count(),
@@ -970,7 +1001,7 @@ def applications_list(request, position):
         on_rfq_track = _module2_on_ready_for_form_queue_track(applicant, row['application'])
         if on_rfq_track:
             ready_for_form_queue_count += 1
-        # Routed Proceed-to-Form applicants stay on Ready for Form until Application advances past draft/routing/completed.
+        # Routed Proceed-to-Form applicants stay on Ready for Form until Application advances past draft/completed.
         if on_rfq_track:
             continue
         applicants_data.append(row)
@@ -982,7 +1013,7 @@ def applications_list(request, position):
             'eligibility': 'Eligibility',
             'document_gathering': 'Document Gathering',
             'form_released': 'Form Released',
-            'signatory_routing': 'Signatory Routing',
+            'awaiting_oic': 'Awaiting OIC approval',
             'fully_approved': 'Fully Approved',
             'lot_awarded': 'Lot Awarded',
         }
@@ -1041,7 +1072,7 @@ def applications_list(request, position):
 @verify_position
 def ready_for_form_queue(request, position):
     """
-    Routed Proceed-to-Form queue: pending Generate Form, then Form Released pipeline (draft/routing/completed)
+    Routed Proceed-to-Form queue: pending Generate Form, then Form Released pipeline (draft/completed)
     until fully approved — hidden from the main Application & Evaluation ledger during that window.
     URL: /applications/<position>/ready-for-form/
     """
@@ -1077,6 +1108,15 @@ def ready_for_form_queue(request, position):
             continue
         if _module2_on_ready_for_form_queue_track(applicant, row['application']):
             applicants_data.append(row)
+
+    # FIFO: whoever was routed with Proceed to Form first appears first (#1 in line).
+    applicants_data.sort(
+        key=lambda r: (
+            r['applicant'].form_queue_routed_at is None,
+            r['applicant'].form_queue_routed_at or timezone.now(),
+            str(r['applicant'].pk),
+        ),
+    )
 
     ready_queue_total = len(applicants_data)
 
@@ -1239,7 +1279,7 @@ def application_detail(request, position, application_id):
     """
     Get applicant/application detail for modal (AJAX).
 
-    URL: /applications/<position>/detail/<application_id>/
+    URL: /applications/staff/<position>/<application_id>/ (applicant or application UUID)
 
     Accepts either an Applicant ID or Application ID and returns
     the relevant information for the modal display.
@@ -3100,7 +3140,7 @@ def application_form_pdf(request, position, applicant_id):
 
 
 # =============================================================================
-# SIGNATORY ROUTING (Jocel/Joie, OIC)
+# OIC FULL APPROVAL (after applicant-signed scan)
 # =============================================================================
 
 @login_required
@@ -3108,38 +3148,32 @@ def application_form_pdf(request, position, applicant_id):
 @require_POST
 def update_routing(request, position):
     """
-    Update signatory routing step (AJAX).
+    Record OIC full approval after the applicant-signed application is on file (AJAX).
 
-    URL: /applications/<position>/routing/update/
+    POST URLs: ``applications:update_routing`` → ``/applications/staff/<position>/routing/update/``;
+    documents alias ``documents:update_signatory_routing`` → ``/documents/<position>/api/update-signatory-routing/``.
 
-    ACCESS CONTROL:
-    - Staff (Jocel 4th / Joie 2nd): marks physical-paper checkpoints
-    - OIC may update its own signature checkpoint
+    Legacy intermediate steps (received / forwarded_oic) are no longer used; applicant
+    signature is captured in the vault scan (``completed``). This endpoint writes one
+    ``signed_oic`` SignatoryRouting row for audit and sets ``oic_signed``.
     """
     application_id = request.POST.get('application_id')
     step = request.POST.get('step')
     notes = request.POST.get('notes', '')
-    
-    # Validate step and check permission
-    step_permissions = {
-        'received': ['fourth_member', 'second_member'],
-        'forwarded_oic': ['fourth_member', 'second_member'],
-        'signed_oic': ['fourth_member', 'second_member', 'oic'],
-    }
 
-    allowed_positions = step_permissions.get(step, [])
+    allowed_positions = ['fourth_member', 'second_member', 'oic']
     if request.user.position not in allowed_positions:
-        position_names = {
-            'fourth_member': 'Jocel (4th Member)',
-            'second_member': 'Joie (2nd Member)',
-            'oic': 'Victor (OIC)',
-        }
-        required = ', '.join([position_names.get(p, p) for p in allowed_positions])
+        return JsonResponse({'success': False, 'error': 'Permission denied.'}, status=403)
+
+    if step != 'signed_oic':
         return JsonResponse({
             'success': False,
-            'error': f'Permission denied. This action requires: {required}'
-        }, status=403)
-    
+            'error': (
+                'Intermediate signatory routing is retired. '
+                'Use full OIC approval only (step signed_oic) once the applicant-signed scan is on file.'
+            ),
+        }, status=400)
+
     try:
         application = Application.objects.select_related('applicant').get(id=application_id)
         handoff_error = _require_intake_archive(application.applicant)
@@ -3149,9 +3183,14 @@ def update_routing(request, position):
         if blacklist_error:
             return blacklist_error
 
-        step_sequence = ['received', 'forwarded_oic', 'signed_oic']
-        if step not in step_sequence:
-            return JsonResponse({'success': False, 'error': 'Invalid routing step.'}, status=400)
+        if application.status != 'completed':
+            return JsonResponse({
+                'success': False,
+                'error': (
+                    f'Application must be applicant-signed (completed) before OIC approval '
+                    f'(current status: {application.get_status_display()}).'
+                ),
+            }, status=400)
 
         completed_steps = set(application.routing_steps.values_list('step', flat=True))
         if step in completed_steps:
@@ -3161,46 +3200,30 @@ def update_routing(request, position):
                 'message': f'Routing step "{step}" already recorded.'
             })
 
-        step_index = step_sequence.index(step)
-        if step_index > 0:
-            previous_step = step_sequence[step_index - 1]
-            if previous_step not in completed_steps:
-                return JsonResponse({
-                    'success': False,
-                    'error': f'Cannot mark "{step}" before "{previous_step}" is completed.'
-                }, status=400)
-        
-        # Create routing step
         SignatoryRouting.objects.create(
             application=application,
             step=step,
             action_by=request.user,
             notes=notes
         )
-        
-        # Update application status based on step
-        if step == 'signed_oic':
-            application.status = 'oic_signed'
-            application.fully_approved_at = timezone.now()
 
-            # Send SMS: Fully Approved
-            if application.applicant.phone_number:
-                message = (
-                    f"Congratulations! Your housing application {application.application_number} "
-                    f"has been FULLY APPROVED. You are now on the Standby Queue. "
-                    f"Please wait for lot availability notification. Reference: {application.applicant.reference_number}"
-                )
-                send_sms(application.applicant.phone_number, message, 'fully_approved', applicant=application.applicant, module='applications')
+        application.status = 'oic_signed'
+        application.fully_approved_at = timezone.now()
 
-        elif step in ['received', 'forwarded_oic']:
-            application.status = 'routing'
-        
+        if application.applicant.phone_number:
+            message = (
+                f"Congratulations! Your housing application {application.application_number} "
+                f"has been FULLY APPROVED. You are now on the Standby Queue. "
+                f"Please wait for lot availability notification. Reference: {application.applicant.reference_number}"
+            )
+            send_sms(application.applicant.phone_number, message, 'fully_approved', applicant=application.applicant, module='applications')
+
         application.save()
-        
+
         return JsonResponse({
             'success': True,
             'new_status': application.status,
-            'message': f'Routing step "{step}" recorded successfully.'
+            'message': 'OIC full approval recorded successfully.'
         })
     except Application.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Application not found'})

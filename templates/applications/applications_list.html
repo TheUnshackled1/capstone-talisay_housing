@@ -3612,7 +3612,7 @@
                         {% if data.m2_evaluator.blacklist_blocked %}
                         <span class="m2-readiness-chip blocked">Blocked - Blacklisted</span>
                         {% elif data.form_generated %}
-                        <span class="m2-readiness-chip {% if data.application.status == 'routing' %}pending{% elif data.application.status == 'awarded' %}followup{% else %}ready{% endif %}">{{ data.current_stage }}</span>
+                        <span class="m2-readiness-chip {% if data.application.status == 'draft' %}pending{% elif data.application.status == 'awarded' %}followup{% else %}ready{% endif %}">{{ data.current_stage }}</span>
                         {% elif not data.m2_evaluator.required_docs_complete %}
                         <span class="m2-readiness-chip pending">Docs Incomplete</span>
                         {% elif data.m2_evaluator.situation_docs_required and not data.m2_evaluator.situation_docs_ready %}
@@ -4333,7 +4333,7 @@
             const label = String(data.application_stage_label || 'Form Released').trim() || 'Form Released';
             const st = String(data.application_status || '').trim();
             let cls = 'ready';
-            if (st === 'routing') cls = 'pending';
+            if (st === 'draft') cls = 'pending';
             else if (st === 'awarded') cls = 'followup';
             return { label, cls, title: '' };
         }
@@ -4975,8 +4975,8 @@
         if (!status) return null;
         if (status === 'awarded') return 'Lot Awarded';
         if (status === 'oic_signed' || status === 'standby') return 'Fully Approved';
-        if (status === 'routing') return 'Signatory Routing';
-        if (status === 'draft' || status === 'completed') return 'Form Released';
+        if (status === 'completed') return 'Awaiting OIC approval';
+        if (status === 'draft') return 'Form Released';
         return null;
     }
 
@@ -5699,7 +5699,7 @@
             'Eligibility': 1,
             'Document Gathering': 2,
             'Form Released': 3,
-            'Signatory Routing': 4,
+            'Awaiting OIC approval': 4,
             'Fully Approved': 5,
             'Lot Awarded': 6
         };

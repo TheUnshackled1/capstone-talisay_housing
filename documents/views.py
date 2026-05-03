@@ -245,7 +245,7 @@ def document_management(request, position):
                 ('application_form', 'Application Form'),
                 ('notarized_docs', 'Notarized Documents'),
                 ('engineering_assessment', 'Engineering Assessment'),
-                ('signed_application', 'Signed Application (Head-Approved)'),
+                ('signed_application', 'Physically signed application (scan)'),
             ]
         },
         'C': {
@@ -388,13 +388,29 @@ def upload_document(request, position):
             }
         )
 
-        return JsonResponse({
+        pipeline_note = ''
+        application_advanced = False
+        if doc_type == 'signed_application':
+            from applications.form_pipeline import apply_signed_application_scan_if_ready
+
+            info = apply_signed_application_scan_if_ready(applicant.id)
+            application_advanced = bool(info.get('updated'))
+            if application_advanced:
+                pipeline_note = (
+                    'Physically signed application scan recorded. '
+                    'Application status is now Completed — Signed by Applicant.'
+                )
+
+        payload = {
             'success': True,
             'message': f"Document {'updated' if not created else 'uploaded'} successfully",
             'document_id': str(doc.id),
             'file_name': doc.file_name,
             'file_size': doc.file_size_display,
-        })
+            'application_advanced': application_advanced,
+            'pipeline_note': pipeline_note,
+        }
+        return JsonResponse(payload)
 
     except Applicant.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Applicant not found'}, status=404)
@@ -535,8 +551,10 @@ def update_requirement_submission(request, position):
 @require_POST
 def update_signatory_routing(request, position):
     """
-    Documents-module alias for Module 2 signatory routing updates.
-    Delegates to applications logic to preserve behavior.
+    Documents-module POST endpoint for Module 2 OIC full approval (applicant-signed scan on file).
+
+    URL: ``/documents/<position>/api/update-signatory-routing/`` — same as
+    ``applications:update_routing`` under ``/applications/staff/<position>/routing/update/``.
     """
     from applications.views import update_routing
     return update_routing(request, position)

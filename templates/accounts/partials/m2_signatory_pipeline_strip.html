@@ -54,27 +54,19 @@
     }
 </style>
 <div class="m2-pipeline-wrap scroll-animate-scale">
-    <div class="m2-pipeline-title">Module 2 — Signatory pipeline (counts by current routing step)</div>
+    <div class="m2-pipeline-title">Module 2 — Form pipeline (counts)</div>
     <div class="m2-pipeline-row">
         <div class="m2-pipeline-step">
-            <em>{{ m2_pipeline.pre_routing }}</em>
-            <span>Form ready<br>(draft / applicant signed)</span>
-        </div>
-        <div class="m2-pipeline-step">
-            <em>{{ m2_pipeline.latest_received }}</em>
-            <span>Latest step:<br>Received</span>
+            <em>{{ m2_pipeline.draft_forms }}</em>
+            <span>Draft<br>(form out — signed scan <strong>not</strong> in vault yet)</span>
         </div>
         <div class="m2-pipeline-step{% if m2_pipeline_role == 'oic' %} current{% endif %}">
-            <em>{{ m2_pipeline.latest_forwarded_oic }}</em>
-            <span>Latest step:<br>At OIC desk</span>
-        </div>
-        <div class="m2-pipeline-step">
-            <em>{{ m2_pipeline.latest_signed_oic }}</em>
-            <span>Latest step:<br>OIC signed</span>
+            <em>{{ m2_pipeline.awaiting_oic }}</em>
+            <span>Your queue<br>(signed scan <strong>on file</strong> — record full approval)</span>
         </div>
         <div class="m2-pipeline-step">
             <em>{{ m2_pipeline.fully_approved }}</em>
-            <span>Fully approved+<br>(signed / standby / awarded)</span>
+            <span>Fully approved+<br>(OIC signed / standby / awarded)</span>
         </div>
     </div>
 </div>

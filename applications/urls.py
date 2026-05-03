@@ -4,6 +4,12 @@ from . import views
 app_name = 'applications'
 
 urlpatterns = [
+    # Applicant/application JSON for Module 2 modal (must be before bare staff/<position>/)
+    path(
+        'staff/<str:position>/<uuid:application_id>/',
+        views.application_detail,
+        name='application_detail',
+    ),
     # Main applications list view (Module 2)
     path('staff/<str:position>/', views.applications_list, name='applications_list'),
     path(
@@ -35,6 +41,9 @@ urlpatterns = [
 
     # Lot awarding (Jocel, Joie)
     path('staff/<str:position>/award-lot/', views.award_lot, name='award_lot'),
+
+    # OIC full approval after applicant-signed scan (same handler as documents API alias)
+    path('staff/<str:position>/routing/update/', views.update_routing, name='update_routing'),
 
     # Electricity tracking (Joie, Laarni)
     path('staff/<str:position>/electricity/', views.electricity_list, name='electricity_list'),

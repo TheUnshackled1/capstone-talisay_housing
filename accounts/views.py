@@ -3,7 +3,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
-from django.db.models import Q, OuterRef, Subquery, Prefetch
+from django.db.models import Q, Prefetch
 from django.urls import reverse
 from datetime import timedelta, date
 from urllib.parse import urlencode
@@ -53,19 +53,18 @@ def _applicant_intake_docs_done_count(applicant):
     return sum(1 for k in keys if getattr(applicant, k, False))
 
 
-def _applications_pending_signatory_step(step):
+def _applications_pending_oic_signature():
     """
-    Applications whose most recent SignatoryRouting step equals `step`
-    (e.g. 'forwarded_oic' = awaiting OIC signature, 'signed_oic' = OIC has signed).
+    Applicant-signed applications (status ``completed``) not yet marked fully approved.
+
+    Intermediate routing steps were retired; OIC approval creates the sole ``signed_oic`` row.
     """
-    latest_sq = (
-        SignatoryRouting.objects.filter(application_id=OuterRef('pk'))
-        .order_by('-action_at')
-        .values('step')[:1]
-    )
+    signed_app_ids = SignatoryRouting.objects.filter(step='signed_oic').values_list(
+        'application_id', flat=True
+    ).distinct()
     return (
-        Application.objects.annotate(_latest_routing_step=Subquery(latest_sq))
-        .filter(_latest_routing_step=step)
+        Application.objects.filter(status='completed')
+        .exclude(id__in=signed_app_ids)
         .select_related('applicant', 'form_generated_by')
         .prefetch_related(
             Prefetch(
@@ -130,24 +129,13 @@ def _build_oversight_applicants_table_rows():
 
 
 def _m2_signatory_pipeline_counts():
-    """Counts for M2 signatory strip (OIC pending pages)."""
-    latest_sq = (
-        SignatoryRouting.objects.filter(application_id=OuterRef('pk'))
-        .order_by('-action_at')
-        .values('step')[:1]
-    )
-    annotated = Application.objects.annotate(_latest=Subquery(latest_sq))
-
-    def _c(**filters):
-        return annotated.filter(**filters).count()
-
+    """Counts for M2 applicant-form pipeline strip (OIC pending pages)."""
+    signed_done_ids = SignatoryRouting.objects.filter(step='signed_oic').values_list(
+        'application_id', flat=True
+    ).distinct()
     return {
-        'pre_routing': Application.objects.filter(
-            status__in=['draft', 'completed'],
-        ).count(),
-        'latest_received': _c(_latest='received'),
-        'latest_forwarded_oic': _c(_latest='forwarded_oic'),
-        'latest_signed_oic': _c(_latest='signed_oic'),
+        'draft_forms': Application.objects.filter(status='draft').count(),
+        'awaiting_oic': Application.objects.filter(status='completed').exclude(id__in=signed_done_ids).count(),
         'fully_approved': Application.objects.filter(
             status__in=['oic_signed', 'standby', 'awarded'],
         ).count(),
@@ -286,7 +274,7 @@ def dashboard_oic(request):
     Responsibilities: M1 (queue oversight), M2 (OIC signatory), M4 (compliance), M5 (escalated complaints)
 
     PHASE 1 Implementation:
-    - M2 (OIC Signatory): Pending signature tracking with >3 day delay flags
+    - M2 (OIC): Queue of completed applications (scan on file) with delay flags
     - M4 (Compliance): Awaiting decision count
     - M5 (Escalated Cases): Escalated to OIC count
     - M6 (Analytics): Pipeline, turnaround time, compliance rates
@@ -298,25 +286,21 @@ def dashboard_oic(request):
     # ==================== MODULE 2: OIC SIGNATORY (PRIORITY) ====================
     from applications.models import Application
 
-    # Applications whose latest routing step is "forwarded_oic" (awaiting OIC signature)
-    pending_signature_applications = _applications_pending_signatory_step('forwarded_oic').select_related(
-        'applicant'
-    ).prefetch_related('routing_steps')
+    pending_signature_applications = _applications_pending_oic_signature()
 
     pending_sigs_with_days = []
     for app in pending_signature_applications:
-        last_routing = app.routing_steps.filter(step='forwarded_oic').order_by('-action_at').first()
-        if last_routing:
-            days_waiting = last_routing.days_since_action
-            is_overdue = days_waiting > 3
-            pending_sigs_with_days.append({
-                'application': app,
-                'reference': app.application_number,
-                'applicant_name': app.applicant.full_name,
-                'days_waiting': days_waiting,
-                'is_overdue': is_overdue,
-                'forwarded_at': last_routing.action_at,
-            })
+        anchor = app.applicant_signed_at or app.updated_at or app.created_at
+        days_waiting = (timezone.now() - anchor).days if anchor else 0
+        is_overdue = days_waiting > 3
+        pending_sigs_with_days.append({
+            'application': app,
+            'reference': app.application_number,
+            'applicant_name': app.applicant.full_name,
+            'days_waiting': days_waiting,
+            'is_overdue': is_overdue,
+            'forwarded_at': anchor,
+        })
 
     # Sort by oldest first (longest waiting)
     pending_sigs_with_days.sort(key=lambda x: x['days_waiting'], reverse=True)
@@ -369,7 +353,6 @@ def dashboard_oic(request):
     pipeline_stages = [
         ('draft', 'Form Generated'),
         ('completed', 'Applicant Signed'),
-        ('routing', 'Signatory Routing'),
         ('oic_signed', 'OIC Approved'),
         ('standby', 'On Standby'),
         ('awarded', 'Lot Awarded'),
@@ -406,86 +389,47 @@ def dashboard_oic(request):
         })
 
     # ==================== MODULE 6: SIGNATORY TURNAROUND TIME (M2/M6) ====================
-    # Signatory routing step definitions
-    routing_steps_definitions = [
-        ('forwarded_oic', 'Forwarded to Victor', 'oic', None),  # First step, no previous
-        ('signed_oic', 'Victor Approves', 'oic', 'forwarded_oic'),  # Previous step: forwarded_oic
-    ]
+    _signed_done_ids = SignatoryRouting.objects.filter(step='signed_oic').values_list(
+        'application_id', flat=True
+    ).distinct()
+    pending_oic_apps = Application.objects.filter(status='completed').exclude(id__in=_signed_done_ids)
+    pending_at_step = pending_oic_apps.count()
+    overdue_at_step = 0
+    for app in pending_oic_apps.iterator():
+        anchor = app.applicant_signed_at or app.updated_at
+        if anchor and (timezone.now() - anchor).days > 3:
+            overdue_at_step += 1
 
-    # Calculate turnaround time for each routing step
-    turnaround_analytics = []
+    turnaround_times = []
+    for routing in SignatoryRouting.objects.filter(step='signed_oic').select_related('application'):
+        app = routing.application
+        if app.applicant_signed_at:
+            turnaround_times.append(max(0, (routing.action_at - app.applicant_signed_at).days))
 
-    for step_code, step_label, responsible_role, prev_step_code in routing_steps_definitions:
-        # Get all completed routing steps for this step
-        completed_steps = SignatoryRouting.objects.filter(
-            step=step_code
-        ).select_related('application', 'action_by').order_by('action_at')
+    if turnaround_times:
+        avg_turnaround = int(sum(turnaround_times) / len(turnaround_times))
+        max_turnaround = max(turnaround_times)
+        min_turnaround = min(turnaround_times)
+        completed_count = len(turnaround_times)
+    else:
+        avg_turnaround = 0
+        max_turnaround = 0
+        min_turnaround = 0
+        completed_count = 0
 
-        # Get currently pending at this step (forwarded but not yet completed)
-        if step_code == 'received':
-            # First step: applications with routing status but no 'received' step yet
-            pending_at_step = 0
-            overdue_at_step = 0
-        else:
-            # Other steps: applications that have completed previous step but not this one
-            apps_with_prev_step = Application.objects.filter(
-                routing_steps__step=prev_step_code
-            ).distinct()
-            apps_with_current_step = Application.objects.filter(
-                routing_steps__step=step_code
-            ).distinct()
-            pending_apps = apps_with_prev_step.exclude(
-                id__in=apps_with_current_step.values_list('id', flat=True)
-            )
-            pending_at_step = pending_apps.count()
-
-            # Count overdue at this step (pending > 3 days)
-            overdue_at_step = 0
-            for app in pending_apps:
-                last_prev = app.routing_steps.filter(
-                    step=prev_step_code
-                ).order_by('-action_at').first()
-                if last_prev and last_prev.is_delayed:
-                    overdue_at_step += 1
-
-        # Calculate turnaround time metrics for completed steps
-        turnaround_times = []
-        for routing in completed_steps:
-            if prev_step_code:
-                # Find previous step for this application
-                prev_routing = routing.application.routing_steps.filter(
-                    step=prev_step_code
-                ).order_by('-action_at').first()
-
-                if prev_routing:
-                    turnaround_days = (routing.action_at - prev_routing.action_at).days
-                    turnaround_times.append(turnaround_days)
-
-        # Calculate statistics
-        if turnaround_times:
-            avg_turnaround = int(sum(turnaround_times) / len(turnaround_times))
-            max_turnaround = max(turnaround_times)
-            min_turnaround = min(turnaround_times)
-            completed_count = len(turnaround_times)
-        else:
-            avg_turnaround = 0
-            max_turnaround = 0
-            min_turnaround = 0
-            completed_count = 0
-
-        turnaround_analytics.append({
-            'step_code': step_code,
-            'step_label': step_label,
-            'responsible_role': responsible_role,
-            'avg_turnaround': avg_turnaround,
-            'max_turnaround': max_turnaround,
-            'min_turnaround': min_turnaround,
-            'completed_count': completed_count,
-            'pending_count': pending_at_step,
-            'overdue_count': overdue_at_step,
-            'sla_target': 3,  # 3-day SLA
-            'is_exceeding_sla': avg_turnaround > 3 if completed_count > 0 else False,
-        })
+    turnaround_analytics = [{
+        'step_code': 'signed_oic',
+        'step_label': 'OIC approval after applicant-signed scan',
+        'responsible_role': 'oic',
+        'avg_turnaround': avg_turnaround,
+        'max_turnaround': max_turnaround,
+        'min_turnaround': min_turnaround,
+        'completed_count': completed_count,
+        'pending_count': pending_at_step,
+        'overdue_count': overdue_at_step,
+        'sla_target': 3,
+        'is_exceeding_sla': avg_turnaround > 3 if completed_count > 0 else False,
+    }]
 
     # ==================== MODULE 6: COMPLIANCE RATE ANALYTICS (stub — ComplianceNotice removed) ====================
     complied_count = escalated_count = active_count = cancelled_count = total_notices = resolved_count = 0
@@ -1444,7 +1388,7 @@ def oic_applicants_overview(request):
 @login_required
 def oic_pending_signature(request):
     """
-    OIC-specific: Applications awaiting OIC's signature.
+    OIC queue: applications with signed scan on file (completed) awaiting full approval.
     URL: /oic/applications/pending/
     """
     # Verify position
@@ -1452,16 +1396,12 @@ def oic_pending_signature(request):
         messages.error(request, 'Access denied. This view is for the OIC position only.')
         return redirect('accounts:dashboard')
 
-    # Awaiting OIC: latest routing step must be "forwarded_oic" (not yet signed_oic).
-    pending_applications = _applications_pending_signatory_step('forwarded_oic').order_by('created_at')
+    pending_applications = _applications_pending_oic_signature().order_by('created_at')
 
     pending_apps_list = []
     for app in pending_applications:
-        last_routing = app.routing_steps.filter(step='forwarded_oic').order_by('-action_at').first()
-        if last_routing:
-            days_pending = (timezone.now() - last_routing.action_at).days
-        else:
-            days_pending = (timezone.now() - app.created_at).days
+        anchor = app.applicant_signed_at or app.updated_at or app.created_at
+        days_pending = (timezone.now() - anchor).days if anchor else 0
 
         pending_apps_list.append({
             'application_number': app.application_number,
@@ -1479,7 +1419,7 @@ def oic_pending_signature(request):
     urgent_count = len([app for app in pending_apps_list if app['days_pending'] >= 7])
 
     context = {
-        'page_title': 'Applications Pending OIC Signature',
+        'page_title': 'Awaiting OIC full approval',
         'user_position': request.user.position,
         'pending_applications': pending_apps_list,
         'total_pending': total_pending,

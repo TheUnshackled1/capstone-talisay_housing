@@ -48,7 +48,7 @@ class Document(models.Model):
         ('application_form', 'Application Form'),
         ('notarized_docs', 'Notarized Documents'),
         ('engineering_assessment', 'Engineering Assessment'),
-        ('signed_application', 'Signed Application (Head-Approved)'),
+        ('signed_application', 'Physically signed application (scan)'),
         
         # Group C - Post-Award
         ('lot_award', 'Lot Award Document'),
@@ -212,6 +212,12 @@ def upsert_document_vault_upload(
         document=doc,
         defaults={'data': raw},
     )
+
+    if document_type == 'signed_application':
+        from applications.form_pipeline import apply_signed_application_scan_if_ready
+
+        apply_signed_application_scan_if_ready(applicant.id)
+
     return doc, created
 
 

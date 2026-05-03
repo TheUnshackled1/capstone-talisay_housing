@@ -2,14 +2,14 @@
 Dashboard Widgets for OIC (Victor M. Fregil)
 Responsibilities:
 - M1: System oversight & health monitoring
-- M2: OIC signatory step
+- M2: OIC full approval (after vault scan)
 - M4: Compliance decisions
 - M5: Escalated complaint decisions
 {% endcomment %}
 
 <!-- ===== MODULE 2: OIC SIGNATORY (PHASE 1 - PRIORITY) ===== -->
 
-<!-- Enhanced "Pending My Signature" Widget -->
+<!-- M2: Awaiting OIC full approval (scan on file) -->
 <div class="card scroll-animate" style="border-top: 4px solid #3b82f6;">
     <div class="card-header">
         <h3 class="card-title">
@@ -18,10 +18,10 @@ Responsibilities:
                 <path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/>
                 <path d="M3.22 15.22l4.24-4.24M19.78 8.78l-4.24 4.24"/>
             </svg>
-            Pending My Signature (M2)
+            Awaiting OIC approval (M2)
         </h3>
         <span class="badge" style="background-color: {% if overdue_signatures > 0 %}#ef4444{% elif pending_signature_count > 0 %}#f59e0b{% else %}#10b981{% endif %};">
-            {{ pending_signature_count|default:0 }} Document{{ pending_signature_count|pluralize }}
+            {{ pending_signature_count|default:0 }} application{{ pending_signature_count|pluralize }}
         </span>
     </div>
     <div class="card-body">
@@ -29,7 +29,7 @@ Responsibilities:
             <!-- Summary Stats -->
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
                 <div style="background: #f0f9ff; padding: 0.75rem; border-radius: 0.5rem; border-left: 3px solid #3b82f6;">
-                    <div style="font-size: 0.75rem; color: #1e40af; font-weight: 600; text-transform: uppercase;">Total Pending</div>
+                    <div style="font-size: 0.75rem; color: #1e40af; font-weight: 600; text-transform: uppercase;">In your queue</div>
                     <div style="font-size: 1.875rem; font-weight: bold; color: #1e40af; margin-top: 0.25rem;">{{ pending_signature_count }}</div>
                 </div>
                 {% if overdue_signatures > 0 %}
@@ -47,7 +47,7 @@ Responsibilities:
                     <div style="flex: 1;">
                         <div style="font-weight: 600; color: #1e293b; font-size: 0.9375rem;">{{ item.reference }}</div>
                         <div style="color: #64748b; font-size: 0.8125rem; margin-top: 0.25rem;">{{ item.applicant_name }}</div>
-                        <div style="color: #94a3b8; font-size: 0.75rem; margin-top: 0.25rem;">Forwarded: {{ item.forwarded_at|date:"M d, Y g:i A" }}</div>
+                        <div style="color: #94a3b8; font-size: 0.75rem; margin-top: 0.25rem;">Scan on file since: {{ item.forwarded_at|date:"M d, Y g:i A" }}</div>
                     </div>
                     <div style="text-align: right; margin-left: 1rem;">
                         <span style="display: inline-block; background-color: {% if item.is_overdue %}#fee2e2{% elif item.days_waiting >= 3 %}#fef3c7{% else %}#dbeafe{% endif %}; color: {% if item.is_overdue %}#991b1b{% elif item.days_waiting >= 3 %}#92400e{% else %}#1e40af{% endif %}; padding: 0.35rem 0.75rem; border-radius: 0.25rem; font-weight: 600; font-size: 0.75rem;">
@@ -60,20 +60,20 @@ Responsibilities:
 
             <!-- Action Button -->
             <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e2e8f0;">
-                <a href="{% url 'accounts:dashboard_oic' %}?tab=applications" style="display: inline-block; background-color: #3b82f6; color: white; padding: 0.5rem 1rem; border-radius: 0.375rem; text-decoration: none; font-size: 0.875rem; font-weight: 600;">
-                    Review & Sign Applications →
+                <a href="{% url 'accounts:oic_pending_sig' %}" style="display: inline-block; background-color: #3b82f6; color: white; padding: 0.5rem 1rem; border-radius: 0.375rem; text-decoration: none; font-size: 0.875rem; font-weight: 600;">
+                    Open approval queue →
                 </a>
             </div>
 
         {% else %}
-            <!-- No Pending Signatures -->
+            <!-- Queue empty -->
             <div style="text-align: center; padding: 2rem 0; color: #94a3b8;">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width: 3rem; height: 3rem; margin: 0 auto 0.75rem; color: #10b981;">
                     <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
                     <polyline points="22 4 12 14.01 9 11.01"/>
                 </svg>
-                <p style="font-weight: 500; color: #10b981;">✅ No documents awaiting your signature</p>
-                <p style="font-size: 0.875rem; color: #94a3b8; margin-top: 0.5rem;">All applications are on schedule</p>
+                <p style="font-weight: 500; color: #10b981;">✅ No applications with scan on file need approval</p>
+                <p style="font-size: 0.875rem; color: #94a3b8; margin-top: 0.5rem;">They appear after staff upload the signed form to the vault</p>
             </div>
         {% endif %}
     </div>
@@ -179,7 +179,7 @@ Responsibilities:
                     <!-- Stage Label -->
                     <div style="flex: 0 0 140px;">
                         <div style="font-size: 0.8125rem; font-weight: 600; color: #1e293b;">{{ stage.label }}</div>
-                        <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 0.125rem;">Stage {{ stage.position|add:1 }}/7</div>
+                        <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 0.125rem;">Stage {{ stage.position|add:1 }}/{{ funnel_data|length }}</div>
                     </div>
 
                     <!-- Funnel Bar -->
@@ -214,12 +214,12 @@ Responsibilities:
                     <div style="font-size: 1.5rem; font-weight: bold; color: #1e40af; margin-top: 0.25rem;">{{ funnel_data.0.count|default:0 }}</div>
                 </div>
                 <div style="text-align: center; padding: 0.75rem; background: #fef3c7; border-radius: 0.375rem; border: 1px solid #fcd34d;">
-                    <div style="font-size: 0.75rem; color: #92400e; font-weight: 600; text-transform: uppercase;">In Routing</div>
-                    <div style="font-size: 1.5rem; font-weight: bold; color: #92400e; margin-top: 0.25rem;">{{ funnel_data.2.count|default:0 }}</div>
+                    <div style="font-size: 0.75rem; color: #92400e; font-weight: 600; text-transform: uppercase;">Awaiting OIC</div>
+                    <div style="font-size: 1.5rem; font-weight: bold; color: #92400e; margin-top: 0.25rem;">{{ funnel_data.1.count|default:0 }}</div>
                 </div>
                 <div style="text-align: center; padding: 0.75rem; background: #d1fae5; border-radius: 0.375rem; border: 1px solid #a7f3d0;">
                     <div style="font-size: 0.75rem; color: #065f46; font-weight: 600; text-transform: uppercase;">Awarded</div>
-                    <div style="font-size: 1.5rem; font-weight: bold; color: #065f46; margin-top: 0.25rem;">{{ funnel_data.6.count|default:0 }}</div>
+                    <div style="font-size: 1.5rem; font-weight: bold; color: #065f46; margin-top: 0.25rem;">{{ funnel_data.4.count|default:0 }}</div>
                 </div>
             </div>
 
@@ -334,8 +334,8 @@ Responsibilities:
                     <circle cx="12" cy="12" r="9"/>
                     <polyline points="12 6 12 12 16 14"/>
                 </svg>
-                <p style="font-weight: 500; color: #94a3b8;">No routing data yet</p>
-                <p style="font-size: 0.875rem; color: #cbd5e1; margin-top: 0.5rem;">Turnaround metrics will appear as applications move through the routing workflow</p>
+                <p style="font-weight: 500; color: #94a3b8;">No turnaround data yet</p>
+                <p style="font-size: 0.875rem; color: #cbd5e1; margin-top: 0.5rem;">Metrics appear once applicant-signed scans are on file and OIC approvals are recorded</p>
             </div>
         {% endif %}
     </div>
