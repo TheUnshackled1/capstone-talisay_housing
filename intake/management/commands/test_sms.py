@@ -1,20 +1,19 @@
 """
-Management command to test SMS routing (console / IPROG / Twilio / Semaphore / httpSMS).
+Management command to test SMS routing (console or Semaphore).
 
 Usage:
     python manage.py test_sms --phone 09987654321
     python manage.py test_sms --phone 09987654321 --service console
-    python manage.py test_sms --phone 09987654321 --service iprog
-    python manage.py test_sms --phone 09987654321 --service twilio
+    python manage.py test_sms --phone 09987654321 --service semaphore
 """
 
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from django.conf import settings
 from intake.utils import send_sms
 
 
 class Command(BaseCommand):
-    help = 'Test SMS pipeline (console mode needs no API keys; use iprog for live gateway)'
+    help = 'Test SMS pipeline (console needs no API key; semaphore uses SEMAPHORE_API_KEY)'
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -27,13 +26,13 @@ class Command(BaseCommand):
             '--service',
             type=str,
             default='console',
-            choices=['console', 'iprog', 'twilio', 'semaphore', 'httpsms'],
+            choices=['console', 'semaphore'],
             help='SMS_SERVICE override for this run (default: console)'
         )
         parser.add_argument(
             '--message',
             type=str,
-            default='Test SMS from IHSMS System',
+            default='IHSMS SMS connectivity check — safe to ignore.',
             help='Custom message to send'
         )
 

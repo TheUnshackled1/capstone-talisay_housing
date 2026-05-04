@@ -111,28 +111,35 @@ def send_sms(phone_number, message, trigger_event, applicant=None, isf_record=No
             logger.warning("SMS_SERVICE=%s is deprecated/unsupported; falling back to console simulation.", sms_service)
             return _sms_simulate_delivery(sms_log, phone_number, message, trigger_event, 'console-fallback')
 
+        if sms_service in {'iprog'}:
+            logger.warning(
+                "SMS_SERVICE=iprog was removed; configure semaphore instead. Falling back to console simulation."
+            )
+            return _sms_simulate_delivery(sms_log, phone_number, message, trigger_event, 'console-fallback')
+
         # Unknown service values should not silently break local testing.
-        if sms_service not in {'iprog'}:
+        if sms_service not in {'semaphore'}:
             logger.warning("Unknown SMS_SERVICE=%s; falling back to console simulation.", sms_service)
             return _sms_simulate_delivery(sms_log, phone_number, message, trigger_event, 'console-fallback')
 
         if not sms_enabled:
             return _sms_simulate_delivery(sms_log, phone_number, message, trigger_event, 'disabled')
 
-        # In dev mode, missing API token should still allow end-to-end workflow testing.
-        if sms_service == 'iprog' and not getattr(settings, 'IPROG_API_TOKEN', None):
+        api_key = (getattr(settings, 'SEMAPHORE_API_KEY', '') or '').strip()
+        if not api_key:
             if is_debug:
-                logger.warning("IPROG token is missing in DEBUG mode; falling back to console simulation.")
+                logger.warning(
+                    "SEMAPHORE_API_KEY is missing in DEBUG mode; falling back to console simulation."
+                )
                 return _sms_simulate_delivery(sms_log, phone_number, message, trigger_event, 'console-fallback')
             sms_log.status = 'failed'
-            sms_log.error_message = 'IPROG API token not configured'
+            sms_log.error_message = 'Semaphore API key not configured'
             sms_log.save(update_fields=['status', 'error_message'])
             return False
 
-        # IPROG: Affordable SMS gateway (P1/SMS - perfect for capstone projects)
-        success = send_sms_iprog(phone_number, message, sms_log)
+        success = send_sms_semaphore(phone_number, message, sms_log)
         if success:
-            logger.info('SMS sent via IPROG: %s to %s (module: %s)', trigger_event, phone_number, module)
+            logger.info('SMS sent via Semaphore: %s to %s (module: %s)', trigger_event, phone_number, module)
         return success
 
 
@@ -152,140 +159,118 @@ def send_sms(phone_number, message, trigger_event, applicant=None, isf_record=No
 
 
 
-def send_sms_iprog(phone_number, message, sms_log):
+def send_sms_semaphore(phone_number, message, sms_log):
     """
-    Send SMS via IPROG SMS API (Affordable Philippine SMS Gateway - P1/SMS).
+    Send SMS via Semaphore (Philippines).
 
-    Args:
-        phone_number: Philippine mobile number (09XXXXXXXXX format)
-        message: SMS message content
-        sms_log: SMSLog instance to update
+    POST https://api.semaphore.co/api/v4/messages — parameters apikey, number, message,
+    optional sendername (see https://semaphore.co/docs).
 
-    Returns:
-        bool: True if sent successfully, False otherwise
+    Messages whose body begins with the word 'TEST' are ignored by Semaphore (not billed, not sent).
     """
+    api_key = (getattr(settings, 'SEMAPHORE_API_KEY', '') or '').strip()
+    if not api_key:
+        raise Exception('Semaphore API key not configured in settings')
+
+    send_url = 'https://api.semaphore.co/api/v4/messages'
+    send_timeout = float(getattr(settings, 'SEMAPHORE_SEND_TIMEOUT_SECONDS', 25))
+    retry_attempts = max(1, int(getattr(settings, 'SEMAPHORE_SEND_RETRY_ATTEMPTS', 3)))
+    retry_backoff = float(getattr(settings, 'SEMAPHORE_SEND_RETRY_BACKOFF_SECONDS', 1.5))
+
+    payload = {
+        'apikey': api_key,
+        'number': phone_number,
+        'message': message,
+    }
+    sender_name = (getattr(settings, 'SEMAPHORE_SENDER_NAME', '') or '').strip()
+    if sender_name:
+        payload['sendername'] = sender_name[:11]
+
+    if (message or '').strip().upper().startswith('TEST'):
+        logger.warning(
+            'Semaphore drops outbound SMS when the message starts with TEST; '
+            'delivery may not occur for trigger_event=%s',
+            sms_log.trigger_event,
+        )
+
+    response = None
+    last_request_error = None
+    for attempt in range(1, retry_attempts + 1):
+        try:
+            response = requests.post(send_url, data=payload, timeout=send_timeout)
+            last_request_error = None
+            break
+        except requests.RequestException as req_err:
+            last_request_error = req_err
+            logger.warning(
+                'Semaphore send attempt %s/%s failed for %s: %s',
+                attempt,
+                retry_attempts,
+                phone_number,
+                req_err,
+            )
+            if attempt < retry_attempts:
+                time.sleep(retry_backoff * attempt)
+
     try:
-        api_token = getattr(settings, 'IPROG_API_TOKEN', None)
-
-        if not api_token:
-            raise Exception("IPROG API token not configured in settings")
-
-        # IPROG API endpoint with query parameters
-        base_url = 'https://www.iprogsms.com/api/v1/sms_messages'
-        send_timeout = float(getattr(settings, 'IPROG_SEND_TIMEOUT_SECONDS', 25))
-        status_timeout = float(getattr(settings, 'IPROG_STATUS_TIMEOUT_SECONDS', 12))
-        retry_attempts = max(1, int(getattr(settings, 'IPROG_SEND_RETRY_ATTEMPTS', 3)))
-        retry_backoff = float(getattr(settings, 'IPROG_SEND_RETRY_BACKOFF_SECONDS', 1.5))
-
-        # Convert to IPROG format: 09XXXXXXXXX → 639XXXXXXXXX (no + or leading 0)
-        if phone_number.startswith('0'):
-            to_number = '63' + phone_number[1:]
-        elif phone_number.startswith('+63'):
-            to_number = phone_number[1:]  # Remove +
-        else:
-            to_number = phone_number
-
-        # Build query parameters
-        params = {
-            'api_token': api_token,
-            'phone_number': to_number,
-            'message': message
-        }
-        sender_name = (getattr(settings, 'IPROG_SENDER_NAME', '') or '').strip()
-        if sender_name:
-            params['sender_name'] = sender_name
-
-        response = None
-        last_request_error = None
-        for attempt in range(1, retry_attempts + 1):
-            try:
-                response = requests.post(
-                    base_url,
-                    params=params,
-                    timeout=send_timeout
-                )
-                last_request_error = None
-                break
-            except requests.RequestException as req_err:
-                last_request_error = req_err
-                logger.warning(
-                    "IPROG send attempt %s/%s failed for %s: %s",
-                    attempt,
-                    retry_attempts,
-                    to_number,
-                    req_err,
-                )
-                if attempt < retry_attempts:
-                    time.sleep(retry_backoff * attempt)
-
         if response is None:
-            raise Exception(f"Unable to reach IPROG after {retry_attempts} attempt(s): {last_request_error}")
+            raise Exception(f'Unable to reach Semaphore after {retry_attempts} attempt(s): {last_request_error}')
 
-        if response.status_code == 200:
-            result = response.json()
-            # IPROG returns status: 200 and message_id on success
-            if result.get('status') == 200 and result.get('message_id'):
-                message_id = result.get('message_id', f'iprog-{sms_log.id}')
-                delivery_status = 'unknown'
-                delivery_note = (result.get('message') or '').strip()
+        if response.status_code >= 400:
+            raise Exception(f'Semaphore HTTP {response.status_code}: {response.text[:500]}')
 
-                # Check immediate status endpoint so UI/logs reflect provider reality.
-                try:
-                    status_response = requests.get(
-                        'https://www.iprogsms.com/api/v1/sms_messages/status',
-                        params={
-                            'api_token': api_token,
-                            'message_id': message_id,
-                        },
-                        timeout=status_timeout,
-                    )
-                    if status_response.status_code == 200:
-                        status_result = status_response.json()
-                        delivery_status = (status_result.get('message_status') or 'unknown').strip().lower()
-                        if status_result.get('status') != 200:
-                            delivery_note = status_result.get('message', 'Status lookup returned non-200 provider status')
-                        elif not delivery_note:
-                            delivery_note = 'IPROG accepted message for delivery.'
-                    else:
-                        delivery_note = f'Status lookup HTTP {status_response.status_code}'
-                except Exception as status_error:
-                    logger.warning("IPROG status check failed for %s: %s", message_id, status_error)
-                    delivery_note = f'Status lookup failed: {status_error}'
+        try:
+            data = response.json()
+        except ValueError:
+            raise Exception(f'Semaphore non-JSON response HTTP {response.status_code}: {response.text[:500]}')
 
-                if delivery_status in {'failed', 'rejected', 'undelivered'}:
-                    sms_log.status = 'failed'
-                    sms_log.external_id = message_id
-                    sms_log.error_message = f"IPROG delivery status: {delivery_status}. {delivery_note}"
-                    sms_log.save(update_fields=['status', 'external_id', 'error_message'])
-                    logger.error("IPROG delivery failed - Message ID: %s status=%s", message_id, delivery_status)
-                    return False
-
-                sms_log.status = 'sent'
-                sms_log.external_id = message_id
-                sms_log.error_message = f"IPROG delivery status: {delivery_status or 'unknown'}. {delivery_note}"
-                sms_log.save(update_fields=['status', 'external_id', 'error_message'])
-                logger.info("IPROG SMS accepted - Message ID: %s status=%s", message_id, delivery_status)
-                return True
+        if isinstance(data, list):
+            if not data:
+                raise Exception('Semaphore returned an empty message list')
+            item = data[0]
+        elif isinstance(data, dict):
+            if data.get('message_id') is not None or data.get('recipient'):
+                item = data
             else:
-                provider_message = result.get('message', 'Unknown IPROG error')
-                if isinstance(provider_message, list):
-                    provider_message = '; '.join(str(part) for part in provider_message if part)
-                elif not isinstance(provider_message, str):
-                    provider_message = str(provider_message)
-                raise Exception(f"IPROG provider rejected request: {provider_message}")
+                err = data.get('message') or data.get('error') or response.text
+                raise Exception(f'Semaphore error: {err}')
         else:
-            error_msg = f"IPROG API error: HTTP {response.status_code}"
-            if response.text:
-                try:
-                    error_data = response.json()
-                    error_msg += f" - {error_data.get('message', response.text)}"
-                except:
-                    error_msg += f" - {response.text}"
-            raise Exception(error_msg)
+            raise Exception(f'Unexpected Semaphore response: {data!r}')
+
+        message_id = item.get('message_id')
+        external_id = str(message_id) if message_id is not None else ''
+        provider_status = (item.get('status') or '').strip().lower()
+
+        terminal_failed = {'failed', 'refunded'}
+        if provider_status in terminal_failed:
+            sms_log.status = 'failed'
+            sms_log.external_id = external_id
+            sms_log.error_message = f'Semaphore status: {item.get("status")}. Network={item.get("network")!r}'
+            sms_log.save(update_fields=['status', 'external_id', 'error_message'])
+            logger.error(
+                'Semaphore SMS failed — message_id=%s status=%s',
+                external_id,
+                item.get('status'),
+            )
+            return False
+
+        sms_log.status = 'sent'
+        sms_log.external_id = external_id
+        sms_log.error_message = (
+            f'Semaphore status: {item.get("status") or "unknown"}. '
+            f'Network={item.get("network")!r}'
+        )
+        sms_log.save(update_fields=['status', 'external_id', 'error_message'])
+        logger.info(
+            'Semaphore SMS queued — message_id=%s status=%s',
+            external_id,
+            item.get('status'),
+        )
+        return True
 
     except Exception as e:
         raw_error = str(e)
-        error_msg = raw_error if raw_error.startswith('IPROG ') else f"IPROG error: {raw_error}"
+        error_msg = raw_error if raw_error.startswith('Semaphore ') else f'Semaphore error: {raw_error}'
         logger.error(error_msg)
         sms_log.status = 'failed'
         sms_log.error_message = error_msg

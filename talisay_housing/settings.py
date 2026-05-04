@@ -165,26 +165,19 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_COOKIE_AGE = 60 * 60  # 1 hour
 
 # =============================================================================
-# SMS — IPROG Gateway Configuration (Affordable P1/SMS)
+# SMS — Semaphore (Philippines)
 # =============================================================================
-# SMS_SERVICE: iprog (IPROG SMS - Perfect for student capstone projects)
-#
-# Set credentials via environment variables.
+# SMS_SERVICE: console | semaphore
+# Live sending requires SEMAPHORE_API_KEY from https://semaphore.co/
 
 SMS_ENABLED = _env_bool('SMS_ENABLED', default=True)
 SMS_SERVICE = os.environ.get('SMS_SERVICE', 'console').strip().lower()
 
-# IPROG SMS Configuration (Affordable - P1/SMS, perfect for student projects)
-IPROG_API_TOKEN = os.environ.get('IPROG_API_TOKEN', '')
-IPROG_SENDER_NAME = os.environ.get('IPROG_SENDER_NAME', 'IPROG SMS')
-IPROG_SEND_TIMEOUT_SECONDS = float(os.environ.get('IPROG_SEND_TIMEOUT_SECONDS', '25'))
-IPROG_STATUS_TIMEOUT_SECONDS = float(os.environ.get('IPROG_STATUS_TIMEOUT_SECONDS', '12'))
-IPROG_SEND_RETRY_ATTEMPTS = int(os.environ.get('IPROG_SEND_RETRY_ATTEMPTS', '3'))
-IPROG_SEND_RETRY_BACKOFF_SECONDS = float(os.environ.get('IPROG_SEND_RETRY_BACKOFF_SECONDS', '1.5'))
-
-
-
-
+SEMAPHORE_API_KEY = os.environ.get('SEMAPHORE_API_KEY', '').strip()
+SEMAPHORE_SENDER_NAME = os.environ.get('SEMAPHORE_SENDER_NAME', '').strip()
+SEMAPHORE_SEND_TIMEOUT_SECONDS = float(os.environ.get('SEMAPHORE_SEND_TIMEOUT_SECONDS', '25'))
+SEMAPHORE_SEND_RETRY_ATTEMPTS = int(os.environ.get('SEMAPHORE_SEND_RETRY_ATTEMPTS', '3'))
+SEMAPHORE_SEND_RETRY_BACKOFF_SECONDS = float(os.environ.get('SEMAPHORE_SEND_RETRY_BACKOFF_SECONDS', '1.5'))
 # =============================================================================
 # Jazzmin Admin Configuration
 # =============================================================================

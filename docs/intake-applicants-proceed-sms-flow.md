@@ -45,7 +45,7 @@ This is a one-screen debug map for:
 - This logs:
   - flow name
   - endpoint
-  - `provider: 'Semaphore'`
+  - `provider: 'Semaphore'` (frontend log only; backend uses `SMS_SERVICE` / `SEMAPHORE_API_KEY` in `intake/utils.py`)
   - `providerReady: false`
   - `smsActive: false`
 - This is console-only preparation for future SMS integration.

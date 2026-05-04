@@ -512,7 +512,7 @@ def update_applicant(request, position):
         current_address = request.POST.get('current_address', '').strip()
 
         if full_name:
-            applicant.full_name = full_name
+            applicant.full_name = full_name[:30]
         if barangay_name:
             try:
                 brgy = Barangay.objects.get(name=barangay_name)
@@ -1470,15 +1470,17 @@ def walkin_register(request, position):
 
     # Build full name from components (for display/reference only)
     # Note: Module 2 will perform blacklist check and other screening
-    full_name = (form.cleaned_data.get('full_name') or '').strip()
+    full_name = (form.cleaned_data.get('full_name') or '').strip()[:30]
     if not full_name:
         last_name = (form.cleaned_data.get('last_name') or '').strip()
         first_name = (form.cleaned_data.get('first_name') or '').strip()
         middle_name = (form.cleaned_data.get('middle_name') or '').strip()
         if last_name and first_name:
-            full_name = f"{last_name}, {first_name}{(' ' + middle_name) if middle_name else ''}"
+            full_name = (
+                f"{last_name}, {first_name}{(' ' + middle_name) if middle_name else ''}"
+            )[:30]
         else:
-            full_name = "Unnamed Applicant"
+            full_name = "Unnamed Applicant"[:30]
     phone_number = form.cleaned_data.get('phone_number', '')
 
     # Applicant Situation (Options A–D) and particulars — validated in WalkInApplicantForm.clean().
@@ -1497,11 +1499,15 @@ def walkin_register(request, position):
         last_name=form.cleaned_data.get('last_name', ''),
         first_name=form.cleaned_data.get('first_name', ''),
         middle_name=form.cleaned_data.get('middle_name', ''),
+        extension_name=form.cleaned_data.get('extension_name', '') or '',
         full_name=full_name,
         sex=form.cleaned_data.get('sex', ''),
         age=computed_age,
         date_of_birth=date_of_birth,
+        place_of_birth=(form.cleaned_data.get('place_of_birth') or '')[:30],
         phone_number=phone_number,
+        spouse_name=(form.cleaned_data.get('spouse_name') or '')[:30],
+        spouse_phone=form.cleaned_data.get('spouse_phone') or '',
         barangay=barangay,
         current_address=form.cleaned_data['current_address'],
         monthly_income=form.cleaned_data['monthly_income'],

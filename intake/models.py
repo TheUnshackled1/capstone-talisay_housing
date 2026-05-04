@@ -12,6 +12,16 @@ validate_philippine_phone = RegexValidator(
 )
 
 
+def _leading_capitalize(val):
+    """Uppercase first character only; remainder unchanged (pastes preserved)."""
+    if val is None:
+        return ''
+    s = str(val).strip()
+    if not s:
+        return ''
+    return s[0].upper() + s[1:]
+
+
 class SMSLog(models.Model):
     """
     Audit trail for all SMS notifications sent by the system.
@@ -100,13 +110,13 @@ class Applicant(models.Model):
     reference_number = models.CharField(max_length=20, unique=True, editable=False)
 
     # Personal Information - Name Fields (A. APPLICATION IDENTITY)
-    last_name = models.CharField(max_length=100, verbose_name="Last Name (Surname)", default="")
-    first_name = models.CharField(max_length=100, verbose_name="First Name (Given Name)", default="")
-    middle_name = models.CharField(max_length=100, blank=True, default="", verbose_name="Middle Name")
-    extension_name = models.CharField(max_length=50, blank=True, default="", verbose_name="Extension Name", help_text="Jr., Sr., II, III, IV, etc.")
+    last_name = models.CharField(max_length=10, verbose_name="Last Name (Surname)", default="")
+    first_name = models.CharField(max_length=15, verbose_name="First Name (Given Name)", default="")
+    middle_name = models.CharField(max_length=10, blank=True, default="", verbose_name="Middle Name")
+    extension_name = models.CharField(max_length=5, blank=True, default="", verbose_name="Extension Name", help_text="Jr., Sr., II, III, IV, etc.")
 
-    # Keep full_name for backward compatibility
-    full_name = models.CharField(max_length=255, verbose_name="Full Name", editable=False)
+    # Keep full_name for backward compatibility (truncated to fit DB — components may be longer separately)
+    full_name = models.CharField(max_length=30, verbose_name="Full Name", editable=False)
 
     sex = models.CharField(
         max_length=1,
@@ -116,7 +126,7 @@ class Applicant(models.Model):
     )
     age = models.PositiveIntegerField(null=True, blank=True, verbose_name="Age")
     date_of_birth = models.DateField(null=True, blank=True, verbose_name="Date of Birth")
-    place_of_birth = models.CharField(max_length=255, blank=True, verbose_name="Place of Birth")
+    place_of_birth = models.CharField(max_length=30, blank=True, verbose_name="Place of Birth")
     phone_number = models.CharField(
         max_length=20,
         blank=True,
@@ -126,7 +136,7 @@ class Applicant(models.Model):
     )
 
     # Spouse Information
-    spouse_name = models.CharField(max_length=255, blank=True, verbose_name="Name of Spouse")
+    spouse_name = models.CharField(max_length=30, blank=True, verbose_name="Name of Spouse")
     spouse_phone = models.CharField(
         max_length=20,
         blank=True,
@@ -165,7 +175,7 @@ class Applicant(models.Model):
         verbose_name="Declared Household Size",
         help_text="Number of household members as declared during registration"
     )
-    occupation = models.CharField(max_length=255, blank=True, verbose_name="Occupation")
+    occupation = models.CharField(max_length=25, blank=True, verbose_name="Occupation")
     employment_status = models.CharField(
         max_length=50,
         blank=True,
@@ -191,7 +201,7 @@ class Applicant(models.Model):
         help_text="flood_prone, landslide, storm_surge, river_bank, cliff_edge, coastal, other"
     )
     danger_zone_location = models.CharField(
-        max_length=255,
+        max_length=30,
         blank=True,
         verbose_name="Specific Danger Zone Location"
     )
@@ -233,7 +243,7 @@ class Applicant(models.Model):
         verbose_name='Ejection / Notice Date',
     )
     project_name = models.CharField(
-        max_length=255,
+        max_length=30,
         blank=True,
         default='',
         verbose_name='Relocation Project Name',
@@ -356,6 +366,14 @@ class Applicant(models.Model):
             random_suffix = ''.join([str(random.randint(0, 9)) for _ in range(4)])
             self.reference_number = f"APP-{date_str}-{random_suffix}"
 
+        self.last_name = _leading_capitalize(self.last_name)[:10]
+        self.first_name = _leading_capitalize(self.first_name)[:15]
+        self.middle_name = _leading_capitalize(self.middle_name)[:10]
+        self.extension_name = _leading_capitalize(self.extension_name)[:5]
+        self.place_of_birth = _leading_capitalize(self.place_of_birth)[:30]
+        self.spouse_name = _leading_capitalize(self.spouse_name)[:30]
+        self.occupation = _leading_capitalize(self.occupation)[:25]
+
         # Auto-generate full_name from components (first, middle, last + extension)
         name_parts = [self.first_name, self.middle_name, self.last_name]
         base_name = ' '.join([part for part in name_parts if part]).strip()
@@ -363,6 +381,9 @@ class Applicant(models.Model):
             self.full_name = f"{base_name}, {self.extension_name}".strip()
         else:
             self.full_name = base_name
+        self.full_name = (self.full_name or '')[:30]
+        self.danger_zone_location = _leading_capitalize(self.danger_zone_location)[:30]
+        self.project_name = _leading_capitalize(self.project_name)[:30]
 
         super().save(*args, **kwargs)
     
@@ -413,7 +434,7 @@ class HouseholdMember(models.Model):
     )
 
     # B. HOUSEHOLD MEMBERS - Personal Information
-    full_name = models.CharField(max_length=100, verbose_name="Full Name")
+    full_name = models.CharField(max_length=30, verbose_name="Full Name")
     relationship = models.CharField(max_length=20, choices=RELATIONSHIP_CHOICES, verbose_name="Relationship to Applicant")
     age = models.PositiveIntegerField(default=0, verbose_name="Age", validators=[MaxValueValidator(120)])
     date_of_birth = models.DateField(null=True, blank=True, verbose_name="Date of Birth")
@@ -440,6 +461,10 @@ class HouseholdMember(models.Model):
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        self.full_name = _leading_capitalize(self.full_name)[:30]
+        super().save(*args, **kwargs)
 
     class Meta:
         ordering = ['applicant', 'created_at']
@@ -482,12 +507,12 @@ class Archive(models.Model):
 
     # Snapshot of applicant state at archive time
     reference_number_snapshot = models.CharField(max_length=50, db_index=True)
-    full_name_snapshot = models.CharField(max_length=255)
+    full_name_snapshot = models.CharField(max_length=30)
     # Individual name components (for display in reports/modals)
-    last_name_snapshot = models.CharField(max_length=100, blank=True)
-    first_name_snapshot = models.CharField(max_length=100, blank=True)
-    middle_name_snapshot = models.CharField(max_length=100, blank=True)
-    extension_name_snapshot = models.CharField(max_length=50, blank=True)
+    last_name_snapshot = models.CharField(max_length=10, blank=True)
+    first_name_snapshot = models.CharField(max_length=15, blank=True)
+    middle_name_snapshot = models.CharField(max_length=10, blank=True)
+    extension_name_snapshot = models.CharField(max_length=5, blank=True)
     date_of_birth_snapshot = models.DateField(null=True, blank=True)
 
     # Channel and queue information

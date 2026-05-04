@@ -87,6 +87,7 @@ class HouseholdMemberForm(forms.ModelForm):
             'full_name': forms.TextInput(attrs={
                 'placeholder': 'Full name',
                 'class': 'form-control',
+                'maxlength': 30,
             }),
             'relationship': forms.Select(attrs={
                 'class': 'form-select',
@@ -174,12 +175,12 @@ class WalkInApplicantForm(forms.ModelForm):
 
     danger_zone_location = forms.CharField(
         required=False,
-        max_length=255,
+        max_length=30,
         label="Hazard Location Description",
         widget=forms.TextInput(attrs={
             'class': 'form-control',
             'placeholder': 'Sitio, purok, river, creek, or nearby landmark',
-            'maxlength': 255,
+            'maxlength': 30,
         })
     )
 
@@ -196,12 +197,12 @@ class WalkInApplicantForm(forms.ModelForm):
     )
     project_name = forms.CharField(
         required=False,
-        max_length=255,
+        max_length=30,
         label="Project Designation",
         widget=forms.TextInput(attrs={
             'class': 'form-control',
             'placeholder': 'Road-widening, drainage, infrastructure, or other government project',
-            'maxlength': 255,
+            'maxlength': 30,
         }),
     )
 
@@ -270,18 +271,22 @@ class WalkInApplicantForm(forms.ModelForm):
                 'class': 'form-control',
                 'placeholder': 'Surname',
                 'autofocus': True,
+                'maxlength': 10,
             }),
             'first_name': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'Given name',
+                'maxlength': 15,
             }),
             'middle_name': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'Middle name (optional)',
+                'maxlength': 10,
             }),
             'extension_name': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'Jr., Sr., II, III, etc. (optional)',
+                'maxlength': 5,
             }),
             'sex': forms.RadioSelect(attrs={
                 'class': 'form-radio',
@@ -298,6 +303,7 @@ class WalkInApplicantForm(forms.ModelForm):
             'place_of_birth': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'City/Municipality, Province',
+                'maxlength': 30,
             }),
             'phone_number': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -307,6 +313,7 @@ class WalkInApplicantForm(forms.ModelForm):
             'spouse_name': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'Spouse full name',
+                'maxlength': 30,
             }),
             'spouse_phone': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -332,6 +339,7 @@ class WalkInApplicantForm(forms.ModelForm):
             'occupation': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'Occupation/job title',
+                'maxlength': 25,
             }),
             'employment_status': forms.Select(attrs={
                 'class': 'form-select',

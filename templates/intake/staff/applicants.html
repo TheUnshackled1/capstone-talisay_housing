@@ -3451,19 +3451,19 @@
                         <div class="form-grid identity-grid" style="margin-bottom: 1rem;">
                             <div class="form-group">
                                 <label class="form-label">Last Name</label>
-                                <input type="text" class="form-input" id="reviewLastName" name="last_name" readonly>
+                                <input type="text" class="form-input" id="reviewLastName" name="last_name" maxlength="10" readonly>
                             </div>
                             <div class="form-group">
                                 <label class="form-label">First Name</label>
-                                <input type="text" class="form-input" id="reviewFirstName" name="first_name" readonly>
+                                <input type="text" class="form-input" id="reviewFirstName" name="first_name" maxlength="15" readonly>
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Middle Name</label>
-                                <input type="text" class="form-input" id="reviewMiddleName" name="middle_name" readonly>
+                                <input type="text" class="form-input" id="reviewMiddleName" name="middle_name" maxlength="10" readonly>
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Extension Name</label>
-                                <input type="text" class="form-input" id="reviewExtensionName" name="extension_name" readonly placeholder="Jr., Sr., II, III, etc.">
+                                <input type="text" class="form-input" id="reviewExtensionName" name="extension_name" maxlength="5" readonly placeholder="Jr., Sr., II, III, etc.">
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Sex</label>
@@ -4575,19 +4575,19 @@
                     <div class="form-row identity-row">
                         <div class="form-group">
                             <label class="form-label">Last name <span style="color: #dc2626;">*</span></label>
-                            <input type="text" class="form-input" placeholder="Family name (surname)" name="last_name" id="lastName" maxlength="100" required>
+                            <input type="text" class="form-input" placeholder="Family name (surname)" name="last_name" id="lastName" maxlength="10" required>
                         </div>
                         <div class="form-group">
                             <label class="form-label">First name <span style="color: #dc2626;">*</span></label>
-                            <input type="text" class="form-input" placeholder="Given name(s)" name="first_name" id="firstName" maxlength="100" required>
+                            <input type="text" class="form-input" placeholder="Given name(s)" name="first_name" id="firstName" maxlength="15" required>
                         </div>
                         <div class="form-group">
                             <label class="form-label">Middle name</label>
-                            <input type="text" class="form-input" placeholder="Middle name" name="middle_name" id="middleName" maxlength="100">
+                            <input type="text" class="form-input" placeholder="Middle name" name="middle_name" id="middleName" maxlength="10">
                         </div>
                         <div class="form-group">
                             <label class="form-label">Extension name</label>
-                            <input type="text" class="form-input" placeholder="Jr., Sr., II, III, etc." name="extension_name" id="extensionName" maxlength="50">
+                            <input type="text" class="form-input" placeholder="Jr., Sr., II, III, etc." name="extension_name" id="extensionName" maxlength="5">
                         </div>
                     </div>
 
@@ -4662,6 +4662,23 @@
                         </div>
                     </div>
 
+                    <!-- Place of birth & spouse -->
+                    <div class="form-row three-cols">
+                        <div class="form-group">
+                            <label class="form-label">Place of birth</label>
+                            <input type="text" class="form-input" placeholder="City/Municipality, Province" name="place_of_birth" id="placeOfBirth" maxlength="30" autocomplete="off">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Name of spouse</label>
+                            <input type="text" class="form-input" placeholder="If applicable" name="spouse_name" id="spouseName" maxlength="30" autocomplete="off">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Spouse mobile number</label>
+                            <input type="tel" class="form-input ph-phone" placeholder="Optional · 09XXXXXXXXXX" maxlength="11" inputmode="numeric" autocomplete="tel-national" name="spouse_phone" id="spousePhone">
+                            <span class="help-text">Leave blank if not applicable.</span>
+                        </div>
+                    </div>
+
                     <!-- Present address & barangay — one row (stack on small screens) -->
                     <div class="form-row">
                         <div class="form-group">
@@ -4690,7 +4707,6 @@
                         </div>
                     </div>
 
-                    <!-- Name of Spouse & Spouse Contact No. -->
                 </div>
 
                 <!-- Section B -->
@@ -4717,7 +4733,7 @@
                     <div class="form-row three-cols">
                         <div class="form-group">
                             <label class="form-label">Principal occupation <span style="color: #dc2626;">*</span></label>
-                            <input type="text" class="form-input" placeholder="Primary livelihood or post (e.g., vendor, factory worker)" name="occupation" id="occupation" maxlength="255" required>
+                            <input type="text" class="form-input" placeholder="Primary livelihood or post (e.g., vendor, factory worker)" name="occupation" id="occupation" maxlength="25" required>
                         </div>
                         <div class="form-group">
                             <label class="form-label">Employment status</label>
@@ -4799,7 +4815,7 @@
                                     </div>
                                     <div class="form-group">
                                         <label class="form-label">Hazard Location Description <span style="color: #dc2626;">*</span></label>
-                                        <input type="text" class="form-input" name="danger_zone_location" id="registrationDangerZoneLocation" placeholder="Sitio, purok, river, creek, or nearby landmark" maxlength="255" autocomplete="off">
+                                        <input type="text" class="form-input" name="danger_zone_location" id="registrationDangerZoneLocation" placeholder="Sitio, purok, river, creek, or nearby landmark" maxlength="30" autocomplete="off">
                                     </div>
                                 </div>
                                 <div class="info-note" style="margin-top: 0.75rem;">
@@ -4834,7 +4850,7 @@
                                 <p class="section-label" style="margin-top:0;">Project / Government-Initiated Relocation Particulars</p>
                                 <div class="form-group">
                                     <label class="form-label">Project Designation <span style="color: #dc2626;">*</span></label>
-                                    <input type="text" class="form-input" name="project_name" id="registrationProjectName" placeholder="Road-widening, drainage, infrastructure, or other government project" maxlength="255" autocomplete="off">
+                                    <input type="text" class="form-input" name="project_name" id="registrationProjectName" placeholder="Road-widening, drainage, infrastructure, or other government project" maxlength="30" autocomplete="off">
                                 </div>
                                 <div class="info-note" style="margin-top: 0.75rem;">
                                     <p><strong>Required Documentation:</strong> Notice of Relocation, Right-of-Way Documentation, or Project Order — verification tracked in Applications.</p>
@@ -8256,7 +8272,7 @@
             memberDiv.innerHTML = `
                 <div class="form-group">
                     <label class="form-label">Full name</label>
-                    <input type="text" class="form-input hh-member-field" placeholder="Surname, given name, extension" name="hh_member_${i}_name" maxlength="100" minlength="2" onchange="updateHouseholdSize()">
+                    <input type="text" class="form-input hh-member-field" placeholder="Surname, given name, extension" name="hh_member_${i}_name" maxlength="30" minlength="2" onchange="updateHouseholdSize()">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Relationship</label>
@@ -8296,7 +8312,7 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">Contact (Opt)</label>
-                    <input type="tel" class="form-input hh-member-field ph-phone" placeholder="09XXXXXXXXXX" pattern="09[0-9]{9}" maxlength="11" minlength="11" inputmode="numeric" autocomplete="tel-national" name="hh_member_${i}_contact">
+                    <input type="tel" class="form-input hh-member-field ph-phone" placeholder="09XXXXXXXXXX" maxlength="11" inputmode="numeric" autocomplete="tel-national" name="hh_member_${i}_contact">
                     <span class="hh-member-help">11 digits only</span>
                 </div>
                 <button type="button" onclick="deleteHouseholdMember(${i})" class="tha-reg-remove-member" title="Remove this member">Remove</button>
@@ -8304,6 +8320,9 @@
             container.appendChild(memberDiv);
         }
         initializePhoneInputs();
+        container.querySelectorAll('input[name^="hh_member_"][name$="_name"]').forEach((el) => {
+            attachLeadingCapitalField(el);
+        });
         updateHouseholdSize();
     }
 
@@ -8441,23 +8460,82 @@
         return age;
     }
 
+    /** First letter uppercase only; keeps pasted casing for the rest. */
+    function leadingCapital(str) {
+        const s = String(str ?? '').trim();
+        if (!s) return '';
+        return s.charAt(0).toUpperCase() + s.slice(1);
+    }
+
+    function attachLeadingCapitalField(el) {
+        if (!el) return;
+        /** While typing or after paste: uppercase first character only; keep caret stable. */
+        const capitalizeFirstLive = () => {
+            const v = el.value;
+            if (!v.length) return;
+            const c0 = v.charAt(0);
+            const up = c0.toUpperCase();
+            if (up === c0) return;
+            const fixed = up + v.slice(1);
+            const pos = el.selectionStart;
+            const end = el.selectionEnd;
+            el.value = fixed;
+            try {
+                el.setSelectionRange(pos, end);
+            } catch (err) { /* ignore */ }
+        };
+        /** On blur: trim edges then capitalize first visible character (paste + leadingCapital). */
+        const normalizeBlur = () => {
+            const next = leadingCapital(el.value);
+            if (el.value !== next) el.value = next;
+        };
+        el.addEventListener('input', capitalizeFirstLive);
+        el.addEventListener('blur', normalizeBlur);
+        el.addEventListener('paste', () => requestAnimationFrame(capitalizeFirstLive));
+    }
 
     function submitAddApplicant(event) {
         event.preventDefault();
         const form = document.getElementById('addApplicantForm');
         const channel = document.getElementById('channelInput').value;
 
-        // Capitalize first letter function
-        const capitalizeFirst = (str) => {
+        const sentenceCase = (str) => {
             if (!str) return str;
-            return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+            const s = String(str).trim();
+            if (!s) return '';
+            return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
         };
 
-        // Combine name fields into full_name
-        const lastName = capitalizeFirst(document.getElementById('lastName').value.trim());
-        const firstName = capitalizeFirst(document.getElementById('firstName').value.trim());
-        const middleName = capitalizeFirst(document.getElementById('middleName').value.trim());
-        const extensionName = (document.getElementById('extensionName').value.trim());
+        const lnEl = document.getElementById('lastName');
+        const fnEl = document.getElementById('firstName');
+        const mnEl = document.getElementById('middleName');
+        const exEl = document.getElementById('extensionName');
+        const lastName = leadingCapital(lnEl ? lnEl.value : '');
+        const firstName = leadingCapital(fnEl ? fnEl.value : '');
+        const middleName = leadingCapital(mnEl ? mnEl.value : '');
+        const extensionName = leadingCapital(exEl ? exEl.value : '');
+        if (lnEl) lnEl.value = lastName;
+        if (fnEl) fnEl.value = firstName;
+        if (mnEl) mnEl.value = middleName;
+        if (exEl) exEl.value = extensionName;
+
+        const pobEl = document.getElementById('placeOfBirth');
+        const spouseEl = document.getElementById('spouseName');
+        if (pobEl) pobEl.value = leadingCapital(pobEl.value);
+        if (spouseEl) spouseEl.value = leadingCapital(spouseEl.value);
+
+        const occEl = document.getElementById('occupation');
+        if (occEl) occEl.value = leadingCapital(occEl.value);
+
+        const hzLocEl = document.getElementById('registrationDangerZoneLocation');
+        const projNameEl = document.getElementById('registrationProjectName');
+        if (hzLocEl) hzLocEl.value = leadingCapital(hzLocEl.value);
+        if (projNameEl) projNameEl.value = leadingCapital(projNameEl.value);
+
+        for (let i = 1; i <= householdMemberCount; i++) {
+            const hn = document.querySelector(`input[name="hh_member_${i}_name"]`);
+            if (hn) hn.value = leadingCapital(hn.value);
+        }
 
         let fullName = `${lastName}, ${firstName}${middleName ? ' ' + middleName : ''}`;
         if (extensionName) {
@@ -8472,13 +8550,13 @@
 
         const formData = new FormData(form);
 
-        // Add combined full_name
-        formData.set('full_name', fullName);
+        // Add combined full_name (stored display field capped at model max_length)
+        formData.set('full_name', fullName.slice(0, 30));
 
-        // Capitalize text fields in formData
-        ['current_address', 'occupation', 'danger_zone_location'].forEach(fieldName => {
+        // Sentence-case address only. Hazard location / project use leadingCapital (synced above).
+        ['current_address'].forEach(fieldName => {
             if (formData.has(fieldName)) {
-                formData.set(fieldName, capitalizeFirst(formData.get(fieldName)));
+                formData.set(fieldName, sentenceCase(formData.get(fieldName)));
             }
         });
 
@@ -8840,6 +8918,10 @@
             const eventName = (id === 'barangay' || id === 'dateOfBirth') ? 'change' : 'input';
             el.addEventListener(eventName, queueDuplicatePreviewCheck);
             el.addEventListener('blur', queueDuplicatePreviewCheck);
+        });
+
+        ['lastName', 'firstName', 'middleName', 'extensionName', 'placeOfBirth', 'spouseName', 'occupation', 'registrationDangerZoneLocation', 'registrationProjectName'].forEach(id => {
+            attachLeadingCapitalField(document.getElementById(id));
         });
     });
 

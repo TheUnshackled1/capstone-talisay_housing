@@ -2,7 +2,7 @@
 Central definitions for SMS trigger_event keys and message bodies (Module 1).
 
 Use these from views so workflow buttons map to consistent audit entries in SMSLog.
-When SMS_SERVICE=console, messages are still written to SMSLog and logged — no paid API required.
+When SMS_SERVICE=console (or Semaphore without API key while DEBUG), messages are still logged to SMSLog — no paid gateway required.
 """
 
 # --- trigger_event values (keep ≤ 50 chars; indexed in SMSLog) ---
