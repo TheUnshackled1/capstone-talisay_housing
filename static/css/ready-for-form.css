@@ -105,14 +105,15 @@
 
 .rfq-table th.rfq-col-actions,
 .rfq-table td.rfq-col-actions {
-    min-width: 37rem;
+    min-width: 38rem;
 }
 
-/* Actions: 3-column grid so "View" aligns down the column; middle slot empty when only 2 actions */
+/* Actions: 3-column grid; center items vertically so a tall middle cell does not stretch Open PDF / View */
 .rfq-actions-inline {
     display: grid;
-    grid-template-columns: repeat(3, 11.75rem);
+    grid-template-columns: 11.75rem minmax(12.5rem, 13.75rem) 11.75rem;
     justify-content: center;
+    align-items: center;
     column-gap: 0.5rem;
     row-gap: 0.4rem;
     padding: 0.4rem 0.2rem;
@@ -126,6 +127,28 @@
 
 .rfq-action-slot-2 {
     grid-column: 2;
+}
+
+/* Middle column: scan + file upload — inline row keeps row height equal to single-button rows */
+.rfq-vault-pair {
+    grid-column: 2;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    width: 100%;
+    max-width: 100%;
+}
+
+.rfq-vault-pair .rfq-action-btn {
+    flex: 1 1 0;
+    min-width: 0;
+    padding-left: 0.28rem;
+    padding-right: 0.28rem;
+    font-size: 0.59375rem;
+    min-height: 2.125rem;
 }
 
 .rfq-action-slot-3 {

@@ -865,18 +865,19 @@ def _module2_applicant_row_payload(applicant, permissions, required_group_a_subm
     )
 
     signed_form_vault_url = ''
+    signed_form_vault_url_scan = ''
+    signed_form_vault_url_upload = ''
     if application is not None and application.status == 'draft':
-        _vault_q = {
+        _vault_base = {
             'search': ((applicant.reference_number or '').strip() or str(applicant.pk)),
             'applicant_id': str(applicant.pk),
             'open_upload': '1',
             'document_type': 'signed_application',
-            'intent': 'upload',
         }
-        signed_form_vault_url = (
-            f"{reverse('documents:management', kwargs={'position': acted_by_user.position})}"
-            f"?{urlencode(_vault_q)}"
-        )
+        _path = reverse('documents:management', kwargs={'position': acted_by_user.position})
+        signed_form_vault_url_scan = f"{_path}?{urlencode({**_vault_base, 'intent': 'scan'})}"
+        signed_form_vault_url_upload = f"{_path}?{urlencode({**_vault_base, 'intent': 'upload'})}"
+        signed_form_vault_url = signed_form_vault_url_upload
 
     return {
         'applicant': applicant,
@@ -904,6 +905,8 @@ def _module2_applicant_row_payload(applicant, permissions, required_group_a_subm
         'm2_evaluator': rules,
         'signed_application_scan_present': signed_scan_present,
         'signed_form_vault_url': signed_form_vault_url,
+        'signed_form_vault_url_scan': signed_form_vault_url_scan,
+        'signed_form_vault_url_upload': signed_form_vault_url_upload,
     }
 
 

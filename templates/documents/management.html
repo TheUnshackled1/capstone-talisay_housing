@@ -478,6 +478,13 @@
         </div>
         <p id="uploadModalIntentHint" style="display: none; margin: 0 1.5rem 0.65rem; font-size: 0.78rem; color: #475569; line-height: 1.45;"></p>
 
+        <div id="uploadModalDwtStrip" style="display: none; flex-direction: column; gap: 0.45rem; margin: 0 1.5rem 0.85rem; padding: 0.65rem 0.75rem; border-radius: 10px; border: 1px solid #e9d5ff; background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);">
+            <button type="button" id="vaultMgmtDwtScanBtn" onclick="vaultMgmtRunSignedApplicationDwtScan()" style="display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; padding: 0.55rem 0.85rem; border-radius: 8px; border: 1px solid #7c3aed; background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%); color: #fff; font-size: 0.8rem; font-weight: 700; cursor: pointer; box-shadow: 0 2px 6px rgba(109, 40, 217, 0.25);">
+                📷 Scan with Dynamsoft (TWAIN)
+            </button>
+            <p style="margin: 0; font-size: 0.72rem; color: #64748b; line-height: 1.4;">Opens the scanner / camera capture, then saves to the vault — same SDK as the intake requirements checklist.</p>
+        </div>
+
         <!-- Modal Body -->
         <div style="flex: 1; padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; overflow-y: auto;">
             <form id="uploadForm" enctype="multipart/form-data" method="POST" style="display: flex; flex-direction: column; gap: 1rem;">
@@ -566,8 +573,114 @@
     </div>
 </div>
 
+<div id="dwtcontrolContainer" style="width: 0; height: 0; overflow: hidden; position: absolute; left: -9999px;" aria-hidden="true"></div>
+<script src="{% static 'Dynamic Web TWAIN SDK 19.3.3/Resources/dynamsoft.webtwain.initiate.js' %}"></script>
+<script src="{% static 'Dynamic Web TWAIN SDK 19.3.3/Resources/dynamsoft.webtwain.config.js' %}"></script>
+
 <!-- JavaScript -->
 <script>
+    const VAULT_MGMT_INTAKE_DWT_URL = '{% url "intake:upload_scanned_requirement" request.user.position %}';
+
+    let VaultMgmtDWTObject = null;
+    if (window.Dynamsoft && window.Dynamsoft.DWT) {
+        Dynamsoft.DWT.RegisterEvent('OnWebTwainReady', function () {
+            VaultMgmtDWTObject = Dynamsoft.DWT.GetWebTwain('dwtcontrolContainer');
+        });
+    }
+
+    async function vaultMgmtWaitForDwt(timeoutMs) {
+        const t = timeoutMs || 10000;
+        const startedAt = Date.now();
+        while (!VaultMgmtDWTObject && (Date.now() - startedAt) < t) {
+            await new Promise(function (resolve) { setTimeout(resolve, 100); });
+        }
+        return VaultMgmtDWTObject;
+    }
+
+    function vaultMgmtNotify(message, title, variant) {
+        if (typeof window.showFlowAlert === 'function') {
+            window.showFlowAlert(message, title || 'Notice', null, variant || 'default');
+        } else {
+            window.alert(message);
+        }
+    }
+
+    async function vaultMgmtRunSignedApplicationDwtScan() {
+        const applicantId = String(document.getElementById('applicantSelect')?.value || '').trim();
+        const docType = String(document.getElementById('uploadDocumentTypeSelect')?.value || '').trim();
+        if (!applicantId) {
+            vaultMgmtNotify('Select an applicant first.');
+            return;
+        }
+        if (docType !== 'signed_application') {
+            vaultMgmtNotify('Choose document type “Physically signed application (scan)” before scanning.');
+            return;
+        }
+        const btn = document.getElementById('vaultMgmtDwtScanBtn');
+        const oldText = btn ? btn.textContent : '';
+        if (btn) {
+            btn.disabled = true;
+            btn.textContent = 'Scanning…';
+        }
+        try {
+            const dwt = await vaultMgmtWaitForDwt();
+            if (!dwt) throw new Error('Scanner SDK is not ready. Refresh the page and try again.');
+            await dwt.SelectSourceAsync();
+            const beforeCount = Number(dwt.HowManyImagesInBuffer || 0);
+            await dwt.AcquireImageAsync({ IfCloseSourceAfterAcquire: true });
+            const afterCount = Number(dwt.HowManyImagesInBuffer || 0);
+            if (afterCount <= beforeCount) throw new Error('No image was acquired from the scanner.');
+            const index = Number(dwt.CurrentImageIndexInBuffer);
+            const uploadUrl = `${VAULT_MGMT_INTAKE_DWT_URL}?applicant_id=${encodeURIComponent(applicantId)}&doc_key=doc_signed_application&doc_code=SIGNED`;
+            const refOpt = document.getElementById('applicantSelect').selectedOptions[0];
+            const refLabel = refOpt ? String(refOpt.textContent || '').trim().replace(/\s+/g, '_').slice(0, 80) : 'applicant';
+            const fileName = `${refLabel}_signed_application.png`;
+
+            await new Promise(function (resolve, reject) {
+                dwt.HTTPUpload(
+                    uploadUrl,
+                    [index],
+                    Dynamsoft.DWT.EnumDWT_ImageType.IT_PNG,
+                    Dynamsoft.DWT.EnumDWT_UploadDataFormat.Binary,
+                    fileName,
+                    function (httpResponse) {
+                        resolve(httpResponse);
+                    },
+                    function (_errorCode, errorString, httpResponse) {
+                        let message = errorString || 'Upload failed.';
+                        const normalized = String(message || '').replace(/\s+/g, ' ').trim();
+                        if (/^HTTP process:\s*OK\s*\(200\)/i.test(normalized) || normalized.toLowerCase().startsWith('http process: ok')) {
+                            resolve(httpResponse);
+                            return;
+                        }
+                        if (httpResponse) {
+                            try {
+                                const parsed = JSON.parse(httpResponse);
+                                if (parsed && parsed.success) {
+                                    resolve(httpResponse);
+                                    return;
+                                }
+                                if (parsed && parsed.error) message = parsed.error;
+                            } catch (_err) {}
+                        }
+                        reject(new Error(message));
+                    }
+                );
+            });
+            vaultMgmtNotify('Scan saved to the document vault.', 'Scan complete', 'success');
+            closeUploadModal();
+            location.reload();
+        } catch (error) {
+            vaultMgmtNotify((error && error.message) ? error.message : 'Unable to complete scan.');
+            if (btn) btn.textContent = oldText || '📷 Scan with Dynamsoft (TWAIN)';
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                if (btn.textContent === 'Scanning…') btn.textContent = oldText || '📷 Scan with Dynamsoft (TWAIN)';
+            }
+        }
+    }
+
 function openUploadModal() {
     document.getElementById('uploadModal').style.display = 'flex';
 }
@@ -592,6 +705,10 @@ function closeUploadModal(e) {
     document.getElementById('uploadModal').style.display = 'none';
     document.getElementById('uploadForm').reset();
     document.getElementById('fileName').textContent = '';
+    const dwtStrip = document.getElementById('uploadModalDwtStrip');
+    if (dwtStrip) dwtStrip.style.display = 'none';
+    const fileInput = document.getElementById('fileInput');
+    if (fileInput) fileInput.setAttribute('required', 'required');
     const titleEl = document.getElementById('uploadModalTitle');
     const hintEl = document.getElementById('uploadModalIntentHint');
     if (titleEl) {
@@ -615,6 +732,8 @@ function submitUpload() {
     }
 
     const formData = new FormData(form);
+    formData.append('applicant_id', formData.get('applicant') || '');
+    formData.append('doc_type', formData.get('document_type') || '');
     const position = '{{ request.user.position }}';
     fetch(`/documents/${position}/api/upload/`, {
         method: 'POST',
@@ -698,6 +817,8 @@ document.addEventListener('DOMContentLoaded', () => {
         openUploadModal();
         const titleEl = document.getElementById('uploadModalTitle');
         const hintEl = document.getElementById('uploadModalIntentHint');
+        const dwtStrip = document.getElementById('uploadModalDwtStrip');
+        const fileInput = document.getElementById('fileInput');
         if (titleEl && hintEl) {
             if (intent === 'scan') {
                 titleEl.textContent = '📷 Scan document';
@@ -705,16 +826,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 titleEl.style.webkitBackgroundClip = 'text';
                 titleEl.style.backgroundClip = 'text';
                 titleEl.style.webkitTextFillColor = 'transparent';
-                hintEl.textContent = 'Use when attaching a scan from the office scanner or camera.';
+                hintEl.textContent = 'Use Dynamsoft (TWAIN) for scanner/camera capture — same as intake requirements “Scan”. Or pick a file below.';
                 hintEl.style.display = 'block';
+                if (dwtStrip) dwtStrip.style.display = 'flex';
+                if (fileInput) fileInput.removeAttribute('required');
             } else if (intent === 'upload') {
                 titleEl.textContent = '📁 Upload document';
                 titleEl.style.background = 'linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%)';
                 titleEl.style.webkitBackgroundClip = 'text';
                 titleEl.style.backgroundClip = 'text';
                 titleEl.style.webkitTextFillColor = 'transparent';
-                hintEl.textContent = 'Use when attaching a file already saved on this device.';
+                hintEl.textContent = 'Choose a file from this computer — same as intake requirements “Upload file”.';
                 hintEl.style.display = 'block';
+                if (dwtStrip) dwtStrip.style.display = 'none';
+                if (fileInput) fileInput.setAttribute('required', 'required');
             }
         }
         const applicantSelect = document.getElementById('applicantSelect');
@@ -734,6 +859,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     break;
                 }
             }
+        }
+
+        const autoScan = params.get('auto_scan');
+        if (intent === 'scan' && autoScan === '1') {
+            try {
+                const u = new URL(window.location.href);
+                u.searchParams.delete('auto_scan');
+                window.history.replaceState({}, '', u.pathname + u.search + u.hash);
+            } catch (_e) {}
+            setTimeout(function () {
+                if (typeof vaultMgmtRunSignedApplicationDwtScan === 'function') {
+                    vaultMgmtRunSignedApplicationDwtScan();
+                }
+            }, 500);
         }
     }
 });

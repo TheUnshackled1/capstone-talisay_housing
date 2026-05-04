@@ -599,10 +599,6 @@ def upload_scanned_requirement(request, position):
     Accepts scanner-uploaded file payloads and stores them in the central Document vault.
     Also mirrors checklist booleans on Applicant for backward-compatible UI counts.
     """
-    allowed_positions = ['fourth_member', 'second_member']
-    if request.user.position not in allowed_positions:
-        return JsonResponse({'success': False, 'error': 'Permission denied.'}, status=403)
-
     applicant_id = (request.POST.get('applicant_id') or request.GET.get('applicant_id') or '').strip()
     doc_key = (request.POST.get('doc_key') or request.GET.get('doc_key') or '').strip()
     doc_code = (request.POST.get('doc_code') or request.GET.get('doc_code') or '').strip().upper()
@@ -619,10 +615,18 @@ def upload_scanned_requirement(request, position):
         'doc_voter_cert': 'voter_certification',
         'doc_cdrrmo': 'cdrrmo_cert',
         'doc_incident_report': 'incident_report',
+        'doc_signed_application': 'signed_application',
     }
 
     if not applicant_id or doc_key not in key_to_document_type:
         return JsonResponse({'success': False, 'error': 'Missing or invalid applicant/document mapping.'}, status=400)
+
+    allowed_positions = ['fourth_member', 'second_member']
+    if doc_key == 'doc_signed_application':
+        if not request.user.is_staff:
+            return JsonResponse({'success': False, 'error': 'Permission denied.'}, status=403)
+    elif request.user.position not in allowed_positions:
+        return JsonResponse({'success': False, 'error': 'Permission denied.'}, status=403)
 
     uploaded_file = request.FILES.get('file')
     if not uploaded_file and request.FILES:

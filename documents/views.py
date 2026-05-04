@@ -31,6 +31,27 @@ def _normalize_blob_content_type(declared: str, filename: str) -> str:
     return base or 'application/octet-stream'
 
 
+def _signed_application_upload_file_error(file) -> str | None:
+    """
+    Signed application vault: PDF, Word, or plain text only — not images.
+    Returns an error message if invalid, otherwise None.
+    """
+    name = (getattr(file, 'name', None) or '').strip()
+    ext = os.path.splitext(name)[1].lower()
+    allowed_ext = {'.pdf', '.doc', '.docx', '.txt'}
+    ct = (getattr(file, 'content_type', None) or '').lower()
+    if ct.startswith('image/'):
+        return (
+            'Signed application must be a PDF, Word file, or text — not an image.'
+        )
+    if ext in allowed_ext:
+        return None
+    return (
+        'Signed application must be a PDF, Word document (.doc or .docx), '
+        'or plain text (.txt).'
+    )
+
+
 def _blob_disposition_inline_ok(content_type: str, filename: str) -> bool:
     """Whether the browser can reasonably display this inline (new tab / embedded)."""
     ct = (content_type or '').split(';')[0].strip().lower()
@@ -360,12 +381,17 @@ def upload_document(request, position):
         return JsonResponse({'success': False, 'error': 'Access denied'}, status=403)
 
     try:
-        applicant_id = request.POST.get('applicant_id')
-        doc_type = request.POST.get('doc_type')
+        applicant_id = (request.POST.get('applicant_id') or request.POST.get('applicant') or '').strip()
+        doc_type = (request.POST.get('doc_type') or request.POST.get('document_type') or '').strip()
         file = request.FILES.get('file')
 
         if not all([applicant_id, doc_type, file]):
             return JsonResponse({'success': False, 'error': 'Missing required fields'}, status=400)
+
+        if doc_type == 'signed_application':
+            sa_err = _signed_application_upload_file_error(file)
+            if sa_err:
+                return JsonResponse({'success': False, 'error': sa_err}, status=400)
 
         # Get applicant
         applicant = Applicant.objects.get(id=applicant_id)

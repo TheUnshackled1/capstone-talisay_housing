@@ -14,13 +14,10 @@
 
 {% block content %}
 <div class="rfq-shell">
+    {% csrf_token %}
     <div class="rfq-head">
         <h1>Ready for Form queue</h1>
         <p>
-            Applicants you routed with <strong>Proceed to Form</strong> appear here until their <strong>Application</strong> moves past <strong>Form Released</strong> (draft until the signed scan is in the vault; then <strong>completed</strong> while awaiting OIC full approval).
-            Use <strong>Generate Form</strong> when ready; print and collect wet signatures offline; then use <strong>Upload signed scan</strong> so the vault receives the physically signed form—the application advances to <strong>completed</strong>, then OIC records full approval when ready (lot awarding comes later).
-        </p>
-        <p style="margin-top:0.45rem;">
             <a class="rfq-link-back" href="{% url 'applications:applications_list' request.user.position %}">← Application &amp; Evaluation (full ledger)</a>
         </p>
         {% if from_source == 'applications_list' and selected_applicant_id %}
@@ -74,11 +71,21 @@
                             <button type="button" class="rfq-action-btn rfq-action-slot-1"
                                 onclick="generateFormFromQueue('{{ data.applicant.id }}')">Generate Form</button>
                             <span class="rfq-action-placeholder rfq-action-placeholder--scan rfq-action-slot-2"
-                                title="Generate the application form first. Then this column shows Upload signed scan (vault), like other rows.">Signed scan upload — after you generate the PDF</span>
+                                title="Generate the application form first. Then this column shows scan / upload shortcuts to the document vault, like other rows.">Signed scan or upload — after you generate the PDF</span>
                             {% elif data.application %}
                             <a class="rfq-action-btn generate-form-btn rfq-action-slot-1" href="{% url 'applications:application_form_pdf' request.user.position data.applicant.id %}" target="_blank" rel="noopener">Open PDF</a>
-                            {% if data.application.status == 'draft' and data.signed_form_vault_url %}
-                            <a class="rfq-action-btn rfq-action-btn--scan rfq-action-slot-2" href="{{ data.signed_form_vault_url }}" target="_blank" rel="noopener noreferrer" title="Document vault — Physically signed application (scan)">Upload signed scan</a>
+                            {% if data.application.status == 'draft' and data.signed_form_vault_url_upload %}
+                            <div class="rfq-action-slot-2 rfq-vault-pair">
+                                <button type="button" class="rfq-action-btn rfq-action-btn--scan"
+                                    data-applicant-id="{{ data.applicant.id }}"
+                                    data-ref-label="{{ data.applicant.reference_number|default:'' }}"
+                                    onclick="rfqScanSignedApplication(this)"
+                                    title="Dynamsoft TWAIN: opens Select Source, then capture — saves to the document vault (stay on this page)">Scan document</button>
+                                <button type="button" class="rfq-action-btn rfq-action-btn--scan"
+                                    data-applicant-id="{{ data.applicant.id }}"
+                                    onclick="rfqPickSignedApplicationFile(this)"
+                                    title="Choose a file from this computer — uploads to the document vault (stay on this page)">Upload document</button>
+                            </div>
                             {% endif %}
                             {% else %}
                             <span class="rfq-actions-muted">Not ready for form yet</span>
@@ -135,6 +142,9 @@
     </div>
     {% endif %}
 </div>
+
+<div id="dwtcontrolContainer" style="width:0;height:0;overflow:hidden;position:absolute;left:-9999px;" aria-hidden="true"></div>
+<input type="file" id="rfqSignedApplicationFile" style="display:none" accept=".pdf,.doc,.docx,.txt,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain">
 
 <!-- Applicant detail (restores columns hidden from the slim queue table) -->
 <div class="rfq-detail-overlay" id="rfqDetailOverlay" role="dialog" aria-modal="true" aria-labelledby="rfqDetailTitle" aria-hidden="true">
@@ -273,10 +283,135 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="{% static 'Dynamic Web TWAIN SDK 19.3.3/Resources/dynamsoft.webtwain.initiate.js' %}"></script>
+<script src="{% static 'Dynamic Web TWAIN SDK 19.3.3/Resources/dynamsoft.webtwain.config.js' %}"></script>
 <script>
     const position = '{{ request.user.position }}';
     const queueUrl = '{% url "applications:ready_for_form_queue" request.user.position %}';
     const selectedApplicantId = '{{ selected_applicant_id|default:""|escapejs }}';
+    const RFQ_INTAKE_DWT_URL = '{% url "intake:upload_scanned_requirement" request.user.position %}';
+
+    let RfqDWTObject = null;
+    if (window.Dynamsoft && window.Dynamsoft.DWT) {
+        Dynamsoft.DWT.RegisterEvent('OnWebTwainReady', function () {
+            RfqDWTObject = Dynamsoft.DWT.GetWebTwain('dwtcontrolContainer');
+        });
+    }
+
+    async function rfqWaitForDwt(timeoutMs) {
+        const t = timeoutMs || 12000;
+        const startedAt = Date.now();
+        while (!RfqDWTObject && (Date.now() - startedAt) < t) {
+            await new Promise(function (resolve) { setTimeout(resolve, 100); });
+        }
+        return RfqDWTObject;
+    }
+
+    async function rfqScanSignedApplication(btn) {
+        if (!btn) return;
+        const scanBtnLabel = 'Scan document';
+        const applicantId = String(btn.dataset.applicantId || '').trim();
+        if (!applicantId) {
+            rfqShowAlert('Missing applicant.', 'Scan', 'default');
+            return;
+        }
+        const refRaw = String(btn.dataset.refLabel || '').trim();
+        const safeRef = refRaw ? refRaw.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9._-]/g, '').slice(0, 80) : ('app_' + applicantId.replace(/-/g, '').slice(0, 12));
+        btn.disabled = true;
+        btn.textContent = 'Starting scanner…';
+        try {
+            const dwt = await rfqWaitForDwt();
+            if (!dwt) throw new Error('Scanner SDK not ready. Refresh the page and try again.');
+            btn.textContent = 'Select source…';
+            await dwt.SelectSourceAsync();
+            const beforeCount = Number(dwt.HowManyImagesInBuffer || 0);
+            await dwt.AcquireImageAsync({ IfCloseSourceAfterAcquire: true });
+            const afterCount = Number(dwt.HowManyImagesInBuffer || 0);
+            if (afterCount <= beforeCount) throw new Error('No image was acquired.');
+            const index = Number(dwt.CurrentImageIndexInBuffer);
+            const uploadUrl = `${RFQ_INTAKE_DWT_URL}?applicant_id=${encodeURIComponent(applicantId)}&doc_key=doc_signed_application&doc_code=SIGNED`;
+            const fileName = `${safeRef}_signed_application.png`;
+            btn.textContent = 'Uploading…';
+            await new Promise(function (resolve, reject) {
+                dwt.HTTPUpload(
+                    uploadUrl,
+                    [index],
+                    Dynamsoft.DWT.EnumDWT_ImageType.IT_PNG,
+                    Dynamsoft.DWT.EnumDWT_UploadDataFormat.Binary,
+                    fileName,
+                    function (httpResponse) { resolve(httpResponse); },
+                    function (_errorCode, errorString, httpResponse) {
+                        let message = errorString || 'Upload failed.';
+                        const normalized = String(message || '').replace(/\s+/g, ' ').trim();
+                        if (/^HTTP process:\s*OK\s*\(200\)/i.test(normalized) || normalized.toLowerCase().startsWith('http process: ok')) {
+                            resolve(httpResponse);
+                            return;
+                        }
+                        if (httpResponse) {
+                            try {
+                                const parsed = JSON.parse(httpResponse);
+                                if (parsed && parsed.success) {
+                                    resolve(httpResponse);
+                                    return;
+                                }
+                                if (parsed && parsed.error) message = parsed.error;
+                            } catch (_err) {}
+                        }
+                        reject(new Error(message));
+                    }
+                );
+            });
+            rfqShowAlert('Signed application scan saved to the vault.', 'Scan complete', 'success');
+            window.location.reload();
+        } catch (err) {
+            rfqShowAlert((err && err.message) ? err.message : 'Scan was cancelled or failed.', 'Scan', 'default');
+            btn.disabled = false;
+            btn.textContent = scanBtnLabel;
+        }
+    }
+
+    let rfqFileUploadApplicantId = null;
+    let rfqFileUploadButtonEl = null;
+
+    function rfqGetCsrfToken() {
+        const inp = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (inp && inp.value) return inp.value;
+        const m = document.cookie.match(/csrftoken=([^;]+)/);
+        return m ? decodeURIComponent(m[1].trim()) : '';
+    }
+
+    /** Signed application upload: PDF, Word, or plain text only — not images. */
+    function rfqSignedApplicationFileAllowed(file) {
+        if (!file || !file.name) return false;
+        const ct = (file.type || '').toLowerCase();
+        if (ct.startsWith('image/')) return false;
+        const ext = (file.name.lastIndexOf('.') >= 0
+            ? file.name.slice(file.name.lastIndexOf('.')).toLowerCase()
+            : '');
+        const okExt = ['.pdf', '.doc', '.docx', '.txt'].indexOf(ext) >= 0;
+        if (okExt) return true;
+        return (
+            ct === 'application/pdf'
+            || ct === 'application/msword'
+            || ct === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            || ct === 'text/plain'
+        );
+    }
+
+    function rfqPickSignedApplicationFile(btn) {
+        if (!btn) return;
+        const applicantId = String(btn.dataset.applicantId || '').trim();
+        if (!applicantId) {
+            rfqShowAlert('Missing applicant.', 'Upload', 'default');
+            return;
+        }
+        rfqFileUploadApplicantId = applicantId;
+        rfqFileUploadButtonEl = btn;
+        const inp = document.getElementById('rfqSignedApplicationFile');
+        if (!inp) return;
+        inp.value = '';
+        inp.click();
+    }
 
     // ---- Custom confirmation modal helpers ----
     function rfqShowConfirm(message, onOk) {
@@ -412,6 +547,66 @@
         }
         if (detailClose) detailClose.addEventListener('click', rfqHideApplicantDetail);
         if (detailFooterClose) detailFooterClose.addEventListener('click', rfqHideApplicantDetail);
+
+        const finput = document.getElementById('rfqSignedApplicationFile');
+        if (finput) {
+            finput.addEventListener('change', async function () {
+                const file = finput.files && finput.files[0];
+                const applicantId = rfqFileUploadApplicantId;
+                const triggerBtn = rfqFileUploadButtonEl;
+                rfqFileUploadApplicantId = null;
+                rfqFileUploadButtonEl = null;
+                if (!file || !applicantId) return;
+                if (!rfqSignedApplicationFileAllowed(file)) {
+                    rfqShowAlert(
+                        'Please upload a PDF, Word document (.doc or .docx), or plain text (.txt). Photos and other images are not accepted here.',
+                        'Upload document',
+                        'default'
+                    );
+                    finput.value = '';
+                    if (triggerBtn) {
+                        triggerBtn.disabled = false;
+                        triggerBtn.textContent = 'Upload document';
+                    }
+                    return;
+                }
+                const uploadLabel = 'Upload document';
+                if (triggerBtn) {
+                    triggerBtn.disabled = true;
+                    triggerBtn.textContent = 'Uploading…';
+                }
+                const csrf = rfqGetCsrfToken();
+                const fd = new FormData();
+                fd.append('applicant_id', applicantId);
+                fd.append('doc_type', 'signed_application');
+                fd.append('file', file);
+                try {
+                    const response = await fetch(`/documents/${position}/api/upload/`, {
+                        method: 'POST',
+                        body: fd,
+                        headers: csrf ? { 'X-CSRFToken': csrf } : {},
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        const msg = data.pipeline_note || data.message || 'Document uploaded.';
+                        rfqShowAlert(msg, 'Upload complete', 'success');
+                        window.location.reload();
+                    } else {
+                        rfqShowAlert(data.error || 'Upload failed.', 'Upload', 'default');
+                        if (triggerBtn) {
+                            triggerBtn.disabled = false;
+                            triggerBtn.textContent = uploadLabel;
+                        }
+                    }
+                } catch (err) {
+                    rfqShowAlert((err && err.message) ? err.message : 'Upload failed.', 'Upload', 'default');
+                    if (triggerBtn) {
+                        triggerBtn.disabled = false;
+                        triggerBtn.textContent = uploadLabel;
+                    }
+                }
+            });
+        }
 
         if (!selectedApplicantId) return;
         const targetRow = document.querySelector(`tr[data-applicant-id="${selectedApplicantId}"]`);
