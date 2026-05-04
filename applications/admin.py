@@ -18,10 +18,6 @@ class ApplicationAdmin(admin.ModelAdmin):
         ('✍️ APPLICANT SIGNATURE', {
             'fields': ('applicant_signed_at',),
         }),
-        ('🔧 FACILITATED SERVICES', {
-            'fields': ('notarial_completed', 'notarial_completed_at', 'engineering_completed', 'engineering_completed_at'),
-            'classes': ('collapse',),
-        }),
         ('✅ APPROVAL & STANDBY', {
             'fields': ('fully_approved_at', 'standby_position', 'standby_entered_at'),
             'classes': ('collapse',),

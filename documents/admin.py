@@ -2,7 +2,6 @@ from django.contrib import admin
 from .models import (
     Document,
     SMSLog,
-    FacilitatedService,
     ElectricityConnection,
     LotAwarding,
     Requirement,
@@ -159,27 +158,6 @@ class EndorsementRoutingStepAdmin(admin.ModelAdmin):
     list_display = ('application', 'step', 'is_completed', 'completed_at', 'recorded_by')
     list_filter = ('step', 'is_completed', 'completed_at')
     search_fields = ('application__application_number', 'application__applicant__full_name')
-
-
-@admin.register(FacilitatedService)
-class FacilitatedServiceAdmin(admin.ModelAdmin):
-    list_display = ('application', 'service_type', 'status', 'initiated_at')
-    list_filter = ('service_type', 'status', 'initiated_at')
-    search_fields = ('application__application_number',)
-    readonly_fields = ('initiated_at', 'completed_at')
-
-    fieldsets = (
-        ('🔧 SERVICE', {
-            'fields': ('application', 'service_type', 'status'),
-        }),
-        ('📅 TIMELINE', {
-            'fields': ('initiated_at', 'initiated_by', 'completed_at', 'completed_by'),
-        }),
-        ('📝 NOTES', {
-            'fields': ('notes',),
-            'classes': ('collapse',),
-        }),
-    )
 
 
 @admin.register(ElectricityConnection)

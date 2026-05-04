@@ -37,13 +37,7 @@ class Application(models.Model):
     
     # Applicant signature
     applicant_signed_at = models.DateTimeField(null=True, blank=True)
-    
-    # Facilitated services flags
-    notarial_completed = models.BooleanField(default=False)
-    notarial_completed_at = models.DateTimeField(null=True, blank=True)
-    engineering_completed = models.BooleanField(default=False)
-    engineering_completed_at = models.DateTimeField(null=True, blank=True)
-    
+
     # Final approval tracking
     fully_approved_at = models.DateTimeField(null=True, blank=True)
     

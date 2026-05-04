@@ -18,7 +18,6 @@ from intake.models import Applicant
 from intake import sms_workflow
 from documents.models import (
     Document,
-    FacilitatedService,
     ElectricityConnection,
     LotAwarding,
     Requirement,

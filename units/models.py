@@ -281,9 +281,9 @@ class ElectricityConnection(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
-        verbose_name = "Electricity Connection"
-        verbose_name_plural = "Electricity Connections"
-    
+        verbose_name = "Electricity connection (unit / lot)"
+        verbose_name_plural = "Electricity connections (units)"
+
     def __str__(self):
         return f"Electricity - {self.lot_award.unit}"
 

@@ -523,67 +523,6 @@ class EndorsementRoutingStep(models.Model):
         return f'{self.application.application_number} - {self.get_step_display()}'
 
 
-class FacilitatedService(models.Model):
-    """
-    Tracks notarial services and engineering assessment.
-    Coordinated by office at no cost to applicant.
-    Transferred from applications module for document/service archival.
-    """
-    SERVICE_TYPE_CHOICES = [
-        ('notarial', 'Notarial Services'),
-        ('engineering', 'Engineering Assessment'),
-    ]
-
-    STATUS_CHOICES = [
-        ('pending', 'Pending'),
-        ('in_progress', 'In Progress'),
-        ('completed', 'Completed'),
-    ]
-
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    application = models.ForeignKey(
-        'applications.Application',
-        on_delete=models.CASCADE,
-        related_name='facilitated_services'
-    )
-
-    service_type = models.CharField(max_length=20, choices=SERVICE_TYPE_CHOICES)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
-
-    initiated_at = models.DateTimeField(auto_now_add=True)
-    initiated_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        related_name='initiated_services'
-    )
-
-    completed_at = models.DateTimeField(null=True, blank=True)
-    completed_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='completed_services'
-    )
-
-    notes = models.TextField(blank=True)
-
-    class Meta:
-        ordering = ['application', 'service_type']
-        verbose_name = "Facilitated Service"
-        verbose_name_plural = "Facilitated Services"
-        constraints = [
-            models.UniqueConstraint(
-                fields=['application', 'service_type'],
-                name='unique_application_service_docs'
-            )
-        ]
-
-    def __str__(self):
-        return f"{self.application.application_number} - {self.get_service_type_display()}"
-
-
 class ElectricityConnection(models.Model):
     """
     Tracks electricity connection status for awarded units.
@@ -639,8 +578,8 @@ class ElectricityConnection(models.Model):
 
     class Meta:
         ordering = ['-created_at']
-        verbose_name = "Electricity Connection"
-        verbose_name_plural = "Electricity Connections"
+        verbose_name = "Electricity connection (application)"
+        verbose_name_plural = "Electricity connections (applications)"
 
     def __str__(self):
         return f"{self.application.application_number} - {self.get_status_display()}"
