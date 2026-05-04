@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.db.models import Q, Prefetch
 from django.http import JsonResponse, HttpResponse, Http404
 from django.views.decorators.http import require_http_methods, require_POST
+from collections import defaultdict
 from functools import wraps
 import json
 import mimetypes
@@ -256,30 +257,12 @@ def document_management(request, position):
                 ('no_property', 'Certificate of No Property'),
                 ('photo_2x2', '2x2 Picture'),
                 ('house_sketch', 'Sketch of House Location'),
+                (
+                    'voter_certification',
+                    'Voter certification (COMELEC / Barangay voter record)',
+                ),
             ]
         },
-        'B': {
-            'label': 'Group B — Office-Generated / Facilitated',
-            'color_bg': 'bg-teal-100',
-            'color_text': 'text-teal-700',
-            'documents': [
-                ('application_form', 'Application Form'),
-                ('notarized_docs', 'Notarized Documents'),
-                ('engineering_assessment', 'Engineering Assessment'),
-                ('signed_application', 'Physically signed application (scan)'),
-            ]
-        },
-        'C': {
-            'label': 'Group C — Post-Award Documents',
-            'color_bg': 'bg-purple-100',
-            'color_text': 'text-purple-700',
-            'documents': [
-                ('lot_award', 'Lot Award Document'),
-                ('electricity_app', 'Electricity Connection Application'),
-                ('cdrrmo_cert', 'CDRRMO Certification'),
-                ('explanation_letter', 'Explanation Letter (compliance)'),
-            ]
-        }
     }
 
     applicant_ids = [a['id'] for a in applicants_list]
@@ -289,6 +272,36 @@ def document_management(request, position):
         .filter(applicant_id__in=applicant_ids)
         .order_by('applicant__created_at', '-uploaded_at')
     )
+
+    types_on_file = defaultdict(set)
+    for doc in documents_qs:
+        types_on_file[str(doc.applicant_id).lower()].add(doc.document_type)
+
+    for row in applicants_list:
+        rid = str(row['id']).lower()
+        checklist = []
+        for _gk, group in doc_groups.items():
+            for type_key, label in group['documents']:
+                checklist.append({
+                    'type_key': type_key,
+                    'label': label,
+                    'group_label': group['label'],
+                    'on_file': type_key in types_on_file[rid],
+                })
+        row['vault_checklist'] = checklist
+
+    # Keys normalized to lowercase so JSON + onclick IDs always match (UUID string casing).
+    vault_drawer_data = {
+        str(row['id']).lower(): {
+            'full_name': row['full_name'],
+            'reference_number': row['reference_number'] or '',
+            'barangay': row['barangay'],
+            'status_display': row['status_display'],
+            'vault_checklist': row['vault_checklist'],
+        }
+        for row in applicants_list
+    }
+
     disqualified_count = (
         Applicant.objects.filter(status='disqualified')
         .filter(Q(archives__isnull=False) | Q(module2_handoff_at__isnull=False))
@@ -319,6 +332,7 @@ def document_management(request, position):
         'total_applicants': len(applicants_list),
         'total_size_gb': round(sum(doc.file_size for doc in documents_qs) / (1024*1024*1024), 2),
         'disqualified_count': disqualified_count,
+        'vault_drawer_data': vault_drawer_data,
     }
 
     return render(request, 'documents/management.html', context)

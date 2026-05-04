@@ -3,6 +3,8 @@
 
 {% block title %}Housing Unit & Occupancy Monitoring - THA{% endblock %}
 
+{% block nav_housing_monitoring %}active{% endblock %}
+
 {% block page_title %}Staff Portal{% endblock %}
 
 {% block extra_css %}
@@ -57,6 +59,17 @@
 {% csrf_token %}
 
 <div class="units-shell">
+    {% if no_relocation_sites %}
+    <div style="margin-bottom: 0.95rem; padding: 0.85rem 1rem; background: #fffbeb; border: 1px solid #fde68a; border-radius: 0.65rem; color: #92400e; font-size: 0.8rem; line-height: 1.45;">
+        <strong style="display: block; margin-bottom: 0.35rem;">No relocation sites in the database yet.</strong>
+        Ask an administrator to add a relocation site (and housing units) before occupancy data can appear here.
+        {% if show_dev_seed_hint %}
+        <span style="display: block; margin-top: 0.5rem; font-size: 0.72rem; color: #78350f;">
+            Dev: run <code style="background: #fef3c7; padding: 0.1rem 0.35rem; border-radius: 4px;">python manage.py seed_relocation_site</code> to load a demo site and sample units.
+        </span>
+        {% endif %}
+    </div>
+    {% endif %}
     <!-- Page Header -->
     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.95rem; gap: 1rem; flex-wrap: wrap;">
         <div>

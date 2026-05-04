@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
@@ -50,9 +51,11 @@ def housing_units_monitoring(request, position):
     Displays all housing units grouped by block with status, occupant info,
     and notice tracking. Supports grid and table views.
 
-    URL: /units/<position>/housing-units/
+    URL: /units/housing-units/<position>/  (e.g. …/second_member/, …/fourth_member/)
 
-    Actors: Fourth Member (Jocel), Field Team
+    Template: units/housing_units_monitoring.html
+
+    Actors: Second Member, Fourth Member, Field desk, and other staff (nav uses role-specific URL).
     Purpose: Monitor unit occupancy, track compliance notices, manage escalations
     """
 
@@ -71,21 +74,24 @@ def housing_units_monitoring(request, position):
 
     # If no assigned site, allow staff to view all sites
     # If regular user with no assignment, show first available site
+    no_relocation_sites = False
     if not site:
         if all_sites.exists():
             site = all_sites.first()
         else:
-            return render(request, 'staff/error.html',
-                          {'error': 'No relocation sites available in the system.'})
+            no_relocation_sites = True
 
-    # Get all units for the site with related data
-    units = (
-        HousingUnit.objects
-        .filter(site=site)
-        .select_related('weekly_report')
-        .prefetch_related('lot_awards__application__applicant')
-        .order_by('block_number', 'lot_number')
-    )
+    # Get all units for the site with related data (empty when no sites exist yet)
+    if no_relocation_sites:
+        units = HousingUnit.objects.none()
+    else:
+        units = (
+            HousingUnit.objects
+            .filter(site=site)
+            .select_related('weekly_report')
+            .prefetch_related('lot_awards__application__applicant')
+            .order_by('block_number', 'lot_number')
+        )
 
     # Count by status
     occupied_count = units.filter(status='Occupied').count()
@@ -120,6 +126,8 @@ def housing_units_monitoring(request, position):
     context = {
         'site': site,
         'all_sites': all_sites,
+        'no_relocation_sites': no_relocation_sites,
+        'show_dev_seed_hint': no_relocation_sites and settings.DEBUG,
         'total_units': units.count(),
         'occupied_count': occupied_count,
         'vacant_count': vacant_count,
