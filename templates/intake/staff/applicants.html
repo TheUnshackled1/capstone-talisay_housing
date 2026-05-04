@@ -3904,22 +3904,28 @@
                     box-shadow: inset 0 -1px 0 rgba(255,255,255,0.06);
                 }
                 .tha-reg-modal .tha-form-crest {
-                    width: 3rem;
-                    height: 3rem;
+                    width: auto;
+                    max-width: min(100%, 18rem);
+                    height: 3.25rem;
                     margin: 0 auto 0.625rem;
-                    background: #f8fafc;
-                    color: #0f172a;
                     border: 2px solid rgba(248, 250, 252, 0.95);
-                    border-radius: 50%;
+                    border-radius: 0.375rem;
+                    overflow: hidden;
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    font-family: Georgia, 'Times New Roman', Times, serif;
-                    font-size: 0.5625rem;
-                    font-weight: 700;
-                    letter-spacing: 0.12em;
-                    line-height: 1.15;
-                    text-align: center;
+                    background: #ffffff;
+                    padding: 0.2rem 0.5rem;
+                    flex-shrink: 0;
+                    box-sizing: border-box;
+                }
+                .tha-reg-modal .tha-form-crest img {
+                    width: auto;
+                    height: 100%;
+                    max-width: 100%;
+                    object-fit: contain;
+                    object-position: center;
+                    display: block;
                 }
                 .tha-reg-modal .tha-form-header h2 {
                     margin: 0;
@@ -4292,16 +4298,29 @@
                     background: #fef2f2;
                     border-color: #dc2626;
                 }
+                .tha-reg-modal #householdMembersContainer {
+                    overflow-x: auto;
+                    overflow-y: visible;
+                    -webkit-overflow-scrolling: touch;
+                    margin-bottom: 0.25rem;
+                }
                 .tha-reg-modal .hh-member-row {
                     display: grid;
-                    grid-template-columns: 1.8fr 1.5fr 0.7fr 0.7fr 1.2fr 1.5fr auto;
-                    gap: 0.75rem;
+                    grid-template-columns: minmax(7.5rem, 1.5fr) minmax(6rem, 0.85fr) minmax(10.5rem, 1fr) minmax(8rem, 1fr) minmax(9.5rem, 1.25fr) minmax(0, auto);
+                    gap: 0.65rem;
                     align-items: start;
                     border: 1px solid #e2e8f0;
                     padding: 1rem;
                     border-radius: 0.5rem;
                     background: #f8fafc;
                     margin-bottom: 1rem;
+                }
+                .tha-reg-modal .hh-member-row > .hh-member-name-span {
+                    grid-column: 1 / -1;
+                }
+                .tha-reg-modal .hh-member-row > .hh-member-name-span .form-input {
+                    width: 100%;
+                    min-width: 0;
                 }
                 .tha-reg-modal .hh-row-1,
                 .tha-reg-modal .hh-row-2 {
@@ -4311,6 +4330,7 @@
                     display: flex;
                     flex-direction: column;
                     gap: 0.4rem;
+                    min-width: 0;
                 }
                 .tha-reg-modal .hh-member-row .form-label {
                     font-size: 0.75rem;
@@ -4350,11 +4370,21 @@
                     width: 1rem;
                     height: 1rem;
                 }
-                .tha-reg-modal .hh-member-row .tha-reg-remove-member {
+                .tha-reg-modal .hh-member-remove-cell .form-label {
+                    visibility: hidden;
+                    min-height: 1rem;
+                    user-select: none;
+                }
+                .tha-reg-modal .hh-member-remove-cell .tha-reg-remove-member {
+                    width: auto;
+                    margin-top: 0;
                     align-self: flex-end;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
                     min-height: 2.35rem;
-                    padding: 0.5rem 1rem;
-                    margin-top: 1.35rem;
+                    min-width: 4.75rem;
+                    padding: 0.5rem 0.75rem;
                 }
                 .tha-reg-modal .hh-member-help {
                     font-size: 0.75rem;
@@ -4492,19 +4522,56 @@
                 }
                 .tha-reg-modal #addApplicantForm .tha-section-block--household .tha-section-header-with-action {
                     border-bottom-color: #a7f3d0;
+                    display: grid;
+                    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+                    align-items: flex-end;
+                    column-gap: 0.65rem;
+                    row-gap: 0.65rem;
+                    justify-content: stretch;
+                }
+                .tha-reg-modal #addApplicantForm .tha-section-block--household .tha-section-header-with-action .tha-section-title {
+                    grid-column: 2;
+                    grid-row: 1;
+                    justify-self: center;
+                    align-self: flex-end;
+                    position: static;
+                    transform: none;
+                    left: auto;
+                    margin: 0;
+                    padding: 0;
+                    width: 100%;
+                    max-width: 100%;
+                    text-align: center;
                 }
                 .tha-reg-modal #addApplicantForm .tha-section-block--household .tha-household-header-actions {
+                    grid-column: 3;
+                    grid-row: 1;
+                    justify-self: end;
                     display: flex;
                     align-items: flex-end;
                     gap: 0.85rem;
-                    flex-wrap: wrap;
+                    flex-wrap: nowrap;
                     justify-content: flex-end;
+                    min-width: 0;
+                    max-width: 100%;
+                    overflow-x: auto;
+                    overflow-y: visible;
+                    -webkit-overflow-scrolling: touch;
+                    padding-bottom: 2px;
+                }
+                .tha-reg-modal #addApplicantForm .tha-section-block--household .tha-household-header-actions .tha-btn-add-member {
+                    flex-shrink: 0;
+                }
+                .tha-reg-modal #addApplicantForm .tha-section-block--household .tha-declared-household-inline {
+                    flex-shrink: 0;
                 }
                 .tha-reg-modal #addApplicantForm .tha-declared-household-inline {
                     display: flex;
                     flex-direction: column;
                     gap: 0.28rem;
-                    align-items: flex-start;
+                    align-items: stretch;
+                    width: 5.25rem;
+                    max-width: 100%;
                     min-width: 0;
                 }
                 .tha-reg-modal #addApplicantForm .tha-declared-household-inline .form-label {
@@ -4513,11 +4580,14 @@
                     font-weight: 700;
                     color: #334155;
                     line-height: 1.2;
-                    white-space: nowrap;
+                    white-space: normal;
+                    text-align: center;
+                    width: 100%;
                 }
                 .tha-reg-modal #addApplicantForm .tha-declared-household-inline .form-input {
+                    box-sizing: border-box;
                     width: 100%;
-                    max-width: 5.25rem;
+                    max-width: none;
                     padding: 0.38rem 0.5rem;
                     font-weight: 700;
                     text-align: center;
@@ -4531,6 +4601,20 @@
                     background: linear-gradient(135deg, #059669 0%, #065f46 100%);
                     border-color: #065f46;
                     color: #ffffff;
+                }
+                @media (max-width: 520px) {
+                    .tha-reg-modal #addApplicantForm .tha-section-block--household .tha-section-header-with-action {
+                        grid-template-columns: minmax(0, 1fr);
+                    }
+                    .tha-reg-modal #addApplicantForm .tha-section-block--household .tha-section-header-with-action .tha-section-title {
+                        grid-column: 1;
+                        grid-row: 1;
+                    }
+                    .tha-reg-modal #addApplicantForm .tha-section-block--household .tha-household-header-actions {
+                        grid-column: 1;
+                        grid-row: 2;
+                        justify-self: stretch;
+                    }
                 }
                 /* Household Income → Amber */
                 .tha-reg-modal #addApplicantForm .tha-section-block--income {
@@ -4559,7 +4643,9 @@
 
                 <!-- Authority header (Module 1 intake) -->
                 <div class="tha-form-header">
-                    <div class="tha-form-crest" aria-hidden="true">THA</div>
+                    <div class="tha-form-crest" aria-hidden="true">
+                        <img src="{% static 'images/favicon.png' %}" alt="" decoding="async">
+                    </div>
                     <h2>Applicant Registration Sheet</h2>
                     <p class="tha-form-subtitle">Talisay City Housing Authority</p>
                 </div>
@@ -4793,7 +4879,7 @@
                                         <span class="tha-layer-option">Option D</span>
                                     </label>
                                     <div class="tha-layer-title">None of A, B, or C (Other / not listed)</div>
-                                    <p class="tha-layer-text">The situation does not fall under a hazard area, ejection, or a government project. The applicant is recorded for the Walk-in path (no Priority on this ground).</p>
+                                    <p class="tha-layer-text">The situation does not fall under a hazard area, ejection, or a government project.</p>
                                 </div>
                             </div>
 
@@ -6619,7 +6705,7 @@
                         situationDesc.textContent = 'Applicant is required to relocate due to a road-widening, drainage, infrastructure, or other government-initiated project.';
                     } else if (displacementReason === 'not_abc') {
                         situationLabel.textContent = 'Option D';
-                        situationDesc.textContent = 'The situation does not fall under a hazard area, ejection, or a government project. The applicant is recorded for the Walk-in path (no Priority on this ground).';
+                        situationDesc.textContent = 'The situation does not fall under a hazard area, ejection, or a government project.';
                     } else {
                         situationLabel.textContent = '—';
                         situationDesc.textContent = 'Applicant situation not recorded.';
@@ -8270,9 +8356,9 @@
             memberDiv.id = `hhMember${i}`;
             memberDiv.className = 'hh-member-row';
             memberDiv.innerHTML = `
-                <div class="form-group">
+                <div class="form-group hh-member-name-span">
                     <label class="form-label">Full name</label>
-                    <input type="text" class="form-input hh-member-field" placeholder="Surname, given name, extension" name="hh_member_${i}_name" maxlength="30" minlength="2" onchange="updateHouseholdSize()">
+                    <input type="text" class="form-input hh-member-field" placeholder="Surname, given name, extension" name="hh_member_${i}_name" maxlength="30" minlength="2" onchange="updateHouseholdSize()" autocomplete="name">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Relationship</label>
@@ -8315,7 +8401,10 @@
                     <input type="tel" class="form-input hh-member-field ph-phone" placeholder="09XXXXXXXXXX" maxlength="11" inputmode="numeric" autocomplete="tel-national" name="hh_member_${i}_contact">
                     <span class="hh-member-help">11 digits only</span>
                 </div>
-                <button type="button" onclick="deleteHouseholdMember(${i})" class="tha-reg-remove-member" title="Remove this member">Remove</button>
+                <div class="form-group hh-member-remove-cell">
+                    <label class="form-label">&nbsp;</label>
+                    <button type="button" onclick="deleteHouseholdMember(${i})" class="tha-reg-remove-member" title="Remove this member">Remove</button>
+                </div>
             `;
             container.appendChild(memberDiv);
         }

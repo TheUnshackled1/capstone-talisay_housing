@@ -1275,7 +1275,7 @@ def applicants_list(request, position):
             'not_abc': (
                 'Option D',
                 'None of A, B, or C (Other / not listed)',
-                'The situation does not fall under a hazard area, ejection, or a government project. The applicant is recorded for the Walk-in path (no Priority on this ground).',
+                'The situation does not fall under a hazard area, ejection, or a government project.',
             ),
         }
         disp_label, disp_title, disp_desc = displacement_map.get(
