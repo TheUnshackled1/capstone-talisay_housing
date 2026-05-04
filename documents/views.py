@@ -3,12 +3,14 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q, Prefetch
 from django.http import JsonResponse, HttpResponse, Http404
+from django.urls import reverse
 from django.views.decorators.http import require_http_methods, require_POST
 from collections import defaultdict
 from functools import wraps
 import json
 import mimetypes
 import os
+from uuid import UUID
 from intake.models import Applicant
 from units.models import LotAward
 from applications.models import QueueEntry
@@ -18,6 +20,254 @@ from documents.models import (
     RequirementSubmission,
     EndorsementRoutingStep,
 )
+
+
+def _vault_blob_view_url(
+    type_key: str | None,
+    on_file: bool,
+    latest_doc_by_type: dict | None,
+    position: str | None,
+) -> str | None:
+    if not on_file or not type_key or not position or not latest_doc_by_type:
+        return None
+    doc_id = latest_doc_by_type.get(type_key)
+    if not doc_id:
+        return None
+    return reverse(
+        'documents:blob_download',
+        kwargs={'position': position, 'doc_id': doc_id},
+    )
+
+
+def _ronda_verification_photos_view_urls(applicant: Applicant, request) -> list[str]:
+    """
+    Absolute URLs for each FieldVerificationPhoto (oldest first → View 1, View 2, …).
+    Same media URLs as Application & Eligibility.
+    """
+    if not request:
+        return []
+    cert = getattr(applicant, 'cdrrmo_certification', None)
+    if not cert:
+        return []
+    out: list[str] = []
+    for ph in cert.field_photos.exclude(image='').filter(image__isnull=False).order_by(
+        'uploaded_at', 'id'
+    ):
+        if not ph.image:
+            continue
+        try:
+            out.append(request.build_absolute_uri(ph.image.url))
+        except (ValueError, AttributeError):
+            continue
+    return out
+
+
+def _build_situation_vault_block(
+    applicant: Applicant,
+    types_set: set,
+    *,
+    latest_doc_by_type: dict | None = None,
+    position: str | None = None,
+    request=None,
+) -> dict:
+    """
+    Vault drawer: Applicant Situation (Options A–D) summary + situation-specific slots.
+
+    Option A: CDRRMO cert (vault); inspection report as vault ``Document(incident_report)``;
+    Ronda/CDRRMO on-site verification photos on FieldVerificationPhoto (not vault Documents).
+
+    Options B/C: single ISF situational documentation bundle (isf_situational_docs).
+
+    Option D: message only, no extra checklist rows.
+    """
+    dr = (getattr(applicant, 'displacement_reason', None) or '').strip()
+
+    option_a_blurb = (
+        'Applicant resides in a flood-prone, landslide, storm-surge, riverbank, '
+        'cliff-edge, or coastal hazard area requiring relocation for safety.'
+    )
+    option_b_blurb = (
+        'Applicant has been evicted or displaced through private land eviction, court order, '
+        'landowner recovery, or analogous proceedings.'
+    )
+    option_c_blurb = (
+        'Applicant is required to relocate due to a road-widening, drainage, infrastructure, '
+        'or other government-initiated project.'
+    )
+    option_d_blurb = (
+        'The situation does not fall under a hazard area, ejection, or a government project. '
+        'The applicant is recorded for the walk-in path (no priority on this ground).'
+    )
+
+    def _dz_detail(applicant):
+        zt = (applicant.danger_zone_type or '').strip()
+        loc = (applicant.danger_zone_location or '').strip()
+        zt_disp = zt.replace('_', ' ').title() if zt else ''
+        parts = [p for p in (zt_disp, loc) if p]
+        return ' · '.join(parts) if parts else '—'
+
+    if dr == 'danger_zone':
+        cert = getattr(applicant, 'cdrrmo_certification', None)
+        has_cdrrmo = ('cdrrmo_cert' in types_set) or bool(
+            cert and getattr(cert, 'status', '') == 'certified'
+        )
+        has_inspection_report = 'incident_report' in types_set
+        inspection_note = (
+            'Written or scanned inspection report on file in this vault.'
+            if has_inspection_report
+            else (
+                'No inspection report in the vault yet. Upload the written or scanned '
+                'report here (Incident report), or complete the site-inspection workflow in Application & Eligibility.'
+            )
+        )
+        n_ronda = 0
+        if cert:
+            n_ronda = cert.field_photos.count()
+        has_ronda_photos = n_ronda > 0
+        ronda_note = (
+            f'{n_ronda} on-site photo(s) on file.'
+            if has_ronda_photos
+            else 'No on-site verification photos yet.'
+        )
+        ronda_view_urls = (
+            _ronda_verification_photos_view_urls(applicant, request)
+            if has_ronda_photos
+            else []
+        )
+        return {
+            'letter': 'A',
+            'title': 'Option A — Resident of Danger Zone or Hazard Area',
+            'blurb': option_a_blurb,
+            'detail_line': _dz_detail(applicant),
+            'option_d_message': None,
+            'rows': [
+                {
+                    'slot_id': 'cdrrmo_cert',
+                    'label': 'CDRRMO certification',
+                    'kind': 'document',
+                    'on_file': has_cdrrmo,
+                    'type_key': 'cdrrmo_cert',
+                    'add_file': not has_cdrrmo,
+                    'note': '',
+                    'view_url': _vault_blob_view_url(
+                        'cdrrmo_cert', has_cdrrmo, latest_doc_by_type, position
+                    ),
+                },
+                {
+                    'slot_id': 'inspection_report',
+                    'label': 'Inspection report (field / Ronda site visit)',
+                    'kind': 'document',
+                    'on_file': has_inspection_report,
+                    'type_key': 'incident_report',
+                    'add_file': not has_inspection_report,
+                    'note': inspection_note,
+                    'view_url': _vault_blob_view_url(
+                        'incident_report',
+                        has_inspection_report,
+                        latest_doc_by_type,
+                        position,
+                    ),
+                },
+                {
+                    'slot_id': 'ronda_verification',
+                    'label': 'Ronda on-site verification (photos)',
+                    'kind': 'image',
+                    'on_file': has_ronda_photos,
+                    'type_key': None,
+                    'add_file': False,
+                    'note': ronda_note,
+                    'view_url': None,
+                    'view_urls': ronda_view_urls,
+                },
+            ],
+        }
+
+    if dr == 'ejected':
+        et = ''
+        if getattr(applicant, 'ejection_type', None):
+            try:
+                et = applicant.get_ejection_type_display()
+            except Exception:
+                et = str(applicant.ejection_type)
+        ed = applicant.ejection_date
+        ed_s = ed.strftime('%Y-%m-%d') if ed else ''
+        detail_bits = [b for b in (et, f'Date: {ed_s}' if ed_s else '') if b]
+        detail = ' · '.join(detail_bits) if detail_bits else '—'
+        has_isf = 'isf_situational_docs' in types_set
+        return {
+            'letter': 'B',
+            'title': 'Option B — Ejected or Evicted from Prior Residence',
+            'blurb': option_b_blurb,
+            'detail_line': detail,
+            'option_d_message': None,
+            'rows': [
+                {
+                    'slot_id': 'isf_ejection',
+                    'label': (
+                        'Proof of ejection — court order, legal office certification, '
+                        'or barangay certification (any applicable)'
+                    ),
+                    'kind': 'document',
+                    'on_file': has_isf,
+                    'type_key': 'isf_situational_docs',
+                    'add_file': not has_isf,
+                    'note': '',
+                    'view_url': _vault_blob_view_url(
+                        'isf_situational_docs', has_isf, latest_doc_by_type, position
+                    ),
+                },
+            ],
+        }
+
+    if dr == 'relocated':
+        proj = (getattr(applicant, 'project_name', None) or '').strip() or '—'
+        has_isf = 'isf_situational_docs' in types_set
+        return {
+            'letter': 'C',
+            'title': 'Option C — Displaced by Government Project or Infrastructure',
+            'blurb': option_c_blurb,
+            'detail_line': f'Project / work: {proj}',
+            'option_d_message': None,
+            'rows': [
+                {
+                    'slot_id': 'isf_project',
+                    'label': (
+                        'Proof of displacement — notice of relocation, right-of-way documentation, '
+                        'or project order (any applicable)'
+                    ),
+                    'kind': 'document',
+                    'on_file': has_isf,
+                    'type_key': 'isf_situational_docs',
+                    'add_file': not has_isf,
+                    'note': '',
+                    'view_url': _vault_blob_view_url(
+                        'isf_situational_docs', has_isf, latest_doc_by_type, position
+                    ),
+                },
+            ],
+        }
+
+    if dr == 'not_abc':
+        return {
+            'letter': 'D',
+            'title': 'Option D — None of A, B, or C (Other / not listed)',
+            'blurb': option_d_blurb,
+            'detail_line': 'Walk-in path — no hazard / ejection / government-project classification.',
+            'option_d_message': (
+                'This applicant is not under Options A, B, or C. No situational documents or '
+                'field verification items are required in this section.'
+            ),
+            'rows': [],
+        }
+
+    return {
+        'letter': None,
+        'title': 'Applicant situation not declared',
+        'blurb': 'Options A–D are recorded in Application & Eligibility (displacement / situation).',
+        'detail_line': '—',
+        'option_d_message': None,
+        'rows': [],
+    }
 
 
 def _normalize_blob_content_type(declared: str, filename: str) -> str:
@@ -274,33 +524,82 @@ def document_management(request, position):
     )
 
     types_on_file = defaultdict(set)
+    # Newest upload per (applicant, document_type) — documents_qs is ordered with -uploaded_at per applicant.
+    latest_doc_id_by_applicant_type = {}
     for doc in documents_qs:
-        types_on_file[str(doc.applicant_id).lower()].add(doc.document_type)
+        rid_d = str(doc.applicant_id).lower()
+        types_on_file[rid_d].add(doc.document_type)
+        key = (rid_d, doc.document_type)
+        if key not in latest_doc_id_by_applicant_type:
+            latest_doc_id_by_applicant_type[key] = str(doc.id)
 
     for row in applicants_list:
         rid = str(row['id']).lower()
         checklist = []
         for _gk, group in doc_groups.items():
             for type_key, label in group['documents']:
+                on_file = type_key in types_on_file[rid]
+                lk = (rid, type_key)
+                view_url = None
+                if on_file and lk in latest_doc_id_by_applicant_type:
+                    view_url = reverse(
+                        'documents:blob_download',
+                        kwargs={
+                            'position': request.user.position,
+                            'doc_id': latest_doc_id_by_applicant_type[lk],
+                        },
+                    )
                 checklist.append({
                     'type_key': type_key,
                     'label': label,
                     'group_label': group['label'],
-                    'on_file': type_key in types_on_file[rid],
+                    'on_file': on_file,
+                    'view_url': view_url,
                 })
         row['vault_checklist'] = checklist
 
+    _va_ids = [UUID(x['id']) for x in applicants_list]
+    applicant_map = {
+        str(a.id).lower(): a
+        for a in (
+            Applicant.objects.filter(id__in=_va_ids)
+            .select_related('application', 'application__field_inspection', 'barangay')
+            .prefetch_related(
+                'cdrrmo_certification__field_photos',
+            )
+        )
+    }
+
     # Keys normalized to lowercase so JSON + onclick IDs always match (UUID string casing).
-    vault_drawer_data = {
-        str(row['id']).lower(): {
+    vault_drawer_data = {}
+    for row in applicants_list:
+        rid = str(row['id']).lower()
+        ap = applicant_map.get(rid)
+        ts = types_on_file[rid]
+        latest_by = {
+            doc_type: doc_id
+            for (r, doc_type), doc_id in latest_doc_id_by_applicant_type.items()
+            if r == rid
+        }
+        situation = (
+            _build_situation_vault_block(
+                ap,
+                ts,
+                latest_doc_by_type=latest_by,
+                position=request.user.position,
+                request=request,
+            )
+            if ap
+            else None
+        )
+        vault_drawer_data[rid] = {
             'full_name': row['full_name'],
             'reference_number': row['reference_number'] or '',
             'barangay': row['barangay'],
             'status_display': row['status_display'],
             'vault_checklist': row['vault_checklist'],
+            'situation': situation,
         }
-        for row in applicants_list
-    }
 
     disqualified_count = (
         Applicant.objects.filter(status='disqualified')

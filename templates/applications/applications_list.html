@@ -2089,39 +2089,114 @@
         z-index: 1100;
     }
 
-    .m2-field-photo-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
-        gap: 0.85rem;
-        align-items: start;
-    }
-
-    .m2-field-photo-item {
-        margin: 0;
-        text-align: center;
-    }
-
-    .m2-field-photo-item a {
-        display: block;
-        border-radius: 10px;
+    /* Carousel (same interaction model as Document Management vault image gallery) */
+    .m2-field-photo-carousel-panel {
+        width: min(900px, 96vw);
+        max-height: min(92vh, 900px);
+        background: #0f172a;
+        border-radius: 0.75rem;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45);
+        display: flex;
+        flex-direction: column;
         overflow: hidden;
-        border: 1px solid #e2e8f0;
-        background: #f8fafc;
+        border: 1px solid #334155;
     }
-
-    .m2-field-photo-item img {
-        width: 100%;
+    .m2-field-photo-carousel-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 0.75rem;
+        padding: 0.65rem 0.85rem;
+        background: #1e293b;
+        border-bottom: 1px solid #334155;
+    }
+    .m2-field-photo-carousel-head-main {
+        flex: 1;
+        min-width: 0;
+    }
+    .m2-field-photo-carousel-title {
+        margin: 0;
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #f1f5f9;
+        line-height: 1.3;
+    }
+    .m2-field-photo-carousel-sub {
+        margin: 0.2rem 0 0 0;
+        font-size: 0.72rem;
+        color: #94a3b8;
+        line-height: 1.35;
+    }
+    .m2-field-photo-carousel-counter {
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: #94a3b8;
+        white-space: nowrap;
+        padding-top: 0.15rem;
+    }
+    .m2-field-photo-carousel-x {
+        flex-shrink: 0;
+        border: none;
+        background: #334155;
+        color: #e2e8f0;
+        width: 2rem;
+        height: 2rem;
+        border-radius: 0.45rem;
+        cursor: pointer;
+        font-size: 1.1rem;
+        line-height: 1;
+    }
+    .m2-field-photo-carousel-x:hover {
+        background: #475569;
+        color: #fff;
+    }
+    .m2-field-photo-carousel-stage {
+        position: relative;
+        flex: 1;
+        min-height: 200px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #020617;
+        padding: 0.5rem;
+    }
+    .m2-field-photo-carousel-stage img {
+        max-width: 100%;
+        max-height: min(78vh, 720px);
+        width: auto;
         height: auto;
-        vertical-align: middle;
-        display: block;
-        max-height: 280px;
         object-fit: contain;
     }
-
-    .m2-field-photo-item figcaption {
-        margin-top: 0.35rem;
-        font-size: 0.75rem;
-        color: #64748b;
+    .m2-field-photo-carousel-nav {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        border: none;
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 9999px;
+        background: rgba(30, 41, 59, 0.92);
+        color: #f8fafc;
+        font-size: 1.5rem;
+        line-height: 1;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+    }
+    .m2-field-photo-carousel-nav:hover {
+        background: #334155;
+    }
+    .m2-field-photo-carousel-nav--prev {
+        left: 0.5rem;
+    }
+    .m2-field-photo-carousel-nav--next {
+        right: 0.5rem;
+    }
+    .m2-field-photo-carousel-nav[hidden] {
+        display: none;
     }
 
     .modal-content {
@@ -3826,17 +3901,20 @@
     </div>
 </div>
 
-<div class="modal-overlay m2-field-photo-gallery-overlay" id="m2FieldPhotoGalleryModal" onclick="m2CloseSituationFieldPhotoGallery(event)" aria-hidden="true">
-    <div class="eligibility-next-modal m2-field-photo-gallery-panel" style="max-width: min(52rem, 96vw); max-height: 92vh;" onclick="event.stopPropagation()">
-        <div class="eligibility-next-header">
-            <h3 class="eligibility-next-title" id="m2FieldPhotoGalleryTitle">Site photographs</h3>
-            <p class="eligibility-next-subtitle" id="m2FieldPhotoGallerySubtitle">Field verification — supporting evidence</p>
+<div class="modal-overlay m2-field-photo-gallery-overlay" id="m2FieldPhotoGalleryModal" role="dialog" aria-modal="true" aria-labelledby="m2FieldPhotoGalleryTitle" onclick="m2CloseSituationFieldPhotoGallery(event)" aria-hidden="true">
+    <div class="m2-field-photo-carousel-panel" onclick="event.stopPropagation();">
+        <div class="m2-field-photo-carousel-head">
+            <div class="m2-field-photo-carousel-head-main">
+                <h3 class="m2-field-photo-carousel-title" id="m2FieldPhotoGalleryTitle">Site photographs</h3>
+                <p class="m2-field-photo-carousel-sub" id="m2FieldPhotoGallerySubtitle">Field verification — supporting evidence</p>
+            </div>
+            <span class="m2-field-photo-carousel-counter" id="m2FieldPhotoGalleryCounter"></span>
+            <button type="button" class="m2-field-photo-carousel-x" onclick="m2CloseSituationFieldPhotoGallery()" aria-label="Close gallery">✕</button>
         </div>
-        <div class="eligibility-next-body" style="overflow:auto;max-height:70vh;">
-            <div class="m2-field-photo-grid" id="m2FieldPhotoGalleryGrid"></div>
-        </div>
-        <div class="eligibility-next-footer">
-            <button type="button" class="eligibility-next-close" id="m2FieldPhotoGalleryCloseBtn" onclick="m2CloseSituationFieldPhotoGallery()">Close</button>
+        <div class="m2-field-photo-carousel-stage">
+            <button type="button" class="m2-field-photo-carousel-nav m2-field-photo-carousel-nav--prev" id="m2FieldPhotoGalleryPrev" aria-label="Previous photo" onclick="event.stopPropagation(); m2FieldPhotoGalleryStep(-1);">‹</button>
+            <img id="m2FieldPhotoGalleryImg" src="" alt="Site photograph" />
+            <button type="button" class="m2-field-photo-carousel-nav m2-field-photo-carousel-nav--next" id="m2FieldPhotoGalleryNext" aria-label="Next photo" onclick="event.stopPropagation(); m2FieldPhotoGalleryStep(1);">›</button>
         </div>
     </div>
 </div>
@@ -4188,6 +4266,9 @@
         return String(jsonStr).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
     }
 
+    let m2FieldPhotoGalleryUrls = [];
+    let m2FieldPhotoGalleryIndex = 0;
+
     function m2OpenSituationFieldPhotoGalleryFromBtn(btn) {
         const raw = btn && btn.getAttribute('data-m2-field-photos');
         if (!raw) return;
@@ -4201,39 +4282,76 @@
         m2OpenSituationFieldPhotoGallery(urls);
     }
 
+    function m2FieldPhotoGalleryRefresh() {
+        const urls = m2FieldPhotoGalleryUrls;
+        const idx = m2FieldPhotoGalleryIndex;
+        const img = document.getElementById('m2FieldPhotoGalleryImg');
+        const prev = document.getElementById('m2FieldPhotoGalleryPrev');
+        const next = document.getElementById('m2FieldPhotoGalleryNext');
+        const counter = document.getElementById('m2FieldPhotoGalleryCounter');
+        if (!img || !urls.length) return;
+        img.src = urls[idx] || '';
+        img.alt = 'Site photograph ' + String(idx + 1) + ' of ' + String(urls.length);
+        if (counter) {
+            counter.textContent = urls.length > 1 ? String(idx + 1) + ' / ' + String(urls.length) : '';
+        }
+        if (prev) prev.hidden = urls.length <= 1;
+        if (next) next.hidden = urls.length <= 1;
+    }
+
+    function m2FieldPhotoGalleryStep(delta) {
+        const n = m2FieldPhotoGalleryUrls.length;
+        if (n <= 1) return;
+        m2FieldPhotoGalleryIndex = (m2FieldPhotoGalleryIndex + delta + n) % n;
+        m2FieldPhotoGalleryRefresh();
+    }
+
+    function m2FieldPhotoGalleryOnKeydown(e) {
+        if (e.key === 'Escape') {
+            m2CloseSituationFieldPhotoGallery();
+            return;
+        }
+        if (m2FieldPhotoGalleryUrls.length <= 1) return;
+        if (e.key === 'ArrowLeft') {
+            e.preventDefault();
+            m2FieldPhotoGalleryStep(-1);
+        }
+        if (e.key === 'ArrowRight') {
+            e.preventDefault();
+            m2FieldPhotoGalleryStep(1);
+        }
+    }
+
     function m2OpenSituationFieldPhotoGallery(urls) {
         const overlay = document.getElementById('m2FieldPhotoGalleryModal');
-        const grid = document.getElementById('m2FieldPhotoGalleryGrid');
         const titleEl = document.getElementById('m2FieldPhotoGalleryTitle');
         const subEl = document.getElementById('m2FieldPhotoGallerySubtitle');
-        if (!overlay || !grid) return;
-        const n = urls.length;
+        if (!overlay) return;
+        const list = urls.slice();
+        const n = list.length;
+        if (!n) return;
+        m2FieldPhotoGalleryUrls = list;
+        m2FieldPhotoGalleryIndex = 0;
         if (titleEl) titleEl.textContent = n === 1 ? 'Site photograph' : 'Site photographs';
-        if (subEl) subEl.textContent = n === 1 ? '1 image on file' : `${n} images on file`;
-        grid.innerHTML = urls.map(function (u, i) {
-            const safe = escapeHtml(u);
-            const num = i + 1;
-            return (
-                '<figure class="m2-field-photo-item">'
-                + '<a href="' + safe + '" target="_blank" rel="noopener noreferrer" title="Open full size in a new tab">'
-                + '<img src="' + safe + '" alt="Site photograph ' + num + ' of ' + n + '" loading="lazy" />'
-                + '</a>'
-                + '<figcaption>Photo ' + num + ' of ' + n + '</figcaption>'
-                + '</figure>'
-            );
-        }).join('');
+        if (subEl) {
+            subEl.textContent = n === 1 ? '1 image on file.' : String(n) + ' images on file.';
+        }
+        m2FieldPhotoGalleryRefresh();
         overlay.classList.add('active');
         overlay.setAttribute('aria-hidden', 'false');
+        document.addEventListener('keydown', m2FieldPhotoGalleryOnKeydown);
     }
 
     function m2CloseSituationFieldPhotoGallery(event) {
         if (event && event.target && event.target.id !== 'm2FieldPhotoGalleryModal') return;
         const overlay = document.getElementById('m2FieldPhotoGalleryModal');
+        const img = document.getElementById('m2FieldPhotoGalleryImg');
         if (!overlay) return;
         overlay.classList.remove('active');
         overlay.setAttribute('aria-hidden', 'true');
-        const grid = document.getElementById('m2FieldPhotoGalleryGrid');
-        if (grid) grid.innerHTML = '';
+        if (img) img.src = '';
+        m2FieldPhotoGalleryUrls = [];
+        document.removeEventListener('keydown', m2FieldPhotoGalleryOnKeydown);
     }
 
     function formatM2EvidenceHtml(lines) {
@@ -4840,7 +4958,7 @@
                     const fieldPhotoUrls = Array.isArray(c.field_photo_urls) ? c.field_photo_urls.filter(function (u) { return u && String(u).trim(); }) : [];
                     const fieldPhotosAttr = fieldPhotoUrls.length ? m2EscapeAttrJson(JSON.stringify(fieldPhotoUrls)) : '';
                     const viewFieldPhotosHtml = (isFieldSitePhotosRow && fieldPhotoUrls.length && fieldPhotosAttr)
-                        ? `<button type="button" class="eligibility-view-doc-btn m2-sit-action-view-photos" data-m2-field-photos="${fieldPhotosAttr}" onclick="m2OpenSituationFieldPhotoGalleryFromBtn(this)" title="View all ${fieldPhotoUrls.length} photograph(s) in a gallery">View photos</button>`
+                        ? `<button type="button" class="eligibility-view-doc-btn m2-sit-action-view-photos" data-m2-field-photos="${fieldPhotosAttr}" onclick="m2OpenSituationFieldPhotoGalleryFromBtn(this)" title="View ${fieldPhotoUrls.length} photograph(s) in the viewer">View</button>`
                         : '';
                     const evidenceHtml = formatM2EvidenceHtml(splitSituationDetailForEvidence(c.detail));
                     let cardClass = 'm2-elig-card';

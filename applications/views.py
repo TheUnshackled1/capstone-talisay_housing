@@ -2458,12 +2458,13 @@ def eligibility_snapshot(request, position):
             photo_urls = []
             try:
                 cert = applicant.cdrrmo_certification
-                for ph in cert.field_photos.all():
-                    if getattr(ph, 'image', None):
-                        try:
-                            photo_urls.append(request.build_absolute_uri(ph.image.url))
-                        except (ValueError, AttributeError):
-                            pass
+                for ph in cert.field_photos.exclude(image='').filter(
+                    image__isnull=False
+                ).order_by('uploaded_at', 'id'):
+                    try:
+                        photo_urls.append(request.build_absolute_uri(ph.image.url))
+                    except (ValueError, AttributeError):
+                        pass
             except CDRRMOCertification.DoesNotExist:
                 pass
             _cert_row['field_photo_urls'] = photo_urls
