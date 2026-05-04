@@ -179,9 +179,10 @@
         width: 4px;
     }
     #archiveSummaryModal .modal-body > div:nth-child(1)::before { background: linear-gradient(180deg, #2563eb 0%, #1e40af 100%); }
-    #archiveSummaryModal .modal-body > div:nth-child(2)::before { background: linear-gradient(180deg, #16a34a 0%, #15803d 100%); }
-    #archiveSummaryModal .modal-body > div:nth-child(3)::before { background: linear-gradient(180deg, #d97706 0%, #b45309 100%); }
-    #archiveSummaryModal .modal-body > div:nth-child(4)::before { background: linear-gradient(180deg, #7c3aed 0%, #6d28d9 100%); }
+    #archiveSummaryModal .modal-body > div:nth-child(2)::before { background: linear-gradient(180deg, #0f766e 0%, #115e59 100%); }
+    #archiveSummaryModal .modal-body > div:nth-child(3)::before { background: linear-gradient(180deg, #16a34a 0%, #15803d 100%); }
+    #archiveSummaryModal .modal-body > div:nth-child(4)::before { background: linear-gradient(180deg, #d97706 0%, #b45309 100%); }
+    #archiveSummaryModal .modal-body > div:nth-child(5)::before { background: linear-gradient(180deg, #7c3aed 0%, #6d28d9 100%); }
     #archiveSummaryModal .modal-body h4 {
         font-size: 0.78rem !important;
         font-weight: 800 !important;
@@ -219,7 +220,7 @@
         word-break: break-word;
     }
     #archiveSummaryModal #archiveSummaryReference,
-    #archiveSummaryModal #archiveSummaryModule2Summary {
+    #archiveSummaryModal #archiveSummaryArchiveSnapshotLine {
         font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace !important;
         color: #1e3a8a !important;
         background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%) !important;
@@ -376,6 +377,20 @@
             <option value="{{ key }}" {% if selected_channel == key %}selected{% endif %}>{{ label }}</option>
             {% endfor %}
         </select>
+        <select class="filter-select" name="reason">
+            <option value="">All Archive Reasons</option>
+            {% for key, label in reason_choices.items %}
+            <option value="{{ key }}" {% if selected_reason == key %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        <select class="filter-select" name="archived_by">
+            <option value="">All Staff</option>
+            {% for uid, first, last in archived_by_choices %}
+            <option value="{{ uid }}" {% if selected_archived_by == uid|stringformat:"s" %}selected{% endif %}>{{ first }} {{ last }}</option>
+            {% endfor %}
+        </select>
+        <input class="filter-select" type="date" name="date_from" value="{{ date_from|default:'' }}" title="Archived from date">
+        <input class="filter-select" type="date" name="date_to" value="{{ date_to|default:'' }}" title="Archived to date">
         <button type="button" onclick="exportArchiveCSV()" class="btn-export" style="display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.5rem 0.75rem; background: #10b981; color: white; border: none; border-radius: 0.5rem; font-size: 0.75rem; font-weight: 500; cursor: pointer; white-space: nowrap; margin-left: auto;">
             <svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
             Export CSV
@@ -385,7 +400,7 @@
     <div class="table-scroll">
     <table class="applicants-table applicants-table--archive">
         <thead>
-            <tr><th>#</th><th>Transaction #</th><th>Proceeded</th><th>Reference #</th><th>Full Name</th><th>Staff Handled</th><th>SMS</th><th>DOB</th><th>Barangay</th><th>Action</th></tr>
+            <tr><th>#</th><th>Transaction #</th><th>Proceeded</th><th>Reference #</th><th>Full Name</th><th>Staff Handled</th><th>Archive Reason</th><th>State</th><th>SMS</th><th>DOB</th><th>Barangay</th><th>Action</th></tr>
         </thead>
         <tbody>
             {% for row in archive_records %}
@@ -396,6 +411,8 @@
                 <td>{{ row.referenceNumber }}</td>
                 <td style="font-weight:500;">{{ row.fullName }}</td>
                 <td><div style="display:flex; align-items:center; gap:0.375rem;"><div class="handled-by-avatar {% if row.handledByPosition == '2nd Member' %}second-member{% elif row.handledByPosition == '4th Member' %}fourth-member{% else %}other{% endif %}">{{ row.handledByInitials }}</div><div style="display:flex; flex-direction:column; min-width:0;"><span style="font-size:0.625rem; font-weight:500; color:#1e293b;">{{ row.handledBy }}</span><span style="font-size:0.5625rem; color:#64748b;">{{ row.handledByPosition }}</span></div></div></td>
+                <td style="font-size:0.58rem; color:#334155;">{{ row.archiveReasonLabel }}</td>
+                <td><span style="display:inline-flex; align-items:center; gap:0.2rem; padding:0.125rem 0.35rem; background:#f8fafc; color:#475569; border:1px solid #cbd5e1; border-radius:9999px; font-size:0.54rem; font-weight:600;">{{ row.readOnlyState }}</span></td>
                 <td>{% if row.hasPhone %}{% if row.registrationSmsSent %}<span style="display:inline-flex; align-items:center; gap:0.125rem; padding:0.125rem 0.375rem; background:#dcfce7; color:#166534; border-radius:9999px; font-size:0.5625rem; font-weight:500;">✓ Sent</span>{% else %}<span style="display:inline-flex; align-items:center; gap:0.125rem; padding:0.125rem 0.375rem; background:#fee2e2; color:#991b1b; border-radius:9999px; font-size:0.5625rem; font-weight:500;">✗ Not Sent</span>{% endif %}{% else %}<span style="padding:0.125rem 0.375rem; background:#f1f5f9; color:#64748b; border-radius:9999px; font-size:0.5625rem;">No Phone</span>{% endif %}</td>
                 <td style="font-size:0.625rem; color:#1e293b; font-weight:600;">{{ row.dateOfBirthDisplay|default:"N/A" }}</td>
                 <td style="font-size:0.5625rem; color:#64748b;">{{ row.barangay|default:"N/A" }}</td>
@@ -417,17 +434,22 @@
                         data-sms="{{ row.smsText|default:'N/A' }}"
                         data-dob="{{ row.dateOfBirthDisplay|default:'N/A' }}"
                         data-barangay="{{ row.barangay|default:'N/A' }}"
-                        data-module2-summary="{{ row.module2Summary|default:'' }}"
-                        data-module3-summary="{{ row.module3Summary|default:'Not yet proceeded to Module 3' }}"
-                        data-module3-at="{{ row.module3ProceededAt|default:'' }}"
-                        data-module3-by="{{ row.module3ProceededBy|default:'' }}"
+                        data-archive-snapshot-line="{{ row.archiveSnapshotLine|default:'' }}"
+                        data-m2-handoff-at="{{ row.module2HandoffAt|default:'' }}"
+                        data-m2-handoff-by="{{ row.module2HandoffBy|default:'' }}"
+                        data-docs-progress="{{ row.scannedCount }}/{{ row.requirementsTotal }}"
+                        data-form-summary="{{ row.formGenSummary|default:'' }}"
+                        data-form-at="{{ row.formGenAt|default:'' }}"
+                        data-form-by="{{ row.formGenBy|default:'' }}"
+                        data-archive-reason="{{ row.archiveReasonLabel|default:'N/A' }}"
+                        data-read-only-state="{{ row.readOnlyState|default:'Read-only historical record' }}"
                     >
                         Handoff Summary
                     </button>
                 </td>
             </tr>
             {% empty %}
-            <tr><td colspan="10" style="text-align:center; color:#64748b; font-size:0.75rem; padding:1rem;">No proceeded records yet.</td></tr>
+            <tr><td colspan="12" style="text-align:center; color:#64748b; font-size:0.75rem; padding:1rem;">No proceeded records yet.</td></tr>
             {% endfor %}
         </tbody>
     </table>
@@ -436,9 +458,9 @@
     <div class="table-pagination">
         <span class="table-pagination-info">{% if page_obj.paginator.count %}Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ page_obj.paginator.count }}{% else %}Showing 0-0 of 0{% endif %}</span>
         <div class="table-pagination-controls">
-            {% if page_obj.has_previous %}<a class="btn-page" href="?page={{ page_obj.previous_page_number }}&barangay={{ selected_barangay }}&channel={{ selected_channel }}&q={{ request.GET.q|default:'' }}">Prev</a>{% else %}<span class="btn-page" style="opacity:0.45; pointer-events:none;">Prev</span>{% endif %}
+            {% if page_obj.has_previous %}<a class="btn-page" href="?page={{ page_obj.previous_page_number }}&barangay={{ selected_barangay }}&channel={{ selected_channel }}&reason={{ selected_reason }}&archived_by={{ selected_archived_by }}&date_from={{ date_from }}&date_to={{ date_to }}&q={{ request.GET.q|default:'' }}">Prev</a>{% else %}<span class="btn-page" style="opacity:0.45; pointer-events:none;">Prev</span>{% endif %}
             <span class="page-indicator">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
-            {% if page_obj.has_next %}<a class="btn-page" href="?page={{ page_obj.next_page_number }}&barangay={{ selected_barangay }}&channel={{ selected_channel }}&q={{ request.GET.q|default:'' }}">Next</a>{% else %}<span class="btn-page" style="opacity:0.45; pointer-events:none;">Next</span>{% endif %}
+            {% if page_obj.has_next %}<a class="btn-page" href="?page={{ page_obj.next_page_number }}&barangay={{ selected_barangay }}&channel={{ selected_channel }}&reason={{ selected_reason }}&archived_by={{ selected_archived_by }}&date_from={{ date_from }}&date_to={{ date_to }}&q={{ request.GET.q|default:'' }}">Next</a>{% else %}<span class="btn-page" style="opacity:0.45; pointer-events:none;">Next</span>{% endif %}
         </div>
     </div>
 </div>
@@ -460,7 +482,7 @@
         </div>
         <div class="modal-body">
             <div>
-                <h4 style="color: #1e40af;"><svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>Module 1 &middot; Registration</h4>
+                <h4 style="color: #1e40af;"><svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>Module 1 &middot; Intake registration</h4>
                 <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1rem;">
                     <div><p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Reference #</p><div id="archiveSummaryReference">N/A</div></div>
                     <div><p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Full Name</p><div id="archiveSummaryName">N/A</div></div>
@@ -472,28 +494,42 @@
                     <div><p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Barangay</p><div id="archiveSummaryBarangay">N/A</div></div>
                     <div><p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Encoded By</p><div id="archiveSummaryEncodedBy">N/A</div></div>
                     <div><p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Staff Role</p><div id="archiveSummaryStaffRole">N/A</div></div>
+                    <div><p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Registration SMS</p><div id="archiveSummarySms">N/A</div></div>
                 </div>
             </div>
             <div>
-                <h4 style="color: #16a34a;"><svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg>Module 2 &middot; Intake Archives Receipt</h4>
+                <h4 style="color: #0f766e;"><svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="11" x2="16" y2="11"/></svg>LIST OF APPLICATIONS &middot; Archive receipt</h4>
+                <p style="font-size: 0.68rem; color: #64748b; margin: -0.35rem 0 0.85rem 0; line-height: 1.45;">Recorded when this applicant was proceeded from the intake registration list into archives (immutable snapshot).</p>
                 <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1rem;">
-                    <div><p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Proceeded To Archives</p><div id="archiveSummaryProceededAt">N/A</div></div>
-                    <div><p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Proceeded By</p><div id="archiveSummaryProceededBy">N/A</div></div>
-                    <div><p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Archive Snapshot</p><div id="archiveSummaryModule2Summary">N/A</div></div>
+                    <div><p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Proceeded to archives</p><div id="archiveSummaryProceededAt">N/A</div></div>
+                    <div><p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Proceeded by</p><div id="archiveSummaryProceededBy">N/A</div></div>
+                    <div><p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Archive snapshot</p><div id="archiveSummaryArchiveSnapshotLine">N/A</div></div>
+                    <div><p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Archive reason</p><div id="archiveSummaryArchiveReason">N/A</div></div>
+                    <div><p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Record state</p><div id="archiveSummaryRecordState">Read-only historical record</div></div>
                 </div>
             </div>
             <div>
-                <h4 style="color: #d97706;"><svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 13 7 8"/><line x1="12" y1="13" x2="12" y2="3"/></svg>Module 3 &middot; Documents</h4>
+                <h4 style="color: #16a34a;"><svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Module 2 &middot; Application &amp; Eligibility</h4>
+                <p style="font-size: 0.68rem; color: #64748b; margin: -0.35rem 0 0.85rem 0; line-height: 1.45;">Handoff from Intake archives into Application &amp; Eligibility (when staff completes baseline checklist / promotion).</p>
                 <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1rem;">
-                    <div><p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">SMS Status</p><div id="archiveSummarySms">N/A</div></div>
+                    <div><p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Handoff recorded</p><div id="archiveSummaryM2HandoffAt">Not yet handed off</div></div>
+                    <div><p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Handoff by</p><div id="archiveSummaryM2HandoffBy">—</div></div>
                 </div>
             </div>
             <div>
-                <h4 style="color: #6d28d9;"><svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Module 4 &middot; Downstream Progress</h4>
+                <h4 style="color: #d97706;"><svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 13 7 8"/><line x1="12" y1="13" x2="12" y2="3"/></svg>Module 3 &middot; Documents vault</h4>
+                <p style="font-size: 0.68rem; color: #64748b; margin: -0.35rem 0 0.85rem 0; line-height: 1.45;">Baseline vault scans tracked from intake checklist progress (detail lives in Documents).</p>
                 <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1rem;">
-                    <div><p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Status</p><div id="archiveSummaryModule3Summary">Not yet proceeded beyond Archives</div></div>
-                    <div><p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Proceeded At</p><div id="archiveSummaryModule3At">N/A</div></div>
-                    <div><p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Proceeded By</p><div id="archiveSummaryModule3By">N/A</div></div>
+                    <div><p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Requirements scanned</p><div id="archiveSummaryDocsProgress">—</div></div>
+                </div>
+            </div>
+            <div>
+                <h4 style="color: #6d28d9;"><svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Housing application &middot; Form generation</h4>
+                <p style="font-size: 0.68rem; color: #64748b; margin: -0.35rem 0 0.85rem 0; line-height: 1.45;">When an Application record exists and the housing application form has been generated in Module 2 workflow.</p>
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1rem;">
+                    <div><p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Summary</p><div id="archiveSummaryFormSummary">Application form not generated yet</div></div>
+                    <div><p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Generated at</p><div id="archiveSummaryFormAt">—</div></div>
+                    <div><p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Generated by</p><div id="archiveSummaryFormBy">—</div></div>
                 </div>
             </div>
         </div>
@@ -533,28 +569,42 @@ function exportArchiveCSV() {
 function openArchiveHandoffSummary(buttonEl) {
     if (!buttonEl) return;
     const d = buttonEl.dataset || {};
-    const setText = (id, value) => {
+    const setText = (id, value, fallback = 'N/A') => {
         const el = document.getElementById(id);
-        if (el) el.textContent = value || 'N/A';
+        if (el) el.textContent = (value !== undefined && value !== null && String(value).trim() !== '') ? String(value) : fallback;
     };
+    const snapshotLine = (d.archiveSnapshotLine && String(d.archiveSnapshotLine).trim())
+        ? d.archiveSnapshotLine
+        : `${d.reference || 'N/A'} • ${d.name || 'N/A'}`;
+    const hasM2Handoff = !!(d.m2HandoffAt && String(d.m2HandoffAt).trim());
+
     setText('archiveSummarySubtitle', `${d.reference || 'N/A'} • ${d.name || 'N/A'}`);
-    setText('archiveSummaryReference', d.reference || 'N/A');
-    setText('archiveSummaryName', d.name || 'N/A');
-    setText('archiveSummaryLastName', d.lastName || 'N/A');
-    setText('archiveSummaryFirstName', d.firstName || 'N/A');
-    setText('archiveSummaryMiddleName', d.middleName || 'N/A');
-    setText('archiveSummaryExtensionName', d.extensionName || 'N/A');
-    setText('archiveSummaryDob', d.dob || 'N/A');
-    setText('archiveSummaryBarangay', d.barangay || 'N/A');
-    setText('archiveSummaryEncodedBy', d.staff || 'Unknown');
-    setText('archiveSummaryStaffRole', d.staffPosition || 'N/A');
-    setText('archiveSummaryProceededAt', d.proceeded || 'N/A');
-    setText('archiveSummaryProceededBy', d.proceededBy || 'Unknown');
-    setText('archiveSummaryModule2Summary', d.module2Summary || `${d.reference || 'N/A'} • ${d.name || 'N/A'}`);
-    setText('archiveSummarySms', d.sms || 'N/A');
-    setText('archiveSummaryModule3Summary', d.module3Summary || 'Not yet proceeded beyond Archives');
-    setText('archiveSummaryModule3At', d.module3At || 'N/A');
-    setText('archiveSummaryModule3By', d.module3By || 'N/A');
+    setText('archiveSummaryReference', d.reference || '');
+    setText('archiveSummaryName', d.name || '');
+    setText('archiveSummaryLastName', d.lastName || '');
+    setText('archiveSummaryFirstName', d.firstName || '');
+    setText('archiveSummaryMiddleName', d.middleName || '');
+    setText('archiveSummaryExtensionName', d.extensionName || '');
+    setText('archiveSummaryDob', d.dob || '');
+    setText('archiveSummaryBarangay', d.barangay || '');
+    setText('archiveSummaryEncodedBy', d.staff || '', 'Unknown');
+    setText('archiveSummaryStaffRole', d.staffPosition || '');
+    setText('archiveSummaryProceededAt', d.proceeded || '');
+    setText('archiveSummaryProceededBy', d.proceededBy || '', 'Unknown');
+    setText('archiveSummaryArchiveSnapshotLine', snapshotLine);
+    setText('archiveSummaryArchiveReason', d.archiveReason || '');
+    setText('archiveSummaryRecordState', d.readOnlyState || '', 'Read-only historical record');
+    setText('archiveSummarySms', d.sms || '');
+
+    setText('archiveSummaryM2HandoffAt', hasM2Handoff ? d.m2HandoffAt : '', 'Not yet handed off');
+    setText('archiveSummaryM2HandoffBy', hasM2Handoff ? (d.m2HandoffBy || '—') : '', '—');
+
+    setText('archiveSummaryDocsProgress', d.docsProgress || '', '—');
+
+    setText('archiveSummaryFormSummary', d.formSummary || '', 'Application form not generated yet');
+    setText('archiveSummaryFormAt', (d.formAt && String(d.formAt).trim()) ? d.formAt : '', '—');
+    setText('archiveSummaryFormBy', (d.formBy && String(d.formBy).trim()) ? d.formBy : '', '—');
+
     const modal = document.getElementById('archiveSummaryModal');
     if (modal) modal.classList.add('active');
 }

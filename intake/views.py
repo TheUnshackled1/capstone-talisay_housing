@@ -1646,12 +1646,17 @@ def archive_list(request, position):
     # Get filters from query parameters
     selected_channel = request.GET.get('channel', '')
     selected_barangay = request.GET.get('barangay', '')
+    selected_reason = request.GET.get('reason', '')
+    selected_archived_by = request.GET.get('archived_by', '')
+    date_from = (request.GET.get('date_from') or '').strip()
+    date_to = (request.GET.get('date_to') or '').strip()
     search_query = (request.GET.get('q') or '').strip()
 
     # Build query
     archives_qs = Archive.objects.select_related(
         'applicant',
         'archived_by',
+        'applicant__module2_handoff_by',
         'applicant__application__form_generated_by',
     ).order_by('archived_at')
 
@@ -1660,12 +1665,37 @@ def archive_list(request, position):
 
     if selected_barangay:
         archives_qs = archives_qs.filter(barangay_name_snapshot=selected_barangay)
+    if selected_archived_by:
+        archives_qs = archives_qs.filter(archived_by_id=selected_archived_by)
+    parsed_from = parse_date(date_from) if date_from else None
+    parsed_to = parse_date(date_to) if date_to else None
+    if parsed_from:
+        archives_qs = archives_qs.filter(archived_at__date__gte=parsed_from)
+    if parsed_to:
+        archives_qs = archives_qs.filter(archived_at__date__lte=parsed_to)
     if search_query:
         archives_qs = archives_qs.filter(
             Q(full_name_snapshot__icontains=search_query) |
             Q(reference_number_snapshot__icontains=search_query) |
             Q(barangay_name_snapshot__icontains=search_query)
         )
+
+    def _archive_reason_key_and_label(archive):
+        applicant = getattr(archive, 'applicant', None)
+        if applicant and getattr(applicant, 'module2_handoff_at', None):
+            return (
+                'promoted_module2',
+                'Promoted to Module 2 (Application & Eligibility)',
+            )
+        return ('intake_archive_only', 'Intake archival receipt only')
+
+    if selected_reason:
+        filtered_ids = []
+        for ar in archives_qs:
+            key, _ = _archive_reason_key_and_label(ar)
+            if key == selected_reason:
+                filtered_ids.append(ar.id)
+        archives_qs = archives_qs.filter(id__in=filtered_ids)
 
     # Get unique channels and barangays for filters
     channel_choices = {
@@ -1677,6 +1707,17 @@ def archive_list(request, position):
 
     barangays = Archive.objects.values_list('barangay_name_snapshot', flat=True).distinct().order_by('barangay_name_snapshot')
     barangays = [b for b in barangays if b]  # Remove empty values
+    archived_by_choices = list(
+        Archive.objects.exclude(archived_by__isnull=True)
+        .select_related('archived_by')
+        .values_list('archived_by_id', 'archived_by__first_name', 'archived_by__last_name')
+        .distinct()
+        .order_by('archived_by__first_name', 'archived_by__last_name')
+    )
+    reason_choices = {
+        'intake_archive_only': 'Intake archival receipt only',
+        'promoted_module2': 'Promoted to Module 2',
+    }
 
     applicant_ids_for_docs = list(
         archives_qs.exclude(applicant_id__isnull=True).values_list('applicant_id', flat=True)
@@ -1702,6 +1743,7 @@ def archive_list(request, position):
 
         staff_initials = staff_user.first_name[:1] + staff_user.last_name[:1] if staff_user else '—'
         channel_display = channel_choices.get(archive.channel, archive.channel)
+        reason_key, reason_label = _archive_reason_key_and_label(archive)
 
         # Convert to local timezone for display
         local_archived_at = timezone.localtime(archive.archived_at)
@@ -1722,16 +1764,28 @@ def archive_list(request, position):
         )
         requirements_total = trackable_total if trackable_total > 0 else max(len(requirement_scan_rows), 1)
 
-        module3_summary = 'Not yet proceeded beyond Archives'
-        module3_proceeded_at = ''
-        module3_proceeded_by = ''
+        form_gen_summary = 'Application form not generated yet'
+        form_gen_at = ''
+        form_gen_by = ''
         if archive.applicant_id and hasattr(archive.applicant, 'application'):
             app_obj = getattr(archive.applicant, 'application', None)
             if app_obj and app_obj.form_generated_at:
                 local_form_generated_at = timezone.localtime(app_obj.form_generated_at)
-                module3_proceeded_at = local_form_generated_at.strftime('%Y-%m-%d %I:%M %p')
-                module3_proceeded_by = app_obj.form_generated_by.get_full_name() if app_obj.form_generated_by else 'Unknown'
-                module3_summary = f"Application #{app_obj.application_number} • {module3_proceeded_at}"
+                form_gen_at = local_form_generated_at.strftime('%Y-%m-%d %I:%M %p')
+                form_gen_by = app_obj.form_generated_by.get_full_name() if app_obj.form_generated_by else 'Unknown'
+                form_gen_summary = f"{app_obj.application_number or '—'} • Form generated {form_gen_at}"
+
+        m2_handoff_at = ''
+        m2_handoff_by = ''
+        if archive.applicant_id and archive.applicant:
+            ap = archive.applicant
+            if getattr(ap, 'module2_handoff_at', None):
+                m2_handoff_at = timezone.localtime(ap.module2_handoff_at).strftime('%Y-%m-%d %I:%M %p')
+                hb = getattr(ap, 'module2_handoff_by', None)
+                m2_handoff_by = hb.get_full_name() if hb else '—'
+            else:
+                m2_handoff_at = ''
+                m2_handoff_by = ''
 
         sms_text = 'No Phone'
         if bool(archive.applicant.phone_number if archive.applicant else False):
@@ -1749,6 +1803,8 @@ def archive_list(request, position):
             'extensionName': archive.extension_name_snapshot,
             'channel': archive.channel,
             'channelLabel': channel_display,
+            'archiveReasonKey': reason_key,
+            'archiveReasonLabel': reason_label,
             'handledBy': staff_name,
             'handledByPosition': staff_position_display,
             'handledByInitials': staff_initials,
@@ -1760,10 +1816,13 @@ def archive_list(request, position):
             'barangay': archive.barangay_name_snapshot,
             'scannedCount': scanned_count,
             'requirementsTotal': requirements_total,
-            'module2Summary': f"{archive.reference_number_snapshot} • {archive.full_name_snapshot}",
-            'module3Summary': module3_summary,
-            'module3ProceededAt': module3_proceeded_at,
-            'module3ProceededBy': module3_proceeded_by,
+            'archiveSnapshotLine': f"{archive.reference_number_snapshot} • {archive.full_name_snapshot}",
+            'module2HandoffAt': m2_handoff_at,
+            'module2HandoffBy': m2_handoff_by,
+            'formGenSummary': form_gen_summary,
+            'formGenAt': form_gen_at,
+            'formGenBy': form_gen_by,
+            'readOnlyState': 'Read-only historical record',
         })
 
     # Pagination
@@ -1778,7 +1837,13 @@ def archive_list(request, position):
         'total_archived': archives_qs.count(),
         'channels': channel_choices,
         'selected_channel': selected_channel,
+        'selected_reason': selected_reason,
+        'selected_archived_by': selected_archived_by,
+        'date_from': date_from,
+        'date_to': date_to,
         'barangays': barangays,
+        'archived_by_choices': archived_by_choices,
+        'reason_choices': reason_choices,
         'selected_barangay': selected_barangay,
         'archive_records': page_obj.object_list,
         'page_obj': page_obj,
