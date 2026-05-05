@@ -385,6 +385,15 @@
         white-space: nowrap !important;
     }
 
+    /* LIST OF APPLICANTS — Full Name by displacement_reason (same palette as Application & Evaluation) */
+    .applicants-table--archive.formal-table tbody td:nth-child(5) .list-archive-full-name {
+        font-weight: 600;
+    }
+    .applicants-table--archive.formal-table tbody td:nth-child(5) .list-archive-full-name.option-a { color: #b91c1c !important; }
+    .applicants-table--archive.formal-table tbody td:nth-child(5) .list-archive-full-name.option-b { color: #b45309 !important; }
+    .applicants-table--archive.formal-table tbody td:nth-child(5) .list-archive-full-name.option-c { color: #047857 !important; }
+    .applicants-table--archive.formal-table tbody td:nth-child(5) .list-archive-full-name.option-d { color: #475569 !important; }
+
     /* Active table (no SMS column) */
     .applicants-table--active th:nth-child(1),
     .applicants-table--active td:nth-child(1) { width: 3%; text-align: center; } /* # */
@@ -3045,6 +3054,7 @@
             {% for row in archive_records %}
             <tr
                 data-archive-row="true"
+                data-displacement-reason="{{ row.displacementReason|default:''|escape }}"
                 data-channel="{{ row.channel }}"
                 data-barangay="{{ row.barangay }}"
                 data-searchable="{{ row.fullName|lower }} {{ row.referenceNumber|lower }} {{ row.barangay|lower }} {{ row.dateOfBirthDisplay|default:''|lower }}"
@@ -3053,7 +3063,9 @@
                 <td style="font-weight: 600; color: #1d4ed8;">#{{ row.id|slice:":8" }}</td>
                 <td style="font-size: 0.6875rem; color: #64748b;">{{ row.dateTime }}</td>
                 <td>{{ row.referenceNumber }}</td>
-                <td style="font-weight: 500;">{{ row.fullName }}</td>
+                <td>
+                    <span class="list-archive-full-name{% if row.archiveDispNameClass %} {{ row.archiveDispNameClass }}{% endif %}">{{ row.fullName }}</span>
+                </td>
                 <td>
                     <div style="display: flex; align-items: center; gap: 0.375rem;">
                         <div class="handled-by-avatar {% if row.handledByPosition == '2nd Member' %}second-member{% elif row.handledByPosition == '4th Member' %}fourth-member{% else %}other{% endif %}">

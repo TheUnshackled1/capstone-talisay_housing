@@ -36,6 +36,20 @@ ISF_EXTRA_VAULT_DOC_TYPE = 'isf_situational_docs'
 CDRRMO_EXTRA_VAULT_DOC_TYPE = 'cdrrmo_cert'
 
 
+def _archive_list_name_class_for_displacement(displacement_reason):
+    """CSS suffix for LIST OF APPLICANTS full name — matches Application & Evaluation ledger (.option-a … .option-d)."""
+    dr = (displacement_reason or '').strip()
+    if dr == 'danger_zone':
+        return 'option-a'
+    if dr == 'ejected':
+        return 'option-b'
+    if dr == 'relocated':
+        return 'option-c'
+    if dr == 'not_abc':
+        return 'option-d'
+    return ''
+
+
 def _isf_situational_row_display_name(displacement_reason=''):
     """
     Human-facing checklist row title for situational follow-up docs.
@@ -1235,6 +1249,7 @@ def applicants_list(request, position):
             'requirementsTotal': requirements_total,
             'applicantId': str(archive.applicant_id) if archive.applicant_id else '',
             'displacementReason': disp_snapshot,
+            'archiveDispNameClass': _archive_list_name_class_for_displacement(disp_snapshot),
         })
 
     archive_documents_modal = {
