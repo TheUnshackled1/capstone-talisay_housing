@@ -6,8 +6,6 @@
 {% block page_title %}Staff Portal{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_blue.css">
 <link rel="stylesheet" href="{% static 'css/tailwind.css' %}">
 <style>
     /* Applicants Page Styles */
@@ -43,53 +41,6 @@
         font-size: 0.75rem;
         color: #64748b;
         margin-top: 0.2rem;
-    }
-
-    /* Modern DOB calendar appearance */
-    .dob-alt-input {
-        background: #ffffff;
-        border: 1px solid #cbd5e1;
-        border-radius: 0.5rem;
-        padding-right: 2.25rem;
-        font-variant-numeric: tabular-nums;
-        letter-spacing: 0.01em;
-    }
-    .dob-alt-input:focus {
-        border-color: #3b82f6;
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
-        outline: none;
-    }
-    .flatpickr-calendar.tha-flatpickr {
-        border-radius: 0.85rem;
-        border: 1px solid #dbeafe;
-        box-shadow: 0 14px 30px rgba(15, 23, 42, 0.18);
-        overflow: hidden;
-    }
-    .flatpickr-calendar.tha-flatpickr .flatpickr-months {
-        background: #eff6ff;
-        border-bottom: 1px solid #dbeafe;
-    }
-    .flatpickr-calendar.tha-flatpickr .flatpickr-current-month {
-        padding-top: 0.3rem;
-    }
-    .flatpickr-calendar.tha-flatpickr .flatpickr-weekday {
-        color: #1e3a8a;
-        font-weight: 600;
-    }
-    .flatpickr-calendar.tha-flatpickr .flatpickr-day.selected,
-    .flatpickr-calendar.tha-flatpickr .flatpickr-day.startRange,
-    .flatpickr-calendar.tha-flatpickr .flatpickr-day.endRange {
-        background: #2563eb;
-        border-color: #2563eb;
-    }
-    .flatpickr-calendar.tha-flatpickr .flatpickr-monthDropdown-months {
-        max-height: 12rem !important;
-        overflow-y: auto !important;
-        overscroll-behavior: contain;
-        scrollbar-width: thin;
-    }
-    .flatpickr-calendar.tha-flatpickr .flatpickr-monthDropdown-month {
-        white-space: nowrap;
     }
 
     .btn-primary-add {
@@ -4745,7 +4696,7 @@
                         </div>
                         <div class="form-group">
                             <label class="form-label">Date of birth <span style="color: #dc2626;">*</span></label>
-                            <input type="date" class="form-input" name="date_of_birth" id="dateOfBirth" onchange="calculateAge()" required>
+                            <input type="date" class="form-input" name="date_of_birth" id="dateOfBirth" onchange="calculateAge()" autocomplete="bday" required>
                         </div>
                         <div class="form-group">
                             <label class="form-label">Age <span style="color: #dc2626;">*</span> <span style="font-weight: 500; color: #64748b;">(computed)</span></label>
@@ -5042,7 +4993,6 @@
 <input type="hidden" id="canModifyFlag" value="{{ can_modify|yesno:'true,false' }}">
 <script src="{% static 'Dynamic Web TWAIN SDK 19.3.3/Resources/dynamsoft.webtwain.initiate.js' %}"></script>
 <script src="{% static 'Dynamic Web TWAIN SDK 19.3.3/Resources/dynamsoft.webtwain.config.js' %}"></script>
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <div id="dwtcontrolContainer" style="width: 0; height: 0; overflow: hidden; position: absolute; left: -9999px;"></div>
 <script>
     // Store applicants data in JavaScript
@@ -6229,7 +6179,7 @@
     let archiveCurrentPage = 1;
 
     window.addEventListener('DOMContentLoaded', function() {
-        initDobDatePicker();
+        syncDateOfBirthMaxToToday();
         // Attach only to text-like income fields. Number inputs must stay plain numeric.
         document.querySelectorAll('.form-input[name*="income"]:not([type="number"]), input[id*="Income"]:not([type="number"])').forEach(attachIncomeFormatter);
         document.querySelectorAll('.js-open-review').forEach(btn => {
@@ -8211,7 +8161,7 @@
     function openAddModal() {
         const modal = document.getElementById('addModal');
         if (modal) modal.classList.add('active');
-        initDobDatePicker();
+        syncDateOfBirthMaxToToday();
         // Initialize household members
         householdMemberCount = 1;
         renderHouseholdMembers();
@@ -8441,41 +8391,17 @@
         renderHouseholdMembers();
     }
 
-    function initDobDatePicker() {
-        const dobInput = document.getElementById('dateOfBirth');
-        if (!dobInput || typeof flatpickr === 'undefined') return;
-        if (dobInput._flatpickr) return;
-        flatpickr(dobInput, {
-            dateFormat: 'Y-m-d',      // backend-safe submit format
-            altInput: true,
-            altFormat: 'd/m/Y',       // requested display format
-            altInputClass: 'form-input dob-alt-input',
-            allowInput: true,
-            maxDate: 'today',
-            disableMobile: true,
-            monthSelectorType: 'dropdown',
-            animate: true,
-            clickOpens: true,
-            locale: {
-                firstDayOfWeek: 1
-            },
-            prevArrow: '<span style="font-size:1rem;line-height:1;">&#10094;</span>',
-            nextArrow: '<span style="font-size:1rem;line-height:1;">&#10095;</span>',
-            onReady: function(_, __, instance) {
-                if (instance.altInput) {
-                    instance.altInput.placeholder = 'DD/MM/YYYY';
-                    instance.altInput.setAttribute('aria-label', 'Date of birth');
-                }
-                if (instance.calendarContainer) {
-                    instance.calendarContainer.classList.add('tha-flatpickr');
-                }
-            },
-            onChange: function() {
-                calculateAge();
-            }
-        });
+    /** Native date input: OS/browser picker (e.g. Chrome Clear/Today UI). max = today (replaces Flatpickr maxDate). */
+    function syncDateOfBirthMaxToToday() {
+        const el = document.getElementById('dateOfBirth');
+        if (!el) return;
+        const d = new Date();
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        el.max = y + '-' + m + '-' + day;
+        el.setAttribute('aria-label', 'Date of birth');
     }
-
 
     // Auto-calculate age from date of birth
     function calculateAge() {

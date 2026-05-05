@@ -971,13 +971,32 @@ def _staff_reports_analytics_payload(request):
     vacant_units_count = HousingUnit.objects.filter(status='Vacant — available').count()
     pending_cdrrmo_count = CDRRMOCertification.objects.filter(status='pending').count()
 
-    channel_labels = dict(Applicant.CHANNEL_CHOICES)
-    applicants_by_channel = sorted(
-        Applicant.objects.values('channel').annotate(count=Count('id')),
-        key=lambda x: (-x['count'], x['channel'] or ''),
-    )
-    for row in applicants_by_channel:
-        row['label'] = channel_labels.get(row['channel'], row['channel'] or '—')
+    situation_counts_map = {
+        (row.get('displacement_reason') or '').strip(): int(row.get('count') or 0)
+        for row in Applicant.objects.values('displacement_reason').annotate(count=Count('id'))
+    }
+    applicants_by_channel = [
+        {
+            'channel': 'danger_zone',
+            'label': 'Option A — Resident of Danger Zone or Hazard Area',
+            'count': situation_counts_map.get('danger_zone', 0),
+        },
+        {
+            'channel': 'ejected',
+            'label': 'Option B — Ejected or Evicted from Prior Residence',
+            'count': situation_counts_map.get('ejected', 0),
+        },
+        {
+            'channel': 'relocated',
+            'label': 'Option C — Displaced by Government Project or Infrastructure',
+            'count': situation_counts_map.get('relocated', 0),
+        },
+        {
+            'channel': 'not_abc',
+            'label': 'Option D — None of A, B, or C (Other / not listed)',
+            'count': situation_counts_map.get('not_abc', 0),
+        },
+    ]
     _analytics_rows_bar_pct(applicants_by_channel)
 
     applicants_top_barangays = list(
@@ -1198,8 +1217,8 @@ def _staff_reports_analytics_csv_response(data, export_role_title, filename_pref
     writer.writerow(['Vault document uploads (in period)', data['docs_filed']])
     writer.writerow([])
     writer.writerow(['Module summaries'])
-    writer.writerow(['Applicants by intake channel', '', ''])
-    writer.writerow(['Channel', 'Label', 'Count'])
+    writer.writerow(['Applicants by applicant situation (Options A-D)', '', ''])
+    writer.writerow(['Situation code', 'Label', 'Count'])
     for row in data.get('applicants_by_channel', []):
         writer.writerow([row.get('channel'), row.get('label'), row.get('count')])
     writer.writerow(['Top barangays (masterlist)', '', ''])

@@ -213,6 +213,7 @@
         padding: 16px 20px 14px;
         background: linear-gradient(180deg, #ecfdf5 0%, #f0fdf4 60%, #ffffff 100%);
         border-bottom: 1px solid #d1fae5;
+        text-align: center;
     }
     .field-work-area-badge {
         display: inline-block;
@@ -228,23 +229,12 @@
         margin-bottom: 8px;
     }
     .field-work-area-title {
-        margin: 0 0 6px 0;
+        margin: 0;
         font-size: 18px;
         font-weight: 800;
         color: #064e3b;
         letter-spacing: -0.01em;
         line-height: 1.25;
-    }
-    .field-work-area-helper {
-        margin: 0;
-        font-size: 13px;
-        color: #047857;
-        line-height: 1.55;
-        font-weight: 500;
-    }
-    .field-work-area-helper strong {
-        color: #064e3b;
-        font-weight: 700;
     }
 
     /* Top metric row now has 2 cards (Pending, Certified). Lock to 2 cols
@@ -875,6 +865,7 @@
         border: 1px dashed #94a3b8;
         border-radius: 12px;
         background: #f8fafc;
+        text-align: center;
     }
     .field-evidence-label {
         display: block;
@@ -886,7 +877,8 @@
         margin-bottom: 8px;
     }
     .field-evidence-hint {
-        margin: 0 0 14px 0;
+        margin: 0 auto 14px;
+        max-width: 40rem;
         font-size: 0.85rem;
         color: #64748b;
         line-height: 1.5;
@@ -897,6 +889,7 @@
         gap: 10px;
         margin-bottom: 12px;
         align-items: center;
+        justify-content: center;
     }
     .field-evidence-file-btn {
         display: inline-block;
@@ -919,6 +912,7 @@
         gap: 10px;
         margin-top: 12px;
         min-height: 0;
+        justify-content: center;
     }
     .field-evidence-thumb {
         position: relative;
@@ -1189,7 +1183,6 @@
         transform: translateY(-2px);
         box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
     }
-    /* Affirm card — emerald (certify hazard sustained) */
     .tha-field-decision-label:has(input[value="certified"]) {
         border-color: #a7f3d0;
         background: linear-gradient(180deg, #f0fdf4 0%, #ffffff 30%);
@@ -1206,7 +1199,6 @@
         background: linear-gradient(180deg, #d1fae5 0%, #ffffff 50%);
         box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.18), 0 6px 16px rgba(16, 185, 129, 0.20);
     }
-    /* Negate card — rose (claim not sustained) */
     .tha-field-decision-label:has(input[value="not_certified"]) {
         border-color: #fecdd3;
         background: linear-gradient(180deg, #fff1f2 0%, #ffffff 30%);
@@ -1261,45 +1253,6 @@
     .tha-field-decision-label:has(input[value="not_certified"]) .tha-field-decision-sub {
         color: #9f1239;
     }
-    .tha-field-workflow-box {
-        background: linear-gradient(180deg, #fffbeb 0%, #ffffff 100%);
-        border: 1px solid #fde68a;
-        border-left: 4px solid #d97706;
-        border-radius: 10px;
-        padding: 0.95rem 1.1rem 1rem;
-        margin-bottom: 1.5rem;
-        font-size: 0.85rem;
-        color: #78350f;
-        line-height: 1.6;
-        box-shadow: 0 1px 2px rgba(217, 119, 6, 0.06);
-    }
-    .tha-field-workflow-box strong {
-        display: flex;
-        align-items: center;
-        gap: 0.4rem;
-        font-family: 'Source Serif Pro', Georgia, serif;
-        font-size: 0.95rem;
-        font-weight: 700;
-        margin-bottom: 0.55rem;
-        color: #92400e;
-        letter-spacing: -0.005em;
-    }
-    .tha-field-workflow-box strong::before {
-        content: '▸';
-        color: #d97706;
-        font-size: 0.85rem;
-    }
-    .tha-field-workflow-box ol {
-        margin: 0;
-        padding-left: 1.25rem;
-        color: #92400e;
-    }
-    .tha-field-workflow-box ol li {
-        margin-bottom: 0.25rem;
-    }
-    .tha-field-workflow-box ol li:last-child {
-        margin-bottom: 0;
-    }
     .tha-field-form-actions {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -1348,18 +1301,6 @@
         transform: translateY(-1px);
         box-shadow: 0 4px 10px rgba(15, 23, 42, 0.08);
     }
-    /* Field inspection notes textarea — design-system focus state */
-    #verificationNotes {
-        border-radius: 9px !important;
-        font-family: inherit;
-        transition: border-color 0.2s ease, box-shadow 0.2s ease;
-    }
-    #verificationNotes:focus {
-        outline: none !important;
-        border-color: #059669 !important;
-        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.18) !important;
-    }
-    /* Decision card section spacing tighter on mobile */
     @media (max-width: 560px) {
         .tha-field-claim-grid,
         .tha-field-decision-grid,
@@ -1384,14 +1325,10 @@
             <!-- Top accent stripe -->
             <div class="field-work-area-stripe"></div>
 
-            <!-- Section header bar with badge + title + helper line -->
+            <!-- Section header bar: badge + title (centered) -->
             <div class="field-work-area-header">
                 <span class="field-work-area-badge">▸ FIELD VERIFICATION DESK</span>
                 <h3 class="field-work-area-title">Pending verifications &mdash; ready for field visit</h3>
-                <p class="field-work-area-helper">
-                    This is your <strong>active work queue</strong>. For each row, conduct the on-site inspection, then click
-                    <strong>Open verification</strong> to record findings and submit certification.
-                </p>
             </div>
 
             <div class="widget" style="margin-top: 0; border-top-left-radius: 0; border-top-right-radius: 0; border-top: none;">
@@ -1406,11 +1343,9 @@
                             <th style="padding: 14px 12px; text-align: left; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.4px;">Reference #</th>
                             <th style="padding: 14px 12px; text-align: left; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.4px;">Full Name</th>
                             <th style="padding: 14px 12px; text-align: left; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.4px;">Current address / barangay</th>
-                            <th style="padding: 14px 12px; text-align: left; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.4px;">Channel</th>
                             <th style="padding: 14px 12px; text-align: left; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.4px;">Eligibility</th>
                             <th style="padding: 14px 12px; text-align: left; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.4px;">Queue / visit order</th>
                             <th style="padding: 14px 12px; text-align: left; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.4px;">Staff Handled</th>
-                            <th style="padding: 14px 12px; text-align: center; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.4px;">SMS</th>
                             <th style="padding: 14px 12px; text-align: center; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.4px;">Action</th>
                         </tr>
                     </thead>
@@ -1426,17 +1361,11 @@
                                 <div style="font-weight: 500;">{{ cert.address|default:"—" }}</div>
                                 <div style="margin-top: 4px; font-size: 11px; color: #64748b; font-weight: 600;">Barangay: {% if cert.barangay %}{{ cert.barangay.name }}{% else %}—{% endif %}</div>
                             </td>
-                            <td style="padding: 12px; color: #6b7280;">
-                                <span style="background: #dbeafe; color: #0369a1; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 600;">{{ cert.channel }}</span>
-                            </td>
                             <td style="padding: 12px;">
                                 <span style="background: #fef3c7; color: #92400e; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 600;">{{ cert.eligibility }}</span>
                             </td>
                             <td style="padding: 12px; color: #475569; text-align: left; font-size: 12px; max-width: 200px;">{{ cert.queue_position }}</td>
                             <td style="padding: 12px; color: #6b7280; font-size: 12px;">{{ cert.staff_handled }}</td>
-                            <td style="padding: 12px; text-align: center; font-size: 12px;">
-                                <span style="{% if 'Sent' in cert.sms_status %}color: #059669;{% else %}color: #dc2626;{% endif %} font-weight: 600;">{{ cert.sms_status }}</span>
-                            </td>
                             <td style="padding: 12px; text-align: center;">
                                 <button type="button" class="table-verify-btn" onclick="openVerificationModal('{{ cert.id }}', '{{ cert.applicant_name|escapejs }}', '{{ cert.address|escapejs }}', '{{ cert.danger_zone_type|escapejs }}', '{{ cert.danger_zone_location|escapejs }}', '{{ cert.reference_number|escapejs }}')">
                                     Open verification
@@ -1940,7 +1869,8 @@
 
             const applicantId = document.getElementById('verificationModalApplicantId').value;
             const verificationDecision = document.querySelector('input[name="verification_decision"]:checked');
-            const verificationNotes = document.getElementById('verificationNotes').value;
+            const notesEl = document.getElementById('verificationNotes');
+            const verificationNotes = notesEl ? notesEl.value.trim() : '';
 
             if (!verificationDecision) {
                 alert('Please select one field certification (hazard sustained, or claim not sustained) before submitting.');
@@ -2133,7 +2063,6 @@
                     <div class="tha-field-modal-crest" aria-hidden="true">THA</div>
                     <div>
                         <h2 id="verificationModalTitle">Hazard-area field certification</h2>
-                        <p>Post-Module 2 handoff — Talisay City Housing Authority / City DRRMO coordination</p>
                     </div>
                 </div>
             </div>
@@ -2217,21 +2146,6 @@
                         <input type="file" id="fieldEvidenceFileInput" accept="image/jpeg,image/png,image/webp,image/*" multiple style="display: none;">
                         <button type="button" class="field-evidence-file-btn" id="fieldEvidenceFilePickBtn">Attach from device</button>
                         <div id="fieldEvidenceStrip" class="field-evidence-strip"></div>
-                    </div>
-
-                    <div style="margin-bottom: 1.5rem;">
-                        <label for="verificationNotes" style="display: block; font-size: 0.7rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 0.5rem; letter-spacing: 0.06em;">Field inspection notes (optional)</label>
-                        <textarea id="verificationNotes" name="verification_notes" placeholder="Observed conditions, landmarks, weather, interview notes, and other material facts." style="width: 100%; padding: 0.75rem 0.875rem; border: 1px solid #cbd5e1; border-radius: 2px; font-size: 0.875rem; font-family: inherit; resize: vertical; min-height: 5.5rem;" onfocus="this.style.borderColor='#64748b'; this.style.boxShadow='0 0 0 2px rgba(100,116,139,0.15)'" onblur="this.style.borderColor='#cbd5e1'; this.style.boxShadow='none'"></textarea>
-                    </div>
-
-                    <div class="tha-field-workflow-box">
-                        <strong>Procedure reminder</strong>
-                        <ol>
-                            <li>Confirm the declaration in Part I against conditions on the ground.</li>
-                            <li>Review any CDRRMO record status shown above.</li>
-                            <li>Select one certification in Part II and attach photographs where practicable.</li>
-                            <li>Submit for supervisory review through Applicant Intake.</li>
-                        </ol>
                     </div>
 
                     <div class="tha-field-form-actions">

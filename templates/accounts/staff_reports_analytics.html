@@ -29,6 +29,23 @@
     h2.section-title:first-of-type { margin-top: 0; }
     .footer-meta { text-align: center; padding: 1rem 0 0; margin-top: 1rem; border-top: 1px solid #e2e8f0; color: #94a3b8; font-size: 0.72rem; }
     .chart-intro { font-size: 0.8rem; color: #64748b; margin: -0.25rem 0 0.75rem 0; line-height: 1.45; }
+    .analytics-included {
+        margin: 0 0 0.55rem 0;
+        color: #334155;
+        font-size: 0.8rem;
+        line-height: 1.45;
+    }
+    .analytics-note {
+        margin: 0;
+        padding: 0.65rem 0.75rem;
+        border: 1px solid #bfdbfe;
+        border-left: 4px solid #2563eb;
+        border-radius: 0.45rem;
+        background: #eff6ff;
+        color: #1e3a8a;
+        font-size: 0.8rem;
+        line-height: 1.45;
+    }
     .chart-full { margin-bottom: 1rem; }
     .chart-full .chart-canvas-wrap { height: 300px; position: relative; }
     .chart-grid-charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
@@ -55,10 +72,6 @@
 {% block content %}
 <div class="analytics-report">
     <h1>Reports &amp; data analytics</h1>
-    <p class="lead">
-        <strong>{{ report_role_heading }}</strong> — {{ report_role_officer }} · {{ report_role_modules }}.
-        Charts below summarize intake through cases for <strong>{{ period_label }}</strong> (and live snapshots where noted). Use <strong>Export CSV</strong> for tabular totals including key counts.
-    </p>
     <p class="lead" style="margin-top:-0.5rem;"><a href="{{ dashboard_url }}" style="color: #2563eb; font-weight: 600;">← Back to workspace</a></p>
 
     <form class="report-toolbar" method="get" action="">
@@ -86,6 +99,10 @@
 
     <h2 class="section-title">Charts &amp; visual summary</h2>
     <p class="chart-intro">Interactive charts match the CSV export datasets. Hover points for exact values. Period window ends <strong>{{ period_label }}</strong>.</p>
+    <div class="chart-full chart-card" style="margin-bottom:0.85rem;">
+        <h3>Analytics coverage</h3>
+        <p class="analytics-note"><strong>Document data note:</strong> Document-related operational data remains in <strong>Document Management</strong>.</p>
+    </div>
 
     <div class="chart-full chart-card">
         <div class="chart-canvas-wrap"><canvas id="chartTrend" aria-label="Six month trends chart"></canvas></div>
@@ -113,7 +130,7 @@
             <div class="chart-canvas-wrap"><canvas id="chartBarangays"></canvas></div>
         </div>
         <div class="chart-card">
-            <h3>Intake channel</h3>
+            <h3>Applicant situation</h3>
             <div class="chart-canvas-wrap"><canvas id="chartChannels"></canvas></div>
         </div>
         <div class="chart-card">
@@ -268,6 +285,19 @@
         });
     }
 
+    function hasChartData(key) {
+        var spec = D[key];
+        if (!spec || !Array.isArray(spec.values) || !spec.values.length) return false;
+        return sum(spec.values.map(function (v) { return Number(v) || 0; })) > 0;
+    }
+
+    function hideChartCardByCanvasId(canvasId) {
+        var canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+        var card = canvas.closest('.chart-card');
+        if (card) card.style.display = 'none';
+    }
+
     Chart.defaults.font.family = "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif";
     Chart.defaults.color = '#475569';
 
@@ -377,11 +407,27 @@
     doughnut(document.getElementById('chartApplicants'), 'applicantsByStatus', 'No applicants on masterlist');
     doughnut(document.getElementById('chartApplications'), 'applicationsByStatus', 'No Module 2 applications yet');
     doughnut(document.getElementById('chartHousing'), 'housingByStatus', 'No housing units tracked');
-    doughnut(document.getElementById('chartChannels'), 'channels', 'No intake channel breakdown');
-    doughnut(document.getElementById('chartRequirements'), 'requirementsByStatus', 'No checklist rows yet');
-    doughnut(document.getElementById('chartCasesStatus'), 'casesByStatus', 'No cases recorded');
-    doughnut(document.getElementById('chartCasesType'), 'casesByType', 'No cases recorded');
-    doughnut(document.getElementById('chartElectricity'), 'electricityByStatus', 'No electricity connections yet');
+    doughnut(document.getElementById('chartChannels'), 'channels', 'No applicant-situation breakdown');
+    if (hasChartData('requirementsByStatus')) {
+        doughnut(document.getElementById('chartRequirements'), 'requirementsByStatus', 'No checklist rows yet');
+    } else {
+        hideChartCardByCanvasId('chartRequirements');
+    }
+    if (hasChartData('casesByStatus')) {
+        doughnut(document.getElementById('chartCasesStatus'), 'casesByStatus', 'No cases recorded');
+    } else {
+        hideChartCardByCanvasId('chartCasesStatus');
+    }
+    if (hasChartData('casesByType')) {
+        doughnut(document.getElementById('chartCasesType'), 'casesByType', 'No cases recorded');
+    } else {
+        hideChartCardByCanvasId('chartCasesType');
+    }
+    if (hasChartData('electricityByStatus')) {
+        doughnut(document.getElementById('chartElectricity'), 'electricityByStatus', 'No electricity connections yet');
+    } else {
+        hideChartCardByCanvasId('chartElectricity');
+    }
 
     barHorizontal(document.getElementById('chartBarangays'), 'topBarangays', 'No barangay breakdown yet');
     barHorizontal(document.getElementById('chartQueues'), 'activeQueues', 'No active desk queues');
