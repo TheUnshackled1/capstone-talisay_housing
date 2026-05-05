@@ -767,7 +767,6 @@ def _build_analytics_charts_data(
     monthly_upload_trend,
     applicant_by_status,
     application_by_status,
-    documents_by_type,
     housing_units_by_status,
     electricity_by_status,
     cases_by_status,
@@ -809,7 +808,6 @@ def _build_analytics_charts_data(
         },
         'applicantsByStatus': pair_labels_counts(applicant_by_status),
         'applicationsByStatus': pair_labels_counts(application_by_status),
-        'documentsByType': pair_labels_counts(documents_by_type),
         'housingByStatus': pair_labels_counts(housing_units_by_status),
         'electricityByStatus': pair_labels_counts(electricity_by_status),
         'casesByStatus': pair_labels_counts(cases_by_status),
@@ -1066,7 +1064,6 @@ def _staff_reports_analytics_payload(request):
         monthly_upload_trend,
         applicant_by_status,
         application_by_status,
-        documents_by_type,
         housing_units_by_status,
         electricity_by_status,
         cases_by_status,
@@ -1281,12 +1278,6 @@ def second_member_analytics(request):
         'report_role_officer': 'Lourynie Joie V. Tingson',
         'report_role_modules': 'M2, M3, M4, M6',
         'dashboard_url': reverse('accounts:dashboard_second_member'),
-        'scope_cards': [
-            {'mod': 'M2', 'title': 'Applications', 'detail': 'Notices · electricity coordination · routing'},
-            {'mod': 'M3', 'title': 'Documents', 'detail': 'Vault oversight'},
-            {'mod': 'M4', 'title': 'Occupancy', 'detail': 'Compliance signals'},
-            {'mod': 'M6', 'title': 'Analytics', 'detail': 'Reporting & exports'},
-        ],
     }
     return render(request, 'accounts/staff_reports_analytics.html', context)
 
@@ -1310,12 +1301,6 @@ def fourth_member_analytics(request):
         'report_role_officer': 'Jocel O. Cuaysing',
         'report_role_modules': 'M1, M2, M3, M4',
         'dashboard_url': reverse('accounts:dashboard_fourth_member'),
-        'scope_cards': [
-            {'mod': 'M1', 'title': 'Intake & eligibility', 'detail': 'Masterlist · eligibility · queue'},
-            {'mod': 'M2', 'title': 'Applications', 'detail': 'Requirements · lot awarding'},
-            {'mod': 'M3', 'title': 'Documents', 'detail': 'Vault coordination'},
-            {'mod': 'M4', 'title': 'Property', 'detail': 'Custodian · occupancy signals'},
-        ],
     }
     return render(request, 'accounts/staff_reports_analytics.html', context)
 

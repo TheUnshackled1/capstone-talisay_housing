@@ -22,51 +22,11 @@
     .btn-primary-report { background: #0f172a; color: #fff; border: none; }
     .btn-primary-report:hover { background: #1e293b; }
     .btn-outline-report { background: #fff; color: #0f172a; border: 1px solid #cbd5e1; }
-    .nav-modules {
-        font-size: 0.78rem; color: #64748b; margin-bottom: 1.25rem; line-height: 1.6;
-        padding-bottom: 1rem;
-        border-bottom: 1px solid #e2e8f0;
-    }
-    .nav-modules a { color: #2563eb; font-weight: 500; text-decoration: none; margin-right: 0.25rem; }
-    .nav-modules a:hover { text-decoration: underline; }
-    .nav-modules span { color: #cbd5e1; margin: 0 0.15rem; }
     h2.section-title {
         font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
         color: #64748b; margin: 1.5rem 0 0.75rem 0; padding-bottom: 0.35rem; border-bottom: 1px solid #e2e8f0;
     }
     h2.section-title:first-of-type { margin-top: 0; }
-    .stat-board {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
-        gap: 0.5rem;
-    }
-    .stat-tile {
-        background: #fff;
-        border: 1px solid #e2e8f0;
-        border-radius: 0.45rem;
-        padding: 0.55rem 0.65rem;
-        text-align: center;
-    }
-    .stat-tile .v { font-size: 1.35rem; font-weight: 800; color: #0f172a; line-height: 1.15; font-variant-numeric: tabular-nums; }
-    .stat-tile .k { font-size: 0.62rem; color: #64748b; margin-top: 0.2rem; line-height: 1.25; }
-    .snap-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 0.75rem; align-items: start; }
-    .panel { background: #fff; border: 1px solid #e8ecf1; border-radius: 0.5rem; padding: 0.75rem 0.85rem; }
-    .panel h3 { margin: 0 0 0.5rem 0; font-size: 0.8125rem; font-weight: 700; color: #334155; }
-    .panel .hint { font-size: 0.7rem; color: #94a3b8; margin: -0.35rem 0 0.5rem 0; }
-    .report-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    .report-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
-    .report-table th { text-align: left; padding: 0.35rem 0.45rem; background: #f1f5f9; color: #475569; font-weight: 600; border-bottom: 1px solid #e2e8f0; }
-    .report-table td { padding: 0.35rem 0.45rem; border-bottom: 1px solid #f1f5f9; color: #334155; vertical-align: middle; }
-    .report-table .num { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
-    .bar-track { height: 6px; background: #e8ecf1; border-radius: 3px; overflow: hidden; max-width: 100px; display: inline-block; vertical-align: middle; }
-    .bar-fill { height: 100%; border-radius: 3px; background: #6366f1; }
-    .bar-fill.teal { background: #0d9488; }
-    .bar-fill.amber { background: #d97706; }
-    .bar-fill.rose { background: #e11d48; }
-    .muted { color: #94a3b8; font-size: 0.72rem; }
-    .resp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.5rem; }
-    .resp-card { border-left: 3px solid #cbd5e1; padding: 0.45rem 0 0.45rem 0.65rem; font-size: 0.78rem; color: #475569; }
-    .resp-card strong { color: #0f172a; font-size: 0.8rem; }
     .footer-meta { text-align: center; padding: 1rem 0 0; margin-top: 1rem; border-top: 1px solid #e2e8f0; color: #94a3b8; font-size: 0.72rem; }
     .chart-intro { font-size: 0.8rem; color: #64748b; margin: -0.25rem 0 0.75rem 0; line-height: 1.45; }
     .chart-full { margin-bottom: 1rem; }
@@ -75,9 +35,19 @@
     .chart-card { background: #fff; border: 1px solid #e8ecf1; border-radius: 0.5rem; padding: 0.65rem 0.75rem 0.85rem; }
     .chart-card h3 { margin: 0 0 0.5rem 0; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; }
     .chart-card .chart-canvas-wrap { height: 240px; position: relative; }
-    .chart-card.wide { grid-column: 1 / -1; }
-    @media (min-width: 900px) {
-        .chart-card.wide { grid-column: span 2; }
+    .chart-placeholder {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.78rem;
+        color: #94a3b8;
+        text-align: center;
+        padding: 1rem 0.75rem;
+        background: #f8fafc;
+        border-radius: 6px;
+        line-height: 1.35;
     }
 </style>
 {% endblock %}
@@ -87,7 +57,7 @@
     <h1>Reports &amp; data analytics</h1>
     <p class="lead">
         <strong>{{ report_role_heading }}</strong> — {{ report_role_officer }} · {{ report_role_modules }}.
-        Numbers below cover intake through cases for <strong>{{ period_label }}</strong> (and live snapshots where noted).
+        Charts below summarize intake through cases for <strong>{{ period_label }}</strong> (and live snapshots where noted). Use <strong>Export CSV</strong> for tabular totals including key counts.
     </p>
     <p class="lead" style="margin-top:-0.5rem;"><a href="{{ dashboard_url }}" style="color: #2563eb; font-weight: 600;">← Back to workspace</a></p>
 
@@ -112,40 +82,10 @@
         <a class="btn-outline-report" href="?year={{ report_year }}&amp;month={{ report_month }}&amp;export=csv">Export CSV</a>
     </form>
 
-    <p class="nav-modules">
-        Open a module:
-        <a href="{% url 'intake:applicants_list' request.user.position %}">Applicant Intake</a><span>·</span>
-        <a href="{% url 'applications:applications_list' request.user.position %}">Application &amp; Eligibility</a><span>·</span>
-        <a href="{% url 'applications:ready_for_form_queue' request.user.position %}">Ready for Form</a><span>·</span>
-        <a href="{% url 'documents:management' request.user.position %}">Documents</a><span>·</span>
-        <a href="{% url 'units:housing_units_monitoring' request.user.position %}">Housing Units</a><span>·</span>
-        <a href="{% url 'cases:case_dashboard' request.user.position %}">Cases</a>
-    </p>
-
     {{ analytics_charts_data|json_script:"tha-analytics-charts" }}
 
-    <h2 class="section-title">Key figures</h2>
-    <div class="stat-board">
-        <div class="stat-tile"><div class="v">{{ total_applications|default:0 }}</div><div class="k">Applicants on masterlist</div></div>
-        <div class="stat-tile"><div class="v">{{ applicants_registered_period|default:0 }}</div><div class="k">New applicants (this month)</div></div>
-        <div class="stat-tile"><div class="v">{{ incomplete_docs|default:0 }}</div><div class="k">Module 1 checklist gaps</div></div>
-        <div class="stat-tile"><div class="v">{{ pending_cdrrmo_count|default:0 }}</div><div class="k">CDRRMO pending</div></div>
-        <div class="stat-tile"><div class="v">{{ housing_application_records|default:0 }}</div><div class="k">Housing application records</div></div>
-        <div class="stat-tile"><div class="v">{{ module2_handoff_count|default:0 }}</div><div class="k">Reached Module 2 handoff</div></div>
-        <div class="stat-tile"><div class="v">{{ pending_oic_signature_count|default:0 }}</div><div class="k">Awaiting OIC signature</div></div>
-        <div class="stat-tile"><div class="v">{{ ready_for_form_queue_count|default:0 }}</div><div class="k">Ready for Form queue</div></div>
-        <div class="stat-tile"><div class="v">{{ documents_total_count|default:0 }}</div><div class="k">Documents in vault</div></div>
-        <div class="stat-tile"><div class="v">{{ docs_filed|default:0 }}</div><div class="k">Vault uploads (this month)</div></div>
-        <div class="stat-tile"><div class="v">{{ housing_units_total|default:0 }}</div><div class="k">Housing units tracked</div></div>
-        <div class="stat-tile"><div class="v">{{ vacant_units_count|default:0 }}</div><div class="k">Vacant (award-ready)</div></div>
-        <div class="stat-tile"><div class="v">{{ electricity_pending|default:0 }}</div><div class="k">Electricity not completed</div></div>
-        <div class="stat-tile"><div class="v">{{ cases_total|default:0 }}</div><div class="k">Cases (total)</div></div>
-        <div class="stat-tile"><div class="v">{{ cases_opened_period|default:0 }}</div><div class="k">Cases opened (this month)</div></div>
-        <div class="stat-tile"><div class="v">{{ cases_closed_period|default:0 }}</div><div class="k">Cases closed (this month)</div></div>
-    </div>
-
     <h2 class="section-title">Charts &amp; visual summary</h2>
-    <p class="chart-intro">Interactive charts use the same underlying counts as the tables below. Hover points for exact values. Period window ends <strong>{{ period_label }}</strong>.</p>
+    <p class="chart-intro">Interactive charts match the CSV export datasets. Hover points for exact values. Period window ends <strong>{{ period_label }}</strong>.</p>
 
     <div class="chart-full chart-card">
         <div class="chart-canvas-wrap"><canvas id="chartTrend" aria-label="Six month trends chart"></canvas></div>
@@ -167,10 +107,6 @@
         <div class="chart-card">
             <h3>Housing units by status</h3>
             <div class="chart-canvas-wrap"><canvas id="chartHousing"></canvas></div>
-        </div>
-        <div class="chart-card wide">
-            <h3>Vault uploads in {{ period_label }} — by document type</h3>
-            <div class="chart-canvas-wrap" style="height:280px;"><canvas id="chartDocTypes"></canvas></div>
         </div>
         <div class="chart-card">
             <h3>Top barangays</h3>
@@ -202,253 +138,6 @@
         </div>
     </div>
 
-    <h2 class="section-title">Activity in {{ period_label }}</h2>
-    <div class="panel" style="margin-bottom: 0.75rem;">
-        <div class="report-table-wrap">
-            <table class="report-table">
-                <thead><tr><th>Metric</th><th class="num">Count</th></tr></thead>
-                <tbody>
-                    <tr><td>New Housing Application records created</td><td class="num">{{ housing_apps_created_period|default:0 }}</td></tr>
-                    <tr><td>Requirements verified</td><td class="num">{{ requirements_verified_period|default:0 }}</td></tr>
-                    <tr><td>Requirement rows submitted (timestamp in period)</td><td class="num">{{ requirement_submissions_submitted_period|default:0 }}</td></tr>
-                    <tr><td>Applications marked lot awarded (updated in period)</td><td class="num">{{ awarded_transition_period|default:0 }}</td></tr>
-                    <tr><td>Vault uploads (timestamp in period)</td><td class="num">{{ docs_filed|default:0 }}</td></tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <h2 class="section-title">Snapshots &amp; breakdowns</h2>
-    <div class="snap-grid">
-        <div class="panel">
-            <h3>Applicants by status</h3>
-            <p class="hint">Everyone on the masterlist today</p>
-            <div class="report-table-wrap">
-                <table class="report-table">
-                    <thead><tr><th>Status</th><th class="num">#</th></tr></thead>
-                    <tbody>
-                        {% for row in applicant_by_status %}
-                        <tr><td>{{ row.label }}</td><td class="num">{{ row.count }}</td></tr>
-                        {% empty %}
-                        <tr><td colspan="2" class="muted">—</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        <div class="panel">
-            <h3>Housing applications by status</h3>
-            <p class="hint">Module 2 records today</p>
-            <div class="report-table-wrap">
-                <table class="report-table">
-                    <thead><tr><th>Status</th><th class="num">#</th></tr></thead>
-                    <tbody>
-                        {% for row in application_by_status %}
-                        <tr><td>{{ row.label }}</td><td class="num">{{ row.count }}</td></tr>
-                        {% empty %}
-                        <tr><td colspan="2" class="muted">—</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        <div class="panel">
-            <h3>Intake channel</h3>
-            <div class="report-table-wrap">
-                <table class="report-table">
-                    <thead><tr><th>Channel</th><th class="num">#</th></tr></thead>
-                    <tbody>
-                        {% for row in applicants_by_channel %}
-                        <tr><td>{{ row.label }}</td><td class="num">{{ row.count }}</td></tr>
-                        {% empty %}
-                        <tr><td colspan="2" class="muted">—</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        <div class="panel">
-            <h3>Top barangays</h3>
-            <p class="hint">By applicant count</p>
-            <div class="report-table-wrap">
-                <table class="report-table">
-                    <thead><tr><th>Barangay</th><th class="num">#</th></tr></thead>
-                    <tbody>
-                        {% for row in applicants_top_barangays %}
-                        <tr><td>{{ row.place_name }}</td><td class="num">{{ row.count }}</td></tr>
-                        {% empty %}
-                        <tr><td colspan="2" class="muted">—</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        <div class="panel">
-            <h3>Requirement submissions</h3>
-            <p class="hint">Checklist rows — all statuses</p>
-            <div class="report-table-wrap">
-                <table class="report-table">
-                    <thead><tr><th>Status</th><th class="num">#</th></tr></thead>
-                    <tbody>
-                        {% for row in requirement_by_status %}
-                        <tr><td>{{ row.label }}</td><td class="num">{{ row.count }}</td></tr>
-                        {% empty %}
-                        <tr><td colspan="2" class="muted">No checklist rows yet.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        <div class="panel">
-            <h3>Active queues</h3>
-            <p class="hint">Desk queues</p>
-            <div class="report-table-wrap">
-                <table class="report-table">
-                    <thead><tr><th>Type</th><th class="num">Active</th></tr></thead>
-                    <tbody>
-                        {% for row in queue_active_rows %}
-                        <tr><td>{{ row.queue_type|default:"—"|cut:"_"|title }}</td><td class="num">{{ row.count }}</td></tr>
-                        {% empty %}
-                        <tr><td colspan="2" class="muted">—</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        <div class="panel">
-            <h3>Housing units by status</h3>
-            <div class="report-table-wrap">
-                <table class="report-table">
-                    <thead><tr><th>Status</th><th class="num">#</th><th></th></tr></thead>
-                    <tbody>
-                        {% for row in housing_units_by_status %}
-                        <tr>
-                            <td>{{ row.label }}</td>
-                            <td class="num">{{ row.count }}</td>
-                            <td><span class="bar-track"><span class="bar-fill teal" style="width: {{ row.bar_pct }}%;"></span></span></td>
-                        </tr>
-                        {% empty %}
-                        <tr><td colspan="3" class="muted">—</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        <div class="panel">
-            <h3>Electricity connections</h3>
-            <div class="report-table-wrap">
-                <table class="report-table">
-                    <thead><tr><th>Status</th><th class="num">#</th></tr></thead>
-                    <tbody>
-                        {% for row in electricity_by_status %}
-                        <tr><td>{{ row.label }}</td><td class="num">{{ row.count }}</td></tr>
-                        {% empty %}
-                        <tr><td colspan="2" class="muted">No rows.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        <div class="panel">
-            <h3>Cases by status</h3>
-            <div class="report-table-wrap">
-                <table class="report-table">
-                    <thead><tr><th>Status</th><th class="num">#</th><th></th></tr></thead>
-                    <tbody>
-                        {% for row in cases_by_status %}
-                        <tr>
-                            <td>{{ row.label }}</td>
-                            <td class="num">{{ row.count }}</td>
-                            <td><span class="bar-track"><span class="bar-fill rose" style="width: {{ row.bar_pct }}%;"></span></span></td>
-                        </tr>
-                        {% empty %}
-                        <tr><td colspan="3" class="muted">No cases.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        <div class="panel">
-            <h3>Cases by type</h3>
-            <div class="report-table-wrap">
-                <table class="report-table">
-                    <thead><tr><th>Type</th><th class="num">#</th><th></th></tr></thead>
-                    <tbody>
-                        {% for row in cases_by_type %}
-                        <tr>
-                            <td>{{ row.label }}</td>
-                            <td class="num">{{ row.count }}</td>
-                            <td><span class="bar-track"><span class="bar-fill amber" style="width: {{ row.bar_pct }}%;"></span></span></td>
-                        </tr>
-                        {% empty %}
-                        <tr><td colspan="3" class="muted">No cases.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <h2 class="section-title">Vault uploads in {{ period_label }} by type</h2>
-    <div class="panel">
-        <div class="report-table-wrap">
-            <table class="report-table">
-                <thead><tr><th>Type</th><th class="num">Uploads</th><th style="min-width:100px;"></th></tr></thead>
-                <tbody>
-                    {% for row in documents_by_type %}
-                    <tr>
-                        <td>{{ row.label }}</td>
-                        <td class="num">{{ row.count }}</td>
-                        <td><span class="bar-track" style="max-width:160px;"><span class="bar-fill" style="width: {{ row.bar_pct }}%;"></span></span></td>
-                    </tr>
-                    {% empty %}
-                    <tr><td colspan="3" class="muted">No uploads this month.</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <h2 class="section-title">Electricity backlog</h2>
-    <p class="muted" style="margin: -0.5rem 0 0.5rem 0;">Up to 30 connections not completed — newest activity first.</p>
-    <div class="panel">
-        <div class="report-table-wrap">
-            <table class="report-table">
-                <thead>
-                    <tr>
-                        <th>Reference</th>
-                        <th>Applicant</th>
-                        <th>Unit</th>
-                        <th>Status</th>
-                        <th>Negros ref.</th>
-                        <th>Updated</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for row in electricity_backlog %}
-                    <tr>
-                        <td>{{ row.reference }}</td>
-                        <td>{{ row.name }}</td>
-                        <td>{{ row.unit }}</td>
-                        <td>{{ row.status }}</td>
-                        <td>{{ row.negros_ref }}</td>
-                        <td>{% if row.updated_at %}{{ row.updated_at|date:"M j, Y" }}{% else %}—{% endif %}</td>
-                    </tr>
-                    {% empty %}
-                    <tr><td colspan="6" class="muted">None — all complete or no records.</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <h2 class="section-title">Your role</h2>
-    <div class="resp-grid">
-        {% for card in scope_cards %}
-        <div class="resp-card"><strong>{{ card.mod }} — {{ card.title }}</strong><br/>{{ card.detail }}</div>
-        {% endfor %}
-    </div>
-
     <div class="footer-meta">
         Generated {{ timestamp|date:"M j, Y g:i A" }} · Export CSV includes the same figures.
     </div>
@@ -472,20 +161,38 @@
 
     function sum(a) { return a.reduce(function (s, n) { return s + n; }, 0); }
 
-    function doughnut(canvas, key) {
+    function showBarPlaceholder(canvas, message) {
+        if (!canvas || !canvas.parentElement) return;
+        canvas.style.display = 'none';
+        var wrap = canvas.parentElement;
+        var prev = wrap.querySelector('.chart-placeholder');
+        if (prev) prev.remove();
+        var d = document.createElement('div');
+        d.className = 'chart-placeholder';
+        d.setAttribute('role', 'status');
+        d.textContent = message;
+        wrap.appendChild(d);
+    }
+
+    function doughnut(canvas, key, emptyCaption) {
         if (!canvas) return;
+        emptyCaption = emptyCaption || 'No records yet';
         var spec = D[key];
-        if (!spec || !spec.labels || !spec.values || !spec.labels.length) return;
-        if (sum(spec.values) === 0) return;
+        var rawLabels = (spec && spec.labels) ? spec.labels.slice() : [];
+        var rawValues = (spec && spec.values) ? spec.values.map(function (v) { return Number(v); }) : [];
+        var isEmpty = !rawLabels.length || sum(rawValues) === 0;
+        var labels = isEmpty ? [emptyCaption] : rawLabels;
+        var values = isEmpty ? [1] : rawValues;
+        var bg = isEmpty
+            ? ['#e8ecf1']
+            : labels.map(function (_, i) { return PALETTE[i % PALETTE.length]; });
         new Chart(canvas, {
             type: 'doughnut',
             data: {
-                labels: spec.labels,
+                labels: labels,
                 datasets: [{
-                    data: spec.values,
-                    backgroundColor: spec.labels.map(function (_, i) {
-                        return PALETTE[i % PALETTE.length];
-                    }),
+                    data: values,
+                    backgroundColor: bg,
                     borderWidth: 2,
                     borderColor: '#ffffff',
                 }],
@@ -499,12 +206,13 @@
                         labels: { boxWidth: 11, padding: 8, font: { size: 10 }, usePointStyle: true },
                     },
                     tooltip: {
+                        enabled: !isEmpty,
                         callbacks: {
                             footer: function (items) {
-                                var total = sum(spec.values);
+                                var total = sum(values);
                                 var i = items[0] && items[0].dataIndex;
                                 if (i == null || !total) return '';
-                                var pct = Math.round((spec.values[i] / total) * 1000) / 10;
+                                var pct = Math.round((values[i] / total) * 1000) / 10;
                                 return pct + '% of total';
                             },
                         },
@@ -514,11 +222,20 @@
         });
     }
 
-    function barHorizontal(canvas, key) {
+    function barHorizontal(canvas, key, emptyCaption) {
         if (!canvas) return;
+        emptyCaption = emptyCaption || 'No records yet';
+        canvas.style.display = '';
+        var wrap = canvas.parentElement;
+        if (wrap) {
+            var ph = wrap.querySelector('.chart-placeholder');
+            if (ph) ph.remove();
+        }
         var spec = D[key];
-        if (!spec || !spec.labels || !spec.values || !spec.labels.length) return;
-        if (sum(spec.values) === 0) return;
+        if (!spec || !spec.labels || !spec.values || !spec.labels.length || sum(spec.values) === 0) {
+            showBarPlaceholder(canvas, emptyCaption);
+            return;
+        }
         new Chart(canvas, {
             type: 'bar',
             data: {
@@ -623,54 +340,51 @@
 
     var pipeEl = document.getElementById('chartPipeline');
     if (pipeEl && D.pipelineSnapshot && D.pipelineSnapshot.labels.length) {
-        if (sum(D.pipelineSnapshot.values) > 0) {
-            new Chart(pipeEl, {
-                type: 'bar',
-                data: {
-                    labels: D.pipelineSnapshot.labels,
-                    datasets: [{
-                        data: D.pipelineSnapshot.values,
-                        backgroundColor: ['#7c3aed', '#2563eb', '#0d9488', '#f59e0b'],
-                        borderRadius: 6,
-                    }],
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        title: {
-                            display: false,
-                        },
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: { precision: 0 },
-                            grid: { color: '#f1f5f9' },
-                        },
-                        x: {
-                            ticks: { font: { size: 10 }, maxRotation: 35 },
-                            grid: { display: false },
-                        },
+        new Chart(pipeEl, {
+            type: 'bar',
+            data: {
+                labels: D.pipelineSnapshot.labels,
+                datasets: [{
+                    data: D.pipelineSnapshot.values,
+                    backgroundColor: ['#7c3aed', '#2563eb', '#0d9488', '#f59e0b'],
+                    borderRadius: 6,
+                }],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    title: {
+                        display: false,
                     },
                 },
-            });
-        }
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { precision: 0 },
+                        grid: { color: '#f1f5f9' },
+                    },
+                    x: {
+                        ticks: { font: { size: 10 }, maxRotation: 35 },
+                        grid: { display: false },
+                    },
+                },
+            },
+        });
     }
 
-    doughnut(document.getElementById('chartApplicants'), 'applicantsByStatus');
-    doughnut(document.getElementById('chartApplications'), 'applicationsByStatus');
-    doughnut(document.getElementById('chartHousing'), 'housingByStatus');
-    doughnut(document.getElementById('chartChannels'), 'channels');
-    doughnut(document.getElementById('chartRequirements'), 'requirementsByStatus');
-    doughnut(document.getElementById('chartCasesStatus'), 'casesByStatus');
-    doughnut(document.getElementById('chartCasesType'), 'casesByType');
-    doughnut(document.getElementById('chartElectricity'), 'electricityByStatus');
+    doughnut(document.getElementById('chartApplicants'), 'applicantsByStatus', 'No applicants on masterlist');
+    doughnut(document.getElementById('chartApplications'), 'applicationsByStatus', 'No Module 2 applications yet');
+    doughnut(document.getElementById('chartHousing'), 'housingByStatus', 'No housing units tracked');
+    doughnut(document.getElementById('chartChannels'), 'channels', 'No intake channel breakdown');
+    doughnut(document.getElementById('chartRequirements'), 'requirementsByStatus', 'No checklist rows yet');
+    doughnut(document.getElementById('chartCasesStatus'), 'casesByStatus', 'No cases recorded');
+    doughnut(document.getElementById('chartCasesType'), 'casesByType', 'No cases recorded');
+    doughnut(document.getElementById('chartElectricity'), 'electricityByStatus', 'No electricity connections yet');
 
-    barHorizontal(document.getElementById('chartDocTypes'), 'documentsByType');
-    barHorizontal(document.getElementById('chartBarangays'), 'topBarangays');
-    barHorizontal(document.getElementById('chartQueues'), 'activeQueues');
+    barHorizontal(document.getElementById('chartBarangays'), 'topBarangays', 'No barangay breakdown yet');
+    barHorizontal(document.getElementById('chartQueues'), 'activeQueues', 'No active desk queues');
 })();
 </script>
 {% endblock %}
