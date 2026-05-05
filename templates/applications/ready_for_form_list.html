@@ -54,7 +54,7 @@
                 <tr data-applicant-id="{{ data.applicant.id }}">
                     <td style="font-weight:700;color:#1e293b;">{{ page_obj.start_index|add:forloop.counter0 }}</td>
                     <td>
-                        <div class="rfq-name">{{ data.applicant.full_name }}</div>
+                        <div class="rfq-name {% if data.applicant.displacement_reason == 'danger_zone' %}option-a{% elif data.applicant.displacement_reason == 'ejected' %}option-b{% elif data.applicant.displacement_reason == 'relocated' %}option-c{% elif data.applicant.displacement_reason == 'not_abc' %}option-d{% endif %}">{{ data.applicant.full_name }}</div>
                     </td>
                     <td class="rfq-col-status">
                         {% if data.selected_out_of_queue %}
@@ -93,6 +93,7 @@
                             <button type="button" class="rfq-action-btn rfq-action-btn--view-gold rfq-action-slot-3"
                                 title="View routed applicant details"
                                 data-name="{{ data.applicant.full_name|escape }}"
+                                data-displacement="{{ data.applicant.displacement_reason|default:''|escape }}"
                                 data-reference="{{ data.applicant.reference_number|default:'—'|escape }}"
                                 data-app-key="APP-{{ data.applicant.id }}"
                                 data-routed="{% if data.form_queue_routed_at %}Routed {{ data.form_queue_routed_at|date:'n/j/Y, P' }}{% if data.form_queue_routed_by %} by {{ data.form_queue_routed_by.get_full_name|escape }}{% endif %}{% else %}—{% endif %}"
@@ -460,7 +461,14 @@
         }
         const ds = btn.dataset;
         document.getElementById('rfqDetailTitle').textContent = ds.name || 'Applicant';
-        document.getElementById('rfqDetailName').textContent = ds.name || '';
+        const nameEl = document.getElementById('rfqDetailName');
+        nameEl.textContent = ds.name || '';
+        nameEl.className = 'rfq-detail-name';
+        const dr = String(ds.displacement || '').trim();
+        if (dr === 'danger_zone') nameEl.classList.add('option-a');
+        else if (dr === 'ejected') nameEl.classList.add('option-b');
+        else if (dr === 'relocated') nameEl.classList.add('option-c');
+        else if (dr === 'not_abc') nameEl.classList.add('option-d');
         document.getElementById('rfqDetailAppKey').textContent = ds.appKey || '';
         document.getElementById('rfqDetailReference').textContent = ds.reference || '—';
         document.getElementById('rfqDetailRouted').textContent = ds.routed || '—';
