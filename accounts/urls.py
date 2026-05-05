@@ -25,6 +25,9 @@ urlpatterns = [
     path('oic/analytics/', views.dashboard_oic, name='oic_analytics'),
 
     # Second Member-Specific Views
-    path('second-member/analytics/', views.dashboard_second_member, name='second_member_analytics'),
+    path('second-member/analytics/', views.second_member_analytics, name='second_member_analytics'),
+
+    # Fourth Member — reports (same datasets as Second Member)
+    path('fourth-member/analytics/', views.fourth_member_analytics, name='fourth_member_analytics'),
 ]
 

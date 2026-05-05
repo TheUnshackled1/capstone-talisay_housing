@@ -1,11 +1,16 @@
+import calendar
+import csv
+import json
+
+from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
-from django.db.models import Q, Prefetch
+from django.db.models import Count, F, Q, Prefetch
 from django.urls import reverse
-from datetime import timedelta, date
+from datetime import date, datetime, timedelta
 from urllib.parse import urlencode
 from .forms import LoginForm
 from .models import FIELD_DESK_POSITIONS
@@ -13,10 +18,9 @@ from intake.models import Applicant, SMSLog
 from applications.models import CDRRMOCertification
 from units.models import Blacklist as UnitsBlacklist
 from applications.models import QueueEntry, Application
-from documents.models import SignatoryRouting, RequirementSubmission
+from documents.models import Document, SignatoryRouting, RequirementSubmission
 from units.models import HousingUnit, ElectricityConnection
 from cases.models import Case
-import json
 
 
 def _redirect_login_preserving_role(request):
@@ -684,6 +688,636 @@ def dashboard_second_member(request):
     }
 
     return render(request, 'accounts/dashboard.html', context)
+
+
+def _report_month_bounds(year: int, month: int):
+    """First and last instant of calendar month in the active timezone."""
+    tz = timezone.get_current_timezone()
+    start = datetime(year, month, 1, 0, 0, 0, tzinfo=tz)
+    last_day = calendar.monthrange(year, month)[1]
+    end = datetime(year, month, last_day, 23, 59, 59, 999999, tzinfo=tz)
+    return start, end
+
+
+def _six_month_sequence_end(year: int, month: int):
+    """Six (year, month, label) tuples, chronological order, ending at year/month."""
+    pairs = []
+    y, m = year, month
+    for _ in range(6):
+        pairs.append((y, m, f'{calendar.month_abbr[m]} {y}'))
+        m -= 1
+        if m < 1:
+            m = 12
+            y -= 1
+    pairs.reverse()
+    return pairs
+
+
+def _staff_analytics_ready_for_form_count(user):
+    """
+    Cardinality of the Ready for Form queue — same routing rules as ``ready_for_form_queue``.
+    Uses lazy imports to avoid tight coupling at module load time.
+    """
+    from documents.models import Requirement
+    from applications.views import (
+        _module2_evaluations_applicants_queryset,
+        _module2_applicant_row_payload,
+        _module2_on_ready_for_form_queue_track,
+        get_module2_permissions,
+    )
+
+    permissions = get_module2_permissions(user)
+    required_total = Requirement.objects.filter(
+        group='A',
+        is_active=True,
+        is_required_for_form=True,
+    ).count()
+    n = 0
+    for applicant in _module2_evaluations_applicants_queryset().iterator(chunk_size=200):
+        row = _module2_applicant_row_payload(applicant, permissions, required_total, user)
+        if row is None:
+            continue
+        if _module2_on_ready_for_form_queue_track(applicant, row['application']):
+            n += 1
+    return n
+
+
+def _analytics_rows_bar_pct(rows, count_key='count'):
+    """Attach ``bar_pct`` 0–100 per row vs max count for horizontal bar charts."""
+    if not rows:
+        return rows
+    top = max(r[count_key] for r in rows)
+    top = max(top, 1)
+    for r in rows:
+        r['bar_pct'] = min(100, int(round(100 * r[count_key] / top)))
+    return rows
+
+
+def _chart_label(s, max_len=44):
+    if s is None:
+        return '—'
+    s = str(s).strip()
+    if len(s) <= max_len:
+        return s
+    return s[: max_len - 1] + '…'
+
+
+def _build_analytics_charts_data(
+    intake_registration_trend,
+    monthly_upload_trend,
+    applicant_by_status,
+    application_by_status,
+    documents_by_type,
+    housing_units_by_status,
+    electricity_by_status,
+    cases_by_status,
+    cases_by_type,
+    applicants_top_barangays,
+    applicants_by_channel,
+    requirement_by_status,
+    queue_active_rows,
+    ready_for_form_queue_count,
+    module2_handoff_count,
+    housing_application_records,
+    applicants_registered_period,
+):
+    """
+    Build a JSON-serializable dict for Chart.js (staff analytics page).
+    Keeps labels readable and aligned with the same queries as the tables.
+    """
+
+    def pair_labels_counts(rows, label_key='label', count_key='count'):
+        labels = [_chart_label(r.get(label_key)) for r in rows]
+        values = [int(r.get(count_key) or 0) for r in rows]
+        return {'labels': labels, 'values': values}
+
+    queue_chart_rows = [
+        {
+            'label': _chart_label(
+                (r.get('queue_type') or '—').replace('_', ' ').strip().title()
+            ),
+            'count': r.get('count') or 0,
+        }
+        for r in (queue_active_rows or [])
+    ]
+
+    return {
+        'trend': {
+            'labels': [r['label'] for r in intake_registration_trend],
+            'registrations': [int(r['count']) for r in intake_registration_trend],
+            'vaultUploads': [int(r['count']) for r in monthly_upload_trend],
+        },
+        'applicantsByStatus': pair_labels_counts(applicant_by_status),
+        'applicationsByStatus': pair_labels_counts(application_by_status),
+        'documentsByType': pair_labels_counts(documents_by_type),
+        'housingByStatus': pair_labels_counts(housing_units_by_status),
+        'electricityByStatus': pair_labels_counts(electricity_by_status),
+        'casesByStatus': pair_labels_counts(cases_by_status),
+        'casesByType': pair_labels_counts(cases_by_type),
+        'topBarangays': pair_labels_counts(applicants_top_barangays, label_key='place_name'),
+        'channels': pair_labels_counts(applicants_by_channel),
+        'requirementsByStatus': pair_labels_counts(requirement_by_status),
+        'activeQueues': pair_labels_counts(queue_chart_rows),
+        'pipelineSnapshot': {
+            'labels': [
+                'Ready for Form',
+                'Module 2 handoff',
+                'Housing app records',
+                'New applicants (period)',
+            ],
+            'values': [
+                int(ready_for_form_queue_count),
+                int(module2_handoff_count),
+                int(housing_application_records),
+                int(applicants_registered_period),
+            ],
+        },
+    }
+
+
+def _staff_reports_analytics_payload(request):
+    """
+    Shared datasets for Second / Fourth Member reporting (same analytics scope).
+
+    Returns a dict suitable for ``staff_reports_analytics.html`` and CSV export.
+    """
+    now = timezone.localtime(timezone.now())
+    try:
+        report_year = int(request.GET.get('year', now.year))
+        report_month = int(request.GET.get('month', now.month))
+    except (TypeError, ValueError):
+        report_year, report_month = now.year, now.month
+    report_year = max(2000, min(report_year, 2100))
+    report_month = max(1, min(report_month, 12))
+
+    period_start, period_end = _report_month_bounds(report_year, report_month)
+    period_label = f'{calendar.month_name[report_month]} {report_year}'
+
+    doc_type_labels = dict(Document.DOCUMENT_TYPE_CHOICES)
+    applicant_status_labels = dict(Applicant.STATUS_CHOICES)
+    application_status_labels = dict(Application.STATUS_CHOICES)
+    electricity_status_labels = dict(ElectricityConnection.STATUS_CHOICES)
+
+    electricity_pending_count = ElectricityConnection.objects.exclude(status='completed').count()
+    incomplete_docs_count = Applicant.objects.filter(_applicant_missing_intake_doc_q()).count()
+    total_applicants = Applicant.objects.count()
+    housing_application_records = Application.objects.count()
+
+    applicant_by_status = sorted(
+        (
+            Applicant.objects.values('status')
+            .annotate(count=Count('id'))
+            .order_by('-count')
+        ),
+        key=lambda x: (-x['count'], x['status'] or ''),
+    )
+    for row in applicant_by_status:
+        row['label'] = applicant_status_labels.get(row['status'], row['status'] or '—')
+
+    application_by_status = sorted(
+        (
+            Application.objects.values('status')
+            .annotate(count=Count('id'))
+            .order_by('-count')
+        ),
+        key=lambda x: (-x['count'], x['status'] or ''),
+    )
+    for row in application_by_status:
+        row['label'] = application_status_labels.get(row['status'], row['status'] or '—')
+
+    docs_filed_period = Document.objects.filter(
+        uploaded_at__gte=period_start,
+        uploaded_at__lte=period_end,
+    ).count()
+
+    documents_by_type = sorted(
+        (
+            Document.objects.filter(uploaded_at__gte=period_start, uploaded_at__lte=period_end)
+            .values('document_type')
+            .annotate(count=Count('id'))
+            .order_by('-count')[:24]
+        ),
+        key=lambda x: (-x['count'], x['document_type'] or ''),
+    )
+    max_doc_type_count = documents_by_type[0]['count'] if documents_by_type else 1
+    for row in documents_by_type:
+        row['label'] = doc_type_labels.get(row['document_type'], row['document_type'] or '—')
+        row['bar_pct'] = min(100, int(round(100 * row['count'] / max_doc_type_count)))
+
+    monthly_upload_trend = []
+    trend_max = 1
+    for y, m, lbl in _six_month_sequence_end(report_year, report_month):
+        ms, me = _report_month_bounds(y, m)
+        c = Document.objects.filter(uploaded_at__gte=ms, uploaded_at__lte=me).count()
+        trend_max = max(trend_max, c)
+        monthly_upload_trend.append({'label': lbl, 'year': y, 'month': m, 'count': c})
+    for row in monthly_upload_trend:
+        row['bar_pct'] = min(100, int(round(100 * row['count'] / trend_max))) if trend_max else 0
+
+    electricity_by_status = sorted(
+        (
+            ElectricityConnection.objects.values('status')
+            .annotate(count=Count('id'))
+            .order_by('-count')
+        ),
+        key=lambda x: (-x['count'], x['status'] or ''),
+    )
+    for row in electricity_by_status:
+        row['label'] = electricity_status_labels.get(row['status'], row['status'] or '—')
+
+    electricity_backlog = []
+    for conn in (
+        ElectricityConnection.objects.exclude(status='completed')
+        .select_related(
+            'lot_award__application__applicant',
+            'lot_award__unit',
+        )
+        .order_by('-updated_at')[:30]
+    ):
+        app = getattr(getattr(conn.lot_award, 'application', None), 'applicant', None)
+        electricity_backlog.append({
+            'reference': getattr(app, 'reference_number', '') or '—',
+            'name': getattr(app, 'full_name', '') or '—',
+            'unit': str(conn.lot_award.unit) if conn.lot_award_id else '—',
+            'status': conn.get_status_display(),
+            'updated_at': timezone.localtime(conn.updated_at),
+            'negros_ref': conn.negros_power_reference or '—',
+        })
+
+    applicants_registered_period = Applicant.objects.filter(
+        created_at__gte=period_start,
+        created_at__lte=period_end,
+    ).count()
+    housing_apps_created_period = Application.objects.filter(
+        created_at__gte=period_start,
+        created_at__lte=period_end,
+    ).count()
+    awarded_transition_period = Application.objects.filter(
+        status='awarded',
+        updated_at__gte=period_start,
+        updated_at__lte=period_end,
+    ).count()
+    requirements_verified_period = RequirementSubmission.objects.filter(
+        status='verified',
+        verified_at__gte=period_start,
+        verified_at__lte=period_end,
+    ).count()
+
+    queue_active_rows = sorted(
+        QueueEntry.objects.filter(status='active')
+        .values('queue_type')
+        .annotate(count=Count('id')),
+        key=lambda x: (-x['count'], x['queue_type'] or ''),
+    )
+
+    vacant_units_count = HousingUnit.objects.filter(status='Vacant — available').count()
+    pending_cdrrmo_count = CDRRMOCertification.objects.filter(status='pending').count()
+
+    channel_labels = dict(Applicant.CHANNEL_CHOICES)
+    applicants_by_channel = sorted(
+        Applicant.objects.values('channel').annotate(count=Count('id')),
+        key=lambda x: (-x['count'], x['channel'] or ''),
+    )
+    for row in applicants_by_channel:
+        row['label'] = channel_labels.get(row['channel'], row['channel'] or '—')
+    _analytics_rows_bar_pct(applicants_by_channel)
+
+    applicants_top_barangays = list(
+        Applicant.objects.exclude(barangay_id__isnull=True)
+        .values(place_name=F('barangay__name'))
+        .annotate(count=Count('id'))
+        .order_by('-count')[:12]
+    )
+    for row in applicants_top_barangays:
+        row['place_name'] = row.get('place_name') or '—'
+    _analytics_rows_bar_pct(applicants_top_barangays)
+
+    intake_registration_trend = []
+    reg_max = 1
+    for y, m, lbl in _six_month_sequence_end(report_year, report_month):
+        ms, me = _report_month_bounds(y, m)
+        c = Applicant.objects.filter(created_at__gte=ms, created_at__lte=me).count()
+        reg_max = max(reg_max, c)
+        intake_registration_trend.append({'label': lbl, 'year': y, 'month': m, 'count': c})
+    for row in intake_registration_trend:
+        row['bar_pct'] = min(100, int(round(100 * row['count'] / reg_max))) if reg_max else 0
+
+    module2_handoff_count = Applicant.objects.filter(module2_handoff_at__isnull=False).count()
+    ready_for_form_queue_count = _staff_analytics_ready_for_form_count(request.user)
+    pending_oic_signature_count = _applications_pending_oic_signature().count()
+
+    requirement_submission_labels = dict(RequirementSubmission.STATUS_CHOICES)
+    requirement_by_status = sorted(
+        RequirementSubmission.objects.values('status').annotate(count=Count('id')),
+        key=lambda x: (-x['count'], x['status'] or ''),
+    )
+    for row in requirement_by_status:
+        row['label'] = requirement_submission_labels.get(row['status'], row['status'] or '—')
+    _analytics_rows_bar_pct(requirement_by_status)
+
+    requirement_submissions_submitted_period = RequirementSubmission.objects.filter(
+        submitted_at__gte=period_start,
+        submitted_at__lte=period_end,
+    ).count()
+
+    documents_total_count = Document.objects.count()
+
+    housing_units_total = HousingUnit.objects.count()
+    housing_status_labels = dict(HousingUnit.STATUS_CHOICES)
+    housing_units_by_status = sorted(
+        HousingUnit.objects.values('status').annotate(count=Count('id')),
+        key=lambda x: (-x['count'], x['status'] or ''),
+    )
+    for row in housing_units_by_status:
+        row['label'] = housing_status_labels.get(row['status'], row['status'] or '—')
+    _analytics_rows_bar_pct(housing_units_by_status)
+
+    cases_total = Case.objects.count()
+    case_status_labels = dict(Case.STATUS_CHOICES)
+    case_type_labels = dict(Case.CASE_TYPE_CHOICES)
+    cases_by_status = sorted(
+        Case.objects.values('status').annotate(count=Count('id')),
+        key=lambda x: (-x['count'], x['status'] or ''),
+    )
+    for row in cases_by_status:
+        row['label'] = case_status_labels.get(row['status'], row['status'] or '—')
+    _analytics_rows_bar_pct(cases_by_status)
+
+    cases_by_type = sorted(
+        Case.objects.values('case_type').annotate(count=Count('id')),
+        key=lambda x: (-x['count'], x['case_type'] or ''),
+    )
+    for row in cases_by_type:
+        row['label'] = case_type_labels.get(row['case_type'], row['case_type'] or '—')
+    _analytics_rows_bar_pct(cases_by_type)
+
+    cases_opened_period = Case.objects.filter(
+        received_at__gte=period_start,
+        received_at__lte=period_end,
+    ).count()
+    cases_closed_period = Case.objects.filter(
+        status__in=['resolved', 'closed'],
+        resolved_at__gte=period_start,
+        resolved_at__lte=period_end,
+    ).count()
+
+    analytics_charts_data = _build_analytics_charts_data(
+        intake_registration_trend,
+        monthly_upload_trend,
+        applicant_by_status,
+        application_by_status,
+        documents_by_type,
+        housing_units_by_status,
+        electricity_by_status,
+        cases_by_status,
+        cases_by_type,
+        applicants_top_barangays,
+        applicants_by_channel,
+        requirement_by_status,
+        queue_active_rows,
+        ready_for_form_queue_count,
+        module2_handoff_count,
+        housing_application_records,
+        applicants_registered_period,
+    )
+
+    year_options = list(range(now.year - 5, now.year + 2))
+    month_options = list(range(1, 13))
+    months_for_select = [(i, calendar.month_name[i]) for i in range(1, 13)]
+
+    return {
+        'pending_notices': 0,
+        'electricity_pending': electricity_pending_count,
+        'incomplete_docs': incomplete_docs_count,
+        'total_applications': total_applicants,
+        'housing_application_records': housing_application_records,
+        'notices_issued': 0,
+        'docs_filed': docs_filed_period,
+        'timestamp': timezone.now(),
+        'period_label': period_label,
+        'report_year': report_year,
+        'report_month': report_month,
+        'year_options': year_options,
+        'month_options': month_options,
+        'months_for_select': months_for_select,
+        'applicant_by_status': applicant_by_status,
+        'application_by_status': application_by_status,
+        'documents_by_type': documents_by_type,
+        'monthly_upload_trend': monthly_upload_trend,
+        'electricity_by_status': electricity_by_status,
+        'electricity_backlog': electricity_backlog,
+        'applicants_registered_period': applicants_registered_period,
+        'housing_apps_created_period': housing_apps_created_period,
+        'awarded_transition_period': awarded_transition_period,
+        'requirements_verified_period': requirements_verified_period,
+        'queue_active_rows': queue_active_rows,
+        'vacant_units_count': vacant_units_count,
+        'pending_cdrrmo_count': pending_cdrrmo_count,
+        'applicants_by_channel': applicants_by_channel,
+        'applicants_top_barangays': applicants_top_barangays,
+        'intake_registration_trend': intake_registration_trend,
+        'module2_handoff_count': module2_handoff_count,
+        'ready_for_form_queue_count': ready_for_form_queue_count,
+        'pending_oic_signature_count': pending_oic_signature_count,
+        'requirement_by_status': requirement_by_status,
+        'requirement_submissions_submitted_period': requirement_submissions_submitted_period,
+        'documents_total_count': documents_total_count,
+        'housing_units_total': housing_units_total,
+        'housing_units_by_status': housing_units_by_status,
+        'cases_total': cases_total,
+        'cases_by_status': cases_by_status,
+        'cases_by_type': cases_by_type,
+        'cases_opened_period': cases_opened_period,
+        'cases_closed_period': cases_closed_period,
+        'analytics_charts_data': analytics_charts_data,
+    }
+
+
+def _staff_reports_analytics_csv_response(data, export_role_title, filename_prefix):
+    """Build CSV download for shared staff report payload."""
+    report_year = data['report_year']
+    report_month = data['report_month']
+    period_label = data['period_label']
+    applicant_by_status = data['applicant_by_status']
+    application_by_status = data['application_by_status']
+    documents_by_type = data['documents_by_type']
+    monthly_upload_trend = data['monthly_upload_trend']
+    electricity_by_status = data['electricity_by_status']
+    electricity_backlog = data['electricity_backlog']
+
+    response = HttpResponse(content_type='text/csv; charset=utf-8')
+    response['Content-Disposition'] = (
+        f'attachment; filename="{filename_prefix}_{report_year}_{report_month:02d}.csv"'
+    )
+    response.write('\ufeff')
+    writer = csv.writer(response)
+    writer.writerow([f'THA {export_role_title} — data export (shared intake & operations metrics)'])
+    writer.writerow(['Reporting period', period_label])
+    writer.writerow(['Generated', timezone.localtime(timezone.now()).isoformat()])
+    writer.writerow([])
+    writer.writerow(['Applicant counts by status (snapshot)'])
+    writer.writerow(['Status code', 'Label', 'Count'])
+    for row in applicant_by_status:
+        writer.writerow([row['status'], row['label'], row['count']])
+    writer.writerow([])
+    writer.writerow(['Housing Application records by status (snapshot)'])
+    writer.writerow(['Status code', 'Label', 'Count'])
+    for row in application_by_status:
+        writer.writerow([row['status'], row['label'], row['count']])
+    writer.writerow([])
+    writer.writerow(['Vault uploads in period by document type'])
+    writer.writerow(['Type code', 'Label', 'Count'])
+    for row in documents_by_type:
+        writer.writerow([row['document_type'], row['label'], row['count']])
+    writer.writerow([])
+    writer.writerow(['Document uploads — trailing six months'])
+    writer.writerow(['Month', 'Count'])
+    for row in monthly_upload_trend:
+        writer.writerow([row['label'], row['count']])
+    writer.writerow([])
+    writer.writerow(['Electricity connections by status (snapshot)'])
+    writer.writerow(['Status code', 'Label', 'Count'])
+    for row in electricity_by_status:
+        writer.writerow([row['status'], row['label'], row['count']])
+    writer.writerow([])
+    writer.writerow(['Electricity backlog (pending / not completed), max 30 rows'])
+    writer.writerow(['Reference', 'Applicant', 'Unit', 'Status', 'Negros ref', 'Last updated'])
+    for row in electricity_backlog:
+        writer.writerow([
+            row['reference'],
+            row['name'],
+            row['unit'],
+            row['status'],
+            row['negros_ref'],
+            row['updated_at'].strftime('%Y-%m-%d %H:%M') if row['updated_at'] else '',
+        ])
+    writer.writerow([])
+    writer.writerow(['Period activity'])
+    writer.writerow(['Metric', 'Value'])
+    writer.writerow(['New applicants registered (created in period)', data['applicants_registered_period']])
+    writer.writerow(['New housing Application records created in period', data['housing_apps_created_period']])
+    writer.writerow(['Applications marked awarded (updated in period)', data['awarded_transition_period']])
+    writer.writerow(['Requirements verified (in period)', data['requirements_verified_period']])
+    writer.writerow(['Vault document uploads (in period)', data['docs_filed']])
+    writer.writerow([])
+    writer.writerow(['Module summaries'])
+    writer.writerow(['Applicants by intake channel', '', ''])
+    writer.writerow(['Channel', 'Label', 'Count'])
+    for row in data.get('applicants_by_channel', []):
+        writer.writerow([row.get('channel'), row.get('label'), row.get('count')])
+    writer.writerow(['Top barangays (masterlist)', '', ''])
+    writer.writerow(['Barangay', 'Count'])
+    for row in data.get('applicants_top_barangays', []):
+        writer.writerow([row.get('place_name'), row.get('count')])
+    writer.writerow(['New registrations — trailing six months', '', ''])
+    writer.writerow(['Month', 'Count'])
+    for row in data.get('intake_registration_trend', []):
+        writer.writerow([row.get('label'), row.get('count')])
+    writer.writerow([])
+    writer.writerow([
+        'Ready for Form queue (current)',
+        data.get('ready_for_form_queue_count'),
+    ])
+    writer.writerow([
+        'Module 2 handoff reached (applicants)',
+        data.get('module2_handoff_count'),
+    ])
+    writer.writerow([
+        'Pending OIC signature (applications)',
+        data.get('pending_oic_signature_count'),
+    ])
+    writer.writerow([])
+    writer.writerow(['Requirement submissions by status'])
+    writer.writerow(['Status', 'Label', 'Count'])
+    for row in data.get('requirement_by_status', []):
+        writer.writerow([row.get('status'), row.get('label'), row.get('count')])
+    writer.writerow([])
+    writer.writerow([
+        'Requirement rows submitted (timestamp in period)',
+        data.get('requirement_submissions_submitted_period'),
+    ])
+    writer.writerow(['Documents in vault (total)', data.get('documents_total_count')])
+    writer.writerow([])
+    writer.writerow(['Housing units by status'])
+    writer.writerow(['Status code', 'Label', 'Count'])
+    for row in data.get('housing_units_by_status', []):
+        writer.writerow([row.get('status'), row.get('label'), row.get('count')])
+    writer.writerow([])
+    writer.writerow(['Cases by status'])
+    writer.writerow(['Status', 'Label', 'Count'])
+    for row in data.get('cases_by_status', []):
+        writer.writerow([row.get('status'), row.get('label'), row.get('count')])
+    writer.writerow(['Cases by type'])
+    writer.writerow(['Type', 'Label', 'Count'])
+    for row in data.get('cases_by_type', []):
+        writer.writerow([row.get('case_type'), row.get('label'), row.get('count')])
+    writer.writerow([
+        'Cases opened (received in period)',
+        data.get('cases_opened_period'),
+    ])
+    writer.writerow([
+        'Cases closed (resolved_at in period)',
+        data.get('cases_closed_period'),
+    ])
+    return response
+
+
+@login_required
+def second_member_analytics(request):
+    """Second Member — same operational analytics dataset as Fourth Member (reports hub)."""
+    if request.user.position != 'second_member':
+        messages.error(request, 'Access denied. Analytics is for the Second Member position only.')
+        return redirect('accounts:dashboard')
+
+    data = _staff_reports_analytics_payload(request)
+    if request.GET.get('export') == 'csv':
+        return _staff_reports_analytics_csv_response(data, 'Second Member', 'second_member_report')
+
+    context = {
+        **data,
+        'page_title': 'Reports & analytics',
+        'report_meta_title': 'Reports & analytics — Second Member | THA',
+        'report_role_heading': 'Second Member oversight',
+        'report_role_officer': 'Lourynie Joie V. Tingson',
+        'report_role_modules': 'M2, M3, M4, M6',
+        'dashboard_url': reverse('accounts:dashboard_second_member'),
+        'scope_cards': [
+            {'mod': 'M2', 'title': 'Applications', 'detail': 'Notices · electricity coordination · routing'},
+            {'mod': 'M3', 'title': 'Documents', 'detail': 'Vault oversight'},
+            {'mod': 'M4', 'title': 'Occupancy', 'detail': 'Compliance signals'},
+            {'mod': 'M6', 'title': 'Analytics', 'detail': 'Reporting & exports'},
+        ],
+    }
+    return render(request, 'accounts/staff_reports_analytics.html', context)
+
+
+@login_required
+def fourth_member_analytics(request):
+    """Fourth Member — same analytics datasets as Second Member (shared pipeline visibility)."""
+    if request.user.position != 'fourth_member':
+        messages.error(request, 'Access denied. Analytics is for the Fourth Member position only.')
+        return redirect('accounts:dashboard')
+
+    data = _staff_reports_analytics_payload(request)
+    if request.GET.get('export') == 'csv':
+        return _staff_reports_analytics_csv_response(data, 'Fourth Member', 'fourth_member_report')
+
+    context = {
+        **data,
+        'page_title': 'Reports & analytics',
+        'report_meta_title': 'Reports & analytics — Fourth Member | THA',
+        'report_role_heading': 'Fourth Member oversight',
+        'report_role_officer': 'Jocel O. Cuaysing',
+        'report_role_modules': 'M1, M2, M3, M4',
+        'dashboard_url': reverse('accounts:dashboard_fourth_member'),
+        'scope_cards': [
+            {'mod': 'M1', 'title': 'Intake & eligibility', 'detail': 'Masterlist · eligibility · queue'},
+            {'mod': 'M2', 'title': 'Applications', 'detail': 'Requirements · lot awarding'},
+            {'mod': 'M3', 'title': 'Documents', 'detail': 'Vault coordination'},
+            {'mod': 'M4', 'title': 'Property', 'detail': 'Custodian · occupancy signals'},
+        ],
+    }
+    return render(request, 'accounts/staff_reports_analytics.html', context)
 
 
 @login_required
