@@ -14,7 +14,7 @@ from functools import wraps
 from urllib.parse import urlencode
 import logging
 from accounts.models import FIELD_DESK_POSITIONS
-from intake.models import Applicant
+from intake.models import Applicant, Archive
 from intake import sms_workflow
 from documents.models import (
     Document,
