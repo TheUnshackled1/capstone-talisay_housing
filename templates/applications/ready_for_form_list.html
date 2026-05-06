@@ -86,6 +86,12 @@
                                     onclick="rfqPickSignedApplicationFile(this)"
                                     title="Choose a file from this computer — uploads to the document vault (stay on this page)">Upload document</button>
                             </div>
+                            {% elif data.application.status == 'completed' %}
+                            <button type="button" class="rfq-action-btn rfq-action-btn--scan rfq-action-slot-2"
+                                onclick="proceedToLotAwardingQueue('{{ data.application.id }}', '{{ data.applicant.reference_number|default:''|escapejs }}')"
+                                title="Move this signed record to the lot-awarding queue">
+                                Proceed to lot awarding
+                            </button>
                             {% endif %}
                             {% else %}
                             <span class="rfq-actions-muted">Not ready for form yet</span>
@@ -289,6 +295,9 @@
 <script>
     const position = '{{ request.user.position }}';
     const queueUrl = '{% url "applications:ready_for_form_queue" request.user.position %}';
+    const applicationsListUrl = '{% url "applications:applications_list" request.user.position %}';
+    const lotAwardingQueueUrl = '{% url "applications:lot_awarding_queue" request.user.position %}';
+    const proceedLotQueueUrl = '{% url "applications:proceed_to_lot_awarding_queue" request.user.position %}';
     const selectedApplicantId = '{{ selected_applicant_id|default:""|escapejs }}';
     const RFQ_INTAKE_DWT_URL = '{% url "intake:upload_scanned_requirement" request.user.position %}';
 
@@ -415,8 +424,9 @@
     }
 
     // ---- Custom confirmation modal helpers ----
-    function rfqShowConfirm(message, onOk) {
+    function rfqShowConfirm(message, onOk, options) {
         const overlay = document.getElementById('rfqConfirmOverlay');
+        const titleEl = document.getElementById('rfqConfirmTitle');
         const messageEl = document.getElementById('rfqConfirmMessage');
         const okBtn = document.getElementById('rfqConfirmOk');
         const cancelBtn = document.getElementById('rfqConfirmCancel');
@@ -424,7 +434,11 @@
             if (window.confirm(message)) onOk && onOk();
             return;
         }
+        const opts = options || {};
+        if (titleEl) titleEl.textContent = opts.title || 'Generate application form?';
         if (message) messageEl.textContent = message;
+        okBtn.textContent = opts.okText || 'Generate Form';
+        cancelBtn.textContent = opts.cancelText || 'Cancel';
         overlay.classList.add('active');
 
         const cleanup = () => {
@@ -540,6 +554,57 @@
                     if (pdfHold) pdfHold.close();
                     rfqShowAlert('Error: ' + error.message, 'Network error', 'default');
                 }
+            },
+            {
+                title: 'Generate application form?',
+                okText: 'Generate Form',
+                cancelText: 'Cancel',
+            }
+        );
+    }
+
+    async function proceedToLotAwardingQueue(applicationId, referenceNumber) {
+        if (!applicationId) {
+            rfqShowAlert('Missing application record.', 'Lot awarding queue', 'default');
+            return;
+        }
+        rfqShowConfirm(
+            'This will move the signed application from Ready for Form to the lot-awarding queue.',
+            async () => {
+                const csrf = rfqGetCsrfToken();
+                const fd = new FormData();
+                fd.append('application_id', applicationId);
+                try {
+                    const response = await fetch(proceedLotQueueUrl, {
+                        method: 'POST',
+                        body: fd,
+                        headers: csrf ? { 'X-CSRFToken': csrf } : {},
+                    });
+                    const data = await response.json();
+                    if (!response.ok || !data.success) {
+                        throw new Error(data.error || 'Unable to proceed to lot-awarding queue.');
+                    }
+                    rfqShowAlert(
+                        data.message || 'Application moved to lot-awarding queue.',
+                        'Lot awarding queue',
+                        'success'
+                    );
+                    setTimeout(() => {
+                        const q = referenceNumber ? ('?search=' + encodeURIComponent(referenceNumber)) : '';
+                        window.location.href = lotAwardingQueueUrl + q;
+                    }, 900);
+                } catch (error) {
+                    rfqShowAlert(
+                        (error && error.message) ? error.message : 'Unable to proceed to lot-awarding queue.',
+                        'Lot awarding queue',
+                        'default'
+                    );
+                }
+            },
+            {
+                title: 'Proceed to lot awarding?',
+                okText: 'Proceed',
+                cancelText: 'Cancel',
             }
         );
     }

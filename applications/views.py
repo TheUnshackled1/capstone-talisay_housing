@@ -839,7 +839,7 @@ def _module2_applicant_row_payload(applicant, permissions, required_group_a_subm
     elif application and application.status == 'draft':
         current_stage = 'Form Released · awaiting signed scan'
     elif application and application.status == 'completed':
-        current_stage = 'Awaiting OIC approval'
+        current_stage = 'Ready for lot awarding'
     elif rules.get('form_generation_ready'):
         current_stage = 'Document Gathering'
     elif applicant.module2_handoff_at:
@@ -1005,6 +1005,11 @@ def applications_list(request, position):
             ready_for_form_queue_count += 1
         # Routed Proceed-to-Form applicants stay on Ready for Form until Application advances past draft/completed.
         if on_rfq_track:
+            continue
+        # Once the same routed record is pushed to lot-awarding track, keep it out of
+        # the main Application & Evaluation ledger; it lives in the dedicated queue.
+        app_status = (getattr(row.get('application'), 'status', '') or '').strip()
+        if getattr(applicant, 'form_queue_routed_at', None) and app_status in {'standby', 'oic_signed'}:
             continue
         applicants_data.append(row)
     
@@ -1195,6 +1200,85 @@ def ready_for_form_queue(request, position):
         'selected_not_ready_reason': selected_not_ready_reason,
     }
     return render(request, 'applications/ready_for_form_list.html', context)
+
+
+@login_required
+@verify_position
+def lot_awarding_queue(request, position):
+    """
+    Dedicated lot-awarding queue fed by Ready for Form routing.
+    Shows applications on awarding track (standby / fully-approved legacy rows).
+    URL: /applications/<position>/lot-awarding-queue/
+    """
+    allowed_positions = ['fourth_member', 'second_member', 'fifth_member', 'oic']
+    if request.user.position not in allowed_positions:
+        messages.error(request, 'Access denied. Module 2 is for authorized staff only.')
+        return redirect('accounts:dashboard')
+
+    permissions = get_module2_permissions(request.user)
+
+    applications_qs = (
+        Application.objects
+        .filter(status__in=['standby', 'oic_signed'])
+        .select_related('applicant')
+        .order_by('standby_position', 'standby_entered_at', '-updated_at')
+    )
+
+    queue_rows = []
+    for app in applications_qs:
+        applicant = app.applicant
+        signed_form_on_file = applicant_has_signed_application_payload(applicant)
+        vault_base = {
+            'search': ((applicant.reference_number or '').strip() or str(applicant.pk)),
+            'applicant_id': str(applicant.pk),
+            'document_type': 'signed_application',
+        }
+        vault_path = reverse('documents:management', kwargs={'position': request.user.position})
+        queue_rows.append({
+            'application': app,
+            'applicant': applicant,
+            'status_label': 'Ready for awarding',
+            'situation_label': applicant.get_displacement_reason_display() if applicant.displacement_reason else '—',
+            'routed_at': app.standby_entered_at or app.updated_at,
+            'can_award_lot': bool(permissions.get('can_award_lot')),
+            'signed_form_on_file': signed_form_on_file,
+            'signed_form_vault_url': f"{vault_path}?{urlencode(vault_base)}",
+        })
+
+    queue_total = len(queue_rows)
+
+    search = request.GET.get('search', '').strip()
+    if search:
+        search_lower = search.lower()
+        queue_rows = [
+            row for row in queue_rows
+            if search_lower in (row['applicant'].full_name or '').lower()
+            or search_lower in (row['applicant'].reference_number or '').lower()
+            or search_lower in (row['application'].application_number or '').lower()
+        ]
+
+    paginator = Paginator(queue_rows, MODULE2_LIST_PER_PAGE)
+    page_number = request.GET.get('page', 1)
+    try:
+        page_obj = paginator.page(page_number)
+    except PageNotAnInteger:
+        page_obj = paginator.page(1)
+    except EmptyPage:
+        page_obj = paginator.page(paginator.num_pages or 1)
+
+    _q = request.GET.copy()
+    _q.pop('page', None)
+    pagination_query = _q.urlencode()
+
+    context = {
+        'queue_rows': list(page_obj),
+        'page_obj': page_obj,
+        'pagination_query': pagination_query,
+        'search': search,
+        'permissions': permissions,
+        'queue_total': queue_total,
+    }
+    return render(request, 'applications/lot_awarding_queue.html', context)
 
 
 # =============================================================================
@@ -3307,6 +3391,65 @@ def move_to_standby(request, position):
             'standby_position': application.standby_position,
             'message': f'Moved to Standby Queue at position #{application.standby_position}'
         })
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
+@login_required
+@verify_position
+@require_POST
+def proceed_to_lot_awarding_queue(request, position):
+    """
+    From Ready for Form queue, move a completed (applicant-signed) form directly
+    to the lot-awarding track (standby queue), skipping OIC routing.
+    """
+    allowed_positions = ['fourth_member', 'second_member']
+    if request.user.position not in allowed_positions:
+        return JsonResponse({
+            'success': False,
+            'error': 'Permission denied. Only Jocel or Joie can route to lot awarding.'
+        }, status=403)
+
+    application_id = request.POST.get('application_id')
+    if not application_id:
+        return JsonResponse({'success': False, 'error': 'Missing application_id.'}, status=400)
+
+    try:
+        application = Application.objects.select_related('applicant').get(id=application_id)
+        handoff_error = _require_intake_archive(application.applicant)
+        if handoff_error:
+            return handoff_error
+        blacklist_error = _require_module2_blacklist_clear(application.applicant)
+        if blacklist_error:
+            return blacklist_error
+
+        if application.status != 'completed':
+            return JsonResponse({
+                'success': False,
+                'error': 'Only applicant-signed (completed) records can proceed to lot awarding queue.',
+            }, status=400)
+
+        application.status = 'standby'
+        application.standby_entered_at = timezone.now()
+
+        last_position = Application.objects.filter(
+            status='standby'
+        ).exclude(id=application.id).aggregate(
+            max_pos=Max('standby_position')
+        )['max_pos'] or 0
+        application.standby_position = last_position + 1
+        application.save(update_fields=['status', 'standby_entered_at', 'standby_position', 'updated_at'])
+
+        return JsonResponse({
+            'success': True,
+            'standby_position': application.standby_position,
+            'message': (
+                f'Application routed to lot-awarding queue '
+                f'(Standby position #{application.standby_position}).'
+            ),
+        })
+    except Application.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Application not found.'}, status=404)
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
 

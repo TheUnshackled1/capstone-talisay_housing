@@ -17,6 +17,11 @@ urlpatterns = [
         views.ready_for_form_queue,
         name='ready_for_form_queue',
     ),
+    path(
+        'staff/<str:position>/lot-awarding-queue/',
+        views.lot_awarding_queue,
+        name='lot_awarding_queue',
+    ),
     path('staff/<str:position>/evaluate-precheck/', views.evaluate_precheck, name='evaluate_precheck'),
     path('staff/<str:position>/eligibility-snapshot/', views.eligibility_snapshot, name='eligibility_snapshot'),
     path('staff/<str:position>/save-eligibility-check-decision/', views.save_eligibility_check_decision, name='save_eligibility_check_decision'),
@@ -38,6 +43,11 @@ urlpatterns = [
 
     # Move to standby queue (Jocel, Joie)
     path('staff/<str:position>/move-to-standby/', views.move_to_standby, name='move_to_standby'),
+    path(
+        'staff/<str:position>/proceed-to-lot-awarding-queue/',
+        views.proceed_to_lot_awarding_queue,
+        name='proceed_to_lot_awarding_queue',
+    ),
 
     # Lot awarding (Jocel, Joie)
     path('staff/<str:position>/award-lot/', views.award_lot, name='award_lot'),
