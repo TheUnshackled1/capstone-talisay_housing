@@ -62,11 +62,17 @@
     {% if no_relocation_sites %}
     <div style="margin-bottom: 0.95rem; padding: 0.85rem 1rem; background: #fffbeb; border: 1px solid #fde68a; border-radius: 0.65rem; color: #92400e; font-size: 0.8rem; line-height: 1.45;">
         <strong style="display: block; margin-bottom: 0.35rem;">No relocation sites in the database yet.</strong>
-        Ask an administrator to add a relocation site (and housing units) before occupancy data can appear here.
+        Create your first relocation site, then start adding block/lot units from this page.
         {% if show_dev_seed_hint %}
         <span style="display: block; margin-top: 0.5rem; font-size: 0.72rem; color: #78350f;">
-            Dev: run <code style="background: #fef3c7; padding: 0.1rem 0.35rem; border-radius: 4px;">python manage.py seed_relocation_site</code> to load a demo site and sample units.
+            Dev: for a fresh database, create at least one relocation site here first.
         </span>
+        {% endif %}
+        {% if can_create_relocation_site %}
+        <button type="button" onclick="openCreateSiteModal()"
+            style="margin-top: 0.7rem; display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.48rem 0.78rem; background: #0369a1; color: #fff; border: none; border-radius: 8px; font-size: 0.74rem; font-weight: 700; cursor: pointer;">
+            + Create relocation site
+        </button>
         {% endif %}
     </div>
     {% endif %}
@@ -74,9 +80,21 @@
     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.95rem; gap: 1rem; flex-wrap: wrap;">
         <div>
             <h1 class="units-page-title">Housing Unit & Occupancy Monitoring</h1>
-            <p style="font-size: 0.75rem; color: #64748b; margin-top: 0.2rem;">Module 4 — GK Cabatangan · {{ total_units }} total units · Weekly occupancy reports</p>
+            <p style="font-size: 0.75rem; color: #64748b; margin-top: 0.2rem;">Module 4{% if site %} — {{ site.name }}{% endif %} · {{ total_units }} total units · Weekly occupancy reports</p>
         </div>
-        <div style="display: flex; gap: 0.5rem;">
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
+            {% if can_create_relocation_site and no_relocation_sites %}
+            <button type="button" onclick="openCreateSiteModal()"
+                style="display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.52rem 0.88rem; background: linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%); color: white; border: none; border-radius: 0.5rem; font-size: 0.72rem; font-weight: 700; cursor: pointer; box-shadow: 0 1px 2px rgba(3, 105, 161, 0.35);">
+                + Create site
+            </button>
+            {% endif %}
+            {% if can_add_housing_unit %}
+            <button type="button" id="openAddUnitModalBtn" onclick="openAddUnitModal()"
+                style="display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.52rem 0.88rem; background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: white; border: none; border-radius: 0.5rem; font-size: 0.72rem; font-weight: 700; cursor: pointer; box-shadow: 0 1px 2px rgba(2, 132, 199, 0.35);">
+                + Add block / lot
+            </button>
+            {% endif %}
             <button id="gridView" class="view-btn" onclick="switchView('grid')" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.52rem 0.88rem; background: white; color: #334155; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.72rem; font-weight: 700; cursor: pointer; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);">Grid</button>
             <button id="tableView" class="view-btn" onclick="switchView('table')" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.52rem 0.88rem; background: white; color: #334155; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.72rem; font-weight: 700; cursor: pointer; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);">Table</button>
         </div>
@@ -119,6 +137,37 @@
                 <p style="font-size: 1.25rem; font-weight: 700; color: #a855f7; margin: 0;">{{ repossessed_count }}</p>
             </div>
         </div>
+    </div>
+
+    <!-- Construction Monitoring (MVP) -->
+    <div style="display:flex; gap:0.75rem; margin-bottom:0.85rem; flex-wrap:wrap; align-items:center; padding:0.6rem; border:1px solid #e2e8f0; background:#ffffff; border-radius:0.7rem;">
+        <div style="display:flex; align-items:center; gap:0.65rem; padding:0.46rem 0.68rem; background:#f1f5f9; border-radius:0.55rem; border:1px solid #e2e8f0;">
+            <div>
+                <p style="font-size:0.625rem; color:#334155; margin:0; text-transform:uppercase; font-weight:700;">Construction not started</p>
+                <p style="font-size:1.15rem; font-weight:800; color:#0f172a; margin:0;">{{ construction_not_started|default:0 }}</p>
+            </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:0.65rem; padding:0.46rem 0.68rem; background:#eff6ff; border-radius:0.55rem; border:1px solid #bfdbfe;">
+            <div>
+                <p style="font-size:0.625rem; color:#1d4ed8; margin:0; text-transform:uppercase; font-weight:700;">In progress</p>
+                <p style="font-size:1.15rem; font-weight:800; color:#1d4ed8; margin:0;">{{ construction_in_progress|default:0 }}</p>
+            </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:0.65rem; padding:0.46rem 0.68rem; background:#f0fdf4; border-radius:0.55rem; border:1px solid #bbf7d0;">
+            <div>
+                <p style="font-size:0.625rem; color:#166534; margin:0; text-transform:uppercase; font-weight:700;">Completed</p>
+                <p style="font-size:1.15rem; font-weight:800; color:#16a34a; margin:0;">{{ construction_completed|default:0 }}</p>
+            </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:0.65rem; padding:0.46rem 0.68rem; background:#fef2f2; border-radius:0.55rem; border:1px solid #fecaca;">
+            <div>
+                <p style="font-size:0.625rem; color:#991b1b; margin:0; text-transform:uppercase; font-weight:700;">Delayed</p>
+                <p style="font-size:1.15rem; font-weight:800; color:#dc2626; margin:0;">{{ construction_delayed|default:0 }}</p>
+            </div>
+        </div>
+        <p style="margin:0; font-size:0.72rem; color:#64748b; line-height:1.4;">
+            Construction progress starts automatically when a lot is awarded, and is updated by field inspections.
+        </p>
     </div>
 
     <!-- Escalation Alert -->
@@ -175,6 +224,21 @@
 
                     <!-- Unit Status Info -->
                     <p style="margin: 0; font-size: 0.75rem; color: var(--gray-600);">{{ unit.get_status_display }}</p>
+
+                    {% with cp=unit.construction_progress_snapshot %}
+                    {% if cp %}
+                    <p style="margin:0.5rem 0 0; font-size:0.72rem; color:#334155; line-height:1.35;">
+                        <strong style="font-weight:800;">Construction:</strong>
+                        {{ cp.get_stage_display }} · {{ cp.percent_complete }}%
+                        {% if cp.last_inspected_at %}
+                        <span style="color:#64748b;">· Inspected {{ cp.last_inspected_at|date:"M d, Y" }}</span>
+                        {% endif %}
+                        {% if cp.is_delayed %}
+                        <span style="margin-left:0.35rem; color:#dc2626; font-weight:800;">Delayed</span>
+                        {% endif %}
+                    </p>
+                    {% endif %}
+                    {% endwith %}
                 </div>
                 {% endfor %}
             </div>
@@ -228,6 +292,132 @@
     </div>
 </div>
 
+{% if can_create_relocation_site %}
+<div id="createSiteModal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.55); align-items: center; justify-content: center; z-index: 1002; padding: 1rem;"
+    onclick="if (event.target === this) closeCreateSiteModal();">
+    <div onclick="event.stopPropagation();" style="background: white; border-radius: 12px; box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.35); max-width: 520px; width: 100%; border: 1px solid #e2e8f0;">
+        <div style="padding: 1rem 1.15rem; border-bottom: 1px solid #e5e7eb; background: linear-gradient(180deg, #f0f9ff 0%, #f8fafc 100%); display: flex; justify-content: space-between; align-items: flex-start; gap: 0.75rem;">
+            <div>
+                <h2 style="margin: 0; font-size: 1rem; font-weight: 700; color: #0c4a6e;">Create relocation site</h2>
+                <p style="margin: 0.35rem 0 0; font-size: 0.72rem; color: #64748b; line-height: 1.4;">Set up the site first, then add block/lot inventory.</p>
+            </div>
+            <button type="button" onclick="closeCreateSiteModal()" title="Close"
+                style="background: transparent; border: none; font-size: 1.35rem; line-height: 1; cursor: pointer; color: #64748b; padding: 0.1rem 0.25rem;">&times;</button>
+        </div>
+        <form id="createSiteForm" style="padding: 1rem 1.15rem 1.1rem;">
+            {% csrf_token %}
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.65rem;margin-bottom:0.75rem;">
+                <div>
+                    <label for="siteNameInput" style="display:block;font-size:0.68rem;font-weight:600;color:#374151;margin-bottom:0.35rem;text-transform:uppercase;letter-spacing:0.04em;">Site name</label>
+                    <input id="siteNameInput" name="name" type="text" required maxlength="100" placeholder="e.g. GK Cabatangan Relocation Site"
+                        style="width:100%;padding:0.55rem 0.65rem;border:1px solid #cbd5e1;border-radius:8px;font-size:0.82rem;box-sizing:border-box;font-family:inherit;">
+                </div>
+                <div>
+                    <label for="siteCodeInput" style="display:block;font-size:0.68rem;font-weight:600;color:#374151;margin-bottom:0.35rem;text-transform:uppercase;letter-spacing:0.04em;">Site code</label>
+                    <input id="siteCodeInput" name="code" type="text" required maxlength="20" placeholder="e.g. GK-CAB"
+                        style="width:100%;padding:0.55rem 0.65rem;border:1px solid #cbd5e1;border-radius:8px;font-size:0.82rem;box-sizing:border-box;font-family:inherit;">
+                </div>
+            </div>
+            <div style="margin-bottom:0.75rem;">
+                <label for="siteBarangayInput" style="display:block;font-size:0.68rem;font-weight:600;color:#374151;margin-bottom:0.35rem;text-transform:uppercase;letter-spacing:0.04em;">Barangay</label>
+                <select id="siteBarangayInput" name="barangay_id" required style="width:100%;padding:0.55rem 0.65rem;border:1px solid #cbd5e1;border-radius:8px;font-size:0.82rem;box-sizing:border-box;font-family:inherit;">
+                    <option value="">Select barangay...</option>
+                    {% for b in barangays %}
+                    <option value="{{ b.id }}">{{ b.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div style="margin-bottom:0.75rem;">
+                <label for="siteAddressInput" style="display:block;font-size:0.68rem;font-weight:600;color:#374151;margin-bottom:0.35rem;text-transform:uppercase;letter-spacing:0.04em;">Address</label>
+                <textarea id="siteAddressInput" name="address" rows="2" required maxlength="1000" placeholder="Complete site address"
+                    style="width:100%;padding:0.55rem 0.65rem;border:1px solid #cbd5e1;border-radius:8px;font-size:0.82rem;resize:vertical;box-sizing:border-box;font-family:inherit;"></textarea>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.65rem;margin-bottom:0.75rem;">
+                <div>
+                    <label for="siteBlocksInput" style="display:block;font-size:0.68rem;font-weight:600;color:#374151;margin-bottom:0.35rem;text-transform:uppercase;letter-spacing:0.04em;">Total blocks <span style="font-weight:500;text-transform:none;letter-spacing:0;color:#94a3b8;">(optional)</span></label>
+                    <input id="siteBlocksInput" name="total_blocks" type="number" min="0" step="1" placeholder="0"
+                        style="width:100%;padding:0.55rem 0.65rem;border:1px solid #cbd5e1;border-radius:8px;font-size:0.82rem;box-sizing:border-box;font-family:inherit;">
+                </div>
+                <div>
+                    <label for="siteLotsInput" style="display:block;font-size:0.68rem;font-weight:600;color:#374151;margin-bottom:0.35rem;text-transform:uppercase;letter-spacing:0.04em;">Total lots <span style="font-weight:500;text-transform:none;letter-spacing:0;color:#94a3b8;">(optional)</span></label>
+                    <input id="siteLotsInput" name="total_lots" type="number" min="0" step="1" placeholder="0"
+                        style="width:100%;padding:0.55rem 0.65rem;border:1px solid #cbd5e1;border-radius:8px;font-size:0.82rem;box-sizing:border-box;font-family:inherit;">
+                </div>
+            </div>
+            <div style="margin-bottom:0.85rem;">
+                <label for="siteNotesInput" style="display:block;font-size:0.68rem;font-weight:600;color:#374151;margin-bottom:0.35rem;text-transform:uppercase;letter-spacing:0.04em;">Notes <span style="font-weight:500;text-transform:none;letter-spacing:0;color:#94a3b8;">(optional)</span></label>
+                <textarea id="siteNotesInput" name="notes" rows="2" maxlength="500" placeholder="Internal notes"
+                    style="width:100%;padding:0.55rem 0.65rem;border:1px solid #cbd5e1;border-radius:8px;font-size:0.82rem;resize:vertical;box-sizing:border-box;font-family:inherit;"></textarea>
+            </div>
+            <p id="createSiteFormError" style="display:none;margin:0 0 0.65rem;font-size:0.75rem;color:#b91c1c;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:0.5rem 0.65rem;"></p>
+            <div style="display:flex;justify-content:flex-end;gap:0.5rem;padding-top:0.25rem;border-top:1px solid #f1f5f9;">
+                <button type="button" onclick="closeCreateSiteModal()"
+                    style="padding:0.5rem 0.95rem;background:#fff;border:1px solid #d1d5db;border-radius:8px;font-size:0.78rem;font-weight:600;color:#475569;cursor:pointer;">Cancel</button>
+                <button type="submit" id="createSiteSubmitBtn"
+                    style="padding:0.5rem 0.95rem;background:#0ea5e9;color:#fff;border:none;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;">Create site</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<!-- Add housing unit (block + lot) -->
+{% if can_add_housing_unit %}
+<div id="addUnitModal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.55); align-items: center; justify-content: center; z-index: 1001; padding: 1rem;"
+    onclick="if (event.target === this) closeAddUnitModal();">
+    <div onclick="event.stopPropagation();" style="background: white; border-radius: 12px; box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.35); max-width: 420px; width: 100%; border: 1px solid #e2e8f0;">
+        <div style="padding: 1rem 1.15rem; border-bottom: 1px solid #e5e7eb; background: linear-gradient(180deg, #f0f9ff 0%, #f8fafc 100%); display: flex; justify-content: space-between; align-items: flex-start; gap: 0.75rem;">
+            <div>
+                <h2 style="margin: 0; font-size: 1rem; font-weight: 700; color: #0c4a6e;">Add housing unit</h2>
+                <p style="margin: 0.35rem 0 0; font-size: 0.72rem; color: #64748b; line-height: 1.4;">Creates a new block/lot on the inventory. Starts as <strong>Vacant — available</strong>.</p>
+            </div>
+            <button type="button" onclick="closeAddUnitModal()" title="Close"
+                style="background: transparent; border: none; font-size: 1.35rem; line-height: 1; cursor: pointer; color: #64748b; padding: 0.1rem 0.25rem;">&times;</button>
+        </div>
+        <form id="addUnitForm" style="padding: 1rem 1.15rem 1.1rem;">
+            {% csrf_token %}
+            {% if all_sites|length > 1 %}
+            <div style="margin-bottom: 0.85rem;">
+                <label for="addUnitSiteId" style="display: block; font-size: 0.68rem; font-weight: 600; color: #374151; margin-bottom: 0.35rem; text-transform: uppercase; letter-spacing: 0.04em;">Relocation site</label>
+                <select id="addUnitSiteId" name="site_id" required
+                    style="width: 100%; padding: 0.55rem 0.65rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.8rem; font-family: inherit; box-sizing: border-box;">
+                    {% for s in all_sites %}
+                    <option value="{{ s.id }}" {% if site and s.id == site.id %}selected{% endif %}>{{ s.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% else %}
+            <input type="hidden" id="addUnitSiteId" name="site_id" value="{{ site.id }}">
+            {% endif %}
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem; margin-bottom: 0.85rem;">
+                <div>
+                    <label for="addUnitBlock" style="display: block; font-size: 0.68rem; font-weight: 600; color: #374151; margin-bottom: 0.35rem; text-transform: uppercase; letter-spacing: 0.04em;">Block</label>
+                    <input id="addUnitBlock" name="block_number" type="text" required maxlength="10" placeholder="e.g. 1" autocomplete="off"
+                        style="width: 100%; padding: 0.55rem 0.65rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.85rem; box-sizing: border-box; font-family: inherit;">
+                </div>
+                <div>
+                    <label for="addUnitLot" style="display: block; font-size: 0.68rem; font-weight: 600; color: #374151; margin-bottom: 0.35rem; text-transform: uppercase; letter-spacing: 0.04em;">Lot</label>
+                    <input id="addUnitLot" name="lot_number" type="text" required maxlength="10" placeholder="e.g. 5" autocomplete="off"
+                        style="width: 100%; padding: 0.55rem 0.65rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.85rem; box-sizing: border-box; font-family: inherit;">
+                </div>
+            </div>
+            <div style="margin-bottom: 0.85rem;">
+                <label for="addUnitNotes" style="display: block; font-size: 0.68rem; font-weight: 600; color: #374151; margin-bottom: 0.35rem; text-transform: uppercase; letter-spacing: 0.04em;">Location notes <span style="font-weight: 500; text-transform: none; letter-spacing: 0; color: #94a3b8;">(optional)</span></label>
+                <textarea id="addUnitNotes" name="location_notes" rows="2" maxlength="500" placeholder="Landmarks, access, etc."
+                    style="width: 100%; padding: 0.55rem 0.65rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.8rem; resize: vertical; box-sizing: border-box; font-family: inherit; line-height: 1.4;"></textarea>
+            </div>
+            <p id="addUnitFormError" style="display: none; margin: 0 0 0.65rem; font-size: 0.75rem; color: #b91c1c; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 0.5rem 0.65rem;"></p>
+            <div style="display: flex; justify-content: flex-end; gap: 0.5rem; padding-top: 0.25rem; border-top: 1px solid #f1f5f9;">
+                <button type="button" onclick="closeAddUnitModal()"
+                    style="padding: 0.5rem 0.95rem; background: #fff; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.78rem; font-weight: 600; color: #475569; cursor: pointer;">Cancel</button>
+                <button type="submit" id="addUnitSubmitBtn"
+                    style="padding: 0.5rem 0.95rem; background: #0284c7; color: #fff; border: none; border-radius: 8px; font-size: 0.78rem; font-weight: 700; cursor: pointer;">Save unit</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
 <!-- Unit Detail Modal -->
 <div id="unitModal" class="unit-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); align-items: center; justify-content: center; z-index: 1000; padding: 1rem; flex-direction: column;">
     <div class="unit-modal-content" onclick="event.stopPropagation();" style="background: white; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); max-width: 500px; width: 100%; max-height: 90vh; overflow-y: auto;">
@@ -247,6 +437,70 @@
                 <p style="margin: 0 0 0.5rem; font-size: 0.75rem; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em;">Occupant</p>
                 <p id="modalOccupant" style="margin: 0; font-size: 0.95rem; color: #111827; font-weight: 500;">—</p>
                 <p id="modalOccupantProfile" style="margin: 0.25rem 0 0; font-size: 0.8rem; color: #6b7280;"></p>
+            </div>
+
+            <!-- Construction progress (MVP) -->
+            <div id="constructionSection" style="margin-bottom: 1.5rem; background: #eff6ff; border-radius: 8px; padding: 1rem; border: 1px solid #bfdbfe;">
+                <p style="margin: 0 0 0.75rem; font-size: 0.75rem; font-weight: 600; color: #1d4ed8; text-transform: uppercase; letter-spacing: 0.05em;">Construction progress</p>
+                <div style="display:flex; justify-content:space-between; gap:0.75rem; flex-wrap:wrap; align-items:center;">
+                    <div>
+                        <p id="constructionStage" style="margin:0; font-weight:800; color:#0f172a; font-size:0.95rem;">—</p>
+                        <p id="constructionMeta" style="margin:0.25rem 0 0; font-size:0.8rem; color:#64748b;">—</p>
+                    </div>
+                    <div style="min-width: 180px; flex: 0 0 auto;">
+                        <div style="background:#dbeafe; border-radius:999px; height:10px; overflow:hidden;">
+                            <div id="constructionBar" style="height:10px; width:0%; background:#2563eb;"></div>
+                        </div>
+                        <p id="constructionPercent" style="margin:0.35rem 0 0; font-size:0.78rem; font-weight:800; color:#1d4ed8; text-align:right;">0%</p>
+                    </div>
+                </div>
+
+                <div id="constructionTimelineWrap" style="margin-top:0.85rem;">
+                    <p style="margin:0 0 0.4rem; font-size:0.72rem; font-weight:700; color:#334155;">Recent updates</p>
+                    <ul id="constructionTimeline" style="margin:0; padding:0; list-style:none; max-height:150px; overflow:auto; border-top:1px solid #bfdbfe;">
+                    </ul>
+                </div>
+
+                <form id="constructionUpdateForm" style="margin-top:0.9rem; display:none;">
+                    {% csrf_token %}
+                    <input type="hidden" name="unit_id" id="constructionUnitId">
+                    <div style="display:grid; grid-template-columns: 1fr 110px; gap:0.65rem; margin-bottom:0.65rem;">
+                        <div>
+                            <label style="display:block; font-size:0.68rem; font-weight:600; color:#374151; margin-bottom:0.35rem; text-transform:uppercase; letter-spacing:0.04em;">Stage</label>
+                            <select id="constructionStageSelect" name="stage" required style="width:100%; padding:0.55rem 0.65rem; border:1px solid #cbd5e1; border-radius:8px; font-size:0.8rem; font-family:inherit; box-sizing:border-box;">
+                                <option value="not_started">Not started</option>
+                                <option value="site_clearing">Site clearing</option>
+                                <option value="foundation">Foundation</option>
+                                <option value="wall_framing">Wall framing</option>
+                                <option value="roofing">Roofing</option>
+                                <option value="finishing">Finishing</option>
+                                <option value="completed">Completed / Occupied</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display:block; font-size:0.68rem; font-weight:600; color:#374151; margin-bottom:0.35rem; text-transform:uppercase; letter-spacing:0.04em;">Percent</label>
+                            <input id="constructionPercentInput" name="percent_complete" type="number" min="0" max="100" step="1" required
+                                style="width:100%; padding:0.55rem 0.65rem; border:1px solid #cbd5e1; border-radius:8px; font-size:0.85rem; box-sizing:border-box; font-family:inherit;">
+                        </div>
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.65rem; margin-bottom:0.65rem;">
+                        <div>
+                            <label style="display:block; font-size:0.68rem; font-weight:600; color:#374151; margin-bottom:0.35rem; text-transform:uppercase; letter-spacing:0.04em;">Visit date</label>
+                            <input id="constructionVisitDate" name="visit_date" type="date" required
+                                style="width:100%; padding:0.55rem 0.65rem; border:1px solid #cbd5e1; border-radius:8px; font-size:0.85rem; box-sizing:border-box; font-family:inherit;">
+                        </div>
+                        <div style="display:flex; align-items:flex-end; justify-content:flex-end;">
+                            <button type="submit" id="constructionSubmitBtn"
+                                style="padding:0.55rem 0.95rem; background:#2563eb; color:#fff; border:none; border-radius:8px; font-size:0.78rem; font-weight:800; cursor:pointer;">Save update</button>
+                        </div>
+                    </div>
+                    <div style="margin-bottom:0.65rem;">
+                        <label style="display:block; font-size:0.68rem; font-weight:600; color:#374151; margin-bottom:0.35rem; text-transform:uppercase; letter-spacing:0.04em;">Notes (optional)</label>
+                        <textarea id="constructionNotes" name="notes" rows="2" maxlength="2000"
+                            style="width:100%; padding:0.55rem 0.65rem; border:1px solid #cbd5e1; border-radius:8px; font-size:0.8rem; resize:vertical; box-sizing:border-box; font-family:inherit; line-height:1.4;"></textarea>
+                    </div>
+                    <p id="constructionFormError" style="display:none;margin:0; font-size:0.75rem; color:#b91c1c; background:#fef2f2; border:1px solid #fecaca; border-radius:8px; padding:0.5rem 0.65rem;"></p>
+                </form>
             </div>
 
             <!-- Weekly site occupancy report -->
@@ -295,6 +549,144 @@
 <!-- Styles & Scripts -->
 <script>
 let currentUnitId = null;
+
+function getCookie(name) {
+    const v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
+    return v ? decodeURIComponent(v[2]) : null;
+}
+
+function openCreateSiteModal() {
+    const m = document.getElementById('createSiteModal');
+    if (!m) return;
+    const err = document.getElementById('createSiteFormError');
+    if (err) { err.style.display = 'none'; err.textContent = ''; }
+    m.style.display = 'flex';
+    const nm = document.getElementById('siteNameInput');
+    if (nm) setTimeout(() => nm.focus(), 50);
+}
+
+function closeCreateSiteModal() {
+    const m = document.getElementById('createSiteModal');
+    if (!m) return;
+    m.style.display = 'none';
+    const f = document.getElementById('createSiteForm');
+    if (f) f.reset();
+    const err = document.getElementById('createSiteFormError');
+    if (err) { err.style.display = 'none'; err.textContent = ''; }
+}
+
+{% if can_create_relocation_site %}
+document.getElementById('createSiteForm')?.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const errEl = document.getElementById('createSiteFormError');
+    const btn = document.getElementById('createSiteSubmitBtn');
+    const body = new URLSearchParams();
+    const csrfInput = document.querySelector('#createSiteForm input[name="csrfmiddlewaretoken"]');
+    body.append('csrfmiddlewaretoken', (csrfInput && csrfInput.value) || getCookie('csrftoken') || '');
+    body.append('name', (document.getElementById('siteNameInput')?.value || '').trim());
+    body.append('code', (document.getElementById('siteCodeInput')?.value || '').trim().toUpperCase());
+    body.append('barangay_id', (document.getElementById('siteBarangayInput')?.value || '').trim());
+    body.append('address', (document.getElementById('siteAddressInput')?.value || '').trim());
+    body.append('total_blocks', (document.getElementById('siteBlocksInput')?.value || '0').trim());
+    body.append('total_lots', (document.getElementById('siteLotsInput')?.value || '0').trim());
+    body.append('notes', (document.getElementById('siteNotesInput')?.value || '').trim());
+    errEl.style.display = 'none';
+    btn.disabled = true;
+    try {
+        const res = await fetch('{% url "units:create_relocation_site" request.user.position %}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: body.toString(),
+        });
+        const data = await res.json();
+        if (data.success) {
+            closeCreateSiteModal();
+            window.location.reload();
+        } else {
+            errEl.textContent = data.error || 'Could not create relocation site.';
+            errEl.style.display = 'block';
+        }
+    } catch (ex) {
+        errEl.textContent = ex.message || 'Network error.';
+        errEl.style.display = 'block';
+    } finally {
+        btn.disabled = false;
+    }
+});
+{% endif %}
+
+function openAddUnitModal() {
+    const m = document.getElementById('addUnitModal');
+    if (!m) return;
+    const err = document.getElementById('addUnitFormError');
+    if (err) { err.style.display = 'none'; err.textContent = ''; }
+    m.style.display = 'flex';
+    const b = document.getElementById('addUnitBlock');
+    if (b) setTimeout(() => b.focus(), 50);
+}
+
+function closeAddUnitModal() {
+    const m = document.getElementById('addUnitModal');
+    if (!m) return;
+    m.style.display = 'none';
+    const f = document.getElementById('addUnitForm');
+    if (f) f.reset();
+    const err = document.getElementById('addUnitFormError');
+    if (err) { err.style.display = 'none'; err.textContent = ''; }
+    {% if all_sites|length <= 1 %}
+    const hid = document.getElementById('addUnitSiteId');
+    if (hid && hid.type === 'hidden') hid.value = '{{ site.id }}';
+    {% endif %}
+}
+
+{% if can_add_housing_unit %}
+document.getElementById('addUnitForm')?.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const errEl = document.getElementById('addUnitFormError');
+    const btn = document.getElementById('addUnitSubmitBtn');
+    const siteField = document.getElementById('addUnitSiteId');
+    const body = new URLSearchParams();
+    const csrfInput = document.querySelector('#addUnitForm input[name="csrfmiddlewaretoken"]');
+    body.append('csrfmiddlewaretoken', (csrfInput && csrfInput.value) || getCookie('csrftoken') || '');
+    body.append('site_id', siteField ? siteField.value : '');
+    body.append('block_number', (document.getElementById('addUnitBlock')?.value || '').trim());
+    body.append('lot_number', (document.getElementById('addUnitLot')?.value || '').trim());
+    body.append('location_notes', (document.getElementById('addUnitNotes')?.value || '').trim());
+    errEl.style.display = 'none';
+    btn.disabled = true;
+    try {
+        const res = await fetch('{% url "units:create_housing_unit" request.user.position %}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: body.toString(),
+        });
+        const data = await res.json();
+        if (data.success) {
+            closeAddUnitModal();
+            window.location.reload();
+        } else {
+            errEl.textContent = data.error || 'Could not add unit.';
+            errEl.style.display = 'block';
+        }
+    } catch (ex) {
+        errEl.textContent = ex.message || 'Network error.';
+        errEl.style.display = 'block';
+    } finally {
+        btn.disabled = false;
+    }
+});
+{% endif %}
+
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && document.getElementById('createSiteModal')?.style.display === 'flex') {
+        closeCreateSiteModal();
+        return;
+    }
+    if (e.key === 'Escape' && document.getElementById('addUnitModal')?.style.display === 'flex') {
+        closeAddUnitModal();
+        return;
+    }
+});
 
 function switchView(view) {
     const gridView = document.getElementById('gridView-content');
@@ -365,6 +757,66 @@ function openUnitModal(unitId) {
                 document.getElementById('modalUnitTitle').textContent = `Block ${unit.block}, Lot ${unit.lot}`;
                 document.getElementById('modalUnitStatus').textContent = unit.status;
                 document.getElementById('modalOccupant').textContent = unit.occupant_name || '—';
+                document.getElementById('constructionUnitId').value = unit.id;
+
+                // Construction progress
+                const c = unit.construction;
+                const stageEl = document.getElementById('constructionStage');
+                const metaEl = document.getElementById('constructionMeta');
+                const barEl = document.getElementById('constructionBar');
+                const pctEl = document.getElementById('constructionPercent');
+                const form = document.getElementById('constructionUpdateForm');
+                const timeline = document.getElementById('constructionTimeline');
+                const formErr = document.getElementById('constructionFormError');
+
+                if (formErr) { formErr.style.display = 'none'; formErr.textContent = ''; }
+                if (c) {
+                    stageEl.textContent = c.stage_label || '—';
+                    const inspected = c.last_inspected_at ? ('Last inspected: ' + (c.last_inspected_at || '').slice(0, 10)) : 'No inspection yet';
+                    metaEl.textContent = inspected + (c.is_delayed ? ' · Delayed' : '');
+                    const pct = Math.max(0, Math.min(100, parseInt(c.percent_complete || 0)));
+                    barEl.style.width = pct + '%';
+                    pctEl.textContent = pct + '%';
+                } else {
+                    stageEl.textContent = '—';
+                    metaEl.textContent = 'No construction record yet (award the lot first).';
+                    barEl.style.width = '0%';
+                    pctEl.textContent = '0%';
+                }
+
+                // Timeline list
+                timeline.innerHTML = '';
+                (unit.construction_updates || []).forEach((u) => {
+                    const li = document.createElement('li');
+                    li.style.padding = '0.45rem 0';
+                    li.style.borderBottom = '1px solid #bfdbfe';
+                    li.innerHTML = `<div style="display:flex;justify-content:space-between;gap:0.65rem;flex-wrap:wrap;">\n` +
+                        `<strong style="font-size:0.78rem;color:#0f172a;">${u.stage_label} · ${u.percent_complete}%</strong>` +
+                        `<span style="font-size:0.72rem;color:#64748b;">${u.visit_date}</span>` +
+                        `</div>` +
+                        (u.notes ? `<div style="font-size:0.75rem;color:#334155;margin-top:0.15rem;line-height:1.35;">${u.notes}</div>` : '');
+                    timeline.appendChild(li);
+                });
+                if (!(unit.construction_updates || []).length) {
+                    const li = document.createElement('li');
+                    li.style.padding = '0.45rem 0';
+                    li.style.color = '#64748b';
+                    li.style.fontSize = '0.75rem';
+                    li.textContent = 'No updates yet.';
+                    timeline.appendChild(li);
+                }
+
+                // Show update form only for authorized roles & only when record exists (occupied/awarded)
+                if (unit.can_update_construction && c) {
+                    form.style.display = 'block';
+                    const vd = document.getElementById('constructionVisitDate');
+                    if (vd && !vd.value) {
+                        const today = new Date();
+                        vd.value = today.toISOString().slice(0, 10);
+                    }
+                } else {
+                    form.style.display = 'none';
+                }
 
                 // Get weekly report data if available
                 if (unit.weekly_report) {
@@ -410,6 +862,40 @@ function awardToNextStandby() {
 
 document.addEventListener('keydown', e => {
     if (e.key === 'Escape') closeUnitModal();
+});
+
+// Save construction progress update
+document.getElementById('constructionUpdateForm')?.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const errEl = document.getElementById('constructionFormError');
+    const btn = document.getElementById('constructionSubmitBtn');
+    const body = new URLSearchParams();
+    const csrfInput = document.querySelector('#constructionUpdateForm input[name="csrfmiddlewaretoken"]');
+    body.append('csrfmiddlewaretoken', (csrfInput && csrfInput.value) || getCookie('csrftoken') || '');
+    body.append('unit_id', (document.getElementById('constructionUnitId')?.value || '').trim());
+    body.append('stage', (document.getElementById('constructionStageSelect')?.value || '').trim());
+    body.append('percent_complete', (document.getElementById('constructionPercentInput')?.value || '').trim());
+    body.append('visit_date', (document.getElementById('constructionVisitDate')?.value || '').trim());
+    body.append('notes', (document.getElementById('constructionNotes')?.value || '').trim());
+    if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
+    btn.disabled = true;
+    try {
+        const res = await fetch('{% url "units:add_construction_update" request.user.position %}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: body.toString(),
+        });
+        const data = await res.json();
+        if (data.success) {
+            openUnitModal(currentUnitId);
+        } else {
+            if (errEl) { errEl.textContent = data.error || 'Unable to save update.'; errEl.style.display = 'block'; }
+        }
+    } catch (ex) {
+        if (errEl) { errEl.textContent = ex.message || 'Network error.'; errEl.style.display = 'block'; }
+    } finally {
+        btn.disabled = false;
+    }
 });
 </script>
 

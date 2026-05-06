@@ -138,15 +138,23 @@ def check_blacklist_module2(
     return False, None
 
 
+_APPLICATIONS_SMS_TRIGGERS = frozenset({
+    'eligibility_check_failed',
+    'lot_awarded',
+    'lot_awarding_queue_notify',
+})
+
+
 def send_sms_for_applications(recipient_phone, message_content, trigger_event, applicant=None):
     """
     Module 2 SMS gateway wrapper.
 
-    Applicant-facing SMS is only sent for eligibility checklist failures when
-    staff opts in (`eligibility_check_failed`). Other triggers are not sent via
-    this module.
+    Allowed triggers:
+    - eligibility_check_failed (checklist SMS opt-in)
+    - lot_awarded (post–lot-award congratulations / office visit)
+    - lot_awarding_queue_notify (staff bulk notify from Lot Awarding queue; no schedule stored)
     """
-    if trigger_event != 'eligibility_check_failed':
+    if trigger_event not in _APPLICATIONS_SMS_TRIGGERS:
         return False
     return _base_send_sms(
         recipient_phone,

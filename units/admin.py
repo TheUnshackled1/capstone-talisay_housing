@@ -3,14 +3,24 @@ from .models import (
     RelocationSite, HousingUnit, WeeklyReport, LotAward,
     ElectricityConnection, Blacklist,
     CaseRecord, CaseUpdate, SMSLog,
+    ConstructionProgress, ConstructionProgressUpdate,
 )
+
+
+class HousingUnitInline(admin.TabularInline):
+    model = HousingUnit
+    extra = 1
+    fields = ('block_number', 'lot_number', 'status', 'location_notes')
+    ordering = ('block_number', 'lot_number')
+    show_change_link = True
 
 
 @admin.register(RelocationSite)
 class RelocationSiteAdmin(admin.ModelAdmin):
-    list_display = ('name', 'code', 'barangay', 'total_lots', 'is_active')
+    list_display = ('name', 'code', 'barangay', 'total_lots', 'occupied_units_count', 'vacant_units_count', 'is_active')
     list_filter = ('is_active', 'barangay')
     search_fields = ('name', 'code', 'address')
+    inlines = [HousingUnitInline]
 
     fieldsets = (
         ('🏗️ SITE INFORMATION', {
@@ -108,6 +118,37 @@ class LotAwardAdmin(admin.ModelAdmin):
         }),
         ('📝 NOTES', {
             'fields': ('notes',),
+            'classes': ('collapse',),
+        }),
+    )
+
+
+class ConstructionProgressUpdateInline(admin.TabularInline):
+    model = ConstructionProgressUpdate
+    extra = 0
+    fields = ('visit_date', 'stage', 'percent_complete', 'notes', 'created_by', 'created_at')
+    readonly_fields = ('created_at',)
+    ordering = ('-visit_date', '-created_at')
+
+
+@admin.register(ConstructionProgress)
+class ConstructionProgressAdmin(admin.ModelAdmin):
+    list_display = ('lot_award', 'stage', 'percent_complete', 'is_delayed', 'last_inspected_at', 'updated_by', 'updated_at')
+    list_filter = ('stage', 'is_delayed')
+    search_fields = ('lot_award__application__applicant__full_name', 'lot_award__unit__site__name')
+    readonly_fields = ('created_at', 'updated_at')
+    inlines = [ConstructionProgressUpdateInline]
+
+    fieldsets = (
+        ('🏗️ CONSTRUCTION SNAPSHOT', {
+            'fields': ('lot_award', 'stage', 'percent_complete', 'is_delayed'),
+        }),
+        ('📅 INSPECTIONS', {
+            'fields': ('started_at', 'expected_completion_date', 'last_inspected_at'),
+            'classes': ('collapse',),
+        }),
+        ('🔏 AUDIT', {
+            'fields': ('updated_by', 'created_at', 'updated_at'),
             'classes': ('collapse',),
         }),
     )

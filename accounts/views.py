@@ -141,7 +141,7 @@ def _m2_signatory_pipeline_counts():
         'draft_forms': Application.objects.filter(status='draft').count(),
         'awaiting_oic': Application.objects.filter(status='completed').exclude(id__in=signed_done_ids).count(),
         'fully_approved': Application.objects.filter(
-            status__in=['oic_signed', 'standby', 'awarded'],
+            status__in=['standby', 'awarded'],
         ).count(),
     }
 
@@ -357,7 +357,7 @@ def dashboard_oic(request):
     pipeline_stages = [
         ('draft', 'Form Generated'),
         ('completed', 'Applicant Signed'),
-        ('oic_signed', 'OIC Approved'),
+        ('standby', 'Fully Approved'),
         ('standby', 'On Standby'),
         ('awarded', 'Lot Awarded'),
     ]
@@ -634,7 +634,7 @@ def dashboard_second_member(request):
     # Shared stat card data (for dashboard headers)
     # Applications fully approved by OIC (final signature)
     awaiting_signature_count = Application.objects.filter(
-        status='oic_signed'
+        status='standby'
     ).count()
 
     # Total housing units
@@ -1335,7 +1335,7 @@ def dashboard_fourth_member(request):
         return redirect('accounts:dashboard')
 
     total_applicants = Applicant.objects.count()
-    awaiting_signature_count = Application.objects.filter(status='oic_signed').count()
+    awaiting_signature_count = Application.objects.filter(status='standby').count()
     total_housing_units = HousingUnit.objects.count()
     this_month_start = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     approved_this_month = Application.objects.filter(
@@ -1442,7 +1442,7 @@ def dashboard_fifth_member(request):
         return redirect('accounts:dashboard')
 
     total_applicants = Applicant.objects.count()
-    awaiting_signature_count = Application.objects.filter(status='oic_signed').count()
+    awaiting_signature_count = Application.objects.filter(status='standby').count()
     total_housing_units = HousingUnit.objects.count()
     this_month_start = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     approved_this_month = Application.objects.filter(

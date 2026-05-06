@@ -1,8 +1,8 @@
 from django.db import migrations, models
 
 
-def migrate_head_signed_to_oic_signed(apps, schema_editor):
-    """Convert any existing head_signed applications to oic_signed (now the final-approved status)."""
+def migrate_head_signed_to_legacy_full_approval(apps, schema_editor):
+    """Convert any existing head_signed applications to the legacy full-approval status."""
     Application = apps.get_model('applications', 'Application')
     Application.objects.filter(status='head_signed').update(status='oic_signed')
 
@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(migrate_head_signed_to_oic_signed, reverse_noop),
+        migrations.RunPython(migrate_head_signed_to_legacy_full_approval, reverse_noop),
         migrations.AlterField(
             model_name='application',
             name='status',

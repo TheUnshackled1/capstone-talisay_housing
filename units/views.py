@@ -3,7 +3,7 @@ from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods, require_POST
-from django.db import transaction, models
+from django.db import transaction, models, IntegrityError
 from django.utils import timezone
 from django.contrib import messages
 from datetime import timedelta, datetime
@@ -11,13 +11,19 @@ from collections import OrderedDict
 from functools import wraps
 import json
 
-from intake.models import Applicant
+from intake.models import Applicant, Barangay
 from applications.models import QueueEntry, Application
 from documents.models import ElectricityConnection
 from intake.utils import send_sms
 from units.models import (
     HousingUnit, LotAward, RelocationSite, CaseRecord, CaseUpdate, WeeklyReport,
+    ConstructionProgress,
 )
+from accounts.models import FIELD_DESK_POSITIONS
+
+# Module 4 inventory: who may add housing units (block/lot rows)
+_MODULE4_ADD_HOUSING_UNIT_POSITIONS = frozenset({'fourth_member', 'second_member'})
+_MODULE4_CREATE_SITE_POSITIONS = frozenset({'fourth_member', 'second_member'})
 
 
 # =============================================================================
@@ -122,6 +128,50 @@ def housing_units_monitoring(request, position):
     for block in blocks:
         units_by_block[block] = units.filter(block_number=block)
 
+    from applications.views import get_module2_permissions
+
+    permissions = get_module2_permissions(request.user)
+    can_create_relocation_site = request.user.position in _MODULE4_CREATE_SITE_POSITIONS
+    can_add_housing_unit = (
+        request.user.position in _MODULE4_ADD_HOUSING_UNIT_POSITIONS
+        and not no_relocation_sites
+        and site is not None
+    )
+
+    # Construction monitoring rollups + per-unit snapshot (MVP)
+    construction_not_started = 0
+    construction_in_progress = 0
+    construction_completed = 0
+    construction_delayed = 0
+    progress_by_unit_id = {}
+
+    if not no_relocation_sites and units.exists():
+        progress_qs = (
+            ConstructionProgress.objects.filter(
+                lot_award__unit__in=units,
+                lot_award__status='active',
+            )
+            .select_related('lot_award__unit')
+        )
+        for p in progress_qs:
+            uid = getattr(p.lot_award, 'unit_id', None)
+            if uid and uid not in progress_by_unit_id:
+                progress_by_unit_id[uid] = p
+
+        for u in units:
+            p = progress_by_unit_id.get(u.id)
+            setattr(u, '_construction_progress', p)
+            if not p:
+                continue
+            if p.is_delayed:
+                construction_delayed += 1
+            if p.stage == 'not_started' or p.percent_complete <= 0:
+                construction_not_started += 1
+            elif p.stage == 'completed' or p.percent_complete >= 100:
+                construction_completed += 1
+            else:
+                construction_in_progress += 1
+
     # Prepare context
     context = {
         'site': site,
@@ -142,9 +192,206 @@ def housing_units_monitoring(request, position):
         'has_escalation_alerts': has_final_notice_alerts,
         'escalation_message': critical_alert_message,
         'view_mode': request.GET.get('view', 'grid'),
+        'permissions': permissions,
+        'can_add_housing_unit': can_add_housing_unit,
+        'can_create_relocation_site': can_create_relocation_site,
+        'barangays': Barangay.objects.filter(is_active=True).order_by('name'),
+        'construction_not_started': construction_not_started,
+        'construction_in_progress': construction_in_progress,
+        'construction_completed': construction_completed,
+        'construction_delayed': construction_delayed,
     }
 
     return render(request, 'units/housing_units_monitoring.html', context)
+
+
+@login_required
+@verify_position
+def construction_monitoring(request, position):
+    """
+    Construction Monitoring dashboard (MVP): view awarded units and current construction stage/percent.
+    """
+    # Same site resolution logic as housing_units_monitoring
+    site_id = request.GET.get('site_id')
+    site = None
+    all_sites = RelocationSite.objects.all()
+
+    if site_id:
+        site = RelocationSite.objects.filter(id=site_id).first()
+    else:
+        sites = request.user.assigned_sites.all()
+        site = sites.first() if sites.exists() else None
+
+    no_relocation_sites = False
+    if not site:
+        if all_sites.exists():
+            site = all_sites.first()
+        else:
+            no_relocation_sites = True
+
+    from applications.views import get_module2_permissions
+    permissions = get_module2_permissions(request.user)
+
+    if no_relocation_sites:
+        progress_rows = []
+    else:
+        progress_rows = (
+            ConstructionProgress.objects
+            .filter(lot_award__status='active', lot_award__unit__site=site)
+            .select_related('lot_award__unit__site', 'lot_award__application__applicant')
+            .order_by('lot_award__unit__block_number', 'lot_award__unit__lot_number')
+        )
+
+    # Simple filters
+    status_filter = (request.GET.get('status') or 'all').strip()
+    if status_filter == 'not_started':
+        progress_rows = [p for p in progress_rows if p.stage == 'not_started' or p.percent_complete <= 0]
+    elif status_filter == 'in_progress':
+        progress_rows = [p for p in progress_rows if 0 < (p.percent_complete or 0) < 100 and p.stage != 'completed']
+    elif status_filter == 'completed':
+        progress_rows = [p for p in progress_rows if p.stage == 'completed' or (p.percent_complete or 0) >= 100]
+    elif status_filter == 'delayed':
+        progress_rows = [p for p in progress_rows if p.is_delayed]
+
+    context = {
+        'site': site,
+        'all_sites': all_sites,
+        'no_relocation_sites': no_relocation_sites,
+        'permissions': permissions,
+        'status_filter': status_filter,
+        'progress_rows': list(progress_rows),
+    }
+    return render(request, 'units/construction_monitoring.html', context)
+
+
+@login_required
+@verify_position
+@require_POST
+def create_relocation_site(request, position):
+    """
+    Bootstrap endpoint for fresh databases: create first relocation site from Module 4 UI.
+    """
+    if request.user.position not in _MODULE4_CREATE_SITE_POSITIONS:
+        return JsonResponse(
+            {'success': False, 'error': 'Only housing staff (4th / 2nd Member) can create relocation sites.'},
+            status=403,
+        )
+
+    name = (request.POST.get('name') or '').strip()[:100]
+    code = (request.POST.get('code') or '').strip()[:20].upper()
+    address = (request.POST.get('address') or '').strip()
+    barangay_id = (request.POST.get('barangay_id') or '').strip()
+    notes = (request.POST.get('notes') or '').strip()[:500]
+    try:
+        total_blocks = int((request.POST.get('total_blocks') or '0').strip() or 0)
+        total_lots = int((request.POST.get('total_lots') or '0').strip() or 0)
+    except ValueError:
+        return JsonResponse({'success': False, 'error': 'Total blocks/lots must be whole numbers.'}, status=400)
+
+    if not name or not code or not address or not barangay_id:
+        return JsonResponse(
+            {'success': False, 'error': 'Name, code, barangay, and address are required.'},
+            status=400,
+        )
+
+    barangay = Barangay.objects.filter(id=barangay_id, is_active=True).first()
+    if not barangay:
+        return JsonResponse({'success': False, 'error': 'Invalid barangay.'}, status=400)
+
+    if RelocationSite.objects.filter(name__iexact=name).exists():
+        return JsonResponse({'success': False, 'error': 'A relocation site with this name already exists.'}, status=400)
+    if RelocationSite.objects.filter(code__iexact=code).exists():
+        return JsonResponse({'success': False, 'error': 'Site code already exists.'}, status=400)
+
+    try:
+        site = RelocationSite.objects.create(
+            name=name,
+            code=code,
+            address=address,
+            barangay=barangay,
+            total_blocks=max(total_blocks, 0),
+            total_lots=max(total_lots, 0),
+            is_active=True,
+            notes=notes,
+            caretaker=request.user,
+        )
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+    return JsonResponse(
+        {
+            'success': True,
+            'message': f'Relocation site created: {site.name}.',
+            'site': {'id': str(site.id), 'name': site.name, 'code': site.code},
+        }
+    )
+
+
+@login_required
+@verify_position
+@require_POST
+def create_housing_unit(request, position):
+    """
+    Add a new HousingUnit (block + lot) to a relocation site inventory.
+    New units start as Vacant — available.
+
+    URL: /units/housing-units/<position>/unit/create/
+
+    POST: site_id, block_number, lot_number, location_notes (optional)
+    """
+    if request.user.position not in _MODULE4_ADD_HOUSING_UNIT_POSITIONS:
+        return JsonResponse(
+            {'success': False, 'error': 'Only housing staff (4th / 2nd Member) can add units.'},
+            status=403,
+        )
+
+    site_id = (request.POST.get('site_id') or '').strip()
+    block_number = (request.POST.get('block_number') or '').strip()[:10]
+    lot_number = (request.POST.get('lot_number') or '').strip()[:10]
+    location_notes = (request.POST.get('location_notes') or '').strip()[:500]
+
+    if not block_number or not lot_number:
+        return JsonResponse(
+            {'success': False, 'error': 'Block and lot are required.'},
+            status=400,
+        )
+
+    site = RelocationSite.objects.filter(id=site_id, is_active=True).first()
+    if not site:
+        return JsonResponse(
+            {'success': False, 'error': 'Invalid or inactive relocation site.'},
+            status=400,
+        )
+
+    try:
+        unit = HousingUnit.objects.create(
+            site=site,
+            block_number=block_number,
+            lot_number=lot_number,
+            status='Vacant — available',
+            location_notes=location_notes,
+        )
+    except IntegrityError:
+        return JsonResponse(
+            {
+                'success': False,
+                'error': (
+                    f'Block {block_number} Lot {lot_number} already exists at {site.name}. '
+                    'Use different numbers or edit the existing unit.'
+                ),
+            },
+            status=400,
+        )
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+    return JsonResponse(
+        {
+            'success': True,
+            'message': f'Added Block {block_number} Lot {lot_number} at {site.name}.',
+            'unit': {'id': str(unit.id), 'block': block_number, 'lot': lot_number},
+        }
+    )
 
 
 @login_required
@@ -181,6 +428,27 @@ def get_unit_details(request, position, unit_id):
         except HousingUnit.weekly_report.RelatedObjectDoesNotExist:
             weekly_report = None
 
+        # Construction snapshot + last updates (MVP)
+        progress = (
+            ConstructionProgress.objects.filter(lot_award__unit=unit, lot_award__status='active')
+            .select_related('updated_by')
+            .first()
+        )
+        updates = []
+        if progress:
+            for u in progress.updates.select_related('created_by').all()[:10]:
+                updates.append({
+                    'stage': u.stage,
+                    'stage_label': u.get_stage_display(),
+                    'percent_complete': u.percent_complete,
+                    'visit_date': u.visit_date.isoformat(),
+                    'notes': (u.notes or ''),
+                    'created_by': u.created_by.get_full_name() if u.created_by else '—',
+                    'created_at': u.created_at.isoformat(),
+                })
+
+        can_update_construction = request.user.position in (_MODULE4_ADD_HOUSING_UNIT_POSITIONS | FIELD_DESK_POSITIONS)
+
         return JsonResponse({
             'success': True,
             'unit': {
@@ -193,6 +461,18 @@ def get_unit_details(request, position, unit_id):
                 'is_escalated': unit.is_escalated,
                 'notice': notice_info,
                 'weekly_report': weekly_report,
+                'construction': (
+                    {
+                        'stage': progress.stage,
+                        'stage_label': progress.get_stage_display(),
+                        'percent_complete': progress.percent_complete,
+                        'last_inspected_at': progress.last_inspected_at.isoformat() if progress.last_inspected_at else None,
+                        'is_delayed': progress.is_delayed,
+                        'expected_completion_date': progress.expected_completion_date.isoformat() if progress.expected_completion_date else None,
+                    } if progress else None
+                ),
+                'construction_updates': updates,
+                'can_update_construction': can_update_construction,
             }
         })
 
@@ -292,6 +572,73 @@ def issue_compliance_notice(request, position):
             'success': False,
             'error': str(e)
         }, status=500)
+
+
+@login_required
+@verify_position
+@require_POST
+def add_construction_update(request, position):
+    """
+    Append a construction progress update (timeline) for an occupied unit with an active lot award.
+    """
+    if request.user.position not in (_MODULE4_ADD_HOUSING_UNIT_POSITIONS | FIELD_DESK_POSITIONS):
+        return JsonResponse({'success': False, 'error': 'Access denied.'}, status=403)
+
+    unit_id = (request.POST.get('unit_id') or '').strip()
+    stage = (request.POST.get('stage') or '').strip()
+    percent_raw = (request.POST.get('percent_complete') or '').strip()
+    visit_date_raw = (request.POST.get('visit_date') or '').strip()
+    notes = (request.POST.get('notes') or '').strip()[:2000]
+
+    if not unit_id or not stage or not percent_raw or not visit_date_raw:
+        return JsonResponse({'success': False, 'error': 'Missing required fields.'}, status=400)
+
+    try:
+        percent = int(percent_raw)
+    except ValueError:
+        return JsonResponse({'success': False, 'error': 'Percent must be a whole number.'}, status=400)
+
+    if percent < 0 or percent > 100:
+        return JsonResponse({'success': False, 'error': 'Percent must be between 0 and 100.'}, status=400)
+
+    try:
+        visit_date = datetime.fromisoformat(visit_date_raw).date()
+    except Exception:
+        return JsonResponse({'success': False, 'error': 'Visit date must be YYYY-MM-DD.'}, status=400)
+
+    if stage not in dict(ConstructionProgress.STAGE_CHOICES):
+        return JsonResponse({'success': False, 'error': 'Invalid stage.'}, status=400)
+
+    unit = HousingUnit.objects.filter(id=unit_id).first()
+    if not unit:
+        return JsonResponse({'success': False, 'error': 'Unit not found.'}, status=404)
+
+    active_award = unit.lot_awards.filter(status='active').first()
+    if not active_award:
+        return JsonResponse({'success': False, 'error': 'No active lot award for this unit.'}, status=400)
+
+    progress, _ = ConstructionProgress.objects.get_or_create(
+        lot_award=active_award,
+        defaults={'stage': 'not_started', 'percent_complete': 0, 'updated_by': request.user},
+    )
+
+    with transaction.atomic():
+        from units.models import ConstructionProgressUpdate
+        ConstructionProgressUpdate.objects.create(
+            progress=progress,
+            stage=stage,
+            percent_complete=percent,
+            visit_date=visit_date,
+            notes=notes,
+            created_by=request.user,
+        )
+        progress.stage = stage
+        progress.percent_complete = percent
+        progress.last_inspected_at = timezone.now()
+        progress.updated_by = request.user
+        progress.save(update_fields=['stage', 'percent_complete', 'last_inspected_at', 'updated_by', 'updated_at'])
+
+    return JsonResponse({'success': True})
 
 
 @login_required

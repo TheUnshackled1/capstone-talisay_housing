@@ -51,6 +51,11 @@ urlpatterns = [
 
     # Lot awarding (Jocel, Joie)
     path('staff/<str:position>/award-lot/', views.award_lot, name='award_lot'),
+    path(
+        'staff/<str:position>/lot-awarding-queue/bulk-notify-sms/',
+        views.lot_awarding_bulk_notify_sms,
+        name='lot_awarding_bulk_notify_sms',
+    ),
 
     # OIC full approval after applicant-signed scan (same handler as documents API alias)
     path('staff/<str:position>/routing/update/', views.update_routing, name='update_routing'),

@@ -11,7 +11,6 @@ class Application(models.Model):
     STATUS_CHOICES = [
         ('draft', 'Draft - Form Generated'),
         ('completed', 'Completed - Signed by Applicant'),
-        ('oic_signed', 'Signed by OIC - Fully Approved'),
         ('standby', 'Fully Approved - On Standby'),
         ('awarded', 'Lot Awarded'),
     ]

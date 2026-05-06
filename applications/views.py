@@ -27,6 +27,7 @@ from documents.models import (
 from .models import (
     Application, QueueEntry, CDRRMOCertificationProxy, CDRRMOCertification, FieldVerificationPhoto, EligibilityCheckDecision,
 )
+from units.models import HousingUnit, LotAward, RelocationSite, ConstructionProgress
 from .form_pipeline import applicant_has_signed_application_payload
 from .utils import check_blacklist_module2, send_sms_for_applications
 from .application_form_pdf import build_filled_application_pdf
@@ -132,7 +133,7 @@ def get_module2_permissions(user):
     
     Module 2 Staff Roles:
     - Jocel (4th Member): Verify documents, generate forms, record lot awarding
-    - Joie (2nd Member): Supervisor, electricity tracking, routing backup
+    - Joie (2nd Member): Supervisor, electricity tracking, routing backup, lot awarding backup
     - Laarni (5th Member): Electricity tracking
     - Victor (OIC): Final signature
     """
@@ -160,13 +161,14 @@ def get_module2_permissions(user):
             'role_description': 'Document Verification & Lot Awarding',
         })
     elif position == 'second_member':
-        # Joie - Supervisor + Electricity
+        # Joie - Supervisor + Electricity + lot awarding backup (same as award_lot view)
         permissions.update({
             'can_view': True,
             'can_verify_documents': True,  # Supervisor can also verify
             'can_generate_form': True,
             'can_receive_routing': True,  # Supervisor backup for signatory handoff
             'can_forward_routing': True,  # Supervisor backup for signatory handoff
+            'can_award_lot': True,
             'can_manage_electricity': True,
             'role_description': 'Supervisor, Routing Backup & Electricity Tracking',
         })
@@ -305,6 +307,11 @@ def _build_module2_blacklist_disqualification_reason(bl_entry):
 def _auto_disqualify_if_blacklisted(applicant, bl_entry, checked_by=None):
     """
     Persist Module 2 policy: blacklist match immediately disqualifies record.
+
+    NOTE:
+    This intentionally writes `Applicant.status = 'disqualified'` and
+    `Applicant.disqualification_reason` in intake.models. Keep those fields
+    unless this workflow is fully migrated.
     """
     if not bl_entry:
         return False
@@ -805,7 +812,7 @@ def _module2_application_overall_snapshot(application):
     num = (application.application_number or '').strip()
     if st == 'awarded':
         stage = 'Lot Awarded'
-    elif st in ('oic_signed', 'standby'):
+    elif st == 'standby':
         stage = 'Fully Approved'
     elif st in ('draft', 'completed'):
         stage = 'Form Released'
@@ -870,7 +877,7 @@ def _module2_applicant_row_payload(applicant, permissions, required_group_a_subm
 
     if application and application.status == 'awarded':
         current_stage = 'Lot Awarded'
-    elif application and application.status in ['oic_signed', 'standby']:
+    elif application and application.status == 'standby':
         current_stage = 'Fully Approved'
     elif application and application.status == 'draft':
         current_stage = 'Form Released · awaiting signed scan'
@@ -888,7 +895,7 @@ def _module2_applicant_row_payload(applicant, permissions, required_group_a_subm
         user_actions.append('verify_docs')
     if can_generate_form:
         user_actions.append('generate_form')
-    if permissions['can_award_lot'] and application and application.status in ['oic_signed', 'standby']:
+    if permissions['can_award_lot'] and application and application.status == 'standby':
         user_actions.append('award_lot')
     if permissions['can_manage_electricity'] and application and application.status == 'awarded':
         user_actions.append('manage_electricity')
@@ -1018,7 +1025,7 @@ def applications_list(request, position):
         .distinct()
         .count(),
         'fully_approved': applicants.filter(
-            application__status__in=['oic_signed', 'standby']
+            application__status='standby'
         ).count(),
         'lot_awarded': applicants.filter(
             application__status='awarded'
@@ -1049,10 +1056,10 @@ def applications_list(request, position):
         # Routed Proceed-to-Form applicants stay on Ready for Form until Application advances past draft/completed.
         if on_rfq_track:
             continue
-        # Once the same routed record is pushed to lot-awarding track, keep it out of
-        # the main Application & Evaluation ledger; it lives in the dedicated queue.
+        # Once the same routed record is pushed to lot-awarding track (and later awarded),
+        # keep it out of the main Application & Evaluation ledger.
         app_status = (getattr(row.get('application'), 'status', '') or '').strip()
-        if getattr(applicant, 'form_queue_routed_at', None) and app_status in {'standby', 'oic_signed'}:
+        if getattr(applicant, 'form_queue_routed_at', None) and app_status in {'standby', 'awarded'}:
             continue
         applicants_data.append(row)
     
@@ -1113,6 +1120,9 @@ def applications_list(request, position):
         'from_intake_handoff': from_intake_handoff,
         'intake_handoff_ref': intake_handoff_ref,
         'ready_for_form_queue_count': ready_for_form_queue_count,
+        'vacant_units_by_site': (
+            vacant_units_grouped_for_award_select() if permissions.get('can_award_lot') else []
+        ),
     }
     
     return render(request, 'applications/applications_list.html', context)
@@ -1262,7 +1272,7 @@ def lot_awarding_queue(request, position):
 
     applications_qs = (
         Application.objects
-        .filter(status__in=['standby', 'oic_signed'])
+        .filter(status='standby')
         .select_related('applicant')
         .order_by('standby_position', 'standby_entered_at', '-updated_at')
     )
@@ -1321,6 +1331,9 @@ def lot_awarding_queue(request, position):
         'search': search,
         'permissions': permissions,
         'queue_total': queue_total,
+        'vacant_units_by_site': (
+            vacant_units_grouped_for_award_select() if permissions.get('can_award_lot') else []
+        ),
     }
     return render(request, 'applications/lot_awarding_queue.html', context)
 
@@ -3286,7 +3299,7 @@ def update_routing(request, position):
 
     Legacy intermediate steps (received / forwarded_oic) are no longer used; applicant
     signature is captured in the vault scan (``completed``). This endpoint writes one
-    ``signed_oic`` SignatoryRouting row for audit and sets ``oic_signed``.
+    ``signed_oic`` SignatoryRouting row for audit and sets ``standby``.
     """
     application_id = request.POST.get('application_id')
     step = request.POST.get('step')
@@ -3338,7 +3351,7 @@ def update_routing(request, position):
             notes=notes
         )
 
-        application.status = 'oic_signed'
+        application.status = 'standby'
         application.fully_approved_at = timezone.now()
 
         if application.applicant.phone_number:
@@ -3397,10 +3410,10 @@ def move_to_standby(request, position):
         if blacklist_error:
             return blacklist_error
         
-        if application.status != 'oic_signed':
+        if application.status != 'completed':
             return JsonResponse({
                 'success': False,
-                'error': 'Application must be fully approved (OIC signed) before moving to standby.'
+                'error': 'Application must be applicant-signed (completed) before moving to standby.'
             })
         
         application.status = 'standby'
@@ -3502,6 +3515,208 @@ def proceed_to_lot_awarding_queue(request, position):
 # LOT AWARDING (Jocel)
 # =============================================================================
 
+
+def vacant_units_grouped_for_award_select():
+    """
+    Vacant housing units for the Award Lot picker (Module 4 inventory).
+    Matches dashboard: status 'Vacant — available' and no active units.LotAward.
+    """
+    active_lot = LotAward.objects.filter(unit_id=OuterRef('pk'), status='active')
+    units = (
+        HousingUnit.objects.filter(status='Vacant — available', site__is_active=True)
+        .annotate(_has_active=Exists(active_lot))
+        .filter(_has_active=False)
+        .select_related('site')
+        .order_by('site__name', 'block_number', 'lot_number')
+    )
+    groups = []
+    index_by_site = {}
+    for u in units:
+        sid = u.site_id
+        if sid not in index_by_site:
+            index_by_site[sid] = len(groups)
+            groups.append({'site': u.site, 'units': []})
+        groups[index_by_site[sid]]['units'].append(u)
+    return groups
+
+
+def _resolve_relocation_site_for_award(site_name_raw):
+    """
+    Map free-text site from the Award Lot modal to a RelocationSite row (Module 4).
+    """
+    name = (site_name_raw or '').strip()
+    qs = RelocationSite.objects.filter(is_active=True).order_by('name')
+    if not qs.exists():
+        return None
+    if not name:
+        return qs.first()
+    site = qs.filter(name__iexact=name).first()
+    if site:
+        return site
+    site = qs.filter(name__icontains=name).first()
+    if site:
+        return site
+    site = qs.filter(code__iexact=name).first()
+    if site:
+        return site
+    compact = name.replace(' ', '').lower()
+    if compact:
+        for candidate in qs:
+            if compact in candidate.name.replace(' ', '').lower():
+                return candidate
+    if qs.count() == 1:
+        return qs.first()
+    return None
+
+
+def _assign_housing_unit_after_lot_award(application, unit, awarded_by_user):
+    """
+    Create units.LotAward and mark HousingUnit occupied. ``unit`` must be vacant.
+    """
+    if unit.status != 'Vacant — available':
+        raise ValueError(
+            f'This housing unit is not available for awarding (current status: {unit.status}). '
+            'Choose a unit listed as Vacant — available in Housing Unit & Occupancy Monitoring.'
+        )
+
+    block = unit.block_number
+    lot = unit.lot_number
+    site_name = unit.site.name
+
+    other_active = (
+        LotAward.objects.filter(unit=unit, status='active')
+        .exclude(application_id=application.id)
+        .select_related('application__applicant')
+        .first()
+    )
+    if other_active:
+        occ = (
+            other_active.application.applicant.full_name
+            if getattr(other_active.application, 'applicant', None)
+            else 'another applicant'
+        )
+        raise ValueError(
+            f'Block {block} Lot {lot} at {site_name} is already assigned ({occ}). '
+            f'Pick a vacant unit or resolve the existing assignment in Module 4.'
+        )
+
+    award = LotAward.objects.create(
+        application=application,
+        unit=unit,
+        status='active',
+        awarded_at=timezone.now(),
+        awarded_by=awarded_by_user,
+        via_draw_lots=False,
+    )
+
+    # Start construction monitoring snapshot (Module 4) for this awarded unit.
+    ConstructionProgress.objects.get_or_create(
+        lot_award=award,
+        defaults={
+            'stage': 'not_started',
+            'percent_complete': 0,
+            'updated_by': awarded_by_user,
+        },
+    )
+
+    applicant = application.applicant
+    unit.status = 'Occupied'
+    unit.occupant_name = applicant.full_name if applicant else ''
+    ref = (applicant.reference_number or '') if applicant else ''
+    unit.occupant_id = ref[:100] if ref else None
+    unit.save(update_fields=['status', 'occupant_name', 'occupant_id', 'updated_at'])
+
+
+def _sync_housing_unit_after_lot_award(application, site_name_raw, block_number, lot_number, awarded_by_user):
+    """
+    Legacy path: resolve site + block/lot, get_or_create HousingUnit, then assign.
+    Prefer selecting an existing vacant unit (housing_unit_id) from Module 4.
+    """
+    site = _resolve_relocation_site_for_award(site_name_raw)
+    if not site:
+        raise ValueError(
+            'Unknown relocation site. Enter the site name as configured in Module 4 (Housing Units), '
+            'for example "GK Cabatangan Relocation Site", or ask an administrator to create the site.'
+        )
+
+    block = (block_number or '').strip()
+    lot = (lot_number or '').strip()
+    if not lot:
+        raise ValueError('Lot number is required to sync the housing unit map.')
+
+    unit, _created = HousingUnit.objects.get_or_create(
+        site=site,
+        block_number=block,
+        lot_number=lot,
+        defaults={'status': 'Vacant — available'},
+    )
+    _assign_housing_unit_after_lot_award(application, unit, awarded_by_user)
+
+
+@login_required
+@verify_position
+@require_POST
+def lot_awarding_bulk_notify_sms(request, position):
+    """
+    Send a coordination SMS to selected applicants still on the lot-awarding queue.
+    Does not store a release schedule — notification only.
+    """
+    allowed_positions = ['fourth_member', 'second_member', 'fifth_member', 'oic']
+    if request.user.position not in allowed_positions:
+        return JsonResponse({'success': False, 'error': 'Access denied.'}, status=403)
+
+    raw_ids = request.POST.getlist('application_ids')
+    if not raw_ids:
+        single = (request.POST.get('application_ids') or '').strip()
+        if single:
+            raw_ids = [x.strip() for x in single.split(',') if x.strip()]
+
+    if not raw_ids:
+        return JsonResponse({'success': False, 'error': 'No applicants selected.'}, status=400)
+
+    # Staff-composed body from the Send SMS modal (reference is appended per recipient below).
+    message_body = (request.POST.get('message') or '').strip()
+    if not message_body:
+        return JsonResponse({'success': False, 'error': 'Message text is required.'}, status=400)
+    message_body = message_body[:900]
+
+    sent = 0
+    skipped_no_phone = 0
+    failed = 0
+    errors = []
+
+    for aid in raw_ids[:100]:
+        try:
+            app = Application.objects.select_related('applicant').get(id=aid)
+        except (Application.DoesNotExist, ValueError):
+            failed += 1
+            errors.append(f'{aid}: not found')
+            continue
+        if app.status != 'standby':
+            failed += 1
+            errors.append(f'{aid}: not in lot awarding queue')
+            continue
+        applicant = app.applicant
+        phone = (applicant.phone_number or '').strip() if applicant else ''
+        if not phone:
+            skipped_no_phone += 1
+            continue
+        msg = f'{message_body} Ref: {applicant.reference_number or "N/A"}.'
+        ok = send_sms(phone, msg, 'lot_awarding_queue_notify', applicant=applicant, module='applications')
+        if ok:
+            sent += 1
+        else:
+            failed += 1
+
+    return JsonResponse({
+        'success': True,
+        'sent': sent,
+        'skipped_no_phone': skipped_no_phone,
+        'failed': failed,
+        'errors': errors[:12],
+    })
+
+
 @login_required
 @verify_position
 @require_POST
@@ -3523,13 +3738,45 @@ def award_lot(request, position):
         }, status=403)
     
     application_id = request.POST.get('application_id')
-    lot_number = request.POST.get('lot_number')
-    block_number = request.POST.get('block_number', '')
-    site_name = request.POST.get('site_name', '')
-    
-    if not lot_number:
-        return JsonResponse({'success': False, 'error': 'Lot number is required.'})
-    
+    housing_unit_id = (request.POST.get('housing_unit_id') or '').strip()
+    notes = (request.POST.get('notes') or '').strip()[:2000]
+
+    unit_for_assign = None
+    lot_number = ''
+    block_number = ''
+    site_name = ''
+
+    if housing_unit_id:
+        try:
+            unit_for_assign = HousingUnit.objects.select_related('site').get(id=housing_unit_id)
+        except (HousingUnit.DoesNotExist, ValueError):
+            return JsonResponse({'success': False, 'error': 'Invalid or unknown housing unit.'}, status=400)
+        if unit_for_assign.status != 'Vacant — available':
+            return JsonResponse({
+                'success': False,
+                'error': (
+                    f'This unit is not vacant (status: {unit_for_assign.status}). '
+                    'Refresh the page and choose a unit marked Vacant — available in Module 4.'
+                ),
+            }, status=400)
+        if LotAward.objects.filter(unit=unit_for_assign, status='active').exists():
+            return JsonResponse({
+                'success': False,
+                'error': 'This unit already has an active assignment. Refresh and pick another vacant unit.',
+            }, status=400)
+        lot_number = unit_for_assign.lot_number
+        block_number = unit_for_assign.block_number or ''
+        site_name = unit_for_assign.site.name
+    else:
+        lot_number = (request.POST.get('lot_number') or '').strip()
+        block_number = (request.POST.get('block_number') or '').strip()
+        site_name = (request.POST.get('site_name') or '').strip()
+        if not lot_number:
+            return JsonResponse({
+                'success': False,
+                'error': 'Select a vacant unit from the list (Module 4 inventory).',
+            })
+
     try:
         application = Application.objects.select_related('applicant').get(id=application_id)
         handoff_error = _require_intake_archive(application.applicant)
@@ -3538,37 +3785,41 @@ def award_lot(request, position):
         blacklist_error = _require_module2_blacklist_clear(application.applicant)
         if blacklist_error:
             return blacklist_error
-        
-        if application.status not in ['oic_signed', 'standby']:
+
+        if application.status != 'standby':
             return JsonResponse({
                 'success': False,
                 'error': 'Application must be fully approved before lot can be awarded.'
             })
-        
-        # Create lot awarding record
-        lot_awarding = LotAwarding.objects.create(
-            application=application,
-            lot_number=lot_number,
-            block_number=block_number,
-            site_name=site_name,
-            awarded_by=request.user
-        )
-        
-        # Update application status
-        application.status = 'awarded'
-        application.save()
-        
-        # Update applicant status
-        application.applicant.status = 'awarded'
-        application.applicant.save()
-        
-        # Create electricity connection record (pending)
-        ElectricityConnection.objects.create(
-            application=application,
-            status='pending'
-        )
-        
-        # Send SMS notification
+
+        with transaction.atomic():
+            LotAwarding.objects.create(
+                application=application,
+                lot_number=lot_number,
+                block_number=block_number,
+                site_name=site_name,
+                awarded_by=request.user,
+                notes=notes,
+            )
+
+            application.status = 'awarded'
+            application.save()
+
+            application.applicant.status = 'awarded'
+            application.applicant.save()
+
+            ElectricityConnection.objects.create(
+                application=application,
+                status='pending'
+            )
+
+            if unit_for_assign:
+                _assign_housing_unit_after_lot_award(application, unit_for_assign, request.user)
+            else:
+                _sync_housing_unit_after_lot_award(
+                    application, site_name, block_number, lot_number, request.user
+                )
+
         if application.applicant.phone_number:
             message = (
                 f"Congratulations! You have been awarded Lot {lot_number}"
@@ -3577,13 +3828,21 @@ def award_lot(request, position):
                 f"Please visit THA office for contract signing and key turnover. "
                 f"Reference: {application.applicant.reference_number}"
             )
-            send_sms(application.applicant.phone_number, message, 'lot_awarded', applicant=application.applicant, module='applications')
-        
+            send_sms(
+                application.applicant.phone_number,
+                message,
+                'lot_awarded',
+                applicant=application.applicant,
+                module='applications',
+            )
+
         return JsonResponse({
             'success': True,
             'lot_number': lot_number,
             'message': f'Lot {lot_number} awarded successfully to {application.applicant.full_name}'
         })
+    except ValueError as e:
+        return JsonResponse({'success': False, 'error': str(e)})
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
 

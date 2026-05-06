@@ -4021,7 +4021,7 @@
             <button type="button" class="btn-modal success" id="isfApproveBtn" onclick="submitISFReview('eligible')" style="background: #10b981;">
                 ✓ Mark as Eligible
             </button>
-            <button type="button" class="btn-modal danger" id="isfDisqualifyBtn" onclick="toggleISFDisqualify()" style="background: #ef4444;">
+            <button type="button" class="btn-modal danger" id="isfDisqualifyBtn" onclick="toggleISFDisqualify()" style="background: #ef4444; display:none;">
                 ✕ Mark as Disqualified
             </button>
             <button type="button" class="btn-modal secondary" onclick="closeISFModal()">
@@ -8204,24 +8204,9 @@
     }
     
     function showDisqualifyReason() {
-        if (!currentApplicant) return;
-
-        // For Channel A: Open ISF Review Modal
-        if (currentApplicant.channel === 'A') {
-            currentISFData = currentApplicant;
-            populateISFModal(currentApplicant);
-            document.getElementById('isfReviewModal').classList.add('active');
-            // Auto-toggle to disqualify mode
-            const group = document.getElementById('isfDisqualifyGroup');
-            if (group.style.display === 'none') {
-                toggleISFDisqualify();
-            }
-            return;
-        }
-
-        // For Channel B/C: Show disqualify modal
-        const modal = document.getElementById('disqualifyModal');
-        if (modal) modal.classList.add('active');
+        showFlowAlert(
+            'Disqualification is handled in Module 2 blacklist policy. Open Application & Eligibility and run Evaluation Precheck.'
+        );
     }
     
     function closeDisqualifyModal() {
@@ -8230,42 +8215,9 @@
     }
     
     function confirmDisqualify() {
-        if (!currentApplicant) return;
-        
-        const reasonEl = document.getElementById('disqualifyReason');
-        const notesEl = document.getElementById('disqualifyNotes');
-        
-        const reason = reasonEl ? reasonEl.value : '';
-        const notes = notesEl ? notesEl.value : '';
-        
-        if (!reason) {
-            showFlowAlert('Please select a reason for disqualification.');
-            return;
-        }
-        
-        const formData = new FormData();
-        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
-        formData.append('applicant_id', currentApplicant.applicantId || currentApplicant.id);
-        formData.append('action', 'disqualify');
-        formData.append('reason', reason);
-        formData.append('notes', notes);
-        
-        fetch('{% url "intake:update_eligibility" request.user.position %}', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showFlowAlert('Applicant disqualified.');
-                location.reload();
-            } else {
-                showFlowAlert('Error: ' + (data.error || 'Unknown error'));
-            }
-        })
-        .catch(error => {
-            showFlowAlert('Error: ' + error.message);
-        });
+        showFlowAlert(
+            'Disqualification is handled in Module 2 blacklist policy. Open Application & Eligibility and run Evaluation Precheck.'
+        );
     }
     
     // Save Changes for Review Modal
@@ -9464,31 +9416,9 @@
     }
 
     function toggleISFDisqualify() {
-        const group = document.getElementById('isfDisqualifyGroup');
-        const approveBtn = document.getElementById('isfApproveBtn');
-        const disqualifyBtn = document.getElementById('isfDisqualifyBtn');
-
-        if (group.style.display === 'none') {
-            // Switching TO disqualify mode
-            group.style.display = 'block';
-            approveBtn.textContent = 'Back to Eligible Check';
-            approveBtn.style.background = '#64748b';
-            approveBtn.disabled = false;
-            approveBtn.style.opacity = '1';
-            approveBtn.style.cursor = 'pointer';
-            approveBtn.title = 'Click to cancel disqualification';
-            disqualifyBtn.textContent = 'Confirm Disqualification';
-        } else {
-            // Switching BACK to eligible mode
-            group.style.display = 'none';
-            approveBtn.textContent = '✓ Mark as Eligible';
-            approveBtn.style.background = '#10b981';
-            disqualifyBtn.textContent = '✕ Mark as Disqualified';
-            // Re-check eligibility after switching back
-            if (currentISFData) {
-                checkISFEligibility(currentISFData);
-            }
-        }
+        showFlowAlert(
+            'Intake disqualification controls are disabled. Disqualification is now enforced by Module 2 blacklist checks.'
+        );
     }
 
     function submitISFReview(action) {
@@ -9496,11 +9426,10 @@
         const phoneNumber = document.getElementById('isfPhoneNumber').value;
         const barangay = document.getElementById('isfBarangay').value;
         const propertyOwnership = document.getElementById('isfPropertyOwnership').value;
-        const disqualifyGroup = document.getElementById('isfDisqualifyGroup');
 
         // Prevent submission if Mark as Eligible button is disabled
         if (action === 'eligible' && document.getElementById('isfApproveBtn').disabled) {
-            showFlowAlert('This applicant does not meet eligibility criteria. Please mark as disqualified or address the issues.');
+            showFlowAlert('This applicant does not meet eligibility criteria. Update records first, then continue in Module 2 Evaluation Precheck.');
             return;
         }
 
@@ -9526,15 +9455,6 @@
             return;
         }
 
-        // If disqualifying, check reason
-        if (disqualifyGroup.style.display !== 'none') {
-            const reason = document.getElementById('isfDisqualifyReason').value;
-            if (!reason) {
-                showFlowAlert('Disqualification reason is required');
-                return;
-            }
-        }
-
         // Submit form via AJAX
         const formData = new FormData();
         formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
@@ -9542,13 +9462,7 @@
         formData.append('barangay', barangay);
         formData.append('has_property_in_talisay', propertyOwnership);
         formData.append('action', 'submit');
-
-        if (disqualifyGroup.style.display !== 'none') {
-            formData.append('disqualification_reason', document.getElementById('isfDisqualifyReason').value);
-            formData.append('status', 'disqualified');
-        } else {
-            formData.append('status', 'eligible');
-        }
+        formData.append('status', 'eligible');
 
         fetch(`/intake/staff/isf/${isfId}/review/`, {
             method: 'POST',

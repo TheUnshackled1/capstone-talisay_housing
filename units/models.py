@@ -138,6 +138,21 @@ class HousingUnit(models.Model):
         active_award = self.lot_awards.filter(status='active').first()
         return active_award.application.applicant if active_award else None
 
+    @property
+    def construction_progress_snapshot(self):
+        """
+        Fast path for templates: views may attach ``_construction_progress``.
+        Falls back to a query if missing.
+        """
+        attached = getattr(self, '_construction_progress', None)
+        if attached is not None:
+            return attached
+        try:
+            active_award = self.lot_awards.select_related('construction_progress').filter(status='active').first()
+            return getattr(active_award, 'construction_progress', None) if active_award else None
+        except Exception:
+            return None
+
 
 class WeeklyReport(models.Model):
     """
@@ -235,6 +250,92 @@ class LotAward(models.Model):
     def __str__(self):
         return f"{self.unit} → {self.application.applicant.full_name}"
 
+
+class ConstructionProgress(models.Model):
+    """
+    Tracks beneficiary house construction progress after a lot is awarded.
+    Snapshot model (current stage/percent). Timeline lives in ConstructionProgressUpdate.
+    """
+    STAGE_CHOICES = [
+        ('not_started', 'Not started'),
+        ('site_clearing', 'Site clearing'),
+        ('foundation', 'Foundation'),
+        ('wall_framing', 'Wall framing'),
+        ('roofing', 'Roofing'),
+        ('finishing', 'Finishing'),
+        ('completed', 'Completed / Occupied'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    lot_award = models.OneToOneField(
+        LotAward,
+        on_delete=models.CASCADE,
+        related_name='construction_progress',
+    )
+
+    stage = models.CharField(max_length=30, choices=STAGE_CHOICES, default='not_started')
+    percent_complete = models.PositiveIntegerField(default=0)
+
+    started_at = models.DateTimeField(null=True, blank=True)
+    expected_completion_date = models.DateField(null=True, blank=True)
+    last_inspected_at = models.DateTimeField(null=True, blank=True)
+
+    is_delayed = models.BooleanField(default=False)
+
+    updated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='construction_progress_updates',
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-updated_at']
+        verbose_name = "Construction progress"
+        verbose_name_plural = "Construction progress"
+
+    def __str__(self):
+        return f"Construction: {self.lot_award.unit} ({self.get_stage_display()} {self.percent_complete}%)"
+
+
+class ConstructionProgressUpdate(models.Model):
+    """
+    Append-only timeline updates for construction progress.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    progress = models.ForeignKey(
+        ConstructionProgress,
+        on_delete=models.CASCADE,
+        related_name='updates',
+    )
+
+    stage = models.CharField(max_length=30, choices=ConstructionProgress.STAGE_CHOICES)
+    percent_complete = models.PositiveIntegerField()
+    visit_date = models.DateField()
+    notes = models.TextField(blank=True)
+
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='construction_progress_timeline_entries',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-visit_date', '-created_at']
+        verbose_name = "Construction progress update"
+        verbose_name_plural = "Construction progress updates"
+
+    def __str__(self):
+        return f"{self.progress.lot_award.unit} - {self.get_stage_display()} ({self.percent_complete}%)"
 
 class ElectricityConnection(models.Model):
     """

@@ -99,6 +99,8 @@ class Applicant(models.Model):
         ('pending_cdrrmo', 'Pending CDRRMO verification (hazard claim)'),
         ('pending_followup', 'Pending Follow-up (failed eligibility check)'),
         ('eligible', 'Eligible - In Queue'),
+        # IMPORTANT: Keep `disqualified` for Module 2 blacklist hard-gate writes.
+        # applications.views._auto_disqualify_if_blacklisted persists this status.
         ('disqualified', 'Disqualified'),
         ('requirements', 'Submitting Requirements'),
         ('application', 'Application In Progress'),
@@ -255,6 +257,8 @@ class Applicant(models.Model):
         default=False,
         verbose_name="Owns Property in Talisay City"
     )
+    # IMPORTANT: Module 2 blacklist engine writes detailed reason text here.
+    # Keep this field unless you migrate applications blacklist logic first.
     disqualification_reason = models.TextField(blank=True)
     
     # Processing metadata
