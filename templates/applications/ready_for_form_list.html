@@ -93,19 +93,45 @@
                                 <button type="button" class="rfq-action-btn rfq-action-btn--scan"
                                     data-applicant-id="{{ data.applicant.id }}"
                                     data-ref-label="{{ data.applicant.reference_number|default:'' }}"
+                                    data-review-url="{% url 'applications:application_form_pdf' request.user.position data.applicant.id %}"
+                                    data-application-id="{{ data.application.id }}"
+                                    data-reference-number="{{ data.applicant.reference_number|default:''|escape }}"
                                     onclick="rfqScanSignedApplication(this)"
                                     title="Dynamsoft TWAIN: opens Select Source, then capture — saves to the document vault (stay on this page)">Scan document</button>
                                 <button type="button" class="rfq-action-btn rfq-action-btn--scan"
                                     data-applicant-id="{{ data.applicant.id }}"
+                                    data-review-url="{% url 'applications:application_form_pdf' request.user.position data.applicant.id %}"
+                                    data-application-id="{{ data.application.id }}"
+                                    data-reference-number="{{ data.applicant.reference_number|default:''|escape }}"
                                     onclick="rfqPickSignedApplicationFile(this)"
                                     title="Choose a file from this computer — uploads to the document vault (stay on this page)">Upload document</button>
                             </div>
                             {% elif data.application.status == 'completed' %}
+                            {% if data.allow_rescan_retry %}
+                            <div class="rfq-action-slot-2 rfq-vault-pair">
+                                <button type="button" class="rfq-action-btn rfq-action-btn--scan"
+                                    data-applicant-id="{{ data.applicant.id }}"
+                                    data-ref-label="{{ data.applicant.reference_number|default:'' }}"
+                                    data-review-url="{% url 'applications:application_form_pdf' request.user.position data.applicant.id %}"
+                                    data-application-id="{{ data.application.id }}"
+                                    data-reference-number="{{ data.applicant.reference_number|default:''|escape }}"
+                                    onclick="rfqScanSignedApplication(this)"
+                                    title="Rescan signed form to replace the current file in vault">Scan document</button>
+                                <button type="button" class="rfq-action-btn rfq-action-btn--scan"
+                                    data-applicant-id="{{ data.applicant.id }}"
+                                    data-review-url="{% url 'applications:application_form_pdf' request.user.position data.applicant.id %}"
+                                    data-application-id="{{ data.application.id }}"
+                                    data-reference-number="{{ data.applicant.reference_number|default:''|escape }}"
+                                    onclick="rfqPickSignedApplicationFile(this)"
+                                    title="Upload another signed form file to replace the current one">Upload document</button>
+                            </div>
+                            {% else %}
                             <button type="button" class="rfq-action-btn rfq-action-btn--scan rfq-action-slot-2"
                                 onclick="proceedToLotAwardingQueue('{{ data.application.id }}', '{{ data.applicant.reference_number|default:''|escapejs }}')"
                                 title="Move this signed record to the lot-awarding queue">
                                 Proceed to lot awarding
                             </button>
+                            {% endif %}
                             {% endif %}
                             {% else %}
                             <span class="rfq-actions-muted">Not ready for form yet</span>
@@ -341,6 +367,9 @@
         }
         const refRaw = String(btn.dataset.refLabel || '').trim();
         const safeRef = refRaw ? refRaw.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9._-]/g, '').slice(0, 80) : ('app_' + applicantId.replace(/-/g, '').slice(0, 12));
+        const reviewUrl = String(btn.dataset.reviewUrl || '').trim();
+        const applicationId = String(btn.dataset.applicationId || '').trim();
+        const referenceNumber = String(btn.dataset.referenceNumber || '').trim();
         btn.disabled = true;
         btn.textContent = 'Starting scanner…';
         try {
@@ -385,8 +414,13 @@
                     }
                 );
             });
-            rfqShowAlert('Signed application scan saved to the vault.', 'Scan complete', 'success');
-            window.location.reload();
+            rfqPromptSignedDocReview(
+                reviewUrl,
+                'Signed application scan saved to the vault.',
+                applicationId,
+                referenceNumber,
+                applicantId
+            );
         } catch (err) {
             rfqShowAlert((err && err.message) ? err.message : 'Scan was cancelled or failed.', 'Scan', 'default');
             btn.disabled = false;
@@ -463,9 +497,22 @@
             document.removeEventListener('keydown', handleEsc);
         };
         const handleOk = () => { cleanup(); onOk && onOk(); };
-        const handleCancel = () => { cleanup(); };
-        const handleBackdrop = (e) => { if (e.target === overlay) cleanup(); };
-        const handleEsc = (e) => { if (e.key === 'Escape') cleanup(); };
+        const handleCancel = () => {
+            cleanup();
+            if (typeof opts.onCancel === 'function') opts.onCancel();
+        };
+        const handleBackdrop = (e) => {
+            if (e.target === overlay) {
+                cleanup();
+                if (typeof opts.onCancel === 'function') opts.onCancel();
+            }
+        };
+        const handleEsc = (e) => {
+            if (e.key === 'Escape') {
+                cleanup();
+                if (typeof opts.onCancel === 'function') opts.onCancel();
+            }
+        };
         okBtn.addEventListener('click', handleOk);
         cancelBtn.addEventListener('click', handleCancel);
         overlay.addEventListener('click', handleBackdrop);
@@ -478,6 +525,37 @@
         } else {
             window.alert(message);
         }
+    }
+
+    function rfqQueueUrlWithoutRetrySign() {
+        try {
+            const u = new URL(window.location.href);
+            u.searchParams.delete('retry_sign');
+            return u.pathname + (u.searchParams.toString() ? ('?' + u.searchParams.toString()) : '');
+        } catch (_e) {
+            return queueUrl;
+        }
+    }
+
+    function rfqPromptSignedDocReview(reviewUrl, successMsg, applicationId, referenceNumber, applicantId) {
+        rfqShowConfirm(
+            (successMsg || 'Signed application saved.') + ' If the signed document is correct, proceed to lot awarding. If not, scan or upload again.',
+            function () {
+                proceedToLotAwardingQueue(applicationId, referenceNumber || '');
+            },
+            {
+                title: 'Signed document verification',
+                okText: 'Proceed to lot awarding',
+                cancelText: 'Scan or upload again',
+                onCancel: function () {
+                    if (applicantId) {
+                        window.location.href = queueUrl + '?retry_sign=' + encodeURIComponent(applicantId);
+                        return;
+                    }
+                    window.location.reload();
+                },
+            }
+        );
     }
 
     function rfqShowApplicantDetail(btn) {
@@ -604,8 +682,7 @@
                         'success'
                     );
                     setTimeout(() => {
-                        const q = referenceNumber ? ('?search=' + encodeURIComponent(referenceNumber)) : '';
-                        window.location.href = lotAwardingQueueUrl + q;
+                        window.location.href = lotAwardingQueueUrl;
                     }, 900);
                 } catch (error) {
                     rfqShowAlert(
@@ -641,6 +718,9 @@
                 const file = finput.files && finput.files[0];
                 const applicantId = rfqFileUploadApplicantId;
                 const triggerBtn = rfqFileUploadButtonEl;
+                const reviewUrl = triggerBtn ? String(triggerBtn.dataset.reviewUrl || '').trim() : '';
+                const applicationId = triggerBtn ? String(triggerBtn.dataset.applicationId || '').trim() : '';
+                const referenceNumber = triggerBtn ? String(triggerBtn.dataset.referenceNumber || '').trim() : '';
                 rfqFileUploadApplicantId = null;
                 rfqFileUploadButtonEl = null;
                 if (!file || !applicantId) return;
@@ -676,8 +756,7 @@
                     const data = await response.json();
                     if (data.success) {
                         const msg = data.pipeline_note || data.message || 'Document uploaded.';
-                        rfqShowAlert(msg, 'Upload complete', 'success');
-                        window.location.reload();
+                        rfqPromptSignedDocReview(reviewUrl, msg, applicationId, referenceNumber, applicantId);
                     } else {
                         rfqShowAlert(data.error || 'Upload failed.', 'Upload', 'default');
                         if (triggerBtn) {

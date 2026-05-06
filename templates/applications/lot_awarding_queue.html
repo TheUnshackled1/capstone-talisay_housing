@@ -485,10 +485,6 @@
                             {% else %}
                             <span class="lawq-muted">Lot awarding is restricted for your role.</span>
                             {% endif %}
-                            <a class="rfq-action-btn lawq-view-btn"
-                                href="{{ row.signed_form_vault_url }}">
-                                View documents
-                            </a>
                         </div>
                     </td>
                 </tr>
@@ -737,5 +733,55 @@
             alert('Error: ' + error.message);
         }
     });
+
+    // Auto-sync queue list without requiring manual refresh.
+    // If server-side queue contents changed, reload this page while preserving query params.
+    (function () {
+        const SYNC_INTERVAL_MS = 12000;
+
+        function currentQueueSignature(rootDoc) {
+            const rowIds = Array.from(
+                rootDoc.querySelectorAll('tbody tr[data-application-id]')
+            ).map((tr) => tr.getAttribute('data-application-id') || '').join('|');
+            const pagerSummary = (rootDoc.querySelector('.rfq-pagination span')?.textContent || '').trim();
+            return rowIds + '||' + pagerSummary;
+        }
+
+        function shouldPauseAutoSync() {
+            if (document.hidden) return true;
+            if (document.getElementById('awardModal')?.classList.contains('active')) return true;
+            if (document.getElementById('lawqSmsModal')?.classList.contains('active')) return true;
+            if (document.querySelectorAll('.lawq-app-check:checked').length > 0) return true;
+            const searchInput = document.querySelector('input[name="search"]');
+            if (searchInput && document.activeElement === searchInput) return true;
+            return false;
+        }
+
+        let baselineSignature = currentQueueSignature(document);
+
+        window.setInterval(async function () {
+            if (shouldPauseAutoSync()) return;
+            try {
+                const url = new URL(window.location.href);
+                url.searchParams.set('_sync', String(Date.now()));
+                const resp = await fetch(url.toString(), {
+                    method: 'GET',
+                    cache: 'no-store',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                });
+                if (!resp.ok) return;
+                const html = await resp.text();
+                const remoteDoc = new DOMParser().parseFromString(html, 'text/html');
+                const remoteSignature = currentQueueSignature(remoteDoc);
+                if (remoteSignature && remoteSignature !== baselineSignature) {
+                    window.location.reload();
+                    return;
+                }
+                baselineSignature = remoteSignature || baselineSignature;
+            } catch (err) {
+                // Quiet fail: do not interrupt staff workflow on transient network issues.
+            }
+        }, SYNC_INTERVAL_MS);
+    })();
 </script>
 {% endblock %}

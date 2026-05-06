@@ -931,6 +931,7 @@ def _module2_applicant_row_payload(applicant, permissions, required_group_a_subm
         'application': application,
         'proceededAgo': proceeded_ago,
         'routedAgo': routed_ago,
+        'routed_sort_at': routed_dt,
         'form_queue_routed_at': applicant.form_queue_routed_at,
         'form_queue_routed_by': applicant.form_queue_routed_by,
         'applicant_status': applicant.status,
@@ -1172,8 +1173,8 @@ def ready_for_form_queue(request, position):
     # FIFO: whoever was routed with Proceed to Form first appears first (#1 in line).
     applicants_data.sort(
         key=lambda r: (
-            r['applicant'].form_queue_routed_at is None,
-            r['applicant'].form_queue_routed_at or timezone.now(),
+            r.get('routed_sort_at') is None,
+            r.get('routed_sort_at') or timezone.now(),
             str(r['applicant'].pk),
         ),
     )

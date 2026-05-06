@@ -894,24 +894,29 @@
                 <tr>
                     <th class="col-num">#</th>
                     <th class="col-applicant">Applicant</th>
-                    <th class="col-documents" title="Total documents on file">Docs</th>
-                    <th class="col-status">Status</th>
+                    <th class="col-status">Applicant Status</th>
+                    <th class="col-documents" title="Total documents on file">No. of Documents</th>
+                    <th class="col-status">Document Status</th>
                     <th class="col-actions">Actions</th>
                 </tr>
             </thead>
             <tbody>
-                {% regroup documents by applicant as docs_by_applicant %}
-                {% for applicant_group in docs_by_applicant %}
-                <tr>
+                {% for applicant in applicants %}
+                <tr class="applicant-row">
                     <td class="col-num">{{ forloop.counter }}</td>
-                    <td class="col-applicant">{{ applicant_group.grouper.full_name }}</td>
+                    <td class="col-applicant">{{ applicant.full_name }}</td>
+                    <td class="col-status" style="vertical-align: middle;">
+                        <span style="display:inline-flex;align-items:center;gap:0.18rem;padding:0.14rem 0.42rem;background:#eef2ff;color:#3730a3;border:1px solid #c7d2fe;border-radius:9999px;font-size:0.5625rem;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;">
+                            {{ applicant.applicant_workflow_status|default:"Application & Eligibility" }}
+                        </span>
+                    </td>
                     <td class="col-documents">
-                        <span style="display: inline-block; padding: 0.35rem 0.65rem; background: #eff6ff; color: #1e40af; border-radius: 4px; font-weight: 600; font-size: 0.75rem;">{{ applicant_group.list|length }}</span>
+                        <span style="display: inline-block; padding: 0.35rem 0.65rem; background: #eff6ff; color: #1e40af; border-radius: 4px; font-weight: 600; font-size: 0.75rem;">{{ applicant.doc_count }}</span>
                     </td>
                     <td class="col-status" style="vertical-align: middle;">
-                        {% if applicant_group.list|length >= 8 %}
+                        {% if applicant.doc_count >= 8 %}
                         <span style="display:inline-flex;align-items:center;gap:0.18rem;padding:0.14rem 0.42rem;background:#dcfce7;color:#166534;border:1px solid #86efac;border-radius:9999px;font-size:0.5625rem;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;">Complete</span>
-                        {% elif applicant_group.list|length > 0 %}
+                        {% elif applicant.doc_count > 0 %}
                         <span style="display:inline-flex;align-items:center;gap:0.18rem;padding:0.14rem 0.42rem;background:#fef3c7;color:#92400e;border:1px solid #fde68a;border-radius:9999px;font-size:0.5625rem;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;">Partial</span>
                         {% else %}
                         <span style="display:inline-flex;align-items:center;gap:0.18rem;padding:0.14rem 0.42rem;background:#fee2e2;color:#991b1b;border:1px solid #fecaca;border-radius:9999px;font-size:0.5625rem;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;">Pending</span>
@@ -919,7 +924,7 @@
                     </td>
                     <td class="col-actions" style="vertical-align: middle;">
                         <button type="button"
-                            data-applicant-id="{{ applicant_group.grouper.id }}"
+                            data-applicant-id="{{ applicant.id }}"
                             onclick="openVaultDrawer(this.dataset.applicantId)"
                             style="display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.34rem 0.6rem; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; border: 1px solid #1d4ed8; border-radius: 0.4rem; font-size: 0.66rem; font-weight: 700; cursor: pointer; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); white-space: nowrap; letter-spacing: 0.02em;">
                             <svg style="width: 0.85rem; height: 0.85rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
@@ -929,7 +934,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="5" style="padding: 1.25rem 1rem; font-size: 0.8125rem; color: #64748b; text-align: center;">No documents found</td>
+                    <td colspan="6" style="padding: 1.25rem 1rem; font-size: 0.8125rem; color: #64748b; text-align: center;">No documents found</td>
                 </tr>
                 {% endfor %}
             </tbody>

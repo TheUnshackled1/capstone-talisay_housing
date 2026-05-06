@@ -447,6 +447,17 @@ def document_management(request, position):
         signed_form_confirmed = bool(app_obj and app_obj.applicant_signed_at)
         phase_a_complete = phase_a_verified_docs >= phase_a_required_docs and signed_form_confirmed
 
+        if applicant.status == 'disqualified':
+            applicant_workflow_status = 'Disqualified'
+        elif app_obj and app_obj.status == 'awarded':
+            applicant_workflow_status = 'Lot Awarded'
+        elif app_obj and app_obj.status == 'standby':
+            applicant_workflow_status = 'Ready for Awarding'
+        elif getattr(applicant, 'form_queue_routed_at', None):
+            applicant_workflow_status = 'Ready for Form queue'
+        else:
+            applicant_workflow_status = 'Application & Eligibility'
+
         field_inspection = getattr(app_obj, 'field_inspection', None) if app_obj else None
         phase_b_complete = bool(field_inspection and field_inspection.status == 'confirmed' and field_inspection.confirmed_at)
 
@@ -483,6 +494,7 @@ def document_management(request, position):
             'module3_ready_for_module4': module3_ready_for_module4,
             'committee_result': committee_result,
             'signed_form_confirmed': signed_form_confirmed,
+            'applicant_workflow_status': applicant_workflow_status,
             'queue_type': queue_type,
             'queue_position': queue_position,
             'queue_label_short': queue_label_short,
