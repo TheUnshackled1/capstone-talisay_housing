@@ -631,6 +631,13 @@
         overflow: hidden;
         text-overflow: ellipsis;
     }
+    .applications-table.compact-table th.col-encoded,
+    .applications-table.compact-table th.col-encoded-ago {
+        white-space: normal;
+        line-height: 1.2;
+        overflow: visible;
+        text-overflow: unset;
+    }
 
     .applications-table.compact-table td.col-num,
     .applications-table.compact-table th.col-num,
@@ -674,7 +681,11 @@
     }
 
     .applications-table.compact-table .col-encoded {
-        width: 10%;
+        width: 9%;
+    }
+
+    .applications-table.compact-table .col-encoded-ago {
+        width: 7%;
     }
 
     .applications-table.compact-table .col-eligibility {
@@ -690,7 +701,7 @@
     }
 
     .applications-table.compact-table .col-staff {
-        width: 15%;
+        width: 14%;
     }
 
     .applications-table.compact-table .col-gate {
@@ -698,7 +709,7 @@
     }
 
     .applications-table.compact-table .col-actions {
-        width: 10%;
+        width: 9%;
     }
 
     .applications-table.compact-table .m2-record-meta {
@@ -3618,6 +3629,7 @@
                     <th class="col-transaction" title="Applicant transaction ID">Transaction #</th>
                     <th class="col-reference" title="Applicant reference number">Reference #</th>
                     <th class="col-encoded" title="Date and time proceeded to Application & Evaluation">Proceeded time</th>
+                    <th class="col-encoded-ago" title="Relative to now since this record proceeded to Application & Evaluation">Time ago</th>
                     <th class="col-staff" title="Applicant Situation selected during intake">Situation Status</th>
                     <th class="col-staff" title="Module 1 encoding staff and Module 2 handoff metadata">Staff</th>
                     <th class="col-eligibility" title="Module 2 eligibility evaluation readiness (documents, checks, certification)">Eligibility status</th>
@@ -3655,6 +3667,9 @@
                     </td>
                     <td class="col-encoded">
                         <span style="font-size:0.6875rem;color:#334155;" title="Date &amp; time proceeded to Application &amp; Evaluation">{{ data.applicant.module2_handoff_at|default:data.applicant.created_at|date:"n/j/Y, P" }}</span>
+                    </td>
+                    <td class="col-encoded-ago" title="Same moment as Proceeded time — relative to now">
+                        <span style="font-size:0.625rem;color:#475569;font-weight:600;white-space:nowrap;">{{ data.proceededAgo|default:"—" }}</span>
                     </td>
                     <td class="col-staff col-status">
                         <div class="col-status-wrap">

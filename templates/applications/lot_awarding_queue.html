@@ -112,6 +112,8 @@
                 <tr>
                     <th>#</th>
                     <th>Applicant</th>
+                    <th class="rfq-col-proceeded">Proceeded Date &amp; Time</th>
+                    <th class="rfq-col-proceeded-ago" title="Relative to now since this record entered lot awarding queue">Time ago</th>
                     <th class="rfq-col-status">Status</th>
                     <th class="rfq-col-actions">Actions</th>
                 </tr>
@@ -134,6 +136,18 @@
                             <strong style="color:#b91c1c;">Missing</strong>
                             {% endif %}
                         </div>
+                    </td>
+                    <td class="rfq-col-proceeded">
+                        {% if row.routed_at %}
+                        <time datetime="{{ row.routed_at|date:'c' }}" title="Entered lot awarding queue (standby)">
+                            {{ row.routed_at|date:"M d, Y" }} | {{ row.routed_at|date:"h:i A" }}
+                        </time>
+                        {% else %}
+                        <span class="rfq-proceeded-missing">—</span>
+                        {% endif %}
+                    </td>
+                    <td class="rfq-col-proceeded-ago" title="Same moment as Proceeded Date &amp; Time — relative to now">
+                        {{ row.routedAgo|default:"—" }}
                     </td>
                     <td class="rfq-col-status">
                         <span class="lawq-chip">{{ row.status_label }}</span>

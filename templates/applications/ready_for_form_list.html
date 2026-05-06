@@ -45,6 +45,8 @@
                 <tr>
                     <th>#</th>
                     <th>Applicant</th>
+                    <th class="rfq-col-proceeded">Proceeded Date &amp; Time</th>
+                    <th class="rfq-col-proceeded-ago" title="Relative to now since this applicant was routed/proceeded">Time ago</th>
                     <th class="rfq-col-status">Status</th>
                     <th class="rfq-col-actions">Actions</th>
                 </tr>
@@ -55,6 +57,18 @@
                     <td style="font-weight:700;color:#1e293b;">{{ page_obj.start_index|add:forloop.counter0 }}</td>
                     <td>
                         <div class="rfq-name {% if data.applicant.displacement_reason == 'danger_zone' %}option-a{% elif data.applicant.displacement_reason == 'ejected' %}option-b{% elif data.applicant.displacement_reason == 'relocated' %}option-c{% elif data.applicant.displacement_reason == 'not_abc' %}option-d{% endif %}">{{ data.applicant.full_name }}</div>
+                    </td>
+                    <td class="rfq-col-proceeded">
+                        {% if data.form_queue_routed_at %}
+                        <time datetime="{{ data.form_queue_routed_at|date:'c' }}" title="{% if data.form_queue_routed_by %}By {{ data.form_queue_routed_by.get_full_name }}{% else %}Proceed to Form{% endif %}">
+                            {{ data.form_queue_routed_at|date:"M d, Y" }} | {{ data.form_queue_routed_at|date:"h:i A" }}
+                        </time>
+                        {% else %}
+                        <span class="rfq-proceeded-missing">—</span>
+                        {% endif %}
+                    </td>
+                    <td class="rfq-col-proceeded-ago" title="Same moment as Proceeded Date &amp; Time — relative to now">
+                        {{ data.routedAgo|default:"—" }}
                     </td>
                     <td class="rfq-col-status">
                         {% if data.selected_out_of_queue %}

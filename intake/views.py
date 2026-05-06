@@ -30,10 +30,66 @@ MODULE1_MONTHLY_INCOME_CEILING_PESO = 10000
 # and submit. The flag is surfaced for downstream eligibility evaluation.
 MODULE1_MIN_YEARS_RESIDING_TALISAY = 5
 
+
+def _relative_time_ago(dt):
+    """
+    Short relative labels from registration datetime to now (e.g. Just now, 2 hours ago, 1 day ago).
+    """
+    if dt is None:
+        return '—'
+    now = timezone.now()
+    if timezone.is_naive(dt):
+        dt = timezone.make_aware(dt, timezone.get_current_timezone())
+    secs = int((now - dt).total_seconds())
+    if secs < 60:
+        return 'Just now'
+    mins = secs // 60
+    if mins < 60:
+        return f'{mins} minute{"s" if mins != 1 else ""} ago'
+    hours = mins // 60
+    if hours < 24:
+        return f'{hours} hour{"s" if hours != 1 else ""} ago'
+    days = hours // 24
+    if days < 7:
+        return f'{days} day{"s" if days != 1 else ""} ago'
+    weeks = days // 7
+    if days < 60:
+        return f'{weeks} week{"s" if weeks != 1 else ""} ago'
+    months = days // 30
+    if months < 12:
+        m = max(months, 1)
+        return f'{m} month{"s" if m != 1 else ""} ago'
+    years = days // 365
+    y = max(years, 1)
+    return f'{y} year{"s" if y != 1 else ""} ago'
+
 # Applicant Situation Options A/B/C need one extra situational vault slot.
 DISPLACEMENT_PATHS_NEED_ISF_EXTRA = frozenset({'danger_zone', 'ejected', 'relocated'})
 ISF_EXTRA_VAULT_DOC_TYPE = 'isf_situational_docs'
 CDRRMO_EXTRA_VAULT_DOC_TYPE = 'cdrrmo_cert'
+
+
+def _requirements_filing_status_label_and_tier(scanned_count, requirements_total):
+    """
+    LIST OF APPLICANTS — Status tracks the same Applicant requirements scan checklist as Documents.
+
+    Pending: no requirement scans filed yet. Incomplete: some filed but not all. Complete: all filed.
+    """
+    try:
+        total = int(requirements_total)
+    except (TypeError, ValueError):
+        total = 0
+    try:
+        scanned = int(scanned_count)
+    except (TypeError, ValueError):
+        scanned = 0
+    if total <= 0:
+        return 'Pending', 'pending'
+    if scanned >= total:
+        return 'Complete', 'complete'
+    if scanned > 0:
+        return 'Incomplete', 'incomplete'
+    return 'Pending', 'pending'
 
 
 def _archive_list_name_class_for_displacement(displacement_reason):
@@ -872,6 +928,9 @@ def applicants_list(request, position):
             'referenceNumber': isf.reference_number,
             'dateRegistered': local_created_at.strftime('%Y-%m-%d'),
             'dateTime': local_created_at.strftime('%b %d, %Y | %I:%M %p'),
+            'dateTimeDatePart': local_created_at.strftime('%b %d, %Y') + ' |',
+            'dateTimeTimePart': local_created_at.strftime('%I:%M %p'),
+            'registeredAgo': _relative_time_ago(isf.created_at),
             'channel': 'A',
             'channelSource': 'staff_entry' if isf.submitted_by_staff else 'portal',  # Differentiate Channel A source
             'submissionId': str(isf.submission.id),  # For Channel A review
@@ -1012,6 +1071,9 @@ def applicants_list(request, position):
             'referenceNumber': app.reference_number,
             'dateRegistered': local_created_at.strftime('%Y-%m-%d'),
             'dateTime': local_created_at.strftime('%b %d, %Y | %I:%M %p'),
+            'dateTimeDatePart': local_created_at.strftime('%b %d, %Y') + ' |',
+            'dateTimeTimePart': local_created_at.strftime('%I:%M %p'),
+            'registeredAgo': _relative_time_ago(app.created_at),
             'dateOfBirthDisplay': app.date_of_birth.strftime('%m/%d/%Y') if app.date_of_birth else '',
             'channel': 'B' if app.channel == 'danger_zone' else 'C',  # Map database channels to UI channels
             'submissionId': None,
@@ -1218,10 +1280,14 @@ def applicants_list(request, position):
             latest_doc_by_type=latest_doc_meta_by_applicant_id.get(archive.applicant_id, {}),
         )
         requirements_total = trackable_total if trackable_total > 0 else max(len(requirement_scan_rows), 1)
+        _req_status_label, _req_status_tier = _requirements_filing_status_label_and_tier(
+            scanned_count, requirements_total
+        )
 
         archive_records.append({
             'id': str(archive.id),
             'dateTime': local_archived_at.strftime('%b %d, %Y | %I:%M %p') if local_archived_at else '',
+            'proceededAgo': _relative_time_ago(archive.archived_at) if archive.archived_at else '—',
             'dateOfBirthDisplay': archive.date_of_birth_snapshot.strftime('%m/%d/%Y') if archive.date_of_birth_snapshot else '',
             'referenceNumber': archive.reference_number_snapshot,
             'fullName': archive.full_name_snapshot,
@@ -1247,6 +1313,8 @@ def applicants_list(request, position):
             'requirementScanRows': requirement_scan_rows,
             'scannedCount': scanned_count,
             'requirementsTotal': requirements_total,
+            'requirementsStatusLabel': _req_status_label,
+            'requirementsStatusTier': _req_status_tier,
             'applicantId': str(archive.applicant_id) if archive.applicant_id else '',
             'displacementReason': disp_snapshot,
             'archiveDispNameClass': _archive_list_name_class_for_displacement(disp_snapshot),
@@ -1815,6 +1883,7 @@ def archive_list(request, position):
         records.append({
             'id': str(archive.id),
             'dateTime': date_time_display,
+            'proceededAgo': _relative_time_ago(archive.archived_at) if archive.archived_at else '—',
             'handoffAt': handoff_at_detail,
             'referenceNumber': archive.reference_number_snapshot,
             'fullName': archive.full_name_snapshot,

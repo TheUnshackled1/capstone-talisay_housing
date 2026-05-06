@@ -52,6 +52,42 @@ ELIGIBILITY_CHECK_LABELS = {
 logger = logging.getLogger(__name__)
 
 
+def _relative_time_ago(dt):
+    """
+    Short relative labels from datetime to now (e.g. Just now, 2 hours ago, 1 day ago).
+
+    NOTE: Duplicated from `intake/views.py` to avoid a circular import
+    (intake imports applications models).
+    """
+    if dt is None:
+        return '—'
+    now = timezone.now()
+    if timezone.is_naive(dt):
+        dt = timezone.make_aware(dt, timezone.get_current_timezone())
+    secs = int((now - dt).total_seconds())
+    if secs < 60:
+        return 'Just now'
+    mins = secs // 60
+    if mins < 60:
+        return f'{mins} minute{"s" if mins != 1 else ""} ago'
+    hours = mins // 60
+    if hours < 24:
+        return f'{hours} hour{"s" if hours != 1 else ""} ago'
+    days = hours // 24
+    if days < 7:
+        return f'{days} day{"s" if days != 1 else ""} ago'
+    weeks = days // 7
+    if days < 60:
+        return f'{weeks} week{"s" if weeks != 1 else ""} ago'
+    months = days // 30
+    if months < 12:
+        m = max(months, 1)
+        return f'{m} month{"s" if m != 1 else ""} ago'
+    years = days // 365
+    y = max(years, 1)
+    return f'{y} year{"s" if y != 1 else ""} ago'
+
+
 def send_sms(recipient_phone, message_content, trigger_event, applicant=None, module='applications'):
     """
     Applications-module SMS policy:
@@ -878,9 +914,16 @@ def _module2_applicant_row_payload(applicant, permissions, required_group_a_subm
         signed_form_vault_url_upload = f"{_path}?{urlencode({**_vault_base, 'intent': 'upload'})}"
         signed_form_vault_url = signed_form_vault_url_upload
 
+    proceeded_dt = applicant.module2_handoff_at or applicant.created_at
+    proceeded_ago = _relative_time_ago(proceeded_dt) if proceeded_dt else '—'
+    routed_dt = applicant.form_queue_routed_at or proceeded_dt
+    routed_ago = _relative_time_ago(routed_dt) if routed_dt else '—'
+
     return {
         'applicant': applicant,
         'application': application,
+        'proceededAgo': proceeded_ago,
+        'routedAgo': routed_ago,
         'form_queue_routed_at': applicant.form_queue_routed_at,
         'form_queue_routed_by': applicant.form_queue_routed_by,
         'applicant_status': applicant.status,
@@ -1240,6 +1283,7 @@ def lot_awarding_queue(request, position):
             'status_label': 'Ready for awarding',
             'situation_label': applicant.get_displacement_reason_display() if applicant.displacement_reason else '—',
             'routed_at': app.standby_entered_at or app.updated_at,
+            'routedAgo': _relative_time_ago(app.standby_entered_at or app.updated_at),
             'can_award_lot': bool(permissions.get('can_award_lot')),
             'signed_form_on_file': signed_form_on_file,
             'signed_form_vault_url': f"{vault_path}?{urlencode(vault_base)}",

@@ -20,6 +20,7 @@ from documents.models import (
     RequirementSubmission,
     EndorsementRoutingStep,
 )
+from applications.form_pipeline import applicant_has_signed_application_payload
 
 
 def _vault_blob_view_url(
@@ -592,12 +593,40 @@ def document_management(request, position):
             if ap
             else None
         )
+        checklist = list(row['vault_checklist'])
+        signed_on_file = bool(ap and applicant_has_signed_application_payload(ap))
+        signed_view_url = None
+        if signed_on_file:
+            doc_id = latest_doc_id_by_applicant_type.get((rid, 'signed_application'))
+            if doc_id:
+                signed_view_url = reverse(
+                    'documents:blob_download',
+                    kwargs={'position': request.user.position, 'doc_id': doc_id},
+                )
+        app_obj = getattr(ap, 'application', None) if ap else None
+        signed_item = {
+            'type_key': 'signed_application',
+            'label': 'Physically signed THA application form (scan / upload)',
+            'group_label': 'Housing application (Module 2)',
+            'on_file': signed_on_file,
+            'view_url': signed_view_url,
+        }
+        if not signed_on_file:
+            if app_obj and app_obj.status == 'draft':
+                signed_item['badge_variant'] = 'pending'
+                signed_item['badge_text'] = 'Awaiting signed scan'
+            elif app_obj is None:
+                signed_item['badge_variant'] = 'waiting'
+                signed_item['badge_text'] = 'Awaiting form release'
+                signed_item['hide_add_file'] = True
+        checklist.append(signed_item)
+
         vault_drawer_data[rid] = {
             'full_name': row['full_name'],
             'reference_number': row['reference_number'] or '',
             'barangay': row['barangay'],
             'status_display': row['status_display'],
-            'vault_checklist': row['vault_checklist'],
+            'vault_checklist': checklist,
             'situation': situation,
         }
 

@@ -525,6 +525,14 @@
         border-left: 3px solid #f43f5e;
         background: linear-gradient(135deg, #fff1f2 0%, #ffffff 30%);
     }
+    .vault-drawer-row:has(.vault-badge--pending) {
+        border-left: 3px solid #d97706;
+        background: linear-gradient(135deg, #fffbeb 0%, #ffffff 35%);
+    }
+    .vault-drawer-row:has(.vault-badge--waiting) {
+        border-left: 3px solid #64748b;
+        background: linear-gradient(135deg, #f1f5f9 0%, #ffffff 35%);
+    }
     .vault-drawer-row-actions {
         display: flex;
         align-items: center;
@@ -619,6 +627,16 @@
         background: #fff1f2;
         color: #be123c;
         border: 1px solid #fecdd3;
+    }
+    .vault-badge--pending {
+        background: #fffbeb;
+        color: #b45309;
+        border: 1px solid #fde68a;
+    }
+    .vault-badge--waiting {
+        background: #f1f5f9;
+        color: #475569;
+        border: 1px solid #cbd5e1;
     }
 
     /* FOOTER LEGEND — compact */
@@ -1399,15 +1417,33 @@ function openVaultDrawer(applicantId) {
             actions.className = 'vault-drawer-row-actions';
 
             const badge = document.createElement('span');
-            badge.className = item.on_file ? 'vault-badge vault-badge--ok' : 'vault-badge vault-badge--missing';
-            badge.textContent = item.on_file ? 'On file' : 'Missing';
+            const bv = item.badge_variant;
+            let badgeKind = item.on_file ? 'ok' : 'missing';
+            if (bv === 'pending') {
+                badgeKind = 'pending';
+            } else if (bv === 'waiting') {
+                badgeKind = 'waiting';
+            }
+            const badgeClassByKind = {
+                ok: 'vault-badge vault-badge--ok',
+                missing: 'vault-badge vault-badge--missing',
+                pending: 'vault-badge vault-badge--pending',
+                waiting: 'vault-badge vault-badge--waiting',
+            };
+            badge.className = badgeClassByKind[badgeKind] || badgeClassByKind.missing;
+            badge.textContent =
+                item.badge_text != null && String(item.badge_text).length
+                    ? item.badge_text
+                    : item.on_file
+                      ? 'On file'
+                      : 'Missing';
             actions.appendChild(badge);
 
             if (item.on_file && item.view_url) {
                 vaultAppendViewButton(actions, item.view_url);
             }
 
-            if (!item.on_file && item.type_key) {
+            if (!item.on_file && item.type_key && !item.hide_add_file) {
                 const addBtn = document.createElement('button');
                 addBtn.type = 'button';
                 addBtn.className = 'vault-add-file-btn';
