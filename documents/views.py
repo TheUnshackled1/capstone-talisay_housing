@@ -694,11 +694,6 @@ def download_document_blob(request, position, doc_id):
         Document.objects.select_related('blob_record'),
         id=doc_id,
     )
-    try:
-        blob = doc.blob_record
-    except DocumentBlob.DoesNotExist:
-        raise Http404('No file payload for this document')
-
     fname_raw = doc.file_name or 'document'
     fname_safe = (
         os.path.basename(fname_raw)
@@ -709,8 +704,20 @@ def download_document_blob(request, position, doc_id):
 
     ctype = _normalize_blob_content_type(doc.mime_type or '', fname_safe)
     force_download = request.GET.get('download') in ('1', 'true', 'yes')
+    payload_bytes = None
+    try:
+        payload_bytes = doc.blob_record.data
+    except DocumentBlob.DoesNotExist:
+        if doc.file:
+            try:
+                with doc.file.open('rb') as fh:
+                    payload_bytes = fh.read()
+            except FileNotFoundError:
+                payload_bytes = None
+    if payload_bytes is None:
+        raise Http404('No file payload for this document')
 
-    response = HttpResponse(blob.data, content_type=ctype)
+    response = HttpResponse(payload_bytes, content_type=ctype)
     if force_download or not _blob_disposition_inline_ok(ctype, fname_safe):
         response['Content-Disposition'] = f'attachment; filename="{fname_safe}"'
     else:

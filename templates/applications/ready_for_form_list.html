@@ -538,24 +538,10 @@
     }
 
     function rfqPromptSignedDocReview(reviewUrl, successMsg, applicationId, referenceNumber, applicantId) {
-        rfqShowConfirm(
-            (successMsg || 'Signed application saved.') + ' If the signed document is correct, proceed to lot awarding. If not, scan or upload again.',
-            function () {
-                proceedToLotAwardingQueue(applicationId, referenceNumber || '');
-            },
-            {
-                title: 'Signed document verification',
-                okText: 'Proceed to lot awarding',
-                cancelText: 'Scan or upload again',
-                onCancel: function () {
-                    if (applicantId) {
-                        window.location.href = queueUrl + '?retry_sign=' + encodeURIComponent(applicantId);
-                        return;
-                    }
-                    window.location.reload();
-                },
-            }
-        );
+        rfqShowAlert(successMsg || 'Signed application saved.', 'Application Form', 'success');
+        window.setTimeout(function () {
+            window.location.href = rfqQueueUrlWithoutRetrySign();
+        }, 500);
     }
 
     function rfqShowApplicantDetail(btn) {
