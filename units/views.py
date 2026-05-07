@@ -234,13 +234,25 @@ def construction_monitoring(request, position):
 
     if no_relocation_sites:
         progress_rows = []
+        all_rows_for_counts = []
     else:
-        progress_rows = (
+        progress_rows = list(
             ConstructionProgress.objects
             .filter(lot_award__status='active', lot_award__unit__site=site)
             .select_related('lot_award__unit__site', 'lot_award__application__applicant')
             .order_by('lot_award__unit__block_number', 'lot_award__unit__lot_number')
         )
+        all_rows_for_counts = progress_rows
+
+    # KPI counts — always reflect the full site, not the filtered list, so
+    # the four KPI tiles stay stable while the user toggles status chips.
+    count_not_started = sum(1 for p in all_rows_for_counts if p.stage == 'not_started' or (p.percent_complete or 0) <= 0)
+    count_completed = sum(1 for p in all_rows_for_counts if p.stage == 'completed' or (p.percent_complete or 0) >= 100)
+    count_delayed = sum(1 for p in all_rows_for_counts if p.is_delayed)
+    count_in_progress = sum(
+        1 for p in all_rows_for_counts
+        if 0 < (p.percent_complete or 0) < 100 and p.stage != 'completed'
+    )
 
     # Simple filters
     status_filter = (request.GET.get('status') or 'all').strip()
@@ -260,6 +272,10 @@ def construction_monitoring(request, position):
         'permissions': permissions,
         'status_filter': status_filter,
         'progress_rows': list(progress_rows),
+        'count_not_started': count_not_started,
+        'count_in_progress': count_in_progress,
+        'count_completed': count_completed,
+        'count_delayed': count_delayed,
     }
     return render(request, 'units/construction_monitoring.html', context)
 

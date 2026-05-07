@@ -273,36 +273,44 @@
     }
 
     /* ===================================================================
-       Page card theme — Document Management (Module 3): Teal
+       Document Management (Module 3) — emerald-on-slate institutional
+       look so this page reads as a peer of Module 4 monitoring pages.
        =================================================================== */
     .docs-shell {
         position: relative;
         overflow: hidden;
-        padding: 1.05rem 1rem 0.9rem;
+        padding: 1.4rem 1.25rem 1.1rem;
         max-width: 100%;
-        background: linear-gradient(180deg, #f0fdfa 0%, #ffffff 16%);
-        border: 1px solid #99f6e4;
-        border-radius: 0.85rem;
-        box-shadow: 0 2px 6px rgba(13, 148, 136, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
+        background: linear-gradient(180deg, #ecfdf5 0%, #ffffff 14%);
+        border: 1px solid #a7f3d0;
+        border-radius: 0.95rem;
+        box-shadow: 0 2px 6px rgba(5, 150, 105, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
         margin-bottom: 0.95rem;
     }
     .docs-shell::before {
         content: '';
         position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
+        top: 0; left: 0; right: 0;
         height: 4px;
-        background: linear-gradient(90deg, #115e59 0%, #0d9488 50%, #5eead4 100%);
+        background: linear-gradient(90deg, #047857 0%, #10b981 50%, #6ee7b7 100%);
         z-index: 1;
     }
+    .docs-kicker {
+        margin: 0 0 0.3rem;
+        font-size: 0.62rem;
+        font-weight: 800;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: #047857;
+    }
     .docs-page-title {
-        font-size: 1.02rem !important;
+        font-family: 'Source Serif Pro', Georgia, serif !important;
+        font-size: 1.3rem !important;
         font-weight: 700 !important;
-        color: #115e59 !important;
-        margin: 0 !important;
-        letter-spacing: 0.04em !important;
-        text-transform: uppercase !important;
+        color: #064e3b !important;
+        margin: 0 0 0.35rem !important;
+        letter-spacing: -0.01em !important;
+        text-transform: none !important;
         display: inline-flex;
         align-items: center;
         gap: 0.55rem;
@@ -312,9 +320,99 @@
         width: 0.55rem;
         height: 0.55rem;
         border-radius: 50%;
-        background: linear-gradient(135deg, #14b8a6 0%, #0f766e 100%);
-        box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.2);
+        background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.18);
     }
+    .docs-subtitle {
+        margin: 0;
+        font-size: 0.78rem;
+        color: #475569;
+        line-height: 1.5;
+    }
+    .docs-subtitle strong { color: #0f172a; font-weight: 700; }
+
+    /* KPI card row — neutral white cards with semantic icon tiles */
+    .docs-kpis {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+        gap: 0.6rem;
+        margin-bottom: 0.85rem;
+    }
+    .docs-kpi {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        padding: 0.65rem 0.78rem;
+        border: 1px solid #e2e8f0;
+        background: #ffffff;
+        border-radius: 0.65rem;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+    .docs-kpi-icon {
+        width: 2.1rem;
+        height: 2.1rem;
+        flex-shrink: 0;
+        border-radius: 0.5rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .docs-kpi-icon svg { width: 1.05rem; height: 1.05rem; stroke-width: 2; }
+    .docs-kpi-label {
+        margin: 0;
+        font-size: 0.6rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #64748b;
+    }
+    .docs-kpi-value {
+        margin: 0.1rem 0 0;
+        font-size: 1.18rem;
+        font-weight: 800;
+        color: #0f172a;
+        line-height: 1.05;
+    }
+    .docs-kpi--total .docs-kpi-icon        { background: #d1fae5; color: #047857; }
+    .docs-kpi--applicants .docs-kpi-icon   { background: #ecfdf5; color: #065f46; }
+    .docs-kpi--disqualified .docs-kpi-icon { background: #fee2e2; color: #b91c1c; }
+    .docs-kpi--disqualified .docs-kpi-value { color: #b91c1c; }
+
+    /* Search input next to KPIs — refined institutional style */
+    .docs-search-wrap {
+        flex: 1;
+        min-width: 16rem;
+        position: relative;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.65rem;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .docs-search-wrap:focus-within {
+        border-color: #6ee7b7;
+        box-shadow: 0 0 0 3px rgba(167, 243, 208, 0.4);
+    }
+    .docs-search-wrap svg {
+        position: absolute;
+        left: 0.85rem;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 1rem;
+        height: 1rem;
+        color: #94a3b8;
+    }
+    .docs-search-wrap input {
+        width: 100%;
+        padding: 0.7rem 0.85rem 0.7rem 2.4rem;
+        border: none;
+        background: transparent;
+        font-size: 0.82rem;
+        color: #0f172a;
+        outline: none;
+        font-family: inherit;
+    }
+    .docs-search-wrap input::placeholder { color: #94a3b8; }
 
     /* Vault checklist drawer (View Documents) */
     /* === VAULT DRAWER — Module 3 Documents (teal) — design-system polish === */
@@ -912,9 +1010,13 @@
 
 <div class="docs-shell">
     <!-- Page Header -->
-    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.95rem; gap: 1rem; flex-wrap: wrap;">
-        <div>
+    <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1.05rem; gap: 1rem; flex-wrap: wrap;">
+        <div style="min-width:0; flex:1 1 22rem;">
+            <p class="docs-kicker">Module 3 · Digital vault</p>
             <h1 class="docs-page-title">Document Management</h1>
+            <p class="docs-subtitle">
+                <strong>{{ total_applicants }}</strong> applicant{{ total_applicants|pluralize }} · <strong>{{ total_documents }}</strong> document{{ total_documents|pluralize }} on file. Physical copies remain authoritative; this vault is a working reference.
+            </p>
         </div>
         <button type="button" class="dm-action-btn dm-action-btn--scan" onclick="openUploadModal()">
             <svg class="dm-action-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -926,32 +1028,38 @@
         </button>
     </div>
 
-    <!-- Controls Bar -->
-    <div style="display: flex; gap: 0.75rem; margin-bottom: 0.85rem; flex-wrap: wrap; align-items: center; padding: 0.6rem; border: 1px solid #e2e8f0; background: #f8fafc; border-radius: 0.7rem;">
-        <div style="display: flex; align-items: center; gap: 0.65rem; padding: 0.46rem 0.68rem; background: #eff6ff; border-radius: 0.55rem; border: 1px solid #bfdbfe;">
-            <svg style="width: 20px; height: 20px; color: #2563eb;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+    <!-- KPI cards -->
+    <div class="docs-kpis">
+        <div class="docs-kpi docs-kpi--total">
+            <span class="docs-kpi-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            </span>
             <div>
-                <p style="font-size: 0.625rem; color: #64748b; margin: 0; text-transform: uppercase; font-weight: 500;">Total Documents</p>
-                <p style="font-size: 1.25rem; font-weight: 700; color: #2563eb; margin: 0;">{{ total_documents }}</p>
+                <p class="docs-kpi-label">Total documents</p>
+                <p class="docs-kpi-value">{{ total_documents }}</p>
             </div>
         </div>
-        <div style="display: flex; align-items: center; gap: 0.65rem; padding: 0.46rem 0.68rem; background: #fef3c7; border-radius: 0.55rem; border: 1px solid #fde68a;">
-            <svg style="width: 20px; height: 20px; color: #d97706;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+        <div class="docs-kpi docs-kpi--applicants">
+            <span class="docs-kpi-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </span>
             <div>
-                <p style="font-size: 0.625rem; color: #92400e; margin: 0; text-transform: uppercase; font-weight: 500;">Applicants</p>
-                <p style="font-size: 1.25rem; font-weight: 700; color: #d97706; margin: 0;">{{ total_applicants }}</p>
+                <p class="docs-kpi-label">Applicants</p>
+                <p class="docs-kpi-value">{{ total_applicants }}</p>
             </div>
         </div>
-        <div style="display: flex; align-items: center; gap: 0.65rem; padding: 0.46rem 0.68rem; background: #fee2e2; border-radius: 0.55rem; border: 1px solid #fecaca;">
-            <svg style="width: 20px; height: 20px; color: #dc2626;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+        <div class="docs-kpi docs-kpi--disqualified">
+            <span class="docs-kpi-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            </span>
             <div>
-                <p style="font-size: 0.625rem; color: #991b1b; margin: 0; text-transform: uppercase; font-weight: 500;">Disqualified</p>
-                <p style="font-size: 1.25rem; font-weight: 700; color: #dc2626; margin: 0;">{{ disqualified_count|default:"0" }}</p>
+                <p class="docs-kpi-label">Disqualified</p>
+                <p class="docs-kpi-value">{{ disqualified_count|default:"0" }}</p>
             </div>
         </div>
-        <div style="flex: 1; min-width: 200px; position: relative;">
-            <svg style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); width: 1rem; height: 1rem; color: #94a3b8;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
-            <input type="text" id="searchInput" placeholder="Search by applicant or document type..." style="width: 100%; padding: 0.56rem 0.72rem 0.56rem 2.25rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.78rem; outline: none;">
+        <div class="docs-search-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
+            <input type="text" id="searchInput" placeholder="Search by applicant or document type…">
         </div>
     </div>
 

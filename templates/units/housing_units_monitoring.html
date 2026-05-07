@@ -10,36 +10,48 @@
 {% block extra_css %}
 <style>
     /* ===================================================================
-       Page card theme — Housing Units Monitoring (Module 4): Sky
+       Housing Unit & Occupancy Monitoring (Module 4)
+       Government-leaning emerald shell with quiet, semantic KPI cards.
        =================================================================== */
     .units-shell {
         position: relative;
         overflow: hidden;
-        padding: 1.05rem 1rem 0.9rem;
+        padding: 1.4rem 1.25rem 1.1rem;
         max-width: 100%;
-        background: linear-gradient(180deg, #f0f9ff 0%, #ffffff 16%);
-        border: 1px solid #bae6fd;
-        border-radius: 0.85rem;
-        box-shadow: 0 2px 6px rgba(2, 132, 199, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
+        background: linear-gradient(180deg, #ecfdf5 0%, #ffffff 14%);
+        border: 1px solid #a7f3d0;
+        border-radius: 0.95rem;
+        box-shadow: 0 2px 6px rgba(5, 150, 105, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
         margin-bottom: 0.95rem;
     }
     .units-shell::before {
         content: '';
         position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
+        top: 0; left: 0; right: 0;
         height: 4px;
-        background: linear-gradient(90deg, #0c4a6e 0%, #0284c7 50%, #7dd3fc 100%);
+        background: linear-gradient(90deg, #047857 0%, #10b981 50%, #6ee7b7 100%);
         z-index: 1;
     }
+
+    /* Hero typography — adopt the same kicker / serif title pattern used
+       across the rest of the staff portal so module pages read as one
+       institutional surface. */
+    .units-kicker {
+        margin: 0 0 0.3rem;
+        font-size: 0.62rem;
+        font-weight: 800;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: #047857;
+    }
     .units-page-title {
-        font-size: 1.02rem !important;
+        font-family: 'Source Serif Pro', Georgia, serif !important;
+        font-size: 1.3rem !important;
         font-weight: 700 !important;
-        color: #0c4a6e !important;
-        margin: 0 !important;
-        letter-spacing: 0.04em !important;
-        text-transform: uppercase !important;
+        color: #064e3b !important;
+        margin: 0 0 0.35rem !important;
+        letter-spacing: -0.01em !important;
+        text-transform: none !important;
         display: inline-flex;
         align-items: center;
         gap: 0.55rem;
@@ -49,8 +61,157 @@
         width: 0.55rem;
         height: 0.55rem;
         border-radius: 50%;
-        background: linear-gradient(135deg, #0ea5e9 0%, #075985 100%);
-        box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.2);
+        background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.18);
+    }
+
+    /* Unified KPI card style — neutral white card body, semantic tile
+       on the small icon. Numerals stay slate-900 except where the state
+       itself is meaningful (delayed = red). Reads as a single clean row
+       rather than a rainbow of shaded backgrounds. */
+    .units-kpis {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr));
+        gap: 0.6rem;
+        margin-bottom: 0.85rem;
+    }
+    .units-kpi {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        padding: 0.65rem 0.78rem;
+        border: 1px solid #e2e8f0;
+        background: #ffffff;
+        border-radius: 0.65rem;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+    .units-kpi-icon {
+        width: 2.1rem;
+        height: 2.1rem;
+        flex-shrink: 0;
+        border-radius: 0.5rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .units-kpi-icon svg {
+        width: 1.05rem;
+        height: 1.05rem;
+        stroke-width: 2;
+    }
+    .units-kpi-label {
+        margin: 0;
+        font-size: 0.6rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #64748b;
+    }
+    .units-kpi-value {
+        margin: 0.1rem 0 0;
+        font-size: 1.18rem;
+        font-weight: 800;
+        color: #0f172a;
+        line-height: 1.05;
+    }
+    /* Semantic tile colors — tone only the icon; keep the card body neutral */
+    .units-kpi--occupied .units-kpi-icon { background: #d1fae5; color: #047857; }
+    .units-kpi--vacant   .units-kpi-icon { background: #ecfdf5; color: #065f46; }
+    .units-kpi--notice30 .units-kpi-icon { background: #fef3c7; color: #92400e; }
+    .units-kpi--notice10 .units-kpi-icon { background: #fee2e2; color: #b91c1c; }
+    .units-kpi--repo     .units-kpi-icon { background: #f1f5f9; color: #475569; }
+    .units-kpi--repo .units-kpi-value    { color: #475569; }
+    .units-kpi--notice10 .units-kpi-value{ color: #b91c1c; }
+
+    /* Construction summary strip — neutral cards with numeric accents */
+    .units-cm-strip {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+        gap: 0.55rem;
+        padding: 0.7rem 0.78rem;
+        background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+        border: 1px solid #e2e8f0;
+        border-radius: 0.7rem;
+        margin-bottom: 0.85rem;
+    }
+    .units-cm-tile {
+        padding: 0.45rem 0.55rem;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.55rem;
+    }
+    .units-cm-tile p {
+        margin: 0;
+    }
+    .units-cm-tile .cm-tile-label {
+        font-size: 0.6rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #64748b;
+    }
+    .units-cm-tile .cm-tile-value {
+        margin-top: 0.15rem;
+        font-size: 1.05rem;
+        font-weight: 800;
+        color: #0f172a;
+        line-height: 1.05;
+    }
+    .units-cm-tile.is-emerald      .cm-tile-value { color: #047857; }
+    .units-cm-tile.is-emerald-dark .cm-tile-value { color: #065f46; }
+    .units-cm-tile.is-delayed      .cm-tile-value { color: #b91c1c; }
+    .units-cm-strip .cm-strip-note {
+        grid-column: 1 / -1;
+        margin: 0.15rem 0 0;
+        font-size: 0.7rem;
+        color: #64748b;
+        line-height: 1.45;
+    }
+
+    /* Header action buttons — convert old sky/cyan inline gradients to
+       the unified emerald primary. */
+    .units-header-action {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        padding: 0.55rem 0.95rem;
+        background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+        color: #ffffff;
+        border: 1px solid #047857;
+        border-radius: 0.55rem;
+        font-size: 0.72rem;
+        font-weight: 700;
+        cursor: pointer;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+        transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+    .units-header-action:hover {
+        background: linear-gradient(180deg, #059669 0%, #047857 100%);
+        box-shadow: 0 4px 14px rgba(5, 150, 105, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        transform: translateY(-1px);
+        color: #ffffff;
+        text-decoration: none;
+    }
+    .units-view-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        padding: 0.55rem 0.85rem;
+        background: #ffffff;
+        color: #334155;
+        border: 1px solid #cbd5e1;
+        border-radius: 0.55rem;
+        font-size: 0.72rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
+    }
+    .units-view-btn:hover {
+        border-color: #6ee7b7;
+        color: #047857;
+        box-shadow: 0 1px 2px rgba(5, 150, 105, 0.08);
     }
 </style>
 {% endblock %}
@@ -77,95 +238,95 @@
     </div>
     {% endif %}
     <!-- Page Header -->
-    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.95rem; gap: 1rem; flex-wrap: wrap;">
-        <div>
-            <h1 class="units-page-title">Housing Unit & Occupancy Monitoring</h1>
-            <p style="font-size: 0.75rem; color: #64748b; margin-top: 0.2rem;">Module 4{% if site %} — {{ site.name }}{% endif %} · {{ total_units }} total units · Weekly occupancy reports</p>
+    <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1.05rem; gap: 1rem; flex-wrap: wrap;">
+        <div style="min-width:0; flex:1 1 22rem;">
+            <p class="units-kicker">Module 4 · Housing inventory</p>
+            <h1 class="units-page-title">Housing Unit &amp; Occupancy Monitoring</h1>
+            <p style="font-size: 0.78rem; color: #475569; margin: 0; line-height: 1.5;">
+                {% if site %}<strong style="color:#0f172a;">{{ site.name }}</strong> ·{% endif %}
+                {{ total_units }} total unit{{ total_units|pluralize }} tracked. Weekly occupancy reports and notice-of-action enforcement.
+            </p>
         </div>
         <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
             {% if can_create_relocation_site and no_relocation_sites %}
-            <button type="button" onclick="openCreateSiteModal()"
-                style="display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.52rem 0.88rem; background: linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%); color: white; border: none; border-radius: 0.5rem; font-size: 0.72rem; font-weight: 700; cursor: pointer; box-shadow: 0 1px 2px rgba(3, 105, 161, 0.35);">
-                + Create site
-            </button>
+            <button type="button" class="units-header-action" onclick="openCreateSiteModal()">+ Create site</button>
             {% endif %}
             {% if can_add_housing_unit %}
-            <button type="button" id="openAddUnitModalBtn" onclick="openAddUnitModal()"
-                style="display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.52rem 0.88rem; background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: white; border: none; border-radius: 0.5rem; font-size: 0.72rem; font-weight: 700; cursor: pointer; box-shadow: 0 1px 2px rgba(2, 132, 199, 0.35);">
-                + Add block / lot
-            </button>
+            <button type="button" id="openAddUnitModalBtn" class="units-header-action" onclick="openAddUnitModal()">+ Add block / lot</button>
             {% endif %}
-            <button id="gridView" class="view-btn" onclick="switchView('grid')" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.52rem 0.88rem; background: white; color: #334155; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.72rem; font-weight: 700; cursor: pointer; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);">Grid</button>
-            <button id="tableView" class="view-btn" onclick="switchView('table')" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.52rem 0.88rem; background: white; color: #334155; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.72rem; font-weight: 700; cursor: pointer; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);">Table</button>
+            <button id="gridView" class="view-btn units-view-btn" onclick="switchView('grid')">Grid</button>
+            <button id="tableView" class="view-btn units-view-btn" onclick="switchView('table')">Table</button>
         </div>
     </div>
 
-    <!-- Controls Bar -->
-    <div style="display: flex; gap: 0.75rem; margin-bottom: 0.85rem; flex-wrap: wrap; align-items: center; padding: 0.6rem; border: 1px solid #e2e8f0; background: #f8fafc; border-radius: 0.7rem;">
-        <div style="display: flex; align-items: center; gap: 0.65rem; padding: 0.46rem 0.68rem; background: #f0fdf4; border-radius: 0.55rem; border: 1px solid #bbf7d0;">
-            <svg style="width: 20px; height: 20px; color: #16a34a;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+    <!-- KPI cards — occupancy + notice-of-action enforcement -->
+    <div class="units-kpis">
+        <div class="units-kpi units-kpi--occupied">
+            <span class="units-kpi-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            </span>
             <div>
-                <p style="font-size: 0.625rem; color: #166534; margin: 0; text-transform: uppercase; font-weight: 500;">Occupied</p>
-                <p style="font-size: 1.25rem; font-weight: 700; color: #16a34a; margin: 0;">{{ occupied_count }}</p>
+                <p class="units-kpi-label">Occupied</p>
+                <p class="units-kpi-value">{{ occupied_count }}</p>
             </div>
         </div>
-        <div style="display: flex; align-items: center; gap: 0.65rem; padding: 0.46rem 0.68rem; background: #eff6ff; border-radius: 0.55rem; border: 1px solid #bfdbfe;">
-            <svg style="width: 20px; height: 20px; color: #2563eb;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
+        <div class="units-kpi units-kpi--vacant">
+            <span class="units-kpi-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+            </span>
             <div>
-                <p style="font-size: 0.625rem; color: #64748b; margin: 0; text-transform: uppercase; font-weight: 500;">Vacant</p>
-                <p style="font-size: 1.25rem; font-weight: 700; color: #2563eb; margin: 0;">{{ vacant_count }}</p>
+                <p class="units-kpi-label">Vacant</p>
+                <p class="units-kpi-value">{{ vacant_count }}</p>
             </div>
         </div>
-        <div style="display: flex; align-items: center; gap: 0.65rem; padding: 0.46rem 0.68rem; background: #fffbeb; border-radius: 0.55rem; border: 1px solid #fde68a;">
-            <svg style="width: 20px; height: 20px; color: #d97706;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        <div class="units-kpi units-kpi--notice30">
+            <span class="units-kpi-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
+            </span>
             <div>
-                <p style="font-size: 0.625rem; color: #92400e; margin: 0; text-transform: uppercase; font-weight: 500;">30-Day Notice</p>
-                <p style="font-size: 1.25rem; font-weight: 700; color: #d97706; margin: 0;">{{ notice_30_count }}</p>
+                <p class="units-kpi-label">30-day notice</p>
+                <p class="units-kpi-value">{{ notice_30_count }}</p>
             </div>
         </div>
-        <div style="display: flex; align-items: center; gap: 0.65rem; padding: 0.46rem 0.68rem; background: #fee2e2; border-radius: 0.55rem; border: 1px solid #fecaca;">
-            <svg style="width: 20px; height: 20px; color: #dc2626;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+        <div class="units-kpi units-kpi--notice10">
+            <span class="units-kpi-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            </span>
             <div>
-                <p style="font-size: 0.625rem; color: #991b1b; margin: 0; text-transform: uppercase; font-weight: 500;">Final Notice</p>
-                <p style="font-size: 1.25rem; font-weight: 700; color: #dc2626; margin: 0;">{{ notice_10_count }}</p>
+                <p class="units-kpi-label">Final notice</p>
+                <p class="units-kpi-value">{{ notice_10_count }}</p>
             </div>
         </div>
-        <div style="display: flex; align-items: center; gap: 0.65rem; padding: 0.46rem 0.68rem; background: #f3e8ff; border-radius: 0.55rem; border: 1px solid #e9d5ff;">
-            <svg style="width: 20px; height: 20px; color: #a855f7;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+        <div class="units-kpi units-kpi--repo">
+            <span class="units-kpi-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            </span>
             <div>
-                <p style="font-size: 0.625rem; color: #6b21a8; margin: 0; text-transform: uppercase; font-weight: 500;">Repossessed</p>
-                <p style="font-size: 1.25rem; font-weight: 700; color: #a855f7; margin: 0;">{{ repossessed_count }}</p>
+                <p class="units-kpi-label">Repossessed</p>
+                <p class="units-kpi-value">{{ repossessed_count }}</p>
             </div>
         </div>
     </div>
 
-    <!-- Construction Monitoring (MVP) -->
-    <div style="display:flex; gap:0.75rem; margin-bottom:0.85rem; flex-wrap:wrap; align-items:center; padding:0.6rem; border:1px solid #e2e8f0; background:#ffffff; border-radius:0.7rem;">
-        <div style="display:flex; align-items:center; gap:0.65rem; padding:0.46rem 0.68rem; background:#f1f5f9; border-radius:0.55rem; border:1px solid #e2e8f0;">
-            <div>
-                <p style="font-size:0.625rem; color:#334155; margin:0; text-transform:uppercase; font-weight:700;">Construction not started</p>
-                <p style="font-size:1.15rem; font-weight:800; color:#0f172a; margin:0;">{{ construction_not_started|default:0 }}</p>
-            </div>
+    <!-- Construction summary (Module 4 MVP) -->
+    <div class="units-cm-strip">
+        <div class="units-cm-tile">
+            <p class="cm-tile-label">Not started</p>
+            <p class="cm-tile-value">{{ construction_not_started|default:0 }}</p>
         </div>
-        <div style="display:flex; align-items:center; gap:0.65rem; padding:0.46rem 0.68rem; background:#eff6ff; border-radius:0.55rem; border:1px solid #bfdbfe;">
-            <div>
-                <p style="font-size:0.625rem; color:#1d4ed8; margin:0; text-transform:uppercase; font-weight:700;">In progress</p>
-                <p style="font-size:1.15rem; font-weight:800; color:#1d4ed8; margin:0;">{{ construction_in_progress|default:0 }}</p>
-            </div>
+        <div class="units-cm-tile is-emerald">
+            <p class="cm-tile-label">In progress</p>
+            <p class="cm-tile-value">{{ construction_in_progress|default:0 }}</p>
         </div>
-        <div style="display:flex; align-items:center; gap:0.65rem; padding:0.46rem 0.68rem; background:#f0fdf4; border-radius:0.55rem; border:1px solid #bbf7d0;">
-            <div>
-                <p style="font-size:0.625rem; color:#166534; margin:0; text-transform:uppercase; font-weight:700;">Completed</p>
-                <p style="font-size:1.15rem; font-weight:800; color:#16a34a; margin:0;">{{ construction_completed|default:0 }}</p>
-            </div>
+        <div class="units-cm-tile is-emerald-dark">
+            <p class="cm-tile-label">Completed</p>
+            <p class="cm-tile-value">{{ construction_completed|default:0 }}</p>
         </div>
-        <div style="display:flex; align-items:center; gap:0.65rem; padding:0.46rem 0.68rem; background:#fef2f2; border-radius:0.55rem; border:1px solid #fecaca;">
-            <div>
-                <p style="font-size:0.625rem; color:#991b1b; margin:0; text-transform:uppercase; font-weight:700;">Delayed</p>
-                <p style="font-size:1.15rem; font-weight:800; color:#dc2626; margin:0;">{{ construction_delayed|default:0 }}</p>
-            </div>
+        <div class="units-cm-tile is-delayed">
+            <p class="cm-tile-label">Delayed</p>
+            <p class="cm-tile-value">{{ construction_delayed|default:0 }}</p>
         </div>
-        <p style="margin:0; font-size:0.72rem; color:#64748b; line-height:1.4;">
+        <p class="cm-strip-note">
             Construction progress starts automatically when a lot is awarded, and is updated by field inspections.
         </p>
     </div>

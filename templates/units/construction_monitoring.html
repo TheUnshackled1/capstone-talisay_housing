@@ -9,34 +9,62 @@
 
 {% block extra_css %}
 <style>
+  /* ===================================================================
+     Construction Monitoring (Module 4) — emerald-on-slate institutional
+     palette. The shell, hero, KPI strip, filters, and table are all
+     designed to read as a single quiet government surface — generous
+     whitespace, restrained color, clear hierarchy.
+     =================================================================== */
   .cm-shell {
     position: relative;
     overflow: hidden;
-    padding: 1.05rem 1rem 0.9rem;
+    padding: 1.4rem 1.25rem 1.1rem;
     max-width: 100%;
-    background: linear-gradient(180deg, #eff6ff 0%, #ffffff 18%);
-    border: 1px solid #bfdbfe;
-    border-radius: 0.85rem;
-    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
+    background: linear-gradient(180deg, #ecfdf5 0%, #ffffff 14%);
+    border: 1px solid #a7f3d0;
+    border-radius: 0.95rem;
+    box-shadow:
+      0 2px 6px rgba(5, 150, 105, 0.08),
+      0 1px 2px rgba(15, 23, 42, 0.04);
     margin-bottom: 0.95rem;
   }
   .cm-shell::before {
     content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
+    top: 0; left: 0; right: 0;
     height: 4px;
-    background: linear-gradient(90deg, #1d4ed8 0%, #2563eb 50%, #93c5fd 100%);
+    background: linear-gradient(90deg, #047857 0%, #10b981 50%, #6ee7b7 100%);
     z-index: 1;
   }
-  .cm-title {
-    font-size: 1.02rem;
+
+  /* Hero */
+  .cm-hero {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.05rem;
+  }
+  .cm-hero-text {
+    min-width: 0;
+    flex: 1 1 22rem;
+  }
+  .cm-kicker {
+    margin: 0 0 0.3rem;
+    font-size: 0.62rem;
     font-weight: 800;
-    color: #1e3a8a;
-    margin: 0;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.18em;
     text-transform: uppercase;
+    color: #047857;
+  }
+  .cm-title {
+    font-family: 'Source Serif Pro', Georgia, serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #064e3b;
+    margin: 0 0 0.35rem;
+    letter-spacing: -0.01em;
     display: inline-flex;
     align-items: center;
     gap: 0.55rem;
@@ -46,64 +74,290 @@
     width: 0.55rem;
     height: 0.55rem;
     border-radius: 50%;
-    background: linear-gradient(135deg, #2563eb 0%, #1e3a8a 100%);
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+    background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.18);
+  }
+  .cm-subtitle {
+    margin: 0;
+    font-size: 0.78rem;
+    color: #475569;
+    line-height: 1.5;
+  }
+  .cm-subtitle strong {
+    color: #0f172a;
+    font-weight: 700;
+  }
+
+  /* Filter chips — pill row aligned to the right of the hero on wide
+     screens; wraps onto its own line on narrow widths. */
+  .cm-filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    align-items: center;
   }
   .cm-filter a {
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
-    padding: 0.4rem 0.75rem;
-    border: 1px solid #cbd5e1;
-    background: #fff;
+    padding: 0.42rem 0.78rem;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
     border-radius: 999px;
     font-size: 0.72rem;
-    font-weight: 700;
+    font-weight: 600;
     color: #334155;
     text-decoration: none;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .cm-filter a:hover {
+    border-color: #6ee7b7;
+    color: #047857;
+    background: #f0fdf4;
   }
   .cm-filter a.active {
-    background: #2563eb;
-    color: #fff;
-    border-color: #1d4ed8;
+    background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+    color: #ffffff;
+    border-color: #047857;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  }
+
+  /* KPI strip — quiet four-up summary above the table */
+  .cm-kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr));
+    gap: 0.6rem;
+    margin-bottom: 1rem;
+  }
+  .cm-kpi {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.65rem 0.78rem;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    border-radius: 0.65rem;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  }
+  .cm-kpi-icon {
+    width: 2.1rem;
+    height: 2.1rem;
+    flex-shrink: 0;
+    border-radius: 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .cm-kpi-icon svg {
+    width: 1.05rem;
+    height: 1.05rem;
+    stroke-width: 2;
+  }
+  .cm-kpi-label {
+    margin: 0;
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #64748b;
+  }
+  .cm-kpi-value {
+    margin: 0.1rem 0 0;
+    font-size: 1.18rem;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.05;
+  }
+  /* Stage-specific accents — used on the small icon tile only, so the
+     KPIs read as a uniform row of cards rather than a rainbow. */
+  .cm-kpi--not-started .cm-kpi-icon { background: #f1f5f9; color: #475569; }
+  .cm-kpi--in-progress .cm-kpi-icon { background: #ecfdf5; color: #047857; }
+  .cm-kpi--completed   .cm-kpi-icon { background: #d1fae5; color: #065f46; }
+  .cm-kpi--delayed     .cm-kpi-icon { background: #fef2f2; color: #b91c1c; }
+  .cm-kpi--delayed .cm-kpi-value    { color: #b91c1c; }
+
+  /* Empty / no-sites notice */
+  .cm-notice {
+    padding: 0.95rem 1rem;
+    background: linear-gradient(180deg, #fffbeb 0%, #fefce8 100%);
+    border: 1px solid #fde68a;
+    border-left: 4px solid #d97706;
+    border-radius: 0.65rem;
+    color: #78350f;
+    font-size: 0.82rem;
+    line-height: 1.5;
+  }
+  .cm-notice strong {
+    display: block;
+    margin-bottom: 0.2rem;
+    color: #78350f;
+    font-weight: 700;
+  }
+
+  /* Table card */
+  .cm-table-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.75rem;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  }
+  .cm-table-scroll {
+    overflow-x: auto;
   }
   .cm-table {
     width: 100%;
+    min-width: 760px;
     border-collapse: collapse;
-    font-size: 0.875rem;
+    font-size: 0.84rem;
+  }
+  .cm-table thead {
+    background: #f8fafc;
   }
   .cm-table th {
     text-align: left;
-    font-size: 0.72rem;
+    font-size: 0.62rem;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.08em;
+    font-weight: 700;
     color: #475569;
-    padding: 0.75rem 0.85rem;
-    background: #f8fafc;
+    padding: 0.78rem 0.95rem;
     border-bottom: 1px solid #e2e8f0;
+    white-space: nowrap;
   }
   .cm-table td {
-    padding: 0.85rem;
+    padding: 0.85rem 0.95rem;
     border-bottom: 1px solid #f1f5f9;
-    vertical-align: top;
+    vertical-align: middle;
+    color: #1e293b;
   }
+  .cm-table tbody tr:hover {
+    background: #f9fafb;
+  }
+  .cm-table tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  /* Cell content helpers */
+  .cm-unit-id {
+    font-weight: 800;
+    color: #0f172a;
+    font-size: 0.86rem;
+  }
+  .cm-unit-sub {
+    margin-top: 0.15rem;
+    font-size: 0.66rem;
+    color: #64748b;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .cm-name {
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.3;
+  }
+  .cm-ref {
+    margin-top: 0.18rem;
+    font-size: 0.7rem;
+    color: #64748b;
+    font-family: ui-monospace, 'Cascadia Code', 'Segoe UI Mono', monospace;
+  }
+
+  /* Stage pill — three semantic states inside the emerald palette */
   .cm-pill {
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
-    padding: 0.25rem 0.6rem;
+    padding: 0.22rem 0.6rem;
     border-radius: 999px;
-    font-size: 0.72rem;
-    font-weight: 800;
-    background: #eff6ff;
-    color: #1d4ed8;
-    border: 1px solid #bfdbfe;
+    font-size: 0.68rem;
+    font-weight: 700;
+    background: #d1fae5;
+    color: #065f46;
+    border: 1px solid #6ee7b7;
     white-space: nowrap;
   }
-  .cm-delayed {
-    background: #fef2f2;
-    color: #dc2626;
+  .cm-pill::before {
+    content: '';
+    width: 0.42rem;
+    height: 0.42rem;
+    border-radius: 50%;
+    background: #10b981;
+  }
+  .cm-pill.cm-not-started {
+    background: #f1f5f9;
+    color: #475569;
+    border-color: #cbd5e1;
+  }
+  .cm-pill.cm-not-started::before { background: #94a3b8; }
+  .cm-pill.cm-completed {
+    background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+    color: #ffffff;
+    border-color: #047857;
+  }
+  .cm-pill.cm-completed::before { background: #ffffff; }
+  .cm-pill.cm-delayed {
+    background: #fee2e2;
+    color: #991b1b;
     border-color: #fecaca;
+  }
+  .cm-pill.cm-delayed::before { background: #dc2626; }
+
+  /* Progress bar */
+  .cm-progress {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    min-width: 8rem;
+  }
+  .cm-progress-track {
+    flex: 1;
+    height: 0.45rem;
+    background: #e2e8f0;
+    border-radius: 999px;
+    overflow: hidden;
+    position: relative;
+  }
+  .cm-progress-fill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    background: linear-gradient(90deg, #10b981 0%, #047857 100%);
+    border-radius: 999px;
+    transition: width 0.3s ease;
+  }
+  .cm-progress-fill.cm-progress-fill--delayed {
+    background: linear-gradient(90deg, #f87171 0%, #b91c1c 100%);
+  }
+  .cm-progress-value {
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: #0f172a;
+    font-variant-numeric: tabular-nums;
+    min-width: 2.4rem;
+    text-align: right;
+  }
+  .cm-progress-value.cm-progress-value--delayed { color: #b91c1c; }
+
+  .cm-empty-cell {
+    padding: 1.5rem 1rem;
+    text-align: center;
+    color: #64748b;
+    font-size: 0.82rem;
+    background: #fafbfc;
+  }
+  .cm-empty-cell strong {
+    display: block;
+    color: #334155;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+    font-size: 0.88rem;
+  }
+
+  @media (max-width: 600px) {
+    .cm-shell { padding: 1.1rem 0.85rem 0.95rem; }
+    .cm-title { font-size: 1.12rem; }
+    .cm-table th, .cm-table td { padding: 0.65rem 0.75rem; }
   }
 </style>
 {% endblock %}
@@ -112,63 +366,131 @@
 {% csrf_token %}
 
 <div class="cm-shell">
-  <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; flex-wrap:wrap; margin-bottom:0.85rem;">
-    <div>
+  <!-- Hero -->
+  <div class="cm-hero">
+    <div class="cm-hero-text">
+      <p class="cm-kicker">Module 4 · Awarded units</p>
       <h1 class="cm-title">Construction Monitoring</h1>
-      <p style="margin:0.25rem 0 0; font-size:0.75rem; color:#64748b;">Module 4{% if site %} — {{ site.name }}{% endif %} · awarded units with construction progress</p>
+      <p class="cm-subtitle">
+        {% if site %}<strong>{{ site.name }}</strong> ·{% endif %}
+        Track construction stage and percent complete for every awarded unit. Field inspections update progress and flag delays.
+      </p>
     </div>
-    <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
-      <a class="cm-filter {% if status_filter == 'all' %}active{% endif %}" href="?status=all{% if site %}&site_id={{ site.id }}{% endif %}">All</a>
-      <a class="cm-filter {% if status_filter == 'not_started' %}active{% endif %}" href="?status=not_started{% if site %}&site_id={{ site.id }}{% endif %}">Not started</a>
-      <a class="cm-filter {% if status_filter == 'in_progress' %}active{% endif %}" href="?status=in_progress{% if site %}&site_id={{ site.id }}{% endif %}">In progress</a>
-      <a class="cm-filter {% if status_filter == 'completed' %}active{% endif %}" href="?status=completed{% if site %}&site_id={{ site.id }}{% endif %}">Completed</a>
-      <a class="cm-filter {% if status_filter == 'delayed' %}active{% endif %}" href="?status=delayed{% if site %}&site_id={{ site.id }}{% endif %}">Delayed</a>
+    <div class="cm-filter" role="tablist" aria-label="Construction stage filter">
+      <a class="{% if status_filter == 'all' %}active{% endif %}" href="?status=all{% if site %}&site_id={{ site.id }}{% endif %}">All</a>
+      <a class="{% if status_filter == 'not_started' %}active{% endif %}" href="?status=not_started{% if site %}&site_id={{ site.id }}{% endif %}">Not started</a>
+      <a class="{% if status_filter == 'in_progress' %}active{% endif %}" href="?status=in_progress{% if site %}&site_id={{ site.id }}{% endif %}">In progress</a>
+      <a class="{% if status_filter == 'completed' %}active{% endif %}" href="?status=completed{% if site %}&site_id={{ site.id }}{% endif %}">Completed</a>
+      <a class="{% if status_filter == 'delayed' %}active{% endif %}" href="?status=delayed{% if site %}&site_id={{ site.id }}{% endif %}">Delayed</a>
     </div>
   </div>
 
   {% if no_relocation_sites %}
-    <div style="padding:0.9rem 1rem; background:#fffbeb; border:1px solid #fde68a; border-radius:0.65rem; color:#92400e; font-size:0.8rem;">
-      No relocation sites found yet. Create a site first in Module 4.
+    <div class="cm-notice">
+      <strong>No relocation sites yet.</strong>
+      Create a site first in Module 4 (Housing Unit &amp; Occupancy Monitoring) before construction tracking becomes available.
     </div>
   {% else %}
-    <div style="background:#fff; border:1px solid #e2e8f0; border-radius:0.75rem; overflow:hidden;">
-      <table class="cm-table">
-        <thead>
-          <tr>
-            <th>Unit</th>
-            <th>Beneficiary</th>
-            <th>Stage</th>
-            <th>Progress</th>
-            <th>Last inspected</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for p in progress_rows %}
-          <tr>
-            <td style="font-weight:800; color:#0f172a;">Block {{ p.lot_award.unit.block_number }} · Lot {{ p.lot_award.unit.lot_number }}</td>
-            <td>
-              <div style="font-weight:800; color:#0f172a;">{{ p.lot_award.application.applicant.full_name }}</div>
-              <div style="font-size:0.75rem; color:#64748b;">Ref: {{ p.lot_award.application.applicant.reference_number }}</div>
-            </td>
-            <td>
-              <span class="cm-pill {% if p.is_delayed %}cm-delayed{% endif %}">
-                {{ p.get_stage_display }}
-                {% if p.is_delayed %}· Delayed{% endif %}
-              </span>
-            </td>
-            <td style="font-weight:800; color:#1d4ed8;">{{ p.percent_complete }}%</td>
-            <td style="color:#475569;">{% if p.last_inspected_at %}{{ p.last_inspected_at|date:"M d, Y" }}{% else %}—{% endif %}</td>
-          </tr>
-          {% empty %}
-          <tr>
-            <td colspan="5" style="padding:1rem; color:#64748b;">No awarded units have construction progress yet.</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+    <!-- KPI strip -->
+    <div class="cm-kpis">
+      <div class="cm-kpi cm-kpi--not-started">
+        <span class="cm-kpi-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </span>
+        <div>
+          <p class="cm-kpi-label">Not started</p>
+          <p class="cm-kpi-value">{{ count_not_started|default:0 }}</p>
+        </div>
+      </div>
+      <div class="cm-kpi cm-kpi--in-progress">
+        <span class="cm-kpi-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2v4"/><path d="M12 18v4"/><path d="M4.93 4.93l2.83 2.83"/><path d="M16.24 16.24l2.83 2.83"/><path d="M2 12h4"/><path d="M18 12h4"/></svg>
+        </span>
+        <div>
+          <p class="cm-kpi-label">In progress</p>
+          <p class="cm-kpi-value">{{ count_in_progress|default:0 }}</p>
+        </div>
+      </div>
+      <div class="cm-kpi cm-kpi--completed">
+        <span class="cm-kpi-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 6L9 17l-5-5"/></svg>
+        </span>
+        <div>
+          <p class="cm-kpi-label">Completed</p>
+          <p class="cm-kpi-value">{{ count_completed|default:0 }}</p>
+        </div>
+      </div>
+      <div class="cm-kpi cm-kpi--delayed">
+        <span class="cm-kpi-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </span>
+        <div>
+          <p class="cm-kpi-label">Delayed</p>
+          <p class="cm-kpi-value">{{ count_delayed|default:0 }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="cm-table-card">
+      <div class="cm-table-scroll">
+        <table class="cm-table">
+          <thead>
+            <tr>
+              <th>Unit</th>
+              <th>Beneficiary</th>
+              <th>Stage</th>
+              <th>Progress</th>
+              <th>Last inspected</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in progress_rows %}
+            <tr>
+              <td>
+                <div class="cm-unit-id">Block {{ p.lot_award.unit.block_number }} · Lot {{ p.lot_award.unit.lot_number }}</div>
+                {% if p.lot_award.unit.site %}<div class="cm-unit-sub">{{ p.lot_award.unit.site.name }}</div>{% endif %}
+              </td>
+              <td>
+                <div class="cm-name">{{ p.lot_award.application.applicant.full_name }}</div>
+                <div class="cm-ref">Ref · {{ p.lot_award.application.applicant.reference_number }}</div>
+              </td>
+              <td>
+                <span class="cm-pill
+                  {% if p.is_delayed %}cm-delayed
+                  {% elif p.percent_complete == 100 %}cm-completed
+                  {% elif p.percent_complete == 0 %}cm-not-started{% endif %}">
+                  {{ p.get_stage_display }}{% if p.is_delayed %} · Delayed{% endif %}
+                </span>
+              </td>
+              <td>
+                <div class="cm-progress">
+                  <div class="cm-progress-track" role="progressbar"
+                       aria-valuenow="{{ p.percent_complete }}" aria-valuemin="0" aria-valuemax="100"
+                       aria-label="Construction progress">
+                    <div class="cm-progress-fill {% if p.is_delayed %}cm-progress-fill--delayed{% endif %}"
+                         style="width: {{ p.percent_complete }}%"></div>
+                  </div>
+                  <span class="cm-progress-value {% if p.is_delayed %}cm-progress-value--delayed{% endif %}">{{ p.percent_complete }}%</span>
+                </div>
+              </td>
+              <td style="color:#475569; white-space:nowrap;">
+                {% if p.last_inspected_at %}{{ p.last_inspected_at|date:"M d, Y" }}{% else %}<span style="color:#94a3b8;">—</span>{% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="5" class="cm-empty-cell">
+                <strong>No construction records yet.</strong>
+                Awarded units will appear here once a lot is awarded and the construction tracking entry is initialized.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
   {% endif %}
 </div>
 
 {% endblock %}
-

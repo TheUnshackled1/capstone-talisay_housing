@@ -7,51 +7,362 @@
 
 {% block extra_css %}
 <style>
-    .analytics-report { padding: 1.25rem 1.5rem 2rem; max-width: 1240px; margin: 0 auto; }
-    .analytics-report > h1 { font-size: 1.5rem; font-weight: 700; color: #0f172a; margin: 0 0 0.5rem 0; }
-    .lead { color: #475569; font-size: 0.9rem; margin: 0 0 1rem 0; line-height: 1.5; }
-    .report-toolbar {
-        display: flex; flex-wrap: wrap; gap: 0.75rem 1rem; align-items: flex-end;
-        background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 0.85rem 1rem; margin-bottom: 1rem;
+    /* ===================================================================
+       Reports & Analytics — institutional dashboard
+       Emerald-on-slate, generous whitespace, dense data grouped into
+       quiet card families. Same visual language as the rest of the staff
+       portal so officers see one continuous government surface.
+       =================================================================== */
+    :root {
+        --rep-bg: #f8fafc;
+        --rep-card-border: #e5e9ef;
+        --rep-card-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+        --rep-text: #0f172a;
+        --rep-muted: #64748b;
+        --rep-em: #047857;
     }
-    .report-toolbar label { font-size: 0.7rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em; display: block; margin-bottom: 0.25rem; }
-    .report-toolbar select { padding: 0.4rem 0.55rem; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 0.875rem; min-width: 9rem; background: #fff; }
-    .report-toolbar button, .report-toolbar .btn-link {
-        padding: 0.45rem 0.9rem; border-radius: 6px; font-weight: 600; font-size: 0.8125rem; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem;
+
+    .rep-page {
+        padding: 1.4rem 1.5rem 2.5rem;
+        max-width: 1400px;
+        margin: 0 auto;
+        color: var(--rep-text);
+        font-feature-settings: "tnum", "ss01";
     }
-    .btn-primary-report { background: #0f172a; color: #fff; border: none; }
-    .btn-primary-report:hover { background: #1e293b; }
-    .btn-outline-report { background: #fff; color: #0f172a; border: 1px solid #cbd5e1; }
-    h2.section-title {
-        font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
-        color: #64748b; margin: 1.5rem 0 0.75rem 0; padding-bottom: 0.35rem; border-bottom: 1px solid #e2e8f0;
+
+    /* Hero */
+    .rep-hero {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1.25rem;
+        flex-wrap: wrap;
+        padding: 1.25rem 1.4rem;
+        margin-bottom: 1rem;
+        background: linear-gradient(180deg, #ecfdf5 0%, #ffffff 60%);
+        border: 1px solid #a7f3d0;
+        border-radius: 0.95rem;
+        box-shadow: var(--rep-card-shadow);
+        position: relative;
+        overflow: hidden;
     }
-    h2.section-title:first-of-type { margin-top: 0; }
-    .footer-meta { text-align: center; padding: 1rem 0 0; margin-top: 1rem; border-top: 1px solid #e2e8f0; color: #94a3b8; font-size: 0.72rem; }
-    .chart-intro { font-size: 0.8rem; color: #64748b; margin: -0.25rem 0 0.75rem 0; line-height: 1.45; }
-    .analytics-included {
-        margin: 0 0 0.55rem 0;
-        color: #334155;
-        font-size: 0.8rem;
-        line-height: 1.45;
+    .rep-hero::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #047857 0%, #10b981 50%, #6ee7b7 100%);
     }
-    .analytics-note {
+    .rep-hero-text { min-width: 0; flex: 1 1 22rem; }
+    .rep-kicker {
+        margin: 0 0 0.3rem;
+        font-size: 0.62rem;
+        font-weight: 800;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--rep-em);
+    }
+    .rep-title {
+        font-family: 'Source Serif Pro', Georgia, serif;
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 0 0 0.4rem;
+        color: #064e3b;
+        letter-spacing: -0.015em;
+    }
+    .rep-meta {
         margin: 0;
-        padding: 0.65rem 0.75rem;
-        border: 1px solid #bfdbfe;
-        border-left: 4px solid #2563eb;
-        border-radius: 0.45rem;
-        background: #eff6ff;
-        color: #1e3a8a;
-        font-size: 0.8rem;
-        line-height: 1.45;
+        font-size: 0.82rem;
+        color: var(--rep-muted);
+        line-height: 1.55;
     }
-    .chart-full { margin-bottom: 1rem; }
-    .chart-full .chart-canvas-wrap { height: 300px; position: relative; }
-    .chart-grid-charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
-    .chart-card { background: #fff; border: 1px solid #e8ecf1; border-radius: 0.5rem; padding: 0.65rem 0.75rem 0.85rem; }
-    .chart-card h3 { margin: 0 0 0.5rem 0; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; }
-    .chart-card .chart-canvas-wrap { height: 240px; position: relative; }
+    .rep-meta strong { color: #0f172a; font-weight: 700; }
+    .rep-back {
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: var(--rep-em);
+        text-decoration: none;
+    }
+    .rep-back:hover { text-decoration: underline; }
+    .rep-period-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.32rem 0.7rem;
+        background: #ffffff;
+        border: 1px solid #a7f3d0;
+        border-radius: 999px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: #047857;
+        margin-right: 0.5rem;
+        margin-top: 0.3rem;
+    }
+    .rep-period-chip::before {
+        content: '';
+        width: 0.42rem; height: 0.42rem;
+        border-radius: 50%;
+        background: #10b981;
+    }
+    .rep-role {
+        font-size: 0.72rem;
+        color: var(--rep-muted);
+        margin-top: 0.5rem;
+    }
+    .rep-role b { color: #0f172a; }
+
+    /* Toolbar */
+    .rep-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.55rem 0.65rem;
+        align-items: flex-end;
+        flex-shrink: 0;
+    }
+    .rep-field { display: flex; flex-direction: column; }
+    .rep-field label {
+        font-size: 0.6rem;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--rep-muted);
+        margin-bottom: 0.2rem;
+    }
+    .rep-field select {
+        padding: 0.5rem 0.7rem;
+        border-radius: 8px;
+        border: 1px solid #cbd5e1;
+        background: #ffffff;
+        font-size: 0.82rem;
+        min-width: 9rem;
+        font-family: inherit;
+        color: #0f172a;
+        cursor: pointer;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .rep-field select:focus {
+        outline: none;
+        border-color: #6ee7b7;
+        box-shadow: 0 0 0 3px rgba(167, 243, 208, 0.5);
+    }
+    .rep-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.55rem 0.95rem;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 0.78rem;
+        cursor: pointer;
+        text-decoration: none;
+        border: 1px solid transparent;
+        transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+        white-space: nowrap;
+        font-family: inherit;
+    }
+    .rep-btn-primary {
+        background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+        color: #ffffff;
+        border-color: #047857;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    }
+    .rep-btn-primary:hover {
+        background: linear-gradient(180deg, #059669 0%, #047857 100%);
+        box-shadow: 0 4px 14px rgba(5, 150, 105, 0.32);
+        transform: translateY(-1px);
+        color: #ffffff;
+    }
+    .rep-btn-outline {
+        background: #ffffff;
+        color: #047857;
+        border-color: #a7f3d0;
+    }
+    .rep-btn-outline:hover {
+        border-color: #10b981;
+        color: #065f46;
+        background: #ecfdf5;
+    }
+
+    /* Section heading band — small uppercase eyebrow + thin rule */
+    .rep-section {
+        display: flex;
+        align-items: baseline;
+        gap: 0.65rem;
+        margin: 1.5rem 0 0.7rem;
+    }
+    .rep-section h2 {
+        margin: 0;
+        font-size: 0.7rem;
+        font-weight: 800;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: #334155;
+    }
+    .rep-section .rep-section-note {
+        margin: 0;
+        font-size: 0.74rem;
+        color: var(--rep-muted);
+        line-height: 1.4;
+    }
+    .rep-section-rule {
+        flex: 1;
+        height: 1px;
+        background: linear-gradient(90deg, #e2e8f0 0%, transparent 100%);
+        margin-left: 0.25rem;
+    }
+
+    /* Card primitives */
+    .rep-card {
+        background: #ffffff;
+        border: 1px solid var(--rep-card-border);
+        border-radius: 0.7rem;
+        padding: 0.95rem 1.05rem 1rem;
+        box-shadow: var(--rep-card-shadow);
+    }
+    .rep-card-title {
+        margin: 0 0 0.4rem;
+        font-size: 0.66rem;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #475569;
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 0.5rem;
+    }
+    .rep-card-sub {
+        margin: 0 0 0.6rem;
+        font-size: 0.72rem;
+        color: var(--rep-muted);
+        line-height: 1.4;
+    }
+
+    /* KPI grids */
+    .rep-kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+        gap: 0.65rem;
+    }
+    .rep-kpi {
+        position: relative;
+        padding: 0.85rem 0.95rem;
+        background: #ffffff;
+        border: 1px solid var(--rep-card-border);
+        border-radius: 0.7rem;
+        box-shadow: var(--rep-card-shadow);
+        overflow: hidden;
+    }
+    .rep-kpi::before {
+        content: '';
+        position: absolute;
+        left: 0; top: 0; bottom: 0;
+        width: 3px;
+        background: #10b981;
+        opacity: 0.85;
+    }
+    .rep-kpi.is-amber::before  { background: #d97706; }
+    .rep-kpi.is-rose::before   { background: #dc2626; }
+    .rep-kpi.is-slate::before  { background: #94a3b8; }
+    .rep-kpi.is-violet::before { background: #7c3aed; }
+    .rep-kpi.is-cyan::before   { background: #0891b2; }
+    .rep-kpi.is-indigo::before { background: #4f46e5; }
+    .rep-kpi-label {
+        margin: 0 0 0.25rem;
+        font-size: 0.6rem;
+        font-weight: 800;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--rep-muted);
+    }
+    .rep-kpi-value {
+        margin: 0;
+        font-size: 1.55rem;
+        font-weight: 800;
+        line-height: 1.05;
+        color: #0f172a;
+        font-variant-numeric: tabular-nums;
+    }
+    .rep-kpi-foot {
+        margin: 0.35rem 0 0;
+        font-size: 0.68rem;
+        color: var(--rep-muted);
+        line-height: 1.35;
+    }
+    .rep-kpi.is-rose .rep-kpi-value { color: #b91c1c; }
+
+    /* Coverage note */
+    .rep-coverage {
+        margin: 0.85rem 0 0;
+        padding: 0.7rem 0.9rem;
+        border-radius: 0.65rem;
+        background: #ecfdf5;
+        border: 1px solid #a7f3d0;
+        border-left: 4px solid #047857;
+        color: #065f46;
+        font-size: 0.78rem;
+        line-height: 1.5;
+    }
+    .rep-coverage strong { color: #064e3b; }
+
+    /* Chart layouts */
+    .rep-trend {
+        margin-top: 1rem;
+    }
+    .rep-trend .rep-chart-canvas { height: 320px; position: relative; }
+
+    .rep-grid-3 {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+        gap: 0.85rem;
+    }
+    .rep-grid-2 {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr));
+        gap: 0.85rem;
+    }
+    .rep-grid-charts .rep-chart-canvas { height: 240px; position: relative; }
+
+    .rep-pipeline-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+        gap: 0.85rem;
+        align-items: stretch;
+    }
+    @media (max-width: 880px) {
+        .rep-pipeline-row { grid-template-columns: 1fr; }
+    }
+
+    /* Operational mini-stat list */
+    .rep-stack {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 0.4rem;
+    }
+    .rep-stat {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.55rem 0.75rem;
+        background: #f8fafc;
+        border: 1px solid #e5e9ef;
+        border-radius: 0.55rem;
+    }
+    .rep-stat-label {
+        font-size: 0.74rem;
+        color: #334155;
+        font-weight: 600;
+    }
+    .rep-stat-value {
+        font-size: 0.92rem;
+        font-weight: 800;
+        color: #0f172a;
+        font-variant-numeric: tabular-nums;
+    }
+    .rep-stat.is-warn  .rep-stat-value { color: #b45309; }
+    .rep-stat.is-alert .rep-stat-value { color: #b91c1c; }
+
+    /* Placeholder for empty charts */
     .chart-placeholder {
         position: absolute;
         inset: 0;
@@ -59,104 +370,432 @@
         align-items: center;
         justify-content: center;
         font-size: 0.78rem;
-        color: #94a3b8;
+        color: var(--rep-muted);
         text-align: center;
         padding: 1rem 0.75rem;
         background: #f8fafc;
-        border-radius: 6px;
-        line-height: 1.35;
+        border-radius: 8px;
+        line-height: 1.4;
+    }
+
+    /* Backlog table (electricity) */
+    .rep-table-card { padding: 0; overflow: hidden; }
+    .rep-table-head {
+        padding: 0.85rem 1.05rem 0.6rem;
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    .rep-table-head h3 {
+        margin: 0;
+        font-size: 0.66rem;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #475569;
+    }
+    .rep-table-head p {
+        margin: 0;
+        font-size: 0.72rem;
+        color: var(--rep-muted);
+    }
+    .rep-table-scroll { overflow-x: auto; }
+    .rep-table {
+        width: 100%;
+        min-width: 720px;
+        border-collapse: collapse;
+        font-size: 0.8rem;
+    }
+    .rep-table thead {
+        background: #f8fafc;
+        border-top: 1px solid var(--rep-card-border);
+    }
+    .rep-table th {
+        text-align: left;
+        font-size: 0.6rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: #475569;
+        font-weight: 800;
+        padding: 0.6rem 0.95rem;
+        border-bottom: 1px solid var(--rep-card-border);
+        white-space: nowrap;
+    }
+    .rep-table td {
+        padding: 0.65rem 0.95rem;
+        border-bottom: 1px solid #f1f5f9;
+        color: #1e293b;
+        vertical-align: middle;
+    }
+    .rep-table tbody tr:hover { background: #f9fafb; }
+    .rep-table tbody tr:last-child td { border-bottom: none; }
+    .rep-mono {
+        font-family: ui-monospace, 'Cascadia Code', 'Segoe UI Mono', monospace;
+        font-size: 0.74rem;
+        color: #475569;
+    }
+    .rep-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.18rem 0.55rem;
+        border-radius: 999px;
+        font-size: 0.66rem;
+        font-weight: 700;
+        background: #fef3c7;
+        color: #92400e;
+        border: 1px solid #fcd34d;
+        white-space: nowrap;
+    }
+
+    .rep-empty-row td {
+        text-align: center;
+        color: var(--rep-muted);
+        padding: 1.3rem 1rem;
+        background: #fafbfc;
+    }
+
+    /* Footer */
+    .rep-footer {
+        margin-top: 1.5rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--rep-card-border);
+        text-align: center;
+        font-size: 0.72rem;
+        color: #94a3b8;
+    }
+
+    @media (max-width: 640px) {
+        .rep-page { padding: 1rem 1rem 2rem; }
+        .rep-hero { padding: 1rem; }
+        .rep-title { font-size: 1.25rem; }
+        .rep-toolbar { width: 100%; }
+        .rep-field select { min-width: 0; width: 100%; }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="analytics-report">
-    <h1>Reports &amp; data analytics</h1>
-    <p class="lead" style="margin-top:-0.5rem;"><a href="{{ dashboard_url }}" style="color: #2563eb; font-weight: 600;">← Back to workspace</a></p>
+<div class="rep-page">
+    <!-- Hero -->
+    <div class="rep-hero">
+        <div class="rep-hero-text">
+            <p class="rep-kicker">{{ report_role_heading }} · Operational analytics</p>
+            <h1 class="rep-title">Reports &amp; data analytics</h1>
+            <p class="rep-meta">
+                <span class="rep-period-chip">Period · {{ period_label }}</span>
+                Snapshot of pipeline, applicants, housing, and operations across modules.
+            </p>
+            <p class="rep-role">
+                <a class="rep-back" href="{{ dashboard_url }}">← Back to workspace</a>
+                {% if report_role_officer %}
+                · Officer of record <b>{{ report_role_officer }}</b>
+                {% endif %}
+                {% if report_role_modules %}
+                · Modules <b>{{ report_role_modules }}</b>
+                {% endif %}
+            </p>
+        </div>
 
-    <form class="report-toolbar" method="get" action="">
-        <div>
-            <label for="report-month">Month</label>
-            <select id="report-month" name="month">
-                {% for mnum, mname in months_for_select %}
-                <option value="{{ mnum }}" {% if mnum == report_month %}selected{% endif %}>{{ mname }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <div>
-            <label for="report-year">Year</label>
-            <select id="report-year" name="year">
-                {% for y in year_options %}
-                <option value="{{ y }}" {% if y == report_year %}selected{% endif %}>{{ y }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <button type="submit" class="btn-primary-report">Apply</button>
-        <a class="btn-outline-report" href="?year={{ report_year }}&amp;month={{ report_month }}&amp;export=csv">Export CSV</a>
-    </form>
+        <form class="rep-toolbar" method="get" action="">
+            <div class="rep-field">
+                <label for="report-month">Month</label>
+                <select id="report-month" name="month">
+                    {% for mnum, mname in months_for_select %}
+                    <option value="{{ mnum }}" {% if mnum == report_month %}selected{% endif %}>{{ mname }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="rep-field">
+                <label for="report-year">Year</label>
+                <select id="report-year" name="year">
+                    {% for y in year_options %}
+                    <option value="{{ y }}" {% if y == report_year %}selected{% endif %}>{{ y }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="rep-btn rep-btn-primary">Apply</button>
+            <a class="rep-btn rep-btn-outline" href="?year={{ report_year }}&amp;month={{ report_month }}&amp;export=csv">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                Export CSV
+            </a>
+        </form>
+    </div>
 
     {{ analytics_charts_data|json_script:"tha-analytics-charts" }}
 
-    <h2 class="section-title">Charts &amp; visual summary</h2>
-    <p class="chart-intro">Interactive charts match the CSV export datasets. Hover points for exact values. Period window ends <strong>{{ period_label }}</strong>.</p>
-    <div class="chart-full chart-card" style="margin-bottom:0.85rem;">
-        <h3>Analytics coverage</h3>
-        <p class="analytics-note"><strong>Document data note:</strong> Document-related operational data remains in <strong>Document Management</strong>.</p>
+    <!-- Section: Headline metrics -->
+    <div class="rep-section">
+        <h2>Headline metrics</h2>
+        <p class="rep-section-note">Snapshot — current state across every module.</p>
+        <span class="rep-section-rule"></span>
     </div>
-
-    <div class="chart-full chart-card">
-        <div class="chart-canvas-wrap"><canvas id="chartTrend" aria-label="Six month trends chart"></canvas></div>
-    </div>
-
-    <div class="chart-grid-charts">
-        <div class="chart-card">
-            <h3>Pipeline snapshot</h3>
-            <div class="chart-canvas-wrap" style="height:220px;"><canvas id="chartPipeline"></canvas></div>
+    <div class="rep-kpi-grid">
+        <div class="rep-kpi">
+            <p class="rep-kpi-label">Total applicants</p>
+            <p class="rep-kpi-value">{{ total_applications|default:0 }}</p>
+            <p class="rep-kpi-foot">All Module 1 records</p>
         </div>
-        <div class="chart-card">
-            <h3>Applicants by status</h3>
-            <div class="chart-canvas-wrap"><canvas id="chartApplicants"></canvas></div>
+        <div class="rep-kpi is-cyan">
+            <p class="rep-kpi-label">Housing applications</p>
+            <p class="rep-kpi-value">{{ housing_application_records|default:0 }}</p>
+            <p class="rep-kpi-foot">Module 2 records</p>
         </div>
-        <div class="chart-card">
-            <h3>Housing applications by status</h3>
-            <div class="chart-canvas-wrap"><canvas id="chartApplications"></canvas></div>
+        <div class="rep-kpi is-indigo">
+            <p class="rep-kpi-label">Documents in vault</p>
+            <p class="rep-kpi-value">{{ documents_total_count|default:0 }}</p>
+            <p class="rep-kpi-foot">Module 3 cumulative</p>
         </div>
-        <div class="chart-card">
-            <h3>Housing units by status</h3>
-            <div class="chart-canvas-wrap"><canvas id="chartHousing"></canvas></div>
+        <div class="rep-kpi">
+            <p class="rep-kpi-label">Housing units</p>
+            <p class="rep-kpi-value">{{ housing_units_total|default:0 }}</p>
+            <p class="rep-kpi-foot">{{ vacant_units_count|default:0 }} vacant available</p>
         </div>
-        <div class="chart-card">
-            <h3>Top barangays</h3>
-            <div class="chart-canvas-wrap"><canvas id="chartBarangays"></canvas></div>
+        <div class="rep-kpi is-violet">
+            <p class="rep-kpi-label">Cases tracked</p>
+            <p class="rep-kpi-value">{{ cases_total|default:0 }}</p>
+            <p class="rep-kpi-foot">All time across all types</p>
         </div>
-        <div class="chart-card">
-            <h3>Applicant situation</h3>
-            <div class="chart-canvas-wrap"><canvas id="chartChannels"></canvas></div>
-        </div>
-        <div class="chart-card">
-            <h3>Requirement submissions</h3>
-            <div class="chart-canvas-wrap"><canvas id="chartRequirements"></canvas></div>
-        </div>
-        <div class="chart-card">
-            <h3>Active queues</h3>
-            <div class="chart-canvas-wrap"><canvas id="chartQueues"></canvas></div>
-        </div>
-        <div class="chart-card">
-            <h3>Cases by status</h3>
-            <div class="chart-canvas-wrap"><canvas id="chartCasesStatus"></canvas></div>
-        </div>
-        <div class="chart-card">
-            <h3>Cases by type</h3>
-            <div class="chart-canvas-wrap"><canvas id="chartCasesType"></canvas></div>
-        </div>
-        <div class="chart-card">
-            <h3>Electricity connections</h3>
-            <div class="chart-canvas-wrap"><canvas id="chartElectricity"></canvas></div>
+        <div class="rep-kpi is-amber">
+            <p class="rep-kpi-label">Pending OIC signature</p>
+            <p class="rep-kpi-value">{{ pending_oic_signature_count|default:0 }}</p>
+            <p class="rep-kpi-foot">Awaiting authorization</p>
         </div>
     </div>
 
-    <div class="footer-meta">
-        Generated {{ timestamp|date:"M j, Y g:i A" }} · Export CSV includes the same figures.
+    <p class="rep-coverage">
+        <strong>Coverage:</strong> The data below is read directly from the live database.
+        Document operational data and per-applicant vault contents remain in <strong>Document Management</strong>.
+    </p>
+
+    <!-- Section: Activity in this period -->
+    <div class="rep-section">
+        <h2>This period</h2>
+        <p class="rep-section-note">Counts limited to {{ period_label }}.</p>
+        <span class="rep-section-rule"></span>
+    </div>
+    <div class="rep-kpi-grid">
+        <div class="rep-kpi">
+            <p class="rep-kpi-label">New applicants</p>
+            <p class="rep-kpi-value">{{ applicants_registered_period|default:0 }}</p>
+            <p class="rep-kpi-foot">Module 1 registrations</p>
+        </div>
+        <div class="rep-kpi is-cyan">
+            <p class="rep-kpi-label">Housing apps created</p>
+            <p class="rep-kpi-value">{{ housing_apps_created_period|default:0 }}</p>
+            <p class="rep-kpi-foot">Module 2 new records</p>
+        </div>
+        <div class="rep-kpi is-indigo">
+            <p class="rep-kpi-label">Vault uploads</p>
+            <p class="rep-kpi-value">{{ docs_filed|default:0 }}</p>
+            <p class="rep-kpi-foot">Module 3 documents filed</p>
+        </div>
+        <div class="rep-kpi">
+            <p class="rep-kpi-label">Requirements verified</p>
+            <p class="rep-kpi-value">{{ requirements_verified_period|default:0 }}</p>
+            <p class="rep-kpi-foot">Verified in window</p>
+        </div>
+        <div class="rep-kpi is-violet">
+            <p class="rep-kpi-label">Lots awarded</p>
+            <p class="rep-kpi-value">{{ awarded_transition_period|default:0 }}</p>
+            <p class="rep-kpi-foot">Transitioned to awarded</p>
+        </div>
+        <div class="rep-kpi is-amber">
+            <p class="rep-kpi-label">Cases opened</p>
+            <p class="rep-kpi-value">{{ cases_opened_period|default:0 }}</p>
+            <p class="rep-kpi-foot">{{ cases_closed_period|default:0 }} closed in same window</p>
+        </div>
+    </div>
+
+    <!-- Section: Trend -->
+    <div class="rep-section">
+        <h2>Six-month trend</h2>
+        <p class="rep-section-note">New applicants vs. vault uploads.</p>
+        <span class="rep-section-rule"></span>
+    </div>
+    <div class="rep-card rep-trend">
+        <div class="rep-chart-canvas"><canvas id="chartTrend" aria-label="Six month trends chart"></canvas></div>
+    </div>
+
+    <!-- Section: Pipeline & operational health -->
+    <div class="rep-section">
+        <h2>Pipeline &amp; operational health</h2>
+        <p class="rep-section-note">Active queues and gating items across modules.</p>
+        <span class="rep-section-rule"></span>
+    </div>
+    <div class="rep-pipeline-row">
+        <div class="rep-card">
+            <p class="rep-card-title">Operational health</p>
+            <p class="rep-card-sub">Items currently waiting on a staff action.</p>
+            <div class="rep-stack">
+                <div class="rep-stat">
+                    <span class="rep-stat-label">Ready for Form queue</span>
+                    <span class="rep-stat-value">{{ ready_for_form_queue_count|default:0 }}</span>
+                </div>
+                <div class="rep-stat">
+                    <span class="rep-stat-label">Module 2 handoff reached</span>
+                    <span class="rep-stat-value">{{ module2_handoff_count|default:0 }}</span>
+                </div>
+                <div class="rep-stat is-warn">
+                    <span class="rep-stat-label">Pending OIC signature</span>
+                    <span class="rep-stat-value">{{ pending_oic_signature_count|default:0 }}</span>
+                </div>
+                <div class="rep-stat is-warn">
+                    <span class="rep-stat-label">Pending CDRRMO verification</span>
+                    <span class="rep-stat-value">{{ pending_cdrrmo_count|default:0 }}</span>
+                </div>
+                <div class="rep-stat is-alert">
+                    <span class="rep-stat-label">Applicants with incomplete docs</span>
+                    <span class="rep-stat-value">{{ incomplete_docs|default:0 }}</span>
+                </div>
+                <div class="rep-stat is-warn">
+                    <span class="rep-stat-label">Electricity connections pending</span>
+                    <span class="rep-stat-value">{{ electricity_pending|default:0 }}</span>
+                </div>
+                <div class="rep-stat">
+                    <span class="rep-stat-label">Requirements submitted in period</span>
+                    <span class="rep-stat-value">{{ requirement_submissions_submitted_period|default:0 }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="rep-card">
+            <p class="rep-card-title">Pipeline snapshot</p>
+            <p class="rep-card-sub">Bar comparison of major pipeline counters.</p>
+            <div class="rep-chart-canvas" style="height: 280px;"><canvas id="chartPipeline"></canvas></div>
+        </div>
+    </div>
+
+    <!-- Section: Applicant analytics -->
+    <div class="rep-section">
+        <h2>Applicant analytics</h2>
+        <p class="rep-section-note">Status, situation, and barangay distribution of all applicants.</p>
+        <span class="rep-section-rule"></span>
+    </div>
+    <div class="rep-grid-3 rep-grid-charts">
+        <div class="rep-card">
+            <p class="rep-card-title">Applicants by status</p>
+            <p class="rep-card-sub">All Module 1 records grouped by current status.</p>
+            <div class="rep-chart-canvas"><canvas id="chartApplicants"></canvas></div>
+        </div>
+        <div class="rep-card">
+            <p class="rep-card-title">Applicant situation</p>
+            <p class="rep-card-sub">Options A–D · displacement category breakdown.</p>
+            <div class="rep-chart-canvas"><canvas id="chartChannels"></canvas></div>
+        </div>
+        <div class="rep-card">
+            <p class="rep-card-title">Top barangays</p>
+            <p class="rep-card-sub">Top 12 barangays by applicant count.</p>
+            <div class="rep-chart-canvas" style="height: 280px;"><canvas id="chartBarangays"></canvas></div>
+        </div>
+    </div>
+
+    <!-- Section: Housing analytics -->
+    <div class="rep-section">
+        <h2>Housing analytics</h2>
+        <p class="rep-section-note">Module 2 applications, Module 4 inventory, and electricity connections.</p>
+        <span class="rep-section-rule"></span>
+    </div>
+    <div class="rep-grid-3 rep-grid-charts">
+        <div class="rep-card">
+            <p class="rep-card-title">Housing applications by status</p>
+            <p class="rep-card-sub">Module 2 records by application status.</p>
+            <div class="rep-chart-canvas"><canvas id="chartApplications"></canvas></div>
+        </div>
+        <div class="rep-card">
+            <p class="rep-card-title">Housing units by status</p>
+            <p class="rep-card-sub">Module 4 inventory occupancy / notice state.</p>
+            <div class="rep-chart-canvas"><canvas id="chartHousing"></canvas></div>
+        </div>
+        <div class="rep-card">
+            <p class="rep-card-title">Electricity connections</p>
+            <p class="rep-card-sub">Connection workflow status with Negros Power.</p>
+            <div class="rep-chart-canvas"><canvas id="chartElectricity"></canvas></div>
+        </div>
+    </div>
+
+    <!-- Section: Operations -->
+    <div class="rep-section">
+        <h2>Operations</h2>
+        <p class="rep-section-note">Requirement intake, case load, and active desk queues.</p>
+        <span class="rep-section-rule"></span>
+    </div>
+    <div class="rep-grid-3 rep-grid-charts">
+        <div class="rep-card">
+            <p class="rep-card-title">Requirement submissions</p>
+            <p class="rep-card-sub">Status mix across all submission rows.</p>
+            <div class="rep-chart-canvas"><canvas id="chartRequirements"></canvas></div>
+        </div>
+        <div class="rep-card">
+            <p class="rep-card-title">Cases by status</p>
+            <p class="rep-card-sub">Open / resolved / closed across all case types.</p>
+            <div class="rep-chart-canvas"><canvas id="chartCasesStatus"></canvas></div>
+        </div>
+        <div class="rep-card">
+            <p class="rep-card-title">Cases by type</p>
+            <p class="rep-card-sub">Distribution by case category.</p>
+            <div class="rep-chart-canvas"><canvas id="chartCasesType"></canvas></div>
+        </div>
+    </div>
+
+    <div class="rep-card" style="margin-top:0.85rem;">
+        <p class="rep-card-title">Active queues</p>
+        <p class="rep-card-sub">Live counts on staff desk queues across the workflow.</p>
+        <div class="rep-chart-canvas" style="height: 240px;"><canvas id="chartQueues"></canvas></div>
+    </div>
+
+    <!-- Section: Electricity backlog -->
+    {% if electricity_backlog %}
+    <div class="rep-section">
+        <h2>Electricity backlog</h2>
+        <p class="rep-section-note">Most recent {{ electricity_backlog|length }} pending connection record{{ electricity_backlog|length|pluralize }}.</p>
+        <span class="rep-section-rule"></span>
+    </div>
+    <div class="rep-card rep-table-card">
+        <div class="rep-table-head">
+            <h3>Pending connections — backlog detail</h3>
+            <p>Sorted by most recently updated. Rows here mirror the CSV export.</p>
+        </div>
+        <div class="rep-table-scroll">
+            <table class="rep-table">
+                <thead>
+                    <tr>
+                        <th>Reference</th>
+                        <th>Applicant</th>
+                        <th>Unit</th>
+                        <th>Status</th>
+                        <th>Negros ref</th>
+                        <th>Updated</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in electricity_backlog %}
+                    <tr>
+                        <td class="rep-mono">{{ row.reference }}</td>
+                        <td>{{ row.name }}</td>
+                        <td>{{ row.unit }}</td>
+                        <td><span class="rep-pill">{{ row.status }}</span></td>
+                        <td class="rep-mono">{{ row.negros_ref }}</td>
+                        <td style="color:#475569; white-space:nowrap;">{{ row.updated_at|date:"M d, Y" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr class="rep-empty-row">
+                        <td colspan="6">No pending connections — every awarded unit is energized.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="rep-footer">
+        Generated {{ timestamp|date:"M j, Y g:i A" }} · The CSV export contains the same figures plus per-row breakdowns.
     </div>
 </div>
 {% endblock %}
@@ -171,9 +810,13 @@
     try { D = JSON.parse(el.textContent); } catch (e) { return; }
     if (!D) return;
 
+    /* Emerald-led palette — primary emerald with supporting slate / amber /
+       indigo / cyan / rose so chart slices stay readable side-by-side
+       without the previous rainbow look. */
     var PALETTE = [
-        '#2563eb', '#059669', '#d97706', '#7c3aed', '#db2777', '#0891b2', '#65a30d', '#ea580c',
-        '#4f46e5', '#0d9488', '#ca8a04', '#9333ea', '#e11d48', '#0ea5e9', '#a855f7', '#f43f5e',
+        '#10b981', '#0ea5e9', '#7c3aed', '#f59e0b', '#dc2626', '#0891b2',
+        '#65a30d', '#4f46e5', '#0d9488', '#d97706', '#9333ea', '#e11d48',
+        '#22c55e', '#a855f7', '#f43f5e', '#06b6d4',
     ];
 
     function sum(a) { return a.reduce(function (s, n) { return s + n; }, 0); }
@@ -212,15 +855,17 @@
                     backgroundColor: bg,
                     borderWidth: 2,
                     borderColor: '#ffffff',
+                    hoverOffset: 6,
                 }],
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                cutout: '62%',
                 plugins: {
                     legend: {
                         position: 'bottom',
-                        labels: { boxWidth: 11, padding: 8, font: { size: 10 }, usePointStyle: true },
+                        labels: { boxWidth: 10, padding: 8, font: { size: 10 }, usePointStyle: true },
                     },
                     tooltip: {
                         enabled: !isEmpty,
@@ -260,7 +905,7 @@
                 datasets: [{
                     label: 'Count',
                     data: spec.values,
-                    backgroundColor: '#6366f1',
+                    backgroundColor: '#10b981',
                     borderRadius: 4,
                     barThickness: spec.labels.length > 8 ? 'flex' : 18,
                 }],
@@ -274,7 +919,7 @@
                     x: {
                         beginAtZero: true,
                         grid: { color: '#f1f5f9' },
-                        ticks: { precision: 0 },
+                        ticks: { precision: 0, font: { size: 10 } },
                     },
                     y: {
                         grid: { display: false },
@@ -294,13 +939,14 @@
     function hideChartCardByCanvasId(canvasId) {
         var canvas = document.getElementById(canvasId);
         if (!canvas) return;
-        var card = canvas.closest('.chart-card');
+        var card = canvas.closest('.rep-card');
         if (card) card.style.display = 'none';
     }
 
     Chart.defaults.font.family = "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif";
     Chart.defaults.color = '#475569';
 
+    /* Trend: registrations vs vault uploads (twin-axis line) */
     var trendEl = document.getElementById('chartTrend');
     if (trendEl && D.trend && D.trend.labels && D.trend.labels.length) {
         new Chart(trendEl, {
@@ -311,24 +957,26 @@
                     {
                         label: 'New applicants',
                         data: D.trend.registrations,
-                        borderColor: '#ea580c',
-                        backgroundColor: 'rgba(234, 88, 12, 0.12)',
+                        borderColor: '#0ea5e9',
+                        backgroundColor: 'rgba(14, 165, 233, 0.12)',
                         yAxisID: 'y',
                         tension: 0.3,
                         fill: true,
                         pointRadius: 4,
                         pointHoverRadius: 6,
+                        borderWidth: 2.5,
                     },
                     {
                         label: 'Vault uploads',
                         data: D.trend.vaultUploads,
-                        borderColor: '#059669',
-                        backgroundColor: 'rgba(5, 150, 105, 0.1)',
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.14)',
                         yAxisID: 'y1',
                         tension: 0.3,
                         fill: true,
                         pointRadius: 4,
                         pointHoverRadius: 6,
+                        borderWidth: 2.5,
                     },
                 ],
             },
@@ -337,14 +985,13 @@
                 maintainAspectRatio: false,
                 interaction: { mode: 'index', intersect: false },
                 plugins: {
-                    legend: { position: 'top' },
-                    title: {
-                        display: true,
-                        text: 'Trailing six months — registrations vs vault uploads',
-                        font: { size: 13, weight: '600' },
-                        color: '#334155',
-                        padding: { bottom: 8 },
+                    legend: {
+                        position: 'top',
+                        align: 'end',
+                        labels: { usePointStyle: true, padding: 14, font: { size: 11 } },
                     },
+                    title: { display: false },
+                    tooltip: { backgroundColor: '#0f172a', padding: 10, cornerRadius: 6 },
                 },
                 scales: {
                     y: {
@@ -363,11 +1010,16 @@
                         grid: { drawOnChartArea: false },
                         ticks: { precision: 0 },
                     },
+                    x: {
+                        grid: { color: '#f8fafc' },
+                        ticks: { font: { size: 11 } },
+                    },
                 },
             },
         });
     }
 
+    /* Pipeline snapshot — vertical bars with emerald + supporting palette */
     var pipeEl = document.getElementById('chartPipeline');
     if (pipeEl && D.pipelineSnapshot && D.pipelineSnapshot.labels.length) {
         new Chart(pipeEl, {
@@ -376,7 +1028,7 @@
                 labels: D.pipelineSnapshot.labels,
                 datasets: [{
                     data: D.pipelineSnapshot.values,
-                    backgroundColor: ['#7c3aed', '#2563eb', '#0d9488', '#f59e0b'],
+                    backgroundColor: ['#7c3aed', '#0ea5e9', '#10b981', '#f59e0b'],
                     borderRadius: 6,
                 }],
             },
@@ -385,9 +1037,7 @@
                 maintainAspectRatio: false,
                 plugins: {
                     legend: { display: false },
-                    title: {
-                        display: false,
-                    },
+                    tooltip: { backgroundColor: '#0f172a', padding: 10, cornerRadius: 6 },
                 },
                 scales: {
                     y: {
