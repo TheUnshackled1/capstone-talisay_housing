@@ -57,95 +57,6 @@ def _applicant_intake_docs_done_count(applicant):
     return sum(1 for k in keys if getattr(applicant, k, False))
 
 
-def _applications_pending_oic_signature():
-    """
-    Applicant-signed applications (status ``completed``) not yet marked fully approved.
-
-    Intermediate routing steps were retired; OIC approval creates the sole ``signed_oic`` row.
-    """
-    signed_app_ids = SignatoryRouting.objects.filter(step='signed_oic').values_list(
-        'application_id', flat=True
-    ).distinct()
-    return (
-        Application.objects.filter(status='completed')
-        .exclude(id__in=signed_app_ids)
-        .select_related('applicant', 'form_generated_by')
-        .prefetch_related(
-            Prefetch(
-                'routing_steps',
-                queryset=SignatoryRouting.objects.order_by('action_at'),
-            )
-        )
-    )
-
-
-def _build_oversight_applicants_table_rows():
-    """
-    Rows for OIC applicant intake overview (ISFRecord model was removed; use Applicant only).
-    """
-    applicants_qs = (
-        Applicant.objects.select_related('registered_by', 'eligibility_checked_by', 'barangay')
-        .prefetch_related('queue_entries', 'requirement_submissions__requirement')
-        .order_by('-created_at')
-    )
-    rows = []
-    for applicant in applicants_qs:
-        queue_entry = applicant.queue_entries.filter(status='active').first()
-        queue_type = queue_entry.get_queue_type_display() if queue_entry else '—'
-
-        group_a_verified = applicant.requirement_submissions.filter(
-            requirement__group='A',
-            status='verified',
-        ).count()
-        group_a_total = applicant.requirement_submissions.filter(
-            requirement__group='A',
-        ).count()
-        if group_a_total > 0:
-            docs_progress = f'{group_a_verified}/{group_a_total}'
-        else:
-            docs_progress = f'{_applicant_intake_docs_done_count(applicant)}/7'
-
-        staff_user = applicant.eligibility_checked_by or applicant.registered_by
-        staff_name = staff_user.get_full_name() if staff_user else '—'
-        staff_position = getattr(staff_user, 'position', None) or '—'
-        if staff_user and staff_user.first_name and staff_user.last_name:
-            staff_initials = f'{staff_user.first_name[0]}{staff_user.last_name[0]}'.upper()
-        else:
-            staff_initials = '—'
-
-        rows.append({
-            'id': str(applicant.id),
-            'transaction_id': str(applicant.id),
-            'reference_number': applicant.reference_number,
-            'full_name': applicant.full_name,
-            'channel': applicant.get_channel_display(),
-            'eligibility': applicant.get_status_display(),
-            'queue_type': queue_type,
-            'created_at': applicant.created_at,
-            'docs_progress': docs_progress,
-            'barangay': applicant.barangay.name if applicant.barangay else '—',
-            'staff_name': staff_name,
-            'staff_position': staff_position,
-            'staff_initials': staff_initials,
-            'sms_sent': applicant.registration_sms_sent or applicant.eligibility_sms_sent,
-        })
-    return rows
-
-
-def _m2_signatory_pipeline_counts():
-    """Counts for M2 applicant-form pipeline strip (OIC pending pages)."""
-    signed_done_ids = SignatoryRouting.objects.filter(step='signed_oic').values_list(
-        'application_id', flat=True
-    ).distinct()
-    return {
-        'draft_forms': Application.objects.filter(status='draft').count(),
-        'awaiting_oic': Application.objects.filter(status='completed').exclude(id__in=signed_done_ids).count(),
-        'fully_approved': Application.objects.filter(
-            status__in=['standby', 'awarded'],
-        ).count(),
-    }
-
-
 def _serialize_units_electricity_connection(conn):
     """units.ElectricityConnection → dict for dashboard templates (2nd / 5th member)."""
     unit = conn.lot_award.unit
@@ -274,291 +185,91 @@ def dashboard_redirect(request):
 @login_required
 def dashboard_oic(request):
     """
-    Dashboard for OIC-THA (Victor Fregil)
-    Responsibilities: M1 (queue oversight), M2 (OIC signatory), M4 (compliance), M5 (escalated complaints)
-
-    PHASE 1 Implementation:
-    - M2 (OIC): Queue of completed applications (scan on file) with delay flags
-    - M4 (Compliance): Awaiting decision count
-    - M5 (Escalated Cases): Escalated to OIC count
-    - M6 (Analytics): Pipeline, turnaround time, compliance rates
+    OIC dashboard focused on read-only analytics, with emphasis on housing-unit data.
     """
     if request.user.position != 'oic':
         messages.error(request, 'Access denied. This dashboard is for the OIC position only.')
         return redirect('accounts:dashboard')
 
-    # ==================== MODULE 2: OIC SIGNATORY (PRIORITY) ====================
-    from applications.models import Application
-
-    pending_signature_applications = _applications_pending_oic_signature()
-
-    pending_sigs_with_days = []
-    for app in pending_signature_applications:
-        anchor = app.applicant_signed_at or app.updated_at or app.created_at
-        days_waiting = (timezone.now() - anchor).days if anchor else 0
-        is_overdue = days_waiting > 3
-        pending_sigs_with_days.append({
-            'application': app,
-            'reference': app.application_number,
-            'applicant_name': app.applicant.full_name,
-            'days_waiting': days_waiting,
-            'is_overdue': is_overdue,
-            'forwarded_at': anchor,
-        })
-
-    # Sort by oldest first (longest waiting)
-    pending_sigs_with_days.sort(key=lambda x: x['days_waiting'], reverse=True)
-
-    # Count overdue signatures
-    overdue_signatures = sum(1 for item in pending_sigs_with_days if item['is_overdue'])
-    pending_signature_count = len(pending_sigs_with_days)
-
-    # ==================== MODULE 1: QUEUE & SMS METRICS ====================
-    # Queue counts
-    priority_queue_count = QueueEntry.objects.filter(queue_type='priority', status='active').count()
-    walkin_queue_count = QueueEntry.objects.filter(queue_type='walkin', status='active').count()
-    total_in_queue = priority_queue_count + walkin_queue_count
-
-    # SMS metrics
-    total_sms = SMSLog.objects.count()
-    sent_sms = SMSLog.objects.filter(status='sent').count()
-    failed_sms = SMSLog.objects.filter(status='failed').count()
-    pending_sms = SMSLog.objects.filter(status='pending').count()
-
-    # Calculate success rate
-    if total_sms > 0:
-        success_rate = int((sent_sms / total_sms) * 100)
-    else:
-        success_rate = 0
-
-    # Failed SMS alerts (last 10)
-    failed_sms_list = SMSLog.objects.filter(status='failed').order_by('-sent_at')[:10]
-
-    # ==================== MODULE 4: COMPLIANCE DECISIONS (retired standalone notices UI) ====================
-    pending_compliance_decisions = []
-    urgent_compliance_count = 0
-    compliance_decision_count = 0
-
-    # ==================== CDRRMO & BLACKLIST ====================
-    # CDRRMO metrics
-    pending_cdrrmo = CDRRMOCertification.objects.filter(status='pending').count()
-    overdue_threshold = timezone.now() - timedelta(days=14)
-    overdue_cdrrmo = CDRRMOCertification.objects.filter(status='pending', requested_at__lt=overdue_threshold).count()
-
-    # Blacklist count
-    blacklist_count = UnitsBlacklist.objects.count()
-    recent_blacklist = UnitsBlacklist.objects.select_related('applicant').order_by('-blacklisted_at')[:5]
-
-    # Total applicants
-    total_applicants = Applicant.objects.count()
-
-    # ==================== MODULE 6: APPLICATION PIPELINE FUNNEL (M2/M6) ====================
-    # Application pipeline stages with counts and conversion rates
-    pipeline_stages = [
-        ('draft', 'Form Generated'),
-        ('completed', 'Applicant Signed'),
-        ('standby', 'Fully Approved'),
-        ('standby', 'On Standby'),
-        ('awarded', 'Lot Awarded'),
-    ]
-
-    # Get counts for each stage
-    stage_counts = {}
-    for status, label in pipeline_stages:
-        stage_counts[status] = Application.objects.filter(status=status).count()
-
-    # Calculate conversion rates
-    funnel_data = []
-    total_applications = sum(stage_counts.values())
-
-    for i, (status, label) in enumerate(pipeline_stages):
-        count = stage_counts[status]
-
-        # Percentage of total applications
-        pct_of_total = int((count / total_applications * 100)) if total_applications > 0 else 0
-
-        # Conversion rate from previous stage
-        conversion_rate = None
-        if i > 0 and funnel_data:
-            prev_count = funnel_data[i-1]['count']
-            conversion_rate = int((count / prev_count * 100)) if prev_count > 0 else 0
-
-        funnel_data.append({
-            'status': status,
-            'label': label,
-            'count': count,
-            'pct_of_total': pct_of_total,
-            'conversion_rate': conversion_rate,
-            'position': i,
-        })
-
-    # ==================== MODULE 6: SIGNATORY TURNAROUND TIME (M2/M6) ====================
-    _signed_done_ids = SignatoryRouting.objects.filter(step='signed_oic').values_list(
-        'application_id', flat=True
-    ).distinct()
-    pending_oic_apps = Application.objects.filter(status='completed').exclude(id__in=_signed_done_ids)
-    pending_at_step = pending_oic_apps.count()
-    overdue_at_step = 0
-    for app in pending_oic_apps.iterator():
-        anchor = app.applicant_signed_at or app.updated_at
-        if anchor and (timezone.now() - anchor).days > 3:
-            overdue_at_step += 1
-
-    turnaround_times = []
-    for routing in SignatoryRouting.objects.filter(step='signed_oic').select_related('application'):
-        app = routing.application
-        if app.applicant_signed_at:
-            turnaround_times.append(max(0, (routing.action_at - app.applicant_signed_at).days))
-
-    if turnaround_times:
-        avg_turnaround = int(sum(turnaround_times) / len(turnaround_times))
-        max_turnaround = max(turnaround_times)
-        min_turnaround = min(turnaround_times)
-        completed_count = len(turnaround_times)
-    else:
-        avg_turnaround = 0
-        max_turnaround = 0
-        min_turnaround = 0
-        completed_count = 0
-
-    turnaround_analytics = [{
-        'step_code': 'signed_oic',
-        'step_label': 'OIC approval after applicant-signed scan',
-        'responsible_role': 'oic',
-        'avg_turnaround': avg_turnaround,
-        'max_turnaround': max_turnaround,
-        'min_turnaround': min_turnaround,
-        'completed_count': completed_count,
-        'pending_count': pending_at_step,
-        'overdue_count': overdue_at_step,
-        'sla_target': 3,
-        'is_exceeding_sla': avg_turnaround > 3 if completed_count > 0 else False,
-    }]
-
-    # ==================== MODULE 6: COMPLIANCE RATE ANALYTICS (stub — ComplianceNotice removed) ====================
-    complied_count = escalated_count = active_count = cancelled_count = total_notices = resolved_count = 0
-    compliance_rate = 0
-    escalation_rate = 0
-    avg_resolution_days = fastest_resolution = slowest_resolution = 0
-    compliance_rating = '—'
-    compliance_color = '#94a3b8'
-
-    # ==================== SHARED DASHBOARD STATS ====================
-    # Total housing units (for dashboard stat cards)
     total_housing_units = HousingUnit.objects.count()
+    occupied_units = HousingUnit.objects.filter(status='Occupied').count()
+    vacant_units = HousingUnit.objects.filter(status='Vacant — available').count()
+    under_notice_units = HousingUnit.objects.filter(status__in=['Under notice (30-day)', 'Final notice (10-day)']).count()
+    repossessed_units = HousingUnit.objects.filter(status='Repossessed').count()
 
-    # Approved this month (for dashboard stat cards)
-    this_month_start = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    approved_this_month = Application.objects.filter(
-        status='awarded',
-        updated_at__gte=this_month_start
-    ).count()
+    total_applications = Application.objects.count()
+    awarded_applications = Application.objects.filter(status='awarded').count()
+    standby_applications = Application.objects.filter(status='standby').count()
+    completed_applications = Application.objects.filter(status='completed').count()
+    draft_applications = Application.objects.filter(status='draft').count()
 
-    # ==================== MODULE 5: ESCALATED CASES (M5) ====================
-    # Cases awaiting OIC decision (open, investigation, pending_decision, referred)
-    escalated_cases_queryset = Case.objects.filter(
-        status__in=['open', 'investigation', 'pending_decision', 'referred']
-    ).order_by('-received_at').select_related('received_by', 'complainant_applicant', 'related_unit', 'subject_applicant')
+    occupancy_rate_pct = int(round((occupied_units / total_housing_units) * 100)) if total_housing_units else 0
+    vacancy_rate_pct = int(round((vacant_units / total_housing_units) * 100)) if total_housing_units else 0
+    awarded_rate_pct = int(round((awarded_applications / total_applications) * 100)) if total_applications else 0
+    ready_for_award_pct = int(round((standby_applications / total_applications) * 100)) if total_applications else 0
 
-    # Enrich with statistics
-    escalated_cases_with_stats = []
-    stale_cases_count = 0  # Cases open > 14 days
-    urgent_cases_count = 0  # Cases open > 7 days
-    case_type_distribution = {}  # Count by case type
-
-    for case in escalated_cases_queryset:
-        days_open = case.days_open
-        is_stale = case.is_stale  # > 14 days
-        is_urgent = days_open > 7  # > 7 days
-
-        # Track type distribution
-        case_type = case.get_case_type_display()
-        case_type_distribution[case_type] = case_type_distribution.get(case_type, 0) + 1
-
-        escalated_cases_with_stats.append({
-            'case': case,
-            'case_number': case.case_number,
-            'case_type': case_type,
-            'status_display': case.get_status_display(),
-            'complainant': case.complainant_name,
-            'subject': case.subject_name or (case.subject_applicant.full_name if case.subject_applicant else 'N/A'),
-            'days_open': days_open,
-            'is_stale': is_stale,
-            'is_urgent': is_urgent,
-            'received_at': case.received_at,
-            'description_snippet': case.initial_description[:100] + '...' if len(case.initial_description) > 100 else case.initial_description,
-        })
-
-        if is_stale:
-            stale_cases_count += 1
-        if is_urgent:
-            urgent_cases_count += 1
-
-    total_escalated_cases = len(escalated_cases_with_stats)
+    apps_for_modal = list(
+        Application.objects.select_related('applicant').order_by('-updated_at')[:300]
+    )
+    units_for_modal = list(
+        HousingUnit.objects.select_related('site').order_by('block_number', 'lot_number')[:300]
+    )
+    oic_modal_lists = {
+        'total_applications': [
+            {
+                'primary': app.application_number,
+                'secondary': app.applicant.full_name,
+                'meta': app.get_status_display(),
+            }
+            for app in apps_for_modal
+        ],
+        'completed_applications': [
+            {
+                'primary': app.application_number,
+                'secondary': app.applicant.full_name,
+                'meta': app.get_status_display(),
+            }
+            for app in apps_for_modal
+            if app.status == 'completed'
+        ],
+        'awarded_applications': [
+            {
+                'primary': app.application_number,
+                'secondary': app.applicant.full_name,
+                'meta': app.get_status_display(),
+            }
+            for app in apps_for_modal
+            if app.status == 'awarded'
+        ],
+        'housing_units': [
+            {
+                'primary': f'Block {unit.block_number}, Lot {unit.lot_number}',
+                'secondary': getattr(unit, 'occupant_name', '') or 'No assigned occupant',
+                'meta': unit.status,
+            }
+            for unit in units_for_modal
+        ],
+    }
 
     context = {
         'page_title': 'OIC Dashboard',
         'user_position': 'oic',
-
-        # ========== MODULE 2: OIC SIGNATORY (PHASE 1) ==========
-        'pending_signature_count': pending_signature_count,
-        'overdue_signatures': overdue_signatures,
-        'pending_sigs_with_days': pending_sigs_with_days,  # Enhanced list with days waiting
-
-        # ========== MODULE 4: COMPLIANCE DECISIONS (PHASE 1) ==========
-        'compliance_decision_count': compliance_decision_count,
-        'urgent_compliance_count': urgent_compliance_count,
-        'pending_compliance_decisions': pending_compliance_decisions,
-
-        # ========== MODULE 6: APPLICATION PIPELINE FUNNEL (PHASE 1 #3) ==========
-        'funnel_data': funnel_data,
+        'total_housing_units': total_housing_units,
+        'occupied_units': occupied_units,
+        'vacant_units': vacant_units,
+        'under_notice_units': under_notice_units,
+        'repossessed_units': repossessed_units,
         'total_applications': total_applications,
-
-        # ========== MODULE 6: SIGNATORY TURNAROUND TIME (PHASE 1 #4) ==========
-        'turnaround_analytics': turnaround_analytics,
-
-        # ========== MODULE 6: COMPLIANCE RATE ANALYTICS (PHASE 1 #5) ==========
-        'compliance_rate': compliance_rate,
-        'escalation_rate': escalation_rate,
-        'compliance_rating': compliance_rating,
-        'compliance_color': compliance_color,
-        'complied_count': complied_count,
-        'escalated_count': escalated_count,
-        'active_count': active_count,
-        'cancelled_count': cancelled_count,
-        'total_notices': total_notices,
-        'resolved_count': resolved_count,
-        'avg_resolution_days': avg_resolution_days,
-        'fastest_resolution': fastest_resolution,
-        'slowest_resolution': slowest_resolution,
-        'compliance_decisions': compliance_decision_count,
-
-        # ========== MODULE 1: SYSTEM HEALTH METRICS ==========
-        'total_in_queue': total_in_queue,
-        'priority_queue_count': priority_queue_count,
-        'walkin_queue_count': walkin_queue_count,
-        'sms_sent': sent_sms,
-        'sms_failed': failed_sms,
-        'sms_pending': pending_sms,
-        'sms_total': total_sms,
-        'success_rate': success_rate,
-        'sms_success_rate': success_rate,
-        'failed_sms_list': failed_sms_list,
-        'pending_cdrrmo': pending_cdrrmo,
-        'overdue_cdrrmo': overdue_cdrrmo,
-        'blacklist_count': blacklist_count,
-        'recent_blacklist': recent_blacklist,
-        'total_applicants': total_applicants,
-
-        # ========== PLACEHOLDERS FOR FUTURE MODULES ==========
-        'awaiting_signature': pending_signature_count,  # M2 (updated from TODO)
-        'housing_units': total_housing_units,  # Shared stat card
-        'approved_this_month': approved_this_month,  # Shared stat card
-        'escalated_complaints': total_escalated_cases,  # M5 (escalated cases awaiting OIC)
-        'escalated_cases': escalated_cases_with_stats,  # M5 (detailed list)
-        'stale_cases_count': stale_cases_count,  # M5 (cases open > 14 days)
-        'urgent_cases_count': urgent_cases_count,  # M5 (cases open > 7 days)
-        'case_type_distribution': case_type_distribution,  # M5 (breakdown by case type)
+        'awarded_applications': awarded_applications,
+        'standby_applications': standby_applications,
+        'completed_applications': completed_applications,
+        'draft_applications': draft_applications,
+        'occupancy_rate_pct': occupancy_rate_pct,
+        'vacancy_rate_pct': vacancy_rate_pct,
+        'awarded_rate_pct': awarded_rate_pct,
+        'ready_for_award_pct': ready_for_award_pct,
+        'oic_analytics_updated_at': timezone.now(),
+        'oic_modal_data_json': json.dumps(oic_modal_lists),
     }
     return render(request, 'accounts/dashboard.html', context)
 
@@ -1021,7 +732,13 @@ def _staff_reports_analytics_payload(request):
 
     module2_handoff_count = Applicant.objects.filter(module2_handoff_at__isnull=False).count()
     ready_for_form_queue_count = _staff_analytics_ready_for_form_count(request.user)
-    pending_oic_signature_count = _applications_pending_oic_signature().count()
+    signed_app_ids = SignatoryRouting.objects.filter(step='signed_oic').values_list(
+        'application_id',
+        flat=True,
+    ).distinct()
+    pending_oic_signature_count = Application.objects.filter(status='completed').exclude(
+        id__in=signed_app_ids
+    ).count()
 
     requirement_submission_labels = dict(RequirementSubmission.STATUS_CHOICES)
     requirement_by_status = sorted(
@@ -1929,144 +1646,4 @@ def applicants_list(request):
 
 
 # ==================== OIC-SPECIFIC VIEWS ====================
-
-@login_required
-def oic_applicants_overview(request):
-    """
-    OIC-specific: Overview of applicant intake with summary stats AND full applicants table.
-    URL: /oic/applicants/
-    OIC has read-only access to all applicants for oversight purposes.
-    """
-    # Verify position
-    if request.user.position != 'oic':
-        messages.error(request, 'Access denied. This view is for the OIC position only.')
-        return redirect('accounts:dashboard')
-
-    # Total applicants
-    total_applicants = Applicant.objects.count()
-
-    # Channel breakdown
-    channel_a = Applicant.objects.filter(channel='A').count()
-    channel_b = Applicant.objects.filter(channel='B').count()
-    channel_c = Applicant.objects.filter(channel='C').count()
-
-    # Eligibility breakdown
-    eligible_count = Applicant.objects.filter(status='eligible').count()
-    disqualified_count = Applicant.objects.filter(status='disqualified').count()
-    pending_count = Applicant.objects.filter(status='under_review').count()
-
-    # Calculate pass rate
-    if total_applicants > 0:
-        eligibility_pass_rate = int((eligible_count / total_applicants) * 100)
-    else:
-        eligibility_pass_rate = 0
-
-    # Queue breakdown
-    priority_queue_count = QueueEntry.objects.filter(queue_type='priority', status='active').count()
-    walkin_queue_count = QueueEntry.objects.filter(queue_type='walkin', status='active').count()
-
-    # Critical alerts
-    overdue_threshold = timezone.now() - timedelta(days=14)
-    overdue_cdrrmo_qs = CDRRMOCertification.objects.filter(
-        status='pending',
-        requested_at__lt=overdue_threshold
-    ).select_related('applicant').order_by('requested_at')
-    overdue_cdrrmo_count = overdue_cdrrmo_qs.count()
-
-    # Build overdue CDRRMO details list
-    overdue_cdrrmo_details = []
-    for cert in overdue_cdrrmo_qs[:10]:  # Limit to top 10
-        days_overdue = (timezone.now() - cert.requested_at).days
-        overdue_cdrrmo_details.append({
-            'applicant_name': cert.applicant.full_name,
-            'days_overdue': days_overdue,
-            'requested_at': cert.requested_at
-        })
-
-    # Blacklist count
-    blacklist_count = UnitsBlacklist.objects.count()
-
-    # SMS failures (last 7 days)
-    seven_days_ago = timezone.now() - timedelta(days=7)
-    sms_failed_recent = SMSLog.objects.filter(status='failed', sent_at__gte=seven_days_ago).count()
-
-    applicants_data = _build_oversight_applicants_table_rows()
-
-    context = {
-        'page_title': 'Applicant Intake Overview',
-        'user_position': request.user.position,
-        'total_applicants': total_applicants,
-        'channel_breakdown': {
-            'a': channel_a,
-            'b': channel_b,
-            'c': channel_c
-        },
-        'eligibility_breakdown': {
-            'eligible': eligible_count,
-            'disqualified': disqualified_count,
-            'pending': pending_count
-        },
-        'eligibility_pass_rate': eligibility_pass_rate,
-        'queue_breakdown': {
-            'priority': priority_queue_count,
-            'walkin': walkin_queue_count
-        },
-        'critical_alerts': {
-            'overdue_cdrrmo': overdue_cdrrmo_count,
-            'blacklist': blacklist_count,
-            'sms_failed': sms_failed_recent
-        },
-        'overdue_cdrrmo_details': overdue_cdrrmo_details,
-        'applicants': applicants_data
-    }
-
-    return render(request, 'accounts/oic/applicants_overview.html', context)
-
-
-@login_required
-def oic_pending_signature(request):
-    """
-    OIC queue: applications with signed scan on file (completed) awaiting full approval.
-    URL: /oic/applications/pending/
-    """
-    # Verify position
-    if request.user.position != 'oic':
-        messages.error(request, 'Access denied. This view is for the OIC position only.')
-        return redirect('accounts:dashboard')
-
-    pending_applications = _applications_pending_oic_signature().order_by('created_at')
-
-    pending_apps_list = []
-    for app in pending_applications:
-        anchor = app.applicant_signed_at or app.updated_at or app.created_at
-        days_pending = (timezone.now() - anchor).days if anchor else 0
-
-        pending_apps_list.append({
-            'application_number': app.application_number,
-            'applicant_name': app.applicant.full_name,
-            'status': app.get_status_display(),
-            'received_date': app.created_at,
-            'days_pending': days_pending,
-            'received_by': app.form_generated_by.get_full_name() if app.form_generated_by else 'N/A',
-            'application_id': str(app.id)
-        })
-
-    pending_apps_list.sort(key=lambda x: x['days_pending'], reverse=True)
-
-    total_pending = len(pending_apps_list)
-    urgent_count = len([app for app in pending_apps_list if app['days_pending'] >= 7])
-
-    context = {
-        'page_title': 'Awaiting OIC full approval',
-        'user_position': request.user.position,
-        'pending_applications': pending_apps_list,
-        'total_pending': total_pending,
-        'urgent_count': urgent_count,
-        'm2_pipeline': _m2_signatory_pipeline_counts(),
-        'm2_pipeline_role': 'oic',
-    }
-
-    return render(request, 'accounts/oic/pending_signature.html', context)
-
-
 

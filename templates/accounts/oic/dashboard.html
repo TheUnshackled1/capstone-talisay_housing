@@ -1,823 +1,194 @@
-{% comment %}
-Dashboard Widgets for OIC (Victor M. Fregil)
-Responsibilities:
-- M1: System oversight & health monitoring
-- M2: OIC full approval (after vault scan)
-- M4: Compliance decisions
-- M5: Escalated complaint decisions
-{% endcomment %}
-
-<!-- ===== MODULE 2: OIC SIGNATORY (PHASE 1 - PRIORITY) ===== -->
-
-<!-- M2: Awaiting OIC full approval (scan on file) -->
-<div class="card scroll-animate" style="border-top: 4px solid #3b82f6;">
+<div class="card scroll-animate" style="border-top: 4px solid #0ea5e9;">
     <div class="card-header">
         <h3 class="card-title">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M10.75 13.5a2.25 2.25 0 1 0 0-4.5 2.25 2.25 0 0 0 0 4.5z"/>
-                <path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/>
-                <path d="M3.22 15.22l4.24-4.24M19.78 8.78l-4.24 4.24"/>
+                <line x1="18" y1="20" x2="18" y2="10"/>
+                <line x1="12" y1="20" x2="12" y2="4"/>
+                <line x1="6" y1="20" x2="6" y2="14"/>
             </svg>
-            Awaiting OIC approval (M2)
+            OIC Analytics Snapshot
         </h3>
-        <span class="badge" style="background-color: {% if overdue_signatures > 0 %}#ef4444{% elif pending_signature_count > 0 %}#f59e0b{% else %}#10b981{% endif %};">
-            {{ pending_signature_count|default:0 }} application{{ pending_signature_count|pluralize }}
-        </span>
     </div>
     <div class="card-body">
-        {% if pending_signature_count > 0 %}
-            <!-- Summary Stats -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
-                <div style="background: #f0f9ff; padding: 0.75rem; border-radius: 0.5rem; border-left: 3px solid #3b82f6;">
-                    <div style="font-size: 0.75rem; color: #1e40af; font-weight: 600; text-transform: uppercase;">In your queue</div>
-                    <div style="font-size: 1.875rem; font-weight: bold; color: #1e40af; margin-top: 0.25rem;">{{ pending_signature_count }}</div>
-                </div>
-                {% if overdue_signatures > 0 %}
-                <div style="background: #fee2e2; padding: 0.75rem; border-radius: 0.5rem; border-left: 3px solid #ef4444;">
-                    <div style="font-size: 0.75rem; color: #991b1b; font-weight: 600; text-transform: uppercase;">🔴 OVERDUE (>3 days)</div>
-                    <div style="font-size: 1.875rem; font-weight: bold; color: #dc2626; margin-top: 0.25rem;">{{ overdue_signatures }}</div>
-                </div>
-                {% endif %}
+        <div style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:0.55rem;">
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:0.55rem; padding:0.35rem 0.45rem;">
+                <div style="font-size:0.64rem; color:#64748b;">Total Units</div>
+                <div style="font-size:0.95rem; font-weight:700; color:#0f172a; line-height:1.2;">{{ total_housing_units|default:0 }}</div>
+                <div style="font-size:0.64rem; color:#475569; line-height:1.25;">{{ occupied_units|default:0 }} occupied / {{ vacant_units|default:0 }} vacant</div>
             </div>
-
-            <!-- Documents List -->
-            <div style="max-height: 400px; overflow-y: auto;">
-                {% for item in pending_sigs_with_days %}
-                <div style="padding: 0.75rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: flex-start;">
-                    <div style="flex: 1;">
-                        <div style="font-weight: 600; color: #1e293b; font-size: 0.9375rem;">{{ item.reference }}</div>
-                        <div style="color: #64748b; font-size: 0.8125rem; margin-top: 0.25rem;">{{ item.applicant_name }}</div>
-                        <div style="color: #94a3b8; font-size: 0.75rem; margin-top: 0.25rem;">Scan on file since: {{ item.forwarded_at|date:"M d, Y g:i A" }}</div>
-                    </div>
-                    <div style="text-align: right; margin-left: 1rem;">
-                        <span style="display: inline-block; background-color: {% if item.is_overdue %}#fee2e2{% elif item.days_waiting >= 3 %}#fef3c7{% else %}#dbeafe{% endif %}; color: {% if item.is_overdue %}#991b1b{% elif item.days_waiting >= 3 %}#92400e{% else %}#1e40af{% endif %}; padding: 0.35rem 0.75rem; border-radius: 0.25rem; font-weight: 600; font-size: 0.75rem;">
-                            {% if item.is_overdue %}🔴 {{ item.days_waiting }} DAYS{% elif item.days_waiting >= 3 %}⚠️ {{ item.days_waiting }} {{ item.days_waiting|pluralize:"day,days" }}{% else %}{{ item.days_waiting }} {{ item.days_waiting|pluralize:"day,days" }}{% endif %}
-                        </span>
-                    </div>
-                </div>
-                {% endfor %}
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:0.55rem; padding:0.35rem 0.45rem;">
+                <div style="font-size:0.64rem; color:#64748b;">Total Applications</div>
+                <div style="font-size:0.95rem; font-weight:700; color:#0f172a; line-height:1.2;">{{ total_applications|default:0 }}</div>
+                <div style="font-size:0.64rem; color:#475569; line-height:1.25;">{{ standby_applications|default:0 }} standby / {{ awarded_applications|default:0 }} awarded</div>
             </div>
-
-            <!-- Action Button -->
-            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e2e8f0;">
-                <a href="{% url 'accounts:oic_pending_sig' %}" style="display: inline-block; background-color: #3b82f6; color: white; padding: 0.5rem 1rem; border-radius: 0.375rem; text-decoration: none; font-size: 0.875rem; font-weight: 600;">
-                    Open approval queue →
-                </a>
-            </div>
-
-        {% else %}
-            <!-- Queue empty -->
-            <div style="text-align: center; padding: 2rem 0; color: #94a3b8;">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width: 3rem; height: 3rem; margin: 0 auto 0.75rem; color: #10b981;">
-                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                    <polyline points="22 4 12 14.01 9 11.01"/>
-                </svg>
-                <p style="font-weight: 500; color: #10b981;">✅ No applications with scan on file need approval</p>
-                <p style="font-size: 0.875rem; color: #94a3b8; margin-top: 0.5rem;">They appear after staff upload the signed form to the vault</p>
-            </div>
-        {% endif %}
-    </div>
-</div>
-
-<!-- ===== MODULE 4: COMPLIANCE DECISIONS (PHASE 1) ===== -->
-
-<!-- Compliance Decisions Widget -->
-<div class="card scroll-animate" style="border-top: 4px solid #f59e0b;">
-    <div class="card-header">
-        <h3 class="card-title">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M12 2v20M2 12h20"/>
-                <circle cx="12" cy="12" r="10"/>
-            </svg>
-            Compliance Decisions (M4)
-        </h3>
-        <span class="badge" style="background-color: {% if urgent_compliance_count > 0 %}#ef4444{% elif compliance_decision_count > 0 %}#f59e0b{% else %}#10b981{% endif %};">
-            {{ compliance_decision_count|default:0 }} Case{{ compliance_decision_count|pluralize }}
-        </span>
-    </div>
-    <div class="card-body">
-        {% if compliance_decision_count > 0 %}
-            <!-- Summary Stats -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
-                <div style="background: #fef3c7; padding: 0.75rem; border-radius: 0.5rem; border-left: 3px solid #f59e0b;">
-                    <div style="font-size: 0.75rem; color: #92400e; font-weight: 600; text-transform: uppercase;">Total Cases</div>
-                    <div style="font-size: 1.875rem; font-weight: bold; color: #92400e; margin-top: 0.25rem;">{{ compliance_decision_count }}</div>
-                </div>
-                {% if urgent_compliance_count > 0 %}
-                <div style="background: #fee2e2; padding: 0.75rem; border-radius: 0.5rem; border-left: 3px solid #ef4444;">
-                    <div style="font-size: 0.75rem; color: #991b1b; font-weight: 600; text-transform: uppercase;">⚠️ URGENT (<= 5 days)</div>
-                    <div style="font-size: 1.875rem; font-weight: bold; color: #dc2626; margin-top: 0.25rem;">{{ urgent_compliance_count }}</div>
-                </div>
-                {% endif %}
-            </div>
-
-            <!-- Cases List -->
-            <div style="max-height: 400px; overflow-y: auto;">
-                {% for item in pending_compliance_decisions %}
-                <div style="padding: 0.75rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: flex-start;">
-                    <div style="flex: 1;">
-                        <div style="font-weight: 600; color: #1e293b; font-size: 0.9375rem;">{{ item.applicant_name }}</div>
-                        <div style="color: #64748b; font-size: 0.8125rem; margin-top: 0.25rem;">📍 {{ item.unit_display }} • {{ item.notice_type }}</div>
-                        <div style="color: #94a3b8; font-size: 0.75rem; margin-top: 0.25rem;">Reason: {{ item.reason|truncatewords:8 }}</div>
-                        <div style="color: #94a3b8; font-size: 0.75rem; margin-top: 0.25rem;">Deadline: {{ item.deadline|date:"M d, Y" }}</div>
-                    </div>
-                    <div style="text-align: right; margin-left: 1rem;">
-                        <span style="display: inline-block; background-color: {% if item.is_overdue %}#fee2e2{% elif item.is_approaching_deadline %}#fef3c7{% else %}#dbeafe{% endif %}; color: {% if item.is_overdue %}#991b1b{% elif item.is_approaching_deadline %}#92400e{% else %}#1e40af{% endif %}; padding: 0.35rem 0.75rem; border-radius: 0.25rem; font-weight: 600; font-size: 0.75rem;">
-                            {% if item.is_overdue %}🔴 OVERDUE{% elif item.is_approaching_deadline %}⚠️ {{ item.days_remaining }} day{{ item.days_remaining|pluralize }}{% else %}{{ item.days_remaining }} day{{ item.days_remaining|pluralize }}{% endif %}
-                        </span>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-
-            <!-- Action Button -->
-            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e2e8f0;">
-                <a href="{% url 'accounts:dashboard_oic' %}?tab=compliance" style="display: inline-block; background-color: #f59e0b; color: white; padding: 0.5rem 1rem; border-radius: 0.375rem; text-decoration: none; font-size: 0.875rem; font-weight: 600;">
-                    Review & Decide →
-                </a>
-            </div>
-
-        {% else %}
-            <!-- No Pending Compliance -->
-            <div style="text-align: center; padding: 2rem 0; color: #94a3b8;">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width: 3rem; height: 3rem; margin: 0 auto 0.75rem; color: #10b981;">
-                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                    <polyline points="22 4 12 14.01 9 11.01"/>
-                </svg>
-                <p style="font-weight: 500; color: #10b981;">✅ No pending compliance decisions</p>
-                <p style="font-size: 0.875rem; color: #94a3b8; margin-top: 0.5rem;">All beneficiaries are in good standing</p>
-            </div>
-        {% endif %}
-    </div>
-</div>
-
-<!-- ===== MODULE 6: APPLICATION PIPELINE FUNNEL (PHASE 1 #3) ===== -->
-
-<!-- Application Pipeline Funnel Widget -->
-<div class="card scroll-animate" style="border-top: 4px solid #8b5cf6;">
-    <div class="card-header">
-        <h3 class="card-title">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M6 9l6 6 6-6"/>
-                <path d="M3 3h18v3H3z"/>
-                <path d="M5 8h14v3H5z"/>
-                <path d="M7 13h10v3H7z"/>
-                <path d="M9 18h6v3H9z"/>
-            </svg>
-            Application Pipeline (M2/M6)
-        </h3>
-        <span class="badge" style="background-color: #8b5cf6;">
-            {{ total_applications|default:0 }} Total
-        </span>
-    </div>
-    <div class="card-body">
-        {% if total_applications > 0 %}
-            <!-- Funnel Visualization -->
-            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-                {% for stage in funnel_data %}
-                <div style="display: flex; align-items: center; gap: 0.75rem;">
-                    <!-- Stage Label -->
-                    <div style="flex: 0 0 140px;">
-                        <div style="font-size: 0.8125rem; font-weight: 600; color: #1e293b;">{{ stage.label }}</div>
-                        <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 0.125rem;">Stage {{ stage.position|add:1 }}/{{ funnel_data|length }}</div>
-                    </div>
-
-                    <!-- Funnel Bar -->
-                    <div style="flex: 1; position: relative; height: 2.5rem; background: #f1f5f9; border-radius: 0.375rem; overflow: hidden; border: 1px solid #e2e8f0;">
-                        <!-- Filled portion (percentage of max count) -->
-                        {% widthratio stage.count total_applications 100 as fill_percent %}
-                        <div style="position: absolute; top: 0; left: 0; height: 100%; background: linear-gradient(90deg, #8b5cf6, #a78bfa); width: {{ fill_percent }}%; transition: width 0.3s ease;"></div>
-
-                        <!-- Count text overlay -->
-                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #1e293b; font-weight: 600; font-size: 0.875rem; z-index: 10;">
-                            {{ stage.count }}
+        </div>
+        <div style="margin-top:0.85rem; display:grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap:0.9rem;">
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:0.6rem; padding:0.7rem;">
+                <div style="font-size:0.75rem; color:#475569; margin-bottom:0.55rem;">Occupancy Rate</div>
+                <div style="display:flex; align-items:center; gap:0.75rem;">
+                    <div style="width:58px; height:58px; border-radius:50%; background:conic-gradient(#2563eb {{ occupancy_rate_pct|default:0 }}%, #e2e8f0 0); position:relative; flex-shrink:0;">
+                        <div style="position:absolute; inset:8px; border-radius:50%; background:#fff; display:flex; align-items:center; justify-content:center; font-size:0.72rem; font-weight:700; color:#1e3a8a;">
+                            {{ occupancy_rate_pct|default:0 }}%
                         </div>
                     </div>
-
-                    <!-- Count & Conversion Info -->
-                    <div style="flex: 0 0 80px; text-align: right;">
-                        <div style="font-size: 0.8125rem; color: #64748b;">{{ stage.pct_of_total }}%</div>
-                        {% if stage.conversion_rate %}
-                        <div style="font-size: 0.75rem; color: {% if stage.conversion_rate >= 80 %}#10b981{% elif stage.conversion_rate >= 50 %}#f59e0b{% else %}#ef4444{% endif %}; margin-top: 0.125rem;">
-                            ↓ {{ stage.conversion_rate }}%
-                        </div>
-                        {% endif %}
+                    <div style="font-size:0.72rem; color:#64748b; line-height:1.45;">
+                        <div><strong style="color:#0f172a;">{{ occupied_units|default:0 }}</strong> occupied</div>
+                        <div><strong style="color:#0f172a;">{{ vacant_units|default:0 }}</strong> vacant</div>
                     </div>
                 </div>
-                {% endfor %}
             </div>
-
-            <!-- Summary Statistics -->
-            <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e2e8f0; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
-                <div style="text-align: center; padding: 0.75rem; background: #f0f9ff; border-radius: 0.375rem; border: 1px solid #bfdbfe;">
-                    <div style="font-size: 0.75rem; color: #1e40af; font-weight: 600; text-transform: uppercase;">Applied (Draft)</div>
-                    <div style="font-size: 1.5rem; font-weight: bold; color: #1e40af; margin-top: 0.25rem;">{{ funnel_data.0.count|default:0 }}</div>
-                </div>
-                <div style="text-align: center; padding: 0.75rem; background: #fef3c7; border-radius: 0.375rem; border: 1px solid #fcd34d;">
-                    <div style="font-size: 0.75rem; color: #92400e; font-weight: 600; text-transform: uppercase;">Awaiting OIC</div>
-                    <div style="font-size: 1.5rem; font-weight: bold; color: #92400e; margin-top: 0.25rem;">{{ funnel_data.1.count|default:0 }}</div>
-                </div>
-                <div style="text-align: center; padding: 0.75rem; background: #d1fae5; border-radius: 0.375rem; border: 1px solid #a7f3d0;">
-                    <div style="font-size: 0.75rem; color: #065f46; font-weight: 600; text-transform: uppercase;">Awarded</div>
-                    <div style="font-size: 1.5rem; font-weight: bold; color: #065f46; margin-top: 0.25rem;">{{ funnel_data.4.count|default:0 }}</div>
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:0.6rem; padding:0.7rem;">
+                <div style="font-size:0.75rem; color:#475569; margin-bottom:0.55rem;">Awarded Rate</div>
+                <div style="display:flex; align-items:center; gap:0.75rem;">
+                    <div style="width:58px; height:58px; border-radius:50%; background:conic-gradient(#16a34a {{ awarded_rate_pct|default:0 }}%, #e2e8f0 0); position:relative; flex-shrink:0;">
+                        <div style="position:absolute; inset:8px; border-radius:50%; background:#fff; display:flex; align-items:center; justify-content:center; font-size:0.72rem; font-weight:700; color:#166534;">
+                            {{ awarded_rate_pct|default:0 }}%
+                        </div>
+                    </div>
+                    <div style="font-size:0.72rem; color:#64748b; line-height:1.45;">
+                        <div><strong style="color:#0f172a;">{{ awarded_applications|default:0 }}</strong> awarded</div>
+                        <div><strong style="color:#0f172a;">{{ standby_applications|default:0 }}</strong> standby</div>
+                    </div>
                 </div>
             </div>
-
-        {% else %}
-            <!-- No Applications -->
-            <div style="text-align: center; padding: 2rem 0; color: #94a3b8;">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width: 3rem; height: 3rem; margin: 0 auto 0.75rem; color: #cbd5e1;">
-                    <path d="M12 2v20M2 12h20M12 7v10M7 12h10"/>
-                </svg>
-                <p style="font-weight: 500; color: #94a3b8;">No applications yet</p>
-                <p style="font-size: 0.875rem; color: #cbd5e1; margin-top: 0.5rem;">Pipeline will populate as applicants submit</p>
-            </div>
-        {% endif %}
-    </div>
-</div>
-
-<!-- ===== MODULE 6: SIGNATORY TURNAROUND TIME (PHASE 1 #4) ===== -->
-
-<!-- Signatory Turnaround Time Widget -->
-<div class="card scroll-animate" style="border-top: 4px solid #06b6d4;">
-    <div class="card-header">
-        <h3 class="card-title">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="9"/>
-                <polyline points="12 6 12 12 16 14"/>
-            </svg>
-            Signatory Turnaround Time (M2/M6)
-        </h3>
-    </div>
-    <div class="card-body">
-        {% if turnaround_analytics %}
-            <!-- Turnaround Time Table -->
-            <div style="overflow-x: auto;">
-                <table style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">
-                    <thead>
-                        <tr style="background: #f1f5f9; border-bottom: 2px solid #e2e8f0;">
-                            <th style="padding: 0.75rem; text-align: left; font-weight: 600; color: #64748b;">Step</th>
-                            <th style="padding: 0.75rem; text-align: center; font-weight: 600; color: #64748b;">Avg Days</th>
-                            <th style="padding: 0.75rem; text-align: center; font-weight: 600; color: #64748b;">Max Days</th>
-                            <th style="padding: 0.75rem; text-align: center; font-weight: 600; color: #64748b;">Pending</th>
-                            <th style="padding: 0.75rem; text-align: center; font-weight: 600; color: #64748b;">Overdue</th>
-                            <th style="padding: 0.75rem; text-align: center; font-weight: 600; color: #64748b;">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for step in turnaround_analytics %}
-                        <tr style="border-bottom: 1px solid #e2e8f0; {% if step.is_exceeding_sla %}background: #fef3c7;{% endif %}">
-                            <td style="padding: 0.75rem; color: #1e293b; font-weight: 500;">
-                                {{ step.step_label }}
-                                <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 0.125rem;">Completed: {{ step.completed_count }}</div>
-                            </td>
-                            <td style="padding: 0.75rem; text-align: center;">
-                                <div style="font-weight: 600; color: {% if step.avg_turnaround <= 3 %}#10b981{% else %}#ef4444{% endif %};">
-                                    {{ step.avg_turnaround }}
-                                </div>
-                                <div style="font-size: 0.75rem; color: #94a3b8;">SLA: {{ step.sla_target }}d</div>
-                            </td>
-                            <td style="padding: 0.75rem; text-align: center; color: #64748b;">{{ step.max_turnaround }}</td>
-                            <td style="padding: 0.75rem; text-align: center;">
-                                <span style="display: inline-block; background: #e0f2fe; color: #0369a1; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-weight: 600; font-size: 0.75rem;">
-                                    {{ step.pending_count }}
-                                </span>
-                            </td>
-                            <td style="padding: 0.75rem; text-align: center;">
-                                {% if step.overdue_count > 0 %}
-                                <span style="display: inline-block; background: #fee2e2; color: #991b1b; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-weight: 600; font-size: 0.75rem;">
-                                    🔴 {{ step.overdue_count }}
-                                </span>
-                                {% else %}
-                                <span style="display: inline-block; background: #d1fae5; color: #065f46; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-weight: 600; font-size: 0.75rem;">
-                                    ✅ 0
-                                </span>
-                                {% endif %}
-                            </td>
-                            <td style="padding: 0.75rem; text-align: center;">
-                                {% if step.avg_turnaround > step.sla_target %}
-                                <span style="display: inline-block; background: #fef3c7; color: #92400e; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-weight: 600; font-size: 0.75rem;">
-                                    ⚠️ EXCEEDS SLA
-                                </span>
-                                {% else %}
-                                <span style="display: inline-block; background: #d1fae5; color: #065f46; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-weight: 600; font-size: 0.75rem;">
-                                    ✅ ON TIME
-                                </span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Performance Legend -->
-            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e2e8f0; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem;">
-                <div style="padding: 0.5rem; background: #d1fae5; border-radius: 0.375rem; text-align: center;">
-                    <div style="font-size: 0.75rem; color: #065f46; font-weight: 600;">✅ ON TRACK</div>
-                    <div style="font-size: 0.8125rem; color: #107a57; margin-top: 0.125rem;">Average ≤ 3 days</div>
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:0.6rem; padding:0.7rem;">
+                <div style="font-size:0.75rem; color:#475569; margin-bottom:0.55rem;">Ready for Award</div>
+                <div style="display:flex; align-items:center; gap:0.75rem;">
+                    <div style="width:58px; height:58px; border-radius:50%; background:conic-gradient(#7c3aed {{ ready_for_award_pct|default:0 }}%, #e2e8f0 0); position:relative; flex-shrink:0;">
+                        <div style="position:absolute; inset:8px; border-radius:50%; background:#fff; display:flex; align-items:center; justify-content:center; font-size:0.72rem; font-weight:700; color:#6d28d9;">
+                            {{ ready_for_award_pct|default:0 }}%
+                        </div>
+                    </div>
+                    <div style="font-size:0.72rem; color:#64748b; line-height:1.45;">
+                        <div><strong style="color:#0f172a;">{{ standby_applications|default:0 }}</strong> standby</div>
+                        <div><strong style="color:#0f172a;">{{ total_applications|default:0 }}</strong> total apps</div>
+                    </div>
                 </div>
-                <div style="padding: 0.5rem; background: #fef3c7; border-radius: 0.375rem; text-align: center;">
-                    <div style="font-size: 0.75rem; color: #92400e; font-weight: 600;">⚠️ CAUTION</div>
-                    <div style="font-size: 0.8125rem; color: #b45309; margin-top: 0.125rem;">Average > 3 days</div>
-                </div>
-                <div style="padding: 0.5rem; background: #fee2e2; border-radius: 0.375rem; text-align: center;">
-                    <div style="font-size: 0.75rem; color: #991b1b; font-weight: 600;">🔴 URGENT</div>
-                    <div style="font-size: 0.8125rem; color: #b91c1c; margin-top: 0.125rem;">Items > 3 days pending</div>
-                </div>
-            </div>
-
-        {% else %}
-            <!-- No Routing Data -->
-            <div style="text-align: center; padding: 2rem 0; color: #94a3b8;">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width: 3rem; height: 3rem; margin: 0 auto 0.75rem; color: #cbd5e1;">
-                    <circle cx="12" cy="12" r="9"/>
-                    <polyline points="12 6 12 12 16 14"/>
-                </svg>
-                <p style="font-weight: 500; color: #94a3b8;">No turnaround data yet</p>
-                <p style="font-size: 0.875rem; color: #cbd5e1; margin-top: 0.5rem;">Metrics appear once applicant-signed scans are on file and OIC approvals are recorded</p>
-            </div>
-        {% endif %}
-    </div>
-</div>
-
-<!-- ===== MODULE 6: COMPLIANCE RATE ANALYTICS (PHASE 1 #5) ===== -->
-
-<!-- Compliance Rate Widget -->
-<div class="card scroll-animate" style="border-top: 4px solid #ec4899;">
-    <div class="card-header">
-        <h3 class="card-title">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M9 12l2 2 4-4"/>
-                <path d="M7.835 4.697a3.42 3.42 0 0 0-1.946 3.28c0 .896.297 1.755.82 2.438A5.998 5.998 0 0 1 12 5c.366 0 .723.044 1.066.128"/>
-                <path d="M15.666 3.888N"/>
-            </svg>
-            Compliance Rate (M4/M6)
-        </h3>
-        <span class="badge" style="background-color: {{ compliance_color }}; color: white;">
-            {{ compliance_rating }}
-        </span>
-    </div>
-    <div class="card-body">
-        {% if total_notices > 0 %}
-            <!-- Main Metrics -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
-                <!-- Compliance Rate -->
-                <div style="padding: 1rem; background: #f0fdf4; border: 2px solid #dcfce7; border-radius: 0.5rem; text-align: center;">
-                    <div style="font-size: 2.25rem; font-weight: bold; color: #15803d;">{{ compliance_rate }}%</div>
-                    <div style="font-size: 0.875rem; color: #4b5563; margin-top: 0.5rem;">Compliance Rate</div>
-                    <div style="font-size: 0.75rem; color: #9ca3af; margin-top: 0.25rem;">{{ complied_count }} of {{ resolved_count }} resolved</div>
-                </div>
-
-                <!-- Escalation Rate -->
-                <div style="padding: 1rem; background: {% if escalation_rate > 30 %}#fef3c7{% else %}#f3f4f6{% endif %}; border: 2px solid {% if escalation_rate > 30 %}#fcd34d{% else %}#e5e7eb{% endif %}; border-radius: 0.5rem; text-align: center;">
-                    <div style="font-size: 2.25rem; font-weight: bold; color: {% if escalation_rate > 30 %}#92400e{% else %}#4b5563{% endif %};">{{ escalation_rate }}%</div>
-                    <div style="font-size: 0.875rem; color: #4b5563; margin-top: 0.5rem;">Escalation Rate</div>
-                    <div style="font-size: 0.75rem; color: #9ca3af; margin-top: 0.25rem;">{{ escalated_count }} notices escalated</div>
-                </div>
-            </div>
-
-            <!-- Status Breakdown -->
-            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid #e5e7eb;">
-                <!-- Complied -->
-                <div style="text-align: center; padding: 0.75rem; background: #d1fae5; border-radius: 0.375rem;">
-                    <div style="font-size: 1.5rem; font-weight: bold; color: #065f46;">{{ complied_count }}</div>
-                    <div style="font-size: 0.75rem; color: #047857; margin-top: 0.25rem; font-weight: 500;">Complied</div>
-                </div>
-
-                <!-- Escalated -->
-                <div style="text-align: center; padding: 0.75rem; background: #fee2e2; border-radius: 0.375rem;">
-                    <div style="font-size: 1.5rem; font-weight: bold; color: #991b1b;">{{ escalated_count }}</div>
-                    <div style="font-size: 0.75rem; color: #b91c1c; margin-top: 0.25rem; font-weight: 500;">Escalated</div>
-                </div>
-
-                <!-- Active -->
-                <div style="text-align: center; padding: 0.75rem; background: #fef3c7; border-radius: 0.375rem;">
-                    <div style="font-size: 1.5rem; font-weight: bold; color: #92400e;">{{ active_count }}</div>
-                    <div style="font-size: 0.75rem; color: #b45309; margin-top: 0.25rem; font-weight: 500;">Active</div>
-                </div>
-
-                <!-- Cancelled -->
-                <div style="text-align: center; padding: 0.75rem; background: #e5e7eb; border-radius: 0.375rem;">
-                    <div style="font-size: 1.5rem; font-weight: bold; color: #4b5563;">{{ cancelled_count }}</div>
-                    <div style="font-size: 0.75rem; color: #6b7280; margin-top: 0.25rem; font-weight: 500;">Cancelled</div>
-                </div>
-            </div>
-
-            <!-- Resolution Metrics -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
-                <!-- Average Resolution Time -->
-                <div style="padding: 0.75rem; background: #f3f4f6; border-radius: 0.375rem; text-align: center;">
-                    <div style="font-size: 0.75rem; color: #6b7280; font-weight: 600; text-transform: uppercase;">Avg Resolution</div>
-                    <div style="font-size: 1.5rem; font-weight: bold; color: #1f2937; margin-top: 0.25rem;">{{ avg_resolution_days }}</div>
-                    <div style="font-size: 0.75rem; color: #9ca3af; margin-top: 0.125rem;">days</div>
-                </div>
-
-                <!-- Fastest Resolution -->
-                <div style="padding: 0.75rem; background: #d1fae5; border-radius: 0.375rem; text-align: center;">
-                    <div style="font-size: 0.75rem; color: #065f46; font-weight: 600; text-transform: uppercase;">Fastest</div>
-                    <div style="font-size: 1.5rem; font-weight: bold; color: #065f46; margin-top: 0.25rem;">{{ fastest_resolution }}</div>
-                    <div style="font-size: 0.75rem; color: #047857; margin-top: 0.125rem;">days</div>
-                </div>
-
-                <!-- Slowest Resolution -->
-                <div style="padding: 0.75rem; background: #fee2e2; border-radius: 0.375rem; text-align: center;">
-                    <div style="font-size: 0.75rem; color: #991b1b; font-weight: 600; text-transform: uppercase;">Slowest</div>
-                    <div style="font-size: 1.5rem; font-weight: bold; color: #991b1b; margin-top: 0.25rem;">{{ slowest_resolution }}</div>
-                    <div style="font-size: 0.75rem; color: #b91c1c; margin-top: 0.125rem;">days</div>
-                </div>
-            </div>
-
-        {% else %}
-            <!-- No Compliance Data -->
-            <div style="text-align: center; padding: 2rem 0; color: #94a3b8;">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width: 3rem; height: 3rem; margin: 0 auto 0.75rem; color: #cbd5e1;">
-                    <path d="M9 12l2 2 4-4"/>
-                    <circle cx="12" cy="12" r="9"/>
-                </svg>
-                <p style="font-weight: 500; color: #94a3b8;">No compliance notices yet</p>
-                <p style="font-size: 0.875rem; color: #cbd5e1; margin-top: 0.5rem;">Compliance metrics will appear as notices are issued and resolved</p>
-            </div>
-        {% endif %}
-    </div>
-</div>
-
-<!-- ===== MODULE 1: SYSTEM HEALTH MONITORING (Informational) ===== -->
-
-<!-- System Health Notice -->
-<div style="background: #eff6ff; border: 1px solid #bfdbfe; border-left: 4px solid #3b82f6; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;">
-    <div style="display: flex; align-items: flex-start; gap: 0.75rem;">
-        <div style="flex-shrink: 0; margin-top: 0.125rem;">
-            <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="0" style="width: 1.25rem; height: 1.25rem; color: #1e40af;">
-                <circle cx="12" cy="12" r="10"/>
-                <text x="12" y="16" text-anchor="middle" fill="white" font-size="14" font-weight="bold">i</text>
-            </svg>
-        </div>
-        <div>
-            <strong style="color: #1e40af; font-size: 0.9375rem;">SYSTEM HEALTH MONITORING (Informational)</strong>
-            <p style="font-size: 0.8125rem; color: #1e3a8a; margin-top: 0.25rem; margin-bottom: 0;">For OIC oversight of system operations only. Direct intake operational issues to Jocel O. Cuaysing (Fourth Member).</p>
-        </div>
-    </div>
-</div>
-
-<!-- Queue Overview Widget -->
-<div class="card scroll-animate">
-    <div class="card-header">
-        <h3 class="card-title">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                <circle cx="9" cy="7" r="4"/>
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-            </svg>
-            Queue Status Overview
-        </h3>
-    </div>
-    <div class="card-body">
-        <div class="grid grid-cols-3 gap-4">
-            <div class="text-center">
-                <div style="font-size: 2rem; font-weight: bold; color: #2563eb;">{{ total_in_queue|default:0 }}</div>
-                <div style="font-size: 0.875rem; color: #64748b;">Total in Queue</div>
-            </div>
-            <div class="text-center border-l border-r border-slate-200">
-                <div style="font-size: 2rem; font-weight: bold; color: #9333ea;">{{ priority_queue_count|default:0 }}</div>
-                <div style="font-size: 0.875rem; color: #64748b;">Priority Queue</div>
-            </div>
-            <div class="text-center">
-                <div style="font-size: 2rem; font-weight: bold; color: #0d9488;">{{ walkin_queue_count|default:0 }}</div>
-                <div style="font-size: 0.875rem; color: #64748b;">Walk-in FIFO</div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- SMS Delivery Status Widget -->
-<div class="card scroll-animate scroll-delay-1">
+<div class="card scroll-animate scroll-delay-1" style="border-top: 4px solid #10b981;">
     <div class="card-header">
         <h3 class="card-title">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                <polyline points="9 22 9 12 15 12 15 22"/>
             </svg>
-            SMS Delivery Status
+            Housing Units Overview
         </h3>
-        <span class="badge" style="background-color: {% if sms_success_rate >= 90 %}#10b981{% else %}#ef4444{% endif %};">{{ sms_success_rate|default:0 }}% Success</span>
     </div>
     <div class="card-body">
-        <div class="space-y-3">
-            <div class="flex justify-between items-center">
-                <span style="font-size: 0.875rem; color: #475569;">Total Sent</span>
-                <span style="font-weight: 600; color: #1e293b;">{{ sms_sent|default:0 }}</span>
+        <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0.75rem;">
+            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 0.5rem; padding: 0.75rem;">
+                <div style="font-size: 0.75rem; color: #166534;">Total Units</div>
+                <div style="font-size: 1.5rem; font-weight: 700; color: #166534;">{{ total_housing_units|default:0 }}</div>
             </div>
-            <div class="flex justify-between items-center">
-                <span style="font-size: 0.875rem; color: #64748b;">Failed</span>
-                <span style="font-weight: 600; color: #ef4444;">{{ sms_failed|default:0 }}</span>
+            <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 0.5rem; padding: 0.75rem;">
+                <div style="font-size: 0.75rem; color: #1d4ed8;">Occupied</div>
+                <div style="font-size: 1.5rem; font-weight: 700; color: #1d4ed8;">{{ occupied_units|default:0 }}</div>
             </div>
-            <div class="flex justify-between items-center">
-                <span style="font-size: 0.875rem; color: #64748b;">Pending</span>
-                <span style="font-weight: 600; color: #f59e0b;">{{ sms_pending|default:0 }}</span>
+            <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 0.5rem; padding: 0.75rem;">
+                <div style="font-size: 0.75rem; color: #a16207;">Vacant</div>
+                <div style="font-size: 1.5rem; font-weight: 700; color: #a16207;">{{ vacant_units|default:0 }}</div>
             </div>
-            <div style="height: 1px; background-color: #e2e8f0; margin: 0.5rem 0;"></div>
-            <div class="flex justify-between items-center">
-                <span style="font-size: 0.875rem; font-weight: 600; color: #334155;">Total SMS</span>
-                <span style="font-weight: bold; color: #1e293b; font-size: 1.125rem;">{{ sms_total|default:0 }}</span>
+            <div style="background: #fff7ed; border: 1px solid #fdba74; border-radius: 0.5rem; padding: 0.75rem;">
+                <div style="font-size: 0.75rem; color: #c2410c;">Under Notice</div>
+                <div style="font-size: 1.5rem; font-weight: 700; color: #c2410c;">{{ under_notice_units|default:0 }}</div>
+            </div>
+            <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 0.5rem; padding: 0.75rem;">
+                <div style="font-size: 0.75rem; color: #b91c1c;">Repossessed</div>
+                <div style="font-size: 1.5rem; font-weight: 700; color: #b91c1c;">{{ repossessed_units|default:0 }}</div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Failed SMS Alerts Widget -->
-<div class="card scroll-animate scroll-delay-2">
-    <div class="card-header">
-        <h3 class="card-title">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="12" y1="8" x2="12" y2="12"/>
-                <line x1="12" y1="16" x2="12.01" y2="16"/>
-            </svg>
-            Failed SMS Alerts (Last 10)
-        </h3>
-        <span class="badge badge-danger">{{ failed_sms|length|default:0 }}</span>
-    </div>
-    <div class="card-body">
-        {% if failed_sms %}
-            <ul style="list-style: none; padding: 0; margin: 0;">
-                {% for sms in failed_sms %}
-                <li style="padding: 0.75rem 0; border-bottom: 1px solid #e2e8f0; font-size: 0.875rem;">
-                    <div style="font-weight: 500; color: #1e293b;">{{ sms.recipient_phone }}</div>
-                    <div style="color: #64748b; font-size: 0.8125rem; margin-top: 0.25rem;">{{ sms.trigger_event|title }} • {{ sms.sent_at|date:"M d, g:i A" }}</div>
-                </li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <div style="text-align: center; padding: 2rem 0; color: #94a3b8;">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width: 3rem; height: 3rem; margin: 0 auto 0.75rem;">
-                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                    <polyline points="22 4 12 14.01 9 11.01"/>
-                </svg>
-                <p>All SMS delivered successfully</p>
-            </div>
-        {% endif %}
-    </div>
-</div>
-
-<!-- CDRRMO & Blacklist Critical Alerts Widget -->
-<div class="card scroll-animate scroll-delay-3">
-    <div class="card-header">
-        <h3 class="card-title">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3.05h16.94a2 2 0 0 0 1.71-3.05L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-                <line x1="12" y1="9" x2="12" y2="13"/>
-                <line x1="12" y1="17" x2="12.01" y2="17"/>
-            </svg>
-            Critical Alerts
-        </h3>
-    </div>
-    <div class="card-body">
-        <div class="space-y-2">
-            {% if overdue_cdrrmo > 0 %}
-            <div style="background: #fee2e2; border: 1px solid #fecaca; padding: 0.75rem; border-radius: 0.5rem;">
-                <div style="font-weight: 600; color: #991b1b; font-size: 0.875rem;">⚠️ CDRRMO Overdue</div>
-                <div style="font-size: 2rem; font-weight: bold; color: #dc2626;">{{ overdue_cdrrmo }}</div>
-                <div style="font-size: 0.75rem; color: #991b1b;">Certifications pending >14 days</div>
-            </div>
-            {% endif %}
-
-            {% if blacklist_count > 0 %}
-            <div style="background: #f3e8ff; border: 1px solid #e9d5ff; padding: 0.75rem; border-radius: 0.5rem;">
-                <div style="font-weight: 600; color: #6b21a8; font-size: 0.875rem;">🚫 Blacklist Summary</div>
-                <div style="font-size: 2rem; font-weight: bold; color: #7e22ce;">{{ blacklist_count }}</div>
-                <div style="font-size: 0.75rem; color: #6b21a8;">Total blacklisted beneficiaries</div>
-            </div>
-            {% endif %}
-
-            {% if pending_cdrrmo > 0 %}
-            <div style="background: #fef3c7; border: 1px solid #fcd34d; padding: 0.75rem; border-radius: 0.5rem;">
-                <div style="font-weight: 600; color: #92400e; font-size: 0.875rem;">⏳ Pending CDRRMO</div>
-                <div style="font-size: 2rem; font-weight: bold; color: #d97706;">{{ pending_cdrrmo }}</div>
-                <div style="font-size: 0.75rem; color: #92400e;">Awaiting danger zone certification</div>
-            </div>
-            {% endif %}
-        </div>
-    </div>
-</div>
-
-<!-- Separator -->
-<div style="margin: 2rem 0; border-top: 2px solid #e2e8f0;"></div>
-
-<!-- ===== MODULE 2+: OIC SIGNATORY & COMPLIANCE ===== -->
-
-<!-- Pending OIC Approval Widget -->
-<div class="card scroll-animate">
+<div class="card scroll-animate scroll-delay-2" style="border-top: 4px solid #6366f1;">
     <div class="card-header">
         <h3 class="card-title">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                 <polyline points="14 2 14 8 20 8"/>
-                <path d="M12 18v-6M9 15h6"/>
             </svg>
-            Awaiting OIC Signature
-        </h3>
-        <span class="badge badge-warning">{{ pending_oic_approvals|length|default:0 }}</span>
-    </div>
-    <div class="card-body">
-        {% if pending_oic_approvals %}
-            <ul class="approval-list">
-                {% for application in pending_oic_approvals %}
-                <li class="approval-item">
-                    <div class="approval-content">
-                        <div class="approval-name">{{ application.applicant_name }}</div>
-                        <div class="approval-meta">
-                            <span class="approval-ref">{{ application.reference }}</span>
-                            <span class="approval-date">Received {{ application.received_date }}</span>
-                            {% if application.days_waiting > 3 %}
-                            <span class="badge badge-warning">{{ application.days_waiting }} days</span>
-                            {% endif %}
-                        </div>
-                    </div>
-                    <a href="#" class="btn btn-sm btn-primary">Review & Sign</a>
-                </li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <div class="empty-state-sm">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                    <polyline points="22 4 12 14.01 9 11.01"/>
-                </svg>
-                <p>No applications pending your approval</p>
-            </div>
-        {% endif %}
-    </div>
-</div>
-
-<!-- Compliance Decisions Widget -->
-<div class="card scroll-animate scroll-delay-1">
-    <div class="card-header">
-        <h3 class="card-title">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                <path d="M9 22V12h6v10"/>
-            </svg>
-            Compliance Cases
-        </h3>
-        <span class="badge badge-amber">{{ pending_compliance_decisions|length|default:0 }}</span>
-    </div>
-    <div class="card-body">
-        {% if pending_compliance_decisions %}
-            <ul class="compliance-list">
-                {% for case in pending_compliance_decisions %}
-                <li class="compliance-item {% if case.is_urgent %}item-urgent{% endif %}">
-                    <div class="compliance-content">
-                        <div class="compliance-title">{{ case.beneficiary_name }}</div>
-                        <div class="compliance-unit">Block {{ case.block }}, Lot {{ case.lot }}</div>
-                        <div class="compliance-meta">
-                            <span class="compliance-type">{{ case.violation_type }}</span>
-                            <span class="compliance-deadline">
-                                {% if case.deadline_passed %}
-                                <span class="badge badge-danger">Deadline passed</span>
-                                {% else %}
-                                {{ case.days_remaining }} days remaining
-                                {% endif %}
-                            </span>
-                        </div>
-                    </div>
-                    <a href="#" class="btn btn-sm btn-primary">Decide</a>
-                </li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <div class="empty-state-sm">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                    <polyline points="22 4 12 14.01 9 11.01"/>
-                </svg>
-                <p>No compliance decisions pending</p>
-            </div>
-        {% endif %}
-    </div>
-</div>
-
-<!-- Escalated Complaints Widget -->
-<div class="card scroll-animate scroll-delay-2">
-    <div class="card-header">
-        <h3 class="card-title">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-            </svg>
-            Escalated Cases (M5)
-        </h3>
-        <span class="badge" style="background-color: {% if stale_cases_count > 0 %}#ef4444{% elif urgent_cases_count > 0 %}#f59e0b{% else %}#10b981{% endif %};">
-            {{ escalated_complaints|default:0 }} Case{{ escalated_complaints|pluralize }}
-        </span>
-    </div>
-    <div class="card-body">
-        {% if escalated_complaints > 0 %}
-            <!-- Summary Stats -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; margin-bottom: 1.5rem;">
-                <div style="background: #f0f9ff; padding: 0.75rem; border-radius: 0.5rem; border-left: 3px solid #3b82f6;">
-                    <div style="font-size: 0.75rem; color: #1e40af; font-weight: 600; text-transform: uppercase;">Total Pending</div>
-                    <div style="font-size: 1.5rem; font-weight: bold; color: #1e40af; margin-top: 0.25rem;">{{ escalated_complaints }}</div>
-                </div>
-                {% if urgent_cases_count > 0 %}
-                <div style="background: #fef3c7; padding: 0.75rem; border-radius: 0.5rem; border-left: 3px solid #f59e0b;">
-                    <div style="font-size: 0.75rem; color: #92400e; font-weight: 600; text-transform: uppercase;">⚠️ Urgent (7+ days)</div>
-                    <div style="font-size: 1.5rem; font-weight: bold; color: #b45309; margin-top: 0.25rem;">{{ urgent_cases_count }}</div>
-                </div>
-                {% endif %}
-                {% if stale_cases_count > 0 %}
-                <div style="background: #fee2e2; padding: 0.75rem; border-radius: 0.5rem; border-left: 3px solid #ef4444;">
-                    <div style="font-size: 0.75rem; color: #991b1b; font-weight: 600; text-transform: uppercase;">🔴 Stale (14+ days)</div>
-                    <div style="font-size: 1.5rem; font-weight: bold; color: #dc2626; margin-top: 0.25rem;">{{ stale_cases_count }}</div>
-                </div>
-                {% endif %}
-            </div>
-
-            <!-- Cases List -->
-            <div style="max-height: 450px; overflow-y: auto;">
-                {% for item in escalated_cases %}
-                <div style="padding: 0.875rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: flex-start;">
-                    <div style="flex: 1;">
-                        <div style="font-weight: 600; color: #1e293b; font-size: 0.9375rem;">{{ item.case_number }}</div>
-                        <div style="color: #64748b; font-size: 0.8125rem; margin-top: 0.25rem;">{{ item.case_type }}</div>
-                        <div style="color: #94a3b8; font-size: 0.75rem; margin-top: 0.25rem;">{{ item.complainant }} {{ item.subject|default:"" }}</div>
-                        <div style="color: #cbd5e1; font-size: 0.75rem; margin-top: 0.25rem;">{{ item.description_snippet }}</div>
-                    </div>
-                    <div style="text-align: right; margin-left: 1rem; min-width: 120px;">
-                        <span style="display: inline-block; background-color: {% if item.is_stale %}#fee2e2{% elif item.is_urgent %}#fef3c7{% else %}#dbeafe{% endif %}; padding: 0.35rem 0.75rem; border-radius: 0.25rem; font-weight: 600; font-size: 0.75rem; margin-bottom: 0.5rem;">
-                            {% if item.is_stale %}🔴 {{ item.days_open }} DAYS{% elif item.is_urgent %}⚠️ {{ item.days_open }} days{% else %}{{ item.days_open }} days{% endif %}
-                        </span>
-                        <div style="font-size: 0.75rem; color: #64748b; margin-top: 0.25rem;">{{ item.status_display }}</div>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-
-            <!-- Action Button -->
-            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e2e8f0;">
-                <a href="#" style="display: inline-block; background-color: #3b82f6; color: white; padding: 0.5rem 1rem; border-radius: 0.375rem; text-decoration: none; font-size: 0.875rem; font-weight: 500;">
-                    Review & Decide Cases
-                </a>
-            </div>
-        {% else %}
-            <div style="text-align: center; padding: 2rem 0;">
-                <p style="color: #10b981; font-weight: 500;">✅ No escalated cases awaiting decision</p>
-            </div>
-        {% endif %}
-    </div>
-</div>
-
-<!-- Decision Summary Widget -->
-<div class="card scroll-animate scroll-delay-3">
-    <div class="card-header">
-        <h3 class="card-title">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="18" y1="20" x2="18" y2="10"/>
-                <line x1="12" y1="20" x2="12" y2="4"/>
-                <line x1="6" y1="20" x2="6" y2="14"/>
-            </svg>
-            This Month's Activity
+            Application Status Overview
         </h3>
     </div>
     <div class="card-body">
-        <div class="summary-stats">
-            <div class="summary-stat">
-                <div class="summary-stat-value">{{ applications_signed|default:0 }}</div>
-                <div class="summary-stat-label">Applications Signed</div>
+        <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.75rem;">
+            <div style="background: #eef2ff; border: 1px solid #c7d2fe; border-radius: 0.5rem; padding: 0.75rem;">
+                <div style="font-size: 0.75rem; color: #3730a3;">Total Applications</div>
+                <div style="font-size: 1.5rem; font-weight: 700; color: #3730a3;">{{ total_applications|default:0 }}</div>
             </div>
-            <div class="summary-stat">
-                <div class="summary-stat-value">{{ compliance_decisions|default:0 }}</div>
-                <div class="summary-stat-label">Compliance Decisions</div>
+            <div style="background: #ecfeff; border: 1px solid #a5f3fc; border-radius: 0.5rem; padding: 0.75rem;">
+                <div style="font-size: 0.75rem; color: #0e7490;">Completed</div>
+                <div style="font-size: 1.5rem; font-weight: 700; color: #0e7490;">{{ completed_applications|default:0 }}</div>
             </div>
-            <div class="summary-stat">
-                <div class="summary-stat-value">{{ cases_resolved|default:0 }}</div>
-                <div class="summary-stat-label">Cases Resolved</div>
+            <div style="background: #faf5ff; border: 1px solid #e9d5ff; border-radius: 0.5rem; padding: 0.75rem;">
+                <div style="font-size: 0.75rem; color: #7e22ce;">Standby</div>
+                <div style="font-size: 1.5rem; font-weight: 700; color: #7e22ce;">{{ standby_applications|default:0 }}</div>
+            </div>
+            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 0.5rem; padding: 0.75rem;">
+                <div style="font-size: 0.75rem; color: #15803d;">Awarded</div>
+                <div style="font-size: 1.5rem; font-weight: 700; color: #15803d;">{{ awarded_applications|default:0 }}</div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Analytics & Reports Widget (M6) - Coming Soon -->
-<div class="card scroll-animate scroll-delay-4">
+<div class="card scroll-animate scroll-delay-3" style="border-top: 4px solid #f59e0b;">
     <div class="card-header">
         <h3 class="card-title">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="18" y1="20" x2="18" y2="10"/>
-                <line x1="12" y1="20" x2="12" y2="4"/>
-                <line x1="6" y1="20" x2="6" y2="14"/>
+                <line x1="4" y1="20" x2="20" y2="20"/>
+                <rect x="6" y="11" width="3" height="7"/>
+                <rect x="11" y="8" width="3" height="10"/>
+                <rect x="16" y="5" width="3" height="13"/>
             </svg>
-            Analytics & Reports
+            Key Performance Rates
         </h3>
     </div>
     <div class="card-body">
-        <div style="text-align: center; padding: 2rem 0;">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color: #cbd5e1; width: 48px; height: 48px; margin: 0 auto 1rem;">
-                <line x1="18" y1="20" x2="18" y2="10"/>
-                <line x1="12" y1="20" x2="12" y2="4"/>
-                <line x1="6" y1="20" x2="6" y2="14"/>
-            </svg>
-            <p style="color: #94a3b8; font-size: 0.875rem; margin-bottom: 1rem;">Analytics dashboard coming soon</p>
-            <button style="background-color: #cbd5e1; color: #475569; padding: 0.5rem 1rem; border-radius: 0.375rem; border: none; cursor: not-allowed; font-size: 0.875rem; font-weight: 500;">
-                View Analytics (Coming Soon)
-            </button>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem;">
+            <div>
+                <div style="display:flex; justify-content:space-between; font-size:0.8125rem; color:#475569; margin-bottom:0.35rem;">
+                    <span>Occupancy Rate</span><strong>{{ occupancy_rate_pct }}%</strong>
+                </div>
+                <div style="height: 0.55rem; background:#e2e8f0; border-radius:999px; overflow:hidden;">
+                    <div style="height:100%; width:{{ occupancy_rate_pct }}%; background:#2563eb;"></div>
+                </div>
+            </div>
+            <div>
+                <div style="display:flex; justify-content:space-between; font-size:0.8125rem; color:#475569; margin-bottom:0.35rem;">
+                    <span>Vacancy Rate</span><strong>{{ vacancy_rate_pct }}%</strong>
+                </div>
+                <div style="height: 0.55rem; background:#e2e8f0; border-radius:999px; overflow:hidden;">
+                    <div style="height:100%; width:{{ vacancy_rate_pct }}%; background:#d97706;"></div>
+                </div>
+            </div>
+            <div>
+                <div style="display:flex; justify-content:space-between; font-size:0.8125rem; color:#475569; margin-bottom:0.35rem;">
+                    <span>Awarded Applications</span><strong>{{ awarded_rate_pct }}%</strong>
+                </div>
+                <div style="height: 0.55rem; background:#e2e8f0; border-radius:999px; overflow:hidden;">
+                    <div style="height:100%; width:{{ awarded_rate_pct }}%; background:#16a34a;"></div>
+                </div>
+            </div>
+            <div>
+                <div style="display:flex; justify-content:space-between; font-size:0.8125rem; color:#475569; margin-bottom:0.35rem;">
+                    <span>Ready for Award (Standby)</span><strong>{{ ready_for_award_pct }}%</strong>
+                </div>
+                <div style="height: 0.55rem; background:#e2e8f0; border-radius:999px; overflow:hidden;">
+                    <div style="height:100%; width:{{ ready_for_award_pct }}%; background:#7c3aed;"></div>
+                </div>
+            </div>
         </div>
+        <p style="margin:0.9rem 0 0; color:#64748b; font-size:0.8rem;">
+            Rates are computed from current system totals and update automatically with live records.
+        </p>
+        <p style="margin:0.35rem 0 0; color:#94a3b8; font-size:0.75rem;">
+            Last updated: {{ oic_analytics_updated_at|date:"M d, Y h:i A" }}
+        </p>
     </div>
 </div>

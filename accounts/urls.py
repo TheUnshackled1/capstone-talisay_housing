@@ -19,11 +19,6 @@ urlpatterns = [
     path('dashboard/caretaker/', views.dashboard_caretaker, name='dashboard_caretaker'),
     path('dashboard/field/', views.dashboard_field, name='dashboard_field'),
 
-    # OIC-Specific Views
-    path('oic/applicants/', views.oic_applicants_overview, name='oic_applicants'),
-    path('oic/applications/pending/', views.oic_pending_signature, name='oic_pending_sig'),
-    path('oic/analytics/', views.dashboard_oic, name='oic_analytics'),
-
     # Second Member-Specific Views
     path('second-member/analytics/', views.second_member_analytics, name='second_member_analytics'),
 

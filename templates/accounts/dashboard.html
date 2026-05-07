@@ -218,56 +218,7 @@
             </div>
 
             {% if user.position == 'oic' %}
-            <!-- OIC (Victor Fregil) - M2 OIC Signatory, M4 Compliance, M5 Escalated Cases -->
-            <div class="nav-section">
-                <div class="nav-section-title">Oversight</div>
-                <a href="{% url 'accounts:oic_applicants' %}" class="nav-link">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                        <circle cx="9" cy="7" r="4"/>
-                        <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
-                    </svg>
-                    <span>View Applicants</span>
-                </a>
-            </div>
-            <div class="nav-section">
-                <div class="nav-section-title">Applications (M2)</div>
-                <a href="{% url 'accounts:oic_pending_sig' %}" class="nav-link">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"/>
-                        <polyline points="12 6 12 12 16 14"/>
-                    </svg>
-                    <span>Scanned form</span>
-                </a>
-            </div>
-            <div class="nav-section">
-                <div class="nav-section-title">Monitoring (M4)</div>
-                <a href="{% url 'units:housing_units_monitoring' request.user.position %}" class="nav-link">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                        <polyline points="9 22 9 12 15 12 15 22"/>
-                    </svg>
-                    <span>Housing Units</span>
-                </a>
-            </div>
-            <div class="nav-section">
-                <div class="nav-section-title">Cases (M5)</div>
-                <a href="{% url 'cases:case_dashboard' request.user.position %}" class="nav-link">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                    </svg>
-                    <span>All Cases</span>
-                </a>
-                <a href="{% url 'cases:case_dashboard' request.user.position %}?status=referred" class="nav-link">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/>
-                        <line x1="12" y1="8" x2="12" y2="12"/>
-                        <line x1="12" y1="16" x2="12.01" y2="16"/>
-                    </svg>
-                    <span>Escalated Cases</span>
-                </a>
-            </div>
-
+            <!-- OIC: dashboard analytics only -->
             {% elif user.position == 'fifth_member' %}
             <!-- FIFTH MEMBER (Laarni Hellera) - M2 Electricity Connection Tracking -->
             <div class="nav-section">
@@ -432,7 +383,7 @@
             <div class="nav-section" id="Reports">
                 <div class="nav-section-title">Reports</div>
                 {% if user.position == 'oic' %}
-                    {% url 'accounts:oic_analytics' as reports_analytics_url %}
+                    {% url 'accounts:dashboard_oic' as reports_analytics_url %}
                 {% elif user.position == 'second_member' %}
                     {% url 'accounts:second_member_analytics' as reports_analytics_url %}
                 {% elif user.position == 'fourth_member' %}
@@ -551,8 +502,8 @@
             <!-- Stats Overview - Role Based -->
             <div class="stats-grid">
                 {% if user.position == 'oic' %}
-                <!-- Leadership Stats (Head, OIC) -->
-                <div class="stat-card blue scroll-animate-left scroll-delay-1">
+                <!-- Analytics-first executive stats -->
+                <div class="stat-card blue scroll-animate-left scroll-delay-1 js-oic-stat-card" data-stat-key="total_applications" data-stat-label="Total Applications" style="cursor:pointer;">
                     <div class="stat-header">
                         <div class="stat-icon-wrapper blue">
                             <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -562,11 +513,11 @@
                             </svg>
                         </div>
                     </div>
-                    <div class="stat-value">{{ total_applicants }}</div>
-                    <div class="stat-label">Total Applicants</div>
+                    <div class="stat-value">{{ total_applications|default:0 }}</div>
+                    <div class="stat-label">Total Applications</div>
                 </div>
 
-                <div class="stat-card green scroll-animate-scale scroll-delay-2">
+                <div class="stat-card green scroll-animate-scale scroll-delay-2 js-oic-stat-card" data-stat-key="completed_applications" data-stat-label="Completed Applications" style="cursor:pointer;">
                     <div class="stat-header">
                         <div class="stat-icon-wrapper green">
                             <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -575,11 +526,11 @@
                             </svg>
                         </div>
                     </div>
-                    <div class="stat-value">{{ awaiting_signature }}</div>
-                    <div class="stat-label">Awaiting Signature</div>
+                    <div class="stat-value">{{ completed_applications|default:0 }}</div>
+                    <div class="stat-label">Completed Applications</div>
                 </div>
 
-                <div class="stat-card amber scroll-animate-scale scroll-delay-3">
+                <div class="stat-card amber scroll-animate-scale scroll-delay-3 js-oic-stat-card" data-stat-key="housing_units" data-stat-label="Housing Units" style="cursor:pointer;">
                     <div class="stat-header">
                         <div class="stat-icon-wrapper amber">
                             <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -588,11 +539,11 @@
                             </svg>
                         </div>
                     </div>
-                    <div class="stat-value">{{ housing_units }}</div>
+                    <div class="stat-value">{{ total_housing_units|default:0 }}</div>
                     <div class="stat-label">Housing Units</div>
                 </div>
 
-                <div class="stat-card purple scroll-animate-right scroll-delay-4">
+                <div class="stat-card purple scroll-animate-right scroll-delay-4 js-oic-stat-card" data-stat-key="awarded_applications" data-stat-label="Awarded Applications" style="cursor:pointer;">
                     <div class="stat-header">
                         <div class="stat-icon-wrapper purple">
                             <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -602,8 +553,8 @@
                             </svg>
                         </div>
                     </div>
-                    <div class="stat-value">{{ approved_this_month }}</div>
-                    <div class="stat-label">Monthly Reports</div>
+                    <div class="stat-value">{{ awarded_applications|default:0 }}</div>
+                    <div class="stat-label">Awarded Applications</div>
                 </div>
 
                 {% elif user.position == 'second_member' %}
@@ -887,64 +838,13 @@
             </div>
 
             <!-- Quick Actions Section - Role Based -->
+            {% if user.position != 'oic' %}
             <div class="section-header scroll-animate">
                 <h2 class="section-title">My Tasks</h2>
             </div>
             <div class="quick-actions">
                 {% if user.position == 'oic' %}
-                <!-- OIC: Signatory, Compliance, Escalated Cases + View Intake -->
-                <a href="{% url 'accounts:oic_applicants' %}" class="action-card scroll-animate-left scroll-delay-1">
-                    <div class="action-icon-wrapper">
-                        <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                            <circle cx="9" cy="7" r="4"/>
-                            <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
-                        </svg>
-                    </div>
-                    <div class="action-text">
-                        <h4>View Applicants</h4>
-                        <p>Intake oversight</p>
-                    </div>
-                </a>
-
-                <a href="{% url 'accounts:oic_pending_sig' %}" class="action-card scroll-animate scroll-delay-2">
-                    <div class="action-icon-wrapper">
-                        <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                            <polyline points="22 4 12 14.01 9 11.01"/>
-                        </svg>
-                    </div>
-                    <div class="action-text">
-                        <h4>Scanned form</h4>
-                        <p>After the signed application scan is in the vault (M2)</p>
-                    </div>
-                </a>
-
-                <a href="#" class="action-card scroll-animate scroll-delay-3">
-                    <div class="action-icon-wrapper">
-                        <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                            <polyline points="9 22 9 12 15 12 15 22"/>
-                        </svg>
-                    </div>
-                    <div class="action-text">
-                        <h4>Compliance Cases</h4>
-                        <p>Unit review (M4)</p>
-                    </div>
-                </a>
-
-                <a href="#" class="action-card scroll-animate-right scroll-delay-4">
-                    <div class="action-icon-wrapper">
-                        <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                        </svg>
-                    </div>
-                    <div class="action-text">
-                        <h4>Escalated Cases</h4>
-                        <p>Decisions (M5)</p>
-                    </div>
-                </a>
-
+                <!-- Dashboard analytics only -->
                 {% elif user.position == 'second_member' %}
                 <!-- Joie: Notices, Electricity, Documentation, Reports, FDP + M1 Access -->
                 <a href="{% url 'intake:applicants_list' request.user.position %}" class="action-card scroll-animate-left scroll-delay-1">
@@ -1185,11 +1085,14 @@
                 </a>
                 {% endif %}
             </div>
+            {% endif %}
 
             <!-- Role-Specific Dashboard Widgets -->
+            {% if user.position != 'oic' %}
             <div class="section-header scroll-animate" style="margin-top: 2rem;">
                 <h2 class="section-title">My Workspace</h2>
             </div>
+            {% endif %}
             
             <div class="widgets-grid">
                 {% if user.position == 'oic' %}
@@ -1250,6 +1153,96 @@
         </div>
     </main>
 
+    {% if user.position == 'oic' %}
+    <div id="oicStatModal" class="modal-overlay" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.55); z-index:2000; align-items:center; justify-content:center; padding:1rem;">
+        <div style="width:min(860px, 96vw); max-height:88vh; background:#fff; border-radius:16px; border:1px solid #e2e8f0; box-shadow:0 24px 56px rgba(15,23,42,0.25); display:flex; flex-direction:column; overflow:hidden;">
+            <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:0.75rem; padding:0.95rem 1rem; border-bottom:1px solid #e2e8f0; background:linear-gradient(180deg,#f8fafc 0%,#ffffff 100%);">
+                <div>
+                    <h3 id="oicStatModalTitle" style="margin:0; font-size:1rem; color:#0f172a;">Details</h3>
+                    <p id="oicStatModalSubtitle" style="margin:0.25rem 0 0; font-size:0.78rem; color:#64748b;">Records</p>
+                </div>
+                <button type="button" id="oicStatModalClose" style="border:1px solid #cbd5e1; background:#fff; color:#334155; border-radius:9px; padding:0.36rem 0.62rem; font-size:0.8rem; cursor:pointer;">Close</button>
+            </div>
+            <div id="oicStatModalBody" style="padding:0.3rem 0.85rem 0.95rem; overflow:auto;"></div>
+        </div>
+    </div>
+    <script id="oicStatModalData" type="application/json">{{ oic_modal_data_json|safe }}</script>
+    {% endif %}
+
     <script src="{% static 'js/dashboard.js' %}"></script>
+    {% if user.position == 'oic' %}
+    <script>
+    (function () {
+        const dataEl = document.getElementById('oicStatModalData');
+        if (!dataEl) return;
+        let modalData = {};
+        try { modalData = JSON.parse(dataEl.textContent || '{}'); } catch (_) { modalData = {}; }
+
+        const modal = document.getElementById('oicStatModal');
+        const titleEl = document.getElementById('oicStatModalTitle');
+        const subtitleEl = document.getElementById('oicStatModalSubtitle');
+        const bodyEl = document.getElementById('oicStatModalBody');
+        const closeBtn = document.getElementById('oicStatModalClose');
+        if (!modal || !titleEl || !subtitleEl || !bodyEl || !closeBtn) return;
+
+        function esc(s) {
+            return String(s || '').replace(/[&<>"']/g, function (m) {
+                return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m];
+            });
+        }
+
+        function badgeStyle(meta) {
+            const m = String(meta || '').toLowerCase();
+            if (m.includes('awarded') || m.includes('occupied')) return 'background:#dcfce7;color:#166534;border:1px solid #86efac;';
+            if (m.includes('completed') || m.includes('standby')) return 'background:#eef2ff;color:#3730a3;border:1px solid #c7d2fe;';
+            if (m.includes('vacant') || m.includes('notice')) return 'background:#fffbeb;color:#92400e;border:1px solid #fde68a;';
+            return 'background:#f8fafc;color:#475569;border:1px solid #e2e8f0;';
+        }
+
+        function renderRows(rows) {
+            if (!rows || !rows.length) {
+                return '<div style="padding:1rem; color:#64748b; font-size:0.86rem; text-align:center;">No records found.</div>';
+            }
+            const header =
+                '<div style="position:sticky; top:0; z-index:1; background:#fff; border-bottom:1px solid #e2e8f0; padding:0.55rem 0.1rem; display:grid; grid-template-columns:58px 1.2fr 1fr auto; gap:0.65rem; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.04em; color:#64748b; font-weight:700;">' +
+                '<div>#</div><div>Primary</div><div>Details</div><div>Status</div></div>';
+            const items = rows.map(function (row, idx) {
+                return (
+                    '<div style="padding:0.62rem 0.1rem; border-bottom:1px solid #f1f5f9; display:grid; grid-template-columns:58px 1.2fr 1fr auto; gap:0.65rem; align-items:center;">' +
+                        '<div style="font-size:0.77rem; color:#94a3b8;">#' + (idx + 1) + '</div>' +
+                        '<div style="font-size:0.9rem; font-weight:600; color:#0f172a;">' + esc(row.primary) + '</div>' +
+                        '<div style="font-size:0.81rem; color:#475569;">' + esc(row.secondary) + '</div>' +
+                        '<div style="font-size:0.73rem; font-weight:600; border-radius:999px; padding:0.2rem 0.55rem; white-space:nowrap;' + badgeStyle(row.meta) + '">' + esc(row.meta) + '</div>' +
+                    '</div>'
+                );
+            }).join('');
+            return '<div>' + header + items + '</div>';
+        }
+
+        function openModal(statKey, statLabel) {
+            const rows = modalData[statKey] || [];
+            titleEl.textContent = statLabel + ' List';
+            subtitleEl.textContent = rows.length + ' record' + (rows.length === 1 ? '' : 's') + ' found';
+            bodyEl.innerHTML = renderRows(rows);
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            modal.style.display = 'none';
+        }
+
+        document.querySelectorAll('.js-oic-stat-card').forEach(function (card) {
+            card.addEventListener('click', function () {
+                openModal(card.getAttribute('data-stat-key'), card.getAttribute('data-stat-label'));
+            });
+        });
+
+        closeBtn.addEventListener('click', closeModal);
+        modal.addEventListener('click', function (e) {
+            if (e.target === modal) closeModal();
+        });
+    })();
+    </script>
+    {% endif %}
 </body>
 </html>
