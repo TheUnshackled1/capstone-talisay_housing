@@ -467,6 +467,89 @@
         color: #94a3b8;
     }
 
+    /* Breakdown data tables — label / bar / count */
+    .rep-breakdown-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+        gap: 0.85rem;
+    }
+    .rep-breakdown-card { padding: 0; overflow: hidden; }
+    .rep-breakdown-head {
+        padding: 0.85rem 1.05rem 0.55rem;
+    }
+    .rep-breakdown-head h3 {
+        margin: 0;
+        font-size: 0.66rem;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #475569;
+    }
+    .rep-breakdown-head p {
+        margin: 0.2rem 0 0;
+        font-size: 0.72rem;
+        color: var(--rep-muted);
+        line-height: 1.4;
+    }
+    .rep-breakdown-list {
+        list-style: none;
+        margin: 0;
+        padding: 0.4rem 0 0.55rem;
+        max-height: 22rem;
+        overflow-y: auto;
+        border-top: 1px solid var(--rep-card-border);
+    }
+    .rep-breakdown-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 0.6rem;
+        align-items: center;
+        padding: 0.5rem 1.05rem;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    .rep-breakdown-row:last-child { border-bottom: none; }
+    .rep-breakdown-row:hover { background: #f9fafb; }
+    .rep-breakdown-label-wrap {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+    }
+    .rep-breakdown-label {
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: #0f172a;
+        line-height: 1.35;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .rep-breakdown-bar {
+        height: 0.36rem;
+        background: #e2e8f0;
+        border-radius: 999px;
+        overflow: hidden;
+    }
+    .rep-breakdown-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #10b981 0%, #047857 100%);
+        border-radius: 999px;
+    }
+    .rep-breakdown-count {
+        font-size: 0.92rem;
+        font-weight: 800;
+        color: #0f172a;
+        font-variant-numeric: tabular-nums;
+        min-width: 2.4rem;
+        text-align: right;
+    }
+    .rep-breakdown-empty {
+        padding: 1.4rem 1rem;
+        text-align: center;
+        color: var(--rep-muted);
+        font-size: 0.78rem;
+    }
+
     @media (max-width: 640px) {
         .rep-page { padding: 1rem 1rem 2rem; }
         .rep-hero { padding: 1rem; }
@@ -738,6 +821,172 @@
         <p class="rep-card-title">Active queues</p>
         <p class="rep-card-sub">Live counts on staff desk queues across the workflow.</p>
         <div class="rep-chart-canvas" style="height: 240px;"><canvas id="chartQueues"></canvas></div>
+    </div>
+
+    <!-- Section: Detailed breakdowns — surface raw rows the charts summarize -->
+    <div class="rep-section">
+        <h2>Detailed breakdowns</h2>
+        <p class="rep-section-note">Same data behind the charts above — exact per-row counts, mirrors the CSV export.</p>
+        <span class="rep-section-rule"></span>
+    </div>
+    <div class="rep-breakdown-grid">
+        <div class="rep-card rep-breakdown-card">
+            <div class="rep-breakdown-head">
+                <h3>Applicants by status</h3>
+                <p>{{ total_applications|default:0 }} applicant{{ total_applications|pluralize }} on masterlist.</p>
+            </div>
+            <ul class="rep-breakdown-list">
+                {% for row in applicant_by_status %}
+                <li class="rep-breakdown-row">
+                    <div class="rep-breakdown-label-wrap">
+                        <span class="rep-breakdown-label" title="{{ row.label }}">{{ row.label }}</span>
+                        <div class="rep-breakdown-bar"><div class="rep-breakdown-bar-fill" style="width: {{ row.bar_pct|default:0 }}%;"></div></div>
+                    </div>
+                    <span class="rep-breakdown-count">{{ row.count|default:0 }}</span>
+                </li>
+                {% empty %}
+                <li class="rep-breakdown-empty">No applicants on masterlist yet.</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="rep-card rep-breakdown-card">
+            <div class="rep-breakdown-head">
+                <h3>Housing applications by status</h3>
+                <p>{{ housing_application_records|default:0 }} Module 2 record{{ housing_application_records|pluralize }}.</p>
+            </div>
+            <ul class="rep-breakdown-list">
+                {% for row in application_by_status %}
+                <li class="rep-breakdown-row">
+                    <div class="rep-breakdown-label-wrap">
+                        <span class="rep-breakdown-label" title="{{ row.label }}">{{ row.label }}</span>
+                        <div class="rep-breakdown-bar"><div class="rep-breakdown-bar-fill" style="width: {{ row.bar_pct|default:0 }}%;"></div></div>
+                    </div>
+                    <span class="rep-breakdown-count">{{ row.count|default:0 }}</span>
+                </li>
+                {% empty %}
+                <li class="rep-breakdown-empty">No Module 2 applications yet.</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="rep-card rep-breakdown-card">
+            <div class="rep-breakdown-head">
+                <h3>Housing units by status</h3>
+                <p>{{ housing_units_total|default:0 }} unit{{ housing_units_total|pluralize }} tracked across all sites.</p>
+            </div>
+            <ul class="rep-breakdown-list">
+                {% for row in housing_units_by_status %}
+                <li class="rep-breakdown-row">
+                    <div class="rep-breakdown-label-wrap">
+                        <span class="rep-breakdown-label" title="{{ row.label }}">{{ row.label }}</span>
+                        <div class="rep-breakdown-bar"><div class="rep-breakdown-bar-fill" style="width: {{ row.bar_pct|default:0 }}%;"></div></div>
+                    </div>
+                    <span class="rep-breakdown-count">{{ row.count|default:0 }}</span>
+                </li>
+                {% empty %}
+                <li class="rep-breakdown-empty">No housing units recorded.</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="rep-card rep-breakdown-card">
+            <div class="rep-breakdown-head">
+                <h3>Applicant situation</h3>
+                <p>Options A–D — displacement category breakdown for all applicants.</p>
+            </div>
+            <ul class="rep-breakdown-list">
+                {% for row in applicants_by_channel %}
+                <li class="rep-breakdown-row">
+                    <div class="rep-breakdown-label-wrap">
+                        <span class="rep-breakdown-label" title="{{ row.label }}">{{ row.label }}</span>
+                        <div class="rep-breakdown-bar"><div class="rep-breakdown-bar-fill" style="width: {{ row.bar_pct|default:0 }}%;"></div></div>
+                    </div>
+                    <span class="rep-breakdown-count">{{ row.count|default:0 }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="rep-card rep-breakdown-card">
+            <div class="rep-breakdown-head">
+                <h3>Top barangays</h3>
+                <p>Highest applicant counts per barangay (top 12).</p>
+            </div>
+            <ul class="rep-breakdown-list">
+                {% for row in applicants_top_barangays %}
+                <li class="rep-breakdown-row">
+                    <div class="rep-breakdown-label-wrap">
+                        <span class="rep-breakdown-label" title="{{ row.place_name }}">{{ row.place_name }}</span>
+                        <div class="rep-breakdown-bar"><div class="rep-breakdown-bar-fill" style="width: {{ row.bar_pct|default:0 }}%;"></div></div>
+                    </div>
+                    <span class="rep-breakdown-count">{{ row.count|default:0 }}</span>
+                </li>
+                {% empty %}
+                <li class="rep-breakdown-empty">No barangay distribution yet.</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="rep-card rep-breakdown-card">
+            <div class="rep-breakdown-head">
+                <h3>Documents uploaded · {{ period_label }}</h3>
+                <p>{{ docs_filed|default:0 }} vault upload{{ docs_filed|pluralize }} this period, by type.</p>
+            </div>
+            <ul class="rep-breakdown-list">
+                {% for row in documents_by_type %}
+                <li class="rep-breakdown-row">
+                    <div class="rep-breakdown-label-wrap">
+                        <span class="rep-breakdown-label" title="{{ row.label }}">{{ row.label }}</span>
+                        <div class="rep-breakdown-bar"><div class="rep-breakdown-bar-fill" style="width: {{ row.bar_pct|default:0 }}%;"></div></div>
+                    </div>
+                    <span class="rep-breakdown-count">{{ row.count|default:0 }}</span>
+                </li>
+                {% empty %}
+                <li class="rep-breakdown-empty">No vault uploads in this period.</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="rep-card rep-breakdown-card">
+            <div class="rep-breakdown-head">
+                <h3>Requirement submissions by status</h3>
+                <p>Status mix across all submission rows ({{ requirement_submissions_submitted_period|default:0 }} this period).</p>
+            </div>
+            <ul class="rep-breakdown-list">
+                {% for row in requirement_by_status %}
+                <li class="rep-breakdown-row">
+                    <div class="rep-breakdown-label-wrap">
+                        <span class="rep-breakdown-label" title="{{ row.label }}">{{ row.label }}</span>
+                        <div class="rep-breakdown-bar"><div class="rep-breakdown-bar-fill" style="width: {{ row.bar_pct|default:0 }}%;"></div></div>
+                    </div>
+                    <span class="rep-breakdown-count">{{ row.count|default:0 }}</span>
+                </li>
+                {% empty %}
+                <li class="rep-breakdown-empty">No requirement submissions yet.</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="rep-card rep-breakdown-card">
+            <div class="rep-breakdown-head">
+                <h3>Cases by status</h3>
+                <p>{{ cases_total|default:0 }} case{{ cases_total|pluralize }} tracked across all types.</p>
+            </div>
+            <ul class="rep-breakdown-list">
+                {% for row in cases_by_status %}
+                <li class="rep-breakdown-row">
+                    <div class="rep-breakdown-label-wrap">
+                        <span class="rep-breakdown-label" title="{{ row.label }}">{{ row.label }}</span>
+                        <div class="rep-breakdown-bar"><div class="rep-breakdown-bar-fill" style="width: {{ row.bar_pct|default:0 }}%;"></div></div>
+                    </div>
+                    <span class="rep-breakdown-count">{{ row.count|default:0 }}</span>
+                </li>
+                {% empty %}
+                <li class="rep-breakdown-empty">No cases recorded.</li>
+                {% endfor %}
+            </ul>
+        </div>
     </div>
 
     <div class="rep-footer">

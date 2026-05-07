@@ -25,6 +25,59 @@ _MODULE4_ADD_HOUSING_UNIT_POSITIONS = frozenset({'fourth_member', 'second_member
 _MODULE4_CREATE_SITE_POSITIONS = frozenset({'fourth_member', 'second_member'})
 
 
+def _sync_site_housing_unit_occupancy(site):
+    """
+    Keep Module 4 unit occupancy aligned with active LotAward rows.
+
+    This fixes stale map badges when old applicant/application records were removed
+    but `HousingUnit.status` remained "Occupied".
+    """
+    if not site:
+        return
+
+    active_awards = (
+        LotAward.objects
+        .filter(unit__site=site, status='active')
+        .select_related('application__applicant')
+        .order_by('-awarded_at')
+    )
+    active_award_by_unit_id = {}
+    for award in active_awards:
+        active_award_by_unit_id.setdefault(award.unit_id, award)
+
+    units = list(
+        HousingUnit.objects
+        .filter(site=site)
+        .only('id', 'status', 'occupant_name', 'occupant_id', 'updated_at')
+    )
+    to_update = []
+    for unit in units:
+        active_award = active_award_by_unit_id.get(unit.id)
+        if active_award is None:
+            # Only reset stale occupied units; preserve notice/repossessed states.
+            if unit.status == 'Occupied':
+                unit.status = 'Vacant — available'
+                unit.occupant_name = ''
+                unit.occupant_id = None
+                to_update.append(unit)
+            continue
+
+        # If an active award exists but unit still shows vacant, correct it.
+        if unit.status == 'Vacant — available':
+            applicant = getattr(active_award.application, 'applicant', None)
+            unit.status = 'Occupied'
+            unit.occupant_name = applicant.full_name if applicant else ''
+            ref = (applicant.reference_number or '') if applicant else ''
+            unit.occupant_id = ref[:100] if ref else None
+            to_update.append(unit)
+
+    if to_update:
+        HousingUnit.objects.bulk_update(
+            to_update,
+            ['status', 'occupant_name', 'occupant_id', 'updated_at'],
+        )
+
+
 # =============================================================================
 # POSITION VERIFICATION DECORATOR
 # =============================================================================
@@ -85,6 +138,10 @@ def housing_units_monitoring(request, position):
             site = all_sites.first()
         else:
             no_relocation_sites = True
+
+    # Reconcile stale occupancy flags before rendering the Module 4 map/KPIs.
+    if not no_relocation_sites and site is not None:
+        _sync_site_housing_unit_occupancy(site)
 
     # Get all units for the site with related data (empty when no sites exist yet)
     if no_relocation_sites:
@@ -202,81 +259,6 @@ def housing_units_monitoring(request, position):
     }
 
     return render(request, 'units/housing_units_monitoring.html', context)
-
-
-@login_required
-@verify_position
-def construction_monitoring(request, position):
-    """
-    Construction Monitoring dashboard (MVP): view awarded units and current construction stage/percent.
-    """
-    # Same site resolution logic as housing_units_monitoring
-    site_id = request.GET.get('site_id')
-    site = None
-    all_sites = RelocationSite.objects.all()
-
-    if site_id:
-        site = RelocationSite.objects.filter(id=site_id).first()
-    else:
-        sites = request.user.assigned_sites.all()
-        site = sites.first() if sites.exists() else None
-
-    no_relocation_sites = False
-    if not site:
-        if all_sites.exists():
-            site = all_sites.first()
-        else:
-            no_relocation_sites = True
-
-    from applications.views import get_module2_permissions
-    permissions = get_module2_permissions(request.user)
-
-    if no_relocation_sites:
-        progress_rows = []
-        all_rows_for_counts = []
-    else:
-        progress_rows = list(
-            ConstructionProgress.objects
-            .filter(lot_award__status='active', lot_award__unit__site=site)
-            .select_related('lot_award__unit__site', 'lot_award__application__applicant')
-            .order_by('lot_award__unit__block_number', 'lot_award__unit__lot_number')
-        )
-        all_rows_for_counts = progress_rows
-
-    # KPI counts — always reflect the full site, not the filtered list, so
-    # the four KPI tiles stay stable while the user toggles status chips.
-    count_not_started = sum(1 for p in all_rows_for_counts if p.stage == 'not_started' or (p.percent_complete or 0) <= 0)
-    count_completed = sum(1 for p in all_rows_for_counts if p.stage == 'completed' or (p.percent_complete or 0) >= 100)
-    count_delayed = sum(1 for p in all_rows_for_counts if p.is_delayed)
-    count_in_progress = sum(
-        1 for p in all_rows_for_counts
-        if 0 < (p.percent_complete or 0) < 100 and p.stage != 'completed'
-    )
-
-    # Simple filters
-    status_filter = (request.GET.get('status') or 'all').strip()
-    if status_filter == 'not_started':
-        progress_rows = [p for p in progress_rows if p.stage == 'not_started' or p.percent_complete <= 0]
-    elif status_filter == 'in_progress':
-        progress_rows = [p for p in progress_rows if 0 < (p.percent_complete or 0) < 100 and p.stage != 'completed']
-    elif status_filter == 'completed':
-        progress_rows = [p for p in progress_rows if p.stage == 'completed' or (p.percent_complete or 0) >= 100]
-    elif status_filter == 'delayed':
-        progress_rows = [p for p in progress_rows if p.is_delayed]
-
-    context = {
-        'site': site,
-        'all_sites': all_sites,
-        'no_relocation_sites': no_relocation_sites,
-        'permissions': permissions,
-        'status_filter': status_filter,
-        'progress_rows': list(progress_rows),
-        'count_not_started': count_not_started,
-        'count_in_progress': count_in_progress,
-        'count_completed': count_completed,
-        'count_delayed': count_delayed,
-    }
-    return render(request, 'units/construction_monitoring.html', context)
 
 
 @login_required
@@ -449,6 +431,23 @@ def get_unit_details(request, position, unit_id):
             .select_related('updated_by')
             .first()
         )
+        active_lot_award = (
+            LotAward.objects
+            .filter(unit=unit, status='active')
+            .select_related('application__applicant')
+            .order_by('-awarded_at')
+            .first()
+        )
+        possession_info = None
+        if active_lot_award and active_lot_award.awarded_at:
+            awarded_at = active_lot_award.awarded_at
+            now = timezone.now()
+            days_possessed = max(0, (now.date() - awarded_at.date()).days)
+            possession_info = {
+                'awarded_at': awarded_at.isoformat(),
+                'possessed_at': awarded_at.isoformat(),
+                'days_possessed': days_possessed,
+            }
         updates = []
         if progress:
             for u in progress.updates.select_related('created_by').all()[:10]:
@@ -463,6 +462,45 @@ def get_unit_details(request, position, unit_id):
                 })
 
         can_update_construction = request.user.position in (_MODULE4_ADD_HOUSING_UNIT_POSITIONS | FIELD_DESK_POSITIONS)
+
+        # Construction monitoring snapshot (site-level) for drawer table + KPI chips.
+        cm_filter = (request.GET.get('cm_filter') or 'all').strip()
+        site_progress_rows = list(
+            ConstructionProgress.objects
+            .filter(lot_award__status='active', lot_award__unit__site=unit.site)
+            .select_related('lot_award__unit__site', 'lot_award__application__applicant')
+            .order_by('lot_award__unit__block_number', 'lot_award__unit__lot_number')
+        )
+        count_not_started = sum(1 for p in site_progress_rows if p.stage == 'not_started' or (p.percent_complete or 0) <= 0)
+        count_completed = sum(1 for p in site_progress_rows if p.stage == 'completed' or (p.percent_complete or 0) >= 100)
+        count_delayed = sum(1 for p in site_progress_rows if p.is_delayed)
+        count_in_progress = sum(
+            1 for p in site_progress_rows
+            if 0 < (p.percent_complete or 0) < 100 and p.stage != 'completed'
+        )
+        if cm_filter == 'not_started':
+            site_progress_rows = [p for p in site_progress_rows if p.stage == 'not_started' or (p.percent_complete or 0) <= 0]
+        elif cm_filter == 'in_progress':
+            site_progress_rows = [p for p in site_progress_rows if 0 < (p.percent_complete or 0) < 100 and p.stage != 'completed']
+        elif cm_filter == 'completed':
+            site_progress_rows = [p for p in site_progress_rows if p.stage == 'completed' or (p.percent_complete or 0) >= 100]
+        elif cm_filter == 'delayed':
+            site_progress_rows = [p for p in site_progress_rows if p.is_delayed]
+
+        site_rows_payload = []
+        for p in site_progress_rows:
+            app = getattr(p.lot_award, 'application', None)
+            applicant = getattr(app, 'applicant', None)
+            site_rows_payload.append({
+                'unit_label': f"Block {p.lot_award.unit.block_number}, Lot {p.lot_award.unit.lot_number}",
+                'site_name': p.lot_award.unit.site.name if p.lot_award.unit.site else '',
+                'beneficiary_name': applicant.full_name if applicant else '—',
+                'beneficiary_ref': applicant.reference_number if applicant else '',
+                'stage_label': p.get_stage_display(),
+                'percent_complete': int(p.percent_complete or 0),
+                'is_delayed': bool(p.is_delayed),
+                'last_inspected_at': p.last_inspected_at.isoformat() if p.last_inspected_at else None,
+            })
 
         return JsonResponse({
             'success': True,
@@ -488,6 +526,16 @@ def get_unit_details(request, position, unit_id):
                 ),
                 'construction_updates': updates,
                 'can_update_construction': can_update_construction,
+                'possession_info': possession_info,
+                'construction_monitoring': {
+                    'site_name': unit.site.name if unit.site else '',
+                    'status_filter': cm_filter,
+                    'count_not_started': count_not_started,
+                    'count_in_progress': count_in_progress,
+                    'count_completed': count_completed,
+                    'count_delayed': count_delayed,
+                    'rows': site_rows_payload,
+                },
             }
         })
 
@@ -515,7 +563,7 @@ def issue_compliance_notice(request, position):
 
     POST data:
     - unit_id: UUID
-    - notice_type: '30-day' or '10-day'
+    - notice_type: '7-day', '15-day', or '30-day'
     - reason: Text reason for notice
     """
     try:
@@ -531,10 +579,10 @@ def issue_compliance_notice(request, position):
                 'error': 'Missing required fields: unit_id, notice_type'
             })
 
-        if notice_type not in ['30-day', '10-day']:
+        if notice_type not in ['7-day', '15-day', '30-day']:
             return JsonResponse({
                 'success': False,
-                'error': 'Invalid notice type. Must be "30-day" or "10-day"'
+                'error': 'Invalid notice type. Must be "7-day", "15-day", or "30-day"'
             })
 
         # Get unit
@@ -544,14 +592,15 @@ def issue_compliance_notice(request, position):
         unit.notice_type = notice_type
         unit.notice_date_issued = timezone.now()
 
-        if notice_type == '30-day':
-            unit.status = 'Under notice (30-day)'
-            unit.notice_deadline = (timezone.now() + timedelta(days=30)).date()
-            days = 30
-        else:
-            unit.status = 'Final notice (10-day)'
-            unit.notice_deadline = (timezone.now() + timedelta(days=10)).date()
-            days = 10
+        notice_days = {
+            '7-day': 7,
+            '15-day': 15,
+            '30-day': 30,
+        }
+        days = notice_days[notice_type]
+        # Keep a single monitored status family while notice_type carries exact day window.
+        unit.status = 'Under notice (30-day)'
+        unit.notice_deadline = (timezone.now() + timedelta(days=days)).date()
 
         unit.save()
 

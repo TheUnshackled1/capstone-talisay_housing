@@ -220,6 +220,710 @@
         color: #047857;
         box-shadow: 0 1px 2px rgba(5, 150, 105, 0.08);
     }
+
+    /* ==========================================================
+       Vicinity Map — replaces card grid. Site canvas, block zones,
+       lot cells laid out spatially. Same data, calmer visual.
+       Filter compat: each lot keeps `.unit-card` + `data-status`.
+       ========================================================== */
+    .vmap-legend {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.45rem 0.85rem;
+        padding: 0.55rem 0.85rem;
+        background: #ffffff;
+        border: 1px solid #e5e9ef;
+        border-radius: 0.65rem;
+        margin-bottom: 0.7rem;
+        font-size: 0.7rem;
+        color: #475569;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+    .vmap-legend-title {
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #0f172a;
+        font-size: 0.6rem;
+        padding-right: 0.6rem;
+        border-right: 1px solid #e2e8f0;
+        margin-right: 0.2rem;
+    }
+    .vmap-legend-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-weight: 600;
+    }
+    .vmap-legend-item i {
+        width: 0.6rem;
+        height: 0.6rem;
+        border-radius: 3px;
+        display: inline-block;
+    }
+    .vmap-legend--occupied i { background: #10b981; }
+    .vmap-legend--vacant   i { background: #3b82f6; }
+    .vmap-legend--notice30 i { background: #f59e0b; }
+    .vmap-legend--final    i { background: #ef4444; }
+    .vmap-legend--repo     i { background: #94a3b8; }
+
+    .vmap-canvas {
+        background-color: #fafbfc;
+        background-image: radial-gradient(circle, rgba(15, 23, 42, 0.06) 1px, transparent 1px);
+        background-size: clamp(12px, 2vw, 18px) clamp(12px, 2vw, 18px);
+        border: 1px solid #e5e9ef;
+        border-radius: 0.85rem;
+        padding: clamp(0.55rem, 1.6vw, 0.95rem);
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+        gap: clamp(0.55rem, 1.4vw, 0.95rem);
+        box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.03);
+    }
+
+    .vmap-block {
+        background: #ffffff;
+        border: 1px solid #e5e9ef;
+        border-radius: 0.7rem;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+    }
+    .vmap-block-head {
+        display: flex;
+        align-items: center;
+        gap: 0.55rem;
+        padding: 0.6rem 0.9rem;
+        background: linear-gradient(180deg, #1d4ed8 0%, #1e3a8a 100%);
+        color: #ffffff;
+        border-bottom: 1px solid #172554;
+    }
+    .vmap-block-marker {
+        font-size: 0.95rem;
+        line-height: 1;
+    }
+    .vmap-block-name {
+        margin: 0;
+        font-family: 'Source Serif Pro', Georgia, serif;
+        font-size: 0.95rem;
+        font-weight: 700;
+        letter-spacing: -0.005em;
+        color: #ffffff;
+    }
+    .vmap-block-meta {
+        margin-left: auto;
+        font-size: 0.6rem;
+        font-weight: 800;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.92);
+        background: rgba(255, 255, 255, 0.12);
+        padding: 0.18rem 0.55rem;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .vmap-lots {
+        padding: clamp(0.45rem, 1.4vw, 0.7rem);
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(clamp(4.4rem, 14vw, 5.6rem), 1fr));
+        gap: clamp(0.35rem, 1vw, 0.5rem);
+        background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+    }
+
+    .vmap-lot {
+        appearance: none;
+        font-family: inherit;
+        border: 1px solid;
+        border-radius: 0.55rem;
+        padding: 0.55rem 0.45rem 0.5rem;
+        cursor: pointer;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.18rem;
+        min-height: 4.7rem;
+        position: relative;
+        overflow: hidden;
+        transition: transform 0.12s ease, box-shadow 0.15s ease, filter 0.15s ease;
+    }
+    .vmap-lot::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 4px;
+        background: currentColor;
+        opacity: 0.9;
+    }
+    .vmap-lot:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.14);
+        filter: brightness(1.02);
+        z-index: 1;
+    }
+    .vmap-lot:focus-visible {
+        outline: 2px solid currentColor;
+        outline-offset: 2px;
+    }
+    .vmap-lot-id {
+        font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+        font-size: 0.82rem;
+        font-weight: 800;
+        letter-spacing: 0.02em;
+        color: #0f172a;
+        line-height: 1.1;
+    }
+    .vmap-lot-occ {
+        font-size: 0.6rem;
+        color: #475569;
+        line-height: 1.2;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-weight: 600;
+    }
+    .vmap-lot-tag {
+        font-size: 0.54rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        line-height: 1;
+        padding: 0.15rem 0.4rem;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.7);
+        margin-top: 0.1rem;
+    }
+
+    /* Status palettes — color sets `currentColor` for top stripe + tag */
+    .vmap-lot--occupied {
+        color: #047857;
+        background: linear-gradient(180deg, #ecfdf5 0%, #d1fae5 100%);
+        border-color: #6ee7b7;
+    }
+    .vmap-lot--occupied .vmap-lot-tag { color: #065f46; }
+
+    .vmap-lot--vacant {
+        color: #2563eb;
+        background: linear-gradient(180deg, #eff6ff 0%, #dbeafe 100%);
+        border-color: #93c5fd;
+    }
+    .vmap-lot--vacant .vmap-lot-tag { color: #1e40af; }
+
+    .vmap-lot--notice30 {
+        color: #d97706;
+        background: linear-gradient(180deg, #fffbeb 0%, #fef3c7 100%);
+        border-color: #fcd34d;
+    }
+    .vmap-lot--notice30 .vmap-lot-tag { color: #92400e; }
+
+    .vmap-lot--final {
+        color: #dc2626;
+        background: linear-gradient(180deg, #fef2f2 0%, #fee2e2 100%);
+        border-color: #fca5a5;
+    }
+    .vmap-lot--final .vmap-lot-tag { color: #991b1b; }
+
+    .vmap-lot--repo {
+        color: #475569;
+        background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
+        border-color: #94a3b8;
+    }
+    .vmap-lot--repo .vmap-lot-tag { color: #334155; }
+
+    /* Tablet — single block per row, denser lot grid */
+    @media (max-width: 900px) {
+        .vmap-canvas { grid-template-columns: 1fr; }
+        .vmap-block-name { font-size: 0.88rem; }
+        .vmap-block-meta { font-size: 0.55rem; padding: 0.15rem 0.5rem; }
+    }
+
+    /* Phone landscape / small tablet */
+    @media (max-width: 640px) {
+        .vmap-legend {
+            padding: 0.5rem 0.65rem;
+            gap: 0.35rem 0.6rem;
+            font-size: 0.66rem;
+        }
+        .vmap-legend-title {
+            flex: 1 0 100%;
+            border-right: none;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 0 0 0.35rem;
+            margin: 0 0 0.2rem;
+        }
+        .vmap-legend-item i { width: 0.55rem; height: 0.55rem; }
+        .vmap-block-head {
+            padding: 0.5rem 0.7rem;
+            gap: 0.45rem;
+        }
+        .vmap-lot {
+            min-height: 4.1rem;
+            padding: 0.45rem 0.35rem 0.4rem;
+        }
+        .vmap-lot-id { font-size: 0.76rem; }
+        .vmap-lot-occ { font-size: 0.56rem; }
+        .vmap-lot-tag { font-size: 0.5rem; padding: 0.12rem 0.35rem; }
+    }
+
+    /* Phone portrait — densest grid, drop occupant text */
+    @media (max-width: 480px) {
+        .vmap-lots {
+            grid-template-columns: repeat(auto-fill, minmax(4rem, 1fr));
+        }
+        .vmap-lot {
+            min-height: 3.7rem;
+            padding: 0.4rem 0.25rem 0.35rem;
+        }
+        .vmap-lot-occ { display: none; }
+        .vmap-block-name { font-size: 0.84rem; }
+        .vmap-block-meta {
+            margin-left: auto;
+            font-size: 0.52rem;
+            letter-spacing: 0.06em;
+        }
+    }
+
+    /* Wide desktop — bigger zones for multi-monitor offices */
+    @media (min-width: 1280px) {
+        .vmap-canvas {
+            grid-template-columns: repeat(auto-fit, minmax(min(100%, 26rem), 1fr));
+        }
+        .vmap-lots {
+            grid-template-columns: repeat(auto-fill, minmax(6rem, 1fr));
+        }
+        .vmap-lot { min-height: 5rem; }
+        .vmap-lot-id { font-size: 0.86rem; }
+    }
+
+    /* ==========================================================
+       Unit Detail Drawer — modern govt design.
+       Right-side slide-in, emerald accent, sectioned content,
+       sticky header + footer for long content.
+       ========================================================== */
+    #unitModal {
+        background: rgba(15, 23, 42, 0.55) !important;
+        backdrop-filter: blur(2px);
+        -webkit-backdrop-filter: blur(2px);
+    }
+    #unitModal .unit-modal-content {
+        width: min(100%, 540px) !important;
+        background: #ffffff !important;
+        box-shadow: -16px 0 48px -8px rgba(15, 23, 42, 0.32) !important;
+        border-left: 1px solid #e5e9ef !important;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        overflow: hidden !important;
+        padding: 0 !important;
+    }
+    #unitModal .unit-modal-content::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #047857 0%, #10b981 50%, #6ee7b7 100%);
+        z-index: 5;
+    }
+
+    .unit-detail-head {
+        flex-shrink: 0;
+        padding: 1.15rem 1.4rem 1rem !important;
+        border-bottom: 1px solid #e5e9ef !important;
+        background: linear-gradient(180deg, #ecfdf5 0%, #ffffff 100%);
+        display: flex !important;
+        align-items: flex-start !important;
+        justify-content: space-between !important;
+        gap: 0.75rem;
+    }
+    .unit-detail-head-text { min-width: 0; flex: 1 1 auto; }
+    .unit-detail-kicker {
+        margin: 0 0 0.3rem;
+        font-size: 0.6rem;
+        font-weight: 800;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: #047857;
+    }
+    .unit-detail-title {
+        font-family: 'Source Serif Pro', Georgia, serif;
+        font-size: 1.18rem !important;
+        font-weight: 700 !important;
+        color: #064e3b !important;
+        letter-spacing: -0.01em;
+        margin: 0 !important;
+    }
+    .unit-detail-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.28rem 0.7rem;
+        border-radius: 999px;
+        font-size: 0.66rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        margin: 0.55rem 0 0 !important;
+        border: 1px solid;
+        white-space: nowrap;
+        max-width: max-content;
+    }
+    .unit-detail-status::before {
+        content: '';
+        width: 0.42rem; height: 0.42rem;
+        border-radius: 50%;
+        background: currentColor;
+    }
+    .unit-detail-status[data-state="occupied"] {
+        color: #047857;
+        background: #ecfdf5;
+        border-color: #a7f3d0;
+    }
+    .unit-detail-status[data-state="vacant"] {
+        color: #1d4ed8;
+        background: #eff6ff;
+        border-color: #93c5fd;
+    }
+    .unit-detail-status[data-state="notice30"] {
+        color: #92400e;
+        background: #fffbeb;
+        border-color: #fde68a;
+    }
+    .unit-detail-status[data-state="final"] {
+        color: #991b1b;
+        background: #fef2f2;
+        border-color: #fca5a5;
+    }
+    .unit-detail-status[data-state="repo"] {
+        color: #475569;
+        background: #f1f5f9;
+        border-color: #cbd5e1;
+    }
+    .unit-detail-close {
+        flex-shrink: 0;
+        background: #f1f5f9 !important;
+        color: #475569 !important;
+        border: none !important;
+        border-radius: 8px !important;
+        width: 2rem !important;
+        height: 2rem !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 1.1rem !important;
+        cursor: pointer;
+        padding: 0 !important;
+        transition: background 0.15s ease, color 0.15s ease;
+    }
+    .unit-detail-close:hover {
+        background: #e2e8f0 !important;
+        color: #0f172a !important;
+    }
+
+    .unit-detail-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1.1rem 1.4rem 1.2rem !important;
+        background: #fafbfc;
+    }
+
+    .unit-detail-section { margin-bottom: 1.1rem; }
+    .unit-detail-section:last-child { margin-bottom: 0; }
+    .unit-detail-label {
+        margin: 0 0 0.4rem !important;
+        font-size: 0.6rem !important;
+        font-weight: 800 !important;
+        letter-spacing: 0.12em !important;
+        text-transform: uppercase !important;
+        color: #047857 !important;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+    .unit-detail-label::before {
+        content: '';
+        width: 0.42rem; height: 0.42rem;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+    }
+    .unit-detail-occupant {
+        margin: 0 !important;
+        font-size: 0.95rem !important;
+        font-weight: 700 !important;
+        color: #0f172a !important;
+        line-height: 1.35;
+    }
+    .unit-detail-occupant-sub {
+        margin: 0.3rem 0 0 !important;
+        font-size: 0.78rem !important;
+        color: #64748b !important;
+    }
+
+    .unit-detail-poss-card {
+        background: #ffffff !important;
+        border: 1px solid #e5e9ef !important;
+        border-left: 3px solid #10b981 !important;
+        border-radius: 0.7rem !important;
+        padding: 0.85rem 1rem !important;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+    .unit-detail-poss-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.75rem;
+    }
+    .unit-detail-poss-cell .poss-cell-label {
+        margin: 0;
+        font-size: 0.6rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #64748b;
+        line-height: 1.2;
+    }
+    .unit-detail-poss-cell .poss-cell-value {
+        margin: 0.25rem 0 0;
+        font-size: 0.86rem;
+        font-weight: 800;
+        color: #0f172a;
+        line-height: 1.2;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .unit-monitor-toggle {
+        width: 100%;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 0.75rem;
+        padding: 0.78rem 0.95rem !important;
+        border: 1px solid #a7f3d0 !important;
+        border-radius: 0.6rem !important;
+        background: #ecfdf5 !important;
+        color: #047857 !important;
+        font-size: 0.82rem !important;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        cursor: pointer;
+        transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .unit-monitor-toggle:hover {
+        background: #d1fae5 !important;
+        border-color: #6ee7b7 !important;
+        box-shadow: 0 1px 2px rgba(5, 150, 105, 0.1);
+    }
+    .unit-monitor-toggle[aria-expanded="true"] {
+        background: linear-gradient(180deg, #10b981 0%, #059669 100%) !important;
+        color: #ffffff !important;
+        border-color: #047857 !important;
+    }
+    .unit-monitor-toggle .toggle-icon { font-size: 0.85rem; line-height: 1; transition: transform 0.18s ease; }
+    .unit-monitor-toggle[aria-expanded="true"] .toggle-icon { transform: rotate(180deg); }
+
+    .unit-monitor-panel {
+        margin-top: 0.55rem !important;
+        background: #ffffff !important;
+        border: 1px solid #e5e9ef !important;
+        border-radius: 0.7rem !important;
+        padding: 1rem !important;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+    .unit-monitor-panel .panel-label {
+        margin: 0 0 0.7rem;
+        font-size: 0.6rem;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #047857;
+    }
+    .unit-monitor-progress-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.85rem;
+        flex-wrap: wrap;
+    }
+    .unit-monitor-stage {
+        margin: 0 !important;
+        font-weight: 800;
+        color: #0f172a;
+        font-size: 0.95rem;
+    }
+    .unit-monitor-meta {
+        margin: 0.25rem 0 0 !important;
+        font-size: 0.76rem;
+        color: #64748b;
+        line-height: 1.4;
+    }
+    .unit-monitor-bar-wrap {
+        min-width: 180px;
+        flex: 0 0 auto;
+    }
+    .unit-monitor-bar-track {
+        background: #e2e8f0;
+        border-radius: 999px;
+        height: 8px;
+        overflow: hidden;
+    }
+    .unit-monitor-bar-fill {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, #10b981 0%, #047857 100%);
+        border-radius: 999px;
+        transition: width 0.3s ease;
+    }
+    .unit-monitor-bar-pct {
+        margin: 0.4rem 0 0;
+        font-size: 0.78rem;
+        font-weight: 800;
+        color: #047857;
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .unit-monitor-timeline-wrap { margin-top: 0.95rem; }
+    .unit-monitor-timeline-label {
+        margin: 0 0 0.45rem;
+        font-size: 0.62rem;
+        font-weight: 800;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: #475569;
+    }
+    .unit-monitor-timeline {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        max-height: 160px;
+        overflow: auto;
+        border-top: 1px solid #e5e9ef;
+    }
+    .unit-monitor-timeline li {
+        padding: 0.55rem 0;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    .unit-monitor-timeline li:last-child { border-bottom: none; }
+
+    .unit-monitor-form { margin-top: 0.95rem; }
+    .unit-monitor-form .form-label {
+        display: block;
+        font-size: 0.6rem;
+        font-weight: 800;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: #475569;
+        margin-bottom: 0.35rem;
+    }
+    .unit-monitor-form .form-input,
+    .unit-monitor-form .form-select,
+    .unit-monitor-form textarea {
+        width: 100%;
+        padding: 0.55rem 0.7rem;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        font-size: 0.84rem;
+        font-family: inherit;
+        background: #ffffff;
+        color: #0f172a;
+        box-sizing: border-box;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .unit-monitor-form .form-input:focus,
+    .unit-monitor-form .form-select:focus,
+    .unit-monitor-form textarea:focus {
+        outline: none;
+        border-color: #10b981;
+        box-shadow: 0 0 0 3px rgba(167, 243, 208, 0.55);
+    }
+    .unit-monitor-form .row-2 {
+        display: grid;
+        grid-template-columns: 1fr 110px;
+        gap: 0.65rem;
+        margin-bottom: 0.65rem;
+    }
+    .unit-monitor-form .row-2-equal {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.65rem;
+        margin-bottom: 0.65rem;
+        align-items: end;
+    }
+    .unit-monitor-form .form-submit {
+        padding: 0.6rem 1rem;
+        background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+        color: #ffffff;
+        border: 1px solid #047857;
+        border-radius: 8px;
+        font-size: 0.78rem;
+        font-weight: 800;
+        cursor: pointer;
+        letter-spacing: 0.02em;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+        transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+    }
+    .unit-monitor-form .form-submit:hover {
+        background: linear-gradient(180deg, #059669 0%, #047857 100%);
+        box-shadow: 0 4px 14px rgba(5, 150, 105, 0.32);
+        transform: translateY(-1px);
+    }
+    .unit-monitor-form .form-error {
+        display: none;
+        margin: 0;
+        font-size: 0.74rem;
+        color: #b91c1c;
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        border-radius: 8px;
+        padding: 0.5rem 0.65rem;
+    }
+
+    .unit-detail-footer {
+        flex-shrink: 0;
+        padding: 0.95rem 1.4rem !important;
+        background: #ffffff !important;
+        border-top: 1px solid #e5e9ef !important;
+        display: flex;
+        gap: 0.6rem;
+    }
+    .unit-detail-action-sms {
+        flex: 1;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        padding: 0.7rem 1rem !important;
+        background: linear-gradient(180deg, #1d4ed8 0%, #1e3a8a 100%) !important;
+        color: #ffffff !important;
+        border: 1px solid #172554 !important;
+        border-radius: 8px !important;
+        font-size: 0.82rem !important;
+        font-weight: 700 !important;
+        cursor: pointer;
+        letter-spacing: 0.01em;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+        transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+    }
+    .unit-detail-action-sms:hover {
+        background: linear-gradient(180deg, #1e3a8a 0%, #172554 100%) !important;
+        box-shadow: 0 4px 14px rgba(29, 78, 216, 0.32);
+        transform: translateY(-1px);
+    }
+
+    @media (max-width: 640px) {
+        #unitModal .unit-modal-content {
+            width: 100% !important;
+            border-left: none !important;
+        }
+        .unit-detail-head { padding: 0.95rem 1rem 0.85rem !important; }
+        .unit-detail-title { font-size: 1.05rem !important; }
+        .unit-detail-body { padding: 0.95rem 1rem 1rem !important; }
+        .unit-detail-poss-grid { grid-template-columns: 1fr; gap: 0.5rem; }
+        .unit-monitor-form .row-2,
+        .unit-monitor-form .row-2-equal { grid-template-columns: 1fr; }
+        .unit-detail-footer { padding: 0.8rem 1rem !important; }
+    }
 </style>
 {% endblock %}
 
@@ -372,59 +1076,40 @@
         <button class="filter-tab" data-filter="Repossessed" onclick="filterUnits('Repossessed')" style="padding: 0.4rem 0.75rem; border: 1px solid #e9d5ff; background: white; border-radius: 20px; font-size: 0.72rem; cursor: pointer;">Repossessed ({{ repossessed_count }})</button>
     </div>
 
-    <!-- GRID VIEW -->
-    <div id="gridView-content" style="display: grid;">
-        {% for block, units in units_by_block.items %}
-        <div class="unit-block-section" style="margin-bottom: 2rem;">
-            <!-- Block Header -->
-            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; padding: 0.75rem 0;">
-                <span style="font-size: 1.5rem;">🏛️</span>
-                <h2 style="margin: 0; font-size: 1rem; font-weight: 600; color: var(--gray-900);">Block {{ block }}</h2>
-                <span style="font-size: 0.8rem; color: var(--gray-600);">{{ units|length }} unit{% if units|length != 1 %}s{% endif %}</span>
-            </div>
-
-            <!-- Units Grid -->
-            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem;">
-                {% for unit in units %}
-                <div class="unit-card scroll-animate-left" onclick="openUnitModal('{{ unit.id }}')" data-status="{{ unit.status }}" style="background: {% if unit.status == 'Occupied' %}#f0fdf4{% elif unit.status == 'Vacant — available' %}#eff6ff{% elif unit.status == 'Under notice (30-day)' %}#fffbeb{% elif unit.status == 'Final notice (10-day)' %}#fef2f2{% else %}#f3e8ff{% endif %}; border-left: 4px solid {% if unit.status == 'Occupied' %}#22c55e{% elif unit.status == 'Vacant — available' %}#3b82f6{% elif unit.status == 'Under notice (30-day)' %}#f59e0b{% elif unit.status == 'Final notice (10-day)' %}#ef4444{% else %}#a855f7{% endif %}; border-radius: 8px; padding: 1rem; cursor: pointer; transition: all 150ms ease;">
-                    <!-- Unit ID and Status Badge -->
-                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.75rem;">
-                        <span style="font-size: 0.8rem; font-weight: 600; color: var(--gray-900);">{{ unit.block_number }}-{{ unit.lot_number }}</span>
-                        <span style="display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.2rem 0.6rem; background: white; border-radius: 12px; font-size: 0.7rem; font-weight: 600;
-                            {% if unit.status == 'Occupied' %}color: #16a34a;{% elif unit.status == 'Vacant — available' %}color: #2563eb;{% elif unit.status == 'Under notice (30-day)' %}color: #d97706;{% elif unit.status == 'Final notice (10-day)' %}color: #dc2626;{% else %}color: #a855f7;{% endif %}
-                        ">
-                            <span style="width: 4px; height: 4px; border-radius: 50%; display: inline-block;
-                                {% if unit.status == 'Occupied' %}background: #22c55e;{% elif unit.status == 'Vacant — available' %}background: #3b82f6;{% elif unit.status == 'Under notice (30-day)' %}background: #f59e0b;{% elif unit.status == 'Final notice (10-day)' %}background: #ef4444;{% else %}background: #a855f7;{% endif %}
-                            "></span>
-                            {% if unit.status == 'Occupied' %}Occupied{% elif unit.status == 'Vacant — available' %}Vacant{% elif unit.status == 'Under notice (30-day)' %}30-Day{% elif unit.status == 'Final notice (10-day)' %}Final{% else %}Repossessed{% endif %}
-                        </span>
-                    </div>
-
-                    <!-- Occupant Name -->
-                    <p style="margin: 0 0 0.5rem; font-size: 0.9rem; font-weight: 600; color: var(--gray-900);">{% if unit.current_occupant %}{{ unit.current_occupant.full_name }}{% elif unit.occupant_name %}{{ unit.occupant_name }}{% else %}—{% endif %}</p>
-
-                    <!-- Unit Status Info -->
-                    <p style="margin: 0; font-size: 0.75rem; color: var(--gray-600);">{{ unit.get_status_display }}</p>
-
-                    {% with cp=unit.construction_progress_snapshot %}
-                    {% if cp %}
-                    <p style="margin:0.5rem 0 0; font-size:0.72rem; color:#334155; line-height:1.35;">
-                        <strong style="font-weight:800;">Construction:</strong>
-                        {{ cp.get_stage_display }} · {{ cp.percent_complete }}%
-                        {% if cp.last_inspected_at %}
-                        <span style="color:#64748b;">· Inspected {{ cp.last_inspected_at|date:"M d, Y" }}</span>
-                        {% endif %}
-                        {% if cp.is_delayed %}
-                        <span style="margin-left:0.35rem; color:#dc2626; font-weight:800;">Delayed</span>
-                        {% endif %}
-                    </p>
-                    {% endif %}
-                    {% endwith %}
-                </div>
-                {% endfor %}
-            </div>
+    <!-- VICINITY MAP VIEW (replaces card grid) -->
+    <div id="gridView-content" style="display: block;">
+        <div class="vmap-legend" role="group" aria-label="Lot status legend">
+            <span class="vmap-legend-title">Site map{% if site %} · {{ site.name }}{% endif %}</span>
+            <span class="vmap-legend-item vmap-legend--occupied"><i></i>Occupied</span>
+            <span class="vmap-legend-item vmap-legend--vacant"><i></i>Vacant</span>
+            <span class="vmap-legend-item vmap-legend--notice30"><i></i>30-day notice</span>
+            <span class="vmap-legend-item vmap-legend--final"><i></i>Final notice</span>
+            <span class="vmap-legend-item vmap-legend--repo"><i></i>Repossessed</span>
         </div>
-        {% endfor %}
+        <div class="vmap-canvas">
+            {% for block, units in units_by_block.items %}
+            <section class="vmap-block">
+                <header class="vmap-block-head">
+                    <span class="vmap-block-marker" aria-hidden="true">▣</span>
+                    <h2 class="vmap-block-name">Block {{ block }}</h2>
+                    <span class="vmap-block-meta">{{ units|length }} lot{{ units|length|pluralize }}</span>
+                </header>
+                <div class="vmap-lots">
+                    {% for unit in units %}
+                    <button type="button"
+                            class="unit-card vmap-lot {% if unit.status == 'Occupied' %}vmap-lot--occupied{% elif unit.status == 'Vacant — available' %}vmap-lot--vacant{% elif unit.status == 'Under notice (30-day)' %}vmap-lot--notice30{% elif unit.status == 'Final notice (10-day)' %}vmap-lot--final{% else %}vmap-lot--repo{% endif %}"
+                            data-status="{{ unit.status }}"
+                            onclick="openUnitModal('{{ unit.id }}')"
+                            title="Block {{ unit.block_number }} · Lot {{ unit.lot_number }} — {{ unit.get_status_display }}{% if unit.current_occupant %} · {{ unit.current_occupant.full_name }}{% elif unit.occupant_name %} · {{ unit.occupant_name }}{% endif %}">
+                        <span class="vmap-lot-id">{{ unit.block_number }}-{{ unit.lot_number }}</span>
+                        <span class="vmap-lot-occ">{% if unit.current_occupant %}{{ unit.current_occupant.full_name|truncatechars:14 }}{% elif unit.occupant_name %}{{ unit.occupant_name|truncatechars:14 }}{% else %}—{% endif %}</span>
+                        <span class="vmap-lot-tag">{% if unit.status == 'Occupied' %}Occupied{% elif unit.status == 'Vacant — available' %}Vacant{% elif unit.status == 'Under notice (30-day)' %}30-day{% elif unit.status == 'Final notice (10-day)' %}Final{% else %}Repo{% endif %}</span>
+                    </button>
+                    {% endfor %}
+                </div>
+            </section>
+            {% endfor %}
+        </div>
     </div>
 
     <!-- TABLE VIEW -->
@@ -599,130 +1284,164 @@
 </div>
 {% endif %}
 
-<!-- Unit Detail Modal -->
-<div id="unitModal" class="unit-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); align-items: center; justify-content: center; z-index: 1000; padding: 1rem; flex-direction: column;">
-    <div class="unit-modal-content" onclick="event.stopPropagation();" style="background: white; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); max-width: 500px; width: 100%; max-height: 90vh; overflow-y: auto;">
-        <!-- Modal Header with Close Button -->
-        <div style="padding: 1.5rem; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: start;">
-            <div>
-                <h2 id="modalUnitTitle" style="margin: 0; font-size: 1.25rem; font-weight: 600; color: #111827;"></h2>
-                <p id="modalUnitStatus" style="margin: 0.5rem 0 0; font-size: 0.875rem; color: #6b7280;"></p>
+<!-- Unit Detail Drawer -->
+<div id="unitModal" class="unit-modal" onclick="closeUnitModal(event)" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; align-items: stretch; justify-content: flex-end; z-index: 1000; padding: 0;">
+    <div class="unit-modal-content" onclick="event.stopPropagation();">
+        <!-- Header -->
+        <div class="unit-detail-head">
+            <div class="unit-detail-head-text">
+                <p class="unit-detail-kicker">Module 4 · Unit detail</p>
+                <h2 id="modalUnitTitle" class="unit-detail-title"></h2>
+                <span id="modalUnitStatus" class="unit-detail-status" data-state=""></span>
             </div>
-            <button onclick="closeUnitModal()" style="background: transparent; border: none; font-size: 1.5rem; cursor: pointer; color: #9ca3af; padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;" title="Close">✕</button>
+            <button type="button" class="unit-detail-close" onclick="closeUnitModal()" title="Close" aria-label="Close">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
         </div>
 
-        <!-- Modal Body -->
-        <div style="padding: 1.5rem;">
-            <!-- Occupant Info -->
-            <div style="margin-bottom: 1.5rem;">
-                <p style="margin: 0 0 0.5rem; font-size: 0.75rem; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em;">Occupant</p>
-                <p id="modalOccupant" style="margin: 0; font-size: 0.95rem; color: #111827; font-weight: 500;">—</p>
-                <p id="modalOccupantProfile" style="margin: 0.25rem 0 0; font-size: 0.8rem; color: #6b7280;"></p>
-            </div>
+        <!-- Body -->
+        <div class="unit-detail-body">
+            <!-- Occupant -->
+            <section class="unit-detail-section">
+                <p class="unit-detail-label">Occupant</p>
+                <p id="modalOccupant" class="unit-detail-occupant">—</p>
+                <p id="modalOccupantProfile" class="unit-detail-occupant-sub"></p>
+            </section>
 
-            <!-- Construction progress (MVP) -->
-            <div id="constructionSection" style="margin-bottom: 1.5rem; background: #eff6ff; border-radius: 8px; padding: 1rem; border: 1px solid #bfdbfe;">
-                <p style="margin: 0 0 0.75rem; font-size: 0.75rem; font-weight: 600; color: #1d4ed8; text-transform: uppercase; letter-spacing: 0.05em;">Construction progress</p>
-                <div style="display:flex; justify-content:space-between; gap:0.75rem; flex-wrap:wrap; align-items:center;">
-                    <div>
-                        <p id="constructionStage" style="margin:0; font-weight:800; color:#0f172a; font-size:0.95rem;">—</p>
-                        <p id="constructionMeta" style="margin:0.25rem 0 0; font-size:0.8rem; color:#64748b;">—</p>
-                    </div>
-                    <div style="min-width: 180px; flex: 0 0 auto;">
-                        <div style="background:#dbeafe; border-radius:999px; height:10px; overflow:hidden;">
-                            <div id="constructionBar" style="height:10px; width:0%; background:#2563eb;"></div>
+            <!-- Lot possession card -->
+            <section class="unit-detail-section">
+                <div class="unit-detail-poss-card">
+                    <p class="unit-detail-label">Lot possession details</p>
+                    <div class="unit-detail-poss-grid">
+                        <div class="unit-detail-poss-cell">
+                            <p class="poss-cell-label">Date lot awarded</p>
+                            <p id="lotAwardedDate" class="poss-cell-value">—</p>
                         </div>
-                        <p id="constructionPercent" style="margin:0.35rem 0 0; font-size:0.78rem; font-weight:800; color:#1d4ed8; text-align:right;">0%</p>
+                        <div class="unit-detail-poss-cell">
+                            <p class="poss-cell-label">Date possessed</p>
+                            <p id="lotPossessedDate" class="poss-cell-value">—</p>
+                        </div>
+                        <div class="unit-detail-poss-cell">
+                            <p class="poss-cell-label">Days possessed</p>
+                            <p id="lotPossessedDays" class="poss-cell-value">—</p>
+                        </div>
                     </div>
                 </div>
+            </section>
 
-                <div id="constructionTimelineWrap" style="margin-top:0.85rem;">
-                    <p style="margin:0 0 0.4rem; font-size:0.72rem; font-weight:700; color:#334155;">Recent updates</p>
-                    <ul id="constructionTimeline" style="margin:0; padding:0; list-style:none; max-height:150px; overflow:auto; border-top:1px solid #bfdbfe;">
-                    </ul>
-                </div>
-
-                <form id="constructionUpdateForm" style="margin-top:0.9rem; display:none;">
-                    {% csrf_token %}
-                    <input type="hidden" name="unit_id" id="constructionUnitId">
-                    <div style="display:grid; grid-template-columns: 1fr 110px; gap:0.65rem; margin-bottom:0.65rem;">
+            <!-- Lot Monitoring collapsible -->
+            <section class="unit-detail-section">
+                <button type="button" id="lotMonitoringToggleBtn" class="unit-monitor-toggle" aria-expanded="false">
+                    <span>Step 1: Lot Monitoring · construction progress</span>
+                    <span id="lotMonitoringToggleIcon" class="toggle-icon" aria-hidden="true">▼</span>
+                </button>
+                <div id="lotMonitoringDropdown" class="unit-monitor-panel" style="display: none;">
+                    <p class="panel-label">Construction progress</p>
+                    <p class="unit-monitor-meta" style="margin:0 0 0.55rem;">
+                        Staff/field team records house-building proof first (photos, stage, percent, visit date).
+                    </p>
+                    <div class="unit-monitor-progress-row">
                         <div>
-                            <label style="display:block; font-size:0.68rem; font-weight:600; color:#374151; margin-bottom:0.35rem; text-transform:uppercase; letter-spacing:0.04em;">Stage</label>
-                            <select id="constructionStageSelect" name="stage" required style="width:100%; padding:0.55rem 0.65rem; border:1px solid #cbd5e1; border-radius:8px; font-size:0.8rem; font-family:inherit; box-sizing:border-box;">
-                                <option value="not_started">Not started</option>
-                                <option value="site_clearing">Site clearing</option>
-                                <option value="foundation">Foundation</option>
-                                <option value="wall_framing">Wall framing</option>
-                                <option value="roofing">Roofing</option>
-                                <option value="finishing">Finishing</option>
-                                <option value="completed">Completed / Occupied</option>
-                            </select>
+                            <p id="constructionStage" class="unit-monitor-stage">—</p>
+                            <p id="constructionMeta" class="unit-monitor-meta">—</p>
                         </div>
-                        <div>
-                            <label style="display:block; font-size:0.68rem; font-weight:600; color:#374151; margin-bottom:0.35rem; text-transform:uppercase; letter-spacing:0.04em;">Percent</label>
-                            <input id="constructionPercentInput" name="percent_complete" type="number" min="0" max="100" step="1" required
-                                style="width:100%; padding:0.55rem 0.65rem; border:1px solid #cbd5e1; border-radius:8px; font-size:0.85rem; box-sizing:border-box; font-family:inherit;">
+                        <div class="unit-monitor-bar-wrap">
+                            <div class="unit-monitor-bar-track">
+                                <div id="constructionBar" class="unit-monitor-bar-fill"></div>
+                            </div>
+                            <p id="constructionPercent" class="unit-monitor-bar-pct">0%</p>
                         </div>
                     </div>
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.65rem; margin-bottom:0.65rem;">
-                        <div>
-                            <label style="display:block; font-size:0.68rem; font-weight:600; color:#374151; margin-bottom:0.35rem; text-transform:uppercase; letter-spacing:0.04em;">Visit date</label>
-                            <input id="constructionVisitDate" name="visit_date" type="date" required
-                                style="width:100%; padding:0.55rem 0.65rem; border:1px solid #cbd5e1; border-radius:8px; font-size:0.85rem; box-sizing:border-box; font-family:inherit;">
-                        </div>
-                        <div style="display:flex; align-items:flex-end; justify-content:flex-end;">
-                            <button type="submit" id="constructionSubmitBtn"
-                                style="padding:0.55rem 0.95rem; background:#2563eb; color:#fff; border:none; border-radius:8px; font-size:0.78rem; font-weight:800; cursor:pointer;">Save update</button>
-                        </div>
-                    </div>
-                    <div style="margin-bottom:0.65rem;">
-                        <label style="display:block; font-size:0.68rem; font-weight:600; color:#374151; margin-bottom:0.35rem; text-transform:uppercase; letter-spacing:0.04em;">Notes (optional)</label>
-                        <textarea id="constructionNotes" name="notes" rows="2" maxlength="2000"
-                            style="width:100%; padding:0.55rem 0.65rem; border:1px solid #cbd5e1; border-radius:8px; font-size:0.8rem; resize:vertical; box-sizing:border-box; font-family:inherit; line-height:1.4;"></textarea>
-                    </div>
-                    <p id="constructionFormError" style="display:none;margin:0; font-size:0.75rem; color:#b91c1c; background:#fef2f2; border:1px solid #fecaca; border-radius:8px; padding:0.5rem 0.65rem;"></p>
-                </form>
-            </div>
 
-            <!-- Weekly site occupancy report -->
-            <div id="reportSection" style="margin-bottom: 1.5rem; background: #f9fafb; border-radius: 8px; padding: 1rem;">
-                <p style="margin: 0 0 0.75rem; font-size: 0.75rem; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em;">Weekly site report</p>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                    <div>
-                        <p style="margin: 0; font-size: 0.75rem; color: #6b7280;">Last Updated</p>
-                        <p id="reportLastUpdated" style="margin: 0.25rem 0 0; font-weight: 500; color: #111827; font-size: 0.875rem;">—</p>
+                    <div id="constructionTimelineWrap" class="unit-monitor-timeline-wrap">
+                        <p class="unit-monitor-timeline-label">Recent updates</p>
+                        <ul id="constructionTimeline" class="unit-monitor-timeline"></ul>
                     </div>
-                    <div>
-                        <p style="margin: 0; font-size: 0.75rem; color: #6b7280;">Reported Status</p>
-                        <p id="reportedStatus" style="margin: 0.25rem 0 0; font-weight: 500; color: #111827; font-size: 0.875rem;">—</p>
+
+                    <form id="constructionUpdateForm" class="unit-monitor-form" style="display: none;">
+                        {% csrf_token %}
+                        <input type="hidden" name="unit_id" id="constructionUnitId">
+                        <div class="row-2">
+                            <div>
+                                <label class="form-label" for="constructionStageSelect">Stage</label>
+                                <select id="constructionStageSelect" name="stage" class="form-select" required>
+                                    <option value="not_started">Not started</option>
+                                    <option value="site_clearing">Site clearing</option>
+                                    <option value="foundation">Foundation</option>
+                                    <option value="wall_framing">Wall framing</option>
+                                    <option value="roofing">Roofing</option>
+                                    <option value="finishing">Finishing</option>
+                                    <option value="completed">Completed / Occupied</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="form-label" for="constructionPercentInput">Percent</label>
+                                <input id="constructionPercentInput" name="percent_complete" type="number" class="form-input" min="0" max="100" step="1" required>
+                            </div>
+                        </div>
+                        <div class="row-2-equal">
+                            <div>
+                                <label class="form-label" for="constructionVisitDate">Visit date</label>
+                                <input id="constructionVisitDate" name="visit_date" type="date" class="form-input" required>
+                            </div>
+                            <div style="display:flex; justify-content:flex-end;">
+                                <button type="submit" id="constructionSubmitBtn" class="form-submit">Save update</button>
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 0.6rem;">
+                            <label class="form-label" for="constructionNotes">Notes (optional)</label>
+                            <textarea id="constructionNotes" name="notes" rows="2" maxlength="2000"></textarea>
+                        </div>
+                        <p id="constructionFormError" class="form-error"></p>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Notice issuing collapsible -->
+            <section class="unit-detail-section">
+                <button type="button" id="noticeIssuingToggleBtn" class="unit-monitor-toggle" aria-expanded="false" style="border-color:#fecaca; background:#fff1f2; color:#9f1239;">
+                    <span>Step 2: Notice Issuing · if non-compliant</span>
+                    <span id="noticeIssuingToggleIcon" class="toggle-icon" aria-hidden="true">▼</span>
+                </button>
+                <div id="noticeIssuingDropdown" class="unit-monitor-panel" style="display:none; background:#fff7ed; border-color:#fed7aa;">
+                    <p class="panel-label" style="color:#9a3412;">Notice issuing endpoint/status transitions (7-day, 15-day, 30-day)</p>
+                    <p class="unit-monitor-meta" style="margin:0 0 0.55rem; color:#7c2d12;">
+                        If the beneficiary remains non-compliant after notices and validation, the final decision is <strong>Disqualified</strong> and <strong>Blacklisted</strong>.
+                    </p>
+                    <div class="unit-detail-poss-grid" style="margin-bottom:0.65rem;">
+                        <div class="unit-detail-poss-cell">
+                            <p class="poss-cell-label">Current status</p>
+                            <p id="noticeCurrentStatus" class="poss-cell-value">—</p>
+                        </div>
+                        <div class="unit-detail-poss-cell">
+                            <p class="poss-cell-label">Date issued</p>
+                            <p id="noticeIssuedDate" class="poss-cell-value">—</p>
+                        </div>
+                        <div class="unit-detail-poss-cell">
+                            <p class="poss-cell-label">Deadline</p>
+                            <p id="noticeDeadlineDate" class="poss-cell-value">—</p>
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:0.55rem; flex-wrap:wrap;">
+                        <button type="button" id="issue7DayBtn" onclick="issueComplianceNotice('7-day')" class="form-submit" style="background:#7c3aed;">Issue 7-day notice</button>
+                        <button type="button" id="issue15DayBtn" onclick="issueComplianceNotice('15-day')" class="form-submit" style="background:#ea580c;">Issue 15-day notice</button>
+                        <button type="button" id="issue30DayBtn" onclick="issueComplianceNotice('30-day')" class="form-submit" style="background:#2563eb;">Issue 30-day notice</button>
                     </div>
                 </div>
-                <div style="margin-top: 0.75rem; font-size: 0.85rem; color: #6b7280;">
-                    <p id="reportComments" style="margin: 0; max-height: 80px; overflow-y: auto;"></p>
-                </div>
-            </div>
+            </section>
+        </div>
 
-            <!-- Active Notices -->
-            <div id="activeNoticesSection" style="margin-bottom: 1.5rem; display: none; background: #fffbeb; border-left: 4px solid #f59e0b; border-radius: 6px; padding: 1rem;">
-                <p id="activeNoticesTitle" style="margin: 0 0 0.75rem; font-size: 0.75rem; font-weight: 600; color: #d97706; text-transform: uppercase; letter-spacing: 0.05em;"></p>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 0.85rem;">
-                    <div>
-                        <p style="margin: 0; color: #6b7280;">Date Issued</p>
-                        <p id="notisDateIssued" style="margin: 0.25rem 0 0; font-weight: 500; color: #111827;"></p>
-                    </div>
-                    <div>
-                        <p style="margin: 0; color: #6b7280;">Deadline</p>
-                        <p id="noticeDeadline" style="margin: 0.25rem 0 0; font-weight: 500; color: #111827;"></p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Action Buttons -->
-            <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
-                <button onclick="updateUnitStatus()" style="flex: 1; padding: 0.6875rem 1rem; background: #2563eb; color: white; border: none; border-radius: 8px; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: background-color 150ms ease; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);" onmouseover="this.style.backgroundColor='#1d4ed8'" onmouseout="this.style.backgroundColor='#2563eb'">⚙️ Update Status</button>
-                <button onclick="sendSMS()" style="flex: 1; padding: 0.6875rem 1rem; background: #e5e7eb; color: #374151; border: none; border-radius: 8px; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: background-color 150ms ease; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);" onmouseover="this.style.backgroundColor='#d1d5db'" onmouseout="this.style.backgroundColor='#e5e7eb'">💬 Send SMS</button>
-                <button id="awardBtn" onclick="awardToNextStandby()" style="display: none; flex: 1; padding: 0.6875rem 1rem; background: #16a34a; color: white; border: none; border-radius: 8px; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: background-color 150ms ease; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);" onmouseover="this.style.backgroundColor='#15803d'" onmouseout="this.style.backgroundColor='#16a34a'">✓ Award to Next Standby</button>
-            </div>
+        <!-- Footer -->
+        <div class="unit-detail-footer">
+            <button type="button" class="unit-detail-action-sms" onclick="sendSMS()">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+                </svg>
+                Send SMS
+            </button>
         </div>
     </div>
 </div>
@@ -927,8 +1646,36 @@ function filterUnits(filter) {
     });
 }
 
+function toggleLotMonitoringDropdown(forceOpen) {
+    const btn = document.getElementById('lotMonitoringToggleBtn');
+    const icon = document.getElementById('lotMonitoringToggleIcon');
+    const box = document.getElementById('lotMonitoringDropdown');
+    if (!btn || !icon || !box) return;
+    const shouldOpen = typeof forceOpen === 'boolean'
+        ? forceOpen
+        : box.style.display === 'none';
+    box.style.display = shouldOpen ? 'block' : 'none';
+    btn.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
+    icon.textContent = shouldOpen ? '▲' : '▼';
+}
+
+function toggleNoticeIssuingDropdown(forceOpen) {
+    const btn = document.getElementById('noticeIssuingToggleBtn');
+    const icon = document.getElementById('noticeIssuingToggleIcon');
+    const box = document.getElementById('noticeIssuingDropdown');
+    if (!btn || !icon || !box) return;
+    const shouldOpen = typeof forceOpen === 'boolean'
+        ? forceOpen
+        : box.style.display === 'none';
+    box.style.display = shouldOpen ? 'block' : 'none';
+    btn.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
+    icon.textContent = shouldOpen ? '▲' : '▼';
+}
+
 function openUnitModal(unitId) {
     currentUnitId = unitId;
+    toggleLotMonitoringDropdown(false);
+    toggleNoticeIssuingDropdown(false);
     const position = '{{ request.user.position }}';
     fetch(`/units/housing-units/${position}/${unitId}/details/`)
         .then(r => r.json())
@@ -936,9 +1683,31 @@ function openUnitModal(unitId) {
             if (data.success) {
                 const unit = data.unit;
                 document.getElementById('modalUnitTitle').textContent = `Block ${unit.block}, Lot ${unit.lot}`;
-                document.getElementById('modalUnitStatus').textContent = unit.status;
+                const statusPill = document.getElementById('modalUnitStatus');
+                statusPill.textContent = unit.status;
+                const statusKeyMap = {
+                    'Occupied': 'occupied',
+                    'Vacant — available': 'vacant',
+                    'Under notice (30-day)': 'notice30',
+                    'Final notice (10-day)': 'final',
+                    'Repossessed': 'repo'
+                };
+                statusPill.dataset.state = statusKeyMap[unit.status] || 'vacant';
                 document.getElementById('modalOccupant').textContent = unit.occupant_name || '—';
                 document.getElementById('constructionUnitId').value = unit.id;
+                const possession = unit.possession_info || null;
+                document.getElementById('lotAwardedDate').textContent = possession && possession.awarded_at ? String(possession.awarded_at).slice(0, 10) : '—';
+                document.getElementById('lotPossessedDate').textContent = possession && possession.possessed_at ? String(possession.possessed_at).slice(0, 10) : '—';
+                document.getElementById('lotPossessedDays').textContent = possession && Number.isFinite(Number(possession.days_possessed))
+                    ? `${Number(possession.days_possessed)} day(s)`
+                    : '—';
+                document.getElementById('noticeCurrentStatus').textContent = unit.status || '—';
+                document.getElementById('noticeIssuedDate').textContent = unit.notice && unit.notice.issued
+                    ? String(unit.notice.issued).slice(0, 10)
+                    : '—';
+                document.getElementById('noticeDeadlineDate').textContent = unit.notice && unit.notice.deadline
+                    ? String(unit.notice.deadline).slice(0, 10)
+                    : '—';
 
                 // Construction progress
                 const c = unit.construction;
@@ -999,21 +1768,6 @@ function openUnitModal(unitId) {
                     form.style.display = 'none';
                 }
 
-                // Get weekly report data if available
-                if (unit.weekly_report) {
-                    document.getElementById('reportLastUpdated').textContent = unit.weekly_report.last_updated || '—';
-                    document.getElementById('reportedStatus').textContent = unit.weekly_report.reported_status || '—';
-                } else {
-                    document.getElementById('reportLastUpdated').textContent = '—';
-                    document.getElementById('reportedStatus').textContent = '—';
-                }
-
-                if (unit.status.includes('Final')) {
-                    document.getElementById('awardBtn').style.display = 'block';
-                } else {
-                    document.getElementById('awardBtn').style.display = 'none';
-                }
-
                 document.getElementById('unitModal').style.display = 'flex';
             } else {
                 console.error('Failed to fetch unit details:', data.error);
@@ -1033,6 +1787,35 @@ function updateUnitStatus() {
     alert('Update status functionality');
 }
 
+async function issueComplianceNotice(noticeType) {
+    if (!currentUnitId) return;
+    const yes = window.confirm(`Issue ${noticeType} notice for this lot?`);
+    if (!yes) return;
+    try {
+        const res = await fetch('{% url "units:issue_compliance_notice" request.user.position %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken') || '',
+            },
+            body: JSON.stringify({
+                unit_id: currentUnitId,
+                notice_type: noticeType,
+                reason: 'Monitoring compliance transition',
+            }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+            window.alert(data.error || 'Failed to issue notice.');
+            return;
+        }
+        openUnitModal(currentUnitId);
+        toggleNoticeIssuingDropdown(true);
+    } catch (err) {
+        window.alert(err.message || 'Network error while issuing notice.');
+    }
+}
+
 function sendSMS() {
     alert('Send SMS functionality');
 }
@@ -1043,6 +1826,13 @@ function awardToNextStandby() {
 
 document.addEventListener('keydown', e => {
     if (e.key === 'Escape') closeUnitModal();
+});
+
+document.getElementById('lotMonitoringToggleBtn')?.addEventListener('click', function () {
+    toggleLotMonitoringDropdown();
+});
+document.getElementById('noticeIssuingToggleBtn')?.addEventListener('click', function () {
+    toggleNoticeIssuingDropdown();
 });
 
 // Save construction progress update
