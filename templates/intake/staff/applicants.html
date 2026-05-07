@@ -688,27 +688,48 @@
         max-width: 75px;
         word-wrap: break-word;
     }
-    .btn-archive-docs--done {
-        background: #dcfce7;
-        color: #166534;
-        border: 1px solid #86efac;
+    /* Requirements N/M — all three states stay in the emerald palette so the
+       column reads as one family. Done is solid emerald (most prominent),
+       partial sits between, none is the faintest emerald wash. The shade
+       intensity preserves the completeness signal without leaving the
+       emerald color story. body-prefixed selectors so we win the specificity
+       tie with tha-design-system.css. */
+    body .btn-archive-docs--done {
+        background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+        color: #ffffff;
+        border: 1px solid #047857;
     }
-    .btn-archive-docs--partial {
-        background: #fef3c7;
-        color: #92400e;
-        border: 1px solid #fcd34d;
+    body .btn-archive-docs--done:hover {
+        background: linear-gradient(180deg, #059669 0%, #047857 100%);
+        border-color: #047857;
+        color: #ffffff;
     }
-    .btn-archive-docs--none {
-        background: #f1f5f9;
-        color: #64748b;
-        border: 1px solid #e2e8f0;
+    body .btn-archive-docs--partial {
+        background: #d1fae5;
+        color: #065f46;
+        border: 1px solid #6ee7b7;
+    }
+    body .btn-archive-docs--partial:hover {
+        background: #a7f3d0;
+        border-color: #34d399;
+        color: #064e3b;
+    }
+    body .btn-archive-docs--none {
+        background: #ecfdf5;
+        color: #047857;
+        border: 1px solid #a7f3d0;
+    }
+    body .btn-archive-docs--none:hover {
+        background: #d1fae5;
+        border-color: #6ee7b7;
+        color: #065f46;
     }
     .btn-archive-docs:hover {
         transform: translateY(-1px);
-        box-shadow: 0 2px 6px rgba(15, 23, 42, 0.12);
+        box-shadow: 0 2px 6px rgba(5, 150, 105, 0.18);
     }
     .btn-archive-docs:focus-visible {
-        outline: 2px solid rgba(59, 130, 246, 0.45);
+        outline: 2px solid #6ee7b7;
         outline-offset: 2px;
     }
 
