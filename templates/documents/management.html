@@ -542,50 +542,114 @@
         flex-shrink: 0;
     }
 
-    /* ADD FILE — teal gradient (Module 3 action color), compact */
-    .vault-add-file-btn {
-        padding: 0.24rem 0.5rem;
-        border-radius: 5px;
-        border: 1px solid #0d9488;
-        background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
-        color: #fff;
-        font-size: 0.62rem;
-        font-weight: 700;
-        letter-spacing: 0.03em;
-        cursor: pointer;
-        white-space: nowrap;
-        transition: all 0.18s ease;
-        box-shadow: 0 1px 2px rgba(13, 148, 136, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.2);
-    }
-    .vault-add-file-btn:hover {
-        background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(13, 148, 136, 0.30), inset 0 1px 0 rgba(255, 255, 255, 0.22);
-    }
-
-    /* VIEW — blue ghost (read action), compact */
+    /* Unified action buttons — same shape/size across the page,
+       semantic color picks usage. Mirrors the Ready-for-Form queue palette
+       (teal = primary, blue = scan/upload, gold = view) so staff see the same
+       visual language everywhere they perform these four actions. */
+    .dm-action-btn,
+    .vault-add-file-btn,
     .vault-view-btn {
-        padding: 0.24rem 0.5rem;
-        border-radius: 5px;
-        border: 1px solid #93c5fd;
-        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-        color: #1e40af;
-        font-size: 0.62rem;
-        font-weight: 700;
-        letter-spacing: 0.03em;
-        cursor: pointer;
-        white-space: nowrap;
-        transition: all 0.18s ease;
-        text-decoration: none;
+        appearance: none;
+        -webkit-appearance: none;
+        font-family: inherit;
+        box-sizing: border-box;
+        min-height: 2.25rem;
+        padding: 0 0.7rem;
+        margin: 0;
         display: inline-flex;
         align-items: center;
+        justify-content: center;
+        gap: 0.35rem;
+        border-radius: 0.5rem;
+        font-size: 0.65625rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        line-height: 1.15;
+        cursor: pointer;
+        text-decoration: none;
+        text-align: center;
+        white-space: nowrap;
+        transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease, background 0.15s ease;
     }
-    .vault-view-btn:hover {
-        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-        border-color: #60a5fa;
-        color: #1e3a8a;
+    .dm-action-btn .dm-action-btn-icon {
+        width: 0.875rem;
+        height: 0.875rem;
+        flex-shrink: 0;
+    }
+    .dm-action-btn:focus-visible,
+    .vault-add-file-btn:focus-visible,
+    .vault-view-btn:focus-visible {
+        outline: 2px solid #5eead4;
+        outline-offset: 2px;
+    }
+    .dm-action-btn:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+
+    /* PRIMARY — teal gradient (Open PDF / generate-style actions) */
+    .dm-action-btn--primary {
+        border: 1px solid #0f766e;
+        background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
+        color: #fff;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    }
+    .dm-action-btn--primary:hover {
+        filter: brightness(1.06);
+        box-shadow: 0 4px 14px rgba(13, 148, 136, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.15);
         transform: translateY(-1px);
-        box-shadow: 0 2px 6px rgba(59, 130, 246, 0.18);
+        color: #fff;
+        text-decoration: none;
+    }
+
+    /* SCAN / UPLOAD — solid blue (Scan document / Upload document / Add file) */
+    .dm-action-btn--scan,
+    .vault-add-file-btn {
+        border: none;
+        background: #2563eb;
+        color: #fff;
+        box-shadow: none;
+    }
+    .dm-action-btn--scan:hover,
+    .vault-add-file-btn:hover {
+        background: #3b82f6;
+        color: #fff;
+        transform: translateY(-1px);
+        box-shadow: none;
+        text-decoration: none;
+    }
+    .dm-action-btn--scan:focus-visible,
+    .vault-add-file-btn:focus-visible {
+        outline: 2px solid #60a5fa;
+        outline-offset: 2px;
+    }
+
+    /* VIEW — gold gradient (read-only viewers, like the queue’s View) */
+    .dm-action-btn--view,
+    .vault-view-btn {
+        border: 1px solid #b45309;
+        background: linear-gradient(135deg, #fde68a 0%, #fbbf24 45%, #d97706 100%);
+        color: #422006;
+        box-shadow:
+            0 1px 2px rgba(66, 32, 6, 0.14),
+            inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    }
+    .dm-action-btn--view:hover,
+    .vault-view-btn:hover {
+        filter: brightness(1.05);
+        box-shadow:
+            0 4px 14px rgba(217, 119, 6, 0.4),
+            inset 0 1px 0 rgba(255, 255, 255, 0.5);
+        color: #292524;
+        transform: translateY(-1px);
+        text-decoration: none;
+    }
+    .dm-action-btn--view:focus-visible,
+    .vault-view-btn:focus-visible {
+        outline: 2px solid #d97706;
+        outline-offset: 2px;
     }
 
     /* DOCUMENT NAME LABEL */
@@ -852,8 +916,13 @@
         <div>
             <h1 class="docs-page-title">Document Management</h1>
         </div>
-        <button onclick="openUploadModal()" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.52rem 0.88rem; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; border: none; border-radius: 0.5rem; font-size: 0.72rem; font-weight: 700; cursor: pointer; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); white-space: nowrap;">
-            ⬆️ Upload Document
+        <button type="button" class="dm-action-btn dm-action-btn--scan" onclick="openUploadModal()">
+            <svg class="dm-action-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            Upload document
         </button>
     </div>
 
@@ -924,11 +993,14 @@
                     </td>
                     <td class="col-actions" style="vertical-align: middle;">
                         <button type="button"
+                            class="dm-action-btn dm-action-btn--view"
                             data-applicant-id="{{ applicant.id }}"
-                            onclick="openVaultDrawer(this.dataset.applicantId)"
-                            style="display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.34rem 0.6rem; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; border: 1px solid #1d4ed8; border-radius: 0.4rem; font-size: 0.66rem; font-weight: 700; cursor: pointer; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); white-space: nowrap; letter-spacing: 0.02em;">
-                            <svg style="width: 0.85rem; height: 0.85rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                            View Documents
+                            onclick="openVaultDrawer(this.dataset.applicantId)">
+                            <svg class="dm-action-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                <circle cx="12" cy="12" r="3"/>
+                            </svg>
+                            View
                         </button>
                     </td>
                 </tr>
@@ -987,8 +1059,12 @@
         <p id="uploadModalIntentHint" style="display: none; margin: 0 1.5rem 0.65rem; font-size: 0.78rem; color: #475569; line-height: 1.45;"></p>
 
         <div id="uploadModalDwtStrip" style="display: none; flex-direction: column; gap: 0.45rem; margin: 0 1.5rem 0.85rem; padding: 0.65rem 0.75rem; border-radius: 10px; border: 1px solid #e9d5ff; background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);">
-            <button type="button" id="vaultMgmtDwtScanBtn" onclick="vaultMgmtRunSignedApplicationDwtScan()" style="display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; padding: 0.55rem 0.85rem; border-radius: 8px; border: 1px solid #7c3aed; background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%); color: #fff; font-size: 0.8rem; font-weight: 700; cursor: pointer; box-shadow: 0 2px 6px rgba(109, 40, 217, 0.25);">
-                📷 Scan with Dynamsoft (TWAIN)
+            <button type="button" id="vaultMgmtDwtScanBtn" class="dm-action-btn dm-action-btn--scan" onclick="vaultMgmtRunSignedApplicationDwtScan()">
+                <svg class="dm-action-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                    <circle cx="12" cy="13" r="4"/>
+                </svg>
+                <span class="dm-action-btn-label">Scan document</span>
             </button>
             <p style="margin: 0; font-size: 0.72rem; color: #64748b; line-height: 1.4;">Opens the scanner / camera capture, then saves to the vault — same SDK as the intake requirements checklist.</p>
         </div>
@@ -1126,10 +1202,11 @@
             return;
         }
         const btn = document.getElementById('vaultMgmtDwtScanBtn');
-        const oldText = btn ? btn.textContent : '';
+        const labelEl = btn ? btn.querySelector('.dm-action-btn-label') : null;
+        const oldText = labelEl ? labelEl.textContent : '';
         if (btn) {
             btn.disabled = true;
-            btn.textContent = 'Scanning…';
+            if (labelEl) labelEl.textContent = 'Scanning…';
         }
         try {
             const dwt = await vaultMgmtWaitForDwt();
@@ -1181,11 +1258,13 @@
             location.reload();
         } catch (error) {
             vaultMgmtNotify((error && error.message) ? error.message : 'Unable to complete scan.');
-            if (btn) btn.textContent = oldText || '📷 Scan with Dynamsoft (TWAIN)';
+            if (labelEl) labelEl.textContent = oldText || 'Scan document';
         } finally {
             if (btn) {
                 btn.disabled = false;
-                if (btn.textContent === 'Scanning…') btn.textContent = oldText || '📷 Scan with Dynamsoft (TWAIN)';
+                if (labelEl && labelEl.textContent === 'Scanning…') {
+                    labelEl.textContent = oldText || 'Scan document';
+                }
             }
         }
     }

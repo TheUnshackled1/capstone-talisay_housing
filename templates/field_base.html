@@ -129,6 +129,23 @@
         </div>
     </main>
 
+    <!-- Shared THA flow alert (replaces native window.alert across the field portal) -->
+    <div class="modal-overlay" id="flowAlertModal" onclick="closeFlowAlert(event)">
+        <div class="flow-alert-card" id="flowAlertCard" onclick="event.stopPropagation()" role="dialog"
+            aria-modal="true" aria-labelledby="flowAlertTitle">
+            <div class="flow-alert-success-badge" id="flowAlertSuccessBadge" aria-hidden="true">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </div>
+            <h3 class="flow-alert-title" id="flowAlertTitle">Notice</h3>
+            <p class="flow-alert-message" id="flowAlertMessage"></p>
+            <div id="flowAlertRefWrap" style="display: none; text-align: center;"></div>
+            <div class="flow-alert-actions">
+                <button type="button" class="flow-alert-ok" id="flowAlertOkBtn" onclick="confirmFlowAlert()">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{% static 'js/flow-alert.js' %}"></script>
     <script src="{% static 'js/dashboard.js' %}"></script>
     {% block extra_js %}{% endblock %}
 </body>

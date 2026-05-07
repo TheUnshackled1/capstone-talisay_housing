@@ -608,49 +608,67 @@
         outline-offset: 2px;
     }
 
-    .btn-review-walkin {
-        background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
-        border-color: #0f766e;
-    }
-
-    .btn-review-walkin:hover {
-        background: linear-gradient(135deg, #0f766e 0%, #115e59 100%);
-        box-shadow: 0 4px 14px rgba(13, 148, 136, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.15);
-    }
-
-    .btn-review .btn-icon {
-        width: 0.875rem;
-        height: 0.875rem;
-    }
-
-    .btn-archive-action {
+    /* Row-primary action sizing — Active Applicants Review (.btn-review-walkin)
+       and LIST OF APPLICANTS View (.btn-archive-action) need to share the
+       same shape so the table action columns read consistently. The light
+       emerald ghost color of .btn-review is set globally in
+       tha-design-system.css; we layer sizing + responsiveness on top using
+       body-prefixed selectors so we match that file's specificity. */
+    body .btn-review-walkin,
+    body .btn-archive-action {
+        box-sizing: border-box;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        gap: 0.25rem;
-        padding: 0.08rem 0.2rem;
-        border-radius: 9999px;
-        font-size: 0.53rem;
-        font-weight: 600;
-        color: #075985;
-        background: #e0f2fe;
-        border: 1px solid #bae6fd;
+        gap: 0.4rem;
+        min-height: 2.25rem;
+        padding: 0.4rem 0.85rem;
+        max-width: 100%;
+        font-size: 0.6875rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        line-height: 1.15;
+        border-radius: 0.5rem;
         cursor: pointer;
         white-space: nowrap;
-        line-height: 1;
-        transition: background 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+        text-decoration: none;
+        transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease, color 0.18s ease;
     }
 
-    .btn-archive-action:hover {
-        background: #bae6fd;
-        border-color: #7dd3fc;
-        box-shadow: 0 2px 6px rgba(14, 116, 144, 0.2);
+    /* Re-skin the LIST OF APPLICANTS View pill from blue ghost (design system
+       default) to emerald ghost so it matches the Review/Evaluate language. */
+    body .btn-archive-action {
+        color: #047857;
+        background: #ecfdf5;
+        border: 1px solid #a7f3d0;
+    }
+    body .btn-archive-action:hover {
+        color: #065f46;
+        background: #d1fae5;
+        border-color: #6ee7b7;
+        box-shadow: 0 2px 6px rgba(5, 150, 105, 0.18);
         transform: translateY(-1px);
     }
-
-    .btn-archive-action:focus-visible {
-        outline: 2px solid rgba(59, 130, 246, 0.45);
+    body .btn-archive-action:focus-visible {
+        outline: 2px solid #6ee7b7;
         outline-offset: 2px;
+    }
+
+    .btn-review .btn-icon,
+    .btn-archive-action .btn-icon {
+        width: 0.875rem;
+        height: 0.875rem;
+        flex-shrink: 0;
+    }
+
+    /* Narrow viewports — let the action column shrink rather than overflow.
+       Keeps the row tap-target intact while the label stays readable. */
+    @media (max-width: 640px) {
+        body .btn-review-walkin,
+        body .btn-archive-action {
+            width: 100%;
+            padding: 0.4rem 0.55rem;
+        }
     }
 
     .btn-archive-docs {
@@ -3264,8 +3282,11 @@
                         class="btn-archive-action"
                         data-reference="{{ row.referenceNumber }}"
                         onclick="openArchiveFormViewModal(this)"
-                        style="padding:0.25rem 0.55rem;font-size:0.62rem;"
                     >
+                        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
                         View
                     </button>
                     {% endif %}

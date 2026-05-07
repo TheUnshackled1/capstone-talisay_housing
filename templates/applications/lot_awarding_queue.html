@@ -35,9 +35,39 @@
     }
     .lawq-actions-inline .rfq-action-btn {
         width: 100%;
-        min-height: 2.05rem;
-        font-size: 0.625rem;
+        min-height: 2.25rem;
+        font-size: 0.6875rem;
         box-sizing: border-box;
+    }
+
+    /* Emerald — matches Review / Evaluate / View across the staff portal so
+       the row-primary action keeps a consistent look. Width is fluid for
+       narrow viewports; the column also collapses gracefully on mobile. */
+    .lawq-action-emerald {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+        color: #ffffff !important;
+        border: 1px solid #047857 !important;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        gap: 0.4rem;
+        padding: 0.4rem 0.85rem;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+    }
+    .lawq-action-emerald:hover {
+        background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+        filter: none !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 14px rgba(5, 150, 105, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+        transform: translateY(-1px);
+    }
+    .lawq-action-emerald:focus-visible {
+        outline: 2px solid #6ee7b7 !important;
+        outline-offset: 2px;
+    }
+    @media (max-width: 640px) {
+        .lawq-action-emerald {
+            padding: 0.4rem 0.55rem;
+        }
     }
     .lawq-actions-inline .lawq-muted {
         display: block;
@@ -477,9 +507,13 @@
                     <td class="rfq-col-actions">
                         <div class="lawq-actions-inline">
                             {% if row.can_award_lot %}
-                            <button type="button" class="rfq-action-btn"
-                                style="background:#f3e8ff;color:#6d28d9;border-color:#d8b4fe;"
+                            <button type="button" class="rfq-action-btn lawq-action-emerald"
                                 onclick="openAwardModal('{{ row.application.id }}', '{{ row.applicant.full_name|escapejs }}')">
+                                <svg class="rfq-action-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                    <path d="M3 11l9-8 9 8"/>
+                                    <path d="M5 10v10h14V10"/>
+                                    <path d="M9 21V13h6v8"/>
+                                </svg>
                                 Award lot
                             </button>
                             {% else %}

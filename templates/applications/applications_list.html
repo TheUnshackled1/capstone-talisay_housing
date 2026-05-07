@@ -1947,14 +1947,31 @@
         outline-offset: 2px;
     }
 
-    .btn-review-walkin {
-        background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
-        border-color: #0f766e;
+    /* Evaluate / row-primary action — color comes from tha-design-system.css
+       (light emerald ghost, .btn-review). We just normalize sizing here so
+       the Evaluate button on this page lines up with the Review and View
+       row buttons on ISF Registration. body-prefixed selectors so we win
+       the specificity tie with the design system. */
+    body .btn-review-walkin {
+        box-sizing: border-box;
+        min-height: 2.25rem;
+        padding: 0.4rem 0.85rem;
+        max-width: 100%;
+        gap: 0.4rem;
+        font-size: 0.6875rem;
+        line-height: 1.15;
     }
 
-    .btn-review-walkin:hover {
-        background: linear-gradient(135deg, #0f766e 0%, #115e59 100%);
-        box-shadow: 0 4px 14px rgba(13, 148, 136, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    body .btn-review-walkin:focus-visible {
+        outline: 2px solid #6ee7b7;
+        outline-offset: 2px;
+    }
+
+    @media (max-width: 640px) {
+        body .btn-review-walkin {
+            width: 100%;
+            padding: 0.4rem 0.55rem;
+        }
     }
 
     .btn-review .btn-icon {

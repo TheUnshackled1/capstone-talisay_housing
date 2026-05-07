@@ -1735,9 +1735,17 @@
             if (stp) stp.style.display = 'none';
         }
 
+        function fieldNotify(message, title, variant) {
+            if (typeof window.showFlowAlert === 'function') {
+                window.showFlowAlert(message, title || 'Notice', null, variant || 'default');
+            } else {
+                alert(message);
+            }
+        }
+
         async function startFieldCamera() {
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                alert('This browser does not support in-page camera access. Please use “Attach from device” to upload photographs.');
+                fieldNotify('This browser does not support in-page camera access. Please use “Attach from device” to upload photographs.', 'Camera unavailable');
                 return;
             }
             try {
@@ -1752,7 +1760,7 @@
                 document.getElementById('fieldCameraCaptureBtn').style.display = 'inline-block';
                 document.getElementById('fieldCameraStopBtn').style.display = 'inline-block';
             } catch (err) {
-                alert('Could not open camera: ' + (err && err.message ? err.message : 'permission denied') + '\n\nUse “Attach from device”, or ensure you are on HTTPS or localhost.');
+                fieldNotify('Could not open camera: ' + (err && err.message ? err.message : 'permission denied') + '\n\nUse “Attach from device”, or ensure you are on HTTPS or localhost.', 'Camera blocked');
             }
         }
 
@@ -1760,11 +1768,11 @@
             const v = document.getElementById('fieldCameraVideo');
             const c = document.getElementById('fieldCameraCanvas');
             if (!v || !c || !v.videoWidth) {
-                alert('Wait for the camera preview to appear, then capture again.');
+                fieldNotify('Wait for the camera preview to appear, then capture again.', 'Camera not ready');
                 return;
             }
             if (fieldEvidenceFiles.length >= 12) {
-                alert('Maximum 12 evidence photos.');
+                fieldNotify('Maximum 12 evidence photos.', 'Photo limit reached');
                 return;
             }
             c.width = v.videoWidth;
@@ -1779,12 +1787,12 @@
 
         function addFieldEvidenceFile(file) {
             if (fieldEvidenceFiles.length >= 12) {
-                alert('Maximum 12 evidence photos.');
+                fieldNotify('Maximum 12 evidence photos.', 'Photo limit reached');
                 return;
             }
             const maxBytes = 6 * 1024 * 1024;
             if (file.size > maxBytes) {
-                alert('Each photo must be 6 MB or smaller: ' + (file.name || 'file'));
+                fieldNotify('Each photo must be 6 MB or smaller: ' + (file.name || 'file'), 'Photo too large');
                 return;
             }
             fieldEvidenceFiles.push(file);
@@ -1873,7 +1881,7 @@
             const verificationNotes = notesEl ? notesEl.value.trim() : '';
 
             if (!verificationDecision) {
-                alert('Please select one field certification (hazard sustained, or claim not sustained) before submitting.');
+                fieldNotify('Please select one field certification (hazard sustained, or claim not sustained) before submitting.', 'Decision required');
                 return;
             }
 
@@ -1912,15 +1920,34 @@
                     try {
                         localStorage.setItem('tha_field_cert_sync', String(Date.now()));
                     } catch (ignoreLs) { /* private mode / quota */ }
-                    alert(data.message + photoMsg + smsMsg + '\n\nThe field certification has been recorded and is now available in Module 2 (Application & Eligibility) for staff review.');
-                    closeVerificationModal();
-                    setTimeout(() => location.reload(), 1000);
+                    var successMessage = data.message + photoMsg + smsMsg
+                        + '\n\nThe field certification has been recorded and is now available in Module 2 (Application & Eligibility) for staff review.';
+                    var onAck = function () {
+                        closeVerificationModal();
+                        setTimeout(function () { location.reload(); }, 200);
+                    };
+                    if (typeof window.showFlowAlert === 'function') {
+                        window.showFlowAlert(successMessage, 'Verification recorded', onAck, 'success');
+                    } else {
+                        alert(successMessage);
+                        onAck();
+                    }
                 } else {
-                    alert('Submission could not be completed: ' + data.error);
+                    var errMsg = 'Submission could not be completed: ' + data.error;
+                    if (typeof window.showFlowAlert === 'function') {
+                        window.showFlowAlert(errMsg, 'Submission failed', null, 'default');
+                    } else {
+                        alert(errMsg);
+                    }
                 }
             })
             .catch(error => {
-                alert('Network or server error: ' + error);
+                var netMsg = 'Network or server error: ' + error;
+                if (typeof window.showFlowAlert === 'function') {
+                    window.showFlowAlert(netMsg, 'Network error', null, 'default');
+                } else {
+                    alert(netMsg);
+                }
                 console.error('Fetch error:', error);
             });
         }
@@ -2045,12 +2072,13 @@
             const pending = vals[0] ? vals[0].textContent.trim() : '—';
             const certified = vals[1] ? vals[1].textContent.trim() : '—';
             const notCert = vals[2] ? vals[2].textContent.trim() : '—';
-            alert(
+            fieldNotify(
                 'Desk summary (current counts)\n\n' +
                 'Pending field certification: ' + pending + '\n' +
                 'Certified — hazard sustained: ' + certified + '\n' +
                 'Not certified — claim not sustained: ' + notCert + '\n\n' +
-                'Please continue to file field reports promptly for THA tracking.'
+                'Please continue to file field reports promptly for THA tracking.',
+                'My verifications today'
             );
         }
 </script>
