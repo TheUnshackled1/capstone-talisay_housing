@@ -337,58 +337,6 @@ class ConstructionProgressUpdate(models.Model):
     def __str__(self):
         return f"{self.progress.lot_award.unit} - {self.get_stage_display()} ({self.percent_complete}%)"
 
-class ElectricityConnection(models.Model):
-    """
-    Tracks Negros Power electricity connection per beneficiary.
-    Managed by Joie (2nd Member) and Laarni (5th Member).
-    """
-    STATUS_CHOICES = [
-        ('pending', 'Pending - Not Started'),
-        ('docs_submitted', 'Documents Submitted to Negros Power'),
-        ('coordinating', 'Coordination in Progress'),
-        ('approved', 'Connection Approved'),
-        ('completed', 'Connection Completed'),
-    ]
-    
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    
-    lot_award = models.OneToOneField(
-        LotAward,
-        on_delete=models.CASCADE,
-        related_name='electricity_connection'
-    )
-    
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
-    
-    # Timeline tracking
-    initiated_at = models.DateTimeField(null=True, blank=True)
-    initiated_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='electricity_initiated'
-    )
-    
-    docs_submitted_at = models.DateTimeField(null=True, blank=True)
-    approved_at = models.DateTimeField(null=True, blank=True)
-    completed_at = models.DateTimeField(null=True, blank=True)
-    
-    # Negros Power reference
-    negros_power_reference = models.CharField(max_length=50, blank=True)
-    
-    notes = models.TextField(blank=True)
-    
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        verbose_name = "Electricity connection (unit / lot)"
-        verbose_name_plural = "Electricity connections (units)"
-
-    def __str__(self):
-        return f"Electricity - {self.lot_award.unit}"
-
-
 class Blacklist(models.Model):
     """
     Permanently disqualified beneficiaries.

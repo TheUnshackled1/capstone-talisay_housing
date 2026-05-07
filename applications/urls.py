@@ -60,7 +60,4 @@ urlpatterns = [
     # OIC full approval after applicant-signed scan (same handler as documents API alias)
     path('staff/<str:position>/routing/update/', views.update_routing, name='update_routing'),
 
-    # Electricity tracking (Joie, Laarni)
-    path('staff/<str:position>/electricity/', views.electricity_list, name='electricity_list'),
-    path('staff/<str:position>/electricity/update/', views.update_electricity, name='update_electricity'),
 ]

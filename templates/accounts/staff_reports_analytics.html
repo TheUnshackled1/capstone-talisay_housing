@@ -378,7 +378,7 @@
         line-height: 1.4;
     }
 
-    /* Backlog table (electricity) */
+    /* Backlog table */
     .rep-table-card { padding: 0; overflow: hidden; }
     .rep-table-head {
         padding: 0.85rem 1.05rem 0.6rem;
@@ -654,10 +654,6 @@
                     <span class="rep-stat-label">Applicants with incomplete docs</span>
                     <span class="rep-stat-value">{{ incomplete_docs|default:0 }}</span>
                 </div>
-                <div class="rep-stat is-warn">
-                    <span class="rep-stat-label">Electricity connections pending</span>
-                    <span class="rep-stat-value">{{ electricity_pending|default:0 }}</span>
-                </div>
                 <div class="rep-stat">
                     <span class="rep-stat-label">Requirements submitted in period</span>
                     <span class="rep-stat-value">{{ requirement_submissions_submitted_period|default:0 }}</span>
@@ -698,10 +694,10 @@
     <!-- Section: Housing analytics -->
     <div class="rep-section">
         <h2>Housing analytics</h2>
-        <p class="rep-section-note">Module 2 applications, Module 4 inventory, and electricity connections.</p>
+        <p class="rep-section-note">Module 2 applications and Module 4 inventory.</p>
         <span class="rep-section-rule"></span>
     </div>
-    <div class="rep-grid-3 rep-grid-charts">
+    <div class="rep-grid-2 rep-grid-charts">
         <div class="rep-card">
             <p class="rep-card-title">Housing applications by status</p>
             <p class="rep-card-sub">Module 2 records by application status.</p>
@@ -711,11 +707,6 @@
             <p class="rep-card-title">Housing units by status</p>
             <p class="rep-card-sub">Module 4 inventory occupancy / notice state.</p>
             <div class="rep-chart-canvas"><canvas id="chartHousing"></canvas></div>
-        </div>
-        <div class="rep-card">
-            <p class="rep-card-title">Electricity connections</p>
-            <p class="rep-card-sub">Connection workflow status with Negros Power.</p>
-            <div class="rep-chart-canvas"><canvas id="chartElectricity"></canvas></div>
         </div>
     </div>
 
@@ -748,51 +739,6 @@
         <p class="rep-card-sub">Live counts on staff desk queues across the workflow.</p>
         <div class="rep-chart-canvas" style="height: 240px;"><canvas id="chartQueues"></canvas></div>
     </div>
-
-    <!-- Section: Electricity backlog -->
-    {% if electricity_backlog %}
-    <div class="rep-section">
-        <h2>Electricity backlog</h2>
-        <p class="rep-section-note">Most recent {{ electricity_backlog|length }} pending connection record{{ electricity_backlog|length|pluralize }}.</p>
-        <span class="rep-section-rule"></span>
-    </div>
-    <div class="rep-card rep-table-card">
-        <div class="rep-table-head">
-            <h3>Pending connections — backlog detail</h3>
-            <p>Sorted by most recently updated. Rows here mirror the CSV export.</p>
-        </div>
-        <div class="rep-table-scroll">
-            <table class="rep-table">
-                <thead>
-                    <tr>
-                        <th>Reference</th>
-                        <th>Applicant</th>
-                        <th>Unit</th>
-                        <th>Status</th>
-                        <th>Negros ref</th>
-                        <th>Updated</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for row in electricity_backlog %}
-                    <tr>
-                        <td class="rep-mono">{{ row.reference }}</td>
-                        <td>{{ row.name }}</td>
-                        <td>{{ row.unit }}</td>
-                        <td><span class="rep-pill">{{ row.status }}</span></td>
-                        <td class="rep-mono">{{ row.negros_ref }}</td>
-                        <td style="color:#475569; white-space:nowrap;">{{ row.updated_at|date:"M d, Y" }}</td>
-                    </tr>
-                    {% empty %}
-                    <tr class="rep-empty-row">
-                        <td colspan="6">No pending connections — every awarded unit is energized.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-    {% endif %}
 
     <div class="rep-footer">
         Generated {{ timestamp|date:"M j, Y g:i A" }} · The CSV export contains the same figures plus per-row breakdowns.
@@ -1073,12 +1019,6 @@
     } else {
         hideChartCardByCanvasId('chartCasesType');
     }
-    if (hasChartData('electricityByStatus')) {
-        doughnut(document.getElementById('chartElectricity'), 'electricityByStatus', 'No electricity connections yet');
-    } else {
-        hideChartCardByCanvasId('chartElectricity');
-    }
-
     barHorizontal(document.getElementById('chartBarangays'), 'topBarangays', 'No barangay breakdown yet');
     barHorizontal(document.getElementById('chartQueues'), 'activeQueues', 'No active desk queues');
 })();

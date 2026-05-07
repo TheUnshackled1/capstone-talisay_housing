@@ -19,7 +19,7 @@ from applications.models import CDRRMOCertification
 from units.models import Blacklist as UnitsBlacklist
 from applications.models import QueueEntry, Application
 from documents.models import Document, SignatoryRouting, RequirementSubmission
-from units.models import HousingUnit, ElectricityConnection
+from units.models import HousingUnit
 from cases.models import Case
 
 
@@ -55,32 +55,6 @@ def _applicant_intake_docs_done_count(applicant):
         'doc_sketch_location',
     )
     return sum(1 for k in keys if getattr(applicant, k, False))
-
-
-def _serialize_units_electricity_connection(conn):
-    """units.ElectricityConnection → dict for dashboard templates (2nd / 5th member)."""
-    unit = conn.lot_award.unit
-    person = conn.lot_award.application.applicant
-    st = conn.status
-    progress_map = {
-        'pending': 25,
-        'docs_submitted': 45,
-        'coordinating': 65,
-        'approved': 90,
-        'completed': 100,
-    }
-    step_map = {'pending': 1, 'docs_submitted': 2, 'coordinating': 3, 'approved': 3, 'completed': 4}
-    return {
-        'beneficiary': person.full_name,
-        'beneficiary_name': person.full_name,
-        'block': unit.block_number,
-        'lot': unit.lot_number,
-        'status': st,
-        'status_display': conn.get_status_display(),
-        'progress': progress_map.get(st, 15),
-        'step': step_map.get(st, 1),
-        'last_updated': conn.updated_at,
-    }
 
 
 def login_view(request):
@@ -278,7 +252,7 @@ def dashboard_oic(request):
 def dashboard_second_member(request):
     """
     Dashboard for Second Member (Lourynie Joie V. Tingson)
-    Responsibilities: M2 (notices, electricity), M3 (docs), M4 (compliance), M6 (reports)
+    Responsibilities: M2 (notices), M3 (docs), M4 (compliance), M6 (reports)
     """
     if request.user.position != 'second_member':
         messages.error(request, 'Access denied. This dashboard is for the Second Member position only.')
@@ -288,17 +262,6 @@ def dashboard_second_member(request):
     pending_notices_count = 0
     urgent_notices_count = 0
     notices_to_prepare = []
-
-    # ==================== MODULE 2: ELECTRICITY CONNECTIONS (M2) — units.ElectricityConnection ====================
-    electricity_connections = (
-        ElectricityConnection.objects.exclude(status='completed')
-        .select_related('lot_award__application__applicant', 'lot_award__unit')
-        .order_by('-updated_at')[:20]
-    )
-    electricity_tracking = [_serialize_units_electricity_connection(c) for c in electricity_connections]
-    electricity_pending_count = (
-        ElectricityConnection.objects.exclude(status='completed').count()
-    )
 
     # ==================== MODULE 3: DOCUMENT OVERSIGHT (M3) — Module 1 seven-document checklist ====================
     incomplete_module1_qs = (
@@ -374,10 +337,6 @@ def dashboard_second_member(request):
         'pending_notices': pending_notices_count,
         'urgent_notices': urgent_notices_count,
         'notices_to_prepare': notices_to_prepare,
-
-        # ========== MODULE 2: ELECTRICITY CONNECTIONS (M2) ==========
-        'electricity_pending': electricity_pending_count,
-        'electricity_tracking': electricity_tracking,
 
         # ========== MODULE 3: DOCUMENT OVERSIGHT (M3) ==========
         'incomplete_docs': incomplete_docs_count,
@@ -479,7 +438,6 @@ def _build_analytics_charts_data(
     applicant_by_status,
     application_by_status,
     housing_units_by_status,
-    electricity_by_status,
     cases_by_status,
     cases_by_type,
     applicants_top_barangays,
@@ -520,7 +478,6 @@ def _build_analytics_charts_data(
         'applicantsByStatus': pair_labels_counts(applicant_by_status),
         'applicationsByStatus': pair_labels_counts(application_by_status),
         'housingByStatus': pair_labels_counts(housing_units_by_status),
-        'electricityByStatus': pair_labels_counts(electricity_by_status),
         'casesByStatus': pair_labels_counts(cases_by_status),
         'casesByType': pair_labels_counts(cases_by_type),
         'topBarangays': pair_labels_counts(applicants_top_barangays, label_key='place_name'),
@@ -565,9 +522,6 @@ def _staff_reports_analytics_payload(request):
     doc_type_labels = dict(Document.DOCUMENT_TYPE_CHOICES)
     applicant_status_labels = dict(Applicant.STATUS_CHOICES)
     application_status_labels = dict(Application.STATUS_CHOICES)
-    electricity_status_labels = dict(ElectricityConnection.STATUS_CHOICES)
-
-    electricity_pending_count = ElectricityConnection.objects.exclude(status='completed').count()
     incomplete_docs_count = Applicant.objects.filter(_applicant_missing_intake_doc_q()).count()
     total_applicants = Applicant.objects.count()
     housing_application_records = Application.objects.count()
@@ -622,36 +576,6 @@ def _staff_reports_analytics_payload(request):
         monthly_upload_trend.append({'label': lbl, 'year': y, 'month': m, 'count': c})
     for row in monthly_upload_trend:
         row['bar_pct'] = min(100, int(round(100 * row['count'] / trend_max))) if trend_max else 0
-
-    electricity_by_status = sorted(
-        (
-            ElectricityConnection.objects.values('status')
-            .annotate(count=Count('id'))
-            .order_by('-count')
-        ),
-        key=lambda x: (-x['count'], x['status'] or ''),
-    )
-    for row in electricity_by_status:
-        row['label'] = electricity_status_labels.get(row['status'], row['status'] or '—')
-
-    electricity_backlog = []
-    for conn in (
-        ElectricityConnection.objects.exclude(status='completed')
-        .select_related(
-            'lot_award__application__applicant',
-            'lot_award__unit',
-        )
-        .order_by('-updated_at')[:30]
-    ):
-        app = getattr(getattr(conn.lot_award, 'application', None), 'applicant', None)
-        electricity_backlog.append({
-            'reference': getattr(app, 'reference_number', '') or '—',
-            'name': getattr(app, 'full_name', '') or '—',
-            'unit': str(conn.lot_award.unit) if conn.lot_award_id else '—',
-            'status': conn.get_status_display(),
-            'updated_at': timezone.localtime(conn.updated_at),
-            'negros_ref': conn.negros_power_reference or '—',
-        })
 
     applicants_registered_period = Applicant.objects.filter(
         created_at__gte=period_start,
@@ -801,7 +725,6 @@ def _staff_reports_analytics_payload(request):
         applicant_by_status,
         application_by_status,
         housing_units_by_status,
-        electricity_by_status,
         cases_by_status,
         cases_by_type,
         applicants_top_barangays,
@@ -820,7 +743,6 @@ def _staff_reports_analytics_payload(request):
 
     return {
         'pending_notices': 0,
-        'electricity_pending': electricity_pending_count,
         'incomplete_docs': incomplete_docs_count,
         'total_applications': total_applicants,
         'housing_application_records': housing_application_records,
@@ -837,8 +759,6 @@ def _staff_reports_analytics_payload(request):
         'application_by_status': application_by_status,
         'documents_by_type': documents_by_type,
         'monthly_upload_trend': monthly_upload_trend,
-        'electricity_by_status': electricity_by_status,
-        'electricity_backlog': electricity_backlog,
         'applicants_registered_period': applicants_registered_period,
         'housing_apps_created_period': housing_apps_created_period,
         'awarded_transition_period': awarded_transition_period,
@@ -875,8 +795,6 @@ def _staff_reports_analytics_csv_response(data, export_role_title, filename_pref
     application_by_status = data['application_by_status']
     documents_by_type = data['documents_by_type']
     monthly_upload_trend = data['monthly_upload_trend']
-    electricity_by_status = data['electricity_by_status']
-    electricity_backlog = data['electricity_backlog']
 
     response = HttpResponse(content_type='text/csv; charset=utf-8')
     response['Content-Disposition'] = (
@@ -907,23 +825,6 @@ def _staff_reports_analytics_csv_response(data, export_role_title, filename_pref
     writer.writerow(['Month', 'Count'])
     for row in monthly_upload_trend:
         writer.writerow([row['label'], row['count']])
-    writer.writerow([])
-    writer.writerow(['Electricity connections by status (snapshot)'])
-    writer.writerow(['Status code', 'Label', 'Count'])
-    for row in electricity_by_status:
-        writer.writerow([row['status'], row['label'], row['count']])
-    writer.writerow([])
-    writer.writerow(['Electricity backlog (pending / not completed), max 30 rows'])
-    writer.writerow(['Reference', 'Applicant', 'Unit', 'Status', 'Negros ref', 'Last updated'])
-    for row in electricity_backlog:
-        writer.writerow([
-            row['reference'],
-            row['name'],
-            row['unit'],
-            row['status'],
-            row['negros_ref'],
-            row['updated_at'].strftime('%Y-%m-%d %H:%M') if row['updated_at'] else '',
-        ])
     writer.writerow([])
     writer.writerow(['Period activity'])
     writer.writerow(['Metric', 'Value'])
@@ -1152,7 +1053,7 @@ def dashboard_fourth_member(request):
 def dashboard_fifth_member(request):
     """
     Dashboard for Fifth Member (Laarni C. Hellera)
-    Responsibilities: M2 (electricity connection tracking)
+    Responsibilities: dashboard monitoring and reporting support
     """
     if request.user.position != 'fifth_member':
         messages.error(request, 'Access denied. This dashboard is for the Fifth Member position only.')
@@ -1167,37 +1068,6 @@ def dashboard_fifth_member(request):
         updated_at__gte=this_month_start,
     ).count()
 
-    qs_open = (
-        ElectricityConnection.objects.exclude(status='completed')
-        .select_related('lot_award__application__applicant', 'lot_award__unit')
-        .order_by('-updated_at')
-    )
-    electricity_queue = [_serialize_units_electricity_connection(c) for c in qs_open[:20]]
-    pending_connections = qs_open.count()
-    connected_this_month = ElectricityConnection.objects.filter(
-        status='completed',
-        completed_at__gte=this_month_start,
-    ).count()
-    awaiting_negros_power = ElectricityConnection.objects.filter(
-        status__in=['docs_submitted', 'coordinating'],
-    ).count()
-
-    negros_power_pending = []
-    for conn in (
-        ElectricityConnection.objects.filter(status__in=['docs_submitted', 'coordinating'])
-        .select_related('lot_award__application__applicant', 'lot_award__unit')
-        .order_by('updated_at')[:15]
-    ):
-        row = _serialize_units_electricity_connection(conn)
-        ref_dt = conn.docs_submitted_at or conn.updated_at
-        if ref_dt:
-            row['submitted_date'] = timezone.localdate(ref_dt).strftime('%b %d, %Y')
-            row['days_pending'] = max(0, (timezone.now() - ref_dt).days)
-        else:
-            row['submitted_date'] = '—'
-            row['days_pending'] = 0
-        negros_power_pending.append(row)
-
     monthly_notices = 0
     docs_submitted = RequirementSubmission.objects.filter(
         status='verified',
@@ -1211,12 +1081,7 @@ def dashboard_fifth_member(request):
         'awaiting_signature': awaiting_signature_count,
         'housing_units': total_housing_units,
         'approved_this_month': approved_this_month,
-        'pending_connections': pending_connections,
-        'connected_this_month': connected_this_month,
-        'awaiting_negros_power': awaiting_negros_power,
         'monthly_notices': monthly_notices,
-        'electricity_queue': electricity_queue,
-        'negros_power_pending': negros_power_pending,
         'docs_submitted': docs_submitted,
     }
     return render(request, 'accounts/dashboard.html', context)
@@ -1448,7 +1313,6 @@ def applicants_list(request):
                 'sketchHouseLocation': False
             },
             'lotAssignment': None,
-            'electricityStatus': None
         },
         {
             'id': 2,
@@ -1479,7 +1343,6 @@ def applicants_list(request):
                 'sketchHouseLocation': True
             },
             'lotAssignment': None,
-            'electricityStatus': None
         },
         {
             'id': 3,
@@ -1510,7 +1373,6 @@ def applicants_list(request):
                 'sketchHouseLocation': True
             },
             'lotAssignment': None,
-            'electricityStatus': None
         },
         {
             'id': 4,
@@ -1541,7 +1403,6 @@ def applicants_list(request):
                 'sketchHouseLocation': False
             },
             'lotAssignment': None,
-            'electricityStatus': None
         },
         {
             'id': 5,
@@ -1577,7 +1438,6 @@ def applicants_list(request):
                 'site': 'GK Cabatangan',
                 'dateAwarded': '2024-02-15'
             },
-            'electricityStatus': 'Application Submitted'
         },
         {
             'id': 6,
@@ -1609,7 +1469,6 @@ def applicants_list(request):
                 'sketchHouseLocation': True
             },
             'lotAssignment': None,
-            'electricityStatus': None
         }
     ]
     

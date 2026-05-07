@@ -2,7 +2,6 @@ from django.contrib import admin
 from .models import (
     Document,
     SMSLog,
-    ElectricityConnection,
     LotAwarding,
     Requirement,
     RequirementSubmission,
@@ -158,39 +157,6 @@ class EndorsementRoutingStepAdmin(admin.ModelAdmin):
     list_display = ('application', 'step', 'is_completed', 'completed_at', 'recorded_by')
     list_filter = ('step', 'is_completed', 'completed_at')
     search_fields = ('application__application_number', 'application__applicant__full_name')
-
-
-@admin.register(ElectricityConnection)
-class ElectricityConnectionAdmin(admin.ModelAdmin):
-    list_display = ('application', 'status', 'applied_at', 'connected_at')
-    list_filter = ('status', 'applied_at')
-    search_fields = ('application__application_number',)
-    readonly_fields = ('applied_at', 'connected_at')
-
-    fieldsets = (
-        ('💡 ELECTRICITY CONNECTION', {
-            'fields': ('application', 'status'),
-        }),
-        ('📝 NEGROS POWER APPLICATION', {
-            'fields': ('applied_at', 'applied_by', 'negros_power_reference'),
-        }),
-        ('🔍 INSPECTION', {
-            'fields': ('inspection_date', 'inspection_result'),
-            'classes': ('collapse',),
-        }),
-        ('✅ CONNECTION COMPLETION', {
-            'fields': ('connected_at', 'meter_number'),
-            'classes': ('collapse',),
-        }),
-        ('⚠️ ISSUES', {
-            'fields': ('issue_description', 'issue_resolved_at'),
-            'classes': ('collapse',),
-        }),
-        ('📝 NOTES', {
-            'fields': ('notes',),
-            'classes': ('collapse',),
-        }),
-    )
 
 
 @admin.register(LotAwarding)

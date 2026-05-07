@@ -1,3 +1,28 @@
+<style>
+.widgets-grid.oic-widgets-inline {
+    grid-template-columns: repeat(4, minmax(240px, 1fr));
+    gap: 0.9rem;
+    align-items: start;
+}
+
+@media (max-width: 1280px) {
+    .widgets-grid.oic-widgets-inline {
+        grid-template-columns: repeat(2, minmax(260px, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    .widgets-grid.oic-widgets-inline {
+        grid-template-columns: 1fr;
+    }
+    .oic-compact-title { font-size: 0.7rem !important; }
+    .oic-compact-value { font-size: 1.25rem !important; }
+    .oic-compact-sub { font-size: 0.7rem !important; }
+    .oic-donut-label { font-size: 0.7rem !important; }
+    .oic-donut-meta { font-size: 0.68rem !important; }
+}
+</style>
+
 <div class="card scroll-animate" style="border-top: 4px solid #0ea5e9;">
     <div class="card-header">
         <h3 class="card-title">
@@ -10,56 +35,56 @@
         </h3>
     </div>
     <div class="card-body">
-        <div style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:0.55rem;">
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap:0.55rem;">
             <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:0.55rem; padding:0.35rem 0.45rem;">
-                <div style="font-size:0.64rem; color:#64748b;">Total Units</div>
-                <div style="font-size:0.95rem; font-weight:700; color:#0f172a; line-height:1.2;">{{ total_housing_units|default:0 }}</div>
-                <div style="font-size:0.64rem; color:#475569; line-height:1.25;">{{ occupied_units|default:0 }} occupied / {{ vacant_units|default:0 }} vacant</div>
+                <div class="oic-compact-title" style="font-size:0.64rem; color:#64748b;">Total Units</div>
+                <div class="oic-compact-value" style="font-size:0.95rem; font-weight:700; color:#0f172a; line-height:1.2;">{{ total_housing_units|default:0 }}</div>
+                <div class="oic-compact-sub" style="font-size:0.64rem; color:#475569; line-height:1.25;">{{ occupied_units|default:0 }} occupied / {{ vacant_units|default:0 }} vacant</div>
             </div>
             <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:0.55rem; padding:0.35rem 0.45rem;">
-                <div style="font-size:0.64rem; color:#64748b;">Total Applications</div>
-                <div style="font-size:0.95rem; font-weight:700; color:#0f172a; line-height:1.2;">{{ total_applications|default:0 }}</div>
-                <div style="font-size:0.64rem; color:#475569; line-height:1.25;">{{ standby_applications|default:0 }} standby / {{ awarded_applications|default:0 }} awarded</div>
+                <div class="oic-compact-title" style="font-size:0.64rem; color:#64748b;">Total Applications</div>
+                <div class="oic-compact-value" style="font-size:0.95rem; font-weight:700; color:#0f172a; line-height:1.2;">{{ total_applications|default:0 }}</div>
+                <div class="oic-compact-sub" style="font-size:0.64rem; color:#475569; line-height:1.25;">{{ standby_applications|default:0 }} standby / {{ awarded_applications|default:0 }} awarded</div>
             </div>
         </div>
-        <div style="margin-top:0.85rem; display:grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap:0.9rem;">
+        <div style="margin-top:0.85rem; display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:0.9rem;">
             <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:0.6rem; padding:0.7rem;">
-                <div style="font-size:0.75rem; color:#475569; margin-bottom:0.55rem;">Occupancy Rate</div>
-                <div style="display:flex; align-items:center; gap:0.75rem;">
+                <div class="oic-donut-label" style="font-size:0.75rem; color:#475569; margin-bottom:0.55rem;">Occupancy Rate</div>
+                <div style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap;">
                     <div style="width:58px; height:58px; border-radius:50%; background:conic-gradient(#2563eb {{ occupancy_rate_pct|default:0 }}%, #e2e8f0 0); position:relative; flex-shrink:0;">
                         <div style="position:absolute; inset:8px; border-radius:50%; background:#fff; display:flex; align-items:center; justify-content:center; font-size:0.72rem; font-weight:700; color:#1e3a8a;">
                             {{ occupancy_rate_pct|default:0 }}%
                         </div>
                     </div>
-                    <div style="font-size:0.72rem; color:#64748b; line-height:1.45;">
+                    <div class="oic-donut-meta" style="font-size:0.72rem; color:#64748b; line-height:1.4; min-width:0; flex:1;">
                         <div><strong style="color:#0f172a;">{{ occupied_units|default:0 }}</strong> occupied</div>
                         <div><strong style="color:#0f172a;">{{ vacant_units|default:0 }}</strong> vacant</div>
                     </div>
                 </div>
             </div>
             <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:0.6rem; padding:0.7rem;">
-                <div style="font-size:0.75rem; color:#475569; margin-bottom:0.55rem;">Awarded Rate</div>
-                <div style="display:flex; align-items:center; gap:0.75rem;">
+                <div class="oic-donut-label" style="font-size:0.75rem; color:#475569; margin-bottom:0.55rem;">Awarded Rate</div>
+                <div style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap;">
                     <div style="width:58px; height:58px; border-radius:50%; background:conic-gradient(#16a34a {{ awarded_rate_pct|default:0 }}%, #e2e8f0 0); position:relative; flex-shrink:0;">
                         <div style="position:absolute; inset:8px; border-radius:50%; background:#fff; display:flex; align-items:center; justify-content:center; font-size:0.72rem; font-weight:700; color:#166534;">
                             {{ awarded_rate_pct|default:0 }}%
                         </div>
                     </div>
-                    <div style="font-size:0.72rem; color:#64748b; line-height:1.45;">
+                    <div class="oic-donut-meta" style="font-size:0.72rem; color:#64748b; line-height:1.4; min-width:0; flex:1;">
                         <div><strong style="color:#0f172a;">{{ awarded_applications|default:0 }}</strong> awarded</div>
                         <div><strong style="color:#0f172a;">{{ standby_applications|default:0 }}</strong> standby</div>
                     </div>
                 </div>
             </div>
             <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:0.6rem; padding:0.7rem;">
-                <div style="font-size:0.75rem; color:#475569; margin-bottom:0.55rem;">Ready for Award</div>
-                <div style="display:flex; align-items:center; gap:0.75rem;">
+                <div class="oic-donut-label" style="font-size:0.75rem; color:#475569; margin-bottom:0.55rem;">Ready for Award</div>
+                <div style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap;">
                     <div style="width:58px; height:58px; border-radius:50%; background:conic-gradient(#7c3aed {{ ready_for_award_pct|default:0 }}%, #e2e8f0 0); position:relative; flex-shrink:0;">
                         <div style="position:absolute; inset:8px; border-radius:50%; background:#fff; display:flex; align-items:center; justify-content:center; font-size:0.72rem; font-weight:700; color:#6d28d9;">
                             {{ ready_for_award_pct|default:0 }}%
                         </div>
                     </div>
-                    <div style="font-size:0.72rem; color:#64748b; line-height:1.45;">
+                    <div class="oic-donut-meta" style="font-size:0.72rem; color:#64748b; line-height:1.4; min-width:0; flex:1;">
                         <div><strong style="color:#0f172a;">{{ standby_applications|default:0 }}</strong> standby</div>
                         <div><strong style="color:#0f172a;">{{ total_applications|default:0 }}</strong> total apps</div>
                     </div>
@@ -80,26 +105,26 @@
         </h3>
     </div>
     <div class="card-body">
-        <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0.75rem;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0.75rem;">
             <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 0.5rem; padding: 0.75rem;">
-                <div style="font-size: 0.75rem; color: #166534;">Total Units</div>
-                <div style="font-size: 1.5rem; font-weight: 700; color: #166534;">{{ total_housing_units|default:0 }}</div>
+                <div class="oic-compact-title" style="font-size: 0.75rem; color: #166534; line-height:1.25;">Total Units</div>
+                <div class="oic-compact-value" style="font-size: 1.5rem; font-weight: 700; color: #166534;">{{ total_housing_units|default:0 }}</div>
             </div>
             <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 0.5rem; padding: 0.75rem;">
-                <div style="font-size: 0.75rem; color: #1d4ed8;">Occupied</div>
-                <div style="font-size: 1.5rem; font-weight: 700; color: #1d4ed8;">{{ occupied_units|default:0 }}</div>
+                <div class="oic-compact-title" style="font-size: 0.75rem; color: #1d4ed8; line-height:1.25;">Occupied</div>
+                <div class="oic-compact-value" style="font-size: 1.5rem; font-weight: 700; color: #1d4ed8;">{{ occupied_units|default:0 }}</div>
             </div>
             <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 0.5rem; padding: 0.75rem;">
-                <div style="font-size: 0.75rem; color: #a16207;">Vacant</div>
-                <div style="font-size: 1.5rem; font-weight: 700; color: #a16207;">{{ vacant_units|default:0 }}</div>
+                <div class="oic-compact-title" style="font-size: 0.75rem; color: #a16207; line-height:1.25;">Vacant</div>
+                <div class="oic-compact-value" style="font-size: 1.5rem; font-weight: 700; color: #a16207;">{{ vacant_units|default:0 }}</div>
             </div>
             <div style="background: #fff7ed; border: 1px solid #fdba74; border-radius: 0.5rem; padding: 0.75rem;">
-                <div style="font-size: 0.75rem; color: #c2410c;">Under Notice</div>
-                <div style="font-size: 1.5rem; font-weight: 700; color: #c2410c;">{{ under_notice_units|default:0 }}</div>
+                <div class="oic-compact-title" style="font-size: 0.75rem; color: #c2410c; line-height:1.25;">Under Notice</div>
+                <div class="oic-compact-value" style="font-size: 1.5rem; font-weight: 700; color: #c2410c;">{{ under_notice_units|default:0 }}</div>
             </div>
             <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 0.5rem; padding: 0.75rem;">
-                <div style="font-size: 0.75rem; color: #b91c1c;">Repossessed</div>
-                <div style="font-size: 1.5rem; font-weight: 700; color: #b91c1c;">{{ repossessed_units|default:0 }}</div>
+                <div class="oic-compact-title" style="font-size: 0.75rem; color: #b91c1c; line-height:1.25;">Repossessed</div>
+                <div class="oic-compact-value" style="font-size: 1.5rem; font-weight: 700; color: #b91c1c;">{{ repossessed_units|default:0 }}</div>
             </div>
         </div>
     </div>
@@ -116,22 +141,22 @@
         </h3>
     </div>
     <div class="card-body">
-        <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.75rem;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.75rem;">
             <div style="background: #eef2ff; border: 1px solid #c7d2fe; border-radius: 0.5rem; padding: 0.75rem;">
-                <div style="font-size: 0.75rem; color: #3730a3;">Total Applications</div>
-                <div style="font-size: 1.5rem; font-weight: 700; color: #3730a3;">{{ total_applications|default:0 }}</div>
+                <div class="oic-compact-title" style="font-size: 0.75rem; color: #3730a3;">Total Applications</div>
+                <div class="oic-compact-value" style="font-size: 1.5rem; font-weight: 700; color: #3730a3;">{{ total_applications|default:0 }}</div>
             </div>
             <div style="background: #ecfeff; border: 1px solid #a5f3fc; border-radius: 0.5rem; padding: 0.75rem;">
-                <div style="font-size: 0.75rem; color: #0e7490;">Completed</div>
-                <div style="font-size: 1.5rem; font-weight: 700; color: #0e7490;">{{ completed_applications|default:0 }}</div>
+                <div class="oic-compact-title" style="font-size: 0.75rem; color: #0e7490;">Completed</div>
+                <div class="oic-compact-value" style="font-size: 1.5rem; font-weight: 700; color: #0e7490;">{{ completed_applications|default:0 }}</div>
             </div>
             <div style="background: #faf5ff; border: 1px solid #e9d5ff; border-radius: 0.5rem; padding: 0.75rem;">
-                <div style="font-size: 0.75rem; color: #7e22ce;">Standby</div>
-                <div style="font-size: 1.5rem; font-weight: 700; color: #7e22ce;">{{ standby_applications|default:0 }}</div>
+                <div class="oic-compact-title" style="font-size: 0.75rem; color: #7e22ce;">Standby</div>
+                <div class="oic-compact-value" style="font-size: 1.5rem; font-weight: 700; color: #7e22ce;">{{ standby_applications|default:0 }}</div>
             </div>
             <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 0.5rem; padding: 0.75rem;">
-                <div style="font-size: 0.75rem; color: #15803d;">Awarded</div>
-                <div style="font-size: 1.5rem; font-weight: 700; color: #15803d;">{{ awarded_applications|default:0 }}</div>
+                <div class="oic-compact-title" style="font-size: 0.75rem; color: #15803d;">Awarded</div>
+                <div class="oic-compact-value" style="font-size: 1.5rem; font-weight: 700; color: #15803d;">{{ awarded_applications|default:0 }}</div>
             </div>
         </div>
     </div>

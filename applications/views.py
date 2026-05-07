@@ -18,7 +18,6 @@ from intake.models import Applicant, Archive
 from intake import sms_workflow
 from documents.models import (
     Document,
-    ElectricityConnection,
     LotAwarding,
     Requirement,
     RequirementSubmission,
@@ -133,8 +132,8 @@ def get_module2_permissions(user):
     
     Module 2 Staff Roles:
     - Jocel (4th Member): Verify documents, generate forms, record lot awarding
-    - Joie (2nd Member): Supervisor, electricity tracking, routing backup, lot awarding backup
-    - Laarni (5th Member): Electricity tracking
+    - Joie (2nd Member): Supervisor, routing backup, lot awarding backup
+    - Laarni (5th Member): View-only access
     - Victor (OIC): Final signature
     """
     position = user.position
@@ -147,7 +146,6 @@ def get_module2_permissions(user):
         'can_forward_routing': False,
         'can_sign_oic': False,
         'can_award_lot': False,
-        'can_manage_electricity': False,
         'role_description': '',
     }
     
@@ -161,7 +159,7 @@ def get_module2_permissions(user):
             'role_description': 'Document Verification & Lot Awarding',
         })
     elif position == 'second_member':
-        # Joie - Supervisor + Electricity + lot awarding backup (same as award_lot view)
+        # Joie - Supervisor + lot awarding backup (same as award_lot view)
         permissions.update({
             'can_view': True,
             'can_verify_documents': True,  # Supervisor can also verify
@@ -169,15 +167,13 @@ def get_module2_permissions(user):
             'can_receive_routing': True,  # Supervisor backup for signatory handoff
             'can_forward_routing': True,  # Supervisor backup for signatory handoff
             'can_award_lot': True,
-            'can_manage_electricity': True,
-            'role_description': 'Supervisor, Routing Backup & Electricity Tracking',
+            'role_description': 'Supervisor & Routing Backup',
         })
     elif position == 'fifth_member':
-        # Laarni - Electricity only
+        # Laarni - View-only role
         permissions.update({
             'can_view': True,
-            'can_manage_electricity': True,
-            'role_description': 'Electricity Tracking',
+            'role_description': 'Read-only Staff Access',
         })
     elif position == 'oic':
         # Victor - OIC signature
@@ -897,8 +893,6 @@ def _module2_applicant_row_payload(applicant, permissions, required_group_a_subm
         user_actions.append('generate_form')
     if permissions['can_award_lot'] and application and application.status == 'standby':
         user_actions.append('award_lot')
-    if permissions['can_manage_electricity'] and application and application.status == 'awarded':
-        user_actions.append('manage_electricity')
 
     signed_scan_present = (
         applicant_has_signed_application_payload(applicant)
@@ -975,8 +969,8 @@ def applications_list(request, position):
 
     ACCESS CONTROL:
     ✅ Jocel (4th Member) - Full access: verify docs, generate forms, award lots
-    ✅ Joie (2nd Member) - Supervisor: verify docs, electricity tracking
-    ✅ Laarni (5th Member) - Electricity tracking only
+    ✅ Joie (2nd Member) - Supervisor: verify docs and routing
+    ✅ Laarni (5th Member) - View-only dashboard access
     ✅ Victor (OIC) - View + OIC full approval once applicant-signed scan is on file
     """
     # Check access
@@ -3809,11 +3803,6 @@ def award_lot(request, position):
             application.applicant.status = 'awarded'
             application.applicant.save()
 
-            ElectricityConnection.objects.create(
-                application=application,
-                status='pending'
-            )
-
             if unit_for_assign:
                 _assign_housing_unit_after_lot_award(application, unit_for_assign, request.user)
             else:
@@ -3848,27 +3837,3 @@ def award_lot(request, position):
         return JsonResponse({'success': False, 'error': str(e)})
 
 
-# =============================================================================
-# ELECTRICITY TRACKING (Joie, Laarni)
-# =============================================================================
-
-@login_required
-@verify_position
-def electricity_list(request, position):
-    """
-    Deprecated path kept for backward compatibility.
-    Electricity tracking moved to Housing Units module.
-    """
-    return redirect('units:electricity_list', position=position)
-
-
-@login_required
-@verify_position
-@require_POST
-def update_electricity(request, position):
-    """
-    Deprecated path kept for backward compatibility.
-    Electricity tracking moved to Housing Units module.
-    """
-    from units.views import update_electricity as units_update_electricity
-    return units_update_electricity(request, position)

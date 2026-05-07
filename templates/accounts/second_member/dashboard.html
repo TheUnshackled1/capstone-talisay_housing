@@ -1,7 +1,7 @@
 {% comment %}
 Modern Dashboard for Second Member (Lourynie Joie V. Tingson)
 Adapted from Housing Services System UI Design
-Responsibilities: M2 (notices, electricity), M3 (docs), M4 (compliance), M6 (reports)
+Responsibilities: M2 (notices), M3 (docs), M4 (compliance), M6 (reports)
 {% endcomment %}
 
 <!-- Widgets Grid -->
@@ -13,7 +13,7 @@ Responsibilities: M2 (notices, electricity), M3 (docs), M4 (compliance), M6 (rep
                 <svg class="w-4 h-4 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
                 </svg>
-                <h3 class="text-sm font-medium text-slate-800">Priority Tasks</h3>
+                <h3 class="text-sm font-medium text-slate-800">Immediate Actions</h3>
             </div>
             <span class="px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full text-xs font-medium">
                 {{ pending_notices|default:0 }}
@@ -51,51 +51,6 @@ Responsibilities: M2 (notices, electricity), M3 (docs), M4 (compliance), M6 (rep
         </div>
     </div>
 
-    <!-- Electricity Connections Widget -->
-    <div class="bg-white rounded-xl border border-slate-200 shadow-sm">
-        <div class="px-4 py-3 border-b border-slate-200 flex items-center justify-between">
-            <div class="flex items-center gap-2">
-                <svg class="w-4 h-4 text-purple-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-                </svg>
-                <h3 class="text-sm font-medium text-slate-800">Electricity Connections</h3>
-            </div>
-            <span class="px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
-                {{ electricity_pending|default:0 }}
-            </span>
-        </div>
-        <div class="p-4">
-            {% if electricity_tracking %}
-                <div class="space-y-3">
-                    {% for item in electricity_tracking %}
-                    <div class="p-3 rounded-lg bg-slate-50 border border-slate-100">
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="text-xs font-medium text-slate-700">Block {{ item.block }}, Lot {{ item.lot }}</span>
-                            <span class="px-2 py-0.5 rounded-full text-[10px] font-medium {% if item.status == 'pending' %}bg-amber-100 text-amber-700{% elif item.status == 'in_progress' %}bg-blue-100 text-blue-700{% else %}bg-green-100 text-green-700{% endif %}">
-                                {{ item.status_display }}
-                            </span>
-                        </div>
-                        <div class="flex items-center gap-2 mb-2">
-                            <div class="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden">
-                                <div class="h-full bg-gradient-to-r from-blue-600 to-purple-600 rounded-full transition-all" style="width: {{ item.progress }}%"></div>
-                            </div>
-                            <span class="text-[10px] font-medium text-slate-600 min-w-[35px] text-right">{{ item.progress }}%</span>
-                        </div>
-                        <p class="text-[11px] text-slate-500">{{ item.beneficiary_name }} • {{ item.last_updated }}</p>
-                    </div>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <div class="text-center py-6">
-                    <svg class="w-10 h-10 text-slate-300 mx-auto mb-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-                    </svg>
-                    <p class="text-sm text-slate-500">No pending connections</p>
-                </div>
-            {% endif %}
-        </div>
-    </div>
-
     <!-- Document Oversight Widget -->
     <div class="bg-white rounded-xl border border-slate-200 shadow-sm">
         <div class="px-4 py-3 border-b border-slate-200 flex items-center justify-between">
@@ -103,7 +58,7 @@ Responsibilities: M2 (notices, electricity), M3 (docs), M4 (compliance), M6 (rep
                 <svg class="w-4 h-4 text-teal-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
                 </svg>
-                <h3 class="text-sm font-medium text-slate-800">Document Oversight</h3>
+                <h3 class="text-sm font-medium text-slate-800">Document Completeness</h3>
             </div>
             <span class="px-2 py-0.5 bg-teal-100 text-teal-700 rounded-full text-xs font-medium">
                 {{ incomplete_docs|default:0 }}
@@ -131,7 +86,7 @@ Responsibilities: M2 (notices, electricity), M3 (docs), M4 (compliance), M6 (rep
                     <svg class="w-10 h-10 text-slate-300 mx-auto mb-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                         <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
                     </svg>
-                    <p class="text-sm text-slate-500">All documents complete</p>
+                    <p class="text-sm text-slate-500">No incomplete document records</p>
                 </div>
             {% endif %}
         </div>
@@ -144,7 +99,7 @@ Responsibilities: M2 (notices, electricity), M3 (docs), M4 (compliance), M6 (rep
                 <svg class="w-4 h-4 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
                 </svg>
-                <h3 class="text-sm font-medium text-slate-800">Upcoming Reports</h3>
+                <h3 class="text-sm font-medium text-slate-800">Reporting Calendar</h3>
             </div>
         </div>
         <div class="p-4">
@@ -173,7 +128,7 @@ Responsibilities: M2 (notices, electricity), M3 (docs), M4 (compliance), M6 (rep
                     <svg class="w-10 h-10 text-slate-300 mx-auto mb-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                         <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
                     </svg>
-                    <p class="text-sm text-slate-500">No reports due</p>
+                    <p class="text-sm text-slate-500">No reports due in current cycle</p>
                 </div>
             {% endif %}
         </div>
@@ -188,7 +143,7 @@ Responsibilities: M2 (notices, electricity), M3 (docs), M4 (compliance), M6 (rep
             </svg>
         </div>
         <div class="min-w-0">
-            <h4 class="text-sm text-slate-800 quick-access-title">Cases Management</h4>
+            <h4 class="text-sm text-slate-800 quick-access-title">Case Oversight</h4>
             <p class="text-xs text-slate-500">Track and manage case records</p>
         </div>
     </a>
@@ -203,7 +158,7 @@ Responsibilities: M2 (notices, electricity), M3 (docs), M4 (compliance), M6 (rep
             </svg>
         </div>
         <div class="min-w-0">
-            <h4 class="text-sm text-slate-800 quick-access-title">Housing Units</h4>
+            <h4 class="text-sm text-slate-800 quick-access-title">Housing Inventory</h4>
             <p class="text-xs text-slate-500">Monitor units and occupancy status</p>
         </div>
     </a>

@@ -1,7 +1,7 @@
 from django.contrib import admin
 from .models import (
     RelocationSite, HousingUnit, WeeklyReport, LotAward,
-    ElectricityConnection, Blacklist,
+    Blacklist,
     CaseRecord, CaseUpdate, SMSLog,
     ConstructionProgress, ConstructionProgressUpdate,
 )
@@ -149,31 +149,6 @@ class ConstructionProgressAdmin(admin.ModelAdmin):
         }),
         ('🔏 AUDIT', {
             'fields': ('updated_by', 'created_at', 'updated_at'),
-            'classes': ('collapse',),
-        }),
-    )
-
-
-@admin.register(ElectricityConnection)
-class ElectricityConnectionAdmin(admin.ModelAdmin):
-    list_display = ('lot_award', 'status', 'initiated_at', 'completed_at')
-    list_filter = ('status', 'initiated_at')
-    search_fields = ('lot_award__application__applicant__full_name', 'negros_power_reference')
-    readonly_fields = ('updated_at',)
-
-    fieldsets = (
-        ('💡 ELECTRICITY CONNECTION', {
-            'fields': ('lot_award', 'status'),
-        }),
-        ('📝 NEGROS POWER', {
-            'fields': ('initiated_at', 'initiated_by', 'negros_power_reference'),
-        }),
-        ('📋 TIMELINE', {
-            'fields': ('docs_submitted_at', 'approved_at', 'completed_at'),
-            'classes': ('collapse',),
-        }),
-        ('📝 NOTES', {
-            'fields': ('notes',),
             'classes': ('collapse',),
         }),
     )
