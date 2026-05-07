@@ -60,15 +60,16 @@
                     </td>
                     <td class="rfq-col-proceeded">
                         {% if data.form_queue_routed_at %}
-                        <time datetime="{{ data.form_queue_routed_at|date:'c' }}" title="{% if data.form_queue_routed_by %}By {{ data.form_queue_routed_by.get_full_name }}{% else %}Proceed to Form{% endif %}">
-                            {{ data.form_queue_routed_at|date:"M d, Y" }} | {{ data.form_queue_routed_at|date:"h:i A" }}
+                        <time class="rfq-proceeded-text" datetime="{{ data.form_queue_routed_at|date:'c' }}" title="{% if data.form_queue_routed_by %}By {{ data.form_queue_routed_by.get_full_name }}{% else %}Proceed to Form{% endif %}">
+                            <span class="rfq-proceeded-date">{{ data.form_queue_routed_at|date:"M d, Y" }}</span>
+                            <span class="rfq-proceeded-time">{{ data.form_queue_routed_at|date:"h:i A" }}</span>
                         </time>
                         {% else %}
                         <span class="rfq-proceeded-missing">—</span>
                         {% endif %}
                     </td>
                     <td class="rfq-col-proceeded-ago" title="Same moment as Proceeded Date &amp; Time — relative to now">
-                        {{ data.routedAgo|default:"—" }}
+                        <span class="rfq-timeago-text">{{ data.routedAgo|default:"—" }}</span>
                     </td>
                     <td class="rfq-col-status">
                         {% if data.selected_out_of_queue %}
@@ -85,7 +86,7 @@
                             <button type="button" class="rfq-action-btn rfq-action-slot-1"
                                 onclick="generateFormFromQueue('{{ data.applicant.id }}')">Generate Form</button>
                             <span class="rfq-action-placeholder rfq-action-placeholder--scan rfq-action-slot-2"
-                                title="Generate the application form first. Then this column shows scan / upload shortcuts to the document vault, like other rows.">Signed scan or upload — after you generate the PDF</span>
+                                title="Generate the application form first. Then this column shows scan / upload shortcuts to the document vault, like other rows.">Signed scan/upload after PDF</span>
                             {% elif data.application %}
                             <a class="rfq-action-btn generate-form-btn rfq-action-slot-1" href="{% url 'applications:application_form_pdf' request.user.position data.applicant.id %}" target="_blank" rel="noopener">Open PDF</a>
                             {% if data.application.status == 'draft' and data.signed_form_vault_url_upload %}
@@ -127,9 +128,9 @@
                             </div>
                             {% else %}
                             <button type="button" class="rfq-action-btn rfq-action-btn--scan rfq-action-slot-2"
-                                onclick="proceedToLotAwardingQueue('{{ data.application.id }}', '{{ data.applicant.reference_number|default:''|escapejs }}')"
+                                onclick="proceedToLotAwardingQueue('{{ data.application.id }}')"
                                 title="Move this signed record to the lot-awarding queue">
-                                Proceed to lot awarding
+                                Proceed to Awarding
                             </button>
                             {% endif %}
                             {% endif %}
@@ -641,7 +642,7 @@
         );
     }
 
-    async function proceedToLotAwardingQueue(applicationId, referenceNumber) {
+    async function proceedToLotAwardingQueue(applicationId) {
         if (!applicationId) {
             rfqShowAlert('Missing application record.', 'Lot awarding queue', 'default');
             return;

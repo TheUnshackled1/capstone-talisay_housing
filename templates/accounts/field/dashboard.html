@@ -1336,17 +1336,17 @@
             <div style="overflow-x: auto;">
                 <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
                     <thead>
-                        <tr style="background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%); border-bottom: 2px solid #d1d5db;">
-                            <th style="padding: 14px 12px; text-align: left; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.4px;">#</th>
-                            <th style="padding: 14px 12px; text-align: left; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.4px;">Transaction #</th>
-                            <th style="padding: 14px 12px; text-align: left; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.4px;">Date & Time</th>
-                            <th style="padding: 14px 12px; text-align: left; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.4px;">Reference #</th>
-                            <th style="padding: 14px 12px; text-align: left; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.4px;">Full Name</th>
-                            <th style="padding: 14px 12px; text-align: left; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.4px;">Current address / barangay</th>
-                            <th style="padding: 14px 12px; text-align: left; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.4px;">Eligibility</th>
-                            <th style="padding: 14px 12px; text-align: left; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.4px;">Queue / visit order</th>
-                            <th style="padding: 14px 12px; text-align: left; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.4px;">Staff Handled</th>
-                            <th style="padding: 14px 12px; text-align: center; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.4px;">Action</th>
+                        <tr style="background: linear-gradient(180deg, #1d4ed8 0%, #1e3a8a 100%); border-bottom: 2px solid #172554;">
+                            <th style="padding: 14px 12px; text-align: left; font-weight: 700; color: #ffffff; text-transform: uppercase; letter-spacing: 0.4px; border-right: 1px solid rgba(255, 255, 255, 0.16);">#</th>
+                            <th style="padding: 14px 12px; text-align: left; font-weight: 700; color: #ffffff; text-transform: uppercase; letter-spacing: 0.4px; border-right: 1px solid rgba(255, 255, 255, 0.16);">Transaction #</th>
+                            <th style="padding: 14px 12px; text-align: left; font-weight: 700; color: #ffffff; text-transform: uppercase; letter-spacing: 0.4px; border-right: 1px solid rgba(255, 255, 255, 0.16);">Date & Time</th>
+                            <th style="padding: 14px 12px; text-align: left; font-weight: 700; color: #ffffff; text-transform: uppercase; letter-spacing: 0.4px; border-right: 1px solid rgba(255, 255, 255, 0.16);">Reference #</th>
+                            <th style="padding: 14px 12px; text-align: left; font-weight: 700; color: #ffffff; text-transform: uppercase; letter-spacing: 0.4px; border-right: 1px solid rgba(255, 255, 255, 0.16);">Full Name</th>
+                            <th style="padding: 14px 12px; text-align: left; font-weight: 700; color: #ffffff; text-transform: uppercase; letter-spacing: 0.4px; border-right: 1px solid rgba(255, 255, 255, 0.16);">Current address / barangay</th>
+                            <th style="padding: 14px 12px; text-align: left; font-weight: 700; color: #ffffff; text-transform: uppercase; letter-spacing: 0.4px; border-right: 1px solid rgba(255, 255, 255, 0.16);">Eligibility</th>
+                            <th style="padding: 14px 12px; text-align: left; font-weight: 700; color: #ffffff; text-transform: uppercase; letter-spacing: 0.4px; border-right: 1px solid rgba(255, 255, 255, 0.16);">Queue / visit order</th>
+                            <th style="padding: 14px 12px; text-align: left; font-weight: 700; color: #ffffff; text-transform: uppercase; letter-spacing: 0.4px; border-right: 1px solid rgba(255, 255, 255, 0.16);">Staff Handled</th>
+                            <th style="padding: 14px 12px; text-align: center; font-weight: 700; color: #ffffff; text-transform: uppercase; letter-spacing: 0.4px;">Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1771,8 +1771,8 @@
                 fieldNotify('Wait for the camera preview to appear, then capture again.', 'Camera not ready');
                 return;
             }
-            if (fieldEvidenceFiles.length >= 12) {
-                fieldNotify('Maximum 12 evidence photos.', 'Photo limit reached');
+            if (fieldEvidenceFiles.length >= 4) {
+                fieldNotify('Maximum 4 evidence photos.', 'Photo limit reached');
                 return;
             }
             c.width = v.videoWidth;
@@ -1786,8 +1786,8 @@
         }
 
         function addFieldEvidenceFile(file) {
-            if (fieldEvidenceFiles.length >= 12) {
-                fieldNotify('Maximum 12 evidence photos.', 'Photo limit reached');
+            if (fieldEvidenceFiles.length >= 4) {
+                fieldNotify('Maximum 4 evidence photos.', 'Photo limit reached');
                 return;
             }
             const maxBytes = 6 * 1024 * 1024;
@@ -1809,7 +1809,7 @@
             const files = ev.target.files;
             if (!files) return;
             for (let i = 0; i < files.length; i++) {
-                if (fieldEvidenceFiles.length >= 12) break;
+                if (fieldEvidenceFiles.length >= 4) break;
                 addFieldEvidenceFile(files[i]);
             }
             ev.target.value = '';
@@ -2163,7 +2163,7 @@
 
                     <div class="field-evidence-section">
                         <span class="field-evidence-label">Site photographs (supporting evidence)</span>
-                        <p class="field-evidence-hint">You may capture images using this device or attach files from storage. Accepted types: JPEG, PNG, or WebP. Maximum twelve (12) files, six (6) MB each. Camera access generally requires HTTPS or <code>localhost</code>.</p>
+                        <p class="field-evidence-hint">You may capture images using this device or attach files from storage. Accepted types: JPEG, PNG, or WebP. Maximum four (4) files, six (6) MB each. Camera access generally requires HTTPS or <code>localhost</code>.</p>
                         <video id="fieldCameraVideo" playsinline autoplay muted style="display: none;"></video>
                         <canvas id="fieldCameraCanvas" style="display: none;"></canvas>
                         <div class="field-evidence-buttons">

@@ -134,17 +134,35 @@ def _wrap_two_lines(text: str, first_max: int = 52, second_max: int = 62):
     return line1, rest
 
 
+def _formal_name_for_sections(applicant) -> str:
+    """
+    Section D/F/G display format:
+    First Middle LAST [EXT]
+    Example: "Trix Justin Aurelio AGUILAR"
+    """
+    first = _safe_str(getattr(applicant, 'first_name', ''))
+    middle = _safe_str(getattr(applicant, 'middle_name', ''))
+    last = _safe_str(getattr(applicant, 'last_name', '')).upper()
+    ext = _safe_str(getattr(applicant, 'extension_name', ''))
+
+    parts = [p for p in (first, middle, last) if p]
+    display = ' '.join(parts).strip()
+    if ext:
+        display = f'{display} {ext}'.strip()
+    return display
+
+
 def _endorsement_name_band(page, full_name: str):
     """Section D: fill gap between 'hereby endorsing' and 'qualified to avail'."""
     endo = page.search_for('hereby endorsing')
     qual = page.search_for('qualified to avail')
     if not full_name or not endo or not qual:
         return
-    left, right = endo[0].x1 + 2, qual[0].x0 - 3
-    top, bot = min(endo[0].y0, qual[0].y0) - 1, max(endo[0].y1, qual[0].y1) + 3
+    left, right = endo[0].x1 + 3, qual[0].x0 - 4
+    top, bot = min(endo[0].y0, qual[0].y0) - 0.5, max(endo[0].y1, qual[0].y1) + 2.5
     if right - left < 36:
         return
-    _insert_box(page, (left, top, right, bot), full_name, fontsize=7.5)
+    _insert_box(page, (left, top, right, bot), _overlay_ascii(full_name, 34), fontsize=7.4)
 
 
 def _section_f_applicant_line(page, full_name: str):
@@ -156,9 +174,9 @@ def _section_f_applicant_line(page, full_name: str):
     pad = 2
     _insert_box(
         page,
-        (r.x0 + pad, r.y0 + 0.5, r.x1 - pad, r.y1 + 1),
-        full_name,
-        fontsize=7.5,
+        (r.x0 + pad, r.y0 + 0.9, r.x1 - pad, r.y1 + 0.7),
+        _overlay_ascii(full_name, 34),
+        fontsize=7.4,
     )
 
 
@@ -183,7 +201,7 @@ def _section_g_applicant_line(page, full_name: str):
     bot = hereby[0].y1 + 2
     if right - left < 40:
         return
-    _insert_box(page, (left, top, right, bot), full_name, fontsize=7.5)
+    _insert_box(page, (left, top + 0.4, right, bot - 0.2), _overlay_ascii(full_name, 34), fontsize=7.4)
 
 
 def build_filled_application_pdf(applicant, application) -> bytes:
@@ -210,10 +228,15 @@ def build_filled_application_pdf(applicant, application) -> bytes:
     LX = 188
     FS = 8.5
 
-    # Names / sex row: lift so rules do not bisect glyphs (Helvetica baseline vs printed rules).
-    _baseline(p0, 188, 289.35, _safe_str(applicant.last_name), fontsize=FS)
-    _baseline(p0, 332, 289.35, _safe_str(applicant.first_name), fontsize=FS)
-    _baseline(p0, 442, 289.35, _safe_str(applicant.middle_name), fontsize=FS)
+    # Name-of-applicant lanes (Last / First / Middle) — slightly re-anchored so
+    # values sit cleaner above each printed lane without drifting into each other.
+    _baseline(p0, 188, 288.95, _overlay_ascii(applicant.last_name, 16), fontsize=FS)
+    _baseline(p0, 326, 288.95, _overlay_ascii(applicant.first_name, 18), fontsize=FS)
+    middle_with_ext = _safe_str(applicant.middle_name)
+    ext = _safe_str(applicant.extension_name)
+    if ext:
+        middle_with_ext = f'{middle_with_ext} {ext}'.strip()
+    _baseline(p0, 432, 288.95, _overlay_ascii(middle_with_ext, 14), fontsize=FS)
 
     sex_display = applicant.get_sex_display() if applicant.sex else ''
     _baseline(p0, LX, 309.45, sex_display[:22], fontsize=FS)
@@ -288,7 +311,7 @@ def build_filled_application_pdf(applicant, application) -> bytes:
     # --- Page 2 ---
     if len(doc) > 1:
         p1 = doc[1]
-        full = _safe_str(applicant.full_name)
+        full = _formal_name_for_sections(applicant)
         _endorsement_name_band(p1, full)
         _section_f_applicant_line(p1, full)
         _section_g_applicant_line(p1, full)

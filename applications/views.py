@@ -1970,7 +1970,7 @@ def field_verify_cdrrmo(request, position):
 
         # Evidence photos MUST stay FieldVerificationPhoto rows only — never Document(incident_report).
         photos = request.FILES.getlist('evidence_photos')
-        max_photos = 12
+        max_photos = 4
         max_bytes = 6 * 1024 * 1024
         allowed_types = {'image/jpeg', 'image/png', 'image/webp'}
         photos_saved = 0

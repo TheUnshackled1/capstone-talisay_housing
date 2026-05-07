@@ -21,6 +21,8 @@ import json
 import re
 from collections import defaultdict
 from django.utils.dateparse import parse_date
+from .utils import send_sms
+from . import sms_workflow
 
 # Module 1 income ceiling (₱) — keep in sync with `Applicant.is_income_eligible` in intake/models.py
 MODULE1_MONTHLY_INCOME_CEILING_PESO = 10000
@@ -836,6 +838,30 @@ def proceed_to_applications(request, position):
             applicant.module2_handoff_at = timezone.now()
             applicant.module2_handoff_by = request.user
             applicant.save(update_fields=['module2_handoff_at', 'module2_handoff_by', 'updated_at'])
+
+        should_send_proceed_sms = bool(applicant.phone_number) and (created or not applicant.registration_sms_sent)
+        if should_send_proceed_sms:
+            applicant_id = applicant.id
+            archive_id = archive_record.id
+            phone_number = applicant.phone_number
+            sms_message = sms_workflow.message_proceed_to_evaluation(applicant)
+
+            def _send_proceed_sms_after_commit():
+                sms_ok = send_sms(
+                    phone_number,
+                    sms_message,
+                    sms_workflow.PROCEED_TO_EVALUATION,
+                    applicant=applicant,
+                    module='intake',
+                )
+                if sms_ok:
+                    Applicant.objects.filter(id=applicant_id).update(registration_sms_sent=True)
+                    Archive.objects.filter(id=archive_id).update(
+                        sms_sent=True,
+                        sms_sent_at=timezone.now(),
+                    )
+
+            transaction.on_commit(_send_proceed_sms_after_commit)
 
     return JsonResponse({
         'success': True,

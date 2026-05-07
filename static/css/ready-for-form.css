@@ -81,7 +81,7 @@
 }
 
 .rfq-table-wrap {
-    overflow-x: auto;
+    overflow-x: hidden;
     border: 1px solid #e2e8f0;
     border-radius: 0.65rem;
 }
@@ -90,19 +90,20 @@
     width: 100%;
     border-collapse: collapse;
     font-size: 0.78rem;
+    table-layout: fixed;
 }
 
-.rfq-table th.rfq-col-proceeded,
 .rfq-table td.rfq-col-proceeded {
     text-align: left;
     white-space: nowrap;
     font-size: 0.6875rem;
     color: #64748b;
     min-width: 9.25rem;
+    width: 16%;
     vertical-align: middle;
+    padding-right: 0.9rem;
 }
 
-.rfq-table th.rfq-col-proceeded-ago,
 .rfq-table td.rfq-col-proceeded-ago {
     text-align: left;
     white-space: nowrap;
@@ -110,7 +111,42 @@
     color: #475569;
     font-weight: 600;
     min-width: 6.5rem;
+    width: 11%;
     vertical-align: middle;
+    padding-left: 1rem;
+    border-left: 1px solid #eef2f7;
+}
+
+.rfq-proceeded-text {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 0.08rem;
+    white-space: normal;
+    line-height: 1.2;
+}
+
+.rfq-timeago-text {
+    display: inline-block;
+    white-space: nowrap;
+    font-weight: 700;
+}
+
+.rfq-proceeded-date,
+.rfq-proceeded-time {
+    display: block;
+    white-space: nowrap;
+}
+
+.rfq-proceeded-time {
+    color: #475569;
+    font-weight: 600;
+}
+
+.rfq-table th.rfq-col-proceeded,
+.rfq-table th.rfq-col-proceeded-ago {
+    color: #ffffff;
+    font-size: 0.62rem;
+    white-space: normal;
 }
 
 .rfq-table td.rfq-col-proceeded time {
@@ -136,13 +172,14 @@
 
 .rfq-table th.rfq-col-actions,
 .rfq-table td.rfq-col-actions {
-    min-width: 38rem;
+    width: 42%;
+    min-width: 0;
 }
 
 /* Actions: 3-column grid; center items vertically so a tall middle cell does not stretch Open PDF / View */
 .rfq-actions-inline {
     display: grid;
-    grid-template-columns: 11.75rem minmax(12.5rem, 13.75rem) 11.75rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     justify-content: center;
     align-items: center;
     column-gap: 0.5rem;
@@ -253,7 +290,7 @@
     cursor: pointer;
     text-decoration: none;
     text-align: center;
-    white-space: nowrap;
+    white-space: normal;
     background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
     color: #fff;
     box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.12);
@@ -333,13 +370,14 @@
 .rfq-table th {
     text-align: left;
     padding: 0.55rem 0.65rem;
-    background: #f1f5f9;
-    color: #475569;
+    background: linear-gradient(180deg, #1d4ed8 0%, #1e3a8a 100%);
+    color: #ffffff;
     font-weight: 700;
     font-size: 0.62rem;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 2px solid #172554;
+    border-right: 1px solid rgba(255, 255, 255, 0.16);
     white-space: nowrap;
 }
 

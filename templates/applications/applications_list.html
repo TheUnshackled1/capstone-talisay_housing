@@ -424,8 +424,8 @@
     }
 
     .applications-table thead {
-        background: linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
-        border-bottom: 2px solid #cbd5e1;
+        background: linear-gradient(180deg, #1d4ed8 0%, #1e3a8a 100%);
+        border-bottom: 2px solid #172554;
         position: sticky;
         top: 0;
         z-index: 2;
@@ -436,15 +436,16 @@
         text-align: left;
         font-size: 0.58rem;
         font-weight: 700;
-        color: #475569;
+        color: #ffffff;
         text-transform: uppercase;
         letter-spacing: 0.085em;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        border-right: 1px solid #e2e8f0;
-        border-bottom: 1px solid #cbd5e1;
+        border-right: 1px solid rgba(255, 255, 255, 0.16);
+        border-bottom: 1px solid #172554;
         position: relative;
+        background: linear-gradient(180deg, #1d4ed8 0%, #1e3a8a 100%);
     }
 
     .applications-table th::after {
@@ -632,7 +633,9 @@
         text-overflow: ellipsis;
     }
     .applications-table.compact-table th.col-encoded,
-    .applications-table.compact-table th.col-encoded-ago {
+    .applications-table.compact-table th.col-encoded-ago,
+    .applications-table.compact-table th.col-transaction,
+    .applications-table.compact-table th.col-eligibility {
         white-space: normal;
         line-height: 1.2;
         overflow: visible;
@@ -673,11 +676,11 @@
     }
 
     .applications-table.compact-table .col-transaction {
-        width: 10%;
+        width: 12%;
     }
 
     .applications-table.compact-table .col-reference {
-        width: 10%;
+        width: 9%;
     }
 
     .applications-table.compact-table .col-encoded {
@@ -689,7 +692,7 @@
     }
 
     .applications-table.compact-table .col-eligibility {
-        width: 12%;
+        width: 14%;
     }
 
     .applications-table.compact-table .col-channel {
@@ -697,7 +700,7 @@
     }
 
     .applications-table.compact-table .col-queue {
-        width: 9%;
+        width: 8%;
     }
 
     .applications-table.compact-table .col-staff {
@@ -709,7 +712,7 @@
     }
 
     .applications-table.compact-table .col-actions {
-        width: 9%;
+        width: 8%;
     }
 
     .applications-table.compact-table .m2-record-meta {
@@ -894,6 +897,10 @@
         border: 1px solid #e2e8f0;
         border-radius: 4px;
         letter-spacing: 0.01em;
+        line-height: 1.35;
+        white-space: normal;
+        overflow-wrap: anywhere;
+        word-break: normal;
     }
 
     .m2-cell-muted {
@@ -2006,6 +2013,28 @@
     .action-btn.action-btn--proceed-form:focus-visible {
         outline: 2px solid #6ee7b7;
         outline-offset: 2px;
+    }
+
+    /* Keep action cell readable without expanding table columns */
+    .m2-actions-stack {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.35rem;
+        width: 100%;
+        max-width: 7.25rem;
+        margin: 0 auto;
+    }
+    .applications-table td.col-actions .btn-review-walkin,
+    .applications-table td.col-actions .action-btn {
+        width: 100%;
+        min-width: 0;
+        justify-content: center;
+        padding: 0.38rem 0.45rem;
+        font-size: 0.64rem;
+        line-height: 1.15;
+        white-space: normal;
+        word-break: normal;
     }
 
     /* Inline-styled action buttons (Receive / Forward / Sign / Award) — keep semantic color but harmonize */
@@ -3738,7 +3767,7 @@
                         </div>
                     </td>
                     <td class="col-transaction">
-                        <span class="m2-cell-code" style="font-family: monospace; font-size: 0.6rem; word-break: break-all;">APP-{{ data.applicant.id }}</span>
+                        <span class="m2-cell-code">APP-{{ data.applicant.id }}</span>
                     </td>
                     <td class="col-reference">
                         <span class="m2-cell-code">{{ data.applicant.reference_number }}</span>
@@ -3826,7 +3855,7 @@
                         </div>
                     </td>
                     <td class="col-actions">
-                        <div style="display: flex; gap: 0.25rem; flex-wrap: wrap; justify-content: center; align-items: center;">
+                        <div class="m2-actions-stack">
                             <button type="button" class="btn-review btn-review-walkin"
                                 onclick="runEvaluatePrecheck('{{ data.applicant.id }}', '{{ data.applicant.full_name|escapejs }}')">
                                 <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
