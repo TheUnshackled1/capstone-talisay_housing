@@ -5268,7 +5268,7 @@
                         </div>
                         <div class="form-group">
                             <label class="form-label">Years of residence in Talisay City <span style="color: #dc2626;">*</span></label>
-                            <input type="number" class="form-input" placeholder="Whole number of years" name="years_residing" id="yearsResiding" min="0" required>
+                            <input type="number" class="form-input" placeholder="Whole number of years" name="years_residing" id="yearsResiding" min="5" required>
                         </div>
                     </div>
 
@@ -6538,6 +6538,8 @@
 
     document.addEventListener('DOMContentLoaded', function() {
         const archiveReqFileInput = document.getElementById('archiveRequirementFileInput');
+        let hasShownVoterRequirementAlert = false;
+        let hasShownPropertyRequirementAlert = false;
         if (archiveReqFileInput) {
             archiveReqFileInput.addEventListener('change', handleArchiveRequirementFileSelected);
         }
@@ -6563,6 +6565,104 @@
         document.querySelectorAll('#addApplicantForm input[name="displacement_reason"]').forEach(function(radio) {
             radio.addEventListener('change', syncRegistrationDisplacementPanels);
         });
+        document.querySelectorAll('#addApplicantForm input[name="is_registered_voter_talisay"]').forEach(function(radio) {
+            radio.addEventListener('change', function() {
+                if (hasShownVoterRequirementAlert) return;
+                hasShownVoterRequirementAlert = true;
+                if (typeof window.showFlowAlert === 'function') {
+                    window.showFlowAlert(
+                        'Applicants must be registered voters in Talisay City before you proceed with registration.',
+                        'Office requirement',
+                        null,
+                        'default'
+                    );
+                } else {
+                    window.alert('Office requirement: Applicants must be registered voters in Talisay City before you proceed with registration.');
+                }
+            });
+        });
+        const hasPropertyYes = document.getElementById('hasPropertyYes');
+        const hasPropertyNo = document.getElementById('hasPropertyNo');
+        const yearsResidingInput = document.getElementById('yearsResiding');
+        const monthlyIncomeInput = document.getElementById('monthlyIncome');
+        let hasShownResidencyRequirementAlert = false;
+        let hasShownIncomeRequirementAlert = false;
+        if (hasPropertyYes) {
+            hasPropertyYes.addEventListener('change', function() {
+                if (!hasPropertyYes.checked) return;
+                if (!hasShownPropertyRequirementAlert) {
+                    hasShownPropertyRequirementAlert = true;
+                    if (typeof window.showFlowAlert === 'function') {
+                        window.showFlowAlert(
+                            'The office only accepts applicants who do not own property in Talisay City.',
+                            'Office requirement',
+                            null,
+                            'default'
+                        );
+                    } else {
+                        window.alert('Office requirement: The office only accepts applicants who do not own property in Talisay City.');
+                    }
+                }
+                if (hasPropertyNo) {
+                    hasPropertyNo.checked = true;
+                    hasPropertyNo.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            });
+        }
+        if (yearsResidingInput) {
+            const enforceResidencyRequirement = function() {
+                const raw = String(yearsResidingInput.value || '').trim();
+                const years = parseInt(raw, 10);
+                const isInvalid = raw !== '' && Number.isFinite(years) && years <= 4;
+                if (isInvalid) {
+                    yearsResidingInput.setCustomValidity('Office requirement: Minimum residency is 5 years in Talisay City.');
+                    if (!hasShownResidencyRequirementAlert) {
+                        hasShownResidencyRequirementAlert = true;
+                        if (typeof window.showFlowAlert === 'function') {
+                            window.showFlowAlert(
+                                'Applicants with 4 years or below residency in Talisay City are not accepted. Minimum is 5 years.',
+                                'Office requirement',
+                                null,
+                                'default'
+                            );
+                        } else {
+                            window.alert('Office requirement: Applicants with 4 years or below residency in Talisay City are not accepted. Minimum is 5 years.');
+                        }
+                    }
+                } else {
+                    yearsResidingInput.setCustomValidity('');
+                }
+            };
+            yearsResidingInput.addEventListener('input', enforceResidencyRequirement);
+            yearsResidingInput.addEventListener('change', enforceResidencyRequirement);
+        }
+        if (monthlyIncomeInput) {
+            const enforceIncomeCeilingRequirement = function() {
+                const raw = String(monthlyIncomeInput.value || '').replace(/,/g, '').trim();
+                const income = parseFloat(raw);
+                const isInvalid = raw !== '' && Number.isFinite(income) && income > MODULE1_INCOME_CEILING;
+                if (isInvalid) {
+                    monthlyIncomeInput.setCustomValidity('Office requirement: Maximum gross monthly household income is PHP 10,000.');
+                    if (!hasShownIncomeRequirementAlert) {
+                        hasShownIncomeRequirementAlert = true;
+                        if (typeof window.showFlowAlert === 'function') {
+                            window.showFlowAlert(
+                                'Applicants with gross monthly household income above PHP 10,000 are not accepted.',
+                                'Office requirement',
+                                null,
+                                'default'
+                            );
+                        } else {
+                            window.alert('Office requirement: Applicants with gross monthly household income above PHP 10,000 are not accepted.');
+                        }
+                    }
+                } else {
+                    monthlyIncomeInput.setCustomValidity('');
+                }
+            };
+            monthlyIncomeInput.addEventListener('input', enforceIncomeCeilingRequirement);
+            monthlyIncomeInput.addEventListener('change', enforceIncomeCeilingRequirement);
+        }
 
         // If an action requested auto-scroll to the Archive section, do it once after reload.
         try {
@@ -9193,16 +9293,52 @@
             }
         }
 
-        // Validate years residing in Talisay (required for eligibility check)
+        // Validate years residing in Talisay (office requirement: minimum 5 years)
         const yearsResiding = document.getElementById('yearsResiding');
-        if (!yearsResiding || yearsResiding.value === '' || yearsResiding.value < 0) {
+        const yearsResidingValue = yearsResiding ? parseInt(String(yearsResiding.value || '').trim(), 10) : NaN;
+        if (!yearsResiding || !Number.isFinite(yearsResidingValue) || yearsResidingValue <= 4) {
             showNoticeModal({
-                title: 'Missing Required Field',
-                message: 'Years Residing in Talisay is required for eligibility check.',
+                title: 'Residency Requirement',
+                message: 'Applicants with 4 years or below residency in Talisay City are not accepted. Minimum is 5 years.',
+                type: 'warning',
+            });
+            if (yearsResiding) {
+                yearsResiding.setCustomValidity('Office requirement: Minimum residency is 5 years in Talisay City.');
+                yearsResiding.reportValidity();
+            }
+            return;
+        }
+        yearsResiding.setCustomValidity('');
+
+        // Office requirement: applicant must be a registered voter in Talisay City.
+        const voterSelection = String(formData.get('is_registered_voter_talisay') || '').trim().toLowerCase();
+        if (voterSelection !== 'true') {
+            showNoticeModal({
+                title: 'Voter Requirement',
+                message: 'Applicants must be registered voters in Talisay City before you proceed with registration.',
                 type: 'warning',
             });
             return;
         }
+
+        // Office requirement: maximum gross monthly household income is PHP 10,000.
+        const monthlyIncomeRaw = String(formData.get('monthly_income') || '').replace(/,/g, '').trim();
+        const monthlyIncomeValue = parseFloat(monthlyIncomeRaw);
+        if (!Number.isFinite(monthlyIncomeValue) || monthlyIncomeValue > MODULE1_INCOME_CEILING) {
+            showNoticeModal({
+                title: 'Income Requirement',
+                message: 'Applicants with gross monthly household income above PHP 10,000 are not accepted.',
+                type: 'warning',
+            });
+            const monthlyIncome = document.getElementById('monthlyIncome');
+            if (monthlyIncome) {
+                monthlyIncome.setCustomValidity('Office requirement: Maximum gross monthly household income is PHP 10,000.');
+                monthlyIncome.reportValidity();
+            }
+            return;
+        }
+        const monthlyIncome = document.getElementById('monthlyIncome');
+        if (monthlyIncome) monthlyIncome.setCustomValidity('');
 
         // Property ownership declaration is required for Module 2.2.
         const propertyOwnershipSelected = formData.get('has_property_in_talisay');

@@ -122,6 +122,13 @@
     .units-kpi--repo     .units-kpi-icon { background: #f1f5f9; color: #475569; }
     .units-kpi--repo .units-kpi-value    { color: #475569; }
     .units-kpi--notice10 .units-kpi-value{ color: #b91c1c; }
+    .units-kpi--cm-not-started .units-kpi-icon { background: #f8fafc; color: #64748b; }
+    .units-kpi--cm-in-progress .units-kpi-icon { background: #d1fae5; color: #047857; }
+    .units-kpi--cm-completed .units-kpi-icon   { background: #bbf7d0; color: #065f46; }
+    .units-kpi--cm-delayed .units-kpi-icon     { background: #fee2e2; color: #b91c1c; }
+    .units-kpi--cm-in-progress .units-kpi-value { color: #047857; }
+    .units-kpi--cm-completed .units-kpi-value   { color: #065f46; }
+    .units-kpi--cm-delayed .units-kpi-value     { color: #b91c1c; }
 
     /* Construction summary strip — neutral cards with numeric accents */
     .units-cm-strip {
@@ -240,12 +247,12 @@
     <!-- Page Header -->
     <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1.05rem; gap: 1rem; flex-wrap: wrap;">
         <div style="min-width:0; flex:1 1 22rem;">
-            <p class="units-kicker">Module 4 · Housing inventory</p>
-            <h1 class="units-page-title">Housing Unit &amp; Occupancy Monitoring</h1>
-            <p style="font-size: 0.78rem; color: #475569; margin: 0; line-height: 1.5;">
-                {% if site %}<strong style="color:#0f172a;">{{ site.name }}</strong> ·{% endif %}
-                {{ total_units }} total unit{{ total_units|pluralize }} tracked. Weekly occupancy reports and notice-of-action enforcement.
-            </p>
+            <div style="display:flex; align-items:baseline; gap:0.55rem; flex-wrap:wrap;">
+                <h1 class="units-page-title" style="margin:0;">Housing Unit &amp; Occupancy Monitoring</h1>
+                <span style="font-size: 0.78rem; color: #475569; line-height: 1.5;">
+                    {% if site %}<strong style="color:#0f172a;">{{ site.name }}</strong> · {% endif %}{{ total_units }} total unit{{ total_units|pluralize }} tracked. Weekly occupancy reports and notice-of-action enforcement.
+                </span>
+            </div>
         </div>
         <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
             {% if can_create_relocation_site and no_relocation_sites %}
@@ -306,29 +313,42 @@
                 <p class="units-kpi-value">{{ repossessed_count }}</p>
             </div>
         </div>
-    </div>
-
-    <!-- Construction summary (Module 4 MVP) -->
-    <div class="units-cm-strip">
-        <div class="units-cm-tile">
-            <p class="cm-tile-label">Not started</p>
-            <p class="cm-tile-value">{{ construction_not_started|default:0 }}</p>
+        <div class="units-kpi units-kpi--cm-not-started">
+            <span class="units-kpi-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            </span>
+            <div>
+                <p class="units-kpi-label">Not started</p>
+                <p class="units-kpi-value">{{ construction_not_started|default:0 }}</p>
+            </div>
         </div>
-        <div class="units-cm-tile is-emerald">
-            <p class="cm-tile-label">In progress</p>
-            <p class="cm-tile-value">{{ construction_in_progress|default:0 }}</p>
+        <div class="units-kpi units-kpi--cm-in-progress">
+            <span class="units-kpi-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 13l4 4L20 7"/></svg>
+            </span>
+            <div>
+                <p class="units-kpi-label">In progress</p>
+                <p class="units-kpi-value">{{ construction_in_progress|default:0 }}</p>
+            </div>
         </div>
-        <div class="units-cm-tile is-emerald-dark">
-            <p class="cm-tile-label">Completed</p>
-            <p class="cm-tile-value">{{ construction_completed|default:0 }}</p>
+        <div class="units-kpi units-kpi--cm-completed">
+            <span class="units-kpi-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg>
+            </span>
+            <div>
+                <p class="units-kpi-label">Completed</p>
+                <p class="units-kpi-value">{{ construction_completed|default:0 }}</p>
+            </div>
         </div>
-        <div class="units-cm-tile is-delayed">
-            <p class="cm-tile-label">Delayed</p>
-            <p class="cm-tile-value">{{ construction_delayed|default:0 }}</p>
+        <div class="units-kpi units-kpi--cm-delayed">
+            <span class="units-kpi-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            </span>
+            <div>
+                <p class="units-kpi-label">Delayed</p>
+                <p class="units-kpi-value">{{ construction_delayed|default:0 }}</p>
+            </div>
         </div>
-        <p class="cm-strip-note">
-            Construction progress starts automatically when a lot is awarded, and is updated by field inspections.
-        </p>
     </div>
 
     <!-- Escalation Alert -->

@@ -238,21 +238,39 @@
     }
 
     .documents-table .col-applicant {
-        width: 34%;
+        width: 29%;
+        font-size: 0.9rem;
+        font-weight: 500;
+        letter-spacing: 0.01em;
     }
 
     .documents-table .col-documents {
-        width: 10%;
+        width: 9%;
         text-align: center;
     }
 
     .documents-table .col-status {
+        width: 12%;
+        text-align: center;
+    }
+
+    .documents-table .col-app-state {
+        width: 10%;
+        text-align: center;
+    }
+
+    .documents-table .col-workflow-status {
         width: 14%;
         text-align: center;
     }
 
+    .documents-table .col-doc-status {
+        width: 12%;
+        text-align: center;
+    }
+
     .documents-table .col-actions {
-        width: 28%;
+        width: 24%;
         overflow: visible;
         text-align: left;
     }
@@ -1013,11 +1031,7 @@
     <!-- Page Header -->
     <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1.05rem; gap: 1rem; flex-wrap: wrap;">
         <div style="min-width:0; flex:1 1 22rem;">
-            <p class="docs-kicker">Module 3 · Digital vault</p>
             <h1 class="docs-page-title">Document Management</h1>
-            <p class="docs-subtitle">
-                <strong>{{ total_applicants }}</strong> applicant{{ total_applicants|pluralize }} · <strong>{{ total_documents }}</strong> document{{ total_documents|pluralize }} on file. Physical copies remain authoritative; this vault is a working reference.
-            </p>
         </div>
         <button type="button" class="dm-action-btn dm-action-btn--scan" onclick="openUploadModal()">
             <svg class="dm-action-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -1072,9 +1086,10 @@
                 <tr>
                     <th class="col-num">#</th>
                     <th class="col-applicant">Applicant</th>
-                    <th class="col-status">Applicant Status</th>
+                    <th class="col-app-state">Status</th>
+                    <th class="col-workflow-status">Applicant Status</th>
                     <th class="col-documents" title="Total documents on file">No. of Documents</th>
-                    <th class="col-status">Document Status</th>
+                    <th class="col-doc-status">Document Status</th>
                     <th class="col-actions">Actions</th>
                 </tr>
             </thead>
@@ -1083,7 +1098,14 @@
                 <tr class="applicant-row">
                     <td class="col-num">{{ forloop.counter }}</td>
                     <td class="col-applicant">{{ applicant.full_name }}</td>
-                    <td class="col-status" style="vertical-align: middle;">
+                    <td class="col-app-state" style="vertical-align: middle;">
+                        {% if applicant.status == 'disqualified' %}
+                        <span style="display:inline-flex;align-items:center;gap:0.18rem;padding:0.14rem 0.42rem;background:#fee2e2;color:#991b1b;border:1px solid #fecaca;border-radius:9999px;font-size:0.5625rem;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;">Disqualified</span>
+                        {% else %}
+                        <span style="display:inline-flex;align-items:center;gap:0.18rem;padding:0.14rem 0.42rem;background:#dcfce7;color:#166534;border:1px solid #86efac;border-radius:9999px;font-size:0.5625rem;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;">Active</span>
+                        {% endif %}
+                    </td>
+                    <td class="col-workflow-status" style="vertical-align: middle;">
                         <span style="display:inline-flex;align-items:center;gap:0.18rem;padding:0.14rem 0.42rem;background:#eef2ff;color:#3730a3;border:1px solid #c7d2fe;border-radius:9999px;font-size:0.5625rem;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;">
                             {{ applicant.applicant_workflow_status|default:"Application & Eligibility" }}
                         </span>
@@ -1091,7 +1113,7 @@
                     <td class="col-documents">
                         <span style="display: inline-block; padding: 0.35rem 0.65rem; background: #eff6ff; color: #1e40af; border-radius: 4px; font-weight: 600; font-size: 0.75rem;">{{ applicant.doc_count }}</span>
                     </td>
-                    <td class="col-status" style="vertical-align: middle;">
+                    <td class="col-doc-status" style="vertical-align: middle;">
                         {% if applicant.doc_count >= 8 %}
                         <span style="display:inline-flex;align-items:center;gap:0.18rem;padding:0.14rem 0.42rem;background:#dcfce7;color:#166534;border:1px solid #86efac;border-radius:9999px;font-size:0.5625rem;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;">Complete</span>
                         {% elif applicant.doc_count > 0 %}
@@ -1115,7 +1137,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="6" style="padding: 1.25rem 1rem; font-size: 0.8125rem; color: #64748b; text-align: center;">No documents found</td>
+                    <td colspan="7" style="padding: 1.25rem 1rem; font-size: 0.8125rem; color: #64748b; text-align: center;">No documents found</td>
                 </tr>
                 {% endfor %}
             </tbody>
