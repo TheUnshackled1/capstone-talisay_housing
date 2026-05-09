@@ -1306,9 +1306,27 @@
         <div class="unit-detail-body">
             <!-- Occupant -->
             <section class="unit-detail-section">
-                <p class="unit-detail-label">Occupant</p>
-                <p id="modalOccupant" class="unit-detail-occupant">—</p>
-                <p id="modalOccupantProfile" class="unit-detail-occupant-sub"></p>
+                <button type="button" id="beneficiaryToggleBtn" class="unit-monitor-toggle" aria-expanded="false">
+                    <span>Beneficiary · occupant &amp; household</span>
+                    <span id="beneficiaryToggleIcon" class="toggle-icon" aria-hidden="true">▼</span>
+                </button>
+                <div id="beneficiaryDropdown" class="unit-monitor-panel" style="display: none;">
+                    <p class="panel-label">Lot beneficiary</p>
+                    <div class="unit-detail-poss-grid" style="margin-bottom: 0;">
+                        <div class="unit-detail-poss-cell">
+                            <p class="poss-cell-label">Name</p>
+                            <p id="modalBeneficiaryName" class="poss-cell-value">—</p>
+                        </div>
+                        <div class="unit-detail-poss-cell">
+                            <p class="poss-cell-label">Reference no.</p>
+                            <p id="modalBeneficiaryRef" class="poss-cell-value">—</p>
+                        </div>
+                        <div class="unit-detail-poss-cell">
+                            <p class="poss-cell-label">Household members</p>
+                            <p id="modalHouseholdMembers" class="poss-cell-value">—</p>
+                        </div>
+                    </div>
+                </div>
             </section>
 
             <!-- Lot possession card -->
@@ -1332,14 +1350,13 @@
                 </div>
             </section>
 
-            <!-- Lot Monitoring collapsible -->
+            <!-- House construction monitoring (collapsible) -->
             <section class="unit-detail-section">
                 <button type="button" id="lotMonitoringToggleBtn" class="unit-monitor-toggle" aria-expanded="false">
-                    <span>Step 1: Lot Monitoring · construction progress</span>
+                    <span>House construction monitoring · progress</span>
                     <span id="lotMonitoringToggleIcon" class="toggle-icon" aria-hidden="true">▼</span>
                 </button>
                 <div id="lotMonitoringDropdown" class="unit-monitor-panel" style="display: none;">
-                    <p class="panel-label">Construction progress</p>
                     <p class="unit-monitor-meta" style="margin:0 0 0.55rem;">
                         Staff/field team records house-building proof first (photos, stage, percent, visit date).
                     </p>
@@ -1403,11 +1420,11 @@
             <!-- Notice issuing collapsible -->
             <section class="unit-detail-section">
                 <button type="button" id="noticeIssuingToggleBtn" class="unit-monitor-toggle" aria-expanded="false" style="border-color:#fecaca; background:#fff1f2; color:#9f1239;">
-                    <span>Step 2: Notice Issuing · if non-compliant</span>
+                    <span>Notice issuing · if non-compliant</span>
                     <span id="noticeIssuingToggleIcon" class="toggle-icon" aria-hidden="true">▼</span>
                 </button>
                 <div id="noticeIssuingDropdown" class="unit-monitor-panel" style="display:none; background:#fff7ed; border-color:#fed7aa;">
-                    <p class="panel-label" style="color:#9a3412;">Notice issuing endpoint/status transitions (7-day, 15-day, 30-day)</p>
+                    <p class="panel-label" style="color:#9a3412;">Compliance notices (7-day, 15-day, 30-day)</p>
                     <p class="unit-monitor-meta" style="margin:0 0 0.55rem; color:#7c2d12;">
                         If the beneficiary remains non-compliant after notices and validation, the final decision is <strong>Disqualified</strong> and <strong>Blacklisted</strong>.
                     </p>
@@ -1646,6 +1663,19 @@ function filterUnits(filter) {
     });
 }
 
+function toggleBeneficiaryDropdown(forceOpen) {
+    const btn = document.getElementById('beneficiaryToggleBtn');
+    const icon = document.getElementById('beneficiaryToggleIcon');
+    const box = document.getElementById('beneficiaryDropdown');
+    if (!btn || !icon || !box) return;
+    const shouldOpen = typeof forceOpen === 'boolean'
+        ? forceOpen
+        : box.style.display === 'none';
+    box.style.display = shouldOpen ? 'block' : 'none';
+    btn.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
+    icon.textContent = shouldOpen ? '▲' : '▼';
+}
+
 function toggleLotMonitoringDropdown(forceOpen) {
     const btn = document.getElementById('lotMonitoringToggleBtn');
     const icon = document.getElementById('lotMonitoringToggleIcon');
@@ -1674,6 +1704,7 @@ function toggleNoticeIssuingDropdown(forceOpen) {
 
 function openUnitModal(unitId) {
     currentUnitId = unitId;
+    toggleBeneficiaryDropdown(false);
     toggleLotMonitoringDropdown(false);
     toggleNoticeIssuingDropdown(false);
     const position = '{{ request.user.position }}';
@@ -1693,7 +1724,17 @@ function openUnitModal(unitId) {
                     'Repossessed': 'repo'
                 };
                 statusPill.dataset.state = statusKeyMap[unit.status] || 'vacant';
-                document.getElementById('modalOccupant').textContent = unit.occupant_name || '—';
+                const ben = unit.beneficiary_info;
+                document.getElementById('modalBeneficiaryName').textContent =
+                    (ben && ben.full_name) ? ben.full_name : '—';
+                document.getElementById('modalBeneficiaryRef').textContent =
+                    (ben && ben.reference_number) ? ben.reference_number : '—';
+                const hmEl = document.getElementById('modalHouseholdMembers');
+                if (ben && ben.household_members != null && ben.household_members !== '') {
+                    hmEl.textContent = String(ben.household_members);
+                } else {
+                    hmEl.textContent = '—';
+                }
                 document.getElementById('constructionUnitId').value = unit.id;
                 const possession = unit.possession_info || null;
                 document.getElementById('lotAwardedDate').textContent = possession && possession.awarded_at ? String(possession.awarded_at).slice(0, 10) : '—';
@@ -1768,6 +1809,7 @@ function openUnitModal(unitId) {
                     form.style.display = 'none';
                 }
 
+                toggleBeneficiaryDropdown(true);
                 document.getElementById('unitModal').style.display = 'flex';
             } else {
                 console.error('Failed to fetch unit details:', data.error);
@@ -1828,6 +1870,9 @@ document.addEventListener('keydown', e => {
     if (e.key === 'Escape') closeUnitModal();
 });
 
+document.getElementById('beneficiaryToggleBtn')?.addEventListener('click', function () {
+    toggleBeneficiaryDropdown();
+});
 document.getElementById('lotMonitoringToggleBtn')?.addEventListener('click', function () {
     toggleLotMonitoringDropdown();
 });

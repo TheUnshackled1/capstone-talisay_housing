@@ -24,6 +24,18 @@ from accounts.models import FIELD_DESK_POSITIONS
 _MODULE4_ADD_HOUSING_UNIT_POSITIONS = frozenset({'fourth_member', 'second_member'})
 _MODULE4_CREATE_SITE_POSITIONS = frozenset({'fourth_member', 'second_member'})
 
+_NOTICE_STATUS_VALUES = frozenset({'Under notice (30-day)', 'Final notice (10-day)'})
+
+
+def _unit_has_notice_subject(unit, active_award=None):
+    """
+    Compliance notices apply to an occupying beneficiary. True if there is an active
+    lot award or at least a recorded occupant on the unit row.
+    """
+    if active_award is not None:
+        return True
+    return bool((unit.occupant_name or '').strip())
+
 
 def _sync_site_housing_unit_occupancy(site):
     """
@@ -48,7 +60,11 @@ def _sync_site_housing_unit_occupancy(site):
     units = list(
         HousingUnit.objects
         .filter(site=site)
-        .only('id', 'status', 'occupant_name', 'occupant_id', 'updated_at')
+        .only(
+            'id', 'status', 'occupant_name', 'occupant_id',
+            'notice_type', 'notice_date_issued', 'notice_deadline',
+            'updated_at',
+        )
     )
     to_update = []
     for unit in units:
@@ -59,6 +75,13 @@ def _sync_site_housing_unit_occupancy(site):
                 unit.status = 'Vacant — available'
                 unit.occupant_name = ''
                 unit.occupant_id = None
+                to_update.append(unit)
+            # Notice status with no occupant and no award is invalid (e.g. notice issued on vacant lot).
+            elif unit.status in _NOTICE_STATUS_VALUES and not (unit.occupant_name or '').strip():
+                unit.status = 'Vacant — available'
+                unit.notice_type = None
+                unit.notice_date_issued = None
+                unit.notice_deadline = None
                 to_update.append(unit)
             continue
 
@@ -74,7 +97,11 @@ def _sync_site_housing_unit_occupancy(site):
     if to_update:
         HousingUnit.objects.bulk_update(
             to_update,
-            ['status', 'occupant_name', 'occupant_id', 'updated_at'],
+            [
+                'status', 'occupant_name', 'occupant_id',
+                'notice_type', 'notice_date_issued', 'notice_deadline',
+                'updated_at',
+            ],
         )
 
 
@@ -439,6 +466,7 @@ def get_unit_details(request, position, unit_id):
             .first()
         )
         possession_info = None
+        beneficiary_info = None
         if active_lot_award and active_lot_award.awarded_at:
             awarded_at = active_lot_award.awarded_at
             now = timezone.now()
@@ -447,6 +475,20 @@ def get_unit_details(request, position, unit_id):
                 'awarded_at': awarded_at.isoformat(),
                 'possessed_at': awarded_at.isoformat(),
                 'days_possessed': days_possessed,
+            }
+        if active_lot_award:
+            applicant = getattr(active_lot_award.application, 'applicant', None)
+            if applicant:
+                beneficiary_info = {
+                    'full_name': applicant.full_name or '',
+                    'reference_number': applicant.reference_number or '',
+                    'household_members': applicant.household_member_count,
+                }
+        if beneficiary_info is None and (unit.occupant_name or '').strip():
+            beneficiary_info = {
+                'full_name': (unit.occupant_name or '').strip(),
+                'reference_number': (unit.occupant_id or '').strip(),
+                'household_members': None,
             }
         updates = []
         if progress:
@@ -527,6 +569,7 @@ def get_unit_details(request, position, unit_id):
                 'construction_updates': updates,
                 'can_update_construction': can_update_construction,
                 'possession_info': possession_info,
+                'beneficiary_info': beneficiary_info,
                 'construction_monitoring': {
                     'site_name': unit.site.name if unit.site else '',
                     'status_filter': cm_filter,
@@ -587,6 +630,25 @@ def issue_compliance_notice(request, position):
 
         # Get unit
         unit = HousingUnit.objects.get(id=unit_id)
+
+        active_award = (
+            LotAward.objects
+            .filter(unit=unit, status='active')
+            .select_related('application__applicant')
+            .order_by('-awarded_at')
+            .first()
+        )
+        if not _unit_has_notice_subject(unit, active_award):
+            return JsonResponse(
+                {
+                    'success': False,
+                    'error': (
+                        'Cannot issue a compliance notice: this lot has no active award '
+                        'and no recorded occupant. Assign or record an occupant first.'
+                    ),
+                },
+                status=400,
+            )
 
         # Update unit status and notice
         unit.notice_type = notice_type
