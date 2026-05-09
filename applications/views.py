@@ -14,7 +14,7 @@ from functools import wraps
 from urllib.parse import urlencode
 import logging
 from accounts.models import FIELD_DESK_POSITIONS
-from intake.models import Applicant, Archive
+from intake.models import Applicant, Archive, SMSLog as IntakeSMSLog
 from intake import sms_workflow
 from documents.models import (
     Document,
@@ -24,7 +24,13 @@ from documents.models import (
     SignatoryRouting,
 )
 from .models import (
-    Application, QueueEntry, CDRRMOCertificationProxy, CDRRMOCertification, FieldVerificationPhoto, EligibilityCheckDecision,
+    Application,
+    QueueEntry,
+    CDRRMOCertificationProxy,
+    CDRRMOCertification,
+    FieldVerificationPhoto,
+    EligibilityCheckDecision,
+    SMSLog as ApplicationSMSLog,
 )
 from units.models import HousingUnit, LotAward, RelocationSite, ConstructionProgress
 from .form_pipeline import applicant_has_signed_application_payload
@@ -90,8 +96,8 @@ def _relative_time_ago(dt):
 
 def send_sms(recipient_phone, message_content, trigger_event, applicant=None, module='applications'):
     """
-    Applications-module SMS policy:
-    Delegates to ``send_sms_for_applications`` (``eligibility_check_failed`` only).
+    Applications-module SMS: ``send_sms_for_applications`` → ``intake.utils.send_sms``
+    (``SMS_SERVICE=console`` or ``semaphore`` in settings).
     """
     if module != 'applications':
         return False
@@ -1337,6 +1343,14 @@ def lot_awarding_queue(request, position):
 # READY FOR FORM QUEUE ROUTING
 # =============================================================================
 
+def _applicant_already_received_proceed_evaluation_sms(applicant) -> bool:
+    """True if Hiligaynon proceed handoff SMS was already logged (Intake or Applications)."""
+    ev = sms_workflow.PROCEED_TO_EVALUATION
+    if ApplicationSMSLog.objects.filter(applicant=applicant, trigger_event=ev, status='sent').exists():
+        return True
+    return IntakeSMSLog.objects.filter(applicant=applicant, trigger_event=ev, status='sent').exists()
+
+
 @login_required
 @verify_position
 @require_POST
@@ -1376,28 +1390,44 @@ def proceed_to_form_queue(request, position):
     applicant.form_queue_routed_by = request.user
     applicant.save(update_fields=['form_queue_routed_at', 'form_queue_routed_by', 'updated_at'])
 
+    has_phone = bool((applicant.phone_number or '').strip())
+    sms_deduped = has_phone and _applicant_already_received_proceed_evaluation_sms(applicant)
+    sms_dispatched = False
+    if has_phone and not sms_deduped:
+        message = sms_workflow.message_proceed_to_evaluation(applicant)
+        sms_dispatched = bool(
+            send_sms(
+                applicant.phone_number,
+                message,
+                sms_workflow.PROCEED_TO_EVALUATION,
+                applicant=applicant,
+                module='applications',
+            )
+        )
+
     sms_plan_payload = {
-        'active': False,
-        'provider': 'Semaphore',
-        'has_phone': bool((applicant.phone_number or '').strip()),
-        'note': 'Console-only trigger plan. No SMS sent on Proceed to Form yet.',
+        'active': has_phone,
+        'deduped': sms_deduped,
+        'dispatched': sms_dispatched,
+        'has_phone': has_phone,
+        'note': (
+            'proceed_evaluation SMS already sent at Intake handoff; not sent again.'
+            if sms_deduped
+            else (
+                'Check runserver or SMSLog (SMS_SERVICE=console simulates delivery).'
+                if sms_dispatched
+                else (
+                    'No phone on applicant.'
+                    if not has_phone
+                    else 'SMS not logged (invalid number format or send_sms returned false).'
+                )
+            )
+        ),
     }
-    # Server terminal trace for local testing (runserver console).
-    print(
-        '[Proceed To Form SMS Plan]',
-        {
-            'applicant_id': str(applicant.id),
-            'reference_number': applicant.reference_number,
-            **sms_plan_payload,
-        },
-    )
     logger.info(
-        'Proceed To Form SMS Plan applicant=%s ref=%s active=%s provider=%s has_phone=%s',
-        applicant.id,
+        'proceed_to_form_queue ref=%s sms_plan=%s',
         applicant.reference_number,
-        sms_plan_payload['active'],
-        sms_plan_payload['provider'],
-        sms_plan_payload['has_phone'],
+        sms_plan_payload,
     )
 
     return JsonResponse({
@@ -1676,11 +1706,18 @@ def update_cdrrmo_certification(request, position):
 
             if applicant.phone_number:
                 if office_receipt:
-                    sms_msg = sms_workflow.message_cdrrmo_office_received(applicant, queue_entry.position)
-                    sms_event = sms_workflow.CDRRMO_OFFICE_CERTIFIED
+                    sms_msg = (
+                        f'THA: Official CDRRMO certification was received and filed at our intake office. '
+                        f'Priority queue no. {queue_entry.position}. Ref {applicant.reference_number}. '
+                        f'Please visit the Talisay Housing Authority when instructed for next steps.'
+                    )
+                    sms_event = 'cdrrmo_office_certified'
                 else:
-                    sms_msg = sms_workflow.message_cdrrmo_certified_priority(applicant, queue_entry.position)
-                    sms_event = sms_workflow.CDRRMO_CERTIFIED
+                    sms_msg = (
+                        f'THA: Your hazard-area certification is on file. Priority queue no. {queue_entry.position}. '
+                        f'Ref {applicant.reference_number}. Please visit the Talisay Housing Authority for next steps.'
+                    )
+                    sms_event = 'cdrrmo_certified'
                 sent = send_sms(applicant.phone_number, sms_msg, sms_event, applicant=applicant, module='applications')
                 if sent and not applicant.eligibility_sms_sent:
                     applicant.eligibility_sms_sent = True
@@ -1700,7 +1737,7 @@ def update_cdrrmo_certification(request, position):
                 f"You are currently placed in Walk-in Queue position #{queue_entry.position}. "
                 f"Reference: {applicant.reference_number}. Final eligibility processing remains under regular processing rules."
             )
-            sent = send_sms(applicant.phone_number, sms_msg, sms_workflow.CDRRMO_NOT_CERTIFIED, applicant=applicant, module='applications')
+            sent = send_sms(applicant.phone_number, sms_msg, 'cdrrmo_not_certified', applicant=applicant, module='applications')
             if sent and not applicant.eligibility_sms_sent:
                 applicant.eligibility_sms_sent = True
                 applicant.save(update_fields=['eligibility_sms_sent', 'updated_at'])
@@ -1991,11 +2028,17 @@ def field_verify_cdrrmo(request, position):
         sms_dispatched = None
         if applicant.phone_number:
             if verification_decision == 'certified':
-                sms_body = sms_workflow.message_field_inspection_sustained(applicant)
-                sms_ev = sms_workflow.FIELD_VERIFICATION_CERTIFIED
+                sms_body = (
+                    f'THA Module 1: Field inspection supports your declared hazard-area classification. '
+                    f'Ref {applicant.reference_number}. Intake will complete supervisory review; await further SMS or office advice.'
+                )
+                sms_ev = 'field_verification_certified'
             else:
-                sms_body = sms_workflow.message_field_inspection_not_sustained(applicant)
-                sms_ev = sms_workflow.FIELD_VERIFICATION_NOT_CERTIFIED
+                sms_body = (
+                    f'THA Module 1: Field inspection did not sustain hazard-area status for your declared address. '
+                    f'Ref {applicant.reference_number}. Intake will update your record; you may visit THA for clarification.'
+                )
+                sms_ev = 'field_verification_not_certified'
             sms_dispatched = send_sms(applicant.phone_number, sms_body, sms_ev, applicant=applicant, module='applications')
 
         return JsonResponse({
@@ -2998,7 +3041,7 @@ def record_evaluation_approval(request, position):
 
     applicant.save(update_fields=update_fields)
 
-    # Applicant SMS for Module 2 is limited to `eligibility_check_failed` only (see send_sms_for_applications).
+    # No applicant SMS from this 2.8 save path (see other views for eligibility / proceed SMS).
     sms_dispatched = False
 
     return JsonResponse({
@@ -3224,10 +3267,6 @@ def generate_form(request, position, applicant_id):
             {'success': False, 'error': f'Could not produce application PDF: {exc}'},
             status=500,
         )
-
-    if applicant.phone_number:
-        message = sms_workflow.message_proceed_to_evaluation(applicant)
-        send_sms(applicant.phone_number, message, sms_workflow.PROCEED_TO_EVALUATION, applicant=applicant, module='applications')
 
     pdf_url = reverse(
         'applications:application_form_pdf',

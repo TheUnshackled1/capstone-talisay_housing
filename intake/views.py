@@ -18,8 +18,11 @@ from .forms import (
     WalkInApplicantForm
 )
 import json
+import logging
 import re
 from collections import defaultdict
+
+logger = logging.getLogger(__name__)
 from django.utils.dateparse import parse_date
 from .utils import send_sms
 from . import sms_workflow
@@ -834,12 +837,25 @@ def proceed_to_applications(request, position):
         )
         # Optional promotion path used by the archive checklist CTA:
         # once baseline required scans (including RVT) are complete, mark as handed off for Module 2 list visibility.
+        handoff_just_set = False
         if promote_to_module2 and applicant.module2_handoff_at is None:
             applicant.module2_handoff_at = timezone.now()
             applicant.module2_handoff_by = request.user
             applicant.save(update_fields=['module2_handoff_at', 'module2_handoff_by', 'updated_at'])
+            handoff_just_set = True
 
-        should_send_proceed_sms = bool(applicant.phone_number) and (created or not applicant.registration_sms_sent)
+        # Hiligaynon proceed_evaluation SMS only when promoting to Module 2 (document checklist path with promote_to_module2).
+        # "Proceed to LIST OF APPLICANTS" uses the same endpoint but does not promote — no SMS on archive-only.
+        should_send_proceed_sms = bool(applicant.phone_number) and handoff_just_set
+        if not should_send_proceed_sms and promote_to_module2:
+            logger.warning(
+                'proceed_to_applications: skipped proceed SMS (has_phone=%s handoff_just_set=%s archive_created=%s registration_sms_sent=%s ref=%s)',
+                bool(applicant.phone_number),
+                handoff_just_set,
+                created,
+                applicant.registration_sms_sent,
+                applicant.reference_number,
+            )
         if should_send_proceed_sms:
             applicant_id = applicant.id
             archive_id = archive_record.id

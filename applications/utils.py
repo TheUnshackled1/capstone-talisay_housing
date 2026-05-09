@@ -138,24 +138,12 @@ def check_blacklist_module2(
     return False, None
 
 
-_APPLICATIONS_SMS_TRIGGERS = frozenset({
-    'eligibility_check_failed',
-    'lot_awarded',
-    'lot_awarding_queue_notify',
-})
-
-
 def send_sms_for_applications(recipient_phone, message_content, trigger_event, applicant=None):
     """
-    Module 2 SMS gateway wrapper.
+    Forward applications-module SMS to the shared pipeline (console or Semaphore per settings).
 
-    Allowed triggers:
-    - eligibility_check_failed (checklist SMS opt-in)
-    - lot_awarded (post–lot-award congratulations / office visit)
-    - lot_awarding_queue_notify (staff bulk notify from Lot Awarding queue; no schedule stored)
+    Logs to ``applications.models.SMSLog``; ``trigger_event`` is the audit key (e.g. ``proceed_evaluation``).
     """
-    if trigger_event not in _APPLICATIONS_SMS_TRIGGERS:
-        return False
     return _base_send_sms(
         recipient_phone,
         message_content,

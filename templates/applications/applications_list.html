@@ -3867,8 +3867,9 @@
                             </button>
                             {% if 'generate_form' in data.user_actions %}
                             <button type="button" class="action-btn action-btn--proceed-form"
-                                onclick="proceedToFormQueue('{{ data.applicant.id }}')">
-                                Proceed to Form
+                                onclick="proceedToFormQueue('{{ data.applicant.id }}')"
+                                title="Routes to Ready for Form queue and sends proceed-to-evaluation SMS if not already sent at Intake.">
+                                Proceed to Application &amp; Eligibility
                             </button>
                             {% endif %}
 
@@ -4727,7 +4728,7 @@
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'action-btn action-btn--proceed-form';
-        btn.textContent = 'Proceed to Form';
+        btn.textContent = 'Proceed to Application & Eligibility';
         btn.setAttribute('onclick', `proceedToFormQueue('${id}')`);
         actionsWrap.appendChild(btn);
     }
@@ -6497,24 +6498,21 @@
                 throw new Error(data.error || 'Unable to proceed applicant to Ready for Form queue.');
             }
             const smsPlan = data.sms_plan || {};
-            console.info('[Proceed To Form SMS Plan]', {
+            console.info('[Proceed To Application & Eligibility SMS]', {
                 flow: 'proceed_to_form_queue',
                 applicantId: applicantId,
                 endpoint: MODULE2_PROCEED_TO_FORM_QUEUE_URL,
-                smsActive: !!smsPlan.active,
-                provider: smsPlan.provider || 'Semaphore',
-                note: smsPlan.note || 'Console-only trace for now.',
-                hasPhone: !!smsPlan.has_phone,
+                smsPlan,
             });
             const nextUrl = `/applications/staff/${position}/ready-for-form/?applicant_id=${encodeURIComponent(applicantId)}&from=applications_list`;
             showFlowAlert(
                 data.message || 'Applicant moved to Ready for Form queue.',
-                'Proceed to Form',
+                'Proceed to Application & Eligibility',
                 () => { window.location.href = nextUrl; },
                 'proceed_success'
             );
         } catch (error) {
-            showFlowAlert(error.message || 'Unable to proceed to Ready for Form queue.', 'Proceed to Form');
+            showFlowAlert(error.message || 'Unable to proceed to Ready for Form queue.', 'Proceed to Application & Eligibility');
         }
     }
 

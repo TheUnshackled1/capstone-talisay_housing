@@ -1,68 +1,74 @@
 """
-Central definitions for SMS trigger_event keys and message bodies (Module 1).
+Central definitions for Module 1→2 proceed-to-evaluation SMS (Hiligaynon) and its SMSLog trigger key.
 
-Use these from views so workflow buttons map to consistent audit entries in SMSLog.
-When SMS_SERVICE=console (or Semaphore without API key while DEBUG), messages are still logged to SMSLog — no paid gateway required.
+Typical sends: Intake ``proceed_to_applications`` and/or Applications ``proceed_to_form_queue``
+(the **Proceed to Application & Eligibility** action on the Application & Evaluation list). The
+latter skips sending if this event already logged ``sent`` in Intake or Applications ``SMSLog``.
+
+Delivery is not implemented here. All sends go through ``intake.utils.send_sms`` (and the applications
+wrapper that forwards to it with ``module='applications'``), which reads Django settings:
+
+Developer console (default)
+    Set ``SMS_SERVICE=console`` in ``.env`` (see ``.env.example``). Runserver prints the full SMS
+    (recipient, event, body) and writes ``SMSLog`` with simulated delivery — no API key.
+
+Semaphore (production / staging)
+    Set ``SMS_SERVICE=semaphore``, ``SMS_ENABLED=True``, and ``SEMAPHORE_API_KEY`` from
+    https://semaphore.co/docs — optional ``SEMAPHORE_SENDER_NAME`` (≤11 chars). In ``DEBUG``,
+    missing API key falls back to console simulation. Do not start the message body with the word
+    ``TEST`` if you expect Semaphore to transmit it (provider ignores those).
+
+Smoke test: ``python manage.py test_sms --phone 09123456789 --service console`` (or ``semaphore``).
 """
 
 # --- trigger_event values (keep ≤ 50 chars; indexed in SMSLog) ---
 PROCEED_TO_EVALUATION = 'proceed_evaluation'
 
 
+def _situation_clause_proceed_sms(displacement_reason: str) -> str:
+    """
+    Hiligaynon add-on by Applicant Situation (Module 1 Layer 3 / displacement_reason).
+    """
+    dr = (displacement_reason or '').strip()
+    if dr == 'danger_zone':
+        return (
+            'Basi sa imo Applicant Situation (Option A — Resident sang Danger Zone/Hazard Area): '
+            'naga-ukoy ka sa hazard area. I-check ka namon paagi sa amon Ronda para sa photo verification. '
+        )
+    if dr == 'ejected':
+        return (
+            'Basi sa imo Applicant Situation (Option B — Gin-eject ukon gin-displace gikan sa imo nagligad nga puluy-an). '
+            'Magasumiter ka sang Required Documentation: Court Order, Legal Office Certification, or Barangay Certification. '
+        )
+    if dr == 'relocated':
+        return (
+            'Basi sa imo Applicant Situation (Option C — Gin-displace tungod sa proyekto o imprastraktura sang gobyerno). '
+            'Magasumiter ka sang imo Required Documentation: Notice of Relocation, Right-of-Way Documentation, or Project Order. '
+        )
+    if dr == 'not_abc':
+        return (
+            'Basi sa imo Applicant Situation (Option D — Wala sa A, B, ukon C / lain nga sitwasyon). '
+        )
+    return (
+        'Wala pa nakuha ang imo Applicant Situation (A–D) sa rekordo, ukon wala pa ini mat-ud. '
+        'Palihog magdu-aw sa Talisay Housing Authority intake para ma-update ang imo kaso. '
+    )
+
+
 def message_proceed_to_evaluation(applicant) -> str:
     """
-    Module 1 handoff SMS.
-    Sent when staff clicks "Proceed to Application & Eligibility"
-    from Intake, moving the record to Module 2.
-    Single SMS message (fits in 160 chars) - no message splitting.
+    Hiligaynon handoff SMS toward Application & Eligibility.
+
+    Triggered from Intake archive/proceed or from Applications when routing to Ready for Form
+    (see ``applications.views.proceed_to_form_queue``). Body reflects Applicant Situation (A–D) or a
+    fallback when ``displacement_reason`` is unset.
     """
     ref = applicant.reference_number
-    # Keep under 160 chars to send as single SMS (not split into 2)
-    base = f'THA {ref}: Your registration has proceeded to application verification & eligibility. We will notify you of updates.'
-    return base
-
-
-ELIGIBILITY = 'eligibility'
-ELIGIBILITY_PASSED = 'eligibility_passed'
-ELIGIBILITY_FAIL = 'eligibility_fail'
-CDRRMO_CERTIFIED = 'cdrrmo_certified'
-CDRRMO_NOT_CERTIFIED = 'cdrrmo_not_certified'
-CDRRMO_OFFICE_CERTIFIED = 'cdrrmo_office_certified'
-FIELD_VERIFICATION_CERTIFIED = 'field_verification_certified'
-FIELD_VERIFICATION_NOT_CERTIFIED = 'field_verification_not_certified'
-
-
-def message_cdrrmo_certified_priority(applicant, queue_position: int) -> str:
-    return (
-        f'THA: Your hazard-area certification is on file. Priority queue no. {queue_position}. '
-        f'Ref {applicant.reference_number}. Please visit the Talisay Housing Authority for next steps.'
+    dr = getattr(applicant, 'displacement_reason', None) or ''
+    base = (
+        f'THA {ref}: Ang imo registration yara na sa evaluation stage. '
+        f'Nabaton na namon ang imo mga dokumento. '
     )
-
-
-def message_cdrrmo_office_received(applicant, queue_position: int) -> str:
-    return (
-        f'THA: Official CDRRMO certification was received and filed at our intake office. '
-        f'Priority queue no. {queue_position}. Ref {applicant.reference_number}. '
-        f'Please visit the Talisay Housing Authority when instructed for next steps.'
-    )
-
-
-def message_cdrrmo_not_certified(applicant) -> str:
-    return (
-        f'THA: Your hazard-area claim could not be certified under current CDRRMO rules. '
-        f'Ref {applicant.reference_number}. You may visit the Talisay Housing Authority for more information.'
-    )
-
-
-def message_field_inspection_sustained(applicant) -> str:
-    return (
-        f'THA Module 1: Field inspection supports your declared hazard-area classification. '
-        f'Ref {applicant.reference_number}. Intake will complete supervisory review; await further SMS or office advice.'
-    )
-
-
-def message_field_inspection_not_sustained(applicant) -> str:
-    return (
-        f'THA Module 1: Field inspection did not sustain hazard-area status for your declared address. '
-        f'Ref {applicant.reference_number}. Intake will update your record; you may visit THA for clarification.'
-    )
+    situation = _situation_clause_proceed_sms(dr)
+    closing = 'Mag-hulat sang updates para sa eligibility. Salamat!'
+    return f'{base}{situation}{closing}'
