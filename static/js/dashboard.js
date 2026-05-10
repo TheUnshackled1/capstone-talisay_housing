@@ -20,53 +20,59 @@ function initSidebar() {
     const sidebar = document.getElementById('sidebar');
     const sidebarOverlay = document.getElementById('sidebarOverlay');
 
+    function closeSidebar() {
+        if (!sidebar) return;
+        sidebar.classList.remove('open');
+        if (sidebarOverlay) sidebarOverlay.classList.remove('open');
+        document.body.classList.remove('sidebar-locked');
+        if (mobileMenuBtn) mobileMenuBtn.setAttribute('aria-expanded', 'false');
+    }
+
+    function openSidebar() {
+        if (!sidebar) return;
+        sidebar.classList.add('open');
+        if (sidebarOverlay) sidebarOverlay.classList.add('open');
+        document.body.classList.add('sidebar-locked');
+        if (mobileMenuBtn) mobileMenuBtn.setAttribute('aria-expanded', 'true');
+    }
+
     if (mobileMenuBtn && sidebar) {
         mobileMenuBtn.addEventListener('click', function() {
-            sidebar.classList.toggle('open');
-            if (sidebarOverlay) {
-                sidebarOverlay.classList.toggle('open');
+            if (sidebar.classList.contains('open')) {
+                closeSidebar();
+            } else {
+                openSidebar();
             }
-            // Toggle aria-expanded
-            const isOpen = sidebar.classList.contains('open');
-            mobileMenuBtn.setAttribute('aria-expanded', isOpen);
         });
     }
 
     if (sidebarOverlay) {
-        sidebarOverlay.addEventListener('click', function() {
-            sidebar.classList.remove('open');
-            sidebarOverlay.classList.remove('open');
-            if (mobileMenuBtn) {
-                mobileMenuBtn.setAttribute('aria-expanded', 'false');
-            }
+        sidebarOverlay.addEventListener('click', closeSidebar);
+    }
+
+    // Auto-close drawer when nav-link clicked on mobile
+    if (sidebar) {
+        sidebar.querySelectorAll('.nav-link, .logout-btn').forEach(function(link) {
+            link.addEventListener('click', function() {
+                if (window.innerWidth < 1024) closeSidebar();
+            });
         });
     }
 
     // Close sidebar on escape key
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape' && sidebar && sidebar.classList.contains('open')) {
-            sidebar.classList.remove('open');
-            if (sidebarOverlay) {
-                sidebarOverlay.classList.remove('open');
-            }
-            if (mobileMenuBtn) {
-                mobileMenuBtn.setAttribute('aria-expanded', 'false');
-                mobileMenuBtn.focus();
-            }
+            closeSidebar();
+            if (mobileMenuBtn) mobileMenuBtn.focus();
         }
     });
 
-    // Handle window resize
+    // Handle window resize — auto-close + clear body lock above breakpoint
     let resizeTimer;
     window.addEventListener('resize', function() {
         clearTimeout(resizeTimer);
         resizeTimer = setTimeout(function() {
-            if (window.innerWidth >= 1024) {
-                sidebar.classList.remove('open');
-                if (sidebarOverlay) {
-                    sidebarOverlay.classList.remove('open');
-                }
-            }
+            if (window.innerWidth >= 1024) closeSidebar();
         }, 100);
     });
 }

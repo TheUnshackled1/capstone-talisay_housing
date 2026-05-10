@@ -1425,10 +1425,14 @@ button {
 @media (max-width: 1023px) {
     .sidebar {
         transform: translateX(-100%);
+        width: min(280px, 86vw);
+        box-shadow: 8px 0 24px -4px rgba(15, 23, 42, 0);
+        transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s ease;
     }
 
     .sidebar.open {
         transform: translateX(0);
+        box-shadow: 12px 0 32px -4px rgba(15, 23, 42, 0.35);
     }
 
     .main-content {
@@ -1436,7 +1440,44 @@ button {
     }
 
     .mobile-menu-btn {
-        display: block;
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+
+    /* Body scroll-lock when drawer open */
+    body.sidebar-locked {
+        overflow: hidden;
+        touch-action: none;
+    }
+
+    /* Overlay polish — z-index sits below sidebar (100) but above content */
+    .sidebar-overlay {
+        z-index: 95;
+        backdrop-filter: blur(2px);
+        -webkit-backdrop-filter: blur(2px);
+    }
+
+    /* Larger nav-link tap target on mobile (≥44px WCAG) */
+    .sidebar .nav-link {
+        min-height: 44px;
+        padding: 0.65rem 1rem;
+    }
+    .sidebar .logout-btn {
+        min-height: 44px;
+    }
+}
+
+@media (max-width: 480px) {
+    .sidebar {
+        width: min(86vw, 320px);
+    }
+    .sidebar-header {
+        padding: 1rem 0.85rem;
     }
 }
 

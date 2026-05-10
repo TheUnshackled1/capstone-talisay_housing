@@ -96,13 +96,15 @@
                 </a>
                 {% endif %}
 
-                <!-- Documents - All Staff -->
+                {% if user.position != 'oic' and user.position != 'second_member' and user.position != 'fourth_member' %}
+                <!-- Documents — Modules (roles without Reports / Analytics block, e.g. Fifth Member) -->
                 <a href="{% url 'documents:management' request.user.position %}" class="nav-link {% block nav_documents %}{% endblock %}">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
                     </svg>
                     <span>Documents</span>
                 </a>
+                {% endif %}
 
                 <!-- Housing Units Monitoring - Module 4 (all staff can view) -->
                 <a href="{% url 'units:housing_units_monitoring' request.user.position %}" class="nav-link {% block nav_housing_monitoring %}{% endblock %}">
@@ -134,6 +136,14 @@
                         <line x1="6" y1="20" x2="6" y2="14"/>
                     </svg>
                     <span>Analytics</span>
+                </a>
+
+                <!-- Documents — below Analytics for OIC / Second / Fourth Member -->
+                <a href="{% url 'documents:management' request.user.position %}" class="nav-link {% block nav_documents_reports %}{% endblock %}">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                    </svg>
+                    <span>Documents</span>
                 </a>
             </div>
             {% endif %}

@@ -10,6 +10,7 @@ from django.db.models import Count, Exists, OuterRef, Q, Prefetch, Max
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 from django.urls import reverse
+from django.conf import settings
 from functools import wraps
 from urllib.parse import urlencode
 import logging
@@ -1371,9 +1372,9 @@ def lot_awarding_queue(request, position):
 # READY FOR FORM QUEUE ROUTING
 # =============================================================================
 
-def _applicant_already_received_proceed_evaluation_sms(applicant) -> bool:
-    """True if Hiligaynon proceed handoff SMS was already logged (Intake or Applications)."""
-    ev = sms_workflow.PROCEED_TO_EVALUATION
+def _applicant_already_received_ready_for_form_reminder_sms(applicant) -> bool:
+    """True if the Ready-for-Form reminder SMS was already sent (Proceed to Ready for Form queue)."""
+    ev = sms_workflow.READY_FOR_FORM_QUEUE_REMINDER
     if ApplicationSMSLog.objects.filter(applicant=applicant, trigger_event=ev, status='sent').exists():
         return True
     return IntakeSMSLog.objects.filter(applicant=applicant, trigger_event=ev, status='sent').exists()
@@ -1419,15 +1420,15 @@ def proceed_to_form_queue(request, position):
     applicant.save(update_fields=['form_queue_routed_at', 'form_queue_routed_by', 'updated_at'])
 
     has_phone = bool((applicant.phone_number or '').strip())
-    sms_deduped = has_phone and _applicant_already_received_proceed_evaluation_sms(applicant)
+    sms_deduped = has_phone and _applicant_already_received_ready_for_form_reminder_sms(applicant)
     sms_dispatched = False
     if has_phone and not sms_deduped:
-        message = sms_workflow.message_proceed_to_evaluation(applicant)
+        message = sms_workflow.message_ready_for_form_queue_reminder(applicant)
         sms_dispatched = bool(
             send_sms(
                 applicant.phone_number,
                 message,
-                sms_workflow.PROCEED_TO_EVALUATION,
+                sms_workflow.READY_FOR_FORM_QUEUE_REMINDER,
                 applicant=applicant,
                 module='applications',
             )
@@ -1439,7 +1440,7 @@ def proceed_to_form_queue(request, position):
         'dispatched': sms_dispatched,
         'has_phone': has_phone,
         'note': (
-            'proceed_evaluation SMS already sent at Intake handoff; not sent again.'
+            'ready_for_form_queue_reminder SMS already sent for this applicant; not sent again.'
             if sms_deduped
             else (
                 'Check runserver or SMSLog (SMS_SERVICE=console simulates delivery).'
@@ -1457,6 +1458,13 @@ def proceed_to_form_queue(request, position):
         applicant.reference_number,
         sms_plan_payload,
     )
+    # Runserver only prints the big SMS banner when send_sms runs; if deduped/no phone, explain here.
+    if getattr(settings, 'DEBUG', False):
+        print(
+            f"\n[proceed_to_form_queue] ref={applicant.reference_number} "
+            f"dispatched={sms_dispatched} deduped={sms_deduped} has_phone={has_phone}\n"
+            f"  {sms_plan_payload['note']}\n"
+        )
 
     return JsonResponse({
         'success': True,

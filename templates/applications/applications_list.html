@@ -3584,9 +3584,11 @@
     .applicants-container--app-eval {
         position: relative;
         overflow: hidden;
-        background: linear-gradient(180deg, #f5f3ff 0%, #ffffff 16%) !important;
-        border-color: #c4b5fd !important;
-        box-shadow: 0 2px 6px rgba(109, 40, 217, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+        background: linear-gradient(180deg, #ecfdf5 0%, #ffffff 16%) !important;
+        border-color: #a7f3d0 !important;
+        border-radius: 0.95rem !important;
+        box-shadow: 0 2px 6px rgba(5, 150, 105, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+        padding: 1.4rem 1.25rem 1.1rem !important;
     }
     .applicants-container--app-eval::before {
         content: '';
@@ -3595,22 +3597,28 @@
         left: 0;
         right: 0;
         height: 4px;
-        background: linear-gradient(90deg, #4c1d95 0%, #6d28d9 50%, #a78bfa 100%);
+        background: linear-gradient(90deg, #047857 0%, #10b981 50%, #6ee7b7 100%);
         z-index: 1;
     }
     .applicants-container--app-eval .page-title {
-        color: #4c1d95 !important;
+        font-family: 'Source Serif Pro', Georgia, serif !important;
+        font-size: 1.32rem !important;
+        font-weight: 700 !important;
+        color: #064e3b !important;
+        letter-spacing: -0.01em !important;
+        text-transform: none !important;
         display: inline-flex;
         align-items: center;
         gap: 0.55rem;
+        margin: 0 0 0.4rem !important;
     }
     .applicants-container--app-eval .page-title::before {
         content: '';
         width: 0.55rem;
         height: 0.55rem;
         border-radius: 50%;
-        background: linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%);
-        box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.18);
+        background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.18);
     }
 
     /* Award Lot modal — vacant units from Module 4 (shared partial with lot queue) */
@@ -4035,8 +4043,8 @@
                             {% if 'generate_form' in data.user_actions %}
                             <button type="button" class="action-btn action-btn--proceed-form"
                                 onclick="proceedToFormQueue('{{ data.applicant.id }}')"
-                                title="Routes to Ready for Form queue and sends proceed-to-evaluation SMS if not already sent at Intake.">
-                                Proceed to Application &amp; Eligibility
+                                title="Routes to Ready for Form queue and sends the Go to Form reminder SMS if not already sent for this applicant.">
+                                Proceed to Ready for Form queue
                             </button>
                             {% endif %}
 
@@ -4076,7 +4084,7 @@
         <div class="empty-state">
             <div class="empty-state-icon">📋</div>
             <h3>No Applications Found</h3>
-            <p>{% if search %}No results match your search "{{ search }}"{% else %}No applicant records available yet. Open an applicant and click "Proceed to Application & Evaluation" to move the record here.{% endif %}</p>
+            <p>{% if search %}No results match your search "{{ search }}"{% else %}No applicant records available yet. From Intake, use Proceed to Application &amp; Eligibility to hand off an applicant to this list. When eligibility shows Ready for Form, use Proceed to Ready for Form queue to route them to Go to Form.{% endif %}</p>
         </div>
         {% endif %}
     </div>
@@ -4895,7 +4903,7 @@
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'action-btn action-btn--proceed-form';
-        btn.textContent = 'Proceed to Application & Eligibility';
+        btn.textContent = 'Proceed to Ready for Form queue';
         btn.setAttribute('onclick', `proceedToFormQueue('${id}')`);
         actionsWrap.appendChild(btn);
     }
@@ -6665,7 +6673,7 @@
                 throw new Error(data.error || 'Unable to proceed applicant to Ready for Form queue.');
             }
             const smsPlan = data.sms_plan || {};
-            console.info('[Proceed To Application & Eligibility SMS]', {
+            console.info('[Proceed to Ready for Form queue SMS]', {
                 flow: 'proceed_to_form_queue',
                 applicantId: applicantId,
                 endpoint: MODULE2_PROCEED_TO_FORM_QUEUE_URL,
@@ -6674,12 +6682,12 @@
             const nextUrl = `/applications/staff/${position}/ready-for-form/?applicant_id=${encodeURIComponent(applicantId)}&from=applications_list`;
             showFlowAlert(
                 data.message || 'Applicant moved to Ready for Form queue.',
-                'Proceed to Application & Eligibility',
+                'Proceed to Ready for Form queue',
                 () => { window.location.href = nextUrl; },
                 'proceed_success'
             );
         } catch (error) {
-            showFlowAlert(error.message || 'Unable to proceed to Ready for Form queue.', 'Proceed to Application & Eligibility');
+            showFlowAlert(error.message || 'Unable to proceed to Ready for Form queue.', 'Proceed to Ready for Form queue');
         }
     }
 

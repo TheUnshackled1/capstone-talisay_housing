@@ -1,6 +1,9 @@
 {% extends 'staff_base.html' %}
 {% load static %}
 
+{% block nav_documents %}{% if user.position == 'fifth_member' %}active{% endif %}{% endblock %}
+{% block nav_documents_reports %}{% if user.position == 'oic' or user.position == 'second_member' or user.position == 'fourth_member' %}active{% endif %}{% endblock %}
+
 {% block title %}Document Management - THA{% endblock %}
 
 {% block page_title %}Staff Portal{% endblock %}
@@ -211,12 +214,12 @@
     }
 
     .documents-table tbody tr:hover {
-        background: #eff6ff;
-        box-shadow: inset 3px 0 0 #2563eb;
+        background: #f0fdf4;
+        box-shadow: inset 3px 0 0 #10b981;
     }
 
     .documents-table tbody tr:hover td:first-child {
-        color: #1e3a8a;
+        color: #047857;
         font-weight: 700;
     }
 
