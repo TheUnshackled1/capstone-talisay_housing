@@ -78,19 +78,81 @@
     /* Override Ready-for-Form’s very wide Actions column on this page only */
     .lawq-queue .rfq-table th.rfq-col-actions,
     .lawq-queue .rfq-table td.rfq-col-actions {
-        min-width: 0;
-        width: 11rem;
+        min-width: 0 !important;
+        width: 11rem !important;
         max-width: 12rem;
-        padding-left: 0.4rem;
-        padding-right: 0.4rem;
+        padding-left: 0.4rem !important;
+        padding-right: 0.4rem !important;
     }
     .lawq-queue .rfq-table tbody td {
-        vertical-align: middle;
+        vertical-align: middle !important;
     }
     .lawq-queue .rfq-table tbody td.lawq-applicant-cell {
-        vertical-align: top;
+        vertical-align: middle !important;
         padding-top: 0.55rem;
         padding-bottom: 0.55rem;
+    }
+    /* Lot Awarding column widths — extra select col shifts indices,
+       so target by class instead of nth-child. Applicant cell needs
+       room for name + ref + app # + signed-form line. */
+    .lawq-queue .rfq-table th.lawq-select-col,
+    .lawq-queue .rfq-table td.lawq-select-col {
+        width: 2.5rem !important;
+        min-width: 2.5rem !important;
+    }
+    .lawq-queue .rfq-table th:nth-child(2),
+    .lawq-queue .rfq-table td:nth-child(2) {
+        width: 2.5rem !important;
+        min-width: 2.5rem !important;
+        text-align: center !important;
+    }
+    .lawq-queue .rfq-table td.lawq-applicant-cell,
+    .lawq-queue .rfq-table th:nth-child(3) {
+        width: 22% !important;
+        min-width: 14rem !important;
+        word-break: keep-all;
+        overflow-wrap: break-word;
+    }
+    .lawq-queue .rfq-table .rfq-name {
+        font-size: 0.78rem !important;
+        line-height: 1.3;
+    }
+    .lawq-queue .rfq-table .lawq-detail {
+        font-size: 0.62rem !important;
+        line-height: 1.4;
+        color: #64748b;
+        margin-top: 0.25rem;
+    }
+    .lawq-queue .rfq-table th.rfq-col-priority,
+    .lawq-queue .rfq-table td.rfq-col-priority {
+        width: 14% !important;
+        min-width: 9rem !important;
+    }
+    .lawq-queue .rfq-table th.rfq-col-proceeded,
+    .lawq-queue .rfq-table td.rfq-col-proceeded {
+        width: 9rem !important;
+        min-width: 8rem !important;
+        white-space: normal;
+        font-size: 0.66rem !important;
+    }
+    .lawq-queue .rfq-table th.rfq-col-proceeded-ago,
+    .lawq-queue .rfq-table td.rfq-col-proceeded-ago {
+        width: 5.5rem !important;
+        min-width: 4.5rem !important;
+        font-size: 0.62rem !important;
+        text-align: center !important;
+        padding-left: 0.4rem !important;
+        padding-right: 0.4rem !important;
+    }
+    .lawq-queue .rfq-table th.rfq-col-status,
+    .lawq-queue .rfq-table td.rfq-col-status {
+        width: 7rem !important;
+        min-width: 5.5rem !important;
+    }
+    .lawq-queue .lawq-chip {
+        white-space: normal;
+        line-height: 1.3;
+        text-align: center;
     }
     /* One bordered block: bulk bar + table */
     .lawq-list-card {
@@ -617,6 +679,9 @@
         <p>
             <a class="rfq-link-back" href="{% url 'applications:applications_list' request.user.position %}">← Application &amp; Evaluation (full ledger)</a>
         </p>
+        <p style="margin-top:0.35rem;font-size:0.72rem;color:#64748b;line-height:1.45;max-width:42rem;">
+            Queue priority: <strong>Option A</strong> (danger / hazard) → <strong>Option C</strong> (government project) → <strong>Option B</strong> (ejected) → <strong>Option D</strong> (other). Within each situation, earliest <em>Proceeded</em> time in this queue (standby) comes first — same tier order as <a href="{% url 'applications:ready_for_form_queue' request.user.position %}" style="color:#0e7490;font-weight:600;">Ready for Form</a>.
+        </p>
     </div>
 
     <form method="get" action="" class="rfq-controls">
@@ -646,6 +711,7 @@
                     <th class="lawq-select-col" title="Select for bulk SMS"><span class="lawq-sr-only">Select</span></th>
                     <th>#</th>
                     <th>Applicant</th>
+                    <th class="rfq-col-priority" title="Serve order: Option A first, then C, B, D; within each tier, earliest proceeded time in this queue">Queue priority</th>
                     <th class="rfq-col-proceeded">Proceeded Date &amp; Time</th>
                     <th class="rfq-col-proceeded-ago" title="Relative to now since this record entered lot awarding queue">Time ago</th>
                     <th class="rfq-col-status">Status</th>
@@ -674,6 +740,22 @@
                             {% else %}
                             <strong style="color:#b91c1c;">Missing</strong>
                             {% endif %}
+                        </div>
+                    </td>
+                    <td class="rfq-col-priority">
+                        <div class="rfq-priority-stack {% if row.applicant.displacement_reason == 'danger_zone' %}stack-option-a{% elif row.applicant.displacement_reason == 'relocated' %}stack-option-c{% elif row.applicant.displacement_reason == 'ejected' %}stack-option-b{% elif row.applicant.displacement_reason == 'not_abc' %}stack-option-d{% else %}stack-option-unknown{% endif %}">
+                            {% if row.applicant.displacement_reason == 'danger_zone' %}
+                            <span class="rfq-priority-tier">1 · Option A</span>
+                            {% elif row.applicant.displacement_reason == 'relocated' %}
+                            <span class="rfq-priority-tier">2 · Option C</span>
+                            {% elif row.applicant.displacement_reason == 'ejected' %}
+                            <span class="rfq-priority-tier">3 · Option B</span>
+                            {% elif row.applicant.displacement_reason == 'not_abc' %}
+                            <span class="rfq-priority-tier">4 · Option D</span>
+                            {% else %}
+                            <span class="rfq-priority-tier rfq-priority-tier--muted">—</span>
+                            {% endif %}
+                            <span class="rfq-priority-name">{{ row.applicant.get_displacement_reason_display }}</span>
                         </div>
                     </td>
                     <td class="rfq-col-proceeded">

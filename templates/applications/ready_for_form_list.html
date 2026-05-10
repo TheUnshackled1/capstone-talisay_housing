@@ -20,6 +20,9 @@
         <p>
             <a class="rfq-link-back" href="{% url 'applications:applications_list' request.user.position %}">← Application &amp; Evaluation (full ledger)</a>
         </p>
+        <p style="margin-top:0.35rem;font-size:0.72rem;color:#64748b;line-height:1.45;max-width:42rem;">
+            Queue priority: <strong>Option A</strong> (danger / hazard) → <strong>Option C</strong> (government project) → <strong>Option B</strong> (ejected) → <strong>Option D</strong> (other). Within each situation, earliest <em>Proceed to Application &amp; Eligibility</em> routing time comes first.
+        </p>
         {% if from_source == 'applications_list' and selected_applicant_id %}
         <p style="margin-top:0.45rem;font-size:0.72rem;color:#047857;">
             Focused applicant loaded from Application &amp; Evaluation list.
@@ -45,6 +48,7 @@
                 <tr>
                     <th>#</th>
                     <th>Applicant</th>
+                    <th class="rfq-col-priority" title="Serve order: Option A first, then C, B, D; within each tier, earliest routing time first">Queue priority</th>
                     <th class="rfq-col-proceeded">Proceeded Date &amp; Time</th>
                     <th class="rfq-col-proceeded-ago" title="Relative to now since this applicant was routed/proceeded">Time ago</th>
                     <th class="rfq-col-status">Status</th>
@@ -57,6 +61,22 @@
                     <td style="font-weight:700;color:#1e293b;">{{ page_obj.start_index|add:forloop.counter0 }}</td>
                     <td>
                         <div class="rfq-name {% if data.applicant.displacement_reason == 'danger_zone' %}option-a{% elif data.applicant.displacement_reason == 'ejected' %}option-b{% elif data.applicant.displacement_reason == 'relocated' %}option-c{% elif data.applicant.displacement_reason == 'not_abc' %}option-d{% endif %}">{{ data.applicant.full_name }}</div>
+                    </td>
+                    <td class="rfq-col-priority">
+                        <div class="rfq-priority-stack {% if data.applicant.displacement_reason == 'danger_zone' %}stack-option-a{% elif data.applicant.displacement_reason == 'relocated' %}stack-option-c{% elif data.applicant.displacement_reason == 'ejected' %}stack-option-b{% elif data.applicant.displacement_reason == 'not_abc' %}stack-option-d{% else %}stack-option-unknown{% endif %}">
+                            {% if data.applicant.displacement_reason == 'danger_zone' %}
+                            <span class="rfq-priority-tier">1 · Option A</span>
+                            {% elif data.applicant.displacement_reason == 'relocated' %}
+                            <span class="rfq-priority-tier">2 · Option C</span>
+                            {% elif data.applicant.displacement_reason == 'ejected' %}
+                            <span class="rfq-priority-tier">3 · Option B</span>
+                            {% elif data.applicant.displacement_reason == 'not_abc' %}
+                            <span class="rfq-priority-tier">4 · Option D</span>
+                            {% else %}
+                            <span class="rfq-priority-tier rfq-priority-tier--muted">—</span>
+                            {% endif %}
+                            <span class="rfq-priority-name">{{ data.applicant.get_displacement_reason_display }}</span>
+                        </div>
                     </td>
                     <td class="rfq-col-proceeded">
                         {% if data.form_queue_routed_at %}

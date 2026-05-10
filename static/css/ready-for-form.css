@@ -93,13 +93,79 @@
     table-layout: fixed;
 }
 
+.rfq-table th.rfq-col-priority,
+.rfq-table td.rfq-col-priority {
+    width: 17%;
+    min-width: 9rem;
+    max-width: 14rem;
+    vertical-align: middle;
+    text-align: left;
+    padding-right: 0.45rem;
+}
+
+.rfq-priority-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.18rem;
+}
+
+.rfq-priority-tier {
+    font-size: 0.62rem;
+    font-weight: 700;
+    color: #0f766e;
+    letter-spacing: 0.02em;
+}
+
+.rfq-priority-tier--muted {
+    color: #94a3b8;
+}
+
+.rfq-priority-name {
+    font-size: 0.58rem;
+    color: #475569;
+    line-height: 1.38;
+    font-weight: 500;
+}
+
+/* Match Queue priority colors to Applicant name (.rfq-name.option-a … option-d) */
+.rfq-priority-stack.stack-option-a .rfq-priority-tier {
+    color: #b91c1c;
+}
+.rfq-priority-stack.stack-option-a .rfq-priority-name {
+    color: #991b1b;
+}
+.rfq-priority-stack.stack-option-b .rfq-priority-tier {
+    color: #b45309;
+}
+.rfq-priority-stack.stack-option-b .rfq-priority-name {
+    color: #9a3412;
+}
+.rfq-priority-stack.stack-option-c .rfq-priority-tier {
+    color: #047857;
+}
+.rfq-priority-stack.stack-option-c .rfq-priority-name {
+    color: #065f46;
+}
+.rfq-priority-stack.stack-option-d .rfq-priority-tier {
+    color: #475569;
+}
+.rfq-priority-stack.stack-option-d .rfq-priority-name {
+    color: #64748b;
+}
+.rfq-priority-stack.stack-option-unknown .rfq-priority-tier--muted {
+    color: #94a3b8;
+}
+.rfq-priority-stack.stack-option-unknown .rfq-priority-name {
+    color: #64748b;
+}
+
 .rfq-table td.rfq-col-proceeded {
     text-align: left;
     white-space: nowrap;
     font-size: 0.6875rem;
     color: #64748b;
     min-width: 9.25rem;
-    width: 16%;
+    width: 14%;
     vertical-align: middle;
     padding-right: 0.9rem;
 }
@@ -426,6 +492,105 @@
     color: #166534;
     font-size: 0.62rem;
     font-weight: 700;
+}
+
+/* ==========================================================
+   UNCROWD — Ready for Form table
+   Wider Applicant col, narrower Action col, tighter btn labels.
+   Override layer; appended last so wins.
+   ========================================================== */
+.rfq-table {
+    table-layout: fixed;
+}
+.rfq-table th:nth-child(1),
+.rfq-table td:nth-child(1) {
+    width: 3rem;
+    text-align: center;
+}
+/* Applicant col — give name room so it stops wrapping per word */
+.rfq-table th:nth-child(2),
+.rfq-table td:nth-child(2) {
+    width: 14%;
+    min-width: 9.5rem;
+    word-break: keep-all;
+    overflow-wrap: break-word;
+}
+.rfq-name {
+    font-size: 0.78rem !important;
+    line-height: 1.3;
+    white-space: normal;
+    word-break: keep-all;
+    overflow-wrap: break-word;
+}
+/* Status pill stays compact, single line */
+.rfq-table th.rfq-col-status,
+.rfq-table td.rfq-col-status {
+    width: 7rem;
+    min-width: 5.5rem;
+}
+.rfq-chip {
+    white-space: nowrap;
+    font-size: 0.6rem !important;
+    padding: 0.18rem 0.5rem !important;
+}
+/* Actions col — shrink, balance with applicant width */
+.rfq-table th.rfq-col-actions,
+.rfq-table td.rfq-col-actions {
+    width: 32% !important;
+    min-width: 22rem;
+}
+.rfq-actions-inline {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr) minmax(0, 1fr) !important;
+    column-gap: 0.4rem !important;
+    padding: 0.35rem 0.15rem !important;
+}
+.rfq-action-btn {
+    font-size: 0.62rem !important;
+    padding: 0 0.5rem !important;
+    min-height: 2.1rem !important;
+    line-height: 1.2 !important;
+    white-space: normal;
+}
+.rfq-action-placeholder.rfq-action-placeholder--scan,
+.rfq-action-placeholder {
+    font-size: 0.58rem !important;
+    line-height: 1.25 !important;
+    padding: 0.25rem 0.4rem !important;
+}
+.rfq-vault-pair .rfq-action-btn {
+    font-size: 0.56rem !important;
+    padding: 0 0.35rem !important;
+}
+/* Cell padding tighten so rows shorter */
+.rfq-table td,
+.rfq-table th {
+    padding: 0.45rem 0.55rem !important;
+}
+/* Vertical-align all cells middle so multi-line content sits centered
+   against shorter siblings (Time ago, Status, Actions). */
+.rfq-table tbody td {
+    vertical-align: middle !important;
+}
+/* Proceeded date — single line */
+.rfq-table td.rfq-col-proceeded {
+    white-space: normal;
+    line-height: 1.3;
+    width: 9rem;
+    font-size: 0.66rem !important;
+}
+.rfq-table td.rfq-col-proceeded-ago {
+    width: 5.5rem;
+    font-size: 0.6rem !important;
+    padding-left: 0.5rem !important;
+    border-left: 1px solid #eef2f7;
+}
+
+@media (max-width: 1100px) {
+    .rfq-table th.rfq-col-actions,
+    .rfq-table td.rfq-col-actions {
+        min-width: 19rem;
+    }
+    .rfq-action-btn { font-size: 0.58rem !important; }
 }
 
 .rfq-chip.followup {

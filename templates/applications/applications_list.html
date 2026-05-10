@@ -3671,6 +3671,173 @@
         opacity: 0.5;
         cursor: not-allowed;
     }
+
+    /* ==========================================================
+       UNCROWD — Application & Evaluation table
+       Tighter padding, clamped secondary text, top-aligned cells,
+       calmer typography. Override layer; appended last so wins.
+       ========================================================== */
+    .applications-table.compact-table th,
+    .applications-table.compact-table td {
+        padding: 0.42rem 0.4rem !important;
+        vertical-align: middle !important;
+        line-height: 1.35;
+    }
+    .applications-table.compact-table tbody td {
+        vertical-align: middle !important;
+    }
+
+    /* Situation Status — clamp Required:... subtitle to 2 lines */
+    .applications-table.compact-table td.col-status .col-status-wrap > div:not([class]) {
+        display: -webkit-box !important;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 0.55rem !important;
+        line-height: 1.3 !important;
+        margin-top: 0.18rem !important;
+        max-width: 100%;
+    }
+
+    /* Situation pill — keep on one line w/ ellipsis if needed */
+    .applications-table.compact-table td.col-status .col-status-wrap > span {
+        max-width: 100%;
+        white-space: normal !important;
+        line-height: 1.2;
+        font-size: 0.6rem !important;
+        padding: 0.18rem 0.5rem !important;
+    }
+
+    /* Eligibility cell — clamp readiness hint */
+    .applications-table.compact-table td.col-eligibility .m2-readiness-hint {
+        display: -webkit-box !important;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 0.56rem !important;
+        line-height: 1.3 !important;
+        margin-top: 0.22rem;
+        color: #475569;
+        max-width: 14rem;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    /* Staff cell — compact name + role, hide M2 handoff line by default */
+    .applications-table.compact-table td.col-staff .m2-staff-row {
+        gap: 0.4rem;
+        align-items: flex-start;
+    }
+    .applications-table.compact-table td.col-staff .m2-staff-row > div:last-child {
+        font-size: 0.6rem;
+        line-height: 1.3;
+        min-width: 0;
+        overflow: hidden;
+    }
+    .applications-table.compact-table td.col-staff .m2-staff-row > div:last-child > div:first-child {
+        font-weight: 600;
+        color: #0f172a;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 9.5rem;
+    }
+    .applications-table.compact-table td.col-staff .m2-staff-row > div:last-child > div:nth-child(2) {
+        font-size: 0.54rem !important;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    /* Hide M2 handoff sub-line — viewable on hover via tooltip */
+    .applications-table.compact-table td.col-staff .m2-staff-row > div:last-child > div:nth-child(3) {
+        display: none !important;
+    }
+
+    /* Avatar shrink */
+    .applications-table.compact-table .handled-by-avatar {
+        width: 22px !important;
+        height: 22px !important;
+        font-size: 0.54rem !important;
+    }
+
+    /* Applicant Record — slim name col, allow wrap on 2 lines */
+    .applications-table.compact-table td.col-applicant {
+        text-align: left !important;
+        font-size: 0.74rem;
+        line-height: 1.3;
+    }
+    .applications-table.compact-table td.col-applicant > * {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        word-break: break-word;
+    }
+
+    /* Transaction / Reference — monospace tiny pill */
+    .applications-table.compact-table td.col-transaction,
+    .applications-table.compact-table td.col-reference {
+        font-size: 0.55rem !important;
+    }
+
+    /* Proceeded time cell — allow wrap so timestamp stays visible */
+    .applications-table.compact-table td.col-encoded {
+        white-space: normal !important;
+        font-size: 0.62rem !important;
+        overflow: visible !important;
+        text-overflow: clip !important;
+        line-height: 1.3;
+    }
+    .applications-table.compact-table td.col-encoded > span {
+        white-space: normal !important;
+        word-break: keep-all;
+        display: inline-block;
+        max-width: 100%;
+    }
+
+    /* Time-ago cell — short tag, wrap to keep inside cell border */
+    .applications-table.compact-table td.col-encoded-ago,
+    .applications-table.compact-table td.col-encoded-ago > span {
+        white-space: normal !important;
+        word-break: keep-all;
+        font-size: 0.62rem !important;
+        overflow: hidden !important;
+        text-align: center;
+        line-height: 1.3;
+        padding-left: 0.35rem !important;
+        padding-right: 0.35rem !important;
+    }
+
+    /* Slim widths — give Situation + Eligibility breathing room */
+    .applications-table.compact-table .col-applicant   { width: 12% !important; }
+    .applications-table.compact-table .col-transaction { width: 9% !important; }
+    .applications-table.compact-table .col-reference   { width: 8% !important; }
+    .applications-table.compact-table .col-encoded     { width: 10% !important; min-width: 6rem; }
+    .applications-table.compact-table .col-encoded-ago { width: 8% !important; min-width: 4.5rem; }
+    .applications-table.compact-table .col-status      { width: 17% !important; }
+    .applications-table.compact-table .col-staff       { width: 13% !important; }
+    /* Situation column uses both col-staff + col-status — staff rule must not shrink it */
+    .applications-table.compact-table th.col-staff.col-status,
+    .applications-table.compact-table td.col-staff.col-status {
+        width: 17% !important;
+        min-width: 8.25rem;
+    }
+    .applications-table.compact-table .col-eligibility { width: 15% !important; }
+    .applications-table.compact-table .col-actions     { width: 10% !important; }
+
+    /* Action stack — tighter gap */
+    .applications-table.compact-table .m2-actions-stack {
+        gap: 0.32rem !important;
+    }
+    .applications-table.compact-table .m2-actions-stack .btn-review,
+    .applications-table.compact-table .m2-actions-stack .action-btn {
+        padding: 0.36rem 0.6rem !important;
+        font-size: 0.62rem !important;
+        min-width: 0 !important;
+    }
 </style>
 {% endblock %}
 
@@ -3737,7 +3904,7 @@
                     <th class="col-reference" title="Applicant reference number">Reference #</th>
                     <th class="col-encoded" title="Date and time proceeded to Application & Evaluation">Proceeded time</th>
                     <th class="col-encoded-ago" title="Relative to now since this record proceeded to Application & Evaluation">Time ago</th>
-                    <th class="col-staff" title="Applicant Situation selected during intake">Situation Status</th>
+                    <th class="col-staff col-status" title="Applicant Situation selected during intake">Situation Status</th>
                     <th class="col-staff" title="Module 1 encoding staff and Module 2 handoff metadata">Staff</th>
                     <th class="col-eligibility" title="Module 2 eligibility evaluation readiness (documents, checks, certification)">Eligibility status</th>
                     <th class="col-actions">Actions</th>

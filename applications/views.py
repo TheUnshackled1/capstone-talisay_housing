@@ -828,6 +828,22 @@ def _module2_application_overall_snapshot(application):
     }
 
 
+def _ready_for_form_situation_priority(displacement_reason) -> int:
+    """
+    Applicant Situation tier for queue ordering (lower = served first).
+
+    Used by Ready for Form and Lot Awarding queues: Option A (danger zone), then C, B, D.
+    Unknown/unset values sort after D.
+    """
+    dr = (displacement_reason or '').strip()
+    return {
+        'danger_zone': 0,
+        'relocated': 1,
+        'ejected': 2,
+        'not_abc': 3,
+    }.get(dr, 99)
+
+
 def _module2_on_ready_for_form_queue_track(applicant, application):
     """True while the applicant belongs on Ready for Form (hidden from the main ledger)."""
     if not getattr(applicant, 'form_queue_routed_at', None):
@@ -1170,9 +1186,10 @@ def ready_for_form_queue(request, position):
         if _module2_on_ready_for_form_queue_track(applicant, row['application']):
             applicants_data.append(row)
 
-    # FIFO: whoever was routed with Proceed to Form first appears first (#1 in line).
+    # Situation tier (A → C → B → D), then FIFO by Proceed-to-Form routing time within tier.
     applicants_data.sort(
         key=lambda r: (
+            _ready_for_form_situation_priority(getattr(r['applicant'], 'displacement_reason', None)),
             r.get('routed_sort_at') is None,
             r.get('routed_sort_at') or timezone.now(),
             str(r['applicant'].pk),
@@ -1288,19 +1305,28 @@ def lot_awarding_queue(request, position):
             'document_type': 'signed_application',
         }
         vault_path = reverse('documents:management', kwargs={'position': request.user.position})
+        routed_dt = app.standby_entered_at or app.updated_at
         queue_rows.append({
             'application': app,
             'applicant': applicant,
             'status_label': 'Ready for awarding',
             'situation_label': applicant.get_displacement_reason_display() if applicant.displacement_reason else '—',
-            'routed_at': app.standby_entered_at or app.updated_at,
-            'routedAgo': _relative_time_ago(app.standby_entered_at or app.updated_at),
+            'routed_at': routed_dt,
+            'routedAgo': _relative_time_ago(routed_dt),
             'can_award_lot': bool(permissions.get('can_award_lot')),
             'signed_form_on_file': signed_form_on_file,
             'signed_form_vault_url': f"{vault_path}?{urlencode(vault_base)}",
         })
 
-    queue_total = len(queue_rows)
+    # Same Applicant Situation tier order as Ready for Form; FIFO by standby / queue entry time within tier.
+    queue_rows.sort(
+        key=lambda r: (
+            _ready_for_form_situation_priority(getattr(r['applicant'], 'displacement_reason', None)),
+            r.get('routed_at') is None,
+            r.get('routed_at') or timezone.now(),
+            str(r['applicant'].pk),
+        ),
+    )
 
     search = request.GET.get('search', '').strip()
     if search:
@@ -1311,6 +1337,8 @@ def lot_awarding_queue(request, position):
             or search_lower in (row['applicant'].reference_number or '').lower()
             or search_lower in (row['application'].application_number or '').lower()
         ]
+
+    queue_total = len(queue_rows)
 
     paginator = Paginator(queue_rows, MODULE2_LIST_PER_PAGE)
     page_number = request.GET.get('page', 1)
