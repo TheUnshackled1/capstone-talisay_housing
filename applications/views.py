@@ -2012,36 +2012,57 @@ def field_verify_cdrrmo(request, position):
             return JsonResponse({'success': False, 'error': 'This applicant is not awaiting CDRRMO verification'})
 
         cert = applicant.cdrrmo_certification
-        if cert.status != 'pending':
-            return JsonResponse({
-                'success': False,
-                'error': (
-                    'A CDRRMO disposition is already on file (for example, official certification received at THA intake). '
-                    'Field verification cannot overwrite it.'
-                ),
-            })
-
-        cert.status = verification_decision
-        cert.certified_at = timezone.now()
-        cert.result_recorded_by = request.user
-        cert.disposition_source = 'field_unit'
-        cert.office_intake_notes = ''
-        cert.certification_notes = verification_notes if verification_notes else ''
-        cert.save()
+        cert_already_decided = (cert.status != 'pending')
 
         # Evidence photos MUST stay FieldVerificationPhoto rows only — never Document(incident_report).
         photos = request.FILES.getlist('evidence_photos')
+        if not photos:
+            return JsonResponse({
+                'success': False,
+                'error': (
+                    'At least one site photograph is required. '
+                    'Capture from the device camera or pick from storage before submitting.'
+                ),
+            })
+
         max_photos = 4
         max_bytes = 6 * 1024 * 1024
         allowed_types = {'image/jpeg', 'image/png', 'image/webp'}
-        photos_saved = 0
+        valid_uploads = []
+        rejected = 0
         for upload in photos[:max_photos]:
             if upload.size > max_bytes:
+                rejected += 1
                 continue
             ct = (upload.content_type or '').lower()
             name = (upload.name or '').lower()
             if ct not in allowed_types and not name.endswith(('.jpg', '.jpeg', '.png', '.webp')):
+                rejected += 1
                 continue
+            valid_uploads.append(upload)
+
+        if not valid_uploads:
+            return JsonResponse({
+                'success': False,
+                'error': (
+                    f'No valid site photographs accepted ({rejected} rejected). '
+                    'Allowed types: JPEG, PNG, or WebP. Maximum 6 MB each.'
+                ),
+            })
+
+        # If cert already decided, append photos only — do NOT change decision/source/notes.
+        # If cert pending, flip status + persist decision metadata.
+        if not cert_already_decided:
+            cert.status = verification_decision
+            cert.certified_at = timezone.now()
+            cert.result_recorded_by = request.user
+            cert.disposition_source = 'field_unit'
+            cert.office_intake_notes = ''
+            cert.certification_notes = verification_notes if verification_notes else ''
+            cert.save()
+
+        photos_saved = 0
+        for upload in valid_uploads:
             FieldVerificationPhoto.objects.create(
                 certification=cert,
                 image=upload,
@@ -2050,7 +2071,8 @@ def field_verify_cdrrmo(request, position):
             photos_saved += 1
 
         sms_dispatched = None
-        if applicant.phone_number:
+        # SMS only fires on first decision; appended-photo runs skip SMS to avoid spam.
+        if not cert_already_decided and applicant.phone_number:
             if verification_decision == 'certified':
                 sms_body = (
                     f'THA Module 1: Field inspection supports your declared hazard-area classification. '
@@ -2065,15 +2087,22 @@ def field_verify_cdrrmo(request, position):
                 sms_ev = 'field_verification_not_certified'
             sms_dispatched = send_sms(applicant.phone_number, sms_body, sms_ev, applicant=applicant, module='applications')
 
+        if cert_already_decided:
+            existing_label = '✓ Certified' if cert.status == 'certified' else '✗ Not Certified'
+            message = f'Certification already on file ({existing_label}). {photos_saved} photo(s) appended to the field record.'
+        else:
+            message = f'Verification recorded as {"✓ Certified" if verification_decision == "certified" else "✗ Not Certified"}'
+
         return JsonResponse({
             'success': True,
-            'message': f'Verification recorded as {"✓ Certified" if verification_decision == "certified" else "✗ Not Certified"}',
-            'certification_status': verification_decision,
+            'message': message,
+            'certification_status': cert.status,
             'recorded_by': f'{request.user.first_name} {request.user.last_name}',
             'recorded_at': timezone.now().isoformat(),
             'photos_saved': photos_saved,
             'sms_dispatched': sms_dispatched,
             'moved_to_module2': True,
+            'append_only': cert_already_decided,
         })
 
     except Applicant.DoesNotExist:

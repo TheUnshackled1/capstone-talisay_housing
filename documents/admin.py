@@ -4,8 +4,6 @@ from .models import (
     LotAwarding,
     Requirement,
     RequirementSubmission,
-    FieldInspection,
-    FieldInspectionPhoto,
 )
 
 
@@ -79,20 +77,6 @@ class RequirementSubmissionAdmin(admin.ModelAdmin):
             'classes': ('collapse',),
         }),
     )
-
-
-class FieldInspectionPhotoInline(admin.TabularInline):
-    model = FieldInspectionPhoto
-    extra = 0
-
-
-@admin.register(FieldInspection)
-class FieldInspectionAdmin(admin.ModelAdmin):
-    list_display = ('application', 'status', 'submitted_by', 'submitted_at', 'confirmed_by', 'confirmed_at')
-    list_filter = ('status', 'submitted_at', 'confirmed_at')
-    search_fields = ('application__application_number', 'application__applicant__full_name')
-    readonly_fields = ('submitted_at',)
-    inlines = [FieldInspectionPhotoInline]
 
 
 @admin.register(LotAwarding)

@@ -5191,8 +5191,21 @@
         if (modal) modal.classList.add('active');
     }
 
-    /** Cross-tab + focus sync: field desk submits photos → Module 2 situation modal refreshes without manual reload. */
+    /** Cross-tab + same-machine sync: field desk submits photos → Module 2 situation modal refreshes without manual reload. */
     const M2_FIELD_CERT_SYNC_KEY = 'tha_field_cert_sync';
+    /** BroadcastChannel notifies all same-origin contexts immediately (localStorage `storage` skips the writer tab). */
+    const M2_FIELD_CERT_BC_NAME = 'tha_field_cert_sync_bc';
+    let m2FieldCertBc = null;
+    try {
+        if (typeof BroadcastChannel !== 'undefined') {
+            m2FieldCertBc = new BroadcastChannel(M2_FIELD_CERT_BC_NAME);
+            m2FieldCertBc.onmessage = function () {
+                scheduleM2EligibilityOpenViewsRefresh();
+            };
+        }
+    } catch (ignoreBc) {
+        m2FieldCertBc = null;
+    }
     let m2EligibilitySyncTimer = null;
     function scheduleM2EligibilityOpenViewsRefresh() {
         if (m2EligibilitySyncTimer) clearTimeout(m2EligibilitySyncTimer);
@@ -5209,7 +5222,11 @@
         const sitOpen = sit && sit.classList.contains('active');
         const eligOpen = elig && elig.classList.contains('active');
         if (!sitOpen && !eligOpen) return;
-        const data = await fetchEligibilitySnapshot(id);
+        const onlySituation = sitOpen && !eligOpen;
+        const fetchOpts = onlySituation
+            ? { preserveContent: true, renderChecklist: false }
+            : {};
+        const data = await fetchEligibilitySnapshot(id, fetchOpts);
         if (!data) return;
         if (sitOpen) {
             await openSituationCertificationModal({ skipFetch: true });

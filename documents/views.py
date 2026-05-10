@@ -456,10 +456,8 @@ def document_management(request, position):
         else:
             applicant_workflow_status = 'Application & Eligibility'
 
-        field_inspection = getattr(app_obj, 'field_inspection', None) if app_obj else None
-        phase_b_complete = bool(field_inspection and field_inspection.status == 'confirmed' and field_inspection.confirmed_at)
-
-        module3_ready_for_module4 = phase_a_complete and phase_b_complete
+        # Module 4 handoff: vault Phase A complete (no separate FieldInspection ORM gate).
+        module3_ready_for_module4 = phase_a_complete
 
         applicants_list.append({
             'id': str(applicant.id),
@@ -477,7 +475,6 @@ def document_management(request, position):
             'phase_a_verified_docs': phase_a_verified_docs,
             'phase_a_required_docs': phase_a_required_docs,
             'phase_a_complete': phase_a_complete,
-            'phase_b_complete': phase_b_complete,
             'module3_ready_for_module4': module3_ready_for_module4,
             'signed_form_confirmed': signed_form_confirmed,
             'applicant_workflow_status': applicant_workflow_status,
@@ -562,7 +559,7 @@ def document_management(request, position):
         str(a.id).lower(): a
         for a in (
             Applicant.objects.filter(id__in=_va_ids)
-            .select_related('application', 'application__field_inspection', 'barangay')
+            .select_related('application', 'barangay')
             .prefetch_related(
                 'cdrrmo_certification__field_photos',
             )
