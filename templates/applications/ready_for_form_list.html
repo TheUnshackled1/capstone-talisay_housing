@@ -92,21 +92,44 @@
                         {% if data.selected_out_of_queue %}
                         <span class="rfq-chip followup">Needs follow-up</span>
                         {% elif data.application %}
-                        <span class="rfq-chip {% if data.application.status == 'draft' %}pending{% else %}ready{% endif %}">{{ data.current_stage }}</span>
+                        <span class="rfq-chip rfq-chip--status {% if data.application.status == 'draft' %}pending{% else %}ready{% endif %}"
+                            title="{{ data.current_stage|escape }}">
+                            {% if data.application.status == 'draft' %}
+                            Awaiting signed scan
+                            {% elif data.application.status == 'completed' %}
+                            Ready for awarding
+                            {% else %}
+                            {{ data.current_stage }}
+                            {% endif %}
+                        </span>
                         {% else %}
-                        <span class="rfq-chip">Ready + verified</span>
+                        <span class="rfq-chip rfq-chip--status">Ready + verified</span>
                         {% endif %}
                     </td>
                     <td class="rfq-col-actions">
                         <div class="rfq-actions-inline">
                             {% if 'generate_form' in data.user_actions %}
                             <button type="button" class="rfq-action-btn rfq-action-slot-1"
+                                title="Generate Form — Create the application PDF and number; then use Scan / Upload in this row for the signed form."
                                 onclick="generateFormFromQueue('{{ data.applicant.id }}')">Generate Form</button>
                             <span class="rfq-action-placeholder rfq-action-placeholder--scan rfq-action-slot-2"
                                 title="Generate the application form first. Then this column shows scan / upload shortcuts to the document vault, like other rows.">Signed scan/upload after PDF</span>
+                            <span class="rfq-action-placeholder rfq-action-slot-3"
+                                title="View opens the signed application file after it is scanned or uploaded (same as Eligibility checklist — preview only).">—</span>
                             {% elif data.application %}
-                            <a class="rfq-action-btn generate-form-btn rfq-action-slot-1" href="{% url 'applications:application_form_pdf' request.user.position data.applicant.id %}" target="_blank" rel="noopener">Open PDF</a>
-                            {% if data.application.status == 'draft' and data.signed_form_vault_url_upload %}
+                            <div class="rfq-action-slot-1 rfq-open-pdf-view-pair">
+                                <a class="rfq-action-btn generate-form-btn" href="{% url 'applications:application_form_pdf' request.user.position data.applicant.id %}" target="_blank" rel="noopener"
+                                    title="Open PDF — Opens the generated application form in a new tab (blank/filled PDF)."
+                                    aria-label="Open application form PDF">Open PDF</a>
+                                {% if data.signed_application_view_url %}
+                                <a class="eligibility-view-doc-btn rfq-signed-application-view"
+                                    href="{{ data.signed_application_view_url }}"
+                                    target="_blank" rel="noopener noreferrer"
+                                    title="Open signed application on file (read-only preview — same vault file as Scan/Upload)"
+                                    aria-label="View signed application document">View</a>
+                                {% endif %}
+                            </div>
+                            {% if data.application.status == 'draft' or data.application.status == 'completed' %}
                             <div class="rfq-action-slot-2 rfq-vault-pair">
                                 <button type="button" class="rfq-action-btn rfq-action-btn--scan"
                                     data-applicant-id="{{ data.applicant.id }}"
@@ -114,66 +137,40 @@
                                     data-review-url="{% url 'applications:application_form_pdf' request.user.position data.applicant.id %}"
                                     data-application-id="{{ data.application.id }}"
                                     data-reference-number="{{ data.applicant.reference_number|default:''|escape }}"
+                                    data-has-existing-doc="{% if data.signed_application_scan_present %}1{% else %}0{% endif %}"
+                                    data-existing-doc-name="{{ data.signed_application_existing_file_label|escape }}"
                                     onclick="rfqScanSignedApplication(this)"
-                                    title="Dynamsoft TWAIN: opens Select Source, then capture — saves to the document vault (stay on this page)">Scan document</button>
+                                    title="Scan — Capture from scanner (TWAIN); saves signed application to the document vault (stay on this page)."
+                                    aria-label="Scan signed application from scanner">Scan document</button>
                                 <button type="button" class="rfq-action-btn rfq-action-btn--scan"
                                     data-applicant-id="{{ data.applicant.id }}"
                                     data-review-url="{% url 'applications:application_form_pdf' request.user.position data.applicant.id %}"
                                     data-application-id="{{ data.application.id }}"
                                     data-reference-number="{{ data.applicant.reference_number|default:''|escape }}"
+                                    data-has-existing-doc="{% if data.signed_application_scan_present %}1{% else %}0{% endif %}"
+                                    data-existing-doc-name="{{ data.signed_application_existing_file_label|escape }}"
                                     onclick="rfqPickSignedApplicationFile(this)"
-                                    title="Choose a file from this computer — uploads to the document vault (stay on this page)">Upload document</button>
+                                    title="Upload — Attach or replace from disk; saves signed application to the document vault (stay on this page)."
+                                    aria-label="Upload signed application file">Upload document</button>
                             </div>
-                            {% elif data.application.status == 'completed' %}
-                            {% if data.allow_rescan_retry %}
-                            <div class="rfq-action-slot-2 rfq-vault-pair">
-                                <button type="button" class="rfq-action-btn rfq-action-btn--scan"
-                                    data-applicant-id="{{ data.applicant.id }}"
-                                    data-ref-label="{{ data.applicant.reference_number|default:'' }}"
-                                    data-review-url="{% url 'applications:application_form_pdf' request.user.position data.applicant.id %}"
-                                    data-application-id="{{ data.application.id }}"
-                                    data-reference-number="{{ data.applicant.reference_number|default:''|escape }}"
-                                    onclick="rfqScanSignedApplication(this)"
-                                    title="Rescan signed form to replace the current file in vault">Scan document</button>
-                                <button type="button" class="rfq-action-btn rfq-action-btn--scan"
-                                    data-applicant-id="{{ data.applicant.id }}"
-                                    data-review-url="{% url 'applications:application_form_pdf' request.user.position data.applicant.id %}"
-                                    data-application-id="{{ data.application.id }}"
-                                    data-reference-number="{{ data.applicant.reference_number|default:''|escape }}"
-                                    onclick="rfqPickSignedApplicationFile(this)"
-                                    title="Upload another signed form file to replace the current one">Upload document</button>
-                            </div>
-                            {% else %}
-                            <button type="button" class="rfq-action-btn rfq-action-btn--scan rfq-action-slot-2"
+                            <button type="button"
+                                class="rfq-action-btn rfq-action-btn--proceed-awarding rfq-action-slot-3"
                                 onclick="proceedToLotAwardingQueue('{{ data.application.id }}')"
-                                title="Move this signed record to the lot-awarding queue">
+                                {% if not data.signed_application_scan_present %}disabled aria-disabled="true"{% endif %}
+                                title="{% if data.signed_application_scan_present %}Move this signed record to the lot-awarding queue{% else %}Upload or scan a signed application first — button stays disabled until the signed form is on file{% endif %}">
                                 Proceed to Awarding
                             </button>
                             {% endif %}
-                            {% endif %}
                             {% else %}
                             <span class="rfq-actions-muted">Not ready for form yet</span>
+                            {% if data.signed_application_view_url %}
+                            <a class="eligibility-view-doc-btn rfq-signed-application-view rfq-action-slot-3"
+                                href="{{ data.signed_application_view_url }}"
+                                target="_blank" rel="noopener noreferrer"
+                                title="Open signed application on file (read-only preview)"
+                                aria-label="View signed application document">View</a>
                             {% endif %}
-                            <button type="button" class="rfq-action-btn rfq-action-btn--view-gold rfq-action-slot-3"
-                                title="View routed applicant details"
-                                data-name="{{ data.applicant.full_name|escape }}"
-                                data-displacement="{{ data.applicant.displacement_reason|default:''|escape }}"
-                                data-reference="{{ data.applicant.reference_number|default:'—'|escape }}"
-                                data-app-key="APP-{{ data.applicant.id }}"
-                                data-routed="{% if data.form_queue_routed_at %}Routed {{ data.form_queue_routed_at|date:'n/j/Y, P' }}{% if data.form_queue_routed_by %} by {{ data.form_queue_routed_by.get_full_name|escape }}{% endif %}{% else %}—{% endif %}"
-                                data-situation="{{ data.applicant.get_displacement_reason_display|escape }}"
-                                data-status-primary="{% if data.selected_out_of_queue %}Needs follow-up{% elif data.application %}{{ data.current_stage|escape }}{% else %}Ready + verified{% endif %}"
-                                data-status-chip="{% if data.selected_out_of_queue %}followup{% elif data.application %}{% if data.application.status == 'draft' %}pending{% else %}ready{% endif %}{% endif %}"
-                                data-signed-scan="{% if data.signed_application_scan_present %}On file{% else %}Not uploaded{% endif %}"
-                                data-application-number="{% if data.application %}{{ data.application.application_number|escape }}{% endif %}"
-                                onclick="rfqShowApplicantDetail(this)">
-                                <svg class="rfq-action-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
-                                    <circle cx="9" cy="7" r="4"></circle>
-                                    <polyline points="16 11 18 13 22 9"></polyline>
-                                </svg>
-                                View
-                            </button>
+                            {% endif %}
                         </div>
                     </td>
                 </tr>
@@ -211,57 +208,6 @@
 <div id="dwtcontrolContainer" style="width:0;height:0;overflow:hidden;position:absolute;left:-9999px;" aria-hidden="true"></div>
 <input type="file" id="rfqSignedApplicationFile" style="display:none" accept=".pdf,.doc,.docx,.txt,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain">
 
-<!-- Applicant detail (restores columns hidden from the slim queue table) -->
-<div class="rfq-detail-overlay" id="rfqDetailOverlay" role="dialog" aria-modal="true" aria-labelledby="rfqDetailTitle" aria-hidden="true">
-    <div class="rfq-detail-card" onclick="event.stopPropagation();">
-        <div class="rfq-detail-stripe" aria-hidden="true"></div>
-        <div class="rfq-detail-head">
-            <div>
-                <p class="rfq-detail-kicker">Ready for Form queue</p>
-                <h2 class="rfq-detail-title" id="rfqDetailTitle">Applicant</h2>
-            </div>
-            <button type="button" class="rfq-detail-close" id="rfqDetailClose" aria-label="Close">&times;</button>
-        </div>
-        <div class="rfq-detail-body">
-            <section class="rfq-detail-section">
-                <h3 class="rfq-detail-section-label">Applicant</h3>
-                <div class="rfq-detail-name" id="rfqDetailName"></div>
-                <div class="rfq-detail-muted mono" id="rfqDetailAppKey"></div>
-            </section>
-            <dl class="rfq-detail-grid">
-                <div class="rfq-detail-row">
-                    <dt>Reference #</dt>
-                    <dd id="rfqDetailReference"></dd>
-                </div>
-                <div class="rfq-detail-row">
-                    <dt>Routed date &amp; time</dt>
-                    <dd id="rfqDetailRouted"></dd>
-                </div>
-                <div class="rfq-detail-row">
-                    <dt>Situation</dt>
-                    <dd id="rfqDetailSituation"></dd>
-                </div>
-                <div class="rfq-detail-row">
-                    <dt>Signed form scan</dt>
-                    <dd id="rfqDetailSignedScan"></dd>
-                </div>
-            </dl>
-            <section class="rfq-detail-section">
-                <h3 class="rfq-detail-section-label">Status</h3>
-                <div class="rfq-detail-status">
-                    <span class="rfq-chip" id="rfqDetailStatusPrimary"></span>
-                    <div class="rfq-detail-muted rfq-detail-ha-wrap" id="rfqDetailApplicationNumberWrap" hidden>
-                        <span id="rfqDetailApplicationNumber"></span>
-                    </div>
-                </div>
-            </section>
-        </div>
-        <div class="rfq-detail-footer">
-            <button type="button" class="tha-btn tha-btn-secondary" id="rfqDetailFooterClose">Close</button>
-        </div>
-    </div>
-</div>
-
 <!-- Custom confirmation modal — replaces native confirm() so we can
      style it as part of the THA design system. -->
 <div class="rfq-confirm-overlay" id="rfqConfirmOverlay" role="dialog" aria-modal="true" aria-labelledby="rfqConfirmTitle">
@@ -277,6 +223,28 @@
         <div class="rfq-confirm-actions">
             <button type="button" class="tha-btn tha-btn-secondary" id="rfqConfirmCancel">Cancel</button>
             <button type="button" class="tha-btn tha-btn-success" id="rfqConfirmOk">Generate Form</button>
+        </div>
+    </div>
+</div>
+
+<!-- Replace signed application (same pattern as Eligibility checklist) -->
+<div class="rfq-confirm-overlay" id="rfqReplaceDocOverlay" role="dialog" aria-modal="true" aria-labelledby="rfqReplaceDocTitle" onclick="rfqCloseReplaceDocOverlay(event)">
+    <div class="rfq-confirm-card" onclick="event.stopPropagation();">
+        <div class="rfq-confirm-stripe" aria-hidden="true"></div>
+        <div class="rfq-confirm-body rfq-replace-doc-body">
+            <h3 class="rfq-confirm-title" id="rfqReplaceDocTitle">Replace existing document?</h3>
+            <p class="rfq-replace-doc-lead">A signed application file is already on file for this applicant.</p>
+            <div class="rfq-replace-doc-existing">
+                <div class="rfq-replace-doc-existing-label">Existing document on file</div>
+                <div class="rfq-replace-doc-existing-name" id="rfqReplaceDocFileName">—</div>
+            </div>
+            <p class="rfq-replace-doc-note">
+                Replacing will update Document Management for this applicant and refresh this queue (same vault slot as Scan / Upload).
+            </p>
+        </div>
+        <div class="rfq-confirm-actions">
+            <button type="button" class="tha-btn tha-btn-secondary" onclick="rfqResolveReplaceDocConfirm(false)">No</button>
+            <button type="button" class="tha-btn tha-btn-success" onclick="rfqResolveReplaceDocConfirm(true)">Yes, replace</button>
         </div>
     </div>
 </div>
@@ -344,6 +312,46 @@
         background: #fafbfc;
     }
     .rfq-confirm-actions .tha-btn { min-width: 8rem; }
+    .rfq-replace-doc-body {
+        text-align: left;
+    }
+    .rfq-replace-doc-body .rfq-confirm-title {
+        text-align: center;
+        margin-bottom: 0.45rem;
+    }
+    .rfq-replace-doc-lead {
+        margin: 0 0 0.65rem;
+        font-size: 0.84rem;
+        color: #475569;
+        line-height: 1.45;
+        text-align: center;
+    }
+    .rfq-replace-doc-existing {
+        padding: 0.65rem 0.8rem;
+        border: 1px solid #fde68a;
+        background: #fffbeb;
+        border-radius: 0.55rem;
+        margin-bottom: 0.65rem;
+    }
+    .rfq-replace-doc-existing-label {
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: #92400e;
+        margin-bottom: 0.2rem;
+    }
+    .rfq-replace-doc-existing-name {
+        font-size: 0.82rem;
+        color: #334155;
+        font-weight: 600;
+        line-height: 1.35;
+        word-break: break-word;
+    }
+    .rfq-replace-doc-note {
+        margin: 0;
+        font-size: 0.78rem;
+        color: #475569;
+        line-height: 1.45;
+    }
 </style>
 {% endblock %}
 
@@ -360,6 +368,7 @@
     const RFQ_INTAKE_DWT_URL = '{% url "intake:upload_scanned_requirement" request.user.position %}';
 
     let RfqDWTObject = null;
+    let rfqReplaceDocConfirmResolver = null;
     if (window.Dynamsoft && window.Dynamsoft.DWT) {
         Dynamsoft.DWT.RegisterEvent('OnWebTwainReady', function () {
             RfqDWTObject = Dynamsoft.DWT.GetWebTwain('dwtcontrolContainer');
@@ -375,6 +384,47 @@
         return RfqDWTObject;
     }
 
+    function rfqCloseReplaceDocOverlay(event) {
+        if (event && event.target && event.target.id !== 'rfqReplaceDocOverlay') return;
+        rfqResolveReplaceDocConfirm(false);
+    }
+
+    function rfqResolveReplaceDocConfirm(approved) {
+        const overlay = document.getElementById('rfqReplaceDocOverlay');
+        if (overlay) {
+            overlay.classList.remove('active');
+            if (overlay._rfqReplaceEsc) {
+                document.removeEventListener('keydown', overlay._rfqReplaceEsc);
+                overlay._rfqReplaceEsc = null;
+            }
+        }
+        if (typeof rfqReplaceDocConfirmResolver === 'function') {
+            const resolver = rfqReplaceDocConfirmResolver;
+            rfqReplaceDocConfirmResolver = null;
+            resolver(!!approved);
+        }
+    }
+
+    function rfqConfirmReplaceExistingDocument(docName) {
+        const overlay = document.getElementById('rfqReplaceDocOverlay');
+        const nameEl = document.getElementById('rfqReplaceDocFileName');
+        if (!overlay || !nameEl) {
+            return Promise.resolve(window.confirm(
+                'A signed application is already on file. Replace it?'
+            ));
+        }
+        nameEl.textContent = docName || 'Signed application';
+        overlay.classList.add('active');
+        const esc = function (e) {
+            if (e.key === 'Escape') rfqResolveReplaceDocConfirm(false);
+        };
+        overlay._rfqReplaceEsc = esc;
+        document.addEventListener('keydown', esc);
+        return new Promise(function (resolve) {
+            rfqReplaceDocConfirmResolver = resolve;
+        });
+    }
+
     async function rfqScanSignedApplication(btn) {
         if (!btn) return;
         const scanBtnLabel = 'Scan document';
@@ -382,6 +432,12 @@
         if (!applicantId) {
             rfqShowAlert('Missing applicant.', 'Scan', 'default');
             return;
+        }
+        const hasExistingDoc = String(btn.dataset.hasExistingDoc || '0') === '1';
+        const existingDocName = String(btn.dataset.existingDocName || '').trim() || 'Signed application';
+        if (hasExistingDoc) {
+            const ok = await rfqConfirmReplaceExistingDocument(existingDocName);
+            if (!ok) return;
         }
         const refRaw = String(btn.dataset.refLabel || '').trim();
         const safeRef = refRaw ? refRaw.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9._-]/g, '').slice(0, 80) : ('app_' + applicantId.replace(/-/g, '').slice(0, 12));
@@ -474,12 +530,18 @@
         );
     }
 
-    function rfqPickSignedApplicationFile(btn) {
+    async function rfqPickSignedApplicationFile(btn) {
         if (!btn) return;
         const applicantId = String(btn.dataset.applicantId || '').trim();
         if (!applicantId) {
             rfqShowAlert('Missing applicant.', 'Upload', 'default');
             return;
+        }
+        const hasExistingDoc = String(btn.dataset.hasExistingDoc || '0') === '1';
+        const existingDocName = String(btn.dataset.existingDocName || '').trim() || 'Signed application';
+        if (hasExistingDoc) {
+            const ok = await rfqConfirmReplaceExistingDocument(existingDocName);
+            if (!ok) return;
         }
         rfqFileUploadApplicantId = applicantId;
         rfqFileUploadButtonEl = btn;
@@ -560,66 +622,6 @@
         window.setTimeout(function () {
             window.location.href = rfqQueueUrlWithoutRetrySign();
         }, 500);
-    }
-
-    function rfqShowApplicantDetail(btn) {
-        const overlay = document.getElementById('rfqDetailOverlay');
-        if (!overlay || !btn || !btn.dataset) return;
-        if (overlay._rfqDetailEsc) {
-            document.removeEventListener('keydown', overlay._rfqDetailEsc);
-            overlay._rfqDetailEsc = null;
-        }
-        const ds = btn.dataset;
-        document.getElementById('rfqDetailTitle').textContent = ds.name || 'Applicant';
-        const nameEl = document.getElementById('rfqDetailName');
-        nameEl.textContent = ds.name || '';
-        nameEl.className = 'rfq-detail-name';
-        const dr = String(ds.displacement || '').trim();
-        if (dr === 'danger_zone') nameEl.classList.add('option-a');
-        else if (dr === 'ejected') nameEl.classList.add('option-b');
-        else if (dr === 'relocated') nameEl.classList.add('option-c');
-        else if (dr === 'not_abc') nameEl.classList.add('option-d');
-        document.getElementById('rfqDetailAppKey').textContent = ds.appKey || '';
-        document.getElementById('rfqDetailReference').textContent = ds.reference || '—';
-        document.getElementById('rfqDetailRouted').textContent = ds.routed || '—';
-        document.getElementById('rfqDetailSituation').textContent = ds.situation || '—';
-        document.getElementById('rfqDetailSignedScan').textContent = ds.signedScan || '—';
-        document.getElementById('rfqDetailStatusPrimary').textContent = ds.statusPrimary || '';
-
-        const haWrap = document.getElementById('rfqDetailApplicationNumberWrap');
-        const haEl = document.getElementById('rfqDetailApplicationNumber');
-        const num = (ds.applicationNumber || '').trim();
-        if (num && haWrap && haEl) {
-            haEl.textContent = num;
-            haWrap.hidden = false;
-        } else if (haWrap) {
-            haWrap.hidden = true;
-            if (haEl) haEl.textContent = '';
-        }
-
-        const chip = document.getElementById('rfqDetailStatusPrimary');
-        chip.classList.remove('followup', 'pending', 'ready');
-        const chipVar = (ds.statusChip || '').trim();
-        if (chipVar) chip.classList.add(chipVar);
-
-        overlay.classList.add('active');
-        overlay.setAttribute('aria-hidden', 'false');
-
-        const close = rfqHideApplicantDetail;
-        const esc = function (e) { if (e.key === 'Escape') close(); };
-        overlay._rfqDetailEsc = esc;
-        document.addEventListener('keydown', esc);
-    }
-
-    function rfqHideApplicantDetail() {
-        const overlay = document.getElementById('rfqDetailOverlay');
-        if (!overlay) return;
-        overlay.classList.remove('active');
-        overlay.setAttribute('aria-hidden', 'true');
-        if (overlay._rfqDetailEsc) {
-            document.removeEventListener('keydown', overlay._rfqDetailEsc);
-            overlay._rfqDetailEsc = null;
-        }
     }
 
     async function generateFormFromQueue(applicantId) {
@@ -705,17 +707,6 @@
     }
 
     document.addEventListener('DOMContentLoaded', function () {
-        const detailOverlay = document.getElementById('rfqDetailOverlay');
-        const detailClose = document.getElementById('rfqDetailClose');
-        const detailFooterClose = document.getElementById('rfqDetailFooterClose');
-        if (detailOverlay) {
-            detailOverlay.addEventListener('click', function (e) {
-                if (e.target === detailOverlay) rfqHideApplicantDetail();
-            });
-        }
-        if (detailClose) detailClose.addEventListener('click', rfqHideApplicantDetail);
-        if (detailFooterClose) detailFooterClose.addEventListener('click', rfqHideApplicantDetail);
-
         const finput = document.getElementById('rfqSignedApplicationFile');
         if (finput) {
             finput.addEventListener('change', async function () {

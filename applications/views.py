@@ -923,6 +923,25 @@ def _module2_applicant_row_payload(applicant, permissions, required_group_a_subm
         else False
     )
 
+    signed_application_view_url = ''
+    signed_application_existing_file_label = ''
+    if signed_scan_present:
+        _sa_doc = (
+            Document.objects.filter(applicant=applicant, document_type='signed_application')
+            .order_by('-uploaded_at', '-id')
+            .first()
+        )
+        if _sa_doc:
+            signed_application_view_url = reverse(
+                'documents:blob_download',
+                kwargs={'position': acted_by_user.position, 'doc_id': _sa_doc.pk},
+            )
+            signed_application_existing_file_label = (
+                (_sa_doc.file_name or '').strip()
+                or (_sa_doc.title or '').strip()
+                or 'Signed application'
+            )
+
     signed_form_vault_url = ''
     signed_form_vault_url_scan = ''
     signed_form_vault_url_upload = ''
@@ -971,6 +990,8 @@ def _module2_applicant_row_payload(applicant, permissions, required_group_a_subm
         'm2_rules': rules,
         'm2_evaluator': rules,
         'signed_application_scan_present': signed_scan_present,
+        'signed_application_existing_file_label': signed_application_existing_file_label,
+        'signed_application_view_url': signed_application_view_url,
         'signed_form_vault_url': signed_form_vault_url,
         'signed_form_vault_url_scan': signed_form_vault_url_scan,
         'signed_form_vault_url_upload': signed_form_vault_url_upload,
@@ -3550,10 +3571,30 @@ def proceed_to_lot_awarding_queue(request, position):
         if blacklist_error:
             return blacklist_error
 
+        from applications.form_pipeline import (
+            applicant_has_signed_application_payload,
+            apply_signed_application_scan_if_ready,
+        )
+
+        apply_signed_application_scan_if_ready(str(application.applicant_id))
+        application.refresh_from_db()
+
+        if not applicant_has_signed_application_payload(application.applicant):
+            return JsonResponse({
+                'success': False,
+                'error': (
+                    'Upload or scan a signed application first. Proceed to Awarding stays disabled '
+                    'until the signed form is on file.'
+                ),
+            }, status=400)
+
         if application.status != 'completed':
             return JsonResponse({
                 'success': False,
-                'error': 'Only applicant-signed (completed) records can proceed to lot awarding queue.',
+                'error': (
+                    'Application must show as Completed (signed scan on file) before proceeding '
+                    'to lot awarding.'
+                ),
             }, status=400)
 
         application.status = 'standby'

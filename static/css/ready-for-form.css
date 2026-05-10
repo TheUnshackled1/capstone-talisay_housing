@@ -81,7 +81,8 @@
 }
 
 .rfq-table-wrap {
-    overflow-x: hidden;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
     border: 1px solid #e2e8f0;
     border-radius: 0.65rem;
 }
@@ -415,6 +416,29 @@
     outline-offset: 2px;
 }
 
+/* Vault “View” is an <a> with eligibility-view-doc-btn — restore gold only on this queue */
+body .rfq-shell a.eligibility-view-doc-btn.rfq-signed-application-view {
+    border: 1px solid #b45309;
+    background: linear-gradient(135deg, #fde68a 0%, #fbbf24 45%, #d97706 100%);
+    color: #422006;
+    box-shadow:
+        0 1px 2px rgba(66, 32, 6, 0.14),
+        inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+body .rfq-shell a.eligibility-view-doc-btn.rfq-signed-application-view:hover {
+    filter: brightness(1.05);
+    box-shadow:
+        0 4px 14px rgba(217, 119, 6, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    color: #292524;
+}
+
+body .rfq-shell a.eligibility-view-doc-btn.rfq-signed-application-view:focus-visible {
+    outline: 2px solid #d97706;
+    outline-offset: 2px;
+}
+
 .rfq-action-btn:focus-visible {
     outline: 2px solid #5eead4;
     outline-offset: 2px;
@@ -522,14 +546,25 @@
     word-break: keep-all;
     overflow-wrap: break-word;
 }
-/* Status pill stays compact, single line */
+/* Status — room for 2-line pills; full label available via title tooltip */
 .rfq-table th.rfq-col-status,
 .rfq-table td.rfq-col-status {
-    width: 7rem;
-    min-width: 5.5rem;
+    width: 11%;
+    min-width: 8.75rem;
+    max-width: 13rem;
+    vertical-align: middle !important;
+}
+.rfq-table td.rfq-col-status .rfq-chip--status {
+    white-space: normal !important;
+    max-width: 100%;
+    box-sizing: border-box;
+    justify-content: center;
+    text-align: center;
+    line-height: 1.25;
+    hyphens: manual;
+    word-break: break-word;
 }
 .rfq-chip {
-    white-space: nowrap;
     font-size: 0.6rem !important;
     padding: 0.18rem 0.5rem !important;
 }
@@ -543,6 +578,12 @@
     grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr) minmax(0, 1fr) !important;
     column-gap: 0.4rem !important;
     padding: 0.35rem 0.15rem !important;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+}
+.rfq-actions-inline > * {
+    min-width: 0;
 }
 .rfq-action-btn {
     font-size: 0.62rem !important;
@@ -560,6 +601,17 @@
 .rfq-vault-pair .rfq-action-btn {
     font-size: 0.56rem !important;
     padding: 0 0.35rem !important;
+}
+
+/* Proceed to Awarding — disabled until signed application is on file */
+.rfq-action-btn--proceed-awarding:disabled,
+.rfq-action-btn--proceed-awarding[aria-disabled="true"] {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #e2e8f0 !important;
+    border-color: #cbd5e1 !important;
+    color: #64748b !important;
+    box-shadow: none;
 }
 /* Cell padding tighten so rows shorter */
 .rfq-table td,
@@ -583,6 +635,49 @@
     font-size: 0.6rem !important;
     padding-left: 0.5rem !important;
     border-left: 1px solid #eef2f7;
+}
+
+/* Open PDF + View side by side in column 1 (Ready for Form queue, application rows) */
+.rfq-open-pdf-view-pair {
+    grid-column: 1;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: 0.35rem;
+    width: 100%;
+    min-width: 0;
+}
+.rfq-open-pdf-view-pair > .generate-form-btn,
+.rfq-open-pdf-view-pair > .rfq-action-btn--view-gold,
+.rfq-open-pdf-view-pair > .eligibility-view-doc-btn {
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+/* Match row control height — Eligibility “View” (blob preview, new tab) beside Open PDF */
+.rfq-open-pdf-view-pair > .eligibility-view-doc-btn {
+    box-sizing: border-box;
+    min-height: 2.25rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.58rem !important;
+    padding: 0.35rem 0.45rem;
+    border-radius: 0.4rem;
+    text-decoration: none;
+}
+
+.rfq-actions-inline .rfq-signed-application-view.rfq-action-slot-3 {
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 2.25rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.58rem !important;
+    padding: 0.35rem 0.45rem;
+    text-decoration: none;
 }
 
 @media (max-width: 1100px) {
@@ -867,6 +962,21 @@
 
 .rfq-detail-ha-wrap:not([hidden]) {
     margin-top: 0.1rem;
+}
+
+.rfq-detail-vault-section {
+    padding-top: 0.15rem;
+}
+
+.rfq-detail-vault-section .rfq-detail-vault-hint {
+    margin-bottom: 0.65rem;
+}
+
+.rfq-detail-vault-pair {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
 }
 
 .rfq-detail-footer {
