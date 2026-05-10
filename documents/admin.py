@@ -8,8 +8,6 @@ from .models import (
     SignatoryRouting,
     FieldInspection,
     FieldInspectionPhoto,
-    CommitteeInterview,
-    EndorsementRoutingStep,
 )
 
 
@@ -143,20 +141,6 @@ class FieldInspectionAdmin(admin.ModelAdmin):
     search_fields = ('application__application_number', 'application__applicant__full_name')
     readonly_fields = ('submitted_at',)
     inlines = [FieldInspectionPhotoInline]
-
-
-@admin.register(CommitteeInterview)
-class CommitteeInterviewAdmin(admin.ModelAdmin):
-    list_display = ('application', 'scheduled_at', 'result', 'result_recorded_at', 'result_recorded_by')
-    list_filter = ('result', 'scheduled_at', 'result_recorded_at')
-    search_fields = ('application__application_number', 'application__applicant__full_name')
-
-
-@admin.register(EndorsementRoutingStep)
-class EndorsementRoutingStepAdmin(admin.ModelAdmin):
-    list_display = ('application', 'step', 'is_completed', 'completed_at', 'recorded_by')
-    list_filter = ('step', 'is_completed', 'completed_at')
-    search_fields = ('application__application_number', 'application__applicant__full_name')
 
 
 @admin.register(LotAwarding)

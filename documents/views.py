@@ -18,7 +18,6 @@ from documents.models import (
     Document,
     DocumentBlob,
     RequirementSubmission,
-    EndorsementRoutingStep,
 )
 from applications.form_pipeline import applicant_has_signed_application_payload
 
@@ -365,7 +364,6 @@ def document_management(request, position):
             'application__lot_awards__unit',
             'documents',
             'requirement_submissions__requirement',
-            'application__endorsement_routing_steps',
             Prefetch(
                 'queue_entries',
                 queryset=QueueEntry.objects.filter(status='active').order_by('position'),
@@ -461,15 +459,7 @@ def document_management(request, position):
         field_inspection = getattr(app_obj, 'field_inspection', None) if app_obj else None
         phase_b_complete = bool(field_inspection and field_inspection.status == 'confirmed' and field_inspection.confirmed_at)
 
-        committee = getattr(app_obj, 'committee_interview', None) if app_obj else None
-        committee_result = getattr(committee, 'result', 'pending') if committee else 'pending'
-        phase_c_complete = committee_result == 'passed'
-
-        routing_steps = list(getattr(app_obj, 'endorsement_routing_steps', []).all()) if app_obj else []
-        completed_routing_count = sum(1 for step in routing_steps if step.is_completed)
-        phase_d_complete = completed_routing_count >= 7
-
-        module3_ready_for_module4 = phase_a_complete and phase_b_complete and phase_c_complete and phase_d_complete
+        module3_ready_for_module4 = phase_a_complete and phase_b_complete
 
         applicants_list.append({
             'id': str(applicant.id),
@@ -488,11 +478,7 @@ def document_management(request, position):
             'phase_a_required_docs': phase_a_required_docs,
             'phase_a_complete': phase_a_complete,
             'phase_b_complete': phase_b_complete,
-            'phase_c_complete': phase_c_complete,
-            'phase_d_complete': phase_d_complete,
-            'phase_d_completed_steps': completed_routing_count,
             'module3_ready_for_module4': module3_ready_for_module4,
-            'committee_result': committee_result,
             'signed_form_confirmed': signed_form_confirmed,
             'applicant_workflow_status': applicant_workflow_status,
             'queue_type': queue_type,
