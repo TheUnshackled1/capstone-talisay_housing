@@ -917,17 +917,3 @@ def update_requirement_submission(request, position):
     """
     from applications.views import update_requirement
     return update_requirement(request, position)
-
-
-@login_required
-@verify_position
-@require_POST
-def update_signatory_routing(request, position):
-    """
-    Documents-module POST endpoint for Module 2 OIC full approval (applicant-signed scan on file).
-
-    URL: ``/documents/<position>/api/update-signatory-routing/`` — same as
-    ``applications:update_routing`` under ``/applications/staff/<position>/routing/update/``.
-    """
-    from applications.views import update_routing
-    return update_routing(request, position)

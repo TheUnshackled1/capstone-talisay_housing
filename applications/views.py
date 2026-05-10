@@ -22,7 +22,6 @@ from documents.models import (
     LotAwarding,
     Requirement,
     RequirementSubmission,
-    SignatoryRouting,
 )
 from .models import (
     Application,
@@ -795,10 +794,6 @@ def _module2_evaluations_applicants_queryset():
     ).prefetch_related(
         'requirement_submissions',
         'requirement_submissions__requirement',
-        Prefetch(
-            'application__routing_steps',
-            queryset=SignatoryRouting.objects.order_by('action_at'),
-        ),
     ).order_by('module2_handoff_at', 'created_at', 'id')
 
 
@@ -901,7 +896,7 @@ def _module2_applicant_row_payload(applicant, permissions, required_group_a_subm
     elif application and application.status == 'draft':
         current_stage = 'Form Released · awaiting signed scan'
     elif application and application.status == 'completed':
-        current_stage = 'Ready for lot awarding'
+        current_stage = 'Awaiting OIC approval'
     elif rules.get('form_generation_ready'):
         current_stage = 'Document Gathering'
     elif applicant.module2_handoff_at:
@@ -1030,13 +1025,6 @@ def applications_list(request, position):
 
     applicants = _module2_evaluations_applicants_queryset()
 
-    _awaiting_oic_q = Exists(
-        SignatoryRouting.objects.filter(
-            application__applicant_id=OuterRef('pk'),
-            step='signed_oic',
-        )
-    )
-
     # Get all requirements for the checklist
     requirements = Requirement.objects.filter(is_active=True).order_by('group', 'order')
     group_a_requirements = requirements.filter(group='A')
@@ -1058,11 +1046,7 @@ def applications_list(request, position):
             form_queue_routed_at__isnull=False,
             application__status__in=['draft', 'completed'],
         ).count(),
-        'awaiting_oic': applicants.filter(application__status='completed')
-        .annotate(_has_signed_oic=_awaiting_oic_q)
-        .filter(_has_signed_oic=False)
-        .distinct()
-        .count(),
+        'awaiting_oic': applicants.filter(application__status='completed').distinct().count(),
         'fully_approved': applicants.filter(
             application__status='standby'
         ).count(),
@@ -1541,7 +1525,6 @@ def application_detail(request, position, application_id):
                     'applicant__archives',
                     queryset=Archive.objects.select_related('archived_by').order_by('archived_at'),
                 ),
-                'routing_steps',
                 'applicant__requirement_submissions',
                 'applicant__requirement_submissions__requirement',
                 Prefetch(
@@ -1605,8 +1588,6 @@ def application_detail(request, position, application_id):
             'project_name': applicant.project_name or '',
         },
         'requirements': [],
-        'routing_steps': [],
-        'latest_step': None,
         'has_application': application is not None,
         'permissions': permissions,
         'blacklist_blocked': rules['blacklist_blocked'],
@@ -1674,21 +1655,7 @@ def application_detail(request, position, application_id):
             'status': application.status,
             'status_display': application.get_status_display(),
         })
-        
-        # Add routing steps
-        latest_step = None
-        for step in application.routing_steps.all().order_by('action_at'):
-            latest_step = step.step
-            data['routing_steps'].append({
-                'step': step.step,
-                'step_display': step.get_step_display(),
-                'action_at': step.action_at.strftime('%Y-%m-%d %H:%M'),
-                'action_by': step.action_by.get_full_name() if step.action_by else 'System',
-                'is_delayed': step.is_delayed,
-                'days_since': step.days_since_action,
-            })
-        data['latest_step'] = latest_step
-    
+
     # Add requirements status
     for submission in applicant.requirement_submissions.all():
         data['requirements'].append({
@@ -3385,16 +3352,13 @@ def update_routing(request, position):
     """
     Record OIC full approval after the applicant-signed application is on file (AJAX).
 
-    POST URLs: ``applications:update_routing`` → ``/applications/staff/<position>/routing/update/``;
-    documents alias ``documents:update_signatory_routing`` → ``/documents/<position>/api/update-signatory-routing/``.
+    POST URL: ``applications:update_routing`` → ``/applications/staff/<position>/routing/update/``.
 
-    Legacy intermediate steps (received / forwarded_oic) are no longer used; applicant
-    signature is captured in the vault scan (``completed``). This endpoint writes one
-    ``signed_oic`` SignatoryRouting row for audit and sets ``standby``.
+    Applicant signature is captured in the vault scan (application status ``completed``).
+    This endpoint sets ``standby``, records ``fully_approved_at``, and sends the standby SMS.
     """
     application_id = request.POST.get('application_id')
     step = request.POST.get('step')
-    notes = request.POST.get('notes', '')
 
     allowed_positions = ['fourth_member', 'second_member', 'oic']
     if request.user.position not in allowed_positions:
@@ -3404,8 +3368,7 @@ def update_routing(request, position):
         return JsonResponse({
             'success': False,
             'error': (
-                'Intermediate signatory routing is retired. '
-                'Use full OIC approval only (step signed_oic) once the applicant-signed scan is on file.'
+                'Only full OIC approval is supported (step signed_oic) once the applicant-signed scan is on file.'
             ),
         }, status=400)
 
@@ -3418,6 +3381,13 @@ def update_routing(request, position):
         if blacklist_error:
             return blacklist_error
 
+        if application.status == 'standby':
+            return JsonResponse({
+                'success': True,
+                'new_status': application.status,
+                'message': 'Application is already fully approved (standby).',
+            })
+
         if application.status != 'completed':
             return JsonResponse({
                 'success': False,
@@ -3426,21 +3396,6 @@ def update_routing(request, position):
                     f'(current status: {application.get_status_display()}).'
                 ),
             }, status=400)
-
-        completed_steps = set(application.routing_steps.values_list('step', flat=True))
-        if step in completed_steps:
-            return JsonResponse({
-                'success': True,
-                'new_status': application.status,
-                'message': f'Routing step "{step}" already recorded.'
-            })
-
-        SignatoryRouting.objects.create(
-            application=application,
-            step=step,
-            action_by=request.user,
-            notes=notes
-        )
 
         application.status = 'standby'
         application.fully_approved_at = timezone.now()

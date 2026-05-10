@@ -56,7 +56,8 @@ def send_sms(phone_number, message, trigger_event, applicant=None, isf_record=No
         trigger_event: Event that triggered SMS (registration, eligibility_passed, etc.)
         applicant: Applicant instance (optional)
         isf_record: ISFRecord instance (optional)
-        module: App module for SMS logging ('intake', 'applications', 'documents', 'units', 'cases')
+        module: App module for SMS logging ('intake', 'applications', 'units', 'cases').
+            ``documents`` is accepted as a legacy alias and logs to ``applications.SMSLog``.
 
     Returns:
         bool: True if SMS sent successfully, False otherwise
@@ -64,10 +65,8 @@ def send_sms(phone_number, message, trigger_event, applicant=None, isf_record=No
     # Route to correct app's SMSLog based on module parameter
     if module == 'intake':
         from .models import SMSLog
-    elif module == 'applications':
+    elif module in ('applications', 'documents'):
         from applications.models import SMSLog
-    elif module == 'documents':
-        from documents.models import SMSLog
     elif module == 'units':
         from units.models import SMSLog
     elif module == 'cases':

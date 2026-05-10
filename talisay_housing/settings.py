@@ -213,7 +213,6 @@ JAZZMIN_SETTINGS = {
         "applications.Application": "fas fa-file-contract",
         "documents.Requirement": "fas fa-checklist",
         "documents.RequirementSubmission": "fas fa-check-circle",
-        "documents.SignatoryRouting": "fas fa-route",
         "documents": "fas fa-folder",
         "documents.Document": "fas fa-file",
         "units": "fas fa-building",

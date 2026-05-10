@@ -312,55 +312,6 @@ class RequirementSubmission(models.Model):
         return f"{self.applicant.full_name} - {self.requirement.name} ({self.get_status_display()})"
 
 
-class SignatoryRouting(models.Model):
-    """
-    Tracks document routing through signatory chain.
-    Hard-moved ownership from applications module.
-    """
-    STEP_CHOICES = [
-        ('received', 'Received - Processing'),
-        ('forwarded_oic', 'Forwarded to OIC'),
-        ('signed_oic', 'Signed by OIC - Complete'),
-    ]
-
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    application = models.ForeignKey(
-        'applications.Application',
-        on_delete=models.CASCADE,
-        related_name='routing_steps'
-    )
-    step = models.CharField(max_length=20, choices=STEP_CHOICES)
-    action_at = models.DateTimeField(auto_now_add=True)
-    action_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        related_name='routing_actions'
-    )
-    notes = models.TextField(blank=True)
-
-    class Meta:
-        ordering = ['application', 'action_at']
-        verbose_name = "Signatory Routing Step"
-        verbose_name_plural = "Signatory Routing Steps"
-        db_table = 'applications_signatoryrouting'
-
-    def __str__(self):
-        return f"{self.application.application_number} - {self.get_step_display()}"
-
-    @property
-    def days_since_action(self):
-        from django.utils import timezone
-        return (timezone.now() - self.action_at).days
-
-    @property
-    def is_delayed(self):
-        return self.days_since_action > 3
-
-
-# Backward-compatible symbol used in some views/admin.
-SignatoryRoutingStep = SignatoryRouting
-
 class FieldInspection(models.Model):
     """
     Phase B (3.4): Ronda field inspection submission and staff confirmation.
@@ -474,46 +425,3 @@ class LotAwarding(models.Model):
 
     def __str__(self):
         return f"{self.application.application_number} - Lot {self.lot_number}"
-
-
-class SMSLog(models.Model):
-    """
-    Audit trail for Documents (Module 2) SMS notifications.
-    Tracks document submission deadlines, verifications, rejections, etc.
-    """
-    STATUS_CHOICES = [
-        ('pending', 'Pending'),
-        ('sent', 'Sent'),
-        ('failed', 'Failed'),
-    ]
-
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    recipient_phone = models.CharField(max_length=20)
-    message_content = models.TextField()
-    trigger_event = models.CharField(
-        max_length=50,
-        help_text="Event that triggered this SMS (deadline_notice, document_verified, document_rejected, etc.)"
-    )
-
-    # Optional links to related records
-    applicant = models.ForeignKey(
-        'intake.Applicant',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='documents_sms_logs'
-    )
-
-    # Status tracking
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
-    error_message = models.TextField(blank=True)
-    external_id = models.CharField(max_length=100, blank=True, help_text="SMS provider message ID")
-    sent_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        ordering = ['-sent_at']
-        verbose_name = "SMS Log (Documents)"
-        verbose_name_plural = "SMS Logs (Documents)"
-
-    def __str__(self):
-        return f"SMS to {self.recipient_phone} - {self.trigger_event} ({self.status})"

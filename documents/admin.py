@@ -1,11 +1,9 @@
 from django.contrib import admin
 from .models import (
     Document,
-    SMSLog,
     LotAwarding,
     Requirement,
     RequirementSubmission,
-    SignatoryRouting,
     FieldInspection,
     FieldInspectionPhoto,
 )
@@ -78,52 +76,6 @@ class RequirementSubmissionAdmin(admin.ModelAdmin):
         }),
         ('📝 NOTES', {
             'fields': ('notes',),
-            'classes': ('collapse',),
-        }),
-    )
-
-
-@admin.register(SignatoryRouting)
-class SignatoryRoutingStepAdmin(admin.ModelAdmin):
-    list_display = ('application', 'step', 'action_at', 'action_by')
-    list_filter = ('step', 'action_at')
-    search_fields = ('application__application_number', 'application__applicant__full_name')
-    readonly_fields = ('action_at',)
-
-    fieldsets = (
-        ('📋 ROUTING STEP', {
-            'fields': ('application', 'step'),
-        }),
-        ('🔏 ACTION', {
-            'fields': ('action_at', 'action_by'),
-        }),
-        ('📝 NOTES', {
-            'fields': ('notes',),
-            'classes': ('collapse',),
-        }),
-    )
-
-
-@admin.register(SMSLog)
-class SMSLogAdmin(admin.ModelAdmin):
-    list_display = ('recipient_phone', 'trigger_event', 'status', 'sent_at')
-    list_filter = ('trigger_event', 'status', 'sent_at')
-    search_fields = ('recipient_phone', 'message_content')
-    readonly_fields = ('sent_at', 'id')
-
-    fieldsets = (
-        ('SMS DETAILS', {
-            'fields': ('recipient_phone', 'message_content', 'trigger_event'),
-        }),
-        ('STATUS', {
-            'fields': ('status', 'error_message', 'external_id'),
-        }),
-        ('RECIPIENT', {
-            'fields': ('applicant',),
-            'classes': ('collapse',),
-        }),
-        ('AUDIT TRAIL', {
-            'fields': ('id', 'sent_at'),
             'classes': ('collapse',),
         }),
     )

@@ -18,7 +18,7 @@ from intake.models import Applicant, SMSLog
 from applications.models import CDRRMOCertification
 from units.models import Blacklist as UnitsBlacklist
 from applications.models import QueueEntry, Application
-from documents.models import Document, SignatoryRouting, RequirementSubmission
+from documents.models import Document, RequirementSubmission
 from units.models import HousingUnit
 from cases.models import Case
 
@@ -656,13 +656,7 @@ def _staff_reports_analytics_payload(request):
 
     module2_handoff_count = Applicant.objects.filter(module2_handoff_at__isnull=False).count()
     ready_for_form_queue_count = _staff_analytics_ready_for_form_count(request.user)
-    signed_app_ids = SignatoryRouting.objects.filter(step='signed_oic').values_list(
-        'application_id',
-        flat=True,
-    ).distinct()
-    pending_oic_signature_count = Application.objects.filter(status='completed').exclude(
-        id__in=signed_app_ids
-    ).count()
+    pending_oic_signature_count = Application.objects.filter(status='completed').count()
 
     requirement_submission_labels = dict(RequirementSubmission.STATUS_CHOICES)
     requirement_by_status = sorted(
