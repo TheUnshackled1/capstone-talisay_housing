@@ -16,5 +16,8 @@ urlpatterns = [
     path('cases/<str:position>/<uuid:case_id>/details/', views.get_case_details, name='get_case_details'),
     path('cases/<str:position>/create/', views.create_case, name='create_case'),
     path('cases/<str:position>/update/', views.update_case, name='update_case'),
+    
+    # Blacklist Management
+    path('blacklists/<str:position>/', views.blacklist_management, name='blacklist_management'),
 ]
 

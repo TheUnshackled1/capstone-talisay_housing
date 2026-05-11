@@ -16,7 +16,7 @@ from applications.models import QueueEntry, Application
 from intake.utils import send_sms
 from units.models import (
     HousingUnit, LotAward, RelocationSite, CaseRecord, CaseUpdate, WeeklyReport,
-    ConstructionProgress,
+    ConstructionProgress, Blacklist
 )
 from accounts.models import FIELD_DESK_POSITIONS
 
@@ -1095,3 +1095,30 @@ def update_case(request, position):
             'success': False,
             'error': str(e)
         }, status=500)
+
+@login_required
+@verify_position
+def blacklist_management(request, position):
+    """
+    Renders the blacklist ledger showing all permanently disqualified applicants.
+    """
+    search_query = request.GET.get('search', '').strip()
+    
+    queryset = Blacklist.objects.select_related('applicant', 'blacklisted_by')
+    
+    if search_query:
+        queryset = queryset.filter(
+            models.Q(applicant__first_name__icontains=search_query) |
+            models.Q(applicant__last_name__icontains=search_query) |
+            models.Q(applicant__reference_number__icontains=search_query)
+        )
+        
+    queryset = queryset.order_by('-blacklisted_at')
+    
+    # We could add pagination here if needed, but keeping it simple for now
+    
+    context = {
+        'blacklists': queryset,
+        'search': search_query,
+    }
+    return render(request, 'units/blacklist_management.html', context)

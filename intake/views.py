@@ -306,7 +306,10 @@ def _describe_applicant_location(applicant):
         application = applicant.application
     except ObjectDoesNotExist:
         application = None
-    if application is not None:
+    if applicant.status == 'disqualified':
+        location = 'Disqualified Registry'
+        status_text = 'Permanently Disqualified / Blacklisted'
+    elif application is not None:
         location = 'Applications (Module 2)'
         status_text = application.get_status_display()
     elif applicant.requirement_submissions.exclude(status='pending').exists() or applicant.status == 'requirements':

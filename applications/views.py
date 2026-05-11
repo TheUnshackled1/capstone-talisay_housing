@@ -288,9 +288,9 @@ def _require_intake_archive(applicant):
 
 def _blacklist_source_label(bl_entry):
     source_map = {
-        'units_blacklist': 'Units Blacklist Entries',
+        'units_blacklist': 'Blacklisted Beneficiaries',
     }
-    return source_map.get(getattr(bl_entry, 'source', ''), 'Units Blacklist Entries')
+    return source_map.get(getattr(bl_entry, 'source', ''), 'Blacklisted Beneficiaries')
 
 
 def _build_module2_blacklist_disqualification_reason(bl_entry):
@@ -1297,6 +1297,7 @@ def lot_awarding_queue(request, position):
     applications_qs = (
         Application.objects
         .filter(status='standby')
+        .exclude(applicant__status='disqualified')
         .select_related('applicant')
         .order_by('standby_position', 'standby_entered_at', '-updated_at')
     )

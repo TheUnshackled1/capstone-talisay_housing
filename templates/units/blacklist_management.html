@@ -1,0 +1,555 @@
+{% extends 'staff_base.html' %}
+{% load static %}
+
+{% block title %}Blacklists{% endblock %}
+
+{% block nav_blacklists %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Primary Header and Layout */
+    .app-main-header {
+        margin-bottom: 1.5rem;
+    }
+
+    .app-main-title {
+        font-size: 1.875rem;
+        font-weight: 800;
+        color: #0f172a;
+        margin: 0 0 0.25rem 0;
+        letter-spacing: -0.025em;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        justify-content: center;
+    }
+
+    .app-main-subtitle {
+        color: #64748b;
+        font-size: 0.875rem;
+        margin: 0;
+        font-weight: 500;
+        text-align: center;
+    }
+
+    /* Filter Bar — institutional toolbar */
+    .filter-bar {
+        display: flex;
+        gap: 0.6rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+        align-items: center;
+        padding: 0.75rem 0.85rem;
+        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        border: 1px solid #e2e8f0;
+        border-radius: 0.75rem;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+    }
+
+    .search-box {
+        flex: 1;
+        min-width: 220px;
+        position: relative;
+    }
+
+    .search-box input {
+        width: 100%;
+        padding: 0.625rem 0.75rem 0.625rem 2.5rem;
+        border: 1px solid #cbd5e1;
+        border-radius: 0.55rem;
+        font-size: 0.875rem;
+        background: white;
+        transition: all 0.18s ease;
+    }
+
+    .search-box input:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    }
+
+    .search-box input::placeholder {
+        color: #94a3b8;
+    }
+
+    .search-box .search-icon {
+        position: absolute;
+        left: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #94a3b8;
+        font-size: 1rem;
+    }
+
+    /* Applications table parity */
+    .applications-table-container {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.85rem;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 4px 14px rgba(15, 23, 42, 0.04);
+        position: relative;
+    }
+
+    .applications-table-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #dc2626 0%, #ef4444 100%);
+        z-index: 1;
+    }
+
+    .applications-table {
+        width: 100%;
+        table-layout: fixed;
+        border-collapse: separate;
+        border-spacing: 0;
+        min-width: 0;
+        background: white;
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
+        position: relative;
+    }
+
+    .applications-table thead {
+        background: linear-gradient(180deg, #1d4ed8 0%, #1e3a8a 100%);
+        border-bottom: 2px solid #172554;
+        position: sticky;
+        top: 0;
+        z-index: 2;
+    }
+
+    .applications-table th {
+        padding: 0.7rem 0.45rem;
+        text-align: left;
+        font-size: 0.58rem;
+        font-weight: 700;
+        color: #ffffff;
+        text-transform: uppercase;
+        letter-spacing: 0.085em;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        border-right: 1px solid rgba(255, 255, 255, 0.16);
+        border-bottom: 1px solid #172554;
+        position: relative;
+        background: linear-gradient(180deg, #1d4ed8 0%, #1e3a8a 100%);
+    }
+
+    .applications-table th::after {
+        content: '';
+        position: absolute;
+        bottom: -1px;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: transparent;
+        transition: background 0.2s ease;
+    }
+
+    .applications-table th:hover::after {
+        background: #2563eb;
+    }
+
+    .applications-table td {
+        padding: 0.65rem 0.55rem;
+        border-bottom: 1px solid #eef2f7;
+        border-right: 1px solid #f1f5f9;
+        vertical-align: middle;
+        font-size: 0.7rem;
+        color: #334155;
+        white-space: normal;
+        overflow-wrap: anywhere;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .applications-table tbody tr {
+        transition: background 0.18s ease, box-shadow 0.18s ease;
+        position: relative;
+    }
+
+    .applications-table tbody tr:nth-child(even) {
+        background: #fafbfc;
+    }
+
+    .applications-table tbody tr:hover {
+        background: #fee2e2;
+        box-shadow: inset 3px 0 0 #dc2626;
+    }
+
+    .applications-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .applications-table th:last-child,
+    .applications-table td:last-child {
+        border-right: none;
+    }
+
+    .applications-table .col-num {
+        width: 3%;
+        text-align: center;
+        font-weight: 700;
+        color: #1e3a8a;
+    }
+
+    .applications-table .col-applicant {
+        width: 20%;
+        font-weight: 600;
+        color: #0f172a;
+    }
+
+    .applications-table .col-reason {
+        width: 12%;
+    }
+
+    .applications-table .col-details {
+        width: 32%;
+        color: #475569;
+        font-size: 0.65rem;
+    }
+
+    .applications-table .col-date {
+        width: 10%;
+        text-align: center;
+    }
+
+    .applications-table .col-staff {
+        width: 13%;
+        text-align: center;
+    }
+
+    .applications-table .col-actions {
+        width: 10%;
+        text-align: center;
+    }
+
+    .btn-view-details {
+        padding: 0.35rem 0.65rem;
+        background: #f1f5f9;
+        color: #334155;
+        border: 1px solid #cbd5e1;
+        border-radius: 0.35rem;
+        font-size: 0.65rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .btn-view-details:hover {
+        background: #e2e8f0;
+        color: #0f172a;
+    }
+
+    /* Modal CSS */
+    .bl-modal-overlay {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(15, 23, 42, 0.6);
+        z-index: 1000;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
+    .bl-modal-overlay.active {
+        display: flex;
+        opacity: 1;
+    }
+    .bl-modal-card {
+        background: white;
+        width: 90%;
+        max-width: 500px;
+        border-radius: 0.75rem;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        overflow: hidden;
+        transform: translateY(10px);
+        transition: transform 0.2s ease;
+    }
+    .bl-modal-overlay.active .bl-modal-card {
+        transform: translateY(0);
+    }
+    .bl-modal-header {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #f8fafc;
+    }
+    .bl-modal-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin: 0;
+    }
+    .bl-modal-close {
+        background: none;
+        border: none;
+        color: #64748b;
+        cursor: pointer;
+        padding: 0.25rem;
+    }
+    .bl-modal-close:hover { color: #0f172a; }
+    .bl-modal-body {
+        padding: 1.5rem;
+    }
+    .bl-detail-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    .bl-detail-group {
+        margin-bottom: 1rem;
+    }
+    .bl-detail-label {
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        color: #64748b;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.25rem;
+    }
+    .bl-detail-value {
+        font-size: 0.875rem;
+        color: #1e293b;
+        font-weight: 500;
+    }
+    .bl-detail-value.text-sm {
+        font-size: 0.75rem;
+        color: #475569;
+    }
+
+    .badge {
+        display: inline-block;
+        padding: 0.25rem 0.375rem;
+        border-radius: 9999px;
+        font-size: 0.6rem;
+        font-weight: 600;
+        border: 1px solid;
+        line-height: 1.25;
+        text-align: center;
+    }
+
+    .badge-reason {
+        background: #fee2e2;
+        color: #991b1b;
+        border-color: #fecaca;
+    }
+
+    .btn-search {
+        padding: 0.625rem 1.25rem;
+        background: #0d9488;
+        color: white;
+        border: none;
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    .btn-search:hover {
+        background: #0f766e;
+    }
+
+    .empty-state {
+        padding: 4rem 2rem;
+        text-align: center;
+        background: white;
+    }
+
+    .empty-state-icon {
+        width: 48px;
+        height: 48px;
+        color: #94a3b8;
+        margin-bottom: 1rem;
+    }
+
+    .empty-state-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="app-main-header">
+    <h1 class="app-main-title">
+        <span style="color: #dc2626;">●</span> Blacklisted Beneficiaries
+    </h1>
+    <p class="app-main-subtitle">Registry of permanently disqualified beneficiaries</p>
+</div>
+
+<form method="get" class="filter-bar">
+    <div class="search-box">
+        <svg class="search-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+            stroke-width="2">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+        </svg>
+        <input type="text" name="search" placeholder="Search by name or reference #..."
+            value="{{ search|default_if_none:'' }}">
+    </div>
+    <button type="submit" class="btn-search">Search</button>
+</form>
+
+<div class="applications-table-container">
+    <table class="applications-table compact-table">
+        <thead>
+            <tr>
+                <th class="col-num">#</th>
+                <th class="col-applicant">Beneficiary</th>
+                <th class="col-reason">Reason</th>
+                <th class="col-details">Details</th>
+                <th class="col-date">Date</th>
+                <th class="col-staff">Blacklisted By</th>
+                <th class="col-actions">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for blacklist in blacklists %}
+            <tr>
+                <td class="col-num">{{ forloop.counter }}</td>
+                <td class="col-applicant">
+                    {{ blacklist.applicant.full_name|upper }}<br>
+                    <span style="font-size: 0.6rem; color: #64748b; font-weight: 400;">Ref: {{ blacklist.applicant.reference_number }}</span>
+                </td>
+                <td class="col-reason">
+                    <span class="badge badge-reason">{{ blacklist.get_reason_display }}</span>
+                </td>
+                <td class="col-details">
+                    {{ blacklist.reason_details }}
+                    {% if blacklist.supporting_notes %}
+                    <div style="margin-top: 0.25rem; font-size: 0.55rem; color: #94a3b8; font-style: italic;">
+                        Notes: {{ blacklist.supporting_notes }}
+                    </div>
+                    {% endif %}
+                </td>
+                <td class="col-date">
+                    {{ blacklist.blacklisted_at|date:"M d, Y" }}
+                </td>
+                <td class="col-staff">
+                    {% if blacklist.blacklisted_by %}
+                    {{ blacklist.blacklisted_by.get_full_name|default:blacklist.blacklisted_by.username }}
+                    {% else %}
+                    System
+                    {% endif %}
+                </td>
+                <td class="col-actions">
+                    <button type="button" class="btn-view-details"
+                        data-name="{{ blacklist.applicant.full_name }}"
+                        data-ref="{{ blacklist.applicant.reference_number }}"
+                        data-dob="{{ blacklist.applicant.date_of_birth|date:'M d, Y'|default:'Unknown' }}"
+                        data-brgy="{{ blacklist.applicant.barangay.name|default:'Unknown' }}"
+                        data-reason="{{ blacklist.get_reason_display }}"
+                        data-details="{{ blacklist.reason_details }}"
+                        data-notes="{{ blacklist.supporting_notes }}"
+                        data-date="{{ blacklist.blacklisted_at|date:'M d, Y' }}"
+                        onclick="openDetailsModal(this)">
+                        View Details
+                    </button>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" class="empty-state">
+                    <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="1.5">
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="12" y1="8" x2="12" y2="12" />
+                        <line x1="12" y1="16" x2="12.01" y2="16" />
+                    </svg>
+                    <h3 class="empty-state-title">No blacklisted beneficiaries found</h3>
+                    <p style="color: #64748b; font-size: 0.875rem;">{% if search %}Try adjusting your search query.{%
+                        else %}The blacklist registry is currently empty.{% endif %}</p>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Details Modal -->
+<div class="bl-modal-overlay" id="blDetailsModal" onclick="closeDetailsModal(event)">
+    <div class="bl-modal-card" onclick="event.stopPropagation()">
+        <div class="bl-modal-header">
+            <h3 class="bl-modal-title">Disqualification Details</h3>
+            <button class="bl-modal-close" onclick="closeDetailsModal()">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <div class="bl-modal-body">
+            <div class="bl-detail-group">
+                <div class="bl-detail-label">Beneficiary Name</div>
+                <div class="bl-detail-value" id="mName" style="color: #dc2626; font-weight: 700;"></div>
+                <div class="bl-detail-value text-sm" style="margin-top: 0.15rem;">Ref: <span id="mRef"></span></div>
+            </div>
+            <div class="bl-detail-grid">
+                <div class="bl-detail-group">
+                    <div class="bl-detail-label">Date of Birth</div>
+                    <div class="bl-detail-value" id="mDob"></div>
+                </div>
+                <div class="bl-detail-group">
+                    <div class="bl-detail-label">Barangay</div>
+                    <div class="bl-detail-value" id="mBrgy"></div>
+                </div>
+            </div>
+            <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 1rem 0;">
+            <div class="bl-detail-group">
+                <div class="bl-detail-label">Date Blacklisted</div>
+                <div class="bl-detail-value" id="mDate"></div>
+            </div>
+            <div class="bl-detail-group">
+                <div class="bl-detail-label">Primary Reason</div>
+                <div class="bl-detail-value" id="mReason"></div>
+            </div>
+            <div class="bl-detail-group">
+                <div class="bl-detail-label">Detailed Explanation</div>
+                <div class="bl-detail-value text-sm" id="mDetails"></div>
+            </div>
+            <div class="bl-detail-group">
+                <div class="bl-detail-label">Supporting Notes</div>
+                <div class="bl-detail-value text-sm" id="mNotes" style="font-style: italic;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openDetailsModal(btn) {
+        document.getElementById('mName').textContent = btn.dataset.name.toUpperCase();
+        document.getElementById('mRef').textContent = btn.dataset.ref;
+        document.getElementById('mDob').textContent = btn.dataset.dob;
+        document.getElementById('mBrgy').textContent = btn.dataset.brgy;
+        document.getElementById('mReason').textContent = btn.dataset.reason;
+        document.getElementById('mDetails').textContent = btn.dataset.details;
+        document.getElementById('mNotes').textContent = btn.dataset.notes || 'No supporting notes provided.';
+        document.getElementById('mDate').textContent = btn.dataset.date;
+        
+        document.getElementById('blDetailsModal').classList.add('active');
+    }
+
+    function closeDetailsModal(event) {
+        if (event && event.target && event.target.id !== 'blDetailsModal') return;
+        document.getElementById('blDetailsModal').classList.remove('active');
+    }
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeDetailsModal();
+        }
+    });
+</script>
+{% endblock %}
