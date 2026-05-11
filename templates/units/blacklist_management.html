@@ -91,6 +91,26 @@
         position: relative;
     }
 
+    .table-scroll-wrapper {
+        width: 100%;
+        overflow-x: auto;
+    }
+
+    .table-scroll-wrapper::-webkit-scrollbar {
+        height: 8px;
+    }
+    .table-scroll-wrapper::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 0 0 0.85rem 0.85rem;
+    }
+    .table-scroll-wrapper::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+    .table-scroll-wrapper::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+
     .applications-table-container::before {
         content: '';
         position: absolute;
@@ -107,7 +127,7 @@
         table-layout: fixed;
         border-collapse: separate;
         border-spacing: 0;
-        min-width: 0;
+        min-width: 1000px;
         background: white;
         border: none;
         border-radius: 0;
@@ -124,13 +144,13 @@
     }
 
     .applications-table th {
-        padding: 0.7rem 0.45rem;
+        padding: 0.85rem 0.75rem;
         text-align: left;
-        font-size: 0.58rem;
+        font-size: 0.75rem;
         font-weight: 700;
         color: #ffffff;
         text-transform: uppercase;
-        letter-spacing: 0.085em;
+        letter-spacing: 0.05em;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -156,11 +176,11 @@
     }
 
     .applications-table td {
-        padding: 0.65rem 0.55rem;
+        padding: 0.85rem 0.75rem;
         border-bottom: 1px solid #eef2f7;
         border-right: 1px solid #f1f5f9;
         vertical-align: middle;
-        font-size: 0.7rem;
+        font-size: 0.875rem;
         color: #334155;
         white-space: normal;
         overflow-wrap: anywhere;
@@ -192,35 +212,41 @@
     }
 
     .applications-table .col-num {
-        width: 3%;
+        width: 4%;
         text-align: center;
+    }
+    .applications-table td.col-num {
         font-weight: 700;
         color: #1e3a8a;
     }
 
     .applications-table .col-applicant {
-        width: 20%;
+        width: 22%;
+    }
+    .applications-table td.col-applicant {
         font-weight: 600;
         color: #0f172a;
     }
 
     .applications-table .col-reason {
-        width: 12%;
+        width: 14%;
     }
 
     .applications-table .col-details {
-        width: 32%;
+        width: 28%;
+    }
+    .applications-table td.col-details {
         color: #475569;
-        font-size: 0.65rem;
+        font-size: 0.8rem;
     }
 
     .applications-table .col-date {
-        width: 10%;
+        width: 11%;
         text-align: center;
     }
 
     .applications-table .col-staff {
-        width: 13%;
+        width: 11%;
         text-align: center;
     }
 
@@ -230,12 +256,12 @@
     }
 
     .btn-view-details {
-        padding: 0.35rem 0.65rem;
+        padding: 0.45rem 0.85rem;
         background: #f1f5f9;
         color: #334155;
         border: 1px solid #cbd5e1;
         border-radius: 0.35rem;
-        font-size: 0.65rem;
+        font-size: 0.75rem;
         font-weight: 600;
         cursor: pointer;
         transition: all 0.2s;
@@ -328,9 +354,9 @@
 
     .badge {
         display: inline-block;
-        padding: 0.25rem 0.375rem;
+        padding: 0.35rem 0.65rem;
         border-radius: 9999px;
-        font-size: 0.6rem;
+        font-size: 0.75rem;
         font-weight: 600;
         border: 1px solid;
         line-height: 1.25;
@@ -403,25 +429,26 @@
 </form>
 
 <div class="applications-table-container">
-    <table class="applications-table compact-table">
-        <thead>
-            <tr>
-                <th class="col-num">#</th>
-                <th class="col-applicant">Beneficiary</th>
-                <th class="col-reason">Reason</th>
-                <th class="col-details">Details</th>
-                <th class="col-date">Date</th>
-                <th class="col-staff">Blacklisted By</th>
-                <th class="col-actions">Actions</th>
-            </tr>
-        </thead>
-        <tbody>
+    <div class="table-scroll-wrapper">
+        <table class="applications-table compact-table">
+            <thead>
+                <tr>
+                    <th class="col-num">#</th>
+                    <th class="col-applicant">Beneficiary</th>
+                    <th class="col-reason">Reason</th>
+                    <th class="col-details">Details</th>
+                    <th class="col-date">Date</th>
+                    <th class="col-staff">Blacklisted By</th>
+                    <th class="col-actions">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
             {% for blacklist in blacklists %}
             <tr>
                 <td class="col-num">{{ forloop.counter }}</td>
                 <td class="col-applicant">
                     {{ blacklist.applicant.full_name|upper }}<br>
-                    <span style="font-size: 0.6rem; color: #64748b; font-weight: 400;">Ref: {{ blacklist.applicant.reference_number }}</span>
+                    <span style="font-size: 0.75rem; color: #64748b; font-weight: 400;">Ref: {{ blacklist.applicant.reference_number }}</span>
                 </td>
                 <td class="col-reason">
                     <span class="badge badge-reason">{{ blacklist.get_reason_display }}</span>
@@ -429,7 +456,7 @@
                 <td class="col-details">
                     {{ blacklist.reason_details }}
                     {% if blacklist.supporting_notes %}
-                    <div style="margin-top: 0.25rem; font-size: 0.55rem; color: #94a3b8; font-style: italic;">
+                    <div style="margin-top: 0.35rem; font-size: 0.75rem; color: #94a3b8; font-style: italic;">
                         Notes: {{ blacklist.supporting_notes }}
                     </div>
                     {% endif %}
@@ -476,6 +503,7 @@
             {% endfor %}
         </tbody>
     </table>
+    </div>
 </div>
 
 <!-- Details Modal -->
