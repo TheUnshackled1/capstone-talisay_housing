@@ -834,7 +834,7 @@
             <label for="lawqSmsMessageText" style="display:block;font-size:0.72rem;font-weight:600;color:#374151;margin-bottom:0.4rem;text-transform:uppercase;letter-spacing:0.04em;">Message</label>
             <textarea id="lawqSmsMessageText" class="lawq-sms-body" maxlength="900" required
                 placeholder="Type the SMS text for the selected applicants…"></textarea>
-            <p class="lawq-sms-hint">Each applicant receives this text with their <strong>reference number</strong> appended. This does not save an official schedule in the system. Delivery is logged under the staff SMS workflow (same as other Module 2 notices).</p>
+            <p class="lawq-sms-hint">Each applicant receives this text with their <strong>full name</strong> appended. This does not save an official schedule in the system. Delivery is logged under the staff SMS workflow (same as other Module 2 notices).</p>
         </div>
         <div style="padding:0.85rem 1.15rem;border-top:1px solid #e5e7eb;display:flex;justify-content:flex-end;gap:0.5rem;background:#fafafa;">
             <button type="button" onclick="closeLawqSmsModal()"
@@ -876,10 +876,18 @@
 {% block extra_js %}
 <script>
     var LAWQ_SMS_DEFAULT = (
-        'Talisay City Housing Authority: You may proceed for lot release coordination. '
-        + 'Please visit or await instructions from the office. '
-        + 'This text does not confirm a date or time.'
+        'Congratulations! Pirmanado na ang imo forms. Ikaw ang '
+        + 'assignan na sang lot. Maghulat sang schedule para sa inyo '
+        + 'orientasyon. Salamat!'
     );
+
+    function lawqShowAlert(message, title, variant) {
+        if (typeof window.showFlowAlert === 'function') {
+            window.showFlowAlert(message, title || 'Notice', null, variant || 'default');
+        } else {
+            window.alert(message);
+        }
+    }
 
     function openLawqSmsModal() {
         var modal = document.getElementById('lawqSmsModal');
@@ -960,7 +968,7 @@
                     return;
                 }
                 if (!msg) {
-                    alert('Please enter a message.');
+                    lawqShowAlert('Please enter a message.', 'Send SMS', 'default');
                     return;
                 }
                 var body = new URLSearchParams();
@@ -969,6 +977,7 @@
                 ids.forEach(function (id) { body.append('application_ids', id); });
                 try {
                     confirmBtn.disabled = true;
+                    confirmBtn.textContent = 'Sending…';
                     var res = await fetch('{% url "applications:lot_awarding_bulk_notify_sms" request.user.position %}', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -976,18 +985,26 @@
                     });
                     var data = await res.json();
                     if (data.success) {
-                        alert('SMS: sent ' + (data.sent || 0) + ', skipped (no phone) ' + (data.skipped_no_phone || 0) + ', failed ' + (data.failed || 0) + '.');
                         closeLawqSmsModal();
+                        var summary = 'SMS sent: ' + (data.sent || 0);
+                        if (data.skipped_no_phone > 0) {
+                            summary += '\nSkipped (no phone): ' + data.skipped_no_phone;
+                        }
+                        if (data.failed > 0) {
+                            summary += '\nFailed: ' + data.failed;
+                        }
+                        lawqShowAlert(summary, 'Send SMS', 'success');
                         checks().forEach(function (cb) { cb.checked = false; });
                         if (selectAll) selectAll.checked = false;
                         updateBulkUi();
                     } else {
-                        alert(data.error || 'Send SMS failed.');
+                        lawqShowAlert(data.error || 'Send SMS failed.', 'Send SMS', 'default');
                     }
                 } catch (e) {
-                    alert('Error: ' + (e.message || e));
+                    lawqShowAlert('Error: ' + (e.message || e), 'Send SMS', 'default');
                 } finally {
                     confirmBtn.disabled = false;
+                    confirmBtn.textContent = 'Send SMS';
                 }
             });
         }

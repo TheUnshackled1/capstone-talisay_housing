@@ -682,8 +682,18 @@
                     if (!response.ok || !data.success) {
                         throw new Error(data.error || 'Unable to proceed to lot-awarding queue.');
                     }
+                    let alertMsg = data.message || 'Application moved to lot-awarding queue.';
+                    if (data.sms_plan) {
+                        if (data.sms_plan.dispatched) {
+                            alertMsg += '\n\nSMS notification sent to applicant.';
+                        } else if (data.sms_plan.deduped) {
+                            alertMsg += '\n\nSMS already sent previously (not re-sent).';
+                        } else if (!data.sms_plan.has_phone) {
+                            alertMsg += '\n\nNo phone number on file — SMS not sent.';
+                        }
+                    }
                     rfqShowAlert(
-                        data.message || 'Application moved to lot-awarding queue.',
+                        alertMsg,
                         'Lot awarding queue',
                         'success'
                     );

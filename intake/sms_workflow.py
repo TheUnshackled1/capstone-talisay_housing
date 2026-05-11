@@ -24,6 +24,7 @@ Smoke test: ``python manage.py test_sms --phone 09123456789 --service console`` 
 # --- trigger_event values (keep ≤ 50 chars; indexed in SMSLog) ---
 PROCEED_TO_EVALUATION = 'proceed_evaluation'
 READY_FOR_FORM_QUEUE_REMINDER = 'ready_for_form_queue_reminder'
+PROCEED_TO_LOT_AWARDING = 'proceed_to_lot_awarding'
 
 
 def _tha_ref_name_header(applicant) -> str:
@@ -95,3 +96,17 @@ def message_proceed_to_evaluation(applicant) -> str:
     situation = _situation_clause_proceed_sms(dr)
     closing = 'Mag-hulat sang updates para sa eligibility. Salamat!'
     return f'{base}{situation}{closing}'
+
+
+def message_proceed_to_lot_awarding(applicant) -> str:
+    """
+    Hiligaynon lot-awarding notification.
+    Fits in a single SMS (160 chars) if head is standard length.
+    """
+    head = _tha_ref_name_header(applicant)
+    # Target: Clear, celebratory, and informative.
+    return (
+        f'{head}: Congratulations! Pirmanado na ang imo forms. Ikaw ang '
+        f'assignan na sang lot. Maghulat sang schedule para sa inyo '
+        f'orientasyon. Salamat!'
+    )

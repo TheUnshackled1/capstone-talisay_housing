@@ -3592,6 +3592,60 @@ def proceed_to_lot_awarding_queue(request, position):
         application.standby_position = last_position + 1
         application.save(update_fields=['status', 'standby_entered_at', 'standby_position', 'updated_at'])
 
+        # --- SMS: Lot-awarding notification ---
+        applicant = application.applicant
+        has_phone = bool((applicant.phone_number or '').strip())
+        ev = sms_workflow.PROCEED_TO_LOT_AWARDING
+        sms_deduped = has_phone and ApplicationSMSLog.objects.filter(
+            applicant=applicant, trigger_event=ev, status='sent',
+        ).exists()
+        if not sms_deduped and has_phone:
+            sms_deduped = IntakeSMSLog.objects.filter(
+                applicant=applicant, trigger_event=ev, status='sent',
+            ).exists()
+        sms_dispatched = False
+        if has_phone and not sms_deduped:
+            message = sms_workflow.message_proceed_to_lot_awarding(applicant)
+            sms_dispatched = bool(
+                send_sms_for_applications(
+                    applicant.phone_number,
+                    message,
+                    ev,
+                    applicant=applicant,
+                )
+            )
+
+        sms_plan_payload = {
+            'active': has_phone,
+            'deduped': sms_deduped,
+            'dispatched': sms_dispatched,
+            'has_phone': has_phone,
+            'note': (
+                'proceed_to_lot_awarding SMS already sent for this applicant; not sent again.'
+                if sms_deduped
+                else (
+                    'Check runserver or SMSLog (SMS_SERVICE=console simulates delivery).'
+                    if sms_dispatched
+                    else (
+                        'No phone on applicant.'
+                        if not has_phone
+                        else 'SMS not logged (invalid number format or send_sms returned false).'
+                    )
+                )
+            ),
+        }
+        logger.info(
+            'proceed_to_lot_awarding_queue ref=%s sms_plan=%s',
+            applicant.reference_number,
+            sms_plan_payload,
+        )
+        if getattr(settings, 'DEBUG', False):
+            print(
+                f"\n[proceed_to_lot_awarding_queue] ref={applicant.reference_number} "
+                f"dispatched={sms_dispatched} deduped={sms_deduped} has_phone={has_phone}\n"
+                f"  {sms_plan_payload['note']}\n"
+            )
+
         return JsonResponse({
             'success': True,
             'standby_position': application.standby_position,
@@ -3599,6 +3653,7 @@ def proceed_to_lot_awarding_queue(request, position):
                 f'Application routed to lot-awarding queue '
                 f'(Standby position #{application.standby_position}).'
             ),
+            'sms_plan': sms_plan_payload,
         })
     except Application.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Application not found.'}, status=404)
@@ -3780,6 +3835,10 @@ def lot_awarding_bulk_notify_sms(request, position):
     failed = 0
     errors = []
 
+    import sys
+    sys.stderr.write(f"\n[lot_awarding_bulk_notify_sms] Sending to {len(raw_ids[:100])} applicant(s)...\n")
+    sys.stderr.flush()
+
     for aid in raw_ids[:100]:
         try:
             app = Application.objects.select_related('applicant').get(id=aid)
@@ -3795,13 +3854,20 @@ def lot_awarding_bulk_notify_sms(request, position):
         phone = (applicant.phone_number or '').strip() if applicant else ''
         if not phone:
             skipped_no_phone += 1
+            sys.stderr.write(f"  WARNING: {applicant.full_name}: no phone -- skipped\n")
             continue
-        msg = f'{message_body} Ref: {applicant.reference_number or "N/A"}.'
-        ok = send_sms(phone, msg, 'lot_awarding_queue_notify', applicant=applicant, module='applications')
+        msg = f'{message_body} — {applicant.full_name}.'
+        ok = send_sms(phone, msg, 'Applicant Notification', applicant=applicant, module='applications')
         if ok:
             sent += 1
         else:
             failed += 1
+
+    sys.stderr.write(
+        f"\n[lot_awarding_bulk_notify_sms] Done -- sent={sent}, "
+        f"skipped_no_phone={skipped_no_phone}, failed={failed}\n\n"
+    )
+    sys.stderr.flush()
 
     return JsonResponse({
         'success': True,

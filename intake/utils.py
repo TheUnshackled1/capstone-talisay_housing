@@ -19,8 +19,11 @@ def _sms_simulate_delivery(sms_log, phone_number, message, trigger_event, label)
         'SMS simulated [%s] event=%s to=%s msg=%s',
         label, trigger_event, phone_number, (message or '')[:200],
     )
-    print(f"\n{'=' * 60}\nSMS SIMULATED ({label}) — not sent via paid gateway\n{'=' * 60}")
-    print(f"To: {phone_number}\nEvent: {trigger_event}\nMessage:\n{message}\n{'=' * 60}\n")
+    import sys
+    sep = '=' * 60
+    sys.stderr.write(f"\n{sep}\nSMS SIMULATED ({label}) — not sent via paid gateway\n{sep}\n")
+    sys.stderr.write(f"To: {phone_number}\nEvent: {trigger_event}\nMessage:\n{message}\n{sep}\n\n")
+    sys.stderr.flush()
     return True
 
 
