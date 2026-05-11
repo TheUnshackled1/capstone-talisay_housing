@@ -1391,45 +1391,17 @@
     <div class="section scroll-animate-scale scroll-delay-2" style="margin-bottom: 1rem;">
         <div class="widget combined-panel" style="padding: 18px 20px;">
 
-            <!-- HEADER BLOCK: breadcrumb + title + subtitle + action buttons -->
-            <div class="combined-header" style="margin-bottom: 18px; padding-bottom: 16px; border-bottom: 1px solid #e2e8f0;">
-                <div class="nav-breadcrumb" style="font-size: 12px; color: #64748b; margin-bottom: 8px;">
-                    <a href="{% url 'accounts:dashboard' %}" style="color: #1d4ed8; text-decoration: none; font-weight: 600;">Dashboard</a>
-                    <span style="color: #cbd5e1; margin: 0 6px;">/</span>
-                    <span>Field verification (post-Module 2 handoff)</span>
-                </div>
-                <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
-                    <div style="min-width: 0; flex: 1;">
-                        <h1 style="font-family: 'Source Serif Pro', Georgia, serif; font-size: 22px; font-weight: 700; color: #0f172a; margin: 0 0 4px 0; letter-spacing: -0.01em; line-height: 1.2;">Field verification desk</h1>
-                        <p style="font-size: 13px; color: #475569; margin: 0; line-height: 1.5;">Talisay City Housing Authority &mdash; Module 2 handoff stage, Channel B (hazard-area / walk-in pathway)</p>
-                    </div>
-                    <div class="dashboard-header-actions" style="display: flex; gap: 8px; flex-wrap: wrap;">
-                        <button onclick="printVerificationSheet()" class="btn-action" title="Print pending applicants list">
-                            <svg style="width: 16px; height: 16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <polyline points="6 9 6 2 18 2 18 9"></polyline>
-                                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-                            </svg>
-                            Print pending list
-                        </button>
-                        <button onclick="location.reload()" class="btn-action refresh" title="Refresh data">
-                            <svg style="width: 16px; height: 16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36M20.49 15a9 9 0 0 1-14.85 3.36"></path>
-                            </svg>
-                            Refresh
-                        </button>
-                        <button onclick="showMyVerifications()" class="btn-action my-work" title="View my verifications">
-                            <svg style="width: 16px; height: 16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                                <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                            </svg>
-                            Today’s summary
-                        </button>
-                    </div>
-                </div>
+            <!-- Section subtitle + Today's summary action -->
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 12px;">
+                <div style="font-size: 11px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: #475569;">Status, performance &amp; workflow</div>
+                <button onclick="showMyVerifications()" class="btn-action my-work" title="View my verifications">
+                    <svg style="width: 16px; height: 16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                    Today’s summary
+                </button>
             </div>
-
-            <!-- Section subtitle for the metrics + workflow block below the header -->
-            <div style="font-size: 11px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: #475569; margin-bottom: 12px;">Status, performance &amp; workflow</div>
 
             <!-- 2 GROUPED CARDS — Status (Pending+Certified) | Performance (Total+Success) -->
             <div class="combined-kpis" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
@@ -1460,12 +1432,15 @@
                             <div class="metric-value">{{ certified_count|add:not_certified_count }}</div>
                             <div class="metric-label">Danger zone verifications completed</div>
                         </div>
-                        <div>
+                        <div role="button" tabindex="0" onclick="openCertifiedApplicantsModal()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openCertifiedApplicantsModal();}" title="View certified hazard-area applicants" style="cursor: pointer; border-radius: 8px; padding: 4px; margin: -4px; transition: background 0.18s ease;" onmouseover="this.style.background='#ecfdf5';" onmouseout="this.style.background='transparent';">
                             <p class="widget-title" style="margin: 0 0 4px 0;">Success Rate</p>
                             <div class="metric-value" style="color: #10b981;">
                                 {% if certified_count|add:not_certified_count > 0 %}{{ verified_percentage }}%{% else %}0%{% endif %}
                             </div>
-                            <div class="metric-label">Share certified as hazard-area</div>
+                            <div class="metric-label" style="display: flex; align-items: center; gap: 4px;">
+                                Share certified as hazard-area
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1498,6 +1473,45 @@
                     </p>
                 </div>
             </div>
+
+            <!-- DIVIDER — Official notice merged into same card -->
+            <div class="combined-divider" style="position: relative; margin: 22px 0 18px; height: 1px; background: linear-gradient(90deg, transparent 0%, #e2e8f0 25%, #cbd5e1 50%, #e2e8f0 75%, transparent 100%);">
+                <span style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); padding: 0 14px; background: #ffffff; font-size: 11px; font-weight: 700; color: #475569; letter-spacing: 0.14em; text-transform: uppercase;">Official notice</span>
+            </div>
+
+            <!-- OFFICIAL NOTICE BLOCK (merged from standalone card) -->
+            <div role="region" aria-labelledby="fieldOfficialNoticeHeading" style="padding: 14px 16px; background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%); border: 1px solid #e2e8f0; border-radius: 10px; border-left: 4px solid #1e40af;">
+                <div style="display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px;">
+                    <div aria-hidden="true" style="flex: 0 0 auto; width: 32px; height: 32px; border-radius: 8px; background: #1e40af; color: #ffffff; display: flex; align-items: center; justify-content: center;">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                            <path d="M9 12l2 2 4-4"/>
+                        </svg>
+                    </div>
+                    <div style="min-width: 0;">
+                        <h2 id="fieldOfficialNoticeHeading" style="margin: 0 0 2px 0; font-family: 'Source Serif Pro', Georgia, serif; font-size: 15px; font-weight: 700; color: #0f172a; letter-spacing: -0.005em;">Official notice to field personnel</h2>
+                        <p style="margin: 0; font-size: 12px; color: #475569; line-height: 1.5;">Channel B hazard-area pathway · Field certification under THA–CDRRMO coordination</p>
+                    </div>
+                </div>
+                <div class="combined-notice-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                    <article style="padding: 10px 12px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px;">
+                        <span style="display: block; font-size: 10.5px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: #1e40af; margin-bottom: 4px;">Mandate</span>
+                        <p style="margin: 0; font-size: 12.5px; color: #1e293b; line-height: 1.55;">You certify, on behalf of the Talisay City Housing Authority field unit, whether the applicant’s declared hazard-area status is supported by on-site inspection.</p>
+                    </article>
+                    <article style="padding: 10px 12px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px;">
+                        <span style="display: block; font-size: 10.5px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: #1e40af; margin-bottom: 4px;">Procedure</span>
+                        <p style="margin: 0; font-size: 12.5px; color: #1e293b; line-height: 1.55;">Open <strong>Open verification</strong> from the queue, record a clear affirmative or negative certification, attach photographic evidence when practicable, and submit.</p>
+                    </article>
+                    <article style="padding: 10px 12px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px;">
+                        <span style="display: block; font-size: 10.5px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: #1e40af; margin-bottom: 4px;">Effect of record</span>
+                        <p style="margin: 0; font-size: 12.5px; color: #1e293b; line-height: 1.55;">A sustained hazard finding supports priority-queue processing; a negative finding routes the case to the general walk-in queue in line with THA rules.</p>
+                    </article>
+                    <article style="padding: 10px 12px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px;">
+                        <span style="display: block; font-size: 10.5px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: #1e40af; margin-bottom: 4px;">Escalation</span>
+                        <p style="margin: 0; font-size: 12.5px; color: #1e293b; line-height: 1.55;">Matters pending beyond fourteen (14) days may be administratively re-queued to protect programme integrity.</p>
+                    </article>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1518,6 +1532,9 @@
                 border-bottom: 1px dashed #cbd5e1;
                 padding-right: 0 !important;
                 padding-bottom: 10px;
+            }
+            .combined-notice-grid {
+                grid-template-columns: 1fr !important;
             }
         }
     </style>
@@ -1563,42 +1580,135 @@
     </div>
     {% endif %}
 
-    <!-- Official mandate notice -->
-    <div class="scroll-animate-left scroll-delay-4 field-official-notice" role="region" aria-labelledby="fieldOfficialNoticeHeading">
-        <div class="field-official-notice__accent" aria-hidden="true"></div>
-        <div class="field-official-notice__inner">
-            <div class="field-official-notice__header">
-                <div class="field-official-notice__icon-wrap" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                        <path d="M9 12l2 2 4-4"/>
-                    </svg>
+    <!-- CERTIFIED APPLICANTS MODAL — opens from Success Rate metric -->
+    <div id="certifiedApplicantsModal" role="dialog" aria-modal="true" aria-labelledby="certifiedApplicantsModalTitle" style="display: none; position: fixed; inset: 0; z-index: 9999; background: rgba(15, 23, 42, 0.55); align-items: center; justify-content: center; padding: 16px;">
+        <div style="background: #ffffff; width: 100%; max-width: 720px; max-height: 86vh; border-radius: 12px; box-shadow: 0 24px 48px rgba(15, 23, 42, 0.25); display: flex; flex-direction: column; overflow: hidden;">
+            <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 16px 20px; border-bottom: 1px solid #e2e8f0;">
+                <div style="min-width: 0;">
+                    <h2 id="certifiedApplicantsModalTitle" style="margin: 0 0 2px 0; font-family: 'Source Serif Pro', Georgia, serif; font-size: 18px; font-weight: 700; color: #0f172a;">Certified hazard-area applicants</h2>
+                    <p style="margin: 0; font-size: 12.5px; color: #475569;">Record of applicants whose declared hazard-area status was sustained on field inspection.</p>
                 </div>
-                <div>
-                    <h2 id="fieldOfficialNoticeHeading" class="field-official-notice__title">Official notice to field personnel</h2>
-                    <p class="field-official-notice__subtitle">Channel B hazard-area pathway · Field certification under THA–CDRRMO coordination</p>
-                </div>
+                <button type="button" onclick="closeCertifiedApplicantsModal()" aria-label="Close" style="flex: 0 0 auto; background: transparent; border: 1px solid #e2e8f0; border-radius: 8px; padding: 6px 8px; cursor: pointer; color: #475569;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
             </div>
-            <div class="field-official-notice__grid">
-                <article class="field-official-notice__item">
-                    <span class="field-official-notice__label">Mandate</span>
-                    <p>You certify, on behalf of the Talisay City Housing Authority field unit, whether the applicant’s declared hazard-area status is supported by on-site inspection.</p>
-                </article>
-                <article class="field-official-notice__item">
-                    <span class="field-official-notice__label">Procedure</span>
-                    <p>Open <strong>Open verification</strong> from the queue, record a clear affirmative or negative certification, attach photographic evidence when practicable, and submit.</p>
-                </article>
-                <article class="field-official-notice__item">
-                    <span class="field-official-notice__label">Effect of record</span>
-                    <p>A sustained hazard finding supports priority-queue processing; a negative finding routes the case to the general walk-in queue in line with THA rules.</p>
-                </article>
-                <article class="field-official-notice__item">
-                    <span class="field-official-notice__label">Escalation</span>
-                    <p>Matters pending beyond fourteen (14) days may be administratively re-queued to protect programme integrity.</p>
-                </article>
+            <div style="overflow: auto; padding: 0;">
+                {% if certified_applicants %}
+                <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                    <thead style="background: #f8fafc; position: sticky; top: 0;">
+                        <tr style="text-align: left; color: #475569; font-size: 11px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase;">
+                            <th style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0;">Applicant</th>
+                            <th style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0;">Hazard type</th>
+                            <th style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0;">Certified on</th>
+                            <th style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0;">Recorded by</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ca in certified_applicants %}
+                        <tr>
+                            <td style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9; color: #0f172a;">
+                                <div style="font-weight: 600;">{{ ca.full_name }}</div>
+                                <div style="font-size: 11.5px; color: #64748b;">📍 {{ ca.address|default:"—" }}</div>
+                            </td>
+                            <td style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9; color: #1e293b;">{{ ca.danger_zone_type|default:"—" }}</td>
+                            <td style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9; color: #1e293b;">{% if ca.certified_at %}{{ ca.certified_at|date:"M d, Y" }}<div style="font-size: 11px; color: #64748b;">{{ ca.certified_at|time:"H:i" }}</div>{% else %}—{% endif %}</td>
+                            <td style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9; color: #1e293b;">{{ ca.recorded_by }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p style="margin: 0; padding: 36px 20px; text-align: center; color: #64748b; font-size: 13.5px;">No certified hazard-area applicants on record yet.</p>
+                {% endif %}
+            </div>
+            <div style="padding: 12px 20px; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 8px;">
+                <button type="button" onclick="closeCertifiedApplicantsModal()" class="btn-action" style="background: #1e40af; color: #ffffff; border-color: #1e40af;">Close</button>
             </div>
         </div>
     </div>
+
+    <!-- TODAY'S SUMMARY MODAL — opens from Today's summary button -->
+    <div id="todaySummaryModal" role="dialog" aria-modal="true" aria-labelledby="todaySummaryModalTitle" style="display: none; position: fixed; inset: 0; z-index: 9999; background: rgba(15, 23, 42, 0.55); align-items: center; justify-content: center; padding: 16px;">
+        <div style="background: #ffffff; width: 100%; max-width: 820px; max-height: 86vh; border-radius: 12px; box-shadow: 0 24px 48px rgba(15, 23, 42, 0.25); display: flex; flex-direction: column; overflow: hidden;">
+            <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 16px 20px; border-bottom: 1px solid #e2e8f0;">
+                <div style="min-width: 0;">
+                    <h2 id="todaySummaryModalTitle" style="margin: 0 0 2px 0; font-family: 'Source Serif Pro', Georgia, serif; font-size: 18px; font-weight: 700; color: #0f172a;">Today’s field summary</h2>
+                    <p style="margin: 0; font-size: 12.5px; color: #475569;">Applicants recorded or photographed in the field today.</p>
+                </div>
+                <button type="button" onclick="closeTodaySummaryModal()" aria-label="Close" style="flex: 0 0 auto; background: transparent; border: 1px solid #e2e8f0; border-radius: 8px; padding: 6px 8px; cursor: pointer; color: #475569;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 14px 20px; background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                <div style="padding: 10px 12px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px;">
+                    <div style="font-size: 10.5px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: #1e40af;">Recorded today</div>
+                    <div style="font-size: 22px; font-weight: 700; color: #0f172a;">{{ today_summary_counts.recorded|default:0 }}</div>
+                    <div style="font-size: 11.5px; color: #64748b;">Certification outcome filed today</div>
+                </div>
+                <div style="padding: 10px 12px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px;">
+                    <div style="font-size: 10.5px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: #059669;">Photos uploaded</div>
+                    <div style="font-size: 22px; font-weight: 700; color: #0f172a;">{{ today_summary_counts.photos|default:0 }}</div>
+                    <div style="font-size: 11.5px; color: #64748b;">Site photos captured today</div>
+                </div>
+                <div style="padding: 10px 12px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px;">
+                    <div style="font-size: 10.5px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: #b45309;">Photo-only cases</div>
+                    <div style="font-size: 22px; font-weight: 700; color: #0f172a;">{{ today_summary_counts.photo_only|default:0 }}</div>
+                    <div style="font-size: 11.5px; color: #64748b;">Photos taken, certification pending</div>
+                </div>
+            </div>
+            <div style="overflow: auto;">
+                {% if today_summary %}
+                <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                    <thead style="background: #f8fafc; position: sticky; top: 0;">
+                        <tr style="text-align: left; color: #475569; font-size: 11px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase;">
+                            <th style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0;">Applicant</th>
+                            <th style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0;">Outcome</th>
+                            <th style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0;">Photos today</th>
+                            <th style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0;">Recorded by</th>
+                            <th style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0;">Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in today_summary %}
+                        <tr>
+                            <td style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9; color: #0f172a;">
+                                <div style="font-weight: 600;">{{ r.full_name }}</div>
+                                <div style="font-size: 11.5px; color: #64748b;">📍 {{ r.address|default:"—" }}</div>
+                            </td>
+                            <td style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9; color: #1e293b;">
+                                {% if r.status == 'certified' %}
+                                    <span style="display: inline-block; padding: 2px 8px; border-radius: 999px; background: #ecfdf5; color: #047857; font-size: 11.5px; font-weight: 700;">Certified — hazard</span>
+                                {% elif r.status == 'not_certified' %}
+                                    <span style="display: inline-block; padding: 2px 8px; border-radius: 999px; background: #fef2f2; color: #b91c1c; font-size: 11.5px; font-weight: 700;">Not certified</span>
+                                {% else %}
+                                    <span style="display: inline-block; padding: 2px 8px; border-radius: 999px; background: #fef3c7; color: #92400e; font-size: 11.5px; font-weight: 700;">Pending — photos only</span>
+                                {% endif %}
+                            </td>
+                            <td style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9; color: #1e293b; font-weight: 600;">
+                                {% if r.photos_today > 0 %}
+                                    📷 {{ r.photos_today }}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+                            <td style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9; color: #1e293b;">{{ r.recorded_by }}</td>
+                            <td style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9; color: #1e293b;">
+                                {% if r.certified_at %}{{ r.certified_at|time:"H:i" }}{% else %}—{% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p style="margin: 0; padding: 36px 20px; text-align: center; color: #64748b; font-size: 13.5px;">No field activity recorded today yet.</p>
+                {% endif %}
+            </div>
+            <div style="padding: 12px 20px; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 8px;">
+                <button type="button" onclick="closeTodaySummaryModal()" class="btn-action" style="background: #1e40af; color: #ffffff; border-color: #1e40af;">Close</button>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 {% endblock %}
@@ -1623,7 +1733,41 @@
                 pickBtn.addEventListener('click', function() { fileInput.click(); });
                 fileInput.addEventListener('change', onFieldEvidenceFilesSelected);
             }
+
+            const certifiedModal = document.getElementById('certifiedApplicantsModal');
+            if (certifiedModal) {
+                certifiedModal.addEventListener('click', function(e) {
+                    if (e.target === certifiedModal) closeCertifiedApplicantsModal();
+                });
+            }
+            const todaySummaryModal = document.getElementById('todaySummaryModal');
+            if (todaySummaryModal) {
+                todaySummaryModal.addEventListener('click', function(e) {
+                    if (e.target === todaySummaryModal) closeTodaySummaryModal();
+                });
+            }
+            document.addEventListener('keydown', function(e) {
+                if (e.key !== 'Escape') return;
+                const cm = document.getElementById('certifiedApplicantsModal');
+                if (cm && cm.style.display === 'flex') { closeCertifiedApplicantsModal(); return; }
+                const tm = document.getElementById('todaySummaryModal');
+                if (tm && tm.style.display === 'flex') closeTodaySummaryModal();
+            });
         });
+
+        function openCertifiedApplicantsModal() {
+            const m = document.getElementById('certifiedApplicantsModal');
+            if (!m) return;
+            m.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeCertifiedApplicantsModal() {
+            const m = document.getElementById('certifiedApplicantsModal');
+            if (!m) return;
+            m.style.display = 'none';
+            document.body.style.overflow = '';
+        }
 
         /**
          * Scroll Animations - Intersection Observer
@@ -1986,111 +2130,19 @@
             }
         });
 
-        // Print Verification Sheet - All pending applicants
-        function printVerificationSheet() {
-            const header = document.querySelector('.dashboard-header');
-            const actions = document.querySelector('.dashboard-header-actions');
-            const stats = document.querySelector('.widgets-grid');
-            const aging = document.querySelector('.section:has(.alert-box)');
-            const pending = document.querySelector('.section:has(.pending-verifications-print), .section:nth-child(5)');
-            const footer = document.querySelector('.modal-footer, .instructions');
-
-            // Hide elements during print
-            header.style.display = 'flex';
-            if (actions) actions.style.display = 'none';
-            if (stats) stats.style.display = 'none';
-            if (aging) aging.style.display = 'none';
-
-            // Trigger print
-            const printContent = document.body.innerHTML;
-            const newWindow = window.open('', '_blank');
-            newWindow.document.write(`
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <title>THA — Field verification roster</title>
-                    <style>
-                        body { font-family: Arial, sans-serif; margin: 20px; }
-                        h1 { color: #1f2937; margin-bottom: 10px; }
-                        p { color: #6b7280; margin: 5px 0; }
-                        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-                        th { background: #f3f4f6; font-weight: 600; }
-                        tr:nth-child(even) { background: #f9fafb; }
-                        .applicant-row { page-break-inside: avoid; }
-                        .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; }
-                        .badge-pending { background: #fef3c7; color: #92400e; }
-                        .instructions { margin-top: 20px; padding: 15px; background: #f3f4f6; border-radius: 6px; }
-                    </style>
-                </head>
-                <body>
-                    <h1>Field verification roster</h1>
-                    <p><strong>Talisay City Housing Authority — Field operations</strong></p>
-                    <p>Printed: ${new Date().toLocaleString()}</p>
-                    <p>Team Member: ${document.querySelector('.user-name')?.textContent || 'Field Team'}</p>
-
-                    <table>
-                        <thead>
-                            <tr>
-                                <th style="width: 5%;">#</th>
-                                <th style="width: 20%;">Name</th>
-                                <th style="width: 25%;">Address</th>
-                                <th style="width: 15%;">Phone</th>
-                                <th style="width: 20%;">Danger Zone</th>
-                                <th style="width: 15%;">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${Array.from(document.querySelectorAll('.list-item')).map((item, idx) => {
-                                const name = item.querySelector('.list-item-name')?.textContent || '';
-                                const meta = item.querySelectorAll('.list-item-meta');
-                                const address = meta[0]?.textContent.split('•')[0].trim().replace('📍 ', '') || '';
-                                const phone = meta[0]?.textContent.split('•')[2]?.trim().replace('📞 ', '') || '';
-                                const household = meta[1]?.textContent || '';
-                                return `
-                                    <tr class="applicant-row">
-                                        <td>${idx + 1}</td>
-                                        <td>${name}</td>
-                                        <td>${address}</td>
-                                        <td>${phone}</td>
-                                        <td>${household}</td>
-                                        <td><span class="badge badge-pending">PENDING</span></td>
-                                    </tr>
-                                `;
-                            }).join('')}
-                        </tbody>
-                    </table>
-
-                    <div class="instructions">
-                        <h3>Instructions to field inspectors</h3>
-                        <ol>
-                            <li><strong>Site visit:</strong> Use this roster to schedule inspections at declared addresses.</li>
-                            <li><strong>Inspection standard:</strong> Determine whether hazard-area status is supported on the ground.</li>
-                            <li><strong>Electronic return:</strong> In the THA portal, open <em>Open verification</em> for each case and lodge the certification.</li>
-                            <li><strong>Supervisory review:</strong> Intake staff will review the filed record and attachments.</li>
-                        </ol>
-                    </div>
-                </body>
-                </html>
-            `);
-            newWindow.document.close();
-            newWindow.print();
+        // Show "Today's summary" modal (recorded + photographed today)
+        function showMyVerifications() {
+            const m = document.getElementById('todaySummaryModal');
+            if (!m) return;
+            m.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
         }
 
-        // Show "My Verifications Today"
-        function showMyVerifications() {
-            const vals = document.querySelectorAll('.widgets-grid > .widget .metric-value');
-            const pending = vals[0] ? vals[0].textContent.trim() : '—';
-            const certified = vals[1] ? vals[1].textContent.trim() : '—';
-            const notCert = vals[2] ? vals[2].textContent.trim() : '—';
-            fieldNotify(
-                'Desk summary (current counts)\n\n' +
-                'Pending field certification: ' + pending + '\n' +
-                'Certified — hazard sustained: ' + certified + '\n' +
-                'Not certified — claim not sustained: ' + notCert + '\n\n' +
-                'Please continue to file field reports promptly for THA tracking.',
-                'My verifications today'
-            );
+        function closeTodaySummaryModal() {
+            const m = document.getElementById('todaySummaryModal');
+            if (!m) return;
+            m.style.display = 'none';
+            document.body.style.overflow = '';
         }
 </script>
 

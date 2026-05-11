@@ -15,7 +15,7 @@ from urllib.parse import urlencode
 from .forms import LoginForm
 from .models import FIELD_DESK_POSITIONS
 from intake.models import Applicant, SMSLog
-from applications.models import CDRRMOCertification
+from applications.models import CDRRMOCertification, FieldVerificationPhoto
 from units.models import Blacklist as UnitsBlacklist
 from applications.models import QueueEntry, Application
 from documents.models import Document, RequirementSubmission
@@ -1368,6 +1368,70 @@ def dashboard_field(request):
     else:
         verified_percentage = 0
 
+    # Certified applicants log (for clickable Success Rate drilldown)
+    certified_applicants = []
+    for cert in CDRRMOCertification.objects.filter(
+        status='certified'
+    ).select_related('applicant', 'result_recorded_by').order_by('-certified_at')[:100]:
+        certified_applicants.append({
+            'full_name': cert.applicant.full_name,
+            'address': cert.applicant.current_address,
+            'danger_zone_type': cert.applicant.danger_zone_type,
+            'certified_at': cert.certified_at,
+            'recorded_by': cert.result_recorded_by.get_full_name() if cert.result_recorded_by else '—',
+        })
+
+    # Today's summary: certifications recorded today + photos uploaded today
+    today_certs_qs = CDRRMOCertification.objects.filter(
+        status__in=['certified', 'not_certified'],
+        certified_at__date=today,
+    ).select_related('applicant', 'result_recorded_by').order_by('-certified_at')
+
+    today_photo_uploads_qs = FieldVerificationPhoto.objects.filter(
+        uploaded_at__date=today,
+    ).select_related('certification__applicant', 'uploaded_by')
+
+    photo_counts_today = {}
+    for ph in today_photo_uploads_qs:
+        ap_id = ph.certification.applicant_id
+        photo_counts_today[ap_id] = photo_counts_today.get(ap_id, 0) + 1
+
+    today_summary = []
+    seen_applicants = set()
+    for cert in today_certs_qs:
+        seen_applicants.add(cert.applicant_id)
+        today_summary.append({
+            'full_name': cert.applicant.full_name,
+            'address': cert.applicant.current_address,
+            'status': cert.status,
+            'status_label': cert.get_status_display(),
+            'certified_at': cert.certified_at,
+            'recorded_by': cert.result_recorded_by.get_full_name() if cert.result_recorded_by else '—',
+            'photos_today': photo_counts_today.get(cert.applicant_id, 0),
+        })
+
+    # Include applicants who only had photos uploaded today (no certification recorded yet)
+    for ph in today_photo_uploads_qs:
+        ap_id = ph.certification.applicant_id
+        if ap_id in seen_applicants:
+            continue
+        seen_applicants.add(ap_id)
+        today_summary.append({
+            'full_name': ph.certification.applicant.full_name,
+            'address': ph.certification.applicant.current_address,
+            'status': ph.certification.status,
+            'status_label': ph.certification.get_status_display(),
+            'certified_at': None,
+            'recorded_by': ph.uploaded_by.get_full_name() if ph.uploaded_by else '—',
+            'photos_today': photo_counts_today.get(ap_id, 0),
+        })
+
+    today_summary_counts = {
+        'recorded': len([r for r in today_summary if r['certified_at']]),
+        'photo_only': len([r for r in today_summary if not r['certified_at']]),
+        'photos': sum(photo_counts_today.values()),
+    }
+
     context = {
         'page_title': 'Field Verification Dashboard',
         'user_position': request.user.position,
@@ -1390,6 +1454,9 @@ def dashboard_field(request):
 
         # ========== VERIFICATION SUMMARY ==========
         'verified_percentage': verified_percentage,
+        'certified_applicants': certified_applicants,
+        'today_summary': today_summary,
+        'today_summary_counts': today_summary_counts,
     }
     return render(request, 'accounts/field/dashboard.html', context)
 
