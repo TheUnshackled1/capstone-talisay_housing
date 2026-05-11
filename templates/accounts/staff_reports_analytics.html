@@ -550,12 +550,178 @@
         font-size: 0.78rem;
     }
 
+    /* ==== Enriched Operations: Gauge / Ring / KPI tiles ==== */
+    .rep-ops-gauges {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+        gap: 0.65rem;
+    }
+    .rep-gauge {
+        position: relative;
+        background: #ffffff;
+        border: 1px solid var(--rep-card-border);
+        border-radius: 0.7rem;
+        box-shadow: var(--rep-card-shadow);
+        padding: 1rem 1rem 0.85rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+        transition: box-shadow 0.18s ease, transform 0.18s ease;
+    }
+    .rep-gauge:hover {
+        box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08);
+        transform: translateY(-1px);
+    }
+    .rep-gauge-ring {
+        position: relative;
+        width: 72px;
+        height: 72px;
+    }
+    .rep-gauge-ring svg {
+        width: 100%;
+        height: 100%;
+        transform: rotate(-90deg);
+    }
+    .rep-gauge-ring circle {
+        fill: none;
+        stroke-width: 5;
+        stroke-linecap: round;
+    }
+    .rep-gauge-ring .ring-bg { stroke: #e8ecf1; }
+    .rep-gauge-ring .ring-fg { transition: stroke-dashoffset 0.6s ease; }
+    .rep-gauge-ring .ring-fg.is-emerald { stroke: #10b981; }
+    .rep-gauge-ring .ring-fg.is-amber   { stroke: #f59e0b; }
+    .rep-gauge-ring .ring-fg.is-rose    { stroke: #ef4444; }
+    .rep-gauge-ring .ring-fg.is-cyan    { stroke: #06b6d4; }
+    .rep-gauge-ring .ring-fg.is-violet  { stroke: #8b5cf6; }
+    .rep-gauge-pct {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.05rem;
+        font-weight: 800;
+        color: #0f172a;
+        font-variant-numeric: tabular-nums;
+    }
+    .rep-gauge-label {
+        text-align: center;
+        font-size: 0.62rem;
+        font-weight: 800;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: #475569;
+    }
+    .rep-gauge-sub {
+        margin: 0;
+        font-size: 0.68rem;
+        color: var(--rep-muted);
+        text-align: center;
+        line-height: 1.4;
+    }
+
+    /* Ops mini-KPI row */
+    .rep-ops-mini-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+        gap: 0.55rem;
+        margin-top: 0.65rem;
+    }
+    .rep-ops-mini {
+        background: #f8fafc;
+        border: 1px solid #e5e9ef;
+        border-radius: 0.55rem;
+        padding: 0.65rem 0.75rem;
+        text-align: center;
+        transition: background 0.15s ease;
+    }
+    .rep-ops-mini:hover { background: #f1f5f9; }
+    .rep-ops-mini-value {
+        font-size: 1.3rem;
+        font-weight: 800;
+        color: #0f172a;
+        font-variant-numeric: tabular-nums;
+        line-height: 1.1;
+    }
+    .rep-ops-mini-value.is-warn  { color: #d97706; }
+    .rep-ops-mini-value.is-alert { color: #dc2626; }
+    .rep-ops-mini-value.is-good  { color: #059669; }
+    .rep-ops-mini-label {
+        margin-top: 0.25rem;
+        font-size: 0.6rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--rep-muted);
+        line-height: 1.3;
+    }
+
+    /* Ops 2-col + 3-col chart layouts */
+    .rep-ops-row-2 {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+        gap: 0.85rem;
+    }
+    .rep-ops-row-3 {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+        gap: 0.85rem;
+    }
+    .rep-ops-chart-canvas { height: 240px; position: relative; }
+    .rep-ops-funnel-canvas { height: 220px; position: relative; }
+
+    /* Aging heatbar */
+    .rep-aging-strip {
+        display: flex;
+        gap: 2px;
+        border-radius: 6px;
+        overflow: hidden;
+        height: 1.4rem;
+        margin: 0.5rem 0;
+    }
+    .rep-aging-cell {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.55rem;
+        font-weight: 800;
+        color: #ffffff;
+        min-width: 2rem;
+    }
+    .rep-aging-cell.lv-0 { background: #10b981; }
+    .rep-aging-cell.lv-1 { background: #34d399; }
+    .rep-aging-cell.lv-2 { background: #fbbf24; }
+    .rep-aging-cell.lv-3 { background: #f97316; color: #fff; }
+    .rep-aging-cell.lv-4 { background: #ef4444; }
+    .rep-aging-legend {
+        display: flex;
+        gap: 0.7rem;
+        flex-wrap: wrap;
+        margin-top: 0.35rem;
+    }
+    .rep-aging-legend-item {
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+        font-size: 0.6rem;
+        color: var(--rep-muted);
+    }
+    .rep-aging-legend-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 2px;
+    }
+
     @media (max-width: 640px) {
         .rep-page { padding: 1rem 1rem 2rem; }
         .rep-hero { padding: 1rem; }
         .rep-title { font-size: 1.25rem; }
         .rep-toolbar { width: 100%; }
         .rep-field select { min-width: 0; width: 100%; }
+        .rep-ops-gauges { grid-template-columns: repeat(2, 1fr); }
     }
 </style>
 {% endblock %}
@@ -778,10 +944,125 @@
     <!-- Section: Operations -->
     <div class="rep-section">
         <h2>Operations</h2>
-        <p class="rep-section-note">Requirement intake, case load, and active desk queues.</p>
+        <p class="rep-section-note">Requirement intake, case load, active desk queues, and workflow health.</p>
         <span class="rep-section-rule"></span>
     </div>
-    <div class="rep-grid-3 rep-grid-charts">
+
+    <!-- Operational Gauges Row -->
+    <div class="rep-ops-gauges">
+        <div class="rep-gauge">
+            <div class="rep-gauge-ring">
+                <svg viewBox="0 0 36 36">
+                    <circle class="ring-bg" cx="18" cy="18" r="15.5"/>
+                    <circle class="ring-fg is-emerald" cx="18" cy="18" r="15.5"
+                            stroke-dasharray="97.4"
+                            stroke-dashoffset="{{ housing_occupancy_offset }}"/>
+                </svg>
+                <span class="rep-gauge-pct">{{ housing_occupancy_rate }}%</span>
+            </div>
+            <p class="rep-gauge-label">Housing occupancy</p>
+            <p class="rep-gauge-sub">{{ occupied_units|default:0 }} of {{ housing_units_total|default:0 }} occupied</p>
+        </div>
+        <div class="rep-gauge">
+            <div class="rep-gauge-ring">
+                <svg viewBox="0 0 36 36">
+                    <circle class="ring-bg" cx="18" cy="18" r="15.5"/>
+                    <circle class="ring-fg is-cyan" cx="18" cy="18" r="15.5"
+                            stroke-dasharray="97.4"
+                            stroke-dashoffset="{{ req_verification_offset }}"/>
+                </svg>
+                <span class="rep-gauge-pct">{{ req_verification_rate }}%</span>
+            </div>
+            <p class="rep-gauge-label">Verification rate</p>
+            <p class="rep-gauge-sub">{{ requirements_verified_period|default:0 }} of {{ req_submitted_period|default:0 }} this period</p>
+        </div>
+        <div class="rep-gauge">
+            <div class="rep-gauge-ring">
+                <svg viewBox="0 0 36 36">
+                    <circle class="ring-bg" cx="18" cy="18" r="15.5"/>
+                    <circle class="ring-fg {% if stale_cases_count > 0 %}is-rose{% else %}is-emerald{% endif %}" cx="18" cy="18" r="15.5"
+                            stroke-dasharray="97.4"
+                            stroke-dashoffset="{{ stale_cases_offset }}"/>
+                </svg>
+                <span class="rep-gauge-pct">{{ open_cases_count|default:0 }}</span>
+            </div>
+            <p class="rep-gauge-label">Open cases</p>
+            <p class="rep-gauge-sub">{{ stale_cases_count|default:0 }} stale (&gt;14 d)</p>
+        </div>
+        <div class="rep-gauge">
+            <div class="rep-gauge-ring">
+                <svg viewBox="0 0 36 36">
+                    <circle class="ring-bg" cx="18" cy="18" r="15.5"/>
+                    <circle class="ring-fg is-violet" cx="18" cy="18" r="15.5"
+                            stroke-dasharray="97.4"
+                            stroke-dashoffset="{{ construction_progress_offset }}"/>
+                </svg>
+                <span class="rep-gauge-pct">{{ construction_in_progress|default:0 }}</span>
+            </div>
+            <p class="rep-gauge-label">Building in progress</p>
+            <p class="rep-gauge-sub">{{ construction_delayed|default:0 }} delayed &middot; {{ construction_completed|default:0 }} done</p>
+        </div>
+    </div>
+
+    <!-- Mini-KPI row -->
+    <div class="rep-ops-mini-grid">
+        <div class="rep-ops-mini">
+            <p class="rep-ops-mini-value">{{ active_lot_awards|default:0 }}</p>
+            <p class="rep-ops-mini-label">Active lot awards</p>
+        </div>
+        <div class="rep-ops-mini">
+            <p class="rep-ops-mini-value {% if units_under_notice > 0 %}is-warn{% endif %}">{{ units_under_notice|default:0 }}</p>
+            <p class="rep-ops-mini-label">Units under notice</p>
+        </div>
+        <div class="rep-ops-mini">
+            <p class="rep-ops-mini-value {% if repossessed_units > 0 %}is-alert{% endif %}">{{ repossessed_units|default:0 }}</p>
+            <p class="rep-ops-mini-label">Repossessed units</p>
+        </div>
+        <div class="rep-ops-mini">
+            <p class="rep-ops-mini-value {% if blacklist_count > 0 %}is-alert{% endif %}">{{ blacklist_count|default:0 }}</p>
+            <p class="rep-ops-mini-label">Blacklisted</p>
+        </div>
+        <div class="rep-ops-mini">
+            <p class="rep-ops-mini-value is-good">{{ vacant_units_count|default:0 }}</p>
+            <p class="rep-ops-mini-label">Vacant available</p>
+        </div>
+        <div class="rep-ops-mini">
+            <p class="rep-ops-mini-value">{{ construction_total|default:0 }}</p>
+            <p class="rep-ops-mini-label">Construction records</p>
+        </div>
+    </div>
+
+    <!-- Operations charts row 1: Workflow Funnel + Case Aging -->
+    <div class="rep-ops-row-2" style="margin-top: 0.85rem;">
+        <div class="rep-card">
+            <p class="rep-card-title">Applicant workflow funnel</p>
+            <p class="rep-card-sub">Pipeline conversion from registration to lot award.</p>
+            <div class="rep-ops-funnel-canvas"><canvas id="chartFunnel"></canvas></div>
+        </div>
+        <div class="rep-card">
+            <p class="rep-card-title">Case aging distribution</p>
+            <p class="rep-card-sub">{{ open_cases_count|default:0 }} open case{{ open_cases_count|pluralize }} by age band.</p>
+            {% if open_cases_count > 0 %}
+            <div class="rep-aging-strip">
+                {% for band, count in case_aging_bands.items %}
+                <div class="rep-aging-cell lv-{{ forloop.counter0 }}" style="flex: {{ count|default:1 }};"
+                     title="{{ band }}: {{ count }}">{{ count }}</div>
+                {% endfor %}
+            </div>
+            <div class="rep-aging-legend">
+                <span class="rep-aging-legend-item"><span class="rep-aging-legend-dot" style="background:#10b981;"></span>0-3 d</span>
+                <span class="rep-aging-legend-item"><span class="rep-aging-legend-dot" style="background:#34d399;"></span>4-7 d</span>
+                <span class="rep-aging-legend-item"><span class="rep-aging-legend-dot" style="background:#fbbf24;"></span>8-14 d</span>
+                <span class="rep-aging-legend-item"><span class="rep-aging-legend-dot" style="background:#f97316;"></span>15-30 d</span>
+                <span class="rep-aging-legend-item"><span class="rep-aging-legend-dot" style="background:#ef4444;"></span>30+ d</span>
+            </div>
+            {% endif %}
+            <div class="rep-ops-chart-canvas" style="margin-top:0.5rem;"><canvas id="chartCaseAging"></canvas></div>
+        </div>
+    </div>
+
+    <!-- Operations charts row 2: Requirement Status + Cases by Status + Cases by Type -->
+    <div class="rep-ops-row-3" style="margin-top: 0.85rem;">
         <div class="rep-card">
             <p class="rep-card-title">Requirement submissions</p>
             <p class="rep-card-sub">Status mix across all submission rows.</p>
@@ -799,10 +1080,18 @@
         </div>
     </div>
 
-    <div class="rep-card" style="margin-top:0.85rem;">
-        <p class="rep-card-title">Active queues</p>
-        <p class="rep-card-sub">Live counts on staff desk queues across the workflow.</p>
-        <div class="rep-chart-canvas" style="height: 240px;"><canvas id="chartQueues"></canvas></div>
+    <!-- Operations charts row 3: Queue lifecycle + Active queues -->
+    <div class="rep-ops-row-2" style="margin-top: 0.85rem;">
+        <div class="rep-card">
+            <p class="rep-card-title">Queue lifecycle</p>
+            <p class="rep-card-sub">All queue entries by current status (active → completed).</p>
+            <div class="rep-ops-chart-canvas"><canvas id="chartQueueLifecycle"></canvas></div>
+        </div>
+        <div class="rep-card">
+            <p class="rep-card-title">Active desk queues</p>
+            <p class="rep-card-sub">Live counts on staff desk queues across the workflow.</p>
+            <div class="rep-ops-chart-canvas"><canvas id="chartQueues"></canvas></div>
+        </div>
     </div>
 
     <!-- Section: Detailed breakdowns — surface raw rows the charts summarize -->
@@ -966,6 +1255,46 @@
                 </li>
                 {% empty %}
                 <li class="rep-breakdown-empty">No cases recorded.</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="rep-card rep-breakdown-card">
+            <div class="rep-breakdown-head">
+                <h3>Workflow funnel</h3>
+                <p>Applicant pipeline from registration through lot award.</p>
+            </div>
+            <ul class="rep-breakdown-list">
+                {% for row in funnel_stages %}
+                <li class="rep-breakdown-row">
+                    <div class="rep-breakdown-label-wrap">
+                        <span class="rep-breakdown-label" title="{{ row.label }}">{{ row.label }}</span>
+                        <div class="rep-breakdown-bar"><div class="rep-breakdown-bar-fill" style="width: {{ row.bar_pct|default:0 }};"></div></div>
+                    </div>
+                    <span class="rep-breakdown-count">{{ row.count|default:0 }}</span>
+                </li>
+                {% empty %}
+                <li class="rep-breakdown-empty">No pipeline data.</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="rep-card rep-breakdown-card">
+            <div class="rep-breakdown-head">
+                <h3>Queue entries by status</h3>
+                <p>Full queue lifecycle — active through completed/removed.</p>
+            </div>
+            <ul class="rep-breakdown-list">
+                {% for row in queue_by_status %}
+                <li class="rep-breakdown-row">
+                    <div class="rep-breakdown-label-wrap">
+                        <span class="rep-breakdown-label" title="{{ row.label }}">{{ row.label }}</span>
+                        <div class="rep-breakdown-bar"><div class="rep-breakdown-bar-fill" style="width: {{ row.bar_pct|default:0 }}%;"></div></div>
+                    </div>
+                    <span class="rep-breakdown-count">{{ row.count|default:0 }}</span>
+                </li>
+                {% empty %}
+                <li class="rep-breakdown-empty">No queue entries recorded.</li>
                 {% endfor %}
             </ul>
         </div>
@@ -1252,6 +1581,77 @@
     }
     barHorizontal(document.getElementById('chartBarangays'), 'topBarangays', 'No barangay breakdown yet');
     barHorizontal(document.getElementById('chartQueues'), 'activeQueues', 'No active desk queues');
+
+    /* Workflow funnel — horizontal bar in pipeline stage order */
+    var funnelEl = document.getElementById('chartFunnel');
+    if (funnelEl && D.workflowFunnel && D.workflowFunnel.labels && D.workflowFunnel.labels.length) {
+        new Chart(funnelEl, {
+            type: 'bar',
+            data: {
+                labels: D.workflowFunnel.labels,
+                datasets: [{
+                    label: 'Applicants',
+                    data: D.workflowFunnel.values,
+                    backgroundColor: ['#0ea5e9', '#10b981', '#8b5cf6', '#f59e0b', '#06b6d4', '#047857'],
+                    borderRadius: 5,
+                    barThickness: 18,
+                }],
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { backgroundColor: '#0f172a', padding: 10, cornerRadius: 6 },
+                },
+                scales: {
+                    x: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { precision: 0, font: { size: 10 } } },
+                    y: { grid: { display: false }, ticks: { font: { size: 10 } } },
+                },
+            },
+        });
+    } else {
+        showBarPlaceholder(funnelEl, 'No pipeline data yet');
+    }
+
+    /* Case aging — bar chart with warning gradient */
+    var agingEl = document.getElementById('chartCaseAging');
+    if (agingEl && D.caseAging && D.caseAging.labels && D.caseAging.labels.length && sum(D.caseAging.values) > 0) {
+        new Chart(agingEl, {
+            type: 'bar',
+            data: {
+                labels: D.caseAging.labels,
+                datasets: [{
+                    label: 'Cases',
+                    data: D.caseAging.values,
+                    backgroundColor: ['#10b981', '#34d399', '#fbbf24', '#f97316', '#ef4444'],
+                    borderRadius: 4,
+                }],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { backgroundColor: '#0f172a', padding: 10, cornerRadius: 6 },
+                },
+                scales: {
+                    y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: '#f1f5f9' } },
+                    x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+                },
+            },
+        });
+    } else {
+        showBarPlaceholder(agingEl, 'No open cases to chart');
+    }
+
+    /* Queue lifecycle — doughnut with full status breakdown */
+    if (hasChartData('queueByStatus')) {
+        doughnut(document.getElementById('chartQueueLifecycle'), 'queueByStatus', 'No queue entries recorded');
+    } else {
+        showBarPlaceholder(document.getElementById('chartQueueLifecycle'), 'No queue entries recorded');
+    }
 })();
 </script>
 {% endblock %}

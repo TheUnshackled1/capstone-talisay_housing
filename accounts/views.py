@@ -19,7 +19,7 @@ from applications.models import CDRRMOCertification
 from units.models import Blacklist as UnitsBlacklist
 from applications.models import QueueEntry, Application
 from documents.models import Document, RequirementSubmission
-from units.models import HousingUnit
+from units.models import HousingUnit, LotAward, ConstructionProgress
 from cases.models import Case
 
 
@@ -448,6 +448,10 @@ def _build_analytics_charts_data(
     module2_handoff_count,
     housing_application_records,
     applicants_registered_period,
+    *,
+    queue_by_status=None,
+    case_aging_bands=None,
+    funnel_stages=None,
 ):
     """
     Build a JSON-serializable dict for Chart.js (staff analytics page).
@@ -469,7 +473,7 @@ def _build_analytics_charts_data(
         for r in (queue_active_rows or [])
     ]
 
-    return {
+    data = {
         'trend': {
             'labels': [r['label'] for r in intake_registration_trend],
             'registrations': [int(r['count']) for r in intake_registration_trend],
@@ -499,6 +503,19 @@ def _build_analytics_charts_data(
             ],
         },
     }
+
+    # Enriched operational charts
+    if queue_by_status:
+        data['queueByStatus'] = pair_labels_counts(queue_by_status)
+    if case_aging_bands:
+        data['caseAging'] = {
+            'labels': list(case_aging_bands.keys()),
+            'values': list(case_aging_bands.values()),
+        }
+    if funnel_stages:
+        data['workflowFunnel'] = pair_labels_counts(funnel_stages)
+
+    return data
 
 
 def _staff_reports_analytics_payload(request):
@@ -713,6 +730,96 @@ def _staff_reports_analytics_payload(request):
         resolved_at__lte=period_end,
     ).count()
 
+    # ===== ENRICHED OPERATIONAL ANALYTICS =====
+
+    # Queue entries by status (full lifecycle)
+    queue_status_labels = dict(QueueEntry.STATUS_CHOICES)
+    queue_by_status = sorted(
+        QueueEntry.objects.values('status').annotate(count=Count('id')),
+        key=lambda x: (-x['count'], x['status'] or ''),
+    )
+    for row in queue_by_status:
+        row['label'] = queue_status_labels.get(row['status'], row['status'] or '—')
+    _analytics_rows_bar_pct(queue_by_status)
+
+    # Queue entries by type (priority vs walk-in)
+    queue_type_labels = dict(QueueEntry.QUEUE_TYPE_CHOICES)
+    queue_by_type = sorted(
+        QueueEntry.objects.values('queue_type').annotate(count=Count('id')),
+        key=lambda x: (-x['count'], x['queue_type'] or ''),
+    )
+    for row in queue_by_type:
+        row['label'] = queue_type_labels.get(row['queue_type'], row['queue_type'] or '—')
+    _analytics_rows_bar_pct(queue_by_type)
+
+    # Case aging bands (open cases only)
+    open_cases = Case.objects.exclude(status__in=['resolved', 'closed'])
+    stale_cases_count = 0
+    case_aging_bands = {'0-3 days': 0, '4-7 days': 0, '8-14 days': 0, '15-30 days': 0, '30+ days': 0}
+    for c in open_cases:
+        days = (now - c.received_at).days if c.received_at else 0
+        if days > 14:
+            stale_cases_count += 1
+        if days <= 3:
+            case_aging_bands['0-3 days'] += 1
+        elif days <= 7:
+            case_aging_bands['4-7 days'] += 1
+        elif days <= 14:
+            case_aging_bands['8-14 days'] += 1
+        elif days <= 30:
+            case_aging_bands['15-30 days'] += 1
+        else:
+            case_aging_bands['30+ days'] += 1
+    open_cases_count = open_cases.count()
+
+    # Applicant workflow funnel — count per pipeline stage
+    funnel_stages = [
+        {'label': 'Registered (all time)', 'count': total_applicants},
+        {'label': 'Eligible / in queue', 'count': Applicant.objects.filter(status='eligible').count()},
+        {'label': 'Submitting requirements', 'count': Applicant.objects.filter(status='requirements').count()},
+        {'label': 'Application in progress', 'count': Applicant.objects.filter(status='application').count()},
+        {'label': 'Fully approved (standby)', 'count': Applicant.objects.filter(status='standby').count()},
+        {'label': 'Lot awarded', 'count': Applicant.objects.filter(status='awarded').count()},
+    ]
+    _analytics_rows_bar_pct(funnel_stages)
+
+    # Requirement verification velocity (verified in period / total submitted in period)
+    req_submitted_period = RequirementSubmission.objects.filter(
+        submitted_at__gte=period_start, submitted_at__lte=period_end,
+    ).count()
+    req_verified_period = requirements_verified_period
+    req_verification_rate = (
+        int(round(100 * req_verified_period / req_submitted_period))
+        if req_submitted_period > 0 else 0
+    )
+
+    # Housing occupancy rate
+    occupied_units = HousingUnit.objects.filter(status='Occupied').count()
+    housing_occupancy_rate = (
+        int(round(100 * occupied_units / housing_units_total))
+        if housing_units_total > 0 else 0
+    )
+
+    # Units under notice
+    units_under_notice = HousingUnit.objects.filter(
+        status__in=['Under notice (30-day)', 'Final notice (10-day)']
+    ).count()
+    repossessed_units = HousingUnit.objects.filter(status='Repossessed').count()
+
+    # Construction progress summary
+    construction_total = ConstructionProgress.objects.count()
+    construction_completed = ConstructionProgress.objects.filter(stage='completed').count()
+    construction_in_progress = ConstructionProgress.objects.exclude(
+        stage__in=['not_started', 'completed']
+    ).count()
+    construction_delayed = ConstructionProgress.objects.filter(is_delayed=True).count()
+
+    # Blacklist count
+    blacklist_count = UnitsBlacklist.objects.count()
+
+    # Active lot awards
+    active_lot_awards = LotAward.objects.filter(status='active').count()
+
     analytics_charts_data = _build_analytics_charts_data(
         intake_registration_trend,
         monthly_upload_trend,
@@ -729,6 +836,9 @@ def _staff_reports_analytics_payload(request):
         module2_handoff_count,
         housing_application_records,
         applicants_registered_period,
+        queue_by_status=queue_by_status,
+        case_aging_bands=case_aging_bands,
+        funnel_stages=funnel_stages,
     )
 
     year_options = list(range(now.year - 5, now.year + 2))
@@ -777,6 +887,32 @@ def _staff_reports_analytics_payload(request):
         'cases_opened_period': cases_opened_period,
         'cases_closed_period': cases_closed_period,
         'analytics_charts_data': analytics_charts_data,
+        # Enriched operational analytics
+        'queue_by_status': queue_by_status,
+        'queue_by_type': queue_by_type,
+        'case_aging_bands': case_aging_bands,
+        'stale_cases_count': stale_cases_count,
+        'open_cases_count': open_cases_count,
+        'funnel_stages': funnel_stages,
+        'req_submitted_period': req_submitted_period,
+        'req_verification_rate': req_verification_rate,
+        'housing_occupancy_rate': housing_occupancy_rate,
+        'occupied_units': occupied_units,
+        'units_under_notice': units_under_notice,
+        'repossessed_units': repossessed_units,
+        'construction_total': construction_total,
+        'construction_completed': construction_completed,
+        'construction_in_progress': construction_in_progress,
+        'construction_delayed': construction_delayed,
+        'blacklist_count': blacklist_count,
+        'active_lot_awards': active_lot_awards,
+        # SVG gauge ring offsets — circumference = 2πr ≈ 97.4; offset = circ × (1 − pct/100)
+        'housing_occupancy_offset': round(97.4 * (1 - housing_occupancy_rate / 100), 1),
+        'req_verification_offset': round(97.4 * (1 - req_verification_rate / 100), 1),
+        'stale_cases_offset': round(97.4 * (1 - min(100, (stale_cases_count * 10 if cases_total else 0)) / 100), 1),
+        'construction_progress_offset': round(
+            97.4 * (1 - min(100, int(100 * construction_in_progress / max(construction_total, 1))) / 100), 1
+        ),
     }
 
 
