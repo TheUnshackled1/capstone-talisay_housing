@@ -107,7 +107,6 @@ class Migration(migrations.Migration):
                             ("second_member", "Second Member"),
                             ("third_member", "Third Member"),
                             ("fourth_member", "Fourth Member"),
-                            ("fifth_member", "Fifth Member"),
                             ("caretaker", "Caretaker"),
                             ("ronda", "Ronda (Field Personnel)"),
                             ("field", "Field Personnel"),

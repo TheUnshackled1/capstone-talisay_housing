@@ -35,13 +35,6 @@ class Command(BaseCommand):
                 'last_name': 'Cuaysing',
                 'position': 'fourth_member',
             },
-            {
-                'username': 'laarni.hellera',
-                'email': 'laarni.hellera@talisayhousing.gov.ph',
-                'first_name': 'Laarni',
-                'last_name': 'Hellera',
-                'position': 'fifth_member',
-            },
             # Field desk — ronda includes former caretaker duties; FIELD_DESK_POSITIONS = ronda + field.
             {
                 'username': 'nonoy.cura',

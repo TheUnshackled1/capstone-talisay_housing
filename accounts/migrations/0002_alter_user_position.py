@@ -20,7 +20,6 @@ class Migration(migrations.Migration):
                     ("oic", "OIC-THA (Officer-in-Charge)"),
                     ("second_member", "Second Member"),
                     ("fourth_member", "Fourth Member"),
-                    ("fifth_member", "Fifth Member"),
                     ("caretaker", "Caretaker"),
                     ("ronda", "Ronda (Field Personnel)"),
                     ("field", "Field Personnel"),

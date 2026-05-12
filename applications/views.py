@@ -139,7 +139,6 @@ def get_module2_permissions(user):
     Module 2 Staff Roles:
     - Jocel (4th Member): Verify documents, generate forms, record lot awarding
     - Joie (2nd Member): Supervisor, routing backup, lot awarding backup
-    - Laarni (5th Member): View-only access
     - Victor (OIC): Final signature
     """
     position = user.position
@@ -174,12 +173,6 @@ def get_module2_permissions(user):
             'can_forward_routing': True,  # Supervisor backup for signatory handoff
             'can_award_lot': True,
             'role_description': 'Supervisor & Routing Backup',
-        })
-    elif position == 'fifth_member':
-        # Laarni - View-only role
-        permissions.update({
-            'can_view': True,
-            'role_description': 'Read-only Staff Access',
         })
     elif position == 'oic':
         # Victor - OIC signature
@@ -1009,11 +1002,10 @@ def applications_list(request, position):
     ACCESS CONTROL:
     ✅ Jocel (4th Member) - Full access: verify docs, generate forms, award lots
     ✅ Joie (2nd Member) - Supervisor: verify docs and routing
-    ✅ Laarni (5th Member) - View-only dashboard access
     ✅ Victor (OIC) - View + OIC full approval once applicant-signed scan is on file
     """
     # Check access
-    allowed_positions = ['fourth_member', 'second_member', 'fifth_member', 'oic']
+    allowed_positions = ['fourth_member', 'second_member', 'oic']
     if request.user.position not in allowed_positions:
         messages.error(request, 'Access denied. Module 2 is for authorized staff only.')
         return redirect('accounts:dashboard')
@@ -1159,7 +1151,7 @@ def ready_for_form_queue(request, position):
     until fully approved — hidden from the main Application & Evaluation ledger during that window.
     URL: /applications/<position>/ready-for-form/
     """
-    allowed_positions = ['fourth_member', 'second_member', 'fifth_member', 'oic']
+    allowed_positions = ['fourth_member', 'second_member', 'oic']
     if request.user.position not in allowed_positions:
         messages.error(request, 'Access denied. Module 2 is for authorized staff only.')
         return redirect('accounts:dashboard')
@@ -1287,7 +1279,7 @@ def lot_awarding_queue(request, position):
     Shows applications on awarding track (standby / fully-approved legacy rows).
     URL: /applications/<position>/lot-awarding-queue/
     """
-    allowed_positions = ['fourth_member', 'second_member', 'fifth_member', 'oic']
+    allowed_positions = ['fourth_member', 'second_member', 'oic']
     if request.user.position not in allowed_positions:
         messages.error(request, 'Access denied. Module 2 is for authorized staff only.')
         return redirect('accounts:dashboard')
@@ -3863,7 +3855,7 @@ def lot_awarding_bulk_notify_sms(request, position):
     Send a coordination SMS to selected applicants still on the lot-awarding queue.
     Does not store a release schedule — notification only.
     """
-    allowed_positions = ['fourth_member', 'second_member', 'fifth_member', 'oic']
+    allowed_positions = ['fourth_member', 'second_member', 'oic']
     if request.user.position not in allowed_positions:
         return JsonResponse({'success': False, 'error': 'Access denied.'}, status=403)
 

@@ -74,7 +74,6 @@ def login_view(request):
         'oic': 'OIC-THA',
         'second_member': 'Second Member',
         'fourth_member': 'Fourth Member',
-        'fifth_member': 'Fifth Member',
         'ronda': 'Ronda / Field Personnel',
         'field': 'Field Personnel',
         'field_desk': 'Field verification desk',
@@ -146,7 +145,6 @@ def dashboard_redirect(request):
         'oic': 'accounts:dashboard_oic',
         'second_member': 'accounts:dashboard_second_member',
         'fourth_member': 'accounts:dashboard_fourth_member',
-        'fifth_member': 'accounts:dashboard_fifth_member',
         'ronda': 'accounts:dashboard_field',
         'field': 'accounts:dashboard_field',
     }
@@ -1176,44 +1174,6 @@ def dashboard_fourth_member(request):
         'ready_to_award': ready_to_award,
     }
 
-    return render(request, 'accounts/dashboard.html', context)
-
-
-@login_required
-def dashboard_fifth_member(request):
-    """
-    Dashboard for Fifth Member (Laarni C. Hellera)
-    Responsibilities: dashboard monitoring and reporting support
-    """
-    if request.user.position != 'fifth_member':
-        messages.error(request, 'Access denied. This dashboard is for the Fifth Member position only.')
-        return redirect('accounts:dashboard')
-
-    total_applicants = Applicant.objects.count()
-    awaiting_signature_count = Application.objects.filter(status='standby').count()
-    total_housing_units = HousingUnit.objects.count()
-    this_month_start = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    approved_this_month = Application.objects.filter(
-        status='awarded',
-        updated_at__gte=this_month_start,
-    ).count()
-
-    monthly_notices = 0
-    docs_submitted = RequirementSubmission.objects.filter(
-        status='verified',
-        verified_at__gte=this_month_start,
-    ).count()
-
-    context = {
-        'page_title': 'Fifth Member Dashboard',
-        'user_position': 'fifth_member',
-        'total_applicants': total_applicants,
-        'awaiting_signature': awaiting_signature_count,
-        'housing_units': total_housing_units,
-        'approved_this_month': approved_this_month,
-        'monthly_notices': monthly_notices,
-        'docs_submitted': docs_submitted,
-    }
     return render(request, 'accounts/dashboard.html', context)
 
 

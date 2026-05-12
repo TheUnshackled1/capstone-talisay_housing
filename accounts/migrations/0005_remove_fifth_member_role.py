@@ -1,10 +1,11 @@
 from django.db import migrations, models
 
 
-def clear_head_position(apps, schema_editor):
-    """Clear position field on any users still holding the removed 'head' role."""
-    User = apps.get_model('accounts', 'User')
-    User.objects.filter(position='head').update(position='')
+def delete_fifth_member_users(apps, schema_editor):
+    User = apps.get_model("accounts", "User")
+    User.objects.filter(position="fifth_member").delete()
+    User.objects.filter(username="laarni.hellera").delete()
+    User.objects.filter(email="laarni.hellera@talisayhousing.gov.ph").delete()
 
 
 def reverse_noop(apps, schema_editor):
@@ -14,11 +15,11 @@ def reverse_noop(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("accounts", "0002_alter_user_position"),
+        ("accounts", "0004_merge_caretaker_into_ronda"),
     ]
 
     operations = [
-        migrations.RunPython(clear_head_position, reverse_noop),
+        migrations.RunPython(delete_fifth_member_users, reverse_noop),
         migrations.AlterField(
             model_name="user",
             name="position",
@@ -28,7 +29,6 @@ class Migration(migrations.Migration):
                     ("oic", "OIC-THA (Officer-in-Charge)"),
                     ("second_member", "Second Member"),
                     ("fourth_member", "Fourth Member"),
-                    ("caretaker", "Caretaker"),
                     ("ronda", "Ronda (Field Personnel)"),
                     ("field", "Field Personnel"),
                 ],

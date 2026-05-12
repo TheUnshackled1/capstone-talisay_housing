@@ -16,7 +16,6 @@ class User(AbstractUser):
         ('oic', 'OIC-THA (Officer-in-Charge)'),
         ('second_member', 'Second Member'),
         ('fourth_member', 'Fourth Member'),
-        ('fifth_member', 'Fifth Member'),
         ('ronda', 'Ronda (Field Personnel)'),
         ('field', 'Field Personnel'),
     ]
@@ -48,7 +47,6 @@ class User(AbstractUser):
             'oic': 'OIC',
             'second_member': '2nd Member',
             'fourth_member': '4th Member',
-            'fifth_member': '5th Member',
             'ronda': 'Ronda',
             'field': 'Field',
         }
