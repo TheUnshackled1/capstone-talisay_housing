@@ -436,6 +436,47 @@
         color: #1f2937;
     }
 
+    .early-confirm-card {
+        max-width: 460px;
+        border: 1px solid #dbeafe;
+        padding: 0;
+        overflow: hidden;
+    }
+    .early-confirm-top {
+        padding: 1.1rem 1.2rem 0.95rem;
+        background: linear-gradient(180deg, #eff6ff 0%, #ffffff 100%);
+        border-top: 4px solid #2563eb;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    .early-confirm-kicker {
+        margin: 0 0 0.35rem;
+        font-size: 0.64rem;
+        font-weight: 800;
+        color: #2563eb;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+    }
+    .early-confirm-title {
+        margin: 0;
+        color: #0f172a;
+        font-size: 1.08rem;
+        font-weight: 800;
+    }
+    .early-confirm-body {
+        padding: 1rem 1.2rem;
+        color: #475569;
+        font-size: 0.88rem;
+        line-height: 1.55;
+    }
+    .early-confirm-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.6rem;
+        padding: 0.9rem 1.2rem 1.1rem;
+        background: #f8fafc;
+        border-top: 1px solid #e2e8f0;
+    }
+
     /* Responsive */
     @media (max-width: 768px) {
         .monitoring-shell {
@@ -501,7 +542,7 @@
             </svg>
         </div>
         <div class="monitoring-kpi-text">
-            <h4>Pending Tasks</h4>
+            <h4>Scheduled Tasks</h4>
             <div class="monitoring-kpi-number">{{ pending_count }}</div>
         </div>
     </div>
@@ -551,6 +592,7 @@
         <label for="filterStatus">Filter by Status</label>
         <select id="filterStatus" onchange="filterTasks()">
             <option value="">All Status</option>
+            <option value="upcoming">Upcoming</option>
             <option value="pending">Pending</option>
             <option value="overdue">Overdue</option>
             <option value="completed">Completed</option>
@@ -573,6 +615,15 @@
 
 <!-- Tasks Table -->
 {% if tasks %}
+<div style="margin: 0 0 0.75rem;">
+    <h2 style="font-size: 1rem; font-weight: 800; color: #064e3b; margin: 0;">Upcoming Monitoring Tasks</h2>
+    <p style="font-size: 0.82rem; color: #64748b; margin: 0.25rem 0 0;">
+        System-scheduled Day 15 and Day 30 inspections from the active award date.
+    </p>
+    <p style="font-size: 0.78rem; color: #1e3a8a; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 0.75rem; padding: 0.65rem 0.75rem; margin: 0.65rem 0 0; line-height: 1.45;">
+        Upcoming tasks are shown for planning. Clicking an early task asks for confirmation before opening it for testing.
+    </p>
+</div>
 <table class="monitoring-tasks-table">
     <thead>
         <tr>
@@ -586,7 +637,9 @@
     </thead>
     <tbody id="tasksTableBody">
         {% for task in tasks %}
-        <tr class="task-row" data-status="{{ task.status }}" data-type="{{ task.task_type }}">
+        <tr class="task-row"
+            data-status="{% if task.status == 'pending' and task.scheduled_date > today %}upcoming{% elif task.status == 'pending' and task.is_overdue %}overdue{% else %}{{ task.status }}{% endif %}"
+            data-type="{{ task.task_type }}">
             <td>
                 <div class="monitoring-task-location">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -604,13 +657,18 @@
                 <span class="monitoring-task-due {% if task.is_overdue %}urgent{% endif %}">
                     {{ task.due_date }}
                 </span>
+                {% if task.status == 'pending' and task.scheduled_date > today %}
+                    <div style="font-size:0.72rem;color:#64748b;margin-top:0.15rem;">Scheduled</div>
+                {% endif %}
             </td>
             <td>
                 <strong>{{ task.days_from_award }}</strong> days
             </td>
             <td>
                 <span class="monitoring-task-status {{ task.status }}">
-                    {% if task.status == 'pending' and task.is_overdue %}
+                    {% if task.status == 'pending' and task.scheduled_date > today %}
+                        Upcoming
+                    {% elif task.status == 'pending' and task.is_overdue %}
                         Overdue
                     {% else %}
                         {{ task.get_status_display }}
@@ -619,13 +677,19 @@
             </td>
             <td>
                 <div class="monitoring-task-actions">
-                    <button type="button" class="btn-submit-report" onclick="openReportModal({{ task.id }})">
-                        {% if task.status == 'completed' %}
-                            View Report
-                        {% else %}
-                            Submit Report
-                        {% endif %}
-                    </button>
+                    {% if task.status == 'pending' and task.scheduled_date > today %}
+                        <button type="button" class="btn-submit-report" onclick="openReportModal({{ task.id }}, true, '{{ task.scheduled_date }}')" style="background:#2563eb;">
+                            Test early inspection
+                        </button>
+                    {% else %}
+                        <button type="button" class="btn-submit-report" onclick="openReportModal({{ task.id }}, false, '')">
+                            {% if task.status == 'completed' %}
+                                View Report
+                            {% else %}
+                                Submit Report
+                            {% endif %}
+                        </button>
+                    {% endif %}
                 </div>
             </td>
         </tr>
@@ -645,6 +709,28 @@
 
 </div>
 
+<div class="modal-overlay" id="earlyInspectionModal">
+    <div class="modal-content early-confirm-card">
+        <div class="early-confirm-top">
+            <p class="early-confirm-kicker">Early inspection testing</p>
+            <h2 class="early-confirm-title">This task is not due yet</h2>
+        </div>
+        <div class="early-confirm-body">
+            <p id="earlyInspectionMessage" style="margin:0;">
+                This monitoring task opens on its scheduled inspection date.
+            </p>
+        </div>
+        <div class="early-confirm-actions">
+            <button type="button" class="btn-view-details" onclick="closeEarlyInspectionModal()" style="background:#ffffff;">
+                Cancel
+            </button>
+            <button type="button" class="btn-submit-report" onclick="continueEarlyInspection()" style="margin:0;">
+                Continue for testing
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- Report Submission Modal -->
 <div class="modal-overlay" id="reportModal">
     <div class="modal-content">
@@ -656,6 +742,7 @@
         <form id="reportForm" onsubmit="submitReport(event)">
             {% csrf_token %}
             <input type="hidden" id="taskId" name="task_id">
+            <input type="hidden" id="allowEarlyInspection" name="allow_early_inspection" value="0">
 
             <!-- Occupancy Status -->
             <div style="margin-bottom: 1.5rem;">
@@ -741,6 +828,8 @@
 </div>
 
 <script>
+let pendingEarlyTaskId = null;
+
 function filterTasks() {
     const statusFilter = document.getElementById('filterStatus').value;
     const typeFilter = document.getElementById('filterType').value;
@@ -757,14 +846,37 @@ function filterTasks() {
     });
 }
 
-function openReportModal(taskId) {
+function openReportModal(taskId, allowEarly, scheduledDate) {
+    if (allowEarly) {
+        pendingEarlyTaskId = taskId;
+        document.getElementById('earlyInspectionMessage').textContent =
+            `Scheduled inspection date: ${scheduledDate}. Continue only for testing or demonstration.`;
+        document.getElementById('earlyInspectionModal').classList.add('active');
+        return;
+    }
     document.getElementById('taskId').value = taskId;
+    document.getElementById('allowEarlyInspection').value = allowEarly ? '1' : '0';
+    document.getElementById('reportModal').classList.add('active');
+}
+
+function closeEarlyInspectionModal() {
+    pendingEarlyTaskId = null;
+    document.getElementById('earlyInspectionModal').classList.remove('active');
+}
+
+function continueEarlyInspection() {
+    if (!pendingEarlyTaskId) return;
+    const taskId = pendingEarlyTaskId;
+    closeEarlyInspectionModal();
+    document.getElementById('taskId').value = taskId;
+    document.getElementById('allowEarlyInspection').value = '1';
     document.getElementById('reportModal').classList.add('active');
 }
 
 function closeReportModal() {
     document.getElementById('reportModal').classList.remove('active');
     document.getElementById('reportForm').reset();
+    document.getElementById('allowEarlyInspection').value = '0';
 }
 
 function submitReport(event) {
@@ -800,6 +912,12 @@ function submitReport(event) {
 document.getElementById('reportModal').addEventListener('click', function(event) {
     if (event.target === this) {
         closeReportModal();
+    }
+});
+
+document.getElementById('earlyInspectionModal').addEventListener('click', function(event) {
+    if (event.target === this) {
+        closeEarlyInspectionModal();
     }
 });
 </script>

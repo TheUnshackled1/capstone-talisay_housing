@@ -18,18 +18,6 @@ urlpatterns = [
     # Phase 4: Report Submission
     path('monitoring-report/<uuid:task_id>/submit/', views.submit_monitoring_report, name='submit_monitoring_report'),
 
-    # Phase 6: Staff Explanation Review
-    path('explanation-review/<str:position>/', views.review_explanation, name='review_explanation'),
-
-    # Phase 7: Final Notice Monitoring
-    path('final-notice-units/<str:position>/', views.get_final_notice_units, name='get_final_notice_units'),
-
-    # Phase 8: Repossession Confirmation
-    path('repossession/<str:position>/confirm/', views.confirm_repossession, name='confirm_repossession'),
-
-    # Staff Dashboard Data Aggregation
-    path('staff-dashboard-data/<str:position>/', views.get_staff_monitoring_dashboard_data, name='get_staff_monitoring_dashboard_data'),
-
     # Case Management (Module 5)
     path('cases/<str:position>/', views.case_management, name='case_management'),
     path('cases/<str:position>/<uuid:case_id>/details/', views.get_case_details, name='get_case_details'),
