@@ -1156,6 +1156,78 @@
             </table>
         </div>
     </div>
+
+    <!-- ===================================================================
+         PHASE 6-8 STAFF WORKFLOWS: Explanation Review, Final Notice, Repossession
+         =================================================================== -->
+
+    <!-- Phase 6-8 KPI Summary -->
+    <div style="margin-top: 2rem; margin-bottom: 0.95rem;">
+        <h2 style="font-family: 'Source Serif Pro', Georgia, serif; font-size: 1.1rem; font-weight: 700; color: #064e3b; margin: 0 0 0.75rem 0;">Staff Workflow Metrics</h2>
+        <div class="units-kpis" style="grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));">
+            <div class="units-kpi units-kpi--notice30" id="pendingExplanationsKpi">
+                <span class="units-kpi-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </span>
+                <div>
+                    <p class="units-kpi-label">Pending Explanations</p>
+                    <p class="units-kpi-value" id="pendingExplanationsValue">—</p>
+                </div>
+            </div>
+            <div class="units-kpi units-kpi--notice10" id="finalNoticeKpi">
+                <span class="units-kpi-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </span>
+                <div>
+                    <p class="units-kpi-label">Final Notice (Active)</p>
+                    <p class="units-kpi-value" id="finalNoticeValue">—</p>
+                </div>
+            </div>
+            <div class="units-kpi units-kpi--notice10" id="urgentFinalKpi">
+                <span class="units-kpi-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                </span>
+                <div>
+                    <p class="units-kpi-label">Urgent (≤7 days)</p>
+                    <p class="units-kpi-value" id="urgentFinalValue">—</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Phase 6: Pending Explanation Reviews -->
+    <div style="margin-bottom: 1.2rem;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
+            <h3 style="font-size: 0.95rem; font-weight: 700; color: #064e3b; margin: 0;">Phase 6: Pending Explanation Reviews</h3>
+            <span style="font-size: 0.72rem; color: #64748b;">Action required from beneficiary</span>
+        </div>
+        <div id="pendingExplanationsContainer" style="border: 1px solid #cbd5e1; border-radius: 0.75rem; overflow: hidden; background: #ffffff;">
+            <div style="padding: 1rem; text-align: center; color: #64748b;">Loading explanations...</div>
+        </div>
+    </div>
+
+    <!-- Phase 7: Units Under Final Notice -->
+    <div style="margin-bottom: 1.2rem;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
+            <h3 style="font-size: 0.95rem; font-weight: 700; color: #064e3b; margin: 0;">Phase 7: Units Under Final Notice</h3>
+            <span style="font-size: 0.72rem; color: #64748b;">Monitor deadline and prepare for repossession</span>
+        </div>
+        <div id="finalNoticeContainer" style="border: 1px solid #cbd5e1; border-radius: 0.75rem; overflow: hidden; background: #ffffff;">
+            <div style="padding: 1rem; text-align: center; color: #64748b;">Loading final notice units...</div>
+        </div>
+    </div>
+
+    <!-- Phase 8: Repossession Ready -->
+    <div style="margin-bottom: 1.2rem;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
+            <h3 style="font-size: 0.95rem; font-weight: 700; color: #064e3b; margin: 0;">Phase 8: Confirm Repossession</h3>
+            <span style="font-size: 0.72rem; color: #64748b;">Selected from units with deadline passed</span>
+        </div>
+        <div id="repossessionContainer" style="border: 1px solid #cbd5e1; border-radius: 0.75rem; overflow: hidden; background: #ffffff;">
+            <div style="padding: 1rem; text-align: center; color: #64748b;">Select from final notice units above</div>
+        </div>
+    </div>
+
 </div>
 
 {% if can_create_relocation_site %}
@@ -1912,6 +1984,94 @@ document.getElementById('constructionUpdateForm')?.addEventListener('submit', as
     } finally {
         btn.disabled = false;
     }
+});
+
+// =============================================================================
+// PHASE 6-8: STAFF WORKFLOW DATA LOADING AND DISPLAY
+// =============================================================================
+
+async function loadPhase6to8Data() {
+    try {
+        // Load dashboard data
+        const dashboardRes = await fetch('{% url "units:get_staff_monitoring_dashboard_data" request.user.position %}');
+        if (dashboardRes.ok) {
+            const dashboardData = await dashboardRes.json();
+            document.getElementById('pendingExplanationsValue').textContent = dashboardData.pending_explanations || 0;
+            document.getElementById('finalNoticeValue').textContent = dashboardData.final_notice_count || 0;
+            document.getElementById('urgentFinalValue').textContent = dashboardData.urgent_final_notice || 0;
+        }
+
+        // Load final notice units
+        const finalNoticeRes = await fetch('{% url "units:get_final_notice_units" request.user.position %}');
+        if (finalNoticeRes.ok) {
+            const finalNoticeData = await finalNoticeRes.json();
+            displayFinalNoticeUnits(finalNoticeData.units || []);
+        }
+    } catch (err) {
+        console.error('Error loading Phase 6-8 data:', err);
+    }
+}
+
+function displayFinalNoticeUnits(units) {
+    const container = document.getElementById('finalNoticeContainer');
+
+    if (!units || units.length === 0) {
+        container.innerHTML = '<div style="padding: 1rem; text-align: center; color: #64748b; font-size: 0.85rem;">No units under final notice</div>';
+        return;
+    }
+
+    let html = '<table style="width: 100%; border-collapse: collapse; font-size: 0.8rem;"><thead><tr style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;"><th style="text-align: left; padding: 0.75rem; font-weight: 700; color: #475569;">Unit</th><th style="text-align: left; padding: 0.75rem; font-weight: 700; color: #475569;">Beneficiary</th><th style="text-align: left; padding: 0.75rem; font-weight: 700; color: #475569;">Days Remaining</th><th style="text-align: left; padding: 0.75rem; font-weight: 700; color: #475569;">Inspection</th><th style="text-align: right; padding: 0.75rem; font-weight: 700; color: #475569;">Action</th></tr></thead><tbody>';
+
+    units.forEach(unit => {
+        const urgentClass = unit.status_urgent ? 'background: #fee2e2;' : '';
+        const urgentBadge = unit.status_urgent ? '<span style="display: inline-block; background: #dc2626; color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 0.7rem; margin-left: 0.5rem;">URGENT</span>' : '';
+
+        html += `<tr style="border-bottom: 1px solid #e2e8f0; ${urgentClass}">
+            <td style="padding: 0.75rem;">${unit.unit}</td>
+            <td style="padding: 0.75rem;">${unit.beneficiary}</td>
+            <td style="padding: 0.75rem;"><strong>${unit.days_remaining}</strong> days${urgentBadge}</td>
+            <td style="padding: 0.75rem;">${unit.task_status || 'Pending'}</td>
+            <td style="padding: 0.75rem; text-align: right;">
+                <button onclick="confirmRepossessionAction('${unit.lot_award_id}')" style="padding: 0.4rem 0.75rem; background: #dc2626; color: white; border: none; border-radius: 6px; font-size: 0.7rem; cursor: pointer; font-weight: 600;">Repossess</button>
+            </td>
+        </tr>`;
+    });
+
+    html += '</tbody></table>';
+    container.innerHTML = html;
+}
+
+async function confirmRepossessionAction(lotAwardId) {
+    const confirmed = window.confirm('Confirm repossession for this unit?\n\nThis action will:\n- Auto-blacklist the beneficiary\n- Return the unit to available status\n- Close all monitoring cycles');
+    if (!confirmed) return;
+
+    try {
+        const body = new URLSearchParams();
+        body.append('lot_award_id', lotAwardId);
+        body.append('confirmation_notes', 'Staff confirmed repossession via dashboard');
+        body.append('csrfmiddlewaretoken', getCookie('csrftoken') || '');
+
+        const res = await fetch('{% url "units:confirm_repossession" request.user.position %}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: body.toString(),
+        });
+
+        const data = await res.json();
+        if (data.success) {
+            window.alert(`✓ Repossession confirmed\n\nUnit: ${data.unit}\nBeneficiary: ${data.beneficiary}\n\n${data.message}`);
+            window.location.reload();
+        } else {
+            window.alert('Error: ' + (data.error || 'Failed to confirm repossession'));
+        }
+    } catch (err) {
+        window.alert('Network error: ' + err.message);
+    }
+}
+
+// Load Phase 6-8 data when page is ready
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(loadPhase6to8Data, 500);
 });
 </script>
 

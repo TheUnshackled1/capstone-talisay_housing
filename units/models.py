@@ -572,3 +572,485 @@ class SMSLog(models.Model):
 
     def __str__(self):
         return f"SMS to {self.recipient_phone} - {self.trigger_event} ({self.status})"
+
+
+# =============================================================================
+# MODULE 4 MONITORING WORKFLOW MODELS
+# =============================================================================
+
+class OccupancyMonitoringCycle(models.Model):
+    """
+    Tracks the overall occupancy monitoring lifecycle for a lot award.
+    Manages transitions through: Original 30-day → Extension (1-3 months) → Final Notice (30 days)
+
+    Each stage represents a distinct monitoring period with its own deadline.
+    """
+    STAGE_CHOICES = [
+        ('original_30_day', 'Original 30-Day Monitoring'),
+        ('extension_month_1', 'Extension Month 1'),
+        ('extension_month_2', 'Extension Month 2'),
+        ('extension_month_3', 'Extension Month 3'),
+        ('final_notice_30_day', 'Final Notice — 30 Days'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    lot_award = models.ForeignKey(
+        LotAward,
+        on_delete=models.CASCADE,
+        related_name='monitoring_cycles'
+    )
+
+    cycle_stage = models.CharField(
+        max_length=30,
+        choices=STAGE_CHOICES,
+        default='original_30_day',
+        help_text="Current monitoring stage in the lifecycle"
+    )
+
+    stage_start_date = models.DateField(
+        help_text="When this stage begins"
+    )
+    stage_end_date = models.DateField(
+        help_text="When this stage ends (deadline)"
+    )
+
+    days_allowed = models.PositiveIntegerField(
+        default=30,
+        help_text="Number of days allowed for this stage (30 for original, varies for extension)"
+    )
+
+    is_active = models.BooleanField(
+        default=True,
+        help_text="True if this is the current active cycle"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Occupancy Monitoring Cycle"
+        verbose_name_plural = "Occupancy Monitoring Cycles"
+
+    def __str__(self):
+        return f"{self.lot_award.unit} - {self.get_cycle_stage_display()}"
+
+    @property
+    def days_remaining(self):
+        """Calculate days until deadline."""
+        from datetime import date
+        days = (self.stage_end_date - date.today()).days
+        return max(0, days)
+
+    @property
+    def is_overdue(self):
+        """Check if deadline has passed."""
+        from datetime import date
+        return date.today() > self.stage_end_date
+
+
+class MonitoringTask(models.Model):
+    """
+    Scheduled inspection task assigned to caretaker/ronda.
+    Created automatically when lot is awarded or extension is approved.
+
+    Task types include: Day 15 Inspection, Day 30 Inspection, Month 1-3 Inspections, Final Inspection.
+    """
+    TASK_TYPE_CHOICES = [
+        ('day_15_inspection', 'Day 15 Inspection'),
+        ('day_30_inspection', 'Day 30 Inspection'),
+        ('month_1_inspection', 'Extension Month 1 — Inspection'),
+        ('month_2_inspection', 'Extension Month 2 — Inspection'),
+        ('month_3_inspection', 'Extension Month 3 — Inspection'),
+        ('final_inspection', 'Final Inspection (Post-Notice)'),
+    ]
+
+    TASK_STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('completed', 'Completed'),
+        ('overdue', 'Overdue'),
+        ('cancelled', 'Cancelled'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    unit = models.ForeignKey(
+        HousingUnit,
+        on_delete=models.CASCADE,
+        related_name='monitoring_tasks'
+    )
+
+    lot_award = models.ForeignKey(
+        LotAward,
+        on_delete=models.CASCADE,
+        related_name='monitoring_tasks'
+    )
+
+    task_type = models.CharField(
+        max_length=30,
+        choices=TASK_TYPE_CHOICES,
+        help_text="Type of monitoring task"
+    )
+
+    scheduled_date = models.DateField(
+        help_text="When task was scheduled (creation date)"
+    )
+
+    due_date = models.DateField(
+        help_text="Deadline for completing task"
+    )
+
+    days_from_award = models.PositiveIntegerField(
+        help_text="Number of days from award date (15, 30, 60, 90, final)"
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=TASK_STATUS_CHOICES,
+        default='pending'
+    )
+
+    assigned_to = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='assigned_monitoring_tasks',
+        help_text="Caretaker or Ronda assigned to this task"
+    )
+
+    completed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="When task was completed"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['due_date', 'task_type']
+        verbose_name = "Monitoring Task"
+        verbose_name_plural = "Monitoring Tasks"
+        indexes = [
+            models.Index(fields=['assigned_to', 'status', 'due_date']),
+            models.Index(fields=['lot_award', 'status']),
+        ]
+
+    def __str__(self):
+        return f"{self.unit} - {self.get_task_type_display()} (Due: {self.due_date})"
+
+    @property
+    def is_overdue(self):
+        """Check if task is past due and not completed."""
+        from datetime import date
+        return self.status != 'completed' and date.today() > self.due_date
+
+    @property
+    def days_until_due(self):
+        """Calculate days until due date."""
+        from datetime import date
+        days = (self.due_date - date.today()).days
+        return max(0, days) if self.status != 'completed' else 0
+
+
+class MonitoringReport(models.Model):
+    """
+    Occupancy and construction report submitted by caretaker/ronda.
+    Captures field observations including occupancy status, construction progress, and photo evidence.
+
+    Used by monitoring evaluation engine to determine compliance and trigger escalations.
+    """
+    OCCUPANCY_STATUS_CHOICES = [
+        ('properly_occupied', 'Properly Occupied'),
+        ('temporarily_vacant', 'Temporarily Vacant'),
+        ('unoccupied_abandoned', 'Unoccupied / Abandoned'),
+    ]
+
+    CONSTRUCTION_STATUS_CHOICES = [
+        ('no_structure', 'No Structure'),
+        ('site_clearing', 'Site Clearing'),
+        ('foundation', 'Foundation'),
+        ('wall_framing', 'Wall Framing'),
+        ('roofing', 'Roofing'),
+        ('finishing', 'Finishing'),
+        ('completed_occupied', 'Completed / Occupied'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    task = models.ForeignKey(
+        MonitoringTask,
+        on_delete=models.CASCADE,
+        related_name='reports',
+        help_text="Monitoring task this report fulfills"
+    )
+
+    lot_award = models.ForeignKey(
+        LotAward,
+        on_delete=models.CASCADE,
+        related_name='monitoring_reports'
+    )
+
+    unit = models.ForeignKey(
+        HousingUnit,
+        on_delete=models.CASCADE,
+        related_name='monitoring_reports'
+    )
+
+    submitted_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='monitoring_reports_submitted',
+        help_text="Caretaker/Ronda who submitted report"
+    )
+
+    # Occupancy information
+    occupancy_status = models.CharField(
+        max_length=30,
+        choices=OCCUPANCY_STATUS_CHOICES,
+        help_text="Current occupancy condition"
+    )
+
+    people_observed = models.CharField(
+        max_length=100,
+        blank=True,
+        help_text="Number of people observed (e.g., '4', 'family of 3', 'none')"
+    )
+
+    occupancy_notes = models.TextField(
+        blank=True,
+        help_text="Observations about occupancy condition"
+    )
+
+    # Construction progress information
+    construction_status = models.CharField(
+        max_length=30,
+        choices=CONSTRUCTION_STATUS_CHOICES,
+        help_text="Current construction stage"
+    )
+
+    percent_complete = models.PositiveIntegerField(
+        default=0,
+        help_text="Estimated construction progress (0-100%)"
+    )
+
+    progress_notes = models.TextField(
+        blank=True,
+        help_text="Details about construction progress"
+    )
+
+    # General remarks and photos
+    general_remarks = models.TextField(
+        blank=True,
+        help_text="Overall assessment and remarks from caretaker"
+    )
+
+    # Completion status
+    is_complete = models.BooleanField(
+        default=True,
+        help_text="True if all required fields are filled"
+    )
+
+    submitted_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-submitted_at']
+        verbose_name = "Monitoring Report"
+        verbose_name_plural = "Monitoring Reports"
+        indexes = [
+            models.Index(fields=['lot_award', '-submitted_at']),
+            models.Index(fields=['occupancy_status', 'construction_status']),
+        ]
+
+    def __str__(self):
+        return f"{self.unit} - {self.get_construction_status_display()} ({self.submitted_at.date()})"
+
+
+class ExplanationReview(models.Model):
+    """
+    Track beneficiary explanations for construction delays or non-compliance.
+
+    Triggered when monitoring evaluation engine detects no progress past deadline.
+    Staff reviews caretaker reports + beneficiary explanation, then approves or denies extension.
+    """
+    REVIEW_STATUS_CHOICES = [
+        ('pending_review', 'Pending Review'),
+        ('approved', 'Approved — Extension Granted'),
+        ('denied', 'Denied — Proceed to Final Notice'),
+        ('needs_clarification', 'Needs Clarification — Request More Info'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    lot_award = models.ForeignKey(
+        LotAward,
+        on_delete=models.CASCADE,
+        related_name='explanation_reviews'
+    )
+
+    unit = models.ForeignKey(
+        HousingUnit,
+        on_delete=models.CASCADE,
+        related_name='explanation_reviews'
+    )
+
+    triggered_by_report = models.ForeignKey(
+        MonitoringReport,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='triggered_explanations',
+        help_text="MonitoringReport that triggered this explanation review"
+    )
+
+    # Beneficiary explanation (from SMS or system notification)
+    beneficiary_explanation = models.TextField(
+        blank=True,
+        help_text="Explanation provided by beneficiary for delay"
+    )
+
+    explanation_submitted_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="When beneficiary submitted explanation"
+    )
+
+    # Staff review
+    review_status = models.CharField(
+        max_length=30,
+        choices=REVIEW_STATUS_CHOICES,
+        default='pending_review'
+    )
+
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='explanations_reviewed',
+        help_text="THA Staff member who reviewed"
+    )
+
+    reviewed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="When staff reviewed explanation"
+    )
+
+    staff_decision_notes = models.TextField(
+        blank=True,
+        help_text="Staff notes on decision"
+    )
+
+    # Extension decision (if approved)
+    extension_approved = models.BooleanField(
+        default=False,
+        help_text="True if extension was approved"
+    )
+
+    extension_months = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        choices=[(1, '1 Month'), (2, '2 Months'), (3, '3 Months')],
+        help_text="Duration of extension (if approved)"
+    )
+
+    extension_reason = models.TextField(
+        blank=True,
+        help_text="Staff notes on why extension was approved/denied"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Explanation Review"
+        verbose_name_plural = "Explanation Reviews"
+        indexes = [
+            models.Index(fields=['review_status', '-created_at']),
+            models.Index(fields=['lot_award', 'review_status']),
+        ]
+
+    def __str__(self):
+        return f"{self.lot_award.unit} - {self.get_review_status_display()}"
+
+
+class ExtensionRecord(models.Model):
+    """
+    Record of an extension approval containing dates and details.
+
+    Created when ExplanationReview is approved.
+    Triggers creation of Month 1, 2, 3 monitoring tasks and new MonitoringCycle.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    lot_award = models.ForeignKey(
+        LotAward,
+        on_delete=models.CASCADE,
+        related_name='extensions'
+    )
+
+    explanation_review = models.ForeignKey(
+        ExplanationReview,
+        on_delete=models.CASCADE,
+        related_name='extension_record',
+        help_text="Explanation review that approved this extension"
+    )
+
+    extension_duration_months = models.PositiveIntegerField(
+        choices=[(1, '1 Month'), (2, '2 Months'), (3, '3 Months')],
+        help_text="Duration of extension in months"
+    )
+
+    extension_start_date = models.DateField(
+        help_text="When extension period begins"
+    )
+
+    extension_end_date = models.DateField(
+        help_text="When extension period ends (deadline)"
+    )
+
+    approved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='approved_extensions',
+        help_text="Staff member who approved extension"
+    )
+
+    approved_at = models.DateTimeField(auto_now_add=True)
+
+    approval_notes = models.TextField(
+        blank=True,
+        help_text="Additional notes from staff on extension approval"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-approved_at']
+        verbose_name = "Extension Record"
+        verbose_name_plural = "Extension Records"
+
+    def __str__(self):
+        return f"{self.lot_award.unit} - {self.extension_duration_months}-Month Extension"
+
+    @property
+    def days_remaining(self):
+        """Calculate days until extension deadline."""
+        from datetime import date
+        days = (self.extension_end_date - date.today()).days
+        return max(0, days)
+
+    @property
+    def is_expired(self):
+        """Check if extension period has ended."""
+        from datetime import date
+        return date.today() > self.extension_end_date

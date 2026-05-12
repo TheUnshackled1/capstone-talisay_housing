@@ -3770,6 +3770,57 @@ def _assign_housing_unit_after_lot_award(application, unit, awarded_by_user):
         },
     )
 
+    # Module 4: Create occupancy monitoring workflow
+    try:
+        from datetime import timedelta
+        from units.models import OccupancyMonitoringCycle, MonitoringTask
+
+        award_date = timezone.now().date()
+
+        # Create monitoring cycle for 30-day period
+        monitoring_cycle = OccupancyMonitoringCycle.objects.create(
+            lot_award=award,
+            cycle_stage='original_30_day',
+            stage_start_date=award_date,
+            stage_end_date=award_date + timedelta(days=30),
+            days_allowed=30,
+            is_active=True,
+        )
+
+        # Determine caretaker for task assignment
+        assigned_caretaker = unit.site.caretaker if unit.site else None
+
+        # Create Day 15 inspection task
+        MonitoringTask.objects.create(
+            unit=unit,
+            lot_award=award,
+            task_type='day_15_inspection',
+            scheduled_date=award_date,
+            due_date=award_date + timedelta(days=15),
+            days_from_award=15,
+            status='pending',
+            assigned_to=assigned_caretaker,
+        )
+
+        # Create Day 30 inspection task
+        MonitoringTask.objects.create(
+            unit=unit,
+            lot_award=award,
+            task_type='day_30_inspection',
+            scheduled_date=award_date,
+            due_date=award_date + timedelta(days=30),
+            days_from_award=30,
+            status='pending',
+            assigned_to=assigned_caretaker,
+        )
+    except Exception as e:
+        # Log the error but don't fail the entire award process
+        import sys
+        sys.stderr.write(
+            f"\n[WARNING] Module 4 monitoring setup failed for {unit}: {str(e)}\n"
+        )
+        sys.stderr.flush()
+
     applicant = application.applicant
     unit.status = 'Occupied'
     unit.occupant_name = applicant.full_name if applicant else ''

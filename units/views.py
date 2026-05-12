@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.shortcuts import render, redirect
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseForbidden
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods, require_POST
 from django.db import transaction, models, IntegrityError
@@ -16,7 +16,8 @@ from applications.models import QueueEntry, Application
 from intake.utils import send_sms
 from units.models import (
     HousingUnit, LotAward, RelocationSite, CaseRecord, CaseUpdate, WeeklyReport,
-    ConstructionProgress, Blacklist
+    ConstructionProgress, Blacklist, OccupancyMonitoringCycle, MonitoringTask,
+    MonitoringReport, ExplanationReview, ExtensionRecord
 )
 from accounts.models import FIELD_DESK_POSITIONS
 
@@ -1122,3 +1123,646 @@ def blacklist_management(request, position):
         'search': search_query,
     }
     return render(request, 'units/blacklist_management.html', context)
+
+
+# =============================================================================
+# PHASE 3: CARETAKER MONITORING DASHBOARD
+# =============================================================================
+
+@login_required
+def caretaker_monitoring_dashboard(request):
+    """
+    Caretaker/Ronda dashboard for viewing and submitting monitoring reports.
+    Displays all assigned monitoring tasks with filtering and modal-based report submission.
+
+    URL: /units/monitoring-dashboard/
+    """
+    # Restrict to caretaker users
+    if request.user.position not in ['caretaker', 'ronda']:
+        return HttpResponseForbidden("Only caretakers can access this dashboard.")
+
+    # Get all assigned tasks
+    today = timezone.now().date()
+    tasks = MonitoringTask.objects.filter(
+        assigned_to_id=request.user.id,
+        status__in=['pending', 'overdue']
+    ).select_related('unit', 'lot_award', 'unit__site').order_by('due_date')
+
+    # Calculate KPIs
+    pending_count = tasks.filter(status='pending').count()
+    overdue_count = tasks.filter(due_date__lt=today, status='pending').count()
+    completed_count = MonitoringTask.objects.filter(
+        assigned_to_id=request.user.id,
+        status='completed'
+    ).count()
+    active_units = tasks.values('unit_id').distinct().count()
+
+    context = {
+        'tasks': tasks,
+        'pending_count': pending_count,
+        'overdue_count': overdue_count,
+        'completed_count': completed_count,
+        'active_units': active_units,
+    }
+
+    return render(request, 'units/caretaker_monitoring_dashboard.html', context)
+
+
+# =============================================================================
+# PHASE 4: REPORT SUBMISSION
+# =============================================================================
+
+@login_required
+@require_POST
+def submit_monitoring_report(request, task_id):
+    """
+    Caretaker submits monitoring report for a specific task.
+    Validates occupancy and construction status, then evaluates for auto-escalation.
+
+    URL: /units/monitoring-report/<task_id>/submit/
+    """
+    if request.user.position not in ['caretaker', 'ronda']:
+        return JsonResponse({
+            'success': False,
+            'error': 'Permission denied'
+        }, status=403)
+
+    try:
+        task = MonitoringTask.objects.select_related(
+            'unit', 'lot_award', 'lot_award__application__applicant'
+        ).get(id=task_id, assigned_to_id=request.user.id)
+
+        occupancy_status = request.POST.get('occupancy_status', '').strip()
+        construction_status = request.POST.get('construction_status', '').strip()
+        percent_complete = request.POST.get('percent_complete', '0').strip()
+
+        if not occupancy_status or not construction_status:
+            return JsonResponse({
+                'success': False,
+                'error': 'Occupancy status and construction status are required'
+            }, status=400)
+
+        try:
+            percent_complete = int(percent_complete)
+            percent_complete = max(0, min(100, percent_complete))
+        except:
+            percent_complete = 0
+
+        # Create monitoring report
+        with transaction.atomic():
+            report = MonitoringReport.objects.create(
+                task=task,
+                lot_award=task.lot_award,
+                unit=task.unit,
+                submitted_by=request.user,
+                occupancy_status=occupancy_status,
+                construction_status=construction_status,
+                percent_complete=percent_complete,
+                people_observed=request.POST.get('people_observed', ''),
+                occupancy_notes=request.POST.get('occupancy_notes', ''),
+                progress_notes=request.POST.get('progress_notes', ''),
+                general_remarks=request.POST.get('general_remarks', ''),
+                is_complete=True,
+            )
+
+            # Mark task as completed
+            task.status = 'completed'
+            task.save()
+
+            # Evaluate report for auto-escalation
+            evaluation = _evaluate_monitoring_report(report)
+
+            return JsonResponse({
+                'success': True,
+                'message': 'Report submitted successfully',
+                'report_id': str(report.id),
+                'evaluation': evaluation,
+            })
+
+    except MonitoringTask.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Task not found'}, status=404)
+    except Exception as e:
+        import sys
+        sys.stderr.write(f"\n[ERROR] Failed to submit monitoring report: {str(e)}\n")
+        sys.stderr.flush()
+        return JsonResponse({
+            'success': False,
+            'error': f'Failed to submit report: {str(e)}'
+        }, status=500)
+
+
+# =============================================================================
+# PHASE 5: EVALUATION ENGINE & AUTO-ESCALATION
+# =============================================================================
+
+def _evaluate_monitoring_report(report):
+    """
+    Evaluates monitoring report against three rules for auto-escalation.
+    - Rule 1: Detect no progress at Day 30
+    - Rule 2: Handle extension period failures
+    - Rule 3: Continue normal monitoring if progress shown
+    """
+    result = {
+        'status': 'unknown',
+        'actions': [],
+        'escalated': False,
+    }
+
+    try:
+        lot_award = report.lot_award
+        today = timezone.now().date()
+        award_date = lot_award.created_at.date()
+        days_since_award = (today - award_date).days
+
+        # Find the active monitoring cycle
+        monitoring_cycle = OccupancyMonitoringCycle.objects.filter(
+            lot_award=lot_award, is_active=True
+        ).first()
+
+        if not monitoring_cycle:
+            result['status'] = 'unknown'
+            return result
+
+        # RULE 1: Original 30-day period with no progress
+        if (days_since_award >= 30 and
+            monitoring_cycle.cycle_stage.startswith('initial') and
+            report.construction_status == 'no_structure' and
+            report.occupancy_status in ['temporarily_vacant', 'unoccupied_abandoned']):
+
+            result['status'] = 'no_progress_detected'
+            result['escalated'] = True
+
+            # Create explanation review
+            explanation = ExplanationReview.objects.create(
+                lot_award=lot_award,
+                reason='No construction progress at day 30',
+                review_status='pending_review',
+            )
+
+            result['actions'].append({
+                'type': 'explanation_review',
+                'message': 'No construction progress detected. Beneficiary must provide explanation.',
+                'review_id': str(explanation.id),
+            })
+
+            # Send SMS
+            if lot_award.application.applicant.phone_number:
+                send_sms(
+                    lot_award.application.applicant.phone_number,
+                    f"No construction progress detected on your lot (Block {report.unit.block_number} Lot {report.unit.lot_number}). "
+                    f"Please explain the delay. Reference: {lot_award.application.applicant.reference_number}",
+                    'no_progress',
+                    applicant=lot_award.application.applicant,
+                    module='units',
+                )
+
+        # RULE 2: Extension period ended - Still no progress
+        elif (monitoring_cycle.cycle_stage.startswith('extension') and
+              today > monitoring_cycle.stage_end_date and
+              report.construction_status == 'no_structure'):
+
+            result['status'] = 'extension_failed'
+            result['escalated'] = True
+
+            # Move to final notice stage
+            monitoring_cycle.is_active = False
+            monitoring_cycle.save()
+
+            final_cycle = OccupancyMonitoringCycle.objects.create(
+                lot_award=lot_award,
+                cycle_stage='final_notice_30_day',
+                stage_start_date=today,
+                stage_end_date=today + timedelta(days=30),
+                days_allowed=30,
+                is_active=True,
+            )
+
+            MonitoringTask.objects.create(
+                unit=report.unit,
+                lot_award=lot_award,
+                task_type='final_inspection',
+                scheduled_date=today,
+                due_date=today + timedelta(days=30),
+                days_from_award=days_since_award,
+                status='pending',
+                assigned_to=report.unit.site.caretaker,
+            )
+
+            result['actions'].append({
+                'type': 'final_notice',
+                'message': 'Extension period ended. Final 30-day notice issued.',
+                'cycle_id': str(final_cycle.id),
+            })
+
+            # Send SMS
+            if lot_award.application.applicant.phone_number:
+                send_sms(
+                    lot_award.application.applicant.phone_number,
+                    f"FINAL NOTICE: You have 30 days to show construction progress on Block {report.unit.block_number} Lot {report.unit.lot_number}. "
+                    f"Deadline: {final_cycle.stage_end_date}. Reference: {lot_award.application.applicant.reference_number}",
+                    'final_notice',
+                    applicant=lot_award.application.applicant,
+                    module='units',
+                )
+
+        # RULE 3: Normal progress - Continue monitoring
+        elif report.construction_status != 'no_structure' or report.occupancy_status == 'properly_occupied':
+            result['status'] = 'progress_detected'
+            result['actions'].append({
+                'type': 'continue_monitoring',
+                'message': f'Construction at {report.construction_status}. Monitoring continues.',
+            })
+
+        return result
+
+    except Exception as e:
+        import sys
+        sys.stderr.write(f"\n[ERROR] Failed to evaluate monitoring report: {str(e)}\n")
+        sys.stderr.flush()
+        result['status'] = 'error'
+        result['error'] = str(e)
+        return result
+
+
+
+# PHASE 6-8: STAFF WORKFLOWS (EXPLANATION REVIEW, FINAL NOTICE, REPOSSESSION)
+# =============================================================================
+
+@login_required
+@require_POST
+def review_explanation(request, position):
+    """
+    Staff reviews beneficiary explanation and approves/denies extension.
+    URL: /units/explanation-review/<position>/
+    """
+    allowed_positions = ['fourth_member', 'second_member', 'oic']
+    if request.user.position not in allowed_positions:
+        return JsonResponse({
+            'success': False,
+            'error': 'Permission denied. Only staff can review explanations.'
+        }, status=403)
+
+    try:
+        review_id = request.POST.get('review_id', '').strip()
+        decision = request.POST.get('decision', '').strip()  # 'approve' or 'deny'
+        extension_months = request.POST.get('extension_months', '1').strip()
+        decision_notes = request.POST.get('decision_notes', '').strip()
+
+        if not review_id or not decision:
+            return JsonResponse({
+                'success': False,
+                'error': 'Review ID and decision are required'
+            }, status=400)
+
+        if decision not in ['approve', 'deny']:
+            return JsonResponse({
+                'success': False,
+                'error': 'Decision must be approve or deny'
+            }, status=400)
+
+        try:
+            extension_months = int(extension_months)
+            if extension_months not in [1, 2, 3]:
+                extension_months = 1
+        except:
+            extension_months = 1
+
+        explanation_review = ExplanationReview.objects.select_related(
+            'lot_award', 'lot_award__unit', 'lot_award__application__applicant'
+        ).get(id=review_id)
+
+        with transaction.atomic():
+            explanation_review.review_status = 'approved' if decision == 'approve' else 'denied'
+            explanation_review.reviewed_by = request.user
+            explanation_review.reviewed_at = timezone.now()
+            explanation_review.staff_decision_notes = decision_notes
+            explanation_review.save()
+
+            if decision == 'approve':
+                # Approve extension
+                explanation_review.extension_approved = True
+                explanation_review.extension_months = extension_months
+                explanation_review.save()
+
+                # Create extension record
+                today = timezone.now().date()
+                extension_end_date = today + timedelta(days=30 * extension_months)
+
+                extension = ExtensionRecord.objects.create(
+                    lot_award=explanation_review.lot_award,
+                    explanation_review=explanation_review,
+                    extension_duration_months=extension_months,
+                    extension_start_date=today,
+                    extension_end_date=extension_end_date,
+                    approved_by=request.user,
+                    approval_notes=decision_notes,
+                )
+
+                # Create new monitoring cycles
+                for month in range(1, extension_months + 1):
+                    cycle = OccupancyMonitoringCycle.objects.create(
+                        lot_award=explanation_review.lot_award,
+                        cycle_stage=f'extension_month_{month}',
+                        stage_start_date=today + timedelta(days=30 * (month - 1)),
+                        stage_end_date=today + timedelta(days=30 * month),
+                        days_allowed=30,
+                        is_active=(month == 1),
+                    )
+
+                    MonitoringTask.objects.create(
+                        unit=explanation_review.unit,
+                        lot_award=explanation_review.lot_award,
+                        task_type=f'month_{month}_inspection',
+                        scheduled_date=today,
+                        due_date=today + timedelta(days=30 * month),
+                        days_from_award=30 + (30 * (month - 1)),
+                        status='pending',
+                        assigned_to=explanation_review.unit.site.caretaker,
+                    )
+
+                # Send SMS
+                if explanation_review.lot_award.application.applicant.phone_number:
+                    send_sms(
+                        explanation_review.lot_award.application.applicant.phone_number,
+                        f"Your extension request has been APPROVED for {extension_months} month(s). "
+                        f"Deadline: {extension_end_date}. Continue construction on Block {explanation_review.unit.block_number} Lot {explanation_review.unit.lot_number}. "
+                        f"Reference: {explanation_review.lot_award.application.applicant.reference_number}",
+                        'extension_approved',
+                        applicant=explanation_review.lot_award.application.applicant,
+                        module='units',
+                    )
+
+                return JsonResponse({
+                    'success': True,
+                    'message': f'Extension approved for {extension_months} month(s). Monitoring tasks created.',
+                    'extension_id': str(extension.id),
+                })
+
+            else:  # decision == 'deny'
+                # Deny extension - move to final notice
+                explanation_review.extension_approved = False
+                explanation_review.save()
+
+                # Close current monitoring cycle
+                OccupancyMonitoringCycle.objects.filter(
+                    lot_award=explanation_review.lot_award, is_active=True
+                ).update(is_active=False)
+
+                # Create final notice cycle
+                today = timezone.now().date()
+                final_cycle = OccupancyMonitoringCycle.objects.create(
+                    lot_award=explanation_review.lot_award,
+                    cycle_stage='final_notice_30_day',
+                    stage_start_date=today,
+                    stage_end_date=today + timedelta(days=30),
+                    days_allowed=30,
+                    is_active=True,
+                )
+
+                MonitoringTask.objects.create(
+                    unit=explanation_review.unit,
+                    lot_award=explanation_review.lot_award,
+                    task_type='final_inspection',
+                    scheduled_date=today,
+                    due_date=today + timedelta(days=30),
+                    days_from_award=999,
+                    status='pending',
+                    assigned_to=explanation_review.unit.site.caretaker,
+                )
+
+                # Send SMS
+                if explanation_review.lot_award.application.applicant.phone_number:
+                    send_sms(
+                        explanation_review.lot_award.application.applicant.phone_number,
+                        f"Your extension request has been DENIED. FINAL NOTICE: You have 30 days to show construction progress. "
+                        f"Deadline: {final_cycle.stage_end_date}. Block {explanation_review.unit.block_number} Lot {explanation_review.unit.lot_number}. "
+                        f"Reference: {explanation_review.lot_award.application.applicant.reference_number}",
+                        'extension_denied',
+                        applicant=explanation_review.lot_award.application.applicant,
+                        module='units',
+                    )
+
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Extension denied. Final 30-day notice issued.',
+                    'cycle_id': str(final_cycle.id),
+                })
+
+    except ExplanationReview.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Explanation review not found'}, status=404)
+    except Exception as e:
+        import sys
+        sys.stderr.write(f"\n[ERROR] Failed to review explanation: {str(e)}\n")
+        sys.stderr.flush()
+        return JsonResponse({
+            'success': False,
+            'error': f'Failed to review explanation: {str(e)}'
+        }, status=500)
+
+
+@login_required
+def get_final_notice_units(request, position):
+    """
+    Get units under final notice period for staff review.
+    URL: /units/final-notice-units/<position>/
+    """
+    allowed_positions = ['fourth_member', 'second_member', 'oic']
+    if request.user.position not in allowed_positions:
+        return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
+
+    try:
+        final_notice_cycles = OccupancyMonitoringCycle.objects.filter(
+            cycle_stage='final_notice_30_day',
+            is_active=True
+        ).select_related(
+            'lot_award', 'lot_award__unit', 'lot_award__unit__site',
+            'lot_award__application', 'lot_award__application__applicant'
+        )
+
+        today = timezone.now().date()
+        units_data = []
+
+        for cycle in final_notice_cycles:
+            lot_award = cycle.lot_award
+            days_remaining = (cycle.stage_end_date - today).days
+
+            final_task = MonitoringTask.objects.filter(
+                lot_award=lot_award,
+                task_type='final_inspection'
+            ).first()
+
+            units_data.append({
+                'cycle_id': str(cycle.id),
+                'lot_award_id': str(lot_award.id),
+                'unit': f"Block {lot_award.unit.block_number} Lot {lot_award.unit.lot_number}",
+                'site': lot_award.unit.site.name,
+                'beneficiary': lot_award.application.applicant.full_name,
+                'reference': lot_award.application.applicant.reference_number,
+                'notice_issued': str(cycle.stage_start_date),
+                'deadline': str(cycle.stage_end_date),
+                'days_remaining': days_remaining,
+                'status_urgent': days_remaining <= 7,
+                'task_status': final_task.status if final_task else 'pending',
+                'task_id': str(final_task.id) if final_task else None,
+            })
+
+        return JsonResponse({
+            'success': True,
+            'units': units_data,
+        })
+
+    except Exception as e:
+        import sys
+        sys.stderr.write(f"\n[ERROR] Failed to get final notice units: {str(e)}\n")
+        sys.stderr.flush()
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+@login_required
+@require_POST
+def confirm_repossession(request, position):
+    """
+    Staff confirms repossession decision and triggers auto-blacklist.
+    URL: /units/repossession/<position>/confirm/
+    """
+    allowed_positions = ['fourth_member', 'second_member', 'oic']
+    if request.user.position not in allowed_positions:
+        return JsonResponse({
+            'success': False,
+            'error': 'Permission denied. Only staff can confirm repossession.'
+        }, status=403)
+
+    try:
+        lot_award_id = request.POST.get('lot_award_id', '').strip()
+
+        if not lot_award_id:
+            return JsonResponse({
+                'success': False,
+                'error': 'Lot award ID is required'
+            }, status=400)
+
+        lot_award = LotAward.objects.select_related(
+            'unit', 'application', 'application__applicant'
+        ).get(id=lot_award_id, status='active')
+
+        # Auto-repossess
+        try:
+            with transaction.atomic():
+                blacklist, created = Blacklist.objects.get_or_create(
+                    applicant=lot_award.application.applicant,
+                    defaults={
+                        'original_lot_award': lot_award,
+                        'original_unit': lot_award.unit,
+                        'reason': 'repossession',
+                        'reason_details': 'Non-compliance: Failed to show construction progress after monitoring periods.',
+                        'blacklisted_by': None,
+                    }
+                )
+
+                lot_award.unit.status = 'Vacant — available'
+                lot_award.unit.occupant_name = ''
+                lot_award.unit.occupant_id = ''
+                lot_award.unit.is_escalated = False
+                lot_award.unit.save()
+
+                lot_award.status = 'repossessed'
+                lot_award.ended_at = timezone.now()
+                lot_award.end_reason = 'Repossessed: Non-compliance with construction requirements'
+                lot_award.save()
+
+                OccupancyMonitoringCycle.objects.filter(
+                    lot_award=lot_award, is_active=True
+                ).update(is_active=False)
+
+                if lot_award.application.applicant.phone_number:
+                    send_sms(
+                        lot_award.application.applicant.phone_number,
+                        f"Your housing unit (Block {lot_award.unit.block_number} Lot {lot_award.unit.lot_number}) has been repossessed. "
+                        f"You have been blacklisted from future housing programs. "
+                        f"Reference: {lot_award.application.applicant.reference_number}",
+                        'repossession_confirmed',
+                        applicant=lot_award.application.applicant,
+                        module='units',
+                    )
+
+                return JsonResponse({
+                    'success': True,
+                    'message': f'Unit repossessed and beneficiary blacklisted',
+                    'lot_award_id': str(lot_award.id),
+                    'unit': f"Block {lot_award.unit.block_number} Lot {lot_award.unit.lot_number}",
+                    'beneficiary': lot_award.application.applicant.full_name,
+                })
+
+        except Exception as e:
+            import sys
+            sys.stderr.write(f"\n[ERROR] Failed during repossession: {str(e)}\n")
+            sys.stderr.flush()
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            }, status=500)
+
+    except LotAward.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Lot award not found'}, status=404)
+    except Exception as e:
+        import sys
+        sys.stderr.write(f"\n[ERROR] Failed to confirm repossession: {str(e)}\n")
+        sys.stderr.flush()
+        return JsonResponse({
+            'success': False,
+            'error': f'Failed to confirm repossession: {str(e)}'
+        }, status=500)
+
+
+def _get_staff_monitoring_dashboard_data(position):
+    """
+    Aggregate Phase 6-8 data for staff dashboard KPI cards.
+    """
+    today = timezone.now().date()
+
+    # Phase 6: Pending explanations
+    pending_explanations = ExplanationReview.objects.filter(
+        review_status='pending_review'
+    ).select_related(
+        'lot_award', 'lot_award__unit', 'lot_award__application__applicant'
+    ).count()
+
+    # Phase 7: Units in final notice
+    final_notice_units = OccupancyMonitoringCycle.objects.filter(
+        cycle_stage='final_notice_30_day',
+        is_active=True
+    ).select_related(
+        'lot_award', 'lot_award__unit', 'lot_award__application__applicant'
+    )
+
+    final_notice_count = final_notice_units.count()
+
+    # Count urgent (<=7 days)
+    urgent_final_notice = 0
+    for cycle in final_notice_units:
+        days_remaining = (cycle.stage_end_date - today).days
+        if days_remaining <= 7:
+            urgent_final_notice += 1
+
+    return {
+        'pending_explanations': pending_explanations,
+        'final_notice_count': final_notice_count,
+        'urgent_final_notice': urgent_final_notice,
+    }
+
+
+@login_required
+def get_staff_monitoring_dashboard_data(request, position):
+    """
+    JSON endpoint for Phase 6-8 staff dashboard KPI data.
+    URL: /units/staff-dashboard-data/<position>/
+    """
+    allowed_positions = ['fourth_member', 'second_member', 'oic']
+    if request.user.position not in allowed_positions:
+        return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
+
+    data = _get_staff_monitoring_dashboard_data(position)
+    return JsonResponse(data)

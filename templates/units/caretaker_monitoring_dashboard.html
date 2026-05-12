@@ -1,0 +1,806 @@
+{% extends 'field_base.html' %}
+{% load static %}
+
+{% block title %}Monitoring Dashboard - THA{% endblock %}
+
+{% block nav_monitoring %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ===================================================================
+       Caretaker Monitoring Dashboard (Module 4)
+       Government-leaning emerald design with clear task hierarchy
+       =================================================================== */
+
+    .monitoring-shell {
+        position: relative;
+        overflow: hidden;
+        padding: 1.6rem 1.5rem 1.4rem;
+        background: linear-gradient(180deg, #ecfdf5 0%, #ffffff 18%);
+        border: 1px solid #a7f3d0;
+        border-radius: 1rem;
+        box-shadow: 0 2px 8px rgba(5, 150, 105, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
+        margin-bottom: 1.2rem;
+    }
+
+    .monitoring-shell::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 5px;
+        background: linear-gradient(90deg, #047857 0%, #10b981 50%, #6ee7b7 100%);
+        z-index: 1;
+    }
+
+    /* Page Title Section */
+    .monitoring-kicker {
+        margin: 0 0 0.35rem 0;
+        font-size: 0.65rem;
+        font-weight: 800;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: #047857;
+    }
+
+    .monitoring-title {
+        font-family: 'Source Serif Pro', Georgia, serif;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #064e3b;
+        margin: 0 0 0.5rem 0;
+        letter-spacing: -0.01em;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.7rem;
+    }
+
+    .monitoring-title::before {
+        content: '';
+        width: 0.6rem;
+        height: 0.6rem;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+    }
+
+    .monitoring-subtitle {
+        color: #6b7280;
+        font-size: 0.9rem;
+        margin: 0;
+        font-weight: 400;
+    }
+
+    /* KPI Cards */
+    .monitoring-kpis {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+        gap: 0.8rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .monitoring-kpi {
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        padding: 0.9rem 1rem;
+        border: 1px solid #e2e8f0;
+        background: #ffffff;
+        border-radius: 0.75rem;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+        transition: all 0.2s ease;
+    }
+
+    .monitoring-kpi:hover {
+        border-color: #10b981;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+    }
+
+    .monitoring-kpi-icon {
+        width: 2.5rem;
+        height: 2.5rem;
+        flex-shrink: 0;
+        border-radius: 0.6rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .monitoring-kpi-icon svg {
+        width: 1.2rem;
+        height: 1.2rem;
+        stroke-width: 2;
+    }
+
+    .monitoring-kpi-pending .monitoring-kpi-icon {
+        background: #dbeafe;
+        color: #0284c7;
+    }
+
+    .monitoring-kpi-overdue .monitoring-kpi-icon {
+        background: #fee2e2;
+        color: #dc2626;
+    }
+
+    .monitoring-kpi-completed .monitoring-kpi-icon {
+        background: #dcfce7;
+        color: #16a34a;
+    }
+
+    .monitoring-kpi-text h4 {
+        margin: 0;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .monitoring-kpi-number {
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: #1f2937;
+        margin-top: 0.2rem;
+    }
+
+    /* Filter Bar */
+    .monitoring-filter-bar {
+        display: flex;
+        gap: 0.8rem;
+        margin-bottom: 1.2rem;
+        flex-wrap: wrap;
+        align-items: center;
+        padding: 0.9rem 1rem;
+        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        border: 1px solid #e2e8f0;
+        border-radius: 0.75rem;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+    }
+
+    .monitoring-filter {
+        flex: 1;
+        min-width: 150px;
+    }
+
+    .monitoring-filter label {
+        display: block;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #6b7280;
+        margin-bottom: 0.35rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .monitoring-filter select {
+        width: 100%;
+        padding: 0.5rem 0.65rem;
+        border: 1px solid #d1d5db;
+        border-radius: 0.5rem;
+        font-size: 0.9rem;
+        background: #ffffff;
+        color: #1f2937;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .monitoring-filter select:focus {
+        outline: none;
+        border-color: #10b981;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+    }
+
+    /* Tasks Table */
+    .monitoring-tasks-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+        border-radius: 0.75rem;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e5e7eb;
+    }
+
+    .monitoring-tasks-table thead {
+        background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+        border-bottom: 2px solid #e5e7eb;
+    }
+
+    .monitoring-tasks-table th {
+        padding: 0.9rem 1rem;
+        text-align: left;
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .monitoring-tasks-table td {
+        padding: 0.95rem 1rem;
+        border-bottom: 1px solid #f3f4f6;
+        font-size: 0.9rem;
+        color: #1f2937;
+    }
+
+    .monitoring-tasks-table tbody tr {
+        transition: background-color 0.2s ease;
+    }
+
+    .monitoring-tasks-table tbody tr:hover {
+        background-color: #f9fafb;
+    }
+
+    .monitoring-task-location {
+        font-weight: 600;
+        color: #047857;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .monitoring-task-type {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        background: #e0e7ff;
+        color: #3730a3;
+        padding: 0.35rem 0.7rem;
+        border-radius: 0.4rem;
+        font-size: 0.78rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+    }
+
+    .monitoring-task-type.day-15 {
+        background: #dbeafe;
+        color: #0284c7;
+    }
+
+    .monitoring-task-type.day-30 {
+        background: #fef3c7;
+        color: #d97706;
+    }
+
+    .monitoring-task-type.month {
+        background: #f3e8ff;
+        color: #7c3aed;
+    }
+
+    .monitoring-task-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.4rem 0.7rem;
+        border-radius: 0.4rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+    }
+
+    .monitoring-task-status.pending {
+        background: #fef3c7;
+        color: #b45309;
+    }
+
+    .monitoring-task-status.overdue {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .monitoring-task-status.completed {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .monitoring-task-due {
+        font-weight: 600;
+    }
+
+    .monitoring-task-due.urgent {
+        color: #dc2626;
+    }
+
+    .monitoring-task-actions {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: center;
+    }
+
+    .btn-submit-report {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        font-size: 0.85rem;
+        font-weight: 600;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+    }
+
+    .btn-submit-report:hover {
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        box-shadow: 0 4px 8px rgba(16, 185, 129, 0.4);
+        transform: translateY(-1px);
+    }
+
+    .btn-submit-report:active {
+        transform: translateY(0);
+    }
+
+    .btn-submit-report:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .btn-view-details {
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        color: #1e293b;
+        padding: 0.5rem 0.8rem;
+        border: 1px solid #cbd5e1;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        font-size: 0.85rem;
+        font-weight: 600;
+        transition: all 0.2s ease;
+    }
+
+    .btn-view-details:hover {
+        background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+        border-color: #94a3b8;
+    }
+
+    /* Empty State */
+    .monitoring-empty-state {
+        padding: 3rem 1.5rem;
+        text-align: center;
+        background: #f9fafb;
+        border: 1px dashed #d1d5db;
+        border-radius: 0.75rem;
+        color: #6b7280;
+    }
+
+    .monitoring-empty-state svg {
+        width: 4rem;
+        height: 4rem;
+        color: #d1d5db;
+        margin: 0 auto 1rem;
+        opacity: 0.5;
+    }
+
+    .monitoring-empty-state h3 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #1f2937;
+        margin: 0 0 0.5rem 0;
+    }
+
+    .monitoring-empty-state p {
+        margin: 0;
+        font-size: 0.9rem;
+    }
+
+    /* Modal Base */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-overlay.active {
+        display: flex;
+    }
+
+    .modal-content {
+        background: white;
+        border-radius: 1rem;
+        padding: 2rem;
+        max-width: 600px;
+        width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .modal-title {
+        font-size: 1.35rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin: 0;
+    }
+
+    .modal-close {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        color: #9ca3af;
+        cursor: pointer;
+        transition: color 0.2s ease;
+    }
+
+    .modal-close:hover {
+        color: #1f2937;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .monitoring-shell {
+            padding: 1.2rem 1rem;
+        }
+
+        .monitoring-title {
+            font-size: 1.2rem;
+        }
+
+        .monitoring-kpis {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.6rem;
+        }
+
+        .monitoring-filter-bar {
+            flex-direction: column;
+        }
+
+        .monitoring-filter {
+            min-width: auto;
+        }
+
+        .monitoring-tasks-table {
+            font-size: 0.85rem;
+        }
+
+        .monitoring-tasks-table th,
+        .monitoring-tasks-table td {
+            padding: 0.7rem 0.6rem;
+        }
+
+        .btn-submit-report,
+        .btn-view-details {
+            padding: 0.4rem 0.6rem;
+            font-size: 0.75rem;
+        }
+
+        .modal-content {
+            padding: 1.5rem;
+        }
+
+        .modal-title {
+            font-size: 1.1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="monitoring-shell">
+    <div class="monitoring-kicker">Module 4</div>
+    <h1 class="monitoring-title">Monitoring Dashboard</h1>
+    <p class="monitoring-subtitle">View and manage housing unit occupancy inspections</p>
+</div>
+
+<!-- KPI Cards -->
+<div class="monitoring-kpis">
+    <div class="monitoring-kpi monitoring-kpi-pending">
+        <div class="monitoring-kpi-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0M9 12l2 2l4 -4"/>
+            </svg>
+        </div>
+        <div class="monitoring-kpi-text">
+            <h4>Pending Tasks</h4>
+            <div class="monitoring-kpi-number">{{ pending_count }}</div>
+        </div>
+    </div>
+
+    <div class="monitoring-kpi monitoring-kpi-overdue">
+        <div class="monitoring-kpi-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
+            </svg>
+        </div>
+        <div class="monitoring-kpi-text">
+            <h4>Overdue Tasks</h4>
+            <div class="monitoring-kpi-number">{{ overdue_count }}</div>
+        </div>
+    </div>
+
+    <div class="monitoring-kpi monitoring-kpi-completed">
+        <div class="monitoring-kpi-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0M9 12l2 2l4 -4"/>
+            </svg>
+        </div>
+        <div class="monitoring-kpi-text">
+            <h4>Completed</h4>
+            <div class="monitoring-kpi-number">{{ completed_count }}</div>
+        </div>
+    </div>
+
+    <div class="monitoring-kpi monitoring-kpi-pending">
+        <div class="monitoring-kpi-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7"/>
+                <path d="M17 7V5a2 2 0 0 0 -2 -2H9a2 2 0 0 0 -2 2v2"/>
+                <line x1="6" y1="12" x2="18" y2="12"/>
+            </svg>
+        </div>
+        <div class="monitoring-kpi-text">
+            <h4>Active Units</h4>
+            <div class="monitoring-kpi-number">{{ active_units }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="monitoring-filter-bar">
+    <div class="monitoring-filter">
+        <label for="filterStatus">Filter by Status</label>
+        <select id="filterStatus" onchange="filterTasks()">
+            <option value="">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="overdue">Overdue</option>
+            <option value="completed">Completed</option>
+        </select>
+    </div>
+
+    <div class="monitoring-filter">
+        <label for="filterType">Filter by Task Type</label>
+        <select id="filterType" onchange="filterTasks()">
+            <option value="">All Types</option>
+            <option value="day_15_inspection">Day 15 Inspection</option>
+            <option value="day_30_inspection">Day 30 Inspection</option>
+            <option value="month_1_inspection">Extension Month 1</option>
+            <option value="month_2_inspection">Extension Month 2</option>
+            <option value="month_3_inspection">Extension Month 3</option>
+            <option value="final_inspection">Final Inspection</option>
+        </select>
+    </div>
+</div>
+
+<!-- Tasks Table -->
+{% if tasks %}
+<table class="monitoring-tasks-table">
+    <thead>
+        <tr>
+            <th>Unit Location</th>
+            <th>Task Type</th>
+            <th>Due Date</th>
+            <th>Days From Award</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody id="tasksTableBody">
+        {% for task in tasks %}
+        <tr class="task-row" data-status="{{ task.status }}" data-type="{{ task.task_type }}">
+            <td>
+                <div class="monitoring-task-location">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
+                    </svg>
+                    Block {{ task.unit.block_number }} Lot {{ task.unit.lot_number }}
+                </div>
+            </td>
+            <td>
+                <span class="monitoring-task-type {% if 'day_15' in task.task_type %}day-15{% elif 'day_30' in task.task_type %}day-30{% else %}month{% endif %}">
+                    {{ task.get_task_type_display }}
+                </span>
+            </td>
+            <td>
+                <span class="monitoring-task-due {% if task.is_overdue %}urgent{% endif %}">
+                    {{ task.due_date }}
+                </span>
+            </td>
+            <td>
+                <strong>{{ task.days_from_award }}</strong> days
+            </td>
+            <td>
+                <span class="monitoring-task-status {{ task.status }}">
+                    {% if task.status == 'pending' and task.is_overdue %}
+                        Overdue
+                    {% else %}
+                        {{ task.get_status_display }}
+                    {% endif %}
+                </span>
+            </td>
+            <td>
+                <div class="monitoring-task-actions">
+                    <button type="button" class="btn-submit-report" onclick="openReportModal({{ task.id }})">
+                        {% if task.status == 'completed' %}
+                            View Report
+                        {% else %}
+                            Submit Report
+                        {% endif %}
+                    </button>
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<div class="monitoring-empty-state">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M12 16v-4M12 8h.01"/>
+    </svg>
+    <h3>No Monitoring Tasks Yet</h3>
+    <p>You don't have any assigned monitoring tasks at this time.</p>
+</div>
+{% endif %}
+
+</div>
+
+<!-- Report Submission Modal -->
+<div class="modal-overlay" id="reportModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Submit Monitoring Report</h2>
+            <button type="button" class="modal-close" onclick="closeReportModal()">×</button>
+        </div>
+
+        <form id="reportForm" onsubmit="submitReport(event)">
+            {% csrf_token %}
+            <input type="hidden" id="taskId" name="task_id">
+
+            <!-- Occupancy Status -->
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #1f2937;">
+                    Occupancy Status
+                </label>
+                <select name="occupancy_status" required style="width: 100%; padding: 0.7rem; border: 1px solid #d1d5db; border-radius: 0.5rem;">
+                    <option value="">Select status...</option>
+                    <option value="properly_occupied">Properly Occupied</option>
+                    <option value="temporarily_vacant">Temporarily Vacant</option>
+                    <option value="unoccupied_abandoned">Unoccupied / Abandoned</option>
+                </select>
+            </div>
+
+            <!-- People Observed -->
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #1f2937;">
+                    Number of People Observed
+                </label>
+                <input type="text" name="people_observed" placeholder="e.g., 4, family of 3, none" style="width: 100%; padding: 0.7rem; border: 1px solid #d1d5db; border-radius: 0.5rem;">
+            </div>
+
+            <!-- Occupancy Notes -->
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #1f2937;">
+                    Occupancy Observations
+                </label>
+                <textarea name="occupancy_notes" rows="3" placeholder="Describe occupancy condition..." style="width: 100%; padding: 0.7rem; border: 1px solid #d1d5db; border-radius: 0.5rem;"></textarea>
+            </div>
+
+            <!-- Construction Status -->
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #1f2937;">
+                    Construction Status
+                </label>
+                <select name="construction_status" required style="width: 100%; padding: 0.7rem; border: 1px solid #d1d5db; border-radius: 0.5rem;">
+                    <option value="">Select status...</option>
+                    <option value="no_structure">No Structure</option>
+                    <option value="site_clearing">Site Clearing</option>
+                    <option value="foundation">Foundation</option>
+                    <option value="wall_framing">Wall Framing</option>
+                    <option value="roofing">Roofing</option>
+                    <option value="finishing">Finishing</option>
+                    <option value="completed_occupied">Completed / Occupied</option>
+                </select>
+            </div>
+
+            <!-- Construction Percentage -->
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #1f2937;">
+                    Percent Complete (0-100%)
+                </label>
+                <input type="number" name="percent_complete" min="0" max="100" value="0" style="width: 100%; padding: 0.7rem; border: 1px solid #d1d5db; border-radius: 0.5rem;">
+            </div>
+
+            <!-- Progress Notes -->
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #1f2937;">
+                    Construction Progress Details
+                </label>
+                <textarea name="progress_notes" rows="3" placeholder="Describe construction progress..." style="width: 100%; padding: 0.7rem; border: 1px solid #d1d5db; border-radius: 0.5rem;"></textarea>
+            </div>
+
+            <!-- General Remarks -->
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #1f2937;">
+                    General Remarks & Observations
+                </label>
+                <textarea name="general_remarks" rows="3" placeholder="Overall assessment and remarks..." style="width: 100%; padding: 0.7rem; border: 1px solid #d1d5db; border-radius: 0.5rem;"></textarea>
+            </div>
+
+            <!-- Submit Button -->
+            <div style="display: flex; gap: 0.8rem; justify-content: flex-end;">
+                <button type="button" class="btn-view-details" onclick="closeReportModal()" style="background-color: transparent;">
+                    Cancel
+                </button>
+                <button type="submit" class="btn-submit-report" style="margin: 0;">
+                    Submit Report
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function filterTasks() {
+    const statusFilter = document.getElementById('filterStatus').value;
+    const typeFilter = document.getElementById('filterType').value;
+    const rows = document.querySelectorAll('.task-row');
+
+    rows.forEach(row => {
+        const rowStatus = row.dataset.status;
+        const rowType = row.dataset.type;
+
+        const statusMatch = !statusFilter || rowStatus === statusFilter;
+        const typeMatch = !typeFilter || rowType === typeFilter;
+
+        row.style.display = (statusMatch && typeMatch) ? '' : 'none';
+    });
+}
+
+function openReportModal(taskId) {
+    document.getElementById('taskId').value = taskId;
+    document.getElementById('reportModal').classList.add('active');
+}
+
+function closeReportModal() {
+    document.getElementById('reportModal').classList.remove('active');
+    document.getElementById('reportForm').reset();
+}
+
+function submitReport(event) {
+    event.preventDefault();
+
+    const formData = new FormData(document.getElementById('reportForm'));
+    const taskId = formData.get('task_id');
+
+    fetch(`/units/monitoring-report/${taskId}/submit/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Report submitted successfully!');
+            closeReportModal();
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to submit report');
+    });
+}
+
+// Close modal when clicking outside
+document.getElementById('reportModal').addEventListener('click', function(event) {
+    if (event.target === this) {
+        closeReportModal();
+    }
+});
+</script>
+{% endblock %}
