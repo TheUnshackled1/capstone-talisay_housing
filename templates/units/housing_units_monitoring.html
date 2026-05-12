@@ -953,9 +953,6 @@
         <div style="min-width:0; flex:1 1 22rem;">
             <div style="display:flex; align-items:baseline; gap:0.55rem; flex-wrap:wrap;">
                 <h1 class="units-page-title" style="margin:0;">Housing Unit &amp; Occupancy Monitoring</h1>
-                <span style="font-size: 0.78rem; color: #475569; line-height: 1.5;">
-                    {% if site %}<strong style="color:#0f172a;">{{ site.name }}</strong> · {% endif %}{{ total_units }} total unit{{ total_units|pluralize }} tracked. Weekly occupancy reports and notice-of-action enforcement.
-                </span>
             </div>
         </div>
         <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
@@ -1066,15 +1063,7 @@
     </div>
     {% endif %}
 
-    <!-- Filter Tabs -->
-    <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.85rem;">
-        <button class="filter-tab active" data-filter="all" onclick="filterUnits('all')" style="padding: 0.4rem 0.75rem; border: 1px solid #cbd5e1; background: white; border-radius: 20px; font-size: 0.72rem; cursor: pointer; font-weight: 600;">All Units ({{ total_units }})</button>
-        <button class="filter-tab" data-filter="Occupied" onclick="filterUnits('Occupied')" style="padding: 0.4rem 0.75rem; border: 1px solid #bbf7d0; background: white; border-radius: 20px; font-size: 0.72rem; cursor: pointer;">Occupied ({{ occupied_count }})</button>
-        <button class="filter-tab" data-filter="Vacant — available" onclick="filterUnits('Vacant — available')" style="padding: 0.4rem 0.75rem; border: 1px solid #bfdbfe; background: white; border-radius: 20px; font-size: 0.72rem; cursor: pointer;">Vacant ({{ vacant_count }})</button>
-        <button class="filter-tab" data-filter="Under notice (30-day)" onclick="filterUnits('Under notice (30-day)')" style="padding: 0.4rem 0.75rem; border: 1px solid #fcd34d; background: white; border-radius: 20px; font-size: 0.72rem; cursor: pointer;">30-Day ({{ notice_30_count }})</button>
-        <button class="filter-tab" data-filter="Final notice (10-day)" onclick="filterUnits('Final notice (10-day)')" style="padding: 0.4rem 0.75rem; border: 1px solid #fecaca; background: white; border-radius: 20px; font-size: 0.72rem; cursor: pointer;">Final ({{ notice_10_count }})</button>
-        <button class="filter-tab" data-filter="Repossessed" onclick="filterUnits('Repossessed')" style="padding: 0.4rem 0.75rem; border: 1px solid #e9d5ff; background: white; border-radius: 20px; font-size: 0.72rem; cursor: pointer;">Repossessed ({{ repossessed_count }})</button>
-    </div>
+    <!-- Filter Tabs (Removed) -->
 
     <!-- VICINITY MAP VIEW (replaces card grid) -->
     <div id="gridView-content" style="display: block;">
@@ -1376,6 +1365,27 @@
 
         <!-- Body -->
         <div class="unit-detail-body">
+            <!-- Lot possession card -->
+            <section class="unit-detail-section">
+                <div class="unit-detail-poss-card">
+                    <p class="unit-detail-label">Lot possession details</p>
+                    <div class="unit-detail-poss-grid">
+                        <div class="unit-detail-poss-cell">
+                            <p class="poss-cell-label">Date lot awarded</p>
+                            <p id="lotAwardedDate" class="poss-cell-value">—</p>
+                        </div>
+                        <div class="unit-detail-poss-cell">
+                            <p class="poss-cell-label">Date possessed</p>
+                            <p id="lotPossessedDate" class="poss-cell-value">—</p>
+                        </div>
+                        <div class="unit-detail-poss-cell">
+                            <p class="poss-cell-label">Days possessed</p>
+                            <p id="lotPossessedDays" class="poss-cell-value">—</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             <!-- Occupant -->
             <section class="unit-detail-section">
                 <button type="button" id="beneficiaryToggleBtn" class="unit-monitor-toggle" aria-expanded="false">
@@ -1396,27 +1406,6 @@
                         <div class="unit-detail-poss-cell">
                             <p class="poss-cell-label">Household members</p>
                             <p id="modalHouseholdMembers" class="poss-cell-value">—</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Lot possession card -->
-            <section class="unit-detail-section">
-                <div class="unit-detail-poss-card">
-                    <p class="unit-detail-label">Lot possession details</p>
-                    <div class="unit-detail-poss-grid">
-                        <div class="unit-detail-poss-cell">
-                            <p class="poss-cell-label">Date lot awarded</p>
-                            <p id="lotAwardedDate" class="poss-cell-value">—</p>
-                        </div>
-                        <div class="unit-detail-poss-cell">
-                            <p class="poss-cell-label">Date possessed</p>
-                            <p id="lotPossessedDate" class="poss-cell-value">—</p>
-                        </div>
-                        <div class="unit-detail-poss-cell">
-                            <p class="poss-cell-label">Days possessed</p>
-                            <p id="lotPossessedDays" class="poss-cell-value">—</p>
                         </div>
                     </div>
                 </div>
@@ -1881,7 +1870,6 @@ function openUnitModal(unitId) {
                     form.style.display = 'none';
                 }
 
-                toggleBeneficiaryDropdown(true);
                 document.getElementById('unitModal').style.display = 'flex';
             } else {
                 console.error('Failed to fetch unit details:', data.error);
