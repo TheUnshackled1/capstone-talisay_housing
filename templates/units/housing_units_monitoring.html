@@ -543,7 +543,7 @@
     }
     .inspection-info-card {
         position: relative;
-        width: min(100%, 1000px);
+        width: min(100%, 560px);
         max-height: 88vh;
         background: #ffffff;
         border: 1px solid #dbeafe;
@@ -552,6 +552,9 @@
         overflow: hidden;
         display: flex;
         flex-direction: column;
+    }
+    .inspection-info-card--large {
+        width: min(100%, 1000px);
     }
     .inspection-info-card::before {
         content: '';
@@ -1800,7 +1803,7 @@
 </div>
 
 <div id="inspectionInfoModal" class="inspection-info-modal" onclick="closeInspectionInfoModal(event)">
-    <div class="inspection-info-card" onclick="event.stopPropagation();">
+    <div class="inspection-info-card inspection-info-card--large" onclick="event.stopPropagation();">
         <div class="inspection-info-body">
             <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 1rem;">
                 <div>
@@ -2166,7 +2169,10 @@ function openInspectionBlockedModal(task) {
     const summary = document.getElementById('inspectionReportSummary');
     const decisionActions = document.getElementById('inspectionDecisionActions');
     const dashboardBtn = document.getElementById('inspectionDashboardBtn');
+    const card = modal ? modal.querySelector('.inspection-info-card') : null;
     if (!modal || !title || !text) return;
+
+    if (card) card.classList.remove('inspection-info-card--large');
 
     activeInspectionTask = null;
     title.textContent = `${task.label} is blocked`;
@@ -2344,7 +2350,12 @@ function openInspectionInfoModal(task) {
     const decisionActions = document.getElementById('inspectionDecisionActions');
     const actions = modal ? modal.querySelector('.inspection-info-actions') : null;
     const body = modal ? modal.querySelector('.inspection-info-body') : null;
+    const card = modal ? modal.querySelector('.inspection-info-card') : null;
     if (!modal || !title || !text) return;
+
+    if (card) {
+        card.classList.toggle('inspection-info-card--large', task.status === 'completed');
+    }
 
     activeInspectionTask = task;
     if (summary) {

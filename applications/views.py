@@ -1209,18 +1209,15 @@ def ready_for_form_queue(request, position):
 
     selected_row_included = False
     selected_not_ready_reason = ''
-
-    # If the user came from Module 2 list with a target applicant, pin it to
-    # the first slot before pagination so it is immediately visible.
+    selected_queue_index = None
     if selected_applicant_id:
         selected_idx = next(
             (i for i, row in enumerate(applicants_data) if str(getattr(row['applicant'], 'id', '')) == selected_applicant_id),
             None,
         )
         if selected_idx is not None:
-            selected_row = applicants_data.pop(selected_idx)
-            applicants_data.insert(0, selected_row)
             selected_row_included = True
+            selected_queue_index = selected_idx
         else:
             selected_candidate = Applicant.objects.filter(id=selected_applicant_id).first()
             if selected_candidate is not None:
@@ -1231,16 +1228,21 @@ def ready_for_form_queue(request, position):
                     request.user,
                 )
                 if selected_payload is not None:
-                    selected_payload['selected_out_of_queue'] = True
-                    applicants_data.insert(0, selected_payload)
-                    selected_row_included = True
                     selected_not_ready_reason = (
                         selected_payload.get('m2_evaluator', {}).get('readiness_hint')
                         or 'Selected applicant is not currently ready for form generation.'
                     )
 
     paginator = Paginator(applicants_data, MODULE2_LIST_PER_PAGE)
-    page_number = request.GET.get('page', 1)
+    requested_page = request.GET.get('page')
+    page_number = requested_page or 1
+    if (
+        selected_queue_index is not None
+        and from_source == 'applications_list'
+        and not requested_page
+        and not search
+    ):
+        page_number = (selected_queue_index // MODULE2_LIST_PER_PAGE) + 1
     try:
         page_obj = paginator.page(page_number)
     except PageNotAnInteger:

@@ -5434,13 +5434,14 @@
             const data = await response.json();
 
             if (data.success) {
-                alert('Lot awarded successfully! SMS notification sent to beneficiary.');
-                location.reload();
+                showFlowAlert('Lot awarded successfully! SMS notification sent to beneficiary.', 'Award Lot', () => {
+                    location.reload();
+                }, 'success');
             } else {
-                alert(data.error || 'Failed to award lot');
+                showFlowAlert(data.error || 'Failed to award lot', 'Award Lot');
             }
         } catch (error) {
-            alert('Error: ' + error.message);
+            showFlowAlert('Error: ' + error.message, 'Award Lot');
         }
     });
 

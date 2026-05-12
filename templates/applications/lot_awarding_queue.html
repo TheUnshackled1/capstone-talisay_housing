@@ -881,11 +881,12 @@
         + 'orientasyon. Salamat!'
     );
 
-    function lawqShowAlert(message, title, variant) {
+    function lawqShowAlert(message, title, onConfirm, variant) {
         if (typeof window.showFlowAlert === 'function') {
-            window.showFlowAlert(message, title || 'Notice', null, variant || 'default');
+            window.showFlowAlert(message, title || 'Notice', onConfirm || null, variant || 'default');
         } else {
             window.alert(message);
+            if (typeof onConfirm === 'function') onConfirm();
         }
     }
 
@@ -968,7 +969,7 @@
                     return;
                 }
                 if (!msg) {
-                    lawqShowAlert('Please enter a message.', 'Send SMS', 'default');
+                    lawqShowAlert('Please enter a message.', 'Send SMS', null, 'default');
                     return;
                 }
                 var body = new URLSearchParams();
@@ -993,15 +994,15 @@
                         if (data.failed > 0) {
                             summary += '\nFailed: ' + data.failed;
                         }
-                        lawqShowAlert(summary, 'Send SMS', 'success');
+                        lawqShowAlert(summary, 'Send SMS', null, 'success');
                         checks().forEach(function (cb) { cb.checked = false; });
                         if (selectAll) selectAll.checked = false;
                         updateBulkUi();
                     } else {
-                        lawqShowAlert(data.error || 'Send SMS failed.', 'Send SMS', 'default');
+                        lawqShowAlert(data.error || 'Send SMS failed.', 'Send SMS', null, 'default');
                     }
                 } catch (e) {
-                    lawqShowAlert('Error: ' + (e.message || e), 'Send SMS', 'default');
+                    lawqShowAlert('Error: ' + (e.message || e), 'Send SMS', null, 'default');
                 } finally {
                     confirmBtn.disabled = false;
                     confirmBtn.textContent = 'Send SMS';
@@ -1041,13 +1042,14 @@
             });
             const data = await response.json();
             if (data.success) {
-                alert(data.message || 'Lot awarded successfully.');
-                location.reload();
+                lawqShowAlert(data.message || 'Lot awarded successfully.', 'Award Lot', function() {
+                    location.reload();
+                }, 'success');
             } else {
-                alert(data.error || 'Failed to award lot.');
+                lawqShowAlert(data.error || 'Failed to award lot.', 'Award Lot', null, 'default');
             }
         } catch (error) {
-            alert('Error: ' + error.message);
+            lawqShowAlert('Error: ' + error.message, 'Award Lot', null, 'default');
         }
     });
 
