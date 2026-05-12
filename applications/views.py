@@ -3768,6 +3768,7 @@ def _assign_housing_unit_after_lot_award(application, unit, awarded_by_user):
         from units.models import OccupancyMonitoringCycle, MonitoringTask
 
         award_date = award.awarded_at.date()
+        monitoring_start_date = award_date + timedelta(days=30)
 
         # Create monitoring cycle for 30-day period
         monitoring_cycle = OccupancyMonitoringCycle.objects.create(
@@ -3782,13 +3783,13 @@ def _assign_housing_unit_after_lot_award(application, unit, awarded_by_user):
         # Determine caretaker for task assignment
         assigned_caretaker = unit.site.caretaker if unit.site else None
 
-        # Inspection tasks become actionable on their target day, not on award day.
+        # Office policy gives beneficiaries 30 days before scheduled inspections begin.
         MonitoringTask.objects.create(
             unit=unit,
             lot_award=award,
             task_type='day_15_inspection',
-            scheduled_date=award_date + timedelta(days=15),
-            due_date=award_date + timedelta(days=15),
+            scheduled_date=monitoring_start_date + timedelta(days=15),
+            due_date=monitoring_start_date + timedelta(days=15),
             days_from_award=15,
             status='pending',
             assigned_to=assigned_caretaker,
@@ -3798,8 +3799,8 @@ def _assign_housing_unit_after_lot_award(application, unit, awarded_by_user):
             unit=unit,
             lot_award=award,
             task_type='day_30_inspection',
-            scheduled_date=award_date + timedelta(days=30),
-            due_date=award_date + timedelta(days=30),
+            scheduled_date=monitoring_start_date + timedelta(days=30),
+            due_date=monitoring_start_date + timedelta(days=30),
             days_from_award=30,
             status='pending',
             assigned_to=assigned_caretaker,

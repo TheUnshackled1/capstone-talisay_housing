@@ -1023,6 +1023,112 @@
     .vault-img-gallery__nav[hidden] {
         display: none;
     }
+
+    .monitoring-doc-modal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 1100;
+        padding: 1rem;
+        align-items: center;
+        justify-content: center;
+        background: rgba(15, 23, 42, 0.65);
+    }
+
+    .monitoring-doc-panel {
+        width: min(760px, 96vw);
+        max-height: 92vh;
+        overflow-y: auto;
+        border-radius: 1rem;
+        background: #ffffff;
+        box-shadow: 0 24px 60px rgba(15, 23, 42, 0.28);
+    }
+
+    .monitoring-doc-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 1.1rem 1.25rem;
+        border-bottom: 1px solid #e2e8f0;
+        background: linear-gradient(135deg, #ecfdf5 0%, #eff6ff 100%);
+    }
+
+    .monitoring-doc-head h3 {
+        margin: 0;
+        color: #0f172a;
+        font-size: 1.05rem;
+        font-weight: 800;
+    }
+
+    .monitoring-doc-head p {
+        margin: 0.25rem 0 0;
+        color: #475569;
+        font-size: 0.78rem;
+    }
+
+    .monitoring-doc-close {
+        border: none;
+        background: transparent;
+        color: #64748b;
+        cursor: pointer;
+        font-size: 1.4rem;
+        line-height: 1;
+    }
+
+    .monitoring-doc-body {
+        padding: 1.25rem;
+    }
+
+    .monitoring-doc-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .monitoring-doc-cell,
+    .monitoring-doc-section {
+        border: 1px solid #e2e8f0;
+        border-radius: 0.75rem;
+        padding: 0.75rem;
+        background: #f8fafc;
+    }
+
+    .monitoring-doc-label {
+        margin: 0 0 0.25rem;
+        color: #64748b;
+        font-size: 0.62rem;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+    }
+
+    .monitoring-doc-value {
+        margin: 0;
+        color: #0f172a;
+        font-size: 0.84rem;
+        line-height: 1.45;
+        white-space: pre-wrap;
+    }
+
+    .monitoring-doc-section {
+        margin-bottom: 0.75rem;
+        background: #ffffff;
+    }
+
+    .monitoring-doc-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.5rem;
+        padding: 0 1.25rem 1.25rem;
+    }
+
+    @media (max-width: 640px) {
+        .monitoring-doc-grid {
+            grid-template-columns: 1fr;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -1178,6 +1284,62 @@
             <button type="button" id="vaultImageGalleryPrev" class="vault-img-gallery__nav vault-img-gallery__nav--prev" aria-label="Previous photo" onclick="event.stopPropagation(); vaultImageGalleryStep(-1);">‹</button>
             <img id="vaultImageGalleryImg" src="" alt="Verification photo" />
             <button type="button" id="vaultImageGalleryNext" class="vault-img-gallery__nav vault-img-gallery__nav--next" aria-label="Next photo" onclick="event.stopPropagation(); vaultImageGalleryStep(1);">›</button>
+        </div>
+    </div>
+</div>
+
+<div id="monitoringReportDocumentModal" class="monitoring-doc-modal" role="dialog" aria-modal="true" aria-labelledby="monitoringReportDocumentTitle" onclick="if (event.target === this) closeMonitoringReportDocument();">
+    <div class="monitoring-doc-panel" onclick="event.stopPropagation();">
+        <div class="monitoring-doc-head">
+            <div>
+                <h3 id="monitoringReportDocumentTitle">Monitoring report</h3>
+                <p id="monitoringReportDocumentSubtitle">Post-award field verification document</p>
+            </div>
+            <button type="button" class="monitoring-doc-close" onclick="closeMonitoringReportDocument();" aria-label="Close">✕</button>
+        </div>
+        <div class="monitoring-doc-body">
+            <div class="monitoring-doc-grid">
+                <div class="monitoring-doc-cell">
+                    <p class="monitoring-doc-label">Unit / lot</p>
+                    <p id="monitoringReportDocUnit" class="monitoring-doc-value">—</p>
+                </div>
+                <div class="monitoring-doc-cell">
+                    <p class="monitoring-doc-label">Monitoring day</p>
+                    <p id="monitoringReportDocDay" class="monitoring-doc-value">—</p>
+                </div>
+                <div class="monitoring-doc-cell">
+                    <p class="monitoring-doc-label">Due date</p>
+                    <p id="monitoringReportDocDue" class="monitoring-doc-value">—</p>
+                </div>
+                <div class="monitoring-doc-cell">
+                    <p class="monitoring-doc-label">Submitted</p>
+                    <p id="monitoringReportDocSubmitted" class="monitoring-doc-value">—</p>
+                </div>
+                <div class="monitoring-doc-cell">
+                    <p class="monitoring-doc-label">Construction status</p>
+                    <p id="monitoringReportDocConstruction" class="monitoring-doc-value">—</p>
+                </div>
+                <div class="monitoring-doc-cell">
+                    <p class="monitoring-doc-label">Staff decision</p>
+                    <p id="monitoringReportDocAssessment" class="monitoring-doc-value">—</p>
+                </div>
+            </div>
+            <div class="monitoring-doc-section">
+                <p class="monitoring-doc-label">Actual occupancy conditions statement</p>
+                <p id="monitoringReportDocOccupancy" class="monitoring-doc-value">—</p>
+            </div>
+            <div class="monitoring-doc-section">
+                <p class="monitoring-doc-label">Construction progress statement</p>
+                <p id="monitoringReportDocProgress" class="monitoring-doc-value">—</p>
+            </div>
+            <div class="monitoring-doc-section">
+                <p class="monitoring-doc-label">General remarks</p>
+                <p id="monitoringReportDocRemarks" class="monitoring-doc-value">—</p>
+            </div>
+        </div>
+        <div class="monitoring-doc-actions">
+            <button type="button" id="monitoringReportDocPhotosBtn" class="vault-view-btn" style="display:none;">View photos</button>
+            <button type="button" class="vault-add-file-btn" onclick="closeMonitoringReportDocument();">Close</button>
         </div>
     </div>
 </div>
@@ -1559,6 +1721,58 @@ function vaultAppendGalleryViewButton(actionsEl, urls, title) {
     actionsEl.appendChild(vBtn);
 }
 
+function setMonitoringReportText(id, value) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value || '—';
+}
+
+function openMonitoringReportDocument(report) {
+    if (!report) return;
+    setMonitoringReportText('monitoringReportDocumentTitle', report.title || 'Monitoring report');
+    setMonitoringReportText('monitoringReportDocumentSubtitle', 'Post-award field verification document');
+    setMonitoringReportText('monitoringReportDocUnit', report.unit);
+    setMonitoringReportText('monitoringReportDocDay', report.monitoring_day ? ('Day ' + report.monitoring_day) : '—');
+    setMonitoringReportText('monitoringReportDocDue', report.due_date);
+    setMonitoringReportText('monitoringReportDocSubmitted', report.submitted_at + ' by ' + (report.submitted_by || '—'));
+    setMonitoringReportText(
+        'monitoringReportDocConstruction',
+        (report.construction_status || '—') + (report.percent_complete ? ' (' + report.percent_complete + ')' : '')
+    );
+    setMonitoringReportText(
+        'monitoringReportDocAssessment',
+        report.assessment + (report.assessed_by && report.assessed_by !== '—' ? ' by ' + report.assessed_by : '')
+    );
+    setMonitoringReportText('monitoringReportDocOccupancy', report.occupancy_notes);
+    setMonitoringReportText('monitoringReportDocProgress', report.progress_notes);
+    setMonitoringReportText('monitoringReportDocRemarks', report.general_remarks);
+
+    const photosBtn = document.getElementById('monitoringReportDocPhotosBtn');
+    const photos = report.photo_urls || [];
+    if (photosBtn) {
+        if (photos.length) {
+            photosBtn.style.display = 'inline-flex';
+            photosBtn.onclick = function () {
+                openVaultImageGallery(photos, report.title || 'Monitoring report photos');
+            };
+        } else {
+            photosBtn.style.display = 'none';
+            photosBtn.onclick = null;
+        }
+    }
+
+    const modal = document.getElementById('monitoringReportDocumentModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function closeMonitoringReportDocument() {
+    const modal = document.getElementById('monitoringReportDocumentModal');
+    if (modal) modal.style.display = 'none';
+    document.body.style.overflow = '';
+}
+
 function openVaultDrawer(applicantId) {
     if (!Object.keys(VAULT_DRAWER_MAP).length) {
         loadVaultDrawerMapFromDom();
@@ -1656,7 +1870,16 @@ function openVaultDrawer(applicantId) {
                       : 'Missing';
             actions.appendChild(badge);
 
-            if (item.on_file && item.view_url) {
+            if (item.is_monitoring_report && item.report) {
+                const reportBtn = document.createElement('button');
+                reportBtn.type = 'button';
+                reportBtn.className = 'vault-view-btn';
+                reportBtn.textContent = 'View report';
+                reportBtn.addEventListener('click', function () {
+                    openMonitoringReportDocument(item.report);
+                });
+                actions.appendChild(reportBtn);
+            } else if (item.on_file && item.view_url) {
                 vaultAppendViewButton(actions, item.view_url);
             }
 

@@ -4,6 +4,8 @@ from django.contrib import messages
 from django.db.models import Q, Prefetch
 from django.http import JsonResponse, HttpResponse, Http404
 from django.urls import reverse
+from django.utils import timezone
+from django.utils.formats import date_format
 from django.views.decorators.http import require_http_methods, require_POST
 from collections import defaultdict
 from functools import wraps
@@ -12,7 +14,7 @@ import mimetypes
 import os
 from uuid import UUID
 from intake.models import Applicant
-from units.models import LotAward
+from units.models import LotAward, MonitoringReport
 from applications.models import QueueEntry
 from documents.models import (
     Document,
@@ -60,6 +62,70 @@ def _ronda_verification_photos_view_urls(applicant: Applicant, request) -> list[
         except (ValueError, AttributeError):
             continue
     return out
+
+
+def _display_date(value) -> str:
+    if not value:
+        return '—'
+    return date_format(value, 'F j, Y')
+
+
+def _display_datetime(value) -> str:
+    if not value:
+        return '—'
+    return date_format(timezone.localtime(value), 'F j, Y')
+
+
+def _monitoring_photo_urls(report: MonitoringReport, request) -> list[str]:
+    urls: list[str] = []
+    for photo in report.photos.all():
+        if not photo.image:
+            continue
+        try:
+            urls.append(request.build_absolute_uri(photo.image.url))
+        except (ValueError, AttributeError):
+            continue
+    if not urls and report.photo_evidence:
+        try:
+            urls.append(request.build_absolute_uri(report.photo_evidence.url))
+        except (ValueError, AttributeError):
+            pass
+    return urls
+
+
+def _monitoring_report_document_item(report: MonitoringReport, request) -> dict:
+    task = report.task
+    unit = report.unit
+    lot_label = f"Block {unit.block_number}, Lot {unit.lot_number}"
+    task_label = task.get_task_type_display() if task else 'Monitoring report'
+    photo_urls = _monitoring_photo_urls(report, request)
+
+    return {
+        'type_key': f'monitoring_report_{report.id}',
+        'label': f'{task_label} ({_display_date(task.due_date if task else None)})',
+        'group_label': 'Post-award monitoring reports',
+        'on_file': True,
+        'badge_text': 'Completed',
+        'is_monitoring_report': True,
+        'report': {
+            'title': task_label,
+            'unit': lot_label,
+            'monitoring_day': task.days_from_award if task else '',
+            'due_date': _display_date(task.due_date if task else None),
+            'submitted_at': _display_datetime(report.submitted_at),
+            'submitted_by': report.submitted_by.get_full_name() or report.submitted_by.username if report.submitted_by else '—',
+            'occupancy_status': report.get_occupancy_status_display(),
+            'occupancy_notes': report.occupancy_notes or '—',
+            'construction_status': report.get_construction_status_display(),
+            'percent_complete': f'{report.percent_complete}%',
+            'progress_notes': report.progress_notes or '—',
+            'general_remarks': report.general_remarks or '—',
+            'assessment': report.get_progress_assessment_display() if report.progress_assessment else 'Awaiting staff decision',
+            'assessed_by': report.assessed_by.get_full_name() or report.assessed_by.username if report.assessed_by else '—',
+            'assessed_at': _display_datetime(report.assessed_at),
+            'photo_urls': photo_urls,
+        },
+    }
 
 
 def _build_situation_vault_block(
@@ -529,8 +595,40 @@ def document_management(request, position):
         if key not in latest_doc_id_by_applicant_type:
             latest_doc_id_by_applicant_type[key] = str(doc.id)
 
+    monitoring_reports_by_applicant = defaultdict(list)
+    total_monitoring_report_documents = 0
+    if position == 'second_member' and applicant_ids:
+        monitoring_reports_qs = (
+            MonitoringReport.objects
+            .select_related(
+                'task',
+                'unit',
+                'lot_award__application__applicant',
+                'submitted_by',
+                'assessed_by',
+            )
+            .prefetch_related('photos')
+            .filter(
+                lot_award__application__applicant_id__in=applicant_ids,
+                task__status='completed',
+                is_complete=True,
+            )
+            .order_by('task__due_date', 'task__days_from_award', 'submitted_at')
+        )
+        for report in monitoring_reports_qs:
+            rid_r = str(report.lot_award.application.applicant_id).lower()
+            monitoring_reports_by_applicant[rid_r].append(
+                _monitoring_report_document_item(report, request)
+            )
+            total_monitoring_report_documents += 1
+
     for row in applicants_list:
         rid = str(row['id']).lower()
+        monitoring_report_items = monitoring_reports_by_applicant.get(rid, [])
+        if monitoring_report_items:
+            row['monitoring_report_count'] = len(monitoring_report_items)
+            row['doc_count'] += len(monitoring_report_items)
+            row['doc_percentage'] = int((row['doc_count'] / row['total_docs']) * 100) if row['total_docs'] > 0 else 0
         checklist = []
         for _gk, group in doc_groups.items():
             for type_key, label in group['documents']:
@@ -615,6 +713,7 @@ def document_management(request, position):
                 signed_item['badge_text'] = 'Awaiting form release'
                 signed_item['hide_add_file'] = True
         checklist.append(signed_item)
+        checklist.extend(monitoring_reports_by_applicant.get(rid, []))
 
         vault_drawer_data[rid] = {
             'full_name': row['full_name'],
@@ -651,7 +750,7 @@ def document_management(request, position):
         ],
         # New template context variables
         'documents': documents_qs,
-        'total_documents': documents_qs.count(),
+        'total_documents': documents_qs.count() + total_monitoring_report_documents,
         'total_applicants': len(applicants_list),
         'total_size_gb': round(sum(doc.file_size for doc in documents_qs) / (1024*1024*1024), 2),
         'disqualified_count': disqualified_count,

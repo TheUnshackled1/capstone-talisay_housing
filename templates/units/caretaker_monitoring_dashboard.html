@@ -15,7 +15,9 @@
     .monitoring-shell {
         position: relative;
         overflow: hidden;
-        padding: 1.6rem 1.5rem 1.4rem;
+        padding: 1.6rem 2rem 1.4rem;
+        width: 100%;
+        max-width: 100%;
         background: linear-gradient(180deg, #ecfdf5 0%, #ffffff 18%);
         border: 1px solid #a7f3d0;
         border-radius: 1rem;
@@ -189,37 +191,96 @@
         box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
     }
 
+    .monitoring-work-area {
+        position: relative;
+        background: #ffffff;
+        border: 2px solid #10b981;
+        border-radius: 14px;
+        overflow: hidden;
+        box-shadow:
+            0 0 0 4px rgba(16, 185, 129, 0.10),
+            0 8px 24px -8px rgba(16, 185, 129, 0.18),
+            0 4px 10px rgba(15, 23, 42, 0.06);
+        margin-bottom: 1.4rem;
+    }
+
+    .monitoring-work-stripe {
+        height: 4px;
+        background: linear-gradient(90deg, #047857 0%, #10b981 30%, #fbbf24 60%, #10b981 90%, #047857 100%);
+    }
+
+    .monitoring-work-header {
+        padding: 16px 20px 14px;
+        background: linear-gradient(180deg, #ecfdf5 0%, #f0fdf4 60%, #ffffff 100%);
+        border-bottom: 1px solid #d1fae5;
+        text-align: center;
+    }
+
+    .monitoring-work-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        color: #ffffff;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        border-radius: 6px;
+        box-shadow: 0 2px 6px rgba(5, 150, 105, 0.25);
+        margin-bottom: 8px;
+    }
+
+    .monitoring-work-title {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 800;
+        color: #064e3b;
+        letter-spacing: -0.01em;
+        line-height: 1.25;
+    }
+
+    .monitoring-work-lead {
+        margin: 0.5rem auto 0;
+        max-width: 760px;
+        color: #475569;
+        font-size: 0.82rem;
+        line-height: 1.45;
+    }
+
+    .monitoring-table-scroll {
+        overflow-x: auto;
+    }
+
     /* Tasks Table */
     .monitoring-tasks-table {
         width: 100%;
         border-collapse: collapse;
         background: white;
-        border-radius: 0.75rem;
-        overflow: hidden;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        border: 1px solid #e5e7eb;
+        font-size: 13px;
     }
 
     .monitoring-tasks-table thead {
-        background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
-        border-bottom: 2px solid #e5e7eb;
+        background: linear-gradient(180deg, #1d4ed8 0%, #1e3a8a 100%);
+        border-bottom: 2px solid #172554;
     }
 
     .monitoring-tasks-table th {
-        padding: 0.9rem 1rem;
+        padding: 14px 12px;
         text-align: left;
-        font-size: 0.78rem;
+        font-size: 0.75rem;
         font-weight: 700;
-        color: #6b7280;
+        color: #ffffff;
         text-transform: uppercase;
-        letter-spacing: 0.05em;
+        letter-spacing: 0.4px;
+        border-right: 1px solid rgba(255, 255, 255, 0.16);
     }
 
     .monitoring-tasks-table td {
-        padding: 0.95rem 1rem;
-        border-bottom: 1px solid #f3f4f6;
-        font-size: 0.9rem;
+        padding: 12px;
+        border-bottom: 1px solid #e5e7eb;
+        font-size: 0.82rem;
         color: #1f2937;
+        vertical-align: top;
     }
 
     .monitoring-tasks-table tbody tr {
@@ -230,12 +291,46 @@
         background-color: #f9fafb;
     }
 
+    .monitoring-tasks-table tbody tr.task-selected {
+        background: #eff6ff;
+        outline: 2px solid #2563eb;
+        outline-offset: -2px;
+    }
+
     .monitoring-task-location {
         font-weight: 600;
         color: #047857;
         display: flex;
         align-items: center;
         gap: 0.4rem;
+    }
+
+    .monitoring-task-id {
+        color: #1f2937;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+        font-size: 0.7rem;
+        max-width: 9rem;
+        word-break: break-all;
+    }
+
+    .monitoring-address-note {
+        margin-top: 4px;
+        font-size: 0.72rem;
+        color: #64748b;
+        font-weight: 600;
+    }
+
+    .monitoring-schedule-note {
+        color: #475569;
+        font-size: 0.78rem;
+        line-height: 1.45;
+        max-width: 13rem;
+    }
+
+    .monitoring-staff-name {
+        color: #64748b;
+        font-size: 0.78rem;
+        line-height: 1.35;
     }
 
     .monitoring-task-type {
@@ -292,6 +387,30 @@
     .monitoring-task-status.completed {
         background: #dcfce7;
         color: #166534;
+    }
+
+    .monitoring-task-notified {
+        display: inline-flex;
+        margin-top: 0.3rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 999px;
+        background: #dbeafe;
+        color: #1d4ed8;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .monitoring-notify-banner {
+        margin: 0 0 1rem;
+        padding: 0.75rem 0.9rem;
+        border: 1px solid #bfdbfe;
+        border-radius: 0.75rem;
+        background: #eff6ff;
+        color: #1e3a8a;
+        font-size: 0.84rem;
+        line-height: 1.45;
     }
 
     .monitoring-task-due {
@@ -353,15 +472,343 @@
         border-color: #94a3b8;
     }
 
+    .report-field {
+        margin-bottom: 1.15rem;
+        padding: 1rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.85rem;
+        background: #ffffff;
+    }
+
+    .report-field label {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 0.55rem;
+        color: #0f172a;
+        font-size: 0.9rem;
+        font-weight: 800;
+    }
+
+    .report-required {
+        color: #047857;
+        background: #ecfdf5;
+        border: 1px solid #a7f3d0;
+        border-radius: 999px;
+        padding: 0.15rem 0.45rem;
+        font-size: 0.68rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        white-space: nowrap;
+    }
+
+    .report-field textarea,
+    .report-field select {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #cbd5e1;
+        border-radius: 0.65rem;
+        color: #0f172a;
+        background: #ffffff;
+        font-size: 0.9rem;
+        line-height: 1.45;
+    }
+
+    .report-field textarea {
+        resize: vertical;
+        min-height: 6rem;
+    }
+
+    .report-field textarea:focus,
+    .report-field select:focus,
+    .report-field input:focus {
+        outline: none;
+        border-color: #10b981;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12);
+    }
+
+    .report-help {
+        margin: 0.45rem 0 0;
+        color: #64748b;
+        font-size: 0.78rem;
+        line-height: 1.45;
+    }
+
+    /* Decision Grid (Radio Buttons) */
+    .monitoring-decision-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.85rem;
+        margin-bottom: 1.5rem;
+    }
+    .monitoring-decision-label {
+        padding: 1.1rem 1rem;
+        border: 1.5px solid #e2e8f0;
+        background: #ffffff;
+        border-radius: 10px;
+        cursor: pointer;
+        text-align: center;
+        transition: all 0.18s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+        overflow: hidden;
+    }
+    .monitoring-decision-label::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 3px;
+        background: transparent;
+        transition: background 0.2s ease;
+    }
+    .monitoring-decision-label:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+    }
+    .monitoring-decision-label input {
+        margin-bottom: 0.55rem;
+        width: 1.15rem;
+        height: 1.15rem;
+        cursor: pointer;
+    }
+    .monitoring-decision-title {
+        font-family: 'Source Serif Pro', Georgia, serif;
+        font-size: 1rem;
+        font-weight: 700;
+        margin-bottom: 0.35rem;
+        letter-spacing: -0.005em;
+    }
+    .monitoring-decision-sub {
+        margin: 0;
+        font-size: 0.78rem;
+        line-height: 1.45;
+    }
+
+    /* Positive option */
+    .monitoring-decision-label.positive {
+        border-color: #a7f3d0;
+        background: linear-gradient(180deg, #f0fdf4 0%, #ffffff 30%);
+    }
+    .monitoring-decision-label.positive::before {
+        background: linear-gradient(90deg, #047857 0%, #10b981 100%);
+    }
+    .monitoring-decision-label.positive:hover {
+        border-color: #10b981;
+        box-shadow: 0 6px 16px rgba(16, 185, 129, 0.18);
+    }
+    .monitoring-decision-label.positive:has(input:checked) {
+        border-color: #047857;
+        background: linear-gradient(180deg, #d1fae5 0%, #ffffff 50%);
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.18), 0 6px 16px rgba(16, 185, 129, 0.20);
+    }
+    .monitoring-decision-label.positive input { accent-color: #047857; }
+    .monitoring-decision-label.positive .monitoring-decision-title { color: #064e3b; }
+    .monitoring-decision-label.positive .monitoring-decision-sub { color: #047857; }
+
+    /* Negative option */
+    .monitoring-decision-label.negative {
+        border-color: #fecdd3;
+        background: linear-gradient(180deg, #fff1f2 0%, #ffffff 30%);
+    }
+    .monitoring-decision-label.negative::before {
+        background: linear-gradient(90deg, #be123c 0%, #f43f5e 100%);
+    }
+    .monitoring-decision-label.negative:hover {
+        border-color: #fb7185;
+        box-shadow: 0 6px 16px rgba(225, 29, 72, 0.18);
+    }
+    .monitoring-decision-label.negative:has(input:checked) {
+        border-color: #be123c;
+        background: linear-gradient(180deg, #ffe4e6 0%, #ffffff 50%);
+        box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.18), 0 6px 16px rgba(225, 29, 72, 0.20);
+    }
+    .monitoring-decision-label.negative input { accent-color: #be123c; }
+    .monitoring-decision-label.negative .monitoring-decision-title { color: #881337; }
+    .monitoring-decision-label.negative .monitoring-decision-sub { color: #9f1239; }
+
+    /* Field evidence (camera / gallery) */
+    .field-evidence-section {
+        margin-bottom: 24px;
+        padding: 18px;
+        border: 1px dashed #94a3b8;
+        border-radius: 12px;
+        background: #f8fafc;
+        text-align: center;
+    }
+    .field-evidence-label {
+        display: block;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #334155;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+    }
+    .field-evidence-hint {
+        margin: 0 auto 14px;
+        max-width: 40rem;
+        font-size: 0.85rem;
+        color: #64748b;
+        line-height: 1.5;
+    }
+    .field-evidence-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 12px;
+        align-items: center;
+        justify-content: center;
+    }
+    .field-evidence-file-btn {
+        display: inline-block;
+        padding: 8px 14px;
+        background: #fff;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #334155;
+        cursor: pointer;
+    }
+    .field-evidence-file-btn:hover {
+        border-color: #3b82f6;
+        color: #1e40af;
+    }
+    .field-evidence-strip {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 12px;
+        min-height: 0;
+        justify-content: center;
+    }
+    .table-verify-btn {
+        background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+        color: white;
+        padding: 6px 14px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 12px;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 4px rgba(30, 64, 175, 0.3);
+    }
+    .table-verify-btn:hover {
+        background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 100%);
+        box-shadow: 0 6px 12px rgba(30, 64, 175, 0.4);
+        transform: translateY(-2px);
+    }
+    .table-verify-btn:active {
+        transform: translateY(0);
+    }
+
+    .field-evidence-thumb {
+        position: relative;
+        width: 76px;
+        height: 76px;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    .field-evidence-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+    .field-evidence-thumb-remove {
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        width: 22px;
+        height: 22px;
+        border: none;
+        border-radius: 50%;
+        background: rgba(15, 23, 42, 0.75);
+        color: #fff;
+        font-size: 12px;
+        line-height: 1;
+        cursor: pointer;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2;
+    }
+    .field-evidence-thumb-remove:hover {
+        background: #dc2626;
+    }
+    
+    #cameraPreview {
+        display: none;
+        margin-top: 15px;
+    }
+    #cameraPreview.active {
+        display: block;
+    }
+
     /* Empty State */
     .monitoring-empty-state {
         padding: 3rem 1.5rem;
         text-align: center;
         background: #f9fafb;
-        border: 1px dashed #d1d5db;
-        border-radius: 0.75rem;
+        border-radius: 12px;
+        border: 1px dashed #e5e7eb;
         color: #6b7280;
     }
+
+    /* Toast Notifications */
+    .toast-container {
+        position: fixed;
+        top: 2rem;
+        right: 2rem;
+        z-index: 10000;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        pointer-events: none;
+    }
+    .toast {
+        pointer-events: auto;
+        min-width: 320px;
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 1.1rem;
+        box-shadow: 0 10px 25px rgba(15, 23, 42, 0.12), 0 4px 10px rgba(15, 23, 42, 0.04);
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        transform: translateX(120%);
+        transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        border-left: 5px solid #10b981;
+    }
+    .toast.active {
+        transform: translateX(0);
+    }
+    .toast-icon {
+        width: 2.4rem;
+        height: 2.4rem;
+        border-radius: 50%;
+        background: #ecfdf5;
+        color: #10b981;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    .toast-icon svg { width: 1.25rem; height: 1.25rem; }
+    .toast-content { flex-grow: 1; }
+    .toast-title { margin: 0; font-size: 0.95rem; font-weight: 800; color: #0f172a; }
+    .toast-message { margin: 0.15rem 0 0; font-size: 0.82rem; color: #475569; font-weight: 500; }
+    .toast.error { border-left-color: #ef4444; }
+    .toast.error .toast-icon { background: #fef2f2; color: #ef4444; }
+
 
     .monitoring-empty-state svg {
         width: 4rem;
@@ -392,6 +839,8 @@
         z-index: 1000;
         align-items: center;
         justify-content: center;
+        padding: 1rem;
+        overflow-y: auto;
     }
 
     .modal-overlay.active {
@@ -433,7 +882,225 @@
     }
 
     .modal-close:hover {
-        color: #1f2937;
+        color: #ffffff;
+    }
+
+    .monitoring-report-modal {
+        background: #fff;
+        margin: 2rem auto;
+        width: 92%;
+        max-width: 44rem;
+        border-radius: 14px;
+        box-shadow:
+            0 25px 50px -12px rgba(15, 23, 42, 0.4),
+            0 16px 32px -8px rgba(15, 23, 42, 0.18);
+        overflow: hidden;
+        border: 1px solid #cbd5e1;
+        display: flex;
+        flex-direction: column;
+        max-height: 90vh;
+    }
+
+    .monitoring-report-header {
+        position: relative;
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+        color: #f8fafc;
+        padding: 1.4rem 1.5rem 1.25rem;
+        border-bottom: none;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .monitoring-report-header::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #f59e0b 0%, #fcd34d 50%, #f59e0b 100%);
+    }
+
+    .monitoring-report-header::after {
+        content: '';
+        position: absolute;
+        bottom: 0; left: 0; right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #047857 0%, #10b981 35%, #fbbf24 70%, #10b981 100%);
+    }
+
+    .monitoring-report-title-row {
+        display: flex;
+        align-items: center;
+        gap: 0.95rem;
+    }
+
+    .monitoring-report-crest {
+        flex-shrink: 0;
+        width: 3rem;
+        height: 3rem;
+        border: 2px solid rgba(251, 191, 36, 0.55);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Source Serif Pro', Georgia, serif;
+        font-size: 0.625rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        line-height: 1.1;
+        text-align: center;
+        color: #0f172a;
+        background: #f8fafc;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3), 0 0 0 4px rgba(251, 191, 36, 0.08);
+    }
+
+    .monitoring-report-title {
+        margin: 0;
+        font-family: 'Source Serif Pro', Georgia, serif;
+        font-size: 1.2rem;
+        font-weight: 700;
+        letter-spacing: -0.005em;
+        color: #ffffff;
+        line-height: 1.25;
+    }
+
+    .monitoring-report-subtitle {
+        margin: 0.3rem 0 0;
+        font-size: 0.75rem;
+        font-weight: 500;
+        letter-spacing: 0.02em;
+        color: #fde68a;
+        opacity: 0.92;
+        line-height: 1.45;
+    }
+
+    .monitoring-report-body {
+        padding: 1.5rem 1.5rem 1.75rem;
+        overflow-y: auto;
+        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        min-height: 0;
+    }
+
+    .monitoring-reference-panel {
+        margin-bottom: 1.5rem;
+        padding: 1.1rem 1.2rem 1.2rem;
+        background: linear-gradient(180deg, #eff6ff 0%, #ffffff 30%);
+        border: 1px solid #bfdbfe;
+        border-left: 4px solid #1d4ed8;
+        border-radius: 10px;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+
+    .monitoring-section-heading {
+        margin: 0 0 0.65rem;
+        color: #0f172a;
+        font-size: 0.98rem;
+        font-weight: 900;
+    }
+
+    .monitoring-reference-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+    }
+
+    .monitoring-reference-cell {
+        background: #fff;
+        padding: 0.78rem 0.9rem;
+        border: 1px solid #dbeafe;
+        border-radius: 8px;
+        box-shadow: 0 1px 1px rgba(15, 23, 42, 0.03);
+    }
+
+    .monitoring-reference-label {
+        display: block;
+        font-size: 0.62rem;
+        font-weight: 800;
+        color: #1e40af;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 0.32rem;
+    }
+
+    .monitoring-reference-value {
+        margin: 0;
+        font-size: 0.92rem;
+        font-weight: 600;
+        color: #0f172a;
+        line-height: 1.4;
+        word-break: break-word;
+    }
+
+    .monitoring-report-divider {
+        height: 1px;
+        background: linear-gradient(90deg, transparent 0%, #cbd5e1 25%, #94a3b8 50%, #cbd5e1 75%, transparent 100%);
+        margin: 1.5rem 0;
+    }
+
+    .monitoring-section-lead {
+        margin: -0.25rem 0 1rem;
+        color: #475569;
+        font-size: 0.86rem;
+        line-height: 1.55;
+    }
+
+    .monitoring-report-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+    }
+
+    .monitoring-report-actions .btn-submit-report {
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        color: #fff;
+        padding: 0.85rem 1rem;
+        border: 1px solid #047857;
+        border-radius: 9px;
+        cursor: pointer;
+        font-weight: 700;
+        font-size: 0.875rem;
+        letter-spacing: 0.02em;
+        transition: all 0.2s ease;
+        box-shadow:
+            0 1px 2px rgba(15, 23, 42, 0.06),
+            0 6px 16px rgba(16, 185, 129, 0.18),
+            inset 0 1px 0 rgba(255, 255, 255, 0.16);
+        margin: 0 !important;
+        text-align: center;
+    }
+    
+    .monitoring-report-actions .btn-submit-report:hover {
+        background: linear-gradient(135deg, #047857 0%, #065f46 100%);
+        transform: translateY(-1px);
+        box-shadow:
+            0 1px 2px rgba(15, 23, 42, 0.08),
+            0 12px 28px rgba(16, 185, 129, 0.30),
+            inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    }
+    
+    .monitoring-report-actions .btn-view-details {
+        background: #ffffff;
+        color: #475569;
+        padding: 0.85rem 1rem;
+        border: 1px solid #cbd5e1;
+        border-radius: 9px;
+        cursor: pointer;
+        font-weight: 700;
+        font-size: 0.875rem;
+        letter-spacing: 0.02em;
+        transition: all 0.2s ease;
+        margin: 0 !important;
+        text-align: center;
+    }
+    
+    .monitoring-report-actions .btn-view-details:hover {
+        background: #f8fafc;
+        border-color: #94a3b8;
+        color: #1e293b;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 10px rgba(15, 23, 42, 0.08);
     }
 
     .early-confirm-card {
@@ -447,6 +1114,7 @@
         background: linear-gradient(180deg, #eff6ff 0%, #ffffff 100%);
         border-top: 4px solid #2563eb;
         border-bottom: 1px solid #e2e8f0;
+        text-align: center;
     }
     .early-confirm-kicker {
         margin: 0 0 0.35rem;
@@ -467,10 +1135,11 @@
         color: #475569;
         font-size: 0.88rem;
         line-height: 1.55;
+        text-align: center;
     }
     .early-confirm-actions {
         display: flex;
-        justify-content: flex-end;
+        justify-content: center;
         gap: 0.6rem;
         padding: 0.9rem 1.2rem 1.1rem;
         background: #f8fafc;
@@ -522,16 +1191,32 @@
         .modal-title {
             font-size: 1.1rem;
         }
+
+        .monitoring-reference-grid,
+        .monitoring-report-actions {
+            grid-template-columns: 1fr;
+        }
+
+        .monitoring-report-header {
+            align-items: flex-start;
+        }
     }
 </style>
 {% endblock %}
 
 {% block content %}
+<div id="toastContainer" class="toast-container"></div>
 <div class="monitoring-shell">
     <div class="monitoring-kicker">Module 4</div>
     <h1 class="monitoring-title">Monitoring Dashboard</h1>
     <p class="monitoring-subtitle">View and manage housing unit occupancy inspections</p>
 </div>
+
+{% if task_notified %}
+<div class="monitoring-notify-banner">
+    Task notified successfully. The selected inspection is highlighted below for caretaker monitoring.
+</div>
+{% endif %}
 
 <!-- KPI Cards -->
 <div class="monitoring-kpis">
@@ -614,32 +1299,52 @@
 </div>
 
 <!-- Tasks Table -->
-{% if tasks %}
-<div style="margin: 0 0 0.75rem;">
-    <h2 style="font-size: 1rem; font-weight: 800; color: #064e3b; margin: 0;">Upcoming Monitoring Tasks</h2>
-    <p style="font-size: 0.82rem; color: #64748b; margin: 0.25rem 0 0;">
-        System-scheduled Day 15 and Day 30 inspections from the active award date.
-    </p>
-    <p style="font-size: 0.78rem; color: #1e3a8a; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 0.75rem; padding: 0.65rem 0.75rem; margin: 0.65rem 0 0; line-height: 1.45;">
-        Upcoming tasks are shown for planning. Clicking an early task asks for confirmation before opening it for testing.
-    </p>
-</div>
-<table class="monitoring-tasks-table">
+<div class="monitoring-work-area">
+    <div class="monitoring-work-stripe"></div>
+    <div class="monitoring-work-header">
+        <span class="monitoring-work-badge">▸ CARETAKER MONITORING DESK</span>
+        <h2 class="monitoring-work-title">Scheduled inspections &mdash; ready for field monitoring</h2>
+        <p class="monitoring-work-lead">
+            Only staff-notified Day 15 and Day 30 inspections appear here. The field report captures actual occupancy, construction progress, and photo evidence.
+        </p>
+    </div>
+    {% if tasks %}
+    <div class="monitoring-table-scroll">
+    <table class="monitoring-tasks-table">
     <thead>
         <tr>
-            <th>Unit Location</th>
-            <th>Task Type</th>
+            <th>#</th>
+            <th>Beneficiary Name</th>
             <th>Due Date</th>
-            <th>Days From Award</th>
+            <th>Unit / Location</th>
+            <th>Task Type</th>
             <th>Status</th>
+            <th>Queue / visit order</th>
+            <th>Staff Handled</th>
             <th>Actions</th>
         </tr>
     </thead>
     <tbody id="tasksTableBody">
         {% for task in tasks %}
         <tr class="task-row"
+            id="task-{{ task.id }}"
+            data-task-id="{{ task.id }}"
             data-status="{% if task.status == 'pending' and task.scheduled_date > today %}upcoming{% elif task.status == 'pending' and task.is_overdue %}overdue{% else %}{{ task.status }}{% endif %}"
             data-type="{{ task.task_type }}">
+            <td>
+                {{ forloop.counter }}
+            </td>
+            <td>
+                <div style="font-weight: 600; color: #1f2937;">{{ task.lot_award.application.applicant.full_name }}</div>
+            </td>
+            <td>
+                <span class="monitoring-task-due {% if task.is_overdue %}urgent{% endif %}">
+                    {{ task.due_date|date:"F j, Y" }}
+                </span>
+                {% if task.status == 'pending' and task.scheduled_date > today %}
+                    <div style="font-size:0.72rem;color:#64748b;margin-top:0.15rem;">Scheduled</div>
+                {% endif %}
+            </td>
             <td>
                 <div class="monitoring-task-location">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -647,22 +1352,12 @@
                     </svg>
                     Block {{ task.unit.block_number }} Lot {{ task.unit.lot_number }}
                 </div>
+                <div class="monitoring-address-note">{{ task.unit.site.name|default:"Relocation site" }}</div>
             </td>
             <td>
                 <span class="monitoring-task-type {% if 'day_15' in task.task_type %}day-15{% elif 'day_30' in task.task_type %}day-30{% else %}month{% endif %}">
                     {{ task.get_task_type_display }}
                 </span>
-            </td>
-            <td>
-                <span class="monitoring-task-due {% if task.is_overdue %}urgent{% endif %}">
-                    {{ task.due_date }}
-                </span>
-                {% if task.status == 'pending' and task.scheduled_date > today %}
-                    <div style="font-size:0.72rem;color:#64748b;margin-top:0.15rem;">Scheduled</div>
-                {% endif %}
-            </td>
-            <td>
-                <strong>{{ task.days_from_award }}</strong> days
             </td>
             <td>
                 <span class="monitoring-task-status {{ task.status }}">
@@ -674,15 +1369,30 @@
                         {{ task.get_status_display }}
                     {% endif %}
                 </span>
+                {% if task.notified_at %}
+                    <div class="monitoring-task-notified">Notified</div>
+                {% endif %}
+            </td>
+            <td>
+                <div class="monitoring-schedule-note"><strong>{{ task.days_from_award }}</strong> days after monitoring starts · field visit order {{ forloop.counter }} of {{ tasks|length }}</div>
+            </td>
+            <td>
+                <div class="monitoring-staff-name">
+                    {% if task.assigned_to %}
+                        {{ task.assigned_to.get_full_name|default:task.assigned_to.username }}
+                    {% else %}
+                        Shared field desk
+                    {% endif %}
+                </div>
             </td>
             <td>
                 <div class="monitoring-task-actions">
                     {% if task.status == 'pending' and task.scheduled_date > today %}
-                        <button type="button" class="btn-submit-report" onclick="openReportModal({{ task.id }}, true, '{{ task.scheduled_date }}')" style="background:#2563eb;">
-                            Test early inspection
+                        <button type="button" class="btn-submit-report" onclick="openReportModal('{{ task.id }}', true, '{{ task.scheduled_date|date:"F j, Y" }}', '{{ task.get_task_type_display|escapejs }}', 'Block {{ task.unit.block_number|escapejs }} Lot {{ task.unit.lot_number|escapejs }}', '{{ task.due_date|date:"F j, Y"|escapejs }}', '{{ task.days_from_award }}')" style="background:#2563eb;">
+                            {% if task.notified_at %}Open notified task{% else %}Notify / test early{% endif %}
                         </button>
                     {% else %}
-                        <button type="button" class="btn-submit-report" onclick="openReportModal({{ task.id }}, false, '')">
+                        <button type="button" class="btn-submit-report" onclick="openReportModal('{{ task.id }}', false, '', '{{ task.get_task_type_display|escapejs }}', 'Block {{ task.unit.block_number|escapejs }} Lot {{ task.unit.lot_number|escapejs }}', '{{ task.due_date|date:"F j, Y"|escapejs }}', '{{ task.days_from_award }}')">
                             {% if task.status == 'completed' %}
                                 View Report
                             {% else %}
@@ -696,6 +1406,7 @@
         {% endfor %}
     </tbody>
 </table>
+    </div>
 {% else %}
 <div class="monitoring-empty-state">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -703,10 +1414,9 @@
         <path d="M12 16v-4M12 8h.01"/>
     </svg>
     <h3>No Monitoring Tasks Yet</h3>
-    <p>You don't have any assigned monitoring tasks at this time.</p>
+    <p>No staff-notified monitoring tasks are waiting for field reporting.</p>
 </div>
 {% endif %}
-
 </div>
 
 <div class="modal-overlay" id="earlyInspectionModal">
@@ -733,102 +1443,165 @@
 
 <!-- Report Submission Modal -->
 <div class="modal-overlay" id="reportModal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2 class="modal-title">Submit Monitoring Report</h2>
+    <div class="modal-content monitoring-report-modal">
+        <div class="monitoring-report-header">
+            <div class="monitoring-report-title-row">
+                <div class="monitoring-report-crest" aria-hidden="true">THA</div>
+                <div>
+                    <h2 class="monitoring-report-title">Caretaker monitoring report</h2>
+                    <p class="monitoring-report-subtitle">Occupancy condition, construction progress, and photo evidence from field inspection.</p>
+                </div>
+            </div>
             <button type="button" class="modal-close" onclick="closeReportModal()">×</button>
         </div>
 
-        <form id="reportForm" onsubmit="submitReport(event)">
-            {% csrf_token %}
-            <input type="hidden" id="taskId" name="task_id">
-            <input type="hidden" id="allowEarlyInspection" name="allow_early_inspection" value="0">
+        <div class="monitoring-report-body">
+            <form id="reportForm" enctype="multipart/form-data" onsubmit="submitReport(event)">
+                {% csrf_token %}
+                <input type="hidden" id="taskId" name="task_id">
+                <input type="hidden" id="allowEarlyInspection" name="allow_early_inspection" value="0">
 
-            <!-- Occupancy Status -->
-            <div style="margin-bottom: 1.5rem;">
-                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #1f2937;">
-                    Occupancy Status
-                </label>
-                <select name="occupancy_status" required style="width: 100%; padding: 0.7rem; border: 1px solid #d1d5db; border-radius: 0.5rem;">
-                    <option value="">Select status...</option>
-                    <option value="properly_occupied">Properly Occupied</option>
-                    <option value="temporarily_vacant">Temporarily Vacant</option>
-                    <option value="unoccupied_abandoned">Unoccupied / Abandoned</option>
-                </select>
-            </div>
-
-            <!-- People Observed -->
-            <div style="margin-bottom: 1.5rem;">
-                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #1f2937;">
-                    Number of People Observed
-                </label>
-                <input type="text" name="people_observed" placeholder="e.g., 4, family of 3, none" style="width: 100%; padding: 0.7rem; border: 1px solid #d1d5db; border-radius: 0.5rem;">
-            </div>
-
-            <!-- Occupancy Notes -->
-            <div style="margin-bottom: 1.5rem;">
-                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #1f2937;">
-                    Occupancy Observations
-                </label>
-                <textarea name="occupancy_notes" rows="3" placeholder="Describe occupancy condition..." style="width: 100%; padding: 0.7rem; border: 1px solid #d1d5db; border-radius: 0.5rem;"></textarea>
-            </div>
+                <div class="monitoring-reference-panel">
+                    <div class="monitoring-reference-grid">
+                        <div class="monitoring-reference-cell">
+                            <span class="monitoring-reference-label">Unit / lot</span>
+                            <p id="reportTaskUnit" class="monitoring-reference-value">—</p>
+                        </div>
+                        <div class="monitoring-reference-cell">
+                            <span class="monitoring-reference-label">Task type</span>
+                            <p id="reportTaskType" class="monitoring-reference-value">—</p>
+                        </div>
+                        <div class="monitoring-reference-cell">
+                            <span class="monitoring-reference-label">Due date</span>
+                            <p id="reportTaskDueDate" class="monitoring-reference-value">—</p>
+                        </div>
+                        <div class="monitoring-reference-cell">
+                            <span class="monitoring-reference-label">Monitoring day</span>
+                            <p id="reportTaskMonitoringDay" class="monitoring-reference-value">—</p>
+                        </div>
+                    </div>
+                </div>
 
             <!-- Construction Status -->
-            <div style="margin-bottom: 1.5rem;">
-                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #1f2937;">
+            <div class="report-field" style="margin-bottom: 0;">
+                <label>
                     Construction Status
+                    <span class="report-required">Required</span>
                 </label>
-                <select name="construction_status" required style="width: 100%; padding: 0.7rem; border: 1px solid #d1d5db; border-radius: 0.5rem;">
-                    <option value="">Select status...</option>
-                    <option value="no_structure">No Structure</option>
-                    <option value="site_clearing">Site Clearing</option>
-                    <option value="foundation">Foundation</option>
-                    <option value="wall_framing">Wall Framing</option>
-                    <option value="roofing">Roofing</option>
-                    <option value="finishing">Finishing</option>
-                    <option value="completed_occupied">Completed / Occupied</option>
-                </select>
+            </div>
+            <div class="monitoring-decision-grid">
+                <label class="monitoring-decision-label positive">
+                    <input type="radio" name="construction_status" value="ongoing" required>
+                    <strong class="monitoring-decision-title">Ongoing Construction</strong>
+                    <p class="monitoring-decision-sub">Active building, structural improvements, or materials present on site.</p>
+                </label>
+                <label class="monitoring-decision-label negative">
+                    <input type="radio" name="construction_status" value="no_structure" required>
+                    <strong class="monitoring-decision-title">No Structure</strong>
+                    <p class="monitoring-decision-sub">No signs of construction, lot remains vacant or untouched.</p>
+                </label>
             </div>
 
-            <!-- Construction Percentage -->
-            <div style="margin-bottom: 1.5rem;">
-                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #1f2937;">
-                    Percent Complete (0-100%)
+            <!-- Occupancy Status -->
+            <div class="report-field" style="margin-bottom: 0;">
+                <label>
+                    Occupancy Status
+                    <span class="report-required">Required</span>
                 </label>
-                <input type="number" name="percent_complete" min="0" max="100" value="0" style="width: 100%; padding: 0.7rem; border: 1px solid #d1d5db; border-radius: 0.5rem;">
+            </div>
+            <div class="monitoring-decision-grid">
+                <label class="monitoring-decision-label positive">
+                    <input type="radio" name="occupancy_status" value="occupied" required>
+                    <strong class="monitoring-decision-title">Properly Occupied</strong>
+                    <p class="monitoring-decision-sub">Beneficiary or immediate family is residing in the unit.</p>
+                </label>
+                <label class="monitoring-decision-label negative">
+                    <input type="radio" name="occupancy_status" value="unoccupied" required>
+                    <strong class="monitoring-decision-title">Unoccupied</strong>
+                    <p class="monitoring-decision-sub">Unit is abandoned, temporarily vacant, or occupied by unauthorized persons.</p>
+                </label>
             </div>
 
-            <!-- Progress Notes -->
-            <div style="margin-bottom: 1.5rem;">
-                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #1f2937;">
-                    Construction Progress Details
-                </label>
-                <textarea name="progress_notes" rows="3" placeholder="Describe construction progress..." style="width: 100%; padding: 0.7rem; border: 1px solid #d1d5db; border-radius: 0.5rem;"></textarea>
+            <!-- Photo Evidence -->
+            <div class="field-evidence-section" style="margin-bottom: 0;">
+                <span class="field-evidence-label">
+                    Photo Evidence <span class="report-required" style="margin-left: 5px;">Required</span>
+                </span>
+                <p class="field-evidence-hint">
+                    Upload field photo proof for occupancy condition and any construction progress. You may capture images using this device or attach files from storage. Maximum 4 images.
+                </p>
+
+                <div id="cameraPreview">
+                    <video id="photoCameraVideo" playsinline autoplay muted style="width: 100%; max-height: 220px; border-radius: 10px; background: #0f172a; margin-bottom: 10px;"></video>
+                    <canvas id="photoCameraCanvas" style="display: none;"></canvas>
+                    <div class="field-evidence-buttons">
+                        <button type="button" class="table-verify-btn" onclick="capturePhotoEvidence()">Capture frame</button>
+                        <button type="button" class="table-verify-btn" onclick="stopPhotoEvidenceCamera()" style="background: linear-gradient(135deg, #64748b 0%, #475569 100%);">Stop camera</button>
+                    </div>
+                </div>
+
+                <div class="field-evidence-buttons" id="mainEvidenceButtons">
+                    <button type="button" class="table-verify-btn" onclick="openPhotoEvidenceInput(true)">Activate camera</button>
+                    <button type="button" class="field-evidence-file-btn" onclick="openPhotoEvidencePicker()">Attach from device</button>
+                </div>
+                
+                <input id="photoEvidenceInput" type="file" name="photo_evidence" accept="image/*" multiple required onchange="setPhotoEvidenceFiles(this.files)" style="display: none;">
+                
+                <div id="photoEvidenceStrip" class="field-evidence-strip">
+                    <span id="photoEvidenceFileName" style="display: block; font-size: 0.85rem; color: #475569; font-weight: 600;">No photo selected</span>
+                </div>
             </div>
 
             <!-- General Remarks -->
-            <div style="margin-bottom: 1.5rem;">
-                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #1f2937;">
+            <div class="report-field">
+                <label>
                     General Remarks & Observations
                 </label>
-                <textarea name="general_remarks" rows="3" placeholder="Overall assessment and remarks..." style="width: 100%; padding: 0.7rem; border: 1px solid #d1d5db; border-radius: 0.5rem;"></textarea>
+                <textarea name="general_remarks" placeholder="Overall assessment, concerns, or follow-up recommendations..."></textarea>
             </div>
 
-            <!-- Submit Button -->
-            <div style="display: flex; gap: 0.8rem; justify-content: flex-end;">
-                <button type="button" class="btn-view-details" onclick="closeReportModal()" style="background-color: transparent;">
-                    Cancel
-                </button>
+                <!-- Submit Button -->
+                <div class="monitoring-report-actions">
                 <button type="submit" class="btn-submit-report" style="margin: 0;">
                     Submit Report
                 </button>
-            </div>
-        </form>
+                    <button type="button" class="btn-view-details" onclick="closeReportModal()" style="background-color: transparent;">
+                        Close without submitting
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 
 <script>
 let pendingEarlyTaskId = null;
+let pendingEarlyTaskDetails = null;
+let photoCameraStream = null;
+const selectedTaskId = '{{ selected_task_id|escapejs }}';
+
+function showToast(message, type = 'success') {
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    const icon = type === 'success' 
+        ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>'
+        : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>';
+    toast.innerHTML = `
+        <div class="toast-icon">${icon}</div>
+        <div class="toast-content">
+            <h4 class="toast-title">${type === 'success' ? 'Success' : 'Attention'}</h4>
+            <p class="toast-message">${message}</p>
+        </div>
+    `;
+    container.appendChild(toast);
+    setTimeout(() => toast.classList.add('active'), 10);
+    setTimeout(() => {
+        toast.classList.remove('active');
+        setTimeout(() => toast.remove(), 400);
+    }, 4500);
+}
 
 function filterTasks() {
     const statusFilter = document.getElementById('filterStatus').value;
@@ -846,9 +1619,17 @@ function filterTasks() {
     });
 }
 
-function openReportModal(taskId, allowEarly, scheduledDate) {
+function setReportReference(taskLabel, unitLocation, dueDate, monitoringDay) {
+    document.getElementById('reportTaskUnit').textContent = unitLocation || '—';
+    document.getElementById('reportTaskType').textContent = taskLabel || '—';
+    document.getElementById('reportTaskDueDate').textContent = dueDate || '—';
+    document.getElementById('reportTaskMonitoringDay').textContent = monitoringDay ? `${monitoringDay} days after monitoring starts` : '—';
+}
+
+function openReportModal(taskId, allowEarly, scheduledDate, taskLabel, unitLocation, dueDate, monitoringDay) {
     if (allowEarly) {
         pendingEarlyTaskId = taskId;
+        pendingEarlyTaskDetails = { taskLabel, unitLocation, dueDate, monitoringDay };
         document.getElementById('earlyInspectionMessage').textContent =
             `Scheduled inspection date: ${scheduledDate}. Continue only for testing or demonstration.`;
         document.getElementById('earlyInspectionModal').classList.add('active');
@@ -856,27 +1637,184 @@ function openReportModal(taskId, allowEarly, scheduledDate) {
     }
     document.getElementById('taskId').value = taskId;
     document.getElementById('allowEarlyInspection').value = allowEarly ? '1' : '0';
+    setReportReference(taskLabel, unitLocation, dueDate, monitoringDay);
     document.getElementById('reportModal').classList.add('active');
 }
 
 function closeEarlyInspectionModal() {
     pendingEarlyTaskId = null;
+    pendingEarlyTaskDetails = null;
     document.getElementById('earlyInspectionModal').classList.remove('active');
 }
 
 function continueEarlyInspection() {
     if (!pendingEarlyTaskId) return;
     const taskId = pendingEarlyTaskId;
+    const details = pendingEarlyTaskDetails;
     closeEarlyInspectionModal();
     document.getElementById('taskId').value = taskId;
     document.getElementById('allowEarlyInspection').value = '1';
+    if (details) {
+        setReportReference(
+            details.taskLabel,
+            details.unitLocation,
+            details.dueDate,
+            details.monitoringDay
+        );
+    }
     document.getElementById('reportModal').classList.add('active');
 }
 
 function closeReportModal() {
+    stopPhotoEvidenceCamera();
     document.getElementById('reportModal').classList.remove('active');
     document.getElementById('reportForm').reset();
     document.getElementById('allowEarlyInspection').value = '0';
+    const fileName = document.getElementById('photoEvidenceFileName');
+    if (fileName) fileName.textContent = 'No photo selected';
+}
+
+function setPhotoEvidenceFiles(files) {
+    const input = document.getElementById('photoEvidenceInput');
+    if (!input) return;
+    const transfer = new DataTransfer();
+    [...files].slice(0, 4).forEach((file) => transfer.items.add(file));
+    input.files = transfer.files;
+    updatePhotoEvidenceName(input);
+}
+
+async function openPhotoEvidenceInput(useCamera) {
+    const input = document.getElementById('photoEvidenceInput');
+    if (!input) return;
+    if (!useCamera) {
+        stopPhotoEvidenceCamera();
+        input.removeAttribute('capture');
+        input.setAttribute('multiple', 'multiple');
+        input.click();
+        return;
+    }
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        showToast('This browser does not support live camera access. Use Choose photo instead.', 'error');
+        return;
+    }
+    try {
+        photoCameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+        const video = document.getElementById('photoCameraVideo');
+        const preview = document.getElementById('cameraPreview');
+        if (video) video.srcObject = photoCameraStream;
+        if (preview) preview.classList.add('active');
+        const mainBtns = document.getElementById('mainEvidenceButtons');
+        if (mainBtns) mainBtns.style.display = 'none';
+    } catch (error) {
+        showToast('Could not open camera. Please allow camera access or use Choose photo.', 'error');
+    }
+}
+
+function stopPhotoEvidenceCamera() {
+    if (photoCameraStream) {
+        photoCameraStream.getTracks().forEach((track) => track.stop());
+        photoCameraStream = null;
+    }
+    const video = document.getElementById('photoCameraVideo');
+    const preview = document.getElementById('cameraPreview');
+    if (video) video.srcObject = null;
+    if (preview) preview.classList.remove('active');
+    const mainBtns = document.getElementById('mainEvidenceButtons');
+    if (mainBtns) mainBtns.style.display = 'flex';
+}
+
+function capturePhotoEvidence() {
+    const input = document.getElementById('photoEvidenceInput');
+    const video = document.getElementById('photoCameraVideo');
+    const canvas = document.getElementById('photoCameraCanvas');
+    if (!input || !video || !canvas) return;
+    if (input.files && input.files.length >= 4) {
+        showToast('Maximum of 4 photo evidence files allowed.', 'error');
+        return;
+    }
+    canvas.width = video.videoWidth || 1280;
+    canvas.height = video.videoHeight || 720;
+    const context = canvas.getContext('2d');
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    canvas.toBlob((blob) => {
+        if (!blob) return;
+        const file = new File([blob], `monitoring-photo-${Date.now()}.jpg`, { type: 'image/jpeg' });
+        setPhotoEvidenceFiles([...(input.files || []), file]);
+    }, 'image/jpeg', 0.9);
+}
+
+function openPhotoEvidencePicker() {
+    const input = document.getElementById('photoEvidenceInput');
+    if (!input) return;
+    stopPhotoEvidenceCamera();
+    input.removeAttribute('capture');
+    input.setAttribute('multiple', 'multiple');
+    input.click();
+}
+
+function updatePhotoEvidenceName(input) {
+    const strip = document.getElementById('photoEvidenceStrip');
+    if (!strip) return;
+    strip.innerHTML = '';
+    
+    const count = input.files ? input.files.length : 0;
+    
+    if (count === 0) {
+        const span = document.createElement('span');
+        span.id = 'photoEvidenceFileName';
+        span.style.display = 'block';
+        span.style.fontSize = '0.85rem';
+        span.style.color = '#475569';
+        span.style.fontWeight = '600';
+        span.textContent = 'No photo selected';
+        strip.appendChild(span);
+        return;
+    }
+
+    if (count > 4) {
+        showToast('Maximum of 4 photo evidence files allowed.', 'error');
+        input.value = '';
+        updatePhotoEvidenceName(input);
+        return;
+    }
+
+    Array.from(input.files).forEach((file, index) => {
+        const thumb = document.createElement('div');
+        thumb.className = 'field-evidence-thumb';
+        
+        const img = document.createElement('img');
+        img.src = URL.createObjectURL(file);
+        thumb.appendChild(img);
+        
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'field-evidence-thumb-remove';
+        removeBtn.innerHTML = '×';
+        removeBtn.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            removePhotoEvidenceFile(index);
+        };
+        thumb.appendChild(removeBtn);
+        
+        strip.appendChild(thumb);
+    });
+}
+
+function removePhotoEvidenceFile(index) {
+    const input = document.getElementById('photoEvidenceInput');
+    if (!input || !input.files) return;
+    
+    const dt = new DataTransfer();
+    const { files } = input;
+    
+    for (let i = 0; i < files.length; i++) {
+        if (i !== index) dt.items.add(files[i]);
+    }
+    
+    input.files = dt.files;
+    updatePhotoEvidenceName(input);
 }
 
 function submitReport(event) {
@@ -895,16 +1833,18 @@ function submitReport(event) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('Report submitted successfully!');
-            closeReportModal();
-            location.reload();
+            showToast('Report submitted successfully!', 'success');
+            setTimeout(() => {
+                closeReportModal();
+                location.reload();
+            }, 1000);
         } else {
-            alert('Error: ' + data.error);
+            showToast(data.error, 'error');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Failed to submit report');
+        showToast('Failed to submit report. Please check your connection.', 'error');
     });
 }
 
@@ -920,5 +1860,13 @@ document.getElementById('earlyInspectionModal').addEventListener('click', functi
         closeEarlyInspectionModal();
     }
 });
+
+if (selectedTaskId) {
+    const selectedRow = document.querySelector(`[data-task-id="${selectedTaskId}"]`);
+    if (selectedRow) {
+        selectedRow.classList.add('task-selected');
+        selectedRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
 </script>
 {% endblock %}

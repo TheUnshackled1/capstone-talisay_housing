@@ -9,7 +9,7 @@
 <style>
     .dashboard-container {
         padding: 28px 28px 40px;
-        max-width: 1400px;
+        max-width: 100%;
         margin: 0 auto;
         background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 8%, transparent 32%);
         min-height: calc(100vh - 2rem);
@@ -1338,12 +1338,9 @@
                     <thead>
                         <tr style="background: linear-gradient(180deg, #1d4ed8 0%, #1e3a8a 100%); border-bottom: 2px solid #172554;">
                             <th style="padding: 14px 12px; text-align: left; font-weight: 700; color: #ffffff; text-transform: uppercase; letter-spacing: 0.4px; border-right: 1px solid rgba(255, 255, 255, 0.16);">#</th>
-                            <th style="padding: 14px 12px; text-align: left; font-weight: 700; color: #ffffff; text-transform: uppercase; letter-spacing: 0.4px; border-right: 1px solid rgba(255, 255, 255, 0.16);">Transaction #</th>
                             <th style="padding: 14px 12px; text-align: left; font-weight: 700; color: #ffffff; text-transform: uppercase; letter-spacing: 0.4px; border-right: 1px solid rgba(255, 255, 255, 0.16);">Date & Time</th>
-                            <th style="padding: 14px 12px; text-align: left; font-weight: 700; color: #ffffff; text-transform: uppercase; letter-spacing: 0.4px; border-right: 1px solid rgba(255, 255, 255, 0.16);">Reference #</th>
                             <th style="padding: 14px 12px; text-align: left; font-weight: 700; color: #ffffff; text-transform: uppercase; letter-spacing: 0.4px; border-right: 1px solid rgba(255, 255, 255, 0.16);">Full Name</th>
                             <th style="padding: 14px 12px; text-align: left; font-weight: 700; color: #ffffff; text-transform: uppercase; letter-spacing: 0.4px; border-right: 1px solid rgba(255, 255, 255, 0.16);">Current address / barangay</th>
-                            <th style="padding: 14px 12px; text-align: left; font-weight: 700; color: #ffffff; text-transform: uppercase; letter-spacing: 0.4px; border-right: 1px solid rgba(255, 255, 255, 0.16);">Eligibility</th>
                             <th style="padding: 14px 12px; text-align: left; font-weight: 700; color: #ffffff; text-transform: uppercase; letter-spacing: 0.4px; border-right: 1px solid rgba(255, 255, 255, 0.16);">Queue / visit order</th>
                             <th style="padding: 14px 12px; text-align: left; font-weight: 700; color: #ffffff; text-transform: uppercase; letter-spacing: 0.4px; border-right: 1px solid rgba(255, 255, 255, 0.16);">Staff Handled</th>
                             <th style="padding: 14px 12px; text-align: center; font-weight: 700; color: #ffffff; text-transform: uppercase; letter-spacing: 0.4px;">Action</th>
@@ -1353,16 +1350,11 @@
                         {% for cert in pending_verifications %}
                         <tr class="scroll-animate {% cycle "scroll-delay-1" "scroll-delay-2" "scroll-delay-3" "scroll-delay-4" %}" style="border-bottom: 1px solid #e5e7eb; transition: all 0.2s ease; background: white;">
                             <td style="padding: 12px; color: #6b7280; font-weight: 600;">{{ forloop.counter }}</td>
-                            <td style="padding: 12px; color: #1f2937; font-family: monospace; font-size: 11px; max-width: 120px; word-break: break-all;">{{ cert.transaction_id }}</td>
                             <td style="padding: 12px; color: #6b7280; font-size: 12px;">{{ cert.created_at|date:"M d, Y h:i A" }}</td>
-                            <td style="padding: 12px; color: #2563eb; font-weight: 600;">{{ cert.reference_number }}</td>
                             <td style="padding: 12px; color: #1f2937; font-weight: 500;">{{ cert.applicant_name }}</td>
                             <td style="padding: 12px; color: #1f2937; font-size: 12px; line-height: 1.45; max-width: 280px;">
                                 <div style="font-weight: 500;">{{ cert.address|default:"—" }}</div>
                                 <div style="margin-top: 4px; font-size: 11px; color: #64748b; font-weight: 600;">Barangay: {% if cert.barangay %}{{ cert.barangay.name }}{% else %}—{% endif %}</div>
-                            </td>
-                            <td style="padding: 12px;">
-                                <span style="background: #fef3c7; color: #92400e; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 600;">{{ cert.eligibility }}</span>
                             </td>
                             <td style="padding: 12px; color: #475569; text-align: left; font-size: 12px; max-width: 200px;">{{ cert.queue_position }}</td>
                             <td style="padding: 12px; color: #6b7280; font-size: 12px;">{{ cert.staff_handled }}</td>

@@ -468,28 +468,42 @@ def get_unit_details(request, position, unit_id):
         )
         possession_info = None
         beneficiary_info = None
+        monitoring_history = []
+        compliance_records = []
         if active_lot_award and active_lot_award.awarded_at:
             awarded_at = active_lot_award.awarded_at
             now = timezone.now()
+            monitoring_start_date = awarded_at.date() + timedelta(days=30)
             days_possessed = max(0, (now.date() - awarded_at.date()).days)
             possession_info = {
                 'awarded_at': awarded_at.isoformat(),
                 'possessed_at': awarded_at.isoformat(),
                 'days_possessed': days_possessed,
+                'monitoring_starts_on': monitoring_start_date.isoformat(),
+                'days_until_monitoring': max(0, (monitoring_start_date - now.date()).days),
             }
         if active_lot_award:
             applicant = getattr(active_lot_award.application, 'applicant', None)
             if applicant:
+                household_member_rows = [
+                    {
+                        'name': member.full_name,
+                        'relationship': member.get_relationship_display(),
+                    }
+                    for member in applicant.household_members.all().order_by('created_at')
+                ]
                 beneficiary_info = {
                     'full_name': applicant.full_name or '',
                     'reference_number': applicant.reference_number or '',
                     'household_members': applicant.household_member_count,
+                    'household_member_rows': household_member_rows,
                 }
         if beneficiary_info is None and (unit.occupant_name or '').strip():
             beneficiary_info = {
                 'full_name': (unit.occupant_name or '').strip(),
                 'reference_number': (unit.occupant_id or '').strip(),
                 'household_members': None,
+                'household_member_rows': [],
             }
         monitoring_tasks = []
         if active_lot_award:
@@ -502,10 +516,40 @@ def get_unit_details(request, position, unit_id):
                 )
                 .order_by('days_from_award', 'scheduled_date')
             ):
+                report = (
+                    task.reports
+                    .select_related('submitted_by', 'assessed_by')
+                    .order_by('-submitted_at')
+                    .first()
+                )
+                report_summary = None
+                if report:
+                    photo_urls = [photo.image.url for photo in report.photos.all() if photo.image]
+                    if not photo_urls and report.photo_evidence:
+                        photo_urls = [report.photo_evidence.url]
+                    report_summary = {
+                        'id': str(report.id),
+                        'occupancy_status': report.get_occupancy_status_display(),
+                        'occupancy_notes': report.occupancy_notes or '',
+                        'construction_status': report.get_construction_status_display(),
+                        'percent_complete': report.percent_complete,
+                        'progress_notes': report.progress_notes or '',
+                        'general_remarks': report.general_remarks or '',
+                        'photo_url': report.photo_evidence.url if report.photo_evidence else '',
+                        'photo_urls': photo_urls,
+                        'submitted_at': report.submitted_at.isoformat(),
+                        'submitted_by': report.submitted_by.get_full_name() if report.submitted_by else '—',
+                        'progress_assessment': report.progress_assessment,
+                        'progress_assessment_label': report.get_progress_assessment_display() if report.progress_assessment else '',
+                        'assessed_at': report.assessed_at.isoformat() if report.assessed_at else '',
+                        'assessed_by': report.assessed_by.get_full_name() if report.assessed_by else '',
+                    }
                 monitoring_tasks.append({
                     'id': str(task.id),
                     'task_type': task.task_type,
                     'label': task.get_task_type_display(),
+                    'award_date': active_lot_award.awarded_at.date().isoformat() if active_lot_award.awarded_at else '',
+                    'monitoring_starts_on': (active_lot_award.awarded_at.date() + timedelta(days=30)).isoformat() if active_lot_award.awarded_at else '',
                     'scheduled_date': task.scheduled_date.isoformat(),
                     'due_date': task.due_date.isoformat(),
                     'days_from_award': task.days_from_award,
@@ -513,6 +557,49 @@ def get_unit_details(request, position, unit_id):
                     'status_label': task.get_status_display(),
                     'is_due': task.scheduled_date <= today,
                     'is_overdue': task.is_overdue,
+                    'notified_at': task.notified_at.isoformat() if task.notified_at else '',
+                    'report': report_summary,
+                })
+                monitoring_history.append({
+                    'label': task.get_task_type_display().replace(' Inspection', ''),
+                    'date': task.due_date.isoformat(),
+                    'result': report.get_construction_status_display() if report else task.get_status_display(),
+                    'decision': report.get_progress_assessment_display() if report and report.progress_assessment else '',
+                })
+            if unit.notice_date_issued:
+                deadline_text = unit.notice_deadline.isoformat() if unit.notice_deadline else ''
+                compliance_records.append({
+                    'title': unit.notice_type or 'Compliance notice',
+                    'status': 'Notice active' if unit.notice_deadline and unit.notice_deadline >= today else 'Notice recorded',
+                    'detail': f"Deadline: {deadline_text}" if deadline_text else 'Notice issued',
+                })
+            for cycle in (
+                active_lot_award.monitoring_cycles
+                .filter(is_active=True)
+                .exclude(cycle_stage='original_30_day')
+                .order_by('-created_at')[:3]
+            ):
+                cycle_title = (
+                    'Final Grace Period Active'
+                    if cycle.cycle_stage == 'final_notice_30_day'
+                    else cycle.get_cycle_stage_display()
+                )
+                compliance_records.append({
+                    'title': cycle_title,
+                    'status': 'Active',
+                    'detail': f"{cycle.stage_start_date.isoformat()} to {cycle.stage_end_date.isoformat()}",
+                })
+            for extension in active_lot_award.extensions.select_related('approved_by').all()[:3]:
+                compliance_records.append({
+                    'title': 'Extension Approved',
+                    'status': f"{extension.extension_duration_months} month(s)",
+                    'detail': f"Until {extension.extension_end_date.isoformat()}",
+                })
+            for review in active_lot_award.explanation_reviews.select_related('reviewed_by').all()[:3]:
+                compliance_records.append({
+                    'title': 'Explanation Review',
+                    'status': review.get_review_status_display(),
+                    'detail': review.staff_decision_notes or review.extension_reason or 'No staff notes recorded',
                 })
         updates = []
         if progress:
@@ -595,6 +682,8 @@ def get_unit_details(request, position, unit_id):
                 'possession_info': possession_info,
                 'beneficiary_info': beneficiary_info,
                 'monitoring_tasks': monitoring_tasks,
+                'monitoring_history': monitoring_history,
+                'compliance_records': compliance_records,
                 'construction_monitoring': {
                     'site_name': unit.site.name if unit.site else '',
                     'status_filter': cm_filter,
@@ -1154,6 +1243,89 @@ def blacklist_management(request, position):
 # =============================================================================
 
 @login_required
+@require_POST
+def notify_monitoring_task(request, task_id):
+    """
+    Mark a scheduled monitoring task as notified so the field desk dashboard can
+    surface it for planning before the official inspection date.
+    """
+    allowed_positions = _MODULE4_ADD_HOUSING_UNIT_POSITIONS | FIELD_DESK_POSITIONS
+    if request.user.position not in allowed_positions:
+        return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
+
+    try:
+        task = MonitoringTask.objects.select_related('unit', 'lot_award').get(id=task_id)
+    except MonitoringTask.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Task not found'}, status=404)
+
+    if task.task_type == 'day_30_inspection':
+        day_15_task = (
+            MonitoringTask.objects
+            .filter(lot_award=task.lot_award, task_type='day_15_inspection')
+            .first()
+        )
+        day_15_report = day_15_task.reports.order_by('-submitted_at').first() if day_15_task else None
+        if not (
+            day_15_task
+            and day_15_task.status == 'completed'
+            and day_15_report
+            and day_15_report.progress_assessment
+        ):
+            return JsonResponse({
+                'success': False,
+                'error': 'Day 30 is locked until Day 15 is completed and reviewed by staff.',
+            }, status=400)
+
+    task.notified_at = timezone.now()
+    task.notified_by = request.user
+    task.save(update_fields=['notified_at', 'notified_by', 'updated_at'])
+
+    return JsonResponse({
+        'success': True,
+        'message': f'{task.get_task_type_display()} notified and waiting for caretaker monitoring.',
+        'notified_at': task.notified_at.isoformat(),
+    })
+
+
+@login_required
+@require_POST
+def assess_monitoring_report(request, task_id):
+    """
+    Staff marks a submitted caretaker monitoring report as normal progress or no progress.
+    """
+    allowed_positions = _MODULE4_ADD_HOUSING_UNIT_POSITIONS | FIELD_DESK_POSITIONS
+    if request.user.position not in allowed_positions:
+        return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
+
+    decision = (request.POST.get('decision') or '').strip()
+    valid_decisions = {'normal_progress', 'no_progress'}
+    if decision not in valid_decisions:
+        return JsonResponse({'success': False, 'error': 'Invalid progress assessment.'}, status=400)
+
+    try:
+        task = MonitoringTask.objects.get(id=task_id, status='completed')
+    except MonitoringTask.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Completed monitoring task not found.'}, status=404)
+
+    report = task.reports.order_by('-submitted_at').first()
+    if not report:
+        return JsonResponse({'success': False, 'error': 'No submitted monitoring report found.'}, status=404)
+
+    report.progress_assessment = decision
+    report.assessed_by = request.user
+    report.assessed_at = timezone.now()
+    report.save(update_fields=['progress_assessment', 'assessed_by', 'assessed_at', 'updated_at'])
+
+    return JsonResponse({
+        'success': True,
+        'decision': report.progress_assessment,
+        'decision_label': report.get_progress_assessment_display(),
+        'assessed_at': report.assessed_at.isoformat(),
+        'assessed_by': request.user.get_full_name() or request.user.username,
+    })
+
+
+@login_required
 def caretaker_monitoring_dashboard(request):
     """
     Caretaker/Ronda dashboard for viewing and submitting monitoring reports.
@@ -1165,10 +1337,11 @@ def caretaker_monitoring_dashboard(request):
     if request.user.position not in FIELD_DESK_POSITIONS:
         return HttpResponseForbidden("Only field desk staff can access this dashboard.")
 
-    # Get all assigned tasks
+    # Field desk only works on monitoring tasks that staff explicitly notified.
     today = timezone.now().date()
     tasks = MonitoringTask.objects.filter(
         models.Q(assigned_to_id=request.user.id) | models.Q(assigned_to__isnull=True),
+        notified_at__isnull=False,
         status__in=['pending', 'overdue'],
     ).select_related('unit', 'lot_award', 'unit__site').order_by('due_date')
 
@@ -1177,6 +1350,7 @@ def caretaker_monitoring_dashboard(request):
     overdue_count = tasks.filter(due_date__lt=today, status='pending').count()
     completed_count = MonitoringTask.objects.filter(
         models.Q(assigned_to_id=request.user.id) | models.Q(assigned_to__isnull=True),
+        notified_at__isnull=False,
         status='completed'
     ).count()
     active_units = tasks.values('unit_id').distinct().count()
@@ -1188,6 +1362,8 @@ def caretaker_monitoring_dashboard(request):
         'completed_count': completed_count,
         'active_units': active_units,
         'today': today,
+        'selected_task_id': (request.GET.get('task') or '').strip(),
+        'task_notified': request.GET.get('notified') == '1',
     }
 
     return render(request, 'units/caretaker_monitoring_dashboard.html', context)
@@ -1230,32 +1406,71 @@ def submit_monitoring_report(request, task_id):
                 'error': f'This monitoring task is scheduled on {task.scheduled_date}.',
             }, status=400)
 
-        occupancy_status = request.POST.get('occupancy_status', '').strip()
         construction_status = request.POST.get('construction_status', '').strip()
-        percent_complete = request.POST.get('percent_complete', '0').strip()
+        occupancy_radio = request.POST.get('occupancy_status', '').strip()
+        general_remarks = request.POST.get('general_remarks', '').strip()
 
-        if not occupancy_status or not construction_status:
+        if not construction_status:
             return JsonResponse({
                 'success': False,
-                'error': 'Occupancy status and construction status are required'
+                'error': 'Construction status is required.'
             }, status=400)
 
-        try:
-            percent_complete = int(percent_complete)
-            percent_complete = max(0, min(100, percent_complete))
-        except:
-            percent_complete = 0
+        if not occupancy_radio:
+            return JsonResponse({
+                'success': False,
+                'error': 'Occupancy status is required.'
+            }, status=400)
 
-        if construction_status == 'no_structure' and percent_complete != 0:
+        # Mapping for notes/statements if they were replaced by radios
+        occupancy_notes = request.POST.get('occupancy_notes', '').strip()
+        if not occupancy_notes:
+            occupancy_notes = "Properly occupied" if occupancy_radio == 'occupied' else "Unit is unoccupied"
+            
+        progress_notes = request.POST.get('progress_notes', '').strip()
+        if not progress_notes and construction_status == 'ongoing':
+            progress_notes = "Active construction observed on site."
+        elif not progress_notes:
+            progress_notes = "No construction progress."
+
+
+        photo_evidence_files = request.FILES.getlist('photo_evidence')
+        if not photo_evidence_files:
             return JsonResponse({
                 'success': False,
-                'error': 'No Structure must use 0% completion.',
+                'error': 'Photo evidence is required for monitoring reports.'
             }, status=400)
-        if construction_status == 'completed_occupied' and percent_complete != 100:
+        if len(photo_evidence_files) > 4:
             return JsonResponse({
                 'success': False,
-                'error': 'Completed / Occupied must use 100% completion.',
+                'error': 'Maximum of 4 photo evidence files allowed.'
             }, status=400)
+
+        percent_by_status = {
+            'no_structure': 0,
+            'ongoing': 25, # Default to 25% if "ongoing" is checked without specific stage
+            'site_clearing': 10,
+            'foundation': 25,
+            'wall_framing': 50,
+            'roofing': 75,
+            'finishing': 90,
+            'completed_occupied': 100,
+        }
+        percent_complete = percent_by_status.get(construction_status, 0)
+
+        # Determine occupancy status from radio or notes
+        if occupancy_radio == 'occupied':
+            occupancy_status = 'properly_occupied'
+        elif occupancy_radio == 'unoccupied':
+            occupancy_status = 'unoccupied_abandoned'
+        else:
+            # Fallback to text analysis if for some reason radio is missing but notes exist
+            occupancy_status = 'properly_occupied'
+            occupancy_text = occupancy_notes.lower()
+            if any(term in occupancy_text for term in ['abandon', 'unoccupied', 'empty', 'no occupant', 'no one']):
+                occupancy_status = 'unoccupied_abandoned'
+            elif any(term in occupancy_text for term in ['temporary', 'vacant', 'away']):
+                occupancy_status = 'temporarily_vacant'
 
         # Create monitoring report
         with transaction.atomic():
@@ -1268,14 +1483,18 @@ def submit_monitoring_report(request, task_id):
                 construction_status=construction_status,
                 percent_complete=percent_complete,
                 people_observed=request.POST.get('people_observed', ''),
-                occupancy_notes=request.POST.get('occupancy_notes', ''),
-                progress_notes=request.POST.get('progress_notes', ''),
+                occupancy_notes=occupancy_notes,
+                progress_notes=progress_notes,
+                photo_evidence=photo_evidence_files[0],
                 general_remarks=request.POST.get('general_remarks', ''),
                 is_complete=True,
             )
+            for photo in photo_evidence_files:
+                report.photos.create(image=photo)
 
             stage_map = {
                 'no_structure': 'not_started',
+                'ongoing': 'foundation', # Map "ongoing" to foundation stage for construction tracking
                 'site_clearing': 'site_clearing',
                 'foundation': 'foundation',
                 'wall_framing': 'wall_framing',
@@ -1299,7 +1518,7 @@ def submit_monitoring_report(request, task_id):
                 stage=stage,
                 percent_complete=percent_complete,
                 visit_date=timezone.now().date(),
-                notes=request.POST.get('progress_notes', ''),
+                notes=progress_notes,
                 created_by=request.user,
             )
 

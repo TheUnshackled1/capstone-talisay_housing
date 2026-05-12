@@ -543,12 +543,15 @@
     }
     .inspection-info-card {
         position: relative;
-        width: min(100%, 430px);
+        width: min(100%, 1000px);
+        max-height: 88vh;
         background: #ffffff;
         border: 1px solid #dbeafe;
         border-radius: 1rem;
         box-shadow: 0 22px 60px rgba(15, 23, 42, 0.28);
         overflow: hidden;
+        display: flex;
+        flex-direction: column;
     }
     .inspection-info-card::before {
         content: '';
@@ -559,6 +562,8 @@
     }
     .inspection-info-body {
         padding: 1.15rem 1.2rem 1.05rem;
+        overflow-y: auto;
+        min-height: 0;
     }
     .inspection-info-kicker {
         margin: 0 0 0.35rem;
@@ -580,13 +585,117 @@
         font-size: 0.86rem;
         line-height: 1.55;
     }
+    .inspection-report-summary {
+        display: none;
+        margin-top: 0.85rem;
+        padding: 0.85rem;
+        border: 1px solid #dbeafe;
+        border-radius: 0.85rem;
+        background: #eff6ff;
+    }
+    .inspection-report-summary.active {
+        display: block;
+    }
+    .inspection-summary-grid {
+        display: grid;
+        gap: 0.55rem;
+    }
+    .inspection-summary-item {
+        padding: 0.6rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.65rem;
+        background: #ffffff;
+    }
+    .inspection-summary-label {
+        display: block;
+        margin-bottom: 0.2rem;
+        color: #64748b;
+        font-size: 0.64rem;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+    .inspection-summary-value {
+        margin: 0;
+        color: #0f172a;
+        font-size: 0.78rem;
+        line-height: 1.45;
+        white-space: pre-wrap;
+    }
+    .inspection-photo-carousel {
+        position: relative;
+        overflow: hidden;
+        border-radius: 0.75rem;
+        border: 1px solid #dbeafe;
+        background: #0f172a;
+    }
+    .inspection-photo-slide {
+        display: none;
+    }
+    .inspection-photo-slide.active {
+        display: block;
+    }
+    .inspection-photo-slide img {
+        display: block;
+        width: 100%;
+        max-height: 16rem;
+        object-fit: contain;
+        background: #0f172a;
+    }
+    .inspection-photo-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.45rem 0.55rem;
+        background: #ffffff;
+        color: #475569;
+        font-size: 0.72rem;
+        font-weight: 800;
+    }
+    .inspection-photo-control {
+        border: 1px solid #cbd5e1;
+        border-radius: 0.55rem;
+        padding: 0.3rem 0.5rem;
+        background: #f8fafc;
+        color: #0f172a;
+        cursor: pointer;
+        font-weight: 800;
+    }
+    .inspection-decision-actions {
+        display: none;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    .inspection-decision-actions.active {
+        display: flex;
+    }
+    .inspection-info-btn.warning {
+        border-color: #f59e0b;
+        background: #fffbeb;
+        color: #92400e;
+    }
     .inspection-info-actions {
         display: flex;
         justify-content: flex-end;
-        gap: 0.55rem;
-        padding: 0.85rem 1.2rem 1.1rem;
+        flex-wrap: wrap;
+        gap: 0.65rem;
+        padding: 1rem 1.4rem 1.25rem;
         border-top: 1px solid #e2e8f0;
         background: #f8fafc;
+        flex-shrink: 0;
+    }
+    .inspection-info-actions.centered {
+        justify-content: center;
+    }
+    .inspection-info-body.centered {
+        text-align: center;
+    }
+    .inspection-info-body.centered .inspection-info-title {
+        justify-content: center;
+    }
+    .inspection-info-body.centered .inspection-summary-grid {
+        text-align: left;
     }
     .inspection-info-btn {
         border: 1px solid #cbd5e1;
@@ -602,6 +711,148 @@
         border-color: #047857;
         background: linear-gradient(180deg, #10b981 0%, #059669 100%);
         color: #ffffff;
+    }
+
+    /* Monitoring Task Cards */
+    .monitoring-task-card {
+        padding: 1rem 1.1rem;
+        border: 1.5px solid #e2e8f0;
+        background: #ffffff;
+        border-radius: 14px;
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+        position: relative;
+        overflow: hidden;
+    }
+    .monitoring-task-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+        border-color: #cbd5e1;
+    }
+    .monitoring-task-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 4px;
+        background: #cbd5e1;
+    }
+    
+    .monitoring-task-label {
+        margin: 0;
+        color: #0f172a;
+        font-weight: 800;
+        font-size: 0.8rem;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+    }
+    .monitoring-task-relative {
+        margin: 0;
+        color: #64748b;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    .monitoring-task-date {
+        margin: 0.2rem 0 0.3rem;
+        color: #1e293b;
+        font-size: 1.18rem;
+        font-weight: 800;
+        letter-spacing: -0.01em;
+    }
+    .monitoring-task-status-row {
+        margin-top: 0.2rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    .monitoring-task-status-badge {
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.02em;
+        padding: 0.25rem 0.75rem;
+        border-radius: 999px;
+        border: 1px solid transparent;
+        white-space: nowrap;
+    }
+    .monitoring-task-hint {
+        margin: 0;
+        color: #64748b;
+        font-size: 0.72rem;
+        font-weight: 500;
+        line-height: 1.4;
+    }
+
+    /* Card Status Variations */
+    .monitoring-task-card.completed { background: #f0fdf4; border-color: #86efac; }
+    .monitoring-task-card.completed::before { background: #10b981; }
+    .monitoring-task-card.completed .monitoring-task-status-badge { background: #d1fae5; color: #047857; border-color: #a7f3d0; }
+
+    .monitoring-task-card.overdue { background: #fef2f2; border-color: #fecaca; }
+    .monitoring-task-card.overdue::before { background: #ef4444; }
+    .monitoring-task-card.overdue .monitoring-task-status-badge { background: #fee2e2; color: #b91c1c; border-color: #fca5a5; }
+
+    .monitoring-task-card.ready { background: #f0fdf4; border-color: #bbf7d0; }
+    .monitoring-task-card.ready::before { background: #22c55e; }
+    .monitoring-task-card.ready .monitoring-task-status-badge { background: #d1fae5; color: #15803d; border-color: #86efac; }
+
+    .monitoring-task-card.notified { background: #ecfdf5; border-color: #a7f3d0; }
+    .monitoring-task-card.notified::before { background: #10b981; }
+    .monitoring-task-card.notified .monitoring-task-status-badge { background: #d1fae5; color: #047857; border-color: #a7f3d0; }
+
+    .monitoring-task-card.upcoming { background: #eff6ff; border-color: #bfdbfe; }
+    .monitoring-task-card.upcoming::before { background: #3b82f6; }
+    .monitoring-task-card.upcoming .monitoring-task-status-badge { background: #dbeafe; color: #1e40af; border-color: #bfdbfe; }
+
+    .monitoring-task-card.blocked { background: #f8fafc; border-color: #e2e8f0; opacity: 0.8; cursor: not-allowed; }
+    .monitoring-task-card.blocked::before { background: #cbd5e1; }
+    .monitoring-task-card.blocked .monitoring-task-status-badge { background: #f1f5f9; color: #64748b; border-color: #e2e8f0; }
+
+    /* Summary Design */
+    .inspection-summary-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.9rem;
+        margin-top: 1rem;
+    }
+    .inspection-summary-item {
+        padding: 1rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        background: #ffffff;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+    }
+    .inspection-summary-item.full-width {
+        grid-column: 1 / -1;
+    }
+    .inspection-summary-label {
+        font-size: 0.68rem;
+        font-weight: 900;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #1e40af;
+        margin-bottom: 0.15rem;
+    }
+    .inspection-summary-value {
+        margin: 0;
+        color: #0f172a;
+        font-size: 0.92rem;
+        font-weight: 700;
+        line-height: 1.5;
+        white-space: pre-wrap;
+    }
+    .inspection-summary-item.decision {
+        background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
+        border-color: #86efac;
+        border-left: 5px solid #10b981;
+    }
+    .inspection-summary-item.decision .inspection-summary-label {
+        color: #047857;
     }
 
     .unit-detail-head {
@@ -765,6 +1016,75 @@
         color: #0f172a;
         line-height: 1.2;
         font-variant-numeric: tabular-nums;
+    }
+
+    .occupied-record-section {
+        margin-top: 0.9rem;
+        padding-top: 0.85rem;
+        border-top: 1px solid #e2e8f0;
+    }
+    .occupied-record-title {
+        margin: 0 0 0.55rem;
+        color: #0f172a;
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+    .occupied-record-table {
+        width: 100%;
+        border-collapse: collapse;
+        overflow: hidden;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.65rem;
+        font-size: 0.76rem;
+    }
+    .occupied-record-table th {
+        padding: 0.48rem 0.55rem;
+        background: #f8fafc;
+        color: #475569;
+        text-align: left;
+        font-size: 0.62rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+    }
+    .occupied-record-table td {
+        padding: 0.55rem;
+        border-top: 1px solid #e2e8f0;
+        color: #0f172a;
+        vertical-align: top;
+    }
+    .occupied-record-empty {
+        margin: 0;
+        padding: 0.65rem 0.75rem;
+        border: 1px dashed #cbd5e1;
+        border-radius: 0.65rem;
+        color: #64748b;
+        background: #f8fafc;
+        font-size: 0.76rem;
+    }
+    .compliance-record-list {
+        display: grid;
+        gap: 0.5rem;
+    }
+    .compliance-record-item {
+        padding: 0.65rem 0.7rem;
+        border: 1px solid #e2e8f0;
+        border-left: 3px solid #2563eb;
+        border-radius: 0.65rem;
+        background: #f8fafc;
+    }
+    .compliance-record-item strong {
+        display: block;
+        color: #0f172a;
+        font-size: 0.78rem;
+    }
+    .compliance-record-item span {
+        display: block;
+        margin-top: 0.18rem;
+        color: #475569;
+        font-size: 0.72rem;
+        line-height: 1.35;
     }
 
     .unit-monitor-toggle {
@@ -1408,8 +1728,20 @@
                             </div>
                         </div>
                         <p style="margin: 0.7rem 0 0; color: #64748b; font-size: 0.75rem; line-height: 1.45;">
-                            The awarded date starts the monitoring schedule only after the lot award is active. Caretaker inspections are scheduled for the 15th and 30th day from this date.
+                            The award date starts possession. The beneficiary has 30 days to show house-building progress before scheduled monitoring begins.
                         </p>
+                        <div class="occupied-record-section">
+                            <p class="occupied-record-title">Household members</p>
+                            <div id="householdMembersRecord"></div>
+                        </div>
+                        <div class="occupied-record-section">
+                            <p class="occupied-record-title">Monitoring history</p>
+                            <div id="monitoringHistoryRecord"></div>
+                        </div>
+                        <div class="occupied-record-section">
+                            <p class="occupied-record-title">Compliance records</p>
+                            <div id="complianceRecordsRecord"></div>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -1421,16 +1753,10 @@
                     <span id="lotMonitoringToggleIcon" class="toggle-icon" aria-hidden="true">▼</span>
                 </button>
                 <div id="lotMonitoringDropdown" class="unit-monitor-panel" style="display: none;">
-                    <p class="unit-monitor-meta" style="margin:0 0 0.55rem;">
-                        The award date activates the lot and schedules caretaker inspections at fixed intervals. The office policy gives the beneficiary 30 days to show house-building progress.
-                    </p>
-                    <p style="margin:0 0 0.75rem; padding:0.65rem 0.75rem; background:#eff6ff; border:1px solid #bfdbfe; border-radius:0.75rem; color:#1e3a8a; font-size:0.78rem; line-height:1.45;">
-                        Monitoring is visible now. If an upcoming task is clicked before its due date, the system warns that it is not yet scheduled for inspection.
-                    </p>
                     <div class="unit-detail-poss-grid" style="margin-bottom:0.75rem;">
                         <div class="unit-detail-poss-cell">
-                            <p class="poss-cell-label">Activation status</p>
-                            <p id="awardActivationStatus" class="poss-cell-value">—</p>
+                            <p class="poss-cell-label">Monitoring starts</p>
+                            <p id="monitoringStartsOn" class="poss-cell-value">—</p>
                         </div>
                         <div class="unit-detail-poss-cell">
                             <p class="poss-cell-label">Award date</p>
@@ -1438,7 +1764,7 @@
                         </div>
                         <div class="unit-detail-poss-cell">
                             <p class="poss-cell-label">Monitoring policy</p>
-                            <p class="poss-cell-value">Day 15 / Day 30</p>
+                            <p class="poss-cell-value">30-day grace, then Day 15 / Day 30</p>
                         </div>
                     </div>
 
@@ -1459,16 +1785,43 @@
     </div>
 </div>
 
+<div id="inspectionConfirmModal" class="inspection-info-modal" onclick="closeInspectionConfirmModal(event)">
+    <div class="inspection-info-card" onclick="event.stopPropagation();">
+        <div class="inspection-info-body centered">
+            <p class="inspection-info-kicker">Confirm schedule</p>
+            <h3 class="inspection-info-title">Open early inspection warning?</h3>
+            <p id="inspectionConfirmText" class="inspection-info-text">Confirm the inspection schedule before continuing.</p>
+        </div>
+        <div class="inspection-info-actions centered">
+            <button type="button" class="inspection-info-btn" onclick="closeInspectionConfirmModal()">No</button>
+            <button type="button" class="inspection-info-btn primary" onclick="continueInspectionWarning()">Yes</button>
+        </div>
+    </div>
+</div>
+
 <div id="inspectionInfoModal" class="inspection-info-modal" onclick="closeInspectionInfoModal(event)">
     <div class="inspection-info-card" onclick="event.stopPropagation();">
         <div class="inspection-info-body">
-            <p class="inspection-info-kicker">Monitoring schedule</p>
-            <h3 id="inspectionInfoTitle" class="inspection-info-title">Inspection not due yet</h3>
-            <p id="inspectionInfoText" class="inspection-info-text">This task opens on its scheduled due date.</p>
+            <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 1rem;">
+                <div>
+                    <p class="inspection-info-kicker">Monitoring schedule</p>
+                    <h3 id="inspectionInfoTitle" class="inspection-info-title">Inspection details</h3>
+                </div>
+                <button type="button" class="unit-detail-close" onclick="closeInspectionInfoModal()" style="width: 2.2rem; height: 2.2rem; font-size: 1.3rem;">×</button>
+            </div>
+            
+            <div id="inspectionInfoBanner" style="padding: 0.85rem 1rem; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 12px; margin-bottom: 1.2rem; display: none;">
+                <p id="inspectionInfoText" style="margin: 0; color: #0369a1; font-size: 0.82rem; font-weight: 600; line-height: 1.5;"></p>
+            </div>
+
+            <div id="inspectionReportSummary" class="inspection-report-summary"></div>
         </div>
         <div class="inspection-info-actions">
-            <button type="button" class="inspection-info-btn" onclick="closeInspectionInfoModal()">Close</button>
-            <button type="button" class="inspection-info-btn primary" onclick="window.location.href='{% url 'units:caretaker_monitoring_dashboard' %}'">Open Monitoring Dashboard</button>
+            <div id="inspectionDecisionActions" class="inspection-decision-actions">
+                <button type="button" class="inspection-info-btn primary" onclick="submitProgressAssessment('normal_progress')">Normal Progress</button>
+                <button type="button" class="inspection-info-btn warning" onclick="submitProgressAssessment('no_progress')">No Progress</button>
+            </div>
+            <button type="button" id="inspectionDashboardBtn" class="inspection-info-btn primary" onclick="notifySelectedInspectionTask()">Notify Monitoring Dashboard</button>
         </div>
     </div>
 </div>
@@ -1476,6 +1829,10 @@
 <!-- Styles & Scripts -->
 <script>
 let currentUnitId = null;
+let pendingInspectionTask = null;
+let activeInspectionTask = null;
+let currentMonitoringTasks = [];
+let inspectionCarouselIndex = 0;
 
 function getCookie(name) {
     const v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
@@ -1702,6 +2059,7 @@ function toggleLotMonitoringDropdown(forceOpen) {
 function renderMonitoringTaskCards(tasks) {
     const wrap = document.getElementById('monitoringTaskCards');
     if (!wrap) return;
+    currentMonitoringTasks = tasks || [];
     wrap.innerHTML = '';
 
     if (!tasks || !tasks.length) {
@@ -1712,46 +2070,427 @@ function renderMonitoringTaskCards(tasks) {
         return;
     }
 
+    const day15Task = tasks.find((item) => item.task_type === 'day_15_inspection');
+    const day15Reviewed = Boolean(
+        day15Task &&
+        day15Task.status === 'completed' &&
+        day15Task.report &&
+        day15Task.report.progress_assessment
+    );
+
     tasks.forEach((task) => {
         const card = document.createElement('div');
-        const borderColor = task.is_overdue ? '#fecaca' : (task.is_due ? '#bbf7d0' : '#bfdbfe');
-        const bgColor = task.is_overdue ? '#fef2f2' : (task.is_due ? '#f0fdf4' : '#eff6ff');
-        const statusText = task.is_overdue ? 'Overdue' : (task.is_due ? 'Ready for inspection' : 'Upcoming');
-        const availabilityText = task.is_due ? 'Available to inspect now' : `Click to test early inspection warning`;
-        card.style.cssText = `padding:0.85rem;border:1px solid ${borderColor};background:${bgColor};border-radius:0.85rem;cursor:pointer;`;
+        const isNotified = Boolean(task.notified_at);
+        const isCompleted = task.status === 'completed';
+        const isBlocked = task.task_type === 'day_30_inspection' && !day15Reviewed;
+        
+        let statusClass = 'upcoming';
+        if (isBlocked) statusClass = 'blocked';
+        else if (isCompleted) statusClass = 'completed';
+        else if (task.is_overdue) statusClass = 'overdue';
+        else if (task.is_due) statusClass = 'ready';
+        else if (isNotified) statusClass = 'notified';
+        
+        card.className = `monitoring-task-card ${statusClass}`;
+        
+        const statusText = isBlocked ? 'Blocked' : (isCompleted ? 'Completed' : (task.is_overdue ? 'Overdue' : (task.is_due ? 'Ready' : (isNotified ? 'Notified' : 'Upcoming'))));
+        const availabilityText = isBlocked
+            ? 'Finish and review Day 15 first'
+            : isCompleted
+            ? 'Caretaker monitoring report submitted'
+            : task.is_due
+            ? 'Available to inspect now'
+            : (isNotified ? 'Waiting for caretaker monitoring report' : 'Click to test early inspection warning');
+
         card.addEventListener('click', () => {
-            if (!task.is_due) {
+            if (isBlocked) {
+                openInspectionBlockedModal(task);
+                return;
+            }
+            if (isCompleted || (isNotified && !task.is_due)) {
                 openInspectionInfoModal(task);
                 return;
             }
-            window.alert(`${task.label} is ready for inspection today.`);
+            if (!task.is_due) {
+                openInspectionConfirmModal(task);
+                return;
+            }
+            // Standard notification flow if ready
+            notifySelectedInspectionTask(task.id);
         });
+
         card.innerHTML = `
-            <p style="margin:0 0 0.45rem;color:#0f172a;font-weight:800;font-size:0.82rem;letter-spacing:0.04em;text-transform:uppercase;">${task.label}</p>
-            <p style="margin:0;color:#475569;font-size:0.78rem;">Due Day ${task.days_from_award}</p>
-            <p style="margin:0.25rem 0 0;color:#111827;font-size:1rem;font-weight:800;">${task.due_date}</p>
-            <p style="margin:0.45rem 0 0;color:#047857;font-size:0.75rem;font-weight:700;">${statusText}</p>
-            <p style="margin:0.25rem 0 0;color:#475569;font-size:0.72rem;">${availabilityText}</p>
+            <p class="monitoring-task-label">${task.label}</p>
+            <p class="monitoring-task-relative">${task.days_from_award} days after monitoring starts</p>
+            <p class="monitoring-task-date">${formatDisplayDate(task.due_date)}</p>
+            <div class="monitoring-task-status-row">
+                <span class="monitoring-task-status-badge">${statusText}</span>
+                <p class="monitoring-task-hint">${availabilityText}</p>
+            </div>
         `;
         wrap.appendChild(card);
     });
+}
+
+function openInspectionConfirmModal(task) {
+    const modal = document.getElementById('inspectionConfirmModal');
+    const text = document.getElementById('inspectionConfirmText');
+    if (!modal || !text) return;
+
+    pendingInspectionTask = task;
+    const awardDate = task.award_date ? formatDisplayDate(task.award_date) : 'award date';
+    text.textContent = `The inspection schedule is: Award date ${awardDate} + 30-day grace + ${task.days_from_award} days after monitoring starts = ${formatDisplayDate(task.due_date)}. Continue?`;
+    modal.style.display = 'flex';
+}
+
+function closeInspectionConfirmModal(e) {
+    if (e && e.target.id !== 'inspectionConfirmModal') return;
+    const modal = document.getElementById('inspectionConfirmModal');
+    if (modal) modal.style.display = 'none';
+    pendingInspectionTask = null;
+}
+
+function continueInspectionWarning() {
+    if (!pendingInspectionTask) return;
+    const task = pendingInspectionTask;
+    const modal = document.getElementById('inspectionConfirmModal');
+    if (modal) modal.style.display = 'none';
+    pendingInspectionTask = null;
+    openInspectionInfoModal(task);
+}
+
+function openInspectionBlockedModal(task) {
+    const modal = document.getElementById('inspectionInfoModal');
+    const title = document.getElementById('inspectionInfoTitle');
+    const text = document.getElementById('inspectionInfoText');
+    const summary = document.getElementById('inspectionReportSummary');
+    const decisionActions = document.getElementById('inspectionDecisionActions');
+    const dashboardBtn = document.getElementById('inspectionDashboardBtn');
+    if (!modal || !title || !text) return;
+
+    activeInspectionTask = null;
+    title.textContent = `${task.label} is blocked`;
+    text.textContent = `Day 30 cannot be opened yet. Complete the Day 15 caretaker report first, then staff must mark the Day 15 result as Normal Progress or No Progress.`;
+    if (summary) {
+        summary.classList.remove('active');
+        summary.innerHTML = '';
+    }
+    if (decisionActions) {
+        decisionActions.classList.remove('active');
+    }
+    if (dashboardBtn) {
+        dashboardBtn.style.display = 'none';
+    }
+    modal.style.display = 'flex';
+}
+
+function escapeHtml(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+function formatDisplayDate(value) {
+    if (!value) return '—';
+    const raw = String(value).slice(0, 10);
+    const parts = raw.split('-').map(Number);
+    if (parts.length !== 3 || parts.some(Number.isNaN)) return raw;
+    return new Date(parts[0], parts[1] - 1, parts[2]).toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+    });
+}
+
+function renderHouseholdMembersRecord(members) {
+    const wrap = document.getElementById('householdMembersRecord');
+    if (!wrap) return;
+    if (!Array.isArray(members) || !members.length) {
+        wrap.innerHTML = '<p class="occupied-record-empty">No household member rows recorded.</p>';
+        return;
+    }
+    wrap.innerHTML = `
+        <table class="occupied-record-table">
+            <thead><tr><th>Name</th><th>Relationship</th></tr></thead>
+            <tbody>
+                ${members.map((member) => `
+                    <tr>
+                        <td>${escapeHtml(member.name || '—')}</td>
+                        <td>${escapeHtml(member.relationship || '—')}</td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
+}
+
+function renderMonitoringHistoryRecord(history) {
+    const wrap = document.getElementById('monitoringHistoryRecord');
+    if (!wrap) return;
+    if (!Array.isArray(history) || !history.length) {
+        wrap.innerHTML = '<p class="occupied-record-empty">No Day 15 / Day 30 monitoring history yet.</p>';
+        return;
+    }
+    wrap.innerHTML = `
+        <table class="occupied-record-table">
+            <thead><tr><th>Date</th><th>Result</th><th>Decision</th></tr></thead>
+            <tbody>
+                ${history.map((item) => `
+                    <tr>
+                        <td>${escapeHtml(item.label || '—')}<br><span style="color:#64748b;">${formatDisplayDate(item.date)}</span></td>
+                        <td>${escapeHtml(item.result || '—')}</td>
+                        <td>${escapeHtml(item.decision || '—')}</td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
+}
+
+function renderComplianceRecordsRecord(records) {
+    const wrap = document.getElementById('complianceRecordsRecord');
+    if (!wrap) return;
+    if (!Array.isArray(records) || !records.length) {
+        wrap.innerHTML = '<p class="occupied-record-empty">No compliance records yet.</p>';
+        return;
+    }
+    wrap.innerHTML = `
+        <div class="compliance-record-list">
+            ${records.map((record) => `
+                <div class="compliance-record-item">
+                    <strong>${escapeHtml(record.title || 'Compliance record')}</strong>
+                    <span>${escapeHtml(record.status || 'Recorded')}</span>
+                    <span>${escapeHtml(record.detail || '')}</span>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+function renderCompletedReportSummary(task) {
+    const report = task.report || {};
+    const photos = Array.isArray(report.photo_urls) ? report.photo_urls : (report.photo_url ? [report.photo_url] : []);
+    inspectionCarouselIndex = 0;
+    const photoCarousel = photos.length
+        ? `
+            <div class="inspection-summary-item full-width">
+                <span class="inspection-summary-label">Photo evidence</span>
+                <div class="inspection-photo-carousel" data-photo-count="${photos.length}">
+                    ${photos.map((url, index) => `
+                        <div class="inspection-photo-slide ${index === 0 ? 'active' : ''}" data-photo-index="${index}">
+                            <img src="${escapeHtml(url)}" alt="Monitoring photo evidence ${index + 1}">
+                        </div>
+                    `).join('')}
+                    <div class="inspection-photo-controls">
+                        <button type="button" class="inspection-photo-control" onclick="event.stopPropagation(); moveInspectionPhoto(-1)" ${photos.length <= 1 ? 'disabled' : ''}>Previous</button>
+                        <span id="inspectionPhotoCounter">1 of ${photos.length}</span>
+                        <button type="button" class="inspection-photo-control" onclick="event.stopPropagation(); moveInspectionPhoto(1)" ${photos.length <= 1 ? 'disabled' : ''}>Next</button>
+                    </div>
+                </div>
+            </div>
+        `
+        : '';
+    const decision = report.progress_assessment_label
+        ? `<div class="inspection-summary-item full-width decision"><span class="inspection-summary-label">Staff decision</span><p class="inspection-summary-value">${escapeHtml(report.progress_assessment_label)}${report.assessed_by ? ` · ${escapeHtml(report.assessed_by)}` : ''}</p></div>`
+        : '';
+
+    return `
+        <div class="inspection-summary-grid">
+            <div class="inspection-summary-item">
+                <span class="inspection-summary-label">Actual occupancy conditions</span>
+                <p class="inspection-summary-value">${escapeHtml(report.occupancy_notes || '—')}</p>
+            </div>
+            <div class="inspection-summary-item">
+                <span class="inspection-summary-label">Construction status</span>
+                <p class="inspection-summary-value">${escapeHtml(report.construction_status || '—')} (${Number(report.percent_complete || 0)}%)</p>
+            </div>
+            <div class="inspection-summary-item full-width">
+                <span class="inspection-summary-label">Construction progress statement</span>
+                <p class="inspection-summary-value">${escapeHtml(report.progress_notes || 'No progress statement submitted.')}</p>
+            </div>
+            <div class="inspection-summary-item full-width">
+                <span class="inspection-summary-label">General remarks</span>
+                <p class="inspection-summary-value">${escapeHtml(report.general_remarks || '—')}</p>
+            </div>
+            ${photoCarousel}
+            ${decision}
+        </div>
+    `;
+}
+
+function moveInspectionPhoto(delta) {
+    const carousel = document.querySelector('.inspection-photo-carousel');
+    if (!carousel) return;
+    const slides = [...carousel.querySelectorAll('.inspection-photo-slide')];
+    if (!slides.length) return;
+    inspectionCarouselIndex = (inspectionCarouselIndex + delta + slides.length) % slides.length;
+    slides.forEach((slide, index) => {
+        slide.classList.toggle('active', index === inspectionCarouselIndex);
+    });
+    const counter = document.getElementById('inspectionPhotoCounter');
+    if (counter) counter.textContent = `${inspectionCarouselIndex + 1} of ${slides.length}`;
 }
 
 function openInspectionInfoModal(task) {
     const modal = document.getElementById('inspectionInfoModal');
     const title = document.getElementById('inspectionInfoTitle');
     const text = document.getElementById('inspectionInfoText');
+    const banner = document.getElementById('inspectionInfoBanner');
+    const dashboardBtn = document.getElementById('inspectionDashboardBtn');
+    const summary = document.getElementById('inspectionReportSummary');
+    const decisionActions = document.getElementById('inspectionDecisionActions');
+    const actions = modal ? modal.querySelector('.inspection-info-actions') : null;
+    const body = modal ? modal.querySelector('.inspection-info-body') : null;
     if (!modal || !title || !text) return;
 
-    title.textContent = `${task.label} is not due yet`;
-    text.textContent = `Inspection opens on ${task.due_date} (Day ${task.days_from_award}). Use Monitoring Dashboard if you want to proceed early for testing.`;
+    activeInspectionTask = task;
+    if (summary) {
+        summary.classList.remove('active');
+        summary.innerHTML = '';
+    }
+    if (decisionActions) {
+        decisionActions.classList.remove('active');
+    }
+    if (banner) banner.style.display = 'block';
+
+    const isInformational = task.status !== 'completed';
+    if (body) body.classList.toggle('centered', isInformational);
+    if (actions) actions.classList.toggle('centered', isInformational);
+
+    if (task.status === 'completed') {
+        title.textContent = `${task.label} is completed`;
+        const hasDecision = Boolean(task.report && task.report.progress_assessment_label);
+        text.textContent = hasDecision
+            ? `Caretaker monitoring report has been reviewed. The saved staff decision is shown in the summary below.`
+            : `Caretaker monitoring report has been submitted. Review the summary, then mark the result as Normal Progress or No Progress.`;
+        if (summary) {
+            summary.innerHTML = renderCompletedReportSummary(task);
+            summary.classList.add('active');
+        }
+        if (decisionActions && !hasDecision) {
+            decisionActions.classList.add('active');
+        }
+    } else if (task.notified_at) {
+        title.textContent = `${task.label} is waiting for caretaker`;
+        text.textContent = `This task was already notified to Monitoring Dashboard. It remains scheduled for ${formatDisplayDate(task.due_date)} and is waiting for the caretaker field report.`;
+    } else {
+        title.textContent = `${task.label} is not due yet`;
+        text.textContent = `Inspection opens on ${formatDisplayDate(task.due_date)} (${task.days_from_award} days after monitoring starts). Use Monitoring Dashboard if you want to proceed early for testing.`;
+    }
+    
+    if (dashboardBtn) {
+        const hideDashboardButton = task.status === 'completed' || Boolean(task.report && task.report.progress_assessment_label);
+        dashboardBtn.style.display = hideDashboardButton ? 'none' : '';
+        dashboardBtn.disabled = Boolean(task.notified_at) || task.status === 'completed';
+        dashboardBtn.textContent = task.status === 'completed'
+            ? 'Report submitted'
+            : (task.notified_at ? 'Already notified' : 'Notify Monitoring Dashboard');
+    }
     modal.style.display = 'flex';
+}
+
+async function submitProgressAssessment(decision) {
+    if (!activeInspectionTask || activeInspectionTask.status !== 'completed') return;
+    const decisionActions = document.getElementById('inspectionDecisionActions');
+    const text = document.getElementById('inspectionInfoText');
+    if (decisionActions) {
+        [...decisionActions.querySelectorAll('button')].forEach((button) => button.disabled = true);
+    }
+
+    try {
+        const body = new URLSearchParams();
+        body.append('decision', decision);
+        const res = await fetch(`/units/monitoring-task/${encodeURIComponent(activeInspectionTask.id)}/assess/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken') || '',
+                'X-Requested-With': 'XMLHttpRequest',
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: body.toString(),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+            throw new Error(data.error || 'Could not save staff decision.');
+        }
+
+        const updatedTask = {
+            ...activeInspectionTask,
+            report: {
+                ...(activeInspectionTask.report || {}),
+                progress_assessment: data.decision,
+                progress_assessment_label: data.decision_label,
+                assessed_at: data.assessed_at,
+                assessed_by: data.assessed_by,
+            },
+        };
+        activeInspectionTask = updatedTask;
+        currentMonitoringTasks = currentMonitoringTasks.map((task) => (
+            String(task.id) === String(updatedTask.id) ? updatedTask : task
+        ));
+        closeInspectionInfoModal();
+        renderMonitoringTaskCards(currentMonitoringTasks);
+    } catch (err) {
+        if (text) {
+            text.textContent = err.message || 'Could not save staff decision.';
+        }
+    } finally {
+        if (decisionActions) {
+            [...decisionActions.querySelectorAll('button')].forEach((button) => button.disabled = false);
+        }
+    }
 }
 
 function closeInspectionInfoModal(e) {
     if (e && e.target.id !== 'inspectionInfoModal') return;
     const modal = document.getElementById('inspectionInfoModal');
     if (modal) modal.style.display = 'none';
+    activeInspectionTask = null;
+}
+
+async function notifySelectedInspectionTask() {
+    if (!activeInspectionTask) return;
+    const dashboardBtn = document.getElementById('inspectionDashboardBtn');
+    const text = document.getElementById('inspectionInfoText');
+    if (dashboardBtn) {
+        dashboardBtn.disabled = true;
+        dashboardBtn.textContent = 'Notifying...';
+    }
+
+    try {
+        const res = await fetch(`/units/monitoring-task/${encodeURIComponent(activeInspectionTask.id)}/notify/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken') || '',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+            throw new Error(data.error || 'Could not notify monitoring dashboard.');
+        }
+        const notifiedAt = data.notified_at || new Date().toISOString();
+        activeInspectionTask.notified_at = notifiedAt;
+        currentMonitoringTasks = currentMonitoringTasks.map((task) => {
+            if (String(task.id) === String(activeInspectionTask.id)) {
+                return { ...task, notified_at: notifiedAt };
+            }
+            return task;
+        });
+        closeInspectionInfoModal();
+        renderMonitoringTaskCards(currentMonitoringTasks);
+    } catch (err) {
+        if (text) {
+            text.textContent = err.message || 'Could not notify monitoring dashboard.';
+        }
+        if (dashboardBtn) {
+            dashboardBtn.disabled = false;
+            dashboardBtn.textContent = 'Notify caretaker_monitoring_dashboard';
+        }
+    }
 }
 
 function openUnitModal(unitId) {
@@ -1786,15 +2525,18 @@ function openUnitModal(unitId) {
                 } else {
                     hmEl.textContent = '—';
                 }
+                renderHouseholdMembersRecord(ben ? ben.household_member_rows : []);
                 const possession = unit.possession_info || null;
-                document.getElementById('lotAwardedDate').textContent = possession && possession.awarded_at ? String(possession.awarded_at).slice(0, 10) : '—';
-                document.getElementById('lotPossessedDate').textContent = possession && possession.possessed_at ? String(possession.possessed_at).slice(0, 10) : '—';
+                document.getElementById('lotAwardedDate').textContent = possession && possession.awarded_at ? formatDisplayDate(possession.awarded_at) : '—';
+                document.getElementById('lotPossessedDate').textContent = possession && possession.possessed_at ? formatDisplayDate(possession.possessed_at) : '—';
                 document.getElementById('lotPossessedDays').textContent = possession && Number.isFinite(Number(possession.days_possessed))
                     ? `${Number(possession.days_possessed)} day(s)`
                     : '—';
-                document.getElementById('awardActivationStatus').textContent = possession ? 'Award activated' : 'Not yet activated';
-                document.getElementById('awardActivationDate').textContent = possession && possession.awarded_at ? String(possession.awarded_at).slice(0, 10) : '—';
+                document.getElementById('awardActivationDate').textContent = possession && possession.awarded_at ? formatDisplayDate(possession.awarded_at) : '—';
+                document.getElementById('monitoringStartsOn').textContent = possession && possession.monitoring_starts_on ? formatDisplayDate(possession.monitoring_starts_on) : '—';
                 renderMonitoringTaskCards(unit.monitoring_tasks || []);
+                renderMonitoringHistoryRecord(unit.monitoring_history || []);
+                renderComplianceRecordsRecord(unit.compliance_records || []);
 
                 document.getElementById('unitModal').style.display = 'flex';
             } else {

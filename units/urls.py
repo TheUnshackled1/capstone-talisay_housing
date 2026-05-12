@@ -14,6 +14,8 @@ urlpatterns = [
 
     # Phase 3: Caretaker Monitoring Dashboard
     path('monitoring-dashboard/', views.caretaker_monitoring_dashboard, name='caretaker_monitoring_dashboard'),
+    path('monitoring-task/<uuid:task_id>/notify/', views.notify_monitoring_task, name='notify_monitoring_task'),
+    path('monitoring-task/<uuid:task_id>/assess/', views.assess_monitoring_report, name='assess_monitoring_report'),
 
     # Phase 4: Report Submission
     path('monitoring-report/<uuid:task_id>/submit/', views.submit_monitoring_report, name='submit_monitoring_report'),

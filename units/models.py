@@ -702,7 +702,7 @@ class MonitoringTask(models.Model):
     )
 
     days_from_award = models.PositiveIntegerField(
-        help_text="Number of days from award date (15, 30, 60, 90, final)"
+        help_text="Monitoring day after the 30-day possession grace period"
     )
 
     status = models.CharField(
@@ -724,6 +724,21 @@ class MonitoringTask(models.Model):
         null=True,
         blank=True,
         help_text="When task was completed"
+    )
+
+    notified_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="When staff notified the monitoring dashboard about this task"
+    )
+
+    notified_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='notified_monitoring_tasks',
+        help_text="Staff user who notified the monitoring dashboard"
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -776,6 +791,11 @@ class MonitoringReport(models.Model):
         ('roofing', 'Roofing'),
         ('finishing', 'Finishing'),
         ('completed_occupied', 'Completed / Occupied'),
+    ]
+
+    PROGRESS_ASSESSMENT_CHOICES = [
+        ('normal_progress', 'Normal Progress'),
+        ('no_progress', 'No Progress'),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -842,10 +862,38 @@ class MonitoringReport(models.Model):
         help_text="Details about construction progress"
     )
 
-    # General remarks and photos
+    photo_evidence = models.FileField(
+        upload_to='monitoring_evidence/%Y/%m/',
+        blank=True,
+        help_text="Field photo evidence captured during inspection"
+    )
+
+    # General remarks
     general_remarks = models.TextField(
         blank=True,
         help_text="Overall assessment and remarks from caretaker"
+    )
+
+    progress_assessment = models.CharField(
+        max_length=30,
+        choices=PROGRESS_ASSESSMENT_CHOICES,
+        blank=True,
+        help_text="Staff review decision after checking caretaker monitoring report"
+    )
+
+    assessed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='monitoring_reports_assessed',
+        help_text="Staff user who reviewed the monitoring report"
+    )
+
+    assessed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="When staff reviewed the monitoring report"
     )
 
     # Completion status
@@ -869,6 +917,31 @@ class MonitoringReport(models.Model):
 
     def __str__(self):
         return f"{self.unit} - {self.get_construction_status_display()} ({self.submitted_at.date()})"
+
+
+class MonitoringReportPhoto(models.Model):
+    """Additional photo evidence attached to a caretaker monitoring report."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    report = models.ForeignKey(
+        MonitoringReport,
+        on_delete=models.CASCADE,
+        related_name='photos'
+    )
+    image = models.FileField(
+        upload_to='monitoring_evidence/%Y/%m/',
+        help_text="Field photo evidence captured during inspection"
+    )
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['uploaded_at', 'id']
+        verbose_name = "Monitoring Report Photo"
+        verbose_name_plural = "Monitoring Report Photos"
+
+    def __str__(self):
+        return f"Photo evidence for {self.report_id}"
 
 
 class ExplanationReview(models.Model):
