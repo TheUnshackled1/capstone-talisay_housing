@@ -691,6 +691,11 @@ def get_unit_details(request, position, unit_id):
                 'can_set_deadline': deadline is None and not has_doc,
                 'can_upload_letter': bool(deadline) and not has_doc,
                 'can_disqualify': bool(deadline and deadline_passed and not has_doc),
+                'letter_document_url': (
+                    request.build_absolute_uri(rev.letter_document.url)
+                    if has_doc and rev.letter_document
+                    else None
+                ),
             }
             if explanation_case['can_disqualify']:
                 ex_row_status = 'Deadline passed — no letter on file'
@@ -716,6 +721,13 @@ def get_unit_details(request, position, unit_id):
                 'status': ex_row_status,
                 'detail': ex_detail,
             })
+
+        explanation_letter_view_url = None
+        if active_lot_award and pending_explanation_rev is None:
+            for _r in ExplanationReview.objects.filter(lot_award=active_lot_award).order_by('-updated_at'):
+                if _r.letter_document and getattr(_r.letter_document, 'name', None):
+                    explanation_letter_view_url = request.build_absolute_uri(_r.letter_document.url)
+                    break
 
         return JsonResponse({
             'success': True,
@@ -748,6 +760,7 @@ def get_unit_details(request, position, unit_id):
                 'monitoring_history': monitoring_history,
                 'compliance_records': compliance_records,
                 'explanation_letter_case': explanation_case,
+                'explanation_letter_view_url': explanation_letter_view_url,
                 'construction_monitoring': {
                     'site_name': unit.site.name if unit.site else '',
                     'status_filter': cm_filter,
@@ -1801,7 +1814,12 @@ def caretaker_monitoring_dashboard(request):
         models.Q(assigned_to_id=request.user.id) | models.Q(assigned_to__isnull=True),
         notified_at__isnull=False,
         status__in=['pending', 'overdue'],
-    ).select_related('unit', 'lot_award', 'unit__site').order_by('due_date')
+    ).select_related(
+        'unit',
+        'lot_award',
+        'lot_award__application__applicant',
+        'unit__site'
+    ).order_by('due_date')
 
     # Calculate KPIs
     pending_count = tasks.filter(status='pending').count()
@@ -1813,12 +1831,30 @@ def caretaker_monitoring_dashboard(request):
     ).count()
     active_units = tasks.values('unit_id').distinct().count()
 
+    scheduled_tasks = tasks.filter(status='pending', due_date__gte=today)
+    overdue_tasks = tasks.filter(status='pending', due_date__lt=today)
+    completed_tasks = MonitoringTask.objects.filter(
+        models.Q(assigned_to_id=request.user.id) | models.Q(assigned_to__isnull=True),
+        notified_at__isnull=False,
+        status='completed'
+    ).select_related(
+        'unit',
+        'lot_award',
+        'lot_award__application__applicant',
+        'unit__site'
+    ).order_by('-completed_at', '-due_date')
+    active_unit_tasks = tasks.order_by('unit_id', 'due_date')
+
     context = {
         'tasks': tasks,
         'pending_count': pending_count,
         'overdue_count': overdue_count,
         'completed_count': completed_count,
         'active_units': active_units,
+        'scheduled_tasks': scheduled_tasks,
+        'overdue_tasks': overdue_tasks,
+        'completed_tasks': completed_tasks,
+        'active_unit_tasks': active_unit_tasks,
         'today': today,
         'selected_task_id': (request.GET.get('task') or '').strip(),
         'task_notified': request.GET.get('notified') == '1',
@@ -1868,7 +1904,6 @@ def submit_monitoring_report(request, task_id):
         if construction_status == 'ongoing':
             construction_status = 'ongoing_construction'
         occupancy_radio = request.POST.get('occupancy_status', '').strip()
-        general_remarks = request.POST.get('general_remarks', '').strip()
 
         if not construction_status:
             return JsonResponse({
@@ -1884,19 +1919,26 @@ def submit_monitoring_report(request, task_id):
 
         occupancy_notes = request.POST.get('occupancy_notes', '').strip()
         if len(occupancy_notes) < 8:
-            return JsonResponse({
-                'success': False,
-                'error': 'Actual occupancy conditions must be described in a short narrative (at least 8 characters).',
-            }, status=400)
+            if occupancy_radio == 'occupied':
+                occupancy_notes = (
+                    'Monitoring visit: caretaker classified the unit as properly occupied '
+                    '(no separate occupancy narrative submitted).'
+                )
+            else:
+                occupancy_notes = (
+                    'Monitoring visit: caretaker classified the unit as unoccupied '
+                    '(no separate occupancy narrative submitted).'
+                )
 
         progress_notes = request.POST.get('progress_notes', '').strip()
-        if construction_status == 'ongoing_construction' and len(progress_notes) < 8:
-            return JsonResponse({
-                'success': False,
-                'error': 'Construction progress statement is required when construction is ongoing (at least 8 characters).',
-            }, status=400)
-        if not progress_notes:
-            progress_notes = "No construction progress."
+        if construction_status == 'ongoing_construction':
+            if len(progress_notes) < 8:
+                progress_notes = (
+                    'Monitoring visit: ongoing construction observed on site '
+                    '(no separate construction progress narrative submitted).'
+                )
+        elif not progress_notes:
+            progress_notes = 'No construction progress.'
 
 
         photo_evidence_files = request.FILES.getlist('photo_evidence')
@@ -1951,7 +1993,7 @@ def submit_monitoring_report(request, task_id):
                 occupancy_notes=occupancy_notes,
                 progress_notes=progress_notes,
                 photo_evidence=photo_evidence_files[0],
-                general_remarks=request.POST.get('general_remarks', ''),
+                general_remarks='',
                 is_complete=True,
             )
             for photo in photo_evidence_files:

@@ -23,6 +23,7 @@
         border-radius: 1rem;
         box-shadow: 0 2px 8px rgba(5, 150, 105, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
         margin-bottom: 1.2rem;
+        text-align: center;
     }
 
     .monitoring-shell::before {
@@ -53,6 +54,7 @@
         letter-spacing: -0.01em;
         display: inline-flex;
         align-items: center;
+        justify-content: center;
         gap: 0.7rem;
     }
 
@@ -90,11 +92,27 @@
         border-radius: 0.75rem;
         box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
         transition: all 0.2s ease;
+        width: 100%;
+        text-align: left;
+        cursor: pointer;
+        appearance: none;
+        font: inherit;
     }
 
     .monitoring-kpi:hover {
         border-color: #10b981;
         box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+        transform: translateY(-2px);
+    }
+
+    .monitoring-kpi:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 6px rgba(16, 185, 129, 0.16);
+    }
+
+    .monitoring-kpi:focus-visible {
+        outline: 3px solid rgba(16, 185, 129, 0.35);
+        outline-offset: 3px;
     }
 
     .monitoring-kpi-icon {
@@ -142,6 +160,111 @@
         font-weight: 800;
         color: #1f2937;
         margin-top: 0.2rem;
+
+    .kpi-modal-card {
+        max-width: 420px;
+        border: 1px solid #e2e8f0;
+        position: relative;
+        padding: 1.7rem 1.8rem 1.9rem;
+    }
+
+    .kpi-modal-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        border-radius: 1rem 1rem 0 0;
+        background: linear-gradient(90deg, #10b981 0%, #34d399 100%);
+    }
+
+    .kpi-modal-card.kpi-overdue::before {
+        background: linear-gradient(90deg, #ef4444 0%, #f97316 100%);
+    }
+
+    .kpi-modal-card.kpi-completed::before {
+        background: linear-gradient(90deg, #0ea5e9 0%, #38bdf8 100%);
+    }
+
+    .kpi-modal-card.kpi-active::before {
+        background: linear-gradient(90deg, #22c55e 0%, #4ade80 100%);
+    }
+
+    .kpi-modal-card .modal-header {
+        margin-bottom: 1rem;
+    }
+
+    .kpi-modal-card .modal-close {
+        color: #94a3b8;
+    }
+
+    .kpi-modal-card .modal-close:hover {
+        color: #0f172a;
+    }
+
+    .kpi-modal-body {
+        text-align: center;
+    }
+
+    .kpi-modal-count {
+        font-size: 2.4rem;
+        font-weight: 800;
+        color: #0f172a;
+        margin-bottom: 0.25rem;
+    }
+
+    .kpi-modal-label {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #0f766e;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        margin-bottom: 0.65rem;
+    }
+
+    .kpi-modal-note {
+        margin: 0;
+        font-size: 0.92rem;
+        color: #475569;
+        line-height: 1.5;
+    }
+
+    .kpi-modal-list {
+        list-style: none;
+        padding: 0;
+        margin: 0.95rem 0 0;
+        text-align: left;
+        max-height: 220px;
+        overflow-y: auto;
+    }
+
+    .kpi-modal-item {
+        padding: 0.65rem 0;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .kpi-modal-item:last-child {
+        border-bottom: none;
+    }
+
+    .kpi-modal-name {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #0f172a;
+    }
+
+    .kpi-modal-datetime {
+        margin-top: 0.2rem;
+        font-size: 0.84rem;
+        color: #64748b;
+    }
+
+    .kpi-modal-empty {
+        margin: 0.95rem 0 0;
+        font-size: 0.9rem;
+        color: #64748b;
+    }
     }
 
     /* Filter Bar */
@@ -1201,13 +1324,51 @@
             align-items: flex-start;
         }
     }
+
+    @media (max-width: 640px) {
+        .monitoring-kpis {
+            grid-template-columns: 1fr;
+        }
+
+        .monitoring-kpi {
+            padding: 0.75rem 0.8rem;
+        }
+
+        .monitoring-kpi-text h4 {
+            font-size: 0.7rem;
+            letter-spacing: 0.08em;
+        }
+
+        .monitoring-kpi-number {
+            font-size: 1.4rem;
+        }
+
+        .monitoring-work-header {
+            padding: 1.1rem 0.9rem 1rem;
+        }
+
+        .monitoring-table-scroll {
+            overflow-x: auto;
+        }
+
+        .monitoring-tasks-table {
+            min-width: 720px;
+        }
+
+        .kpi-modal-card {
+            width: 100%;
+        }
+
+        .kpi-modal-list {
+            max-height: 180px;
+        }
+    }
 </style>
 {% endblock %}
 
 {% block content %}
 <div id="toastContainer" class="toast-container"></div>
 <div class="monitoring-shell">
-    <div class="monitoring-kicker">Module 4</div>
     <h1 class="monitoring-title">Monitoring Dashboard</h1>
     <p class="monitoring-subtitle">View and manage housing unit occupancy inspections</p>
 </div>
@@ -1220,7 +1381,7 @@
 
 <!-- KPI Cards -->
 <div class="monitoring-kpis">
-    <div class="monitoring-kpi monitoring-kpi-pending">
+    <button type="button" class="monitoring-kpi monitoring-kpi-pending" data-kpi-modal="kpiScheduledModal" aria-controls="kpiScheduledModal" aria-haspopup="dialog">
         <div class="monitoring-kpi-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0M9 12l2 2l4 -4"/>
@@ -1230,9 +1391,9 @@
             <h4>Scheduled Tasks</h4>
             <div class="monitoring-kpi-number">{{ pending_count }}</div>
         </div>
-    </div>
+    </button>
 
-    <div class="monitoring-kpi monitoring-kpi-overdue">
+    <button type="button" class="monitoring-kpi monitoring-kpi-overdue" data-kpi-modal="kpiOverdueModal" aria-controls="kpiOverdueModal" aria-haspopup="dialog">
         <div class="monitoring-kpi-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
@@ -1242,9 +1403,9 @@
             <h4>Overdue Tasks</h4>
             <div class="monitoring-kpi-number">{{ overdue_count }}</div>
         </div>
-    </div>
+    </button>
 
-    <div class="monitoring-kpi monitoring-kpi-completed">
+    <button type="button" class="monitoring-kpi monitoring-kpi-completed" data-kpi-modal="kpiCompletedModal" aria-controls="kpiCompletedModal" aria-haspopup="dialog">
         <div class="monitoring-kpi-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0M9 12l2 2l4 -4"/>
@@ -1254,9 +1415,9 @@
             <h4>Completed</h4>
             <div class="monitoring-kpi-number">{{ completed_count }}</div>
         </div>
-    </div>
+    </button>
 
-    <div class="monitoring-kpi monitoring-kpi-pending">
+    <button type="button" class="monitoring-kpi monitoring-kpi-pending" data-kpi-modal="kpiActiveUnitsModal" aria-controls="kpiActiveUnitsModal" aria-haspopup="dialog">
         <div class="monitoring-kpi-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7"/>
@@ -1268,33 +1429,119 @@
             <h4>Active Units</h4>
             <div class="monitoring-kpi-number">{{ active_units }}</div>
         </div>
+    </button>
+</div>
+
+<div class="modal-overlay kpi-modal" id="kpiScheduledModal" role="dialog" aria-modal="true" aria-labelledby="kpiScheduledTitle">
+    <div class="modal-content kpi-modal-card">
+        <div class="modal-header">
+            <h2 class="modal-title" id="kpiScheduledTitle">Scheduled tasks</h2>
+            <button type="button" class="modal-close" onclick="closeKpiModal('kpiScheduledModal')" aria-label="Close">×</button>
+        </div>
+        <div class="kpi-modal-body">
+            <div class="kpi-modal-count">{{ pending_count }}</div>
+            <div class="kpi-modal-label">Scheduled</div>
+            <p class="kpi-modal-note">Inspections waiting for field reporting. Use the table below to open a task or submit a report.</p>
+            {% if scheduled_tasks %}
+            <ul class="kpi-modal-list">
+                {% for task in scheduled_tasks %}
+                <li class="kpi-modal-item">
+                    <div class="kpi-modal-name">{{ task.lot_award.application.applicant.full_name }}</div>
+                    <div class="kpi-modal-datetime">Notified {{ task.notified_at|date:"M j, Y g:i A" }}</div>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="kpi-modal-empty">No scheduled tasks right now.</p>
+            {% endif %}
+        </div>
     </div>
 </div>
 
-<!-- Filter Bar -->
-<div class="monitoring-filter-bar">
-    <div class="monitoring-filter">
-        <label for="filterStatus">Filter by Status</label>
-        <select id="filterStatus" onchange="filterTasks()">
-            <option value="">All Status</option>
-            <option value="upcoming">Upcoming</option>
-            <option value="pending">Pending</option>
-            <option value="overdue">Overdue</option>
-            <option value="completed">Completed</option>
-        </select>
+<div class="modal-overlay kpi-modal" id="kpiOverdueModal" role="dialog" aria-modal="true" aria-labelledby="kpiOverdueTitle">
+    <div class="modal-content kpi-modal-card kpi-overdue">
+        <div class="modal-header">
+            <h2 class="modal-title" id="kpiOverdueTitle">Overdue tasks</h2>
+            <button type="button" class="modal-close" onclick="closeKpiModal('kpiOverdueModal')" aria-label="Close">×</button>
+        </div>
+        <div class="kpi-modal-body">
+            <div class="kpi-modal-count">{{ overdue_count }}</div>
+            <div class="kpi-modal-label">Overdue</div>
+            <p class="kpi-modal-note">These inspections are past the due date and need priority field visits.</p>
+            {% if overdue_tasks %}
+            <ul class="kpi-modal-list">
+                {% for task in overdue_tasks %}
+                <li class="kpi-modal-item">
+                    <div class="kpi-modal-name">{{ task.lot_award.application.applicant.full_name }}</div>
+                    <div class="kpi-modal-datetime">Notified {{ task.notified_at|date:"M j, Y g:i A" }}</div>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="kpi-modal-empty">No overdue tasks right now.</p>
+            {% endif %}
+        </div>
     </div>
+</div>
 
-    <div class="monitoring-filter">
-        <label for="filterType">Filter by Task Type</label>
-        <select id="filterType" onchange="filterTasks()">
-            <option value="">All Types</option>
-            <option value="day_15_inspection">Day 15 Inspection</option>
-            <option value="day_30_inspection">Day 30 Inspection</option>
-            <option value="month_1_inspection">Extension Month 1</option>
-            <option value="month_2_inspection">Extension Month 2</option>
-            <option value="month_3_inspection">Extension Month 3</option>
-            <option value="final_inspection">Final Inspection</option>
-        </select>
+<div class="modal-overlay kpi-modal" id="kpiCompletedModal" role="dialog" aria-modal="true" aria-labelledby="kpiCompletedTitle">
+    <div class="modal-content kpi-modal-card kpi-completed">
+        <div class="modal-header">
+            <h2 class="modal-title" id="kpiCompletedTitle">Completed reports</h2>
+            <button type="button" class="modal-close" onclick="closeKpiModal('kpiCompletedModal')" aria-label="Close">×</button>
+        </div>
+        <div class="kpi-modal-body">
+            <div class="kpi-modal-count">{{ completed_count }}</div>
+            <div class="kpi-modal-label">Completed</div>
+            <p class="kpi-modal-note">Reports already submitted by the caretaker team.</p>
+            {% if completed_tasks %}
+            <ul class="kpi-modal-list">
+                {% for task in completed_tasks %}
+                <li class="kpi-modal-item">
+                    <div class="kpi-modal-name">{{ task.lot_award.application.applicant.full_name }}</div>
+                    <div class="kpi-modal-datetime">
+                        {% if task.completed_at %}
+                            Completed {{ task.completed_at|date:"M j, Y g:i A" }}
+                        {% else %}
+                            Notified {{ task.notified_at|date:"M j, Y g:i A" }}
+                        {% endif %}
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="kpi-modal-empty">No completed reports yet.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay kpi-modal" id="kpiActiveUnitsModal" role="dialog" aria-modal="true" aria-labelledby="kpiActiveUnitsTitle">
+    <div class="modal-content kpi-modal-card kpi-active">
+        <div class="modal-header">
+            <h2 class="modal-title" id="kpiActiveUnitsTitle">Active units</h2>
+            <button type="button" class="modal-close" onclick="closeKpiModal('kpiActiveUnitsModal')" aria-label="Close">×</button>
+        </div>
+        <div class="kpi-modal-body">
+            <div class="kpi-modal-count">{{ active_units }}</div>
+            <div class="kpi-modal-label">Active</div>
+            <p class="kpi-modal-note">Units currently under monitoring coverage.</p>
+            {% regroup active_unit_tasks by unit_id as active_unit_groups %}
+            {% if active_unit_groups %}
+            <ul class="kpi-modal-list">
+                {% for group in active_unit_groups %}
+                    {% with task=group.list.0 %}
+                    <li class="kpi-modal-item">
+                        <div class="kpi-modal-name">{{ task.lot_award.application.applicant.full_name }}</div>
+                        <div class="kpi-modal-datetime">Notified {{ task.notified_at|date:"M j, Y g:i A" }}</div>
+                    </li>
+                    {% endwith %}
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="kpi-modal-empty">No active units yet.</p>
+            {% endif %}
+        </div>
     </div>
 </div>
 
@@ -1304,9 +1551,6 @@
     <div class="monitoring-work-header">
         <span class="monitoring-work-badge">▸ CARETAKER MONITORING DESK</span>
         <h2 class="monitoring-work-title">Scheduled inspections &mdash; ready for field monitoring</h2>
-        <p class="monitoring-work-lead">
-            Only staff-notified Day 15 and Day 30 inspections appear here. The field report captures actual occupancy, construction progress, and photo evidence.
-        </p>
     </div>
     {% if tasks %}
     <div class="monitoring-table-scroll">
@@ -1482,21 +1726,11 @@
                     </div>
                 </div>
 
-                <div class="report-field">
-                    <label>
-                        Actual occupancy conditions
-                        <span class="report-required">Required</span>
-                    </label>
-                    <p class="report-help" style="margin-top:0;">Same heading staff see in the monitoring schedule summary. State what you observed on site (who is present, vacant, unauthorized occupants, etc.).</p>
-                    <textarea name="occupancy_notes" required minlength="8" maxlength="2000" rows="4" placeholder="Example: Beneficiary household present; structure in progress. Or: Unit appears vacant; no authorized occupant observed."></textarea>
-                </div>
-
                 <div class="report-field" style="margin-bottom: 0;">
                     <label>
                         Occupancy classification
                         <span class="report-required">Required</span>
                     </label>
-                    <p class="report-help" style="margin-top:0;">Select the category that matches your narrative above.</p>
                 </div>
                 <div class="monitoring-decision-grid">
                     <label class="monitoring-decision-label positive">
@@ -1530,15 +1764,6 @@
                     </label>
                 </div>
 
-                <div class="report-field">
-                    <label>
-                        Construction progress statement
-                        <span class="report-required" id="progressNotesRequiredBadge" style="display:none;">Required</span>
-                    </label>
-                    <p class="report-help" style="margin-top:0;">Shown under this same label in the staff review summary. If you chose <strong>Ongoing Construction</strong>, describe what was built or improved.</p>
-                    <textarea id="progressNotesInput" name="progress_notes" rows="4" maxlength="2000" placeholder="If construction is ongoing, describe progress. If there is no structure, you may write: No construction progress."></textarea>
-                </div>
-
                 <div class="field-evidence-section" style="margin-bottom: 0;">
                     <span class="field-evidence-label">
                         Photo evidence <span class="report-required" style="margin-left: 5px;">Required</span>
@@ -1566,15 +1791,6 @@
                 <div id="photoEvidenceStrip" class="field-evidence-strip">
                     <span id="photoEvidenceFileName" style="display: block; font-size: 0.85rem; color: #475569; font-weight: 600;">No photo selected</span>
                 </div>
-            </div>
-
-            <!-- General Remarks -->
-            <div class="report-field">
-                <label>
-                    General remarks &amp; observations
-                </label>
-                <p class="report-help" style="margin-top:0;">Appears as <strong>General remarks</strong> in the staff summary.</p>
-                <textarea name="general_remarks" rows="3" maxlength="2000" placeholder="Overall assessment, concerns, or follow-up recommendations..."></textarea>
             </div>
 
                 <!-- Submit Button -->
@@ -1620,6 +1836,18 @@ function showToast(message, type = 'success') {
     }, 4500);
 }
 
+function openKpiModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+    modal.classList.add('active');
+}
+
+function closeKpiModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+    modal.classList.remove('active');
+}
+
 function filterTasks() {
     const statusFilter = document.getElementById('filterStatus').value;
     const typeFilter = document.getElementById('filterType').value;
@@ -1656,7 +1884,6 @@ function openReportModal(taskId, allowEarly, scheduledDate, taskLabel, unitLocat
     document.getElementById('allowEarlyInspection').value = allowEarly ? '1' : '0';
     setReportReference(taskLabel, unitLocation, dueDate, monitoringDay);
     document.getElementById('reportModal').classList.add('active');
-    syncProgressNotesRequiredUI();
 }
 
 function closeEarlyInspectionModal() {
@@ -1681,23 +1908,6 @@ function continueEarlyInspection() {
         );
     }
     document.getElementById('reportModal').classList.add('active');
-    syncProgressNotesRequiredUI();
-}
-
-function syncProgressNotesRequiredUI() {
-    const badge = document.getElementById('progressNotesRequiredBadge');
-    const ta = document.getElementById('progressNotesInput');
-    const checked = document.querySelector('input[name="construction_status"]:checked');
-    if (!badge || !ta) return;
-    const ongoing = checked && checked.value === 'ongoing_construction';
-    badge.style.display = ongoing ? 'inline' : 'none';
-    if (ongoing) {
-        ta.setAttribute('minlength', '8');
-        ta.setAttribute('required', 'required');
-    } else {
-        ta.removeAttribute('minlength');
-        ta.removeAttribute('required');
-    }
 }
 
 function closeReportModal() {
@@ -1710,7 +1920,6 @@ function closeReportModal() {
         input.value = '';
         updatePhotoEvidenceName(input);
     }
-    syncProgressNotesRequiredUI();
 }
 
 function setPhotoEvidenceFiles(files) {
@@ -1862,14 +2071,6 @@ function submitReport(event) {
     const form = document.getElementById('reportForm');
     const formData = new FormData(form);
     const taskId = formData.get('task_id');
-    const construction = formData.get('construction_status');
-    const progressEl = document.getElementById('progressNotesInput');
-    const progressText = progressEl ? progressEl.value.trim() : '';
-    if (construction === 'ongoing_construction' && progressText.length < 8) {
-        showToast('Construction progress statement must be at least 8 characters when construction is ongoing.', 'error');
-        return;
-    }
-
     fetch(`/units/monitoring-report/${taskId}/submit/`, {
         method: 'POST',
         headers: {
@@ -1908,6 +2109,20 @@ document.getElementById('earlyInspectionModal').addEventListener('click', functi
     }
 });
 
+document.querySelectorAll('[data-kpi-modal]').forEach((card) => {
+    card.addEventListener('click', () => {
+        openKpiModal(card.dataset.kpiModal);
+    });
+});
+
+document.querySelectorAll('.kpi-modal').forEach((modal) => {
+    modal.addEventListener('click', function(event) {
+        if (event.target === this) {
+            closeKpiModal(this.id);
+        }
+    });
+});
+
 if (selectedTaskId) {
     const selectedRow = document.querySelector(`[data-task-id="${selectedTaskId}"]`);
     if (selectedRow) {
@@ -1916,8 +2131,5 @@ if (selectedTaskId) {
     }
 }
 
-document.querySelectorAll('input[name="construction_status"]').forEach((el) => {
-    el.addEventListener('change', syncProgressNotesRequiredUI);
-});
 </script>
 {% endblock %}

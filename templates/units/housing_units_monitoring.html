@@ -1034,6 +1034,15 @@
         margin-bottom: 0 !important;
     }
 
+    .explanation-letter-panel--dormant {
+        opacity: 0.92;
+        border-left-color: #cbd5e1 !important;
+        background: #f8fafc !important;
+    }
+    .explanation-letter-panel--dormant .premium-card-title {
+        color: #475569 !important;
+    }
+
     /* Premium Collapsible Section Headers */
     .unit-monitor-toggle {
         width: 100% !important;
@@ -1860,7 +1869,10 @@
             <!-- Formal award activation and monitoring schedule -->
             <section class="unit-detail-section">
                 <button type="button" id="lotMonitoringToggleBtn" class="unit-monitor-toggle" aria-expanded="false">
-                    <span>Formal lot award activation · monitoring tasks</span>
+                    <span style="display: flex; flex-direction: column; align-items: center; gap: 0.25rem; text-align: center;">
+                        <span>Formal lot award activation · monitoring tasks</span>
+                        <span style="font-size: 0.72rem; font-weight: 600; color: #64748b; max-width: 22rem; line-height: 1.35;">Includes schedule, Day 15/30 cards, compliance — and the explanation letter workflow at the bottom after No Progress.</span>
+                    </span>
                     <span id="lotMonitoringToggleIcon" class="toggle-icon" aria-hidden="true">▼</span>
                 </button>
                 <div id="lotMonitoringDropdown" class="unit-monitor-panel" style="display: none;">
@@ -1911,10 +1923,16 @@
                             </label>
                             <button type="button" class="inspection-info-btn primary" id="explanationSaveDeadlineBtn" onclick="saveExplanationLetterDeadline()">Save deadline</button>
                         </div>
-                        <div id="explanationUploadForm" style="display: none; margin-bottom: 0.5rem;">
-                            <label style="display: block; font-size: 0.72rem; font-weight: 700; color: #475569; margin-bottom: 0.35rem;">Scan / upload explanation letter (PDF or image)</label>
-                            <input type="file" id="explanationLetterFile" accept=".pdf,image/*" style="font-size: 0.78rem;">
-                            <button type="button" class="inspection-info-btn primary" style="margin-top: 0.45rem;" onclick="uploadExplanationLetterFile()">Upload letter &amp; grant 30-day extension</button>
+                        <div id="explanationLetterFileActions" style="margin-bottom: 0.65rem;">
+                            <p style="margin: 0 0 0.45rem; font-size: 0.72rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.03em;">Explanation letter file</p>
+                            <p style="margin: 0 0 0.5rem; font-size: 0.74rem; color: #64748b; line-height: 1.4;">Upload or scan the beneficiary’s written explanation (PDF or image). View opens the saved file in a new tab.</p>
+                            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;">
+                                <button type="button" class="inspection-info-btn primary" id="explanationPickScanBtn" onclick="explanationPickScanLetter()">Upload / scan explanation letter</button>
+                                <button type="button" class="inspection-info-btn" id="explanationViewLetterBtn" onclick="explanationViewLetter()">View explanation letter</button>
+                            </div>
+                            <input type="file" id="explanationLetterFile" accept=".pdf,image/*" style="position: absolute; width: 0.1px; height: 0.1px; opacity: 0; overflow: hidden; z-index: -1;" aria-hidden="true" tabindex="-1" onchange="explanationLetterFileChosen()">
+                            <p id="explanationSelectedFileName" style="display: none; margin: 0.45rem 0 0; font-size: 0.72rem; color: #475569;"></p>
+                            <button type="button" class="inspection-info-btn primary" id="explanationSubmitScanBtn" style="display: none; margin-top: 0.45rem;" onclick="uploadExplanationLetterFile()">Submit scan &amp; grant extension</button>
                         </div>
                     </div>
                 </div>
@@ -2761,15 +2779,71 @@ function syncExplanationLetterPanel(unit) {
     const panel = document.getElementById('explanationLetterPanel');
     const status = document.getElementById('explanationLetterStatus');
     const deadlineForm = document.getElementById('explanationDeadlineForm');
-    const uploadForm = document.getElementById('explanationUploadForm');
+    const fileActions = document.getElementById('explanationLetterFileActions');
     const dqBtn = document.getElementById('disqualifyBeneficiaryBtn');
-    if (!panel || !status || !deadlineForm || !uploadForm) return;
+    const pickBtn = document.getElementById('explanationPickScanBtn');
+    const viewBtn = document.getElementById('explanationViewLetterBtn');
+    const subBtn = document.getElementById('explanationSubmitScanBtn');
+    const nameEl = document.getElementById('explanationSelectedFileName');
+    const fi = document.getElementById('explanationLetterFile');
+    if (!panel || !status || !deadlineForm || !fileActions) return;
+
+    function setLetterButtons(canPick, pickHint, canView, letterUrl) {
+        if (pickBtn) {
+            pickBtn.style.display = 'inline-flex';
+            pickBtn.disabled = !canPick;
+            pickBtn.style.opacity = canPick ? '1' : '0.55';
+            pickBtn.style.cursor = canPick ? 'pointer' : 'not-allowed';
+            pickBtn.title = pickHint || '';
+        }
+        if (viewBtn) {
+            viewBtn.style.display = 'inline-flex';
+            viewBtn.disabled = !canView;
+            viewBtn.style.opacity = canView ? '1' : '0.55';
+            viewBtn.style.cursor = canView ? 'pointer' : 'not-allowed';
+            viewBtn.dataset.url = letterUrl || '';
+            viewBtn.title = canView
+                ? 'Open the explanation letter in a new tab.'
+                : 'No scanned explanation letter saved yet.';
+        }
+    }
 
     const c = unit.explanation_letter_case;
-    if (!c) {
+    const viewUrl = (c && c.letter_document_url) || (!c && (unit.explanation_letter_view_url || '')) || '';
+    const hasAward = Boolean(unit.lot_award_id);
+
+    if (!hasAward) {
         panel.style.display = 'none';
+        panel.classList.remove('explanation-letter-panel--dormant');
         deadlineForm.style.display = 'none';
-        uploadForm.style.display = 'none';
+        fileActions.style.display = 'none';
+        if (pickBtn) pickBtn.style.display = 'none';
+        if (viewBtn) viewBtn.style.display = 'none';
+        if (subBtn) subBtn.style.display = 'none';
+        if (nameEl) nameEl.style.display = 'none';
+        if (fi) fi.value = '';
+        if (dqBtn) {
+            dqBtn.style.opacity = '0.45';
+            dqBtn.style.pointerEvents = 'none';
+        }
+        return;
+    }
+
+    if (!c && !viewUrl) {
+        panel.style.display = 'block';
+        panel.classList.add('explanation-letter-panel--dormant');
+        status.textContent = 'No active case yet. After staff marks a monitoring report as No Progress, use this same card (scroll here) to set the office letter deadline, then use Upload / scan and View for the explanation letter.';
+        deadlineForm.style.display = 'none';
+        fileActions.style.display = 'block';
+        setLetterButtons(
+            false,
+            'Available after a report is marked No Progress and a letter deadline is set.',
+            false,
+            '',
+        );
+        if (subBtn) subBtn.style.display = 'none';
+        if (nameEl) nameEl.style.display = 'none';
+        if (fi) fi.value = '';
         if (dqBtn) {
             dqBtn.style.opacity = '0.45';
             dqBtn.style.pointerEvents = 'none';
@@ -2778,6 +2852,28 @@ function syncExplanationLetterPanel(unit) {
     }
 
     panel.style.display = 'block';
+    panel.classList.remove('explanation-letter-panel--dormant');
+
+    if (!c && viewUrl) {
+        status.textContent = 'A scanned explanation letter is on file for this lot.';
+        deadlineForm.style.display = 'none';
+        fileActions.style.display = 'block';
+        setLetterButtons(
+            false,
+            'Letter already on file for this award. Open a new No Progress case to replace it.',
+            true,
+            viewUrl,
+        );
+        if (subBtn) subBtn.style.display = 'none';
+        if (nameEl) nameEl.style.display = 'none';
+        if (fi) fi.value = '';
+        if (dqBtn) {
+            dqBtn.style.opacity = '0.45';
+            dqBtn.style.pointerEvents = 'none';
+        }
+        return;
+    }
+
     const parts = [];
     if (c.letter_deadline_at) {
         const d = new Date(c.letter_deadline_at);
@@ -2787,7 +2883,7 @@ function syncExplanationLetterPanel(unit) {
             parts.push(`Deadline: ${formatDisplayDate(String(c.letter_deadline_at).slice(0, 10))}`);
         }
     } else {
-        parts.push('Deadline not set — register date and time below, then notify the beneficiary.');
+        parts.push('Deadline not set — register date and time above, then notify the beneficiary.');
     }
     if (c.has_letter_document) {
         parts.push('Explanation letter is on file.');
@@ -2795,7 +2891,19 @@ function syncExplanationLetterPanel(unit) {
     status.textContent = parts.join(' ');
 
     deadlineForm.style.display = c.can_set_deadline ? 'flex' : 'none';
-    uploadForm.style.display = c.can_upload_letter ? 'block' : 'none';
+
+    fileActions.style.display = 'block';
+    const canPick = Boolean(c.can_upload_letter);
+    const canView = Boolean(viewUrl);
+    setLetterButtons(
+        canPick,
+        canPick ? '' : 'Set the office letter deadline first, then upload or scan the explanation letter.',
+        canView,
+        viewUrl,
+    );
+    if (subBtn) subBtn.style.display = 'none';
+    if (nameEl) nameEl.style.display = 'none';
+    if (fi) fi.value = '';
 
     if (dqBtn) {
         const enable = Boolean(c.can_disqualify);
@@ -2812,6 +2920,47 @@ function syncExplanationLetterPanel(unit) {
         }
     } else if (inp) {
         inp.value = '';
+    }
+}
+
+function explanationPickScanLetter() {
+    const btn = document.getElementById('explanationPickScanBtn');
+    if (btn && btn.disabled) return;
+    const unit = lastOpenedUnitPayload;
+    const c = unit && unit.explanation_letter_case;
+    if (!c || !c.can_upload_letter) {
+        alert('Set the letter deadline first, then you can upload or scan the explanation letter.');
+        return;
+    }
+    document.getElementById('explanationLetterFile')?.click();
+}
+
+function explanationLetterFileChosen() {
+    const unit = lastOpenedUnitPayload;
+    const c = unit && unit.explanation_letter_case;
+    const fi = document.getElementById('explanationLetterFile');
+    const nameEl = document.getElementById('explanationSelectedFileName');
+    const subBtn = document.getElementById('explanationSubmitScanBtn');
+    if (!fi || !fi.files || !fi.files[0]) {
+        if (nameEl) nameEl.style.display = 'none';
+        if (subBtn) subBtn.style.display = 'none';
+        return;
+    }
+    if (nameEl) {
+        nameEl.textContent = `Selected: ${fi.files[0].name}`;
+        nameEl.style.display = 'block';
+    }
+    if (subBtn) {
+        subBtn.style.display = (c && c.can_upload_letter) ? 'inline-block' : 'none';
+    }
+}
+
+function explanationViewLetter() {
+    const btn = document.getElementById('explanationViewLetterBtn');
+    if (!btn || btn.disabled) return;
+    const url = btn.dataset.url;
+    if (url) {
+        window.open(url, '_blank', 'noopener,noreferrer');
     }
 }
 
@@ -2964,11 +3113,22 @@ function openUnitModal(unitId) {
                 renderMonitoringHistoryRecord(unit.monitoring_history || []);
                 renderComplianceRecordsRecord(unit.compliance_records || []);
                 syncExplanationLetterPanel(unit);
-                if (unit.explanation_letter_case) {
+                const expandMonitoring = Boolean(
+                    unit.lot_award_id
+                    || (unit.monitoring_tasks && unit.monitoring_tasks.length)
+                    || unit.explanation_letter_case
+                    || unit.explanation_letter_view_url
+                );
+                if (expandMonitoring) {
                     toggleLotMonitoringDropdown(true);
                 }
 
                 document.getElementById('unitModal').style.display = 'flex';
+                if (unit.explanation_letter_case || unit.explanation_letter_view_url) {
+                    requestAnimationFrame(() => {
+                        document.getElementById('explanationLetterPanel')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    });
+                }
             } else {
                 console.error('Failed to fetch unit details:', data.error);
             }

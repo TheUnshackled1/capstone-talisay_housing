@@ -1,54 +1,368 @@
-{% extends 'staff_base.html' %}
+{% extends base_template|default:'staff_base.html' %}
 {% load static %}
 
 {% block title %}Case Management - THA{% endblock %}
 
-{% block page_title %}Staff Portal{% endblock %}
+{% block page_title %}Case Management{% endblock %}
+
+{% block nav_cases %}active{% endblock %}
 
 {% block extra_css %}
 <style>
     /* ===================================================================
-       Page card theme — Case Management (Module 5): Rose
+       Case Management (Module 5) — Monitoring-style layout
        =================================================================== */
-    .cases-shell {
+    .monitoring-shell {
         position: relative;
         overflow: hidden;
-        padding: 1.05rem 1rem 0.9rem;
+        padding: 1.6rem 2rem 1.4rem;
+        width: 100%;
         max-width: 100%;
-        background: linear-gradient(180deg, #fff1f2 0%, #ffffff 16%);
-        border: 1px solid #fda4af;
-        border-radius: 0.85rem;
-        box-shadow: 0 2px 6px rgba(190, 18, 60, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
-        margin-bottom: 0.95rem;
+        background: linear-gradient(180deg, #ecfdf5 0%, #ffffff 18%);
+        border: 1px solid #a7f3d0;
+        border-radius: 1rem;
+        box-shadow: 0 2px 8px rgba(5, 150, 105, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
+        margin-bottom: 1.2rem;
+        text-align: center;
     }
-    .cases-shell::before {
+
+    .monitoring-shell::before {
         content: '';
         position: absolute;
         top: 0;
         left: 0;
         right: 0;
-        height: 4px;
-        background: linear-gradient(90deg, #881337 0%, #be123c 50%, #fb7185 100%);
+        height: 5px;
+        background: linear-gradient(90deg, #047857 0%, #10b981 50%, #6ee7b7 100%);
         z-index: 1;
     }
-    .cases-page-title {
-        font-size: 1.02rem !important;
-        font-weight: 700 !important;
-        color: #881337 !important;
-        margin: 0 !important;
-        letter-spacing: 0.04em !important;
-        text-transform: uppercase !important;
+
+    .monitoring-kicker {
+        margin: 0 0 0.35rem 0;
+        font-size: 0.65rem;
+        font-weight: 800;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: #047857;
+    }
+
+    .monitoring-title {
+        font-family: 'Source Serif Pro', Georgia, serif;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #064e3b;
+        margin: 0 0 0.5rem 0;
+        letter-spacing: -0.01em;
         display: inline-flex;
         align-items: center;
-        gap: 0.55rem;
+        justify-content: center;
+        gap: 0.7rem;
     }
-    .cases-page-title::before {
+
+    .monitoring-title::before {
         content: '';
-        width: 0.55rem;
-        height: 0.55rem;
+        width: 0.6rem;
+        height: 0.6rem;
         border-radius: 50%;
-        background: linear-gradient(135deg, #f43f5e 0%, #9f1239 100%);
-        box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.2);
+        background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+    }
+
+    .monitoring-subtitle {
+        color: #6b7280;
+        font-size: 0.9rem;
+        margin: 0;
+        font-weight: 400;
+    }
+
+    .monitoring-kpis {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+        gap: 0.8rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .monitoring-kpi {
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        padding: 0.9rem 1rem;
+        border: 1px solid #e2e8f0;
+        background: #ffffff;
+        border-radius: 0.75rem;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+        transition: all 0.2s ease;
+    }
+
+    .monitoring-kpi:hover {
+        border-color: #10b981;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+        transform: translateY(-2px);
+    }
+
+    .monitoring-kpi-icon {
+        width: 2.5rem;
+        height: 2.5rem;
+        flex-shrink: 0;
+        border-radius: 0.6rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .monitoring-kpi-icon svg {
+        width: 1.2rem;
+        height: 1.2rem;
+        stroke-width: 2;
+    }
+
+    .monitoring-kpi-open .monitoring-kpi-icon {
+        background: #ffedd5;
+        color: #ea580c;
+    }
+
+    .monitoring-kpi-investigation .monitoring-kpi-icon {
+        background: #dbeafe;
+        color: #2563eb;
+    }
+
+    .monitoring-kpi-referred .monitoring-kpi-icon {
+        background: #ede9fe;
+        color: #7c3aed;
+    }
+
+    .monitoring-kpi-resolved .monitoring-kpi-icon {
+        background: #dcfce7;
+        color: #16a34a;
+    }
+
+    .monitoring-kpi-text h4 {
+        margin: 0 0 0.2rem 0;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+    }
+
+    .monitoring-kpi-number {
+        font-size: 1.4rem;
+        font-weight: 800;
+        color: #0f172a;
+    }
+
+    .monitoring-work-area {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 1rem;
+        overflow: hidden;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+    }
+
+    .monitoring-work-stripe {
+        height: 4px;
+        background: linear-gradient(90deg, #0f172a 0%, #1e293b 40%, #f59e0b 70%, #10b981 100%);
+    }
+
+    .monitoring-work-header {
+        padding: 1.4rem 1.6rem 1.2rem;
+        background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+        text-align: center;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .monitoring-work-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.4rem 0.85rem;
+        border-radius: 999px;
+        font-size: 0.65rem;
+        font-weight: 800;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: #0f172a;
+        background: #e2e8f0;
+        margin-bottom: 0.6rem;
+    }
+
+    .monitoring-work-title {
+        margin: 0;
+        font-size: 1.2rem;
+        font-weight: 800;
+        color: #0f172a;
+        letter-spacing: -0.01em;
+    }
+
+    .monitoring-work-lead {
+        margin: 0.35rem auto 0;
+        max-width: 720px;
+        font-size: 0.9rem;
+        color: #64748b;
+    }
+
+    .cases-toolbar {
+        padding: 1rem 1.4rem 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .cases-toolbar-actions {
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .cases-add-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.6rem 1rem;
+        border-radius: 0.6rem;
+        border: none;
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        color: #ffffff;
+        font-size: 0.78rem;
+        font-weight: 700;
+        cursor: pointer;
+        box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .cases-add-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3);
+    }
+
+    .cases-filter-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        align-items: center;
+    }
+
+    .cases-search {
+        position: relative;
+        flex: 1;
+        min-width: 220px;
+    }
+
+    .cases-search svg {
+        position: absolute;
+        left: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 1rem;
+        height: 1rem;
+        color: #94a3b8;
+    }
+
+    .cases-search input {
+        width: 100%;
+        padding: 0.6rem 0.8rem 0.6rem 2.25rem;
+        border: 1px solid #cbd5e1;
+        border-radius: 0.6rem;
+        font-size: 0.82rem;
+        outline: none;
+        background: #ffffff;
+    }
+
+    .cases-select {
+        padding: 0.6rem 2rem 0.6rem 0.8rem;
+        border: 1px solid #cbd5e1;
+        border-radius: 0.6rem;
+        font-size: 0.8rem;
+        background: #ffffff;
+        cursor: pointer;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2364748b'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 0.6rem center;
+    }
+
+    .cases-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        padding: 1rem 1.4rem 1.6rem;
+    }
+
+    .monitoring-empty-state {
+        text-align: center;
+        padding: 2.5rem 1.5rem;
+        color: #94a3b8;
+    }
+
+    .monitoring-empty-state svg {
+        width: 3.5rem;
+        height: 3.5rem;
+        color: #cbd5e1;
+        margin: 0 auto 1rem;
+    }
+
+    .monitoring-empty-state h3 {
+        font-size: 1.05rem;
+        font-weight: 600;
+        color: #1f2937;
+        margin: 0 0 0.4rem 0;
+    }
+
+    .monitoring-empty-state p {
+        margin: 0;
+        font-size: 0.9rem;
+        color: #64748b;
+    }
+
+    @media (max-width: 768px) {
+        .monitoring-shell {
+            padding: 1.2rem 1rem;
+        }
+        .monitoring-title {
+            font-size: 1.25rem;
+        }
+        .monitoring-work-header {
+            padding: 1.2rem 1rem 1rem;
+        }
+        .cases-list {
+            padding: 1rem;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .monitoring-kpis {
+            grid-template-columns: 1fr;
+        }
+
+        .cases-toolbar {
+            padding: 0.9rem 1rem 0;
+        }
+
+        .cases-toolbar-actions {
+            justify-content: stretch;
+        }
+
+        .cases-add-btn {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .cases-filter-row {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .cases-select {
+            width: 100%;
+        }
+
+        .case-item {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .case-item > button {
+            align-self: flex-start;
+        }
     }
 </style>
 {% endblock %}
@@ -56,55 +370,94 @@
 {% block content %}
 {% csrf_token %}
 
-<div class="cases-shell">
-    <!-- Page Header -->
-    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.95rem; gap: 1rem; flex-wrap: wrap;">
-        <div>
-            <h1 class="cases-page-title">Case Management</h1>
-            <p style="font-size: 0.75rem; color: #64748b; margin-top: 0.2rem;">Module 5 — Every complaint gets a case record · No verbal-only handling</p>
+<div class="monitoring-shell">
+    <div class="monitoring-kicker">Module 5</div>
+    <h1 class="monitoring-title">Case Management</h1>
+    <p class="monitoring-subtitle">Every complaint gets a case record · No verbal-only handling</p>
+</div>
+
+<div class="monitoring-kpis">
+    <div class="monitoring-kpi monitoring-kpi-open">
+        <div class="monitoring-kpi-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <circle cx="12" cy="12" r="9"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
         </div>
-        <button onclick="openNewCaseModal()" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.52rem 0.88rem; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; border: none; border-radius: 0.5rem; font-size: 0.72rem; font-weight: 700; cursor: pointer; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); white-space: nowrap;">
-            ➕ Log New Case
-        </button>
+        <div class="monitoring-kpi-text">
+            <h4>Open</h4>
+            <div class="monitoring-kpi-number">{{ status_counts.open }}</div>
+        </div>
     </div>
 
-    <!-- Controls Bar -->
-    <div style="display: flex; gap: 0.75rem; margin-bottom: 0.85rem; flex-wrap: wrap; align-items: center; padding: 0.6rem; border: 1px solid #e2e8f0; background: #f8fafc; border-radius: 0.7rem;">
-        <div style="display: flex; align-items: center; gap: 0.65rem; padding: 0.46rem 0.68rem; background: #fffbeb; border-radius: 0.55rem; border: 1px solid #fde68a;">
-            <svg style="width: 20px; height: 20px; color: #d97706;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-            <div>
-                <p style="font-size: 0.625rem; color: #92400e; margin: 0; text-transform: uppercase; font-weight: 500;">Open</p>
-                <p style="font-size: 1.25rem; font-weight: 700; color: #d97706; margin: 0;">{{ status_counts.open }}</p>
-            </div>
+    <div class="monitoring-kpi monitoring-kpi-investigation">
+        <div class="monitoring-kpi-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <circle cx="11" cy="11" r="7"/>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
         </div>
-        <div style="display: flex; align-items: center; gap: 0.65rem; padding: 0.46rem 0.68rem; background: #f3e8ff; border-radius: 0.55rem; border: 1px solid #e9d5ff;">
-            <svg style="width: 20px; height: 20px; color: #a855f7;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>
-            <div>
-                <p style="font-size: 0.625rem; color: #6b21a8; margin: 0; text-transform: uppercase; font-weight: 500;">Referred</p>
-                <p style="font-size: 1.25rem; font-weight: 700; color: #a855f7; margin: 0;">{{ status_counts.referred }}</p>
-            </div>
+        <div class="monitoring-kpi-text">
+            <h4>Investigation</h4>
+            <div class="monitoring-kpi-number">{{ status_counts.investigation }}</div>
         </div>
-        <div style="display: flex; align-items: center; gap: 0.65rem; padding: 0.46rem 0.68rem; background: #f0fdf4; border-radius: 0.55rem; border: 1px solid #bbf7d0;">
-            <svg style="width: 20px; height: 20px; color: #16a34a;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-            <div>
-                <p style="font-size: 0.625rem; color: #166534; margin: 0; text-transform: uppercase; font-weight: 500;">Resolved</p>
-                <p style="font-size: 1.25rem; font-weight: 700; color: #16a34a; margin: 0;">{{ status_counts.resolved }}</p>
-            </div>
-        </div>
-        <div style="flex: 1; min-width: 200px; position: relative;">
-            <svg style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); width: 1rem; height: 1rem; color: #94a3b8;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
-            <input type="text" id="searchInput" placeholder="Complainant, case #, description..." style="width: 100%; padding: 0.56rem 0.72rem 0.56rem 2.25rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.78rem; outline: none;">
-        </div>
-        <select id="typeFilter" style="padding: 0.56rem 1.9rem 0.56rem 0.7rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.75rem; background: white; cursor: pointer; appearance: none; background-image: url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2364748b'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E&quot;); background-repeat: no-repeat; background-position: right 0.5rem center;">
-            <option value="all">All Types</option>
-            {% for code, label in case_type_choices %}
-            <option value="{{ code }}">{{ label }}</option>
-            {% endfor %}
-        </select>
     </div>
 
-    <!-- Cases List (Horizontal Items) -->
-    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+    <div class="monitoring-kpi monitoring-kpi-referred">
+        <div class="monitoring-kpi-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M4 12h10"/>
+                <path d="M10 6l6 6-6 6"/>
+            </svg>
+        </div>
+        <div class="monitoring-kpi-text">
+            <h4>Referred</h4>
+            <div class="monitoring-kpi-number">{{ status_counts.referred }}</div>
+        </div>
+    </div>
+
+    <div class="monitoring-kpi monitoring-kpi-resolved">
+        <div class="monitoring-kpi-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <circle cx="12" cy="12" r="9"/>
+                <path d="M8 12l2.5 2.5L16 9"/>
+            </svg>
+        </div>
+        <div class="monitoring-kpi-text">
+            <h4>Resolved</h4>
+            <div class="monitoring-kpi-number">{{ status_counts.resolved }}</div>
+        </div>
+    </div>
+</div>
+
+<div class="monitoring-work-area">
+    <div class="monitoring-work-stripe"></div>
+    <div class="monitoring-work-header">
+        <span class="monitoring-work-badge">▸ CASE MANAGEMENT DESK</span>
+        <h2 class="monitoring-work-title">Case queue &mdash; ready for review</h2>
+        <p class="monitoring-work-lead">Search, filter, and open a case record to log findings or update status.</p>
+    </div>
+
+    <div class="cases-toolbar">
+        <div class="cases-toolbar-actions">
+            <button onclick="openNewCaseModal()" class="cases-add-btn">➕ Log New Case</button>
+        </div>
+        <div class="cases-filter-row">
+            <div class="cases-search">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
+                <input type="text" id="searchInput" placeholder="Complainant, case #, description...">
+            </div>
+            <select id="typeFilter" class="cases-select">
+                <option value="all">All Types</option>
+                {% for code, label in case_type_choices %}
+                <option value="{{ code }}">{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <div class="cases-list">
         {% for case in cases %}
         <div class="case-item scroll-animate-left" onclick="openCaseModal('{{ case.id }}')" data-case-id="{{ case.id }}" data-status="{{ case.status }}" data-type="{{ case.case_type }}" style="background: white; border-left: 4px solid {% if case.status == 'open' %}#f59e0b{% elif case.status == 'investigation' %}#3b82f6{% elif case.status == 'referred' %}#a855f7{% elif case.status == 'pending_decision' %}#ea580c{% elif case.status == 'resolved' %}#22c55e{% else %}#6b7280{% endif %}; padding: 1rem 1.25rem; border-radius: 8px; display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; cursor: pointer; transition: all 150ms ease; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
             <div style="flex: 1; min-width: 0;">
@@ -172,13 +525,16 @@
             </button>
         </div>
         {% empty %}
-        <div style="text-align: center; padding: 3rem 2rem; background: white; border-radius: 12px;">
-            <div style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;">📂</div>
-            <p style="font-size: 1rem; color: var(--gray-600); margin: 0;">No cases match your search</p>
+        <div class="monitoring-empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M12 16v-4M12 8h.01"/>
+            </svg>
+            <h3>No cases match your search</h3>
+            <p>Try adjusting the filters or log a new case.</p>
         </div>
         {% endfor %}
     </div>
-</div>
 </div>
 
 <!-- Case Detail Modal -->

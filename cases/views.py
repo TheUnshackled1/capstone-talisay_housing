@@ -8,6 +8,7 @@ from functools import wraps
 import json
 
 from .models import Case, CaseNote
+from accounts.models import FIELD_DESK_POSITIONS
 
 
 def verify_position(view_func):
@@ -81,6 +82,12 @@ def case_management_dashboard(request, position):
     if filter_type != 'all':
         cases = cases.filter(case_type=filter_type)
 
+    base_template = (
+        'field_base.html'
+        if request.user.position in FIELD_DESK_POSITIONS
+        else 'staff_base.html'
+    )
+
     context = {
         'cases': cases,
         'status_counts': status_counts,
@@ -88,6 +95,7 @@ def case_management_dashboard(request, position):
         'filter_status': filter_status,
         'filter_type': filter_type,
         'case_type_choices': Case.CASE_TYPE_CHOICES,
+        'base_template': base_template,
     }
 
     return render(request, 'cases/case_management.html', context)
