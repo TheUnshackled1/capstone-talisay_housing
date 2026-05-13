@@ -850,292 +850,365 @@
         white-space: pre-wrap;
     }
     .inspection-summary-item.decision {
-        background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
-        border-color: #86efac;
-        border-left: 5px solid #10b981;
+        background: #ffffff;
+        border-color: #e2e8f0;
+        border-left: 5px solid #94a3b8;
     }
     .inspection-summary-item.decision .inspection-summary-label {
+        color: #475569;
+    }
+    .inspection-summary-item.decision.decision--normal_progress {
+        background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
+        border-color: #86efac;
+        border-left-color: #10b981;
+    }
+    .inspection-summary-item.decision.decision--normal_progress .inspection-summary-label {
         color: #047857;
+    }
+    .inspection-summary-item.decision.decision--normal_progress .inspection-summary-value {
+        color: #047857;
+    }
+    .inspection-summary-item.decision.decision--no_progress {
+        background: linear-gradient(135deg, #fef2f2 0%, #ffffff 100%);
+        border-color: #fecaca;
+        border-left-color: #ef4444;
+    }
+    .inspection-summary-item.decision.decision--no_progress .inspection-summary-label {
+        color: #b91c1c;
+    }
+    .inspection-summary-item.decision.decision--no_progress .inspection-summary-value {
+        color: #991b1b;
     }
 
-    .unit-detail-head {
-        flex-shrink: 0;
-        padding: 1.15rem 1.4rem 1rem !important;
-        border-bottom: 1px solid #e5e9ef !important;
-        background: linear-gradient(180deg, #ecfdf5 0%, #ffffff 100%);
-        display: flex !important;
-        align-items: flex-start !important;
-        justify-content: space-between !important;
-        gap: 0.75rem;
+    .monitoring-task-hint--blocked {
+        color: #64748b !important;
+        font-weight: 600 !important;
     }
-    .unit-detail-head-text { min-width: 0; flex: 1 1 auto; }
-    .unit-detail-kicker {
-        margin: 0 0 0.3rem;
-        font-size: 0.6rem;
-        font-weight: 800;
-        letter-spacing: 0.18em;
-        text-transform: uppercase;
-        color: #047857;
-    }
-    .unit-detail-title {
-        font-family: 'Source Serif Pro', Georgia, serif;
-        font-size: 1.18rem !important;
+    .monitoring-task-hint--decision-normal {
+        color: #047857 !important;
         font-weight: 700 !important;
-        color: #064e3b !important;
-        letter-spacing: -0.01em;
-        margin: 0 !important;
     }
-    .unit-detail-status {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.35rem;
-        padding: 0.28rem 0.7rem;
-        border-radius: 999px;
-        font-size: 0.66rem;
-        font-weight: 800;
-        letter-spacing: 0.04em;
-        margin: 0.55rem 0 0 !important;
-        border: 1px solid;
-        white-space: nowrap;
-        max-width: max-content;
+    .monitoring-task-hint--decision-no {
+        color: #b91c1c !important;
+        font-weight: 700 !important;
     }
-    .unit-detail-status::before {
-        content: '';
-        width: 0.42rem; height: 0.42rem;
-        border-radius: 50%;
-        background: currentColor;
+    .monitoring-task-hint--pending-review {
+        color: #b45309 !important;
+        font-weight: 600 !important;
     }
-    .unit-detail-status[data-state="occupied"] {
+    .monitoring-task-hint--program-complete {
+        font-weight: 700 !important;
+    }
+
+    .monitoring-task-card.completed.completed--normal-progress {
+        background: #f0fdf4;
+        border-color: #86efac;
+    }
+    .monitoring-task-card.completed.completed--normal-progress::before {
+        background: #10b981;
+    }
+    .monitoring-task-card.completed.completed--normal-progress .monitoring-task-status-badge {
+        background: #d1fae5;
         color: #047857;
-        background: #ecfdf5;
         border-color: #a7f3d0;
     }
-    .unit-detail-status[data-state="vacant"] {
-        color: #1d4ed8;
-        background: #eff6ff;
-        border-color: #93c5fd;
+    .monitoring-task-card.completed.completed--no-progress {
+        background: #fef2f2;
+        border-color: #fecaca;
     }
-    .unit-detail-status[data-state="notice30"] {
-        color: #92400e;
+    .monitoring-task-card.completed.completed--no-progress::before {
+        background: #ef4444;
+    }
+    .monitoring-task-card.completed.completed--no-progress .monitoring-task-status-badge {
+        background: #fee2e2;
+        color: #b91c1c;
+        border-color: #fca5a5;
+    }
+    .monitoring-task-card.completed.completed--pending-review {
         background: #fffbeb;
         border-color: #fde68a;
     }
-    .unit-detail-status[data-state="final"] {
-        color: #991b1b;
-        background: #fef2f2;
-        border-color: #fca5a5;
+    .monitoring-task-card.completed.completed--pending-review::before {
+        background: #f59e0b;
     }
-    .unit-detail-status[data-state="repo"] {
-        color: #475569;
-        background: #f1f5f9;
-        border-color: #cbd5e1;
+    .monitoring-task-card.completed.completed--pending-review .monitoring-task-status-badge {
+        background: #fef3c7;
+        color: #b45309;
+        border-color: #fcd34d;
+    }
+
+    .monitoring-history-decision {
+        font-weight: 700;
+        color: #64748b;
+    }
+    .monitoring-history-decision--normal {
+        color: #047857;
+    }
+    .monitoring-history-decision--no {
+        color: #b91c1c;
+    }
+
+    /* ==========================================================
+       Modern Unit Detail Modal Improvisations
+       ========================================================== */
+    .unit-detail-head {
+        padding: 1.5rem 1.4rem 1.25rem !important;
+        border-bottom: 1px solid #e2e8f0 !important;
+        background: white !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        text-align: center;
+        position: relative;
+        z-index: 20;
+    }
+    .unit-detail-head .unit-detail-head-text {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+    }
+    .unit-detail-kicker {
+        font-size: 0.62rem !important;
+        font-weight: 800 !important;
+        letter-spacing: 0.18em !important;
+        text-transform: uppercase !important;
+        color: #047857 !important;
+        margin-bottom: 0.5rem !important;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+    .unit-detail-kicker::before {
+        content: '';
+        width: 6px; height: 6px;
+        border-radius: 50%;
+        background: #10b981;
+    }
+    .unit-detail-title {
+        font-family: 'Source Serif Pro', Georgia, serif !important;
+        font-size: 1.75rem !important;
+        font-weight: 700 !important;
+        color: #0f172a !important;
+        margin-bottom: 0.75rem !important;
+    }
+    .unit-detail-status {
+        margin: 0 !important;
+        font-size: 0.68rem !important;
+        padding: 0.35rem 1rem !important;
+        border-radius: 999px !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.02em !important;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
     }
     .unit-detail-close {
-        flex-shrink: 0;
-        background: #f1f5f9 !important;
-        color: #475569 !important;
+        position: absolute !important;
+        right: 1.25rem !important;
+        top: 1.25rem !important;
+        width: 2.2rem !important;
+        height: 2.2rem !important;
+        background: transparent !important;
+        color: #94a3b8 !important;
         border: none !important;
-        border-radius: 8px !important;
-        width: 2rem !important;
-        height: 2rem !important;
-        display: inline-flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        font-size: 1.1rem !important;
-        cursor: pointer;
-        padding: 0 !important;
-        transition: background 0.15s ease, color 0.15s ease;
+        font-size: 1.5rem !important;
+        transition: all 0.2s ease !important;
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
     }
     .unit-detail-close:hover {
-        background: #e2e8f0 !important;
-        color: #0f172a !important;
+        color: #475569 !important;
+        background: #f1f5f9 !important;
+        border-radius: 8px !important;
     }
 
     .unit-detail-body {
         flex: 1;
         overflow-y: auto;
-        padding: 1.1rem 1.4rem 1.2rem !important;
+        padding: 1.5rem 1.4rem !important;
         background: #fafbfc;
     }
-
-    .unit-detail-section { margin-bottom: 1.1rem; }
-    .unit-detail-section:last-child { margin-bottom: 0; }
-    .unit-detail-label {
-        margin: 0 0 0.4rem !important;
-        font-size: 0.6rem !important;
-        font-weight: 800 !important;
-        letter-spacing: 0.12em !important;
-        text-transform: uppercase !important;
-        color: #047857 !important;
-        display: flex;
-        align-items: center;
-        gap: 0.4rem;
+    .unit-detail-section {
+        margin-bottom: 1.25rem !important;
     }
-    .unit-detail-label::before {
-        content: '';
-        width: 0.42rem; height: 0.42rem;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #10b981 0%, #047857 100%);
-    }
-    .unit-detail-occupant {
-        margin: 0 !important;
-        font-size: 0.95rem !important;
-        font-weight: 700 !important;
-        color: #0f172a !important;
-        line-height: 1.35;
-    }
-    .unit-detail-occupant-sub {
-        margin: 0.3rem 0 0 !important;
-        font-size: 0.78rem !important;
-        color: #64748b !important;
+    .unit-detail-section:last-child {
+        margin-bottom: 0 !important;
     }
 
-    .unit-detail-poss-card {
-        background: #ffffff !important;
-        border: 1px solid #e5e9ef !important;
-        border-left: 3px solid #10b981 !important;
-        border-radius: 0.7rem !important;
-        padding: 0.85rem 1rem !important;
-        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-    }
-    .unit-detail-poss-grid {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 0.75rem;
-    }
-    .unit-detail-poss-cell .poss-cell-label {
-        margin: 0;
-        font-size: 0.6rem;
-        font-weight: 700;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        color: #64748b;
-        line-height: 1.2;
-    }
-    .unit-detail-poss-cell .poss-cell-value {
-        margin: 0.25rem 0 0;
-        font-size: 0.86rem;
-        font-weight: 800;
-        color: #0f172a;
-        line-height: 1.2;
-        font-variant-numeric: tabular-nums;
-    }
-
-    .occupied-record-section {
-        margin-top: 0.9rem;
-        padding-top: 0.85rem;
-        border-top: 1px solid #e2e8f0;
-    }
-    .occupied-record-title {
-        margin: 0 0 0.55rem;
-        color: #0f172a;
-        font-size: 0.72rem;
-        font-weight: 800;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-    }
-    .occupied-record-table {
-        width: 100%;
-        border-collapse: collapse;
-        overflow: hidden;
-        border: 1px solid #e2e8f0;
-        border-radius: 0.65rem;
-        font-size: 0.76rem;
-    }
-    .occupied-record-table th {
-        padding: 0.48rem 0.55rem;
-        background: #f8fafc;
-        color: #475569;
-        text-align: left;
-        font-size: 0.62rem;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
-    }
-    .occupied-record-table td {
-        padding: 0.55rem;
-        border-top: 1px solid #e2e8f0;
-        color: #0f172a;
-        vertical-align: top;
-    }
-    .occupied-record-empty {
-        margin: 0;
-        padding: 0.65rem 0.75rem;
-        border: 1px dashed #cbd5e1;
-        border-radius: 0.65rem;
-        color: #64748b;
-        background: #f8fafc;
-        font-size: 0.76rem;
-    }
-    .compliance-record-list {
-        display: grid;
-        gap: 0.5rem;
-    }
-    .compliance-record-item {
-        padding: 0.65rem 0.7rem;
-        border: 1px solid #e2e8f0;
-        border-left: 3px solid #2563eb;
-        border-radius: 0.65rem;
-        background: #f8fafc;
-    }
-    .compliance-record-item strong {
-        display: block;
-        color: #0f172a;
-        font-size: 0.78rem;
-    }
-    .compliance-record-item span {
-        display: block;
-        margin-top: 0.18rem;
-        color: #475569;
-        font-size: 0.72rem;
-        line-height: 1.35;
-    }
-
+    /* Premium Collapsible Section Headers */
     .unit-monitor-toggle {
-        width: 100%;
+        width: 100% !important;
         display: flex !important;
         align-items: center !important;
-        justify-content: space-between !important;
-        gap: 0.75rem;
-        padding: 0.78rem 0.95rem !important;
-        border: 1px solid #a7f3d0 !important;
-        border-radius: 0.6rem !important;
-        background: #ecfdf5 !important;
-        color: #047857 !important;
-        font-size: 0.82rem !important;
-        font-weight: 700;
-        letter-spacing: 0.02em;
+        justify-content: center !important;
+        gap: 0.75rem !important;
+        background: #f0fdfa !important; /* Light emerald background */
+        border: 1px solid #ccfbf1 !important;
+        color: #0f172a !important;
+        padding: 1.15rem 1.25rem !important;
+        font-size: 0.9rem !important;
+        font-weight: 700 !important;
+        letter-spacing: -0.01em !important;
+        border-radius: 14px !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.04) !important;
+        margin-bottom: 0.85rem !important;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
         cursor: pointer;
-        transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
     }
     .unit-monitor-toggle:hover {
-        background: #d1fae5 !important;
-        border-color: #6ee7b7 !important;
-        box-shadow: 0 1px 2px rgba(5, 150, 105, 0.1);
+        border-color: #cbd5e1 !important;
+        background: #f8fafc !important;
+        transform: translateY(-1px);
     }
     .unit-monitor-toggle[aria-expanded="true"] {
         background: linear-gradient(180deg, #10b981 0%, #059669 100%) !important;
-        color: #ffffff !important;
         border-color: #047857 !important;
+        color: #ffffff !important;
+        box-shadow: 0 8px 20px rgba(5, 150, 105, 0.15) !important;
     }
-    .unit-monitor-toggle .toggle-icon { font-size: 0.85rem; line-height: 1; transition: transform 0.18s ease; }
-    .unit-monitor-toggle[aria-expanded="true"] .toggle-icon { transform: rotate(180deg); }
+    .unit-monitor-toggle[aria-expanded="true"] .toggle-icon {
+        color: #ffffff !important;
+    }
+    .unit-monitor-toggle .toggle-icon {
+        color: #94a3b8;
+        font-size: 0.75rem !important;
+    }
+    .unit-monitor-toggle[aria-expanded="true"] .toggle-icon {
+        color: #10b981;
+    }
 
+    /* Content Cards Inside Panels */
     .unit-monitor-panel {
-        margin-top: 0.55rem !important;
-        background: #ffffff !important;
-        border: 1px solid #e5e9ef !important;
-        border-radius: 0.7rem !important;
-        padding: 1rem !important;
-        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0.75rem 0 !important;
+        margin-top: 0 !important;
     }
-    .unit-monitor-panel .panel-label {
-        margin: 0 0 0.7rem;
-        font-size: 0.6rem;
+
+    .premium-data-card {
+        background: #ffffff;
+        border: 1px solid #e5e9ef;
+        border-radius: 14px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
+    }
+    .premium-data-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; bottom: 0;
+        width: 4px;
+        background: #e2e8f0;
+    }
+    .premium-data-card.border-green::before { background: #10b981; }
+    .premium-data-card.border-blue::before { background: #3b82f6; }
+    .premium-data-card.border-amber::before { background: #f59e0b; }
+
+    .premium-card-title {
+        font-size: 0.65rem;
         font-weight: 800;
         letter-spacing: 0.12em;
         text-transform: uppercase;
-        color: #047857;
+        color: #64748b;
+        margin: 0 0 1.25rem 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
     }
+
+    /* Grid Improvements */
+    .premium-grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem 1rem;
+    }
+    .premium-data-cell .cell-label {
+        font-size: 0.6rem;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: #94a3b8;
+        margin-bottom: 0.35rem;
+    }
+    .premium-data-cell .cell-value {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin: 0;
+        line-height: 1.3;
+    }
+    .premium-data-cell .cell-value.monospace {
+        font-family: ui-monospace, monospace;
+        background: #f1f5f9;
+        padding: 0.2rem 0.5rem;
+        border-radius: 6px;
+        font-size: 0.82rem;
+    }
+
+    /* Tables */
+    .premium-table-wrap {
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        overflow: hidden;
+        margin-top: 1rem;
+    }
+    .premium-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .premium-table th {
+        background: #f8fafc;
+        padding: 0.75rem 1rem;
+        text-align: left;
+        font-size: 0.62rem;
+        font-weight: 800;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+    }
+    .premium-table td {
+        padding: 0.85rem 1rem;
+        border-top: 1px solid #f1f5f9;
+        font-size: 0.82rem;
+        color: #1e293b;
+    }
+    .premium-table tr:hover td {
+        background: #fafbfc;
+    }
+
+    /* Monitoring Cards in Timeline */
+    .monitoring-task-card {
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 1.25rem;
+        background: #ffffff;
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+        transition: all 0.25s ease;
+    }
+    .monitoring-task-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+        border-color: #cbd5e1;
+    }
+    .monitoring-task-label {
+        font-size: 0.65rem;
+        font-weight: 800;
+        color: #64748b;
+    }
+    .monitoring-task-date {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin: 0.5rem 0;
+    }
+    .monitoring-task-status-badge {
+        font-size: 0.68rem;
+        font-weight: 700;
+        padding: 0.35rem 0.85rem;
+    }
+
     .unit-monitor-progress-row {
         display: flex;
         justify-content: space-between;
@@ -1283,29 +1356,68 @@
         background: #ffffff !important;
         border-top: 1px solid #e5e9ef !important;
         display: flex;
-        gap: 0.6rem;
+        justify-content: center;
     }
-    .unit-detail-action-sms {
-        flex: 1;
+    .unit-detail-footer-actions {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: stretch;
+        justify-content: center;
+        gap: 0.55rem;
+        width: 100%;
+        max-width: 100%;
+    }
+    .unit-detail-footer-btn {
+        flex: 1 1 8.25rem;
+        box-sizing: border-box;
+        min-height: 2.85rem;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        gap: 0.4rem;
-        padding: 0.7rem 1rem !important;
-        background: linear-gradient(180deg, #1d4ed8 0%, #1e3a8a 100%) !important;
-        color: #ffffff !important;
-        border: 1px solid #172554 !important;
+        gap: 0.45rem;
+        padding: 0.65rem 0.75rem !important;
         border-radius: 8px !important;
-        font-size: 0.82rem !important;
+        font-size: 0.8rem !important;
         font-weight: 700 !important;
         cursor: pointer;
         letter-spacing: 0.01em;
+        text-align: center;
+        text-decoration: none !important;
+        line-height: 1.25;
+        transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease, border-color 0.15s ease;
+    }
+    .unit-detail-action-sms {
+        border: 1px solid #172554 !important;
+        background: linear-gradient(180deg, #1d4ed8 0%, #1e3a8a 100%) !important;
+        color: #ffffff !important;
         box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.18);
-        transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
     }
     .unit-detail-action-sms:hover {
         background: linear-gradient(180deg, #1e3a8a 0%, #172554 100%) !important;
         box-shadow: 0 4px 14px rgba(29, 78, 216, 0.32);
+        transform: translateY(-1px);
+    }
+    .unit-detail-action-update {
+        border: 1px solid #047857 !important;
+        background: linear-gradient(180deg, #10b981 0%, #059669 100%) !important;
+        color: #ffffff !important;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    }
+    .unit-detail-action-update:hover {
+        background: linear-gradient(180deg, #059669 0%, #047857 100%) !important;
+        box-shadow: 0 4px 14px rgba(5, 150, 105, 0.32);
+        transform: translateY(-1px);
+    }
+    .unit-detail-action-disqualify {
+        border: 1px solid #991b1b !important;
+        background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%) !important;
+        color: #ffffff !important;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    }
+    .unit-detail-action-disqualify:hover {
+        background: linear-gradient(180deg, #dc2626 0%, #b91c1c 100%) !important;
+        box-shadow: 0 4px 14px rgba(220, 38, 38, 0.32);
         transform: translateY(-1px);
     }
 
@@ -1692,59 +1804,55 @@
 
         <!-- Body -->
         <div class="unit-detail-body">
-            <!-- Occupant -->
+            <!-- Occupant Section -->
             <section class="unit-detail-section">
                 <button type="button" id="beneficiaryToggleBtn" class="unit-monitor-toggle" aria-expanded="false">
                     <span>Beneficiary · occupant &amp; household</span>
                     <span id="beneficiaryToggleIcon" class="toggle-icon" aria-hidden="true">▼</span>
                 </button>
                 <div id="beneficiaryDropdown" class="unit-monitor-panel" style="display: none;">
-                    <div class="unit-detail-poss-card">
-                        <p class="panel-label">Lot beneficiary</p>
-                        <div class="unit-detail-poss-grid" style="margin-bottom: 0.95rem;">
-                            <div class="unit-detail-poss-cell">
-                                <p class="poss-cell-label">Name</p>
-                                <p id="modalBeneficiaryName" class="poss-cell-value">—</p>
+                    <div class="premium-data-card border-green">
+                        <p class="premium-card-title">Lot beneficiary</p>
+                        <div class="premium-grid-3">
+                            <div class="premium-data-cell">
+                                <p class="cell-label">Name</p>
+                                <p id="modalBeneficiaryName" class="cell-value">—</p>
                             </div>
-                            <div class="unit-detail-poss-cell">
-                                <p class="poss-cell-label">Reference no.</p>
-                                <p id="modalBeneficiaryRef" class="poss-cell-value">—</p>
+                            <div class="premium-data-cell">
+                                <p class="cell-label">Reference no.</p>
+                                <p id="modalBeneficiaryRef" class="cell-value monospace">—</p>
                             </div>
-                            <div class="unit-detail-poss-cell">
-                                <p class="poss-cell-label">Household members</p>
-                                <p id="modalHouseholdMembers" class="poss-cell-value">—</p>
-                            </div>
-                        </div>
-                        <p class="unit-detail-label">Lot possession details</p>
-                        <div class="unit-detail-poss-grid">
-                            <div class="unit-detail-poss-cell">
-                                <p class="poss-cell-label">Date lot awarded</p>
-                                <p id="lotAwardedDate" class="poss-cell-value">—</p>
-                            </div>
-                            <div class="unit-detail-poss-cell">
-                                <p class="poss-cell-label">Date possessed</p>
-                                <p id="lotPossessedDate" class="poss-cell-value">—</p>
-                            </div>
-                            <div class="unit-detail-poss-cell">
-                                <p class="poss-cell-label">Days possessed</p>
-                                <p id="lotPossessedDays" class="poss-cell-value">—</p>
+                            <div class="premium-data-cell">
+                                <p class="cell-label">Household members</p>
+                                <p id="modalHouseholdMembers" class="cell-value">—</p>
                             </div>
                         </div>
-                        <p style="margin: 0.7rem 0 0; color: #64748b; font-size: 0.75rem; line-height: 1.45;">
+
+                        <hr style="border: none; border-top: 1px solid #f1f5f9; margin: 1.5rem 0;">
+
+                        <p class="premium-card-title">Lot possession details</p>
+                        <div class="premium-grid-3">
+                            <div class="premium-data-cell">
+                                <p class="cell-label">Date lot awarded</p>
+                                <p id="lotAwardedDate" class="cell-value">—</p>
+                            </div>
+                            <div class="premium-data-cell">
+                                <p class="cell-label">Date possessed</p>
+                                <p id="lotPossessedDate" class="cell-value">—</p>
+                            </div>
+                            <div class="premium-data-cell">
+                                <p class="cell-label">Days possessed</p>
+                                <p id="lotPossessedDays" class="cell-value">—</p>
+                            </div>
+                        </div>
+                        <p style="margin: 1rem 0 0; color: #64748b; font-size: 0.75rem; line-height: 1.5; font-style: italic;">
                             The award date starts possession. The beneficiary has 30 days to show house-building progress before scheduled monitoring begins.
                         </p>
-                        <div class="occupied-record-section">
-                            <p class="occupied-record-title">Household members</p>
-                            <div id="householdMembersRecord"></div>
-                        </div>
-                        <div class="occupied-record-section">
-                            <p class="occupied-record-title">Monitoring history</p>
-                            <div id="monitoringHistoryRecord"></div>
-                        </div>
-                        <div class="occupied-record-section">
-                            <p class="occupied-record-title">Compliance records</p>
-                            <div id="complianceRecordsRecord"></div>
-                        </div>
+                    </div>
+
+                    <div class="premium-data-card border-blue">
+                        <p class="premium-card-title">Household members list</p>
+                        <div id="householdMembersRecord"></div>
                     </div>
                 </div>
             </section>
@@ -1756,34 +1864,92 @@
                     <span id="lotMonitoringToggleIcon" class="toggle-icon" aria-hidden="true">▼</span>
                 </button>
                 <div id="lotMonitoringDropdown" class="unit-monitor-panel" style="display: none;">
-                    <div class="unit-detail-poss-grid" style="margin-bottom:0.75rem;">
-                        <div class="unit-detail-poss-cell">
-                            <p class="poss-cell-label">Monitoring starts</p>
-                            <p id="monitoringStartsOn" class="poss-cell-value">—</p>
-                        </div>
-                        <div class="unit-detail-poss-cell">
-                            <p class="poss-cell-label">Award date</p>
-                            <p id="awardActivationDate" class="poss-cell-value">—</p>
-                        </div>
-                        <div class="unit-detail-poss-cell">
-                            <p class="poss-cell-label">Monitoring policy</p>
-                            <p class="poss-cell-value">30-day grace, then Day 15 / Day 30</p>
+                    <div class="premium-data-card border-green">
+                        <p class="premium-card-title">Monitoring schedule</p>
+                        <div class="premium-grid-3">
+                            <div class="premium-data-cell">
+                                <p class="cell-label">Monitoring starts</p>
+                                <p id="monitoringStartsOn" class="cell-value">—</p>
+                            </div>
+                            <div class="premium-data-cell">
+                                <p class="cell-label">Award date</p>
+                                <p id="awardActivationDate" class="cell-value">—</p>
+                            </div>
+                            <div class="premium-data-cell">
+                                <p class="cell-label">Monitoring policy</p>
+                                <p class="cell-value">30-day grace, then Day 15 / Day 30</p>
+                            </div>
                         </div>
                     </div>
 
-                    <div id="monitoringTaskCards" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap:0.7rem;"></div>
+                    <div class="premium-data-card border-amber">
+                        <p class="premium-card-title">Monitoring history</p>
+                        <div id="monitoringHistoryRecord"></div>
+                    </div>
+
+                    <div class="premium-data-card border-blue">
+                        <p class="premium-card-title">Compliance records</p>
+                        <div id="complianceRecordsRecord"></div>
+                    </div>
+
+                    <div id="monitoringTaskCards" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap:0.75rem; margin-top:0.5rem;"></div>
+
+                    <div id="explanationLetterPanel" class="premium-data-card border-rose" style="display: none; margin-top: 0.75rem; border-left: 4px solid #e11d48;">
+                        <p class="premium-card-title">No progress — explanation letter workflow</p>
+                        <p style="margin: 0 0 0.75rem; font-size: 0.78rem; color: #64748b; line-height: 1.45;">
+                            After staff marks <strong>No Progress</strong>, register the office deadline for the beneficiary’s written explanation, then scan the letter when received. If the deadline passes with no letter on file, you may disqualify the beneficiary.
+                        </p>
+                        <div id="explanationLetterStatus" style="font-size: 0.8rem; font-weight: 600; color: #0f172a; margin-bottom: 0.65rem;"></div>
+                        <div id="explanationDeadlineForm" style="display: none; gap: 0.5rem; flex-wrap: wrap; align-items: flex-end; margin-bottom: 0.65rem;">
+                            <label style="display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.72rem; font-weight: 700; color: #475569;">
+                                Letter deadline (date &amp; time)
+                                <input type="datetime-local" id="explanationDeadlineInput" style="padding: 0.45rem 0.5rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.8rem;">
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.72rem; color: #475569; cursor: pointer;">
+                                <input type="checkbox" id="explanationNotifySms" checked>
+                                SMS beneficiary
+                            </label>
+                            <button type="button" class="inspection-info-btn primary" id="explanationSaveDeadlineBtn" onclick="saveExplanationLetterDeadline()">Save deadline</button>
+                        </div>
+                        <div id="explanationUploadForm" style="display: none; margin-bottom: 0.5rem;">
+                            <label style="display: block; font-size: 0.72rem; font-weight: 700; color: #475569; margin-bottom: 0.35rem;">Scan / upload explanation letter (PDF or image)</label>
+                            <input type="file" id="explanationLetterFile" accept=".pdf,image/*" style="font-size: 0.78rem;">
+                            <button type="button" class="inspection-info-btn primary" style="margin-top: 0.45rem;" onclick="uploadExplanationLetterFile()">Upload letter &amp; grant 30-day extension</button>
+                        </div>
+                    </div>
                 </div>
             </section>
+
         </div>
 
         <!-- Footer -->
         <div class="unit-detail-footer">
-            <button type="button" class="unit-detail-action-sms" onclick="sendSMS()">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
-                </svg>
-                Send SMS
-            </button>
+            <div class="unit-detail-footer-actions">
+                <button type="button" class="unit-detail-footer-btn unit-detail-action-sms" onclick="sendSMS()">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+                    </svg>
+                    Send SMS
+                </button>
+                <button type="button" class="unit-detail-footer-btn unit-detail-action-update">Update lot</button>
+                <a href="#" id="disqualifyBeneficiaryBtn" class="unit-detail-footer-btn unit-detail-action-disqualify" role="button" onclick="event.preventDefault(); openDisqualifyBeneficiaryModal();">Disqualify beneficiary</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="disqualifyBeneficiaryModal" class="inspection-info-modal" onclick="closeDisqualifyBeneficiaryModal(event)" style="display: none;">
+    <div class="inspection-info-card" onclick="event.stopPropagation();" style="max-width: 28rem;">
+        <div class="inspection-info-body">
+            <p class="inspection-info-kicker">Disqualify beneficiary</p>
+            <h3 class="inspection-info-title">Confirm on-file disqualification</h3>
+            <p class="inspection-info-text" style="margin-top: 0.5rem;">This is allowed only after the explanation letter deadline has passed with no scanned letter on file. The applicant record will be marked disqualified.</p>
+            <label style="display: block; margin-top: 0.75rem; font-size: 0.72rem; font-weight: 700; color: #475569;">Reason (required, min. 10 characters)</label>
+            <textarea id="disqualifyReasonInput" rows="3" maxlength="2000" style="width: 100%; margin-top: 0.25rem; padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.82rem;"></textarea>
+        </div>
+        <div class="inspection-info-actions">
+            <button type="button" class="inspection-info-btn" onclick="closeDisqualifyBeneficiaryModal()">Cancel</button>
+            <button type="button" class="inspection-info-btn warning" onclick="submitDisqualifyBeneficiary()">Disqualify</button>
         </div>
     </div>
 </div>
@@ -2094,16 +2260,48 @@ function renderMonitoringTaskCards(tasks) {
         else if (task.is_due) statusClass = 'ready';
         else if (isNotified) statusClass = 'notified';
         
-        card.className = `monitoring-task-card ${statusClass}`;
-        
+        let completedTone = '';
+        if (isCompleted && task.report) {
+            if (task.report.progress_assessment === 'no_progress') {
+                completedTone = ' completed--no-progress';
+            } else if (task.report.progress_assessment === 'normal_progress') {
+                completedTone = ' completed--normal-progress';
+            } else {
+                completedTone = ' completed--pending-review';
+            }
+        }
+        card.className = `monitoring-task-card ${statusClass}${completedTone}`;
+
         const statusText = isBlocked ? 'Blocked' : (isCompleted ? 'Completed' : (task.is_overdue ? 'Overdue' : (task.is_due ? 'Ready' : (isNotified ? 'Notified' : 'Upcoming'))));
-        const availabilityText = isBlocked
-            ? 'Finish and review Day 15 first'
-            : isCompleted
-            ? 'Caretaker monitoring report submitted'
-            : task.is_due
-            ? 'Available to inspect now'
-            : (isNotified ? 'Waiting for caretaker monitoring report' : 'Click to test early inspection warning');
+        let availabilityText;
+        let hintClass = 'monitoring-task-hint';
+        if (isBlocked) {
+            availabilityText = 'Finish and review Day 15 first';
+            hintClass += ' monitoring-task-hint--blocked';
+        } else if (isCompleted && task.report) {
+            const by = task.report.assessed_by ? ` · ${task.report.assessed_by}` : '';
+            if (task.report.progress_assessment === 'normal_progress') {
+                if (task.initial_monitoring_program_complete) {
+                    availabilityText = `Normal Progress — initial monitoring complete${by}`;
+                    hintClass += ' monitoring-task-hint--decision-normal monitoring-task-hint--program-complete';
+                } else {
+                    availabilityText = `Normal Progress${by}`;
+                    hintClass += ' monitoring-task-hint--decision-normal';
+                }
+            } else if (task.report.progress_assessment === 'no_progress') {
+                availabilityText = `No Progress${by}`;
+                hintClass += ' monitoring-task-hint--decision-no';
+            } else {
+                availabilityText = 'Caretaker monitoring report submitted — staff decision pending';
+                hintClass += ' monitoring-task-hint--pending-review';
+            }
+        } else {
+            availabilityText = isCompleted
+                ? 'Caretaker monitoring report submitted'
+                : task.is_due
+                    ? 'Available to inspect now'
+                    : (isNotified ? 'Waiting for caretaker monitoring report' : 'Click to test early inspection warning');
+        }
 
         card.addEventListener('click', () => {
             if (isBlocked) {
@@ -2128,7 +2326,7 @@ function renderMonitoringTaskCards(tasks) {
             <p class="monitoring-task-date">${formatDisplayDate(task.due_date)}</p>
             <div class="monitoring-task-status-row">
                 <span class="monitoring-task-status-badge">${statusText}</span>
-                <p class="monitoring-task-hint">${availabilityText}</p>
+                <p class="${hintClass}">${availabilityText}</p>
             </div>
         `;
         wrap.appendChild(card);
@@ -2219,17 +2417,19 @@ function renderHouseholdMembersRecord(members) {
         return;
     }
     wrap.innerHTML = `
-        <table class="occupied-record-table">
-            <thead><tr><th>Name</th><th>Relationship</th></tr></thead>
-            <tbody>
-                ${members.map((member) => `
-                    <tr>
-                        <td>${escapeHtml(member.name || '—')}</td>
-                        <td>${escapeHtml(member.relationship || '—')}</td>
-                    </tr>
-                `).join('')}
-            </tbody>
-        </table>
+        <div class="premium-table-wrap">
+            <table class="premium-table">
+                <thead><tr><th>Name</th><th>Relationship</th></tr></thead>
+                <tbody>
+                    ${members.map((member) => `
+                        <tr>
+                            <td style="font-weight: 700;">${escapeHtml(member.name || '—')}</td>
+                            <td style="color: #64748b;">${escapeHtml(member.relationship || '—')}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
     `;
 }
 
@@ -2241,19 +2441,54 @@ function renderMonitoringHistoryRecord(history) {
         return;
     }
     wrap.innerHTML = `
-        <table class="occupied-record-table">
-            <thead><tr><th>Date</th><th>Result</th><th>Decision</th></tr></thead>
-            <tbody>
-                ${history.map((item) => `
-                    <tr>
-                        <td>${escapeHtml(item.label || '—')}<br><span style="color:#64748b;">${formatDisplayDate(item.date)}</span></td>
-                        <td>${escapeHtml(item.result || '—')}</td>
-                        <td>${escapeHtml(item.decision || '—')}</td>
-                    </tr>
-                `).join('')}
-            </tbody>
-        </table>
+        <div class="premium-table-wrap">
+            <table class="premium-table">
+                <thead><tr><th>Date</th><th>Result</th><th>Decision</th></tr></thead>
+                <tbody>
+                    ${history.map((item) => `
+                        <tr>
+                            <td>
+                                <div style="font-weight: 700;">${escapeHtml(item.label || '—')}</div>
+                                <div style="font-size: 0.65rem; color: #64748b; margin-top: 0.2rem;">${formatDisplayDate(item.date)}</div>
+                            </td>
+                            <td>
+                                <span style="display: inline-block; padding: 0.2rem 0.6rem; background: #f1f5f9; border-radius: 6px; font-weight: 700; font-size: 0.72rem;">
+                                    ${escapeHtml(item.result || '—')}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="monitoring-history-decision${item.progress_assessment === 'normal_progress' ? ' monitoring-history-decision--normal' : item.progress_assessment === 'no_progress' ? ' monitoring-history-decision--no' : ''}">${escapeHtml(item.decision || '—')}</span>
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
     `;
+}
+
+function buildMonitoringHistoryFromTasks(tasks) {
+    if (!Array.isArray(tasks) || !tasks.length) return [];
+    return tasks.map((task) => {
+        const report = task.report || null;
+        let result = task.status_label || task.status || '—';
+        if (report && report.construction_status) {
+            result = report.construction_status;
+        } else if (task.status === 'completed' && report && !report.construction_status) {
+            result = 'Report submitted';
+        }
+        const decision = (report && report.progress_assessment_label)
+            ? report.progress_assessment_label
+            : '—';
+        const label = String(task.label || '').replace(/\s*Inspection\s*$/i, '').trim() || '—';
+        return {
+            label,
+            date: task.due_date,
+            result: result || '—',
+            decision: decision || '—',
+            progress_assessment: (report && report.progress_assessment) ? report.progress_assessment : '',
+        };
+    });
 }
 
 function renderComplianceRecordsRecord(records) {
@@ -2299,8 +2534,13 @@ function renderCompletedReportSummary(task) {
             </div>
         `
         : '';
+    const decisionTone = report.progress_assessment === 'no_progress'
+        ? 'decision--no_progress'
+        : report.progress_assessment === 'normal_progress'
+        ? 'decision--normal_progress'
+        : '';
     const decision = report.progress_assessment_label
-        ? `<div class="inspection-summary-item full-width decision"><span class="inspection-summary-label">Staff decision</span><p class="inspection-summary-value">${escapeHtml(report.progress_assessment_label)}${report.assessed_by ? ` · ${escapeHtml(report.assessed_by)}` : ''}</p></div>`
+        ? `<div class="inspection-summary-item full-width decision ${decisionTone}"><span class="inspection-summary-label">Staff decision</span><p class="inspection-summary-value">${escapeHtml(report.progress_assessment_label)}${report.assessed_by ? ` · ${escapeHtml(report.assessed_by)}` : ''}</p></div>`
         : '';
 
     return `
@@ -2430,6 +2670,11 @@ async function submitProgressAssessment(decision) {
 
         const updatedTask = {
             ...activeInspectionTask,
+            initial_monitoring_program_complete: Boolean(
+                data.monitoring_program_complete
+                && activeInspectionTask.task_type === 'day_30_inspection'
+                && decision === 'normal_progress'
+            ),
             report: {
                 ...(activeInspectionTask.report || {}),
                 progress_assessment: data.decision,
@@ -2443,7 +2688,12 @@ async function submitProgressAssessment(decision) {
             String(task.id) === String(updatedTask.id) ? updatedTask : task
         ));
         closeInspectionInfoModal();
-        renderMonitoringTaskCards(currentMonitoringTasks);
+        if (data.monitoring_program_complete && currentUnitId) {
+            openUnitModal(currentUnitId);
+        } else {
+            renderMonitoringTaskCards(currentMonitoringTasks);
+            renderMonitoringHistoryRecord(buildMonitoringHistoryFromTasks(currentMonitoringTasks));
+        }
     } catch (err) {
         if (text) {
             text.textContent = err.message || 'Could not save staff decision.';
@@ -2504,6 +2754,171 @@ async function notifySelectedInspectionTask() {
     }
 }
 
+let lastOpenedUnitPayload = null;
+
+function syncExplanationLetterPanel(unit) {
+    lastOpenedUnitPayload = unit;
+    const panel = document.getElementById('explanationLetterPanel');
+    const status = document.getElementById('explanationLetterStatus');
+    const deadlineForm = document.getElementById('explanationDeadlineForm');
+    const uploadForm = document.getElementById('explanationUploadForm');
+    const dqBtn = document.getElementById('disqualifyBeneficiaryBtn');
+    if (!panel || !status || !deadlineForm || !uploadForm) return;
+
+    const c = unit.explanation_letter_case;
+    if (!c) {
+        panel.style.display = 'none';
+        deadlineForm.style.display = 'none';
+        uploadForm.style.display = 'none';
+        if (dqBtn) {
+            dqBtn.style.opacity = '0.45';
+            dqBtn.style.pointerEvents = 'none';
+        }
+        return;
+    }
+
+    panel.style.display = 'block';
+    const parts = [];
+    if (c.letter_deadline_at) {
+        const d = new Date(c.letter_deadline_at);
+        if (!Number.isNaN(d.getTime())) {
+            parts.push(`Deadline: ${d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}`);
+        } else {
+            parts.push(`Deadline: ${formatDisplayDate(String(c.letter_deadline_at).slice(0, 10))}`);
+        }
+    } else {
+        parts.push('Deadline not set — register date and time below, then notify the beneficiary.');
+    }
+    if (c.has_letter_document) {
+        parts.push('Explanation letter is on file.');
+    }
+    status.textContent = parts.join(' ');
+
+    deadlineForm.style.display = c.can_set_deadline ? 'flex' : 'none';
+    uploadForm.style.display = c.can_upload_letter ? 'block' : 'none';
+
+    if (dqBtn) {
+        const enable = Boolean(c.can_disqualify);
+        dqBtn.style.opacity = enable ? '1' : '0.45';
+        dqBtn.style.pointerEvents = enable ? 'auto' : 'none';
+    }
+
+    const inp = document.getElementById('explanationDeadlineInput');
+    if (inp && c.letter_deadline_at) {
+        const d = new Date(c.letter_deadline_at);
+        if (!Number.isNaN(d.getTime())) {
+            const pad = (n) => String(n).padStart(2, '0');
+            inp.value = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        }
+    } else if (inp) {
+        inp.value = '';
+    }
+}
+
+async function saveExplanationLetterDeadline() {
+    const inp = document.getElementById('explanationDeadlineInput');
+    if (!inp || !inp.value) {
+        alert('Choose a deadline date and time.');
+        return;
+    }
+    const iso = new Date(inp.value).toISOString();
+    const position = '{{ request.user.position }}';
+    try {
+        const res = await fetch(`/units/housing-units/${position}/${currentUnitId}/explanation-letter/deadline/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken') || '',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: JSON.stringify({
+                deadline: iso,
+                notify_beneficiary: document.getElementById('explanationNotifySms') ? document.getElementById('explanationNotifySms').checked : true,
+            }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+            throw new Error(data.error || 'Could not save deadline.');
+        }
+        openUnitModal(currentUnitId);
+    } catch (e) {
+        alert(e.message || 'Could not save deadline.');
+    }
+}
+
+async function uploadExplanationLetterFile() {
+    const fi = document.getElementById('explanationLetterFile');
+    if (!fi || !fi.files || !fi.files[0]) {
+        alert('Choose a file to upload.');
+        return;
+    }
+    const position = '{{ request.user.position }}';
+    const body = new FormData();
+    body.append('letter_file', fi.files[0]);
+    body.append('csrfmiddlewaretoken', getCookie('csrftoken') || '');
+    try {
+        const res = await fetch(`/units/housing-units/${position}/${currentUnitId}/explanation-letter/upload/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken') || '',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            body,
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+            throw new Error(data.error || 'Upload failed.');
+        }
+        alert(data.message || 'Letter saved.');
+        openUnitModal(currentUnitId);
+    } catch (e) {
+        alert(e.message || 'Upload failed.');
+    }
+}
+
+function openDisqualifyBeneficiaryModal() {
+    const modal = document.getElementById('disqualifyBeneficiaryModal');
+    const ta = document.getElementById('disqualifyReasonInput');
+    if (ta) ta.value = '';
+    if (modal) modal.style.display = 'flex';
+}
+
+function closeDisqualifyBeneficiaryModal(e) {
+    if (e && e.target.id !== 'disqualifyBeneficiaryModal') return;
+    const modal = document.getElementById('disqualifyBeneficiaryModal');
+    if (modal) modal.style.display = 'none';
+}
+
+async function submitDisqualifyBeneficiary() {
+    const ta = document.getElementById('disqualifyReasonInput');
+    const reason = (ta && ta.value) ? ta.value.trim() : '';
+    if (reason.length < 10) {
+        alert('Enter a disqualification reason (at least 10 characters).');
+        return;
+    }
+    const position = '{{ request.user.position }}';
+    try {
+        const res = await fetch(`/units/housing-units/${position}/${currentUnitId}/disqualify-beneficiary/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken') || '',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: JSON.stringify({ reason }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+            throw new Error(data.error || 'Disqualify failed.');
+        }
+        closeDisqualifyBeneficiaryModal();
+        alert(data.message || 'Disqualified.');
+        openUnitModal(currentUnitId);
+    } catch (e) {
+        alert(e.message || 'Disqualify failed.');
+    }
+}
+
 function openUnitModal(unitId) {
     currentUnitId = unitId;
     toggleBeneficiaryDropdown(false);
@@ -2548,6 +2963,10 @@ function openUnitModal(unitId) {
                 renderMonitoringTaskCards(unit.monitoring_tasks || []);
                 renderMonitoringHistoryRecord(unit.monitoring_history || []);
                 renderComplianceRecordsRecord(unit.compliance_records || []);
+                syncExplanationLetterPanel(unit);
+                if (unit.explanation_letter_case) {
+                    toggleLotMonitoringDropdown(true);
+                }
 
                 document.getElementById('unitModal').style.display = 'flex';
             } else {

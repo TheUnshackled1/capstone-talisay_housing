@@ -17,6 +17,7 @@ urlpatterns = [
     path('dashboard/fourth-member/', views.dashboard_fourth_member, name='dashboard_fourth_member'),
     path('dashboard/caretaker/', views.dashboard_caretaker, name='dashboard_caretaker'),
     path('dashboard/field/', views.dashboard_field, name='dashboard_field'),
+    path('dashboard/field-team/', views.field_team_dashboard, name='field_team_dashboard'),
 
     # Second Member-Specific Views
     path('second-member/analytics/', views.second_member_analytics, name='second_member_analytics'),

@@ -5,6 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods, require_POST
 from django.db import transaction, models, IntegrityError
 from django.utils import timezone
+from django.utils.dateparse import parse_datetime
 from django.contrib import messages
 from datetime import timedelta, datetime
 from collections import OrderedDict
@@ -16,14 +17,15 @@ from applications.models import QueueEntry, Application
 from intake.utils import send_sms
 from units.models import (
     HousingUnit, LotAward, RelocationSite, CaseRecord, CaseUpdate, WeeklyReport,
-    ConstructionProgress, Blacklist, OccupancyMonitoringCycle, MonitoringTask,
-    MonitoringReport, ExplanationReview
+    ConstructionProgress, ConstructionProgressUpdate, Blacklist, OccupancyMonitoringCycle,
+    MonitoringTask, MonitoringReport, ExplanationReview, ExtensionRecord,
 )
 from accounts.models import FIELD_DESK_POSITIONS
 
 # Module 4 inventory: who may add housing units (block/lot rows)
 _MODULE4_ADD_HOUSING_UNIT_POSITIONS = frozenset({'fourth_member', 'second_member'})
 _MODULE4_CREATE_SITE_POSITIONS = frozenset({'fourth_member', 'second_member'})
+_MODULE4_MONITORING_COMPLIANCE_STAFF = _MODULE4_ADD_HOUSING_UNIT_POSITIONS | FIELD_DESK_POSITIONS
 
 _NOTICE_STATUS_VALUES = frozenset({'Under notice (30-day)', 'Final notice (10-day)'})
 
@@ -506,7 +508,14 @@ def get_unit_details(request, position, unit_id):
                 'household_member_rows': [],
             }
         monitoring_tasks = []
+        extension_monitoring_active = False
+        pending_explanation_rev = None
         if active_lot_award:
+            extension_monitoring_active = OccupancyMonitoringCycle.objects.filter(
+                lot_award=active_lot_award,
+                is_active=True,
+            ).exclude(cycle_stage='original_30_day').exists()
+            pending_explanation_rev = _active_pending_explanation_for_lot_award(active_lot_award)
             today = timezone.now().date()
             for task in (
                 MonitoringTask.objects
@@ -544,6 +553,15 @@ def get_unit_details(request, position, unit_id):
                         'assessed_at': report.assessed_at.isoformat() if report.assessed_at else '',
                         'assessed_by': report.assessed_by.get_full_name() if report.assessed_by else '',
                     }
+                initial_monitoring_program_complete = (
+                    task.task_type == 'day_30_inspection'
+                    and report_summary
+                    and report_summary.get('progress_assessment') == 'normal_progress'
+                    and not extension_monitoring_active
+                    and progress
+                    and progress.stage == 'completed'
+                    and (progress.percent_complete or 0) >= 100
+                )
                 monitoring_tasks.append({
                     'id': str(task.id),
                     'task_type': task.task_type,
@@ -559,6 +577,7 @@ def get_unit_details(request, position, unit_id):
                     'is_overdue': task.is_overdue,
                     'notified_at': task.notified_at.isoformat() if task.notified_at else '',
                     'report': report_summary,
+                    'initial_monitoring_program_complete': initial_monitoring_program_complete,
                 })
                 monitoring_history.append({
                     'label': task.get_task_type_display().replace(' Inspection', ''),
@@ -596,6 +615,8 @@ def get_unit_details(request, position, unit_id):
                     'detail': f"Until {extension.extension_end_date.isoformat()}",
                 })
             for review in active_lot_award.explanation_reviews.select_related('reviewed_by').all()[:3]:
+                if pending_explanation_rev and review.pk == pending_explanation_rev.pk:
+                    continue
                 compliance_records.append({
                     'title': 'Explanation Review',
                     'status': review.get_review_status_display(),
@@ -655,6 +676,47 @@ def get_unit_details(request, position, unit_id):
                 'last_inspected_at': p.last_inspected_at.isoformat() if p.last_inspected_at else None,
             })
 
+        explanation_case = None
+        if pending_explanation_rev:
+            rev = pending_explanation_rev
+            now = timezone.now()
+            has_doc = bool(rev.letter_document)
+            deadline = rev.letter_deadline_at
+            deadline_passed = bool(deadline and now > deadline)
+            explanation_case = {
+                'review_id': str(rev.id),
+                'trigger_kind': rev.trigger_kind,
+                'letter_deadline_at': deadline.isoformat() if deadline else None,
+                'has_letter_document': has_doc,
+                'can_set_deadline': deadline is None and not has_doc,
+                'can_upload_letter': bool(deadline) and not has_doc,
+                'can_disqualify': bool(deadline and deadline_passed and not has_doc),
+            }
+            if explanation_case['can_disqualify']:
+                ex_row_status = 'Deadline passed — no letter on file'
+            elif explanation_case['has_letter_document']:
+                ex_row_status = 'Letter on file'
+            elif explanation_case['letter_deadline_at']:
+                ex_row_status = 'Awaiting scanned letter'
+            else:
+                ex_row_status = 'Register office deadline'
+            if explanation_case['letter_deadline_at']:
+                ex_detail = (
+                    f"Office deadline {timezone.localtime(deadline).strftime('%b %d, %Y %I:%M %p')}. "
+                    'Use the No progress — explanation letter workflow panel at the bottom of this section '
+                    'to upload the scanned letter or disqualify if the deadline passed with no submission.'
+                )
+            else:
+                ex_detail = (
+                    'Set the letter submission date and time in the workflow panel at the bottom of this section, '
+                    'then notify the beneficiary by SMS.'
+                )
+            compliance_records.insert(0, {
+                'title': 'No progress — explanation letter workflow',
+                'status': ex_row_status,
+                'detail': ex_detail,
+            })
+
         return JsonResponse({
             'success': True,
             'unit': {
@@ -665,6 +727,7 @@ def get_unit_details(request, position, unit_id):
                 'occupant_name': unit.occupant_name or '',
                 'occupant_id': unit.occupant_id or '',
                 'is_escalated': unit.is_escalated,
+                'lot_award_id': str(active_lot_award.id) if active_lot_award else None,
                 'notice': notice_info,
                 'weekly_report': weekly_report,
                 'construction': (
@@ -684,6 +747,7 @@ def get_unit_details(request, position, unit_id):
                 'monitoring_tasks': monitoring_tasks,
                 'monitoring_history': monitoring_history,
                 'compliance_records': compliance_records,
+                'explanation_letter_case': explanation_case,
                 'construction_monitoring': {
                     'site_name': unit.site.name if unit.site else '',
                     'status_filter': cm_filter,
@@ -706,6 +770,188 @@ def get_unit_details(request, position, unit_id):
             'success': False,
             'error': str(e)
         }, status=500)
+
+
+@login_required
+@verify_position
+@require_POST
+def set_explanation_letter_deadline(request, position, unit_id):
+    if request.user.position not in _MODULE4_MONITORING_COMPLIANCE_STAFF:
+        return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
+    try:
+        payload = json.loads(request.body or '{}')
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'Invalid JSON.'}, status=400)
+    raw = payload.get('deadline') or payload.get('deadline_at')
+    deadline = parse_datetime(raw) if raw else None
+    if not deadline:
+        return JsonResponse({'success': False, 'error': 'Use ISO deadline (e.g. 2026-07-20T17:00:00).'}, status=400)
+    if timezone.is_naive(deadline):
+        deadline = timezone.make_aware(deadline, timezone.get_current_timezone())
+    if deadline <= timezone.now():
+        return JsonResponse({'success': False, 'error': 'Deadline must be in the future.'}, status=400)
+    notify = bool(payload.get('notify_beneficiary', True))
+
+    try:
+        unit = HousingUnit.objects.get(id=unit_id)
+    except HousingUnit.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Unit not found'}, status=404)
+
+    la = (
+        LotAward.objects.filter(unit=unit, status='active')
+        .select_related('application__applicant')
+        .order_by('-awarded_at')
+        .first()
+    )
+    if not la:
+        return JsonResponse({'success': False, 'error': 'No active lot award for this unit.'}, status=400)
+
+    rev = _active_pending_explanation_for_lot_award(la)
+    if not rev:
+        return JsonResponse({
+            'success': False,
+            'error': 'No pending explanation letter workflow for this unit. Mark the monitoring report as No Progress first.',
+        }, status=400)
+    if rev.letter_document:
+        return JsonResponse({'success': False, 'error': 'Letter already uploaded for this case.'}, status=400)
+    if ExtensionRecord.objects.filter(explanation_review=rev).exists():
+        return JsonResponse({'success': False, 'error': 'Extension already granted; deadline cannot be changed.'}, status=400)
+
+    rev.letter_deadline_at = deadline
+    rev.save(update_fields=['letter_deadline_at', 'updated_at'])
+
+    if notify:
+        applicant = la.application.applicant
+        phone = (applicant.phone_number or '').strip()
+        if phone:
+            local_disp = timezone.localtime(deadline).strftime('%b %d, %Y %I:%M %p')
+            send_sms(
+                phone,
+                (
+                    f"THA: Submit your written EXPLANATION letter for Block {unit.block_number} Lot {unit.lot_number} "
+                    f"at the Housing Office no later than {local_disp}. "
+                    f"Ref: {applicant.reference_number or '—'}"
+                ),
+                'explanation_letter_deadline_set',
+                applicant=applicant,
+                module='units',
+            )
+
+    return JsonResponse({
+        'success': True,
+        'letter_deadline_at': rev.letter_deadline_at.isoformat(),
+    })
+
+
+@login_required
+@verify_position
+@require_POST
+def upload_explanation_letter(request, position, unit_id):
+    if request.user.position not in _MODULE4_MONITORING_COMPLIANCE_STAFF:
+        return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
+    f = request.FILES.get('letter_file') or request.FILES.get('file')
+    if not f:
+        return JsonResponse({'success': False, 'error': 'letter_file is required.'}, status=400)
+
+    try:
+        unit = HousingUnit.objects.get(id=unit_id)
+    except HousingUnit.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Unit not found'}, status=404)
+
+    la = LotAward.objects.filter(unit=unit, status='active').order_by('-awarded_at').first()
+    if not la:
+        return JsonResponse({'success': False, 'error': 'No active lot award for this unit.'}, status=400)
+
+    rev = _active_pending_explanation_for_lot_award(la)
+    if not rev:
+        return JsonResponse({'success': False, 'error': 'No pending explanation case.'}, status=400)
+    if not rev.letter_deadline_at:
+        return JsonResponse({'success': False, 'error': 'Set the submission deadline before scanning the letter.'}, status=400)
+    if rev.letter_document:
+        return JsonResponse({'success': False, 'error': 'Letter already on file.'}, status=400)
+
+    with transaction.atomic():
+        locked = ExplanationReview.objects.select_for_update().get(pk=rev.pk)
+        if locked.letter_document:
+            return JsonResponse({'success': False, 'error': 'Letter already on file.'}, status=400)
+        locked.letter_document = f
+        locked.save(update_fields=['letter_document', 'updated_at'])
+        _grant_monitoring_extension_from_explanation_review(locked, request.user)
+
+    return JsonResponse({
+        'success': True,
+        'message': 'Explanation letter stored. A 30-day extension and monitoring tasks were created.',
+    })
+
+
+@login_required
+@verify_position
+@require_POST
+def disqualify_beneficiary_monitoring(request, position, unit_id):
+    if request.user.position not in _MODULE4_MONITORING_COMPLIANCE_STAFF:
+        return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
+    try:
+        payload = json.loads(request.body or '{}')
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'Invalid JSON.'}, status=400)
+    reason = (payload.get('reason') or '').strip()
+    if len(reason) < 10:
+        return JsonResponse({'success': False, 'error': 'reason must be at least 10 characters.'}, status=400)
+
+    try:
+        unit = HousingUnit.objects.get(id=unit_id)
+    except HousingUnit.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Unit not found'}, status=404)
+
+    la = (
+        LotAward.objects.filter(unit=unit, status='active')
+        .select_related('application__applicant')
+        .order_by('-awarded_at')
+        .first()
+    )
+    if not la:
+        return JsonResponse({'success': False, 'error': 'No active lot award for this unit.'}, status=400)
+
+    rev = _active_pending_explanation_for_lot_award(la)
+    if not rev:
+        return JsonResponse({'success': False, 'error': 'No pending explanation case to close.'}, status=400)
+    if not rev.letter_deadline_at:
+        return JsonResponse({
+            'success': False,
+            'error': 'A deadline must be recorded before disqualifying for non-compliance.',
+        }, status=400)
+    now = timezone.now()
+    if not (rev.letter_deadline_at < now and not rev.letter_document):
+        return JsonResponse({
+            'success': False,
+            'error': 'Disqualify is available only after the explanation letter deadline has passed with no letter on file.',
+        }, status=400)
+
+    applicant = la.application.applicant
+
+    with transaction.atomic():
+        locked_rev = ExplanationReview.objects.select_for_update().get(pk=rev.pk)
+        if locked_rev.letter_document:
+            return JsonResponse({'success': False, 'error': 'A letter is now on file; disqualify is no longer applicable.'}, status=400)
+        if not (locked_rev.letter_deadline_at and locked_rev.letter_deadline_at < timezone.now()):
+            return JsonResponse({'success': False, 'error': 'Deadline has not passed yet.'}, status=400)
+
+        locked_applicant = Applicant.objects.select_for_update().get(pk=applicant.pk)
+        if locked_applicant.status == 'disqualified':
+            return JsonResponse({'success': False, 'error': 'Applicant is already disqualified.'}, status=400)
+        locked_applicant.status = 'disqualified'
+        locked_applicant.disqualification_reason = reason
+        locked_applicant.save(update_fields=['status', 'disqualification_reason', 'updated_at'])
+
+        locked_rev.review_status = 'denied'
+        locked_rev.staff_decision_notes = reason
+        locked_rev.reviewed_by = request.user
+        locked_rev.reviewed_at = timezone.now()
+        locked_rev.save(
+            update_fields=['review_status', 'staff_decision_notes', 'reviewed_by', 'reviewed_at', 'updated_at']
+        )
+
+    return JsonResponse({'success': True, 'message': 'Beneficiary has been disqualified on file.'})
 
 
 @login_required
@@ -1287,11 +1533,212 @@ def notify_monitoring_task(request, task_id):
     })
 
 
+def _active_pending_explanation_for_lot_award(lot_award):
+    return (
+        ExplanationReview.objects.filter(
+            lot_award=lot_award,
+            review_status='pending_review',
+        )
+        .order_by('-created_at')
+        .first()
+    )
+
+
+def _open_explanation_review_after_no_progress(report, _acting_user):
+    """
+    When staff marks a monitoring report as No Progress, open (or reuse) an explanation
+    review and notify the beneficiary to submit a written explanation letter at THA.
+
+    If a pending explanation case already exists for this lot award (e.g. after Day 15
+    No Progress), do not create a second case or send duplicate SMS when Day 30 is
+    later assessed No Progress.
+    """
+    if ExplanationReview.objects.filter(triggered_by_report=report).exists():
+        return
+    if _active_pending_explanation_for_lot_award(report.lot_award):
+        return
+    ExplanationReview.objects.create(
+        lot_award=report.lot_award,
+        unit=report.unit,
+        triggered_by_report=report,
+        review_status='pending_review',
+        trigger_kind='staff_no_progress',
+    )
+    applicant = report.lot_award.application.applicant
+    phone = (applicant.phone_number or '').strip()
+    if not phone:
+        return
+    send_sms(
+        phone,
+        (
+            f"THA: Your lot (Block {report.unit.block_number} Lot {report.unit.lot_number}) was assessed as "
+            f"No Progress. Report to the THA office with a written EXPLANATION letter. "
+            f"Staff will record your submission deadline in the system. Ref: {applicant.reference_number or '—'}"
+        ),
+        'explanation_letter_required',
+        applicant=applicant,
+        module='units',
+    )
+
+
+def _grant_monitoring_extension_from_explanation_review(review, approved_by_user):
+    """
+    After staff uploads the explanation letter on file, grant a 30-day extension window
+    with Month 1 / Month 2 monitoring tasks (same rhythm as the original award cycle).
+    """
+    if ExtensionRecord.objects.filter(explanation_review=review).exists():
+        return
+    now = timezone.now()
+    start = now.date()
+    end = start + timedelta(days=30)
+    lot_award = review.lot_award
+    unit = review.unit
+    caretaker = unit.site.caretaker if unit.site else None
+
+    with transaction.atomic():
+        review.letter_received_at = now
+        review.review_status = 'approved'
+        review.extension_approved = True
+        review.extension_months = 1
+        review.reviewed_by = approved_by_user
+        review.reviewed_at = now
+        review.staff_decision_notes = (review.staff_decision_notes or '').strip()
+        if not review.staff_decision_notes:
+            review.staff_decision_notes = 'Written explanation letter received and scanned on file.'
+        review.save(
+            update_fields=[
+                'letter_received_at',
+                'review_status',
+                'extension_approved',
+                'extension_months',
+                'reviewed_by',
+                'reviewed_at',
+                'staff_decision_notes',
+                'updated_at',
+            ]
+        )
+
+        ExtensionRecord.objects.create(
+            lot_award=lot_award,
+            explanation_review=review,
+            extension_duration_months=1,
+            extension_start_date=start,
+            extension_end_date=end,
+            approved_by=approved_by_user,
+            approval_notes='30-day extension after explanation letter compliance.',
+        )
+
+        OccupancyMonitoringCycle.objects.filter(lot_award=lot_award, is_active=True).update(is_active=False)
+        OccupancyMonitoringCycle.objects.create(
+            lot_award=lot_award,
+            cycle_stage='extension_month_1',
+            stage_start_date=start,
+            stage_end_date=end,
+            days_allowed=30,
+            is_active=True,
+        )
+
+        MonitoringTask.objects.create(
+            unit=unit,
+            lot_award=lot_award,
+            task_type='month_1_inspection',
+            scheduled_date=start + timedelta(days=15),
+            due_date=start + timedelta(days=15),
+            days_from_award=15,
+            status='pending',
+            assigned_to=caretaker,
+        )
+        MonitoringTask.objects.create(
+            unit=unit,
+            lot_award=lot_award,
+            task_type='month_2_inspection',
+            scheduled_date=start + timedelta(days=30),
+            due_date=start + timedelta(days=30),
+            days_from_award=30,
+            status='pending',
+            assigned_to=caretaker,
+        )
+
+
+def _complete_original_program_on_day30_normal_progress(task, acting_user):
+    """
+    When staff marks the Day 30 report as Normal Progress while the original 30-day
+    monitoring cycle is still active (no extension cycle running), close out that
+    cycle, finalize construction progress for the awarded lot, and clear monitoring
+    escalation on the unit row.
+    """
+    if task.task_type != 'day_30_inspection':
+        return None
+    lot_award = task.lot_award
+    unit = task.unit
+    now_dt = timezone.now()
+    today = now_dt.date()
+
+    if OccupancyMonitoringCycle.objects.filter(
+        lot_award=lot_award,
+        is_active=True,
+    ).exclude(cycle_stage='original_30_day').exists():
+        return None
+
+    cycles_closed = OccupancyMonitoringCycle.objects.filter(
+        lot_award=lot_award,
+        is_active=True,
+        cycle_stage='original_30_day',
+    ).update(is_active=False)
+
+    progress, _ = ConstructionProgress.objects.get_or_create(
+        lot_award=lot_award,
+        defaults={'stage': 'not_started', 'percent_complete': 0, 'updated_by': acting_user},
+    )
+    ConstructionProgressUpdate.objects.create(
+        progress=progress,
+        stage='completed',
+        percent_complete=100,
+        visit_date=today,
+        notes='Day 30 inspection: Normal Progress — initial occupancy monitoring program complete.',
+        created_by=acting_user,
+    )
+    progress.stage = 'completed'
+    progress.percent_complete = 100
+    progress.last_inspected_at = now_dt
+    progress.updated_by = acting_user
+    progress.is_delayed = False
+    progress.save(
+        update_fields=[
+            'stage',
+            'percent_complete',
+            'last_inspected_at',
+            'updated_by',
+            'is_delayed',
+            'updated_at',
+        ]
+    )
+
+    esc_fields = []
+    if unit.is_escalated:
+        unit.is_escalated = False
+        esc_fields.append('is_escalated')
+    if (unit.escalation_reason or '').strip():
+        unit.escalation_reason = ''
+        esc_fields.append('escalation_reason')
+    if esc_fields:
+        esc_fields.append('updated_at')
+        unit.save(update_fields=esc_fields)
+
+    return {
+        'cycles_deactivated': cycles_closed,
+        'construction_finalized': True,
+    }
+
+
 @login_required
 @require_POST
 def assess_monitoring_report(request, task_id):
     """
     Staff marks a submitted caretaker monitoring report as normal progress or no progress.
+
+    Day 30 + Normal Progress while the original monitoring cycle is active closes the
+    initial occupancy monitoring program and finalizes construction for the lot.
     """
     allowed_positions = _MODULE4_ADD_HOUSING_UNIT_POSITIONS | FIELD_DESK_POSITIONS
     if request.user.position not in allowed_positions:
@@ -1303,7 +1750,7 @@ def assess_monitoring_report(request, task_id):
         return JsonResponse({'success': False, 'error': 'Invalid progress assessment.'}, status=400)
 
     try:
-        task = MonitoringTask.objects.get(id=task_id, status='completed')
+        task = MonitoringTask.objects.select_related('unit', 'lot_award').get(id=task_id, status='completed')
     except MonitoringTask.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Completed monitoring task not found.'}, status=404)
 
@@ -1311,18 +1758,29 @@ def assess_monitoring_report(request, task_id):
     if not report:
         return JsonResponse({'success': False, 'error': 'No submitted monitoring report found.'}, status=404)
 
-    report.progress_assessment = decision
-    report.assessed_by = request.user
-    report.assessed_at = timezone.now()
-    report.save(update_fields=['progress_assessment', 'assessed_by', 'assessed_at', 'updated_at'])
+    program_payload = None
+    with transaction.atomic():
+        report.progress_assessment = decision
+        report.assessed_by = request.user
+        report.assessed_at = timezone.now()
+        report.save(update_fields=['progress_assessment', 'assessed_by', 'assessed_at', 'updated_at'])
 
-    return JsonResponse({
+        if decision == 'no_progress':
+            _open_explanation_review_after_no_progress(report, request.user)
+        elif decision == 'normal_progress':
+            program_payload = _complete_original_program_on_day30_normal_progress(task, request.user)
+
+    payload = {
         'success': True,
         'decision': report.progress_assessment,
         'decision_label': report.get_progress_assessment_display(),
         'assessed_at': report.assessed_at.isoformat(),
         'assessed_by': request.user.get_full_name() or request.user.username,
-    })
+    }
+    if program_payload:
+        payload['monitoring_program_complete'] = True
+        payload['monitoring_program_detail'] = program_payload
+    return JsonResponse(payload)
 
 
 @login_required
@@ -1407,6 +1865,8 @@ def submit_monitoring_report(request, task_id):
             }, status=400)
 
         construction_status = request.POST.get('construction_status', '').strip()
+        if construction_status == 'ongoing':
+            construction_status = 'ongoing_construction'
         occupancy_radio = request.POST.get('occupancy_status', '').strip()
         general_remarks = request.POST.get('general_remarks', '').strip()
 
@@ -1422,15 +1882,20 @@ def submit_monitoring_report(request, task_id):
                 'error': 'Occupancy status is required.'
             }, status=400)
 
-        # Mapping for notes/statements if they were replaced by radios
         occupancy_notes = request.POST.get('occupancy_notes', '').strip()
-        if not occupancy_notes:
-            occupancy_notes = "Properly occupied" if occupancy_radio == 'occupied' else "Unit is unoccupied"
-            
+        if len(occupancy_notes) < 8:
+            return JsonResponse({
+                'success': False,
+                'error': 'Actual occupancy conditions must be described in a short narrative (at least 8 characters).',
+            }, status=400)
+
         progress_notes = request.POST.get('progress_notes', '').strip()
-        if not progress_notes and construction_status == 'ongoing':
-            progress_notes = "Active construction observed on site."
-        elif not progress_notes:
+        if construction_status == 'ongoing_construction' and len(progress_notes) < 8:
+            return JsonResponse({
+                'success': False,
+                'error': 'Construction progress statement is required when construction is ongoing (at least 8 characters).',
+            }, status=400)
+        if not progress_notes:
             progress_notes = "No construction progress."
 
 
@@ -1448,7 +1913,7 @@ def submit_monitoring_report(request, task_id):
 
         percent_by_status = {
             'no_structure': 0,
-            'ongoing': 25, # Default to 25% if "ongoing" is checked without specific stage
+            'ongoing_construction': 25,
             'site_clearing': 10,
             'foundation': 25,
             'wall_framing': 50,
@@ -1494,7 +1959,7 @@ def submit_monitoring_report(request, task_id):
 
             stage_map = {
                 'no_structure': 'not_started',
-                'ongoing': 'foundation', # Map "ongoing" to foundation stage for construction tracking
+                'ongoing_construction': 'foundation',
                 'site_clearing': 'site_clearing',
                 'foundation': 'foundation',
                 'wall_framing': 'wall_framing',
@@ -1594,8 +2059,10 @@ def _evaluate_monitoring_report(report):
             # Create explanation review
             explanation = ExplanationReview.objects.create(
                 lot_award=lot_award,
-                reason='No construction progress at day 30',
+                unit=report.unit,
+                triggered_by_report=report,
                 review_status='pending_review',
+                trigger_kind='auto_rule',
             )
 
             result['actions'].append({

@@ -145,8 +145,8 @@ def dashboard_redirect(request):
         'oic': 'accounts:dashboard_oic',
         'second_member': 'accounts:dashboard_second_member',
         'fourth_member': 'accounts:dashboard_fourth_member',
-        'ronda': 'accounts:dashboard_field',
-        'field': 'accounts:dashboard_field',
+        'ronda': 'accounts:field_team_dashboard',
+        'field': 'accounts:field_team_dashboard',
     }
     
     # Get URL for user's position, default to field dashboard
@@ -1179,11 +1179,11 @@ def dashboard_fourth_member(request):
 
 @login_required
 def dashboard_caretaker(request):
-    """Legacy URL name; field desk (ronda / field) redirects to dashboard_field."""
+    """Legacy URL name; field desk (ronda / field) redirects to the field team dashboard."""
     if request.user.position not in FIELD_DESK_POSITIONS:
         messages.error(request, 'Access denied.')
         return redirect('accounts:dashboard')
-    return redirect('accounts:dashboard_field')
+    return redirect('accounts:field_team_dashboard')
 
 
 @login_required
@@ -1393,7 +1393,7 @@ def dashboard_field(request):
     }
 
     context = {
-        'page_title': 'Field Verification Dashboard',
+        'page_title': 'Field Operations Dashboard',
         'user_position': request.user.position,
 
         # ========== MODULE 1: VERIFICATION METRICS ==========
@@ -1419,6 +1419,138 @@ def dashboard_field(request):
         'today_summary_counts': today_summary_counts,
     }
     return render(request, 'accounts/field/dashboard.html', context)
+
+
+@login_required
+def field_team_dashboard(request):
+    """
+    Main Field Team dashboard: unified chronological log drawn from
+    Field verification desk (CDRRMO / photos) and Monitoring dashboard (reports, staff decisions, task notices).
+    """
+    if request.user.position not in FIELD_DESK_POSITIONS:
+        messages.error(
+            request,
+            'Access denied. This dashboard is for field desk staff (Ronda or Field) only.',
+        )
+        return redirect('accounts:dashboard')
+
+    from units.models import MonitoringReport, MonitoringTask
+
+    feed = []
+
+    for cert in (
+        CDRRMOCertification.objects.filter(
+            status__in=['certified', 'not_certified'],
+            certified_at__isnull=False,
+        )
+        .select_related('applicant', 'result_recorded_by')
+        .order_by('-certified_at')[:80]
+    ):
+        feed.append({
+            'ts': cert.certified_at,
+            'source': 'verification',
+            'source_label': 'Field verification desk',
+            'accent': 'blue',
+            'title': cert.get_status_display(),
+            'subtitle': cert.applicant.full_name,
+            'meta': cert.applicant.reference_number or '—',
+            'actor': cert.result_recorded_by.get_full_name() if cert.result_recorded_by else '—',
+        })
+
+    for ph in (
+        FieldVerificationPhoto.objects.select_related(
+            'certification__applicant',
+            'uploaded_by',
+        ).order_by('-uploaded_at')[:60]
+    ):
+        feed.append({
+            'ts': ph.uploaded_at,
+            'source': 'verification',
+            'source_label': 'Field verification desk',
+            'accent': 'blue',
+            'title': 'Field verification photo uploaded',
+            'subtitle': ph.certification.applicant.full_name,
+            'meta': (ph.caption or 'On-site evidence').strip() or 'Evidence image',
+            'actor': ph.uploaded_by.get_full_name() if ph.uploaded_by else '—',
+        })
+
+    for rep in (
+        MonitoringReport.objects.select_related(
+            'unit',
+            'submitted_by',
+            'lot_award__application__applicant',
+            'task',
+        ).order_by('-submitted_at')[:80]
+    ):
+        applicant_name = '—'
+        la = rep.lot_award
+        if la:
+            applicant_name = la.application.applicant.full_name
+        feed.append({
+            'ts': rep.submitted_at,
+            'source': 'monitoring',
+            'source_label': 'Monitoring dashboard',
+            'accent': 'emerald',
+            'title': f"Monitoring report · {rep.task.get_task_type_display()}",
+            'subtitle': str(rep.unit),
+            'meta': applicant_name,
+            'actor': rep.submitted_by.get_full_name() if rep.submitted_by else '—',
+        })
+
+    for rep in (
+        MonitoringReport.objects.filter(
+            progress_assessment__in=['normal_progress', 'no_progress'],
+            assessed_at__isnull=False,
+        )
+        .select_related('unit', 'assessed_by')
+        .order_by('-assessed_at')[:50]
+    ):
+        feed.append({
+            'ts': rep.assessed_at,
+            'source': 'monitoring',
+            'source_label': 'Monitoring dashboard',
+            'accent': 'emerald',
+            'title': f"Staff decision · {rep.get_progress_assessment_display()}",
+            'subtitle': str(rep.unit),
+            'meta': '',
+            'actor': rep.assessed_by.get_full_name() if rep.assessed_by else '—',
+        })
+
+    for task in (
+        MonitoringTask.objects.filter(notified_at__isnull=False)
+        .select_related('unit', 'notified_by')
+        .order_by('-notified_at')[:50]
+    ):
+        feed.append({
+            'ts': task.notified_at,
+            'source': 'monitoring',
+            'source_label': 'Monitoring dashboard',
+            'accent': 'amber',
+            'title': f"Monitoring task notified · {task.get_task_type_display()}",
+            'subtitle': str(task.unit),
+            'meta': f"Due {task.due_date}",
+            'actor': task.notified_by.get_full_name() if task.notified_by else '—',
+        })
+
+    feed.sort(key=lambda x: x['ts'], reverse=True)
+    activity_feed = feed[:150]
+
+    counts = {'verification': 0, 'monitoring': 0}
+    for row in activity_feed:
+        key = row.get('source')
+        if key in counts:
+            counts[key] += 1
+
+    return render(
+        request,
+        'accounts/field/team_dashboard.html',
+        {
+            'page_title': 'Field team dashboard',
+            'activity_feed': activity_feed,
+            'log_counts': counts,
+        },
+    )
+
 
 
 # Legacy view for backward compatibility - now just redirects

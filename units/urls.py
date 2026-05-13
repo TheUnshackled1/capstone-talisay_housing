@@ -10,6 +10,21 @@ urlpatterns = [
     path('housing-units/<str:position>/unit/create/', views.create_housing_unit, name='create_housing_unit'),
     path('housing-units/<str:position>/unit/construction/update/', views.add_construction_update, name='add_construction_update'),
     path('housing-units/<str:position>/<uuid:unit_id>/details/', views.get_unit_details, name='get_unit_details'),
+    path(
+        'housing-units/<str:position>/<uuid:unit_id>/explanation-letter/deadline/',
+        views.set_explanation_letter_deadline,
+        name='set_explanation_letter_deadline',
+    ),
+    path(
+        'housing-units/<str:position>/<uuid:unit_id>/explanation-letter/upload/',
+        views.upload_explanation_letter,
+        name='upload_explanation_letter',
+    ),
+    path(
+        'housing-units/<str:position>/<uuid:unit_id>/disqualify-beneficiary/',
+        views.disqualify_beneficiary_monitoring,
+        name='disqualify_beneficiary_monitoring',
+    ),
     path('housing-units/<str:position>/issue-notice/', views.issue_compliance_notice, name='issue_compliance_notice'),
 
     # Phase 3: Caretaker Monitoring Dashboard

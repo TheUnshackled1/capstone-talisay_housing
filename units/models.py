@@ -785,6 +785,7 @@ class MonitoringReport(models.Model):
 
     CONSTRUCTION_STATUS_CHOICES = [
         ('no_structure', 'No Structure'),
+        ('ongoing_construction', 'Ongoing Construction'),
         ('site_clearing', 'Site Clearing'),
         ('foundation', 'Foundation'),
         ('wall_framing', 'Wall Framing'),
@@ -958,6 +959,11 @@ class ExplanationReview(models.Model):
         ('needs_clarification', 'Needs Clarification — Request More Info'),
     ]
 
+    TRIGGER_KIND_CHOICES = [
+        ('staff_no_progress', 'Staff marked monitoring as No Progress'),
+        ('auto_rule', 'Automated monitoring evaluation rule'),
+    ]
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     lot_award = models.ForeignKey(
@@ -979,6 +985,44 @@ class ExplanationReview(models.Model):
         blank=True,
         related_name='triggered_explanations',
         help_text="MonitoringReport that triggered this explanation review"
+    )
+
+    trigger_kind = models.CharField(
+        max_length=30,
+        choices=TRIGGER_KIND_CHOICES,
+        default='staff_no_progress',
+        help_text="Whether this case was opened by staff assessment or automated rules",
+    )
+
+    # Staff-set deadline for the beneficiary to submit a written explanation at the office
+    letter_deadline_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Date/time by which the beneficiary must submit an explanation letter on file",
+    )
+
+    letter_document = models.FileField(
+        upload_to='explanation_letters/%Y/%m/',
+        blank=True,
+        help_text="Scanned or uploaded explanation letter (staff)",
+    )
+
+    letter_received_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="When staff recorded receipt of the explanation letter",
+    )
+
+    deadline_eve_sms_sent_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="When the day-before deadline reminder SMS was sent",
+    )
+
+    deadline_due_sms_sent_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="When the past-deadline / non-compliance notice SMS was sent",
     )
 
     # Beneficiary explanation (from SMS or system notification)

@@ -1449,7 +1449,7 @@
                 <div class="monitoring-report-crest" aria-hidden="true">THA</div>
                 <div>
                     <h2 class="monitoring-report-title">Caretaker monitoring report</h2>
-                    <p class="monitoring-report-subtitle">Occupancy condition, construction progress, and photo evidence from field inspection.</p>
+                    <p class="monitoring-report-subtitle">What you submit here is summarized for staff under the same headings as the monitoring schedule review (occupancy, construction, progress, remarks, photos).</p>
                 </div>
             </div>
             <button type="button" class="modal-close" onclick="closeReportModal()">×</button>
@@ -1482,54 +1482,70 @@
                     </div>
                 </div>
 
-            <!-- Construction Status -->
-            <div class="report-field" style="margin-bottom: 0;">
-                <label>
-                    Construction Status
-                    <span class="report-required">Required</span>
-                </label>
-            </div>
-            <div class="monitoring-decision-grid">
-                <label class="monitoring-decision-label positive">
-                    <input type="radio" name="construction_status" value="ongoing" required>
-                    <strong class="monitoring-decision-title">Ongoing Construction</strong>
-                    <p class="monitoring-decision-sub">Active building, structural improvements, or materials present on site.</p>
-                </label>
-                <label class="monitoring-decision-label negative">
-                    <input type="radio" name="construction_status" value="no_structure" required>
-                    <strong class="monitoring-decision-title">No Structure</strong>
-                    <p class="monitoring-decision-sub">No signs of construction, lot remains vacant or untouched.</p>
-                </label>
-            </div>
+                <div class="report-field">
+                    <label>
+                        Actual occupancy conditions
+                        <span class="report-required">Required</span>
+                    </label>
+                    <p class="report-help" style="margin-top:0;">Same heading staff see in the monitoring schedule summary. State what you observed on site (who is present, vacant, unauthorized occupants, etc.).</p>
+                    <textarea name="occupancy_notes" required minlength="8" maxlength="2000" rows="4" placeholder="Example: Beneficiary household present; structure in progress. Or: Unit appears vacant; no authorized occupant observed."></textarea>
+                </div>
 
-            <!-- Occupancy Status -->
-            <div class="report-field" style="margin-bottom: 0;">
-                <label>
-                    Occupancy Status
-                    <span class="report-required">Required</span>
-                </label>
-            </div>
-            <div class="monitoring-decision-grid">
-                <label class="monitoring-decision-label positive">
-                    <input type="radio" name="occupancy_status" value="occupied" required>
-                    <strong class="monitoring-decision-title">Properly Occupied</strong>
-                    <p class="monitoring-decision-sub">Beneficiary or immediate family is residing in the unit.</p>
-                </label>
-                <label class="monitoring-decision-label negative">
-                    <input type="radio" name="occupancy_status" value="unoccupied" required>
-                    <strong class="monitoring-decision-title">Unoccupied</strong>
-                    <p class="monitoring-decision-sub">Unit is abandoned, temporarily vacant, or occupied by unauthorized persons.</p>
-                </label>
-            </div>
+                <div class="report-field" style="margin-bottom: 0;">
+                    <label>
+                        Occupancy classification
+                        <span class="report-required">Required</span>
+                    </label>
+                    <p class="report-help" style="margin-top:0;">Select the category that matches your narrative above.</p>
+                </div>
+                <div class="monitoring-decision-grid">
+                    <label class="monitoring-decision-label positive">
+                        <input type="radio" name="occupancy_status" value="occupied" required>
+                        <strong class="monitoring-decision-title">Properly Occupied</strong>
+                        <p class="monitoring-decision-sub">Beneficiary or immediate family is residing in the unit.</p>
+                    </label>
+                    <label class="monitoring-decision-label negative">
+                        <input type="radio" name="occupancy_status" value="unoccupied" required>
+                        <strong class="monitoring-decision-title">Unoccupied</strong>
+                        <p class="monitoring-decision-sub">Unit is abandoned, temporarily vacant, or occupied by unauthorized persons.</p>
+                    </label>
+                </div>
 
-            <!-- Photo Evidence -->
-            <div class="field-evidence-section" style="margin-bottom: 0;">
-                <span class="field-evidence-label">
-                    Photo Evidence <span class="report-required" style="margin-left: 5px;">Required</span>
-                </span>
-                <p class="field-evidence-hint">
-                    Upload field photo proof for occupancy condition and any construction progress. You may capture images using this device or attach files from storage. Maximum 4 images.
-                </p>
+                <div class="report-field" style="margin-bottom: 0;">
+                    <label>
+                        Construction status
+                        <span class="report-required">Required</span>
+                    </label>
+                </div>
+                <div class="monitoring-decision-grid">
+                    <label class="monitoring-decision-label positive">
+                        <input type="radio" name="construction_status" value="ongoing_construction" required>
+                        <strong class="monitoring-decision-title">Ongoing Construction</strong>
+                        <p class="monitoring-decision-sub">Active building, structural improvements, or materials present on site.</p>
+                    </label>
+                    <label class="monitoring-decision-label negative">
+                        <input type="radio" name="construction_status" value="no_structure" required>
+                        <strong class="monitoring-decision-title">No Structure</strong>
+                        <p class="monitoring-decision-sub">No signs of construction, lot remains vacant or untouched.</p>
+                    </label>
+                </div>
+
+                <div class="report-field">
+                    <label>
+                        Construction progress statement
+                        <span class="report-required" id="progressNotesRequiredBadge" style="display:none;">Required</span>
+                    </label>
+                    <p class="report-help" style="margin-top:0;">Shown under this same label in the staff review summary. If you chose <strong>Ongoing Construction</strong>, describe what was built or improved.</p>
+                    <textarea id="progressNotesInput" name="progress_notes" rows="4" maxlength="2000" placeholder="If construction is ongoing, describe progress. If there is no structure, you may write: No construction progress."></textarea>
+                </div>
+
+                <div class="field-evidence-section" style="margin-bottom: 0;">
+                    <span class="field-evidence-label">
+                        Photo evidence <span class="report-required" style="margin-left: 5px;">Required</span>
+                    </span>
+                    <p class="field-evidence-hint">
+                        Same evidence block staff reviews in the monitoring schedule summary. Capture or attach up to 4 images of the lot and any structures or materials.
+                    </p>
 
                 <div id="cameraPreview">
                     <video id="photoCameraVideo" playsinline autoplay muted style="width: 100%; max-height: 220px; border-radius: 10px; background: #0f172a; margin-bottom: 10px;"></video>
@@ -1555,9 +1571,10 @@
             <!-- General Remarks -->
             <div class="report-field">
                 <label>
-                    General Remarks & Observations
+                    General remarks &amp; observations
                 </label>
-                <textarea name="general_remarks" placeholder="Overall assessment, concerns, or follow-up recommendations..."></textarea>
+                <p class="report-help" style="margin-top:0;">Appears as <strong>General remarks</strong> in the staff summary.</p>
+                <textarea name="general_remarks" rows="3" maxlength="2000" placeholder="Overall assessment, concerns, or follow-up recommendations..."></textarea>
             </div>
 
                 <!-- Submit Button -->
@@ -1639,6 +1656,7 @@ function openReportModal(taskId, allowEarly, scheduledDate, taskLabel, unitLocat
     document.getElementById('allowEarlyInspection').value = allowEarly ? '1' : '0';
     setReportReference(taskLabel, unitLocation, dueDate, monitoringDay);
     document.getElementById('reportModal').classList.add('active');
+    syncProgressNotesRequiredUI();
 }
 
 function closeEarlyInspectionModal() {
@@ -1663,6 +1681,23 @@ function continueEarlyInspection() {
         );
     }
     document.getElementById('reportModal').classList.add('active');
+    syncProgressNotesRequiredUI();
+}
+
+function syncProgressNotesRequiredUI() {
+    const badge = document.getElementById('progressNotesRequiredBadge');
+    const ta = document.getElementById('progressNotesInput');
+    const checked = document.querySelector('input[name="construction_status"]:checked');
+    if (!badge || !ta) return;
+    const ongoing = checked && checked.value === 'ongoing_construction';
+    badge.style.display = ongoing ? 'inline' : 'none';
+    if (ongoing) {
+        ta.setAttribute('minlength', '8');
+        ta.setAttribute('required', 'required');
+    } else {
+        ta.removeAttribute('minlength');
+        ta.removeAttribute('required');
+    }
 }
 
 function closeReportModal() {
@@ -1670,8 +1705,12 @@ function closeReportModal() {
     document.getElementById('reportModal').classList.remove('active');
     document.getElementById('reportForm').reset();
     document.getElementById('allowEarlyInspection').value = '0';
-    const fileName = document.getElementById('photoEvidenceFileName');
-    if (fileName) fileName.textContent = 'No photo selected';
+    const input = document.getElementById('photoEvidenceInput');
+    if (input) {
+        input.value = '';
+        updatePhotoEvidenceName(input);
+    }
+    syncProgressNotesRequiredUI();
 }
 
 function setPhotoEvidenceFiles(files) {
@@ -1820,8 +1859,16 @@ function removePhotoEvidenceFile(index) {
 function submitReport(event) {
     event.preventDefault();
 
-    const formData = new FormData(document.getElementById('reportForm'));
+    const form = document.getElementById('reportForm');
+    const formData = new FormData(form);
     const taskId = formData.get('task_id');
+    const construction = formData.get('construction_status');
+    const progressEl = document.getElementById('progressNotesInput');
+    const progressText = progressEl ? progressEl.value.trim() : '';
+    if (construction === 'ongoing_construction' && progressText.length < 8) {
+        showToast('Construction progress statement must be at least 8 characters when construction is ongoing.', 'error');
+        return;
+    }
 
     fetch(`/units/monitoring-report/${taskId}/submit/`, {
         method: 'POST',
@@ -1868,5 +1915,9 @@ if (selectedTaskId) {
         selectedRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 }
+
+document.querySelectorAll('input[name="construction_status"]').forEach((el) => {
+    el.addEventListener('change', syncProgressNotesRequiredUI);
+});
 </script>
 {% endblock %}

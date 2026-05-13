@@ -2676,6 +2676,280 @@
         box-shadow: 0 4px 10px rgba(217, 119, 6, 0.35);
         transform: translateY(-1px);
     }
+
+    /* Refined Applicant Record Modal — mirroring Archive Summary styles */
+    #reviewModal .modal-content.tha-review-modal {
+        border: 1px solid #cbd5e1;
+        border-radius: 1rem;
+        box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.28);
+        overflow: hidden;
+        background: #fff;
+        position: relative;
+    }
+    #reviewModal .modal-content.tha-review-modal::before {
+        content: '';
+        position: sticky;
+        top: 0;
+        display: block;
+        height: 4px;
+        background: linear-gradient(90deg, #1e3a8a 0%, #2563eb 25%, #16a34a 50%, #d97706 75%, #7c3aed 100%);
+        z-index: 11;
+    }
+    #reviewModal .modal-header {
+        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        border-bottom: 2px solid #e2e8f0;
+        padding: 1.1rem 1.5rem 1rem;
+        justify-content: center;
+    }
+    #reviewModal .tha-review-modal-kicker {
+        font-size: 0.6rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: #1e3a8a;
+        margin: 0 0 0.4rem 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+    #reviewModal .tha-review-modal-kicker::before {
+        content: '';
+        width: 0.5rem;
+        height: 0.5rem;
+        background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+        border-radius: 50%;
+        box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.12);
+    }
+    #reviewModal .modal-body {
+        padding: 1.25rem 1.5rem;
+        background: #fafbfc;
+    }
+    #reviewModal .review-section-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.75rem;
+        padding: 1.1rem 1.2rem !important;
+        margin-bottom: 0.85rem !important;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+    #reviewModal .review-section-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: 4px;
+    }
+    #reviewModal .review-section-card.section-blue::before { background: linear-gradient(180deg, #2563eb 0%, #1e40af 100%); }
+    #reviewModal .review-section-card.section-teal::before { background: linear-gradient(180deg, #0f766e 0%, #115e59 100%); }
+    #reviewModal .review-section-card.section-green::before { background: linear-gradient(180deg, #16a34a 0%, #15803d 100%); }
+    #reviewModal .review-section-card.section-amber::before { background: linear-gradient(180deg, #d97706 0%, #b45309 100%); }
+    #reviewModal .review-section-card.section-purple::before { background: linear-gradient(180deg, #7c3aed 0%, #6d28d9 100%); }
+
+    #reviewModal .review-section-title {
+        font-family: 'Source Serif Pro', Georgia, serif !important;
+        font-size: 0.9rem !important;
+        font-weight: 700 !important;
+        text-transform: none !important;
+        letter-spacing: -0.01em !important;
+        margin: 0 0 1rem 0 !important;
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        padding-left: 0.4rem;
+        color: #1e3a8a;
+    }
+    #reviewModal .review-section-title::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: linear-gradient(90deg, #e2e8f0 0%, transparent 100%);
+    }
+
+    #reviewModal .review-field-label {
+        font-size: 0.6rem !important;
+        font-weight: 800 !important;
+        color: #64748b !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.12em !important;
+        margin-bottom: 0.35rem !important;
+        display: block;
+    }
+
+    /* Target both readonly inputs and standard boxes to look like Archive Summary values */
+    #reviewModal .form-input[readonly],
+    #reviewModal .form-select[disabled],
+    #reviewModal .review-field-value-box {
+        font-size: 0.85rem !important;
+        font-weight: 600 !important;
+        color: #0f172a !important;
+        background: #f8fafc !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 0.45rem !important;
+        padding: 0.55rem 0.7rem !important;
+        line-height: 1.4 !important;
+        word-break: break-word !important;
+        min-height: 2.2rem !important;
+        display: flex !important;
+        align-items: center !important;
+        width: 100% !important;
+        box-shadow: none !important;
+        border-left: 1px solid #e2e8f0 !important; /* Overriding previous blue border-left */
+    }
+
+    #reviewModal .form-input[readonly]:focus {
+        outline: none !important;
+    }
+
+    #reviewModal .review-field-monospace {
+        font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace !important;
+        color: #1e3a8a !important;
+        background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%) !important;
+        border-color: #bfdbfe !important;
+        letter-spacing: 0.01em !important;
+    }
+
+    /* Responsive Grids for Modal */
+    #reviewModal .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+    #reviewModal .identity-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+    }
+    
+    #reviewModal .form-group[style*="grid-column: span 2"] {
+        grid-column: span 2;
+    }
+
+    @media (max-width: 1024px) {
+        #reviewModal .identity-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+    @media (max-width: 640px) {
+        #reviewModal .identity-grid {
+            grid-template-columns: 1fr;
+        }
+        #reviewModal .form-group[style*="grid-column: span 2"] {
+            grid-column: span 1 !important;
+        }
+        #reviewModal .modal-content.tha-review-modal {
+            width: 100%;
+            height: 100%;
+            max-height: 100vh;
+            border-radius: 0;
+        }
+    }
+
+    /* Refined Situation Card */
+    #reviewModal #reviewApplicantSituationCard {
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
+        border: 1px solid #e2e8f0 !important;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.8) !important;
+    }
+    #reviewModal #situationIcon {
+        background: #ffffff !important;
+        border: 1px solid #e2e8f0 !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.03) !important;
+    }
+
+    /* Target Buttons for Perfect Match */
+    #reviewModal .btn-modal {
+        padding: 0.65rem 1.25rem !important;
+        font-size: 0.72rem !important;
+        font-weight: 800 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.05em !important;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    #reviewModal .btn-modal.secondary#btnEditToggle {
+        background: #fffbeb !important;
+        color: #b45309 !important;
+        border: 1px solid #fcd34d !important;
+        box-shadow: 0 1px 2px rgba(180, 83, 9, 0.05) !important;
+    }
+    #reviewModal .btn-modal.secondary#btnEditToggle:hover {
+        background: #fef3c7 !important;
+        border-color: #f59e0b !important;
+    }
+
+    #reviewModal .btn-modal.primary#btnProceedModule2 {
+        background: #1e40af !important;
+        border: 1px solid #1e3a8a !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 12px rgba(30, 64, 175, 0.2) !important;
+    }
+    #reviewModal .btn-modal.primary#btnProceedModule2:hover {
+        background: #1d4ed8 !important;
+        transform: translateY(-1px);
+    }
+
+    #reviewModal .btn-modal.danger {
+        background: #b91c1c !important;
+        border: 1px solid #991b1b !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 12px rgba(185, 28, 28, 0.2) !important;
+    }
+    #reviewModal .btn-modal.danger:hover {
+        background: #dc2626 !important;
+    }
+
+    #reviewModal .btn-modal.secondary:not(#btnEditToggle) {
+        background: #ffffff !important;
+        border: 1px solid #cbd5e1 !important;
+        color: #475569 !important;
+    }
+    #reviewModal .btn-modal.secondary:not(#btnEditToggle):hover {
+        background: #f8fafc !important;
+        border-color: #94a3b8 !important;
+    }
+
+    /* Exact Header Chip Styling */
+    #reviewModal .modal-subtitle#reviewReference {
+        font-family: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace !important;
+        background: #f0f7ff !important;
+        color: #1e40af !important;
+        border: 1px solid #dbeafe !important;
+        padding: 0.45rem 1.1rem !important;
+        border-radius: 999px !important;
+        font-size: 0.8rem !important;
+        font-weight: 700 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 0.5rem !important;
+        box-shadow: 0 1px 2px rgba(30, 64, 175, 0.05) !important;
+    }
+
+    /* Label Typography Refinement */
+    #reviewModal .form-label {
+        font-size: 0.58rem !important;
+        font-weight: 800 !important;
+        color: #64748b !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.1em !important;
+        margin-bottom: 0.5rem !important;
+    }
+
+    /* Input Field Refinement */
+    #reviewModal .form-input[readonly],
+    #reviewModal .form-select[disabled] {
+        background: #f8fafc !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 0.6rem !important;
+        padding: 0.65rem 0.85rem !important;
+        color: #0f172a !important;
+        font-weight: 600 !important;
+        transition: all 0.15s ease !important;
+    }
 </style>
 {% endblock %}
 
@@ -3326,17 +3600,16 @@
 <!-- Review/Edit Modal - Combined Detail & Review -->
 <div class="modal-overlay" id="reviewModal" onclick="closeReviewModal()">
     <div class="modal-content tha-review-modal" style="max-width: 48rem; max-height: 90vh; overflow-y: auto;" onclick="event.stopPropagation()">
-        <div class="modal-header" style="position: sticky; top: 0; background: white; z-index: 10; justify-content: center;">
-            <div style="text-align: center;">
-                <p class="tha-review-modal-kicker">Talisay City Housing Authority Applicant record</p>
-                <h2 class="modal-title" id="reviewName"></h2>
-                <p class="modal-subtitle" id="reviewReference"></p>
-            </div>
-            <button class="btn-close" onclick="closeReviewModal()" style="position: absolute; right: 1.5rem;">
-                <svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
+        <div class="modal-header" style="position: sticky; top: 0; background: white; z-index: 10; flex-direction: column; align-items: center; padding: 1.5rem 1rem 1.25rem 1rem;">
+            <p class="tha-review-modal-kicker" style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem;">
+                <span style="width: 6px; height: 6px; border-radius: 50%; background: #2563eb;"></span>
+                TALISAY CITY HOUSING AUTHORITY APPLICANT RECORD
+            </p>
+            <h2 class="modal-title" id="reviewName" style="font-family: 'Source Serif Pro', Georgia, serif; font-size: 1.75rem; font-weight: 700; color: #0f172a; margin-bottom: 0.75rem;">—</h2>
+            <p class="modal-subtitle" id="reviewReference" style="margin: 0;">—</p>
+            
+            <button type="button" class="btn-close" onclick="closeReviewModal()" style="position: absolute; right: 1.25rem; top: 1.25rem; font-size: 1.5rem; color: #94a3b8; opacity: 0.8; transition: opacity 0.2s; border: none; background: none; cursor: pointer;">
+                &times;
             </button>
         </div>
         
@@ -3354,8 +3627,8 @@
                     <input type="hidden" id="reviewFullNameB" name="full_name_b" value="">
 
                     <!-- Section A: APPLICATION IDENTITY -->
-                    <div style="border-bottom: 2px solid #e2e8f0; padding-bottom: 1rem; margin-bottom: 1rem;">
-                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">A. Application identity</h4>
+                    <div class="review-section-card section-blue">
+                        <h4 class="review-section-title">A. Application identity</h4>
                         <div class="form-grid identity-grid" style="margin-bottom: 1rem;">
                             <div class="form-group">
                                 <label class="form-label">Last name</label>
@@ -3424,8 +3697,8 @@
                     </div>
 
                     <!-- Section B: HOUSEHOLD MEMBERS -->
-                    <div style="border-bottom: 2px solid #e2e8f0; padding-bottom: 1rem; margin-bottom: 1rem;">
-                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">B. Household members</h4>
+                    <div class="review-section-card section-teal">
+                        <h4 class="review-section-title">B. Household members</h4>
                         <div id="reviewHouseholdListB" style="margin-bottom: 0.75rem;">
                             <!-- Populated by JavaScript -->
                         </div>
@@ -3438,8 +3711,8 @@
                     </div>
 
                     <!-- Section C: HOUSEHOLD INCOME -->
-                    <div style="border-bottom: 2px solid #e2e8f0; padding-bottom: 1rem; margin-bottom: 1rem;">
-                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">C. Household income</h4>
+                    <div class="review-section-card section-green">
+                        <h4 class="review-section-title">C. Household income</h4>
                         <div class="form-grid">
                             <div class="form-group">
                                 <label class="form-label">Principal occupation</label>
@@ -3457,8 +3730,8 @@
                     </div>
 
                     <!-- Section D: APPLICANT SITUATION -->
-                    <div style="border-bottom: 2px solid #e2e8f0; padding-bottom: 1rem; margin-bottom: 1rem;">
-                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.5px;">D. Applicant Situation</h4>
+                    <div class="review-section-card section-amber">
+                        <h4 class="review-section-title">D. Applicant Situation</h4>
 
                         <!-- Main Situation Display Card -->
                         <div id="reviewApplicantSituationCard" style="background: linear-gradient(135deg, #f0f9ff 0%, #f1f5f9 100%); border: 2px solid #cbd5e1; border-radius: 0.75rem; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 1rem;">
@@ -3612,7 +3885,8 @@
                     </div>
                     
                     <!-- Channel B supplemental status (CDRRMO only when applicable) -->
-                    <div style="border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-bottom: 1rem;">
+                    <div class="review-section-card section-purple">
+                        <h4 class="review-section-title">Eligibility Checks</h4>
                         <div id="eligibilityChecksB" style="display: grid; gap: 0.5rem;">
                             <!-- Populated by JavaScript -->
                         </div>
@@ -3628,8 +3902,8 @@
                     </div>
                     
                     <!-- Section A: APPLICATION IDENTITY -->
-                    <div style="border-bottom: 2px solid #e2e8f0; padding-bottom: 1rem; margin-bottom: 1rem;">
-                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">A. APPLICATION IDENTITY</h4>
+                    <div class="review-section-card section-blue">
+                        <h4 class="review-section-title">A. APPLICATION IDENTITY</h4>
                         <div class="form-grid identity-grid" style="margin-bottom: 1rem;">
                             <div class="form-group">
                                 <label class="form-label">Last Name</label>
@@ -3684,8 +3958,8 @@
                     </div>
 
                     <!-- Section B: HOUSEHOLD MEMBERS -->
-                    <div style="border-bottom: 2px solid #e2e8f0; padding-bottom: 1rem; margin-bottom: 1rem;">
-                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">B. HOUSEHOLD MEMBERS</h4>
+                    <div class="review-section-card section-teal">
+                        <h4 class="review-section-title">B. HOUSEHOLD MEMBERS</h4>
                         <div id="reviewHouseholdList" style="margin-bottom: 0.75rem;">
                             <!-- Populated by JavaScript -->
                         </div>
@@ -3698,8 +3972,8 @@
                     </div>
 
                     <!-- Section C: FAMILY INCOME -->
-                    <div style="border-bottom: 2px solid #e2e8f0; padding-bottom: 1rem; margin-bottom: 1rem;">
-                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">C. APPLICANTS FAMILY INCOME</h4>
+                    <div class="review-section-card section-green">
+                        <h4 class="review-section-title">C. APPLICANTS FAMILY INCOME</h4>
                         <div class="form-grid">
                             <div class="form-group">
                                 <label class="form-label">Occupation</label>
@@ -3725,8 +3999,8 @@
                     </div>
                     
                     <!-- Eligibility Check Section -->
-                    <div style="border-top: 1px solid #e2e8f0; padding-top: 1rem; margin-bottom: 1rem;">
-                        <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">Eligibility Check</h4>
+                    <div class="review-section-card section-purple">
+                        <h4 class="review-section-title">Eligibility Check</h4>
                         <div id="eligibilityChecks" style="display: grid; gap: 0.5rem;">
                             <!-- Populated by JavaScript -->
                         </div>
@@ -3743,19 +4017,16 @@
                 </div>
             </div>
             
-            <div class="modal-footer">
+            <div class="modal-footer" style="padding: 1.25rem 1.5rem; background: #ffffff; border-top: 1px solid #e2e8f0; sticky; bottom: 0; z-index: 10; gap: 0.75rem;">
                 {% if can_modify %}
                 <!-- Edit Mode Toggle - Only for Jocel/Joie -->
                 <button type="button" class="btn-modal secondary" id="btnEditToggle" onclick="toggleEditMode()">
-                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 1rem; height: 1rem;">
                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                         <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                     </svg>
                     <span id="editToggleText">EDIT record</span>
                 </button>
-
-                <!-- Intake is encoding-only; eligibility/disqualification is handled in Module 2 -->
-                <div id="reviewActions" style="display:none;"></div>
 
                 <!-- Save/Cancel (Edit Mode) -->
                 <div id="editActions" style="display: none; gap: 0.5rem;">
@@ -3778,17 +4049,19 @@
                     id="btnProceedModule2"
                     onclick="proceedToArchive()"
                 >
-                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M5 12h14M12 5l7 7-7 7"/>
+                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 1rem; height: 1rem;">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
                     </svg>
                     Proceed to LIST OF APPLICANTS
                 </button>
 
                 <!-- Delete Button - Only for Jocel/Joie -->
                 <button type="button" class="btn-modal danger" id="btnDelete" onclick="confirmDelete()" style="margin-left: auto;">
-                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="3 6 5 6 21 6"></polyline>
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 1rem; height: 1rem;">
+                        <path d="M3 6h18"></path>
+                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
                     </svg>
                     DELETE record
                 </button>
@@ -7158,7 +7431,7 @@
             const reviewChannelEl = document.getElementById('reviewChannel');
             
             if (reviewNameEl) reviewNameEl.textContent = currentApplicant.fullName;
-            if (reviewRefEl) reviewRefEl.textContent = currentApplicant.referenceNumber + ' · Reg. ' + currentApplicant.dateRegistered;
+            if (reviewRefEl) reviewRefEl.textContent = `${currentApplicant.referenceNumber} · Reg. ${currentApplicant.dateRegistered}`;
             if (reviewApplicantIdEl) reviewApplicantIdEl.value = currentApplicant.applicantId || currentApplicant.id;
             if (reviewChannelEl) reviewChannelEl.value = currentApplicant.channel;
 
