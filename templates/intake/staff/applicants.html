@@ -7,6 +7,8 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/tailwind.css' %}">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_blue.css">
 <style>
     /* Applicants Page Styles */
     .applicants-container {
@@ -1670,6 +1672,18 @@
         background: #f8fafc;
     }
 
+    #reviewModal .btn-modal.dismiss {
+        background: #eef2ff;
+        color: #3730a3;
+        border-color: #c7d2fe;
+    }
+
+    #reviewModal .btn-modal.dismiss:hover {
+        background: #e0e7ff;
+        color: #312e81;
+        border-color: #a5b4fc;
+    }
+
     .btn-icon {
         width: 0.875rem;
         height: 0.875rem;
@@ -2162,7 +2176,7 @@
     /* Sticky footer — clear action hierarchy */
     #reviewModal .modal-content.tha-review-modal .modal-footer {
         gap: 0.5rem;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
         align-items: center;
         background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
         border-top: 1px solid #e2e8f0;
@@ -2903,14 +2917,27 @@
         background: #dc2626 !important;
     }
 
-    #reviewModal .btn-modal.secondary:not(#btnEditToggle) {
+    #reviewModal .btn-modal.secondary:not(#btnEditToggle):not(.dismiss) {
         background: #ffffff !important;
         border: 1px solid #cbd5e1 !important;
         color: #475569 !important;
     }
-    #reviewModal .btn-modal.secondary:not(#btnEditToggle):hover {
+    #reviewModal .btn-modal.secondary:not(#btnEditToggle):not(.dismiss):hover {
         background: #f8fafc !important;
         border-color: #94a3b8 !important;
+    }
+
+    #reviewModal .btn-modal.secondary.dismiss {
+        background: #eef2ff !important;
+        color: #3730a3 !important;
+        border-color: #c7d2fe !important;
+        box-shadow: 0 2px 8px rgba(99, 102, 241, 0.18) !important;
+    }
+    #reviewModal .btn-modal.secondary.dismiss:hover {
+        background: #e0e7ff !important;
+        color: #312e81 !important;
+        border-color: #a5b4fc !important;
+        transform: translateY(-1px);
     }
 
     /* Exact Header Chip Styling */
@@ -3884,14 +3911,6 @@
                         </div>
                     </div>
                     
-                    <!-- Channel B supplemental status (CDRRMO only when applicable) -->
-                    <div class="review-section-card section-purple">
-                        <h4 class="review-section-title">Eligibility Checks</h4>
-                        <div id="eligibilityChecksB" style="display: grid; gap: 0.5rem;">
-                            <!-- Populated by JavaScript -->
-                        </div>
-                    </div>
-
                 </div>
                 
                 <!-- Channel C: Regular Walk-in Applicant View -->
@@ -3998,14 +4017,6 @@
                         </div>
                     </div>
                     
-                    <!-- Eligibility Check Section -->
-                    <div class="review-section-card section-purple">
-                        <h4 class="review-section-title">Eligibility Check</h4>
-                        <div id="eligibilityChecks" style="display: grid; gap: 0.5rem;">
-                            <!-- Populated by JavaScript -->
-                        </div>
-                    </div>
-                    
                     <!-- Lot Assignment (if applicable) -->
                     <div id="lotAssignmentSection" style="display: none; border-top: 1px solid #e2e8f0; padding-top: 1rem;">
                         <h4 style="font-size: 0.8125rem; font-weight: 600; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase;">Lot Assignment</h4>
@@ -4057,7 +4068,7 @@
                 </button>
 
                 <!-- Delete Button - Only for Jocel/Joie -->
-                <button type="button" class="btn-modal danger" id="btnDelete" onclick="confirmDelete()" style="margin-left: auto;">
+                <button type="button" class="btn-modal danger" id="btnDelete" onclick="confirmDelete()">
                     <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 1rem; height: 1rem;">
                         <path d="M3 6h18"></path>
                         <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
@@ -4077,7 +4088,7 @@
                 </div>
                 {% endif %}
                 
-                <button type="button" class="btn-modal secondary" onclick="closeReviewModal()">
+                <button type="button" class="btn-modal secondary dismiss" onclick="closeReviewModal()">
                     Dismiss
                 </button>
             </div>
@@ -4349,6 +4360,22 @@
         </div>
         <div class="modal-body" style="max-height: 75vh; overflow-y: auto; overflow-x: hidden;">
             <style>
+                .tha-reg-modal .modal-header {
+                    justify-content: center;
+                    align-items: center;
+                }
+
+                .tha-reg-modal .modal-title {
+                    width: 100%;
+                    text-align: center;
+                }
+
+                .tha-reg-modal .btn-close {
+                    position: absolute;
+                    right: 1.5rem;
+                    top: 1rem;
+                }
+
                 .tha-reg-modal .tha-form-header {
                     background: #0f172a;
                     color: #f8fafc;
@@ -4730,6 +4757,9 @@
                 @media (max-width: 1023px) {
                     #addModal {
                         left: 0;
+                    }
+                    #reviewModal .modal-content.tha-review-modal .modal-footer {
+                        flex-wrap: wrap;
                     }
                 }
                 .tha-reg-modal .identity-row {
@@ -5417,15 +5447,17 @@
                     transform: translateY(-1px);
                 }
                 .tha-reg-modal .modal-footer .btn-modal.danger {
-                    background: #ffffff !important;
-                    color: #475569 !important;
-                    border-color: #cbd5e1 !important;
-                    box-shadow: none !important;
+                    background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%) !important;
+                    color: #ffffff !important;
+                    border-color: #b91c1c !important;
+                    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
                 }
                 .tha-reg-modal .modal-footer .btn-modal.danger:hover {
-                    background: #f8fafc !important;
-                    border-color: #94a3b8 !important;
-                    color: #0f172a !important;
+                    background: linear-gradient(180deg, #dc2626 0%, #b91c1c 100%) !important;
+                    border-color: #991b1b !important;
+                    color: #ffffff !important;
+                    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.32) !important;
+                    transform: translateY(-1px);
                 }
 
                 /* Duplicate preview — soften */
@@ -5453,6 +5485,121 @@
                     color-scheme: light;
                     font-variant-numeric: tabular-nums;
                     cursor: pointer;
+                }
+
+                /* Material-style Flatpickr chrome for date pickers */
+                .tha-reg-modal .flatpickr-calendar.tha-material-picker {
+                    border-radius: 12px;
+                    border: 1px solid #e2e8f0;
+                    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.2);
+                    padding: 0.6rem 0.7rem 0.75rem;
+                    width: 19rem;
+                }
+                .tha-reg-modal .tha-material-picker .tha-material-header {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 0.25rem;
+                    padding: 0.35rem 0.15rem 0.45rem;
+                }
+                .tha-reg-modal .tha-material-picker .tha-material-kicker {
+                    font-size: 0.62rem;
+                    font-weight: 700;
+                    letter-spacing: 0.12em;
+                    text-transform: uppercase;
+                    color: #94a3b8;
+                }
+                .tha-reg-modal .tha-material-picker .tha-material-date-row {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 0.5rem;
+                }
+                .tha-reg-modal .tha-material-picker .tha-material-date {
+                    font-size: 1.1rem;
+                    font-weight: 700;
+                    color: #1f2937;
+                }
+                .tha-reg-modal .tha-material-picker .tha-material-edit {
+                    border: none;
+                    background: transparent;
+                    color: #64748b;
+                    width: 2rem;
+                    height: 2rem;
+                    border-radius: 999px;
+                    display: grid;
+                    place-items: center;
+                    cursor: pointer;
+                }
+                .tha-reg-modal .tha-material-picker .tha-material-edit:hover {
+                    background: #f1f5f9;
+                    color: #334155;
+                }
+                .tha-reg-modal .tha-material-picker .flatpickr-months {
+                    margin-top: 0.15rem;
+                }
+                .tha-reg-modal .tha-material-picker .flatpickr-weekdays {
+                    font-size: 0.65rem;
+                    color: #94a3b8;
+                }
+                .tha-reg-modal .tha-material-picker .flatpickr-weekday {
+                    font-weight: 600;
+                }
+                .tha-reg-modal .tha-material-picker .flatpickr-day {
+                    border-radius: 999px;
+                    line-height: 2.15rem;
+                    height: 2.15rem;
+                    max-width: 2.15rem;
+                    font-weight: 600;
+                }
+                .tha-reg-modal .tha-material-picker .flatpickr-day.selected,
+                .tha-reg-modal .tha-material-picker .flatpickr-day.startRange,
+                .tha-reg-modal .tha-material-picker .flatpickr-day.endRange {
+                    background: #2563eb;
+                    border-color: #2563eb;
+                    color: #ffffff;
+                    box-shadow: none;
+                }
+                .tha-reg-modal .tha-material-picker .flatpickr-day.today {
+                    border-color: #93c5fd;
+                }
+                .tha-reg-modal .tha-material-picker .flatpickr-months .flatpickr-month {
+                    color: #475569;
+                }
+                .tha-reg-modal .tha-material-picker .flatpickr-current-month input.cur-year {
+                    font-weight: 600;
+                }
+                .tha-reg-modal .tha-material-picker .flatpickr-prev-month,
+                .tha-reg-modal .tha-material-picker .flatpickr-next-month {
+                    color: #94a3b8;
+                }
+                .tha-reg-modal .tha-material-picker .flatpickr-prev-month:hover,
+                .tha-reg-modal .tha-material-picker .flatpickr-next-month:hover {
+                    color: #1d4ed8;
+                }
+                .tha-reg-modal .tha-material-picker .tha-material-footer {
+                    display: flex;
+                    justify-content: flex-end;
+                    gap: 0.75rem;
+                    margin-top: 0.35rem;
+                    padding-top: 0.5rem;
+                    border-top: 1px solid #e2e8f0;
+                }
+                .tha-reg-modal .tha-material-picker .tha-material-btn {
+                    border: none;
+                    background: transparent;
+                    text-transform: uppercase;
+                    font-size: 0.72rem;
+                    font-weight: 700;
+                    letter-spacing: 0.08em;
+                    color: #2563eb;
+                    cursor: pointer;
+                    padding: 0.25rem 0.4rem;
+                }
+                .tha-reg-modal .tha-material-picker .tha-material-btn.cancel {
+                    color: #64748b;
+                }
+                .tha-reg-modal .tha-material-picker .tha-material-btn:hover {
+                    color: #1d4ed8;
                 }
             </style>
 
@@ -5551,7 +5698,7 @@
                         </div>
                         <div class="form-group">
                             <label class="form-label">Date of birth <span style="color: #dc2626;">*</span></label>
-                            <input type="date" class="form-input" name="date_of_birth" id="dateOfBirth" onchange="calculateAge()" autocomplete="bday" required>
+                            <input type="text" class="form-input" name="date_of_birth" id="dateOfBirth" placeholder="dd/mm/yyyy" onchange="calculateAge()" autocomplete="bday" required>
                         </div>
                         <div class="form-group">
                             <label class="form-label">Age <span style="color: #dc2626;">*</span> <span style="font-weight: 500; color: #64748b;">(computed)</span></label>
@@ -5742,7 +5889,7 @@
                                     </div>
                                     <div class="form-group">
                                         <label class="form-label">Date of Notice or Ejection</label>
-                                        <input type="date" class="form-input" name="ejection_date" id="registrationEjectionDate">
+                                        <input type="text" class="form-input" name="ejection_date" id="registrationEjectionDate" placeholder="dd/mm/yyyy">
                                     </div>
                                 </div>
                                 <div class="info-note" style="margin-top: 0.75rem;">
@@ -5848,6 +5995,7 @@
 <input type="hidden" id="canModifyFlag" value="{{ can_modify|yesno:'true,false' }}">
 <script src="{% static 'Dynamic Web TWAIN SDK 19.3.3/Resources/dynamsoft.webtwain.initiate.js' %}"></script>
 <script src="{% static 'Dynamic Web TWAIN SDK 19.3.3/Resources/dynamsoft.webtwain.config.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <div id="dwtcontrolContainer" style="width: 0; height: 0; overflow: hidden; position: absolute; left: -9999px;"></div>
 <script>
     // Store applicants data in JavaScript
@@ -9350,16 +9498,189 @@
         renderHouseholdMembers();
     }
 
-    /** Native date input: OS/browser picker (e.g. Chrome Clear/Today UI). max = today (replaces Flatpickr maxDate). */
+    function formatMaterialPickerDate(date) {
+        if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+            return 'Select date';
+        }
+        return date.toLocaleDateString('en-US', {
+            weekday: 'short',
+            month: 'short',
+            day: 'numeric',
+        });
+    }
+
+    function updateMaterialPickerHeader(fp) {
+        const dateEl = fp?.calendarContainer?.querySelector('[data-role="tha-selected-date"]');
+        if (!dateEl) return;
+        const selected = fp.selectedDates && fp.selectedDates[0] ? fp.selectedDates[0] : null;
+        dateEl.textContent = formatMaterialPickerDate(selected);
+    }
+
+    function applyMaterialPickerChrome(fp) {
+        if (!fp?.calendarContainer) return;
+        const calendar = fp.calendarContainer;
+        if (!calendar.classList.contains('tha-material-picker')) {
+            calendar.classList.add('tha-material-picker');
+        }
+
+        if (!calendar.querySelector('.tha-material-header')) {
+            const header = document.createElement('div');
+            header.className = 'tha-material-header';
+            header.innerHTML = `
+                <div class="tha-material-kicker">Select date</div>
+                <div class="tha-material-date-row">
+                    <div class="tha-material-date" data-role="tha-selected-date">Select date</div>
+                    <button type="button" class="tha-material-edit" aria-label="Edit date">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                            <path d="M12 20h9" />
+                            <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+                        </svg>
+                    </button>
+                </div>
+            `;
+            calendar.prepend(header);
+        }
+
+        if (!calendar.querySelector('.tha-material-footer')) {
+            const footer = document.createElement('div');
+            footer.className = 'tha-material-footer';
+            footer.innerHTML = `
+                <button type="button" class="tha-material-btn cancel" data-action="cancel">Cancel</button>
+                <button type="button" class="tha-material-btn ok" data-action="ok">OK</button>
+            `;
+            calendar.appendChild(footer);
+        }
+
+        if (!calendar.dataset.thaMaterialBound) {
+            calendar.dataset.thaMaterialBound = 'true';
+            const editBtn = calendar.querySelector('.tha-material-edit');
+            const cancelBtn = calendar.querySelector('[data-action="cancel"]');
+            const okBtn = calendar.querySelector('[data-action="ok"]');
+
+            if (editBtn) {
+                editBtn.addEventListener('click', function() {
+                    if (fp.altInput) {
+                        fp.altInput.focus();
+                    } else if (fp._input) {
+                        fp._input.focus();
+                    }
+                });
+            }
+
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', function() {
+                    if (fp._thaPrevDate) {
+                        fp.setDate(fp._thaPrevDate, true);
+                    } else {
+                        fp.clear();
+                    }
+                    fp.close();
+                });
+            }
+
+            if (okBtn) {
+                okBtn.addEventListener('click', function() {
+                    fp.close();
+                });
+            }
+        }
+
+        updateMaterialPickerHeader(fp);
+    }
+
+    /** Date inputs: material-style Flatpickr with native fallback. */
+    let dateOfBirthPicker = null;
+    let ejectionDatePicker = null;
     function syncDateOfBirthMaxToToday() {
-        const el = document.getElementById('dateOfBirth');
-        if (!el) return;
-        const d = new Date();
-        const y = d.getFullYear();
-        const m = String(d.getMonth() + 1).padStart(2, '0');
-        const day = String(d.getDate()).padStart(2, '0');
-        el.max = y + '-' + m + '-' + day;
-        el.setAttribute('aria-label', 'Date of birth');
+        const today = new Date();
+        const dobEl = document.getElementById('dateOfBirth');
+        const ejectEl = document.getElementById('registrationEjectionDate');
+
+        if (window.flatpickr) {
+            if (dobEl) {
+                if (!dateOfBirthPicker) {
+                    dateOfBirthPicker = flatpickr(dobEl, {
+                        dateFormat: 'Y-m-d',
+                        altInput: true,
+                        altFormat: 'd/m/Y',
+                        altInputClass: 'form-input',
+                        allowInput: true,
+                        disableMobile: true,
+                        closeOnSelect: false,
+                        maxDate: today,
+                        onReady: function(_selected, _dateStr, fp) {
+                            if (fp.altInput) {
+                                fp.altInput.placeholder = 'dd/mm/yyyy';
+                                fp.altInput.setAttribute('aria-label', 'Date of birth');
+                            }
+                            applyMaterialPickerChrome(fp);
+                        },
+                        onOpen: function(_selected, _dateStr, fp) {
+                            fp._thaPrevDate = fp.selectedDates && fp.selectedDates[0]
+                                ? new Date(fp.selectedDates[0].getTime())
+                                : null;
+                            updateMaterialPickerHeader(fp);
+                        },
+                        onChange: function(_selected, _dateStr, fp) {
+                            calculateAge();
+                            updateMaterialPickerHeader(fp);
+                        },
+                    });
+                } else {
+                    dateOfBirthPicker.set('maxDate', today);
+                }
+            }
+
+            if (ejectEl) {
+                if (!ejectionDatePicker) {
+                    ejectionDatePicker = flatpickr(ejectEl, {
+                        dateFormat: 'Y-m-d',
+                        altInput: true,
+                        altFormat: 'd/m/Y',
+                        altInputClass: 'form-input',
+                        allowInput: true,
+                        disableMobile: true,
+                        closeOnSelect: false,
+                        maxDate: today,
+                        onReady: function(_selected, _dateStr, fp) {
+                            if (fp.altInput) {
+                                fp.altInput.placeholder = 'dd/mm/yyyy';
+                                fp.altInput.setAttribute('aria-label', 'Date of notice or ejection');
+                            }
+                            applyMaterialPickerChrome(fp);
+                        },
+                        onOpen: function(_selected, _dateStr, fp) {
+                            fp._thaPrevDate = fp.selectedDates && fp.selectedDates[0]
+                                ? new Date(fp.selectedDates[0].getTime())
+                                : null;
+                            updateMaterialPickerHeader(fp);
+                        },
+                        onChange: function(_selected, _dateStr, fp) {
+                            updateMaterialPickerHeader(fp);
+                        },
+                    });
+                } else {
+                    ejectionDatePicker.set('maxDate', today);
+                }
+            }
+            return;
+        }
+
+        const y = today.getFullYear();
+        const m = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        const maxValue = y + '-' + m + '-' + day;
+
+        if (dobEl) {
+            dobEl.setAttribute('type', 'date');
+            dobEl.max = maxValue;
+            dobEl.setAttribute('aria-label', 'Date of birth');
+        }
+        if (ejectEl) {
+            ejectEl.setAttribute('type', 'date');
+            ejectEl.max = maxValue;
+            ejectEl.setAttribute('aria-label', 'Date of notice or ejection');
+        }
     }
 
     // Auto-calculate age from date of birth

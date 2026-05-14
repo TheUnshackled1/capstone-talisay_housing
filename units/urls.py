@@ -11,6 +11,11 @@ urlpatterns = [
     path('housing-units/<str:position>/unit/construction/update/', views.add_construction_update, name='add_construction_update'),
     path('housing-units/<str:position>/<uuid:unit_id>/details/', views.get_unit_details, name='get_unit_details'),
     path(
+        'housing-units/<str:position>/<uuid:unit_id>/household-member/add/',
+        views.add_household_member_for_unit,
+        name='add_household_member_for_unit',
+    ),
+    path(
         'housing-units/<str:position>/<uuid:unit_id>/explanation-letter/deadline/',
         views.set_explanation_letter_deadline,
         name='set_explanation_letter_deadline',

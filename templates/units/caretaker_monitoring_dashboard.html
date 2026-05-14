@@ -1600,7 +1600,7 @@
             </td>
             <td>
                 <span class="monitoring-task-type {% if 'day_15' in task.task_type %}day-15{% elif 'day_30' in task.task_type %}day-30{% else %}month{% endif %}">
-                    {{ task.get_task_type_display }}
+                    {% if task.task_type == 'day_15_inspection' %}15 Day Inspection{% elif task.task_type == 'day_30_inspection' %}30 Day Inspection{% else %}{{ task.get_task_type_display }}{% endif %}
                 </span>
             </td>
             <td>
@@ -1618,7 +1618,7 @@
                 {% endif %}
             </td>
             <td>
-                <div class="monitoring-schedule-note"><strong>{{ task.days_from_award }}</strong> days after monitoring starts · field visit order {{ forloop.counter }} of {{ tasks|length }}</div>
+                <div class="monitoring-schedule-note">{% if task.task_type == 'day_15_inspection' %}<strong>during 15 days of monitoring</strong>{% elif task.task_type == 'day_30_inspection' %}<strong>during 30 days of monitoring</strong>{% else %}<strong>{{ task.days_from_award }}</strong> days after monitoring starts{% endif %} · field visit order {{ forloop.counter }} of {{ tasks|length }}</div>
             </td>
             <td>
                 <div class="monitoring-staff-name">
@@ -1632,11 +1632,11 @@
             <td>
                 <div class="monitoring-task-actions">
                     {% if task.status == 'pending' and task.scheduled_date > today %}
-                        <button type="button" class="btn-submit-report" onclick="openReportModal('{{ task.id }}', true, '{{ task.scheduled_date|date:"F j, Y" }}', '{{ task.get_task_type_display|escapejs }}', 'Block {{ task.unit.block_number|escapejs }} Lot {{ task.unit.lot_number|escapejs }}', '{{ task.due_date|date:"F j, Y"|escapejs }}', '{{ task.days_from_award }}')" style="background:#2563eb;">
+                        <button type="button" class="btn-submit-report" onclick="openReportModal('{{ task.id }}', true, '{{ task.scheduled_date|date:"F j, Y" }}', '{% if task.task_type == "day_15_inspection" %}15 Day Inspection{% elif task.task_type == "day_30_inspection" %}30 Day Inspection{% else %}{{ task.get_task_type_display|escapejs }}{% endif %}', 'Block {{ task.unit.block_number|escapejs }} Lot {{ task.unit.lot_number|escapejs }}', '{{ task.due_date|date:"F j, Y"|escapejs }}', '{% if task.task_type == "day_15_inspection" %}during 15 days of monitoring{% elif task.task_type == "day_30_inspection" %}during 30 days of monitoring{% else %}{{ task.days_from_award }} days after monitoring starts{% endif %}')" style="background:#2563eb;">
                             {% if task.notified_at %}Open notified task{% else %}Notify / test early{% endif %}
                         </button>
                     {% else %}
-                        <button type="button" class="btn-submit-report" onclick="openReportModal('{{ task.id }}', false, '', '{{ task.get_task_type_display|escapejs }}', 'Block {{ task.unit.block_number|escapejs }} Lot {{ task.unit.lot_number|escapejs }}', '{{ task.due_date|date:"F j, Y"|escapejs }}', '{{ task.days_from_award }}')">
+                        <button type="button" class="btn-submit-report" onclick="openReportModal('{{ task.id }}', false, '', '{% if task.task_type == "day_15_inspection" %}15 Day Inspection{% elif task.task_type == "day_30_inspection" %}30 Day Inspection{% else %}{{ task.get_task_type_display|escapejs }}{% endif %}', 'Block {{ task.unit.block_number|escapejs }} Lot {{ task.unit.lot_number|escapejs }}', '{{ task.due_date|date:"F j, Y"|escapejs }}', '{% if task.task_type == "day_15_inspection" %}during 15 days of monitoring{% elif task.task_type == "day_30_inspection" %}during 30 days of monitoring{% else %}{{ task.days_from_award }} days after monitoring starts{% endif %}')">
                             {% if task.status == 'completed' %}
                                 View Report
                             {% else %}
@@ -1693,7 +1693,7 @@
                 <div class="monitoring-report-crest" aria-hidden="true">THA</div>
                 <div>
                     <h2 class="monitoring-report-title">Caretaker monitoring report</h2>
-                    <p class="monitoring-report-subtitle">What you submit here is summarized for staff under the same headings as the monitoring schedule review (occupancy, construction, progress, remarks, photos).</p>
+                    <p class="monitoring-report-subtitle">Occupancy and construction choices plus photo evidence match what staff see first. If you do not add optional narratives, the system stores short default notes and a percent estimate when you submit.</p>
                 </div>
             </div>
             <button type="button" class="modal-close" onclick="closeReportModal()">×</button>
@@ -1720,7 +1720,7 @@
                             <p id="reportTaskDueDate" class="monitoring-reference-value">—</p>
                         </div>
                         <div class="monitoring-reference-cell">
-                            <span class="monitoring-reference-label">Monitoring day</span>
+                            <span class="monitoring-reference-label">Monitoring window</span>
                             <p id="reportTaskMonitoringDay" class="monitoring-reference-value">—</p>
                         </div>
                     </div>
@@ -1864,17 +1864,20 @@ function filterTasks() {
     });
 }
 
-function setReportReference(taskLabel, unitLocation, dueDate, monitoringDay) {
+function setReportReference(taskLabel, unitLocation, dueDate, monitoringDayLine) {
     document.getElementById('reportTaskUnit').textContent = unitLocation || '—';
     document.getElementById('reportTaskType').textContent = taskLabel || '—';
     document.getElementById('reportTaskDueDate').textContent = dueDate || '—';
-    document.getElementById('reportTaskMonitoringDay').textContent = monitoringDay ? `${monitoringDay} days after monitoring starts` : '—';
+    const line = (monitoringDayLine != null && String(monitoringDayLine).trim() !== '')
+        ? String(monitoringDayLine).trim()
+        : '—';
+    document.getElementById('reportTaskMonitoringDay').textContent = line;
 }
 
-function openReportModal(taskId, allowEarly, scheduledDate, taskLabel, unitLocation, dueDate, monitoringDay) {
+function openReportModal(taskId, allowEarly, scheduledDate, taskLabel, unitLocation, dueDate, monitoringDayLine) {
     if (allowEarly) {
         pendingEarlyTaskId = taskId;
-        pendingEarlyTaskDetails = { taskLabel, unitLocation, dueDate, monitoringDay };
+        pendingEarlyTaskDetails = { taskLabel, unitLocation, dueDate, monitoringDayLine };
         document.getElementById('earlyInspectionMessage').textContent =
             `Scheduled inspection date: ${scheduledDate}. Continue only for testing or demonstration.`;
         document.getElementById('earlyInspectionModal').classList.add('active');
@@ -1882,7 +1885,7 @@ function openReportModal(taskId, allowEarly, scheduledDate, taskLabel, unitLocat
     }
     document.getElementById('taskId').value = taskId;
     document.getElementById('allowEarlyInspection').value = allowEarly ? '1' : '0';
-    setReportReference(taskLabel, unitLocation, dueDate, monitoringDay);
+    setReportReference(taskLabel, unitLocation, dueDate, monitoringDayLine);
     document.getElementById('reportModal').classList.add('active');
 }
 
@@ -1904,7 +1907,7 @@ function continueEarlyInspection() {
             details.taskLabel,
             details.unitLocation,
             details.dueDate,
-            details.monitoringDay
+            details.monitoringDayLine
         );
     }
     document.getElementById('reportModal').classList.add('active');
@@ -2082,6 +2085,9 @@ function submitReport(event) {
     .then(data => {
         if (data.success) {
             showToast('Report submitted successfully!', 'success');
+            try {
+                localStorage.setItem('tha_monitoring_task_sync', String(Date.now()));
+            } catch (ignoreLs) { /* private mode / quota */ }
             setTimeout(() => {
                 closeReportModal();
                 location.reload();
@@ -2130,6 +2136,16 @@ if (selectedTaskId) {
         selectedRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 }
+
+(function setupMonitoringTaskSyncReload() {
+    function reloadFromOtherTab() {
+        location.reload();
+    }
+    window.addEventListener('storage', function (e) {
+        if (e.key !== 'tha_monitoring_task_sync' || e.newValue == null) return;
+        reloadFromOtherTab();
+    });
+})();
 
 </script>
 {% endblock %}

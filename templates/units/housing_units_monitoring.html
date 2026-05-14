@@ -563,6 +563,41 @@
         height: 4px;
         background: linear-gradient(90deg, #2563eb 0%, #10b981 100%);
     }
+    .inspection-info-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        position: relative;
+    }
+    .inspection-info-head-text {
+        flex: 1;
+    }
+    .inspection-info-card--centered .inspection-info-head {
+        justify-content: center;
+    }
+    .inspection-info-card--centered .inspection-info-head-text {
+        text-align: center;
+    }
+    .inspection-info-card--centered .inspection-info-head .unit-detail-close {
+        position: absolute;
+        right: 0;
+        top: 0;
+    }
+    .inspection-info-card--alert {
+        width: min(100%, 640px);
+        border-color: #e2e8f0;
+    }
+    .inspection-info-card--alert .inspection-info-actions {
+        display: none;
+    }
+    .inspection-info-card--alert .inspection-info-body {
+        padding: 0.95rem 1.2rem 1rem;
+    }
+    .inspection-info-card--alert .inspection-info-body > div:first-child {
+        margin-bottom: 0 !important;
+    }
     .inspection-info-body {
         padding: 1.15rem 1.2rem 1.05rem;
         overflow-y: auto;
@@ -1043,46 +1078,32 @@
         color: #475569 !important;
     }
 
-    /* Premium Collapsible Section Headers */
-    .unit-monitor-toggle {
-        width: 100% !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        gap: 0.75rem !important;
-        background: #f0fdfa !important; /* Light emerald background */
-        border: 1px solid #ccfbf1 !important;
-        color: #0f172a !important;
-        padding: 1.15rem 1.25rem !important;
-        font-size: 0.9rem !important;
-        font-weight: 700 !important;
-        letter-spacing: -0.01em !important;
-        border-radius: 14px !important;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.04) !important;
-        margin-bottom: 0.85rem !important;
-        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        cursor: pointer;
+    /* Static section headers (always-visible content) */
+    .unit-section-header {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.25rem;
+        background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+        border: 1px solid #047857;
+        color: #ffffff;
+        padding: 0.85rem 1.25rem;
+        font-size: 0.9rem;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        border-radius: 14px;
+        box-shadow: 0 4px 10px rgba(5, 150, 105, 0.12);
+        margin-bottom: 0.85rem;
+        text-align: center;
     }
-    .unit-monitor-toggle:hover {
-        border-color: #cbd5e1 !important;
-        background: #f8fafc !important;
-        transform: translateY(-1px);
-    }
-    .unit-monitor-toggle[aria-expanded="true"] {
-        background: linear-gradient(180deg, #10b981 0%, #059669 100%) !important;
-        border-color: #047857 !important;
-        color: #ffffff !important;
-        box-shadow: 0 8px 20px rgba(5, 150, 105, 0.15) !important;
-    }
-    .unit-monitor-toggle[aria-expanded="true"] .toggle-icon {
-        color: #ffffff !important;
-    }
-    .unit-monitor-toggle .toggle-icon {
-        color: #94a3b8;
-        font-size: 0.75rem !important;
-    }
-    .unit-monitor-toggle[aria-expanded="true"] .toggle-icon {
-        color: #10b981;
+    .unit-section-subtitle {
+        font-size: 0.72rem;
+        font-weight: 500;
+        color: rgba(255, 255, 255, 0.9);
+        max-width: 26rem;
+        line-height: 1.35;
     }
 
     /* Content Cards Inside Panels */
@@ -1133,6 +1154,11 @@
         grid-template-columns: repeat(3, 1fr);
         gap: 1.5rem 1rem;
     }
+    .premium-grid-4 {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1.5rem 1rem;
+    }
     .premium-data-cell .cell-label {
         font-size: 0.6rem;
         font-weight: 800;
@@ -1154,6 +1180,109 @@
         padding: 0.2rem 0.5rem;
         border-radius: 6px;
         font-size: 0.82rem;
+    }
+
+    .household-add-panel {
+        margin-top: 1.1rem;
+        padding: 1rem 1rem 1.05rem;
+        background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+    }
+    .household-add-title {
+        margin: 0 0 0.75rem;
+        font-size: 0.78rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #475569;
+    }
+    .household-add-form {
+        display: flex;
+        flex-direction: column;
+        gap: 0.85rem;
+    }
+    .household-add-field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+    }
+    .household-add-label {
+        font-size: 0.62rem;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: #64748b;
+    }
+    .household-add-input,
+    .household-add-select {
+        font-size: 0.8rem;
+        padding: 0.5rem 0.6rem;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        background: #fff;
+        color: #0f172a;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+    .household-add-age-input {
+        max-width: 7rem;
+    }
+    .household-add-radios {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.65rem 1.1rem;
+        padding: 0.45rem 0.1rem 0.15rem;
+    }
+    .household-add-radio {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #334155;
+        cursor: pointer;
+        user-select: none;
+    }
+    .household-add-radio input {
+        width: 1rem;
+        height: 1rem;
+        margin: 0;
+        accent-color: #2563eb;
+        cursor: pointer;
+    }
+    .household-add-inline-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        gap: 0.65rem 1rem;
+    }
+    .household-add-field--age {
+        flex: 0 0 auto;
+    }
+    .household-add-actions--inline {
+        display: flex;
+        align-items: flex-end;
+        padding-top: 0;
+        margin-left: auto;
+    }
+    .household-add-btn {
+        font-size: 0.78rem;
+        font-weight: 800;
+        padding: 0.55rem 1.1rem;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        color: #fff;
+        white-space: nowrap;
+        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+    }
+    .household-add-btn:hover {
+        filter: brightness(1.05);
+        transform: translateY(-1px);
     }
 
     /* Tables */
@@ -1442,6 +1571,22 @@
         .unit-monitor-form .row-2,
         .unit-monitor-form .row-2-equal { grid-template-columns: 1fr; }
         .unit-detail-footer { padding: 0.8rem 1rem !important; }
+        .premium-grid-4 {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        .household-add-age-input {
+            max-width: 100%;
+        }
+        .household-add-inline-row {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .household-add-actions--inline {
+            margin-left: 0;
+        }
+        .household-add-actions--inline .household-add-btn {
+            width: 100%;
+        }
     }
 </style>
 {% endblock %}
@@ -1799,7 +1944,7 @@
         <!-- Header -->
         <div class="unit-detail-head">
             <div class="unit-detail-head-text">
-                <p class="unit-detail-kicker">Module 4 · Unit detail</p>
+                <p class="unit-detail-kicker">Lot detail</p>
                 <h2 id="modalUnitTitle" class="unit-detail-title"></h2>
                 <span id="modalUnitStatus" class="unit-detail-status" data-state=""></span>
             </div>
@@ -1815,14 +1960,13 @@
         <div class="unit-detail-body">
             <!-- Occupant Section -->
             <section class="unit-detail-section">
-                <button type="button" id="beneficiaryToggleBtn" class="unit-monitor-toggle" aria-expanded="false">
+                <header class="unit-section-header">
                     <span>Beneficiary · occupant &amp; household</span>
-                    <span id="beneficiaryToggleIcon" class="toggle-icon" aria-hidden="true">▼</span>
-                </button>
-                <div id="beneficiaryDropdown" class="unit-monitor-panel" style="display: none;">
+                </header>
+                <div id="beneficiaryDropdown" class="unit-monitor-panel">
                     <div class="premium-data-card border-green">
                         <p class="premium-card-title">Lot beneficiary</p>
-                        <div class="premium-grid-3">
+                        <div class="premium-grid-4">
                             <div class="premium-data-cell">
                                 <p class="cell-label">Name</p>
                                 <p id="modalBeneficiaryName" class="cell-value">—</p>
@@ -1830,6 +1974,10 @@
                             <div class="premium-data-cell">
                                 <p class="cell-label">Reference no.</p>
                                 <p id="modalBeneficiaryRef" class="cell-value monospace">—</p>
+                            </div>
+                            <div class="premium-data-cell">
+                                <p class="cell-label">Sex</p>
+                                <p id="modalBeneficiarySex" class="cell-value">—</p>
                             </div>
                             <div class="premium-data-cell">
                                 <p class="cell-label">Household members</p>
@@ -1868,14 +2016,10 @@
 
             <!-- Formal award activation and monitoring schedule -->
             <section class="unit-detail-section">
-                <button type="button" id="lotMonitoringToggleBtn" class="unit-monitor-toggle" aria-expanded="false">
-                    <span style="display: flex; flex-direction: column; align-items: center; gap: 0.25rem; text-align: center;">
-                        <span>Formal lot award activation · monitoring tasks</span>
-                        <span style="font-size: 0.72rem; font-weight: 600; color: #64748b; max-width: 22rem; line-height: 1.35;">Includes schedule, Day 15/30 cards, compliance — and the explanation letter workflow at the bottom after No Progress.</span>
-                    </span>
-                    <span id="lotMonitoringToggleIcon" class="toggle-icon" aria-hidden="true">▼</span>
-                </button>
-                <div id="lotMonitoringDropdown" class="unit-monitor-panel" style="display: none;">
+                <header class="unit-section-header unit-section-header--stacked">
+                    <span>Formal lot award activation · monitoring tasks</span>
+                </header>
+                <div id="lotMonitoringDropdown" class="unit-monitor-panel">
                     <div class="premium-data-card border-green">
                         <p class="premium-card-title">Monitoring schedule</p>
                         <div class="premium-grid-3">
@@ -1889,7 +2033,7 @@
                             </div>
                             <div class="premium-data-cell">
                                 <p class="cell-label">Monitoring policy</p>
-                                <p class="cell-value">30-day grace, then Day 15 / Day 30</p>
+                                <p class="cell-value">30-day grace, then 15 Day / 30 Day</p>
                             </div>
                         </div>
                     </div>
@@ -1989,8 +2133,8 @@
 <div id="inspectionInfoModal" class="inspection-info-modal" onclick="closeInspectionInfoModal(event)">
     <div class="inspection-info-card inspection-info-card--large" onclick="event.stopPropagation();">
         <div class="inspection-info-body">
-            <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 1rem;">
-                <div>
+            <div class="inspection-info-head">
+                <div class="inspection-info-head-text">
                     <p class="inspection-info-kicker">Monitoring schedule</p>
                     <h3 id="inspectionInfoTitle" class="inspection-info-title">Inspection details</h3>
                 </div>
@@ -2217,30 +2361,19 @@ function filterUnits(filter) {
     });
 }
 
-function toggleBeneficiaryDropdown(forceOpen) {
-    const btn = document.getElementById('beneficiaryToggleBtn');
-    const icon = document.getElementById('beneficiaryToggleIcon');
-    const box = document.getElementById('beneficiaryDropdown');
-    if (!btn || !icon || !box) return;
-    const shouldOpen = typeof forceOpen === 'boolean'
-        ? forceOpen
-        : box.style.display === 'none';
-    box.style.display = shouldOpen ? 'block' : 'none';
-    btn.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
-    icon.textContent = shouldOpen ? '▲' : '▼';
+function monitoringTaskDisplayTitle(task) {
+    if (!task) return '—';
+    if (task.task_type === 'day_15_inspection') return '15 Day Inspection';
+    if (task.task_type === 'day_30_inspection') return '30 Day Inspection';
+    return task.label || '—';
 }
 
-function toggleLotMonitoringDropdown(forceOpen) {
-    const btn = document.getElementById('lotMonitoringToggleBtn');
-    const icon = document.getElementById('lotMonitoringToggleIcon');
-    const box = document.getElementById('lotMonitoringDropdown');
-    if (!btn || !icon || !box) return;
-    const shouldOpen = typeof forceOpen === 'boolean'
-        ? forceOpen
-        : box.style.display === 'none';
-    box.style.display = shouldOpen ? 'block' : 'none';
-    btn.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
-    icon.textContent = shouldOpen ? '▲' : '▼';
+function monitoringTaskRelativeLine(task) {
+    if (!task) return '';
+    if (task.task_type === 'day_15_inspection') return 'during 15 days of monitoring';
+    if (task.task_type === 'day_30_inspection') return 'during 30 days of monitoring';
+    const d = task.days_from_award;
+    return (d != null && d !== '') ? `${d} days after monitoring starts` : '';
 }
 
 function renderMonitoringTaskCards(tasks) {
@@ -2252,7 +2385,7 @@ function renderMonitoringTaskCards(tasks) {
     if (!tasks || !tasks.length) {
         const empty = document.createElement('div');
         empty.style.cssText = 'grid-column:1/-1;padding:0.8rem;border:1px dashed #cbd5e1;border-radius:0.75rem;color:#64748b;font-size:0.8rem;';
-        empty.textContent = 'No Day 15 or Day 30 monitoring tasks generated yet.';
+        empty.textContent = 'No 15 Day or 30 Day monitoring tasks generated yet.';
         wrap.appendChild(empty);
         return;
     }
@@ -2294,7 +2427,7 @@ function renderMonitoringTaskCards(tasks) {
         let availabilityText;
         let hintClass = 'monitoring-task-hint';
         if (isBlocked) {
-            availabilityText = 'Finish and review Day 15 first';
+            availabilityText = 'Finish and review the 15 Day Inspection first';
             hintClass += ' monitoring-task-hint--blocked';
         } else if (isCompleted && task.report) {
             const by = task.report.assessed_by ? ` · ${task.report.assessed_by}` : '';
@@ -2339,8 +2472,8 @@ function renderMonitoringTaskCards(tasks) {
         });
 
         card.innerHTML = `
-            <p class="monitoring-task-label">${task.label}</p>
-            <p class="monitoring-task-relative">${task.days_from_award} days after monitoring starts</p>
+            <p class="monitoring-task-label">${monitoringTaskDisplayTitle(task)}</p>
+            <p class="monitoring-task-relative">${monitoringTaskRelativeLine(task)}</p>
             <p class="monitoring-task-date">${formatDisplayDate(task.due_date)}</p>
             <div class="monitoring-task-status-row">
                 <span class="monitoring-task-status-badge">${statusText}</span>
@@ -2358,7 +2491,7 @@ function openInspectionConfirmModal(task) {
 
     pendingInspectionTask = task;
     const awardDate = task.award_date ? formatDisplayDate(task.award_date) : 'award date';
-    text.textContent = `The inspection schedule is: Award date ${awardDate} + 30-day grace + ${task.days_from_award} days after monitoring starts = ${formatDisplayDate(task.due_date)}. Continue?`;
+    text.textContent = `The inspection schedule is: Award date ${awardDate} + 30-day grace, then ${monitoringTaskRelativeLine(task)} — due ${formatDisplayDate(task.due_date)}. Continue?`;
     modal.style.display = 'flex';
 }
 
@@ -2382,17 +2515,27 @@ function openInspectionBlockedModal(task) {
     const modal = document.getElementById('inspectionInfoModal');
     const title = document.getElementById('inspectionInfoTitle');
     const text = document.getElementById('inspectionInfoText');
+    const banner = document.getElementById('inspectionInfoBanner');
     const summary = document.getElementById('inspectionReportSummary');
     const decisionActions = document.getElementById('inspectionDecisionActions');
     const dashboardBtn = document.getElementById('inspectionDashboardBtn');
+    const actions = modal ? modal.querySelector('.inspection-info-actions') : null;
+    const body = modal ? modal.querySelector('.inspection-info-body') : null;
     const card = modal ? modal.querySelector('.inspection-info-card') : null;
     if (!modal || !title || !text) return;
 
-    if (card) card.classList.remove('inspection-info-card--large');
+    if (card) {
+        card.classList.remove('inspection-info-card--large');
+        card.classList.add('inspection-info-card--alert');
+        card.classList.remove('inspection-info-card--centered');
+    }
+    if (body) body.classList.remove('centered');
+    if (actions) actions.classList.remove('centered');
+    if (banner) banner.style.display = 'none';
 
     activeInspectionTask = null;
-    title.textContent = `${task.label} is blocked`;
-    text.textContent = `Day 30 cannot be opened yet. Complete the Day 15 caretaker report first, then staff must mark the Day 15 result as Normal Progress or No Progress.`;
+    title.textContent = `${monitoringTaskDisplayTitle(task)} is blocked`;
+    text.textContent = `30 Day Inspection cannot be opened yet. Complete the 15 Day Inspection caretaker report first, then staff must mark the 15 Day Inspection result as Normal Progress or No Progress.`;
     if (summary) {
         summary.classList.remove('active');
         summary.innerHTML = '';
@@ -2427,35 +2570,131 @@ function formatDisplayDate(value) {
     });
 }
 
-function renderHouseholdMembersRecord(members) {
+function buildHouseholdAddRelationshipSelect(relOpts) {
+    const opts = Array.isArray(relOpts) ? relOpts : [];
+    const inner = ['<option value="">— Select —</option>']
+        .concat(opts.map((o) => `<option value="${escapeHtml(o.value)}">${escapeHtml(o.label)}</option>`))
+        .join('');
+    return `<select id="hhAddRelationship" class="household-add-select">${inner}</select>`;
+}
+
+function buildHouseholdAddPanel(relOpts) {
+    return `
+    <div class="household-add-panel" role="region" aria-label="Add household member">
+        <p class="household-add-title">Add household member</p>
+        <div class="household-add-form">
+            <div class="household-add-field">
+                <label class="household-add-label" for="hhAddFullName">Full name</label>
+                <input type="text" id="hhAddFullName" class="household-add-input" maxlength="30" placeholder="" autocomplete="name">
+            </div>
+            <div class="household-add-field">
+                <label class="household-add-label" for="hhAddRelationship">Relationship to beneficiary</label>
+                ${buildHouseholdAddRelationshipSelect(relOpts)}
+            </div>
+            <div class="household-add-field">
+                <span class="household-add-label" id="hhAddSexLegend">Sex</span>
+                <div class="household-add-radios" role="radiogroup" aria-labelledby="hhAddSexLegend">
+                    <label class="household-add-radio"><input type="radio" name="hhAddSex" value="M"> Male</label>
+                    <label class="household-add-radio"><input type="radio" name="hhAddSex" value="F"> Female</label>
+                </div>
+            </div>
+            <div class="household-add-inline-row">
+                <div class="household-add-field household-add-field--age">
+                    <label class="household-add-label" for="hhAddAge">Age</label>
+                    <input type="number" id="hhAddAge" class="household-add-input household-add-age-input" min="0" max="120" placeholder="">
+                </div>
+                <div class="household-add-actions--inline">
+                    <button type="button" class="household-add-btn" onclick="submitAddHouseholdMember(event)">Add member</button>
+                </div>
+            </div>
+        </div>
+    </div>`;
+}
+
+function renderHouseholdMembersRecord(members, meta) {
     const wrap = document.getElementById('householdMembersRecord');
     if (!wrap) return;
+    const canAdd = meta && meta.can_add_household_members;
+    const relOpts = (meta && meta.relationship_options) ? meta.relationship_options : [];
+    const addPanel = canAdd ? buildHouseholdAddPanel(relOpts) : '';
+
     if (!Array.isArray(members) || !members.length) {
-        wrap.innerHTML = '<p class="occupied-record-empty">No household member rows recorded.</p>';
+        wrap.innerHTML = `
+            <p class="occupied-record-empty">No household member rows recorded.</p>
+            ${addPanel}
+        `;
         return;
     }
     wrap.innerHTML = `
         <div class="premium-table-wrap">
             <table class="premium-table">
-                <thead><tr><th>Name</th><th>Relationship</th></tr></thead>
+                <thead><tr><th>Name</th><th>Relationship</th><th>Sex</th><th>Age</th></tr></thead>
                 <tbody>
-                    ${members.map((member) => `
+                    ${members.map((member) => {
+                        const ageRaw = member.age;
+                        let ageDisp = '—';
+                        if (ageRaw != null && ageRaw !== '') {
+                            const n = Number(ageRaw);
+                            if (Number.isFinite(n)) ageDisp = String(n);
+                        }
+                        return `
                         <tr>
                             <td style="font-weight: 700;">${escapeHtml(member.name || '—')}</td>
                             <td style="color: #64748b;">${escapeHtml(member.relationship || '—')}</td>
-                        </tr>
-                    `).join('')}
+                            <td style="color: #64748b;">${escapeHtml(member.sex_display || '—')}</td>
+                            <td style="color: #64748b;">${escapeHtml(ageDisp)}</td>
+                        </tr>`;
+                    }).join('')}
                 </tbody>
             </table>
         </div>
+        ${addPanel}
     `;
+}
+
+async function submitAddHouseholdMember(event) {
+    if (event) event.preventDefault();
+    if (!currentUnitId) return;
+    const name = (document.getElementById('hhAddFullName') && document.getElementById('hhAddFullName').value || '').trim();
+    const relationship = (document.getElementById('hhAddRelationship') && document.getElementById('hhAddRelationship').value || '').trim();
+    const sexRadio = document.querySelector('input[name="hhAddSex"]:checked');
+    const sex = sexRadio ? String(sexRadio.value || '').trim() : '';
+    const ageVal = document.getElementById('hhAddAge') ? document.getElementById('hhAddAge').value : '';
+    const position = '{{ request.user.position }}';
+    if (!name) {
+        alert('Enter the household member’s full name.');
+        return;
+    }
+    if (!relationship) {
+        alert('Select relationship to the beneficiary.');
+        return;
+    }
+    const body = { full_name: name, relationship: relationship, sex: sex, age: ageVal };
+    try {
+        const res = await fetch(`/units/housing-units/${position}/${currentUnitId}/household-member/add/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken') || '',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: JSON.stringify(body),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+            throw new Error(data.error || 'Could not add household member.');
+        }
+        openUnitModal(currentUnitId);
+    } catch (e) {
+        alert(e.message || 'Could not add household member.');
+    }
 }
 
 function renderMonitoringHistoryRecord(history) {
     const wrap = document.getElementById('monitoringHistoryRecord');
     if (!wrap) return;
     if (!Array.isArray(history) || !history.length) {
-        wrap.innerHTML = '<p class="occupied-record-empty">No Day 15 / Day 30 monitoring history yet.</p>';
+        wrap.innerHTML = '<p class="occupied-record-empty">No 15 Day / 30 Day monitoring history yet.</p>';
         return;
     }
     wrap.innerHTML = `
@@ -2498,7 +2737,7 @@ function buildMonitoringHistoryFromTasks(tasks) {
         const decision = (report && report.progress_assessment_label)
             ? report.progress_assessment_label
             : '—';
-        const label = String(task.label || '').replace(/\s*Inspection\s*$/i, '').trim() || '—';
+        const label = monitoringTaskDisplayTitle(task).replace(/\s*Inspection\s*$/i, '').trim() || '—';
         return {
             label,
             date: task.due_date,
@@ -2611,8 +2850,11 @@ function openInspectionInfoModal(task) {
     const card = modal ? modal.querySelector('.inspection-info-card') : null;
     if (!modal || !title || !text) return;
 
+    const isInformational = task.status !== 'completed';
     if (card) {
+        card.classList.remove('inspection-info-card--alert');
         card.classList.toggle('inspection-info-card--large', task.status === 'completed');
+        card.classList.toggle('inspection-info-card--centered', isInformational);
     }
 
     activeInspectionTask = task;
@@ -2625,12 +2867,11 @@ function openInspectionInfoModal(task) {
     }
     if (banner) banner.style.display = 'block';
 
-    const isInformational = task.status !== 'completed';
     if (body) body.classList.toggle('centered', isInformational);
     if (actions) actions.classList.toggle('centered', isInformational);
 
     if (task.status === 'completed') {
-        title.textContent = `${task.label} is completed`;
+        title.textContent = `${monitoringTaskDisplayTitle(task)} is completed`;
         const hasDecision = Boolean(task.report && task.report.progress_assessment_label);
         text.textContent = hasDecision
             ? `Caretaker monitoring report has been reviewed. The saved staff decision is shown in the summary below.`
@@ -2643,11 +2884,11 @@ function openInspectionInfoModal(task) {
             decisionActions.classList.add('active');
         }
     } else if (task.notified_at) {
-        title.textContent = `${task.label} is waiting for caretaker`;
+        title.textContent = `${monitoringTaskDisplayTitle(task)} is waiting for caretaker`;
         text.textContent = `This task was already notified to Monitoring Dashboard. It remains scheduled for ${formatDisplayDate(task.due_date)} and is waiting for the caretaker field report.`;
     } else {
-        title.textContent = `${task.label} is not due yet`;
-        text.textContent = `Inspection opens on ${formatDisplayDate(task.due_date)} (${task.days_from_award} days after monitoring starts). Use Monitoring Dashboard if you want to proceed early for testing.`;
+        title.textContent = 'Inspection details';
+        text.textContent = `Inspection opens on ${formatDisplayDate(task.due_date)} (${monitoringTaskRelativeLine(task)}). Use Monitoring Dashboard if you want to proceed early for testing.`;
     }
     
     if (dashboardBtn) {
@@ -2712,6 +2953,15 @@ async function submitProgressAssessment(decision) {
             renderMonitoringTaskCards(currentMonitoringTasks);
             renderMonitoringHistoryRecord(buildMonitoringHistoryFromTasks(currentMonitoringTasks));
         }
+        try {
+            const _ts = String(Date.now());
+            localStorage.setItem('tha_monitoring_task_sync', _ts);
+            if (typeof BroadcastChannel !== 'undefined') {
+                const _bc = new BroadcastChannel('tha_monitoring_task_sync_bc');
+                _bc.postMessage({ t: _ts });
+                _bc.close();
+            }
+        } catch (ignoreLs) { /* private mode / quota */ }
     } catch (err) {
         if (text) {
             text.textContent = err.message || 'Could not save staff decision.';
@@ -2759,6 +3009,15 @@ async function notifySelectedInspectionTask() {
             }
             return task;
         });
+        try {
+            const _ts = String(Date.now());
+            localStorage.setItem('tha_monitoring_task_sync', _ts);
+            if (typeof BroadcastChannel !== 'undefined') {
+                const _bc = new BroadcastChannel('tha_monitoring_task_sync_bc');
+                _bc.postMessage({ t: _ts });
+                _bc.close();
+            }
+        } catch (ignoreLs) { /* private mode / quota */ }
         closeInspectionInfoModal();
         renderMonitoringTaskCards(currentMonitoringTasks);
     } catch (err) {
@@ -2767,7 +3026,7 @@ async function notifySelectedInspectionTask() {
         }
         if (dashboardBtn) {
             dashboardBtn.disabled = false;
-            dashboardBtn.textContent = 'Notify caretaker_monitoring_dashboard';
+            dashboardBtn.textContent = 'Notify Monitoring Dashboard';
         }
     }
 }
@@ -3070,8 +3329,6 @@ async function submitDisqualifyBeneficiary() {
 
 function openUnitModal(unitId) {
     currentUnitId = unitId;
-    toggleBeneficiaryDropdown(false);
-    toggleLotMonitoringDropdown(false);
     const position = '{{ request.user.position }}';
     fetch(`/units/housing-units/${position}/${unitId}/details/`)
         .then(r => r.json())
@@ -3094,13 +3351,20 @@ function openUnitModal(unitId) {
                     (ben && ben.full_name) ? ben.full_name : '—';
                 document.getElementById('modalBeneficiaryRef').textContent =
                     (ben && ben.reference_number) ? ben.reference_number : '—';
+                const sexEl = document.getElementById('modalBeneficiarySex');
+                if (sexEl) {
+                    sexEl.textContent = (ben && ben.sex_display) ? ben.sex_display : '—';
+                }
                 const hmEl = document.getElementById('modalHouseholdMembers');
                 if (ben && ben.household_members != null && ben.household_members !== '') {
                     hmEl.textContent = String(ben.household_members);
                 } else {
                     hmEl.textContent = '—';
                 }
-                renderHouseholdMembersRecord(ben ? ben.household_member_rows : []);
+                renderHouseholdMembersRecord(ben ? ben.household_member_rows : [], {
+                    can_add_household_members: !!unit.can_add_household_members,
+                    relationship_options: unit.household_relationship_options || [],
+                });
                 const possession = unit.possession_info || null;
                 document.getElementById('lotAwardedDate').textContent = possession && possession.awarded_at ? formatDisplayDate(possession.awarded_at) : '—';
                 document.getElementById('lotPossessedDate').textContent = possession && possession.possessed_at ? formatDisplayDate(possession.possessed_at) : '—';
@@ -3113,16 +3377,6 @@ function openUnitModal(unitId) {
                 renderMonitoringHistoryRecord(unit.monitoring_history || []);
                 renderComplianceRecordsRecord(unit.compliance_records || []);
                 syncExplanationLetterPanel(unit);
-                const expandMonitoring = Boolean(
-                    unit.lot_award_id
-                    || (unit.monitoring_tasks && unit.monitoring_tasks.length)
-                    || unit.explanation_letter_case
-                    || unit.explanation_letter_view_url
-                );
-                if (expandMonitoring) {
-                    toggleLotMonitoringDropdown(true);
-                }
-
                 document.getElementById('unitModal').style.display = 'flex';
                 if (unit.explanation_letter_case || unit.explanation_letter_view_url) {
                     requestAnimationFrame(() => {
@@ -3147,15 +3401,29 @@ function sendSMS() {
     alert('Send SMS functionality');
 }
 
+(function setupMonitoringTaskSyncListener() {
+    function refreshOpenUnitIfNeeded() {
+        if (!currentUnitId) return;
+        const modal = document.getElementById('unitModal');
+        if (!modal) return;
+        const disp = modal.style.display;
+        if (disp !== 'flex' && disp !== 'block') return;
+        openUnitModal(currentUnitId);
+    }
+    window.addEventListener('storage', function (e) {
+        if (e.key !== 'tha_monitoring_task_sync' || e.newValue == null) return;
+        refreshOpenUnitIfNeeded();
+    });
+    if (typeof BroadcastChannel !== 'undefined') {
+        try {
+            const bc = new BroadcastChannel('tha_monitoring_task_sync_bc');
+            bc.onmessage = function () { refreshOpenUnitIfNeeded(); };
+        } catch (ignoreBc) { /* unsupported */ }
+    }
+})();
+
 document.addEventListener('keydown', e => {
     if (e.key === 'Escape') closeUnitModal();
-});
-
-document.getElementById('beneficiaryToggleBtn')?.addEventListener('click', function () {
-    toggleBeneficiaryDropdown();
-});
-document.getElementById('lotMonitoringToggleBtn')?.addEventListener('click', function () {
-    toggleLotMonitoringDropdown();
 });
 
 </script>

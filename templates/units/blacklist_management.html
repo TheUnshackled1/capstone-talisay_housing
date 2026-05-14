@@ -32,6 +32,30 @@
         text-align: center;
     }
 
+    .blacklist-card {
+        position: relative;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 1rem;
+        padding: 1.5rem 1.5rem 1.25rem;
+        box-shadow: 0 6px 20px rgba(15, 23, 42, 0.06);
+    }
+
+    .blacklist-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        border-radius: 1rem 1rem 0 0;
+        background: linear-gradient(90deg, #dc2626 0%, #ef4444 100%);
+    }
+
+    .blacklist-card .applications-table-container {
+        box-shadow: none;
+    }
+
     /* Filter Bar — institutional toolbar */
     .filter-bar {
         display: flex;
@@ -408,101 +432,103 @@
 {% endblock %}
 
 {% block content %}
-<div class="app-main-header">
-    <h1 class="app-main-title">
-        <span style="color: #dc2626;">●</span> Blacklisted Beneficiaries
-    </h1>
-    <p class="app-main-subtitle">Registry of permanently disqualified beneficiaries</p>
-</div>
-
-<form method="get" class="filter-bar">
-    <div class="search-box">
-        <svg class="search-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
-            stroke-width="2">
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-        </svg>
-        <input type="text" name="search" placeholder="Search by name or reference #..."
-            value="{{ search|default_if_none:'' }}">
+<div class="blacklist-card">
+    <div class="app-main-header">
+        <h1 class="app-main-title">
+            Blacklisted Beneficiaries
+        </h1>
+        <p class="app-main-subtitle">Registry of permanently disqualified beneficiaries</p>
     </div>
-    <button type="submit" class="btn-search">Search</button>
-</form>
 
-<div class="applications-table-container">
-    <div class="table-scroll-wrapper">
-        <table class="applications-table compact-table">
-            <thead>
+    <form method="get" class="filter-bar">
+        <div class="search-box">
+            <svg class="search-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                stroke-width="2">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input type="text" name="search" placeholder="Search by name or reference #..."
+                value="{{ search|default_if_none:'' }}">
+        </div>
+        <button type="submit" class="btn-search">Search</button>
+    </form>
+
+    <div class="applications-table-container">
+        <div class="table-scroll-wrapper">
+            <table class="applications-table compact-table">
+                <thead>
+                    <tr>
+                        <th class="col-num">#</th>
+                        <th class="col-applicant">Beneficiary</th>
+                        <th class="col-reason">Reason</th>
+                        <th class="col-details">Details</th>
+                        <th class="col-date">Date</th>
+                        <th class="col-staff">Blacklisted By</th>
+                        <th class="col-actions">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for blacklist in blacklists %}
                 <tr>
-                    <th class="col-num">#</th>
-                    <th class="col-applicant">Beneficiary</th>
-                    <th class="col-reason">Reason</th>
-                    <th class="col-details">Details</th>
-                    <th class="col-date">Date</th>
-                    <th class="col-staff">Blacklisted By</th>
-                    <th class="col-actions">Actions</th>
+                    <td class="col-num">{{ forloop.counter }}</td>
+                    <td class="col-applicant">
+                        {{ blacklist.applicant.full_name|upper }}<br>
+                        <span style="font-size: 0.75rem; color: #64748b; font-weight: 400;">Ref: {{ blacklist.applicant.reference_number }}</span>
+                    </td>
+                    <td class="col-reason">
+                        <span class="badge badge-reason">{{ blacklist.get_reason_display }}</span>
+                    </td>
+                    <td class="col-details">
+                        {{ blacklist.reason_details }}
+                        {% if blacklist.supporting_notes %}
+                        <div style="margin-top: 0.35rem; font-size: 0.75rem; color: #94a3b8; font-style: italic;">
+                            Notes: {{ blacklist.supporting_notes }}
+                        </div>
+                        {% endif %}
+                    </td>
+                    <td class="col-date">
+                        {{ blacklist.blacklisted_at|date:"M d, Y" }}
+                    </td>
+                    <td class="col-staff">
+                        {% if blacklist.blacklisted_by %}
+                        {{ blacklist.blacklisted_by.get_full_name|default:blacklist.blacklisted_by.username }}
+                        {% else %}
+                        System
+                        {% endif %}
+                    </td>
+                    <td class="col-actions">
+                        <button type="button" class="btn-view-details"
+                            data-name="{{ blacklist.applicant.full_name }}"
+                            data-ref="{{ blacklist.applicant.reference_number }}"
+                            data-dob="{{ blacklist.applicant.date_of_birth|date:'M d, Y'|default:'Unknown' }}"
+                            data-brgy="{{ blacklist.applicant.barangay.name|default:'Unknown' }}"
+                            data-reason="{{ blacklist.get_reason_display }}"
+                            data-details="{{ blacklist.reason_details }}"
+                            data-notes="{{ blacklist.supporting_notes }}"
+                            data-date="{{ blacklist.blacklisted_at|date:'M d, Y' }}"
+                            onclick="openDetailsModal(this)">
+                            View Details
+                        </button>
+                    </td>
                 </tr>
-            </thead>
-            <tbody>
-            {% for blacklist in blacklists %}
-            <tr>
-                <td class="col-num">{{ forloop.counter }}</td>
-                <td class="col-applicant">
-                    {{ blacklist.applicant.full_name|upper }}<br>
-                    <span style="font-size: 0.75rem; color: #64748b; font-weight: 400;">Ref: {{ blacklist.applicant.reference_number }}</span>
-                </td>
-                <td class="col-reason">
-                    <span class="badge badge-reason">{{ blacklist.get_reason_display }}</span>
-                </td>
-                <td class="col-details">
-                    {{ blacklist.reason_details }}
-                    {% if blacklist.supporting_notes %}
-                    <div style="margin-top: 0.35rem; font-size: 0.75rem; color: #94a3b8; font-style: italic;">
-                        Notes: {{ blacklist.supporting_notes }}
-                    </div>
-                    {% endif %}
-                </td>
-                <td class="col-date">
-                    {{ blacklist.blacklisted_at|date:"M d, Y" }}
-                </td>
-                <td class="col-staff">
-                    {% if blacklist.blacklisted_by %}
-                    {{ blacklist.blacklisted_by.get_full_name|default:blacklist.blacklisted_by.username }}
-                    {% else %}
-                    System
-                    {% endif %}
-                </td>
-                <td class="col-actions">
-                    <button type="button" class="btn-view-details"
-                        data-name="{{ blacklist.applicant.full_name }}"
-                        data-ref="{{ blacklist.applicant.reference_number }}"
-                        data-dob="{{ blacklist.applicant.date_of_birth|date:'M d, Y'|default:'Unknown' }}"
-                        data-brgy="{{ blacklist.applicant.barangay.name|default:'Unknown' }}"
-                        data-reason="{{ blacklist.get_reason_display }}"
-                        data-details="{{ blacklist.reason_details }}"
-                        data-notes="{{ blacklist.supporting_notes }}"
-                        data-date="{{ blacklist.blacklisted_at|date:'M d, Y' }}"
-                        onclick="openDetailsModal(this)">
-                        View Details
-                    </button>
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="6" class="empty-state">
-                    <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="1.5">
-                        <circle cx="12" cy="12" r="10" />
-                        <line x1="12" y1="8" x2="12" y2="12" />
-                        <line x1="12" y1="16" x2="12.01" y2="16" />
-                    </svg>
-                    <h3 class="empty-state-title">No blacklisted beneficiaries found</h3>
-                    <p style="color: #64748b; font-size: 0.875rem;">{% if search %}Try adjusting your search query.{%
-                        else %}The blacklist registry is currently empty.{% endif %}</p>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="empty-state">
+                        <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1.5">
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="12" y1="8" x2="12" y2="12" />
+                            <line x1="12" y1="16" x2="12.01" y2="16" />
+                        </svg>
+                        <h3 class="empty-state-title">No blacklisted beneficiaries found</h3>
+                        <p style="color: #64748b; font-size: 0.875rem;">{% if search %}Try adjusting your search query.{%
+                            else %}The blacklist registry is currently empty.{% endif %}</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
     </div>
 </div>
 

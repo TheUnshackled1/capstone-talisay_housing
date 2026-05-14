@@ -1342,132 +1342,6 @@
         text-transform: uppercase;
         letter-spacing: 0.06em;
     }
-    .tha-field-section-heading {
-        margin: 0 0 0.55rem;
-        font-family: 'Source Serif Pro', Georgia, serif;
-        font-size: 1.05rem;
-        font-weight: 700;
-        letter-spacing: -0.005em;
-        text-transform: none;
-        color: #064e3b;
-        display: flex;
-        align-items: center;
-        gap: 0.45rem;
-    }
-    .tha-field-section-heading::before {
-        content: '▸';
-        color: #059669;
-        font-size: 0.85rem;
-        font-weight: 800;
-    }
-    .tha-field-section-lead {
-        margin: 0 0 1.15rem;
-        font-size: 0.875rem;
-        color: #475569;
-        line-height: 1.55;
-    }
-    .tha-field-decision-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 0.85rem;
-        margin-bottom: 1.5rem;
-    }
-    .tha-field-decision-label {
-        padding: 1.1rem 1rem;
-        border: 1.5px solid #e2e8f0;
-        background: #ffffff;
-        border-radius: 10px;
-        cursor: pointer;
-        text-align: center;
-        transition: all 0.18s ease;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        position: relative;
-        overflow: hidden;
-    }
-    .tha-field-decision-label::before {
-        content: '';
-        position: absolute;
-        top: 0; left: 0; right: 0;
-        height: 3px;
-        background: transparent;
-        transition: background 0.2s ease;
-    }
-    .tha-field-decision-label:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
-    }
-    .tha-field-decision-label:has(input[value="certified"]) {
-        border-color: #a7f3d0;
-        background: linear-gradient(180deg, #f0fdf4 0%, #ffffff 30%);
-    }
-    .tha-field-decision-label:has(input[value="certified"])::before {
-        background: linear-gradient(90deg, #047857 0%, #10b981 100%);
-    }
-    .tha-field-decision-label:has(input[value="certified"]):hover {
-        border-color: #10b981;
-        box-shadow: 0 6px 16px rgba(16, 185, 129, 0.18);
-    }
-    .tha-field-decision-label:has(input[value="certified"]:checked) {
-        border-color: #047857;
-        background: linear-gradient(180deg, #d1fae5 0%, #ffffff 50%);
-        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.18), 0 6px 16px rgba(16, 185, 129, 0.20);
-    }
-    .tha-field-decision-label:has(input[value="not_certified"]) {
-        border-color: #fecdd3;
-        background: linear-gradient(180deg, #fff1f2 0%, #ffffff 30%);
-    }
-    .tha-field-decision-label:has(input[value="not_certified"])::before {
-        background: linear-gradient(90deg, #be123c 0%, #f43f5e 100%);
-    }
-    .tha-field-decision-label:has(input[value="not_certified"]):hover {
-        border-color: #fb7185;
-        box-shadow: 0 6px 16px rgba(225, 29, 72, 0.18);
-    }
-    .tha-field-decision-label:has(input[value="not_certified"]:checked) {
-        border-color: #be123c;
-        background: linear-gradient(180deg, #ffe4e6 0%, #ffffff 50%);
-        box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.18), 0 6px 16px rgba(225, 29, 72, 0.20);
-    }
-    .tha-field-decision-label input {
-        margin-bottom: 0.55rem;
-        width: 1.15rem;
-        height: 1.15rem;
-        cursor: pointer;
-        accent-color: #047857;
-    }
-    .tha-field-decision-label:has(input[value="not_certified"]) input {
-        accent-color: #be123c;
-    }
-    .tha-field-decision-affirm {
-        font-family: 'Source Serif Pro', Georgia, serif;
-        color: #064e3b;
-        font-size: 1rem;
-        font-weight: 700;
-        margin-bottom: 0.35rem;
-        letter-spacing: -0.005em;
-    }
-    .tha-field-decision-negate {
-        font-family: 'Source Serif Pro', Georgia, serif;
-        color: #881337;
-        font-size: 1rem;
-        font-weight: 700;
-        margin-bottom: 0.35rem;
-        letter-spacing: -0.005em;
-    }
-    .tha-field-decision-sub {
-        margin: 0;
-        font-size: 0.78rem;
-        color: #475569;
-        line-height: 1.45;
-    }
-    .tha-field-decision-label:has(input[value="certified"]) .tha-field-decision-sub {
-        color: #047857;
-    }
-    .tha-field-decision-label:has(input[value="not_certified"]) .tha-field-decision-sub {
-        color: #9f1239;
-    }
     .tha-field-form-actions {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -1518,7 +1392,6 @@
     }
     @media (max-width: 560px) {
         .tha-field-claim-grid,
-        .tha-field-decision-grid,
         .tha-field-form-actions,
         .cdrrmo-cert-row2 {
             grid-template-columns: 1fr !important;
@@ -2134,14 +2007,8 @@
             event.preventDefault();
 
             const applicantId = document.getElementById('verificationModalApplicantId').value;
-            const verificationDecision = document.querySelector('input[name="verification_decision"]:checked');
             const notesEl = document.getElementById('verificationNotes');
             const verificationNotes = notesEl ? notesEl.value.trim() : '';
-
-            if (!verificationDecision) {
-                fieldNotify('Please select one field certification (hazard sustained, or claim not sustained) before submitting.', 'Decision required');
-                return;
-            }
 
             if (!fieldEvidenceFiles.length) {
                 fieldNotify('Attach at least one site photograph (capture from camera or pick from device) before submitting. Photos are required so Module 2 can verify the field record.', 'Site photo required');
@@ -2150,7 +2017,7 @@
 
             const formData = new FormData();
             formData.append('applicant_id', applicantId);
-            formData.append('verification_decision', verificationDecision.value);
+            formData.append('verification_decision', 'certified');
             formData.append('verification_notes', verificationNotes);
             fieldEvidenceFiles.forEach(function(file) {
                 formData.append('evidence_photos', file, file.name);
@@ -2322,21 +2189,7 @@
                 <div class="tha-field-modal-divider" role="presentation"></div>
 
                 <form id="verificationForm" onsubmit="submitVerification(event)">
-                    <h3 class="tha-field-section-heading">Part II — Field inspector’s certification</h3>
-                    <p class="tha-field-section-lead">After physical inspection, certify whether the applicant’s <strong>present address</strong> is located within the hazard area described above, consistent with City DRRMO mapping and THA intake rules.</p>
-
-                    <div class="tha-field-decision-grid">
-                        <label class="tha-field-decision-label">
-                            <input type="radio" name="verification_decision" value="certified">
-                            <strong class="tha-field-decision-affirm">Certify — hazard sustained</strong>
-                            <p class="tha-field-decision-sub">On-site conditions support the declared hazard-area classification.</p>
-                        </label>
-                        <label class="tha-field-decision-label">
-                            <input type="radio" name="verification_decision" value="not_certified">
-                            <strong class="tha-field-decision-negate">Certify — claim not sustained</strong>
-                            <p class="tha-field-decision-sub">Inspection does not support hazard-area status (administrative re-queue applies).</p>
-                        </label>
-                    </div>
+                    <input type="hidden" name="verification_decision" value="certified">
 
                     <div class="field-evidence-section">
                         <span class="field-evidence-label">Site photographs (supporting evidence)</span>
