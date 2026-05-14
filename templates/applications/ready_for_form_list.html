@@ -38,7 +38,6 @@
         <button type="submit" class="rfq-btn rfq-btn-search">Search</button>
     </form>
 
-    {% if applicants_data %}
     <div class="rfq-table-wrap">
         <table class="rfq-table">
             <thead>
@@ -174,6 +173,16 @@
                         </div>
                     </td>
                 </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" style="text-align:center;color:#64748b;font-size:0.75rem;padding:1.1rem 0.75rem;line-height:1.5;">
+                        {% if search %}
+                        No applicants in this queue match your search.
+                        {% else %}
+                        No one is on this routed queue. Use <strong>Proceed to Form</strong> from <a href="{% url 'applications:applications_list' request.user.position %}">Application &amp; Evaluation</a> when an applicant is ready, or finish evaluation steps there first.
+                        {% endif %}
+                    </td>
+                </tr>
                 {% endfor %}
             </tbody>
         </table>
@@ -194,15 +203,6 @@
             {% else %}<span style="opacity:0.45;">Next</span>{% endif %}
         </span>
     </div>
-    {% else %}
-    <div class="rfq-empty">
-        {% if search %}
-        No applicants in this queue match your search.
-        {% else %}
-        No one is on this routed queue. Use <strong>Proceed to Form</strong> from <a href="{% url 'applications:applications_list' request.user.position %}">Application &amp; Evaluation</a> when an applicant is ready, or finish evaluation steps there first.
-        {% endif %}
-    </div>
-    {% endif %}
 </div>
 
 <div id="dwtcontrolContainer" style="width:0;height:0;overflow:hidden;position:absolute;left:-9999px;" aria-hidden="true"></div>
@@ -245,6 +245,21 @@
         <div class="rfq-confirm-actions">
             <button type="button" class="tha-btn tha-btn-secondary" onclick="rfqResolveReplaceDocConfirm(false)">No</button>
             <button type="button" class="tha-btn tha-btn-success" onclick="rfqResolveReplaceDocConfirm(true)">Yes, replace</button>
+        </div>
+    </div>
+</div>
+
+<!-- Styled alert modal — replaces native alert() for success / error notices. -->
+<div class="rfq-confirm-overlay" id="rfqAlertOverlay" role="dialog" aria-modal="true" aria-labelledby="rfqAlertTitle" onclick="rfqCloseAlert(event)">
+    <div class="rfq-confirm-card" onclick="event.stopPropagation();">
+        <div class="rfq-confirm-stripe" aria-hidden="true"></div>
+        <div class="rfq-confirm-body">
+            <div class="rfq-alert-icon" id="rfqAlertIcon" aria-hidden="true">&#10003;</div>
+            <h3 class="rfq-confirm-title" id="rfqAlertTitle">Notice</h3>
+            <p class="rfq-confirm-message rfq-alert-message" id="rfqAlertMessage"></p>
+        </div>
+        <div class="rfq-confirm-actions">
+            <button type="button" class="tha-btn tha-btn-success" id="rfqAlertOk">OK</button>
         </div>
     </div>
 </div>
@@ -312,6 +327,21 @@
         background: #fafbfc;
     }
     .rfq-confirm-actions .tha-btn { min-width: 8rem; }
+    .rfq-alert-icon {
+        width: 2.4rem;
+        height: 2.4rem;
+        border-radius: 9999px;
+        background: #16a34a;
+        color: #ffffff;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        font-weight: 800;
+        line-height: 1;
+        margin: 0 auto 0.6rem;
+    }
+    .rfq-alert-message { white-space: pre-line; }
     .rfq-replace-doc-body {
         text-align: left;
     }
@@ -600,11 +630,26 @@
     }
 
     function rfqShowAlert(message, title, variant) {
-        if (typeof window.showFlowAlert === 'function') {
-            window.showFlowAlert(message, title || 'Notice', null, variant || 'default');
-        } else {
+        const overlay = document.getElementById('rfqAlertOverlay');
+        if (!overlay) {
             window.alert(message);
+            return;
         }
+        const titleEl = document.getElementById('rfqAlertTitle');
+        const messageEl = document.getElementById('rfqAlertMessage');
+        const iconEl = document.getElementById('rfqAlertIcon');
+        const okBtn = document.getElementById('rfqAlertOk');
+        if (titleEl) titleEl.textContent = title || 'Notice';
+        if (messageEl) messageEl.textContent = message || '';
+        if (iconEl) iconEl.style.display = (variant === 'success') ? 'inline-flex' : 'none';
+        if (okBtn) okBtn.onclick = function () { overlay.classList.remove('active'); };
+        overlay.classList.add('active');
+    }
+
+    function rfqCloseAlert(event) {
+        if (event && event.target && event.target.id !== 'rfqAlertOverlay') return;
+        const overlay = document.getElementById('rfqAlertOverlay');
+        if (overlay) overlay.classList.remove('active');
     }
 
     function rfqQueueUrlWithoutRetrySign() {

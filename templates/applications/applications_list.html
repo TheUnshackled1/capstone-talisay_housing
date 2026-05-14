@@ -2208,7 +2208,8 @@
         background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
         border-bottom: 1px solid #e2e8f0;
     }
-    .flow-alert-card.success::before {
+    .flow-alert-card.success::before,
+    .flow-alert-card.proceed-success::before {
         background: linear-gradient(90deg, #166534 0%, #16a34a 45%, #22c55e 100%);
     }
     .flow-alert-icon {
@@ -2222,7 +2223,8 @@
         font-weight: 800;
         line-height: 1;
     }
-    .flow-alert-card.success .flow-alert-icon {
+    .flow-alert-card.success .flow-alert-icon,
+    .flow-alert-card.proceed-success .flow-alert-icon {
         background: #16a34a;
         color: #ffffff;
         border: none;
@@ -3702,9 +3704,8 @@
         </div>
     </div>
 
-    <!-- Applications Table -->
+    <!-- Applications Table (headers always visible; empty state is one tbody row, intake-style) -->
     <div class="applications-table-container">
-        {% if applicants_data %}
         <table class="applications-table compact-table">
             <thead>
                 <tr>
@@ -3859,6 +3860,16 @@
                         </div>
                     </td>
                 </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="10" style="text-align:center;color:#64748b;font-size:0.75rem;padding:1.1rem 0.75rem;line-height:1.5;">
+                        {% if search %}
+                        No results match your search &ldquo;{{ search }}&rdquo;.
+                        {% else %}
+                        No applicant records on this list yet. From Intake, use Proceed to Application &amp; Eligibility to hand off an applicant here. When eligibility shows Ready for Form, use Proceed to Ready for Form queue to route them to Go to Form.
+                        {% endif %}
+                    </td>
+                </tr>
                 {% endfor %}
             </tbody>
         </table>
@@ -3882,13 +3893,6 @@
                 </div>
             </div>
         </div>
-        {% else %}
-        <div class="empty-state">
-            <div class="empty-state-icon">📋</div>
-            <h3>No Applications Found</h3>
-            <p>{% if search %}No results match your search "{{ search }}"{% else %}No applicant records available yet. From Intake, use Proceed to Application &amp; Eligibility to hand off an applicant to this list. When eligibility shows Ready for Form, use Proceed to Ready for Form queue to route them to Go to Form.{% endif %}</p>
-        </div>
-        {% endif %}
     </div>
 </div>
 

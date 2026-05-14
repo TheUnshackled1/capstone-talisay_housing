@@ -247,6 +247,74 @@
         white-space: nowrap;
         border: 0;
     }
+    /* Styled alert modal */
+    .lawq-alert-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.55);
+        backdrop-filter: blur(2px);
+        -webkit-backdrop-filter: blur(2px);
+        z-index: 13050;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+    }
+    .lawq-alert-overlay.active { display: flex; }
+    .lawq-alert-card {
+        width: min(28rem, 100%);
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 14px;
+        box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.4),
+                    0 16px 32px -8px rgba(15, 23, 42, 0.18);
+        position: relative;
+        overflow: hidden;
+    }
+    .lawq-alert-stripe {
+        height: 4px;
+        background: linear-gradient(90deg, #047857 0%, #10b981 50%, #6ee7b7 100%);
+    }
+    .lawq-alert-body {
+        padding: 1.4rem 1.5rem 0.9rem;
+        text-align: center;
+    }
+    .lawq-alert-icon {
+        width: 2.4rem;
+        height: 2.4rem;
+        border-radius: 9999px;
+        background: #16a34a;
+        color: #ffffff;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        font-weight: 800;
+        line-height: 1;
+        margin: 0 auto 0.6rem;
+    }
+    .lawq-alert-title {
+        margin: 0 0 0.5rem;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #0f172a;
+    }
+    .lawq-alert-message {
+        margin: 0;
+        font-size: 0.84rem;
+        color: #475569;
+        line-height: 1.5;
+        white-space: pre-line;
+    }
+    .lawq-alert-actions {
+        display: flex;
+        justify-content: center;
+        padding: 0.95rem 1.25rem 1.15rem;
+        border-top: 1px solid #f1f5f9;
+        background: #fafbfc;
+    }
+    .lawq-alert-actions .lawq-award-btn-submit { min-width: 8rem; }
+
     /* Award Lot modal */
     #awardModal {
         display: none;
@@ -693,14 +761,15 @@
         {% endif %}
     </form>
 
-    {% if queue_rows %}
     <div class="lawq-list-card">
+    {% if queue_rows %}
     <div class="lawq-bulk-bar" id="lawqBulkBar">
         <label>
             <input type="checkbox" id="lawqSelectAll" title="Select all rows on this page" aria-label="Select all on this page">
             Select all on page
         </label>
     </div>
+    {% endif %}
     <div class="rfq-table-wrap">
         <table class="rfq-table">
             <thead>
@@ -788,6 +857,16 @@
                         </div>
                     </td>
                 </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" style="text-align:center;color:#64748b;font-size:0.75rem;padding:1.1rem 0.75rem;line-height:1.5;">
+                        {% if search %}
+                        No applicants in this queue match your search.
+                        {% else %}
+                        No applicants are currently in the lot-awarding queue. Route signed records from <strong>Ready for Form queue</strong> using <strong>Proceed to lot awarding</strong>.
+                        {% endif %}
+                    </td>
+                </tr>
                 {% endfor %}
             </tbody>
         </table>
@@ -809,15 +888,6 @@
             {% else %}<span style="opacity:0.45;">Next</span>{% endif %}
         </span>
     </div>
-    {% else %}
-    <div class="rfq-empty">
-        {% if search %}
-        No applicants in this queue match your search.
-        {% else %}
-        No applicants are currently in the lot-awarding queue. Route signed records from <strong>Ready for Form queue</strong> using <strong>Proceed to lot awarding</strong>.
-        {% endif %}
-    </div>
-    {% endif %}
 </div>
 
 <div class="modal-overlay" id="lawqSmsModal" role="dialog" aria-modal="true" aria-labelledby="lawqSmsModalTitle">
@@ -871,6 +941,21 @@
         </form>
     </div>
 </div>
+
+<!-- Styled alert modal — replaces native alert() for success / error notices. -->
+<div class="lawq-alert-overlay" id="lawqAlertOverlay" role="dialog" aria-modal="true" aria-labelledby="lawqAlertTitle" onclick="lawqCloseAlert(event)">
+    <div class="lawq-alert-card" onclick="event.stopPropagation();">
+        <div class="lawq-alert-stripe" aria-hidden="true"></div>
+        <div class="lawq-alert-body">
+            <div class="lawq-alert-icon" id="lawqAlertIcon" aria-hidden="true">&#10003;</div>
+            <h3 class="lawq-alert-title" id="lawqAlertTitle">Notice</h3>
+            <p class="lawq-alert-message" id="lawqAlertMessage"></p>
+        </div>
+        <div class="lawq-alert-actions">
+            <button type="button" class="lawq-award-btn-submit" id="lawqAlertOk">OK</button>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -882,12 +967,31 @@
     );
 
     function lawqShowAlert(message, title, onConfirm, variant) {
-        if (typeof window.showFlowAlert === 'function') {
-            window.showFlowAlert(message, title || 'Notice', onConfirm || null, variant || 'default');
-        } else {
+        const overlay = document.getElementById('lawqAlertOverlay');
+        if (!overlay) {
             window.alert(message);
             if (typeof onConfirm === 'function') onConfirm();
+            return;
         }
+        const titleEl = document.getElementById('lawqAlertTitle');
+        const messageEl = document.getElementById('lawqAlertMessage');
+        const iconEl = document.getElementById('lawqAlertIcon');
+        const okBtn = document.getElementById('lawqAlertOk');
+        if (titleEl) titleEl.textContent = title || 'Notice';
+        if (messageEl) messageEl.textContent = message || '';
+        if (iconEl) iconEl.style.display = (variant === 'success') ? 'inline-flex' : 'none';
+        if (okBtn) {
+            okBtn.onclick = function () {
+                overlay.classList.remove('active');
+                if (typeof onConfirm === 'function') onConfirm();
+            };
+        }
+        overlay.classList.add('active');
+    }
+
+    function lawqCloseAlert(event) {
+        if (event && event.target && event.target.id !== 'lawqAlertOverlay') return;
+        document.getElementById('lawqAlertOverlay').classList.remove('active');
     }
 
     function openLawqSmsModal() {
