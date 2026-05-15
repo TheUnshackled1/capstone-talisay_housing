@@ -37,6 +37,14 @@ SECRET_KEY = "django-insecure-l#!1!(warwnj*ld=dz=-kd13sfzq1s9m460mt8w^p3l4+0##lg
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+# When True, staff housing monitoring UI does not block extension 30 Day (month_2) on the
+# caretaker midpoint—Confirm / Inspection details / Notify flow works for QA. Set env
+# EXTENSION_30DAY_SKIP_MIDPOINT_BLOCK=0 on production. Defaults to DEBUG.
+EXTENSION_30DAY_SKIP_MIDPOINT_BLOCK = _env_bool(
+    'EXTENSION_30DAY_SKIP_MIDPOINT_BLOCK',
+    default=DEBUG,
+)
+
 ALLOWED_HOSTS = ['*']  # Allow all hosts for development/testing
 
 
@@ -162,7 +170,7 @@ LOGOUT_REDIRECT_URL = 'accounts:dashboard'
 
 # Session settings
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-SESSION_COOKIE_AGE = 60 * 60  # 1 hour
+SESSION_COOKIE_AGE = 60 * 60 * 5  # 5 hours
 
 # =============================================================================
 # SMS — Semaphore (Philippines)

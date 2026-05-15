@@ -702,7 +702,10 @@ class MonitoringTask(models.Model):
     )
 
     days_from_award = models.PositiveIntegerField(
-        help_text="Monitoring day after the 30-day possession grace period"
+        help_text=(
+            "Monitoring day after the 30-day possession grace period when the visit is due "
+            "(15 for the first visit; 45 for the final 30 Day visit, i.e. 30 days after the 15 Day due date)."
+        ),
     )
 
     status = models.CharField(

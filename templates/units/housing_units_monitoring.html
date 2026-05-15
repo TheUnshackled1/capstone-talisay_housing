@@ -1073,29 +1073,96 @@
         border-left-color: #cbd5e1 !important;
         background: #f8fafc !important;
     }
-    .explanation-letter-panel--dormant .premium-card-title {
+    .explanation-letter-panel--dormant .explanation-letter-panel-title {
         color: #475569 !important;
     }
-
-    /* Static section headers (always-visible content) */
-    .unit-section-header {
+    #explanationLetterPanel .explanation-letter-panel-title {
+        text-align: center;
         width: 100%;
+        margin-bottom: 0.55rem;
+    }
+    #explanationLetterPanel .explanation-letter-file-actions-row {
         display: flex;
-        flex-direction: column;
-        align-items: center;
+        flex-wrap: wrap;
         justify-content: center;
-        gap: 0.25rem;
-        background: linear-gradient(180deg, #10b981 0%, #059669 100%);
-        border: 1px solid #047857;
-        color: #ffffff;
-        padding: 0.85rem 1.25rem;
-        font-size: 0.9rem;
+        gap: 0.5rem;
+        align-items: center;
+    }
+    .explanation-build-extension-note {
+        margin-top: 0.55rem;
+        padding: 0.55rem 0.7rem;
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        border-radius: 8px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: #14532d;
+        line-height: 1.45;
+        text-align: left;
+    }
+    .explanation-letter-panel--dormant .explanation-build-extension-note {
+        display: none !important;
+    }
+    #explanationLetterPanel .explanation-letter-nested-task-grid {
+        display: none;
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+        margin-top: 0.45rem;
+        padding: 0.65rem;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+    }
+
+    /* Section tabs (switch between drawer sections) */
+    .unit-section-tabs {
+        display: flex;
+        gap: 0.4rem;
+        margin-bottom: 0.85rem;
+        background: #f1f5f9;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 0.3rem;
+    }
+    .unit-tab {
+        flex: 1 1 0;
+        min-width: 0;
+        font-family: inherit;
+        font-size: 0.82rem;
         font-weight: 700;
         letter-spacing: -0.01em;
-        border-radius: 14px;
-        box-shadow: 0 4px 10px rgba(5, 150, 105, 0.12);
-        margin-bottom: 0.85rem;
+        line-height: 1.3;
+        color: #475569;
+        background: transparent;
+        border: 1px solid transparent;
+        border-radius: 11px;
+        padding: 0.7rem 0.85rem;
         text-align: center;
+        cursor: pointer;
+        -webkit-appearance: none;
+        appearance: none;
+        transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .unit-tab:hover {
+        color: #0f172a;
+        background: #e2e8f0;
+    }
+    .unit-tab:focus-visible {
+        outline: 2px solid #a7f3d0;
+        outline-offset: 2px;
+    }
+    .unit-tab.is-active {
+        color: #ffffff;
+        background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+        border-color: #047857;
+        box-shadow: 0 4px 10px rgba(5, 150, 105, 0.18);
+    }
+    .unit-tab.is-active:hover {
+        background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+        color: #ffffff;
+    }
+    .unit-monitor-panel[hidden] {
+        display: none !important;
     }
     .unit-section-subtitle {
         font-size: 0.72rem;
@@ -1344,6 +1411,65 @@
         font-size: 0.68rem;
         font-weight: 700;
         padding: 0.35rem 0.85rem;
+    }
+
+    /* Full-width stacked cards: prior No Progress panel + extension task inside letter card */
+    #priorNoProgressVisitsGrid {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        margin-top: 0.5rem;
+    }
+    #priorNoProgressVisitsGrid .monitoring-task-card,
+    #explanationLetterPanel .explanation-letter-nested-task-grid .monitoring-task-card {
+        width: 100%;
+        max-width: none;
+        box-sizing: border-box;
+        padding: 1.1rem 1.2rem 1.15rem;
+        gap: 0.4rem;
+        border-radius: 14px;
+    }
+    #priorNoProgressVisitsGrid .monitoring-task-label,
+    #explanationLetterPanel .explanation-letter-nested-task-grid .monitoring-task-label {
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: #64748b;
+    }
+    #priorNoProgressVisitsGrid .monitoring-task-relative,
+    #explanationLetterPanel .explanation-letter-nested-task-grid .monitoring-task-relative {
+        font-size: 0.74rem;
+        color: #64748b;
+        font-weight: 600;
+    }
+    #priorNoProgressVisitsGrid .monitoring-task-date,
+    #explanationLetterPanel .explanation-letter-nested-task-grid .monitoring-task-date {
+        font-size: 1.28rem;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        color: #1e293b;
+        margin: 0.35rem 0 0.4rem;
+    }
+    #priorNoProgressVisitsGrid .monitoring-task-status-row,
+    #explanationLetterPanel .explanation-letter-nested-task-grid .monitoring-task-status-row {
+        margin-top: 0.35rem;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.55rem;
+        flex-wrap: nowrap;
+    }
+    #priorNoProgressVisitsGrid .monitoring-task-status-badge,
+    #explanationLetterPanel .explanation-letter-nested-task-grid .monitoring-task-status-badge {
+        flex-shrink: 0;
+    }
+    #priorNoProgressVisitsGrid .monitoring-task-hint,
+    #explanationLetterPanel .explanation-letter-nested-task-grid .monitoring-task-hint {
+        font-size: 0.78rem;
+        font-weight: 600;
+        line-height: 1.45;
+        width: 100%;
     }
 
     .unit-monitor-progress-row {
@@ -1957,11 +2083,15 @@
 
         <!-- Body -->
         <div class="unit-detail-body">
+            <!-- Section tabs -->
+            <div class="unit-section-tabs" role="tablist">
+                <button type="button" class="unit-tab is-active" role="tab" aria-selected="true" data-tab-target="beneficiaryDropdown" onclick="switchUnitTab(this)">Beneficiary · occupant &amp; household</button>
+                <button type="button" class="unit-tab" role="tab" aria-selected="false" data-tab-target="lotMonitoringDropdown" onclick="switchUnitTab(this)">Formal lot award activation · monitoring tasks</button>
+                <button type="button" class="unit-tab" role="tab" aria-selected="false" data-tab-target="caseDropdown" onclick="switchUnitTab(this)">Case</button>
+            </div>
+
             <!-- Occupant Section -->
             <section class="unit-detail-section">
-                <header class="unit-section-header">
-                    <span>Beneficiary · occupant &amp; household</span>
-                </header>
                 <div id="beneficiaryDropdown" class="unit-monitor-panel">
                     <div class="premium-data-card border-green">
                         <p class="premium-card-title">Lot beneficiary</p>
@@ -2015,10 +2145,7 @@
 
             <!-- Formal award activation and monitoring schedule -->
             <section class="unit-detail-section">
-                <header class="unit-section-header unit-section-header--stacked">
-                    <span>Formal lot award activation · monitoring tasks</span>
-                </header>
-                <div id="lotMonitoringDropdown" class="unit-monitor-panel">
+                <div id="lotMonitoringDropdown" class="unit-monitor-panel" hidden>
                     <div class="premium-data-card border-green">
                         <p class="premium-card-title">Monitoring schedule</p>
                         <div class="premium-grid-3">
@@ -2049,15 +2176,18 @@
 
                     <div id="monitoringTaskCards" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap:0.75rem; margin-top:0.5rem;"></div>
 
+                    <div id="priorNoProgressVisitsPanel" class="premium-data-card" style="display: none; margin-top: 0.75rem; border-left: 4px solid #64748b;">
+                        <p class="premium-card-title">Initial monitoring — No Progress visits</p>
+                        <div id="priorNoProgressVisitsGrid"></div>
+                    </div>
+
                     <div id="explanationLetterPanel" class="premium-data-card border-rose" style="display: none; margin-top: 0.75rem; border-left: 4px solid #e11d48;">
-                        <p class="premium-card-title">No progress — explanation letter workflow</p>
-                        <p style="margin: 0 0 0.75rem; font-size: 0.78rem; color: #475569; line-height: 1.45;">
-                            After staff marks <strong>No Progress</strong>, register the office deadline for the beneficiary’s written explanation, then scan the letter when received. If the deadline passes with no letter on file, you may disqualify the beneficiary.
-                        </p>
+                        <p class="premium-card-title explanation-letter-panel-title">30 Day No Progress — explanation letter</p>
                         <div id="explanationLetterStatus" style="font-size: 0.8rem; font-weight: 600; color: #0f172a; margin-bottom: 0.65rem;"></div>
                         <div id="explanationDeadlineForm" style="display: none; gap: 0.5rem; flex-wrap: wrap; align-items: flex-end; margin-bottom: 0.65rem;">
                             <label style="display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.72rem; font-weight: 700; color: #475569;">
                                 Letter deadline (date &amp; time)
+                                <span style="font-weight: 500; color: #64748b;">Housing office local time ({{ explanation_letter_office_tz }}).</span>
                                 <input type="datetime-local" id="explanationDeadlineInput" style="padding: 0.45rem 0.5rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.8rem;">
                             </label>
                             <label style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.72rem; color: #475569; cursor: pointer;">
@@ -2067,15 +2197,28 @@
                             <button type="button" class="inspection-info-btn primary" id="explanationSaveDeadlineBtn" onclick="saveExplanationLetterDeadline()">Save deadline</button>
                         </div>
                         <div id="explanationLetterFileActions" style="margin-bottom: 0.65rem;">
-                            <p style="margin: 0 0 0.45rem; font-size: 0.72rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.03em;">Explanation letter file</p>
-                            <p style="margin: 0 0 0.5rem; font-size: 0.74rem; color: #475569; line-height: 1.4;">Upload or scan the beneficiary’s written explanation (PDF or image). View opens the saved file in a new tab.</p>
-                            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;">
-                                <button type="button" class="inspection-info-btn primary" id="explanationPickScanBtn" onclick="explanationPickScanLetter()">Upload / scan explanation letter</button>
+                            <div class="explanation-letter-file-actions-row">
+                                <button type="button" class="inspection-info-btn primary" id="explanationUploadLetterBtn" onclick="explanationUploadLetterFromComputer()">Upload</button>
+                                <button type="button" class="inspection-info-btn primary" id="explanationTwainScanBtn" onclick="explanationScanLetterWithDwt()">Scan</button>
                                 <button type="button" class="inspection-info-btn" id="explanationViewLetterBtn" onclick="explanationViewLetter()">View explanation letter</button>
                             </div>
                             <input type="file" id="explanationLetterFile" accept=".pdf,image/*" style="position: absolute; width: 0.1px; height: 0.1px; opacity: 0; overflow: hidden; z-index: -1;" aria-hidden="true" tabindex="-1" onchange="explanationLetterFileChosen()">
                             <p id="explanationSelectedFileName" style="display: none; margin: 0.45rem 0 0; font-size: 0.72rem; color: #475569;"></p>
                             <button type="button" class="inspection-info-btn primary" id="explanationSubmitScanBtn" style="display: none; margin-top: 0.45rem;" onclick="uploadExplanationLetterFile()">Submit scan &amp; grant extension</button>
+                        </div>
+                        <div id="explanationBuildExtensionNote" class="explanation-build-extension-note" style="display: none;"></div>
+                        <div id="explanationExtension30DayCardWrap" class="explanation-letter-nested-task-grid"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Case Section (prep for /cases integration) -->
+            <section class="unit-detail-section">
+                <div id="caseDropdown" class="unit-monitor-panel" hidden>
+                    <div class="premium-data-card border-blue">
+                        <p class="premium-card-title">Case record</p>
+                        <div id="unitCaseRecord">
+                            <p class="occupied-record-empty">No case linked to this lot yet.</p>
                         </div>
                     </div>
                 </div>
@@ -2104,7 +2247,7 @@
         <div class="inspection-info-body">
             <p class="inspection-info-kicker">Disqualify beneficiary</p>
             <h3 class="inspection-info-title">Confirm on-file disqualification</h3>
-            <p class="inspection-info-text" style="margin-top: 0.5rem;">This is allowed only after the explanation letter deadline has passed with no scanned letter on file. The applicant record will be marked disqualified.</p>
+            <p class="inspection-info-text" style="margin-top: 0.5rem;">This is allowed only after the explanation letter deadline has passed with no scanned letter on file. The beneficiary will be disqualified, added to Blacklisted Beneficiaries, removed from this block and lot, and the unit will be vacated for reassignment.</p>
             <label style="display: block; margin-top: 0.75rem; font-size: 0.72rem; font-weight: 700; color: #475569;">Reason (required, min. 10 characters)</label>
             <textarea id="disqualifyReasonInput" rows="3" maxlength="2000" style="width: 100%; margin-top: 0.25rem; padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.82rem;"></textarea>
         </div>
@@ -2155,6 +2298,10 @@
         </div>
     </div>
 </div>
+
+<script src="{% static 'Dynamic Web TWAIN SDK 19.3.3/Resources/dynamsoft.webtwain.initiate.js' %}"></script>
+<script src="{% static 'Dynamic Web TWAIN SDK 19.3.3/Resources/dynamsoft.webtwain.config.js' %}"></script>
+<div id="dwtcontrolContainer" style="width: 0; height: 0; overflow: hidden; position: absolute; left: -9999px;" aria-hidden="true"></div>
 
 <!-- Styles & Scripts -->
 <script>
@@ -2362,34 +2509,132 @@ function filterUnits(filter) {
 
 function monitoringTaskDisplayTitle(task) {
     if (!task) return '—';
+    if (task.label) return task.label;
     if (task.task_type === 'day_15_inspection') return '15 Day Inspection';
-    if (task.task_type === 'day_30_inspection') return '30 Day Inspection';
-    return task.label || '—';
+    if (task.task_type === 'day_30_inspection' || task.task_type === 'month_2_inspection') return '30 Day Inspection';
+    return '—';
 }
 
 function monitoringTaskRelativeLine(task) {
     if (!task) return '';
+    if (task.monitoring_window_line) return task.monitoring_window_line;
     if (task.task_type === 'day_15_inspection') return 'during 15 days of monitoring';
-    if (task.task_type === 'day_30_inspection') return 'during 30 days of monitoring';
+    if (task.task_type === 'day_30_inspection' || task.task_type === 'month_2_inspection') return 'during 30 days of monitoring';
     const d = task.days_from_award;
     return (d != null && d !== '') ? `${d} days after monitoring starts` : '';
 }
 
-function renderMonitoringTaskCards(tasks) {
-    const wrap = document.getElementById('monitoringTaskCards');
-    if (!wrap) return;
-    currentMonitoringTasks = tasks || [];
-    wrap.innerHTML = '';
+function isPriorNoProgressLetterVisit(task, letterWorkflowApplies) {
+    if (!letterWorkflowApplies || !task) return false;
+    if (task.task_type !== 'day_15_inspection' && task.task_type !== 'day_30_inspection') return false;
+    return task.status === 'completed'
+        && task.report
+        && task.report.progress_assessment === 'no_progress';
+}
 
-    if (!tasks || !tasks.length) {
-        const empty = document.createElement('div');
-        empty.style.cssText = 'grid-column:1/-1;padding:0.8rem;border:1px dashed #cbd5e1;border-radius:0.75rem;color:#64748b;font-size:0.8rem;';
-        empty.textContent = 'No 15 Day or 30 Day monitoring tasks generated yet.';
-        wrap.appendChild(empty);
-        return;
+function filterMainTasksForTopGrid(mainTasks, letterWorkflowApplies) {
+    if (!letterWorkflowApplies) return mainTasks || [];
+    return (mainTasks || []).filter((t) => !isPriorNoProgressLetterVisit(t, true));
+}
+
+function buildMonitoringTaskCardElement(task, day15Reviewed) {
+    const card = document.createElement('div');
+    const isNotified = Boolean(task.notified_at);
+    const isCompleted = task.status === 'completed';
+    const isBlocked = (
+        (task.task_type === 'day_30_inspection' && !day15Reviewed) ||
+        Boolean(task.extension_30day_blocked)
+    );
+
+    let statusClass = 'upcoming';
+    if (isBlocked) statusClass = 'blocked';
+    else if (isCompleted) statusClass = 'completed';
+    else if (task.is_overdue) statusClass = 'overdue';
+    else if (task.is_due) statusClass = 'ready';
+    else if (isNotified) statusClass = 'notified';
+
+    let completedTone = '';
+    if (isCompleted && task.report) {
+        if (task.report.progress_assessment === 'no_progress') {
+            completedTone = ' completed--no-progress';
+        } else if (task.report.progress_assessment === 'normal_progress') {
+            completedTone = ' completed--normal-progress';
+        } else {
+            completedTone = ' completed--pending-review';
+        }
+    }
+    card.className = `monitoring-task-card ${statusClass}${completedTone}`;
+
+    const statusText = isBlocked ? 'Blocked' : (isCompleted ? 'Completed' : (task.is_overdue ? 'Overdue' : (task.is_due ? 'Ready' : (isNotified ? 'Notified' : 'Upcoming'))));
+    let availabilityText;
+    let hintClass = 'monitoring-task-hint';
+    if (isBlocked) {
+        availabilityText = task.extension_30day_blocked
+            ? 'Finish the extension midpoint field visit first (caretaker dashboard), then staff must assess it'
+            : 'Finish and review the 15 Day Inspection first';
+        hintClass += ' monitoring-task-hint--blocked';
+    } else if (isCompleted && task.report) {
+        const by = task.report.assessed_by ? ` · ${task.report.assessed_by}` : '';
+        if (task.report.progress_assessment === 'normal_progress') {
+            if (task.initial_monitoring_program_complete) {
+                availabilityText = `Normal Progress — initial monitoring complete${by}`;
+                hintClass += ' monitoring-task-hint--decision-normal monitoring-task-hint--program-complete';
+            } else {
+                availabilityText = `Normal Progress${by}`;
+                hintClass += ' monitoring-task-hint--decision-normal';
+            }
+        } else if (task.report.progress_assessment === 'no_progress') {
+            availabilityText = `No Progress${by}`;
+            hintClass += ' monitoring-task-hint--decision-no';
+        } else {
+            availabilityText = 'Caretaker monitoring report submitted — staff decision pending';
+            hintClass += ' monitoring-task-hint--pending-review';
+        }
+    } else {
+        availabilityText = isCompleted
+            ? 'Caretaker monitoring report submitted'
+            : task.is_due
+                ? 'Available to inspect now'
+                : (isNotified ? 'Waiting for caretaker monitoring report' : 'Click to test early inspection warning');
     }
 
-    const day15Task = tasks.find((item) => item.task_type === 'day_15_inspection');
+    card.addEventListener('click', () => {
+        if (isBlocked) {
+            openInspectionBlockedModal(task);
+            return;
+        }
+        if (isCompleted || (isNotified && !task.is_due)) {
+            openInspectionInfoModal(task);
+            return;
+        }
+        if (!task.is_due) {
+            openInspectionConfirmModal(task);
+            return;
+        }
+        notifySelectedInspectionTask(task.id);
+    });
+
+    card.innerHTML = `
+        <p class="monitoring-task-label">${monitoringTaskDisplayTitle(task)}</p>
+        <p class="monitoring-task-relative">${monitoringTaskRelativeLine(task)}</p>
+        <p class="monitoring-task-date">${formatDisplayDate(task.due_date)}</p>
+        <div class="monitoring-task-status-row">
+            <span class="monitoring-task-status-badge">${statusText}</span>
+            <p class="${hintClass}">${availabilityText}</p>
+        </div>
+    `;
+    return card;
+}
+
+function renderMonitoringTaskCards(mainTasks, mergedForState, letterWorkflowApplies) {
+    const wrap = document.getElementById('monitoringTaskCards');
+    if (!wrap) return;
+    const merged = mergedForState != null ? mergedForState : (mainTasks || []);
+    currentMonitoringTasks = merged;
+    const gridTasks = filterMainTasksForTopGrid(mainTasks, letterWorkflowApplies);
+    wrap.innerHTML = '';
+
+    const day15Task = merged.find((item) => item.task_type === 'day_15_inspection');
     const day15Reviewed = Boolean(
         day15Task &&
         day15Task.status === 'completed' &&
@@ -2397,90 +2642,69 @@ function renderMonitoringTaskCards(tasks) {
         day15Task.report.progress_assessment
     );
 
-    tasks.forEach((task) => {
-        const card = document.createElement('div');
-        const isNotified = Boolean(task.notified_at);
-        const isCompleted = task.status === 'completed';
-        const isBlocked = task.task_type === 'day_30_inspection' && !day15Reviewed;
-        
-        let statusClass = 'upcoming';
-        if (isBlocked) statusClass = 'blocked';
-        else if (isCompleted) statusClass = 'completed';
-        else if (task.is_overdue) statusClass = 'overdue';
-        else if (task.is_due) statusClass = 'ready';
-        else if (isNotified) statusClass = 'notified';
-        
-        let completedTone = '';
-        if (isCompleted && task.report) {
-            if (task.report.progress_assessment === 'no_progress') {
-                completedTone = ' completed--no-progress';
-            } else if (task.report.progress_assessment === 'normal_progress') {
-                completedTone = ' completed--normal-progress';
-            } else {
-                completedTone = ' completed--pending-review';
-            }
-        }
-        card.className = `monitoring-task-card ${statusClass}${completedTone}`;
+    if (!gridTasks.length) {
+        const empty = document.createElement('div');
+        empty.style.cssText = 'grid-column:1/-1;padding:0.8rem;border:1px dashed #cbd5e1;border-radius:0.75rem;color:#64748b;font-size:0.8rem;';
+        const nestedInSeparateCard = letterWorkflowApplies && (merged || []).some((t) => isPriorNoProgressLetterVisit(t, true));
+        empty.textContent = nestedInSeparateCard
+            ? 'Completed 15 Day / 30 Day (No Progress) visits are shown in the separate card below.'
+            : 'No 15 Day or 30 Day monitoring tasks generated yet.';
+        wrap.appendChild(empty);
+        return;
+    }
 
-        const statusText = isBlocked ? 'Blocked' : (isCompleted ? 'Completed' : (task.is_overdue ? 'Overdue' : (task.is_due ? 'Ready' : (isNotified ? 'Notified' : 'Upcoming'))));
-        let availabilityText;
-        let hintClass = 'monitoring-task-hint';
-        if (isBlocked) {
-            availabilityText = 'Finish and review the 15 Day Inspection first';
-            hintClass += ' monitoring-task-hint--blocked';
-        } else if (isCompleted && task.report) {
-            const by = task.report.assessed_by ? ` · ${task.report.assessed_by}` : '';
-            if (task.report.progress_assessment === 'normal_progress') {
-                if (task.initial_monitoring_program_complete) {
-                    availabilityText = `Normal Progress — initial monitoring complete${by}`;
-                    hintClass += ' monitoring-task-hint--decision-normal monitoring-task-hint--program-complete';
-                } else {
-                    availabilityText = `Normal Progress${by}`;
-                    hintClass += ' monitoring-task-hint--decision-normal';
-                }
-            } else if (task.report.progress_assessment === 'no_progress') {
-                availabilityText = `No Progress${by}`;
-                hintClass += ' monitoring-task-hint--decision-no';
-            } else {
-                availabilityText = 'Caretaker monitoring report submitted — staff decision pending';
-                hintClass += ' monitoring-task-hint--pending-review';
-            }
-        } else {
-            availabilityText = isCompleted
-                ? 'Caretaker monitoring report submitted'
-                : task.is_due
-                    ? 'Available to inspect now'
-                    : (isNotified ? 'Waiting for caretaker monitoring report' : 'Click to test early inspection warning');
-        }
-
-        card.addEventListener('click', () => {
-            if (isBlocked) {
-                openInspectionBlockedModal(task);
-                return;
-            }
-            if (isCompleted || (isNotified && !task.is_due)) {
-                openInspectionInfoModal(task);
-                return;
-            }
-            if (!task.is_due) {
-                openInspectionConfirmModal(task);
-                return;
-            }
-            // Standard notification flow if ready
-            notifySelectedInspectionTask(task.id);
-        });
-
-        card.innerHTML = `
-            <p class="monitoring-task-label">${monitoringTaskDisplayTitle(task)}</p>
-            <p class="monitoring-task-relative">${monitoringTaskRelativeLine(task)}</p>
-            <p class="monitoring-task-date">${formatDisplayDate(task.due_date)}</p>
-            <div class="monitoring-task-status-row">
-                <span class="monitoring-task-status-badge">${statusText}</span>
-                <p class="${hintClass}">${availabilityText}</p>
-            </div>
-        `;
-        wrap.appendChild(card);
+    gridTasks.forEach((task) => {
+        wrap.appendChild(buildMonitoringTaskCardElement(task, day15Reviewed));
     });
+}
+
+function renderPriorNoProgressVisitsPanel(letterWorkflowApplies) {
+    const panel = document.getElementById('priorNoProgressVisitsPanel');
+    const wrap = document.getElementById('priorNoProgressVisitsGrid');
+    if (!panel || !wrap) return;
+    wrap.innerHTML = '';
+    if (!letterWorkflowApplies) {
+        panel.style.display = 'none';
+        return;
+    }
+    const merged = currentMonitoringTasks || [];
+    const prior = merged
+        .filter((t) => isPriorNoProgressLetterVisit(t, true))
+        .sort((a, b) => String(a.due_date || '').localeCompare(String(b.due_date || '')));
+    if (!prior.length) {
+        panel.style.display = 'none';
+        return;
+    }
+    const day15Task = merged.find((item) => item.task_type === 'day_15_inspection');
+    const day15Reviewed = Boolean(
+        day15Task &&
+        day15Task.status === 'completed' &&
+        day15Task.report &&
+        day15Task.report.progress_assessment
+    );
+    panel.style.display = 'block';
+    prior.forEach((task) => {
+        wrap.appendChild(buildMonitoringTaskCardElement(task, day15Reviewed));
+    });
+}
+
+function renderExplanationExtension30DayCard(ext30) {
+    const wrap = document.getElementById('explanationExtension30DayCardWrap');
+    if (!wrap) return;
+    wrap.innerHTML = '';
+    if (!ext30 || ext30.task_type !== 'month_2_inspection') {
+        wrap.style.display = 'none';
+        return;
+    }
+    const day15Task = (currentMonitoringTasks || []).find((item) => item.task_type === 'day_15_inspection');
+    const day15Reviewed = Boolean(
+        day15Task &&
+        day15Task.status === 'completed' &&
+        day15Task.report &&
+        day15Task.report.progress_assessment
+    );
+    wrap.style.display = 'grid';
+    wrap.appendChild(buildMonitoringTaskCardElement(ext30, day15Reviewed));
 }
 
 function openInspectionConfirmModal(task) {
@@ -2489,8 +2713,38 @@ function openInspectionConfirmModal(task) {
     if (!modal || !text) return;
 
     pendingInspectionTask = task;
-    const awardDate = task.award_date ? formatDisplayDate(task.award_date) : 'award date';
-    text.textContent = `The inspection schedule is: Award date ${awardDate} + 30-day grace, then ${monitoringTaskRelativeLine(task)} — due ${formatDisplayDate(task.due_date)}. Continue?`;
+    const due = formatDisplayDate(task.due_date);
+    const relative = monitoringTaskRelativeLine(task);
+    let scheduleText;
+    if (task.task_type === 'month_2_inspection') {
+        const unit = lastOpenedUnitPayload;
+        const ext = unit && unit.explanation_build_extension;
+        const ms = task.monitoring_starts_on
+            ? formatDisplayDate(String(task.monitoring_starts_on).slice(0, 10))
+            : null;
+        if (ext && ext.start_date && ext.end_date) {
+            const fromD = formatDisplayDate(String(ext.start_date).slice(0, 10));
+            const until = formatDisplayDate(String(ext.end_date).slice(0, 10));
+            scheduleText = (
+                'This is the extension 30 Day inspection after the written explanation letter was placed on file. '
+                + `Another 30-day build extension applies from ${fromD} through ${until}.`
+                + (ms
+                    ? ` Extension monitoring is counted from ${ms}, then ${relative} — inspection due ${due}. Continue?`
+                    : ` Then ${relative} — inspection due ${due}. Continue?`)
+            );
+        } else {
+            scheduleText = (
+                'This is the extension 30 Day inspection after the written explanation letter was placed on file. '
+                + (ms
+                    ? `Extension monitoring is counted from ${ms}, then ${relative} — inspection due ${due}. Continue?`
+                    : `Schedule: ${relative} — inspection due ${due}. Continue?`)
+            );
+        }
+    } else {
+        const awardDate = task.award_date ? formatDisplayDate(task.award_date) : 'award date';
+        scheduleText = `The inspection schedule is: Award date ${awardDate} + 30-day grace, then ${relative} — due ${due}. Continue?`;
+    }
+    text.textContent = scheduleText;
     modal.style.display = 'flex';
 }
 
@@ -2534,7 +2788,15 @@ function openInspectionBlockedModal(task) {
 
     activeInspectionTask = null;
     title.textContent = `${monitoringTaskDisplayTitle(task)} is blocked`;
-    text.textContent = `30 Day Inspection cannot be opened yet. Complete the 15 Day Inspection caretaker report first, then staff must mark the 15 Day Inspection result as Normal Progress or No Progress.`;
+    if (task.extension_30day_blocked) {
+        text.textContent = (
+            'This 30 Day Inspection (after your explanation-letter extension) cannot be opened yet. ' +
+            'The extension midpoint visit must be completed on the caretaker monitoring dashboard first, ' +
+            'then housing staff must record Normal Progress or No Progress on that midpoint report.'
+        );
+    } else {
+        text.textContent = '30 Day Inspection cannot be opened yet. Complete the 15 Day Inspection caretaker report first, then staff must mark the 15 Day Inspection result as Normal Progress or No Progress.';
+    }
     if (summary) {
         summary.classList.remove('active');
         summary.innerHTML = '';
@@ -2887,7 +3149,23 @@ function openInspectionInfoModal(task) {
         text.textContent = `This task was already notified to Monitoring Dashboard. It remains scheduled for ${formatDisplayDate(task.due_date)} and is waiting for the caretaker field report.`;
     } else {
         title.textContent = 'Inspection details';
-        text.textContent = `Inspection opens on ${formatDisplayDate(task.due_date)} (${monitoringTaskRelativeLine(task)}). Use Monitoring Dashboard if you want to proceed early for testing.`;
+        if (task.task_type === 'month_2_inspection') {
+            const unit = lastOpenedUnitPayload;
+            const ext = unit && unit.explanation_build_extension;
+            const extLine = (ext && ext.start_date && ext.end_date)
+                ? (
+                    ` The 30-day build extension runs from ${formatDisplayDate(String(ext.start_date).slice(0, 10))} `
+                    + `through ${formatDisplayDate(String(ext.end_date).slice(0, 10))}.`
+                )
+                : '';
+            text.textContent = (
+                `Extension 30 Day inspection opens on ${formatDisplayDate(task.due_date)} (${monitoringTaskRelativeLine(task)}).`
+                + extLine
+                + ' Use Monitoring Dashboard if you want to proceed early for testing.'
+            );
+        } else {
+            text.textContent = `Inspection opens on ${formatDisplayDate(task.due_date)} (${monitoringTaskRelativeLine(task)}). Use Monitoring Dashboard if you want to proceed early for testing.`;
+        }
     }
     
     if (dashboardBtn) {
@@ -2949,7 +3227,13 @@ async function submitProgressAssessment(decision) {
         if (data.monitoring_program_complete && currentUnitId) {
             openUnitModal(currentUnitId);
         } else {
-            renderMonitoringTaskCards(currentMonitoringTasks);
+            const merged = currentMonitoringTasks;
+            const main = merged.filter((t) => t.task_type !== 'month_2_inspection');
+            const ext30 = merged.find((t) => t.task_type === 'month_2_inspection') || null;
+            const letterWf = lastOpenedUnitPayload && lastOpenedUnitPayload.explanation_letter_workflow_applies === true;
+            renderMonitoringTaskCards(main, merged, letterWf);
+            renderPriorNoProgressVisitsPanel(letterWf);
+            renderExplanationExtension30DayCard(ext30);
             renderMonitoringHistoryRecord(buildMonitoringHistoryFromTasks(currentMonitoringTasks));
         }
         try {
@@ -3018,7 +3302,13 @@ async function notifySelectedInspectionTask() {
             }
         } catch (ignoreLs) { /* private mode / quota */ }
         closeInspectionInfoModal();
-        renderMonitoringTaskCards(currentMonitoringTasks);
+        const merged = currentMonitoringTasks;
+        const main = merged.filter((t) => t.task_type !== 'month_2_inspection');
+        const ext30 = merged.find((t) => t.task_type === 'month_2_inspection') || null;
+        const letterWf = lastOpenedUnitPayload && lastOpenedUnitPayload.explanation_letter_workflow_applies === true;
+        renderMonitoringTaskCards(main, merged, letterWf);
+        renderPriorNoProgressVisitsPanel(letterWf);
+        renderExplanationExtension30DayCard(ext30);
     } catch (err) {
         if (text) {
             text.textContent = err.message || 'Could not notify monitoring dashboard.';
@@ -3032,27 +3322,193 @@ async function notifySelectedInspectionTask() {
 
 let lastOpenedUnitPayload = null;
 
+let explanationLetterDwtObject = null;
+if (window.Dynamsoft && window.Dynamsoft.DWT) {
+    Dynamsoft.DWT.RegisterEvent('OnWebTwainReady', function () {
+        try {
+            explanationLetterDwtObject = Dynamsoft.DWT.GetWebTwain('dwtcontrolContainer');
+        } catch (_e) {
+            explanationLetterDwtObject = null;
+        }
+    });
+}
+
+async function explanationLetterWaitForDwtReady(timeoutMs = 12000) {
+    const startedAt = Date.now();
+    while (!explanationLetterDwtObject && (Date.now() - startedAt) < timeoutMs) {
+        await new Promise(function (resolve) { setTimeout(resolve, 100); });
+    }
+    return explanationLetterDwtObject;
+}
+
+function explanationLetterClearDwtBuffer(dwt) {
+    if (!dwt) return;
+    try {
+        if (typeof dwt.RemoveAllImages === 'function') {
+            dwt.RemoveAllImages();
+        }
+    } catch (_e) { /* ignore */ }
+}
+
+function explanationLetterConvertDwtScanToPngFile(dwt) {
+    return new Promise(function (resolve, reject) {
+        const index = Number(dwt.CurrentImageIndexInBuffer);
+        if (Number.isNaN(index) || index < 0) {
+            reject(new Error('No scanned image in buffer.'));
+            return;
+        }
+        const fail = function (_code, msg) {
+            reject(new Error(msg || 'Export failed.'));
+        };
+        const finishBlob = function (blob) {
+            if (!blob) {
+                reject(new Error('Could not export scan.'));
+                return;
+            }
+            const name = 'explanation-letter-scan.png';
+            resolve(new File([blob], name, { type: blob.type || 'image/png' }));
+        };
+        if (typeof dwt.ConvertToBlob === 'function') {
+            dwt.ConvertToBlob([index], Dynamsoft.DWT.EnumDWT_ImageType.IT_PNG, function (result) {
+                if (result instanceof Blob) {
+                    finishBlob(result);
+                    return;
+                }
+                if (result && result.blob instanceof Blob) {
+                    finishBlob(result.blob);
+                    return;
+                }
+                reject(new Error('Unexpected scan export format.'));
+            }, fail);
+            return;
+        }
+        if (typeof dwt.ConvertToBase64 === 'function') {
+            dwt.ConvertToBase64([index], Dynamsoft.DWT.EnumDWT_ImageType.IT_PNG, function (base64) {
+                try {
+                    let b64 = String(base64 || '').trim();
+                    if (b64.includes(',')) b64 = b64.split(',')[1] || '';
+                    const bin = atob(b64);
+                    const arr = new Uint8Array(bin.length);
+                    for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+                    finishBlob(new Blob([arr], { type: 'image/png' }));
+                } catch (err) {
+                    reject(err);
+                }
+            }, fail);
+            return;
+        }
+        reject(new Error('Scanner export API not available. Use Upload.'));
+    });
+}
+
+async function explanationScanLetterWithDwt() {
+    const scanBtn = document.getElementById('explanationTwainScanBtn');
+    if (scanBtn && scanBtn.disabled) return;
+    const unit = lastOpenedUnitPayload;
+    const c = unit && unit.explanation_letter_case;
+    if (!c || !c.can_upload_letter) {
+        alert('Set the letter deadline first, then upload or scan.');
+        return;
+    }
+    const oldText = scanBtn ? scanBtn.textContent : '';
+    if (scanBtn) {
+        scanBtn.disabled = true;
+        scanBtn.textContent = 'Scanning…';
+    }
+    try {
+        const dwt = await explanationLetterWaitForDwtReady();
+        if (!dwt) throw new Error('Scanner SDK is not ready. Refresh the page and try again.');
+        await dwt.SelectSourceAsync();
+        const beforeCount = Number(dwt.HowManyImagesInBuffer || 0);
+        await dwt.AcquireImageAsync({ IfCloseSourceAfterAcquire: true });
+        const afterCount = Number(dwt.HowManyImagesInBuffer || 0);
+        if (afterCount <= beforeCount) throw new Error('No image was acquired from the scanner.');
+        const file = await explanationLetterConvertDwtScanToPngFile(dwt);
+        explanationLetterClearDwtBuffer(dwt);
+        await uploadExplanationLetterFile(file);
+    } catch (e) {
+        alert((e && e.message) ? e.message : 'Scan failed.');
+    } finally {
+        if (scanBtn) {
+            scanBtn.disabled = false;
+            scanBtn.textContent = oldText || 'Scan';
+        }
+    }
+}
+
+function explanationUploadLetterFromComputer() {
+    const btn = document.getElementById('explanationUploadLetterBtn');
+    if (btn && btn.disabled) return;
+    const unit = lastOpenedUnitPayload;
+    const c = unit && unit.explanation_letter_case;
+    if (!c || !c.can_upload_letter) {
+        alert('Set the letter deadline first, then upload or scan.');
+        return;
+    }
+    document.getElementById('explanationLetterFile')?.click();
+}
+
+function updateExplanationBuildExtensionNote(unit) {
+    const el = document.getElementById('explanationBuildExtensionNote');
+    if (!el) return;
+    const ext = unit && unit.explanation_build_extension;
+    if (ext && ext.end_date) {
+        const until = formatDisplayDate(String(ext.end_date).slice(0, 10));
+        const fromD = ext.start_date ? formatDisplayDate(String(ext.start_date).slice(0, 10)) : '';
+        el.textContent = fromD
+            ? (
+                'After the explanation letter is uploaded or scanned on file, another 30-day build extension applies. '
+                + `It runs from ${fromD} through ${until}. Your first 15 Day / 30 Day (No Progress) visits are in the separate card above; the extension 30 Day visit appears below this notice (midpoint is on the caretaker dashboard first).`
+            )
+            : (
+                'After the explanation letter is uploaded or scanned on file, another 30-day build extension applies. '
+                + `It runs through ${until}. Your first 15 Day / 30 Day (No Progress) visits are in the separate card above; the extension 30 Day visit appears below this notice (midpoint is on the caretaker dashboard first).`
+            );
+        el.style.display = 'block';
+    } else {
+        el.textContent = '';
+        el.style.display = 'none';
+    }
+}
+
 function syncExplanationLetterPanel(unit) {
     lastOpenedUnitPayload = unit;
     const panel = document.getElementById('explanationLetterPanel');
     const status = document.getElementById('explanationLetterStatus');
     const deadlineForm = document.getElementById('explanationDeadlineForm');
     const fileActions = document.getElementById('explanationLetterFileActions');
+    const extNote = document.getElementById('explanationBuildExtensionNote');
     const dqBtn = document.getElementById('disqualifyBeneficiaryBtn');
-    const pickBtn = document.getElementById('explanationPickScanBtn');
+    const uploadBtn = document.getElementById('explanationUploadLetterBtn');
+    const scanBtn = document.getElementById('explanationTwainScanBtn');
     const viewBtn = document.getElementById('explanationViewLetterBtn');
     const subBtn = document.getElementById('explanationSubmitScanBtn');
     const nameEl = document.getElementById('explanationSelectedFileName');
     const fi = document.getElementById('explanationLetterFile');
     if (!panel || !status || !deadlineForm || !fileActions) return;
 
-    function setLetterButtons(canPick, pickHint, canView, letterUrl) {
-        if (pickBtn) {
-            pickBtn.style.display = 'inline-flex';
-            pickBtn.disabled = !canPick;
-            pickBtn.style.opacity = canPick ? '1' : '0.55';
-            pickBtn.style.cursor = canPick ? 'pointer' : 'not-allowed';
-            pickBtn.title = pickHint || '';
+    if (extNote) {
+        extNote.style.display = 'none';
+        extNote.textContent = '';
+    }
+
+    status.textContent = '';
+    status.style.display = 'none';
+
+    function setLetterButtons(canUpload, uploadHint, canScan, scanHint, canView, letterUrl) {
+        if (uploadBtn) {
+            uploadBtn.style.display = 'inline-flex';
+            uploadBtn.disabled = !canUpload;
+            uploadBtn.style.opacity = canUpload ? '1' : '0.55';
+            uploadBtn.style.cursor = canUpload ? 'pointer' : 'not-allowed';
+            uploadBtn.title = uploadHint || '';
+        }
+        if (scanBtn) {
+            scanBtn.style.display = 'inline-flex';
+            scanBtn.disabled = !canScan;
+            scanBtn.style.opacity = canScan ? '1' : '0.55';
+            scanBtn.style.cursor = canScan ? 'pointer' : 'not-allowed';
+            scanBtn.title = scanHint || '';
         }
         if (viewBtn) {
             viewBtn.style.display = 'inline-flex';
@@ -3075,7 +3531,26 @@ function syncExplanationLetterPanel(unit) {
         panel.classList.remove('explanation-letter-panel--dormant');
         deadlineForm.style.display = 'none';
         fileActions.style.display = 'none';
-        if (pickBtn) pickBtn.style.display = 'none';
+        if (uploadBtn) uploadBtn.style.display = 'none';
+        if (scanBtn) scanBtn.style.display = 'none';
+        if (viewBtn) viewBtn.style.display = 'none';
+        if (subBtn) subBtn.style.display = 'none';
+        if (nameEl) nameEl.style.display = 'none';
+        if (fi) fi.value = '';
+        if (dqBtn) {
+            dqBtn.style.opacity = '0.45';
+            dqBtn.style.pointerEvents = 'none';
+        }
+        return;
+    }
+
+    if (unit.explanation_letter_workflow_applies !== true) {
+        panel.style.display = 'none';
+        panel.classList.remove('explanation-letter-panel--dormant');
+        deadlineForm.style.display = 'none';
+        fileActions.style.display = 'none';
+        if (uploadBtn) uploadBtn.style.display = 'none';
+        if (scanBtn) scanBtn.style.display = 'none';
         if (viewBtn) viewBtn.style.display = 'none';
         if (subBtn) subBtn.style.display = 'none';
         if (nameEl) nameEl.style.display = 'none';
@@ -3090,15 +3565,10 @@ function syncExplanationLetterPanel(unit) {
     if (!c && !viewUrl) {
         panel.style.display = 'block';
         panel.classList.add('explanation-letter-panel--dormant');
-        status.textContent = 'No active case yet. After staff marks a monitoring report as No Progress, use this same card (scroll here) to set the office letter deadline, then use Upload / scan and View for the explanation letter.';
         deadlineForm.style.display = 'none';
         fileActions.style.display = 'block';
-        setLetterButtons(
-            false,
-            'Available after a report is marked No Progress and a letter deadline is set.',
-            false,
-            '',
-        );
+        const dormantHint = 'Available after 30 Day No Progress and a letter deadline is set.';
+        setLetterButtons(false, dormantHint, false, dormantHint, false, '');
         if (subBtn) subBtn.style.display = 'none';
         if (nameEl) nameEl.style.display = 'none';
         if (fi) fi.value = '';
@@ -3113,15 +3583,10 @@ function syncExplanationLetterPanel(unit) {
     panel.classList.remove('explanation-letter-panel--dormant');
 
     if (!c && viewUrl) {
-        status.textContent = 'A scanned explanation letter is on file for this lot.';
         deadlineForm.style.display = 'none';
         fileActions.style.display = 'block';
-        setLetterButtons(
-            false,
-            'Letter already on file for this award. Open a new No Progress case to replace it.',
-            true,
-            viewUrl,
-        );
+        const lockedHint = 'Letter on file. Upload and scan are unavailable until a new 30 Day No Progress case is opened.';
+        setLetterButtons(false, lockedHint, false, lockedHint, true, viewUrl);
         if (subBtn) subBtn.style.display = 'none';
         if (nameEl) nameEl.style.display = 'none';
         if (fi) fi.value = '';
@@ -3129,11 +3594,14 @@ function syncExplanationLetterPanel(unit) {
             dqBtn.style.opacity = '0.45';
             dqBtn.style.pointerEvents = 'none';
         }
+        updateExplanationBuildExtensionNote(unit);
         return;
     }
 
     const parts = [];
-    if (c.letter_deadline_at) {
+    if (c.letter_deadline_display) {
+        parts.push(`Deadline: ${c.letter_deadline_display}`);
+    } else if (c.letter_deadline_at) {
         const d = new Date(c.letter_deadline_at);
         if (!Number.isNaN(d.getTime())) {
             parts.push(`Deadline: ${d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}`);
@@ -3141,24 +3609,21 @@ function syncExplanationLetterPanel(unit) {
             parts.push(`Deadline: ${formatDisplayDate(String(c.letter_deadline_at).slice(0, 10))}`);
         }
     } else {
-        parts.push('Deadline not set — register date and time above, then notify the beneficiary.');
+        parts.push('Deadline not set — set date and time below, then save.');
     }
     if (c.has_letter_document) {
-        parts.push('Explanation letter is on file.');
+        parts.push('Letter on file.');
     }
+    status.style.display = 'block';
     status.textContent = parts.join(' ');
 
     deadlineForm.style.display = c.can_set_deadline ? 'flex' : 'none';
 
     fileActions.style.display = 'block';
-    const canPick = Boolean(c.can_upload_letter);
+    const canAct = Boolean(c.can_upload_letter);
     const canView = Boolean(viewUrl);
-    setLetterButtons(
-        canPick,
-        canPick ? '' : 'Set the office letter deadline first, then upload or scan the explanation letter.',
-        canView,
-        viewUrl,
-    );
+    const idleHint = canAct ? '' : 'Set the letter deadline first, then upload or scan.';
+    setLetterButtons(canAct, idleHint, canAct, idleHint, canView, viewUrl);
     if (subBtn) subBtn.style.display = 'none';
     if (nameEl) nameEl.style.display = 'none';
     if (fi) fi.value = '';
@@ -3170,27 +3635,20 @@ function syncExplanationLetterPanel(unit) {
     }
 
     const inp = document.getElementById('explanationDeadlineInput');
-    if (inp && c.letter_deadline_at) {
-        const d = new Date(c.letter_deadline_at);
-        if (!Number.isNaN(d.getTime())) {
-            const pad = (n) => String(n).padStart(2, '0');
-            inp.value = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    if (inp && (c.letter_deadline_local_input || c.letter_deadline_at)) {
+        if (c.letter_deadline_local_input) {
+            inp.value = c.letter_deadline_local_input;
+        } else {
+            const d = new Date(c.letter_deadline_at);
+            if (!Number.isNaN(d.getTime())) {
+                const pad = (n) => String(n).padStart(2, '0');
+                inp.value = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+            }
         }
     } else if (inp) {
         inp.value = '';
     }
-}
-
-function explanationPickScanLetter() {
-    const btn = document.getElementById('explanationPickScanBtn');
-    if (btn && btn.disabled) return;
-    const unit = lastOpenedUnitPayload;
-    const c = unit && unit.explanation_letter_case;
-    if (!c || !c.can_upload_letter) {
-        alert('Set the letter deadline first, then you can upload or scan the explanation letter.');
-        return;
-    }
-    document.getElementById('explanationLetterFile')?.click();
+    updateExplanationBuildExtensionNote(unit);
 }
 
 function explanationLetterFileChosen() {
@@ -3228,7 +3686,6 @@ async function saveExplanationLetterDeadline() {
         alert('Choose a deadline date and time.');
         return;
     }
-    const iso = new Date(inp.value).toISOString();
     const position = '{{ request.user.position }}';
     try {
         const res = await fetch(`/units/housing-units/${position}/${currentUnitId}/explanation-letter/deadline/`, {
@@ -3239,7 +3696,7 @@ async function saveExplanationLetterDeadline() {
                 'X-Requested-With': 'XMLHttpRequest',
             },
             body: JSON.stringify({
-                deadline: iso,
+                deadline_local: inp.value,
                 notify_beneficiary: document.getElementById('explanationNotifySms') ? document.getElementById('explanationNotifySms').checked : true,
             }),
         });
@@ -3253,15 +3710,18 @@ async function saveExplanationLetterDeadline() {
     }
 }
 
-async function uploadExplanationLetterFile() {
+async function uploadExplanationLetterFile(fileOverride) {
     const fi = document.getElementById('explanationLetterFile');
-    if (!fi || !fi.files || !fi.files[0]) {
+    const file = (fileOverride instanceof File)
+        ? fileOverride
+        : (fi && fi.files && fi.files[0]);
+    if (!file) {
         alert('Choose a file to upload.');
         return;
     }
     const position = '{{ request.user.position }}';
     const body = new FormData();
-    body.append('letter_file', fi.files[0]);
+    body.append('letter_file', file);
     body.append('csrfmiddlewaretoken', getCookie('csrftoken') || '');
     try {
         const res = await fetch(`/units/housing-units/${position}/${currentUnitId}/explanation-letter/upload/`, {
@@ -3276,6 +3736,7 @@ async function uploadExplanationLetterFile() {
         if (!res.ok || !data.success) {
             throw new Error(data.error || 'Upload failed.');
         }
+        if (fi) fi.value = '';
         alert(data.message || 'Letter saved.');
         openUnitModal(currentUnitId);
     } catch (e) {
@@ -3372,12 +3833,18 @@ function openUnitModal(unitId) {
                     : '—';
                 document.getElementById('awardActivationDate').textContent = possession && possession.awarded_at ? formatDisplayDate(possession.awarded_at) : '—';
                 document.getElementById('monitoringStartsOn').textContent = possession && possession.monitoring_starts_on ? formatDisplayDate(possession.monitoring_starts_on) : '—';
-                renderMonitoringTaskCards(unit.monitoring_tasks || []);
+                const main = unit.monitoring_tasks || [];
+                const ext30 = unit.explanation_extension_30day_task || null;
+                const merged = ext30 ? [...main, ext30] : [...main];
+                const letterWf = unit.explanation_letter_workflow_applies === true;
+                renderMonitoringTaskCards(main, merged, letterWf);
                 renderMonitoringHistoryRecord(unit.monitoring_history || []);
                 renderComplianceRecordsRecord(unit.compliance_records || []);
                 syncExplanationLetterPanel(unit);
+                renderPriorNoProgressVisitsPanel(letterWf);
+                renderExplanationExtension30DayCard(ext30);
                 document.getElementById('unitModal').style.display = 'flex';
-                if (unit.explanation_letter_case || unit.explanation_letter_view_url) {
+                if (unit.explanation_letter_workflow_applies === true && (unit.explanation_letter_case || unit.explanation_letter_view_url)) {
                     requestAnimationFrame(() => {
                         document.getElementById('explanationLetterPanel')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                     });
@@ -3394,6 +3861,19 @@ function openUnitModal(unitId) {
 function closeUnitModal(e) {
     if (e && e.target.id !== 'unitModal') return;
     document.getElementById('unitModal').style.display = 'none';
+}
+
+function switchUnitTab(btn) {
+    if (!btn) return;
+    const tabs = btn.parentElement.querySelectorAll('.unit-tab');
+    tabs.forEach(function (tab) {
+        const targetId = tab.getAttribute('data-tab-target');
+        const panel = targetId ? document.getElementById(targetId) : null;
+        const active = tab === btn;
+        tab.classList.toggle('is-active', active);
+        tab.setAttribute('aria-selected', active ? 'true' : 'false');
+        if (panel) panel.hidden = !active;
+    });
 }
 
 function sendSMS() {

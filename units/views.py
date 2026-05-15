@@ -9,6 +9,7 @@ from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from django.contrib import messages
 from datetime import timedelta, datetime
+from zoneinfo import ZoneInfo
 from collections import OrderedDict
 from functools import wraps
 import json
@@ -33,6 +34,25 @@ _NOTICE_STATUS_VALUES = frozenset({'Under notice (30-day)', 'Final notice (10-da
 _HOUSEHOLD_RELATIONSHIP_OPTIONS = [
     {'value': key, 'label': label} for key, label in HouseholdMember.RELATIONSHIP_CHOICES
 ]
+
+
+def _explanation_letter_deadline_office_payload(deadline):
+    """
+    Format ``letter_deadline_at`` for THA office wall clock (``settings.TIME_ZONE``).
+
+    Returns (iso_utc_or_offset, display_str, datetime_local_value). Values are None
+    when ``deadline`` is None. ``datetime_local_value`` is suitable for
+    ``<input type="datetime-local">`` and must be parsed on save as office time, not
+    the browser's local zone.
+    """
+    if deadline is None:
+        return None, None, None
+    local = timezone.localtime(deadline)
+    return (
+        deadline.isoformat(),
+        local.strftime('%b %d, %Y %I:%M %p'),
+        local.strftime('%Y-%m-%dT%H:%M'),
+    )
 
 
 def _unit_has_notice_subject(unit, active_award=None):
@@ -291,6 +311,7 @@ def housing_units_monitoring(request, position):
         'construction_in_progress': construction_in_progress,
         'construction_completed': construction_completed,
         'construction_delayed': construction_delayed,
+        'explanation_letter_office_tz': str(settings.TIME_ZONE),
     }
 
     return render(request, 'units/housing_units_monitoring.html', context)
@@ -522,26 +543,79 @@ def get_unit_details(request, position, unit_id):
                 'sex_display': '—',
             }
         monitoring_tasks = []
+        explanation_extension_30day_task = None
+        explanation_build_extension = None
         extension_monitoring_active = False
         pending_explanation_rev = None
+        ext_cycle = None
         if active_lot_award:
-            extension_monitoring_active = OccupancyMonitoringCycle.objects.filter(
-                lot_award=active_lot_award,
-                is_active=True,
-            ).exclude(cycle_stage='original_30_day').exists()
+            ext_cycle = (
+                OccupancyMonitoringCycle.objects.filter(
+                    lot_award=active_lot_award,
+                    is_active=True,
+                )
+                .exclude(cycle_stage='original_30_day')
+                .order_by('-created_at')
+                .first()
+            )
+            extension_monitoring_active = ext_cycle is not None
             pending_explanation_rev = _active_pending_explanation_for_lot_award(active_lot_award)
             if pending_explanation_rev and not _explanation_review_triggered_by_day30_inspection(
                 pending_explanation_rev
             ):
                 pending_explanation_rev = None
             today = timezone.now().date()
+            grace_monitoring_start = (
+                (active_lot_award.awarded_at.date() + timedelta(days=30)).isoformat()
+                if active_lot_award.awarded_at
+                else ''
+            )
+            ext_monitoring_start = (
+                ext_cycle.stage_start_date.isoformat()
+                if ext_cycle and ext_cycle.stage_start_date
+                else ''
+            )
+            ext_row = None
+            if extension_monitoring_active and ext_cycle:
+                ext_row = (
+                    ExtensionRecord.objects.filter(
+                        lot_award=active_lot_award,
+                        explanation_review__isnull=False,
+                    )
+                    .order_by('-extension_start_date')
+                    .first()
+                )
+            letter_extension_cards = ext_row is not None
+            if ext_row:
+                explanation_build_extension = {
+                    'start_date': ext_row.extension_start_date.isoformat(),
+                    'end_date': ext_row.extension_end_date.isoformat(),
+                }
+            task_types = (
+                ['day_15_inspection', 'day_30_inspection', 'month_2_inspection']
+                if letter_extension_cards
+                else ['day_15_inspection', 'day_30_inspection']
+            )
+            extension_midpoint_cleared = True
+            if letter_extension_cards:
+                m1 = (
+                    MonitoringTask.objects.filter(
+                        lot_award=active_lot_award,
+                        task_type='month_1_inspection',
+                    )
+                    .first()
+                )
+                if m1:
+                    r1 = m1.reports.order_by('-submitted_at').first()
+                    extension_midpoint_cleared = bool(
+                        m1.status == 'completed' and r1 and r1.progress_assessment
+                    )
+                else:
+                    extension_midpoint_cleared = False
             for task in (
                 MonitoringTask.objects
-                .filter(
-                    lot_award=active_lot_award,
-                    task_type__in=['day_15_inspection', 'day_30_inspection'],
-                )
-                .order_by('days_from_award', 'scheduled_date')
+                .filter(lot_award=active_lot_award, task_type__in=task_types)
+                .order_by('due_date', 'scheduled_date', 'task_type')
             ):
                 report = (
                     task.reports
@@ -582,34 +656,39 @@ def get_unit_details(request, position, unit_id):
                     and progress.stage == 'completed'
                     and (progress.percent_complete or 0) >= 100
                 )
-                _task_title = (
-                    '15 Day Inspection'
-                    if task.task_type == 'day_15_inspection'
-                    else '30 Day Inspection'
-                    if task.task_type == 'day_30_inspection'
-                    else task.get_task_type_display()
+                if task.task_type in ('day_15_inspection', 'month_1_inspection'):
+                    _task_title = '15 Day Inspection'
+                    _history_row_label = '15 Day'
+                    monitoring_window_line = 'during 15 days of monitoring'
+                elif task.task_type in ('day_30_inspection', 'month_2_inspection'):
+                    _task_title = '30 Day Inspection'
+                    _history_row_label = '30 Day'
+                    monitoring_window_line = 'during 30 days of monitoring'
+                else:
+                    _task_title = task.get_task_type_display()
+                    _history_row_label = task.get_task_type_display().replace(' Inspection', '')
+                    monitoring_window_line = (
+                        f'{task.days_from_award} days after monitoring starts'
+                        if task.days_from_award is not None
+                        else 'scheduled monitoring visit'
+                    )
+                monitoring_starts_on = (
+                    ext_monitoring_start
+                    if (
+                        letter_extension_cards
+                        and ext_monitoring_start
+                        and task.task_type == 'month_2_inspection'
+                    )
+                    else grace_monitoring_start
                 )
-                _history_row_label = (
-                    '15 Day'
-                    if task.task_type == 'day_15_inspection'
-                    else '30 Day'
-                    if task.task_type == 'day_30_inspection'
-                    else task.get_task_type_display().replace(' Inspection', '')
-                )
-                monitoring_tasks.append({
+                task_row = {
                     'id': str(task.id),
                     'task_type': task.task_type,
                     'label': _task_title,
                     'unit_label': f'Block {unit.block_number} Lot {unit.lot_number}',
-                    'monitoring_window_line': (
-                        'during 15 days of monitoring'
-                        if task.task_type == 'day_15_inspection'
-                        else 'during 30 days of monitoring'
-                        if task.task_type == 'day_30_inspection'
-                        else f'{task.days_from_award} days after monitoring starts'
-                    ),
+                    'monitoring_window_line': monitoring_window_line,
                     'award_date': active_lot_award.awarded_at.date().isoformat() if active_lot_award.awarded_at else '',
-                    'monitoring_starts_on': (active_lot_award.awarded_at.date() + timedelta(days=30)).isoformat() if active_lot_award.awarded_at else '',
+                    'monitoring_starts_on': monitoring_starts_on,
                     'scheduled_date': task.scheduled_date.isoformat(),
                     'due_date': task.due_date.isoformat(),
                     'days_from_award': task.days_from_award,
@@ -622,7 +701,15 @@ def get_unit_details(request, position, unit_id):
                     'final_monitoring_program_complete': final_monitoring_program_complete,
                     # Deprecated alias — same boolean; prefer final_monitoring_program_complete.
                     'initial_monitoring_program_complete': final_monitoring_program_complete,
-                })
+                }
+                if letter_extension_cards and task.task_type == 'month_2_inspection':
+                    if settings.EXTENSION_30DAY_SKIP_MIDPOINT_BLOCK:
+                        task_row['extension_30day_blocked'] = False
+                    else:
+                        task_row['extension_30day_blocked'] = not extension_midpoint_cleared
+                    explanation_extension_30day_task = task_row
+                else:
+                    monitoring_tasks.append(task_row)
                 monitoring_history.append({
                     'label': _history_row_label,
                     'date': task.due_date.isoformat(),
@@ -727,10 +814,13 @@ def get_unit_details(request, position, unit_id):
             has_doc = bool(rev.letter_document)
             deadline = rev.letter_deadline_at
             deadline_passed = bool(deadline and now > deadline)
+            _iso, _disp, _local_inp = _explanation_letter_deadline_office_payload(deadline)
             explanation_case = {
                 'review_id': str(rev.id),
                 'trigger_kind': rev.trigger_kind,
-                'letter_deadline_at': deadline.isoformat() if deadline else None,
+                'letter_deadline_at': _iso,
+                'letter_deadline_display': _disp,
+                'letter_deadline_local_input': _local_inp,
                 'has_letter_document': has_doc,
                 'can_set_deadline': deadline is None and not has_doc,
                 'can_upload_letter': bool(deadline) and not has_doc,
@@ -752,8 +842,8 @@ def get_unit_details(request, position, unit_id):
             if explanation_case['letter_deadline_at']:
                 ex_detail = (
                     f"Office deadline {timezone.localtime(deadline).strftime('%b %d, %Y %I:%M %p')}. "
-                    'Final 30 Day No Progress: use the explanation letter panel to upload the letter; '
-                    'after a compliant letter is on file, another 30-day build window is granted—or disqualify if the deadline passed with no letter.'
+                    'After a compliant letter is on file, the beneficiary receives another 30 days to build; '
+                    'if the deadline passes with no letter, staff may disqualify.'
                 )
             else:
                 ex_detail = (
@@ -779,13 +869,10 @@ def get_unit_details(request, position, unit_id):
                     explanation_letter_view_url = request.build_absolute_uri(_r.letter_document.url)
                     break
 
-        explanation_letter_workflow_applies = False
-        if active_lot_award:
-            explanation_letter_workflow_applies = bool(
-                explanation_case
-                or explanation_letter_view_url
-                or _monitoring_tasks_payload_has_day30_no_progress(monitoring_tasks)
-            )
+        explanation_letter_workflow_applies = bool(
+            active_lot_award
+            and (explanation_case or explanation_letter_view_url)
+        )
 
         can_add_household_members = bool(
             applicant_for_household
@@ -822,11 +909,13 @@ def get_unit_details(request, position, unit_id):
                 'possession_info': possession_info,
                 'beneficiary_info': beneficiary_info,
                 'monitoring_tasks': monitoring_tasks,
+                'explanation_extension_30day_task': explanation_extension_30day_task,
                 'monitoring_history': monitoring_history,
                 'compliance_records': compliance_records,
                 'explanation_letter_case': explanation_case,
                 'explanation_letter_view_url': explanation_letter_view_url,
                 'explanation_letter_workflow_applies': explanation_letter_workflow_applies,
+                'explanation_build_extension': explanation_build_extension,
                 'construction_monitoring': {
                     'site_name': unit.site.name if unit.site else '',
                     'status_filter': cm_filter,
@@ -947,12 +1036,31 @@ def set_explanation_letter_deadline(request, position, unit_id):
         payload = json.loads(request.body or '{}')
     except json.JSONDecodeError:
         return JsonResponse({'success': False, 'error': 'Invalid JSON.'}, status=400)
-    raw = payload.get('deadline') or payload.get('deadline_at')
-    deadline = parse_datetime(raw) if raw else None
+    deadline_local = (payload.get('deadline_local') or '').strip()
+    raw_iso = payload.get('deadline') or payload.get('deadline_at')
+    deadline = None
+    if deadline_local:
+        try:
+            parsed_local = datetime.fromisoformat(deadline_local)
+        except ValueError:
+            return JsonResponse({'success': False, 'error': 'Invalid deadline date and time.'}, status=400)
+        if timezone.is_naive(parsed_local):
+            try:
+                office_tz = ZoneInfo(str(settings.TIME_ZONE))
+            except Exception:
+                office_tz = timezone.get_current_timezone()
+            deadline = timezone.make_aware(parsed_local, office_tz)
+        else:
+            deadline = parsed_local
+    elif raw_iso:
+        deadline = parse_datetime(raw_iso)
+        if deadline and timezone.is_naive(deadline):
+            deadline = timezone.make_aware(deadline, timezone.get_current_timezone())
     if not deadline:
-        return JsonResponse({'success': False, 'error': 'Use ISO deadline (e.g. 2026-07-20T17:00:00).'}, status=400)
-    if timezone.is_naive(deadline):
-        deadline = timezone.make_aware(deadline, timezone.get_current_timezone())
+        return JsonResponse({
+            'success': False,
+            'error': 'Choose a deadline date and time (housing office local time).',
+        }, status=400)
     if deadline <= timezone.now():
         return JsonResponse({'success': False, 'error': 'Deadline must be in the future.'}, status=400)
     notify = bool(payload.get('notify_beneficiary', True))
@@ -1007,9 +1115,12 @@ def set_explanation_letter_deadline(request, position, unit_id):
                 module='units',
             )
 
+    _iso, _disp, _local_inp = _explanation_letter_deadline_office_payload(rev.letter_deadline_at)
     return JsonResponse({
         'success': True,
-        'letter_deadline_at': rev.letter_deadline_at.isoformat(),
+        'letter_deadline_at': _iso,
+        'letter_deadline_display': _disp,
+        'letter_deadline_local_input': _local_inp,
     })
 
 
@@ -1109,6 +1220,12 @@ def disqualify_beneficiary_monitoring(request, position, unit_id):
 
     applicant = la.application.applicant
 
+    if Blacklist.objects.filter(applicant_id=applicant.pk).exists():
+        return JsonResponse({
+            'success': False,
+            'error': 'This applicant is already on the Blacklisted Beneficiaries registry.',
+        }, status=400)
+
     with transaction.atomic():
         locked_rev = ExplanationReview.objects.select_for_update().get(pk=rev.pk)
         if locked_rev.letter_document:
@@ -1131,7 +1248,72 @@ def disqualify_beneficiary_monitoring(request, position, unit_id):
             update_fields=['review_status', 'staff_decision_notes', 'reviewed_by', 'reviewed_at', 'updated_at']
         )
 
-    return JsonResponse({'success': True, 'message': 'Beneficiary has been disqualified on file.'})
+        Blacklist.objects.create(
+            applicant=locked_applicant,
+            original_lot_award=la,
+            original_unit=unit,
+            reason='other',
+            reason_details=reason,
+            blacklisted_by=request.user,
+            supporting_notes=(
+                'Module 4 — Final 30 Day No Progress: explanation letter office deadline passed '
+                'with no scanned or uploaded letter on file; beneficiary disqualified from the awarded lot.'
+            ),
+        )
+
+        locked_la = LotAward.objects.select_for_update().get(pk=la.pk)
+        now_ts = timezone.now()
+        locked_la.status = 'repossessed'
+        locked_la.ended_at = now_ts
+        locked_la.end_reason = (
+            'Explanation letter non-compliance after 30 Day No Progress (deadline passed, no letter on file). '
+            f'Staff notes: {reason[:1500]}'
+        )
+        locked_la.save(update_fields=['status', 'ended_at', 'end_reason'])
+
+        OccupancyMonitoringCycle.objects.filter(
+            lot_award_id=locked_la.pk,
+            is_active=True,
+        ).update(is_active=False)
+
+        MonitoringTask.objects.filter(
+            lot_award_id=locked_la.pk,
+            status__in=['pending', 'overdue'],
+        ).update(status='cancelled')
+
+        locked_unit = HousingUnit.objects.select_for_update().get(pk=unit.pk)
+        locked_unit.status = 'Vacant — available'
+        locked_unit.occupant_name = ''
+        locked_unit.occupant_id = None
+        locked_unit.notice_type = None
+        locked_unit.notice_date_issued = None
+        locked_unit.notice_deadline = None
+        locked_unit.is_escalated = False
+        locked_unit.escalation_reason = ''
+        locked_unit.save(
+            update_fields=[
+                'status',
+                'occupant_name',
+                'occupant_id',
+                'notice_type',
+                'notice_date_issued',
+                'notice_deadline',
+                'is_escalated',
+                'escalation_reason',
+                'updated_at',
+            ]
+        )
+
+    if unit.site_id:
+        _sync_site_housing_unit_occupancy(unit.site)
+
+    return JsonResponse({
+        'success': True,
+        'message': (
+            'Beneficiary disqualified, added to Blacklisted Beneficiaries, and removed from this block/lot. '
+            'The lot award was repossessed and the unit is vacant for reassignment.'
+        ),
+    })
 
 
 @login_required
@@ -1691,15 +1873,6 @@ def _explanation_review_triggered_by_day30_inspection(rev):
     return bool(task and task.task_type == 'day_30_inspection')
 
 
-def _monitoring_tasks_payload_has_day30_no_progress(monitoring_tasks):
-    for row in monitoring_tasks or []:
-        if row.get('task_type') != 'day_30_inspection':
-            continue
-        rep = row.get('report') or {}
-        return rep.get('progress_assessment') == 'no_progress'
-    return False
-
-
 def _open_explanation_review_after_no_progress(report, _acting_user):
     """
     When staff marks the **30 Day** monitoring report as No Progress, open (or reuse)
@@ -1740,15 +1913,42 @@ def _grant_monitoring_extension_from_explanation_review(review, approved_by_user
     """
     After staff uploads the explanation letter on file, grant a 30-day extension window
     with Month 1 / Month 2 monitoring tasks (same rhythm as the original award cycle).
+
+    The extension must begin only after initial monitoring has finished: the first day
+    of the build extension is the calendar day after the letter is received, and is
+    never earlier than the day after the original 30 Day inspection due date that
+    triggered this case (so extension dates cannot precede the July-style initial cycle).
     """
     if ExtensionRecord.objects.filter(explanation_review=review).exists():
         return
     now = timezone.now()
-    start = now.date()
-    end = start + timedelta(days=30)
+    today = now.date()
     lot_award = review.lot_award
     unit = review.unit
     caretaker = unit.site.caretaker if unit.site else None
+
+    day30_due = None
+    trig = getattr(review, 'triggered_by_report', None)
+    if trig:
+        t0 = getattr(trig, 'task', None)
+        if t0 and t0.task_type == 'day_30_inspection' and t0.due_date:
+            day30_due = t0.due_date
+    if day30_due is None:
+        d30 = (
+            MonitoringTask.objects.filter(
+                lot_award=lot_award,
+                task_type='day_30_inspection',
+            )
+            .order_by('-due_date')
+            .first()
+        )
+        if d30 and d30.due_date:
+            day30_due = d30.due_date
+
+    earliest_start = day30_due + timedelta(days=1) if day30_due else today + timedelta(days=1)
+    # First build-extension day: day after letter on file, but not before initial 30 Day window has ended.
+    start = max(today + timedelta(days=1), earliest_start)
+    end = start + timedelta(days=30)
 
     with transaction.atomic():
         review.letter_received_at = now

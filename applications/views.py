@@ -3785,13 +3785,17 @@ def _assign_housing_unit_after_lot_award(application, unit, awarded_by_user):
         # Determine caretaker for task assignment
         assigned_caretaker = unit.site.caretaker if unit.site else None
 
-        # Office policy gives beneficiaries 30 days before scheduled inspections begin.
+        # Office policy: 30-day possession grace, then monitoring. First field visit is at
+        # monitoring day 15; the final (30 Day) visit is 30 calendar days after that due date
+        # (not monitoring_start + 30, which was only 15 days after the 15 Day visit).
+        day_15_due = monitoring_start_date + timedelta(days=15)
+        day_30_due = day_15_due + timedelta(days=30)
         MonitoringTask.objects.create(
             unit=unit,
             lot_award=award,
             task_type='day_15_inspection',
-            scheduled_date=monitoring_start_date + timedelta(days=15),
-            due_date=monitoring_start_date + timedelta(days=15),
+            scheduled_date=day_15_due,
+            due_date=day_15_due,
             days_from_award=15,
             status='pending',
             assigned_to=assigned_caretaker,
@@ -3801,9 +3805,9 @@ def _assign_housing_unit_after_lot_award(application, unit, awarded_by_user):
             unit=unit,
             lot_award=award,
             task_type='day_30_inspection',
-            scheduled_date=monitoring_start_date + timedelta(days=30),
-            due_date=monitoring_start_date + timedelta(days=30),
-            days_from_award=30,
+            scheduled_date=day_30_due,
+            due_date=day_30_due,
+            days_from_award=45,
             status='pending',
             assigned_to=assigned_caretaker,
         )
