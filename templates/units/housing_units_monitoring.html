@@ -85,6 +85,23 @@
         border-radius: 0.65rem;
         box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
     }
+    .units-kpi[role="button"] {
+        cursor: pointer;
+        transition: box-shadow 0.15s ease, transform 0.1s ease, border-color 0.15s ease, background 0.15s ease;
+    }
+    .units-kpi[role="button"]:hover {
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.1);
+        transform: translateY(-1px);
+    }
+    .units-kpi[role="button"]:focus-visible {
+        outline: 2px solid #047857;
+        outline-offset: 2px;
+    }
+    .units-kpi.is-active {
+        border-color: #047857;
+        box-shadow: 0 0 0 2px rgba(4, 120, 87, 0.25);
+        background: #f0fdf4;
+    }
     .units-kpi-icon {
         width: 2.1rem;
         height: 2.1rem;
@@ -115,6 +132,7 @@
         line-height: 1.05;
     }
     /* Semantic tile colors — tone only the icon; keep the card body neutral */
+    .units-kpi--all .units-kpi-icon { background: #e0e7ff; color: #4338ca; }
     .units-kpi--occupied .units-kpi-icon { background: #d1fae5; color: #047857; }
     .units-kpi--vacant   .units-kpi-icon { background: #ecfdf5; color: #065f46; }
     .units-kpi--notice30 .units-kpi-icon { background: #fef3c7; color: #92400e; }
@@ -1758,7 +1776,16 @@
 
     <!-- KPI cards — occupancy + notice-of-action enforcement -->
     <div class="units-kpis">
-        <div class="units-kpi units-kpi--occupied">
+        <div class="units-kpi units-kpi--all is-active" role="button" tabindex="0" data-fkind="all" data-fval="" onclick="kpiFilter(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kpiFilter(this);}">
+            <span class="units-kpi-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            </span>
+            <div>
+                <p class="units-kpi-label">Show all</p>
+                <p class="units-kpi-value">{{ total_units }}</p>
+            </div>
+        </div>
+        <div class="units-kpi units-kpi--occupied" role="button" tabindex="0" data-fkind="status" data-fval="Occupied" onclick="kpiFilter(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kpiFilter(this);}">
             <span class="units-kpi-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
             </span>
@@ -1767,7 +1794,7 @@
                 <p class="units-kpi-value">{{ occupied_count }}</p>
             </div>
         </div>
-        <div class="units-kpi units-kpi--vacant">
+        <div class="units-kpi units-kpi--vacant" role="button" tabindex="0" data-fkind="status" data-fval="Vacant — available" onclick="kpiFilter(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kpiFilter(this);}">
             <span class="units-kpi-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
             </span>
@@ -1776,7 +1803,7 @@
                 <p class="units-kpi-value">{{ vacant_count }}</p>
             </div>
         </div>
-        <div class="units-kpi units-kpi--notice30">
+        <div class="units-kpi units-kpi--notice30" role="button" tabindex="0" data-fkind="status" data-fval="Under notice (30-day)" onclick="kpiFilter(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kpiFilter(this);}">
             <span class="units-kpi-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
             </span>
@@ -1785,7 +1812,7 @@
                 <p class="units-kpi-value">{{ notice_30_count }}</p>
             </div>
         </div>
-        <div class="units-kpi units-kpi--notice10">
+        <div class="units-kpi units-kpi--notice10" role="button" tabindex="0" data-fkind="status" data-fval="Final notice (10-day)" onclick="kpiFilter(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kpiFilter(this);}">
             <span class="units-kpi-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             </span>
@@ -1794,7 +1821,7 @@
                 <p class="units-kpi-value">{{ notice_10_count }}</p>
             </div>
         </div>
-        <div class="units-kpi units-kpi--repo">
+        <div class="units-kpi units-kpi--repo" role="button" tabindex="0" data-fkind="status" data-fval="Repossessed" onclick="kpiFilter(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kpiFilter(this);}">
             <span class="units-kpi-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
             </span>
@@ -1803,7 +1830,7 @@
                 <p class="units-kpi-value">{{ repossessed_count }}</p>
             </div>
         </div>
-        <div class="units-kpi units-kpi--cm-not-started">
+        <div class="units-kpi units-kpi--cm-not-started" role="button" tabindex="0" data-fkind="construction" data-fval="not_started" onclick="kpiFilter(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kpiFilter(this);}">
             <span class="units-kpi-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
             </span>
@@ -1812,7 +1839,7 @@
                 <p class="units-kpi-value">{{ construction_not_started|default:0 }}</p>
             </div>
         </div>
-        <div class="units-kpi units-kpi--cm-in-progress">
+        <div class="units-kpi units-kpi--cm-in-progress" role="button" tabindex="0" data-fkind="construction" data-fval="in_progress" onclick="kpiFilter(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kpiFilter(this);}">
             <span class="units-kpi-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 13l4 4L20 7"/></svg>
             </span>
@@ -1821,7 +1848,7 @@
                 <p class="units-kpi-value">{{ construction_in_progress|default:0 }}</p>
             </div>
         </div>
-        <div class="units-kpi units-kpi--cm-completed">
+        <div class="units-kpi units-kpi--cm-completed" role="button" tabindex="0" data-fkind="construction" data-fval="completed" onclick="kpiFilter(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kpiFilter(this);}">
             <span class="units-kpi-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg>
             </span>
@@ -1830,7 +1857,7 @@
                 <p class="units-kpi-value">{{ construction_completed|default:0 }}</p>
             </div>
         </div>
-        <div class="units-kpi units-kpi--cm-delayed">
+        <div class="units-kpi units-kpi--cm-delayed" role="button" tabindex="0" data-fkind="construction" data-fval="delayed" onclick="kpiFilter(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kpiFilter(this);}">
             <span class="units-kpi-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             </span>
@@ -1877,6 +1904,7 @@
                     <button type="button"
                             class="unit-card vmap-lot {% if unit.status == 'Occupied' %}vmap-lot--occupied{% elif unit.status == 'Vacant — available' %}vmap-lot--vacant{% elif unit.status == 'Under notice (30-day)' %}vmap-lot--notice30{% elif unit.status == 'Final notice (10-day)' %}vmap-lot--final{% else %}vmap-lot--repo{% endif %}"
                             data-status="{{ unit.status }}"
+                            data-construction="{{ unit.construction_tokens }}"
                             onclick="openUnitModal('{{ unit.id }}')"
                             title="Block {{ unit.block_number }} · Lot {{ unit.lot_number }} — {{ unit.get_status_display }}{% if unit.current_occupant %} · {{ unit.current_occupant.full_name }}{% elif unit.occupant_name %} · {{ unit.occupant_name }}{% endif %}">
                         <span class="vmap-lot-id">{{ unit.block_number }}-{{ unit.lot_number }}</span>
@@ -2472,38 +2500,41 @@ function switchView(view) {
     }
 }
 
-function filterUnits(filter) {
-    const tabs = document.querySelectorAll('.filter-tab');
-    tabs.forEach(t => {
-        if (t.dataset.filter === filter) {
-            t.style.background = 'var(--primary-600)';
-            t.style.color = 'white';
-        } else {
-            t.style.background = 'white';
-            t.style.color = 'var(--gray-700)';
+function kpiFilter(card) {
+    if (!card) return;
+    const kind = card.dataset.fkind;
+    const val = card.dataset.fval;
+    const cards = document.querySelectorAll('.units-kpi[role="button"]');
+    const reset = card.classList.contains('is-active') && kind !== 'all';  // click active card again -> clear
+    cards.forEach(c => c.classList.remove('is-active'));
+    if (!reset) card.classList.add('is-active');
+    const showAll = reset || kind === 'all';
+
+    document.querySelectorAll('.vmap-lot').forEach(lot => {
+        let show = true;
+        if (!showAll) {
+            if (kind === 'status') {
+                show = (lot.dataset.status || '') === val;
+            } else {
+                show = (' ' + (lot.dataset.construction || '') + ' ').indexOf(' ' + val + ' ') !== -1;
+            }
         }
+        lot.style.display = show ? '' : 'none';
     });
 
-    const matchStatus = (status) => {
-        if (filter === 'all') return true;
-        return status === filter;
-    };
-
-    document.querySelectorAll('.unit-card').forEach(card => {
-        const st = card.getAttribute('data-status') || '';
-        card.style.display = matchStatus(st) ? '' : 'none';
+    document.querySelectorAll('.vmap-block').forEach(block => {
+        const any = Array.from(block.querySelectorAll('.vmap-lot')).some(
+            l => l.style.display !== 'none'
+        );
+        block.style.display = any ? '' : 'none';
     });
 
     document.querySelectorAll('.unit-table-row').forEach(row => {
-        const st = row.getAttribute('data-status') || '';
-        row.style.display = matchStatus(st) ? '' : 'none';
-    });
-
-    document.querySelectorAll('.unit-block-section').forEach(section => {
-        const anyVisible = Array.from(section.querySelectorAll('.unit-card')).some(
-            c => c.style.display !== 'none'
-        );
-        section.style.display = anyVisible ? '' : 'none';
+        let show = true;
+        if (!showAll && kind === 'status') {
+            show = (row.dataset.status || '') === val;
+        }
+        row.style.display = show ? '' : 'none';
     });
 }
 

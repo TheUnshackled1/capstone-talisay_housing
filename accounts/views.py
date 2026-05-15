@@ -1341,6 +1341,18 @@ def dashboard_field(request):
             'recorded_by': cert.result_recorded_by.get_full_name() if cert.result_recorded_by else '—',
         })
 
+    not_certified_applicants = []
+    for cert in CDRRMOCertification.objects.filter(
+        status='not_certified'
+    ).select_related('applicant', 'result_recorded_by').order_by('-certified_at')[:100]:
+        not_certified_applicants.append({
+            'full_name': cert.applicant.full_name,
+            'address': cert.applicant.current_address,
+            'danger_zone_type': cert.applicant.danger_zone_type,
+            'certified_at': cert.certified_at,
+            'recorded_by': cert.result_recorded_by.get_full_name() if cert.result_recorded_by else '—',
+        })
+
     # Today's summary: certifications recorded today + photos uploaded today
     today_certs_qs = CDRRMOCertification.objects.filter(
         status__in=['certified', 'not_certified'],
@@ -1415,6 +1427,7 @@ def dashboard_field(request):
         # ========== VERIFICATION SUMMARY ==========
         'verified_percentage': verified_percentage,
         'certified_applicants': certified_applicants,
+        'not_certified_applicants': not_certified_applicants,
         'today_summary': today_summary,
         'today_summary_counts': today_summary_counts,
     }

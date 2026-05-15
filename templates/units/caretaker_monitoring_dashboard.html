@@ -160,6 +160,7 @@
         font-weight: 800;
         color: #1f2937;
         margin-top: 0.2rem;
+    }
 
     .kpi-modal-card {
         max-width: 420px;
@@ -265,6 +266,146 @@
         font-size: 0.9rem;
         color: #64748b;
     }
+
+    /* Tabular KPI modals (match field desk certification list modals) */
+    .modal-content.kpi-modal-card--tabular {
+        max-width: 720px;
+        width: min(720px, calc(100vw - 2rem));
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        max-height: min(86vh, 680px);
+        overflow: hidden;
+    }
+
+    .modal-content.kpi-modal-card--tabular .modal-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 16px 20px;
+        border-bottom: 1px solid #e2e8f0;
+        margin-bottom: 0;
+    }
+
+    .modal-content.kpi-modal-card--tabular .modal-title {
+        margin: 0 0 2px 0;
+        font-family: 'Source Serif Pro', Georgia, serif;
+        font-size: 18px;
+        font-weight: 700;
+        color: #0f172a;
+    }
+
+    .kpi-modal-subtitle {
+        margin: 0;
+        font-size: 12.5px;
+        color: #475569;
+        line-height: 1.45;
+    }
+
+    .modal-content.kpi-modal-card--tabular .kpi-modal-body {
+        text-align: left;
+        padding: 0;
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .modal-content.kpi-modal-card--tabular .kpi-modal-summary-strip {
+        padding: 10px 20px 8px;
+        border-bottom: 1px solid #f1f5f9;
+        background: #fafafa;
+        font-size: 13px;
+        color: #334155;
+    }
+
+    .modal-content.kpi-modal-card--tabular .kpi-modal-summary-strip strong {
+        color: #0f172a;
+        font-weight: 800;
+    }
+
+    .kpi-modal-table-scroll {
+        overflow: auto;
+        flex: 1;
+        min-height: 0;
+    }
+
+    .monitoring-kpi-detail-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+    }
+
+    .monitoring-kpi-detail-table thead {
+        background: #f8fafc;
+        position: sticky;
+        top: 0;
+        z-index: 1;
+    }
+
+    .monitoring-kpi-detail-table thead th {
+        padding: 10px 14px;
+        border-bottom: 1px solid #e2e8f0;
+        text-align: left;
+        color: #475569;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+    }
+
+    .monitoring-kpi-detail-table tbody td {
+        padding: 10px 14px;
+        border-bottom: 1px solid #f1f5f9;
+        color: #1e293b;
+        vertical-align: top;
+    }
+
+    .monitoring-kpi-detail-table tbody tr:hover td {
+        background: #eff6ff;
+    }
+
+    .monitoring-kpi-detail-table .kpi-applicant-name {
+        font-weight: 600;
+        color: #0f172a;
+    }
+
+    .monitoring-kpi-detail-table .kpi-applicant-addr {
+        margin-top: 2px;
+        font-size: 11.5px;
+        color: #64748b;
+    }
+
+    .monitoring-kpi-detail-table .kpi-cell-muted {
+        font-size: 11px;
+        color: #64748b;
+    }
+
+    .kpi-modal-footer {
+        padding: 12px 20px;
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        flex-shrink: 0;
+        background: #fff;
+    }
+
+    .kpi-modal-footer .btn-kpi-modal-close {
+        background: #1e40af;
+        color: #ffffff;
+        border: 1px solid #1e40af;
+        border-radius: 8px;
+        padding: 8px 18px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .kpi-modal-footer .btn-kpi-modal-close:hover {
+        background: #1d4ed8;
+        border-color: #1d4ed8;
     }
 
     /* Filter Bar */
@@ -1381,7 +1522,7 @@
 
 <!-- KPI Cards -->
 <div class="monitoring-kpis">
-    <button type="button" class="monitoring-kpi monitoring-kpi-pending" data-kpi-modal="kpiScheduledModal" aria-controls="kpiScheduledModal" aria-haspopup="dialog">
+    <button type="button" class="monitoring-kpi monitoring-kpi-pending" data-kpi-modal="kpiScheduledModal" data-kpi-scroll-tasks="1" aria-controls="kpiScheduledModal" aria-haspopup="dialog">
         <div class="monitoring-kpi-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0M9 12l2 2l4 -4"/>
@@ -1393,7 +1534,7 @@
         </div>
     </button>
 
-    <button type="button" class="monitoring-kpi monitoring-kpi-overdue" data-kpi-modal="kpiOverdueModal" aria-controls="kpiOverdueModal" aria-haspopup="dialog">
+    <button type="button" class="monitoring-kpi monitoring-kpi-overdue" data-kpi-modal="kpiOverdueModal" data-kpi-scroll-tasks="1" aria-controls="kpiOverdueModal" aria-haspopup="dialog">
         <div class="monitoring-kpi-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
@@ -1433,120 +1574,206 @@
 </div>
 
 <div class="modal-overlay kpi-modal" id="kpiScheduledModal" role="dialog" aria-modal="true" aria-labelledby="kpiScheduledTitle">
-    <div class="modal-content kpi-modal-card">
+    <div class="modal-content kpi-modal-card kpi-modal-card--tabular">
         <div class="modal-header">
-            <h2 class="modal-title" id="kpiScheduledTitle">Scheduled tasks</h2>
+            <div style="min-width: 0;">
+                <h2 class="modal-title" id="kpiScheduledTitle">Scheduled tasks</h2>
+                <p class="kpi-modal-subtitle">Inspections waiting for field reporting. Use the main table below to open a task or submit a report.</p>
+            </div>
             <button type="button" class="modal-close" onclick="closeKpiModal('kpiScheduledModal')" aria-label="Close">×</button>
         </div>
         <div class="kpi-modal-body">
-            <div class="kpi-modal-count">{{ pending_count }}</div>
-            <div class="kpi-modal-label">Scheduled</div>
-            <p class="kpi-modal-note">Inspections waiting for field reporting. Use the table below to open a task or submit a report.</p>
-            {% if scheduled_tasks %}
-            <ul class="kpi-modal-list">
-                {% for task in scheduled_tasks %}
-                <li class="kpi-modal-item">
-                    <div class="kpi-modal-name">{{ task.lot_award.application.applicant.full_name }}</div>
-                    <div class="kpi-modal-datetime">Notified {{ task.notified_at|date:"M j, Y g:i A" }}</div>
-                </li>
-                {% endfor %}
-            </ul>
-            {% else %}
-            <p class="kpi-modal-empty">No scheduled tasks right now.</p>
-            {% endif %}
+            <div class="kpi-modal-summary-strip"><strong>{{ pending_count }}</strong> scheduled</div>
+            <div class="kpi-modal-table-scroll">
+                {% if scheduled_tasks %}
+                <table class="monitoring-kpi-detail-table">
+                    <thead>
+                        <tr>
+                            <th>Applicant</th>
+                            <th>Task type</th>
+                            <th>Due date</th>
+                            <th>Notified</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for task in scheduled_tasks %}
+                        <tr>
+                            <td>
+                                <div class="kpi-applicant-name">{{ task.lot_award.application.applicant.full_name }}</div>
+                                <div class="kpi-applicant-addr">📍 {{ task.lot_award.application.applicant.current_address|default:"—" }}</div>
+                            </td>
+                            <td>{% if task.task_type == 'day_15_inspection' %}15 Day Inspection{% elif task.task_type == 'day_30_inspection' %}30 Day Inspection{% else %}{{ task.get_task_type_display }}{% endif %}</td>
+                            <td>{{ task.due_date|date:"M d, Y" }}</td>
+                            <td>{% if task.notified_at %}{{ task.notified_at|date:"M d, Y" }}<div class="kpi-cell-muted">{{ task.notified_at|time:"H:i" }}</div>{% else %}—{% endif %}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p style="margin: 0; padding: 36px 20px; text-align: center; color: #64748b; font-size: 13.5px;">No scheduled tasks right now.</p>
+                {% endif %}
+            </div>
+        </div>
+        <div class="kpi-modal-footer">
+            <button type="button" class="btn-kpi-modal-close" onclick="closeKpiModal('kpiScheduledModal')">Close</button>
         </div>
     </div>
 </div>
 
 <div class="modal-overlay kpi-modal" id="kpiOverdueModal" role="dialog" aria-modal="true" aria-labelledby="kpiOverdueTitle">
-    <div class="modal-content kpi-modal-card kpi-overdue">
+    <div class="modal-content kpi-modal-card kpi-overdue kpi-modal-card--tabular">
         <div class="modal-header">
-            <h2 class="modal-title" id="kpiOverdueTitle">Overdue tasks</h2>
+            <div style="min-width: 0;">
+                <h2 class="modal-title" id="kpiOverdueTitle">Overdue tasks</h2>
+                <p class="kpi-modal-subtitle">These inspections are past the due date and need priority field visits.</p>
+            </div>
             <button type="button" class="modal-close" onclick="closeKpiModal('kpiOverdueModal')" aria-label="Close">×</button>
         </div>
         <div class="kpi-modal-body">
-            <div class="kpi-modal-count">{{ overdue_count }}</div>
-            <div class="kpi-modal-label">Overdue</div>
-            <p class="kpi-modal-note">These inspections are past the due date and need priority field visits.</p>
-            {% if overdue_tasks %}
-            <ul class="kpi-modal-list">
-                {% for task in overdue_tasks %}
-                <li class="kpi-modal-item">
-                    <div class="kpi-modal-name">{{ task.lot_award.application.applicant.full_name }}</div>
-                    <div class="kpi-modal-datetime">Notified {{ task.notified_at|date:"M j, Y g:i A" }}</div>
-                </li>
-                {% endfor %}
-            </ul>
-            {% else %}
-            <p class="kpi-modal-empty">No overdue tasks right now.</p>
-            {% endif %}
+            <div class="kpi-modal-summary-strip"><strong>{{ overdue_count }}</strong> overdue</div>
+            <div class="kpi-modal-table-scroll">
+                {% if overdue_tasks %}
+                <table class="monitoring-kpi-detail-table">
+                    <thead>
+                        <tr>
+                            <th>Applicant</th>
+                            <th>Task type</th>
+                            <th>Due date</th>
+                            <th>Notified</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for task in overdue_tasks %}
+                        <tr>
+                            <td>
+                                <div class="kpi-applicant-name">{{ task.lot_award.application.applicant.full_name }}</div>
+                                <div class="kpi-applicant-addr">📍 {{ task.lot_award.application.applicant.current_address|default:"—" }}</div>
+                            </td>
+                            <td>{% if task.task_type == 'day_15_inspection' %}15 Day Inspection{% elif task.task_type == 'day_30_inspection' %}30 Day Inspection{% else %}{{ task.get_task_type_display }}{% endif %}</td>
+                            <td>{{ task.due_date|date:"M d, Y" }}</td>
+                            <td>{% if task.notified_at %}{{ task.notified_at|date:"M d, Y" }}<div class="kpi-cell-muted">{{ task.notified_at|time:"H:i" }}</div>{% else %}—{% endif %}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p style="margin: 0; padding: 36px 20px; text-align: center; color: #64748b; font-size: 13.5px;">No overdue tasks right now.</p>
+                {% endif %}
+            </div>
+        </div>
+        <div class="kpi-modal-footer">
+            <button type="button" class="btn-kpi-modal-close" onclick="closeKpiModal('kpiOverdueModal')">Close</button>
         </div>
     </div>
 </div>
 
 <div class="modal-overlay kpi-modal" id="kpiCompletedModal" role="dialog" aria-modal="true" aria-labelledby="kpiCompletedTitle">
-    <div class="modal-content kpi-modal-card kpi-completed">
+    <div class="modal-content kpi-modal-card kpi-completed kpi-modal-card--tabular">
         <div class="modal-header">
-            <h2 class="modal-title" id="kpiCompletedTitle">Completed reports</h2>
+            <div style="min-width: 0;">
+                <h2 class="modal-title" id="kpiCompletedTitle">Completed reports</h2>
+                <p class="kpi-modal-subtitle">Record of occupancy monitoring reports already submitted by the caretaker team.</p>
+            </div>
             <button type="button" class="modal-close" onclick="closeKpiModal('kpiCompletedModal')" aria-label="Close">×</button>
         </div>
         <div class="kpi-modal-body">
-            <div class="kpi-modal-count">{{ completed_count }}</div>
-            <div class="kpi-modal-label">Completed</div>
-            <p class="kpi-modal-note">Reports already submitted by the caretaker team.</p>
-            {% if completed_tasks %}
-            <ul class="kpi-modal-list">
-                {% for task in completed_tasks %}
-                <li class="kpi-modal-item">
-                    <div class="kpi-modal-name">{{ task.lot_award.application.applicant.full_name }}</div>
-                    <div class="kpi-modal-datetime">
-                        {% if task.completed_at %}
-                            Completed {{ task.completed_at|date:"M j, Y g:i A" }}
-                        {% else %}
-                            Notified {{ task.notified_at|date:"M j, Y g:i A" }}
-                        {% endif %}
-                    </div>
-                </li>
-                {% endfor %}
-            </ul>
-            {% else %}
-            <p class="kpi-modal-empty">No completed reports yet.</p>
-            {% endif %}
+            <div class="kpi-modal-summary-strip"><strong>{{ completed_count }}</strong> completed</div>
+            <div class="kpi-modal-table-scroll">
+                {% if completed_tasks %}
+                <table class="monitoring-kpi-detail-table">
+                    <thead>
+                        <tr>
+                            <th>Applicant</th>
+                            <th>Task type</th>
+                            <th>Completed on</th>
+                            <th>Recorded by</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for task in completed_tasks %}
+                        <tr>
+                            <td>
+                                <div class="kpi-applicant-name">{{ task.lot_award.application.applicant.full_name }}</div>
+                                <div class="kpi-applicant-addr">📍 {{ task.lot_award.application.applicant.current_address|default:"—" }}</div>
+                            </td>
+                            <td>{% if task.task_type == 'day_15_inspection' %}15 Day Inspection{% elif task.task_type == 'day_30_inspection' %}30 Day Inspection{% else %}{{ task.get_task_type_display }}{% endif %}</td>
+                            <td>
+                                {% if task.completed_at %}
+                                    {{ task.completed_at|date:"M d, Y" }}<div class="kpi-cell-muted">{{ task.completed_at|time:"H:i" }}</div>
+                                {% elif task.reports.first %}
+                                    {{ task.reports.first.submitted_at|date:"M d, Y" }}<div class="kpi-cell-muted">{{ task.reports.first.submitted_at|time:"H:i" }}</div>
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+                            <td>{% if task.reports.first and task.reports.first.submitted_by %}{{ task.reports.first.submitted_by.get_full_name|default:task.reports.first.submitted_by.username }}{% else %}—{% endif %}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p style="margin: 0; padding: 36px 20px; text-align: center; color: #64748b; font-size: 13.5px;">No completed reports yet.</p>
+                {% endif %}
+            </div>
+        </div>
+        <div class="kpi-modal-footer">
+            <button type="button" class="btn-kpi-modal-close" onclick="closeKpiModal('kpiCompletedModal')">Close</button>
         </div>
     </div>
 </div>
 
 <div class="modal-overlay kpi-modal" id="kpiActiveUnitsModal" role="dialog" aria-modal="true" aria-labelledby="kpiActiveUnitsTitle">
-    <div class="modal-content kpi-modal-card kpi-active">
+    <div class="modal-content kpi-modal-card kpi-active kpi-modal-card--tabular">
         <div class="modal-header">
-            <h2 class="modal-title" id="kpiActiveUnitsTitle">Active units</h2>
+            <div style="min-width: 0;">
+                <h2 class="modal-title" id="kpiActiveUnitsTitle">Active units</h2>
+                <p class="kpi-modal-subtitle">Units currently under monitoring coverage (one row per unit, next due visit).</p>
+            </div>
             <button type="button" class="modal-close" onclick="closeKpiModal('kpiActiveUnitsModal')" aria-label="Close">×</button>
         </div>
         <div class="kpi-modal-body">
-            <div class="kpi-modal-count">{{ active_units }}</div>
-            <div class="kpi-modal-label">Active</div>
-            <p class="kpi-modal-note">Units currently under monitoring coverage.</p>
-            {% regroup active_unit_tasks by unit_id as active_unit_groups %}
-            {% if active_unit_groups %}
-            <ul class="kpi-modal-list">
-                {% for group in active_unit_groups %}
-                    {% with task=group.list.0 %}
-                    <li class="kpi-modal-item">
-                        <div class="kpi-modal-name">{{ task.lot_award.application.applicant.full_name }}</div>
-                        <div class="kpi-modal-datetime">Notified {{ task.notified_at|date:"M j, Y g:i A" }}</div>
-                    </li>
-                    {% endwith %}
-                {% endfor %}
-            </ul>
-            {% else %}
-            <p class="kpi-modal-empty">No active units yet.</p>
-            {% endif %}
+            <div class="kpi-modal-summary-strip"><strong>{{ active_units }}</strong> active</div>
+            <div class="kpi-modal-table-scroll">
+                {% regroup active_unit_tasks by unit_id as active_unit_groups %}
+                {% if active_unit_groups %}
+                <table class="monitoring-kpi-detail-table">
+                    <thead>
+                        <tr>
+                            <th>Applicant</th>
+                            <th>Task type</th>
+                            <th>Due date</th>
+                            <th>Notified</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for group in active_unit_groups %}
+                        {% with task=group.list.0 %}
+                        <tr>
+                            <td>
+                                <div class="kpi-applicant-name">{{ task.lot_award.application.applicant.full_name }}</div>
+                                <div class="kpi-applicant-addr">📍 {{ task.lot_award.application.applicant.current_address|default:"—" }}</div>
+                            </td>
+                            <td>{% if task.task_type == 'day_15_inspection' %}15 Day Inspection{% elif task.task_type == 'day_30_inspection' %}30 Day Inspection{% else %}{{ task.get_task_type_display }}{% endif %}</td>
+                            <td>{{ task.due_date|date:"M d, Y" }}</td>
+                            <td>{% if task.notified_at %}{{ task.notified_at|date:"M d, Y" }}<div class="kpi-cell-muted">{{ task.notified_at|time:"H:i" }}</div>{% else %}—{% endif %}</td>
+                        </tr>
+                        {% endwith %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p style="margin: 0; padding: 36px 20px; text-align: center; color: #64748b; font-size: 13.5px;">No active units yet.</p>
+                {% endif %}
+            </div>
+        </div>
+        <div class="kpi-modal-footer">
+            <button type="button" class="btn-kpi-modal-close" onclick="closeKpiModal('kpiActiveUnitsModal')">Close</button>
         </div>
     </div>
 </div>
 
 <!-- Tasks Table -->
-<div class="monitoring-work-area">
+<div id="monitoring-tasks-work-area" class="monitoring-work-area">
     <div class="monitoring-work-stripe"></div>
     <div class="monitoring-work-header">
         <span class="monitoring-work-badge">▸ CARETAKER MONITORING DESK</span>
@@ -1840,12 +2067,21 @@ function openKpiModal(modalId) {
     const modal = document.getElementById(modalId);
     if (!modal) return;
     modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
 }
 
 function closeKpiModal(modalId) {
     const modal = document.getElementById(modalId);
     if (!modal) return;
     modal.classList.remove('active');
+    if (!document.querySelector('.modal-overlay.active')) {
+        document.body.style.overflow = '';
+    }
+}
+
+function scrollToMonitoringTasksTable() {
+    const el = document.getElementById('monitoring-tasks-work-area');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function filterTasks() {
@@ -1881,18 +2117,23 @@ function openReportModal(taskId, allowEarly, scheduledDate, taskLabel, unitLocat
         document.getElementById('earlyInspectionMessage').textContent =
             `Scheduled inspection date: ${scheduledDate}. Continue only for testing or demonstration.`;
         document.getElementById('earlyInspectionModal').classList.add('active');
+        document.body.style.overflow = 'hidden';
         return;
     }
     document.getElementById('taskId').value = taskId;
     document.getElementById('allowEarlyInspection').value = allowEarly ? '1' : '0';
     setReportReference(taskLabel, unitLocation, dueDate, monitoringDayLine);
     document.getElementById('reportModal').classList.add('active');
+    document.body.style.overflow = 'hidden';
 }
 
 function closeEarlyInspectionModal() {
     pendingEarlyTaskId = null;
     pendingEarlyTaskDetails = null;
     document.getElementById('earlyInspectionModal').classList.remove('active');
+    if (!document.querySelector('.modal-overlay.active')) {
+        document.body.style.overflow = '';
+    }
 }
 
 function continueEarlyInspection() {
@@ -1911,6 +2152,7 @@ function continueEarlyInspection() {
         );
     }
     document.getElementById('reportModal').classList.add('active');
+    document.body.style.overflow = 'hidden';
 }
 
 function closeReportModal() {
@@ -1922,6 +2164,9 @@ function closeReportModal() {
     if (input) {
         input.value = '';
         updatePhotoEvidenceName(input);
+    }
+    if (!document.querySelector('.modal-overlay.active')) {
+        document.body.style.overflow = '';
     }
 }
 
@@ -2102,40 +2347,53 @@ function submitReport(event) {
     });
 }
 
-// Close modal when clicking outside
-document.getElementById('reportModal').addEventListener('click', function(event) {
-    if (event.target === this) {
-        closeReportModal();
+document.addEventListener('DOMContentLoaded', function () {
+    const reportModalEl = document.getElementById('reportModal');
+    if (reportModalEl) {
+        reportModalEl.addEventListener('click', function (event) {
+            if (event.target === this) closeReportModal();
+        });
     }
-});
-
-document.getElementById('earlyInspectionModal').addEventListener('click', function(event) {
-    if (event.target === this) {
-        closeEarlyInspectionModal();
+    const earlyModalEl = document.getElementById('earlyInspectionModal');
+    if (earlyModalEl) {
+        earlyModalEl.addEventListener('click', function (event) {
+            if (event.target === this) closeEarlyInspectionModal();
+        });
     }
-});
 
-document.querySelectorAll('[data-kpi-modal]').forEach((card) => {
-    card.addEventListener('click', () => {
-        openKpiModal(card.dataset.kpiModal);
+    document.querySelectorAll('[data-kpi-modal]').forEach(function (card) {
+        card.addEventListener('click', function () {
+            const modalId = card.getAttribute('data-kpi-modal');
+            if (modalId) openKpiModal(modalId);
+            if (card.getAttribute('data-kpi-scroll-tasks') === '1') {
+                requestAnimationFrame(function () {
+                    scrollToMonitoringTasksTable();
+                });
+            }
+        });
     });
-});
 
-document.querySelectorAll('.kpi-modal').forEach((modal) => {
-    modal.addEventListener('click', function(event) {
-        if (event.target === this) {
-            closeKpiModal(this.id);
+    document.querySelectorAll('.kpi-modal').forEach(function (modal) {
+        modal.addEventListener('click', function (event) {
+            if (event.target === this) closeKpiModal(this.id);
+        });
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key !== 'Escape') return;
+        document.querySelectorAll('.kpi-modal.modal-overlay.active').forEach(function (m) {
+            closeKpiModal(m.id);
+        });
+    });
+
+    if (selectedTaskId) {
+        const selectedRow = document.querySelector('[data-task-id="' + selectedTaskId + '"]');
+        if (selectedRow) {
+            selectedRow.classList.add('task-selected');
+            selectedRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
-    });
-});
-
-if (selectedTaskId) {
-    const selectedRow = document.querySelector(`[data-task-id="${selectedTaskId}"]`);
-    if (selectedRow) {
-        selectedRow.classList.add('task-selected');
-        selectedRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
-}
+});
 
 (function setupMonitoringTaskSyncReload() {
     function reloadFromOtherTab() {

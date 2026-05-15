@@ -5,6 +5,7 @@ from django.http import JsonResponse, HttpResponseForbidden
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods, require_POST
 from django.db import transaction, models, IntegrityError
+from django.db.models import Prefetch
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from django.contrib import messages
@@ -233,11 +234,13 @@ def housing_units_monitoring(request, position):
             f"Deadline: {escalated_units.notice_deadline}. No response received — case escalated."
         )
 
+    # Materialize once so per-unit annotations survive into the template
+    units_list = list(units)
+
     # Group units by block (OrderedDict so template can use .items() like a dict)
-    blocks = units.values_list('block_number', flat=True).distinct().order_by('block_number')
     units_by_block = OrderedDict()
-    for block in blocks:
-        units_by_block[block] = units.filter(block_number=block)
+    for u in units_list:
+        units_by_block.setdefault(u.block_number, []).append(u)
 
     from applications.views import get_module2_permissions
 
@@ -256,10 +259,10 @@ def housing_units_monitoring(request, position):
     construction_delayed = 0
     progress_by_unit_id = {}
 
-    if not no_relocation_sites and units.exists():
+    if not no_relocation_sites and units_list:
         progress_qs = (
             ConstructionProgress.objects.filter(
-                lot_award__unit__in=units,
+                lot_award__unit__in=units_list,
                 lot_award__status='active',
             )
             .select_related('lot_award__unit')
@@ -269,19 +272,26 @@ def housing_units_monitoring(request, position):
             if uid and uid not in progress_by_unit_id:
                 progress_by_unit_id[uid] = p
 
-        for u in units:
+        for u in units_list:
             p = progress_by_unit_id.get(u.id)
             setattr(u, '_construction_progress', p)
             if not p:
+                setattr(u, 'construction_tokens', '')
                 continue
+            tokens = []
             if p.is_delayed:
                 construction_delayed += 1
+                tokens.append('delayed')
             if p.stage == 'not_started' or p.percent_complete <= 0:
                 construction_not_started += 1
+                tokens.append('not_started')
             elif p.stage == 'completed' or p.percent_complete >= 100:
                 construction_completed += 1
+                tokens.append('completed')
             else:
                 construction_in_progress += 1
+                tokens.append('in_progress')
+            setattr(u, 'construction_tokens', ' '.join(tokens))
 
     # Prepare context
     context = {
@@ -2163,7 +2173,8 @@ def caretaker_monitoring_dashboard(request):
         'unit',
         'lot_award',
         'lot_award__application__applicant',
-        'unit__site'
+        'unit__site',
+        'assigned_to',
     ).order_by('due_date')
 
     # Calculate KPIs
@@ -2186,7 +2197,15 @@ def caretaker_monitoring_dashboard(request):
         'unit',
         'lot_award',
         'lot_award__application__applicant',
-        'unit__site'
+        'unit__site',
+        'assigned_to',
+    ).prefetch_related(
+        Prefetch(
+            'reports',
+            queryset=MonitoringReport.objects.select_related('submitted_by').order_by(
+                '-submitted_at'
+            ),
+        )
     ).order_by('-completed_at', '-due_date')
     active_unit_tasks = tasks.order_by('unit_id', 'due_date')
 
