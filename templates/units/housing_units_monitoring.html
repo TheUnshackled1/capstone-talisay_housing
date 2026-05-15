@@ -720,16 +720,42 @@
     }
     .inspection-decision-actions {
         display: none;
-        gap: 0.5rem;
+        gap: 0.75rem;
         flex-wrap: wrap;
+        justify-content: center;
+        width: 100%;
     }
     .inspection-decision-actions.active {
         display: flex;
+    }
+    .inspection-info-actions.inspection-info-actions--review {
+        justify-content: center;
+    }
+    .inspection-info-card--centered #inspectionInfoBanner {
+        text-align: center;
     }
     .inspection-info-btn.warning {
         border-color: #f59e0b;
         background: #fffbeb;
         color: #92400e;
+    }
+    .inspection-info-btn.inspection-info-btn--no-progress {
+        border-color: #b91c1c;
+        background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%);
+        color: #ffffff;
+        box-shadow: 0 2px 8px rgba(220, 38, 38, 0.25);
+    }
+    .inspection-info-btn.inspection-info-btn--no-progress:hover {
+        background: linear-gradient(180deg, #dc2626 0%, #b91c1c 100%);
+    }
+    .inspection-info-btn.primary.inspection-info-btn--normal-progress {
+        border-color: #047857;
+        background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+        color: #ffffff;
+        box-shadow: 0 2px 8px rgba(5, 150, 105, 0.25);
+    }
+    .inspection-info-btn.primary.inspection-info-btn--normal-progress:hover {
+        background: linear-gradient(180deg, #059669 0%, #047857 100%);
     }
     .inspection-info-actions {
         display: flex;
@@ -932,6 +958,114 @@
     .inspection-summary-item.decision.decision--no_progress .inspection-summary-value {
         color: #991b1b;
     }
+    .inspection-report-mirror {
+        grid-column: 1 / -1;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1.25rem;
+        align-items: start;
+    }
+    .inspection-report-mirror-heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin: 0 0 0.65rem;
+        color: #0f172a;
+        font-size: 0.9rem;
+        font-weight: 800;
+    }
+    .inspection-report-mirror-required {
+        color: #047857;
+        background: #ecfdf5;
+        border: 1px solid #a7f3d0;
+        border-radius: 999px;
+        padding: 0.15rem 0.45rem;
+        font-size: 0.68rem;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        flex-shrink: 0;
+    }
+    .inspection-report-mirror .monitoring-decision-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.85rem;
+        margin: 0;
+    }
+    .inspection-report-mirror .monitoring-decision-label {
+        padding: 1.1rem 1rem;
+        border: 1.5px solid #e2e8f0;
+        background: #ffffff;
+        border-radius: 10px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+        overflow: hidden;
+        cursor: default;
+        pointer-events: none;
+    }
+    .inspection-report-mirror .monitoring-decision-label::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: transparent;
+    }
+    .inspection-report-mirror .monitoring-decision-title {
+        font-family: 'Source Serif Pro', Georgia, serif;
+        font-size: 1rem;
+        font-weight: 700;
+        margin: 0 0 0.35rem;
+        letter-spacing: -0.005em;
+    }
+    .inspection-report-mirror .monitoring-decision-sub {
+        margin: 0;
+        font-size: 0.78rem;
+        line-height: 1.45;
+    }
+    .inspection-report-mirror .monitoring-decision-label.positive {
+        border-color: #a7f3d0;
+        background: linear-gradient(180deg, #f0fdf4 0%, #ffffff 30%);
+    }
+    .inspection-report-mirror .monitoring-decision-label.positive::before {
+        background: linear-gradient(90deg, #047857 0%, #10b981 100%);
+    }
+    .inspection-report-mirror .monitoring-decision-label.positive .monitoring-decision-title { color: #064e3b; }
+    .inspection-report-mirror .monitoring-decision-label.positive .monitoring-decision-sub { color: #047857; }
+    .inspection-report-mirror .monitoring-decision-label.negative {
+        border-color: #fecdd3;
+        background: linear-gradient(180deg, #fff1f2 0%, #ffffff 30%);
+    }
+    .inspection-report-mirror .monitoring-decision-label.negative::before {
+        background: linear-gradient(90deg, #be123c 0%, #f43f5e 100%);
+    }
+    .inspection-report-mirror .monitoring-decision-label.negative .monitoring-decision-title { color: #881337; }
+    .inspection-report-mirror .monitoring-decision-label.negative .monitoring-decision-sub { color: #9f1239; }
+    .inspection-report-mirror .monitoring-decision-label.is-selected.positive {
+        border-color: #047857;
+        background: linear-gradient(180deg, #d1fae5 0%, #ffffff 50%);
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.18), 0 6px 16px rgba(16, 185, 129, 0.20);
+        opacity: 1;
+    }
+    .inspection-report-mirror .monitoring-decision-label.is-selected.negative {
+        border-color: #be123c;
+        background: linear-gradient(180deg, #ffe4e6 0%, #ffffff 50%);
+        box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.18), 0 6px 16px rgba(225, 29, 72, 0.20);
+        opacity: 1;
+    }
+    .inspection-report-mirror .monitoring-decision-label.is-muted {
+        opacity: 0.38;
+    }
+    @media (max-width: 720px) {
+        .inspection-report-mirror {
+            grid-template-columns: 1fr;
+        }
+    }
 
     .monitoring-task-hint--blocked {
         color: #64748b !important;
@@ -1043,6 +1177,11 @@
         font-weight: 700 !important;
         color: #0f172a !important;
         margin-bottom: 0.75rem !important;
+    }
+    .unit-detail-status[data-state="housing-unit"] {
+        background: #ecfdf5 !important;
+        color: #047857 !important;
+        border: 1px solid #a7f3d0 !important;
     }
     .unit-detail-status {
         margin: 0 !important;
@@ -1219,6 +1358,8 @@
     .premium-data-card.border-green::before { background: #10b981; }
     .premium-data-card.border-blue::before { background: #3b82f6; }
     .premium-data-card.border-amber::before { background: #f59e0b; }
+    .premium-data-card.border-rose::before { background: #e11d48; }
+    .premium-data-card.border-slate::before { background: #64748b; }
 
     .premium-card-title {
         font-size: 0.65rem;
@@ -1230,6 +1371,67 @@
         display: flex;
         align-items: center;
         gap: 0.5rem;
+    }
+
+    /* Collapsible premium cards (unit detail drawer) */
+    .premium-data-card--collapsible {
+        padding: 0;
+    }
+    .premium-data-card--collapsible > summary.premium-card-summary {
+        list-style: none;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        padding: 0.95rem 1.15rem;
+        margin: 0;
+        cursor: pointer;
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
+    }
+    .premium-data-card--collapsible > summary.premium-card-summary::-webkit-details-marker {
+        display: none;
+    }
+    .premium-data-card--collapsible > summary.premium-card-summary .premium-card-title {
+        margin: 0;
+        flex: 1;
+        min-width: 0;
+    }
+    .premium-card-chevron {
+        flex: 0 0 auto;
+        width: 1.65rem;
+        height: 1.65rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        background: #f1f5f9;
+        border: 1px solid #e2e8f0;
+        color: #475569;
+        transition: transform 0.2s ease, background 0.15s ease;
+    }
+    .premium-data-card--collapsible[open] > summary .premium-card-chevron {
+        transform: rotate(180deg);
+        background: #ecfdf5;
+        border-color: #a7f3d0;
+        color: #047857;
+    }
+    .premium-data-card--collapsible > summary:hover .premium-card-chevron {
+        background: #e2e8f0;
+    }
+    .premium-card-body {
+        padding: 0 1.15rem 1.15rem;
+        border-top: 1px solid #f1f5f9;
+    }
+    .premium-card-body > .premium-card-title {
+        margin: 1rem 0 1rem;
+    }
+    .premium-card-footnote {
+        margin: 1rem 0 0;
+        color: #64748b;
+        font-size: 0.75rem;
+        line-height: 1.5;
+        font-style: italic;
     }
 
     /* Grid Improvements */
@@ -1438,8 +1640,25 @@
         gap: 0.75rem;
         margin-top: 0.5rem;
     }
+    .monitoring-task-cards-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        margin-top: 0.5rem;
+    }
+    .monitoring-task-details .premium-card-body.monitoring-task-details-body {
+        padding: 0.85rem 1rem 1rem;
+    }
+    .monitoring-task-details .monitoring-task-card {
+        margin: 0;
+        cursor: pointer;
+    }
+    .monitoring-task-details .monitoring-task-card.blocked {
+        cursor: not-allowed;
+    }
     #priorNoProgressVisitsGrid .monitoring-task-card,
-    #explanationLetterPanel .explanation-letter-nested-task-grid .monitoring-task-card {
+    #explanationLetterPanel .explanation-letter-nested-task-grid .monitoring-task-card,
+    .monitoring-task-details .monitoring-task-card {
         width: 100%;
         max-width: none;
         box-sizing: border-box;
@@ -1702,6 +1921,15 @@
         transform: translateY(-1px);
     }
 
+    @media (max-width: 900px) {
+        .premium-grid-4 {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        .premium-grid-3 {
+            grid-template-columns: 1fr;
+        }
+    }
+
     @media (max-width: 640px) {
         #unitModal .unit-modal-content {
             width: 100% !important;
@@ -1714,8 +1942,16 @@
         .unit-monitor-form .row-2,
         .unit-monitor-form .row-2-equal { grid-template-columns: 1fr; }
         .unit-detail-footer { padding: 0.8rem 1rem !important; }
-        .premium-grid-4 {
-            grid-template-columns: repeat(2, 1fr);
+        .premium-grid-4,
+        .premium-grid-3 {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+        .premium-data-card--collapsible > summary.premium-card-summary {
+            padding: 0.85rem 0.95rem;
+        }
+        .premium-card-body {
+            padding: 0 0.95rem 0.95rem;
         }
         .household-add-age-input {
             max-width: 100%;
@@ -2121,8 +2357,14 @@
             <!-- Occupant Section -->
             <section class="unit-detail-section">
                 <div id="beneficiaryDropdown" class="unit-monitor-panel">
-                    <div class="premium-data-card border-green">
-                        <p class="premium-card-title">Lot beneficiary</p>
+                    <details class="premium-data-card premium-data-card--collapsible border-green">
+                        <summary class="premium-card-summary">
+                            <span class="premium-card-title">Lot beneficiary</span>
+                            <span class="premium-card-chevron" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                            </span>
+                        </summary>
+                        <div class="premium-card-body">
                         <div class="premium-grid-4">
                             <div class="premium-data-cell">
                                 <p class="cell-label">Name</p>
@@ -2141,11 +2383,18 @@
                                 <p id="modalHouseholdMembers" class="cell-value">—</p>
                             </div>
                         </div>
+                        </div>
+                    </details>
 
-                        <hr style="border: none; border-top: 1px solid #f1f5f9; margin: 1.5rem 0;">
-
-                        <p class="premium-card-title">Lot possession details</p>
-                        <div class="premium-grid-3">
+                    <details class="premium-data-card premium-data-card--collapsible border-green">
+                        <summary class="premium-card-summary">
+                            <span class="premium-card-title">Lot possession details</span>
+                            <span class="premium-card-chevron" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                            </span>
+                        </summary>
+                        <div class="premium-card-body">
+                            <div class="premium-grid-3">
                             <div class="premium-data-cell">
                                 <p class="cell-label">Date lot awarded</p>
                                 <p id="lotAwardedDate" class="cell-value">—</p>
@@ -2158,59 +2407,101 @@
                                 <p class="cell-label">Days possessed</p>
                                 <p id="lotPossessedDays" class="cell-value">—</p>
                             </div>
+                            </div>
+                            <p class="premium-card-footnote">
+                                The award date starts possession. The beneficiary has 30 days to show house-building progress before scheduled monitoring begins.
+                            </p>
                         </div>
-                        <p style="margin: 1rem 0 0; color: #64748b; font-size: 0.75rem; line-height: 1.5; font-style: italic;">
-                            The award date starts possession. The beneficiary has 30 days to show house-building progress before scheduled monitoring begins.
-                        </p>
-                    </div>
+                    </details>
 
-                    <div class="premium-data-card border-blue">
-                        <p class="premium-card-title">Household members list</p>
-                        <div id="householdMembersRecord"></div>
-                    </div>
+                    <details class="premium-data-card premium-data-card--collapsible border-blue">
+                        <summary class="premium-card-summary">
+                            <span class="premium-card-title">Household members list</span>
+                            <span class="premium-card-chevron" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                            </span>
+                        </summary>
+                        <div class="premium-card-body">
+                            <div id="householdMembersRecord"></div>
+                        </div>
+                    </details>
                 </div>
             </section>
 
             <!-- Formal award activation and monitoring schedule -->
             <section class="unit-detail-section">
                 <div id="lotMonitoringDropdown" class="unit-monitor-panel" hidden>
-                    <div class="premium-data-card border-green">
-                        <p class="premium-card-title">Monitoring schedule</p>
-                        <div class="premium-grid-3">
-                            <div class="premium-data-cell">
-                                <p class="cell-label">Monitoring starts</p>
-                                <p id="monitoringStartsOn" class="cell-value">—</p>
-                            </div>
-                            <div class="premium-data-cell">
-                                <p class="cell-label">Award date</p>
-                                <p id="awardActivationDate" class="cell-value">—</p>
-                            </div>
-                            <div class="premium-data-cell">
-                                <p class="cell-label">Monitoring policy</p>
-                                <p class="cell-value">30-day grace, then 15 Day / 30 Day</p>
+                    <details class="premium-data-card premium-data-card--collapsible border-green">
+                        <summary class="premium-card-summary">
+                            <span class="premium-card-title">Monitoring schedule</span>
+                            <span class="premium-card-chevron" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                            </span>
+                        </summary>
+                        <div class="premium-card-body">
+                            <div class="premium-grid-3">
+                                <div class="premium-data-cell">
+                                    <p class="cell-label">Monitoring starts</p>
+                                    <p id="monitoringStartsOn" class="cell-value">—</p>
+                                </div>
+                                <div class="premium-data-cell">
+                                    <p class="cell-label">Award date</p>
+                                    <p id="awardActivationDate" class="cell-value">—</p>
+                                </div>
+                                <div class="premium-data-cell">
+                                    <p class="cell-label">Monitoring policy</p>
+                                    <p class="cell-value">30-day grace, then 15 Day / 30 Day</p>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    </details>
 
-                    <div class="premium-data-card border-amber">
-                        <p class="premium-card-title">Monitoring history</p>
-                        <div id="monitoringHistoryRecord"></div>
-                    </div>
+                    <details class="premium-data-card premium-data-card--collapsible border-amber">
+                        <summary class="premium-card-summary">
+                            <span class="premium-card-title">Monitoring history</span>
+                            <span class="premium-card-chevron" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                            </span>
+                        </summary>
+                        <div class="premium-card-body">
+                            <div id="monitoringHistoryRecord"></div>
+                        </div>
+                    </details>
 
-                    <div class="premium-data-card border-blue">
-                        <p class="premium-card-title">Compliance records</p>
-                        <div id="complianceRecordsRecord"></div>
-                    </div>
+                    <details class="premium-data-card premium-data-card--collapsible border-blue">
+                        <summary class="premium-card-summary">
+                            <span class="premium-card-title">Compliance records</span>
+                            <span class="premium-card-chevron" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                            </span>
+                        </summary>
+                        <div class="premium-card-body">
+                            <div id="complianceRecordsRecord"></div>
+                        </div>
+                    </details>
 
-                    <div id="monitoringTaskCards" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap:0.75rem; margin-top:0.5rem;"></div>
+                    <div id="monitoringTaskCards" class="monitoring-task-cards-stack"></div>
 
-                    <div id="priorNoProgressVisitsPanel" class="premium-data-card" style="display: none; margin-top: 0.75rem; border-left: 4px solid #64748b;">
-                        <p class="premium-card-title">Initial monitoring — No Progress visits</p>
-                        <div id="priorNoProgressVisitsGrid"></div>
-                    </div>
+                    <details id="priorNoProgressVisitsPanel" class="premium-data-card premium-data-card--collapsible border-slate" style="display: none; margin-top: 0.75rem;">
+                        <summary class="premium-card-summary">
+                            <span class="premium-card-title">Initial monitoring — No Progress visits</span>
+                            <span class="premium-card-chevron" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                            </span>
+                        </summary>
+                        <div class="premium-card-body">
+                            <div id="priorNoProgressVisitsGrid"></div>
+                        </div>
+                    </details>
 
-                    <div id="explanationLetterPanel" class="premium-data-card border-rose" style="display: none; margin-top: 0.75rem; border-left: 4px solid #e11d48;">
-                        <p class="premium-card-title explanation-letter-panel-title">30 Day No Progress — explanation letter</p>
+                    <details id="explanationLetterPanel" class="premium-data-card premium-data-card--collapsible border-rose" style="display: none; margin-top: 0.75rem;">
+                        <summary class="premium-card-summary">
+                            <span class="premium-card-title explanation-letter-panel-title">30 Day No Progress — explanation letter</span>
+                            <span class="premium-card-chevron" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                            </span>
+                        </summary>
+                        <div class="premium-card-body">
                         <div id="explanationLetterStatus" style="font-size: 0.8rem; font-weight: 600; color: #0f172a; margin-bottom: 0.65rem;"></div>
                         <div id="explanationDeadlineForm" style="display: none; gap: 0.5rem; flex-wrap: wrap; align-items: flex-end; margin-bottom: 0.65rem;">
                             <label style="display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.72rem; font-weight: 700; color: #475569;">
@@ -2236,7 +2527,8 @@
                         </div>
                         <div id="explanationBuildExtensionNote" class="explanation-build-extension-note" style="display: none;"></div>
                         <div id="explanationExtension30DayCardWrap" class="explanation-letter-nested-task-grid"></div>
-                    </div>
+                        </div>
+                    </details>
                 </div>
             </section>
 
@@ -2319,8 +2611,8 @@
         </div>
         <div class="inspection-info-actions">
             <div id="inspectionDecisionActions" class="inspection-decision-actions">
-                <button type="button" class="inspection-info-btn primary" onclick="submitProgressAssessment('normal_progress')">Normal Progress</button>
-                <button type="button" class="inspection-info-btn warning" onclick="submitProgressAssessment('no_progress')">No Progress</button>
+                <button type="button" class="inspection-info-btn primary inspection-info-btn--normal-progress" onclick="submitProgressAssessment('normal_progress')">Normal Progress</button>
+                <button type="button" class="inspection-info-btn inspection-info-btn--no-progress" onclick="submitProgressAssessment('no_progress')">No Progress</button>
             </div>
             <button type="button" id="inspectionDashboardBtn" class="inspection-info-btn primary" onclick="notifySelectedInspectionTask()">Notify Monitoring Dashboard</button>
         </div>
@@ -2546,13 +2838,59 @@ function monitoringTaskDisplayTitle(task) {
     return '—';
 }
 
+function monitoringTaskPhase(task) {
+    if (!task) return 'other';
+    if (task.task_type === 'day_15_inspection' || task.task_type === 'month_1_inspection') return 'initial';
+    if (task.task_type === 'day_30_inspection' || task.task_type === 'month_2_inspection') return 'final';
+    return 'other';
+}
+
+function monitoringStaffDecisionLabels(task) {
+    if (monitoringTaskPhase(task) === 'final') {
+        return {
+            normal_progress: 'Housing unit on file',
+            no_progress: 'Explanation letter',
+        };
+    }
+    return {
+        normal_progress: 'Normal Progress',
+        no_progress: 'No Progress',
+    };
+}
+
+function monitoringStaffDecisionDisplayLabel(task, assessment) {
+    if (!assessment) return '';
+    const labels = monitoringStaffDecisionLabels(task);
+    return labels[assessment] || assessment;
+}
+
+function updateInspectionDecisionButtons(task) {
+    const actions = document.getElementById('inspectionDecisionActions');
+    if (!actions) return;
+    const labels = monitoringStaffDecisionLabels(task);
+    const normalBtn = actions.querySelector('.inspection-info-btn--normal-progress');
+    const noBtn = actions.querySelector('.inspection-info-btn--no-progress');
+    if (normalBtn) normalBtn.textContent = labels.normal_progress;
+    if (noBtn) noBtn.textContent = labels.no_progress;
+}
+
 function monitoringTaskRelativeLine(task) {
     if (!task) return '';
     if (task.monitoring_window_line) return task.monitoring_window_line;
-    if (task.task_type === 'day_15_inspection') return 'during 15 days of monitoring';
-    if (task.task_type === 'day_30_inspection' || task.task_type === 'month_2_inspection') return 'during 30 days of monitoring';
+    if (monitoringTaskPhase(task) === 'initial') return 'Initial monitoring — first 15 days';
+    if (monitoringTaskPhase(task) === 'final') return 'Final monitoring — confirm lot build is finished';
     const d = task.days_from_award;
     return (d != null && d !== '') ? `${d} days after monitoring starts` : '';
+}
+
+function monitoringEarlyScheduleHint(task) {
+    if (monitoringTaskPhase(task) === 'initial') {
+        return 'Initial monitoring visit — click to test early inspection schedule';
+    }
+    if (monitoringTaskPhase(task) === 'final') {
+        return 'Final monitoring visit — click to test early inspection schedule';
+    }
+    return 'Click to test early inspection warning';
 }
 
 function isPriorNoProgressLetterVisit(task, letterWorkflowApplies) {
@@ -2568,7 +2906,16 @@ function filterMainTasksForTopGrid(mainTasks, letterWorkflowApplies) {
     return (mainTasks || []).filter((t) => !isPriorNoProgressLetterVisit(t, true));
 }
 
+function premiumCardChevronHtml() {
+    return '<span class="premium-card-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></span>';
+}
+
 function buildMonitoringTaskCardElement(task, day15Reviewed) {
+    const details = document.createElement('details');
+    const borderTone = task.task_type === 'day_15_inspection' ? 'border-green' : 'border-amber';
+    details.className = `premium-data-card premium-data-card--collapsible ${borderTone} monitoring-task-details`;
+    details.open = false;
+
     const card = document.createElement('div');
     const isNotified = Boolean(task.notified_at);
     const isCompleted = task.status === 'completed';
@@ -2607,15 +2954,24 @@ function buildMonitoringTaskCardElement(task, day15Reviewed) {
     } else if (isCompleted && task.report) {
         const by = task.report.assessed_by ? ` · ${task.report.assessed_by}` : '';
         if (task.report.progress_assessment === 'normal_progress') {
-            if (task.initial_monitoring_program_complete) {
-                availabilityText = `Normal Progress — initial monitoring complete${by}`;
+            const decisionLabel = monitoringStaffDecisionDisplayLabel(task, 'normal_progress');
+            if (task.final_monitoring_program_complete) {
+                availabilityText = `${decisionLabel} — final monitoring complete${by}`;
                 hintClass += ' monitoring-task-hint--decision-normal monitoring-task-hint--program-complete';
+            } else if (task.initial_monitoring_complete || monitoringTaskPhase(task) === 'initial') {
+                availabilityText = `${decisionLabel} — initial monitoring recorded${by}`;
+                hintClass += ' monitoring-task-hint--decision-normal';
             } else {
-                availabilityText = `Normal Progress${by}`;
+                availabilityText = `${decisionLabel}${by}`;
                 hintClass += ' monitoring-task-hint--decision-normal';
             }
         } else if (task.report.progress_assessment === 'no_progress') {
-            availabilityText = `No Progress${by}`;
+            const decisionLabel = monitoringStaffDecisionDisplayLabel(task, 'no_progress');
+            if (monitoringTaskPhase(task) === 'final') {
+                availabilityText = `${decisionLabel} — explanation letter workflow may apply${by}`;
+            } else {
+                availabilityText = `${decisionLabel}${by}`;
+            }
             hintClass += ' monitoring-task-hint--decision-no';
         } else {
             availabilityText = 'Caretaker monitoring report submitted — staff decision pending';
@@ -2625,8 +2981,14 @@ function buildMonitoringTaskCardElement(task, day15Reviewed) {
         availabilityText = isCompleted
             ? 'Caretaker monitoring report submitted'
             : task.is_due
-                ? 'Available to inspect now'
-                : (isNotified ? 'Waiting for caretaker monitoring report' : 'Click to test early inspection warning');
+                ? (monitoringTaskPhase(task) === 'final'
+                    ? 'Final monitoring — available to inspect now'
+                    : (monitoringTaskPhase(task) === 'initial'
+                        ? 'Initial monitoring — available to inspect now'
+                        : 'Available to inspect now'))
+                : (isNotified
+                    ? 'Waiting for caretaker monitoring report'
+                    : monitoringEarlyScheduleHint(task));
     }
 
     card.addEventListener('click', () => {
@@ -2646,7 +3008,6 @@ function buildMonitoringTaskCardElement(task, day15Reviewed) {
     });
 
     card.innerHTML = `
-        <p class="monitoring-task-label">${monitoringTaskDisplayTitle(task)}</p>
         <p class="monitoring-task-relative">${monitoringTaskRelativeLine(task)}</p>
         <p class="monitoring-task-date">${formatDisplayDate(task.due_date)}</p>
         <div class="monitoring-task-status-row">
@@ -2654,7 +3015,18 @@ function buildMonitoringTaskCardElement(task, day15Reviewed) {
             <p class="${hintClass}">${availabilityText}</p>
         </div>
     `;
-    return card;
+
+    const summary = document.createElement('summary');
+    summary.className = 'premium-card-summary';
+    summary.innerHTML = `<span class="premium-card-title">${monitoringTaskDisplayTitle(task)}</span>${premiumCardChevronHtml()}`;
+
+    const body = document.createElement('div');
+    body.className = 'premium-card-body monitoring-task-details-body';
+    body.appendChild(card);
+
+    details.appendChild(summary);
+    details.appendChild(body);
+    return details;
 }
 
 function renderMonitoringTaskCards(mainTasks, mergedForState, letterWorkflowApplies) {
@@ -2675,7 +3047,7 @@ function renderMonitoringTaskCards(mainTasks, mergedForState, letterWorkflowAppl
 
     if (!gridTasks.length) {
         const empty = document.createElement('div');
-        empty.style.cssText = 'grid-column:1/-1;padding:0.8rem;border:1px dashed #cbd5e1;border-radius:0.75rem;color:#64748b;font-size:0.8rem;';
+        empty.style.cssText = 'padding:0.8rem;border:1px dashed #cbd5e1;border-radius:0.75rem;color:#64748b;font-size:0.8rem;';
         const nestedInSeparateCard = letterWorkflowApplies && (merged || []).some((t) => isPriorNoProgressLetterVisit(t, true));
         empty.textContent = nestedInSeparateCard
             ? 'Completed 15 Day / 30 Day (No Progress) visits are shown in the separate card below.'
@@ -2771,6 +3143,18 @@ function openInspectionConfirmModal(task) {
                     : `Schedule: ${relative} — inspection due ${due}. Continue?`)
             );
         }
+    } else if (task.task_type === 'day_15_inspection') {
+        const awardDate = task.award_date ? formatDisplayDate(task.award_date) : 'award date';
+        scheduleText = (
+            `Initial monitoring: award ${awardDate} + 30-day grace, then ${relative} — due ${due}. `
+            + 'This is the first monitoring visit. Continue?'
+        );
+    } else if (task.task_type === 'day_30_inspection') {
+        const awardDate = task.award_date ? formatDisplayDate(task.award_date) : 'award date';
+        scheduleText = (
+            `Final monitoring: award ${awardDate} + 30-day grace, then ${relative} — due ${due}. `
+            + 'Staff will confirm whether the lot build is finished (Housing unit on file closes monitoring) or record Explanation letter to open that workflow. Continue?'
+        );
     } else {
         const awardDate = task.award_date ? formatDisplayDate(task.award_date) : 'award date';
         scheduleText = `The inspection schedule is: Award date ${awardDate} + 30-day grace, then ${relative} — due ${due}. Continue?`;
@@ -3060,6 +3444,92 @@ function renderComplianceRecordsRecord(records) {
     `;
 }
 
+
+function monitoringMirrorOccupancyOptions(task) {
+    if (monitoringTaskPhase(task) === 'final') {
+        return {
+            positive: {
+                title: 'Properly Occupied',
+                sub: 'Beneficiary or immediate family is residing in the unit at this final visit.',
+            },
+            negative: {
+                title: 'Unoccupied',
+                sub: 'Unit is vacant, abandoned, or occupied by unauthorized persons at this final visit.',
+            },
+        };
+    }
+    return {
+        positive: {
+            title: 'Properly Occupied',
+            sub: 'Beneficiary or immediate family is residing in the unit.',
+        },
+        negative: {
+            title: 'Unoccupied',
+            sub: 'Unit is abandoned, temporarily vacant, or occupied by unauthorized persons.',
+        },
+    };
+}
+
+function monitoringMirrorConstructionOptions(task) {
+    if (monitoringTaskPhase(task) === 'final') {
+        return {
+            positive: {
+                title: 'Build finished',
+                sub: 'Structure is substantially complete — the lot build is ready to count as a finished housing unit.',
+            },
+            negative: {
+                title: 'Build not finished',
+                sub: 'No finished structure on site, or construction is clearly incomplete at this final visit.',
+            },
+        };
+    }
+    return {
+        positive: {
+            title: 'Ongoing Construction',
+            sub: 'Active building, structural improvements, or materials present on site.',
+        },
+        negative: {
+            title: 'No Structure',
+            sub: 'No signs of construction; lot remains vacant or untouched.',
+        },
+    };
+}
+
+function resolveOccupancySelection(report) {
+    const key = String(report.occupancy_status_key || '').toLowerCase();
+    if (key === 'properly_occupied') return 'positive';
+    if (key === 'unoccupied_abandoned' || key === 'temporarily_vacant') return 'negative';
+    const label = String(report.occupancy_status || '').toLowerCase();
+    if (label.includes('unoccupied') || label.includes('abandon') || label.includes('vacant')) return 'negative';
+    return 'positive';
+}
+
+function resolveConstructionSelection(report) {
+    const key = String(report.construction_status_key || '').toLowerCase();
+    if (key === 'no_structure') return 'negative';
+    if (key === 'completed_occupied' || key === 'ongoing_construction') return 'positive';
+    const label = String(report.construction_status || '').toLowerCase();
+    if (label.includes('no structure') || label.includes('not finished')) return 'negative';
+    if (label.includes('finished') || label.includes('complete')) return 'positive';
+    return 'positive';
+}
+
+function renderInspectionDecisionCard(tone, title, sub, isSelected) {
+    const state = isSelected ? ' is-selected' : ' is-muted';
+    return `<div class="monitoring-decision-label ${tone}${state}">
+        <strong class="monitoring-decision-title">${escapeHtml(title)}</strong>
+        <p class="monitoring-decision-sub">${escapeHtml(sub)}</p>
+    </div>`;
+}
+
+function stripMonitoringReportBoilerplate(text) {
+    if (!text) return text;
+    return String(text)
+        .replace(/\s*\(no separate occupancy narrative submitted\)\.?/gi, '.')
+        .replace(/\s*\(no separate construction progress narrative submitted\)\.?/gi, '.')
+        .trim();
+}
+
 function renderCompletedReportSummary(task) {
     const report = task.report || {};
     const photos = Array.isArray(report.photo_urls) ? report.photo_urls : (report.photo_url ? [report.photo_url] : []);
@@ -3088,27 +3558,61 @@ function renderCompletedReportSummary(task) {
         : report.progress_assessment === 'normal_progress'
         ? 'decision--normal_progress'
         : '';
-    const decision = report.progress_assessment_label
-        ? `<div class="inspection-summary-item full-width decision ${decisionTone}"><span class="inspection-summary-label">Staff decision</span><p class="inspection-summary-value">${escapeHtml(report.progress_assessment_label)}${report.assessed_by ? ` · ${escapeHtml(report.assessed_by)}` : ''}</p></div>`
+    const staffDecisionLabel = monitoringStaffDecisionDisplayLabel(task, report.progress_assessment)
+        || report.progress_assessment_label;
+    const decision = staffDecisionLabel
+        ? `<div class="inspection-summary-item full-width decision ${decisionTone}"><span class="inspection-summary-label">Staff decision</span><p class="inspection-summary-value">${escapeHtml(staffDecisionLabel)}${report.assessed_by ? ` · ${escapeHtml(report.assessed_by)}` : ''}</p></div>`
         : '';
+
+    const occupancyPick = resolveOccupancySelection(report);
+    const constructionPick = resolveConstructionSelection(report);
+    const occupancyOpts = monitoringMirrorOccupancyOptions(task);
+    const constructionOpts = monitoringMirrorConstructionOptions(task);
+    const constructionHeading = monitoringTaskPhase(task) === 'final' ? 'Lot build status (final)' : 'Construction status';
 
     return `
         <div class="inspection-summary-grid">
-            <div class="inspection-summary-item">
-                <span class="inspection-summary-label">Actual occupancy conditions</span>
-                <p class="inspection-summary-value">${escapeHtml(report.occupancy_notes || '—')}</p>
-            </div>
-            <div class="inspection-summary-item">
-                <span class="inspection-summary-label">Construction status</span>
-                <p class="inspection-summary-value">${escapeHtml(report.construction_status || '—')} (${Number(report.percent_complete || 0)}%)</p>
-            </div>
-            <div class="inspection-summary-item full-width">
-                <span class="inspection-summary-label">Construction progress statement</span>
-                <p class="inspection-summary-value">${escapeHtml(report.progress_notes || 'No progress statement submitted.')}</p>
-            </div>
-            <div class="inspection-summary-item full-width">
-                <span class="inspection-summary-label">General remarks</span>
-                <p class="inspection-summary-value">${escapeHtml(report.general_remarks || '—')}</p>
+            <div class="inspection-report-mirror">
+                <div class="inspection-report-mirror-col">
+                    <p class="inspection-report-mirror-heading">
+                        <span>Occupancy classification</span>
+                        <span class="inspection-report-mirror-required">Required</span>
+                    </p>
+                    <div class="monitoring-decision-grid">
+                        ${renderInspectionDecisionCard(
+                            'positive',
+                            occupancyOpts.positive.title,
+                            occupancyOpts.positive.sub,
+                            occupancyPick === 'positive'
+                        )}
+                        ${renderInspectionDecisionCard(
+                            'negative',
+                            occupancyOpts.negative.title,
+                            occupancyOpts.negative.sub,
+                            occupancyPick === 'negative'
+                        )}
+                    </div>
+                </div>
+                <div class="inspection-report-mirror-col">
+                    <p class="inspection-report-mirror-heading">
+                        <span>${constructionHeading}</span>
+                        <span class="inspection-report-mirror-required">Required</span>
+                    </p>
+                    <div class="monitoring-decision-grid">
+                        ${renderInspectionDecisionCard(
+                            'positive',
+                            constructionOpts.positive.title,
+                            constructionOpts.positive.sub,
+                            constructionPick === 'positive'
+                        )}
+                        ${renderInspectionDecisionCard(
+                            'negative',
+                            constructionOpts.negative.title,
+                            constructionOpts.negative.sub,
+                            constructionPick === 'negative'
+                        )}
+                    </div>
+                </div>
             </div>
             ${photoCarousel}
             ${decision}
@@ -3142,11 +3646,15 @@ function openInspectionInfoModal(task) {
     const card = modal ? modal.querySelector('.inspection-info-card') : null;
     if (!modal || !title || !text) return;
 
-    const isInformational = task.status !== 'completed';
+    const isCompleted = task.status === 'completed';
+    const isInformational = !isCompleted;
+    const hasDecision = Boolean(task.report && task.report.progress_assessment_label);
+    const isReviewPending = isCompleted && !hasDecision;
+
     if (card) {
         card.classList.remove('inspection-info-card--alert');
-        card.classList.toggle('inspection-info-card--large', task.status === 'completed');
-        card.classList.toggle('inspection-info-card--centered', isInformational);
+        card.classList.toggle('inspection-info-card--large', isCompleted);
+        card.classList.toggle('inspection-info-card--centered', isInformational || isCompleted);
     }
 
     activeInspectionTask = task;
@@ -3159,21 +3667,26 @@ function openInspectionInfoModal(task) {
     }
     if (banner) banner.style.display = 'block';
 
-    if (body) body.classList.toggle('centered', isInformational);
-    if (actions) actions.classList.toggle('centered', isInformational);
+    if (body) body.classList.toggle('centered', isInformational || isCompleted);
+    if (actions) {
+        actions.classList.toggle('centered', isInformational || isReviewPending);
+        actions.classList.toggle('inspection-info-actions--review', isReviewPending);
+    }
 
-    if (task.status === 'completed') {
+    if (isCompleted) {
         title.textContent = `${monitoringTaskDisplayTitle(task)} is completed`;
-        const hasDecision = Boolean(task.report && task.report.progress_assessment_label);
         text.textContent = hasDecision
             ? `Caretaker monitoring report has been reviewed. The saved staff decision is shown in the summary below.`
-            : `Caretaker monitoring report has been submitted. Review the summary, then mark the result as Normal Progress or No Progress.`;
+            : (monitoringTaskPhase(task) === 'final'
+                ? 'Caretaker monitoring report has been submitted. Review the summary, then choose Housing unit on file if the lot build is finished, or Explanation letter to open that workflow.'
+                : 'Caretaker monitoring report has been submitted. Review the summary, then mark the result as Normal Progress or No Progress.');
         if (summary) {
             summary.innerHTML = renderCompletedReportSummary(task);
             summary.classList.add('active');
         }
-        if (decisionActions && !hasDecision) {
+        if (decisionActions && isReviewPending) {
             decisionActions.classList.add('active');
+            updateInspectionDecisionButtons(task);
         }
     } else if (task.notified_at) {
         title.textContent = `${monitoringTaskDisplayTitle(task)} is waiting for caretaker`;
@@ -3193,6 +3706,16 @@ function openInspectionInfoModal(task) {
                 `Extension 30 Day inspection opens on ${formatDisplayDate(task.due_date)} (${monitoringTaskRelativeLine(task)}).`
                 + extLine
                 + ' Use Monitoring Dashboard if you want to proceed early for testing.'
+            );
+        } else if (task.task_type === 'day_30_inspection') {
+            text.textContent = (
+                `Final monitoring opens on ${formatDisplayDate(task.due_date)} (${monitoringTaskRelativeLine(task)}). `
+                + 'Use this visit to confirm the lot build is finished. Housing unit on file records the lot and closes monitoring; Explanation letter opens that workflow.'
+            );
+        } else if (task.task_type === 'day_15_inspection') {
+            text.textContent = (
+                `Initial monitoring opens on ${formatDisplayDate(task.due_date)} (${monitoringTaskRelativeLine(task)}). `
+                + 'Use Monitoring Dashboard if you want to proceed early for testing.'
             );
         } else {
             text.textContent = `Inspection opens on ${formatDisplayDate(task.due_date)} (${monitoringTaskRelativeLine(task)}). Use Monitoring Dashboard if you want to proceed early for testing.`;
@@ -3237,10 +3760,18 @@ async function submitProgressAssessment(decision) {
 
         const updatedTask = {
             ...activeInspectionTask,
-            initial_monitoring_program_complete: Boolean(
+            initial_monitoring_complete: Boolean(
+                activeInspectionTask.task_type === 'day_15_inspection'
+                && (decision === 'normal_progress' || decision === 'no_progress')
+            ),
+            final_monitoring_program_complete: Boolean(
                 data.monitoring_program_complete
                 && activeInspectionTask.task_type === 'day_30_inspection'
                 && decision === 'normal_progress'
+            ),
+            initial_monitoring_program_complete: Boolean(
+                activeInspectionTask.task_type === 'day_15_inspection'
+                && (decision === 'normal_progress' || decision === 'no_progress')
             ),
             report: {
                 ...(activeInspectionTask.report || {}),
@@ -3828,15 +4359,21 @@ function openUnitModal(unitId) {
                 const unit = data.unit;
                 document.getElementById('modalUnitTitle').textContent = `Block ${unit.block}, Lot ${unit.lot}`;
                 const statusPill = document.getElementById('modalUnitStatus');
-                statusPill.textContent = unit.status;
                 const statusKeyMap = {
                     'Occupied': 'occupied',
                     'Vacant — available': 'vacant',
                     'Under notice (30-day)': 'notice30',
                     'Final notice (10-day)': 'final',
-                    'Repossessed': 'repo'
+                    'Repossessed': 'repo',
+                    'Housing unit': 'housing-unit',
                 };
-                statusPill.dataset.state = statusKeyMap[unit.status] || 'vacant';
+                if (unit.is_housing_unit_on_file || unit.status_display === 'Housing unit') {
+                    statusPill.textContent = 'Housing unit';
+                    statusPill.dataset.state = 'housing-unit';
+                } else {
+                    statusPill.textContent = unit.status_display || unit.status;
+                    statusPill.dataset.state = statusKeyMap[unit.status] || 'vacant';
+                }
                 const ben = unit.beneficiary_info;
                 document.getElementById('modalBeneficiaryName').textContent =
                     (ben && ben.full_name) ? ben.full_name : '—';

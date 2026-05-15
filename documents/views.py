@@ -419,6 +419,7 @@ def document_management(request, position):
 
     search_query = request.GET.get('search', '').strip()
     status_filter = request.GET.get('status', 'all').strip()
+    open_vault_deep_link = request.GET.get('open_vault') == '1'
 
     # Vault list scope: anyone on Intake "LIST OF APPLICATIONS" (has an Archive row) and/or
     # anyone with Intake Archive or legacy Module 2 handoff timestamp. Union covers both:
@@ -446,8 +447,8 @@ def document_management(request, position):
     if status_filter != 'all' and status_filter:
         applicants_qs = applicants_qs.filter(status=status_filter)
 
-    # Filter by search query
-    if search_query:
+    # Filter by search query (skip when opening vault drawer — reference # is not in table row text)
+    if search_query and not open_vault_deep_link:
         applicants_qs = applicants_qs.filter(
             Q(full_name__icontains=search_query) |
             Q(reference_number__icontains=search_query) |

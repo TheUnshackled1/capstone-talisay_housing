@@ -1238,6 +1238,40 @@
         opacity: 0.92;
         line-height: 1.45;
     }
+    .monitoring-report-phase-badge {
+        display: inline-block;
+        margin-top: 0.45rem;
+        padding: 0.2rem 0.55rem;
+        border-radius: 999px;
+        font-size: 0.62rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        background: rgba(255, 255, 255, 0.14);
+        color: #ecfdf5;
+        border: 1px solid rgba(255, 255, 255, 0.22);
+    }
+    .monitoring-phase-notice {
+        margin: 0 0 1.15rem;
+        padding: 0.85rem 1rem;
+        border-radius: 10px;
+        font-size: 0.8rem;
+        line-height: 1.5;
+        font-weight: 500;
+    }
+    .monitoring-phase-notice--initial {
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        color: #1e40af;
+    }
+    .monitoring-phase-notice--final {
+        background: #fffbeb;
+        border: 1px solid #fde68a;
+        color: #92400e;
+    }
+    .monitoring-phase-notice strong {
+        font-weight: 800;
+    }
 
     .monitoring-report-body {
         padding: 1.5rem 1.5rem 1.75rem;
@@ -1845,7 +1879,7 @@
                 {% endif %}
             </td>
             <td>
-                <div class="monitoring-schedule-note">{% if task.task_type == 'day_15_inspection' %}<strong>during 15 days of monitoring</strong>{% elif task.task_type == 'day_30_inspection' %}<strong>during 30 days of monitoring</strong>{% else %}<strong>{{ task.days_from_award }}</strong> days after monitoring starts{% endif %} · field visit order {{ forloop.counter }} of {{ tasks|length }}</div>
+                <div class="monitoring-schedule-note">{% if task.task_type == 'day_15_inspection' %}<strong>Initial monitoring — first 15 days</strong>{% elif task.task_type == 'day_30_inspection' %}<strong>Final monitoring — confirm lot build is finished</strong>{% else %}<strong>{{ task.days_from_award }}</strong> days after monitoring starts{% endif %} · field visit order {{ forloop.counter }} of {{ tasks|length }}</div>
             </td>
             <td>
                 <div class="monitoring-staff-name">
@@ -1859,11 +1893,11 @@
             <td>
                 <div class="monitoring-task-actions">
                     {% if task.status == 'pending' and task.scheduled_date > today %}
-                        <button type="button" class="btn-submit-report" onclick="openReportModal('{{ task.id }}', true, '{{ task.scheduled_date|date:"F j, Y" }}', '{% if task.task_type == "day_15_inspection" %}15 Day Inspection{% elif task.task_type == "day_30_inspection" %}30 Day Inspection{% else %}{{ task.get_task_type_display|escapejs }}{% endif %}', 'Block {{ task.unit.block_number|escapejs }} Lot {{ task.unit.lot_number|escapejs }}', '{{ task.due_date|date:"F j, Y"|escapejs }}', '{% if task.task_type == "day_15_inspection" %}during 15 days of monitoring{% elif task.task_type == "day_30_inspection" %}during 30 days of monitoring{% else %}{{ task.days_from_award }} days after monitoring starts{% endif %}')" style="background:#2563eb;">
+                        <button type="button" class="btn-submit-report" onclick="openReportModal('{{ task.id }}', true, '{{ task.scheduled_date|date:"F j, Y" }}', '{% if task.task_type == "day_15_inspection" %}15 Day Inspection{% elif task.task_type == "day_30_inspection" %}30 Day Inspection{% else %}{{ task.get_task_type_display|escapejs }}{% endif %}', 'Block {{ task.unit.block_number|escapejs }} Lot {{ task.unit.lot_number|escapejs }}', '{{ task.due_date|date:"F j, Y"|escapejs }}', '{{ task.task_type|escapejs }}')" style="background:#2563eb;">
                             {% if task.notified_at %}Open notified task{% else %}Notify / test early{% endif %}
                         </button>
                     {% else %}
-                        <button type="button" class="btn-submit-report" onclick="openReportModal('{{ task.id }}', false, '', '{% if task.task_type == "day_15_inspection" %}15 Day Inspection{% elif task.task_type == "day_30_inspection" %}30 Day Inspection{% else %}{{ task.get_task_type_display|escapejs }}{% endif %}', 'Block {{ task.unit.block_number|escapejs }} Lot {{ task.unit.lot_number|escapejs }}', '{{ task.due_date|date:"F j, Y"|escapejs }}', '{% if task.task_type == "day_15_inspection" %}during 15 days of monitoring{% elif task.task_type == "day_30_inspection" %}during 30 days of monitoring{% else %}{{ task.days_from_award }} days after monitoring starts{% endif %}')">
+                        <button type="button" class="btn-submit-report" onclick="openReportModal('{{ task.id }}', false, '', '{% if task.task_type == "day_15_inspection" %}15 Day Inspection{% elif task.task_type == "day_30_inspection" %}30 Day Inspection{% else %}{{ task.get_task_type_display|escapejs }}{% endif %}', 'Block {{ task.unit.block_number|escapejs }} Lot {{ task.unit.lot_number|escapejs }}', '{{ task.due_date|date:"F j, Y"|escapejs }}', '{{ task.task_type|escapejs }}')">
                             {% if task.status == 'completed' %}
                                 View Report
                             {% else %}
@@ -1919,8 +1953,9 @@
             <div class="monitoring-report-title-row">
                 <div class="monitoring-report-crest" aria-hidden="true">THA</div>
                 <div>
-                    <h2 class="monitoring-report-title">Caretaker monitoring report</h2>
-                    <p class="monitoring-report-subtitle">Occupancy and construction choices plus photo evidence match what staff see first. If you do not add optional narratives, the system stores short default notes and a percent estimate when you submit.</p>
+                    <h2 id="reportModalTitle" class="monitoring-report-title">Caretaker monitoring report</h2>
+                    <p id="reportModalSubtitle" class="monitoring-report-subtitle"></p>
+                    <span id="reportModalPhaseBadge" class="monitoring-report-phase-badge" hidden></span>
                 </div>
             </div>
             <button type="button" class="modal-close" onclick="closeReportModal()">×</button>
@@ -1953,41 +1988,55 @@
                     </div>
                 </div>
 
+                <div id="reportModalPhaseNotice" class="monitoring-phase-notice" hidden></div>
+
                 <div class="report-field" style="margin-bottom: 0;">
                     <label>
                         Occupancy classification
                         <span class="report-required">Required</span>
                     </label>
                 </div>
-                <div class="monitoring-decision-grid">
+                <div class="monitoring-decision-grid" id="occupancyDecisionGrid">
                     <label class="monitoring-decision-label positive">
                         <input type="radio" name="occupancy_status" value="occupied" required>
                         <strong class="monitoring-decision-title">Properly Occupied</strong>
-                        <p class="monitoring-decision-sub">Beneficiary or immediate family is residing in the unit.</p>
+                        <p id="occupancySubPositive" class="monitoring-decision-sub">Beneficiary or immediate family is residing in the unit.</p>
                     </label>
                     <label class="monitoring-decision-label negative">
                         <input type="radio" name="occupancy_status" value="unoccupied" required>
                         <strong class="monitoring-decision-title">Unoccupied</strong>
-                        <p class="monitoring-decision-sub">Unit is abandoned, temporarily vacant, or occupied by unauthorized persons.</p>
+                        <p id="occupancySubNegative" class="monitoring-decision-sub">Unit is abandoned, temporarily vacant, or occupied by unauthorized persons.</p>
                     </label>
                 </div>
 
                 <div class="report-field" style="margin-bottom: 0;">
                     <label>
-                        Construction status
+                        <span id="constructionFieldLabel">Construction status</span>
                         <span class="report-required">Required</span>
                     </label>
                 </div>
-                <div class="monitoring-decision-grid">
+                <div class="monitoring-decision-grid" id="constructionChoicesInitial">
                     <label class="monitoring-decision-label positive">
                         <input type="radio" name="construction_status" value="ongoing_construction" required>
                         <strong class="monitoring-decision-title">Ongoing Construction</strong>
                         <p class="monitoring-decision-sub">Active building, structural improvements, or materials present on site.</p>
                     </label>
                     <label class="monitoring-decision-label negative">
-                        <input type="radio" name="construction_status" value="no_structure" required>
+                        <input type="radio" name="construction_status" value="no_structure">
                         <strong class="monitoring-decision-title">No Structure</strong>
-                        <p class="monitoring-decision-sub">No signs of construction, lot remains vacant or untouched.</p>
+                        <p class="monitoring-decision-sub">No signs of construction; lot remains vacant or untouched.</p>
+                    </label>
+                </div>
+                <div class="monitoring-decision-grid" id="constructionChoicesFinal" hidden>
+                    <label class="monitoring-decision-label positive">
+                        <input type="radio" name="construction_status" value="completed_occupied">
+                        <strong class="monitoring-decision-title">Build finished</strong>
+                        <p class="monitoring-decision-sub">Structure is substantially complete — the lot build is ready to count as a finished housing unit.</p>
+                    </label>
+                    <label class="monitoring-decision-label negative">
+                        <input type="radio" name="construction_status" value="no_structure">
+                        <strong class="monitoring-decision-title">Build not finished</strong>
+                        <p class="monitoring-decision-sub">No finished structure on site, or construction is clearly incomplete at this final visit.</p>
                     </label>
                 </div>
 
@@ -1995,9 +2044,7 @@
                     <span class="field-evidence-label">
                         Photo evidence <span class="report-required" style="margin-left: 5px;">Required</span>
                     </span>
-                    <p class="field-evidence-hint">
-                        Same evidence block staff reviews in the monitoring schedule summary. Capture or attach up to 4 images of the lot and any structures or materials.
-                    </p>
+                    <p id="reportEvidenceHint" class="field-evidence-hint"></p>
 
                 <div id="cameraPreview">
                     <video id="photoCameraVideo" playsinline autoplay muted style="width: 100%; max-height: 220px; border-radius: 10px; background: #0f172a; margin-bottom: 10px;"></video>
@@ -2100,20 +2147,123 @@ function filterTasks() {
     });
 }
 
-function setReportReference(taskLabel, unitLocation, dueDate, monitoringDayLine) {
+function caretakerTaskPhase(taskType) {
+    const t = String(taskType || '');
+    if (t === 'day_15_inspection' || t === 'month_1_inspection') return 'initial';
+    if (t === 'day_30_inspection' || t === 'month_2_inspection') return 'final';
+    return 'other';
+}
+
+function caretakerMonitoringWindowLine(taskType) {
+    const phase = caretakerTaskPhase(taskType);
+    if (phase === 'initial') return 'Initial monitoring — first 15 days';
+    if (phase === 'final') return 'Final monitoring — confirm lot build is finished';
+    return 'Scheduled monitoring visit';
+}
+
+
+function toggleCaretakerConstructionChoices(taskType) {
+    const phase = caretakerTaskPhase(taskType);
+    const initial = document.getElementById('constructionChoicesInitial');
+    const final = document.getElementById('constructionChoicesFinal');
+    const fieldLabel = document.getElementById('constructionFieldLabel');
+    if (!initial || !final) return;
+    const isFinal = phase === 'final';
+    initial.hidden = isFinal;
+    final.hidden = !isFinal;
+    if (fieldLabel) {
+        fieldLabel.textContent = isFinal ? 'Lot build status (final)' : 'Construction status';
+    }
+    initial.querySelectorAll('input[type="radio"]').forEach((input) => {
+        input.required = !isFinal;
+        if (isFinal) input.checked = false;
+    });
+    final.querySelectorAll('input[type="radio"]').forEach((input) => {
+        input.required = isFinal;
+        if (!isFinal) input.checked = false;
+    });
+}
+
+function updateCaretakerOccupancyCopy(taskType) {
+    const pos = document.getElementById('occupancySubPositive');
+    const neg = document.getElementById('occupancySubNegative');
+    if (!pos || !neg) return;
+    if (caretakerTaskPhase(taskType) === 'final') {
+        pos.textContent = 'Beneficiary or immediate family is residing in the unit at this final visit.';
+        neg.textContent = 'Unit is vacant, abandoned, or occupied by unauthorized persons at this final visit.';
+    } else {
+        pos.textContent = 'Beneficiary or immediate family is residing in the unit.';
+        neg.textContent = 'Unit is abandoned, temporarily vacant, or occupied by unauthorized persons.';
+    }
+}
+
+function applyReportModalPhase(taskType) {
+    const phase = caretakerTaskPhase(taskType);
+    const titleEl = document.getElementById('reportModalTitle');
+    const subtitleEl = document.getElementById('reportModalSubtitle');
+    const badgeEl = document.getElementById('reportModalPhaseBadge');
+    const noticeEl = document.getElementById('reportModalPhaseNotice');
+    const evidenceEl = document.getElementById('reportEvidenceHint');
+    if (!titleEl || !subtitleEl || !noticeEl || !evidenceEl) return;
+
+    const sharedSub = 'Occupancy and construction choices plus photo evidence match what housing staff review. If you do not add optional narratives, the system stores short default notes when you submit.';
+
+    if (phase === 'initial') {
+        titleEl.textContent = 'Caretaker monitoring report — initial visit';
+        subtitleEl.textContent = sharedSub + ' This is the first (15 Day) monitoring visit.';
+        if (badgeEl) {
+            badgeEl.textContent = 'Initial monitoring';
+            badgeEl.hidden = false;
+        }
+        noticeEl.className = 'monitoring-phase-notice monitoring-phase-notice--initial';
+        noticeEl.hidden = false;
+        noticeEl.innerHTML = (
+            '<strong>15 Day Inspection (initial)</strong> '
+            + 'Housing staff will mark this visit as <strong>Normal Progress</strong> or <strong>No Progress</strong> after you submit. '
+            + 'This records initial monitoring only; the 30 Day final visit comes later.'
+        );
+        evidenceEl.textContent = 'Capture or attach up to 4 images of the lot during the first 15-day monitoring window.';
+    } else if (phase === 'final') {
+        titleEl.textContent = 'Caretaker monitoring report — final visit';
+        subtitleEl.textContent = sharedSub + ' This final (30 Day) visit confirms whether the lot build is finished.';
+        if (badgeEl) {
+            badgeEl.textContent = 'Final monitoring';
+            badgeEl.hidden = false;
+        }
+        noticeEl.className = 'monitoring-phase-notice monitoring-phase-notice--final';
+        noticeEl.hidden = false;
+        noticeEl.innerHTML = (
+            '<strong>30 Day Inspection (final)</strong> '
+            + 'Staff use your report to decide: '
+            + '<strong>Housing unit on file</strong> — lot build is finished; the lot is recorded as a housing unit and monitoring closes. '
+            + '<strong>Explanation letter</strong> — opens the explanation-letter workflow.'
+        );
+        evidenceEl.textContent = 'Capture or attach up to 4 images showing whether construction on the lot is finished or still incomplete.';
+    } else {
+        titleEl.textContent = 'Caretaker monitoring report';
+        subtitleEl.textContent = sharedSub;
+        if (badgeEl) badgeEl.hidden = true;
+        noticeEl.hidden = true;
+        noticeEl.textContent = '';
+        evidenceEl.textContent = 'Capture or attach up to 4 images of the lot and any structures or materials.';
+    }
+    toggleCaretakerConstructionChoices(taskType);
+    updateCaretakerOccupancyCopy(taskType);
+}
+
+function setReportReference(taskLabel, unitLocation, dueDate, taskType) {
     document.getElementById('reportTaskUnit').textContent = unitLocation || '—';
     document.getElementById('reportTaskType').textContent = taskLabel || '—';
     document.getElementById('reportTaskDueDate').textContent = dueDate || '—';
-    const line = (monitoringDayLine != null && String(monitoringDayLine).trim() !== '')
-        ? String(monitoringDayLine).trim()
-        : '—';
-    document.getElementById('reportTaskMonitoringDay').textContent = line;
+    const line = caretakerMonitoringWindowLine(taskType);
+    document.getElementById('reportTaskMonitoringDay').textContent = line || '—';
+    applyReportModalPhase(taskType);
 }
 
-function openReportModal(taskId, allowEarly, scheduledDate, taskLabel, unitLocation, dueDate, monitoringDayLine) {
+function openReportModal(taskId, allowEarly, scheduledDate, taskLabel, unitLocation, dueDate, taskType) {
     if (allowEarly) {
         pendingEarlyTaskId = taskId;
-        pendingEarlyTaskDetails = { taskLabel, unitLocation, dueDate, monitoringDayLine };
+        pendingEarlyTaskDetails = { taskLabel, unitLocation, dueDate, taskType };
         document.getElementById('earlyInspectionMessage').textContent =
             `Scheduled inspection date: ${scheduledDate}. Continue only for testing or demonstration.`;
         document.getElementById('earlyInspectionModal').classList.add('active');
@@ -2122,7 +2272,7 @@ function openReportModal(taskId, allowEarly, scheduledDate, taskLabel, unitLocat
     }
     document.getElementById('taskId').value = taskId;
     document.getElementById('allowEarlyInspection').value = allowEarly ? '1' : '0';
-    setReportReference(taskLabel, unitLocation, dueDate, monitoringDayLine);
+    setReportReference(taskLabel, unitLocation, dueDate, taskType);
     document.getElementById('reportModal').classList.add('active');
     document.body.style.overflow = 'hidden';
 }
@@ -2148,7 +2298,7 @@ function continueEarlyInspection() {
             details.taskLabel,
             details.unitLocation,
             details.dueDate,
-            details.monitoringDayLine
+            details.taskType
         );
     }
     document.getElementById('reportModal').classList.add('active');

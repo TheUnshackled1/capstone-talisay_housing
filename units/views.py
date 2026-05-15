@@ -457,6 +457,21 @@ def create_housing_unit(request, position):
     )
 
 
+_FINAL_MONITORING_TASK_TYPES = frozenset({'day_30_inspection', 'month_2_inspection'})
+
+
+def _staff_progress_assessment_display(task_type, assessment):
+    """Staff decision label; final visits use outcome wording instead of Normal/No Progress."""
+    if not assessment:
+        return ''
+    if task_type in _FINAL_MONITORING_TASK_TYPES:
+        if assessment == 'normal_progress':
+            return 'Housing unit on file'
+        if assessment == 'no_progress':
+            return 'Explanation letter'
+    return dict(MonitoringReport.PROGRESS_ASSESSMENT_CHOICES).get(assessment, assessment)
+
+
 @login_required
 @verify_position
 @require_http_methods(["GET"])
@@ -653,10 +668,17 @@ def get_unit_details(request, position, unit_id):
                         'submitted_at': report.submitted_at.isoformat(),
                         'submitted_by': report.submitted_by.get_full_name() if report.submitted_by else '—',
                         'progress_assessment': report.progress_assessment,
-                        'progress_assessment_label': report.get_progress_assessment_display() if report.progress_assessment else '',
+                        'progress_assessment_label': _staff_progress_assessment_display(
+                            task.task_type, report.progress_assessment
+                        ) if report.progress_assessment else '',
                         'assessed_at': report.assessed_at.isoformat() if report.assessed_at else '',
                         'assessed_by': report.assessed_by.get_full_name() if report.assessed_by else '',
                     }
+                initial_monitoring_complete = (
+                    task.task_type == 'day_15_inspection'
+                    and report_summary
+                    and bool(report_summary.get('progress_assessment'))
+                )
                 final_monitoring_program_complete = (
                     task.task_type == 'day_30_inspection'
                     and report_summary
@@ -669,11 +691,11 @@ def get_unit_details(request, position, unit_id):
                 if task.task_type in ('day_15_inspection', 'month_1_inspection'):
                     _task_title = '15 Day Inspection'
                     _history_row_label = '15 Day'
-                    monitoring_window_line = 'during 15 days of monitoring'
+                    monitoring_window_line = 'Initial monitoring — first 15 days'
                 elif task.task_type in ('day_30_inspection', 'month_2_inspection'):
                     _task_title = '30 Day Inspection'
                     _history_row_label = '30 Day'
-                    monitoring_window_line = 'during 30 days of monitoring'
+                    monitoring_window_line = 'Final monitoring — confirm lot build is finished'
                 else:
                     _task_title = task.get_task_type_display()
                     _history_row_label = task.get_task_type_display().replace(' Inspection', '')
@@ -708,9 +730,10 @@ def get_unit_details(request, position, unit_id):
                     'is_overdue': task.is_overdue,
                     'notified_at': task.notified_at.isoformat() if task.notified_at else '',
                     'report': report_summary,
+                    'initial_monitoring_complete': initial_monitoring_complete,
                     'final_monitoring_program_complete': final_monitoring_program_complete,
-                    # Deprecated alias — same boolean; prefer final_monitoring_program_complete.
-                    'initial_monitoring_program_complete': final_monitoring_program_complete,
+                    # Deprecated alias — use initial_monitoring_complete for 15 Day only.
+                    'initial_monitoring_program_complete': initial_monitoring_complete,
                 }
                 if letter_extension_cards and task.task_type == 'month_2_inspection':
                     if settings.EXTENSION_30DAY_SKIP_MIDPOINT_BLOCK:
@@ -724,7 +747,9 @@ def get_unit_details(request, position, unit_id):
                     'label': _history_row_label,
                     'date': task.due_date.isoformat(),
                     'result': report.get_construction_status_display() if report else task.get_status_display(),
-                    'decision': report.get_progress_assessment_display() if report and report.progress_assessment else '',
+                    'decision': _staff_progress_assessment_display(
+                        task.task_type, report.progress_assessment
+                    ) if report and report.progress_assessment else '',
                 })
             if unit.notice_date_issued:
                 deadline_text = unit.notice_deadline.isoformat() if unit.notice_deadline else ''
@@ -889,6 +914,12 @@ def get_unit_details(request, position, unit_id):
             and request.user.position in _MODULE4_MONITORING_COMPLIANCE_STAFF
         )
 
+        is_housing_unit_on_file = bool(
+            progress
+            and progress.stage == 'completed'
+            and (progress.percent_complete or 0) >= 100
+        )
+
         return JsonResponse({
             'success': True,
             'unit': {
@@ -896,6 +927,12 @@ def get_unit_details(request, position, unit_id):
                 'block': unit.block_number,
                 'lot': unit.lot_number,
                 'status': unit.status,
+                'is_housing_unit_on_file': is_housing_unit_on_file,
+                'status_display': (
+                    'Housing unit'
+                    if is_housing_unit_on_file
+                    else unit.status
+                ),
                 'occupant_name': unit.occupant_name or '',
                 'occupant_id': unit.occupant_id or '',
                 'is_escalated': unit.is_escalated,
@@ -2141,12 +2178,15 @@ def assess_monitoring_report(request, task_id):
     payload = {
         'success': True,
         'decision': report.progress_assessment,
-        'decision_label': report.get_progress_assessment_display(),
+        'decision_label': _staff_progress_assessment_display(
+            task.task_type, report.progress_assessment
+        ),
         'assessed_at': report.assessed_at.isoformat(),
         'assessed_by': request.user.get_full_name() or request.user.username,
     }
     if program_payload:
         payload['monitoring_program_complete'] = True
+        payload['housing_unit_on_file'] = True
         payload['monitoring_program_detail'] = program_payload
     return JsonResponse(payload)
 
@@ -2285,21 +2325,30 @@ def submit_monitoring_report(request, task_id):
         if len(occupancy_notes) < 8:
             if occupancy_radio == 'occupied':
                 occupancy_notes = (
-                    'Monitoring visit: caretaker classified the unit as properly occupied '
-                    '(no separate occupancy narrative submitted).'
+                    'Monitoring visit: caretaker classified the unit as properly occupied.'
                 )
             else:
                 occupancy_notes = (
-                    'Monitoring visit: caretaker classified the unit as unoccupied '
-                    '(no separate occupancy narrative submitted).'
+                    'Monitoring visit: caretaker classified the unit as unoccupied.'
                 )
 
         progress_notes = request.POST.get('progress_notes', '').strip()
-        if construction_status == 'ongoing_construction':
+        is_final_monitoring_task = task.task_type in ('day_30_inspection', 'month_2_inspection')
+        if is_final_monitoring_task:
+            if construction_status == 'completed_occupied' and len(progress_notes) < 8:
+                progress_notes = (
+                    'Final monitoring visit: lot build appears finished on site.'
+                )
+            elif construction_status == 'no_structure' and len(progress_notes) < 8:
+                progress_notes = (
+                    'Final monitoring visit: no finished structure observed on site.'
+                )
+            elif not progress_notes:
+                progress_notes = 'Final monitoring visit: construction status recorded.'
+        elif construction_status == 'ongoing_construction':
             if len(progress_notes) < 8:
                 progress_notes = (
-                    'Monitoring visit: ongoing construction observed on site '
-                    '(no separate construction progress narrative submitted).'
+                    'Monitoring visit: ongoing construction observed on site.'
                 )
         elif not progress_notes:
             progress_notes = 'No construction progress.'

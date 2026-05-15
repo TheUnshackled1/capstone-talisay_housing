@@ -30,7 +30,7 @@
         display:inline-flex; align-items:center; gap:0.5rem; background:#f8fafc; border:1px solid #e2e8f0;
         border-radius:0.52rem; padding:0.42rem 0.58rem; white-space:nowrap;
     }
-    .search-box { flex:1 1 280px; min-width:240px; position:relative; }
+    .search-box { flex:1 1 180px; min-width:0; position:relative; }
     .search-icon { position:absolute; left:0.65rem; top:50%; transform:translateY(-50%); width:0.9rem; height:0.9rem; color:#94a3b8; }
     .search-input { width:100%; padding:0.52rem 0.65rem 0.52rem 2rem; border:1px solid #dbe2ea; border-radius:9px; min-height:39px; font-size:0.74rem; color:#334155; }
     .filter-select { padding:0.52rem 0.65rem; border:1px solid #dbe2ea; border-radius:9px; min-height:39px; font-size:0.74rem; background:#fff; color:#334155; }
@@ -306,7 +306,44 @@
     .summary-chip-card--amber p:first-of-type { color: #b45309 !important; }
     .summary-chip-card--amber p:last-of-type { color: #92400e !important; }
 
-    @media (max-width: 1200px) {
+    .controls-bar-actions {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-left: auto;
+        flex-wrap: nowrap;
+        flex: 0 0 auto;
+    }
+    .btn-primary-nav {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        padding: 0.52rem 0.88rem;
+        min-height: 39px;
+        border-radius: 0.5rem;
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-decoration: none;
+        white-space: nowrap;
+        transition: all 0.18s ease;
+        border: 1px solid transparent;
+        cursor: pointer;
+        box-sizing: border-box;
+    }
+    .btn-primary-nav--intake {
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        border-color: #047857;
+        color: #ffffff;
+        box-shadow: 0 2px 6px rgba(4, 120, 87, 0.25);
+    }
+    .btn-primary-nav--intake:hover {
+        background: linear-gradient(135deg, #047857 0%, #065f46 100%);
+        box-shadow: 0 4px 10px rgba(4, 120, 87, 0.35);
+        transform: translateY(-1px);
+        color: #ffffff;
+    }
+
+    @media (max-width: 900px) {
         .controls-bar {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -319,8 +356,13 @@
             width: 100%;
             min-width: 0;
         }
-        .btn-export {
+        .controls-bar-actions {
             width: 100%;
+            margin-left: 0 !important;
+        }
+        .btn-export,
+        .btn-primary-nav {
+            flex: 1 1 auto;
             justify-content: center;
             margin-left: 0 !important;
         }
@@ -349,8 +391,8 @@
 
 {% block content %}
 <div class="applicants-container applicants-container--archives" style="padding-top: 0.85rem;">
-    <div style="display:flex; align-items:center; justify-content:center; margin:0 0 0.5rem 0; gap:0.75rem; flex-wrap:wrap;">
-        <h3 class="section-title-archives" style="margin:0; font-size:0.95rem; text-align: center;">ARCHIVES</h3>
+    <div style="display:flex; align-items:center; justify-content:center; margin:0 0 0.5rem 0;">
+        <h3 class="section-title-archives" style="margin:0; font-size:0.95rem; text-align:center;">ARCHIVES</h3>
     </div>
 
     <form class="controls-bar" method="get">
@@ -371,30 +413,18 @@
             <option value="">All Barangays</option>
             {% for brgy in barangays %}<option value="{{ brgy }}" {% if selected_barangay == brgy %}selected{% endif %}>{{ brgy }}</option>{% endfor %}
         </select>
-        <select class="filter-select" name="channel">
-            <option value="">All Channels</option>
-            {% for key, label in channels.items %}
-            <option value="{{ key }}" {% if selected_channel == key %}selected{% endif %}>{{ label }}</option>
-            {% endfor %}
-        </select>
-        <select class="filter-select" name="reason">
-            <option value="">All Archive Reasons</option>
-            {% for key, label in reason_choices.items %}
-            <option value="{{ key }}" {% if selected_reason == key %}selected{% endif %}>{{ label }}</option>
-            {% endfor %}
-        </select>
-        <select class="filter-select" name="archived_by">
-            <option value="">All Staff</option>
-            {% for uid, first, last in archived_by_choices %}
-            <option value="{{ uid }}" {% if selected_archived_by == uid|stringformat:"s" %}selected{% endif %}>{{ first }} {{ last }}</option>
-            {% endfor %}
-        </select>
-        <input class="filter-select" type="date" name="date_from" value="{{ date_from|default:'' }}" title="Archived from date">
-        <input class="filter-select" type="date" name="date_to" value="{{ date_to|default:'' }}" title="Archived to date">
-        <button type="button" onclick="exportArchiveCSV()" class="btn-export" style="display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.5rem 0.75rem; background: #10b981; color: white; border: none; border-radius: 0.5rem; font-size: 0.75rem; font-weight: 500; cursor: pointer; white-space: nowrap; margin-left: auto;">
-            <svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-            Export CSV
-        </button>
+        <div class="controls-bar-actions">
+            <a href="{% url 'intake:applicants_list' position %}" class="btn-primary-nav btn-primary-nav--intake">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+                Applicant Intake
+            </a>
+            <button type="button" onclick="exportArchiveCSV()" class="btn-export" style="display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.5rem 0.75rem; min-height: 39px; background: #10b981; color: white; border: none; border-radius: 0.5rem; font-size: 0.75rem; font-weight: 500; cursor: pointer; white-space: nowrap; box-sizing: border-box;">
+                <svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                Export CSV
+            </button>
+        </div>
     </form>
 
     <div class="table-scroll">
@@ -459,9 +489,9 @@
     <div class="table-pagination">
         <span class="table-pagination-info">{% if page_obj.paginator.count %}Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ page_obj.paginator.count }}{% else %}Showing 0-0 of 0{% endif %}</span>
         <div class="table-pagination-controls">
-            {% if page_obj.has_previous %}<a class="btn-page" href="?page={{ page_obj.previous_page_number }}&barangay={{ selected_barangay }}&channel={{ selected_channel }}&reason={{ selected_reason }}&archived_by={{ selected_archived_by }}&date_from={{ date_from }}&date_to={{ date_to }}&q={{ request.GET.q|default:'' }}">Prev</a>{% else %}<span class="btn-page" style="opacity:0.45; pointer-events:none;">Prev</span>{% endif %}
+            {% if page_obj.has_previous %}<a class="btn-page" href="?page={{ page_obj.previous_page_number }}&barangay={{ selected_barangay }}&q={{ request.GET.q|default:'' }}">Prev</a>{% else %}<span class="btn-page" style="opacity:0.45; pointer-events:none;">Prev</span>{% endif %}
             <span class="page-indicator">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
-            {% if page_obj.has_next %}<a class="btn-page" href="?page={{ page_obj.next_page_number }}&barangay={{ selected_barangay }}&channel={{ selected_channel }}&reason={{ selected_reason }}&archived_by={{ selected_archived_by }}&date_from={{ date_from }}&date_to={{ date_to }}&q={{ request.GET.q|default:'' }}">Next</a>{% else %}<span class="btn-page" style="opacity:0.45; pointer-events:none;">Next</span>{% endif %}
+            {% if page_obj.has_next %}<a class="btn-page" href="?page={{ page_obj.next_page_number }}&barangay={{ selected_barangay }}&q={{ request.GET.q|default:'' }}">Next</a>{% else %}<span class="btn-page" style="opacity:0.45; pointer-events:none;">Next</span>{% endif %}
         </div>
     </div>
 </div>

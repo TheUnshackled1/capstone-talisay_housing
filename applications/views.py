@@ -1301,9 +1301,9 @@ def lot_awarding_queue(request, position):
         applicant = app.applicant
         signed_form_on_file = applicant_has_signed_application_payload(applicant)
         vault_base = {
-            'search': ((applicant.reference_number or '').strip() or str(applicant.pk)),
             'applicant_id': str(applicant.pk),
             'document_type': 'signed_application',
+            'open_vault': '1',
         }
         vault_path = reverse('documents:management', kwargs={'position': request.user.position})
         routed_dt = app.standby_entered_at or app.updated_at

@@ -263,8 +263,32 @@
     }
 
     .documents-table .col-workflow-status {
-        width: 14%;
+        width: 15%;
         text-align: center;
+    }
+
+    /* Applicant Status — one pill style so Lot Awarded / Ready for Awarding match */
+    .dm-workflow-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        box-sizing: border-box;
+        min-width: 7.5rem;
+        min-height: 2.05rem;
+        padding: 0.28rem 0.55rem;
+        background-color: #dbeafe;
+        color: #1e40af;
+        border: 1px solid #93c5fd;
+        border-radius: 9999px;
+        font-size: 0.5625rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        line-height: 1.2;
+        text-transform: uppercase;
+        text-align: center;
+        white-space: normal;
+        word-break: break-word;
+        hyphens: none;
     }
 
     .documents-table .col-doc-status {
@@ -1204,7 +1228,9 @@
             </thead>
             <tbody>
                 {% for applicant in applicants %}
-                <tr class="applicant-row">
+                <tr class="applicant-row"
+                    data-applicant-id="{{ applicant.id }}"
+                    data-search="{{ applicant.full_name|lower }} {{ applicant.reference_number|default:''|lower }}">
                     <td class="col-num">{{ forloop.counter }}</td>
                     <td class="col-applicant">{{ applicant.full_name }}</td>
                     <td class="col-app-state" style="vertical-align: middle;">
@@ -1215,9 +1241,7 @@
                         {% endif %}
                     </td>
                     <td class="col-workflow-status" style="vertical-align: middle;">
-                        <span style="display:inline-flex;align-items:center;gap:0.18rem;padding:0.14rem 0.42rem;background:#dbeafe;color:#1e40af;border:1px solid #93c5fd;border-radius:9999px;font-size:0.5625rem;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;">
-                            {{ applicant.applicant_workflow_status|default:"Application & Eligibility" }}
-                        </span>
+                        <span class="dm-workflow-badge">{{ applicant.applicant_workflow_status|default:"Application & Eligibility" }}</span>
                     </td>
                     <td class="col-documents">
                         <span style="display: inline-block; padding: 0.35rem 0.65rem; background: #eff6ff; color: #1e40af; border-radius: 4px; font-weight: 600; font-size: 0.75rem;">{{ applicant.doc_count }}</span>
@@ -1985,6 +2009,15 @@ function closeVaultDrawer() {
         backdrop.style.display = 'none';
     }
     document.body.style.overflow = '';
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('open_vault') === '1') {
+        clearDocumentsVaultDeepLinkParams();
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.value = '';
+        }
+        applyDocumentsManagementSearch('');
+    }
 }
 
 function openUploadModal() {
@@ -2104,17 +2137,37 @@ document.getElementById('fileInput')?.addEventListener('change', (e) => {
     }
 });
 
-// Search functionality
-document.getElementById('searchInput').addEventListener('input', (e) => {
-    const query = e.target.value.toLowerCase();
+function applyDocumentsManagementSearch(query) {
+    const q = String(query || '').trim().toLowerCase();
     document.querySelectorAll('.doc-item').forEach(item => {
-        const text = item.textContent.toLowerCase();
-        item.style.display = text.includes(query) ? 'flex' : 'none';
+        const hay = (item.getAttribute('data-search') || item.textContent || '').toLowerCase();
+        item.style.display = !q || hay.includes(q) ? 'flex' : 'none';
     });
     document.querySelectorAll('.applicant-row').forEach(row => {
-        const text = row.textContent.toLowerCase();
-        row.style.display = text.includes(query) ? '' : 'none';
+        const hay = (row.getAttribute('data-search') || row.textContent || '').toLowerCase();
+        row.style.display = !q || hay.includes(q) ? '' : 'none';
     });
+}
+
+function clearDocumentsVaultDeepLinkParams() {
+    try {
+        const u = new URL(window.location.href);
+        let changed = false;
+        ['open_vault', 'applicant_id', 'document_type', 'search'].forEach(function (key) {
+            if (u.searchParams.has(key)) {
+                u.searchParams.delete(key);
+                changed = true;
+            }
+        });
+        if (changed) {
+            window.history.replaceState({}, '', u.pathname + (u.search || ''));
+        }
+    } catch (_e) {}
+}
+
+// Search functionality
+document.getElementById('searchInput').addEventListener('input', (e) => {
+    applyDocumentsManagementSearch(e.target.value);
 });
 
 
@@ -2140,9 +2193,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const intent = params.get('intent');
 
     const searchInput = document.getElementById('searchInput');
-    if (search && searchInput) {
+    const openVaultDeepLink = params.get('open_vault') === '1';
+    if (search && searchInput && !openVaultDeepLink) {
         searchInput.value = search;
-        searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+        applyDocumentsManagementSearch(search);
+    } else if (searchInput && openVaultDeepLink) {
+        searchInput.value = '';
+        applyDocumentsManagementSearch('');
     }
 
     if (openUpload === '1') {
@@ -2208,6 +2265,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }, 500);
         }
+    }
+
+    if (params.get('open_vault') === '1' && applicantId) {
+        setTimeout(function () {
+            if (typeof openVaultDrawer === 'function') {
+                openVaultDrawer(applicantId);
+            }
+        }, 150);
     }
 });
 

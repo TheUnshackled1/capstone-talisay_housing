@@ -2677,17 +2677,17 @@
     .summary-chip-card--emerald p:first-of-type { color: #047857 !important; }
     .summary-chip-card--emerald p:last-of-type { color: #065f46 !important; }
 
-    /* --- Archives launcher button: Amber --- */
+    /* --- Archives launcher button: aligned with primary blue --- */
     .btn-primary-add--archives {
-        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
-        border-color: #d97706 !important;
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+        border-color: #1d4ed8 !important;
         color: #ffffff !important;
-        box-shadow: 0 2px 6px rgba(217, 119, 6, 0.25);
+        box-shadow: 0 2px 6px rgba(30, 64, 175, 0.25);
         transition: all 0.18s ease;
     }
     .btn-primary-add--archives:hover {
-        background: linear-gradient(135deg, #d97706 0%, #b45309 100%) !important;
-        box-shadow: 0 4px 10px rgba(217, 119, 6, 0.35);
+        background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%) !important;
+        box-shadow: 0 4px 10px rgba(30, 64, 175, 0.35);
         transform: translateY(-1px);
     }
 
@@ -6768,10 +6768,15 @@
         proceedBtn.disabled = !canProceed;
         proceedBtn.classList.toggle('is-ready', !!canProceed);
         if (hintEl) {
-            hintEl.textContent = canProceed
-                ? 'All baseline requirements complete. Ready to proceed.'
-                : 'Complete all baseline required scans (R01–R07 and RVT) to proceed.';
-            hintEl.classList.toggle('is-ready', !!canProceed);
+            if (canProceed) {
+                hintEl.textContent = '';
+                hintEl.hidden = true;
+                hintEl.classList.remove('is-ready');
+            } else {
+                hintEl.hidden = false;
+                hintEl.textContent = 'Complete all baseline required scans (R01–R07 and RVT) to proceed.';
+                hintEl.classList.remove('is-ready');
+            }
         }
     }
 

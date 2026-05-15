@@ -1777,16 +1777,9 @@ def archive_list(request, position):
     """
     from django.core.paginator import Paginator
 
-    # Get filters from query parameters
-    selected_channel = request.GET.get('channel', '')
     selected_barangay = request.GET.get('barangay', '')
-    selected_reason = request.GET.get('reason', '')
-    selected_archived_by = request.GET.get('archived_by', '')
-    date_from = (request.GET.get('date_from') or '').strip()
-    date_to = (request.GET.get('date_to') or '').strip()
     search_query = (request.GET.get('q') or '').strip()
 
-    # Build query
     archives_qs = Archive.objects.select_related(
         'applicant',
         'archived_by',
@@ -1794,19 +1787,8 @@ def archive_list(request, position):
         'applicant__application__form_generated_by',
     ).order_by('archived_at')
 
-    if selected_channel:
-        archives_qs = archives_qs.filter(channel=selected_channel)
-
     if selected_barangay:
         archives_qs = archives_qs.filter(barangay_name_snapshot=selected_barangay)
-    if selected_archived_by:
-        archives_qs = archives_qs.filter(archived_by_id=selected_archived_by)
-    parsed_from = parse_date(date_from) if date_from else None
-    parsed_to = parse_date(date_to) if date_to else None
-    if parsed_from:
-        archives_qs = archives_qs.filter(archived_at__date__gte=parsed_from)
-    if parsed_to:
-        archives_qs = archives_qs.filter(archived_at__date__lte=parsed_to)
     if search_query:
         archives_qs = archives_qs.filter(
             Q(full_name_snapshot__icontains=search_query) |
@@ -1823,15 +1805,6 @@ def archive_list(request, position):
             )
         return ('intake_archive_only', 'Intake archival receipt only')
 
-    if selected_reason:
-        filtered_ids = []
-        for ar in archives_qs:
-            key, _ = _archive_reason_key_and_label(ar)
-            if key == selected_reason:
-                filtered_ids.append(ar.id)
-        archives_qs = archives_qs.filter(id__in=filtered_ids)
-
-    # Get unique channels and barangays for filters
     channel_choices = {
         'channel_a': 'Channel A — Walk-in',
         'channel_b_no_hazard': 'Channel B — No hazard',
@@ -1840,18 +1813,7 @@ def archive_list(request, position):
     }
 
     barangays = Archive.objects.values_list('barangay_name_snapshot', flat=True).distinct().order_by('barangay_name_snapshot')
-    barangays = [b for b in barangays if b]  # Remove empty values
-    archived_by_choices = list(
-        Archive.objects.exclude(archived_by__isnull=True)
-        .select_related('archived_by')
-        .values_list('archived_by_id', 'archived_by__first_name', 'archived_by__last_name')
-        .distinct()
-        .order_by('archived_by__first_name', 'archived_by__last_name')
-    )
-    reason_choices = {
-        'intake_archive_only': 'Intake archival receipt only',
-        'promoted_module2': 'Promoted to Module 2',
-    }
+    barangays = [b for b in barangays if b]
 
     applicant_ids_for_docs = list(
         archives_qs.exclude(applicant_id__isnull=True).values_list('applicant_id', flat=True)
@@ -1965,21 +1927,15 @@ def archive_list(request, position):
     page_number = request.GET.get('page', 1)
     page_obj = paginator.get_page(page_number)
 
+    # Context: barangay + search only (channel/reason/staff/date filters removed from UI).
     context = {
         'page_title': 'Archive Records',
         'staff_position': position,
         'position': position,
         'total_archived': archives_qs.count(),
-        'channels': channel_choices,
-        'selected_channel': selected_channel,
-        'selected_reason': selected_reason,
-        'selected_archived_by': selected_archived_by,
-        'date_from': date_from,
-        'date_to': date_to,
         'barangays': barangays,
-        'archived_by_choices': archived_by_choices,
-        'reason_choices': reason_choices,
         'selected_barangay': selected_barangay,
+        'search_query': search_query,
         'archive_records': page_obj.object_list,
         'page_obj': page_obj,
     }
