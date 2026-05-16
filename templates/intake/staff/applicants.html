@@ -214,9 +214,44 @@
         background-position: right 0.5rem center;
     }
 
-    /* Visual styling moved to .formal-table in dashboard.css.
-       This template keeps only the column-width modifiers
-       (.applicants-table--active / --archive) further below. */
+    /* Boxed grid for formal applicant tables — lives in this template because
+       extra_css reloads tailwind.css after dashboard.css (Tailwind preflight can
+       strip table borders). Mirrors Document Management .documents-table treatment. */
+    .applicants-table.formal-table {
+        border-collapse: collapse;
+        border: 1px solid #e5e7eb;
+    }
+
+    .applicants-table.formal-table thead th {
+        border: 1px solid rgba(255, 255, 255, 0.22);
+    }
+
+    .applicants-table.formal-table thead th:last-child {
+        border-right: 1px solid rgba(255, 255, 255, 0.22);
+    }
+
+    .applicants-table.formal-table tbody td {
+        border: 1px solid #e5e7eb;
+    }
+
+    .applicants-table.formal-table tbody td:last-child {
+        border-right: 1px solid #e5e7eb;
+    }
+
+    .applicants-table.formal-table tbody tr:last-child td {
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .applicants-table.formal-table tbody .formal-table-empty td {
+        border: 1px solid #e5e7eb;
+    }
+
+    /* LIST OF APPLICANTS — Status column can wrap multi-line badges */
+    .applicants-table--archive.formal-table tbody td:nth-child(8) {
+        overflow: visible;
+        white-space: normal !important;
+    }
+
     .applicants-table { table-layout: fixed; width: 100%; }
 
     .section-divider {

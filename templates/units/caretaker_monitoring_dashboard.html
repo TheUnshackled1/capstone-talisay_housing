@@ -521,11 +521,11 @@
         border-collapse: collapse;
         background: white;
         font-size: 13px;
+        border: 1px solid #e5e7eb;
     }
 
     .monitoring-tasks-table thead {
-        background: linear-gradient(180deg, #1d4ed8 0%, #1e3a8a 100%);
-        border-bottom: 2px solid #172554;
+        background: transparent;
     }
 
     .monitoring-tasks-table th {
@@ -536,23 +536,49 @@
         color: #ffffff;
         text-transform: uppercase;
         letter-spacing: 0.4px;
-        border-right: 1px solid rgba(255, 255, 255, 0.16);
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        background: linear-gradient(180deg, #1d4ed8 0%, #1e3a8a 100%);
+        position: sticky;
+        top: 0;
+        z-index: 2;
+    }
+
+    .monitoring-tasks-table thead th:last-child {
+        border-right: 1px solid rgba(255, 255, 255, 0.22);
     }
 
     .monitoring-tasks-table td {
         padding: 12px;
-        border-bottom: 1px solid #e5e7eb;
+        border: 1px solid #e5e7eb;
         font-size: 0.82rem;
         color: #1f2937;
-        vertical-align: top;
+        vertical-align: middle;
+    }
+
+    .monitoring-tasks-table tbody td:last-child {
+        border-right: 1px solid #e5e7eb;
+    }
+
+    .monitoring-tasks-table tbody tr:last-child td {
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .monitoring-tasks-table td:nth-child(6),
+    .monitoring-tasks-table td:nth-child(9) {
+        overflow: visible;
+    }
+
+    .monitoring-tasks-table tbody tr:nth-child(even) {
+        background: #fafbfc;
     }
 
     .monitoring-tasks-table tbody tr {
-        transition: background-color 0.2s ease;
+        transition: background-color 0.2s ease, box-shadow 0.2s ease;
     }
 
     .monitoring-tasks-table tbody tr:hover {
-        background-color: #f9fafb;
+        background: #eff6ff;
+        box-shadow: inset 3px 0 0 #2563eb;
     }
 
     .monitoring-tasks-table tbody tr.task-selected {

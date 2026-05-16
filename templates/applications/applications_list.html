@@ -354,11 +354,10 @@
     .applications-table {
         width: 100%;
         table-layout: fixed;
-        border-collapse: separate;
-        border-spacing: 0;
+        border-collapse: collapse;
         min-width: 0;
         background: white;
-        border: none;
+        border: 1px solid #e5e7eb;
         border-radius: 0;
         box-shadow: none;
         position: relative;
@@ -366,7 +365,6 @@
 
     .applications-table thead {
         background: linear-gradient(180deg, #1d4ed8 0%, #1e3a8a 100%);
-        border-bottom: 2px solid #172554;
         position: sticky;
         top: 0;
         z-index: 2;
@@ -383,8 +381,7 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        border-right: 1px solid rgba(255, 255, 255, 0.16);
-        border-bottom: 1px solid #172554;
+        border: 1px solid rgba(255, 255, 255, 0.22);
         position: relative;
         background: linear-gradient(180deg, #1d4ed8 0%, #1e3a8a 100%);
     }
@@ -466,8 +463,7 @@
 
     .applications-table td {
         padding: 0.55rem 0.45rem;
-        border-bottom: 1px solid #eef2f7;
-        border-right: 1px solid #f1f5f9;
+        border: 1px solid #e5e7eb;
         vertical-align: middle;
         font-size: 0.625rem;
         color: #334155;
@@ -475,6 +471,12 @@
         overflow-wrap: anywhere;
         overflow: hidden;
         position: relative;
+    }
+
+    .applications-table td.col-status,
+    .applications-table td.col-eligibility,
+    .applications-table td.col-actions {
+        overflow: visible;
     }
 
     .applications-table tbody tr {
@@ -496,12 +498,16 @@
     }
 
     .applications-table tbody tr:last-child td {
-        border-bottom: none;
+        border-bottom: 1px solid #e5e7eb;
     }
 
     .applications-table th:last-child,
     .applications-table td:last-child {
-        border-right: none;
+        border-right: 1px solid #e5e7eb;
+    }
+
+    .applications-table thead th:last-child {
+        border-right: 1px solid rgba(255, 255, 255, 0.22);
     }
 
     /* Column width for main applications table */

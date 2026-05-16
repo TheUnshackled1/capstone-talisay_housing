@@ -430,7 +430,7 @@
     <div class="table-scroll">
     <table class="applicants-table applicants-table--archive">
         <thead>
-            <tr><th>#</th><th>Transaction #</th><th>Proceeded</th><th title="Relative to now since this record proceeded to ARCHIVES">Time ago</th><th>Reference #</th><th>Full Name</th><th>Staff Handled</th><th>Archive Reason</th><th>State</th><th>SMS</th><th>DOB</th><th>Barangay</th><th>Action</th></tr>
+            <tr><th>#</th><th>Transaction #</th><th>Proceeded</th><th title="Relative to now since this record proceeded to ARCHIVES">Time ago</th><th>Reference #</th><th>Full Name</th><th>Staff Handled</th><th>Applicant Status</th><th>State</th><th>SMS</th><th>DOB</th><th>Barangay</th><th>Action</th></tr>
         </thead>
         <tbody>
             {% for row in archive_records %}
@@ -442,7 +442,10 @@
                 <td>{{ row.referenceNumber }}</td>
                 <td style="font-weight:500;">{{ row.fullName }}</td>
                 <td><div style="display:flex; align-items:center; gap:0.375rem;"><div class="handled-by-avatar {% if row.handledByPosition == '2nd Member' %}second-member{% elif row.handledByPosition == '4th Member' %}fourth-member{% else %}other{% endif %}">{{ row.handledByInitials }}</div><div style="display:flex; flex-direction:column; min-width:0;"><span style="font-size:0.625rem; font-weight:500; color:#1e293b;">{{ row.handledBy }}</span><span style="font-size:0.5625rem; color:#64748b;">{{ row.handledByPosition }}</span></div></div></td>
-                <td style="font-size:0.58rem; color:#334155;">{{ row.archiveReasonLabel }}</td>
+                <td style="font-size:0.58rem; color:#334155; vertical-align:top;">
+                    <span style="font-weight:600;">{{ row.applicantStatusLabel }}</span>
+                    {% if row.applicantStatusDetail %}<div style="margin-top:0.25rem; font-size:0.54rem; color:#64748b; line-height:1.35;">{{ row.applicantStatusDetail }}</div>{% endif %}
+                </td>
                 <td><span style="display:inline-flex; align-items:center; gap:0.2rem; padding:0.125rem 0.35rem; background:#f8fafc; color:#475569; border:1px solid #cbd5e1; border-radius:9999px; font-size:0.54rem; font-weight:600;">{{ row.readOnlyState }}</span></td>
                 <td>{% if row.hasPhone %}{% if row.registrationSmsSent %}<span style="display:inline-flex; align-items:center; gap:0.125rem; padding:0.125rem 0.375rem; background:#dcfce7; color:#166534; border-radius:9999px; font-size:0.5625rem; font-weight:500;">✓ Sent</span>{% else %}<span style="display:inline-flex; align-items:center; gap:0.125rem; padding:0.125rem 0.375rem; background:#fee2e2; color:#991b1b; border-radius:9999px; font-size:0.5625rem; font-weight:500;">✗ Not Sent</span>{% endif %}{% else %}<span style="padding:0.125rem 0.375rem; background:#f1f5f9; color:#64748b; border-radius:9999px; font-size:0.5625rem;">No Phone</span>{% endif %}</td>
                 <td style="font-size:0.625rem; color:#1e293b; font-weight:600;">{{ row.dateOfBirthDisplay|default:"N/A" }}</td>
@@ -472,7 +475,8 @@
                         data-form-summary="{{ row.formGenSummary|default:'' }}"
                         data-form-at="{{ row.formGenAt|default:'' }}"
                         data-form-by="{{ row.formGenBy|default:'' }}"
-                        data-archive-reason="{{ row.archiveReasonLabel|default:'N/A' }}"
+                        data-applicant-status="{{ row.applicantStatusLabel|default:'N/A' }}"
+                        data-applicant-status-detail="{{ row.applicantStatusDetail|default:'' }}"
                         data-read-only-state="{{ row.readOnlyState|default:'Read-only historical record' }}"
                     >
                         Handoff Summary
@@ -535,7 +539,8 @@
                     <div><p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Proceeded to archives</p><div id="archiveSummaryProceededAt">N/A</div></div>
                     <div><p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Proceeded by</p><div id="archiveSummaryProceededBy">N/A</div></div>
                     <div><p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Archive snapshot</p><div id="archiveSummaryArchiveSnapshotLine">N/A</div></div>
-                    <div><p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Archive reason</p><div id="archiveSummaryArchiveReason">N/A</div></div>
+                    <div><p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Applicant status</p><div id="archiveSummaryApplicantStatus">N/A</div></div>
+                    <div id="archiveApplicantStatusDetailBlock" style="display:none;"><p style="font-size: 0.72rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.35rem;">Status detail</p><div id="archiveSummaryApplicantStatusDetail" style="font-size: 0.78rem; color: #475569; line-height: 1.45;"></div></div>
                     <div><p style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Record state</p><div id="archiveSummaryRecordState">Read-only historical record</div></div>
                 </div>
             </div>
@@ -623,7 +628,19 @@ function openArchiveHandoffSummary(buttonEl) {
     setText('archiveSummaryProceededAt', d.proceeded || '');
     setText('archiveSummaryProceededBy', d.proceededBy || '', 'Unknown');
     setText('archiveSummaryArchiveSnapshotLine', snapshotLine);
-    setText('archiveSummaryArchiveReason', d.archiveReason || '');
+    setText('archiveSummaryApplicantStatus', d.applicantStatus || '');
+    const detailBlk = document.getElementById('archiveApplicantStatusDetailBlock');
+    const detailEl = document.getElementById('archiveSummaryApplicantStatusDetail');
+    const detRaw = (d.applicantStatusDetail && String(d.applicantStatusDetail).trim()) ? String(d.applicantStatusDetail).trim() : '';
+    if (detailBlk && detailEl) {
+        if (detRaw) {
+            detailEl.textContent = detRaw;
+            detailBlk.style.display = 'block';
+        } else {
+            detailEl.textContent = '';
+            detailBlk.style.display = 'none';
+        }
+    }
     setText('archiveSummaryRecordState', d.readOnlyState || '', 'Read-only historical record');
     setText('archiveSummarySms', d.sms || '');
 

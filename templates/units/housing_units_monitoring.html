@@ -288,10 +288,6 @@
         box-shadow: 0 0 0 1px rgba(15, 118, 110, 0.35);
     }
     .vmap-legend--vacant   i { background: #3b82f6; }
-    .vmap-legend--extension-failed i {
-        background: linear-gradient(135deg, #f87171 0%, #dc2626 100%);
-        box-shadow: 0 0 0 1px rgba(185, 28, 28, 0.4);
-    }
 
     .vmap-canvas {
         background-color: #fafbfc;
@@ -451,47 +447,6 @@
         border-color: #93c5fd;
     }
     .vmap-lot--vacant .vmap-lot-tag { color: #1e40af; }
-
-    .vmap-lot--notice30 {
-        color: #d97706;
-        background: linear-gradient(180deg, #fffbeb 0%, #fef3c7 100%);
-        border-color: #fcd34d;
-    }
-    .vmap-lot--notice30 .vmap-lot-tag { color: #92400e; }
-
-    .vmap-lot--final {
-        color: #dc2626;
-        background: linear-gradient(180deg, #fef2f2 0%, #fee2e2 100%);
-        border-color: #fca5a5;
-    }
-    .vmap-lot--final .vmap-lot-tag { color: #991b1b; }
-
-    .vmap-lot--repo {
-        color: #475569;
-        background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
-        border-color: #94a3b8;
-    }
-    .vmap-lot--repo .vmap-lot-tag { color: #334155; }
-
-    /* Extension 30 Day assessed Failed — staff attention (overrides status palette) */
-    .vmap-lot.vmap-lot--extension-failed {
-        color: #b91c1c;
-        background: linear-gradient(180deg, #fef2f2 0%, #fecaca 100%);
-        border-color: #f87171;
-        box-shadow: inset 0 0 0 1px rgba(220, 38, 38, 0.35), 0 0 0 1px rgba(185, 28, 28, 0.2);
-    }
-    .vmap-lot--extension-failed .vmap-lot-id { color: #7f1d1d; }
-    .vmap-lot--extension-failed .vmap-lot-tag {
-        color: #991b1b;
-        background: rgba(254, 226, 226, 0.95);
-        border: 1px solid #fca5a5;
-        letter-spacing: 0.06em;
-    }
-
-    .unit-table-row--extension-failed td {
-        background: linear-gradient(180deg, #fef2f2 0%, #fee2e2 100%) !important;
-        box-shadow: inset 3px 0 0 0 #dc2626;
-    }
 
     /* Tablet — single block per row, denser lot grid */
     @media (max-width: 900px) {
@@ -2173,7 +2128,6 @@
             <span class="vmap-legend-item vmap-legend--occupied"><i></i>Occupied</span>
             <span class="vmap-legend-item vmap-legend--housing-file"><i></i>Housing unit</span>
             <span class="vmap-legend-item vmap-legend--vacant"><i></i>Vacant</span>
-            <span class="vmap-legend-item vmap-legend--extension-failed"><i></i>Extension Failed</span>
         </div>
         <div class="vmap-canvas">
             {% for block, units in units_by_block.items %}
@@ -2188,14 +2142,14 @@
                     <button type="button"
                             data-unit-id="{{ unit.id }}"
                             data-housing-unit-on-file="{% if unit.is_housing_unit_on_file %}1{% else %}0{% endif %}"
-                            class="unit-card vmap-lot {% if unit.extension_final_visit_failed %}vmap-lot--extension-failed{% elif unit.is_housing_unit_on_file %}vmap-lot--housing-unit{% elif unit.status == 'Occupied' %}vmap-lot--occupied{% elif unit.status == 'Vacant — available' %}vmap-lot--vacant{% elif unit.status == 'Under notice (30-day)' %}vmap-lot--notice30{% elif unit.status == 'Final notice (10-day)' %}vmap-lot--final{% else %}vmap-lot--repo{% endif %}"
+                            class="unit-card vmap-lot {% if unit.is_housing_unit_on_file %}vmap-lot--housing-unit{% elif unit.status == 'Occupied' %}vmap-lot--occupied{% elif unit.status == 'Vacant — available' %}vmap-lot--vacant{% endif %}"
                             data-status="{{ unit.status }}"
                             data-construction="{{ unit.construction_tokens }}"
                             onclick="openUnitModal('{{ unit.id }}')"
                             title="Block {{ unit.block_number }} · Lot {{ unit.lot_number }} — {% if unit.is_housing_unit_on_file %}Housing unit — final monitoring complete, recorded in inventory{% else %}{{ unit.get_status_display }}{% endif %}{% if unit.current_occupant %} · {{ unit.current_occupant.full_name }}{% elif unit.occupant_name %} · {{ unit.occupant_name }}{% endif %}">
                         <span class="vmap-lot-id">{{ unit.block_number }}-{{ unit.lot_number }}</span>
                         <span class="vmap-lot-occ">{% if unit.current_occupant %}{{ unit.current_occupant.full_name|truncatechars:14 }}{% elif unit.occupant_name %}{{ unit.occupant_name|truncatechars:14 }}{% else %}—{% endif %}</span>
-                        <span class="vmap-lot-tag">{% if unit.extension_final_visit_failed %}Failed{% elif unit.is_housing_unit_on_file %}Unit{% elif unit.status == 'Occupied' %}Occupied{% elif unit.status == 'Vacant — available' %}Vacant{% elif unit.status == 'Under notice (30-day)' %}30-day{% elif unit.status == 'Final notice (10-day)' %}Final{% else %}Repo{% endif %}</span>
+                        <span class="vmap-lot-tag">{% if unit.is_housing_unit_on_file %}Unit{% elif unit.status == 'Occupied' %}Occupied{% elif unit.status == 'Vacant — available' %}Vacant{% else %}{{ unit.status|default:"—" }}{% endif %}</span>
                     </button>
                     {% endfor %}
                 </div>
@@ -2222,7 +2176,7 @@
                 <tbody>
                     {% for block, units in units_by_block.items %}
                         {% for unit in units %}
-                        <tr class="unit-table-row{% if unit.extension_final_visit_failed %} unit-table-row--extension-failed{% endif %}"
+                        <tr class="unit-table-row"
                             data-unit-id="{{ unit.id }}"
                             data-status="{{ unit.status }}"
                             data-construction="{{ unit.construction_tokens }}"
@@ -2239,10 +2193,10 @@
                                 </span>
                                 {% else %}
                                 <span style="display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.25rem 0.6rem; border-radius: 4px; font-weight: 500;
-                                    {% if unit.status == 'Occupied' %}background: rgba(34, 197, 94, 0.15); color: #16a34a;{% elif unit.status == 'Vacant — available' %}background: rgba(37, 99, 235, 0.15); color: #2563eb;{% elif unit.status == 'Under notice (30-day)' %}background: rgba(245, 158, 11, 0.15); color: #d97706;{% elif unit.status == 'Final notice (10-day)' %}background: rgba(239, 68, 68, 0.15); color: #dc2626;{% else %}background: rgba(168, 85, 247, 0.15); color: #a855f7;{% endif %}
+                                    {% if unit.status == 'Occupied' %}background: rgba(34, 197, 94, 0.15); color: #16a34a;{% elif unit.status == 'Vacant — available' %}background: rgba(37, 99, 235, 0.15); color: #2563eb;{% else %}background: rgba(148, 163, 184, 0.15); color: #475569;{% endif %}
                                 ">
                                     <span style="width: 5px; height: 5px; border-radius: 50%; display: inline-block;
-                                        {% if unit.status == 'Occupied' %}background: #22c55e;{% elif unit.status == 'Vacant — available' %}background: #3b82f6;{% elif unit.status == 'Under notice (30-day)' %}background: #f59e0b;{% elif unit.status == 'Final notice (10-day)' %}background: #ef4444;{% else %}background: #a855f7;{% endif %}
+                                        {% if unit.status == 'Occupied' %}background: #22c55e;{% elif unit.status == 'Vacant — available' %}background: #3b82f6;{% else %}background: #94a3b8;{% endif %}
                                     "></span>
                                     {{ unit.status|default:"—" }}
                                 </span>
@@ -2336,14 +2290,15 @@
 {% if can_add_housing_unit %}
 <div id="addUnitModal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.55); align-items: center; justify-content: center; z-index: 1001; padding: 1rem;"
     onclick="if (event.target === this) closeAddUnitModal();">
-    <div onclick="event.stopPropagation();" style="background: white; border-radius: 12px; box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.35); max-width: 420px; width: 100%; border: 1px solid #e2e8f0;">
-        <div style="padding: 1rem 1.15rem; border-bottom: 1px solid #e5e7eb; background: linear-gradient(180deg, #f0f9ff 0%, #f8fafc 100%); display: flex; justify-content: space-between; align-items: flex-start; gap: 0.75rem;">
-            <div>
-                <h2 style="margin: 0; font-size: 1rem; font-weight: 700; color: #0c4a6e;">Add housing unit</h2>
-                <p style="margin: 0.35rem 0 0; font-size: 0.72rem; color: #64748b; line-height: 1.4;">Creates a new block/lot on the inventory. Starts as <strong>Vacant — available</strong>.</p>
+    <div onclick="event.stopPropagation();" style="background: white; border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.4), 0 0 0 1px rgba(15, 23, 42, 0.05); max-width: 440px; width: 100%; overflow: hidden;">
+        <div style="position: relative; padding: 1.6rem 1.5rem 1.25rem; background: linear-gradient(180deg, #f0f9ff 0%, #ffffff 100%); border-bottom: 1px solid #e5e7eb; text-align: center;">
+            <button type="button" onclick="closeAddUnitModal()" title="Close" aria-label="Close"
+                style="position: absolute; top: 0.75rem; right: 0.75rem; background: transparent; border: none; font-size: 1.4rem; line-height: 1; cursor: pointer; color: #64748b; padding: 0.2rem 0.4rem; border-radius: 6px;">&times;</button>
+            <div style="display: inline-flex; align-items: center; justify-content: center; width: 2.75rem; height: 2.75rem; border-radius: 999px; background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); color: #fff; margin-bottom: 0.6rem; box-shadow: 0 6px 14px -4px rgba(2, 132, 199, 0.4);" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
             </div>
-            <button type="button" onclick="closeAddUnitModal()" title="Close"
-                style="background: transparent; border: none; font-size: 1.35rem; line-height: 1; cursor: pointer; color: #64748b; padding: 0.1rem 0.25rem;">&times;</button>
+            <h2 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: #0c4a6e; letter-spacing: -0.01em;">Add housing unit</h2>
+            <p style="margin: 0.4rem auto 0; max-width: 22rem; font-size: 0.78rem; color: #475569; line-height: 1.45;">Creates a new block/lot on the inventory. Starts as <strong style="color: #0c4a6e;">Vacant — available</strong>.</p>
         </div>
         <form id="addUnitForm" style="padding: 1rem 1.15rem 1.1rem;">
             {% csrf_token %}
@@ -2363,13 +2318,21 @@
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem; margin-bottom: 0.85rem;">
                 <div>
                     <label for="addUnitBlock" style="display: block; font-size: 0.68rem; font-weight: 600; color: #374151; margin-bottom: 0.35rem; text-transform: uppercase; letter-spacing: 0.04em;">Block</label>
-                    <input id="addUnitBlock" name="block_number" type="text" required maxlength="10" placeholder="e.g. 1" autocomplete="off"
-                        style="width: 100%; padding: 0.55rem 0.65rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.85rem; box-sizing: border-box; font-family: inherit;">
+                    <input id="addUnitBlock" name="block_number" type="text" required maxlength="10" minlength="1"
+                        pattern="[0-9]+" inputmode="numeric" autocomplete="off"
+                        placeholder="e.g. 1"
+                        title="Digits only (max 10)"
+                        style="width: 100%; padding: 0.55rem 0.65rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.85rem; box-sizing: border-box; font-family: inherit;"
+                        oninput="this.value=this.value.replace(/\D/g,'')">
                 </div>
                 <div>
                     <label for="addUnitLot" style="display: block; font-size: 0.68rem; font-weight: 600; color: #374151; margin-bottom: 0.35rem; text-transform: uppercase; letter-spacing: 0.04em;">Lot</label>
-                    <input id="addUnitLot" name="lot_number" type="text" required maxlength="10" placeholder="e.g. 5" autocomplete="off"
-                        style="width: 100%; padding: 0.55rem 0.65rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.85rem; box-sizing: border-box; font-family: inherit;">
+                    <input id="addUnitLot" name="lot_number" type="text" required maxlength="10" minlength="1"
+                        pattern="[0-9]+" inputmode="numeric" autocomplete="off"
+                        placeholder="e.g. 5"
+                        title="Digits only (max 10)"
+                        style="width: 100%; padding: 0.55rem 0.65rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.85rem; box-sizing: border-box; font-family: inherit;"
+                        oninput="this.value=this.value.replace(/\D/g,'')">
                 </div>
             </div>
             <div style="margin-bottom: 0.85rem;">
@@ -2378,11 +2341,11 @@
                     style="width: 100%; padding: 0.55rem 0.65rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.8rem; resize: vertical; box-sizing: border-box; font-family: inherit; line-height: 1.4;"></textarea>
             </div>
             <p id="addUnitFormError" style="display: none; margin: 0 0 0.65rem; font-size: 0.75rem; color: #b91c1c; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 0.5rem 0.65rem;"></p>
-            <div style="display: flex; justify-content: flex-end; gap: 0.5rem; padding-top: 0.25rem; border-top: 1px solid #f1f5f9;">
+            <div style="display: flex; justify-content: center; gap: 0.6rem; padding: 0.85rem 0 0.1rem; margin-top: 0.4rem; border-top: 1px solid #f1f5f9;">
                 <button type="button" onclick="closeAddUnitModal()"
-                    style="padding: 0.5rem 0.95rem; background: #fff; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.78rem; font-weight: 600; color: #475569; cursor: pointer;">Cancel</button>
+                    style="padding: 0.6rem 1.4rem; background: #fff; border: 1px solid #cbd5e1; border-radius: 9px; font-size: 0.82rem; font-weight: 600; color: #475569; cursor: pointer; min-width: 7rem; transition: background 0.15s, border-color 0.15s;">Cancel</button>
                 <button type="submit" id="addUnitSubmitBtn"
-                    style="padding: 0.5rem 0.95rem; background: #0284c7; color: #fff; border: none; border-radius: 8px; font-size: 0.78rem; font-weight: 700; cursor: pointer;">Save unit</button>
+                    style="padding: 0.6rem 1.4rem; background: linear-gradient(180deg, #0ea5e9 0%, #0284c7 100%); color: #fff; border: none; border-radius: 9px; font-size: 0.82rem; font-weight: 700; cursor: pointer; min-width: 7rem; box-shadow: 0 4px 10px -2px rgba(2, 132, 199, 0.35); transition: filter 0.15s, transform 0.1s;">Save unit</button>
             </div>
         </form>
     </div>
@@ -2719,10 +2682,8 @@ function highlightExtensionFailedDisqualifyPath() {
             const chip = document.querySelector(`button.vmap-lot[data-unit-id="${uid}"]`);
             if (chip) {
                 const st = chip.dataset.status || '';
-                applyVmapLotHousingUnitVisual(uid, false, st, true);
+                applyVmapLotHousingUnitVisual(uid, false, st);
             }
-            const row = document.querySelector(`tr.unit-table-row[data-unit-id="${uid}"]`);
-            if (row) row.classList.add('unit-table-row--extension-failed');
         }
         const unitModal = document.getElementById('unitModal');
         const disp = unitModal && unitModal.style.display;
@@ -2933,22 +2894,14 @@ function applyUnitDrawerStatusPill(unit) {
     }
 }
 
-function applyVmapLotHousingUnitVisual(unitId, isOnFile, occupancyStatus, extensionFailed) {
+function applyVmapLotHousingUnitVisual(unitId, isOnFile, occupancyStatus) {
     const chip = document.querySelector(`button.vmap-lot[data-unit-id="${unitId}"]`);
     if (!chip) return;
     const tag = chip.querySelector('.vmap-lot-tag');
     const st = occupancyStatus != null ? occupancyStatus : (chip.dataset.status || '');
     chip.classList.remove(
         'vmap-lot--housing-unit', 'vmap-lot--occupied', 'vmap-lot--vacant',
-        'vmap-lot--notice30', 'vmap-lot--final', 'vmap-lot--repo',
-        'vmap-lot--extension-failed',
     );
-    if (extensionFailed) {
-        chip.classList.add('vmap-lot--extension-failed');
-        chip.dataset.housingUnitOnFile = '0';
-        if (tag) tag.textContent = 'Failed';
-        return;
-    }
     if (isOnFile) {
         chip.classList.add('vmap-lot--housing-unit');
         chip.dataset.housingUnitOnFile = '1';
@@ -2962,15 +2915,8 @@ function applyVmapLotHousingUnitVisual(unitId, isOnFile, occupancyStatus, extens
     } else if (st === 'Vacant — available') {
         chip.classList.add('vmap-lot--vacant');
         if (tag) tag.textContent = 'Vacant';
-    } else if (st === 'Under notice (30-day)') {
-        chip.classList.add('vmap-lot--notice30');
-        if (tag) tag.textContent = '30-day';
-    } else if (st === 'Final notice (10-day)') {
-        chip.classList.add('vmap-lot--final');
-        if (tag) tag.textContent = 'Final';
     } else {
-        chip.classList.add('vmap-lot--repo');
-        if (tag) tag.textContent = 'Repo';
+        if (tag) tag.textContent = st || '—';
     }
 }
 
@@ -2988,7 +2934,7 @@ async function handleUpdateLotClick() {
         const unit = data.unit;
         applyUnitDetailHeader(unit);
         applyUnitDrawerStatusPill(unit);
-        applyVmapLotHousingUnitVisual(String(unit.id), !!unit.is_housing_unit_on_file, unit.status, !!unit.extension_final_visit_failed);
+                applyVmapLotHousingUnitVisual(String(unit.id), !!unit.is_housing_unit_on_file, unit.status);
         if (!unit.is_housing_unit_on_file) {
             monitoringFlowAlert(
                 'This lot is not a completed housing unit yet. After final monitoring is assessed as Housing unit and construction reaches 100%, the map tag shows “Unit”.',
@@ -4056,7 +4002,6 @@ async function submitProgressAssessment(decision) {
                             String(u.id),
                             !!u.is_housing_unit_on_file,
                             u.status,
-                            !!u.extension_final_visit_failed,
                         );
                     }
                     setTimeout(() => highlightExtensionFailedDisqualifyPath(), 150);
@@ -4745,7 +4690,7 @@ function openUnitModal(unitId) {
                 syncExplanationLetterPanel(unit);
                 renderPriorNoProgressVisitsPanel(letterWf);
                 renderExplanationExtension30DayCard(ext30);
-                applyVmapLotHousingUnitVisual(String(unit.id), !!unit.is_housing_unit_on_file, unit.status, !!unit.extension_final_visit_failed);
+                applyVmapLotHousingUnitVisual(String(unit.id), !!unit.is_housing_unit_on_file, unit.status);
                 document.getElementById('unitModal').style.display = 'flex';
                 if (unit.explanation_letter_workflow_applies === true && (unit.explanation_letter_case || unit.explanation_letter_view_url)) {
                     requestAnimationFrame(() => {

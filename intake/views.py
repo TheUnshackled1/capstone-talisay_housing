@@ -11,7 +11,9 @@ from django.views.decorators.csrf import csrf_exempt
 from django.core.exceptions import ObjectDoesNotExist
 from functools import wraps
 from .models import Applicant, Barangay, Archive, SMSLog
+from applications.staff_pipeline_status import archive_applicant_status
 from applications.models import QueueEntry
+from units.models import LotAward, Blacklist
 from documents.models import Document, Requirement, upsert_document_vault_upload
 from .forms import (
     HouseholdMemberForm,
@@ -1780,12 +1782,21 @@ def archive_list(request, position):
     selected_barangay = request.GET.get('barangay', '')
     search_query = (request.GET.get('q') or '').strip()
 
-    archives_qs = Archive.objects.select_related(
-        'applicant',
-        'archived_by',
-        'applicant__module2_handoff_by',
-        'applicant__application__form_generated_by',
-    ).order_by('archived_at')
+    archives_qs = (
+        Archive.objects.select_related(
+            'applicant',
+            'archived_by',
+            'applicant__module2_handoff_by',
+            'applicant__application__form_generated_by',
+        )
+        .prefetch_related(
+            Prefetch(
+                'applicant__application__lot_awards',
+                queryset=LotAward.objects.select_related('unit', 'construction_progress'),
+            ),
+        )
+        .order_by('archived_at')
+    )
 
     if selected_barangay:
         archives_qs = archives_qs.filter(barangay_name_snapshot=selected_barangay)
@@ -1796,15 +1807,6 @@ def archive_list(request, position):
             Q(barangay_name_snapshot__icontains=search_query)
         )
 
-    def _archive_reason_key_and_label(archive):
-        applicant = getattr(archive, 'applicant', None)
-        if applicant and getattr(applicant, 'module2_handoff_at', None):
-            return (
-                'promoted_module2',
-                'Promoted to Module 2 (Application & Eligibility)',
-            )
-        return ('intake_archive_only', 'Intake archival receipt only')
-
     channel_choices = {
         'channel_a': 'Channel A — Walk-in',
         'channel_b_no_hazard': 'Channel B — No hazard',
@@ -1814,6 +1816,14 @@ def archive_list(request, position):
 
     barangays = Archive.objects.values_list('barangay_name_snapshot', flat=True).distinct().order_by('barangay_name_snapshot')
     barangays = [b for b in barangays if b]
+
+    applicant_ids_for_blacklist = list(
+        archives_qs.exclude(applicant_id__isnull=True).values_list('applicant_id', flat=True).distinct()
+    )
+    blacklist_map = {
+        str(b.applicant_id): b
+        for b in Blacklist.objects.filter(applicant_id__in=applicant_ids_for_blacklist).only('applicant_id')
+    }
 
     applicant_ids_for_docs = list(
         archives_qs.exclude(applicant_id__isnull=True).values_list('applicant_id', flat=True)
@@ -1839,7 +1849,10 @@ def archive_list(request, position):
 
         staff_initials = staff_user.first_name[:1] + staff_user.last_name[:1] if staff_user else '—'
         channel_display = channel_choices.get(archive.channel, archive.channel)
-        reason_key, reason_label = _archive_reason_key_and_label(archive)
+
+        applicant_live = archive.applicant if archive.applicant_id else None
+        bl_row = blacklist_map.get(str(applicant_live.pk)) if applicant_live else None
+        applicant_status_primary, applicant_status_detail = archive_applicant_status(applicant_live, bl_row)
 
         # Convert to local timezone for display
         local_archived_at = timezone.localtime(archive.archived_at)
@@ -1900,8 +1913,8 @@ def archive_list(request, position):
             'extensionName': archive.extension_name_snapshot,
             'channel': archive.channel,
             'channelLabel': channel_display,
-            'archiveReasonKey': reason_key,
-            'archiveReasonLabel': reason_label,
+            'applicantStatusLabel': applicant_status_primary,
+            'applicantStatusDetail': applicant_status_detail or '',
             'handledBy': staff_name,
             'handledByPosition': staff_position_display,
             'handledByInitials': staff_initials,

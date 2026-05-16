@@ -1,6 +1,9 @@
 from django.db import models
 from django.conf import settings
+from django.core.validators import RegexValidator
 import uuid
+
+_DIGITS_ONLY = RegexValidator(r'^\d+$', message='Must be digits only (0-9).')
 
 
 class RelocationSite(models.Model):
@@ -80,8 +83,8 @@ class HousingUnit(models.Model):
         related_name='units'
     )
 
-    block_number = models.CharField(max_length=10)
-    lot_number = models.CharField(max_length=10)
+    block_number = models.CharField(max_length=10, validators=[_DIGITS_ONLY])
+    lot_number = models.CharField(max_length=10, validators=[_DIGITS_ONLY])
 
     # Unit details
     area_sqm = models.DecimalField(

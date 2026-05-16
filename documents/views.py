@@ -14,8 +14,9 @@ import mimetypes
 import os
 from uuid import UUID
 from intake.models import Applicant
-from units.models import ConstructionProgress, LotAward, MonitoringReport, Blacklist
+from units.models import LotAward, MonitoringReport, Blacklist
 from applications.models import QueueEntry
+from applications.staff_pipeline_status import staff_pipeline_primary_detail
 from documents.models import (
     Document,
     DocumentBlob,
@@ -402,73 +403,6 @@ def verify_position(view_func):
     return wrapper
 
 
-def _construction_progress_for_lot_award(lot_award: LotAward | None):
-    if not lot_award:
-        return None
-    try:
-        return lot_award.construction_progress
-    except ConstructionProgress.DoesNotExist:
-        return None
-
-
-def _housing_unit_on_file_from_progress(progress) -> bool:
-    return bool(
-        progress
-        and getattr(progress, 'stage', '') == 'completed'
-        and (getattr(progress, 'percent_complete', None) or 0) >= 100
-    )
-
-
-def _active_lot_award_with_unit(app_obj) -> LotAward | None:
-    if not app_obj:
-        return None
-    for la in app_obj.lot_awards.all():
-        if la.status == 'active' and la.unit_id:
-            return la
-    return None
-
-
-def _document_management_applicant_status(
-    applicant: Applicant, app_obj, bl_row: Blacklist | None
-) -> tuple[str, str | None]:
-    """
-    Applicant Status: pipeline stages, plus Module 4 distinction between
-    formal housing unit on file (construction completed) vs awarded lot only.
-    Blacklisted Beneficiaries registry overrides post-award labels.
-    """
-    if bl_row:
-        return ('Blacklisted Beneficiaries registry', None)
-
-    la_active = _active_lot_award_with_unit(app_obj) if app_obj else None
-    if la_active and la_active.unit:
-        unit = la_active.unit
-        loc = f'Block {unit.block_number}, Lot {unit.lot_number}'
-        prog = _construction_progress_for_lot_award(la_active)
-        if _housing_unit_on_file_from_progress(prog):
-            status_disp = unit.get_status_display() if hasattr(unit, 'get_status_display') else unit.status
-            return (
-                'Housing Units',
-                f'{loc} · Housing unit on file · {status_disp}',
-            )
-        status_disp = unit.get_status_display() if hasattr(unit, 'get_status_display') else unit.status
-        return (
-            'Awarded lot — not housing unit on file',
-            f'{loc} · {status_disp}',
-        )
-
-    if app_obj:
-        if app_obj.status == 'awarded':
-            return ('Awarded — pending unit linkage', None)
-        if app_obj.status == 'standby':
-            return ('Ready for Awarding', None)
-        if app_obj.status == 'completed':
-            return ('Ready for Awarding', None)
-
-    if getattr(applicant, 'form_queue_routed_at', None):
-        return ('Ready for Form queue', None)
-    return ('Evaluation & Eligibility', None)
-
-
 @login_required
 @verify_position
 def document_management(request, position):
@@ -602,7 +536,7 @@ def document_management(request, position):
         elif bl_row and (bl_row.reason_details or '').strip():
             why_disqualified = bl_row.reason_details.strip()
 
-        applicant_workflow_status, applicant_status_detail = _document_management_applicant_status(
+        applicant_workflow_status, applicant_status_detail = staff_pipeline_primary_detail(
             applicant, app_obj, bl_row
         )
 

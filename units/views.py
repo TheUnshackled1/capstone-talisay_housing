@@ -436,6 +436,12 @@ def create_housing_unit(request, position):
             status=400,
         )
 
+    if not block_number.isdigit() or not lot_number.isdigit():
+        return JsonResponse(
+            {'success': False, 'error': 'Block and lot must be digits only (0-9).'},
+            status=400,
+        )
+
     site = RelocationSite.objects.filter(id=site_id, is_active=True).first()
     if not site:
         return JsonResponse(
