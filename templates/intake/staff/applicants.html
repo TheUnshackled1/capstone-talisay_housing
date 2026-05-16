@@ -410,16 +410,18 @@
     .applicants-table--archive th:nth-child(11),
     .applicants-table--archive td:nth-child(11) { width: 8% !important; text-align: center; } /* View Sheet */
     .list-req-status {
-        display: inline-flex;
+        display: flex !important;
+        width: 100%;
         align-items: center;
         justify-content: center;
-        padding: 0.12rem 0.42rem;
-        border-radius: 9999px;
-        font-size: 0.5625rem;
+        padding: 0.45rem 0.55rem !important;
+        border-radius: 4px !important;
+        font-size: 0.5625rem !important;
         font-weight: 700;
         letter-spacing: 0.04em;
         text-transform: uppercase;
         white-space: nowrap;
+        box-sizing: border-box;
     }
     .list-req-status--complete {
         background: #dcfce7;
@@ -435,6 +437,33 @@
         background: #fee2e2;
         color: #991b1b;
         border: 1px solid #fecaca;
+    }
+
+    .list-req-status--blocked {
+        background: #fef2f2;
+        color: #7f1d1d;
+        border: 1px solid #f87171;
+        white-space: normal;
+        line-height: 1.25;
+        text-align: center;
+    }
+
+    .list-gen-status {
+        display: flex !important;
+        width: 100%;
+        align-items: center;
+        justify-content: center;
+        gap: 0.2rem;
+        padding: 0.45rem 0.55rem !important;
+        background: #dcfce7;
+        color: #166534;
+        border: 1px solid #86efac;
+        border-radius: 4px !important;
+        font-size: 0.5625rem !important;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        box-sizing: border-box;
     }
     .applicants-table--archive td:nth-child(3) {
         font-size: 0.56rem !important;
@@ -647,18 +676,19 @@
     body .btn-review-walkin,
     body .btn-archive-action {
         box-sizing: border-box;
-        display: inline-flex;
+        display: flex !important;
+        width: 100%;
         align-items: center;
         justify-content: center;
         gap: 0.4rem;
         min-height: 2.25rem;
-        padding: 0.4rem 0.85rem;
+        padding: 0.45rem 0.85rem !important;
         max-width: 100%;
         font-size: 0.6875rem;
         font-weight: 700;
         letter-spacing: 0.02em;
         line-height: 1.15;
-        border-radius: 0.5rem;
+        border-radius: 4px !important;
         cursor: pointer;
         white-space: nowrap;
         text-decoration: none;
@@ -702,21 +732,26 @@
     }
 
     .btn-archive-docs {
-        display: inline-flex;
+        display: flex !important;
+        width: 100%;
         align-items: center;
         justify-content: center;
         gap: 0.125rem;
-        padding: 0.22rem 0.55rem;
-        border-radius: 9999px;
-        font-size: 0.5625rem;
-        font-weight: 600;
+        min-height: 2.25rem;
+        padding: 0.45rem 0.55rem !important;
+        border-radius: 4px !important;
+        font-size: 0.5625rem !important;
+        font-weight: 700;
         cursor: pointer;
         white-space: normal;
         line-height: 1.2;
         font-family: inherit;
         transition: background 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s;
-        max-width: 75px;
+        max-width: 100%;
         word-wrap: break-word;
+        box-sizing: border-box;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
     }
     /* Requirements N/M — all three states stay in the emerald palette so the
        column reads as one family. Done is solid emerald (most prominent),
@@ -1443,6 +1478,184 @@
 
     .notice-modal-overlay.active {
         display: flex;
+    }
+
+    .notice-modal-overlay.notice-modal-overlay--top {
+        z-index: 13050;
+    }
+
+    #archiveRequirementsModal .archive-blacklist-banner {
+        display: none;
+        margin: 0 0 0.75rem;
+        padding: 0.65rem 0.75rem;
+        border-radius: 0.65rem;
+        border: 1px solid #fecaca;
+        background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+        color: #991b1b;
+        font-size: 0.78rem;
+        line-height: 1.45;
+    }
+
+    #archiveRequirementsModal .archive-blacklist-banner.is-visible {
+        display: block;
+    }
+
+    #archiveRequirementsModal .archive-blacklist-banner strong {
+        color: #7f1d1d;
+    }
+
+    /* Blacklist proceed blocked — notice modal layout */
+    .notice-modal.notice-modal--blacklist-blocked {
+        width: min(26rem, calc(100vw - 2rem));
+        border-color: #fecaca;
+        box-shadow:
+            0 20px 40px rgba(127, 29, 29, 0.14),
+            0 1px 0 rgba(255, 255, 255, 0.8) inset;
+    }
+
+    .notice-modal.notice-modal--blacklist-blocked .notice-modal-header {
+        background: linear-gradient(180deg, #fef2f2 0%, #fff5f5 100%);
+        border-bottom-color: #fecaca;
+        padding: 0.75rem 1rem 0.7rem;
+    }
+
+    .notice-modal.notice-modal--blacklist-blocked .notice-modal-title {
+        color: #991b1b;
+        font-size: 0.8125rem;
+        letter-spacing: 0.06em;
+    }
+
+    .notice-modal.notice-modal--blacklist-blocked .notice-modal-body {
+        padding: 0.85rem 1rem 0.5rem;
+        white-space: normal;
+        text-align: left;
+    }
+
+    .notice-modal.notice-modal--blacklist-blocked .notice-modal-actions {
+        padding: 0.55rem 1rem 0.85rem;
+        border-top: 1px solid #f1f5f9;
+        background: #fafafa;
+    }
+
+    .bl-proceed-blocked {
+        display: flex;
+        flex-direction: column;
+        gap: 0.65rem;
+    }
+
+    .bl-proceed-blocked__attempt {
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+        padding: 0.55rem 0.65rem;
+        border-radius: 0.5rem;
+        border: 1px solid #e2e8f0;
+        background: #f8fafc;
+    }
+
+    .bl-proceed-blocked__attempt-label {
+        font-size: 0.625rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: #64748b;
+    }
+
+    .bl-proceed-blocked__attempt-ref {
+        font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #1e40af;
+        letter-spacing: 0.02em;
+    }
+
+    .bl-proceed-blocked__attempt-name {
+        font-size: 0.8125rem;
+        font-weight: 600;
+        color: #0f172a;
+        line-height: 1.35;
+    }
+
+    .bl-proceed-blocked__lead {
+        margin: 0;
+        font-size: 0.8125rem;
+        line-height: 1.5;
+        color: #334155;
+    }
+
+    .bl-proceed-blocked__lead strong {
+        color: #0f172a;
+        font-weight: 700;
+    }
+
+    .bl-proceed-blocked__registry {
+        padding: 0.6rem 0.7rem;
+        border-radius: 0.5rem;
+        border: 1px solid #fecaca;
+        background: #fef2f2;
+    }
+
+    .bl-proceed-blocked__registry-kicker {
+        display: block;
+        margin-bottom: 0.35rem;
+        font-size: 0.625rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: #b91c1c;
+    }
+
+    .bl-proceed-blocked__registry-line {
+        display: block;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #7f1d1d;
+        line-height: 1.4;
+    }
+
+    .bl-proceed-blocked__registry-line code {
+        font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+        font-size: 0.6875rem;
+        font-weight: 700;
+        color: #991b1b;
+        background: rgba(255, 255, 255, 0.65);
+        padding: 0.1rem 0.3rem;
+        border-radius: 0.25rem;
+    }
+
+    .bl-proceed-blocked__reason {
+        display: block;
+        margin-top: 0.35rem;
+        font-size: 0.6875rem;
+        color: #991b1b;
+        line-height: 1.4;
+    }
+
+    .bl-proceed-blocked__reason strong {
+        font-weight: 700;
+    }
+
+    .bl-proceed-blocked__note {
+        margin: 0;
+        font-size: 0.6875rem;
+        line-height: 1.45;
+        color: #64748b;
+    }
+
+    .bl-proceed-blocked__link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #b91c1c;
+        text-decoration: none;
+        width: fit-content;
+    }
+
+    .bl-proceed-blocked__link:hover {
+        text-decoration: underline;
+        color: #991b1b;
     }
 
     .notice-modal {
@@ -3451,6 +3664,7 @@
             </button>
         </div>
         <div class="archive-req-body">
+            <div id="archiveBlacklistBanner" class="archive-blacklist-banner" role="alert" hidden></div>
             <div class="archive-req-summary">
                 <span class="archive-req-chip">Required Scanned <span class="archive-req-chip-value" id="archiveRequirementsScannedSummary">0/0</span></span>
                 <span class="archive-req-chip">Rows <span class="archive-req-chip-value" id="archiveRequirementsRowSummary">0</span></span>
@@ -3839,7 +4053,8 @@
                 data-displacement-reason="{{ row.displacementReason|default:''|escape }}"
                 data-channel="{{ row.channel }}"
                 data-barangay="{{ row.barangay }}"
-                data-searchable="{{ row.fullName|lower }} {{ row.referenceNumber|lower }} {{ row.barangay|lower }} {{ row.requirementsStatusLabel|lower }} {{ row.proceededAgo|default:''|lower }}"
+                data-blacklist-blocked="{% if row.blacklistBlocked %}1{% else %}0{% endif %}"
+                data-searchable="{{ row.fullName|lower }} {{ row.referenceNumber|lower }} {{ row.barangay|lower }} {{ row.requirementsStatusLabel|lower }} cannot proceed {{ row.proceededAgo|default:''|lower }}"
             >
                 <td style="font-weight: 700; color: #1e293b;">{{ forloop.counter }}</td>
                 <td style="font-weight: 600; color: #1d4ed8;">#{{ row.id|slice:":8" }}</td>
@@ -3861,7 +4076,7 @@
                     </div>
                 </td>
                 <td style="text-align: center; vertical-align: middle;"
-                    title="Applicant requirements (scan checklist): {{ row.scannedCount }}/{{ row.requirementsTotal }} filed — same totals as Documents">
+                    title="{% if row.blacklistBlocked %}Blacklisted — cannot proceed to Applicant Evaluation and Eligibility ({{ row.scannedCount }}/{{ row.requirementsTotal }} docs on file){% else %}Applicant requirements (scan checklist): {{ row.scannedCount }}/{{ row.requirementsTotal }} filed — same totals as Documents{% endif %}">
                     <span class="list-req-status list-req-status--{{ row.requirementsStatusTier }}">{{ row.requirementsStatusLabel }}</span>
                 </td>
                 <td style="font-size: 0.5625rem; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ row.barangay|default:'N/A' }}">
@@ -3880,10 +4095,10 @@
                 </td>
                 <td style="vertical-align: middle;">
                     {% if row.module3ApplicationNumber %}
-                    <span style="display:inline-flex;align-items:center;gap:0.2rem;padding:0.14rem 0.42rem;background:#dcfce7;color:#166534;border-radius:9999px;font-size:0.5625rem;font-weight:600;">
+                    <span class="list-gen-status">
                         Generated
                     </span>
-                    <div style="font-size:0.56rem;color:#1e40af;margin-top:0.18rem;">
+                    <div style="font-size:0.56rem;color:#1e40af;margin-top:0.18rem;text-align:center;font-weight:600;">
                         #{{ row.module3ApplicationNumber }}
                     </div>
                     {% else %}
@@ -6628,8 +6843,16 @@
 
     function closeNoticeModal() {
         const overlay = document.getElementById('noticeModalOverlay');
+        const modal = document.getElementById('noticeModal');
+        const bodyEl = document.getElementById('noticeModalBody');
         const refWrap = document.getElementById('noticeModalRefWrap');
-        if (overlay) overlay.classList.remove('active');
+        if (overlay) {
+            overlay.classList.remove('active');
+            overlay.classList.remove('notice-modal-overlay--top');
+            overlay.style.zIndex = '';
+        }
+        if (modal) modal.classList.remove('notice-modal--blacklist-blocked');
+        if (bodyEl) bodyEl.classList.remove('notice-modal-body--blacklist-blocked');
         if (refWrap) {
             refWrap.innerHTML = '';
             refWrap.style.display = 'none';
@@ -6654,7 +6877,7 @@
             refWrap.innerHTML = '';
             refWrap.style.display = 'none';
             const rp = refPill && String(refPill).trim();
-            if (rp && type === 'success') {
+            if (rp && (type === 'success' || type === 'error')) {
                 const pill = document.createElement('span');
                 pill.className = 'flow-alert-ref-pill';
                 pill.style.marginTop = '0';
@@ -6685,6 +6908,38 @@
             : onPrimary;
         noticeSecondaryHandler = onSecondary;
         overlay.classList.add('active');
+    }
+
+    function applyArchiveRequirementsBlacklistState(payload) {
+        const banner = document.getElementById('archiveBlacklistBanner');
+        const proceedBtn = document.getElementById('archiveProceedToEvaluationBtn');
+        const blocked = !!(payload && payload.blacklistBlocked);
+        if (banner) {
+            if (blocked) {
+                const reason = (payload.blacklistReason || '').trim();
+                const regRef = (payload.blacklistRegistryRef || '').trim();
+                const regName = (payload.blacklistRegistryName || '').trim();
+                const regLine = regRef && regName ? (regRef + ' — ' + regName) : (regName || regRef || '—');
+                banner.innerHTML =
+                    '<strong>Cannot proceed — Blacklisted.</strong> '
+                    + 'This applicant cannot go to Applicant Evaluation and Eligibility while on the '
+                    + '<strong>Blacklisted Beneficiaries</strong> registry'
+                    + (regLine !== '—' ? (' (' + regLine + ')') : '')
+                    + (reason ? ('. Reason: ' + reason + '.') : '.')
+                    + ' Resolve the registry entry in Units monitoring first.';
+                banner.hidden = false;
+                banner.classList.add('is-visible');
+            } else {
+                banner.innerHTML = '';
+                banner.hidden = true;
+                banner.classList.remove('is-visible');
+            }
+        }
+        if (proceedBtn && blocked) {
+            proceedBtn.disabled = true;
+            proceedBtn.classList.remove('is-ready');
+        }
+        return blocked;
     }
 
     // NOTE: Proceed-to-Module-2 action removed from Intake Archive table.
@@ -7085,6 +7340,24 @@
         const total = Number(totalAll) || 0;
         var label;
         var tier;
+        if (payload && payload.blacklistBlocked) {
+            label = 'Cannot proceed';
+            tier = 'blocked';
+            statusSpan.textContent = label;
+            statusSpan.classList.remove(
+                'list-req-status--complete',
+                'list-req-status--incomplete',
+                'list-req-status--pending'
+            );
+            statusSpan.classList.add('list-req-status--blocked');
+            var blockedTd = statusSpan.closest('td');
+            if (blockedTd) {
+                blockedTd.title =
+                    'Blacklisted — cannot proceed to Applicant Evaluation and Eligibility (' +
+                    scanned + '/' + total + ' docs on file)';
+            }
+            return;
+        }
         if (total <= 0) {
             label = 'Pending';
             tier = 'pending';
@@ -7099,7 +7372,12 @@
             tier = 'pending';
         }
         statusSpan.textContent = label;
-        statusSpan.classList.remove('list-req-status--complete', 'list-req-status--incomplete', 'list-req-status--pending');
+        statusSpan.classList.remove(
+            'list-req-status--complete',
+            'list-req-status--incomplete',
+            'list-req-status--pending',
+            'list-req-status--blocked'
+        );
         statusSpan.classList.add('list-req-status--' + tier);
         var statusTd = statusSpan.closest('td');
         if (statusTd) {
@@ -7147,8 +7425,10 @@
         const proceedBtn = document.getElementById('archiveProceedToEvaluationBtn');
         const hintEl = document.getElementById('archiveProceedHint');
         if (!proceedBtn) return;
-        proceedBtn.disabled = !canProceed;
-        proceedBtn.classList.toggle('is-ready', !!canProceed);
+        const blacklistBlocked = !!(currentArchiveRequirementsPayload && currentArchiveRequirementsPayload.blacklistBlocked);
+        const allowed = !!canProceed && !blacklistBlocked;
+        proceedBtn.disabled = !allowed;
+        proceedBtn.classList.toggle('is-ready', allowed);
         if (hintEl) {
             if (canProceed) {
                 hintEl.textContent = '';
@@ -7160,6 +7440,67 @@
                 hintEl.classList.remove('is-ready');
             }
         }
+    }
+
+    const blacklistRegistryUrl = '{% url "units:blacklist_management" request.user.position %}';
+
+    function showBlacklistProceedBlockedModal(payload, applicantRef) {
+        closeArchiveRequirementsModal();
+        const data = payload || {};
+        const attemptingRef = (applicantRef || data.applicant_reference || data.applicant_reference_number || '').trim();
+        const attemptingName = (data.applicant_name || data.applicantName || data.fullName || '').trim();
+        const reason = (data.blacklist_reason || data.blacklistReason || '').trim();
+        const registryRef = (data.blacklist_registry_ref || data.blacklistRegistryRef || '').trim();
+        const registryName = (data.blacklist_registry_name || data.blacklistRegistryName || '').trim();
+        const esc = (typeof escapeHtml === 'function') ? escapeHtml : function (s) { return String(s || ''); };
+
+        const attemptBlock = attemptingRef || attemptingName
+            ? (
+                '<div class="bl-proceed-blocked__attempt">'
+                + '<span class="bl-proceed-blocked__attempt-label">Record you tried to promote</span>'
+                + (attemptingRef ? ('<span class="bl-proceed-blocked__attempt-ref">' + esc(attemptingRef) + '</span>') : '')
+                + (attemptingName ? ('<span class="bl-proceed-blocked__attempt-name">' + esc(attemptingName) + '</span>') : '')
+                + '</div>'
+            )
+            : '';
+
+        const registryLine = registryRef && registryName
+            ? ('<code>' + esc(registryRef) + '</code> — ' + esc(registryName))
+            : esc(registryName || registryRef || '—');
+
+        showNoticeModal({
+            title: 'Cannot proceed — Blacklisted',
+            allowHtml: true,
+            messageHtml: (
+                '<div class="bl-proceed-blocked">'
+                + attemptBlock
+                + '<p class="bl-proceed-blocked__lead">'
+                + 'This applicant cannot move to <strong>Applicant Evaluation and Eligibility</strong> '
+                + 'while a matching entry exists on the <strong>Blacklisted Beneficiaries</strong> registry.'
+                + '</p>'
+                + '<div class="bl-proceed-blocked__registry">'
+                + '<span class="bl-proceed-blocked__registry-kicker">Matching registry entry</span>'
+                + '<span class="bl-proceed-blocked__registry-line">' + registryLine + '</span>'
+                + (reason ? ('<span class="bl-proceed-blocked__reason"><strong>Reason:</strong> ' + esc(reason) + '</span>') : '')
+                + '</div>'
+                + '<p class="bl-proceed-blocked__note">No proceed SMS was sent. Update or remove the blacklist entry in Units monitoring, then try again.</p>'
+                + '<a class="bl-proceed-blocked__link" href="' + esc(blacklistRegistryUrl) + '">Open Blacklisted Beneficiaries registry →</a>'
+                + '</div>'
+            ),
+            type: 'error',
+            refPill: '',
+            primaryText: 'OK',
+        });
+
+        const overlay = document.getElementById('noticeModalOverlay');
+        const modal = document.getElementById('noticeModal');
+        const bodyEl = document.getElementById('noticeModalBody');
+        if (overlay) {
+            overlay.classList.add('notice-modal-overlay--top');
+            overlay.style.zIndex = '13050';
+        }
+        if (modal) modal.classList.add('notice-modal--blacklist-blocked');
+        if (bodyEl) bodyEl.classList.add('notice-modal-body--blacklist-blocked');
     }
 
     function logSmsDispatchPlan(flowName, details) {
@@ -7176,6 +7517,17 @@
 
     function proceedToEvaluationFromArchiveRequirements() {
         const payload = currentArchiveRequirementsPayload;
+        if (payload && payload.blacklistBlocked) {
+            showBlacklistProceedBlockedModal({
+                applicant_name: payload.fullName || '',
+                applicant_reference: payload.referenceNumber || '',
+                blacklist_reason: payload.blacklistReason || '',
+                blacklist_registry_name: payload.blacklistRegistryName || '',
+                blacklist_registry_ref: payload.blacklistRegistryRef || '',
+                blacklist_blocked: true,
+            }, payload.referenceNumber || '');
+            return;
+        }
         const rows = payload && Array.isArray(payload.rows) ? payload.rows : [];
         const requiredRows = rows.filter(function (r) { return !!r.is_required_for_form; });
         const scannedRequired = requiredRows.filter(function (r) { return !!r.scanned; }).length;
@@ -7222,9 +7574,18 @@
             method: 'POST',
             body: formData
         })
-            .then(function (response) { return response.json(); })
-            .then(function (data) {
+            .then(function (response) {
+                return response.json().then(function (data) {
+                    return { ok: response.ok, data: data };
+                });
+            })
+            .then(function (result) {
+                const data = result.data || {};
                 if (!data.success) {
+                    if (data.blacklist_blocked || data.blacklistBlocked) {
+                        showBlacklistProceedBlockedModal(data, ref);
+                        return;
+                    }
                     throw new Error(data.error || 'Unable to proceed to Application & Eligibility.');
                 }
                 const nextUrl = `${evaluationApplicationsUrl}?applicant_id=${encodeURIComponent(applicantId)}&from=intake_scan_checklist&ref=${encodeURIComponent(ref)}`;
@@ -7415,6 +7776,8 @@
             }).join('');
             setArchiveScanButtonBusy(false);
         }
+
+        applyArchiveRequirementsBlacklistState(payload);
 
         var modalEl = document.getElementById('archiveRequirementsModal');
         if (modalEl) modalEl.classList.add('active');

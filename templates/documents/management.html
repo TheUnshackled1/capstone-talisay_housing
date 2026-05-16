@@ -263,18 +263,18 @@
 
     /* Applicant Status — one pill style so Lot Awarded / Ready for Awarding match */
     .dm-workflow-badge {
-        display: inline-flex;
+        display: flex !important;
+        width: 100%;
         align-items: center;
         justify-content: center;
         box-sizing: border-box;
-        min-width: 7.5rem;
-        min-height: 2.05rem;
-        padding: 0.28rem 0.55rem;
+        min-height: 2.25rem;
+        padding: 0.45rem 0.55rem !important;
         background-color: #dbeafe;
         color: #1e40af;
         border: 1px solid #93c5fd;
-        border-radius: 9999px;
-        font-size: 0.5625rem;
+        border-radius: 4px !important;
+        font-size: 0.5625rem !important;
         font-weight: 700;
         letter-spacing: 0.04em;
         line-height: 1.2;
@@ -284,6 +284,28 @@
         word-break: break-word;
         hyphens: none;
     }
+
+    .dm-status-pill {
+        display: flex !important;
+        width: 100%;
+        align-items: center;
+        justify-content: center;
+        gap: 0.18rem;
+        padding: 0.45rem 0.5rem !important;
+        border-radius: 4px !important;
+        font-size: 0.5625rem !important;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        box-sizing: border-box;
+        text-align: center;
+        line-height: 1.2;
+    }
+    .dm-status--active { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+    .dm-status--blacklist { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+    .dm-status--complete { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+    .dm-status--partial { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+    .dm-status--pending { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
 
     .dm-applicant-status-detail {
         margin-top: 0.35rem;
@@ -1240,11 +1262,11 @@
                     data-search="{{ applicant.full_name|lower }} {{ applicant.reference_number|default:''|lower }}">
                     <td class="col-num">{{ forloop.counter }}</td>
                     <td class="col-applicant">{{ applicant.full_name }}</td>
-                    <td class="col-app-state" style="vertical-align: middle;">
+                    <td class="col-app-state">
                         {% if applicant.has_blacklist_record %}
-                        <span style="display:inline-flex;align-items:center;gap:0.18rem;padding:0.14rem 0.42rem;background:#fee2e2;color:#991b1b;border:1px solid #fecaca;border-radius:9999px;font-size:0.5625rem;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;">Blacklisted</span>
+                        <span class="dm-status-pill dm-status--blacklist">Blacklisted</span>
                         {% else %}
-                        <span style="display:inline-flex;align-items:center;gap:0.18rem;padding:0.14rem 0.42rem;background:#dcfce7;color:#166534;border:1px solid #86efac;border-radius:9999px;font-size:0.5625rem;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;">Active</span>
+                        <span class="dm-status-pill dm-status--active">Active</span>
                         {% endif %}
                     </td>
                     <td class="col-workflow-status">
@@ -1256,13 +1278,13 @@
                     <td class="col-documents">
                         <span style="display: inline-block; padding: 0.35rem 0.65rem; background: #eff6ff; color: #1e40af; border-radius: 4px; font-weight: 600; font-size: 0.75rem;">{{ applicant.doc_count }}</span>
                     </td>
-                    <td class="col-doc-status" style="vertical-align: middle;">
+                    <td class="col-doc-status">
                         {% if applicant.doc_count >= 8 %}
-                        <span style="display:inline-flex;align-items:center;gap:0.18rem;padding:0.14rem 0.42rem;background:#dcfce7;color:#166534;border:1px solid #86efac;border-radius:9999px;font-size:0.5625rem;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;">Complete</span>
+                        <span class="dm-status-pill dm-status--complete">Complete</span>
                         {% elif applicant.doc_count > 0 %}
-                        <span style="display:inline-flex;align-items:center;gap:0.18rem;padding:0.14rem 0.42rem;background:#fef3c7;color:#92400e;border:1px solid #fde68a;border-radius:9999px;font-size:0.5625rem;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;">Partial</span>
+                        <span class="dm-status-pill dm-status--partial">Partial</span>
                         {% else %}
-                        <span style="display:inline-flex;align-items:center;gap:0.18rem;padding:0.14rem 0.42rem;background:#fee2e2;color:#991b1b;border:1px solid #fecaca;border-radius:9999px;font-size:0.5625rem;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;">Pending</span>
+                        <span class="dm-status-pill dm-status--pending">Pending</span>
                         {% endif %}
                     </td>
                     <td class="col-actions" style="vertical-align: middle;">

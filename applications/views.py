@@ -737,21 +737,28 @@ def _module2_run_handoff_preflight(request_user):
         _auto_finalize_non_hazard_walkin(candidate, acted_by=request_user)
 
 
+_MODULE2_EVALUATION_ACTIVE_STATUSES = (
+    'pending',
+    'pending_cdrrmo',
+    'pending_followup',
+    'eligible',
+    'requirements',
+    'application',
+    'standby',
+    'awarded',
+)
+
+
 def _module2_evaluations_applicants_queryset():
     """
     Applicants shown on Application & Evaluation (Module 2 handoff + baseline Group A scans).
+
+    Handed-off applicants who were auto-disqualified (e.g. blacklist) remain visible so staff
+    see the same record they promoted from Intake — not a silent drop after proceed SMS.
     """
     applicants = Applicant.objects.filter(
-        status__in=[
-            'pending',
-            'pending_cdrrmo',
-            'pending_followup',
-            'eligible',
-            'requirements',
-            'application',
-            'standby',
-            'awarded',
-        ]
+        Q(status__in=_MODULE2_EVALUATION_ACTIVE_STATUSES)
+        | Q(status='disqualified', module2_handoff_at__isnull=False)
     ).filter(
         Q(module2_handoff_at__isnull=False) | Q(application__isnull=False)
     ).exclude(
@@ -776,7 +783,8 @@ def _module2_evaluations_applicants_queryset():
                 distinct=True,
             )
         ).filter(
-            scanned_required_group_a__gte=required_group_a_total
+            Q(module2_handoff_at__isnull=False)
+            | Q(scanned_required_group_a__gte=required_group_a_total)
         )
 
     return applicants.select_related(
@@ -864,7 +872,6 @@ def _module2_applicant_row_payload(applicant, permissions, required_group_a_subm
             barangay_id=applicant.barangay_id,
         )
         _auto_disqualify_if_blacklisted(applicant, bl_entry, checked_by=acted_by_user)
-        return None
 
     application = getattr(applicant, 'application', None)
 

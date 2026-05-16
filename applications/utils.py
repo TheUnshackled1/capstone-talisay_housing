@@ -53,7 +53,7 @@ def check_blacklist_module2(
 
     Match priority (first match wins):
         1. Applicant UUID (direct OneToOne link — strongest)
-        2. Phone number (exact)
+        2. Phone + same first and last name (duplicate registration; not phone alone)
         3. Last name + First name + Date of birth + Barangay (full identity match)
         4. Last name + First name + Date of birth (3-of-4)
         5. Last name + First name + Barangay (3-of-4 — when DOB unknown)
@@ -82,14 +82,19 @@ def check_blacklist_module2(
             .first()
         )
 
-    if not units_match and phone_number:
+    has_first_last = bool(first_name and last_name)
+
+    # Shared household/test numbers must not block unrelated applicants.
+    if not units_match and phone_number and has_first_last:
         units_match = (
-            units_q.filter(applicant__phone_number=phone_number)
+            units_q.filter(
+                applicant__phone_number=phone_number,
+                applicant__last_name__iexact=last_name,
+                applicant__first_name__iexact=first_name,
+            )
             .order_by('-blacklisted_at')
             .first()
         )
-
-    has_first_last = bool(first_name and last_name)
 
     if not units_match and has_first_last and date_of_birth and barangay_id:
         units_match = (

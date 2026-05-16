@@ -28,9 +28,45 @@ logger = logging.getLogger(__name__)
 from django.utils.dateparse import parse_date
 from .utils import send_sms
 from . import sms_workflow
+from applications.utils import check_blacklist_module2
 
 # Module 1 income ceiling (₱) — keep in sync with `Applicant.is_income_eligible` in intake/models.py
 MODULE1_MONTHLY_INCOME_CEILING_PESO = 10000
+
+
+def _intake_module2_blacklist_check_payload(applicant):
+    """Flags for Intake document checklist — block proceed when on Units blacklist."""
+    empty = {
+        'blacklistBlocked': False,
+        'blacklistReason': '',
+        'blacklistRegistryName': '',
+        'blacklistRegistryRef': '',
+    }
+    if not applicant:
+        return empty
+    is_bl, bl_entry = check_blacklist_module2(
+        applicant.full_name,
+        applicant.phone_number or None,
+        applicant_id=applicant.id,
+        last_name=applicant.last_name,
+        first_name=applicant.first_name,
+        date_of_birth=applicant.date_of_birth,
+        barangay_id=applicant.barangay_id,
+    )
+    if not is_bl:
+        return empty
+    reason_label = bl_entry.get_reason_display() if bl_entry else 'Blacklist match'
+    registry_applicant = None
+    if bl_entry is not None and getattr(bl_entry, '_entry', None) is not None:
+        registry_applicant = getattr(bl_entry._entry, 'applicant', None)
+    registry_name = (registry_applicant.full_name if registry_applicant else applicant.full_name) or ''
+    registry_ref = (registry_applicant.reference_number if registry_applicant else applicant.reference_number) or ''
+    return {
+        'blacklistBlocked': True,
+        'blacklistReason': reason_label,
+        'blacklistRegistryName': registry_name,
+        'blacklistRegistryRef': registry_ref,
+    }
 
 # Module 1 residency eligibility threshold (years residing in Talisay City).
 # Soft check only: applicants below this threshold are still allowed to register
@@ -74,6 +110,17 @@ def _relative_time_ago(dt):
 DISPLACEMENT_PATHS_NEED_ISF_EXTRA = frozenset({'danger_zone', 'ejected', 'relocated'})
 ISF_EXTRA_VAULT_DOC_TYPE = 'isf_situational_docs'
 CDRRMO_EXTRA_VAULT_DOC_TYPE = 'cdrrmo_cert'
+
+
+def _archive_list_status_label_and_tier(scanned_count, requirements_total, blacklist_blocked=False):
+    """
+    LIST OF APPLICANTS — Status column.
+
+    When blacklisted, docs may be Complete but proceed to Module 2 is blocked → Cannot proceed.
+    """
+    if blacklist_blocked:
+        return 'Cannot proceed', 'blocked'
+    return _requirements_filing_status_label_and_tier(scanned_count, requirements_total)
 
 
 def _requirements_filing_status_label_and_tier(scanned_count, requirements_total):
@@ -817,9 +864,42 @@ def proceed_to_applications(request, position):
         return JsonResponse({'success': False, 'error': 'Missing applicant_id.'}, status=400)
 
     applicant = get_object_or_404(Applicant, id=applicant_id)
+    promote_to_module2 = str(request.POST.get('promote_to_module2', '')).strip().lower() in {'1', 'true', 'yes', 'on'}
+
+    if promote_to_module2:
+        is_bl, bl_entry = check_blacklist_module2(
+            applicant.full_name,
+            applicant.phone_number or None,
+            applicant_id=applicant.id,
+            last_name=applicant.last_name,
+            first_name=applicant.first_name,
+            date_of_birth=applicant.date_of_birth,
+            barangay_id=applicant.barangay_id,
+        )
+        if is_bl:
+            reason_label = bl_entry.get_reason_display() if bl_entry else 'Blacklist match'
+            registry_applicant = None
+            if bl_entry is not None and getattr(bl_entry, '_entry', None) is not None:
+                registry_applicant = getattr(bl_entry._entry, 'applicant', None)
+            registry_name = (registry_applicant.full_name if registry_applicant else applicant.full_name) or ''
+            registry_ref = (registry_applicant.reference_number if registry_applicant else applicant.reference_number) or ''
+            return JsonResponse({
+                'success': False,
+                'blacklist_blocked': True,
+                'blacklist_reason': reason_label,
+                'blacklist_registry_name': registry_name,
+                'blacklist_registry_ref': registry_ref,
+                'applicant_name': applicant.full_name or '',
+                'applicant_reference': applicant.reference_number or '',
+                'error': (
+                    f'{applicant.full_name or "This applicant"} cannot proceed to '
+                    'Applicant Evaluation and Eligibility because they are on the '
+                    'Blacklisted Beneficiaries registry. Resolve the blacklist entry first.'
+                ),
+            }, status=400)
+
     if applicant.status == 'disqualified':
         return JsonResponse({'success': False, 'error': 'Disqualified records cannot be archived.'}, status=400)
-    promote_to_module2 = str(request.POST.get('promote_to_module2', '')).strip().lower() in {'1', 'true', 'yes', 'on'}
 
     with transaction.atomic():
         # Intake Archives receipt.
@@ -1327,10 +1407,16 @@ def applicants_list(request, position):
             latest_doc_by_type=latest_doc_meta_by_applicant_id.get(archive.applicant_id, {}),
         )
         requirements_total = trackable_total if trackable_total > 0 else max(len(requirement_scan_rows), 1)
-        _req_status_label, _req_status_tier = _requirements_filing_status_label_and_tier(
-            scanned_count, requirements_total
+        bl_gate = (
+            _intake_module2_blacklist_check_payload(archive.applicant)
+            if archive.applicant_id and archive.applicant
+            else _intake_module2_blacklist_check_payload(None)
         )
-
+        _req_status_label, _req_status_tier = _archive_list_status_label_and_tier(
+            scanned_count,
+            requirements_total,
+            blacklist_blocked=bool(bl_gate.get('blacklistBlocked')),
+        )
         archive_records.append({
             'id': str(archive.id),
             'dateTime': local_archived_at.strftime('%b %d, %Y | %I:%M %p') if local_archived_at else '',
@@ -1365,6 +1451,7 @@ def applicants_list(request, position):
             'applicantId': str(archive.applicant_id) if archive.applicant_id else '',
             'displacementReason': disp_snapshot,
             'archiveDispNameClass': _archive_list_name_class_for_displacement(disp_snapshot),
+            **bl_gate,
         })
 
     archive_documents_modal = {
@@ -1374,6 +1461,10 @@ def applicants_list(request, position):
             'applicantId': r.get('applicantId', ''),
             'displacementReason': r.get('displacementReason', ''),
             'rows': r['requirementScanRows'],
+            'blacklistBlocked': bool(r.get('blacklistBlocked')),
+            'blacklistReason': r.get('blacklistReason', ''),
+            'blacklistRegistryName': r.get('blacklistRegistryName', ''),
+            'blacklistRegistryRef': r.get('blacklistRegistryRef', ''),
         }
         for r in archive_records
     }
