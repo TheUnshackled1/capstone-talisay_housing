@@ -134,6 +134,8 @@
     /* Semantic tile colors — tone only the icon; keep the card body neutral */
     .units-kpi--all .units-kpi-icon { background: #e0e7ff; color: #4338ca; }
     .units-kpi--occupied .units-kpi-icon { background: #d1fae5; color: #047857; }
+    .units-kpi--housing-file .units-kpi-icon { background: #ccfbf1; color: #0f766e; }
+    .units-kpi--housing-file .units-kpi-value { color: #0f766e; }
     .units-kpi--vacant   .units-kpi-icon { background: #ecfdf5; color: #065f46; }
     .units-kpi--notice30 .units-kpi-icon { background: #fef3c7; color: #92400e; }
     .units-kpi--notice10 .units-kpi-icon { background: #fee2e2; color: #b91c1c; }
@@ -281,10 +283,15 @@
         display: inline-block;
     }
     .vmap-legend--occupied i { background: #10b981; }
+    .vmap-legend--housing-file i {
+        background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+        box-shadow: 0 0 0 1px rgba(15, 118, 110, 0.35);
+    }
     .vmap-legend--vacant   i { background: #3b82f6; }
-    .vmap-legend--notice30 i { background: #f59e0b; }
-    .vmap-legend--final    i { background: #ef4444; }
-    .vmap-legend--repo     i { background: #94a3b8; }
+    .vmap-legend--extension-failed i {
+        background: linear-gradient(135deg, #f87171 0%, #dc2626 100%);
+        box-shadow: 0 0 0 1px rgba(185, 28, 28, 0.4);
+    }
 
     .vmap-canvas {
         background-color: #fafbfc;
@@ -424,6 +431,20 @@
     }
     .vmap-lot--occupied .vmap-lot-tag { color: #065f46; }
 
+    /* Final monitoring complete — distinct from “occupied / in progress” */
+    .vmap-lot--housing-unit {
+        color: #0f766e;
+        background: linear-gradient(180deg, #f0fdfa 0%, #ccfbf1 100%);
+        border-color: #2dd4bf;
+        box-shadow: inset 0 0 0 1px rgba(45, 212, 191, 0.35);
+    }
+    .vmap-lot--housing-unit .vmap-lot-tag {
+        color: #134e4a;
+        background: rgba(167, 243, 208, 0.65);
+        border: 1px solid #5eead4;
+        letter-spacing: 0.06em;
+    }
+
     .vmap-lot--vacant {
         color: #2563eb;
         background: linear-gradient(180deg, #eff6ff 0%, #dbeafe 100%);
@@ -451,6 +472,26 @@
         border-color: #94a3b8;
     }
     .vmap-lot--repo .vmap-lot-tag { color: #334155; }
+
+    /* Extension 30 Day assessed Failed — staff attention (overrides status palette) */
+    .vmap-lot.vmap-lot--extension-failed {
+        color: #b91c1c;
+        background: linear-gradient(180deg, #fef2f2 0%, #fecaca 100%);
+        border-color: #f87171;
+        box-shadow: inset 0 0 0 1px rgba(220, 38, 38, 0.35), 0 0 0 1px rgba(185, 28, 28, 0.2);
+    }
+    .vmap-lot--extension-failed .vmap-lot-id { color: #7f1d1d; }
+    .vmap-lot--extension-failed .vmap-lot-tag {
+        color: #991b1b;
+        background: rgba(254, 226, 226, 0.95);
+        border: 1px solid #fca5a5;
+        letter-spacing: 0.06em;
+    }
+
+    .unit-table-row--extension-failed td {
+        background: linear-gradient(180deg, #fef2f2 0%, #fee2e2 100%) !important;
+        box-shadow: inset 3px 0 0 0 #dc2626;
+    }
 
     /* Tablet — single block per row, denser lot grid */
     @media (max-width: 900px) {
@@ -793,6 +834,45 @@
         border-color: #047857;
         background: linear-gradient(180deg, #10b981 0%, #059669 100%);
         color: #ffffff;
+    }
+
+    /* Blacklist beneficiary modal — centered actions, semantic button colors */
+    #disqualifyBeneficiaryModal .inspection-info-btn--dq-cancel {
+        border: 1px solid #047857 !important;
+        background: linear-gradient(180deg, #10b981 0%, #059669 100%) !important;
+        color: #ffffff !important;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    }
+    #disqualifyBeneficiaryModal .inspection-info-btn--dq-cancel:hover {
+        background: linear-gradient(180deg, #059669 0%, #047857 100%) !important;
+        box-shadow: 0 4px 14px rgba(5, 150, 105, 0.32);
+    }
+    #disqualifyBeneficiaryModal .inspection-info-btn--dq-submit {
+        border: 1px solid #991b1b !important;
+        background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%) !important;
+        color: #ffffff !important;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    }
+    #disqualifyBeneficiaryModal .inspection-info-btn--dq-submit:hover {
+        background: linear-gradient(180deg, #dc2626 0%, #b91c1c 100%) !important;
+        box-shadow: 0 4px 14px rgba(220, 38, 38, 0.32);
+    }
+
+    .blacklist-modal-situation {
+        margin-top: 0.65rem;
+        padding: 0.65rem 0.78rem;
+        border-radius: 0.65rem;
+        border: 1px solid #e2e8f0;
+        background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+        font-size: 0.82rem;
+        line-height: 1.55;
+        color: #334155;
+    }
+    .blacklist-modal-situation p {
+        margin: 0 0 0.45rem;
+    }
+    .blacklist-modal-situation p:last-child {
+        margin-bottom: 0;
     }
 
     /* Monitoring Task Cards */
@@ -1179,9 +1259,22 @@
         margin-bottom: 0.75rem !important;
     }
     .unit-detail-status[data-state="housing-unit"] {
-        background: #ecfdf5 !important;
-        color: #047857 !important;
-        border: 1px solid #a7f3d0 !important;
+        display: inline-flex !important;
+        align-items: center;
+        gap: 0.2rem;
+        font-size: 0.7rem !important;
+        padding: 0.45rem 1.15rem !important;
+        background: linear-gradient(180deg, #ecfdf5 0%, #d1fae5 100%) !important;
+        color: #065f46 !important;
+        border: 2px solid #10b981 !important;
+        box-shadow: 0 2px 10px rgba(16, 185, 129, 0.22);
+    }
+    .unit-detail-status[data-state="housing-unit"]::before {
+        content: '✓';
+        font-weight: 900;
+        color: #059669;
+        font-size: 0.78rem;
+        line-height: 1;
     }
     .unit-detail-status {
         margin: 0 !important;
@@ -1920,6 +2013,16 @@
         box-shadow: 0 4px 14px rgba(220, 38, 38, 0.32);
         transform: translateY(-1px);
     }
+    .unit-detail-action-disqualify--highlight {
+        outline: 3px solid #f59e0b !important;
+        outline-offset: 2px;
+        animation: disqualify-pulse 1.1s ease-in-out 3;
+        box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.35) !important;
+    }
+    @keyframes disqualify-pulse {
+        0%, 100% { filter: brightness(1); }
+        50% { filter: brightness(1.12); }
+    }
 
     @media (max-width: 900px) {
         .premium-grid-4 {
@@ -2030,6 +2133,15 @@
                 <p class="units-kpi-value">{{ occupied_count }}</p>
             </div>
         </div>
+        <div class="units-kpi units-kpi--housing-file" role="button" tabindex="0" data-fkind="housing_unit" data-fval="1" onclick="kpiFilter(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kpiFilter(this);}">
+            <span class="units-kpi-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            </span>
+            <div>
+                <p class="units-kpi-label">Housing unit</p>
+                <p class="units-kpi-value">{{ housing_unit_on_file_count|default:0 }}</p>
+            </div>
+        </div>
         <div class="units-kpi units-kpi--vacant" role="button" tabindex="0" data-fkind="status" data-fval="Vacant — available" onclick="kpiFilter(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kpiFilter(this);}">
             <span class="units-kpi-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
@@ -2037,69 +2149,6 @@
             <div>
                 <p class="units-kpi-label">Vacant</p>
                 <p class="units-kpi-value">{{ vacant_count }}</p>
-            </div>
-        </div>
-        <div class="units-kpi units-kpi--notice30" role="button" tabindex="0" data-fkind="status" data-fval="Under notice (30-day)" onclick="kpiFilter(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kpiFilter(this);}">
-            <span class="units-kpi-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
-            </span>
-            <div>
-                <p class="units-kpi-label">30-day notice</p>
-                <p class="units-kpi-value">{{ notice_30_count }}</p>
-            </div>
-        </div>
-        <div class="units-kpi units-kpi--notice10" role="button" tabindex="0" data-fkind="status" data-fval="Final notice (10-day)" onclick="kpiFilter(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kpiFilter(this);}">
-            <span class="units-kpi-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            </span>
-            <div>
-                <p class="units-kpi-label">Final notice</p>
-                <p class="units-kpi-value">{{ notice_10_count }}</p>
-            </div>
-        </div>
-        <div class="units-kpi units-kpi--repo" role="button" tabindex="0" data-fkind="status" data-fval="Repossessed" onclick="kpiFilter(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kpiFilter(this);}">
-            <span class="units-kpi-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            </span>
-            <div>
-                <p class="units-kpi-label">Repossessed</p>
-                <p class="units-kpi-value">{{ repossessed_count }}</p>
-            </div>
-        </div>
-        <div class="units-kpi units-kpi--cm-not-started" role="button" tabindex="0" data-fkind="construction" data-fval="not_started" onclick="kpiFilter(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kpiFilter(this);}">
-            <span class="units-kpi-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-            </span>
-            <div>
-                <p class="units-kpi-label">Not started</p>
-                <p class="units-kpi-value">{{ construction_not_started|default:0 }}</p>
-            </div>
-        </div>
-        <div class="units-kpi units-kpi--cm-in-progress" role="button" tabindex="0" data-fkind="construction" data-fval="in_progress" onclick="kpiFilter(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kpiFilter(this);}">
-            <span class="units-kpi-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 13l4 4L20 7"/></svg>
-            </span>
-            <div>
-                <p class="units-kpi-label">In progress</p>
-                <p class="units-kpi-value">{{ construction_in_progress|default:0 }}</p>
-            </div>
-        </div>
-        <div class="units-kpi units-kpi--cm-completed" role="button" tabindex="0" data-fkind="construction" data-fval="completed" onclick="kpiFilter(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kpiFilter(this);}">
-            <span class="units-kpi-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg>
-            </span>
-            <div>
-                <p class="units-kpi-label">Completed</p>
-                <p class="units-kpi-value">{{ construction_completed|default:0 }}</p>
-            </div>
-        </div>
-        <div class="units-kpi units-kpi--cm-delayed" role="button" tabindex="0" data-fkind="construction" data-fval="delayed" onclick="kpiFilter(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kpiFilter(this);}">
-            <span class="units-kpi-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            </span>
-            <div>
-                <p class="units-kpi-label">Delayed</p>
-                <p class="units-kpi-value">{{ construction_delayed|default:0 }}</p>
             </div>
         </div>
     </div>
@@ -2122,10 +2171,9 @@
         <div class="vmap-legend" role="group" aria-label="Lot status legend">
             <span class="vmap-legend-title">Site map{% if site %} · {{ site.name }}{% endif %}</span>
             <span class="vmap-legend-item vmap-legend--occupied"><i></i>Occupied</span>
+            <span class="vmap-legend-item vmap-legend--housing-file"><i></i>Housing unit</span>
             <span class="vmap-legend-item vmap-legend--vacant"><i></i>Vacant</span>
-            <span class="vmap-legend-item vmap-legend--notice30"><i></i>30-day notice</span>
-            <span class="vmap-legend-item vmap-legend--final"><i></i>Final notice</span>
-            <span class="vmap-legend-item vmap-legend--repo"><i></i>Repossessed</span>
+            <span class="vmap-legend-item vmap-legend--extension-failed"><i></i>Extension Failed</span>
         </div>
         <div class="vmap-canvas">
             {% for block, units in units_by_block.items %}
@@ -2138,14 +2186,16 @@
                 <div class="vmap-lots">
                     {% for unit in units %}
                     <button type="button"
-                            class="unit-card vmap-lot {% if unit.status == 'Occupied' %}vmap-lot--occupied{% elif unit.status == 'Vacant — available' %}vmap-lot--vacant{% elif unit.status == 'Under notice (30-day)' %}vmap-lot--notice30{% elif unit.status == 'Final notice (10-day)' %}vmap-lot--final{% else %}vmap-lot--repo{% endif %}"
+                            data-unit-id="{{ unit.id }}"
+                            data-housing-unit-on-file="{% if unit.is_housing_unit_on_file %}1{% else %}0{% endif %}"
+                            class="unit-card vmap-lot {% if unit.extension_final_visit_failed %}vmap-lot--extension-failed{% elif unit.is_housing_unit_on_file %}vmap-lot--housing-unit{% elif unit.status == 'Occupied' %}vmap-lot--occupied{% elif unit.status == 'Vacant — available' %}vmap-lot--vacant{% elif unit.status == 'Under notice (30-day)' %}vmap-lot--notice30{% elif unit.status == 'Final notice (10-day)' %}vmap-lot--final{% else %}vmap-lot--repo{% endif %}"
                             data-status="{{ unit.status }}"
                             data-construction="{{ unit.construction_tokens }}"
                             onclick="openUnitModal('{{ unit.id }}')"
-                            title="Block {{ unit.block_number }} · Lot {{ unit.lot_number }} — {{ unit.get_status_display }}{% if unit.current_occupant %} · {{ unit.current_occupant.full_name }}{% elif unit.occupant_name %} · {{ unit.occupant_name }}{% endif %}">
+                            title="Block {{ unit.block_number }} · Lot {{ unit.lot_number }} — {% if unit.is_housing_unit_on_file %}Housing unit — final monitoring complete, recorded in inventory{% else %}{{ unit.get_status_display }}{% endif %}{% if unit.current_occupant %} · {{ unit.current_occupant.full_name }}{% elif unit.occupant_name %} · {{ unit.occupant_name }}{% endif %}">
                         <span class="vmap-lot-id">{{ unit.block_number }}-{{ unit.lot_number }}</span>
                         <span class="vmap-lot-occ">{% if unit.current_occupant %}{{ unit.current_occupant.full_name|truncatechars:14 }}{% elif unit.occupant_name %}{{ unit.occupant_name|truncatechars:14 }}{% else %}—{% endif %}</span>
-                        <span class="vmap-lot-tag">{% if unit.status == 'Occupied' %}Occupied{% elif unit.status == 'Vacant — available' %}Vacant{% elif unit.status == 'Under notice (30-day)' %}30-day{% elif unit.status == 'Final notice (10-day)' %}Final{% else %}Repo{% endif %}</span>
+                        <span class="vmap-lot-tag">{% if unit.extension_final_visit_failed %}Failed{% elif unit.is_housing_unit_on_file %}Unit{% elif unit.status == 'Occupied' %}Occupied{% elif unit.status == 'Vacant — available' %}Vacant{% elif unit.status == 'Under notice (30-day)' %}30-day{% elif unit.status == 'Final notice (10-day)' %}Final{% else %}Repo{% endif %}</span>
                     </button>
                     {% endfor %}
                 </div>
@@ -2172,11 +2222,22 @@
                 <tbody>
                     {% for block, units in units_by_block.items %}
                         {% for unit in units %}
-                        <tr class="unit-table-row" data-status="{{ unit.status }}" style="border-bottom: 1px solid var(--gray-100); hover:background: #f9fafb;">
+                        <tr class="unit-table-row{% if unit.extension_final_visit_failed %} unit-table-row--extension-failed{% endif %}"
+                            data-unit-id="{{ unit.id }}"
+                            data-status="{{ unit.status }}"
+                            data-construction="{{ unit.construction_tokens }}"
+                            data-housing-unit-on-file="{% if unit.is_housing_unit_on_file %}1{% else %}0{% endif %}"
+                            style="border-bottom: 1px solid var(--gray-100); hover:background: #f9fafb;">
                             <td style="padding: 1rem;">{{ block }}</td>
                             <td style="padding: 1rem;">{{ unit.lot_number }}</td>
                             <td style="padding: 1rem;">{% if unit.current_occupant %}{{ unit.current_occupant.full_name }}{% elif unit.occupant_name %}{{ unit.occupant_name }}{% else %}—{% endif %}</td>
                             <td style="padding: 1rem;">
+                                {% if unit.is_housing_unit_on_file %}
+                                <span style="display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.25rem 0.6rem; border-radius: 4px; font-weight: 600; background: rgba(45, 212, 191, 0.2); color: #0f766e; border: 1px solid rgba(13, 148, 136, 0.35);">
+                                    <span style="width: 5px; height: 5px; border-radius: 50%; display: inline-block; background: #0d9488;"></span>
+                                    Housing unit
+                                </span>
+                                {% else %}
                                 <span style="display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.25rem 0.6rem; border-radius: 4px; font-weight: 500;
                                     {% if unit.status == 'Occupied' %}background: rgba(34, 197, 94, 0.15); color: #16a34a;{% elif unit.status == 'Vacant — available' %}background: rgba(37, 99, 235, 0.15); color: #2563eb;{% elif unit.status == 'Under notice (30-day)' %}background: rgba(245, 158, 11, 0.15); color: #d97706;{% elif unit.status == 'Final notice (10-day)' %}background: rgba(239, 68, 68, 0.15); color: #dc2626;{% else %}background: rgba(168, 85, 247, 0.15); color: #a855f7;{% endif %}
                                 ">
@@ -2185,6 +2246,7 @@
                                     "></span>
                                     {{ unit.status|default:"—" }}
                                 </span>
+                                {% endif %}
                             </td>
                             <td style="padding: 1rem;">—</td>
                             <td style="padding: 1rem;">{% if unit.weekly_report %}{{ unit.weekly_report.reported_status|default:"—" }}{% else %}—{% endif %}</td>
@@ -2333,7 +2395,7 @@
         <!-- Header -->
         <div class="unit-detail-head">
             <div class="unit-detail-head-text">
-                <p class="unit-detail-kicker">Lot detail</p>
+                <p id="modalUnitKicker" class="unit-detail-kicker">Lot detail</p>
                 <h2 id="modalUnitTitle" class="unit-detail-title"></h2>
                 <span id="modalUnitStatus" class="unit-detail-status" data-state=""></span>
             </div>
@@ -2484,7 +2546,7 @@
 
                     <details id="priorNoProgressVisitsPanel" class="premium-data-card premium-data-card--collapsible border-slate" style="display: none; margin-top: 0.75rem;">
                         <summary class="premium-card-summary">
-                            <span class="premium-card-title">Initial monitoring — No Progress visits</span>
+                            <span class="premium-card-title">Initial monitoring — Explanation letter path</span>
                             <span class="premium-card-chevron" aria-hidden="true">
                                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
                             </span>
@@ -2496,7 +2558,7 @@
 
                     <details id="explanationLetterPanel" class="premium-data-card premium-data-card--collapsible border-rose" style="display: none; margin-top: 0.75rem;">
                         <summary class="premium-card-summary">
-                            <span class="premium-card-title explanation-letter-panel-title">30 Day No Progress — explanation letter</span>
+                            <span class="premium-card-title explanation-letter-panel-title">30 Day — Explanation letter workflow</span>
                             <span class="premium-card-chevron" aria-hidden="true">
                                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
                             </span>
@@ -2555,8 +2617,8 @@
                     </svg>
                     Send SMS
                 </button>
-                <button type="button" class="unit-detail-footer-btn unit-detail-action-update">Update lot</button>
-                <a href="#" id="disqualifyBeneficiaryBtn" class="unit-detail-footer-btn unit-detail-action-disqualify" role="button" onclick="event.preventDefault(); openDisqualifyBeneficiaryModal();">Disqualify beneficiary</a>
+                <button type="button" class="unit-detail-footer-btn unit-detail-action-update" onclick="handleUpdateLotClick()" title="Re-check this lot against the server and refresh the site map badge (Housing unit).">Update lot</button>
+                <a href="#" id="disqualifyBeneficiaryBtn" class="unit-detail-footer-btn unit-detail-action-disqualify" role="button" onclick="event.preventDefault(); openDisqualifyBeneficiaryModal();">Blacklist beneficiary</a>
             </div>
         </div>
     </div>
@@ -2565,15 +2627,15 @@
 <div id="disqualifyBeneficiaryModal" class="inspection-info-modal" onclick="closeDisqualifyBeneficiaryModal(event)" style="display: none;">
     <div class="inspection-info-card" onclick="event.stopPropagation();" style="max-width: 28rem;">
         <div class="inspection-info-body">
-            <p class="inspection-info-kicker">Disqualify beneficiary</p>
-            <h3 class="inspection-info-title">Confirm on-file disqualification</h3>
-            <p class="inspection-info-text" style="margin-top: 0.5rem;">This is allowed only after the explanation letter deadline has passed with no scanned letter on file. The beneficiary will be disqualified, added to Blacklisted Beneficiaries, removed from this block and lot, and the unit will be vacated for reassignment.</p>
-            <label style="display: block; margin-top: 0.75rem; font-size: 0.72rem; font-weight: 700; color: #475569;">Reason (required, min. 10 characters)</label>
+            <p class="inspection-info-kicker">Blacklist beneficiary</p>
+            <h3 class="inspection-info-title">Confirm beneficiary blacklist</h3>
+            <div id="blacklistModalSituation" class="blacklist-modal-situation" style="display: none;" aria-live="polite"></div>
+            <label style="display: block; margin-top: 0.75rem; font-size: 0.72rem; font-weight: 700; color: #475569;">Reason for blacklist (required, min. 10 characters)</label>
             <textarea id="disqualifyReasonInput" rows="3" maxlength="2000" style="width: 100%; margin-top: 0.25rem; padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.82rem;"></textarea>
         </div>
-        <div class="inspection-info-actions">
-            <button type="button" class="inspection-info-btn" onclick="closeDisqualifyBeneficiaryModal()">Cancel</button>
-            <button type="button" class="inspection-info-btn warning" onclick="submitDisqualifyBeneficiary()">Disqualify</button>
+        <div class="inspection-info-actions centered">
+            <button type="button" class="inspection-info-btn inspection-info-btn--dq-cancel" onclick="closeDisqualifyBeneficiaryModal()">Cancel</button>
+            <button type="button" class="inspection-info-btn inspection-info-btn--dq-submit" onclick="submitDisqualifyBeneficiary()">Blacklist</button>
         </div>
     </div>
 </div>
@@ -2634,6 +2696,50 @@ let inspectionCarouselIndex = 0;
 function getCookie(name) {
     const v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
     return v ? decodeURIComponent(v[2]) : null;
+}
+
+/**
+ * Uses global showFlowAlert (staff_base + flow-alert.css) instead of window.alert.
+ * variant: 'success' | 'default'
+ */
+function monitoringFlowAlert(message, title, variant, onConfirm) {
+    const tone = variant === 'success' ? 'success' : 'default';
+    if (typeof showFlowAlert === 'function') {
+        showFlowAlert(message || '', title || 'Notice', onConfirm || null, tone);
+        return;
+    }
+    window.alert(message || '');
+    if (typeof onConfirm === 'function') onConfirm();
+}
+
+function highlightExtensionFailedDisqualifyPath() {
+    const onAck = () => {
+        if (currentUnitId) {
+            const uid = String(currentUnitId);
+            const chip = document.querySelector(`button.vmap-lot[data-unit-id="${uid}"]`);
+            if (chip) {
+                const st = chip.dataset.status || '';
+                applyVmapLotHousingUnitVisual(uid, false, st, true);
+            }
+            const row = document.querySelector(`tr.unit-table-row[data-unit-id="${uid}"]`);
+            if (row) row.classList.add('unit-table-row--extension-failed');
+        }
+        const unitModal = document.getElementById('unitModal');
+        const disp = unitModal && unitModal.style.display;
+        const drawerOpen = unitModal && (disp === 'flex' || disp === 'block');
+        const btn = document.getElementById('disqualifyBeneficiaryBtn');
+        if (drawerOpen && btn) {
+            btn.classList.add('unit-detail-action-disqualify--highlight');
+            btn.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            setTimeout(() => btn.classList.remove('unit-detail-action-disqualify--highlight'), 12000);
+        }
+    };
+    monitoringFlowAlert(
+        'Extension marked as Failed.',
+        'Failed',
+        'default',
+        onAck
+    );
 }
 
 function openCreateSiteModal() {
@@ -2792,6 +2898,112 @@ function switchView(view) {
     }
 }
 
+function applyUnitDetailHeader(unit) {
+    const kicker = document.getElementById('modalUnitKicker');
+    const titleEl = document.getElementById('modalUnitTitle');
+    if (!unit || !titleEl) return;
+    const isHu = !!(unit.is_housing_unit_on_file || unit.status_display === 'Housing unit');
+    if (kicker) {
+        kicker.textContent = isHu ? 'Unit detail' : 'Lot detail';
+    }
+    titleEl.textContent = isHu
+        ? `Block ${unit.block}, Unit ${unit.lot}`
+        : `Block ${unit.block}, Lot ${unit.lot}`;
+}
+
+function applyUnitDrawerStatusPill(unit) {
+    const statusPill = document.getElementById('modalUnitStatus');
+    if (!statusPill || !unit) return;
+    const statusKeyMap = {
+        Occupied: 'occupied',
+        'Vacant — available': 'vacant',
+        'Under notice (30-day)': 'notice30',
+        'Final notice (10-day)': 'final',
+        Repossessed: 'repo',
+        'Housing unit': 'housing-unit',
+    };
+    if (unit.is_housing_unit_on_file || unit.status_display === 'Housing unit') {
+        statusPill.textContent = 'Housing unit';
+        statusPill.dataset.state = 'housing-unit';
+        statusPill.title = 'Recognized housing unit: final monitoring done and construction complete — this lot is counted as a completed unit in inventory.';
+    } else {
+        statusPill.textContent = unit.status_display || unit.status;
+        statusPill.dataset.state = statusKeyMap[unit.status] || 'vacant';
+        statusPill.removeAttribute('title');
+    }
+}
+
+function applyVmapLotHousingUnitVisual(unitId, isOnFile, occupancyStatus, extensionFailed) {
+    const chip = document.querySelector(`button.vmap-lot[data-unit-id="${unitId}"]`);
+    if (!chip) return;
+    const tag = chip.querySelector('.vmap-lot-tag');
+    const st = occupancyStatus != null ? occupancyStatus : (chip.dataset.status || '');
+    chip.classList.remove(
+        'vmap-lot--housing-unit', 'vmap-lot--occupied', 'vmap-lot--vacant',
+        'vmap-lot--notice30', 'vmap-lot--final', 'vmap-lot--repo',
+        'vmap-lot--extension-failed',
+    );
+    if (extensionFailed) {
+        chip.classList.add('vmap-lot--extension-failed');
+        chip.dataset.housingUnitOnFile = '0';
+        if (tag) tag.textContent = 'Failed';
+        return;
+    }
+    if (isOnFile) {
+        chip.classList.add('vmap-lot--housing-unit');
+        chip.dataset.housingUnitOnFile = '1';
+        if (tag) tag.textContent = 'Unit';
+        return;
+    }
+    chip.dataset.housingUnitOnFile = '0';
+    if (st === 'Occupied') {
+        chip.classList.add('vmap-lot--occupied');
+        if (tag) tag.textContent = 'Occupied';
+    } else if (st === 'Vacant — available') {
+        chip.classList.add('vmap-lot--vacant');
+        if (tag) tag.textContent = 'Vacant';
+    } else if (st === 'Under notice (30-day)') {
+        chip.classList.add('vmap-lot--notice30');
+        if (tag) tag.textContent = '30-day';
+    } else if (st === 'Final notice (10-day)') {
+        chip.classList.add('vmap-lot--final');
+        if (tag) tag.textContent = 'Final';
+    } else {
+        chip.classList.add('vmap-lot--repo');
+        if (tag) tag.textContent = 'Repo';
+    }
+}
+
+async function handleUpdateLotClick() {
+    const position = '{{ request.user.position }}';
+    if (!currentUnitId) return;
+    const btn = document.querySelector('.unit-detail-action-update');
+    if (btn) btn.disabled = true;
+    try {
+        const res = await fetch(`/units/housing-units/${position}/${encodeURIComponent(currentUnitId)}/details/`);
+        const data = await res.json();
+        if (!data.success) {
+            throw new Error(data.error || 'Could not load lot details.');
+        }
+        const unit = data.unit;
+        applyUnitDetailHeader(unit);
+        applyUnitDrawerStatusPill(unit);
+        applyVmapLotHousingUnitVisual(String(unit.id), !!unit.is_housing_unit_on_file, unit.status, !!unit.extension_final_visit_failed);
+        if (!unit.is_housing_unit_on_file) {
+            monitoringFlowAlert(
+                'This lot is not a completed housing unit yet. After final monitoring is assessed as Housing unit and construction reaches 100%, the map tag shows “Unit”.',
+                'Notice',
+                'default',
+                null
+            );
+        }
+    } catch (e) {
+        monitoringFlowAlert((e && e.message) ? e.message : 'Could not update lot.', 'Could not update', 'default', null);
+    } finally {
+        if (btn) btn.disabled = false;
+    }
+}
+
 function kpiFilter(card) {
     if (!card) return;
     const kind = card.dataset.fkind;
@@ -2807,6 +3019,8 @@ function kpiFilter(card) {
         if (!showAll) {
             if (kind === 'status') {
                 show = (lot.dataset.status || '') === val;
+            } else if (kind === 'housing_unit') {
+                show = (lot.dataset.housingUnitOnFile || '') === '1';
             } else {
                 show = (' ' + (lot.dataset.construction || '') + ' ').indexOf(' ' + val + ' ') !== -1;
             }
@@ -2823,8 +3037,16 @@ function kpiFilter(card) {
 
     document.querySelectorAll('.unit-table-row').forEach(row => {
         let show = true;
-        if (!showAll && kind === 'status') {
-            show = (row.dataset.status || '') === val;
+        if (!showAll) {
+            if (kind === 'status') {
+                show = (row.dataset.status || '') === val;
+            } else if (kind === 'housing_unit') {
+                show = (row.dataset.housingUnitOnFile || '') === '1';
+            } else if (kind === 'construction') {
+                show = (' ' + (row.dataset.construction || '') + ' ').indexOf(' ' + val + ' ') !== -1;
+            } else {
+                show = true;
+            }
         }
         row.style.display = show ? '' : 'none';
     });
@@ -2834,7 +3056,8 @@ function monitoringTaskDisplayTitle(task) {
     if (!task) return '—';
     if (task.label) return task.label;
     if (task.task_type === 'day_15_inspection') return '15 Day Inspection';
-    if (task.task_type === 'day_30_inspection' || task.task_type === 'month_2_inspection') return '30 Day Inspection';
+    if (task.task_type === 'month_2_inspection') return 'Extension 30 Day Inspection';
+    if (task.task_type === 'day_30_inspection') return '30 Day Inspection';
     return '—';
 }
 
@@ -2846,9 +3069,15 @@ function monitoringTaskPhase(task) {
 }
 
 function monitoringStaffDecisionLabels(task) {
+    if (task && task.task_type === 'month_2_inspection') {
+        return {
+            normal_progress: 'Housing unit',
+            no_progress: 'Failed',
+        };
+    }
     if (monitoringTaskPhase(task) === 'final') {
         return {
-            normal_progress: 'Housing unit on file',
+            normal_progress: 'Housing unit',
             no_progress: 'Explanation letter',
         };
     }
@@ -2876,6 +3105,9 @@ function updateInspectionDecisionButtons(task) {
 
 function monitoringTaskRelativeLine(task) {
     if (!task) return '';
+    if (task.task_type === 'month_2_inspection') {
+        return 'Extension period — final 30 Day visit (after explanation letter)';
+    }
     if (task.monitoring_window_line) return task.monitoring_window_line;
     if (monitoringTaskPhase(task) === 'initial') return 'Initial monitoring — first 15 days';
     if (monitoringTaskPhase(task) === 'final') return 'Final monitoring — confirm lot build is finished';
@@ -2884,6 +3116,10 @@ function monitoringTaskRelativeLine(task) {
 }
 
 function monitoringEarlyScheduleHint(task) {
+    if (task && task.task_type === 'month_2_inspection') {
+        return 'Extension 30 Day visit — click to test early inspection schedule';
+    }
+    if (!task) return 'Click to test early inspection warning';
     if (monitoringTaskPhase(task) === 'initial') {
         return 'Initial monitoring visit — click to test early inspection schedule';
     }
@@ -2968,7 +3204,9 @@ function buildMonitoringTaskCardElement(task, day15Reviewed) {
         } else if (task.report.progress_assessment === 'no_progress') {
             const decisionLabel = monitoringStaffDecisionDisplayLabel(task, 'no_progress');
             if (monitoringTaskPhase(task) === 'final') {
-                availabilityText = `${decisionLabel} — explanation letter workflow may apply${by}`;
+                availabilityText = task.task_type === 'month_2_inspection'
+                    ? `${decisionLabel} — review blacklist beneficiary when eligible${by}`
+                    : `${decisionLabel} — explanation letter workflow may apply${by}`;
             } else {
                 availabilityText = `${decisionLabel}${by}`;
             }
@@ -3050,7 +3288,7 @@ function renderMonitoringTaskCards(mainTasks, mergedForState, letterWorkflowAppl
         empty.style.cssText = 'padding:0.8rem;border:1px dashed #cbd5e1;border-radius:0.75rem;color:#64748b;font-size:0.8rem;';
         const nestedInSeparateCard = letterWorkflowApplies && (merged || []).some((t) => isPriorNoProgressLetterVisit(t, true));
         empty.textContent = nestedInSeparateCard
-            ? 'Completed 15 Day / 30 Day (No Progress) visits are shown in the separate card below.'
+            ? 'Completed visits that used the Explanation letter path are listed in the separate card below.'
             : 'No 15 Day or 30 Day monitoring tasks generated yet.';
         wrap.appendChild(empty);
         return;
@@ -3125,6 +3363,10 @@ function openInspectionConfirmModal(task) {
         const ms = task.monitoring_starts_on
             ? formatDisplayDate(String(task.monitoring_starts_on).slice(0, 10))
             : null;
+        const extStaffChoice = (
+            ' Staff choose Housing unit if the lot build is finished, or Failed if not '
+            + '(Failed supports Blacklist beneficiary when office rules allow).'
+        );
         if (ext && ext.start_date && ext.end_date) {
             const fromD = formatDisplayDate(String(ext.start_date).slice(0, 10));
             const until = formatDisplayDate(String(ext.end_date).slice(0, 10));
@@ -3132,15 +3374,15 @@ function openInspectionConfirmModal(task) {
                 'This is the extension 30 Day inspection after the written explanation letter was placed on file. '
                 + `Another 30-day build extension applies from ${fromD} through ${until}.`
                 + (ms
-                    ? ` Extension monitoring is counted from ${ms}, then ${relative} — inspection due ${due}. Continue?`
-                    : ` Then ${relative} — inspection due ${due}. Continue?`)
+                    ? ` Extension monitoring is counted from ${ms}, then ${relative} — inspection due ${due}.${extStaffChoice} Continue?`
+                    : ` Then ${relative} — inspection due ${due}.${extStaffChoice} Continue?`)
             );
         } else {
             scheduleText = (
                 'This is the extension 30 Day inspection after the written explanation letter was placed on file. '
                 + (ms
-                    ? `Extension monitoring is counted from ${ms}, then ${relative} — inspection due ${due}. Continue?`
-                    : `Schedule: ${relative} — inspection due ${due}. Continue?`)
+                    ? `Extension monitoring is counted from ${ms}, then ${relative} — inspection due ${due}.${extStaffChoice} Continue?`
+                    : `Schedule: ${relative} — inspection due ${due}.${extStaffChoice} Continue?`)
             );
         }
     } else if (task.task_type === 'day_15_inspection') {
@@ -3153,7 +3395,7 @@ function openInspectionConfirmModal(task) {
         const awardDate = task.award_date ? formatDisplayDate(task.award_date) : 'award date';
         scheduleText = (
             `Final monitoring: award ${awardDate} + 30-day grace, then ${relative} — due ${due}. `
-            + 'Staff will confirm whether the lot build is finished (Housing unit on file closes monitoring) or record Explanation letter to open that workflow. Continue?'
+            + 'Staff will confirm whether the lot build is finished (Housing unit closes monitoring) or record Explanation letter to open that workflow. Continue?'
         );
     } else {
         const awardDate = task.award_date ? formatDisplayDate(task.award_date) : 'award date';
@@ -3338,11 +3580,11 @@ async function submitAddHouseholdMember(event) {
     const ageVal = document.getElementById('hhAddAge') ? document.getElementById('hhAddAge').value : '';
     const position = '{{ request.user.position }}';
     if (!name) {
-        alert('Enter the household member’s full name.');
+        monitoringFlowAlert('Enter the household member’s full name.', 'Reminder', 'default', null);
         return;
     }
     if (!relationship) {
-        alert('Select relationship to the beneficiary.');
+        monitoringFlowAlert('Select relationship to the beneficiary.', 'Reminder', 'default', null);
         return;
     }
     const body = { full_name: name, relationship: relationship, sex: sex, age: ageVal };
@@ -3362,7 +3604,7 @@ async function submitAddHouseholdMember(event) {
         }
         openUnitModal(currentUnitId);
     } catch (e) {
-        alert(e.message || 'Could not add household member.');
+        monitoringFlowAlert(e.message || 'Could not add household member.', 'Could not add member', 'default', null);
     }
 }
 
@@ -3678,7 +3920,9 @@ function openInspectionInfoModal(task) {
         text.textContent = hasDecision
             ? `Caretaker monitoring report has been reviewed. The saved staff decision is shown in the summary below.`
             : (monitoringTaskPhase(task) === 'final'
-                ? 'Caretaker monitoring report has been submitted. Review the summary, then choose Housing unit on file if the lot build is finished, or Explanation letter to open that workflow.'
+                ? (task.task_type === 'month_2_inspection'
+                    ? 'Caretaker monitoring report was submitted for the extension 30 Day visit. Review the summary, then choose Housing unit if the lot build is finished, or Failed if it does not pass—Failed leads to Blacklist beneficiary when the case is eligible.'
+                    : 'Caretaker monitoring report has been submitted. Review the summary, then choose Housing unit if the lot build is finished, or Explanation letter to open that workflow.')
                 : 'Caretaker monitoring report has been submitted. Review the summary, then mark the result as Normal Progress or No Progress.');
         if (summary) {
             summary.innerHTML = renderCompletedReportSummary(task);
@@ -3705,12 +3949,12 @@ function openInspectionInfoModal(task) {
             text.textContent = (
                 `Extension 30 Day inspection opens on ${formatDisplayDate(task.due_date)} (${monitoringTaskRelativeLine(task)}).`
                 + extLine
-                + ' Use Monitoring Dashboard if you want to proceed early for testing.'
+                + ' Staff record Housing unit when the build is complete, or Failed when this extension visit does not pass—Failed leads toward Blacklist beneficiary when office rules allow. Use Monitoring Dashboard to test an early schedule if needed.'
             );
         } else if (task.task_type === 'day_30_inspection') {
             text.textContent = (
                 `Final monitoring opens on ${formatDisplayDate(task.due_date)} (${monitoringTaskRelativeLine(task)}). `
-                + 'Use this visit to confirm the lot build is finished. Housing unit on file records the lot and closes monitoring; Explanation letter opens that workflow.'
+                + 'Use this visit to confirm the lot build is finished. Housing unit records the lot and closes monitoring; Explanation letter opens that workflow.'
             );
         } else if (task.task_type === 'day_15_inspection') {
             text.textContent = (
@@ -3786,6 +4030,7 @@ async function submitProgressAssessment(decision) {
             String(task.id) === String(updatedTask.id) ? updatedTask : task
         ));
         closeInspectionInfoModal();
+        const extensionMarkedFailed = updatedTask.task_type === 'month_2_inspection' && decision === 'no_progress';
         if (data.monitoring_program_complete && currentUnitId) {
             openUnitModal(currentUnitId);
         } else {
@@ -3797,6 +4042,28 @@ async function submitProgressAssessment(decision) {
             renderPriorNoProgressVisitsPanel(letterWf);
             renderExplanationExtension30DayCard(ext30);
             renderMonitoringHistoryRecord(buildMonitoringHistoryFromTasks(currentMonitoringTasks));
+        }
+        if (extensionMarkedFailed && currentUnitId) {
+            const position = '{{ request.user.position }}';
+            fetch(`/units/housing-units/${position}/${encodeURIComponent(currentUnitId)}/details/`)
+                .then((r) => r.json())
+                .then((payload) => {
+                    if (payload.success && payload.unit) {
+                        const u = payload.unit;
+                        lastOpenedUnitPayload = u;
+                        syncExplanationLetterPanel(u);
+                        applyVmapLotHousingUnitVisual(
+                            String(u.id),
+                            !!u.is_housing_unit_on_file,
+                            u.status,
+                            !!u.extension_final_visit_failed,
+                        );
+                    }
+                    setTimeout(() => highlightExtensionFailedDisqualifyPath(), 150);
+                })
+                .catch(() => {
+                    setTimeout(() => highlightExtensionFailedDisqualifyPath(), 150);
+                });
         }
         try {
             const _ts = String(Date.now());
@@ -3969,7 +4236,7 @@ async function explanationScanLetterWithDwt() {
     const unit = lastOpenedUnitPayload;
     const c = unit && unit.explanation_letter_case;
     if (!c || !c.can_upload_letter) {
-        alert('Set the letter deadline first, then upload or scan.');
+        monitoringFlowAlert('Set the letter deadline first, then upload or scan.', 'Notice', 'default', null);
         return;
     }
     const oldText = scanBtn ? scanBtn.textContent : '';
@@ -3989,7 +4256,7 @@ async function explanationScanLetterWithDwt() {
         explanationLetterClearDwtBuffer(dwt);
         await uploadExplanationLetterFile(file);
     } catch (e) {
-        alert((e && e.message) ? e.message : 'Scan failed.');
+        monitoringFlowAlert((e && e.message) ? e.message : 'Scan failed.', 'Scan failed', 'default', null);
     } finally {
         if (scanBtn) {
             scanBtn.disabled = false;
@@ -4004,7 +4271,7 @@ function explanationUploadLetterFromComputer() {
     const unit = lastOpenedUnitPayload;
     const c = unit && unit.explanation_letter_case;
     if (!c || !c.can_upload_letter) {
-        alert('Set the letter deadline first, then upload or scan.');
+        monitoringFlowAlert('Set the letter deadline first, then upload or scan.', 'Notice', 'default', null);
         return;
     }
     document.getElementById('explanationLetterFile')?.click();
@@ -4019,12 +4286,12 @@ function updateExplanationBuildExtensionNote(unit) {
         const fromD = ext.start_date ? formatDisplayDate(String(ext.start_date).slice(0, 10)) : '';
         el.textContent = fromD
             ? (
-                'After the explanation letter is uploaded or scanned on file, another 30-day build extension applies. '
-                + `It runs from ${fromD} through ${until}. Your first 15 Day / 30 Day (No Progress) visits are in the separate card above; the extension 30 Day visit appears below this notice (midpoint is on the caretaker dashboard first).`
+                `Letter on file triggers a 30-day build extension (${fromD}–${until}). `
+                + 'Original 15 Day and 30 Day visits stay in the card above; extension visits (caretaker midpoint, then final 30 Day) appear below.'
             )
             : (
-                'After the explanation letter is uploaded or scanned on file, another 30-day build extension applies. '
-                + `It runs through ${until}. Your first 15 Day / 30 Day (No Progress) visits are in the separate card above; the extension 30 Day visit appears below this notice (midpoint is on the caretaker dashboard first).`
+                `Letter on file triggers a 30-day build extension (through ${until}). `
+                + 'Original visits stay above; extension visits appear below (caretaker assigns the midpoint visit first).'
             );
         el.style.display = 'block';
     } else {
@@ -4129,7 +4396,7 @@ function syncExplanationLetterPanel(unit) {
         panel.classList.add('explanation-letter-panel--dormant');
         deadlineForm.style.display = 'none';
         fileActions.style.display = 'block';
-        const dormantHint = 'Available after 30 Day No Progress and a letter deadline is set.';
+        const dormantHint = 'Available after a 30 Day Explanation letter outcome and a letter deadline is set.';
         setLetterButtons(false, dormantHint, false, dormantHint, false, '');
         if (subBtn) subBtn.style.display = 'none';
         if (nameEl) nameEl.style.display = 'none';
@@ -4147,14 +4414,15 @@ function syncExplanationLetterPanel(unit) {
     if (!c && viewUrl) {
         deadlineForm.style.display = 'none';
         fileActions.style.display = 'block';
-        const lockedHint = 'Letter on file. Upload and scan are unavailable until a new 30 Day No Progress case is opened.';
+        const lockedHint = 'Letter on file. Upload and scan are unavailable until a new 30 Day Explanation letter case is opened.';
         setLetterButtons(false, lockedHint, false, lockedHint, true, viewUrl);
         if (subBtn) subBtn.style.display = 'none';
         if (nameEl) nameEl.style.display = 'none';
         if (fi) fi.value = '';
         if (dqBtn) {
-            dqBtn.style.opacity = '0.45';
-            dqBtn.style.pointerEvents = 'none';
+            const enable = Boolean(unit.extension_final_visit_failed);
+            dqBtn.style.opacity = enable ? '1' : '0.45';
+            dqBtn.style.pointerEvents = enable ? 'auto' : 'none';
         }
         updateExplanationBuildExtensionNote(unit);
         return;
@@ -4191,7 +4459,8 @@ function syncExplanationLetterPanel(unit) {
     if (fi) fi.value = '';
 
     if (dqBtn) {
-        const enable = Boolean(c.can_disqualify);
+        const extFail = Boolean(unit.extension_final_visit_failed);
+        const enable = extFail || Boolean(c.can_disqualify);
         dqBtn.style.opacity = enable ? '1' : '0.45';
         dqBtn.style.pointerEvents = enable ? 'auto' : 'none';
     }
@@ -4245,7 +4514,7 @@ function explanationViewLetter() {
 async function saveExplanationLetterDeadline() {
     const inp = document.getElementById('explanationDeadlineInput');
     if (!inp || !inp.value) {
-        alert('Choose a deadline date and time.');
+        monitoringFlowAlert('Choose a deadline date and time.', 'Reminder', 'default', null);
         return;
     }
     const position = '{{ request.user.position }}';
@@ -4268,7 +4537,7 @@ async function saveExplanationLetterDeadline() {
         }
         openUnitModal(currentUnitId);
     } catch (e) {
-        alert(e.message || 'Could not save deadline.');
+        monitoringFlowAlert(e.message || 'Could not save deadline.', 'Could not save', 'default', null);
     }
 }
 
@@ -4278,7 +4547,7 @@ async function uploadExplanationLetterFile(fileOverride) {
         ? fileOverride
         : (fi && fi.files && fi.files[0]);
     if (!file) {
-        alert('Choose a file to upload.');
+        monitoringFlowAlert('Choose a file to upload.', 'Reminder', 'default', null);
         return;
     }
     const position = '{{ request.user.position }}';
@@ -4299,17 +4568,86 @@ async function uploadExplanationLetterFile(fileOverride) {
             throw new Error(data.error || 'Upload failed.');
         }
         if (fi) fi.value = '';
-        alert(data.message || 'Letter saved.');
-        openUnitModal(currentUnitId);
+        monitoringFlowAlert(
+            data.message || 'Letter saved.',
+            'Explanation letter stored',
+            'success',
+            () => { openUnitModal(currentUnitId); }
+        );
     } catch (e) {
-        alert(e.message || 'Upload failed.');
+        monitoringFlowAlert(e.message || 'Upload failed.', 'Upload failed', 'default', null);
     }
+}
+
+function fillBlacklistModalSituation() {
+    const wrap = document.getElementById('blacklistModalSituation');
+    if (!wrap) return;
+    const unit = lastOpenedUnitPayload;
+    if (!unit) {
+        wrap.innerHTML = '';
+        wrap.style.display = 'none';
+        return;
+    }
+
+    const ext = unit.explanation_build_extension;
+    const ext30 = unit.explanation_extension_30day_task;
+    const extFailed = Boolean(unit.extension_final_visit_failed);
+    const c = unit.explanation_letter_case;
+
+    let paragraph = '';
+
+    const extRangeSentence = () => {
+        if (!ext || !ext.start_date || !ext.end_date) return '';
+        const fromD = formatDisplayDate(String(ext.start_date).slice(0, 10));
+        const until = formatDisplayDate(String(ext.end_date).slice(0, 10));
+        return `Build extension (after letter): ${fromD}–${until}. Original 15 & 30 Day visits stay in the card above; extension visits are separate below.`;
+    };
+
+    if (extFailed && ext30 && ext30.task_type === 'month_2_inspection') {
+        const rep = ext30.report || {};
+        const due = ext30.due_date ? formatDisplayDate(ext30.due_date) : '';
+        const labels = monitoringStaffDecisionLabels(ext30);
+        const outcomeLabel = rep.progress_assessment_label
+            || (rep.progress_assessment === 'no_progress' ? labels.no_progress : '')
+            || 'Failed';
+        const by = rep.assessed_by ? ` · ${rep.assessed_by}` : '';
+        const visitSummary = (
+            `Extension final visit`
+            + (due ? ` (${due})` : '')
+            + `: ${outcomeLabel}${by}.`
+        );
+        const tail = (c && c.has_letter_document)
+            ? ' Eligible for blacklist (letter may already be on file).'
+            : ' Eligible for blacklist.';
+        const lead = extRangeSentence();
+        paragraph = [lead, visitSummary + tail].filter(Boolean).join(' ');
+    } else if (extFailed) {
+        const lead = extRangeSentence();
+        paragraph = (
+            [lead, 'Extension final visit assessed Failed. Eligible for blacklist.']
+                .filter(Boolean)
+                .join(' ')
+        );
+    } else if (c && c.can_disqualify) {
+        const lead = extRangeSentence();
+        paragraph = (
+            [lead, 'Letter deadline passed with no compliant letter on file. Eligible for blacklist.']
+                .filter(Boolean)
+                .join(' ')
+        );
+    } else {
+        paragraph = 'Reload this lot’s details to show blacklist context.';
+    }
+
+    wrap.innerHTML = `<p>${paragraph}</p>`;
+    wrap.style.display = 'block';
 }
 
 function openDisqualifyBeneficiaryModal() {
     const modal = document.getElementById('disqualifyBeneficiaryModal');
     const ta = document.getElementById('disqualifyReasonInput');
     if (ta) ta.value = '';
+    fillBlacklistModalSituation();
     if (modal) modal.style.display = 'flex';
 }
 
@@ -4323,7 +4661,7 @@ async function submitDisqualifyBeneficiary() {
     const ta = document.getElementById('disqualifyReasonInput');
     const reason = (ta && ta.value) ? ta.value.trim() : '';
     if (reason.length < 10) {
-        alert('Enter a disqualification reason (at least 10 characters).');
+        monitoringFlowAlert('Enter a blacklist reason (at least 10 characters).', 'Reminder', 'default', null);
         return;
     }
     const position = '{{ request.user.position }}';
@@ -4337,15 +4675,26 @@ async function submitDisqualifyBeneficiary() {
             },
             body: JSON.stringify({ reason }),
         });
-        const data = await res.json();
+        let data;
+        try {
+            data = await res.json();
+        } catch (parseErr) {
+            throw new Error('Unexpected server response while blacklisting. Check that you are logged in and try again.');
+        }
         if (!res.ok || !data.success) {
-            throw new Error(data.error || 'Disqualify failed.');
+            throw new Error(data.error || 'Blacklist failed.');
         }
         closeDisqualifyBeneficiaryModal();
-        alert(data.message || 'Disqualified.');
-        openUnitModal(currentUnitId);
+        monitoringFlowAlert(
+            data.message || 'Beneficiary blacklisted.',
+            'Blacklisted',
+            'success',
+            () => {
+                window.location.href = `/units/blacklists/${position}/`;
+            }
+        );
     } catch (e) {
-        alert(e.message || 'Disqualify failed.');
+        monitoringFlowAlert(e.message || 'Blacklist failed.', 'Could not blacklist', 'default', null);
     }
 }
 
@@ -4357,23 +4706,8 @@ function openUnitModal(unitId) {
         .then(data => {
             if (data.success) {
                 const unit = data.unit;
-                document.getElementById('modalUnitTitle').textContent = `Block ${unit.block}, Lot ${unit.lot}`;
-                const statusPill = document.getElementById('modalUnitStatus');
-                const statusKeyMap = {
-                    'Occupied': 'occupied',
-                    'Vacant — available': 'vacant',
-                    'Under notice (30-day)': 'notice30',
-                    'Final notice (10-day)': 'final',
-                    'Repossessed': 'repo',
-                    'Housing unit': 'housing-unit',
-                };
-                if (unit.is_housing_unit_on_file || unit.status_display === 'Housing unit') {
-                    statusPill.textContent = 'Housing unit';
-                    statusPill.dataset.state = 'housing-unit';
-                } else {
-                    statusPill.textContent = unit.status_display || unit.status;
-                    statusPill.dataset.state = statusKeyMap[unit.status] || 'vacant';
-                }
+                applyUnitDetailHeader(unit);
+                applyUnitDrawerStatusPill(unit);
                 const ben = unit.beneficiary_info;
                 document.getElementById('modalBeneficiaryName').textContent =
                     (ben && ben.full_name) ? ben.full_name : '—';
@@ -4411,6 +4745,7 @@ function openUnitModal(unitId) {
                 syncExplanationLetterPanel(unit);
                 renderPriorNoProgressVisitsPanel(letterWf);
                 renderExplanationExtension30DayCard(ext30);
+                applyVmapLotHousingUnitVisual(String(unit.id), !!unit.is_housing_unit_on_file, unit.status, !!unit.extension_final_visit_failed);
                 document.getElementById('unitModal').style.display = 'flex';
                 if (unit.explanation_letter_workflow_applies === true && (unit.explanation_letter_case || unit.explanation_letter_view_url)) {
                     requestAnimationFrame(() => {
@@ -4445,7 +4780,7 @@ function switchUnitTab(btn) {
 }
 
 function sendSMS() {
-    alert('Send SMS functionality');
+    monitoringFlowAlert('Send SMS functionality is not wired yet.', 'Notice', 'default', null);
 }
 
 (function setupMonitoringTaskSyncListener() {

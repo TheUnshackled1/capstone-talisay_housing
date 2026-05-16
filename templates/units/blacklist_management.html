@@ -168,16 +168,16 @@
     }
 
     .applications-table th {
-        padding: 0.85rem 0.75rem;
+        padding: 0.85rem 0.65rem;
         text-align: left;
-        font-size: 0.75rem;
+        font-size: 0.7rem;
         font-weight: 700;
         color: #ffffff;
         text-transform: uppercase;
         letter-spacing: 0.05em;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        white-space: normal;
+        line-height: 1.25;
+        vertical-align: middle;
         border-right: 1px solid rgba(255, 255, 255, 0.16);
         border-bottom: 1px solid #172554;
         position: relative;
@@ -217,13 +217,15 @@
         position: relative;
     }
 
-    .applications-table tbody tr:nth-child(even) {
-        background: #fafbfc;
+    .applications-table tbody tr {
+        background: #ffffff;
     }
-
+    .applications-table tbody tr:nth-child(even) {
+        background: #f8fafc;
+    }
     .applications-table tbody tr:hover {
-        background: #fee2e2;
-        box-shadow: inset 3px 0 0 #dc2626;
+        background: #fef3f2;
+        box-shadow: inset 3px 0 0 #b91c1c;
     }
 
     .applications-table tbody tr:last-child td {
@@ -242,57 +244,118 @@
     .applications-table td.col-num {
         font-weight: 700;
         color: #1e3a8a;
+        font-variant-numeric: tabular-nums;
     }
 
     .applications-table .col-applicant {
-        width: 22%;
+        width: 18%;
     }
     .applications-table td.col-applicant {
-        font-weight: 600;
+        font-weight: 700;
         color: #0f172a;
+        line-height: 1.35;
+    }
+    .applications-table td.col-applicant .blacklist-ref {
+        display: inline-block;
+        margin-top: 0.2rem;
+        font-size: 0.7rem;
+        font-weight: 500;
+        color: #64748b;
+        font-family: 'JetBrains Mono', 'Courier New', monospace;
+        letter-spacing: 0.02em;
     }
 
     .applications-table .col-reason {
-        width: 14%;
+        width: 11%;
+        text-align: center;
     }
 
     .applications-table .col-details {
-        width: 28%;
+        width: 34%;
     }
     .applications-table td.col-details {
+        color: #334155;
+        font-size: 0.8rem;
+        line-height: 1.5;
+    }
+    .applications-table td.col-details .details-primary {
+        display: block;
+        color: #0f172a;
+        font-weight: 500;
+        margin-bottom: 0.3rem;
+    }
+    .applications-table td.col-details .details-secondary {
+        display: block;
+        color: #475569;
+        font-size: 0.75rem;
+        font-style: italic;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+    }
+    .applications-table td.col-details .details-empty {
+        color: #94a3b8;
+        font-style: italic;
+        font-size: 0.78rem;
+    }
+
+    .applications-table .col-date {
+        width: 10%;
+        text-align: center;
+    }
+    .applications-table td.col-date {
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+        color: #475569;
+    }
+
+    .applications-table .col-staff {
+        width: 12%;
+        text-align: center;
+    }
+    .applications-table td.col-staff {
         color: #475569;
         font-size: 0.8rem;
     }
 
-    .applications-table .col-date {
-        width: 11%;
-        text-align: center;
-    }
-
-    .applications-table .col-staff {
-        width: 11%;
-        text-align: center;
-    }
-
     .applications-table .col-actions {
-        width: 10%;
+        width: 11%;
         text-align: center;
     }
 
     .btn-view-details {
-        padding: 0.45rem 0.85rem;
-        background: #f1f5f9;
-        color: #334155;
-        border: 1px solid #cbd5e1;
-        border-radius: 0.35rem;
-        font-size: 0.75rem;
-        font-weight: 600;
+        padding: 0.4rem 0.9rem;
+        background: #ffffff;
+        color: #1e3a8a;
+        border: 1px solid #93c5fd;
+        border-radius: 0.4rem;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
         cursor: pointer;
-        transition: all 0.2s;
+        transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+        white-space: nowrap;
     }
     .btn-view-details:hover {
-        background: #e2e8f0;
-        color: #0f172a;
+        background: #1d4ed8;
+        border-color: #1d4ed8;
+        color: #ffffff;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(29, 78, 216, 0.25);
+    }
+    .btn-view-details:focus-visible {
+        outline: 2px solid #60a5fa;
+        outline-offset: 2px;
+    }
+    .badge-reason {
+        background: #fef2f2;
+        color: #991b1b;
+        border-color: #fecaca;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        font-size: 0.68rem;
+        padding: 0.32rem 0.6rem;
+        white-space: nowrap;
     }
 
     /* Modal CSS */
@@ -393,6 +456,15 @@
         border-color: #fecaca;
     }
 
+    .blacklist-reason-narrative {
+        display: block;
+        font-size: 0.8rem;
+        font-weight: 500;
+        line-height: 1.45;
+        color: #334155;
+        max-width: 28rem;
+    }
+
     .btn-search {
         padding: 0.625rem 1.25rem;
         background: #0d9488;
@@ -472,18 +544,20 @@
                 <tr>
                     <td class="col-num">{{ forloop.counter }}</td>
                     <td class="col-applicant">
-                        {{ blacklist.applicant.full_name|upper }}<br>
-                        <span style="font-size: 0.75rem; color: #64748b; font-weight: 400;">Ref: {{ blacklist.applicant.reference_number }}</span>
+                        {{ blacklist.applicant.full_name|upper }}
+                        <span class="blacklist-ref">{{ blacklist.applicant.reference_number }}</span>
                     </td>
                     <td class="col-reason">
                         <span class="badge badge-reason">{{ blacklist.get_reason_display }}</span>
                     </td>
                     <td class="col-details">
-                        {{ blacklist.reason_details }}
                         {% if blacklist.supporting_notes %}
-                        <div style="margin-top: 0.35rem; font-size: 0.75rem; color: #94a3b8; font-style: italic;">
-                            Notes: {{ blacklist.supporting_notes }}
-                        </div>
+                        <span class="details-primary">{{ blacklist.supporting_notes }}</span>
+                        {% endif %}
+                        {% if blacklist.reason_details %}
+                        <span class="details-secondary">{{ blacklist.reason_details }}</span>
+                        {% elif not blacklist.supporting_notes %}
+                        <span class="details-empty">No additional details recorded.</span>
                         {% endif %}
                     </td>
                     <td class="col-date">
@@ -502,9 +576,9 @@
                             data-ref="{{ blacklist.applicant.reference_number }}"
                             data-dob="{{ blacklist.applicant.date_of_birth|date:'M d, Y'|default:'Unknown' }}"
                             data-brgy="{{ blacklist.applicant.barangay.name|default:'Unknown' }}"
-                            data-reason="{{ blacklist.get_reason_display }}"
+                            data-reason="{% if blacklist.supporting_notes %}{{ blacklist.supporting_notes }}{% else %}{{ blacklist.get_reason_display }}{% endif %}"
                             data-details="{{ blacklist.reason_details }}"
-                            data-notes="{{ blacklist.supporting_notes }}"
+                            data-notes="{{ blacklist.get_reason_display }}"
                             data-date="{{ blacklist.blacklisted_at|date:'M d, Y' }}"
                             onclick="openDetailsModal(this)">
                             View Details
@@ -513,7 +587,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="6" class="empty-state">
+                    <td colspan="7" class="empty-state">
                         <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="1.5">
                             <circle cx="12" cy="12" r="10" />
@@ -566,16 +640,16 @@
                 <div class="bl-detail-value" id="mDate"></div>
             </div>
             <div class="bl-detail-group">
-                <div class="bl-detail-label">Primary Reason</div>
-                <div class="bl-detail-value" id="mReason"></div>
+                <div class="bl-detail-label">Reason</div>
+                <div class="bl-detail-value text-sm" id="mReason"></div>
             </div>
             <div class="bl-detail-group">
-                <div class="bl-detail-label">Detailed Explanation</div>
+                <div class="bl-detail-label">Staff explanation (details)</div>
                 <div class="bl-detail-value text-sm" id="mDetails"></div>
             </div>
             <div class="bl-detail-group">
-                <div class="bl-detail-label">Supporting Notes</div>
-                <div class="bl-detail-value text-sm" id="mNotes" style="font-style: italic;"></div>
+                <div class="bl-detail-label">Office category</div>
+                <div class="bl-detail-value text-sm" id="mNotes"></div>
             </div>
         </div>
     </div>
@@ -589,7 +663,7 @@
         document.getElementById('mBrgy').textContent = btn.dataset.brgy;
         document.getElementById('mReason').textContent = btn.dataset.reason;
         document.getElementById('mDetails').textContent = btn.dataset.details;
-        document.getElementById('mNotes').textContent = btn.dataset.notes || 'No supporting notes provided.';
+        document.getElementById('mNotes').textContent = btn.dataset.notes || '—';
         document.getElementById('mDate').textContent = btn.dataset.date;
         
         document.getElementById('blDetailsModal').classList.add('active');

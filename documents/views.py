@@ -14,7 +14,7 @@ import mimetypes
 import os
 from uuid import UUID
 from intake.models import Applicant
-from units.models import LotAward, MonitoringReport
+from units.models import ConstructionProgress, LotAward, MonitoringReport, Blacklist
 from applications.models import QueueEntry
 from documents.models import (
     Document,
@@ -402,6 +402,73 @@ def verify_position(view_func):
     return wrapper
 
 
+def _construction_progress_for_lot_award(lot_award: LotAward | None):
+    if not lot_award:
+        return None
+    try:
+        return lot_award.construction_progress
+    except ConstructionProgress.DoesNotExist:
+        return None
+
+
+def _housing_unit_on_file_from_progress(progress) -> bool:
+    return bool(
+        progress
+        and getattr(progress, 'stage', '') == 'completed'
+        and (getattr(progress, 'percent_complete', None) or 0) >= 100
+    )
+
+
+def _active_lot_award_with_unit(app_obj) -> LotAward | None:
+    if not app_obj:
+        return None
+    for la in app_obj.lot_awards.all():
+        if la.status == 'active' and la.unit_id:
+            return la
+    return None
+
+
+def _document_management_applicant_status(
+    applicant: Applicant, app_obj, bl_row: Blacklist | None
+) -> tuple[str, str | None]:
+    """
+    Applicant Status: pipeline stages, plus Module 4 distinction between
+    formal housing unit on file (construction completed) vs awarded lot only.
+    Blacklisted Beneficiaries registry overrides post-award labels.
+    """
+    if bl_row:
+        return ('Blacklisted Beneficiaries registry', None)
+
+    la_active = _active_lot_award_with_unit(app_obj) if app_obj else None
+    if la_active and la_active.unit:
+        unit = la_active.unit
+        loc = f'Block {unit.block_number}, Lot {unit.lot_number}'
+        prog = _construction_progress_for_lot_award(la_active)
+        if _housing_unit_on_file_from_progress(prog):
+            status_disp = unit.get_status_display() if hasattr(unit, 'get_status_display') else unit.status
+            return (
+                'Housing Units',
+                f'{loc} · Housing unit on file · {status_disp}',
+            )
+        status_disp = unit.get_status_display() if hasattr(unit, 'get_status_display') else unit.status
+        return (
+            'Awarded lot — not housing unit on file',
+            f'{loc} · {status_disp}',
+        )
+
+    if app_obj:
+        if app_obj.status == 'awarded':
+            return ('Awarded — pending unit linkage', None)
+        if app_obj.status == 'standby':
+            return ('Ready for Awarding', None)
+        if app_obj.status == 'completed':
+            return ('Ready for Awarding', None)
+
+    if getattr(applicant, 'form_queue_routed_at', None):
+        return ('Ready for Form queue', None)
+    return ('Evaluation & Eligibility', None)
+
+
 @login_required
 @verify_position
 def document_management(request, position):
@@ -428,7 +495,10 @@ def document_management(request, position):
     applicants_qs = (
         Applicant.objects
         .prefetch_related(
-            'application__lot_awards__unit',
+            Prefetch(
+                'application__lot_awards',
+                queryset=LotAward.objects.select_related('unit', 'construction_progress'),
+            ),
             'documents',
             'requirement_submissions__requirement',
             Prefetch(
@@ -460,9 +530,19 @@ def document_management(request, position):
     QUEUE_RANK = {'priority': 0, 'walk_in': 1}
     QUEUE_LABEL = {'priority': 'Priority', 'walk_in': 'Walk-in'}
 
+    # Evaluate once so we can bulk-load Module 4 blacklist rows (why disqualified).
+    applicants_ordered = list(applicants_qs)
+    bl_applicant_ids = [a.pk for a in applicants_ordered]
+    blacklist_map = {
+        str(b.applicant_id): b
+        for b in Blacklist.objects.filter(applicant_id__in=bl_applicant_ids).only(
+            'applicant_id', 'supporting_notes', 'reason_details'
+        )
+    }
+
     # Prepare applicants with lot info and document count
     applicants_list = []
-    for applicant in applicants_qs:
+    for applicant in applicants_ordered:
         # Resolve active queue entry from the prefetched list (lowest position wins).
         active_entries = getattr(applicant, 'active_queue_entries', None) or []
         active_queue_entry = active_entries[0] if active_entries else None
@@ -486,7 +566,8 @@ def document_management(request, position):
         lot_info = None
         try:
             if hasattr(applicant, 'application') and applicant.application:
-                lot_award = applicant.application.lot_awards.filter(unit__isnull=False).first()
+                qs = applicant.application.lot_awards.filter(unit__isnull=False)
+                lot_award = qs.filter(status='active').first() or qs.first()
                 if lot_award and lot_award.unit:
                     lot_info = {
                         'block': str(lot_award.unit.block_number) if lot_award.unit.block_number else 'N/A',
@@ -512,16 +593,18 @@ def document_management(request, position):
         signed_form_confirmed = bool(app_obj and app_obj.applicant_signed_at)
         phase_a_complete = phase_a_verified_docs >= phase_a_required_docs and signed_form_confirmed
 
-        if applicant.status == 'disqualified':
-            applicant_workflow_status = 'Disqualified'
-        elif app_obj and app_obj.status == 'awarded':
-            applicant_workflow_status = 'Lot Awarded'
-        elif app_obj and app_obj.status == 'standby':
-            applicant_workflow_status = 'Ready for Awarding'
-        elif getattr(applicant, 'form_queue_routed_at', None):
-            applicant_workflow_status = 'Ready for Form queue'
-        else:
-            applicant_workflow_status = 'Application & Eligibility'
+        bl_row = blacklist_map.get(str(applicant.pk))
+        why_disqualified = ''
+        if bl_row and (bl_row.supporting_notes or '').strip():
+            why_disqualified = bl_row.supporting_notes.strip()
+        elif (applicant.disqualification_reason or '').strip():
+            why_disqualified = applicant.disqualification_reason.strip()
+        elif bl_row and (bl_row.reason_details or '').strip():
+            why_disqualified = bl_row.reason_details.strip()
+
+        applicant_workflow_status, applicant_status_detail = _document_management_applicant_status(
+            applicant, app_obj, bl_row
+        )
 
         # Module 4 handoff: vault Phase A complete (no separate FieldInspection ORM gate).
         module3_ready_for_module4 = phase_a_complete
@@ -545,6 +628,9 @@ def document_management(request, position):
             'module3_ready_for_module4': module3_ready_for_module4,
             'signed_form_confirmed': signed_form_confirmed,
             'applicant_workflow_status': applicant_workflow_status,
+            'applicant_status_detail': applicant_status_detail,
+            'why_disqualified': why_disqualified,
+            'has_blacklist_record': bool(bl_row),
             'queue_type': queue_type,
             'queue_position': queue_position,
             'queue_label_short': queue_label_short,
@@ -720,14 +806,17 @@ def document_management(request, position):
             'full_name': row['full_name'],
             'reference_number': row['reference_number'] or '',
             'barangay': row['barangay'],
+            'status': row['status'],
             'status_display': row['status_display'],
+            'applicant_workflow_status': row.get('applicant_workflow_status') or '',
+            'applicant_status_detail': row.get('applicant_status_detail') or '',
+            'why_disqualified': row.get('why_disqualified') or '',
             'vault_checklist': checklist,
             'situation': situation,
         }
 
-    disqualified_count = (
-        Applicant.objects.filter(status='disqualified')
-        .filter(Q(archives__isnull=False) | Q(module2_handoff_at__isnull=False))
+    blacklisted_registry_count = (
+        Blacklist.objects.filter(Q(applicant__archives__isnull=False) | Q(applicant__module2_handoff_at__isnull=False))
         .distinct()
         .count()
     )
@@ -754,7 +843,7 @@ def document_management(request, position):
         'total_documents': documents_qs.count() + total_monitoring_report_documents,
         'total_applicants': len(applicants_list),
         'total_size_gb': round(sum(doc.file_size for doc in documents_qs) / (1024*1024*1024), 2),
-        'disqualified_count': disqualified_count,
+        'blacklisted_registry_count': blacklisted_registry_count,
         'vault_drawer_data': vault_drawer_data,
     }
 

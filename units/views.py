@@ -257,6 +257,7 @@ def housing_units_monitoring(request, position):
     construction_in_progress = 0
     construction_completed = 0
     construction_delayed = 0
+    housing_unit_on_file_count = 0
     progress_by_unit_id = {}
 
     if not no_relocation_sites and units_list:
@@ -275,6 +276,14 @@ def housing_units_monitoring(request, position):
         for u in units_list:
             p = progress_by_unit_id.get(u.id)
             setattr(u, '_construction_progress', p)
+            on_file = bool(
+                p
+                and p.stage == 'completed'
+                and (p.percent_complete or 0) >= 100
+            )
+            setattr(u, 'is_housing_unit_on_file', on_file)
+            if on_file:
+                housing_unit_on_file_count += 1
             if not p:
                 setattr(u, 'construction_tokens', '')
                 continue
@@ -292,6 +301,13 @@ def housing_units_monitoring(request, position):
                 construction_in_progress += 1
                 tokens.append('in_progress')
             setattr(u, 'construction_tokens', ' '.join(tokens))
+
+        ext_failed_unit_ids = _unit_ids_with_extension_month_2_failed(units_list)
+        for u in units_list:
+            setattr(u, 'extension_final_visit_failed', u.id in ext_failed_unit_ids)
+    else:
+        for u in units_list:
+            setattr(u, 'extension_final_visit_failed', False)
 
     # Prepare context
     context = {
@@ -321,6 +337,7 @@ def housing_units_monitoring(request, position):
         'construction_in_progress': construction_in_progress,
         'construction_completed': construction_completed,
         'construction_delayed': construction_delayed,
+        'housing_unit_on_file_count': housing_unit_on_file_count,
         'explanation_letter_office_tz': str(settings.TIME_ZONE),
     }
 
@@ -457,6 +474,55 @@ def create_housing_unit(request, position):
     )
 
 
+def _month_2_inspection_marked_no_progress(lot_award):
+    """
+    True when the extension final visit (month_2_inspection) is complete and staff
+    assessed it as no_progress ("Failed" in UI).
+    """
+    if not lot_award:
+        return False
+    task = (
+        MonitoringTask.objects.filter(
+            lot_award=lot_award,
+            task_type='month_2_inspection',
+            status='completed',
+        )
+        .order_by('-due_date', '-id')
+        .first()
+    )
+    if not task:
+        return False
+    report = task.reports.order_by('-submitted_at').first()
+    return bool(
+        report
+        and report.progress_assessment == 'no_progress'
+        and report.assessed_at
+    )
+
+
+def _unit_ids_with_extension_month_2_failed(units_list):
+    """For site map: units whose extension 30 Day visit was assessed Failed."""
+    if not units_list:
+        return frozenset()
+    unit_ids = [u.id for u in units_list]
+    failed = set()
+    tasks = MonitoringTask.objects.filter(
+        lot_award__unit_id__in=unit_ids,
+        lot_award__status='active',
+        task_type='month_2_inspection',
+        status='completed',
+    ).select_related('lot_award')
+    for t in tasks:
+        report = t.reports.order_by('-submitted_at').first()
+        if (
+            report
+            and report.progress_assessment == 'no_progress'
+            and report.assessed_at
+        ):
+            failed.add(t.lot_award.unit_id)
+    return frozenset(failed)
+
+
 _FINAL_MONITORING_TASK_TYPES = frozenset({'day_30_inspection', 'month_2_inspection'})
 
 
@@ -464,10 +530,12 @@ def _staff_progress_assessment_display(task_type, assessment):
     """Staff decision label; final visits use outcome wording instead of Normal/No Progress."""
     if not assessment:
         return ''
-    if task_type in _FINAL_MONITORING_TASK_TYPES:
-        if assessment == 'normal_progress':
-            return 'Housing unit on file'
-        if assessment == 'no_progress':
+    if assessment == 'normal_progress' and task_type in _FINAL_MONITORING_TASK_TYPES:
+        return 'Housing unit'
+    if assessment == 'no_progress':
+        if task_type == 'month_2_inspection':
+            return 'Failed'
+        if task_type == 'day_30_inspection':
             return 'Explanation letter'
     return dict(MonitoringReport.PROGRESS_ASSESSMENT_CHOICES).get(assessment, assessment)
 
@@ -518,6 +586,9 @@ def get_unit_details(request, position, unit_id):
             .select_related('application__applicant')
             .order_by('-awarded_at')
             .first()
+        )
+        extension_final_visit_failed = (
+            _month_2_inspection_marked_no_progress(active_lot_award) if active_lot_award else False
         )
         possession_info = None
         beneficiary_info = None
@@ -859,7 +930,9 @@ def get_unit_details(request, position, unit_id):
                 'has_letter_document': has_doc,
                 'can_set_deadline': deadline is None and not has_doc,
                 'can_upload_letter': bool(deadline) and not has_doc,
-                'can_disqualify': bool(deadline and deadline_passed and not has_doc),
+                'can_disqualify': bool(
+                    (deadline and deadline_passed and not has_doc) or extension_final_visit_failed
+                ),
                 'letter_document_url': (
                     request.build_absolute_uri(rev.letter_document.url)
                     if has_doc and rev.letter_document
@@ -867,7 +940,11 @@ def get_unit_details(request, position, unit_id):
                 ),
             }
             if explanation_case['can_disqualify']:
-                ex_row_status = 'Deadline passed — no letter on file'
+                ex_row_status = (
+                    'Extension final visit — Failed (blacklist beneficiary available)'
+                    if extension_final_visit_failed
+                    else 'Deadline passed — no letter on file'
+                )
             elif explanation_case['has_letter_document']:
                 ex_row_status = 'Letter on file'
             elif explanation_case['letter_deadline_at']:
@@ -936,6 +1013,7 @@ def get_unit_details(request, position, unit_id):
                 'occupant_name': unit.occupant_name or '',
                 'occupant_id': unit.occupant_id or '',
                 'is_escalated': unit.is_escalated,
+                'extension_final_visit_failed': extension_final_visit_failed,
                 'lot_award_id': str(active_lot_award.id) if active_lot_award else None,
                 'can_add_household_members': can_add_household_members,
                 'household_relationship_options': _HOUSEHOLD_RELATIONSHIP_OPTIONS,
@@ -1245,27 +1323,37 @@ def disqualify_beneficiary_monitoring(request, position, unit_id):
     if not la:
         return JsonResponse({'success': False, 'error': 'No active lot award for this unit.'}, status=400)
 
+    application = getattr(la, 'application', None)
+    if not application:
+        return JsonResponse({'success': False, 'error': 'Lot award has no linked application.'}, status=400)
+    applicant = getattr(application, 'applicant', None)
+    if not applicant:
+        return JsonResponse({'success': False, 'error': 'Application has no linked beneficiary record.'}, status=400)
+
+    extension_final_failed = _month_2_inspection_marked_no_progress(la)
+
     rev = _active_pending_explanation_for_lot_award(la)
+    if not rev and extension_final_failed:
+        rev = _latest_day30_triggered_explanation_review(la)
     if not rev:
-        return JsonResponse({'success': False, 'error': 'No pending explanation case to close.'}, status=400)
+        return JsonResponse({'success': False, 'error': 'No explanation letter case found for this lot award.'}, status=400)
     if not _explanation_review_triggered_by_day30_inspection(rev):
         return JsonResponse({
             'success': False,
             'error': 'Explanation letter workflow applies only after the 30 Day Inspection is marked No Progress.',
         }, status=400)
-    if not rev.letter_deadline_at:
-        return JsonResponse({
-            'success': False,
-            'error': 'A deadline must be recorded before disqualifying for non-compliance.',
-        }, status=400)
-    now = timezone.now()
-    if not (rev.letter_deadline_at < now and not rev.letter_document):
-        return JsonResponse({
-            'success': False,
-            'error': 'Disqualify is available only after the explanation letter deadline has passed with no letter on file.',
-        }, status=400)
-
-    applicant = la.application.applicant
+    if not extension_final_failed:
+        if not rev.letter_deadline_at:
+            return JsonResponse({
+                'success': False,
+                'error': 'A deadline must be recorded before blacklisting for non-compliance.',
+            }, status=400)
+        now = timezone.now()
+        if not (rev.letter_deadline_at < now and not rev.letter_document):
+            return JsonResponse({
+                'success': False,
+                'error': 'Blacklist beneficiary is available only after the explanation letter deadline has passed with no letter on file.',
+            }, status=400)
 
     if Blacklist.objects.filter(applicant_id=applicant.pk).exists():
         return JsonResponse({
@@ -1275,10 +1363,11 @@ def disqualify_beneficiary_monitoring(request, position, unit_id):
 
     with transaction.atomic():
         locked_rev = ExplanationReview.objects.select_for_update().get(pk=rev.pk)
-        if locked_rev.letter_document:
-            return JsonResponse({'success': False, 'error': 'A letter is now on file; disqualify is no longer applicable.'}, status=400)
-        if not (locked_rev.letter_deadline_at and locked_rev.letter_deadline_at < timezone.now()):
-            return JsonResponse({'success': False, 'error': 'Deadline has not passed yet.'}, status=400)
+        if locked_rev.letter_document and not extension_final_failed:
+            return JsonResponse({'success': False, 'error': 'A letter is now on file; blacklist beneficiary is no longer applicable.'}, status=400)
+        if not extension_final_failed:
+            if not (locked_rev.letter_deadline_at and locked_rev.letter_deadline_at < timezone.now()):
+                return JsonResponse({'success': False, 'error': 'Deadline has not passed yet.'}, status=400)
 
         locked_applicant = Applicant.objects.select_for_update().get(pk=applicant.pk)
         if locked_applicant.status == 'disqualified':
@@ -1299,10 +1388,15 @@ def disqualify_beneficiary_monitoring(request, position, unit_id):
             applicant=locked_applicant,
             original_lot_award=la,
             original_unit=unit,
-            reason='other',
+            reason='repossession',
             reason_details=reason,
             blacklisted_by=request.user,
             supporting_notes=(
+                'Module 4 — Extension final monitoring visit (after explanation letter) assessed Failed; '
+                'beneficiary disqualified from the awarded lot per staff decision.'
+            )
+            if extension_final_failed
+            else (
                 'Module 4 — Final 30 Day No Progress: explanation letter office deadline passed '
                 'with no scanned or uploaded letter on file; beneficiary disqualified from the awarded lot.'
             ),
@@ -1313,8 +1407,15 @@ def disqualify_beneficiary_monitoring(request, position, unit_id):
         locked_la.status = 'repossessed'
         locked_la.ended_at = now_ts
         locked_la.end_reason = (
-            'Explanation letter non-compliance after 30 Day No Progress (deadline passed, no letter on file). '
-            f'Staff notes: {reason[:1500]}'
+            (
+                'Extension final monitoring visit assessed Failed (lot build not substantially complete at final '
+                f'extension inspection). Staff notes: {reason[:1500]}'
+            )
+            if extension_final_failed
+            else (
+                'Explanation letter non-compliance after 30 Day No Progress (deadline passed, no letter on file). '
+                f'Staff notes: {reason[:1500]}'
+            )
         )
         locked_la.save(update_fields=['status', 'ended_at', 'end_reason'])
 
@@ -1357,7 +1458,7 @@ def disqualify_beneficiary_monitoring(request, position, unit_id):
     return JsonResponse({
         'success': True,
         'message': (
-            'Beneficiary disqualified, added to Blacklisted Beneficiaries, and removed from this block/lot. '
+            'Beneficiary blacklisted (disqualified), added to Blacklisted Beneficiaries, and removed from this block/lot. '
             'The lot award was repossessed and the unit is vacant for reassignment.'
         ),
     })
@@ -1834,9 +1935,10 @@ def blacklist_management(request, position):
     
     if search_query:
         queryset = queryset.filter(
-            models.Q(applicant__first_name__icontains=search_query) |
-            models.Q(applicant__last_name__icontains=search_query) |
-            models.Q(applicant__reference_number__icontains=search_query)
+            models.Q(applicant__first_name__icontains=search_query)
+            | models.Q(applicant__last_name__icontains=search_query)
+            | models.Q(applicant__full_name__icontains=search_query)
+            | models.Q(applicant__reference_number__icontains=search_query)
         )
         
     queryset = queryset.order_by('-blacklisted_at')
@@ -1909,6 +2011,25 @@ def _active_pending_explanation_for_lot_award(lot_award):
         .order_by('-created_at')
         .first()
     )
+
+
+def _latest_day30_triggered_explanation_review(lot_award):
+    """
+    Most recent explanation case opened from a 30 Day No Progress assessment.
+    Used when the letter workflow moved the review out of pending_review (e.g. approved
+    after letter on file) but staff must still disqualify after extension final Failed.
+    """
+    if not lot_award:
+        return None
+    qs = (
+        ExplanationReview.objects.filter(lot_award=lot_award)
+        .select_related('triggered_by_report__task')
+        .order_by('-updated_at', '-created_at')
+    )
+    for rev in qs:
+        if _explanation_review_triggered_by_day30_inspection(rev):
+            return rev
+    return None
 
 
 def _explanation_review_triggered_by_day30_inspection(rev):

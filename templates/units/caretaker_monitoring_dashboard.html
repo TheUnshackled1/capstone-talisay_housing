@@ -1824,7 +1824,7 @@
             <th>Unit / Location</th>
             <th>Task Type</th>
             <th>Status</th>
-            <th>Queue / visit order</th>
+            <th>Monitoring category</th>
             <th>Staff Handled</th>
             <th>Actions</th>
         </tr>
@@ -1879,7 +1879,7 @@
                 {% endif %}
             </td>
             <td>
-                <div class="monitoring-schedule-note">{% if task.task_type == 'day_15_inspection' %}<strong>Initial monitoring — first 15 days</strong>{% elif task.task_type == 'day_30_inspection' %}<strong>Final monitoring — confirm lot build is finished</strong>{% else %}<strong>{{ task.days_from_award }}</strong> days after monitoring starts{% endif %} · field visit order {{ forloop.counter }} of {{ tasks|length }}</div>
+                <div class="monitoring-schedule-note">{% if task.task_type == 'day_15_inspection' %}<strong>Initial monitoring — during 15 days</strong>{% elif task.task_type == 'day_30_inspection' %}<strong>Final monitoring — confirm lot build is finished</strong>{% else %}<strong>{{ task.days_from_award }}</strong> days after monitoring starts{% endif %}</div>
             </td>
             <td>
                 <div class="monitoring-staff-name">
@@ -2155,8 +2155,10 @@ function caretakerTaskPhase(taskType) {
 }
 
 function caretakerMonitoringWindowLine(taskType) {
+    const t = String(taskType || '');
+    if (t === 'month_2_inspection') return 'Extension period — final 30 Day visit (after explanation letter)';
     const phase = caretakerTaskPhase(taskType);
-    if (phase === 'initial') return 'Initial monitoring — first 15 days';
+    if (phase === 'initial') return 'Initial monitoring — during 15 days';
     if (phase === 'final') return 'Final monitoring — confirm lot build is finished';
     return 'Scheduled monitoring visit';
 }
@@ -2210,7 +2212,7 @@ function applyReportModalPhase(taskType) {
 
     if (phase === 'initial') {
         titleEl.textContent = 'Caretaker monitoring report — initial visit';
-        subtitleEl.textContent = sharedSub + ' This is the first (15 Day) monitoring visit.';
+        subtitleEl.textContent = '';
         if (badgeEl) {
             badgeEl.textContent = 'Initial monitoring';
             badgeEl.hidden = false;
@@ -2222,23 +2224,42 @@ function applyReportModalPhase(taskType) {
             + 'Housing staff will mark this visit as <strong>Normal Progress</strong> or <strong>No Progress</strong> after you submit. '
             + 'This records initial monitoring only; the 30 Day final visit comes later.'
         );
-        evidenceEl.textContent = 'Capture or attach up to 4 images of the lot during the first 15-day monitoring window.';
+        evidenceEl.textContent = 'Capture or attach up to 4 images of the lot during the 15-day monitoring window.';
     } else if (phase === 'final') {
-        titleEl.textContent = 'Caretaker monitoring report — final visit';
-        subtitleEl.textContent = sharedSub + ' This final (30 Day) visit confirms whether the lot build is finished.';
-        if (badgeEl) {
-            badgeEl.textContent = 'Final monitoring';
-            badgeEl.hidden = false;
+        const isExtensionFinal = String(taskType) === 'month_2_inspection';
+        if (isExtensionFinal) {
+            titleEl.textContent = 'Caretaker monitoring report — extension 30 Day (final)';
+            subtitleEl.textContent = sharedSub
+                + ' This is the final field visit in the extra build period after the explanation letter was filed—same checklist as the original 30 Day (is the lot build finished?).';
+            if (badgeEl) {
+                badgeEl.textContent = 'Extension · final';
+                badgeEl.hidden = false;
+            }
+            noticeEl.className = 'monitoring-phase-notice monitoring-phase-notice--final';
+            noticeEl.hidden = false;
+            noticeEl.innerHTML = (
+                '<strong>Extension 30 Day (final)</strong> '
+                + 'Housing staff choose <strong>Housing unit</strong> if the build is finished, or <strong>Failed</strong> if this extension visit does not pass. '
+                + 'Failed is the staff path toward <strong>Blacklist beneficiary</strong> when office rules allow (e.g. letter deadline passed with no compliant letter on file).'
+            );
+            evidenceEl.textContent = 'Capture or attach up to 4 images showing whether construction on the lot is finished or still incomplete.';
+        } else {
+            titleEl.textContent = 'Caretaker monitoring report — final visit';
+            subtitleEl.textContent = sharedSub + ' This final (30 Day) visit confirms whether the lot build is finished.';
+            if (badgeEl) {
+                badgeEl.textContent = 'Final monitoring';
+                badgeEl.hidden = false;
+            }
+            noticeEl.className = 'monitoring-phase-notice monitoring-phase-notice--final';
+            noticeEl.hidden = false;
+            noticeEl.innerHTML = (
+                '<strong>30 Day Inspection (final)</strong> '
+                + 'Staff use your report to decide: '
+                + '<strong>Housing unit</strong> — lot build is finished; the lot is counted as a completed unit and monitoring closes. '
+                + '<strong>Explanation letter</strong> — opens the explanation-letter workflow.'
+            );
+            evidenceEl.textContent = 'Capture or attach up to 4 images showing whether construction on the lot is finished or still incomplete.';
         }
-        noticeEl.className = 'monitoring-phase-notice monitoring-phase-notice--final';
-        noticeEl.hidden = false;
-        noticeEl.innerHTML = (
-            '<strong>30 Day Inspection (final)</strong> '
-            + 'Staff use your report to decide: '
-            + '<strong>Housing unit on file</strong> — lot build is finished; the lot is recorded as a housing unit and monitoring closes. '
-            + '<strong>Explanation letter</strong> — opens the explanation-letter workflow.'
-        );
-        evidenceEl.textContent = 'Capture or attach up to 4 images showing whether construction on the lot is finished or still incomplete.';
     } else {
         titleEl.textContent = 'Caretaker monitoring report';
         subtitleEl.textContent = sharedSub;
