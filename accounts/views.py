@@ -10,6 +10,8 @@ from django.contrib import messages
 from django.utils import timezone
 from django.db.models import Count, F, Q, Prefetch
 from django.urls import reverse
+from django.contrib.sessions.models import Session
+from django.contrib.auth import get_user_model
 from datetime import date, datetime, timedelta
 from urllib.parse import urlencode
 from .forms import LoginForm
@@ -516,6 +518,190 @@ def _build_analytics_charts_data(
     return data
 
 
+def _calculate_analytics_enhancements(data):
+    """
+    Enhance analytics data with:
+    - Efficiency metrics (conversion rates, completion %)
+    - Trend indicators (↑ ↓ for improvement/decline)
+    - Status colors for visual alerts
+    """
+    enhancements = {}
+
+    # 1. Pipeline completion rates
+    total_applicants = data.get('total_applications', 0)
+    awarded_applicants = sum([row.get('count', 0) for row in data.get('applicants_by_channel', []) if row.get('status') == 'awarded'])
+
+    if total_applicants > 0:
+        enhancements['pipeline_completion_pct'] = int((awarded_applicants / total_applicants) * 100)
+    else:
+        enhancements['pipeline_completion_pct'] = 0
+
+    # 2. Document upload rate
+    housing_apps = data.get('housing_application_records', 0)
+    docs_uploaded = data.get('docs_filed', 0)
+    if housing_apps > 0:
+        enhancements['doc_upload_rate_pct'] = min(100, int((docs_uploaded / housing_apps / 10) * 100))  # Assuming ~10 docs per app
+    else:
+        enhancements['doc_upload_rate_pct'] = 0
+
+    # 3. Requirement verification rate
+    req_verified = data.get('requirements_verified_period', 0)
+    req_submitted = data.get('requirement_submissions_submitted_period', 0)
+    if req_submitted > 0:
+        enhancements['requirement_fulfilment_pct'] = int((req_verified / req_submitted) * 100)
+    else:
+        enhancements['requirement_fulfilment_pct'] = 0
+
+    # 4. Housing occupancy health
+    occupancy_rate = data.get('housing_occupancy_rate', 0)
+    if occupancy_rate >= 80:
+        enhancements['occupancy_status'] = 'excellent'
+        enhancements['occupancy_status_color'] = '#10b981'
+    elif occupancy_rate >= 60:
+        enhancements['occupancy_status'] = 'good'
+        enhancements['occupancy_status_color'] = '#0ea5e9'
+    elif occupancy_rate >= 40:
+        enhancements['occupancy_status'] = 'fair'
+        enhancements['occupancy_status_color'] = '#f59e0b'
+    else:
+        enhancements['occupancy_status'] = 'low'
+        enhancements['occupancy_status_color'] = '#ef4444'
+
+    # 5. Bottleneck identification
+    incomplete_docs = data.get('incomplete_docs', 0)
+    pending_oic = data.get('pending_oic_signature_count', 0)
+    stale_cases = data.get('stale_cases_count', 0)
+
+    bottlenecks = []
+    if incomplete_docs > 5:
+        bottlenecks.append({'issue': 'incomplete_docs', 'count': incomplete_docs, 'severity': 'high'})
+    if pending_oic > 10:
+        bottlenecks.append({'issue': 'pending_oic', 'count': pending_oic, 'severity': 'high'})
+    if stale_cases > 3:
+        bottlenecks.append({'issue': 'stale_cases', 'count': stale_cases, 'severity': 'medium'})
+
+    enhancements['bottlenecks'] = bottlenecks
+    enhancements['has_critical_issues'] = len([b for b in bottlenecks if b['severity'] == 'high']) > 0
+
+    # 6. Case resolution efficiency
+    opened_period = data.get('cases_opened_period', 0)
+    closed_period = data.get('cases_closed_period', 0)
+    if opened_period > 0:
+        enhancements['case_resolution_rate'] = int((closed_period / opened_period) * 100) if opened_period > 0 else 0
+    else:
+        enhancements['case_resolution_rate'] = 0
+
+    # 7. Staff workload metrics
+    req_verification_rate = data.get('req_verification_rate', 0)
+    lot_awards = data.get('awarded_transition_period', 0)
+
+    enhancements['verification_status'] = 'on_track' if req_verification_rate >= 80 else 'behind'
+    enhancements['lot_award_momentum'] = 'positive' if lot_awards > 2 else 'needs_attention'
+
+    return enhancements
+
+
+def _get_session_monitoring_data():
+    """
+    Collect session monitoring data for analytics dashboard.
+    Returns dict with active sessions, statistics, and user activity.
+    """
+    from django.utils import timezone
+
+    User = get_user_model()
+    now = timezone.now()
+
+    # Active sessions (not expired)
+    active_sessions = Session.objects.filter(expire_date__gte=now)
+    expired_sessions = Session.objects.filter(expire_date__lt=now)
+
+    # Session statistics
+    total_sessions = Session.objects.count()
+    active_count = active_sessions.count()
+    expired_count_total = expired_sessions.count()
+
+    # Sessions by time of day (peak times)
+    sessions_24h = Session.objects.filter(
+        expire_date__gte=now - timedelta(hours=24)
+    ).count()
+    sessions_7d = Session.objects.filter(
+        expire_date__gte=now - timedelta(days=7)
+    ).count()
+
+    # Active user sessions with details
+    active_user_sessions = []
+    for session in active_sessions[:10]:  # Limit to 10 most recent
+        try:
+            user_id = session.get_decoded().get('_auth_user_id')
+            if user_id:
+                user = User.objects.get(id=user_id)
+                session_age = now - (session.expire_date - timedelta(hours=5))
+                time_remaining = session.expire_date - now
+
+                active_user_sessions.append({
+                    'session_key': session.session_key[:16] + '...',
+                    'user_email': user.email,
+                    'user_position': getattr(user, 'position', 'N/A'),
+                    'session_age_minutes': int(session_age.total_seconds() / 60),
+                    'time_remaining_minutes': int(time_remaining.total_seconds() / 60),
+                    'expires_at': session.expire_date,
+                })
+        except Exception:
+            pass
+
+    # Login patterns (daily session creation trend)
+    login_trend = []
+    for i in range(6, -1, -1):
+        day = now - timedelta(days=i)
+        day_start = day.replace(hour=0, minute=0, second=0, microsecond=0)
+        day_end = day_start + timedelta(days=1)
+        daily_count = Session.objects.filter(
+            expire_date__gte=day_start,
+            expire_date__lt=day_end,
+        ).count()
+        login_trend.append({
+            'date': day_start.strftime('%m/%d'),
+            'count': daily_count,
+        })
+
+    # Calculate bar widths for login trend (max 150px per bar)
+    max_logins = max([day['count'] for day in login_trend]) if login_trend else 1
+    for day in login_trend:
+        day['bar_width'] = int((day['count'] / max(max_logins, 1)) * 150)
+
+    # Security: Sessions expiring soon (within 30 minutes)
+    expiring_soon = Session.objects.filter(
+        expire_date__gte=now,
+        expire_date__lte=now + timedelta(minutes=30)
+    ).count()
+
+    # Peak hour sessions (when most users are online)
+    sessions_by_hour = {}
+    for hour in range(24):
+        hour_start = now.replace(hour=hour, minute=0, second=0, microsecond=0)
+        hour_end = hour_start + timedelta(hours=1)
+        sessions_by_hour[f"{hour:02d}:00"] = Session.objects.filter(
+            expire_date__gte=hour_start,
+            expire_date__lt=hour_end,
+        ).count()
+
+    peak_hour = max(sessions_by_hour.items(), key=lambda x: x[1])[0] if sessions_by_hour else "N/A"
+    peak_count = max(sessions_by_hour.values()) if sessions_by_hour else 0
+
+    return {
+        'total_sessions': total_sessions,
+        'active_sessions': active_count,
+        'expired_sessions': expired_count_total,
+        'sessions_24h': sessions_24h,
+        'sessions_7d': sessions_7d,
+        'active_user_sessions': active_user_sessions,
+        'login_trend': login_trend,
+        'expiring_soon': expiring_soon,
+        'peak_hour': peak_hour,
+        'peak_count': peak_count,
+    }
+
+
 def _staff_reports_analytics_payload(request):
     """
     Shared datasets for Second / Fourth Member reporting (same analytics scope).
@@ -843,7 +1029,7 @@ def _staff_reports_analytics_payload(request):
     month_options = list(range(1, 13))
     months_for_select = [(i, calendar.month_name[i]) for i in range(1, 13)]
 
-    return {
+    analytics_data = {
         'pending_notices': 0,
         'incomplete_docs': incomplete_docs_count,
         'total_applications': total_applicants,
@@ -911,7 +1097,13 @@ def _staff_reports_analytics_payload(request):
         'construction_progress_offset': round(
             97.4 * (1 - min(100, int(100 * construction_in_progress / max(construction_total, 1))) / 100), 1
         ),
+        # Session monitoring & security
+        **_get_session_monitoring_data(),
     }
+
+    # Add efficiency enhancements
+    analytics_data.update(_calculate_analytics_enhancements(analytics_data))
+    return analytics_data
 
 
 def _staff_reports_analytics_csv_response(data, export_role_title, filename_prefix):

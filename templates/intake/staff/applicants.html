@@ -785,7 +785,7 @@
         position: sticky;
         top: 0;
         z-index: 10;
-        padding: 1rem 1.25rem 0.9rem;
+        padding: 1.35rem 1.5rem 1.1rem;
         border-bottom: 1px solid #e2e8f0;
         background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
         display: flex;
@@ -796,15 +796,39 @@
         text-align: center;
         max-width: calc(100% - 2.5rem);
     }
+    #archiveRequirementsModal .archive-req-headline .tha-review-modal-kicker {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.62rem;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #1e3a8a;
+        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        border: 1px solid #bfdbfe;
+        padding: 0.3rem 0.7rem;
+        border-radius: 9999px;
+    }
+    #archiveRequirementsModal .archive-req-headline .tha-review-modal-kicker::before {
+        content: '';
+        width: 0.4rem;
+        height: 0.4rem;
+        border-radius: 9999px;
+        background: #2563eb;
+    }
     #archiveRequirementsModal .archive-req-title {
-        margin: 0.2rem 0 0;
-        font-size: 1.02rem;
-        letter-spacing: -0.01em;
+        margin: 0.55rem 0 0;
+        font-size: 1.2rem;
+        font-weight: 800;
+        color: #0f172a;
+        letter-spacing: -0.015em;
     }
     #archiveRequirementsModal .archive-req-subtitle {
-        margin-top: 0.3rem;
-        font-size: 0.78rem;
+        margin-top: 0.45rem;
+        font-size: 0.8rem;
         color: #475569;
+        font-weight: 500;
         word-break: break-word;
     }
     #archiveRequirementsModal .archive-req-body {
@@ -822,19 +846,41 @@
     #archiveRequirementsModal .archive-req-chip {
         display: inline-flex;
         align-items: center;
-        gap: 0.35rem;
-        padding: 0.32rem 0.62rem;
+        gap: 0.45rem;
+        padding: 0.4rem 0.75rem;
         border-radius: 9999px;
         border: 1px solid #bfdbfe;
         background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
         color: #1e3a8a;
         font-size: 0.64rem;
-        font-weight: 700;
-        letter-spacing: 0.03em;
+        font-weight: 800;
+        letter-spacing: 0.06em;
         text-transform: uppercase;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+    }
+    #archiveRequirementsModal .archive-req-chip::before {
+        content: '';
+        width: 0.42rem;
+        height: 0.42rem;
+        border-radius: 9999px;
+        background: #2563eb;
     }
     #archiveRequirementsModal .archive-req-chip-value {
-        font-size: 0.75rem;
+        font-size: 0.82rem;
+        font-weight: 800;
+        letter-spacing: -0.01em;
+        color: #0f172a;
+    }
+    #archiveRequirementsModal .archive-req-chip.is-complete {
+        border-color: #86efac;
+        background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+        color: #14532d;
+    }
+    #archiveRequirementsModal .archive-req-chip.is-complete::before {
+        background: #16a34a;
+    }
+    #archiveRequirementsModal .archive-req-chip.is-complete .archive-req-chip-value {
+        color: #14532d;
     }
     #archiveRequirementsModal .archive-req-table-wrap {
         border: 1px solid #e2e8f0;
@@ -889,19 +935,29 @@
     #archiveRequirementsModal .archive-req-footer {
         background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
         border-top: 1px solid #e2e8f0;
-        padding: 0.75rem 1.25rem;
+        padding: 0.9rem 1.25rem;
         display: flex;
-        align-items: center;
         flex-wrap: wrap;
-        gap: 0.5rem;
-        justify-content: flex-end;
+        align-items: center;
+        justify-content: center;
+        gap: 0.65rem;
         flex-shrink: 0;
     }
+    #archiveRequirementsModal .archive-req-footer .archive-proceed-hint {
+        flex: 1 1 100%;
+        justify-content: center;
+    }
     #archiveRequirementsModal #archiveProceedToEvaluationBtn {
-        min-width: 15rem;
+        order: 3;
+        min-width: 0;
+        width: auto;
+        padding: 0.45rem 1rem;
+        font-size: 0.75rem;
         font-weight: 700;
-        color: #64748b;
-        background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
+        line-height: 1.2;
+        border-radius: 0.5rem;
+        color: #94a3b8;
+        background: #f1f5f9;
         border: 1px solid #cbd5e1;
         box-shadow: none;
         transition: all 0.18s ease;
@@ -910,12 +966,38 @@
         color: #ffffff;
         background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
         border-color: #1d4ed8;
-        box-shadow: 0 8px 20px rgba(37, 99, 235, 0.25);
+        box-shadow: 0 8px 18px -4px rgba(37, 99, 235, 0.4);
+    }
+    #archiveRequirementsModal #archiveProceedToEvaluationBtn.is-ready:hover {
+        filter: brightness(1.05);
+        transform: translateY(-1px);
     }
     #archiveRequirementsModal #archiveProceedToEvaluationBtn[disabled] {
         opacity: 1 !important;
         cursor: not-allowed !important;
         box-shadow: none;
+    }
+    #archiveRequirementsModal .archive-req-footer .btn-modal.secondary {
+        order: 1;
+        justify-self: start;
+        width: auto;
+        min-width: 0;
+        background: #fff;
+        color: #b91c1c;
+        border: 1px solid #fca5a5;
+        padding: 0.45rem 1rem;
+        border-radius: 0.5rem;
+        font-weight: 700;
+        font-size: 0.75rem;
+        line-height: 1.2;
+        cursor: pointer;
+        transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.1s;
+    }
+    #archiveRequirementsModal .archive-req-footer .btn-modal.secondary:hover {
+        background: #dc2626;
+        color: #ffffff;
+        border-color: #dc2626;
+        transform: translateY(-1px);
     }
     #archiveRequirementsModal #archiveScanAllBtn {
         border-color: #93c5fd;
@@ -936,53 +1018,79 @@
     }
     #archiveRequirementsModal .archive-req-actions-group {
         display: inline-flex;
+        gap: 0.35rem;
+        flex-wrap: nowrap;
+        align-items: center;
+    }
+    #archiveRequirementsModal .archive-req-upload-btn,
+    #archiveRequirementsModal .archive-req-row-scan-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         gap: 0.3rem;
-        flex-wrap: wrap;
+        font-size: 0.68rem;
+        font-weight: 700;
+        padding: 0.3rem 0.55rem;
+        border-radius: 0.45rem;
+        line-height: 1.2;
+        min-width: 4.6rem;
+        border-width: 1px;
+        border-style: solid;
+        white-space: nowrap;
+        cursor: pointer;
+        transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.1s;
     }
     #archiveRequirementsModal .archive-req-upload-btn {
-        font-size: 0.72rem;
-        padding: 0.28rem 0.55rem;
-        border-radius: 0.4rem;
-        line-height: 1.2;
-        min-width: 6.25rem;
-        justify-content: center;
         border-color: #93c5fd;
         color: #1d4ed8;
         background: #eff6ff;
     }
     #archiveRequirementsModal .archive-req-upload-btn:hover {
-        border-color: #60a5fa;
-        background: #dbeafe;
+        border-color: #2563eb;
+        background: #2563eb;
+        color: #fff;
+        transform: translateY(-1px);
     }
     #archiveRequirementsModal .archive-req-row-scan-btn {
-        min-width: 6.25rem;
-        justify-content: center;
-        font-size: 0.72rem;
-        padding: 0.28rem 0.55rem;
-        border-radius: 0.4rem;
-        line-height: 1.2;
         border-color: #86efac;
         color: #166534;
         background: #f0fdf4;
     }
     #archiveRequirementsModal .archive-req-row-scan-btn:hover {
-        border-color: #4ade80;
-        background: #dcfce7;
+        border-color: #16a34a;
+        background: #16a34a;
+        color: #fff;
+        transform: translateY(-1px);
     }
     #archiveRequirementsModal .archive-proceed-hint {
+        order: 2;
         display: inline-flex;
         align-items: center;
-        padding: 0.4rem 0.65rem;
-        border-radius: 9999px;
-        font-size: 0.72rem;
-        border: 1px solid #cbd5e1;
-        background: #f8fafc;
-        color: #64748b;
+        gap: 0.4rem;
+        padding: 0.5rem 0.85rem;
+        border-radius: 0.55rem;
+        font-size: 0.74rem;
+        font-weight: 500;
+        border: 1px solid #fcd34d;
+        background: #fffbeb;
+        color: #92400e;
+        line-height: 1.3;
+    }
+    #archiveRequirementsModal .archive-proceed-hint::before {
+        content: 'ⓘ';
+        font-weight: 700;
+        font-size: 0.9rem;
+        line-height: 1;
+        color: #d97706;
     }
     #archiveRequirementsModal .archive-proceed-hint.is-ready {
         border-color: #86efac;
         background: #f0fdf4;
         color: #15803d;
+    }
+    #archiveRequirementsModal .archive-proceed-hint.is-ready::before {
+        content: '✓';
+        color: #16a34a;
     }
     #archiveRequirementsModal .req-badge {
         display: inline-flex;
@@ -1435,6 +1543,135 @@
         justify-content: flex-end;
         gap: 0.5rem;
         padding: 0 1rem 1rem;
+    }
+
+    /* Replace-document confirm — document scan checklist (above archive modal) */
+    .archive-replace-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 1200;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+        background: rgba(15, 23, 42, 0.55);
+        backdrop-filter: blur(3px);
+        -webkit-backdrop-filter: blur(3px);
+    }
+    .archive-replace-overlay.active {
+        display: flex;
+    }
+    .archive-replace-card {
+        width: min(30rem, 100%);
+        background: #ffffff;
+        border: 1px solid #bfdbfe;
+        border-radius: 14px;
+        box-shadow:
+            0 25px 50px -12px rgba(15, 23, 42, 0.35),
+            0 12px 28px -8px rgba(37, 99, 235, 0.12);
+        overflow: hidden;
+        position: relative;
+    }
+    .archive-replace-stripe {
+        height: 4px;
+        background: linear-gradient(90deg, #1e3a8a 0%, #2563eb 45%, #0ea5e9 100%);
+    }
+    .archive-replace-body {
+        padding: 1.15rem 1.35rem 0.9rem;
+        text-align: center;
+    }
+    .archive-replace-kicker {
+        margin: 0 0 0.4rem;
+        font-size: 0.62rem;
+        font-weight: 800;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: #1d4ed8;
+    }
+    .archive-replace-title {
+        margin: 0 0 0.45rem;
+        font-family: 'Source Serif Pro', Georgia, serif;
+        font-size: 1.12rem;
+        font-weight: 700;
+        color: #0f172a;
+        letter-spacing: -0.01em;
+        line-height: 1.3;
+    }
+    .archive-replace-lead {
+        margin: 0 0 0.75rem;
+        font-size: 0.8rem;
+        color: #475569;
+        line-height: 1.45;
+    }
+    .archive-replace-existing {
+        margin: 0 0 0.65rem;
+        padding: 0.65rem 0.75rem;
+        border: 1px solid #fde68a;
+        border-radius: 0.65rem;
+        background: linear-gradient(180deg, #fffbeb 0%, #ffffff 100%);
+        text-align: left;
+    }
+    .archive-replace-existing-label {
+        font-size: 0.62rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #b45309;
+        margin-bottom: 0.28rem;
+    }
+    .archive-replace-existing-name {
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: #1e293b;
+        line-height: 1.35;
+        word-break: break-word;
+    }
+    .archive-replace-existing-req {
+        margin-top: 0.35rem;
+        font-size: 0.72rem;
+        color: #64748b;
+        line-height: 1.35;
+    }
+    .archive-replace-note {
+        margin: 0;
+        font-size: 0.76rem;
+        color: #475569;
+        line-height: 1.45;
+    }
+    .archive-replace-actions {
+        display: flex;
+        justify-content: center;
+        gap: 0.65rem;
+        padding: 0.85rem 1.25rem 1.1rem;
+        border-top: 1px solid #e2e8f0;
+        background: #f8fafc;
+    }
+    .archive-replace-actions .btn-modal {
+        min-width: 7.5rem;
+        font-size: 0.78rem;
+        font-weight: 700;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+    }
+    .archive-replace-actions .archive-replace-btn-cancel {
+        background: #ffffff;
+        color: #475569;
+        border: 1px solid #cbd5e1;
+    }
+    .archive-replace-actions .archive-replace-btn-cancel:hover {
+        background: #f1f5f9;
+        border-color: #94a3b8;
+        color: #1e293b;
+    }
+    .archive-replace-actions .archive-replace-btn-confirm {
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        color: #ffffff;
+        border: 1px solid #1e40af;
+        box-shadow: 0 2px 6px rgba(37, 99, 235, 0.28);
+    }
+    .archive-replace-actions .archive-replace-btn-confirm:hover {
+        background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%);
+        color: #ffffff;
     }
 
     .modal-title {
@@ -3228,14 +3465,14 @@
                                 <th>Is required for form</th>
                                 <th>Is active</th>
                                 <th>Actions</th>
-                                <th>Scanned</th>
+                                <th>View</th>
                             </tr>
                         </thead>
                         <tbody id="archiveRequirementsTableBody"></tbody>
                     </table>
                 </div>
             </div>
-            <input type="file" id="archiveRequirementFileInput" accept="image/*,application/pdf,.pdf" tabindex="-1" aria-hidden="true" style="position:absolute;width:0;height:0;opacity:0;pointer-events:none;">
+            <input type="file" id="archiveRequirementFileInput" accept="image/*,application/pdf,.pdf" tabindex="-1" aria-hidden="true" style="display:none;">
         </div>
         <div class="archive-req-footer">
             <button
@@ -3251,9 +3488,32 @@
                 id="archiveProceedHint"
                 class="archive-proceed-hint"
             >
-                Complete all baseline required scans (R01–R07 and RVT) to proceed.
             </span>
             <button type="button" class="btn-modal secondary" onclick="closeArchiveRequirementsModal()">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- Replace existing vault file — document scan checklist -->
+<div class="archive-replace-overlay" id="archiveReplaceDocOverlay" role="dialog" aria-modal="true" aria-labelledby="archiveReplaceDocTitle" onclick="archiveCloseReplaceDocOverlay(event)">
+    <div class="archive-replace-card" onclick="event.stopPropagation();">
+        <div class="archive-replace-stripe" aria-hidden="true"></div>
+        <div class="archive-replace-body">
+            <p class="archive-replace-kicker">Document scan checklist</p>
+            <h3 class="archive-replace-title" id="archiveReplaceDocTitle">Replace existing document?</h3>
+            <p class="archive-replace-lead">A file is already on file for this requirement.</p>
+            <div class="archive-replace-existing">
+                <div class="archive-replace-existing-label">Existing document on file</div>
+                <div class="archive-replace-existing-name" id="archiveReplaceDocFileName">—</div>
+                <div class="archive-replace-existing-req" id="archiveReplaceDocRequirement">—</div>
+            </div>
+            <p class="archive-replace-note">
+                Replacing will update this row in the checklist and the applicant’s record in Document Management (same vault slot as Upload or Scan).
+            </p>
+        </div>
+        <div class="archive-replace-actions">
+            <button type="button" class="btn-modal secondary archive-replace-btn-cancel" onclick="archiveResolveReplaceDocConfirm(false)">Keep existing</button>
+            <button type="button" class="btn-modal primary archive-replace-btn-confirm" onclick="archiveResolveReplaceDocConfirm(true)">Yes, replace</button>
         </div>
     </div>
 </div>
@@ -3290,7 +3550,7 @@
                 </div>
                 <div class="docscan-summary-actions">
                     <button type="button" class="btn-modal secondary" id="scanAllDocumentsTopBtn" onclick="scanAllDocumentsOneByOne()">
-                        Scan all documents
+                        Scan documents
                     </button>
                 </div>
             </div>
@@ -3305,7 +3565,7 @@
                                 <th>Name</th>
                                 <th>Is required for form</th>
                                 <th>Is active</th>
-                                <th>Scanned</th>
+                                <th>View</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
@@ -3322,7 +3582,7 @@
         <div class="docscan-footer">
             <button type="button" class="btn-modal secondary" onclick="closeDocumentScanModal()">Cancel</button>
             <button type="button" class="btn-modal secondary" id="scanAllDocumentsBtn" onclick="scanAllDocumentsOneByOne()">
-                Scan all documents
+                Scan documents
             </button>
             <button type="button" class="btn-modal primary" id="submitToApplicationsBtn" onclick="submitToApplications()" disabled style="opacity: 0.5; cursor: not-allowed;">
                 Submit to LIST OF APPLICATIONS
@@ -6490,8 +6750,101 @@
     let currentArchiveRequirementsPayload = null;
     let pendingArchiveUploadContext = null;
     let archiveRowUploadBusyButton = null;
+    let archiveReplaceDocConfirmResolver = null;
 
-    function triggerArchiveRowDocumentUpload(codeRaw) {
+    function archiveReqFindRow(code) {
+        const safeCode = String(code || '').trim().toUpperCase();
+        const payload = currentArchiveRequirementsPayload;
+        if (!payload || !Array.isArray(payload.rows)) return null;
+        return payload.rows.find(function (r) {
+            return String(r.code || '').trim().toUpperCase() === safeCode;
+        }) || null;
+    }
+
+    function archiveReqRowHasFile(row) {
+        if (!row) return false;
+        return !!(row.scanned || String(row.latest_file_url || '').trim());
+    }
+
+    function archiveCloseReplaceDocOverlay(event) {
+        if (event && event.target && event.target.id !== 'archiveReplaceDocOverlay') return;
+        archiveResolveReplaceDocConfirm(false);
+    }
+    window.archiveCloseReplaceDocOverlay = archiveCloseReplaceDocOverlay;
+
+    function archiveResolveReplaceDocConfirm(approved) {
+        const overlay = document.getElementById('archiveReplaceDocOverlay');
+        if (overlay) {
+            overlay.classList.remove('active');
+            if (overlay._archiveReplaceEsc) {
+                document.removeEventListener('keydown', overlay._archiveReplaceEsc);
+                overlay._archiveReplaceEsc = null;
+            }
+        }
+        if (typeof archiveReplaceDocConfirmResolver === 'function') {
+            const resolver = archiveReplaceDocConfirmResolver;
+            archiveReplaceDocConfirmResolver = null;
+            resolver(!!approved);
+        }
+    }
+    window.archiveResolveReplaceDocConfirm = archiveResolveReplaceDocConfirm;
+
+    function archiveConfirmReplaceExistingDocument(row) {
+        if (!archiveReqRowHasFile(row)) return Promise.resolve(true);
+        const overlay = document.getElementById('archiveReplaceDocOverlay');
+        const nameEl = document.getElementById('archiveReplaceDocFileName');
+        const reqEl = document.getElementById('archiveReplaceDocRequirement');
+        if (!overlay || !nameEl) {
+            const name = String(row.latest_file_name || row.name || row.code || 'this requirement').trim();
+            return Promise.resolve(window.confirm(
+                'A file is already on file for ' + name + '.\n\nReplace it with the new upload or scan?'
+            ));
+        }
+        const fileName = String(row.latest_file_name || row.name || 'Document on file').trim();
+        const reqCode = String(row.code || '').trim();
+        const reqName = String(row.name || '').trim();
+        nameEl.textContent = fileName;
+        if (reqEl) {
+            reqEl.textContent = reqCode && reqName ? (reqCode + ' — ' + reqName) : (reqCode || reqName || '—');
+        }
+        overlay.classList.add('active');
+        const escHandler = function (e) {
+            if (e.key === 'Escape') archiveResolveReplaceDocConfirm(false);
+        };
+        overlay._archiveReplaceEsc = escHandler;
+        document.addEventListener('keydown', escHandler);
+        return new Promise(function (resolve) {
+            archiveReplaceDocConfirmResolver = resolve;
+        });
+    }
+
+    /** Actions column — Upload + Scan always available (same pattern as Eligibility checklist). */
+    function buildArchiveReqActionsInnerHtml(safeCode, row) {
+        const rawCode = String(safeCode || '').trim().toUpperCase();
+        if (!ARCHIVE_DOC_KEY_BY_CODE[rawCode]) {
+            return '<span style="color:#94a3b8;font-size:0.75rem;">—</span>';
+        }
+        const hasFile = archiveReqRowHasFile(row);
+        const docName = escapeHtml(String((row && row.latest_file_name) || (row && row.name) || rawCode).trim() || 'Document on file');
+        const hasExistingAttr = hasFile ? '1' : '0';
+        return '<div class="archive-req-actions-group">'
+            + '<button type="button" class="btn-modal secondary archive-req-upload-btn" data-archive-upload-code="' + safeCode + '" data-has-existing-doc="' + hasExistingAttr + '" data-existing-doc-name="' + docName + '" onclick="triggerArchiveRowDocumentUpload(this.getAttribute(\'data-archive-upload-code\'))" title="Choose a file from this computer — saves to document vault">Upload</button>'
+            + '<button type="button" class="btn-modal secondary archive-req-row-scan-btn" data-archive-scan-code="' + safeCode + '" data-has-existing-doc="' + hasExistingAttr + '" data-existing-doc-name="' + docName + '" onclick="scanArchiveRequirementByCode(this.getAttribute(\'data-archive-scan-code\'))" title="Capture from scanner (TWAIN) — saves to document vault">Scan</button>'
+            + '</div>';
+    }
+
+    /** View column — read-only preview link only when a vault file exists. */
+    function buildArchiveReqViewInnerHtml(row) {
+        const latestFileUrl = String((row && row.latest_file_url) || '').trim();
+        if (!latestFileUrl) {
+            return '<span style="color:#94a3b8;font-size:0.75rem;">—</span>';
+        }
+        const safeLatestFileUrl = escapeHtml(latestFileUrl);
+        const docTitle = escapeHtml(String((row && row.latest_file_name) || 'Document on file').trim());
+        return '<button type="button" class="req-scan req-scan-done archive-req-scan-link" data-archive-view-url="' + safeLatestFileUrl + '" onclick="openArchiveRequirementDocument(this.getAttribute(\'data-archive-view-url\'))" title="Open ' + docTitle + ' (read-only)">View</button>';
+    }
+
+    async function triggerArchiveRowDocumentUpload(codeRaw) {
         const code = String(codeRaw || '').trim().toUpperCase();
         const docKey = ARCHIVE_DOC_KEY_BY_CODE[code];
         if (!docKey) {
@@ -6503,6 +6856,8 @@
             showFlowAlert('No applicant loaded.');
             return;
         }
+        const ok = await archiveConfirmReplaceExistingDocument(archiveReqFindRow(code));
+        if (!ok) return;
         pendingArchiveUploadContext = {
             applicantId: String(payload.applicantId),
             referenceNumber: payload.referenceNumber || '',
@@ -6526,6 +6881,8 @@
             showFlowAlert('Unable to scan this requirement.');
             return;
         }
+        const ok = await archiveConfirmReplaceExistingDocument(archiveReqFindRow(code));
+        if (!ok) return;
 
         const rowScanBtn = document.querySelector(
             '#archiveRequirementsModal button.archive-req-row-scan-btn[data-archive-scan-code="' + code + '"]'
@@ -6564,7 +6921,7 @@
         } finally {
             if (rowScanBtn) {
                 rowScanBtn.disabled = false;
-                rowScanBtn.textContent = 'Scan all';
+                rowScanBtn.textContent = 'Scan';
             }
         }
     }
@@ -6588,37 +6945,23 @@
         if (!rowEl) return;
         const cells = rowEl.querySelectorAll('td');
         if (cells.length < 6) return;
-        const hasUpload = !!ARCHIVE_DOC_KEY_BY_CODE[safeCode];
-        const latestFileUrl = String(row.latest_file_url || '').trim();
-        const safeLatestFileUrl = escapeHtml(latestFileUrl);
-        const actionsHtml = !hasUpload
-            ? '<span style="color:#94a3b8;font-size:0.75rem;">—</span>'
-            : row.scanned
-                ? '<span style="color:#64748b;font-size:0.75rem;font-weight:600;">Completed</span>'
-                : '<div class="archive-req-actions-group"><button type="button" class="btn-modal secondary archive-req-upload-btn" data-archive-upload-code="' + safeCode + '" onclick="triggerArchiveRowDocumentUpload(this.getAttribute(\'data-archive-upload-code\'))">Upload file</button><button type="button" class="btn-modal secondary archive-req-row-scan-btn" data-archive-scan-code="' + safeCode + '" onclick="scanArchiveRequirementByCode(this.getAttribute(\'data-archive-scan-code\'))">Scan all</button></div>';
-        const scanHtml = row.scanned
-            ? (latestFileUrl
-                ? '<button type="button" class="req-scan req-scan-done archive-req-scan-link" data-archive-view-url="' + safeLatestFileUrl + '" onclick="openArchiveRequirementDocument(this.getAttribute(\'data-archive-view-url\'))">Scanned</button>'
-                : '<span class="req-scan req-scan-done">Scanned</span>')
-            : '<span class="req-scan req-scan-pending">Not scanned</span>';
-        cells[4].innerHTML = actionsHtml;
-        cells[5].innerHTML = scanHtml;
+        cells[4].innerHTML = buildArchiveReqActionsInnerHtml(safeCode, row);
+        cells[5].innerHTML = buildArchiveReqViewInnerHtml(row);
     }
 
     function forceArchiveRowScannedDom(code, documentUrl) {
         const safeCode = String(code || '').trim().toUpperCase();
         if (!safeCode) return;
-        const rowEl = document.querySelector('#archiveRequirementsTableBody tr[data-archive-code="' + safeCode + '"]');
-        if (!rowEl) return;
-        const cells = rowEl.querySelectorAll('td');
-        if (cells.length < 6) return;
-        cells[4].innerHTML = '<span style="color:#64748b;font-size:0.75rem;font-weight:600;">Completed</span>';
-        const safeDocUrl = String(documentUrl || '').trim();
-        if (safeDocUrl) {
-            cells[5].innerHTML = '<button type="button" class="req-scan req-scan-done archive-req-scan-link" data-archive-view-url="' + escapeHtml(safeDocUrl) + '" onclick="openArchiveRequirementDocument(this.getAttribute(\'data-archive-view-url\'))">Scanned</button>';
-        } else {
-            cells[5].innerHTML = '<span class="req-scan req-scan-done">Scanned</span>';
+        const payload = currentArchiveRequirementsPayload;
+        if (payload && Array.isArray(payload.rows)) {
+            payload.rows.forEach(function (row) {
+                if (String(row.code || '').trim().toUpperCase() === safeCode) {
+                    row.scanned = true;
+                    if (documentUrl) row.latest_file_url = documentUrl;
+                }
+            });
         }
+        renderArchiveRowStatusAndActions(safeCode);
     }
 
     function handleArchiveRequirementFileSelected(ev) {
@@ -6678,7 +7021,7 @@
                 if (input) input.value = '';
                 if (archiveRowUploadBusyButton) {
                     archiveRowUploadBusyButton.disabled = false;
-                    archiveRowUploadBusyButton.textContent = 'Upload file';
+                    archiveRowUploadBusyButton.textContent = 'Upload';
                     archiveRowUploadBusyButton = null;
                 }
             });
@@ -6690,17 +7033,17 @@
             strictBtn.disabled = isBusy;
             strictBtn.style.opacity = isBusy ? '0.6' : '1';
             strictBtn.style.cursor = isBusy ? 'wait' : 'pointer';
-            strictBtn.textContent = isBusy ? 'Scanning documents...' : 'Scan all documents';
+            strictBtn.textContent = isBusy ? 'Scanning documents...' : 'Scan documents';
         }
         document.querySelectorAll('#archiveRequirementsModal .archive-req-upload-btn, #archiveRequirementsModal .archive-req-row-scan-btn').forEach(function (btn) {
             btn.disabled = isBusy;
             btn.style.opacity = isBusy ? '0.6' : '1';
             btn.style.cursor = isBusy ? 'wait' : 'pointer';
             if (!isBusy && btn.classList.contains('archive-req-upload-btn') && btn.textContent === 'Uploading...') {
-                btn.textContent = 'Upload file';
+                btn.textContent = 'Upload';
             }
             if (!isBusy && btn.classList.contains('archive-req-row-scan-btn') && btn.textContent === 'Scanning...') {
-                btn.textContent = 'Scan all documents';
+                btn.textContent = 'Scan';
             }
         });
     }
@@ -6786,7 +7129,11 @@
         const safeRows = Array.isArray(rows) ? rows : [];
         const requiredRows = safeRows.filter(function (r) { return !!r.is_required_for_form; });
         const scannedRequired = requiredRows.filter(function (r) { return !!r.scanned; }).length;
-        if (scannedSummaryEl) scannedSummaryEl.textContent = String(scannedRequired) + '/' + String(requiredRows.length);
+        if (scannedSummaryEl) {
+            scannedSummaryEl.textContent = String(scannedRequired) + '/' + String(requiredRows.length);
+            const chip = scannedSummaryEl.closest('.archive-req-chip');
+            if (chip) chip.classList.toggle('is-complete', requiredRows.length > 0 && scannedRequired >= requiredRows.length);
+        }
         if (rowSummaryEl) rowSummaryEl.textContent = String(safeRows.length);
         // LIST OF APPLICANTS badge: count every checklist row (incl. optional situational row for Options A/B/C).
         const scannedAll = safeRows.filter(function (r) { return !!r.scanned; }).length;
@@ -6808,8 +7155,8 @@
                 hintEl.hidden = true;
                 hintEl.classList.remove('is-ready');
             } else {
-                hintEl.hidden = false;
-                hintEl.textContent = 'Complete all baseline required scans (R01–R07 and RVT) to proceed.';
+                hintEl.hidden = true;
+                hintEl.textContent = '';
                 hintEl.classList.remove('is-ready');
             }
         }
@@ -7055,26 +7402,15 @@
                     ? '<span class="req-badge req-badge-no" style="margin-left:0.45rem;">Follow-up</span>'
                     : '';
                 var rowStyle = code === 'ISF-SIT' ? ' style="background:#f8fafc;"' : '';
-                var hasUpload = !!ARCHIVE_DOC_KEY_BY_CODE[rawCode];
-                var latestFileUrl = String(r.latest_file_url || '').trim();
-                var safeLatestFileUrl = escapeHtml(latestFileUrl);
-                var actionsCell = !hasUpload
-                    ? '<td class="archive-req-table-actions"><span style="color:#94a3b8;font-size:0.75rem;">—</span></td>'
-                    : (r.scanned
-                        ? '<td class="archive-req-table-actions"><span style="color:#64748b;font-size:0.75rem;font-weight:600;">Completed</span></td>'
-                        : '<td class="archive-req-table-actions"><div class="archive-req-actions-group"><button type="button" class="btn-modal secondary archive-req-upload-btn" data-archive-upload-code="' + code + '" onclick="triggerArchiveRowDocumentUpload(this.getAttribute(\'data-archive-upload-code\'))">Upload file</button><button type="button" class="btn-modal secondary archive-req-row-scan-btn" data-archive-scan-code="' + code + '" onclick="scanArchiveRequirementByCode(this.getAttribute(\'data-archive-scan-code\'))">Scan all</button></div></td>');
-                var scanCell = r.scanned
-                    ? (latestFileUrl
-                        ? '<button type="button" class="req-scan req-scan-done archive-req-scan-link" data-archive-view-url="' + safeLatestFileUrl + '" onclick="openArchiveRequirementDocument(this.getAttribute(\'data-archive-view-url\'))">Scanned</button>'
-                        : '<span class="req-scan req-scan-done">Scanned</span>')
-                    : '<span class="req-scan req-scan-pending">Not scanned</span>';
+                var actionsCell = '<td class="archive-req-table-actions">' + buildArchiveReqActionsInnerHtml(rawCode, r) + '</td>';
+                var viewCell = '<td>' + buildArchiveReqViewInnerHtml(r) + '</td>';
                 return '<tr data-archive-code="' + code + '"' + rowStyle + '>'
                     + '<td class="archive-req-table-code">' + escapeHtml(String(r.code || '')) + '</td>'
                     + '<td class="archive-req-table-name"' + nameTitleAttr + '>' + escapeHtml(rowLabel) + (followUpBadge ? ' ' + followUpBadge : '') + '</td>'
                     + '<td>' + reqBadge + '</td>'
                     + '<td>' + activeBadge + '</td>'
                     + actionsCell
-                    + '<td>' + scanCell + '</td>'
+                    + viewCell
                     + '</tr>';
             }).join('');
             setArchiveScanButtonBusy(false);
@@ -8700,7 +9036,7 @@
                 headerBtn.type = 'button';
                 headerBtn.id = 'scanAllDocumentsHeaderBtn';
                 headerBtn.className = 'btn-modal secondary';
-                headerBtn.textContent = 'Scan all documents';
+                headerBtn.textContent = 'Scan documents';
                 headerBtn.style.marginTop = '0.45rem';
                 headerBtn.style.alignSelf = 'flex-start';
                 headerBtn.onclick = scanAllDocumentsOneByOne;
@@ -8748,7 +9084,7 @@
                 </td>
                 <td>
                     <span class="${req.scanned ? 'docscan-status docscan-status-done' : 'docscan-status docscan-status-pending'}">
-                        ${req.scanned ? 'Scanned' : 'Not scanned'}
+                        ${req.scanned ? 'View' : 'Not scanned'}
                     </span>
                 </td>
                 <td>
@@ -8789,10 +9125,10 @@
             if (checkbox) checkbox.checked = true;
             if (statusEl) {
                 statusEl.className = 'docscan-status docscan-status-done';
-                statusEl.textContent = 'Scanned';
+                statusEl.textContent = 'View';
             }
             updateDocumentScanProgress();
-            buttonEl.textContent = 'Scanned';
+            buttonEl.textContent = 'Scan';
         } catch (error) {
             showFlowAlert('Unable to scan ' + name + ': ' + (error.message || 'unknown error'));
             buttonEl.textContent = oldText;
@@ -8832,19 +9168,19 @@
             headerScanBtn.disabled = isBusy;
             headerScanBtn.style.opacity = isBusy ? '0.6' : '1';
             headerScanBtn.style.cursor = isBusy ? 'wait' : 'pointer';
-            headerScanBtn.textContent = isBusy ? 'Scanning documents...' : 'Scan all documents';
+            headerScanBtn.textContent = isBusy ? 'Scanning documents...' : 'Scan documents';
         }
         if (scanBtn) {
             scanBtn.disabled = isBusy;
             scanBtn.style.opacity = isBusy ? '0.6' : '1';
             scanBtn.style.cursor = isBusy ? 'wait' : 'pointer';
-            scanBtn.textContent = isBusy ? 'Scanning documents...' : 'Scan all documents';
+            scanBtn.textContent = isBusy ? 'Scanning documents...' : 'Scan documents';
         }
         if (topScanBtn) {
             topScanBtn.disabled = isBusy;
             topScanBtn.style.opacity = isBusy ? '0.6' : '1';
             topScanBtn.style.cursor = isBusy ? 'wait' : 'pointer';
-            topScanBtn.textContent = isBusy ? 'Scanning documents...' : 'Scan all documents';
+            topScanBtn.textContent = isBusy ? 'Scanning documents...' : 'Scan documents';
         }
         if (submitBtn) {
             submitBtn.disabled = isBusy;
@@ -8881,12 +9217,12 @@
                 const statusEl = checkbox.closest('tr')?.querySelector('.docscan-status');
                 if (statusEl) {
                     statusEl.className = 'docscan-status docscan-status-done';
-                    statusEl.textContent = 'Scanned';
+                    statusEl.textContent = 'View';
                 }
                 const rowBtn = checkbox.closest('tr')?.querySelector('.docscan-row-scan-btn');
                 if (rowBtn) {
                     rowBtn.disabled = true;
-                    rowBtn.textContent = 'Scanned';
+                    rowBtn.textContent = 'Scan';
                 }
                 updateDocumentScanProgress();
                 await new Promise((resolve) => setTimeout(resolve, 120));
