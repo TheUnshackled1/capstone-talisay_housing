@@ -64,6 +64,54 @@
         background: linear-gradient(135deg, #10b981 0%, #047857 100%);
         box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.18);
     }
+    .units-page-header {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        margin-bottom: 1.05rem;
+        min-height: 2.5rem;
+    }
+    .units-page-header__title {
+        grid-column: 1 / -1;
+        grid-row: 1;
+        justify-self: center;
+        margin: 0;
+        text-align: center;
+        pointer-events: none;
+    }
+    .units-page-header__title .units-page-title {
+        pointer-events: auto;
+    }
+    .units-page-header__toolbar {
+        grid-column: 2;
+        grid-row: 1;
+        justify-self: end;
+        z-index: 1;
+        display: inline-flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        align-items: center;
+    }
+    @media (max-width: 900px) {
+        .units-page-header {
+            grid-template-columns: 1fr;
+            gap: 0.65rem;
+            min-height: 0;
+        }
+        .units-page-header__title {
+            grid-column: 1;
+            grid-row: 1;
+            justify-self: center;
+            pointer-events: auto;
+        }
+        .units-page-header__toolbar {
+            grid-column: 1;
+            grid-row: 2;
+            justify-self: center;
+            width: 100%;
+            justify-content: center;
+        }
+    }
 
     /* Unified KPI card style — neutral white card body, semantic tile
        on the small icon. Numerals stay slate-900 except where the state
@@ -2070,13 +2118,11 @@
     </div>
     {% endif %}
     <!-- Page Header -->
-    <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1.05rem; gap: 1rem; flex-wrap: wrap;">
-        <div style="min-width:0; flex:1 1 22rem;">
-            <div style="display:flex; align-items:baseline; gap:0.55rem; flex-wrap:wrap;">
-                <h1 class="units-page-title" style="margin:0;">Housing Unit &amp; Occupancy Monitoring</h1>
-            </div>
+    <header class="units-page-header">
+        <div class="units-page-header__title">
+            <h1 class="units-page-title" style="margin:0;">Housing Unit &amp; Occupancy Monitoring</h1>
         </div>
-        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
+        <div class="units-page-header__toolbar">
             {% if can_create_relocation_site and no_relocation_sites %}
             <button type="button" class="units-header-action" onclick="openCreateSiteModal()">+ Create site</button>
             {% endif %}
@@ -2086,7 +2132,7 @@
             <button id="gridView" class="view-btn units-view-btn" onclick="switchView('grid')">Grid</button>
             <button id="tableView" class="view-btn units-view-btn" onclick="switchView('table')">Table</button>
         </div>
-    </div>
+    </header>
 
     <!-- KPI cards — occupancy + notice-of-action enforcement -->
     <div class="units-kpis">
