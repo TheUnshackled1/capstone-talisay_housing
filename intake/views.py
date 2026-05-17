@@ -929,9 +929,47 @@ def proceed_to_applications(request, position):
             applicant.save(update_fields=['module2_handoff_at', 'module2_handoff_by', 'updated_at'])
             handoff_just_set = True
 
-        # Hiligaynon proceed_evaluation SMS only when promoting to Module 2 (document checklist path with promote_to_module2).
-        # "Proceed to LIST OF APPLICANTS" uses the same endpoint but does not promote — no SMS on archive-only.
+        # Archive-only: LIST OF APPLICANTS SMS with document checklist (first archive only).
+        should_send_list_sms = bool(applicant.phone_number) and (not promote_to_module2) and created
+        # Module 2 handoff: evaluation-stage SMS (document checklist path with promote_to_module2).
         should_send_proceed_sms = bool(applicant.phone_number) and handoff_just_set
+
+        if should_send_list_sms:
+            from documents.models import Requirement
+
+            checklist_rows, _, _ = _archive_requirement_scan_rows(
+                Requirement.objects.filter(group='A', is_active=True),
+                set(),
+                displacement_reason=(applicant.displacement_reason or '').strip(),
+                latest_doc_by_type={},
+            )
+            applicant_id = applicant.id
+            archive_id = archive_record.id
+            phone_number = applicant.phone_number
+            sms_message = sms_workflow.message_proceed_to_applicant_list(applicant, checklist_rows)
+
+            def _send_list_sms_after_commit():
+                sms_ok = send_sms(
+                    phone_number,
+                    sms_message,
+                    sms_workflow.PROCEED_TO_APPLICANT_LIST,
+                    applicant=applicant,
+                    module='intake',
+                )
+                if sms_ok:
+                    Applicant.objects.filter(id=applicant_id).update(registration_sms_sent=True)
+                    Archive.objects.filter(id=archive_id).update(
+                        sms_sent=True,
+                        sms_sent_at=timezone.now(),
+                    )
+
+            transaction.on_commit(_send_list_sms_after_commit)
+        elif not promote_to_module2 and not created:
+            logger.info(
+                'proceed_to_applications: skipped LIST SMS (archive already exists ref=%s)',
+                applicant.reference_number,
+            )
+
         if not should_send_proceed_sms and promote_to_module2:
             logger.warning(
                 'proceed_to_applications: skipped proceed SMS (has_phone=%s handoff_just_set=%s archive_created=%s registration_sms_sent=%s ref=%s)',
@@ -1763,7 +1801,7 @@ def walkin_register(request, position):
 
     # Process household members from form
     for i in range(1, 51):  # Support up to 50 household members
-        name = request.POST.get(f'hh_member_{i}_name', '').strip()
+        name = request.POST.get(f'hh_member_{i}_name', '').strip().upper()
         relationship = request.POST.get(f'hh_member_{i}_relationship', '').strip()
         age = request.POST.get(f'hh_member_{i}_age', '').strip()
         civil_status = request.POST.get(f'hh_member_{i}_status', 'single').strip()

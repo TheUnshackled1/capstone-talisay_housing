@@ -7508,7 +7508,7 @@
         console.info('[Intake SMS Plan]', {
             flow: flowName,
             endpoint: 'intake:proceed_to_applications',
-            note: 'Backend may send proceed_evaluation SMS (console or Semaphore per SMS_SERVICE). Check runserver output or SMSLog.',
+            note: 'Backend may send proceed_applicant_list or proceed_evaluation SMS (console or Semaphore per SMS_SERVICE). Check runserver output or SMSLog.',
             applicantId: info.applicantId || '',
             referenceNumber: info.referenceNumber || '',
             promote_to_module2: !!info.promoteToModule2,
@@ -7813,22 +7813,30 @@
         document.querySelectorAll('#addApplicantForm input[name="displacement_reason"]').forEach(function(radio) {
             radio.addEventListener('change', syncRegistrationDisplacementPanels);
         });
-        document.querySelectorAll('#addApplicantForm input[name="is_registered_voter_talisay"]').forEach(function(radio) {
-            radio.addEventListener('change', function() {
-                if (hasShownVoterRequirementAlert) return;
-                hasShownVoterRequirementAlert = true;
-                if (typeof window.showFlowAlert === 'function') {
-                    window.showFlowAlert(
-                        'Applicants must be registered voters in Talisay City before you proceed with registration.',
-                        'Office requirement',
-                        null,
-                        'default'
-                    );
-                } else {
-                    window.alert('Office requirement: Applicants must be registered voters in Talisay City before you proceed with registration.');
+        const voterYes = document.getElementById('voterYes');
+        const voterNo = document.getElementById('voterNo');
+        if (voterNo) {
+            voterNo.addEventListener('change', function() {
+                if (!voterNo.checked) return;
+                if (!hasShownVoterRequirementAlert) {
+                    hasShownVoterRequirementAlert = true;
+                    if (typeof window.showFlowAlert === 'function') {
+                        window.showFlowAlert(
+                            'Applicants must be registered voters in Talisay City before you proceed with registration.',
+                            'Office requirement',
+                            null,
+                            'default'
+                        );
+                    } else {
+                        window.alert('Office requirement: Applicants must be registered voters in Talisay City before you proceed with registration.');
+                    }
+                }
+                if (voterYes) {
+                    voterYes.checked = true;
+                    voterYes.dispatchEvent(new Event('change', { bubbles: true }));
                 }
             });
-        });
+        }
         const hasPropertyYes = document.getElementById('hasPropertyYes');
         const hasPropertyNo = document.getElementById('hasPropertyNo');
         const yearsResidingInput = document.getElementById('yearsResiding');
@@ -9224,6 +9232,7 @@
             applicantId: target.applicantId || target.id,
             referenceNumber: target.referenceNumber || '',
             promoteToModule2: false,
+            smsTrigger: 'proceed_applicant_list',
         });
 
         archiveProceedInFlight = true;
@@ -10332,7 +10341,7 @@
         }
         initializePhoneInputs();
         container.querySelectorAll('input[name^="hh_member_"][name$="_name"]').forEach((el) => {
-            attachLeadingCapitalField(el);
+            attachUppercaseField(el);
         });
         updateHouseholdSize();
     }
@@ -10626,6 +10635,30 @@
         return s.charAt(0).toUpperCase() + s.slice(1);
     }
 
+    /** Applicant identity names: entire field uppercase while typing or on paste. */
+    function attachUppercaseField(el) {
+        if (!el) return;
+        const toUpperLive = () => {
+            const v = el.value;
+            if (!v) return;
+            const fixed = v.toUpperCase();
+            if (fixed === v) return;
+            const pos = el.selectionStart;
+            const end = el.selectionEnd;
+            el.value = fixed;
+            try {
+                el.setSelectionRange(pos, end);
+            } catch (err) { /* ignore */ }
+        };
+        const normalizeBlur = () => {
+            const next = String(el.value || '').trim().toUpperCase();
+            if (el.value !== next) el.value = next;
+        };
+        el.addEventListener('input', toUpperLive);
+        el.addEventListener('blur', normalizeBlur);
+        el.addEventListener('paste', () => requestAnimationFrame(toUpperLive));
+    }
+
     function attachLeadingCapitalField(el) {
         if (!el) return;
         /** While typing or after paste: uppercase first character only; keep caret stable. */
@@ -10665,35 +10698,39 @@
             return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
         };
 
+        const uppercaseName = (str) => String(str ?? '').trim().toUpperCase();
+
         const lnEl = document.getElementById('lastName');
         const fnEl = document.getElementById('firstName');
         const mnEl = document.getElementById('middleName');
         const exEl = document.getElementById('extensionName');
-        const lastName = leadingCapital(lnEl ? lnEl.value : '');
-        const firstName = leadingCapital(fnEl ? fnEl.value : '');
-        const middleName = leadingCapital(mnEl ? mnEl.value : '');
-        const extensionName = leadingCapital(exEl ? exEl.value : '');
+        const lastName = uppercaseName(lnEl ? lnEl.value : '');
+        const firstName = uppercaseName(fnEl ? fnEl.value : '');
+        const middleName = uppercaseName(mnEl ? mnEl.value : '');
+        const extensionName = uppercaseName(exEl ? exEl.value : '');
         if (lnEl) lnEl.value = lastName;
         if (fnEl) fnEl.value = firstName;
         if (mnEl) mnEl.value = middleName;
         if (exEl) exEl.value = extensionName;
 
+        const addrEl = document.getElementById('presentAddress');
         const pobEl = document.getElementById('placeOfBirth');
         const spouseEl = document.getElementById('spouseName');
-        if (pobEl) pobEl.value = leadingCapital(pobEl.value);
-        if (spouseEl) spouseEl.value = leadingCapital(spouseEl.value);
+        if (addrEl) addrEl.value = uppercaseName(addrEl.value);
+        if (pobEl) pobEl.value = uppercaseName(pobEl.value);
+        if (spouseEl) spouseEl.value = uppercaseName(spouseEl.value);
 
         const occEl = document.getElementById('occupation');
-        if (occEl) occEl.value = leadingCapital(occEl.value);
+        if (occEl) occEl.value = uppercaseName(occEl.value);
 
         const hzLocEl = document.getElementById('registrationDangerZoneLocation');
         const projNameEl = document.getElementById('registrationProjectName');
-        if (hzLocEl) hzLocEl.value = leadingCapital(hzLocEl.value);
-        if (projNameEl) projNameEl.value = leadingCapital(projNameEl.value);
+        if (hzLocEl) hzLocEl.value = uppercaseName(hzLocEl.value);
+        if (projNameEl) projNameEl.value = uppercaseName(projNameEl.value);
 
         for (let i = 1; i <= householdMemberCount; i++) {
             const hn = document.querySelector(`input[name="hh_member_${i}_name"]`);
-            if (hn) hn.value = leadingCapital(hn.value);
+            if (hn) hn.value = uppercaseName(hn.value);
         }
 
         let fullName = `${lastName}, ${firstName}${middleName ? ' ' + middleName : ''}`;
@@ -10712,12 +10749,15 @@
         // Add combined full_name (stored display field capped at model max_length)
         formData.set('full_name', fullName.slice(0, 30));
 
-        // Sentence-case address only. Hazard location / project use leadingCapital (synced above).
-        ['current_address'].forEach(fieldName => {
-            if (formData.has(fieldName)) {
-                formData.set(fieldName, sentenceCase(formData.get(fieldName)));
-            }
-        });
+        if (formData.has('current_address')) {
+            formData.set('current_address', uppercaseName(formData.get('current_address')));
+        }
+        if (formData.has('place_of_birth')) {
+            formData.set('place_of_birth', uppercaseName(formData.get('place_of_birth')));
+        }
+        if (formData.has('spouse_name')) {
+            formData.set('spouse_name', uppercaseName(formData.get('spouse_name')));
+        }
 
         // Validate phone number
         const phoneNumber = document.getElementById('phoneNumber');
@@ -11115,8 +11155,12 @@
             el.addEventListener('blur', queueDuplicatePreviewCheck);
         });
 
-        ['lastName', 'firstName', 'middleName', 'extensionName', 'placeOfBirth', 'spouseName', 'occupation', 'registrationDangerZoneLocation', 'registrationProjectName'].forEach(id => {
-            attachLeadingCapitalField(document.getElementById(id));
+        [
+            'lastName', 'firstName', 'middleName', 'extensionName',
+            'presentAddress', 'placeOfBirth', 'spouseName', 'occupation',
+            'registrationDangerZoneLocation', 'registrationProjectName',
+        ].forEach(id => {
+            attachUppercaseField(document.getElementById(id));
         });
     });
 

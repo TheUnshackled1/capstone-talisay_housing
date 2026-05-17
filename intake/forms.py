@@ -418,6 +418,22 @@ class WalkInApplicantForm(forms.ModelForm):
             cleaned_data['ejection_date'] = None
             cleaned_data['project_name'] = ''
 
+        for text_field in (
+            'last_name',
+            'first_name',
+            'middle_name',
+            'extension_name',
+            'place_of_birth',
+            'spouse_name',
+            'current_address',
+            'occupation',
+            'danger_zone_location',
+            'project_name',
+        ):
+            raw = cleaned_data.get(text_field)
+            if raw:
+                cleaned_data[text_field] = str(raw).strip().upper()
+
         return cleaned_data
 
     def clean_has_property_in_talisay(self):

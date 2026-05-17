@@ -52,10 +52,6 @@
         background: linear-gradient(90deg, #dc2626 0%, #ef4444 100%);
     }
 
-    .blacklist-card .applications-table-container {
-        box-shadow: none;
-    }
-
     /* Filter Bar — institutional toolbar */
     .filter-bar {
         display: flex;
@@ -105,172 +101,159 @@
         font-size: 1rem;
     }
 
-    /* Applications table parity */
-    .applications-table-container {
-        background: white;
-        border: 1px solid #e2e8f0;
-        border-radius: 0.85rem;
-        overflow: hidden;
-        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 4px 14px rgba(15, 23, 42, 0.04);
-        position: relative;
+    /* Blacklist registry table — same formal-table shell as ISF Registration */
+    .blacklist-table-card {
+        margin-bottom: 0;
     }
 
-    .table-scroll-wrapper {
-        width: 100%;
-        overflow-x: auto;
-    }
-
-    .table-scroll-wrapper::-webkit-scrollbar {
-        height: 8px;
-    }
-    .table-scroll-wrapper::-webkit-scrollbar-track {
-        background: #f1f5f9;
-        border-radius: 0 0 0.85rem 0.85rem;
-    }
-    .table-scroll-wrapper::-webkit-scrollbar-thumb {
-        background: #cbd5e1;
-        border-radius: 4px;
-    }
-    .table-scroll-wrapper::-webkit-scrollbar-thumb:hover {
-        background: #94a3b8;
-    }
-
-    .applications-table-container::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 3px;
-        background: linear-gradient(90deg, #dc2626 0%, #ef4444 100%);
-        z-index: 1;
-    }
-
-    .applications-table {
-        width: 100%;
+    .blacklist-table {
         table-layout: fixed;
-        border-collapse: separate;
-        border-spacing: 0;
         min-width: 1000px;
-        background: white;
-        border: none;
-        border-radius: 0;
-        box-shadow: none;
-        position: relative;
     }
 
-    .applications-table thead {
-        background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
-        border-bottom: 2px solid #0f172a;
-        position: sticky;
-        top: 0;
-        z-index: 2;
-    }
-
-    .applications-table th {
-        padding: 0.85rem 0.65rem;
-        text-align: left;
-        font-size: 0.7rem;
-        font-weight: 700;
-        color: #ffffff;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        white-space: normal;
-        line-height: 1.25;
-        vertical-align: middle;
-        border-right: 1px solid rgba(255, 255, 255, 0.08);
-        border-bottom: 1px solid #0f172a;
-        position: relative;
-        background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
-    }
-
-    .applications-table th::after {
-        content: '';
-        position: absolute;
-        bottom: -1px;
-        left: 0;
-        right: 0;
-        height: 2px;
-        background: transparent;
-        transition: background 0.2s ease;
-    }
-
-    .applications-table th:hover::after {
-        background: #dc2626;
-    }
-
-    .applications-table td {
-        padding: 0.85rem 0.75rem;
-        border-bottom: 1px solid #eef2f7;
-        border-right: 1px solid #f1f5f9;
-        vertical-align: middle;
-        font-size: 0.875rem;
-        color: #334155;
-        white-space: normal;
-        overflow-wrap: anywhere;
-        overflow: hidden;
-        position: relative;
-    }
-
-    .applications-table tbody tr {
-        transition: background 0.18s ease, box-shadow 0.18s ease;
-        position: relative;
-        background: #ffffff;
-    }
-
-    .applications-table tbody tr:nth-child(even) {
-        background: #f8fafc;
-    }
-
-    .applications-table tbody tr:hover {
-        background: #fff5f5;
-        box-shadow: inset 3px 0 0 #dc2626;
-    }
-
-    .applications-table tbody tr:last-child td {
-        border-bottom: none;
-    }
-
-    .applications-table th:last-child,
-    .applications-table td:last-child {
-        border-right: none;
-    }
-
-    .applications-table .col-num {
+    .blacklist-table th:nth-child(1),
+    .blacklist-table td:nth-child(1) {
         width: 4%;
         text-align: center;
-    }
-    .applications-table td.col-num {
         font-weight: 700;
-        color: #0f172a;
-        font-variant-numeric: tabular-nums;
+        color: #1e293b;
     }
 
-    .applications-table .col-applicant {
-        width: 18%;
-    }
-    .applications-table td.col-applicant {
+    .blacklist-table th:nth-child(2),
+    .blacklist-table td:nth-child(2) { width: 15%; }
+
+    .blacklist-table td.blacklist-beneficiary-cell {
         font-weight: 700;
         color: #0f172a;
         line-height: 1.35;
+        overflow-wrap: anywhere;
     }
-    .applications-table td.col-applicant .blacklist-ref {
-        display: inline-block;
+
+    .blacklist-table .blacklist-ref {
+        display: block;
         margin-top: 0.2rem;
-        font-size: 0.7rem;
+        font-size: 0.6875rem;
         font-weight: 500;
         color: #64748b;
-        font-family: 'JetBrains Mono', 'Courier New', monospace;
+        font-family: var(--tha-font-mono, 'JetBrains Mono', 'Courier New', monospace);
         letter-spacing: 0.02em;
     }
 
-    .applications-table .col-reason {
+    .blacklist-table th:nth-child(3),
+    .blacklist-table td:nth-child(3) {
         width: 11%;
         text-align: center;
     }
 
-    .applications-table .col-details {
-        width: 34%;
+    .blacklist-table th:nth-child(4),
+    .blacklist-table td:nth-child(4) { width: 30%; }
+
+    .blacklist-table th:nth-child(5),
+    .blacklist-table td:nth-child(5) {
+        width: 10%;
+        text-align: center;
+    }
+
+    .blacklist-table td.blacklist-date-cell {
+        font-size: 0.6875rem;
+        color: #64748b;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+    }
+
+    .blacklist-table th:nth-child(6),
+    .blacklist-table td:nth-child(6) { width: 14%; }
+
+    .blacklist-table th:nth-child(7),
+    .blacklist-table td:nth-child(7) {
+        width: 10%;
+        text-align: center;
+    }
+
+    .blacklist-table td.blacklist-actions-cell {
+        text-align: center;
+        vertical-align: middle;
+    }
+
+    .blacklist-actions-inner {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+    }
+
+    .handled-by-avatar {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.6rem;
+        font-weight: 700;
+        flex-shrink: 0;
+        box-shadow: 0 2px 4px rgba(15, 23, 42, 0.18), inset 0 0 0 2px #ffffff;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+    }
+
+    .handled-by-avatar.second-member {
+        background: linear-gradient(135deg, #4f46e5 0%, #2563eb 100%);
+    }
+
+    .handled-by-avatar.fourth-member {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    }
+
+    .handled-by-avatar.other {
+        background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);
+    }
+
+    .blacklist-handled-wrap {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.375rem;
+    }
+
+    .blacklist-handled-name {
+        display: block;
+        font-size: 0.625rem;
+        font-weight: 500;
+        color: #1e293b;
+        line-height: 1.25;
+        white-space: normal;
+        word-break: break-word;
+    }
+
+    .blacklist-handled-role {
+        font-size: 0.5625rem;
+        color: #64748b;
+    }
+
+    body .btn-blacklist-view {
+        box-sizing: border-box;
+        display: inline-flex !important;
+        width: 100%;
+        max-width: 7.5rem;
+        align-items: center;
+        justify-content: center;
+        gap: 0.35rem;
+        min-height: 2.25rem;
+        padding: 0.45rem 0.65rem !important;
+        font-size: 0.6875rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        line-height: 1.15;
+        border-radius: 4px !important;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+
+    body .btn-blacklist-view .btn-icon {
+        width: 0.875rem;
+        height: 0.875rem;
+        flex-shrink: 0;
     }
     
     .details-container {
@@ -330,54 +313,14 @@
         flex-shrink: 0;
     }
 
-    .applications-table .col-date {
-        width: 10%;
-        text-align: center;
-    }
-    .applications-table td.col-date {
-        font-variant-numeric: tabular-nums;
-        white-space: nowrap;
-        color: #475569;
+    .blacklist-table tbody tr.formal-table-empty:hover {
+        background: var(--white);
+        box-shadow: none;
     }
 
-    .applications-table .col-staff {
-        width: 12%;
-        text-align: center;
-    }
-    .applications-table td.col-staff {
-        color: #475569;
-        font-size: 0.8rem;
-        text-align: center;
-    }
-
-    .applications-table .col-actions {
-        width: 11%;
-        text-align: center;
-    }
-
-    .btn-view-details {
-        padding: 0.45rem 1rem;
-        background: #ffffff;
-        color: #334155;
-        border: 1px solid #cbd5e1;
-        border-radius: 6px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.15s ease;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-        white-space: nowrap;
-    }
-    .btn-view-details:hover {
-        background: #f8fafc;
-        border-color: #94a3b8;
-        color: #0f172a;
-        transform: translateY(-1px);
-        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.08);
-    }
-    .btn-view-details:focus-visible {
-        outline: 2px solid #0f172a;
-        outline-offset: 2px;
+    .blacklist-table tbody tr.formal-table-empty td {
+        padding: 3rem 2rem;
+        border: 1px solid #e5e7eb;
     }
     .badge-reason {
         display: inline-flex !important;
@@ -575,35 +518,35 @@
         <button type="submit" class="btn-search">Search</button>
     </form>
 
-    <div class="applications-table-container">
-        <div class="table-scroll-wrapper">
-            <table class="applications-table compact-table">
+    <div class="formal-table-card blacklist-table-card">
+        <div class="formal-table-scroll">
+            <table class="formal-table compact blacklist-table">
                 <thead>
                     <tr>
-                        <th class="col-num">#</th>
-                        <th class="col-applicant">Beneficiary</th>
-                        <th class="col-reason">Reason</th>
-                        <th class="col-details">Details</th>
-                        <th class="col-date">Date</th>
-                        <th class="col-staff">Blacklisted By</th>
-                        <th class="col-actions">Actions</th>
+                        <th>#</th>
+                        <th>Beneficiary</th>
+                        <th>Reason</th>
+                        <th>Details</th>
+                        <th>Date</th>
+                        <th>Blacklisted By</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                 {% for blacklist in blacklists %}
                 <tr>
-                    <td class="col-num">{{ forloop.counter }}</td>
-                    <td class="col-applicant">
+                    <td>{{ forloop.counter }}</td>
+                    <td class="blacklist-beneficiary-cell">
                         {{ blacklist.applicant.full_name|upper }}
                         <span class="blacklist-ref">{{ blacklist.applicant.reference_number }}</span>
                     </td>
-                    <td class="col-reason">
+                    <td>
                         <span class="badge badge-reason">
                             <span class="status-dot"></span>
                             {{ blacklist.get_reason_display }}
                         </span>
                     </td>
-                    <td class="col-details">
+                    <td>
                         <div class="details-container">
                             {% if blacklist.formatted_notes %}
                             <div class="details-primary">
@@ -637,18 +580,27 @@
                             {% endif %}
                         </div>
                     </td>
-                    <td class="col-date">
+                    <td class="blacklist-date-cell">
                         {{ blacklist.blacklisted_at|date:"M d, Y" }}
                     </td>
-                    <td class="col-staff">
+                    <td>
                         {% if blacklist.blacklisted_by %}
-                        {{ blacklist.blacklisted_by.get_full_name|default:blacklist.blacklisted_by.username }}
+                        <div class="blacklist-handled-wrap">
+                            <div class="handled-by-avatar {% if blacklist.blacklisted_by.position == 'second_member' %}second-member{% elif blacklist.blacklisted_by.position == 'fourth_member' %}fourth-member{% else %}other{% endif %}">
+                                {{ blacklist.blacklisted_by.first_name|slice:":1" }}{{ blacklist.blacklisted_by.last_name|slice:":1" }}
+                            </div>
+                            <div style="display: flex; flex-direction: column; min-width: 0;">
+                                <span class="blacklist-handled-name">{{ blacklist.blacklisted_by.get_full_name|default:blacklist.blacklisted_by.username }}</span>
+                                <span class="blacklist-handled-role">{{ blacklist.blacklisted_by.get_position_display_short }}</span>
+                            </div>
+                        </div>
                         {% else %}
-                        System
+                        <span class="blacklist-handled-name">System</span>
                         {% endif %}
                     </td>
-                    <td class="col-actions">
-                        <button type="button" class="btn-view-details"
+                    <td class="blacklist-actions-cell">
+                        <div class="blacklist-actions-inner">
+                        <button type="button" class="btn-review btn-review-walkin btn-blacklist-view"
                             data-name="{{ blacklist.applicant.full_name }}"
                             data-ref="{{ blacklist.applicant.reference_number }}"
                             data-dob="{{ blacklist.applicant.date_of_birth|date:'M d, Y'|default:'Unknown' }}"
@@ -658,12 +610,17 @@
                             data-notes="{{ blacklist.get_reason_display }}"
                             data-date="{{ blacklist.blacklisted_at|date:'M d, Y' }}"
                             onclick="openDetailsModal(this)">
-                            View Details
+                            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                            View
                         </button>
+                        </div>
                     </td>
                 </tr>
                 {% empty %}
-                <tr>
+                <tr class="formal-table-empty">
                     <td colspan="7" class="empty-state">
                         <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="1.5">
