@@ -1541,18 +1541,6 @@
                         <p class="field-kpi-value">{{ certified_count }}</p>
                     </div>
                 </div>
-                <div class="field-kpi-card kpi-red field-kpi-card--interactive" role="button" tabindex="0" data-kpi-action="not_certified" aria-label="Not certified — view list">
-                    <div class="field-kpi-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <circle cx="12" cy="12" r="9"></circle>
-                            <path d="M9 9l6 6M15 9l-6 6"></path>
-                        </svg>
-                    </div>
-                    <div>
-                        <p class="field-kpi-label">Not certified</p>
-                        <p class="field-kpi-value">{{ not_certified_count }}</p>
-                    </div>
-                </div>
                 <div class="field-kpi-card kpi-purple field-kpi-card--interactive" role="button" tabindex="0" data-kpi-action="today" aria-label="Completed today — view today’s field summary">
                     <div class="field-kpi-icon" aria-hidden="true">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -1718,53 +1706,6 @@
         </div>
     </div>
 
-    <!-- NOT CERTIFIED APPLICANTS MODAL — opens from red KPI card -->
-    <div id="notCertifiedApplicantsModal" role="dialog" aria-modal="true" aria-labelledby="notCertifiedApplicantsModalTitle" style="display: none; position: fixed; inset: 0; z-index: 9999; background: rgba(15, 23, 42, 0.55); align-items: center; justify-content: center; padding: 16px;">
-        <div style="background: #ffffff; width: 100%; max-width: 720px; max-height: 86vh; border-radius: 12px; box-shadow: 0 24px 48px rgba(15, 23, 42, 0.25); display: flex; flex-direction: column; overflow: hidden;">
-            <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 16px 20px; border-bottom: 1px solid #e2e8f0;">
-                <div style="min-width: 0;">
-                    <h2 id="notCertifiedApplicantsModalTitle" style="margin: 0 0 2px 0; font-family: 'Source Serif Pro', Georgia, serif; font-size: 18px; font-weight: 700; color: #0f172a;">Not certified — hazard-area applicants</h2>
-                    <p style="margin: 0; font-size: 12.5px; color: #475569;">Applicants whose declared hazard-area status was not sustained on field inspection.</p>
-                </div>
-                <button type="button" onclick="closeNotCertifiedApplicantsModal()" aria-label="Close" style="flex: 0 0 auto; background: transparent; border: 1px solid #e2e8f0; border-radius: 8px; padding: 6px 8px; cursor: pointer; color: #475569;">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                </button>
-            </div>
-            <div style="overflow: auto; padding: 0;">
-                {% if not_certified_applicants %}
-                <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-                    <thead style="background: #f8fafc; position: sticky; top: 0;">
-                        <tr style="text-align: left; color: #475569; font-size: 11px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase;">
-                            <th style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0;">Applicant</th>
-                            <th style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0;">Hazard type</th>
-                            <th style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0;">Recorded on</th>
-                            <th style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0;">Recorded by</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for na in not_certified_applicants %}
-                        <tr>
-                            <td style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9; color: #0f172a;">
-                                <div style="font-weight: 600;">{{ na.full_name }}</div>
-                                <div style="font-size: 11.5px; color: #64748b;">📍 {{ na.address|default:"—" }}</div>
-                            </td>
-                            <td style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9; color: #1e293b;">{{ na.danger_zone_type|default:"—" }}</td>
-                            <td style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9; color: #1e293b;">{% if na.certified_at %}{{ na.certified_at|date:"M d, Y" }}<div style="font-size: 11px; color: #64748b;">{{ na.certified_at|time:"H:i" }}</div>{% else %}—{% endif %}</td>
-                            <td style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9; color: #1e293b;">{{ na.recorded_by }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                {% else %}
-                <p style="margin: 0; padding: 36px 20px; text-align: center; color: #64748b; font-size: 13.5px;">No not-certified hazard-area records on file yet.</p>
-                {% endif %}
-            </div>
-            <div style="padding: 12px 20px; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 8px;">
-                <button type="button" onclick="closeNotCertifiedApplicantsModal()" class="btn-action" style="background: #1e40af; color: #ffffff; border-color: #1e40af;">Close</button>
-            </div>
-        </div>
-    </div>
-
     <!-- TODAY'S SUMMARY MODAL — opens from Today's summary button -->
     <div id="todaySummaryModal" role="dialog" aria-modal="true" aria-labelledby="todaySummaryModalTitle" style="display: none; position: fixed; inset: 0; z-index: 9999; background: rgba(15, 23, 42, 0.55); align-items: center; justify-content: center; padding: 16px;">
         <div style="background: #ffffff; width: 100%; max-width: 820px; max-height: 86vh; border-radius: 12px; box-shadow: 0 24px 48px rgba(15, 23, 42, 0.25); display: flex; flex-direction: column; overflow: hidden;">
@@ -1880,12 +1821,6 @@
                     if (e.target === certifiedModal) closeCertifiedApplicantsModal();
                 });
             }
-            const notCertifiedModal = document.getElementById('notCertifiedApplicantsModal');
-            if (notCertifiedModal) {
-                notCertifiedModal.addEventListener('click', function(e) {
-                    if (e.target === notCertifiedModal) closeNotCertifiedApplicantsModal();
-                });
-            }
             const todaySummaryModal = document.getElementById('todaySummaryModal');
             if (todaySummaryModal) {
                 todaySummaryModal.addEventListener('click', function(e) {
@@ -1896,8 +1831,6 @@
                 if (e.key !== 'Escape') return;
                 const cm = document.getElementById('certifiedApplicantsModal');
                 if (cm && cm.style.display === 'flex') { closeCertifiedApplicantsModal(); return; }
-                const nm = document.getElementById('notCertifiedApplicantsModal');
-                if (nm && nm.style.display === 'flex') { closeNotCertifiedApplicantsModal(); return; }
                 const tm = document.getElementById('todaySummaryModal');
                 if (tm && tm.style.display === 'flex') closeTodaySummaryModal();
             });
@@ -1909,7 +1842,6 @@
                     const action = card.getAttribute('data-kpi-action');
                     if (action === 'pending') scrollToFieldPendingQueue();
                     else if (action === 'certified') openCertifiedApplicantsModal();
-                    else if (action === 'not_certified') openNotCertifiedApplicantsModal();
                     else if (action === 'today') showMyVerifications();
                 });
                 card.addEventListener('keydown', function(e) {
@@ -1924,20 +1856,6 @@
         function scrollToFieldPendingQueue() {
             const el = document.getElementById('field-pending-queue');
             if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-
-        function openNotCertifiedApplicantsModal() {
-            const m = document.getElementById('notCertifiedApplicantsModal');
-            if (!m) return;
-            m.style.display = 'flex';
-            document.body.style.overflow = 'hidden';
-        }
-
-        function closeNotCertifiedApplicantsModal() {
-            const m = document.getElementById('notCertifiedApplicantsModal');
-            if (!m) return;
-            m.style.display = 'none';
-            document.body.style.overflow = '';
         }
 
         function openCertifiedApplicantsModal() {

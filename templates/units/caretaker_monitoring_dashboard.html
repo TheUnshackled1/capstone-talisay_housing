@@ -1594,18 +1594,6 @@
         </div>
     </button>
 
-    <button type="button" class="monitoring-kpi monitoring-kpi-overdue" data-kpi-modal="kpiOverdueModal" data-kpi-scroll-tasks="1" aria-controls="kpiOverdueModal" aria-haspopup="dialog">
-        <div class="monitoring-kpi-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
-            </svg>
-        </div>
-        <div class="monitoring-kpi-text">
-            <h4>Overdue Tasks</h4>
-            <div class="monitoring-kpi-number">{{ overdue_count }}</div>
-        </div>
-    </button>
-
     <button type="button" class="monitoring-kpi monitoring-kpi-completed" data-kpi-modal="kpiCompletedModal" aria-controls="kpiCompletedModal" aria-haspopup="dialog">
         <div class="monitoring-kpi-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -1676,53 +1664,6 @@
         </div>
         <div class="kpi-modal-footer">
             <button type="button" class="btn-kpi-modal-close" onclick="closeKpiModal('kpiScheduledModal')">Close</button>
-        </div>
-    </div>
-</div>
-
-<div class="modal-overlay kpi-modal" id="kpiOverdueModal" role="dialog" aria-modal="true" aria-labelledby="kpiOverdueTitle">
-    <div class="modal-content kpi-modal-card kpi-overdue kpi-modal-card--tabular">
-        <div class="modal-header">
-            <div style="min-width: 0;">
-                <h2 class="modal-title" id="kpiOverdueTitle">Overdue tasks</h2>
-                <p class="kpi-modal-subtitle">These inspections are past the due date and need priority field visits.</p>
-            </div>
-            <button type="button" class="modal-close" onclick="closeKpiModal('kpiOverdueModal')" aria-label="Close">×</button>
-        </div>
-        <div class="kpi-modal-body">
-            <div class="kpi-modal-summary-strip"><strong>{{ overdue_count }}</strong> overdue</div>
-            <div class="kpi-modal-table-scroll">
-                {% if overdue_tasks %}
-                <table class="monitoring-kpi-detail-table">
-                    <thead>
-                        <tr>
-                            <th>Applicant</th>
-                            <th>Task type</th>
-                            <th>Due date</th>
-                            <th>Notified</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for task in overdue_tasks %}
-                        <tr>
-                            <td>
-                                <div class="kpi-applicant-name">{{ task.lot_award.application.applicant.full_name }}</div>
-                                <div class="kpi-applicant-addr">📍 {{ task.lot_award.application.applicant.current_address|default:"—" }}</div>
-                            </td>
-                            <td>{% if task.task_type == 'day_15_inspection' %}15 Day Inspection{% elif task.task_type == 'day_30_inspection' %}30 Day Inspection{% else %}{{ task.get_task_type_display }}{% endif %}</td>
-                            <td>{{ task.due_date|date:"M d, Y" }}</td>
-                            <td>{% if task.notified_at %}{{ task.notified_at|date:"M d, Y" }}<div class="kpi-cell-muted">{{ task.notified_at|time:"H:i" }}</div>{% else %}—{% endif %}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                {% else %}
-                <p style="margin: 0; padding: 36px 20px; text-align: center; color: #64748b; font-size: 13.5px;">No overdue tasks right now.</p>
-                {% endif %}
-            </div>
-        </div>
-        <div class="kpi-modal-footer">
-            <button type="button" class="btn-kpi-modal-close" onclick="closeKpiModal('kpiOverdueModal')">Close</button>
         </div>
     </div>
 </div>
@@ -2255,8 +2196,7 @@ function applyReportModalPhase(taskType) {
         const isExtensionFinal = String(taskType) === 'month_2_inspection';
         if (isExtensionFinal) {
             titleEl.textContent = 'Caretaker monitoring report — extension 30 Day (final)';
-            subtitleEl.textContent = sharedSub
-                + ' This is the final field visit in the extra build period after the explanation letter was filed—same checklist as the original 30 Day (is the lot build finished?).';
+            subtitleEl.textContent = '';
             if (badgeEl) {
                 badgeEl.textContent = 'Extension · final';
                 badgeEl.hidden = false;
@@ -2271,7 +2211,7 @@ function applyReportModalPhase(taskType) {
             evidenceEl.textContent = 'Capture or attach up to 4 images showing whether construction on the lot is finished or still incomplete.';
         } else {
             titleEl.textContent = 'Caretaker monitoring report — final visit';
-            subtitleEl.textContent = sharedSub + ' This final (30 Day) visit confirms whether the lot build is finished.';
+            subtitleEl.textContent = '';
             if (badgeEl) {
                 badgeEl.textContent = 'Final monitoring';
                 badgeEl.hidden = false;
