@@ -88,8 +88,8 @@
 
     .search-box input:focus {
         outline: none;
-        border-color: #2563eb;
-        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+        border-color: #0f172a;
+        box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
     }
 
     .search-box input::placeholder {
@@ -160,8 +160,8 @@
     }
 
     .applications-table thead {
-        background: linear-gradient(180deg, #1d4ed8 0%, #1e3a8a 100%);
-        border-bottom: 2px solid #172554;
+        background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+        border-bottom: 2px solid #0f172a;
         position: sticky;
         top: 0;
         z-index: 2;
@@ -178,10 +178,10 @@
         white-space: normal;
         line-height: 1.25;
         vertical-align: middle;
-        border-right: 1px solid rgba(255, 255, 255, 0.16);
-        border-bottom: 1px solid #172554;
+        border-right: 1px solid rgba(255, 255, 255, 0.08);
+        border-bottom: 1px solid #0f172a;
         position: relative;
-        background: linear-gradient(180deg, #1d4ed8 0%, #1e3a8a 100%);
+        background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
     }
 
     .applications-table th::after {
@@ -196,7 +196,7 @@
     }
 
     .applications-table th:hover::after {
-        background: #2563eb;
+        background: #dc2626;
     }
 
     .applications-table td {
@@ -215,17 +215,16 @@
     .applications-table tbody tr {
         transition: background 0.18s ease, box-shadow 0.18s ease;
         position: relative;
-    }
-
-    .applications-table tbody tr {
         background: #ffffff;
     }
+
     .applications-table tbody tr:nth-child(even) {
         background: #f8fafc;
     }
+
     .applications-table tbody tr:hover {
-        background: #fef3f2;
-        box-shadow: inset 3px 0 0 #b91c1c;
+        background: #fff5f5;
+        box-shadow: inset 3px 0 0 #dc2626;
     }
 
     .applications-table tbody tr:last-child td {
@@ -243,7 +242,7 @@
     }
     .applications-table td.col-num {
         font-weight: 700;
-        color: #1e3a8a;
+        color: #0f172a;
         font-variant-numeric: tabular-nums;
     }
 
@@ -273,29 +272,62 @@
     .applications-table .col-details {
         width: 34%;
     }
-    .applications-table td.col-details {
-        color: #334155;
-        font-size: 0.8rem;
-        line-height: 1.5;
+    
+    .details-container {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+        text-align: left;
     }
-    .applications-table td.col-details .details-primary {
-        display: block;
-        color: #0f172a;
+    .details-primary {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.4rem;
+        color: #1e293b;
         font-weight: 500;
-        margin-bottom: 0.3rem;
+        font-size: 0.82rem;
+        line-height: 1.4;
     }
-    .applications-table td.col-details .details-secondary {
-        display: block;
+    .details-primary-icon {
+        color: #64748b;
+        flex-shrink: 0;
+        margin-top: 0.15rem;
+    }
+    .details-secondary-box {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.4rem;
+        background: #f8fafc;
+        border-left: 3px solid #cbd5e1;
+        border-radius: 4px;
+        padding: 0.4rem 0.6rem;
+        margin-top: 0.1rem;
+    }
+    .details-secondary-icon {
+        color: #94a3b8;
+        flex-shrink: 0;
+        margin-top: 0.125rem;
+    }
+    .details-secondary-text {
         color: #475569;
-        font-size: 0.75rem;
+        font-size: 0.74rem;
         font-style: italic;
+        line-height: 1.35;
+        font-weight: 400;
         word-break: break-word;
-        overflow-wrap: anywhere;
+        text-align: left;
     }
-    .applications-table td.col-details .details-empty {
+    .details-empty {
         color: #94a3b8;
         font-style: italic;
         font-size: 0.78rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+    .details-empty-icon {
+        color: #94a3b8;
+        flex-shrink: 0;
     }
 
     .applications-table .col-date {
@@ -315,6 +347,7 @@
     .applications-table td.col-staff {
         color: #475569;
         font-size: 0.8rem;
+        text-align: center;
     }
 
     .applications-table .col-actions {
@@ -323,47 +356,57 @@
     }
 
     .btn-view-details {
-        padding: 0.4rem 0.9rem;
+        padding: 0.45rem 1rem;
         background: #ffffff;
-        color: #1e3a8a;
-        border: 1px solid #93c5fd;
-        border-radius: 0.4rem;
-        font-size: 0.72rem;
-        font-weight: 700;
-        letter-spacing: 0.02em;
+        color: #334155;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
         cursor: pointer;
-        transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
-        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+        transition: all 0.15s ease;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
         white-space: nowrap;
     }
     .btn-view-details:hover {
-        background: #1d4ed8;
-        border-color: #1d4ed8;
-        color: #ffffff;
+        background: #f8fafc;
+        border-color: #94a3b8;
+        color: #0f172a;
         transform: translateY(-1px);
-        box-shadow: 0 4px 8px rgba(29, 78, 216, 0.25);
+        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.08);
     }
     .btn-view-details:focus-visible {
-        outline: 2px solid #60a5fa;
+        outline: 2px solid #0f172a;
         outline-offset: 2px;
     }
     .badge-reason {
-        width: 100%;
-        display: flex !important;
+        display: inline-flex !important;
         align-items: center;
-        justify-content: center;
-        padding: 0.45rem 0.55rem !important;
+        justify-content: flex-start;
+        gap: 0.35rem;
+        padding: 0.35rem 0.65rem !important;
         background: #fef2f2;
         color: #991b1b;
         border: 1px solid #fecaca;
-        border-radius: 4px !important;
+        border-radius: 6px !important;
         text-transform: uppercase;
-        letter-spacing: 0.04em;
-        font-size: 0.62rem !important;
+        letter-spacing: 0.03em;
+        font-size: 0.65rem !important;
         font-weight: 700;
-        line-height: 1.2;
-        text-align: center;
+        line-height: 1.3;
+        text-align: left;
         box-sizing: border-box;
+        max-width: 100%;
+        word-break: break-word;
+        box-shadow: 0 1px 2px rgba(153, 27, 27, 0.02);
+    }
+    .badge-reason .status-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background-color: #dc2626;
+        flex-shrink: 0;
+        display: inline-block;
     }
 
     /* Modal CSS */
@@ -470,19 +513,22 @@
     }
 
     .btn-search {
-        padding: 0.625rem 1.25rem;
-        background: #0d9488;
+        padding: 0.625rem 1.5rem;
+        background: #1e293b;
         color: white;
-        border: none;
-        border-radius: 0.5rem;
+        border: 1px solid #0f172a;
+        border-radius: 0.55rem;
         font-size: 0.875rem;
         font-weight: 600;
         cursor: pointer;
-        transition: background 0.2s;
+        transition: all 0.2s ease;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
     }
 
     .btn-search:hover {
-        background: #0f766e;
+        background: #0f172a;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 6px rgba(15, 23, 42, 0.15);
     }
 
     .empty-state {
@@ -552,17 +598,44 @@
                         <span class="blacklist-ref">{{ blacklist.applicant.reference_number }}</span>
                     </td>
                     <td class="col-reason">
-                        <span class="badge badge-reason">{{ blacklist.get_reason_display }}</span>
+                        <span class="badge badge-reason">
+                            <span class="status-dot"></span>
+                            {{ blacklist.get_reason_display }}
+                        </span>
                     </td>
                     <td class="col-details">
-                        {% if blacklist.supporting_notes %}
-                        <span class="details-primary">{{ blacklist.supporting_notes }}</span>
-                        {% endif %}
-                        {% if blacklist.reason_details %}
-                        <span class="details-secondary">{{ blacklist.reason_details }}</span>
-                        {% elif not blacklist.supporting_notes %}
-                        <span class="details-empty">No additional details recorded.</span>
-                        {% endif %}
+                        <div class="details-container">
+                            {% if blacklist.formatted_notes %}
+                            <div class="details-primary">
+                                <svg class="details-primary-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                                    <polyline points="10 9 9 9 8 9"></polyline>
+                                </svg>
+                                <span>{{ blacklist.formatted_notes }}</span>
+                            </div>
+                            {% endif %}
+                            
+                            {% if blacklist.formatted_details %}
+                            <div class="details-secondary-box" title="Staff Explanation">
+                                <svg class="details-secondary-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                                </svg>
+                                <span class="details-secondary-text">{{ blacklist.formatted_details }}</span>
+                            </div>
+                            {% elif not blacklist.formatted_notes %}
+                            <div class="details-empty">
+                                <svg class="details-empty-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                </svg>
+                                <span>No additional details recorded.</span>
+                            </div>
+                            {% endif %}
+                        </div>
                     </td>
                     <td class="col-date">
                         {{ blacklist.blacklisted_at|date:"M d, Y" }}
@@ -580,8 +653,8 @@
                             data-ref="{{ blacklist.applicant.reference_number }}"
                             data-dob="{{ blacklist.applicant.date_of_birth|date:'M d, Y'|default:'Unknown' }}"
                             data-brgy="{{ blacklist.applicant.barangay.name|default:'Unknown' }}"
-                            data-reason="{% if blacklist.supporting_notes %}{{ blacklist.supporting_notes }}{% else %}{{ blacklist.get_reason_display }}{% endif %}"
-                            data-details="{{ blacklist.reason_details }}"
+                            data-reason="{{ blacklist.formatted_notes }}"
+                            data-details="{{ blacklist.formatted_details }}"
                             data-notes="{{ blacklist.get_reason_display }}"
                             data-date="{{ blacklist.blacklisted_at|date:'M d, Y' }}"
                             onclick="openDetailsModal(this)">

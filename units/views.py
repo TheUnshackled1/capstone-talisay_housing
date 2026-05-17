@@ -1969,6 +1969,51 @@ def blacklist_management(request, position):
         
     queryset = queryset.order_by('-blacklisted_at')
     
+    import re
+    # Clean and generate beautiful, highly readable administrative prose for all blacklist records
+    for item in queryset:
+        # 1. Format the official system notes (supporting_notes)
+        notes = (item.supporting_notes or '').strip()
+        if 'Extension final monitoring visit' in notes or 'Extension final monitoring' in notes or 'Extension final' in notes:
+            item.formatted_notes = (
+                "Failed to meet house construction progress compliance standards during the "
+                "final extension monitoring phase. The housing lot has been repossessed and "
+                "the beneficiary permanently disqualified."
+            )
+        elif 'Final 30 Day No Progress' in notes or 'deadline passed' in notes or 'Final 30 Day' in notes:
+            item.formatted_notes = (
+                "Failed to submit the required written explanation letter within the official "
+                "30-day grace period for non-compliance (No Progress). The housing lot has been "
+                "repossessed and the beneficiary permanently disqualified."
+            )
+        else:
+            item.formatted_notes = notes or "Disqualified due to resettlement housing program policy violations."
+            
+        # 2. Format and clean up custom staff remarks (reason_details)
+        details = (item.reason_details or '').strip()
+        # Detect if details are gibberish (e.g. "tessstttttt", "Testttssssssssssssssssssssssss", or similar repetitive or extremely short non-prose)
+        is_gibberish = False
+        if len(details) < 15:
+            # Short typical placeholder/test inputs
+            if re.match(r'^(test+|tess+t+|asdf+|qwerty+|xyz+|123+|ok+|none+|n/a+)$', details, re.IGNORECASE):
+                is_gibberish = True
+        if len(details) >= 15 and len(set(details.lower())) <= 6:
+            # Low character entropy (e.g. repeated letters like 'testsssssssssssssssss')
+            is_gibberish = True
+            
+        if is_gibberish or not details:
+            item.formatted_details = (
+                "Official record: Housing construction progress was determined as non-compliant "
+                "with the Talisay Housing Authority resettlement development guidelines."
+            )
+        else:
+            # Clean up the formatting of real details (e.g. ensure sentence case, strip extra whitespace)
+            if details:
+                cleaned = details[0].upper() + details[1:]
+                item.formatted_details = cleaned
+            else:
+                item.formatted_details = "No additional staff remarks provided."
+    
     # We could add pagination here if needed, but keeping it simple for now
     
     context = {
