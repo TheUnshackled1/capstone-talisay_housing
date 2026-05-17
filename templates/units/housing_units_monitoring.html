@@ -753,6 +753,26 @@
     .inspection-info-btn.primary.inspection-info-btn--normal-progress:hover {
         background: linear-gradient(180deg, #059669 0%, #047857 100%);
     }
+    .inspection-info-btn.primary.inspection-info-btn--housing-ready-pulse {
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.35), 0 2px 8px rgba(5, 150, 105, 0.25);
+    }
+    #inspectionInfoBanner.inspection-info-banner--housing-ready {
+        background: #ecfdf5;
+        border-color: #86efac;
+    }
+    #inspectionInfoBanner.inspection-info-banner--housing-ready #inspectionInfoText {
+        color: #14532d;
+    }
+    #inspectionInfoBanner.inspection-info-banner--explanation-letter {
+        background: #fff7ed;
+        border-color: #fdba74;
+    }
+    #inspectionInfoBanner.inspection-info-banner--explanation-letter #inspectionInfoText {
+        color: #9a3412;
+    }
+    .inspection-info-btn.inspection-info-btn--explanation-letter-pulse {
+        box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.35), 0 2px 8px rgba(234, 88, 12, 0.2);
+    }
     .inspection-info-actions {
         display: flex;
         justify-content: flex-end;
@@ -3039,14 +3059,100 @@ function monitoringStaffDecisionDisplayLabel(task, assessment) {
     return labels[assessment] || assessment;
 }
 
+function monitoringBeneficiarySubjectPronoun(beneficiaryInfo) {
+    const sex = (beneficiaryInfo && beneficiaryInfo.sex || '').trim().toUpperCase();
+    if (sex === 'F') return 'she';
+    if (sex === 'M') return 'he';
+    return 'they';
+}
+
+function monitoringReportIsUnoccupied(report) {
+    const occKey = String((report && report.occupancy_status_key) || '').toLowerCase();
+    return occKey === 'unoccupied_abandoned' || occKey === 'temporarily_vacant';
+}
+
+/**
+ * Caretaker report → recommended staff outcome: normal_progress | no_progress | null.
+ * 15 Day: Normal Progress vs No Progress. Final / extension 30 Day: Housing unit vs Explanation letter or Failed.
+ */
+function monitoringRecommendedStaffDecision(task, report) {
+    if (!task || !report || (report.progress_assessment || '').trim()) return null;
+    const occKey = String(report.occupancy_status_key || '').toLowerCase();
+    const conKey = String(report.construction_status_key || '').toLowerCase();
+    const unoccupied = monitoringReportIsUnoccupied(report);
+
+    if (task.task_type === 'day_30_inspection' || task.task_type === 'month_2_inspection') {
+        if (occKey === 'properly_occupied' && conKey === 'completed_occupied') return 'normal_progress';
+        if (unoccupied && conKey === 'no_structure') return 'no_progress';
+        return null;
+    }
+    if (task.task_type === 'day_15_inspection') {
+        if (occKey === 'properly_occupied' && conKey === 'ongoing_construction') return 'normal_progress';
+        if (unoccupied && conKey === 'no_structure') return 'no_progress';
+        return null;
+    }
+    return null;
+}
+
+function isMonitoringReportReadyForHousingUnit(task, report) {
+    return task && task.task_type === 'day_30_inspection'
+        && monitoringRecommendedStaffDecision(task, report) === 'normal_progress';
+}
+
+function isMonitoringReportReadyForExplanationLetter(task, report) {
+    return task && task.task_type === 'day_30_inspection'
+        && monitoringRecommendedStaffDecision(task, report) === 'no_progress';
+}
+
+function monitoringRecommendedDecisionHint(task, recommendation) {
+    if (!task || !recommendation) return '';
+    if (task.task_type === 'day_15_inspection') {
+        if (recommendation === 'normal_progress') {
+            return 'Caretaker reported Properly Occupied and Ongoing Construction — use Normal Progress.';
+        }
+        if (recommendation === 'no_progress') {
+            return 'Caretaker reported Unoccupied and No Structure — use No Progress.';
+        }
+    }
+    if (task.task_type === 'day_30_inspection') {
+        if (recommendation === 'normal_progress') {
+            return 'Caretaker reported Properly Occupied and Build finished — use Housing unit.';
+        }
+        if (recommendation === 'no_progress') {
+            return 'Caretaker reported Unoccupied and Build not finished — use Explanation letter.';
+        }
+    }
+    if (task.task_type === 'month_2_inspection') {
+        if (recommendation === 'normal_progress') {
+            return 'Caretaker reported Properly Occupied and Build finished — use Housing unit.';
+        }
+        if (recommendation === 'no_progress') {
+            return 'Caretaker reported Unoccupied and Build not finished — use Failed.';
+        }
+    }
+    return '';
+}
+
 function updateInspectionDecisionButtons(task) {
     const actions = document.getElementById('inspectionDecisionActions');
     if (!actions) return;
     const labels = monitoringStaffDecisionLabels(task);
     const normalBtn = actions.querySelector('.inspection-info-btn--normal-progress');
     const noBtn = actions.querySelector('.inspection-info-btn--no-progress');
-    if (normalBtn) normalBtn.textContent = labels.normal_progress;
-    if (noBtn) noBtn.textContent = labels.no_progress;
+    const report = (task && task.report) || {};
+    const rec = monitoringRecommendedStaffDecision(task, report);
+    if (normalBtn) {
+        normalBtn.textContent = labels.normal_progress;
+        normalBtn.classList.toggle('inspection-info-btn--housing-ready-pulse', rec === 'normal_progress');
+        normalBtn.classList.remove('inspection-info-btn--explanation-letter-pulse');
+        normalBtn.title = rec === 'normal_progress' ? monitoringRecommendedDecisionHint(task, 'normal_progress') : '';
+    }
+    if (noBtn) {
+        noBtn.textContent = labels.no_progress;
+        noBtn.classList.toggle('inspection-info-btn--explanation-letter-pulse', rec === 'no_progress');
+        noBtn.classList.remove('inspection-info-btn--housing-ready-pulse');
+        noBtn.title = rec === 'no_progress' ? monitoringRecommendedDecisionHint(task, 'no_progress') : '';
+    }
 }
 
 function monitoringTaskRelativeLine(task) {
@@ -3853,7 +3959,13 @@ function openInspectionInfoModal(task) {
     if (decisionActions) {
         decisionActions.classList.remove('active');
     }
-    if (banner) banner.style.display = 'block';
+    if (banner) {
+        banner.style.display = 'block';
+        if (!isCompleted || hasDecision) {
+            banner.classList.remove('inspection-info-banner--housing-ready');
+            banner.classList.remove('inspection-info-banner--explanation-letter');
+        }
+    }
 
     if (body) body.classList.toggle('centered', isInformational || isCompleted);
     if (actions) {
@@ -3863,13 +3975,67 @@ function openInspectionInfoModal(task) {
 
     if (isCompleted) {
         title.textContent = `${monitoringTaskDisplayTitle(task)} is completed`;
-        text.textContent = hasDecision
-            ? `Caretaker monitoring report has been reviewed. The saved staff decision is shown in the summary below.`
-            : (monitoringTaskPhase(task) === 'final'
-                ? (task.task_type === 'month_2_inspection'
-                    ? 'Caretaker monitoring report was submitted for the extension 30 Day visit. Review the summary, then choose Housing unit if the lot build is finished, or Failed if it does not pass—Failed leads to Blacklist beneficiary when the case is eligible.'
-                    : 'Caretaker monitoring report has been submitted. Review the summary, then choose Housing unit if the lot build is finished, or Explanation letter to open that workflow.')
-                : 'Caretaker monitoring report has been submitted. Review the summary, then mark the result as Normal Progress or No Progress.');
+        const reportForReady = task.report || {};
+        const staffRec = isReviewPending ? monitoringRecommendedStaffDecision(task, reportForReady) : null;
+        const recommendNormal = staffRec === 'normal_progress';
+        const recommendNoProgress = staffRec === 'no_progress';
+        if (banner) {
+            banner.classList.toggle('inspection-info-banner--housing-ready', recommendNormal);
+            banner.classList.toggle('inspection-info-banner--explanation-letter', recommendNoProgress);
+        }
+        if (hasDecision) {
+            text.textContent = 'Caretaker monitoring report has been reviewed. The saved staff decision is shown in the summary below.';
+        } else if (recommendNormal && task.task_type === 'day_30_inspection') {
+            text.textContent = (
+                'This beneficiary is ready for housing unit. '
+                + 'The caretaker reported Properly Occupied and Build finished. '
+                + 'Choose Housing unit to record the completed lot and close monitoring. '
+                + 'Explanation letter does not apply for this visit.'
+            );
+        } else if (recommendNoProgress && task.task_type === 'day_30_inspection') {
+            text.textContent = (
+                'Explanation letter applies for this beneficiary. '
+                + 'The caretaker reported Unoccupied and Build not finished. '
+                + 'Choose Explanation letter to open that workflow. '
+                + 'Housing unit does not apply for this visit.'
+            );
+        } else if (recommendNormal && task.task_type === 'month_2_inspection') {
+            text.textContent = (
+                'This beneficiary is ready for housing unit. '
+                + 'The caretaker reported Properly Occupied and Build finished on the extension final visit. '
+                + 'Choose Housing unit to record the completed lot and close monitoring. '
+                + 'Failed does not apply for this visit.'
+            );
+        } else if (recommendNoProgress && task.task_type === 'month_2_inspection') {
+            text.textContent = (
+                'Failed applies for this extension final visit. '
+                + 'The caretaker reported Unoccupied and Build not finished. '
+                + 'Choose Failed when the lot does not pass—Failed leads toward Blacklist beneficiary when office rules allow. '
+                + 'Housing unit does not apply for this visit.'
+            );
+        } else if (recommendNormal && task.task_type === 'day_15_inspection') {
+            const labels = monitoringStaffDecisionLabels(task);
+            text.textContent = (
+                'Initial monitoring supports ' + labels.normal_progress + '. '
+                + 'The caretaker reported Properly Occupied and Ongoing Construction. '
+                + 'Choose ' + labels.normal_progress + ' to record initial monitoring. '
+                + labels.no_progress + ' does not match this visit.'
+            );
+        } else if (recommendNoProgress && task.task_type === 'day_15_inspection') {
+            const labels = monitoringStaffDecisionLabels(task);
+            text.textContent = (
+                'Initial monitoring supports ' + labels.no_progress + '. '
+                + 'The caretaker reported Unoccupied and No Structure. '
+                + 'Choose ' + labels.no_progress + ' for this visit. '
+                + labels.normal_progress + ' does not match this visit.'
+            );
+        } else if (monitoringTaskPhase(task) === 'final') {
+            text.textContent = task.task_type === 'month_2_inspection'
+                ? 'Caretaker monitoring report was submitted for the extension 30 Day visit. Review the summary, then choose Housing unit if the lot build is finished, or Failed if it does not pass—Failed leads to Blacklist beneficiary when the case is eligible.'
+                : 'Caretaker monitoring report has been submitted. Review the summary, then choose Housing unit if the lot build is finished, or Explanation letter to open that workflow.';
+        } else {
+            text.textContent = 'Caretaker monitoring report has been submitted. Review the summary, then mark the result as Normal Progress or No Progress.';
+        }
         if (summary) {
             summary.innerHTML = renderCompletedReportSummary(task);
             summary.classList.add('active');
@@ -3923,8 +4089,81 @@ function openInspectionInfoModal(task) {
     modal.style.display = 'flex';
 }
 
+function alertMonitoringStaffDecisionMismatch(task, attemptedDecision, recommendedDecision) {
+    const ben = lastOpenedUnitPayload && lastOpenedUnitPayload.beneficiary_info;
+    const pronoun = monitoringBeneficiarySubjectPronoun(ben);
+    const labels = monitoringStaffDecisionLabels(task);
+    const attemptedLabel = labels[attemptedDecision] || attemptedDecision;
+    const recommendedLabel = labels[recommendedDecision] || recommendedDecision;
+    let title = 'Use ' + recommendedLabel;
+    let body = '';
+
+    if (task.task_type === 'day_30_inspection' && recommendedDecision === 'normal_progress') {
+        title = 'Ready for housing unit';
+        body = (
+            'You cannot open an explanation letter for this beneficiary because '
+            + pronoun
+            + ' is ready for housing unit. Choose Housing unit to record the completed lot and close monitoring.'
+        );
+    } else if (task.task_type === 'day_30_inspection' && recommendedDecision === 'no_progress') {
+        title = 'Use Explanation letter';
+        body = (
+            'You cannot record Housing unit for this beneficiary because '
+            + pronoun
+            + ' requires the Explanation letter workflow (Unoccupied and Build not finished on the final visit). '
+            + 'Choose Explanation letter to continue.'
+        );
+    } else if (task.task_type === 'month_2_inspection' && recommendedDecision === 'normal_progress') {
+        title = 'Ready for housing unit';
+        body = (
+            'You cannot record Failed for this beneficiary because '
+            + pronoun
+            + ' is ready for housing unit on the extension final visit. '
+            + 'Choose Housing unit to record the completed lot and close monitoring.'
+        );
+    } else if (task.task_type === 'month_2_inspection' && recommendedDecision === 'no_progress') {
+        title = 'Use Failed';
+        body = (
+            'You cannot record Housing unit for this beneficiary because '
+            + pronoun
+            + ' did not pass the extension final visit (Unoccupied and Build not finished). '
+            + 'Choose Failed to continue—Failed leads toward Blacklist beneficiary when office rules allow.'
+        );
+    } else if (task.task_type === 'day_15_inspection' && recommendedDecision === 'normal_progress') {
+        title = 'Use ' + recommendedLabel;
+        body = (
+            'You cannot record ' + attemptedLabel + ' for this beneficiary because '
+            + pronoun
+            + ' should be marked as ' + recommendedLabel
+            + ' (Properly Occupied and Ongoing Construction on the initial visit). Choose '
+            + recommendedLabel + ' instead.'
+        );
+    } else if (task.task_type === 'day_15_inspection' && recommendedDecision === 'no_progress') {
+        title = 'Use ' + recommendedLabel;
+        body = (
+            'You cannot record ' + attemptedLabel + ' for this beneficiary because '
+            + pronoun
+            + ' should be marked as ' + recommendedLabel
+            + ' (Unoccupied and No Structure on the initial visit). Choose '
+            + recommendedLabel + ' instead.'
+        );
+    } else {
+        body = (
+            'You cannot record ' + attemptedLabel + ' for this beneficiary. Choose '
+            + recommendedLabel + ' based on the caretaker report.'
+        );
+    }
+    monitoringFlowAlert(body, title, 'default', null);
+}
+
 async function submitProgressAssessment(decision) {
     if (!activeInspectionTask || activeInspectionTask.status !== 'completed') return;
+    const report = activeInspectionTask.report || {};
+    const recommended = monitoringRecommendedStaffDecision(activeInspectionTask, report);
+    if (recommended && decision !== recommended) {
+        alertMonitoringStaffDecisionMismatch(activeInspectionTask, decision, recommended);
+        return;
+    }
     const decisionActions = document.getElementById('inspectionDecisionActions');
     const text = document.getElementById('inspectionInfoText');
     if (decisionActions) {

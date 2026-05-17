@@ -532,6 +532,26 @@ def _unit_ids_with_extension_month_2_failed(units_list):
 _FINAL_MONITORING_TASK_TYPES = frozenset({'day_30_inspection', 'month_2_inspection'})
 
 
+def _report_indicates_housing_unit_ready(report):
+    """Final 30 Day caretaker report: properly occupied + build finished → staff should choose Housing unit."""
+    if not report:
+        return False
+    return (
+        (report.occupancy_status or '').strip() == 'properly_occupied'
+        and (report.construction_status or '').strip() == 'completed_occupied'
+    )
+
+
+def _beneficiary_subject_pronoun(applicant):
+    """he / she / they for staff-facing monitoring messages."""
+    sex = (getattr(applicant, 'sex', None) or '').strip().upper()
+    if sex == 'F':
+        return 'she'
+    if sex == 'M':
+        return 'he'
+    return 'they'
+
+
 def _staff_progress_assessment_display(task_type, assessment):
     """Staff decision label; final visits use outcome wording instead of Normal/No Progress."""
     if not assessment:
