@@ -563,14 +563,21 @@
 
     <!-- Search/KPI row -->
     <div style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
-        <form method="get" class="bl-search-wrap">
-            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="11" cy="11" r="8" />
-                <path d="m21 21-4.35-4.35" />
-            </svg>
-            <input type="text" name="search" placeholder="Search by name or reference #..."
-                value="{{ search|default_if_none:'' }}">
-            <button type="submit" class="btn-search">Search</button>
+        <form method="get" class="bl-search-wrap" style="flex: 1; min-width: 200px; position: relative; display: flex; border: none; box-shadow: none; background: transparent; padding: 0;">
+            <div style="flex: 1; min-width: 200px; position: relative; display: flex; width: 100%;">
+                <svg class="search-icon" style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); width: 1rem; height: 1rem; color: #94a3b8; z-index: 2;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8" />
+                    <path d="m21 21-4.35-4.35" />
+                </svg>
+                <input type="text" name="search" placeholder="Search by name or reference #..."
+                    value="{{ search|default_if_none:'' }}"
+                    style="flex: 1; padding: 0.56rem 0.72rem 0.56rem 2.25rem; border: 1px solid #cbd5e1; border-radius: 0.5rem 0 0 0.5rem; font-size: 0.78rem; outline: none; transition: all 0.15s ease; background: #fff;">
+                <button type="submit"
+                    style="padding: 0 1.25rem; background: #15803d; color: white; border: none; border-radius: 0 0.5rem 0.5rem 0; font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease;"
+                    onmouseover="this.style.background='#166534'" onmouseout="this.style.background='#15803d'">
+                    Search
+                </button>
+            </div>
         </form>
     </div>
 

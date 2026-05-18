@@ -3916,20 +3916,26 @@
     <!-- Controls Bar (intake-style compact row) -->
     <div class="controls-bar"
         style="display: flex; gap: 0.75rem; margin-bottom: 0.85rem; flex-wrap: wrap; align-items: center; padding: 0.6rem; border: 1px solid #e2e8f0; background: #f8fafc; border-radius: 0.7rem;">
-        <div class="search-box" style="flex: 1; min-width: 200px; position: relative;">
-            <svg style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); width: 1rem; height: 1rem; color: #94a3b8;"
+        <div class="search-box" style="flex: 1; min-width: 200px; position: relative; display: flex;">
+            <svg style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); width: 1rem; height: 1rem; color: #94a3b8; z-index: 2;"
                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="11" cy="11" r="8"></circle>
                 <path d="m21 21-4.35-4.35"></path>
             </svg>
             <input type="text" id="searchInput" placeholder="Name, ref #, barangay..." value="{{ search }}"
-                onkeyup="handleSearch(event)"
-                style="width: 100%; padding: 0.56rem 0.72rem 0.56rem 2.25rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.78rem; outline: none;">
+                onkeypress="if(event.key === 'Enter') executeSearch()"
+                style="flex: 1; padding: 0.56rem 0.72rem 0.56rem 2.25rem; border: 1px solid #cbd5e1; border-radius: 0.5rem 0 0 0.5rem; font-size: 0.78rem; outline: none; transition: all 0.15s ease;">
+            <button type="button" onclick="executeSearch()"
+                style="padding: 0 1.25rem; background: #15803d; color: white; border: none; border-radius: 0 0.5rem 0.5rem 0; font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease;"
+                onmouseover="this.style.background='#166534'" onmouseout="this.style.background='#15803d'">
+                Search
+            </button>
         </div>
         <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
             {% if permissions.can_generate_form %}
             <a href="{% url 'applications:ready_for_form_queue' request.user.position %}"
-                style="display:inline-flex;align-items:center;gap:0.35rem;padding:0.5rem 0.85rem;background:#15803d;color:#fff;border-radius:0.5rem;font-size:0.74rem;font-weight:700;text-decoration:none;border:1px solid #166534;white-space:nowrap;box-shadow:0 1px 2px rgba(15,23,42,0.08);"
+                style="display:inline-flex;align-items:center;gap:0.35rem;padding:0.5rem 0.85rem;background:#1e40af;color:#fff;border-radius:0.5rem;font-size:0.74rem;font-weight:700;text-decoration:none;border:1px solid #1e3a8a;white-space:nowrap;box-shadow:0 1px 2px rgba(15,23,42,0.08); transition: background 0.2s ease;"
+                onmouseover="this.style.background='#1e3a8a'" onmouseout="this.style.background='#1e40af'"
                 title="Routed Proceed-to-Form queue: Generate Form or continue print-and-sign until Fully Approved">
                 Go to Form
                 {% if ready_for_form_queue_count > 0 %}
@@ -5673,14 +5679,18 @@
     }
 
     let searchTimeout;
+    function executeSearch() {
+        const search = document.getElementById('searchInput').value;
+        const stage = document.getElementById('stageFilter')?.value
+            || new URLSearchParams(window.location.search).get('stage')
+            || 'all';
+        window.location.href = `?stage=${stage}&search=${encodeURIComponent(search)}&page=1`;
+    }
+    
     function handleSearch(event) {
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(() => {
-            const search = event.target.value;
-            const stage = document.getElementById('stageFilter')?.value
-                || new URLSearchParams(window.location.search).get('stage')
-                || 'all';
-            window.location.href = `?stage=${stage}&search=${encodeURIComponent(search)}&page=1`;
+            executeSearch();
         }, 500);
     }
 
