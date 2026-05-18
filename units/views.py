@@ -2414,7 +2414,7 @@ def caretaker_monitoring_dashboard(request):
         'lot_award__application__applicant',
         'unit__site',
         'assigned_to',
-    ).order_by('due_date')
+    ).order_by('notified_at', 'due_date', 'pk')
 
     # Calculate KPIs
     pending_count = tasks.filter(status='pending').count()
@@ -2446,7 +2446,7 @@ def caretaker_monitoring_dashboard(request):
             ),
         )
     ).order_by('-completed_at', '-due_date')
-    active_unit_tasks = tasks.order_by('unit_id', 'due_date')
+    active_unit_tasks = tasks.order_by('unit_id', 'notified_at', 'due_date', 'pk')
 
     context = {
         'tasks': tasks,

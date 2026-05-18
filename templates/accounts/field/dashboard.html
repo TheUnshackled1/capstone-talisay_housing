@@ -1508,6 +1508,7 @@
 {% endblock %}
 
 {% block content %}
+{{ pending_cdrrmo_meta|json_script:"field-pending-cdrrmo-meta" }}
 <div class="dashboard-container" data-user-position="{{ request.user.position }}">
     <div class="monitoring-shell">
         <h1 class="monitoring-title">Field Verification Desk</h1>
@@ -2077,8 +2078,79 @@
             return map[key] || String(code).replace(/_/g, ' ');
         }
 
+        const FIELD_PENDING_CDRRMO_META = (function () {
+            const el = document.getElementById('field-pending-cdrrmo-meta');
+            if (!el || !el.textContent) return {};
+            try {
+                return JSON.parse(el.textContent);
+            } catch (e) {
+                return {};
+            }
+        })();
+
+        function formatFieldCdrrmoDateTime(iso) {
+            if (!iso) return '—';
+            const d = new Date(iso);
+            if (Number.isNaN(d.getTime())) return '—';
+            const datePart = d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+            const timePart = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+            return datePart + ' ' + timePart;
+        }
+
+        const FIELD_CDRRMO_META_URL_TEMPLATE = '{% url "accounts:field_applicant_cdrrmo_meta" applicant_id="00000000-0000-4000-8000-000000000001" %}';
+
+        function applyFieldCdrrmoMeta(meta) {
+            const cdrrmoStatusText = document.getElementById('cdrrmoStatusText');
+            const cdrrmoDateText = document.getElementById('cdrrmoDateText');
+            if (!cdrrmoStatusText || !cdrrmoDateText) return;
+            if (!meta) {
+                cdrrmoStatusText.textContent = '—';
+                cdrrmoDateText.textContent = '—';
+                return;
+            }
+            if (meta.status === 'certified') {
+                cdrrmoStatusText.textContent = 'Certified — danger zone (government record)';
+                cdrrmoStatusText.style.color = '#166534';
+            } else if (meta.status === 'not_certified') {
+                cdrrmoStatusText.textContent = 'Not certified — hazard claim not verified';
+                cdrrmoStatusText.style.color = '#991b1b';
+            } else if (meta.document_at) {
+                cdrrmoStatusText.textContent = 'CDRRMO certification on file — awaiting field verification report';
+                cdrrmoStatusText.style.color = '#1d4ed8';
+            } else {
+                cdrrmoStatusText.textContent = 'Pending — awaiting field verification report';
+                cdrrmoStatusText.style.color = '#78350f';
+            }
+            const verifiedIso = meta.certified_at || meta.document_at || null;
+            cdrrmoDateText.textContent = formatFieldCdrrmoDateTime(verifiedIso);
+        }
+
+        async function refreshFieldCdrrmoMeta(applicantId) {
+            const embedded = FIELD_PENDING_CDRRMO_META[String(applicantId)] || {};
+            applyFieldCdrrmoMeta(embedded);
+            const url = FIELD_CDRRMO_META_URL_TEMPLATE.replace(
+                '00000000-0000-4000-8000-000000000001',
+                encodeURIComponent(applicantId)
+            );
+            try {
+                const resp = await fetch(url, {
+                    headers: { Accept: 'application/json' },
+                    credentials: 'same-origin',
+                });
+                const contentType = (resp.headers.get('content-type') || '').toLowerCase();
+                if (!resp.ok || !contentType.includes('application/json')) return;
+                const data = await resp.json();
+                if (data.success && data.meta) {
+                    applyFieldCdrrmoMeta(data.meta);
+                    FIELD_PENDING_CDRRMO_META[String(applicantId)] = data.meta;
+                }
+            } catch (err) {
+                /* keep embedded snapshot */
+            }
+        }
+
         // Field Verification Modal
-        function openVerificationModal(applicantId, applicantName, address, dangerZoneType, dangerZoneLocation, referenceNumber) {
+        async function openVerificationModal(applicantId, applicantName, address, dangerZoneType, dangerZoneLocation, referenceNumber) {
             clearFieldEvidenceUI();
             stopFieldCamera();
 
@@ -2090,21 +2162,16 @@
                 (dangerZoneLocation && dangerZoneLocation.trim()) ? dangerZoneLocation.trim() : '—';
 
             const cdrrmoStatusBox = document.getElementById('cdrrmoStatusBox');
-            const cdrrmoStatusText = document.getElementById('cdrrmoStatusText');
-            const cdrrmoDateText = document.getElementById('cdrrmoDateText');
             const cdrrmoRefText = document.getElementById('cdrrmoRefText');
 
             cdrrmoRefText.textContent = referenceNumber && referenceNumber.trim() ? referenceNumber.trim() : '—';
 
             if (dangerZoneType) {
                 cdrrmoStatusBox.style.display = 'block';
-                cdrrmoStatusText.textContent = 'Pending — awaiting field verification report';
-                cdrrmoStatusText.style.color = '#78350f';
-                cdrrmoDateText.textContent = '—';
+                void refreshFieldCdrrmoMeta(applicantId);
             } else {
                 cdrrmoStatusBox.style.display = 'none';
-                cdrrmoStatusText.textContent = '—';
-                cdrrmoDateText.textContent = '—';
+                applyFieldCdrrmoMeta(null);
             }
 
             document.getElementById('verificationModal').style.display = 'block';

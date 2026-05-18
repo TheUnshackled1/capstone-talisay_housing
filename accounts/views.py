@@ -2,7 +2,8 @@ import calendar
 import csv
 import json
 
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
+from django.views.decorators.http import require_GET
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -1378,6 +1379,34 @@ def dashboard_caretaker(request):
     return redirect('accounts:dashboard_field')
 
 
+def _cdrrmo_meta_for_applicant(applicant):
+    """Vault CDRRMO upload date + government certification record for field desk UI."""
+    doc = (
+        Document.objects.filter(applicant_id=applicant.pk, document_type='cdrrmo_cert')
+        .order_by('-uploaded_at')
+        .first()
+    )
+    cert = getattr(applicant, 'cdrrmo_certification', None)
+    return {
+        'status': cert.status if cert else 'pending',
+        'certified_at': cert.certified_at.isoformat() if cert and cert.certified_at else None,
+        'document_at': doc.uploaded_at.isoformat() if doc and doc.uploaded_at else None,
+    }
+
+
+@login_required
+@require_GET
+def field_applicant_cdrrmo_meta(request, applicant_id):
+    """Fresh CDRRMO vault / certification dates for the field verification modal (GET)."""
+    if request.user.position not in FIELD_DESK_POSITIONS:
+        return JsonResponse({'success': False, 'error': 'Permission denied.'}, status=403)
+    try:
+        applicant = Applicant.objects.get(pk=applicant_id)
+    except Applicant.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Applicant not found.'}, status=404)
+    return JsonResponse({'success': True, 'meta': _cdrrmo_meta_for_applicant(applicant)})
+
+
 @login_required
 def dashboard_field(request):
     """
@@ -1409,20 +1438,24 @@ def dashboard_field(request):
         applicant__danger_zone_type=''  # Empty string means not claimed
     ).distinct().select_related(
         'applicant', 'applicant__registered_by', 'applicant__barangay'
-    ).order_by('-requested_at')
+    ).order_by('requested_at')
 
     pending_cert_list = list(pending_certifications)
     total_pending_certs = len(pending_cert_list)
-    # Oldest certification request first — useful field visit order before a QueueEntry exists
-    visit_order_by_applicant_id = {}
-    for order, c in enumerate(
-        sorted(pending_cert_list, key=lambda x: x.requested_at),
-        start=1,
-    ):
-        visit_order_by_applicant_id[c.applicant_id] = order
+
+    pending_cdrrmo_meta = {
+        str(cert.applicant_id): _cdrrmo_meta_for_applicant(cert.applicant)
+        for cert in pending_cert_list
+    }
+
+    # Oldest certification request first — table row order matches field visit order before QueueEntry exists
+    visit_order_by_applicant_id = {
+        c.applicant_id: order
+        for order, c in enumerate(pending_cert_list, start=1)
+    }
 
     pending_verifications = []
-    for cert in pending_cert_list:
+    for row_num, cert in enumerate(pending_cert_list, start=1):
         days_pending = (timezone.now() - cert.requested_at).days
 
         # Priority QueueEntry is only created after eligibility / CDRRMO staff steps — not at registration.
@@ -1439,7 +1472,7 @@ def dashboard_field(request):
             )
 
         pending_verifications.append({
-            'index': pending_certifications.filter(requested_at__gte=cert.requested_at).count(),
+            'index': row_num,
             'id': cert.applicant.id,
             'transaction_id': cert.id,
             'reference_number': cert.applicant.reference_number,
@@ -1615,6 +1648,7 @@ def dashboard_field(request):
 
         # ========== PENDING VERIFICATIONS LIST ==========
         'pending_verifications': pending_verifications,
+        'pending_cdrrmo_meta': pending_cdrrmo_meta,
 
         # ========== VERIFICATION SUMMARY ==========
         'verified_percentage': verified_percentage,
