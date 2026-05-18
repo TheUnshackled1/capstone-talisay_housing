@@ -2016,8 +2016,15 @@ def blacklist_management(request, position):
     
     # We could add pagination here if needed, but keeping it simple for now
     
+    # Paginate — 10 records per page
+    from django.core.paginator import Paginator
+    paginator = Paginator(queryset, 10)
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
+
     context = {
-        'blacklists': queryset,
+        'blacklists': page_obj,
+        'page_obj': page_obj,
         'search': search_query,
     }
     return render(request, 'units/blacklist_management.html', context)

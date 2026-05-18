@@ -920,21 +920,24 @@
         </table>
     </div>
     </div>
-    <div class="rfq-pagination">
-        <span>
-            Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ queue_total }} in queue
-            {% if search %} (filtered){% endif %}
+    <div class="rfq-pagination table-pagination">
+        <span class="table-pagination-info">
+            Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count }} in queue
+            {% if search %} (filtered from {{ queue_total }}){% endif %}
         </span>
-        <span>
+        <div class="table-pagination-controls">
             {% if page_obj.has_previous %}
-            <a href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.previous_page_number }}">Prev</a>
-            {% else %}<span style="opacity:0.45;">Prev</span>{% endif %}
-            &nbsp;·&nbsp;Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
-            &nbsp;·&nbsp;
+            <a class="btn-page" href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.previous_page_number }}">Prev</a>
+            {% else %}
+            <span class="btn-page is-disabled">Prev</span>
+            {% endif %}
+            <span class="page-indicator">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
             {% if page_obj.has_next %}
-            <a href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.next_page_number }}">Next</a>
-            {% else %}<span style="opacity:0.45;">Next</span>{% endif %}
-        </span>
+            <a class="btn-page" href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.next_page_number }}">Next</a>
+            {% else %}
+            <span class="btn-page is-disabled">Next</span>
+            {% endif %}
+        </div>
     </div>
 </div>
 

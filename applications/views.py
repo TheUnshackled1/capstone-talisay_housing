@@ -39,7 +39,10 @@ from .utils import check_blacklist_module2, send_sms_for_applications
 from .application_form_pdf import build_filled_application_pdf
 
 MODULE1_MONTHLY_INCOME_CEILING_PESO = 10000
-# Application & Evaluation list: records per page (Module 2 ledger)
+# Application & Evaluation ledger and Ready for Form queue: records per page
+MODULE2_EVALUATIONS_LIST_PER_PAGE = 10
+MODULE2_READY_FOR_FORM_QUEUE_PER_PAGE = 10
+MODULE2_LOT_AWARDING_QUEUE_PER_PAGE = 10
 MODULE2_LIST_PER_PAGE = 20
 # Routed “Proceed to Form” applicants stay on Ready for Form until Application leaves this pipeline.
 _MODULE2_FORM_PIPELINE_STATUSES = frozenset({'draft', 'completed'})
@@ -1110,7 +1113,7 @@ def applications_list(request, position):
                search.lower() in a['applicant'].reference_number.lower()
         ]
 
-    paginator = Paginator(applicants_data, MODULE2_LIST_PER_PAGE)
+    paginator = Paginator(applicants_data, MODULE2_EVALUATIONS_LIST_PER_PAGE)
     page_number = request.GET.get('page', 1)
     try:
         page_obj = paginator.page(page_number)
@@ -1241,7 +1244,7 @@ def ready_for_form_queue(request, position):
                         or 'Selected applicant is not currently ready for form generation.'
                     )
 
-    paginator = Paginator(applicants_data, MODULE2_LIST_PER_PAGE)
+    paginator = Paginator(applicants_data, MODULE2_READY_FOR_FORM_QUEUE_PER_PAGE)
     requested_page = request.GET.get('page')
     page_number = requested_page or 1
     if (
@@ -1250,7 +1253,7 @@ def ready_for_form_queue(request, position):
         and not requested_page
         and not search
     ):
-        page_number = (selected_queue_index // MODULE2_LIST_PER_PAGE) + 1
+        page_number = (selected_queue_index // MODULE2_READY_FOR_FORM_QUEUE_PER_PAGE) + 1
     try:
         page_obj = paginator.page(page_number)
     except PageNotAnInteger:
@@ -1349,7 +1352,7 @@ def lot_awarding_queue(request, position):
 
     queue_total = len(queue_rows)
 
-    paginator = Paginator(queue_rows, MODULE2_LIST_PER_PAGE)
+    paginator = Paginator(queue_rows, MODULE2_LOT_AWARDING_QUEUE_PER_PAGE)
     page_number = request.GET.get('page', 1)
     try:
         page_obj = paginator.page(page_number)

@@ -2013,38 +2013,51 @@
         gap: 0.375rem;
     }
 
+
     .applications-table-container .btn-page {
-        border: 1px solid #cbd5e1;
-        border-radius: 0.375rem;
-        background: #f8fafc;
-        color: #334155;
-        font-size: 0.64rem;
-        font-weight: 600;
-        padding: 0.22rem 0.48rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        border: none;
+        border-radius: 0.4rem;
+        background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+        color: #ffffff;
+        font-size: 0.67rem;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        padding: 0.3rem 0.75rem;
         cursor: pointer;
+        box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
         text-decoration: none;
         transition: all 0.15s ease;
     }
 
     .applications-table-container .btn-page:hover:not(.is-disabled) {
-        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-        border-color: #93c5fd;
-        color: #1d4ed8;
-        box-shadow: 0 2px 4px rgba(37, 99, 235, 0.1);
+        background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%);
+        box-shadow: 0 4px 10px rgba(37, 99, 235, 0.4);
         transform: translateY(-1px);
     }
 
     .applications-table-container .btn-page.is-disabled {
-        opacity: 0.55;
+        background: #e2e8f0;
+        color: #94a3b8;
+        box-shadow: none;
         cursor: not-allowed;
         pointer-events: none;
+        transform: none;
     }
 
     .applications-table-container .page-indicator {
-        font-size: 0.6875rem;
-        font-weight: 600;
-        color: #475569;
+        font-size: 0.67rem;
+        font-weight: 700;
+        color: #1e3a8a;
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        border-radius: 0.4rem;
+        padding: 0.28rem 0.65rem;
+        letter-spacing: 0.02em;
     }
+
 
     /* Modal Styles */
     .modal-overlay {
@@ -2740,27 +2753,32 @@
     .m2-elig-carousel-slide .m2-elig-card {
         min-height: 12.5rem;
     }
-    #eligibilityNextChecklist .m2-elig-actions .eligibility-view-doc-btn {
+    #eligibilityNextChecklist .m2-elig-actions .eligibility-view-doc-btn,
+    #situationCertificationContent .m2-elig-actions .eligibility-view-doc-btn {
         background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
         border-color: #93c5fd;
         color: #1d4ed8;
     }
-    #eligibilityNextChecklist .m2-elig-actions .m2-elig-upload-btn {
+    #eligibilityNextChecklist .m2-elig-actions .m2-elig-upload-btn,
+    #situationCertificationContent .m2-elig-actions .m2-elig-upload-btn {
         background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
         border-color: #6ee7b7;
         color: #047857;
     }
-    #eligibilityNextChecklist .m2-elig-actions .m2-elig-scan-btn {
+    #eligibilityNextChecklist .m2-elig-actions .m2-elig-scan-btn,
+    #situationCertificationContent .m2-elig-actions .m2-elig-scan-btn {
         background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
         border-color: #c4b5fd;
         color: #5b21b6;
     }
-    #eligibilityNextChecklist .m2-elig-actions .eligibility-decision-btn:not(.active-pass):not(.active-fail)[onclick*="passed"] {
+    #eligibilityNextChecklist .m2-elig-actions .eligibility-decision-btn:not(.active-pass):not(.active-fail)[onclick*="passed"],
+    #situationCertificationContent .m2-elig-actions .eligibility-decision-btn:not(.active-pass):not(.active-fail)[onclick*="passed"] {
         background: linear-gradient(180deg, #f0fdf4 0%, #ffffff 100%);
         border-color: #86efac;
         color: #166534;
     }
-    #eligibilityNextChecklist .m2-elig-actions .eligibility-decision-btn:not(.active-pass):not(.active-fail)[onclick*="failed"] {
+    #eligibilityNextChecklist .m2-elig-actions .eligibility-decision-btn:not(.active-pass):not(.active-fail)[onclick*="failed"],
+    #situationCertificationContent .m2-elig-actions .eligibility-decision-btn:not(.active-pass):not(.active-fail)[onclick*="failed"] {
         background: linear-gradient(180deg, #fff1f2 0%, #ffffff 100%);
         border-color: #fecaca;
         color: #991b1b;
@@ -4728,6 +4746,74 @@
         return '';
     }
 
+    function buildM2SituationCertCardHtml(c, idx, checks, sc, suppressReasonDup) {
+        const ok = !!c.done;
+        const vaultUploadUrl = typeof c.vault_upload_url === 'string' ? c.vault_upload_url.trim() : '';
+        const vaultScanUrl = typeof c.vault_scan_url === 'string' ? c.vault_scan_url.trim() : '';
+        const docUrl = (c.view_document && c.view_document.url) ? String(c.view_document.url).trim() : '';
+        const docName = (c.view_document && c.view_document.name) ? String(c.view_document.name) : 'Document';
+        const safeDocHref = docUrl ? docUrl.replace(/"/g, '&quot;') : '';
+        const safeVaultUploadHref = vaultUploadUrl ? vaultUploadUrl.replace(/"/g, '&quot;') : '';
+        const safeVaultScanHref = vaultScanUrl ? vaultScanUrl.replace(/"/g, '&quot;') : '';
+        const vaultDt = String(c.vault_document_type || '').trim();
+        const sitDwtMapping = M2_VAULT_DOCUMENT_TYPE_TO_INTAKE_DOC[vaultDt];
+        const hasExistingDocAttr = docUrl ? '1' : '0';
+        const safeExistingDocNameAttr = escapeHtml(docName || 'Document');
+        const sitScanControlHtml = (vaultScanUrl && MODULE2_CAN_DWT_SCAN && sitDwtMapping)
+            ? `<button type="button" class="m2-elig-scan-btn m2-sit-action-scan" data-intake-doc-key="${escapeHtml(sitDwtMapping.doc_key)}" data-intake-doc-code="${escapeHtml(sitDwtMapping.doc_code)}" data-has-existing-doc="${hasExistingDocAttr}" data-existing-doc-name="${safeExistingDocNameAttr}" onclick="m2SituationCertificationDwtScan(this)" title="Scan with Dynamsoft (TWAIN), same as Intake Applicants — saves to vault">Scan</button>`
+            : (vaultScanUrl
+                ? `<a class="m2-elig-scan-btn m2-sit-action-scan m2-replace-aware-link" href="${safeVaultScanHref}" target="_blank" rel="noopener noreferrer" data-has-existing-doc="${hasExistingDocAttr}" data-existing-doc-name="${safeExistingDocNameAttr}" title="Open Document Vault — attach a scanned file">Scan</a>`
+                : '');
+        const sitUploadHtml = (vaultUploadUrl && MODULE2_CAN_DWT_SCAN && sitDwtMapping)
+            ? `<button type="button" class="m2-elig-upload-btn m2-elig-intake-upload-btn m2-sit-action-upload" data-intake-doc-key="${escapeHtml(sitDwtMapping.doc_key)}" data-intake-doc-code="${escapeHtml(sitDwtMapping.doc_code)}" data-has-existing-doc="${hasExistingDocAttr}" data-existing-doc-name="${safeExistingDocNameAttr}" onclick="m2SituationCertificationFileUpload(this)" title="Choose a file from this computer — same as Intake document checklist">Upload</button>`
+            : (vaultUploadUrl
+                ? `<a class="m2-elig-upload-btn m2-sit-action-upload m2-replace-aware-link" href="${safeVaultUploadHref}" target="_blank" rel="noopener noreferrer" data-has-existing-doc="${hasExistingDocAttr}" data-existing-doc-name="${safeExistingDocNameAttr}" title="Open Document Vault — upload a file">Upload</a>`
+                : '');
+        const isFieldSitePhotosRow = String(c.key || '').trim() === 'field_site_photos';
+        const fieldPhotoUrls = Array.isArray(c.field_photo_urls) ? c.field_photo_urls.filter(function (u) { return u && String(u).trim(); }) : [];
+        const fieldPhotosAttr = fieldPhotoUrls.length ? m2EscapeAttrJson(JSON.stringify(fieldPhotoUrls)) : '';
+        const viewFieldPhotosHtml = (isFieldSitePhotosRow && fieldPhotoUrls.length && fieldPhotosAttr)
+            ? `<button type="button" class="eligibility-view-doc-btn m2-sit-action-view-photos" data-m2-field-photos="${fieldPhotosAttr}" onclick="m2OpenSituationFieldPhotoGalleryFromBtn(this)" title="View ${fieldPhotoUrls.length} photograph(s) in the viewer">View</button>`
+            : '';
+        const evidenceHtml = formatM2EvidenceHtml(splitSituationDetailForEvidence(c.detail));
+        let cardClass = 'm2-elig-card';
+        if (ok) cardClass += ' m2-elig-card--pass';
+        else cardClass += ' m2-elig-card--fail';
+        const chipClass = ok ? 'passed' : 'failed';
+        const chipLabel = ok ? 'Done' : 'Missing';
+        const reasonLine = situationCertReasonForCheck(checks, sc, idx, ok, suppressReasonDup);
+        const markPassedTitle = ok
+            ? 'Requirement satisfied on record. When every row shows Done, click Mark Situation Certified below.'
+            : 'Upload or scan the required document in the vault until this row shows Done.';
+        const markPassedButtonsHtml = isFieldSitePhotosRow
+            ? ''
+            : (ok
+                ? `<button type="button" class="eligibility-decision-btn m2-sit-mark-passed active-pass" title="${escapeHtml(markPassedTitle)}"
+                 onclick="showFlowAlert('This requirement is satisfied on record. When every row shows Done, click Mark Situation Certified below.', 'Situation Certification', null, 'success')">Mark Passed</button>`
+                : `<button type="button" class="eligibility-decision-btn m2-sit-mark-passed" disabled title="${escapeHtml(markPassedTitle)}">Mark Passed</button>`);
+        const actionsRow = `
+            <div class="m2-elig-actions m2-sit-actions">
+                ${docUrl
+            ? `<a class="eligibility-view-doc-btn m2-sit-action-view" href="${safeDocHref}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(docName)}">View</a>`
+            : ''
+                }
+                ${sitUploadHtml}
+                ${sitScanControlHtml}
+                ${viewFieldPhotosHtml}
+                ${markPassedButtonsHtml}
+            </div>`;
+        return `
+            <div class="${cardClass}">
+                <div class="m2-elig-card-head">
+                    <h4 class="m2-elig-card-title">${escapeHtml(String(c.label || 'Requirement'))}</h4>
+                    <span class="eligibility-check-chip ${chipClass}">${chipLabel}</span>
+                </div>
+                ${reasonLine ? `<div class="m2-elig-card-reason">${escapeHtml(reasonLine)}</div>` : ''}
+                ${evidenceHtml}
+                ${actionsRow}
+            </div>`;
+    }
+
     function showFlowAlert(message, title = 'Notice', onConfirm = null, tone = 'default', onNext = null) {
         const modal = document.getElementById('flowAlertModal');
         const card = document.getElementById('flowAlertCard');
@@ -5056,6 +5142,7 @@
     }
 
     let m2EligCarouselIndex = 0;
+    let m2SitCarouselIndex = 0;
 
     function m2EligCarouselSync() {
         const track = document.getElementById('m2EligCarouselTrack');
@@ -5085,6 +5172,36 @@
     function m2EligCarouselGoTo(index) {
         m2EligCarouselIndex = index;
         m2EligCarouselSync();
+    }
+
+    function m2SitCarouselSync() {
+        const track = document.getElementById('m2SitCarouselTrack');
+        const slides = track ? track.querySelectorAll('.m2-elig-carousel-slide') : [];
+        const total = slides.length;
+        if (!total) return;
+        if (m2SitCarouselIndex < 0) m2SitCarouselIndex = 0;
+        if (m2SitCarouselIndex >= total) m2SitCarouselIndex = total - 1;
+        track.style.transform = 'translateX(-' + (m2SitCarouselIndex * 100) + '%)';
+        const counter = document.getElementById('m2SitCarouselCounter');
+        if (counter) counter.textContent = (m2SitCarouselIndex + 1) + ' / ' + total;
+        document.querySelectorAll('#m2SitCarouselDots .m2-elig-carousel-dot').forEach(function (dot, i) {
+            dot.classList.toggle('is-active', i === m2SitCarouselIndex);
+            dot.setAttribute('aria-current', i === m2SitCarouselIndex ? 'true' : 'false');
+        });
+        const prev = document.getElementById('m2SitCarouselPrev');
+        const next = document.getElementById('m2SitCarouselNext');
+        if (prev) prev.disabled = m2SitCarouselIndex <= 0;
+        if (next) next.disabled = m2SitCarouselIndex >= total - 1;
+    }
+
+    function m2SitCarouselStep(delta) {
+        m2SitCarouselIndex += delta;
+        m2SitCarouselSync();
+    }
+
+    function m2SitCarouselGoTo(index) {
+        m2SitCarouselIndex = index;
+        m2SitCarouselSync();
     }
 
     function renderEligibilityChecklist(snapshot) {
@@ -5342,6 +5459,7 @@
     async function openSituationCertificationModal(opts) {
         opts = opts || {};
         const skipFetch = !!opts.skipFetch;
+        if (!skipFetch) m2SitCarouselIndex = 0;
         if (!currentEligibilityApplicantId) {
             showFlowAlert('Load the eligibility checklist first before proceeding.');
             return;
@@ -5387,78 +5505,38 @@
                     ? `<div class="m2-elig-banner m2-elig-banner--fail">${escapeHtml(blockText)}</div>`
                     : '';
                 const suppressReasonDup = !!bannerHtml;
-                const checksHtml = checks.map(function (c, idx) {
-                    const ok = !!c.done;
-                    const vaultUploadUrl = typeof c.vault_upload_url === 'string' ? c.vault_upload_url.trim() : '';
-                    const vaultScanUrl = typeof c.vault_scan_url === 'string' ? c.vault_scan_url.trim() : '';
-                    const docUrl = (c.view_document && c.view_document.url) ? String(c.view_document.url).trim() : '';
-                    const docName = (c.view_document && c.view_document.name) ? String(c.view_document.name) : 'Document';
-                    const safeDocHref = docUrl ? docUrl.replace(/"/g, '&quot;') : '';
-                    const safeVaultUploadHref = vaultUploadUrl ? vaultUploadUrl.replace(/"/g, '&quot;') : '';
-                    const safeVaultScanHref = vaultScanUrl ? vaultScanUrl.replace(/"/g, '&quot;') : '';
-                    const vaultDt = String(c.vault_document_type || '').trim();
-                    const sitDwtMapping = M2_VAULT_DOCUMENT_TYPE_TO_INTAKE_DOC[vaultDt];
-                    const hasExistingDocAttr = docUrl ? '1' : '0';
-                    const safeExistingDocNameAttr = escapeHtml(docName || 'Document');
-                    const sitScanControlHtml = (vaultScanUrl && MODULE2_CAN_DWT_SCAN && sitDwtMapping)
-                        ? `<button type="button" class="m2-elig-scan-btn m2-sit-action-scan" data-intake-doc-key="${escapeHtml(sitDwtMapping.doc_key)}" data-intake-doc-code="${escapeHtml(sitDwtMapping.doc_code)}" data-has-existing-doc="${hasExistingDocAttr}" data-existing-doc-name="${safeExistingDocNameAttr}" onclick="m2SituationCertificationDwtScan(this)" title="Scan with Dynamsoft (TWAIN), same as Intake Applicants — saves to vault">Scan</button>`
-                        : (vaultScanUrl
-                            ? `<a class="m2-elig-scan-btn m2-sit-action-scan m2-replace-aware-link" href="${safeVaultScanHref}" target="_blank" rel="noopener noreferrer" data-has-existing-doc="${hasExistingDocAttr}" data-existing-doc-name="${safeExistingDocNameAttr}" title="Open Document Vault — attach a scanned file">Scan</a>`
-                            : '');
-                    const sitUploadHtml = (vaultUploadUrl && MODULE2_CAN_DWT_SCAN && sitDwtMapping)
-                        ? `<button type="button" class="m2-elig-upload-btn m2-elig-intake-upload-btn m2-sit-action-upload" data-intake-doc-key="${escapeHtml(sitDwtMapping.doc_key)}" data-intake-doc-code="${escapeHtml(sitDwtMapping.doc_code)}" data-has-existing-doc="${hasExistingDocAttr}" data-existing-doc-name="${safeExistingDocNameAttr}" onclick="m2SituationCertificationFileUpload(this)" title="Choose a file from this computer — same as Intake document checklist">Upload</button>`
-                        : (vaultUploadUrl
-                            ? `<a class="m2-elig-upload-btn m2-sit-action-upload m2-replace-aware-link" href="${safeVaultUploadHref}" target="_blank" rel="noopener noreferrer" data-has-existing-doc="${hasExistingDocAttr}" data-existing-doc-name="${safeExistingDocNameAttr}" title="Open Document Vault — upload a file">Upload</a>`
-                            : '');
-                    const isFieldSitePhotosRow = String(c.key || '').trim() === 'field_site_photos';
-                    const fieldPhotoUrls = Array.isArray(c.field_photo_urls) ? c.field_photo_urls.filter(function (u) { return u && String(u).trim(); }) : [];
-                    const fieldPhotosAttr = fieldPhotoUrls.length ? m2EscapeAttrJson(JSON.stringify(fieldPhotoUrls)) : '';
-                    const viewFieldPhotosHtml = (isFieldSitePhotosRow && fieldPhotoUrls.length && fieldPhotosAttr)
-                        ? `<button type="button" class="eligibility-view-doc-btn m2-sit-action-view-photos" data-m2-field-photos="${fieldPhotosAttr}" onclick="m2OpenSituationFieldPhotoGalleryFromBtn(this)" title="View ${fieldPhotoUrls.length} photograph(s) in the viewer">View</button>`
-                        : '';
-                    const evidenceHtml = formatM2EvidenceHtml(splitSituationDetailForEvidence(c.detail));
-                    let cardClass = 'm2-elig-card';
-                    if (ok) cardClass += ' m2-elig-card--pass';
-                    else cardClass += ' m2-elig-card--fail';
-                    const chipClass = ok ? 'passed' : 'failed';
-                    const chipLabel = ok ? 'Done' : 'Missing';
-                    const reasonLine = situationCertReasonForCheck(checks, sc, idx, ok, suppressReasonDup);
-                    const markPassedTitle = ok
-                        ? 'Requirement satisfied on record. When every row shows Done, click Mark Situation Certified below.'
-                        : 'Upload or scan the required document in the vault until this row shows Done.';
-                    const markPassedButtonsHtml = isFieldSitePhotosRow
-                        ? ''
-                        : (ok
-                            ? `<button type="button" class="eligibility-decision-btn m2-sit-mark-passed active-pass" title="${escapeHtml(markPassedTitle)}"
-                             onclick="showFlowAlert('This requirement is satisfied on record. When every row shows Done, click Mark Situation Certified below.', 'Situation Certification', null, 'success')">Mark Passed</button>`
-                            : `<button type="button" class="eligibility-decision-btn m2-sit-mark-passed" disabled title="${escapeHtml(markPassedTitle)}">Mark Passed</button>`);
-                    const actionsRow = `
-                        <div class="m2-elig-actions m2-sit-actions">
-                            ${docUrl
-                        ? `<a class="eligibility-view-doc-btn m2-sit-action-view" href="${safeDocHref}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(docName)}">View</a>`
-                        : ''
-                            }
-                            ${sitUploadHtml}
-                            ${sitScanControlHtml}
-                            ${viewFieldPhotosHtml}
-                            ${markPassedButtonsHtml}
-                        </div>`;
-                    return `
-                        <div class="${cardClass}">
-                            <div class="m2-elig-card-head">
-                                <h4 class="m2-elig-card-title">${escapeHtml(String(c.label || 'Requirement'))}</h4>
-                                <span class="eligibility-check-chip ${chipClass}">${chipLabel}</span>
-                            </div>
-                            ${reasonLine ? `<div class="m2-elig-card-reason">${escapeHtml(reasonLine)}</div>` : ''}
-                            ${evidenceHtml}
-                            ${actionsRow}
-                        </div>`;
+                if (m2SitCarouselIndex >= checks.length) {
+                    m2SitCarouselIndex = Math.max(0, checks.length - 1);
+                }
+                const carouselDotsHtml = checks.map(function (c, idx) {
+                    let dotClass = 'm2-elig-carousel-dot';
+                    if (idx === m2SitCarouselIndex) dotClass += ' is-active';
+                    if (c.done) dotClass += ' is-pass';
+                    else dotClass += ' is-fail';
+                    return `<button type="button" class="${dotClass}" aria-label="Go to requirement ${idx + 1}: ${escapeHtml(String(c.label || 'Requirement'))}" onclick="m2SitCarouselGoTo(${idx})"></button>`;
+                }).join('');
+                const checkSlides = checks.map(function (c, idx) {
+                    const cardHtml = buildM2SituationCertCardHtml(c, idx, checks, sc, suppressReasonDup);
+                    return `<div class="m2-elig-carousel-slide" role="group" aria-roledescription="slide" aria-label="Requirement ${idx + 1} of ${checks.length}">${cardHtml}</div>`;
                 }).join('');
                 content.innerHTML = `
                     <div class="m2-elig-outer-card">
                         ${bannerHtml}
-                        <div style="display:flex;flex-direction:column;gap:0.55rem;">${checksHtml}</div>
+                        <div class="m2-elig-carousel" id="m2SitCarousel">
+                            <div class="m2-elig-carousel-toolbar">
+                                <span class="m2-elig-carousel-counter" id="m2SitCarouselCounter">1 / ${checks.length}</span>
+                                <div class="m2-elig-carousel-dots" id="m2SitCarouselDots">${carouselDotsHtml}</div>
+                            </div>
+                            <div class="m2-elig-carousel-viewport">
+                                <button type="button" class="m2-elig-carousel-nav" id="m2SitCarouselPrev" aria-label="Previous requirement" onclick="m2SitCarouselStep(-1)">‹</button>
+                                <div class="m2-elig-carousel-track-wrap">
+                                    <div class="m2-elig-carousel-track" id="m2SitCarouselTrack">${checkSlides}</div>
+                                </div>
+                                <button type="button" class="m2-elig-carousel-nav" id="m2SitCarouselNext" aria-label="Next requirement" onclick="m2SitCarouselStep(1)">›</button>
+                            </div>
+                        </div>
                     </div>`;
+                m2SitCarouselSync();
             }
         }
         const certifyBtn = document.getElementById('markSituationCertifiedBtn');

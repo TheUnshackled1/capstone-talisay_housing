@@ -7,98 +7,153 @@
 
 {% block extra_css %}
 <style>
-    /* Primary Header and Layout */
-    .app-main-header {
-        margin-bottom: 1.5rem;
+    /* Institutional Shell Layout */
+    .bl-shell {
+        max-width: 100%;
+        margin: 0 auto;
     }
-
-    .app-main-title {
-        font-size: 1.875rem;
-        font-weight: 800;
-        color: #0f172a;
-        margin: 0 0 0.25rem 0;
-        letter-spacing: -0.025em;
-        display: flex;
+    .bl-page-title {
+        font-family: 'Source Serif Pro', Georgia, serif !important;
+        font-size: 1.3rem !important;
+        font-weight: 700 !important;
+        color: #7f1d1d !important;
+        margin: 0 0 0.25rem !important;
+        letter-spacing: -0.01em !important;
+        display: inline-flex;
         align-items: center;
-        gap: 0.5rem;
-        justify-content: center;
+        gap: 0.55rem;
     }
-
-    .app-main-subtitle {
-        color: #64748b;
-        font-size: 0.875rem;
+    .bl-page-title::before {
+        content: '';
+        width: 0.55rem;
+        height: 0.55rem;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.18);
+    }
+    .bl-subtitle {
         margin: 0;
-        font-weight: 500;
-        text-align: center;
+        font-size: 0.78rem;
+        color: #475569;
+        line-height: 1.5;
     }
-
-    .blacklist-card {
+    
+    /* Institutional Search Bar */
+    .bl-search-wrap {
+        display: flex;
+        flex: 1;
+        min-width: 20rem;
         position: relative;
         background: #ffffff;
         border: 1px solid #e2e8f0;
-        border-radius: 1rem;
-        padding: 1.5rem 1.5rem 1.25rem;
-        box-shadow: 0 6px 20px rgba(15, 23, 42, 0.06);
+        border-radius: 0.65rem;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        margin-bottom: 0.85rem;
     }
-
-    .blacklist-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 4px;
-        border-radius: 1rem 1rem 0 0;
-        background: linear-gradient(90deg, #dc2626 0%, #ef4444 100%);
+    .bl-search-wrap:focus-within {
+        border-color: #fca5a5;
+        box-shadow: 0 0 0 3px rgba(254, 202, 202, 0.4);
     }
-
-    /* Filter Bar — institutional toolbar */
-    .filter-bar {
+    /* Institutional Pagination */
+    .bl-pagination {
         display: flex;
-        gap: 0.6rem;
-        margin-bottom: 1rem;
-        flex-wrap: wrap;
         align-items: center;
-        padding: 0.75rem 0.85rem;
-        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-        border: 1px solid #e2e8f0;
-        border-radius: 0.75rem;
-        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+        justify-content: space-between;
+        gap: 0.75rem;
+        padding: 0.54rem 0.18rem 0.05rem;
+        flex-wrap: wrap;
+        margin-top: 0.5rem;
     }
-
-    .search-box {
-        flex: 1;
-        min-width: 220px;
-        position: relative;
+    .bl-pagination-info {
+        font-size: 0.6875rem;
+        color: #64748b;
+        font-weight: 500;
     }
-
-    .search-box input {
-        width: 100%;
-        padding: 0.625rem 0.75rem 0.625rem 2.5rem;
-        border: 1px solid #cbd5e1;
-        border-radius: 0.55rem;
-        font-size: 0.875rem;
-        background: white;
-        transition: all 0.18s ease;
+    .bl-pagination-controls {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
     }
-
-    .search-box input:focus {
-        outline: none;
-        border-color: #0f172a;
-        box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
+    .btn-bl-page {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        border: none;
+        border-radius: 0.4rem;
+        background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+        color: #ffffff;
+        font-size: 0.67rem;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        padding: 0.3rem 0.75rem;
+        cursor: pointer;
+        box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
+        text-decoration: none;
+        transition: all 0.15s ease;
     }
-
-    .search-box input::placeholder {
+    .btn-bl-page:hover {
+        background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%);
+        box-shadow: 0 4px 10px rgba(37, 99, 235, 0.4);
+        transform: translateY(-1px);
+        color: #fff;
+        text-decoration: none;
+    }
+    .btn-bl-page.is-disabled {
+        background: #e2e8f0;
         color: #94a3b8;
+        box-shadow: none;
+        cursor: not-allowed;
+        pointer-events: none;
+        transform: none;
     }
-
-    .search-box .search-icon {
+    .bl-page-indicator {
+        font-size: 0.67rem;
+        font-weight: 700;
+        color: #1e3a8a;
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        border-radius: 0.4rem;
+        padding: 0.28rem 0.65rem;
+        letter-spacing: 0.02em;
+    }
+    .bl-search-wrap svg.search-icon {
         position: absolute;
-        left: 0.75rem;
+        left: 0.85rem;
         top: 50%;
         transform: translateY(-50%);
+        width: 1rem;
+        height: 1rem;
         color: #94a3b8;
-        font-size: 1rem;
+    }
+    .bl-search-wrap input {
+        flex: 1;
+        width: 100%;
+        border: none;
+        background: transparent;
+        padding: 0.6rem 0.85rem 0.6rem 2.4rem;
+        font-size: 0.82rem;
+        color: #0f172a;
+        outline: none;
+        border-radius: 0.65rem 0 0 0.65rem;
+    }
+    .bl-search-wrap input::placeholder {
+        color: #94a3b8;
+        font-weight: 400;
+    }
+    .btn-search {
+        padding: 0 1.25rem;
+        background: #1e293b;
+        color: white;
+        border: none;
+        border-radius: 0 0.65rem 0.65rem 0;
+        font-size: 0.78rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .btn-search:hover {
+        background: #0f172a;
     }
 
     /* Blacklist registry table — same formal-table shell as ISF Registration */
@@ -497,26 +552,27 @@
 {% endblock %}
 
 {% block content %}
-<div class="blacklist-card">
-    <div class="app-main-header">
-        <h1 class="app-main-title">
-            Blacklisted Beneficiaries
-        </h1>
-        <p class="app-main-subtitle">Registry of permanently disqualified beneficiaries</p>
+<div class="bl-shell">
+    <!-- Page Header -->
+    <div style="position: relative; display: flex; align-items: center; justify-content: center; margin-bottom: 1.05rem; min-height: 2.5rem; flex-wrap: wrap; gap: 1rem;">
+        <div style="text-align: center; width: 100%;">
+            <h1 class="bl-page-title" style="margin: 0 !important; justify-content: center;">Blacklisted Beneficiaries</h1>
+            <p class="bl-subtitle" style="text-align: center;">Registry of permanently disqualified beneficiaries</p>
+        </div>
     </div>
 
-    <form method="get" class="filter-bar">
-        <div class="search-box">
-            <svg class="search-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
-                stroke-width="2">
+    <!-- Search/KPI row -->
+    <div style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
+        <form method="get" class="bl-search-wrap">
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                <path d="m21 21-4.35-4.35" />
             </svg>
             <input type="text" name="search" placeholder="Search by name or reference #..."
                 value="{{ search|default_if_none:'' }}">
-        </div>
-        <button type="submit" class="btn-search">Search</button>
-    </form>
+            <button type="submit" class="btn-search">Search</button>
+        </form>
+    </div>
 
     <div class="formal-table-card blacklist-table-card">
         <div class="formal-table-scroll">
@@ -636,6 +692,30 @@
                 {% endfor %}
             </tbody>
         </table>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="bl-pagination">
+        <span class="bl-pagination-info">
+            {% if page_obj.paginator.count %}
+                Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count }} record{{ page_obj.paginator.count|pluralize }}
+            {% else %}
+                No records found
+            {% endif %}
+        </span>
+        <div class="bl-pagination-controls">
+            {% if page_obj.has_previous %}
+                <a class="btn-bl-page" href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search }}{% endif %}">Prev</a>
+            {% else %}
+                <span class="btn-bl-page is-disabled">Prev</span>
+            {% endif %}
+            <span class="bl-page-indicator">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+            {% if page_obj.has_next %}
+                <a class="btn-bl-page" href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search }}{% endif %}">Next</a>
+            {% else %}
+                <span class="btn-bl-page is-disabled">Next</span>
+            {% endif %}
         </div>
     </div>
 </div>

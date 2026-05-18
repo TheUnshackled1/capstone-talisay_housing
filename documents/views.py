@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db.models import Q, Prefetch
 from django.http import JsonResponse, HttpResponse, Http404
 from django.urls import reverse
@@ -23,6 +24,8 @@ from documents.models import (
     RequirementSubmission,
 )
 from applications.form_pipeline import applicant_has_signed_application_payload
+
+DOCUMENTS_MANAGEMENT_PER_PAGE = 10
 
 
 def _vault_blob_view_url(
@@ -576,6 +579,34 @@ def document_management(request, position):
     # Final ordering: priority queue first (by position), then walk-in (by position), then no-queue.
     applicants_list.sort(key=lambda a: (a['_queue_rank'], a['_queue_position_sort'], a['full_name']))
 
+    applicants_total = len(applicants_list)
+    deep_link_applicant_id = (request.GET.get('applicant_id') or '').strip().lower()
+
+    paginator = Paginator(applicants_list, DOCUMENTS_MANAGEMENT_PER_PAGE)
+    page_number = request.GET.get('page', 1)
+    try:
+        page_obj = paginator.page(page_number)
+    except PageNotAnInteger:
+        page_obj = paginator.page(1)
+    except EmptyPage:
+        page_obj = paginator.page(paginator.num_pages or 1)
+
+    page_applicants = list(page_obj)
+    page_applicant_ids = {str(a['id']).lower() for a in page_applicants}
+    if open_vault_deep_link and deep_link_applicant_id and deep_link_applicant_id not in page_applicant_ids:
+        for idx, row in enumerate(applicants_list):
+            if str(row['id']).lower() == deep_link_applicant_id:
+                correct_page = (idx // DOCUMENTS_MANAGEMENT_PER_PAGE) + 1
+                if page_obj.number != correct_page:
+                    _redirect_q = request.GET.copy()
+                    _redirect_q['page'] = correct_page
+                    return redirect(f'{request.path}?{_redirect_q.urlencode()}')
+                break
+
+    _q = request.GET.copy()
+    _q.pop('page', None)
+    pagination_query = _q.urlencode()
+
     # Document group definitions
     doc_groups = {
         'A': {
@@ -598,11 +629,12 @@ def document_management(request, position):
         },
     }
 
-    applicant_ids = [a['id'] for a in applicants_list]
+    all_applicant_ids = [a['id'] for a in applicants_list]
+    page_row_ids = [a['id'] for a in page_applicants]
     documents_qs = (
         Document.objects
         .select_related('applicant')
-        .filter(applicant_id__in=applicant_ids)
+        .filter(applicant_id__in=all_applicant_ids)
         .order_by('applicant__created_at', '-uploaded_at')
     )
 
@@ -618,7 +650,7 @@ def document_management(request, position):
 
     monitoring_reports_by_applicant = defaultdict(list)
     total_monitoring_report_documents = 0
-    if position == 'second_member' and applicant_ids:
+    if position == 'second_member' and page_row_ids:
         monitoring_reports_qs = (
             MonitoringReport.objects
             .select_related(
@@ -630,7 +662,7 @@ def document_management(request, position):
             )
             .prefetch_related('photos')
             .filter(
-                lot_award__application__applicant_id__in=applicant_ids,
+                lot_award__application__applicant_id__in=page_row_ids,
                 task__status='completed',
                 is_complete=True,
             )
@@ -643,7 +675,7 @@ def document_management(request, position):
             )
             total_monitoring_report_documents += 1
 
-    for row in applicants_list:
+    for row in page_applicants:
         rid = str(row['id']).lower()
         monitoring_report_items = monitoring_reports_by_applicant.get(rid, [])
         if monitoring_report_items:
@@ -673,7 +705,7 @@ def document_management(request, position):
                 })
         row['vault_checklist'] = checklist
 
-    _va_ids = [UUID(x['id']) for x in applicants_list]
+    _va_ids = [UUID(x['id']) for x in page_applicants]
     applicant_map = {
         str(a.id).lower(): a
         for a in (
@@ -687,7 +719,7 @@ def document_management(request, position):
 
     # Keys normalized to lowercase so JSON + onclick IDs always match (UUID string casing).
     vault_drawer_data = {}
-    for row in applicants_list:
+    for row in page_applicants:
         rid = str(row['id']).lower()
         ap = applicant_map.get(rid)
         ts = types_on_file[rid]
@@ -758,7 +790,14 @@ def document_management(request, position):
     context = {
         'page_title': 'Document Management',
         'user_position': request.user.position,
-        'applicants': applicants_list,
+        'applicants': page_applicants,
+        'applicants_upload_choices': [
+            {'id': a['id'], 'full_name': a['full_name']}
+            for a in applicants_list
+        ],
+        'page_obj': page_obj,
+        'pagination_query': pagination_query,
+        'applicants_total': applicants_total,
         'doc_groups': doc_groups,
         'search_query': search_query,
         'status_filter': status_filter,
@@ -775,7 +814,7 @@ def document_management(request, position):
         # New template context variables
         'documents': documents_qs,
         'total_documents': documents_qs.count() + total_monitoring_report_documents,
-        'total_applicants': len(applicants_list),
+        'total_applicants': applicants_total,
         'total_size_gb': round(sum(doc.file_size for doc in documents_qs) / (1024*1024*1024), 2),
         'blacklisted_registry_count': blacklisted_registry_count,
         'vault_drawer_data': vault_drawer_data,

@@ -408,16 +408,18 @@
 
     /* KPI card row — neutral white cards with semantic icon tiles */
     .docs-kpis {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+        display: flex;
+        flex-wrap: wrap;
         gap: 0.6rem;
         margin-bottom: 0.85rem;
     }
     .docs-kpi {
+        flex: 0 0 auto;
+        min-width: 11rem;
         display: flex;
         align-items: center;
         gap: 0.65rem;
-        padding: 0.65rem 0.78rem;
+        padding: 0.6rem 0.75rem;
         border: 1px solid #e2e8f0;
         background: #ffffff;
         border-radius: 0.65rem;
@@ -1182,6 +1184,56 @@
             grid-template-columns: 1fr;
         }
     }
+
+    .dm-pagination {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        margin-top: 0.85rem;
+        padding: 0.55rem 0.65rem;
+        border: 1px solid #e2e8f0;
+        background: #f8fafc;
+        border-radius: 0.65rem;
+        font-size: 0.78rem;
+        color: #475569;
+    }
+    .dm-pagination-controls {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+    }
+    .dm-pagination .btn-page {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 3.25rem;
+        padding: 0.38rem 0.65rem;
+        border-radius: 0.45rem;
+        border: 1px solid #cbd5e1;
+        background: #fff;
+        color: #0f172a;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-decoration: none;
+        cursor: pointer;
+    }
+    .dm-pagination .btn-page:hover:not(.is-disabled) {
+        border-color: #0891b2;
+        color: #0e7490;
+        background: #ecfeff;
+    }
+    .dm-pagination .btn-page.is-disabled {
+        opacity: 0.45;
+        cursor: default;
+        pointer-events: none;
+    }
+    .dm-pagination .page-indicator {
+        padding: 0 0.35rem;
+        font-weight: 600;
+        color: #334155;
+    }
 </style>
 {% endblock %}
 
@@ -1191,11 +1243,11 @@
 
 <div class="docs-shell">
     <!-- Page Header -->
-    <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1.05rem; gap: 1rem; flex-wrap: wrap;">
-        <div style="min-width:0; flex:1 1 22rem;">
-            <h1 class="docs-page-title">Document Management</h1>
+    <div style="position: relative; display: flex; align-items: center; justify-content: center; margin-bottom: 1.05rem; min-height: 2.5rem; flex-wrap: wrap; gap: 1rem;">
+        <div style="text-align: center; width: 100%;">
+            <h1 class="docs-page-title" style="margin: 0 !important; justify-content: center;">Document Management</h1>
         </div>
-        <button type="button" class="dm-action-btn dm-action-btn--scan" onclick="openUploadModal()">
+        <button type="button" class="dm-action-btn dm-action-btn--scan" onclick="openUploadModal()" style="position: absolute; right: 0; top: 0;">
             <svg class="dm-action-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                 <polyline points="17 8 12 3 7 8"/>
@@ -1207,6 +1259,10 @@
 
     <!-- KPI cards -->
     <div class="docs-kpis">
+        <div class="docs-search-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
+            <input type="text" id="searchInput" placeholder="Search by applicant or document type…">
+        </div>
         <div class="docs-kpi docs-kpi--total">
             <span class="docs-kpi-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
@@ -1230,13 +1286,9 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
             </span>
             <div>
-                <p class="docs-kpi-label" title="Listed on Blacklisted Beneficiaries (Module 4 registry row)">Beneficiary Registry</p>
+                <p class="docs-kpi-label" title="Listed on Blacklisted Beneficiaries (Module 4 registry row)">Blacklisted</p>
                 <p class="docs-kpi-value">{{ blacklisted_registry_count|default:"0" }}</p>
             </div>
-        </div>
-        <div class="docs-search-wrap">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
-            <input type="text" id="searchInput" placeholder="Search by applicant or document type…">
         </div>
     </div>
 
@@ -1260,7 +1312,7 @@
                 <tr class="applicant-row"
                     data-applicant-id="{{ applicant.id }}"
                     data-search="{{ applicant.full_name|lower }} {{ applicant.reference_number|default:''|lower }}">
-                    <td class="col-num">{{ forloop.counter }}</td>
+                    <td class="col-num">{{ page_obj.start_index|add:forloop.counter0 }}</td>
                     <td class="col-applicant">{{ applicant.full_name }}</td>
                     <td class="col-app-state">
                         {% if applicant.has_blacklist_record %}
@@ -1308,6 +1360,27 @@
             </tbody>
         </table>
     </div>
+
+    {% if applicants_total %}
+    <div class="dm-pagination">
+        <span class="dm-pagination-info">
+            Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ applicants_total }} applicants
+        </span>
+        <div class="dm-pagination-controls">
+            {% if page_obj.has_previous %}
+            <a class="btn-page" href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.previous_page_number }}">Prev</a>
+            {% else %}
+            <span class="btn-page is-disabled">Prev</span>
+            {% endif %}
+            <span class="page-indicator">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+            {% if page_obj.has_next %}
+            <a class="btn-page" href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.next_page_number }}">Next</a>
+            {% else %}
+            <span class="btn-page is-disabled">Next</span>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
 </div>
 
 <!-- Vault checklist drawer (View Documents — not the upload modal) -->
@@ -1432,7 +1505,7 @@
                     <input type="text" id="applicantSearch" placeholder="Search applicant..." style="padding: 0.625rem; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 0.875rem; color: #111827; transition: all 200ms ease; background: white;" onfocus="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 3px rgba(59, 130, 246, 0.1)'; this.style.backgroundColor='white'" onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'">
                     <select id="applicantSelect" name="applicant" required style="padding: 0.625rem; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 0.875rem; color: #111827; transition: all 200ms ease; background: white;" onfocus="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 3px rgba(59, 130, 246, 0.1)'; this.style.backgroundColor='white'" onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'">
                         <option value="">— Select Applicant —</option>
-                        {% for applicant in applicants %}
+                        {% for applicant in applicants_upload_choices %}
                         <option value="{{ applicant.id }}">{{ applicant.full_name }}</option>
                         {% endfor %}
                     </select>
