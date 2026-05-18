@@ -40,9 +40,22 @@ def _tha_ref_name_header(applicant) -> str:
     return f'THA Ref# {ref}'
 
 
-def _situation_clause_proceed_sms(displacement_reason: str) -> str:
+def _applicant_has_isf_situational_on_file(applicant) -> bool:
+    """True when ISF-SIT / isf_situational_docs is already in the document vault."""
+    if applicant is None:
+        return False
+    try:
+        return applicant.documents.filter(document_type='isf_situational_docs').exists()
+    except Exception:
+        return False
+
+
+def _situation_clause_proceed_sms(displacement_reason: str, *, has_isf_situational: bool = False) -> str:
     """
     Hiligaynon add-on by Applicant Situation (Module 1 Layer 3 / displacement_reason).
+
+    Options B/C: when ISF-SIT is already on file, omit the extra “submit required documentation”
+    reminder (baseline scans are complete and situational docs were filed).
     """
     dr = (displacement_reason or '').strip()
     if dr == 'danger_zone':
@@ -51,14 +64,24 @@ def _situation_clause_proceed_sms(displacement_reason: str) -> str:
             'naga-ukoy ka sa hazard area. I-check ka namon paagi sa amon Ronda para sa photo verification. '
         )
     if dr == 'ejected':
-        return (
+        intro = (
             'Basi sa imo Applicant Situation (Option B — Gin-eject ukon gin-displace gikan sa imo nagligad nga puluy-an). '
-            'Magasumiter ka sang Required Documentation: Court Order, Legal Office Certification, or Barangay Certification. '
+        )
+        if has_isf_situational:
+            return intro
+        return (
+            intro
+            + 'Magasumiter ka sang Required Documentation: Court Order, Legal Office Certification, or Barangay Certification. '
         )
     if dr == 'relocated':
-        return (
+        intro = (
             'Basi sa imo Applicant Situation (Option C — Gin-displace tungod sa proyekto o imprastraktura sang gobyerno). '
-            'Magasumiter ka sang imo Required Documentation: Notice of Relocation, Right-of-Way Documentation, or Project Order. '
+        )
+        if has_isf_situational:
+            return intro
+        return (
+            intro
+            + 'Magasumiter ka sang imo Required Documentation: Notice of Relocation, Right-of-Way Documentation, or Project Order. '
         )
     if dr == 'not_abc':
         return (
@@ -181,12 +204,15 @@ def message_proceed_to_evaluation(applicant) -> str:
     Uses ``_situation_clause_proceed_sms`` for next steps — not the document list from LIST SMS.
     """
     head = _tha_ref_name_header(applicant)
-    dr = getattr(applicant, 'displacement_reason', None) or ''
+    dr = (getattr(applicant, 'displacement_reason', None) or '').strip()
+    has_isf = dr in ('ejected', 'relocated') and _applicant_has_isf_situational_on_file(applicant)
     base = (
         f'{head}: Ang imo registration yara na sa evaluation stage. '
         f'Nabaton na namon ang imo mga dokumento. '
     )
-    situation = _situation_clause_proceed_sms(dr)
+    situation = _situation_clause_proceed_sms(dr, has_isf_situational=has_isf)
+    if has_isf:
+        return f'{base}{situation}'
     closing = 'Mag-hulat sang updates para sa eligibility. Salamat!'
     return f'{base}{situation}{closing}'
 

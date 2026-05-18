@@ -99,6 +99,21 @@ class Document(models.Model):
     
     notes = models.TextField(blank=True)
 
+    CAPTURE_UPLOAD = 'upload'
+    CAPTURE_SCAN = 'scan'
+    CAPTURE_METHOD_CHOICES = [
+        ('', 'Not recorded'),
+        (CAPTURE_UPLOAD, 'Uploaded'),
+        (CAPTURE_SCAN, 'Scanned'),
+    ]
+    capture_method = models.CharField(
+        max_length=10,
+        choices=CAPTURE_METHOD_CHOICES,
+        blank=True,
+        default='',
+        help_text='How this file entered the vault (staff Upload vs TWAIN Scan).',
+    )
+
     objects = DocumentManager()
 
     class Meta:
@@ -148,6 +163,19 @@ class Document(models.Model):
             return request.build_absolute_uri(self.file.url)
         return ''
 
+    def filed_via_display(self):
+        return document_filed_via_display(self.capture_method)
+
+
+def document_filed_via_display(capture_method):
+    """UI label for checklist rows (Uploaded vs Scanned)."""
+    method = (capture_method or '').strip().lower()
+    if method == Document.CAPTURE_UPLOAD:
+        return 'Uploaded'
+    if method == Document.CAPTURE_SCAN:
+        return 'Scanned'
+    return ''
+
 
 class DocumentBlob(models.Model):
     """Binary vault payload linked 1:1 to Document (used by intake scanner uploads)."""
@@ -175,6 +203,7 @@ def upsert_document_vault_upload(
     uploaded_file,
     title,
     uploaded_by,
+    capture_method='',
 ):
     """
     Create or replace a vault Document for this applicant/type.
@@ -194,6 +223,10 @@ def upsert_document_vault_upload(
     if existing and existing.file:
         existing.file.delete(save=False)
 
+    method = (capture_method or '').strip().lower()
+    if method not in (Document.CAPTURE_UPLOAD, Document.CAPTURE_SCAN):
+        method = ''
+
     doc, created = Document.objects.update_or_create(
         applicant=applicant,
         document_type=document_type,
@@ -204,6 +237,7 @@ def upsert_document_vault_upload(
             'mime_type': getattr(uploaded_file, 'content_type', '') or '',
             'uploaded_by': uploaded_by,
             'file': None,
+            'capture_method': method,
         },
     )
 

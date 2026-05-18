@@ -22,6 +22,7 @@ from documents.models import (
     LotAwarding,
     Requirement,
     RequirementSubmission,
+    document_filed_via_display,
 )
 from .models import (
     Application,
@@ -2389,6 +2390,11 @@ def _situation_certification_gate(applicant):
     return base
 
 
+# Eligibility evidence copy — vault row counts whether staff used Upload or Scan.
+M2_REQUIREMENT_ON_FILE_LABEL = 'On file (scan or upload)'
+M2_REQUIREMENT_MISSING_LABEL = 'Missing — scan or upload'
+
+
 @login_required
 @verify_position
 @require_POST
@@ -2436,24 +2442,26 @@ def eligibility_snapshot(request, position):
     )
     req_scan_by_code = {}
     requirement_rows = []
-    # Latest vault payload per document_type — include blob-only scans (FileField cleared).
-    doc_type_to_latest_file = {}
+    # Latest vault payload per document_type (upload vs scan label for checklist UI).
+    doc_type_to_latest_meta = {}
     for doc in applicant.documents.select_related('blob_record').order_by('-uploaded_at'):
-        if doc.document_type in doc_type_to_latest_file:
+        if doc.document_type in doc_type_to_latest_meta:
             continue
         try:
             doc_url = doc.absolute_download_url(request)
         except (ValueError, AttributeError):
             doc_url = ''
-        if not doc_url:
-            continue
-        doc_type_to_latest_file[doc.document_type] = {
+        capture_method = (doc.capture_method or '').strip()
+        doc_type_to_latest_meta[doc.document_type] = {
             'url': doc_url,
             'name': (doc.file_name or doc.title or doc.get_document_type_display() or '').strip(),
+            'capture_method': capture_method,
+            'filed_via_label': document_filed_via_display(capture_method),
         }
     for row in required_rows:
         files_count = applicant.documents.filter(document_type=row['vault_document_type']).count()
         scanned = files_count > 0
+        meta = doc_type_to_latest_meta.get(row['vault_document_type'], {})
         req_scan_by_code[row['code']] = {
             'scanned': scanned,
             'files_count': files_count,
@@ -2464,6 +2472,8 @@ def eligibility_snapshot(request, position):
             'document_type': row['vault_document_type'],
             'scanned': scanned,
             'files_count': files_count,
+            'filed_via': meta.get('capture_method', '') if scanned else '',
+            'filed_via_label': meta.get('filed_via_label', '') if scanned else '',
         })
 
     def _req_scanned(code):
@@ -2473,7 +2483,16 @@ def eligibility_snapshot(request, position):
         row = next((item for item in required_rows if item['code'] == code), None)
         if not row:
             return {'url': '', 'name': ''}
-        return doc_type_to_latest_file.get(row['vault_document_type'], {'url': '', 'name': ''})
+        return doc_type_to_latest_meta.get(row['vault_document_type'], {'url': '', 'name': ''})
+
+    def _req_evidence_doc_label(code):
+        if not _req_scanned(code):
+            return M2_REQUIREMENT_MISSING_LABEL
+        row_def = next((item for item in required_rows if item['code'] == code), None)
+        if not row_def:
+            return M2_REQUIREMENT_MISSING_LABEL
+        label = doc_type_to_latest_meta.get(row_def['vault_document_type'], {}).get('filed_via_label', '')
+        return label or M2_REQUIREMENT_ON_FILE_LABEL
 
     # Per-check statuses (profile checks + evidence gates)
     age_value = int(applicant.age or 0)
@@ -2505,7 +2524,7 @@ def eligibility_snapshot(request, position):
             ),
             'evidence': [
                 f'Profile declaration: {"No property in Talisay City" if not applicant.has_property_in_talisay else "Has property in Talisay City"}',
-                f'R05 Certificate of No Property: {"Scanned" if property_evidence_ready else "Not scanned"}',
+                f'R05 Certificate of No Property: {_req_evidence_doc_label("R05")}',
             ],
             'view_document': _latest_doc_for_req('R05'),
         },
@@ -2520,7 +2539,7 @@ def eligibility_snapshot(request, position):
             'evidence': [
                 f'Profile age: {age_value if age_known else "Missing"}',
                 f'Profile years residing: {rules.get("years_residing", 0)} (minimum {rules.get("min_years_residing_talisay", MODULE1_MIN_YEARS_RESIDING_TALISAY)})',
-                f'R01 Brgy. Certificate of Residency: {"Scanned" if residency_evidence_ready else "Not scanned"}',
+                f'R01 Brgy. Certificate of Residency: {_req_evidence_doc_label("R01")}',
             ],
             'view_document': _latest_doc_for_req('R01'),
         },
@@ -2534,7 +2553,7 @@ def eligibility_snapshot(request, position):
             ),
             'evidence': [
                 f'Profile monthly income: {"₱" + format(applicant.monthly_income, ",.2f") if applicant.monthly_income is not None else "Missing"}',
-                f'R02 Brgy. Certificate of Indigency: {"Scanned" if income_evidence_ready else "Not scanned"}',
+                f'R02 Brgy. Certificate of Indigency: {_req_evidence_doc_label("R02")}',
             ],
             'view_document': _latest_doc_for_req('R02'),
         },
@@ -2549,7 +2568,7 @@ def eligibility_snapshot(request, position):
             'evidence': [
                 f'Profile household size: {applicant.household_size if applicant.household_size is not None else "Missing"}',
                 f'Listed household size (computed): {rules.get("listed_household_size", "N/A")}',
-                f'R03 Cedula: {"Scanned" if household_evidence_ready else "Not scanned"}',
+                f'R03 Cedula: {_req_evidence_doc_label("R03")}',
             ],
             'view_document': _latest_doc_for_req('R03'),
         },
@@ -2563,7 +2582,7 @@ def eligibility_snapshot(request, position):
             ),
             'evidence': [
                 f'Profile voter flag: {"Yes" if applicant.is_registered_voter_talisay else "No"}',
-                f'Voter certification document: {"Scanned" if voter_evidence_ready else "Not scanned"}',
+                f'Voter certification document: {_req_evidence_doc_label("RVT")}',
             ],
             'view_document': voter_doc_latest,
         },

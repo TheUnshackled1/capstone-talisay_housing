@@ -878,6 +878,7 @@ def upload_document(request, position):
                 'file_size': file.size,
                 'mime_type': file.content_type,
                 'uploaded_by': request.user,
+                'capture_method': Document.CAPTURE_UPLOAD,
             }
         )
 

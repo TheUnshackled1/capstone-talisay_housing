@@ -209,14 +209,18 @@ class WalkInApplicantForm(forms.ModelForm):
     # Eligibility check required field
     years_residing = forms.IntegerField(
         required=True,
-        min_value=0,
+        min_value=5,
+        max_value=99,
         label="Years Residing in Talisay",
         widget=forms.NumberInput(attrs={
             'class': 'form-control',
-            'placeholder': 'Number of years',
-            'min': 0,
+            'placeholder': 'e.g. 10',
+            'min': 5,
+            'max': 99,
+            'maxlength': 2,
+            'inputmode': 'numeric',
         }),
-        help_text="Required for eligibility check"
+        help_text="Whole years in Talisay City (2 digits, 5–99).",
     )
     is_registered_voter_talisay = forms.TypedChoiceField(
         choices=[
@@ -372,6 +376,18 @@ class WalkInApplicantForm(forms.ModelForm):
         if income and income < 0:
             raise forms.ValidationError('Monthly income cannot be negative.')
         return income
+
+    def clean_years_residing(self):
+        years = self.cleaned_data.get('years_residing')
+        if years is None:
+            return years
+        if years > 99:
+            raise ValidationError('Years of residence must be at most 2 digits (99).')
+        if years < 5:
+            raise ValidationError(
+                'Applicants with 4 years or below residency in Talisay City are not accepted. Minimum is 5 years.'
+            )
+        return years
 
     def clean(self):
         """Require hazard / ejection / project particulars by Applicant Situation (A–D)."""

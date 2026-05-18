@@ -374,7 +374,7 @@
     .applicants-table--archive th:nth-child(1),
     .applicants-table--archive td:nth-child(1) { width: 3% !important; text-align: center; }
     .applicants-table--archive th:nth-child(2),
-    .applicants-table--archive td:nth-child(2) { width: 9% !important; }
+    .applicants-table--archive td:nth-child(2) { width: 12% !important; } /* Full Name */
     .applicants-table--archive th:nth-child(3),
     .applicants-table--archive td:nth-child(3) { width: 11% !important; }
     .applicants-table--archive th:nth-child(4),
@@ -391,7 +391,7 @@
     .applicants-table--archive th:nth-child(5),
     .applicants-table--archive td:nth-child(5) { width: 10% !important; }
     .applicants-table--archive th:nth-child(6),
-    .applicants-table--archive td:nth-child(6) { width: 10% !important; }
+    .applicants-table--archive td:nth-child(6) { width: 9% !important; } /* Transaction # */
     .applicants-table--archive th:nth-child(7),
     .applicants-table--archive td:nth-child(7) { width: 11% !important; }
     .applicants-table--archive th:nth-child(8),
@@ -469,9 +469,13 @@
         font-size: 0.56rem !important;
         color: #64748b !important;
     }
-    .applicants-table--archive td:nth-child(6) {
+    .applicants-table--archive td:nth-child(2) {
         overflow-wrap: anywhere;
         word-break: normal;
+    }
+    .applicants-table--archive td:nth-child(6) {
+        font-weight: 600;
+        color: #1d4ed8;
     }
     .applicants-table--archive td:nth-child(9) {
         font-size: 0.54rem !important;
@@ -517,13 +521,13 @@
     }
 
     /* LIST OF APPLICANTS — Full Name by displacement_reason (same palette as Application & Evaluation) */
-    .applicants-table--archive.formal-table tbody td:nth-child(6) .list-archive-full-name {
+    .applicants-table--archive.formal-table tbody td:nth-child(2) .list-archive-full-name {
         font-weight: 600;
     }
-    .applicants-table--archive.formal-table tbody td:nth-child(6) .list-archive-full-name.option-a { color: #b91c1c !important; }
-    .applicants-table--archive.formal-table tbody td:nth-child(6) .list-archive-full-name.option-b { color: #b45309 !important; }
-    .applicants-table--archive.formal-table tbody td:nth-child(6) .list-archive-full-name.option-c { color: #047857 !important; }
-    .applicants-table--archive.formal-table tbody td:nth-child(6) .list-archive-full-name.option-d { color: #475569 !important; }
+    .applicants-table--archive.formal-table tbody td:nth-child(2) .list-archive-full-name.option-a { color: #b91c1c !important; }
+    .applicants-table--archive.formal-table tbody td:nth-child(2) .list-archive-full-name.option-b { color: #b45309 !important; }
+    .applicants-table--archive.formal-table tbody td:nth-child(2) .list-archive-full-name.option-c { color: #047857 !important; }
+    .applicants-table--archive.formal-table tbody td:nth-child(2) .list-archive-full-name.option-d { color: #475569 !important; }
 
     /* Active table (no SMS column) */
     .applicants-table--active th:nth-child(1),
@@ -1470,14 +1474,29 @@
         position: fixed;
         inset: 0;
         z-index: 1200;
-        background: rgba(15, 23, 42, 0.45);
+        background: rgba(15, 23, 42, 0.48);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
         align-items: center;
         justify-content: center;
-        padding: 1rem;
+        padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
     }
 
     .notice-modal-overlay.active {
         display: flex;
+    }
+
+    @keyframes notice-modal-in {
+        from {
+            opacity: 0;
+            transform: scale(0.94) translateY(8px);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
     }
 
     .notice-modal-overlay.notice-modal-overlay--top {
@@ -1659,12 +1678,15 @@
     }
 
     .notice-modal {
-        width: min(28rem, 100%);
+        width: min(28rem, calc(100vw - 2rem));
+        max-height: min(90vh, calc(100dvh - 2rem));
         background: #ffffff;
         border: 1px solid #e2e8f0;
         border-radius: 0.875rem;
         box-shadow: 0 20px 40px rgba(15, 23, 42, 0.22);
         overflow: hidden;
+        margin: auto;
+        animation: notice-modal-in 0.32s cubic-bezier(0.34, 1.2, 0.64, 1);
     }
 
     .notice-modal-header {
@@ -1688,6 +1710,29 @@
     .notice-modal.error .notice-modal-badge { background: #dc2626; }
     .notice-modal.success .notice-modal-badge { background: #16a34a; }
     .notice-modal.info .notice-modal-badge { background: #2563eb; }
+
+    .notice-modal-success-icon {
+        display: none;
+        align-items: center;
+        justify-content: center;
+        width: 3.25rem;
+        height: 3.25rem;
+        margin: 1.35rem auto 0;
+        border-radius: 1rem;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: #fff;
+        box-shadow: 0 10px 22px -6px rgba(16, 185, 129, 0.45);
+    }
+
+    .notice-modal-success-icon svg {
+        width: 1.65rem;
+        height: 1.65rem;
+        stroke: currentColor;
+        stroke-width: 2.75;
+        fill: none;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
 
     /* Align intake notice “success” with global flow-alert success (THA green dialog) */
     .notice-modal.success {
@@ -1717,6 +1762,94 @@
         background: linear-gradient(180deg, #16a34a, #166534);
     }
 
+    /* Rich success — proceed to LIST OF APPLICANTS, registration, etc. */
+    .notice-modal.notice-modal--celebration {
+        width: min(26rem, calc(100vw - 1.5rem));
+        border-radius: 1.25rem;
+        border-color: #bbf7d0;
+    }
+
+    .notice-modal.notice-modal--celebration .notice-modal-success-icon {
+        display: flex;
+    }
+
+    .notice-modal.notice-modal--celebration .notice-modal-badge {
+        display: none;
+    }
+
+    .notice-modal.notice-modal--celebration .notice-modal-header {
+        border-bottom: none;
+        padding: 0 1.25rem 0.35rem;
+        justify-content: center;
+    }
+
+    .notice-modal.notice-modal--celebration .notice-modal-title {
+        font-size: 1.05rem;
+        letter-spacing: 0.06em;
+        padding-right: 0;
+    }
+
+    .notice-modal.notice-modal--celebration .notice-modal-body {
+        padding: 0.35rem 1.25rem 0.25rem;
+        font-size: 0.875rem;
+    }
+
+    .notice-modal.notice-modal--celebration .notice-modal-sms-note {
+        margin-top: 0.65rem;
+        text-align: center;
+        font-size: 0.75rem;
+    }
+
+    .notice-modal.notice-modal--celebration #noticeModalRefWrap {
+        padding: 0 1.25rem !important;
+        margin-bottom: 0;
+    }
+
+    .notice-modal.notice-modal--celebration .notice-modal-actions {
+        justify-content: center;
+        align-items: center;
+        padding: 0.9rem 1.25rem 1.15rem;
+        margin-top: 0;
+        border-top: none;
+        background: transparent;
+    }
+
+    .notice-modal.notice-modal--celebration .btn-modal.primary {
+        width: auto;
+        min-width: 6.5rem;
+        justify-content: center;
+        padding: 0.55rem 1.75rem;
+        font-size: 0.8125rem;
+        font-weight: 700;
+        border-radius: 0.65rem;
+        box-shadow: 0 2px 6px rgba(21, 128, 61, 0.2);
+    }
+
+    .notice-modal.notice-modal--celebration .btn-modal.primary:hover {
+        box-shadow: 0 4px 10px rgba(21, 128, 61, 0.24);
+        transform: none;
+    }
+
+    .notice-success-lead {
+        margin: 0 0 0.5rem;
+        font-size: 0.9375rem;
+        font-weight: 600;
+        line-height: 1.45;
+        color: #065f46;
+    }
+
+    .notice-success-lead strong {
+        font-weight: 800;
+        letter-spacing: 0.02em;
+    }
+
+    .notice-success-detail {
+        margin: 0;
+        font-size: 0.8125rem;
+        line-height: 1.5;
+        color: #047857;
+    }
+
     .notice-modal-title {
         font-size: 0.95rem;
         font-weight: 700;
@@ -1735,6 +1868,8 @@
         color: #334155;
         line-height: 1.5;
         white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        word-break: break-word;
     }
 
     .notice-modal-message-center {
@@ -1749,6 +1884,8 @@
         border-radius: 0.5rem;
         color: #166534;
         line-height: 1.45;
+        font-size: 0.8125rem;
+        text-align: left;
     }
 
     .notice-modal-actions {
@@ -1756,6 +1893,31 @@
         justify-content: flex-end;
         gap: 0.5rem;
         padding: 0 1rem 1rem;
+        flex-wrap: wrap;
+    }
+
+    #noticeModalRefWrap .flow-alert-ref-pill {
+        display: inline-block;
+        margin: 0.5rem 0 0;
+        padding: 0.4rem 0.85rem;
+        font-size: 0.78rem;
+        font-weight: 700;
+        font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+        color: #065f46;
+        background: #dcfce7;
+        border: 1px solid #bbf7d0;
+        border-radius: 0.65rem;
+        letter-spacing: 0.04em;
+    }
+
+    @media (max-width: 480px) {
+        .notice-modal.notice-modal--celebration .notice-modal-actions {
+            padding: 0.85rem 1rem 1rem;
+        }
+
+        .notice-modal.notice-modal--celebration .notice-modal-title {
+            font-size: 0.95rem;
+        }
     }
 
     /* Replace-document confirm — document scan checklist (above archive modal) */
@@ -3516,7 +3678,10 @@
 {% endif %}
 
 <div class="notice-modal-overlay" id="noticeModalOverlay" onclick="closeNoticeModal()">
-    <div class="notice-modal info" id="noticeModal" onclick="event.stopPropagation()">
+    <div class="notice-modal info" id="noticeModal" role="dialog" aria-modal="true" aria-labelledby="noticeModalTitle" onclick="event.stopPropagation()">
+        <div class="notice-modal-success-icon" id="noticeModalSuccessIcon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false"><path d="M20 6L9 17l-5-5"/></svg>
+        </div>
         <div class="notice-modal-header">
             <span class="notice-modal-badge" aria-hidden="true"></span>
             <p class="notice-modal-title" id="noticeModalTitle">Notice</p>
@@ -3666,7 +3831,7 @@
         <div class="archive-req-body">
             <div id="archiveBlacklistBanner" class="archive-blacklist-banner" role="alert" hidden></div>
             <div class="archive-req-summary">
-                <span class="archive-req-chip">Required Scanned <span class="archive-req-chip-value" id="archiveRequirementsScannedSummary">0/0</span></span>
+                <span class="archive-req-chip">Required on file <span class="archive-req-chip-value" id="archiveRequirementsScannedSummary">0/0</span></span>
                 <span class="archive-req-chip">Rows <span class="archive-req-chip-value" id="archiveRequirementsRowSummary">0</span></span>
             </div>
             <div class="archive-req-table-wrap">
@@ -3679,7 +3844,7 @@
                                 <th>Is required for form</th>
                                 <th>Is active</th>
                                 <th>Actions</th>
-                                <th>View</th>
+                                <th>Status</th>
                             </tr>
                         </thead>
                         <tbody id="archiveRequirementsTableBody"></tbody>
@@ -3751,7 +3916,7 @@
         <div class="docscan-body">
             <div class="docscan-summary">
                 <div class="docscan-chip">
-                    <span class="docscan-chip-label">Required Scanned</span>
+                    <span class="docscan-chip-label">Required on file</span>
                     <span class="docscan-chip-value" id="documentScanProgress">0/8</span>
                 </div>
                 <div class="docscan-chip">
@@ -3789,7 +3954,7 @@
             </div>
 
             <p class="docscan-footnote">
-                Applicant can proceed only when all eight baseline requirements (R01–R07 and voter certification RVT) are scanned. If Applicant Situation is Option A, B, or C, one optional situational row is shown (Option A: CDRRMO; Option B/C: ISF-SIT).
+                Each requirement is satisfied when a file is in the document vault — via <strong>Upload</strong> or <strong>Scan</strong> (same as the Eligibility checklist). All eight baseline requirements (R01–R07 and RVT) must be on file before proceed. Option A/B/C adds one optional situational row.
             </p>
         </div>
 
@@ -4034,11 +4199,11 @@
         <thead>
             <tr>
                 <th>#</th>
-                <th>Transaction #</th>
+                <th>Full Name</th>
                 <th>Proceeded</th>
                 <th title="Relative to now since this record proceeded to LIST OF APPLICANTS">Time ago</th>
                 <th>Reference #</th>
-                <th>Full Name</th>
+                <th>Transaction #</th>
                 <th>Staff Handled</th>
                 <th>Status</th>
                 <th>Barangay</th>
@@ -4057,13 +4222,13 @@
                 data-searchable="{{ row.fullName|lower }} {{ row.referenceNumber|lower }} {{ row.barangay|lower }} {{ row.requirementsStatusLabel|lower }} cannot proceed {{ row.proceededAgo|default:''|lower }}"
             >
                 <td style="font-weight: 700; color: #1e293b;">{{ forloop.counter }}</td>
-                <td style="font-weight: 600; color: #1d4ed8;">#{{ row.id|slice:":8" }}</td>
-                <td style="font-size: 0.6875rem; color: #64748b;">{{ row.dateTime }}</td>
-                <td title="Same moment as Proceeded — relative to now">{{ row.proceededAgo|default:"—" }}</td>
-                <td>{{ row.referenceNumber }}</td>
                 <td>
                     <span class="list-archive-full-name{% if row.archiveDispNameClass %} {{ row.archiveDispNameClass }}{% endif %}">{{ row.fullName }}</span>
                 </td>
+                <td style="font-size: 0.6875rem; color: #64748b;">{{ row.dateTime }}</td>
+                <td title="Same moment as Proceeded — relative to now">{{ row.proceededAgo|default:"—" }}</td>
+                <td>{{ row.referenceNumber }}</td>
+                <td>#{{ row.id|slice:":8" }}</td>
                 <td>
                     <div style="display: flex; align-items: flex-start; gap: 0.375rem;">
                         <div class="handled-by-avatar {% if row.handledByPosition == '2nd Member' %}second-member{% elif row.handledByPosition == '4th Member' %}fourth-member{% else %}other{% endif %}">
@@ -4820,7 +4985,7 @@
                     <!-- Editable Years Residing -->
                     <div class="form-group">
                         <label class="form-label">Years Residing *</label>
-                        <input type="number" id="isfEditYears" class="form-input" min="0" placeholder="0" style="width: 100%; padding: 0.625rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.875rem;">
+                        <input type="text" id="isfEditYears" class="form-input" inputmode="numeric" maxlength="2" pattern="[0-9]{1,2}" placeholder="e.g. 10" title="2 digits only (0–99)" style="width: 100%; padding: 0.625rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.875rem;">
                     </div>
 
                     <!-- Edit Reason -->
@@ -6280,7 +6445,7 @@
                         </div>
                         <div class="form-group">
                             <label class="form-label">Years of residence in Talisay City <span style="color: #dc2626;">*</span></label>
-                            <input type="number" class="form-input" placeholder="Whole number of years" name="years_residing" id="yearsResiding" min="5" required>
+                            <input type="text" class="form-input" placeholder="e.g. 10" name="years_residing" id="yearsResiding" inputmode="numeric" maxlength="2" pattern="[0-9]{1,2}" autocomplete="off" title="2 digits only (5–99 years)" required>
                         </div>
                     </div>
 
@@ -6673,6 +6838,19 @@
         doc_sketch_location: 'docSketchLocation',
         doc_voter_cert: 'docVoterCert',
     };
+    const DOC_KEY_TO_VAULT_TYPE = {
+        doc_brgy_residency: 'barangay_residency',
+        doc_brgy_indigency: 'barangay_indigency',
+        doc_cedula: 'cedula',
+        doc_police_clearance: 'police_clearance',
+        doc_no_property: 'no_property',
+        doc_2x2_picture: 'photo_2x2',
+        doc_sketch_location: 'house_sketch',
+        doc_voter_cert: 'voter_certification',
+        doc_cdrrmo: 'cdrrmo_cert',
+        doc_isf_situational: 'isf_situational_docs',
+    };
+    const APPLICANT_REQUIREMENT_SCAN_STATUS_URL = '{% url "intake:applicant_requirement_scan_status" request.user.position %}';
     let DWTObject = null;
     if (window.Dynamsoft?.DWT) {
         Dynamsoft.DWT.RegisterEvent("OnWebTwainReady", function () {
@@ -6782,7 +6960,7 @@
                 const safeApplicantId = encodeURIComponent(applicantId || '');
                 const safeDocKey = encodeURIComponent(docKey || '');
                 const safeDocCode = encodeURIComponent(docCode || '');
-                const uploadUrl = `{% url "intake:upload_scanned_requirement" request.user.position %}?applicant_id=${safeApplicantId}&doc_key=${safeDocKey}&doc_code=${safeDocCode}`;
+                const uploadUrl = `{% url "intake:upload_scanned_requirement" request.user.position %}?applicant_id=${safeApplicantId}&doc_key=${safeDocKey}&doc_code=${safeDocCode}&capture_method=scan`;
                 const fileName = `${(referenceNumber || 'applicant')}_${docCode || 'scan'}.png`;
 
                 dwt.HTTPUpload(
@@ -6851,7 +7029,10 @@
             overlay.classList.remove('notice-modal-overlay--top');
             overlay.style.zIndex = '';
         }
-        if (modal) modal.classList.remove('notice-modal--blacklist-blocked');
+        if (modal) {
+            modal.classList.remove('notice-modal--blacklist-blocked');
+            modal.classList.remove('notice-modal--celebration');
+        }
         if (bodyEl) bodyEl.classList.remove('notice-modal-body--blacklist-blocked');
         if (refWrap) {
             refWrap.innerHTML = '';
@@ -6861,7 +7042,43 @@
         noticeSecondaryHandler = null;
     }
 
-    function showNoticeModal({ title = 'Notice', message = '', messageHtml = '', type = 'info', primaryText = 'OK', secondaryText = '', onPrimary = null, onSecondary = null, allowHtml = false, refPill = '' }) {
+    function buildProceedArchiveSuccessHtml() {
+        return (
+            '<p class="notice-success-lead">Moved to <strong>LIST OF APPLICANTS</strong></p>' +
+            '<p class="notice-success-detail">This record is archived and will appear in the list below.</p>'
+        );
+    }
+
+    function buildProceedEvaluationSuccessHtml(fullName) {
+        const safeName = (typeof escapeHtml === 'function') ? escapeHtml(fullName || 'Applicant') : String(fullName || 'Applicant');
+        return (
+            '<p class="notice-success-lead">Moved to <strong>Application &amp; Eligibility</strong></p>' +
+            '<p class="notice-success-detail">All baseline requirements are complete.</p>' +
+            '<div style="margin-top: 0.75rem; padding: 0.5rem; background: #e6f4ea; border-radius: 0.375rem; color: #0f5132; font-size: 0.875rem; font-weight: 700; text-align: center; text-transform: uppercase; letter-spacing: 0.03em;">' + safeName + '</div>'
+        );
+    }
+
+    function parseRegistrationSuccessMessage(message) {
+        const raw = String(message || '').trim();
+        const refMatch = raw.match(/Reference:\s*(\S+)/i);
+        const nameMatch = raw.match(/Successfully registered:\s*(.+?)\s*\|\s*Reference:/i);
+        return {
+            fullName: nameMatch ? nameMatch[1].trim() : '',
+            referenceNumber: refMatch ? refMatch[1].trim() : '',
+        };
+    }
+
+    function buildApplicantRegisteredSuccessHtml(fullName) {
+        const safeName = (typeof escapeHtml === 'function') ? escapeHtml(fullName || 'Applicant') : String(fullName || 'Applicant');
+        const smsNote = 'No SMS is sent at registration. The first SMS is sent when this record is proceeded to Module 2.';
+        const safeSms = (typeof escapeHtml === 'function') ? escapeHtml(smsNote) : smsNote;
+        return (
+            '<p class="notice-success-lead">Successfully registered: <strong>' + safeName + '</strong></p>' +
+            '<div class="notice-modal-sms-note">' + safeSms + '</div>'
+        );
+    }
+
+    function showNoticeModal({ title = 'Notice', message = '', messageHtml = '', type = 'info', primaryText = 'OK', secondaryText = '', onPrimary = null, onSecondary = null, allowHtml = false, refPill = '', celebration = false }) {
         const overlay = document.getElementById('noticeModalOverlay');
         const modal = document.getElementById('noticeModal');
         const titleEl = document.getElementById('noticeModalTitle');
@@ -6873,6 +7090,7 @@
 
         modal.classList.remove('info', 'success', 'warning', 'error');
         modal.classList.add(type);
+        modal.classList.toggle('notice-modal--celebration', !!(celebration && type === 'success'));
         if (refWrap) {
             refWrap.innerHTML = '';
             refWrap.style.display = 'none';
@@ -6999,6 +7217,40 @@
         'ISF-SIT': 'doc_isf_situational',
         RVT: 'doc_voter_cert',
     };
+
+    function isApplicantRequirementOnFile(applicant, code) {
+        if (!applicant) return false;
+        const rawCode = String(code || '').trim().toUpperCase();
+        const docKey = ARCHIVE_DOC_KEY_BY_CODE[rawCode];
+        if (!docKey) return false;
+        const vaultTypes = Array.isArray(applicant.vaultDocumentTypes) ? applicant.vaultDocumentTypes : [];
+        const vaultType = DOC_KEY_TO_VAULT_TYPE[docKey];
+        if (vaultType && vaultTypes.indexOf(vaultType) >= 0) return true;
+        const prop = DOC_KEY_TO_APPLICANT_PROP[docKey];
+        return prop ? !!applicant[prop] : false;
+    }
+
+    async function refreshApplicantRequirementScanPayload(payload) {
+        if (!payload || !payload.applicantId) return payload;
+        try {
+            const url = APPLICANT_REQUIREMENT_SCAN_STATUS_URL
+                + '?applicant_id=' + encodeURIComponent(String(payload.applicantId));
+            const response = await fetch(url, { credentials: 'same-origin', headers: { Accept: 'application/json' } });
+            const fresh = await response.json();
+            if (!fresh || !fresh.success || !Array.isArray(fresh.rows)) return payload;
+            payload.rows = fresh.rows;
+            payload.displacementReason = fresh.displacementReason || payload.displacementReason || '';
+            payload.blacklistBlocked = !!fresh.blacklistBlocked;
+            payload.blacklistReason = fresh.blacklistReason || '';
+            payload.blacklistRegistryName = fresh.blacklistRegistryName || '';
+            payload.blacklistRegistryRef = fresh.blacklistRegistryRef || '';
+            return payload;
+        } catch (_err) {
+            console.warn('Requirement scan refresh failed; using cached checklist.', _err);
+            return payload;
+        }
+    }
+
     function isFollowUpRequirement(code) {
         return String(code || '').toUpperCase() === 'ISF-SIT';
     }
@@ -7088,15 +7340,20 @@
             + '</div>';
     }
 
-    /** View column — read-only preview link only when a vault file exists. */
+    /** Status column — Uploaded / Scanned (opens file when URL available). */
     function buildArchiveReqViewInnerHtml(row) {
         const latestFileUrl = String((row && row.latest_file_url) || '').trim();
-        if (!latestFileUrl) {
+        const filedLabel = String((row && row.filed_via_label) || '').trim();
+        if (!filedLabel && !latestFileUrl) {
             return '<span style="color:#94a3b8;font-size:0.75rem;">—</span>';
         }
-        const safeLatestFileUrl = escapeHtml(latestFileUrl);
-        const docTitle = escapeHtml(String((row && row.latest_file_name) || 'Document on file').trim());
-        return '<button type="button" class="req-scan req-scan-done archive-req-scan-link" data-archive-view-url="' + safeLatestFileUrl + '" onclick="openArchiveRequirementDocument(this.getAttribute(\'data-archive-view-url\'))" title="Open ' + docTitle + ' (read-only)">View</button>';
+        const label = escapeHtml(filedLabel || 'On file');
+        const docTitle = escapeHtml(String((row && row.latest_file_name) || filedLabel || 'Document on file').trim());
+        if (latestFileUrl) {
+            const safeLatestFileUrl = escapeHtml(latestFileUrl);
+            return '<button type="button" class="req-scan req-scan-done archive-req-scan-link" data-archive-view-url="' + safeLatestFileUrl + '" onclick="openArchiveRequirementDocument(this.getAttribute(\'data-archive-view-url\'))" title="Open ' + docTitle + '">' + label + '</button>';
+        }
+        return '<span class="req-scan req-scan-done">' + label + '</span>';
     }
 
     async function triggerArchiveRowDocumentUpload(codeRaw) {
@@ -7162,6 +7419,8 @@
                         row.scanned = true;
                         if (uploadResult && uploadResult.document_url) row.latest_file_url = uploadResult.document_url;
                         if (uploadResult && uploadResult.document_name) row.latest_file_name = uploadResult.document_name;
+                        row.filed_via = 'scan';
+                        row.filed_via_label = 'Scanned';
                     }
                 });
                 updateArchiveRequirementsSummary(payload.rows);
@@ -7213,6 +7472,8 @@
                 if (String(row.code || '').trim().toUpperCase() === safeCode) {
                     row.scanned = true;
                     if (documentUrl) row.latest_file_url = documentUrl;
+                    row.filed_via = 'scan';
+                    row.filed_via_label = 'Scanned';
                 }
             });
         }
@@ -7233,6 +7494,7 @@
         formData.append('doc_key', ctx.docKey);
         formData.append('doc_code', ctx.code);
         formData.append('file', file);
+        formData.append('capture_method', 'upload');
 
         const uploadUrl = '{% url "intake:upload_scanned_requirement" request.user.position %}';
         const uploadBtn = document.querySelector(
@@ -7257,14 +7519,16 @@
                 const payload = currentArchiveRequirementsPayload;
                 if (payload && Array.isArray(payload.rows)) {
                     payload.rows.forEach(function (row) {
-                        if (String(row.code || '').toUpperCase() === ctx.code) {
+                        if (String(row.code || '').trim().toUpperCase() === ctx.code) {
                             row.scanned = true;
                             if (data.document_url) row.latest_file_url = data.document_url;
                             if (data.document_name) row.latest_file_name = data.document_name;
+                            row.filed_via = data.capture_method || 'upload';
+                            row.filed_via_label = data.filed_via_label || 'Uploaded';
                         }
                     });
                 }
-                renderArchiveRowStatusAndActions(ctx.code);
+                forceArchiveRowScannedDom(ctx.code, data.document_url || '');
                 if (payload && payload.rows) {
                     updateArchiveRequirementsSummary(payload.rows);
                 }
@@ -7391,7 +7655,7 @@
         var tds = tr.querySelectorAll('td');
         if (tds.length >= 11) {
             var refText = (tds[4].textContent || '').trim().toLowerCase();
-            var nameCell = tds[5];
+            var nameCell = tds[1];
             var nameEl = nameCell.querySelector('.list-archive-full-name') || nameCell;
             var nameText = (nameEl.textContent || '').trim().toLowerCase();
             var barText = (tds[8].textContent || '').trim().toLowerCase();
@@ -7591,8 +7855,10 @@
                 const nextUrl = `${evaluationApplicationsUrl}?applicant_id=${encodeURIComponent(applicantId)}&from=intake_scan_checklist&ref=${encodeURIComponent(ref)}`;
                 showNoticeModal({
                     title: 'Proceeded Successfully',
-                    message: 'Applicant moved to Application & Eligibility. All baseline requirements are complete.',
+                    messageHtml: buildProceedEvaluationSuccessHtml(payload ? payload.fullName : ''),
+                    allowHtml: true,
                     type: 'success',
+                    celebration: true,
                     primaryText: 'Continue',
                     refPill: ref,
                     onPrimary: function () {
@@ -7675,6 +7941,8 @@
                 row.scanned = true;
                 if (uploadResult && uploadResult.document_url) row.latest_file_url = uploadResult.document_url;
                 if (uploadResult && uploadResult.document_name) row.latest_file_name = uploadResult.document_name;
+                row.filed_via = 'scan';
+                row.filed_via_label = 'Scanned';
                 renderArchiveRowStatusAndActions(code);
                 forceArchiveRowScannedDom(code, uploadResult && uploadResult.document_url ? uploadResult.document_url : '');
                 updateArchiveRequirementsSummary(rows);
@@ -7705,7 +7973,7 @@
         return '';
     }
 
-    function openArchiveRequirementsModal(buttonEl) {
+    async function openArchiveRequirementsModal(buttonEl) {
         if (!buttonEl) return;
         let payloadMap = {};
         const scriptEl = document.getElementById('archive-pages-documents-payload');
@@ -7717,7 +7985,14 @@
             }
         }
         const ref = (buttonEl.dataset && buttonEl.dataset.reference) || '';
-        const payload = payloadMap[ref];
+        let payload = payloadMap[ref];
+        if (payload) {
+            payload = await refreshApplicantRequirementScanPayload(payload);
+            payloadMap[ref] = payload;
+            if (scriptEl) {
+                try { scriptEl.textContent = JSON.stringify(payloadMap); } catch (_err) { /* ignore */ }
+            }
+        }
         currentArchiveRequirementsPayload = payload || null;
 
         const tbody = document.getElementById('archiveRequirementsTableBody');
@@ -7865,12 +8140,18 @@
                 }
             });
         }
+        attachYearsResidingDigitLimit(yearsResidingInput, { minYears: MODULE1_MIN_YEARS_RESIDING });
+        const isfEditYearsInput = document.getElementById('isfEditYears');
+        attachYearsResidingDigitLimit(isfEditYearsInput, { minYears: 0 });
         if (yearsResidingInput) {
             const enforceResidencyRequirement = function() {
                 const raw = String(yearsResidingInput.value || '').trim();
                 const years = parseInt(raw, 10);
-                const isInvalid = raw !== '' && Number.isFinite(years) && years <= 4;
-                if (isInvalid) {
+                const isTooManyDigits = raw !== '' && Number.isFinite(years) && years > MODULE1_MAX_YEARS_RESIDING;
+                const isBelowMin = raw !== '' && Number.isFinite(years) && years <= 4;
+                if (isTooManyDigits) {
+                    yearsResidingInput.setCustomValidity('Years of residence must be at most 2 digits (99).');
+                } else if (isBelowMin) {
                     yearsResidingInput.setCustomValidity('Office requirement: Minimum residency is 5 years in Talisay City.');
                     if (!hasShownResidencyRequirementAlert) {
                         hasShownResidencyRequirementAlert = true;
@@ -7968,8 +8249,39 @@
 
     /** Module 1 income rule — must match `Applicant.is_income_eligible` / `update_eligibility` in intake/views.py */
     const MODULE1_INCOME_CEILING = 10000;
-    /** Mirror `MODULE1_MIN_YEARS_RESIDING_TALISAY` in intake/views.py */
+    /** Mirror `MODULE1_MIN_YEARS_RESIDING_TALISAY` / `MODULE1_MAX_YEARS_RESIDING_TALISAY` in intake/views.py */
     const MODULE1_MIN_YEARS_RESIDING = 5;
+    const MODULE1_MAX_YEARS_RESIDING = 99;
+
+    function attachYearsResidingDigitLimit(inputEl, { minYears = 0 } = {}) {
+        if (!inputEl || inputEl.dataset.yearsDigitLimit === '1') return;
+        inputEl.dataset.yearsDigitLimit = '1';
+        inputEl.setAttribute('inputmode', 'numeric');
+        inputEl.setAttribute('maxlength', '2');
+        if (minYears > 0) {
+            inputEl.setAttribute('min', String(minYears));
+        }
+        const clampDigits = function() {
+            let digits = String(inputEl.value || '').replace(/\D/g, '').slice(0, 2);
+            if (digits !== '') {
+                let n = parseInt(digits, 10);
+                if (n > MODULE1_MAX_YEARS_RESIDING) {
+                    n = MODULE1_MAX_YEARS_RESIDING;
+                    digits = String(n);
+                }
+            }
+            if (inputEl.value !== digits) {
+                inputEl.value = digits;
+            }
+        };
+        inputEl.addEventListener('input', clampDigits);
+        inputEl.addEventListener('paste', function(e) {
+            e.preventDefault();
+            const paste = (e.clipboardData || window.clipboardData).getData('text');
+            inputEl.value = String(paste || '').replace(/\D/g, '').slice(0, 2);
+            clampDigits();
+        });
+    }
 
     function clearLayer2ViolationClasses(scopeRoot) {
         if (!scopeRoot) return;
@@ -9252,9 +9564,12 @@
                     return;
                 }
                 showNoticeModal({
-                    title: 'Applicant Archived',
-                    message: `${target.referenceNumber || ''} has been moved to LIST OF APPLICANTS`,
+                    title: 'Success!',
+                    messageHtml: buildProceedArchiveSuccessHtml(),
+                    allowHtml: true,
                     type: 'success',
+                    celebration: true,
+                    refPill: target.referenceNumber || '',
                     onPrimary: () => {
                         try { sessionStorage.setItem('scrollToArchiveSection', '1'); } catch (_err) {}
                         closeReviewModal();
@@ -9300,7 +9615,7 @@
                 dbKey: 'doc_brgy_residency',
                 isRequired: true,
                 isActive: true,
-                scanned: !!applicant.docBrgyResidency,
+                scanned: isApplicantRequirementOnFile(applicant, 'R01'),
             },
             {
                 code: 'R02',
@@ -9309,7 +9624,7 @@
                 dbKey: 'doc_brgy_indigency',
                 isRequired: true,
                 isActive: true,
-                scanned: !!applicant.docBrgyIndigency,
+                scanned: isApplicantRequirementOnFile(applicant, 'R02'),
             },
             {
                 code: 'R03',
@@ -9318,7 +9633,7 @@
                 dbKey: 'doc_cedula',
                 isRequired: true,
                 isActive: true,
-                scanned: !!applicant.docCedula,
+                scanned: isApplicantRequirementOnFile(applicant, 'R03'),
             },
             {
                 code: 'R04',
@@ -9327,7 +9642,7 @@
                 dbKey: 'doc_police_clearance',
                 isRequired: true,
                 isActive: true,
-                scanned: !!applicant.docPoliceClearance,
+                scanned: isApplicantRequirementOnFile(applicant, 'R04'),
             },
             {
                 code: 'R05',
@@ -9336,7 +9651,7 @@
                 dbKey: 'doc_no_property',
                 isRequired: true,
                 isActive: true,
-                scanned: !!applicant.docNoProperty,
+                scanned: isApplicantRequirementOnFile(applicant, 'R05'),
             },
             {
                 code: 'R06',
@@ -9345,7 +9660,7 @@
                 dbKey: 'doc_2x2_picture',
                 isRequired: true,
                 isActive: true,
-                scanned: !!applicant.doc2x2Picture,
+                scanned: isApplicantRequirementOnFile(applicant, 'R06'),
             },
             {
                 code: 'R07',
@@ -9354,7 +9669,7 @@
                 dbKey: 'doc_sketch_location',
                 isRequired: true,
                 isActive: true,
-                scanned: !!applicant.docSketchLocation,
+                scanned: isApplicantRequirementOnFile(applicant, 'R07'),
             },
         ];
         requirements.push({
@@ -9364,7 +9679,7 @@
             dbKey: 'doc_voter_cert',
             isRequired: true,
             isActive: true,
-            scanned: !!applicant.docVoterCert,
+            scanned: isApplicantRequirementOnFile(applicant, 'RVT'),
         });
         if (['danger_zone', 'ejected', 'relocated'].includes(applicant.displacementReason)) {
             var situCode = String(applicant.displacementReason || '').trim() === 'danger_zone' ? 'CDRRMO' : 'ISF-SIT';
@@ -9388,7 +9703,7 @@
                 dbKey: situDbKey,
                 isRequired: false,
                 isActive: true,
-                scanned: false,
+                scanned: isApplicantRequirementOnFile(applicant, situCode),
             });
         }
 
@@ -9456,7 +9771,7 @@
                 </td>
                 <td>
                     <span class="${req.scanned ? 'docscan-status docscan-status-done' : 'docscan-status docscan-status-pending'}">
-                        ${req.scanned ? 'View' : 'Not scanned'}
+                        ${req.scanned ? 'On file' : 'Missing'}
                     </span>
                 </td>
                 <td>
@@ -10773,10 +11088,35 @@
             }
         }
 
-        // Validate years residing in Talisay (office requirement: minimum 5 years)
+        // Validate years residing in Talisay (2 digits max; office minimum 5 years)
         const yearsResiding = document.getElementById('yearsResiding');
-        const yearsResidingValue = yearsResiding ? parseInt(String(yearsResiding.value || '').trim(), 10) : NaN;
-        if (!yearsResiding || !Number.isFinite(yearsResidingValue) || yearsResidingValue <= 4) {
+        const yearsResidingRaw = yearsResiding ? String(yearsResiding.value || '').trim() : '';
+        const yearsResidingValue = yearsResiding ? parseInt(yearsResidingRaw, 10) : NaN;
+        if (!yearsResiding || !/^\d{1,2}$/.test(yearsResidingRaw) || !Number.isFinite(yearsResidingValue)) {
+            showNoticeModal({
+                title: 'Residency Requirement',
+                message: 'Enter years of residence as a whole number (2 digits only, 5–99).',
+                type: 'warning',
+            });
+            if (yearsResiding) {
+                yearsResiding.setCustomValidity('Enter 1–2 digits (5–99 years).');
+                yearsResiding.reportValidity();
+            }
+            return;
+        }
+        if (yearsResidingValue > MODULE1_MAX_YEARS_RESIDING) {
+            showNoticeModal({
+                title: 'Residency Requirement',
+                message: 'Years of residence must be at most 2 digits (99).',
+                type: 'warning',
+            });
+            if (yearsResiding) {
+                yearsResiding.setCustomValidity('Maximum 99 years (2 digits).');
+                yearsResiding.reportValidity();
+            }
+            return;
+        }
+        if (yearsResidingValue <= 4) {
             showNoticeModal({
                 title: 'Residency Requirement',
                 message: 'Applicants with 4 years or below residency in Talisay City are not accepted. Minimum is 5 years.',
@@ -10968,13 +11308,14 @@
                 closeAddModal();
 
                 const successLine = data.message || 'Applicant registered successfully.';
-                const smsNote = 'No SMS is sent at registration. The first SMS is sent when this record is proceeded to Module 2.';
-                const detailHtml = `<div class="notice-modal-message-center">${escapeHtml(successLine)}</div><div class="notice-modal-sms-note">${escapeHtml(smsNote)}</div>`;
+                const registered = parseRegistrationSuccessMessage(successLine);
                 showNoticeModal({
                     title: 'Applicant Registered',
-                    messageHtml: detailHtml,
+                    messageHtml: buildApplicantRegisteredSuccessHtml(registered.fullName),
                     allowHtml: true,
                     type: 'success',
+                    celebration: true,
+                    refPill: registered.referenceNumber || '',
                     onPrimary: () => { location.reload(); },
                 });
             } else {
@@ -11554,8 +11895,14 @@
             submitFieldEdit('monthly_income', income, reason);
         } else if (household && household !== currentISFData.household_members) {
             submitFieldEdit('household_members', household, reason);
-        } else if (years && years !== currentISFData.years_residing) {
-            submitFieldEdit('years_residing', years, reason);
+        } else if (years && String(years) !== String(currentISFData.years_residing)) {
+            const yearsDigits = String(years).replace(/\D/g, '').slice(0, 2);
+            const yearsNum = parseInt(yearsDigits, 10);
+            if (!/^\d{1,2}$/.test(yearsDigits) || !Number.isFinite(yearsNum) || yearsNum > MODULE1_MAX_YEARS_RESIDING) {
+                showFlowAlert('Years of residence must be 2 digits only (0–99).');
+                return;
+            }
+            submitFieldEdit('years_residing', String(yearsNum), reason);
         } else {
             showFlowAlert('No changes detected');
             return;

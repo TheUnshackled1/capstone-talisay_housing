@@ -14,7 +14,7 @@ from .models import Applicant, Barangay, Archive, SMSLog
 from applications.staff_pipeline_status import archive_applicant_status
 from applications.models import QueueEntry
 from units.models import LotAward, Blacklist
-from documents.models import Document, Requirement, upsert_document_vault_upload
+from documents.models import Document, Requirement, document_filed_via_display, upsert_document_vault_upload
 from .forms import (
     HouseholdMemberForm,
     WalkInApplicantForm
@@ -72,6 +72,20 @@ def _intake_module2_blacklist_check_payload(applicant):
 # Soft check only: applicants below this threshold are still allowed to register
 # and submit. The flag is surfaced for downstream eligibility evaluation.
 MODULE1_MIN_YEARS_RESIDING_TALISAY = 5
+MODULE1_MAX_YEARS_RESIDING_TALISAY = 99
+
+
+def _parse_years_residing(raw):
+    """Normalize years residing to 0–99 (2 digits). Returns None if empty/invalid."""
+    if raw is None:
+        return None
+    text = str(raw).strip()
+    if not text:
+        return None
+    digits = re.sub(r'\D', '', text)[:2]
+    if not digits:
+        return None
+    return max(0, min(MODULE1_MAX_YEARS_RESIDING_TALISAY, int(digits)))
 
 
 def _relative_time_ago(dt):
@@ -110,6 +124,106 @@ def _relative_time_ago(dt):
 DISPLACEMENT_PATHS_NEED_ISF_EXTRA = frozenset({'danger_zone', 'ejected', 'relocated'})
 ISF_EXTRA_VAULT_DOC_TYPE = 'isf_situational_docs'
 CDRRMO_EXTRA_VAULT_DOC_TYPE = 'cdrrmo_cert'
+
+# Mirrors `upload_scanned_requirement` — vault row satisfies checklist whether filed via Upload or Scan.
+APPLICANT_DOC_KEY_TO_VAULT_TYPE = {
+    'doc_brgy_residency': 'barangay_residency',
+    'doc_brgy_indigency': 'barangay_indigency',
+    'doc_cedula': 'cedula',
+    'doc_police_clearance': 'police_clearance',
+    'doc_no_property': 'no_property',
+    'doc_2x2_picture': 'photo_2x2',
+    'doc_sketch_location': 'house_sketch',
+    'doc_isf_situational': ISF_EXTRA_VAULT_DOC_TYPE,
+    'doc_voter_cert': 'voter_certification',
+    'doc_cdrrmo': CDRRMO_EXTRA_VAULT_DOC_TYPE,
+    'doc_incident_report': 'incident_report',
+    'doc_signed_application': 'signed_application',
+}
+
+
+def _applicant_vault_document_types(applicant):
+    return set(
+        Document.objects.filter(applicant_id=applicant.pk)
+        .exclude(document_type='')
+        .values_list('document_type', flat=True)
+    )
+
+
+def _sync_applicant_doc_flags_from_vault(applicant, scanned_types=None):
+    """Keep legacy boolean checklist fields aligned with vault (upload or scan)."""
+    scanned_types = scanned_types if scanned_types is not None else _applicant_vault_document_types(applicant)
+    update_fields = []
+    for doc_key, vault_type in APPLICANT_DOC_KEY_TO_VAULT_TYPE.items():
+        if vault_type not in scanned_types:
+            continue
+        if hasattr(applicant, doc_key) and not getattr(applicant, doc_key):
+            setattr(applicant, doc_key, True)
+            update_fields.append(doc_key)
+    if update_fields:
+        update_fields.append('updated_at')
+        applicant.save(update_fields=update_fields)
+
+
+def _latest_doc_meta_by_type_for_applicant(applicant, request):
+    latest_doc_by_type = {}
+    latest_docs = (
+        Document.objects.filter(applicant_id=applicant.pk)
+        .with_file_payload()
+        .select_related('blob_record')
+        .order_by('document_type', '-uploaded_at')
+    )
+    for doc in latest_docs:
+        dtype = (doc.document_type or '').strip()
+        if not dtype or dtype in latest_doc_by_type:
+            continue
+        try:
+            doc_url = doc.absolute_download_url(request)
+        except (ValueError, AttributeError):
+            doc_url = ''
+        if not doc_url:
+            continue
+        capture_method = (doc.capture_method or '').strip()
+        latest_doc_by_type[dtype] = {
+            'url': doc_url,
+            'name': (doc.file_name or doc.title or doc.get_document_type_display() or '').strip(),
+            'capture_method': capture_method,
+            'filed_via': capture_method,
+            'filed_via_label': document_filed_via_display(capture_method),
+        }
+    return latest_doc_by_type
+
+
+def _build_applicant_requirement_scan_payload(applicant, request):
+    """Live checklist rows: `scanned` when vault has the requirement (upload or scan)."""
+    scanned_types = _applicant_vault_document_types(applicant)
+    _sync_applicant_doc_flags_from_vault(applicant, scanned_types)
+    latest_doc_by_type = _latest_doc_meta_by_type_for_applicant(applicant, request)
+    displacement_reason = (applicant.displacement_reason or '').strip()
+    requirements_group_a = list(Requirement.objects.filter(group='A').order_by('order', 'code'))
+    rows, scanned_count, trackable_total = _archive_requirement_scan_rows(
+        requirements_group_a,
+        scanned_types,
+        displacement_reason=displacement_reason,
+        latest_doc_by_type=latest_doc_by_type,
+    )
+    required_rows = [row for row in rows if row.get('is_required_for_form')]
+    scanned_required = sum(1 for row in required_rows if row.get('scanned'))
+    bl_gate = _intake_module2_blacklist_check_payload(applicant)
+    return {
+        'success': True,
+        'rows': rows,
+        'scannedCount': scanned_count,
+        'trackableTotal': trackable_total,
+        'requiredScannedCount': scanned_required,
+        'requiredTotal': len(required_rows),
+        'vaultDocumentTypes': sorted(scanned_types),
+        'applicantId': str(applicant.pk),
+        'referenceNumber': applicant.reference_number or '',
+        'fullName': applicant.full_name or '',
+        'displacementReason': displacement_reason,
+        **bl_gate,
+    }
 
 
 def _archive_list_status_label_and_tier(scanned_count, requirements_total, blacklist_blocked=False):
@@ -201,10 +315,38 @@ def _isf_situational_policy_tooltip(displacement_reason=''):
     return ''
 
 
+def _requirement_scan_row_dict(req, scanned, latest_meta=None):
+    latest_meta = latest_meta or {}
+    filed_via = latest_meta.get('filed_via', '') if scanned else ''
+    filed_via_label = latest_meta.get('filed_via_label', '') if scanned else ''
+    return {
+        'code': req.code,
+        'name': req.name,
+        'group_display': req.get_group_display(),
+        'is_required_for_form': req.is_required_for_form,
+        'is_active': req.is_active,
+        'scanned': scanned,
+        'latest_file_url': latest_meta.get('url', ''),
+        'latest_file_name': latest_meta.get('name', ''),
+        'filed_via': filed_via,
+        'filed_via_label': filed_via_label,
+    }
+
+
+def _requirement_scan_row_extras(scanned, latest_meta=None):
+    latest_meta = latest_meta or {}
+    if not scanned:
+        return {'filed_via': '', 'filed_via_label': ''}
+    return {
+        'filed_via': latest_meta.get('filed_via', ''),
+        'filed_via_label': latest_meta.get('filed_via_label', ''),
+    }
+
+
 def _archive_requirement_scan_rows(requirements_group_a, scanned_types_set, displacement_reason='', latest_doc_by_type=None):
     """
     Build checklist rows from `documents.Requirement` rows; `scanned` is True when this
-    requirement's `vault_document_type` matches an uploaded Applicant Document.
+    requirement's `vault_document_type` exists in the applicant vault (upload or scan).
 
     When displacement is Option A/B/C, one extra trackable row is appended:
     - Option A: CDRRMO certification
@@ -236,16 +378,7 @@ def _archive_requirement_scan_rows(requirements_group_a, scanned_types_set, disp
         dtype = (getattr(req, 'vault_document_type', None) or '').strip()
         scanned = bool(dtype and dtype in scanned_types_set)
         latest_meta = latest_doc_by_type.get(dtype, {}) if dtype else {}
-        rows.append({
-            'code': req.code,
-            'name': req.name,
-            'group_display': req.get_group_display(),
-            'is_required_for_form': req.is_required_for_form,
-            'is_active': req.is_active,
-            'scanned': scanned,
-            'latest_file_url': latest_meta.get('url', ''),
-            'latest_file_name': latest_meta.get('name', ''),
-        })
+        rows.append(_requirement_scan_row_dict(req, scanned, latest_meta))
 
     scanned_count = 0
     trackable_total = 0
@@ -261,16 +394,7 @@ def _archive_requirement_scan_rows(requirements_group_a, scanned_types_set, disp
         dtype = (getattr(rvt_req, 'vault_document_type', None) or '').strip()
         scanned = bool(dtype and dtype in scanned_types_set)
         latest_meta = latest_doc_by_type.get(dtype, {}) if dtype else {}
-        rows.append({
-            'code': rvt_req.code,
-            'name': rvt_req.name,
-            'group_display': rvt_req.get_group_display(),
-            'is_required_for_form': rvt_req.is_required_for_form,
-            'is_active': rvt_req.is_active,
-            'scanned': scanned,
-            'latest_file_url': latest_meta.get('url', ''),
-            'latest_file_name': latest_meta.get('name', ''),
-        })
+        rows.append(_requirement_scan_row_dict(rvt_req, scanned, latest_meta))
         if dtype:
             trackable_total += 1
             if dtype in scanned_types_set:
@@ -291,6 +415,7 @@ def _archive_requirement_scan_rows(requirements_group_a, scanned_types_set, disp
             'scanned': scanned_cdrrmo,
             'latest_file_url': latest_cdrrmo.get('url', ''),
             'latest_file_name': latest_cdrrmo.get('name', ''),
+            **_requirement_scan_row_extras(scanned_cdrrmo, latest_cdrrmo),
         })
         # LIST OF APPLICANTS badge + parity with modal row count (R01–RVT + optional situational row).
         trackable_total += 1
@@ -310,6 +435,7 @@ def _archive_requirement_scan_rows(requirements_group_a, scanned_types_set, disp
             'scanned': scanned_isf,
             'latest_file_url': latest_isf.get('url', ''),
             'latest_file_name': latest_isf.get('name', ''),
+            **_requirement_scan_row_extras(scanned_isf, latest_isf),
         })
         # LIST OF APPLICANTS badge + parity with modal row count (R01–RVT + optional situational row).
         trackable_total += 1
@@ -317,6 +443,19 @@ def _archive_requirement_scan_rows(requirements_group_a, scanned_types_set, disp
             scanned_count += 1
 
     return rows, scanned_count, trackable_total
+
+
+def _required_requirement_counts(vault_types, displacement_reason, requirements_group_a):
+    """(scanned_required, required_total) for walk-in / checklist chips."""
+    rows, _, _ = _archive_requirement_scan_rows(
+        requirements_group_a,
+        vault_types or set(),
+        displacement_reason=(displacement_reason or '').strip(),
+        latest_doc_by_type={},
+    )
+    required_rows = [row for row in rows if row.get('is_required_for_form')]
+    scanned_required = sum(1 for row in required_rows if row.get('scanned'))
+    return scanned_required, len(required_rows)
 
 
 def _is_residency_eligible(years_residing):
@@ -650,11 +789,9 @@ def update_applicant(request, position):
             applicant.monthly_income = Decimal(monthly_income)
         if household_size:
             applicant.household_size = int(household_size)
-        if years_residing is not None and str(years_residing).strip() != '':
-            try:
-                applicant.years_residing = int(years_residing)
-            except (TypeError, ValueError):
-                pass
+        parsed_years = _parse_years_residing(years_residing)
+        if parsed_years is not None:
+            applicant.years_residing = parsed_years
         if phone_number:
             applicant.phone_number = phone_number
         if current_address:
@@ -730,22 +867,7 @@ def upload_scanned_requirement(request, position):
     doc_key = (request.POST.get('doc_key') or request.GET.get('doc_key') or '').strip()
     doc_code = (request.POST.get('doc_code') or request.GET.get('doc_code') or '').strip().upper()
 
-    key_to_document_type = {
-        'doc_brgy_residency': 'barangay_residency',
-        'doc_brgy_indigency': 'barangay_indigency',
-        'doc_cedula': 'cedula',
-        'doc_police_clearance': 'police_clearance',
-        'doc_no_property': 'no_property',
-        'doc_2x2_picture': 'photo_2x2',
-        'doc_sketch_location': 'house_sketch',
-        'doc_isf_situational': 'isf_situational_docs',
-        'doc_voter_cert': 'voter_certification',
-        'doc_cdrrmo': 'cdrrmo_cert',
-        'doc_incident_report': 'incident_report',
-        'doc_signed_application': 'signed_application',
-    }
-
-    if not applicant_id or doc_key not in key_to_document_type:
+    if not applicant_id or doc_key not in APPLICANT_DOC_KEY_TO_VAULT_TYPE:
         return JsonResponse({'success': False, 'error': 'Missing or invalid applicant/document mapping.'}, status=400)
 
     allowed_positions = ['fourth_member', 'second_member']
@@ -761,12 +883,16 @@ def upload_scanned_requirement(request, position):
     if not uploaded_file:
         return JsonResponse({'success': False, 'error': 'No scanned file payload received.'}, status=400)
 
+    capture_method = (request.POST.get('capture_method') or request.GET.get('capture_method') or '').strip().lower()
+    if capture_method not in (Document.CAPTURE_UPLOAD, Document.CAPTURE_SCAN):
+        capture_method = Document.CAPTURE_SCAN
+
     try:
         applicant = Applicant.objects.get(id=applicant_id)
     except Applicant.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Applicant not found.'}, status=404)
 
-    document_type = key_to_document_type[doc_key]
+    document_type = APPLICANT_DOC_KEY_TO_VAULT_TYPE[doc_key]
     label_map = dict(Document.DOCUMENT_TYPE_CHOICES)
     doc_title = f"{applicant.full_name} - {label_map.get(document_type, document_type)}"
 
@@ -776,6 +902,7 @@ def upload_scanned_requirement(request, position):
         uploaded_file=uploaded_file,
         title=doc_title,
         uploaded_by=request.user,
+        capture_method=capture_method,
     )
 
     if hasattr(applicant, doc_key):
@@ -791,7 +918,31 @@ def upload_scanned_requirement(request, position):
         'doc_type': document_type,
         'document_url': doc.absolute_download_url(request),
         'document_name': doc.file_name or (uploaded_file.name if uploaded_file else ''),
+        'capture_method': doc.capture_method or capture_method,
+        'filed_via_label': document_filed_via_display(doc.capture_method or capture_method),
     })
+
+
+@login_required
+@verify_position
+def applicant_requirement_scan_status(request, position):
+    """Fresh document scan checklist rows (vault upload or scan counts as filed)."""
+    if request.method != 'GET':
+        return JsonResponse({'success': False, 'error': 'GET required.'}, status=405)
+
+    if request.user.position not in ('second_member', 'fourth_member'):
+        return JsonResponse({'success': False, 'error': 'Permission denied.'}, status=403)
+
+    applicant_id = (request.GET.get('applicant_id') or '').strip()
+    if not applicant_id:
+        return JsonResponse({'success': False, 'error': 'Missing applicant_id.'}, status=400)
+
+    try:
+        applicant = Applicant.objects.get(pk=applicant_id)
+    except Applicant.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Applicant not found.'}, status=404)
+
+    return JsonResponse(_build_applicant_requirement_scan_payload(applicant, request))
 
 
 @login_required
@@ -1173,13 +1324,16 @@ def applicants_list(request, position):
         ).order_by('created_at')
     )
     walk_in_ids = [a.id for a in walk_in_applicants]
+    walk_in_vault_types_by_applicant = defaultdict(set)
     walk_in_extra_doc_types_by_applicant = defaultdict(set)
+    requirements_group_a = list(Requirement.objects.filter(group='A').order_by('order', 'code'))
     if walk_in_ids:
         for aid, doc_type in Document.objects.filter(
             applicant_id__in=walk_in_ids,
-            document_type__in=(ISF_EXTRA_VAULT_DOC_TYPE, CDRRMO_EXTRA_VAULT_DOC_TYPE),
-        ).values_list('applicant_id', 'document_type'):
-            walk_in_extra_doc_types_by_applicant[aid].add(doc_type)
+        ).exclude(document_type='').values_list('applicant_id', 'document_type'):
+            walk_in_vault_types_by_applicant[aid].add(doc_type)
+            if doc_type in (ISF_EXTRA_VAULT_DOC_TYPE, CDRRMO_EXTRA_VAULT_DOC_TYPE):
+                walk_in_extra_doc_types_by_applicant[aid].add(doc_type)
 
     for app in walk_in_applicants:
         # Determine eligibility status display
@@ -1230,6 +1384,11 @@ def applicants_list(request, position):
             cdrrmo_disposition_source = 'pending'
 
         local_created_at = timezone.localtime(app.created_at)
+        doc_scanned_count, doc_required_total = _required_requirement_counts(
+            walk_in_vault_types_by_applicant.get(app.id, set()),
+            app.displacement_reason,
+            requirements_group_a,
+        )
         applicants.append({
             'id': str(app.id),
             'fullName': app.full_name,
@@ -1312,38 +1471,10 @@ def applicants_list(request, position):
             'handledBy': app.registered_by.get_full_name() if app.registered_by else 'Unknown',
             'handledByPosition': app.registered_by.get_position_display_short() if app.registered_by else '',
             'handledByInitials': (app.registered_by.first_name[:1] + app.registered_by.last_name[:1]).upper() if app.registered_by else '??',
-            # Document checklist count (baseline + one optional situational slot for Options A/B/C).
-            'docsCount': (
-                sum([
-                    app.doc_brgy_residency,
-                    app.doc_brgy_indigency,
-                    app.doc_cedula,
-                    app.doc_police_clearance,
-                    app.doc_no_property,
-                    app.doc_2x2_picture,
-                    app.doc_sketch_location,
-                    app.doc_voter_cert,
-                ])
-                + (
-                    1
-                    if (
-                        (
-                            (app.displacement_reason or '').strip() == 'danger_zone'
-                            and CDRRMO_EXTRA_VAULT_DOC_TYPE in walk_in_extra_doc_types_by_applicant.get(app.id, set())
-                        )
-                        or (
-                            (app.displacement_reason or '').strip() in ('ejected', 'relocated')
-                            and ISF_EXTRA_VAULT_DOC_TYPE in walk_in_extra_doc_types_by_applicant.get(app.id, set())
-                        )
-                    )
-                    else 0
-                )
-            ),
-            'docsTotal': (
-                9
-                if (app.displacement_reason or '').strip() in DISPLACEMENT_PATHS_NEED_ISF_EXTRA
-                else 8
-            ),
+            # Document checklist count — vault is source of truth (upload or scan).
+            'docsCount': doc_scanned_count,
+            'docsTotal': doc_required_total,
+            'vaultDocumentTypes': sorted(walk_in_vault_types_by_applicant.get(app.id, set())),
             # Individual document states for modal checkboxes
             'docBrgyResidency': app.doc_brgy_residency,
             'docBrgyIndigency': app.doc_brgy_indigency,
@@ -1397,8 +1528,6 @@ def applicants_list(request, position):
                 'url': doc.absolute_download_url(request),
                 'name': (doc.file_name or doc.title or doc.get_document_type_display() or '').strip(),
             }
-
-    requirements_group_a = list(Requirement.objects.filter(group='A').order_by('order', 'code'))
 
     channel_display_map = {
         'channel_a': ('A', 'Channel A — Walk-in'),

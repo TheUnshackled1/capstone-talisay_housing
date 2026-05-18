@@ -155,9 +155,11 @@ class Applicant(models.Model):
         verbose_name="Barangay of Origin"
     )
     current_address = models.TextField(verbose_name="Current Address/Location")
-    years_residing = models.PositiveIntegerField(
+    years_residing = models.PositiveSmallIntegerField(
         default=0,
-        verbose_name="Years Residing in Talisay"
+        validators=[MinValueValidator(0), MaxValueValidator(99)],
+        verbose_name="Years Residing in Talisay",
+        help_text="Whole years in Talisay City (2 digits maximum, 0–99).",
     )
     is_registered_voter_talisay = models.BooleanField(
         default=False,
@@ -360,7 +362,13 @@ class Applicant(models.Model):
         ordering = ['created_at']
         verbose_name = "Applicant"
         verbose_name_plural = "Applicants"
-    
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(years_residing__lte=99),
+                name='applicant_years_residing_max_99',
+            ),
+        ]
+
     def save(self, *args, **kwargs):
         # Generate reference number if new
         if not self.reference_number:
@@ -388,6 +396,9 @@ class Applicant(models.Model):
         self.full_name = (self.full_name or '')[:30]
         self.danger_zone_location = _leading_capitalize(self.danger_zone_location)[:30]
         self.project_name = _leading_capitalize(self.project_name)[:30]
+
+        if self.years_residing is not None:
+            self.years_residing = max(0, min(99, int(self.years_residing)))
 
         super().save(*args, **kwargs)
     
