@@ -1394,6 +1394,36 @@ def _cdrrmo_meta_for_applicant(applicant):
     }
 
 
+def _module1_staff_handled_user(applicant):
+    """Staff who proceeded from Module 1; falls back to encoder."""
+    return getattr(applicant, 'module2_handoff_by', None) or applicant.registered_by
+
+
+def _staff_handled_row(user):
+    """Avatar initials + labels for Staff Handled columns (intake / field desk)."""
+    if not user:
+        return {
+            'staff_handled': '—',
+            'staff_position': '—',
+            'staff_initials': '—',
+            'staff_position_key': '',
+        }
+    first = (user.first_name or '')[:1]
+    last = (user.last_name or '')[:1]
+    initials = (first + last).upper() or '??'
+    position_key = getattr(user, 'position', '') or ''
+    if hasattr(user, 'get_position_display_short'):
+        position_label = user.get_position_display_short()
+    else:
+        position_label = user.get_position_display() if position_key else '—'
+    return {
+        'staff_handled': user.get_full_name(),
+        'staff_position': position_label,
+        'staff_initials': initials,
+        'staff_position_key': position_key,
+    }
+
+
 @login_required
 @require_GET
 def field_applicant_cdrrmo_meta(request, applicant_id):
@@ -1437,7 +1467,10 @@ def dashboard_field(request):
     ).exclude(
         applicant__danger_zone_type=''  # Empty string means not claimed
     ).distinct().select_related(
-        'applicant', 'applicant__registered_by', 'applicant__barangay'
+        'applicant',
+        'applicant__registered_by',
+        'applicant__module2_handoff_by',
+        'applicant__barangay',
     ).order_by('requested_at')
 
     pending_cert_list = list(pending_certifications)
@@ -1471,6 +1504,8 @@ def dashboard_field(request):
                 else 'Pre-assignment'
             )
 
+        staff_user = _module1_staff_handled_user(cert.applicant)
+        staff_row = _staff_handled_row(staff_user)
         pending_verifications.append({
             'index': row_num,
             'id': cert.applicant.id,
@@ -1487,8 +1522,8 @@ def dashboard_field(request):
             'channel': 'Channel B — Danger Zone',
             'eligibility': 'Eligible to Proceed',  # All showing in this view are eligible
             'queue_position': queue_position,
-            'staff_handled': cert.applicant.registered_by.get_full_name() if cert.applicant.registered_by else '—',
-            'staff_position': cert.applicant.registered_by.get_position_display() if cert.applicant.registered_by else '—',
+            'staff_user': staff_user,
+            **staff_row,
             'sms_status': '✓ Sent' if cert.applicant.registration_sms_sent else '✗ Not Sent',
             'created_at': cert.requested_at,
             'days_pending': days_pending,

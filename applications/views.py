@@ -753,6 +753,39 @@ _MODULE2_EVALUATION_ACTIVE_STATUSES = (
 )
 
 
+def _module1_staff_handled_user(applicant):
+    """Staff who proceeded from Module 1 (handoff), else encoder."""
+    return getattr(applicant, 'module2_handoff_by', None) or applicant.registered_by
+
+
+def _staff_handled_display(user):
+    """Initials + labels for Staff column (matches intake / field desk)."""
+    if not user:
+        return {
+            'staff_user': None,
+            'staff_initials': '',
+            'staff_name': '',
+            'staff_role': '',
+            'staff_position_key': '',
+        }
+    first = (user.first_name or '')[:1]
+    last = (user.last_name or '')[:1]
+    initials = (first + last).upper() or '??'
+    position_key = getattr(user, 'position', '') or ''
+    role = (
+        user.get_position_display_short()
+        if hasattr(user, 'get_position_display_short')
+        else (user.get_position_display() if position_key else '')
+    )
+    return {
+        'staff_user': user,
+        'staff_initials': initials,
+        'staff_name': user.get_full_name(),
+        'staff_role': role,
+        'staff_position_key': position_key,
+    }
+
+
 def _module2_evaluations_applicants_queryset():
     """
     Applicants shown on Application & Evaluation (Module 2 handoff + baseline Group A scans).
@@ -960,9 +993,11 @@ def _module2_applicant_row_payload(applicant, permissions, required_group_a_subm
     proceeded_ago = _relative_time_ago(proceeded_dt) if proceeded_dt else '—'
     routed_dt = applicant.form_queue_routed_at or proceeded_dt
     routed_ago = _relative_time_ago(routed_dt) if routed_dt else '—'
+    staff_display = _staff_handled_display(_module1_staff_handled_user(applicant))
 
     return {
         'applicant': applicant,
+        **staff_display,
         'application': application,
         'proceededAgo': proceeded_ago,
         'routedAgo': routed_ago,

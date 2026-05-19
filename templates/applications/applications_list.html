@@ -475,7 +475,8 @@
 
     .applications-table td.col-status,
     .applications-table td.col-eligibility,
-    .applications-table td.col-actions {
+    .applications-table td.col-actions,
+    .applications-table td.col-staff:not(.col-status) {
         overflow: visible;
     }
 
@@ -691,13 +692,14 @@
         width: 26px;
         height: 26px;
         border-radius: 50%;
-        color: white;
+        color: #ffffff !important;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 0.6rem;
+        font-size: 0.6rem !important;
         font-weight: 700;
         flex-shrink: 0;
+        line-height: 1;
         box-shadow: 0 2px 4px rgba(15, 23, 42, 0.18), inset 0 0 0 2px #ffffff;
         letter-spacing: 0.02em;
     }
@@ -3785,12 +3787,21 @@
         gap: 0.4rem;
         align-items: flex-start;
     }
-    .applications-table.compact-table td.col-staff .m2-staff-row > div:last-child {
+    .applications-table.compact-table td.col-staff .m2-staff-row__meta {
+        flex: 1 1 auto;
+        min-width: 3.25rem;
+        overflow: hidden;
         font-size: 0.6rem;
         line-height: 1.3;
-        min-width: 0;
-        overflow: hidden;
     }
+    .applications-table.compact-table td.col-staff .m2-staff-row > div:last-child:not(.handled-by-avatar) {
+        flex: 1 1 auto;
+        min-width: 3.25rem;
+        overflow: hidden;
+        font-size: 0.6rem;
+        line-height: 1.3;
+    }
+    .applications-table.compact-table td.col-staff .m2-staff-row__meta > div:first-child,
     .applications-table.compact-table td.col-staff .m2-staff-row > div:last-child > div:first-child {
         font-weight: 600;
         color: #0f172a;
@@ -3799,6 +3810,7 @@
         text-overflow: ellipsis;
         max-width: 9.5rem;
     }
+    .applications-table.compact-table td.col-staff .m2-staff-row__meta > div:nth-child(2),
     .applications-table.compact-table td.col-staff .m2-staff-row > div:last-child > div:nth-child(2) {
         font-size: 0.54rem !important;
         color: #64748b;
@@ -3806,6 +3818,7 @@
         letter-spacing: 0.05em;
     }
     /* Hide M2 handoff sub-line — viewable on hover via tooltip */
+    .applications-table.compact-table td.col-staff .m2-staff-row__meta > div:nth-child(3),
     .applications-table.compact-table td.col-staff .m2-staff-row > div:last-child > div:nth-child(3) {
         display: none !important;
     }
@@ -3815,6 +3828,8 @@
         width: 22px !important;
         height: 22px !important;
         font-size: 0.54rem !important;
+        color: #ffffff !important;
+        flex-shrink: 0 !important;
     }
 
     /* Applicant Record — slim name col, allow wrap on 2 lines */
@@ -3893,6 +3908,52 @@
         font-size: 0.62rem !important;
         min-width: 0 !important;
     }
+
+    /* Staff column only (not Situation Status) — fixed table was clipping name/role */
+    .applications-table.compact-table th.col-staff:not(.col-status),
+    .applications-table.compact-table td.col-staff:not(.col-status) {
+        width: 12% !important;
+        min-width: 8.25rem !important;
+        overflow: visible !important;
+    }
+    .applications-table td.col-staff:not(.col-status) .m2-staff-row {
+        display: flex !important;
+        align-items: center !important;
+        gap: 0.4rem !important;
+        width: 100% !important;
+    }
+    .applications-table td.col-staff:not(.col-status) .m2-staff-row__meta {
+        flex: 1 1 0 !important;
+        min-width: 4.5rem !important;
+        overflow: visible !important;
+        display: block !important;
+    }
+    .applications-table td.col-staff:not(.col-status) .m2-staff-row__meta > div:first-child {
+        white-space: normal !important;
+        overflow: visible !important;
+        text-overflow: clip !important;
+        max-width: none !important;
+        font-size: 0.62rem !important;
+        font-weight: 600 !important;
+        color: #0f172a !important;
+        line-height: 1.25 !important;
+    }
+    .applications-table td.col-staff:not(.col-status) .m2-staff-row__meta > div:nth-child(2) {
+        white-space: normal !important;
+        overflow: visible !important;
+        text-overflow: clip !important;
+        max-width: none !important;
+        font-size: 0.54rem !important;
+        color: #64748b !important;
+        text-transform: none !important;
+        letter-spacing: 0 !important;
+    }
+    .applications-table td.col-staff:not(.col-status) .handled-by-avatar {
+        color: #ffffff !important;
+        font-size: 0.58rem !important;
+        line-height: 1 !important;
+        flex-shrink: 0 !important;
+    }
 </style>
 {% endblock %}
 
@@ -3958,7 +4019,7 @@
                     <th class="col-encoded" title="Date and time proceeded to Application & Evaluation">Proceeded time</th>
                     <th class="col-encoded-ago" title="Relative to now since this record proceeded to Application & Evaluation">Time ago</th>
                     <th class="col-staff col-status" title="Applicant Situation selected during intake">Situation Status</th>
-                    <th class="col-staff" title="Module 1 encoding staff and Module 2 handoff metadata">Staff</th>
+                    <th class="col-staff" title="Staff who proceeded from Module 1 (same as Intake Staff Handled)">Staff</th>
                     <th class="col-eligibility" title="Module 2 eligibility evaluation readiness (documents, checks, certification)">Eligibility status</th>
                     <th class="col-actions">Actions</th>
                 </tr>
@@ -4027,17 +4088,16 @@
                         </div>
                     </td>
                     <td class="col-staff">
-                        {% if data.applicant.registered_by %}
-                        <div class="m2-staff-row">
-                            <div class="handled-by-avatar {% if data.applicant.registered_by.position == 'second_member' %}second-member{% elif data.applicant.registered_by.position == 'fourth_member' %}fourth-member{% else %}other{% endif %}">{{ data.applicant.registered_by.first_name|default:''|slice:':1'|upper }}{{ data.applicant.registered_by.last_name|default:''|slice:':1'|upper }}</div>
-                            <div style="min-width:0;">
-                                <div style="font-weight:500;color:#1e293b;">{{ data.applicant.registered_by.get_full_name }}</div>
-                                <div style="color:#64748b;">{{ data.applicant.registered_by.get_position_display }}
-                                </div>
-                                {% if data.applicant.module2_handoff_by_id and data.applicant.module2_handoff_by_id != data.applicant.registered_by.id %}
+                        {% if data.staff_user %}
+                        <div class="m2-staff-row" title="{{ data.staff_name }}{% if data.staff_role %} · {{ data.staff_role }}{% endif %}">
+                            <div class="handled-by-avatar {% if data.staff_position_key == 'second_member' %}second-member{% elif data.staff_position_key == 'fourth_member' %}fourth-member{% else %}other{% endif %}">{{ data.staff_initials }}</div>
+                            <div class="m2-staff-row__meta">
+                                <div>{{ data.staff_name }}</div>
+                                <div>{{ data.staff_role }}</div>
+                                {% if data.applicant.registered_by_id and data.applicant.module2_handoff_by_id and data.applicant.registered_by_id != data.applicant.module2_handoff_by_id %}
                                 <div style="color:#475569;margin-top:0.2rem;font-size:0.5625rem;"
-                                    title="Proceed to Application &amp; Evaluation (Module 1)">
-                                    <strong>M2 handoff:</strong> {{ data.applicant.module2_handoff_by.get_full_name }}
+                                    title="Original Module 1 encoding staff">
+                                    <strong>Encoded by:</strong> {{ data.applicant.registered_by.get_full_name }}
                                 </div>
                                 {% endif %}
                             </div>

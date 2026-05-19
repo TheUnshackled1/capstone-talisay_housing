@@ -7,6 +7,73 @@
 
 {% block extra_css %}
 <style>
+    /* Pagination Styles */
+    .table-pagination {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        padding: 0.75rem 1.2rem;
+        flex-wrap: wrap;
+        border-top: 1px solid #e2e8f0;
+        background: #fafafa;
+    }
+
+    .table-pagination-info {
+        font-size: 0.6875rem;
+        color: #64748b;
+        font-weight: 500;
+    }
+
+    .table-pagination-controls {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+    }
+
+    .btn-page {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        border: none;
+        border-radius: 0.4rem;
+        background: linear-gradient(135deg, #047857 0%, #10b981 100%);
+        color: #ffffff;
+        font-size: 0.67rem;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        padding: 0.3rem 0.75rem;
+        cursor: pointer;
+        box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+        transition: all 0.15s ease;
+    }
+
+    .btn-page:hover:not(:disabled) {
+        background: linear-gradient(135deg, #065f46 0%, #059669 100%);
+        box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);
+        transform: translateY(-1px);
+    }
+
+    .btn-page:disabled,
+    .btn-page.is-disabled {
+        background: #e2e8f0;
+        color: #94a3b8;
+        box-shadow: none;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .page-indicator {
+        font-size: 0.67rem;
+        font-weight: 700;
+        color: #047857;
+        background: #ecfdf5;
+        border: 1px solid #a7f3d0;
+        border-radius: 0.4rem;
+        padding: 0.28rem 0.65rem;
+        letter-spacing: 0.02em;
+    }
+
     /* ===================================================================
        Caretaker Monitoring Dashboard (Module 4)
        Government-leaning emerald design with clear task hierarchy
@@ -1879,6 +1946,16 @@
     </tbody>
 </table>
     </div>
+      <div class="table-pagination">
+          <div class="table-pagination-info">
+              Showing 1-{{ tasks|length }} of {{ tasks|length }}
+          </div>
+          <div class="table-pagination-controls">
+              <button type="button" class="btn-page is-disabled" disabled>Prev</button>
+              <span class="page-indicator">Page 1 of 1</span>
+              <button type="button" class="btn-page is-disabled" disabled>Next</button>
+          </div>
+      </div>
 {% else %}
 <div class="monitoring-empty-state">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
