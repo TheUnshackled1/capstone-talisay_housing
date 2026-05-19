@@ -1124,7 +1124,11 @@ def get_unit_details(request, position, unit_id):
                 'status_display': (
                     'Housing unit'
                     if is_housing_unit_on_file
-                    else unit.status
+                    else (
+                        'Failed'
+                        if extension_final_visit_failed
+                        else unit.status
+                    )
                 ),
                 'occupant_name': unit.occupant_name or '',
                 'occupant_id': unit.occupant_id or '',
@@ -2616,6 +2620,10 @@ def assess_monitoring_report(request, task_id):
             if program_payload is None:
                 program_payload = _complete_extension_on_month2_normal_progress(task, request.user)
 
+    ext_failed = False
+    if task.lot_award_id:
+        ext_failed = _month_2_inspection_marked_no_progress(task.lot_award)
+
     payload = {
         'success': True,
         'decision': report.progress_assessment,
@@ -2624,6 +2632,7 @@ def assess_monitoring_report(request, task_id):
         ),
         'assessed_at': report.assessed_at.isoformat(),
         'assessed_by': request.user.get_full_name() or request.user.username,
+        'extension_final_visit_failed': ext_failed,
     }
     if program_payload:
         payload['monitoring_program_complete'] = True

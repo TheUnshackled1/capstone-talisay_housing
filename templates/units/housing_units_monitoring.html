@@ -331,6 +331,7 @@
         display: inline-block;
     }
     .vmap-legend--occupied i { background: #10b981; }
+    .vmap-legend--failed i { background: #ef4444; }
     .vmap-legend--housing-file i {
         background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
         box-shadow: 0 0 0 1px rgba(15, 118, 110, 0.35);
@@ -495,6 +496,19 @@
         border-color: #93c5fd;
     }
     .vmap-lot--vacant .vmap-lot-tag { color: #1e40af; }
+
+    /* Extension final 30 Day visit assessed Failed (staff No Progress) */
+    .vmap-lot--extension-failed {
+        color: #b91c1c;
+        background: linear-gradient(180deg, #fef2f2 0%, #fee2e2 100%);
+        border-color: #f87171;
+        box-shadow: inset 0 0 0 1px rgba(248, 113, 113, 0.35);
+    }
+    .vmap-lot--extension-failed .vmap-lot-tag {
+        color: #991b1b;
+        background: rgba(254, 202, 202, 0.75);
+        border: 1px solid #fca5a5;
+    }
 
     /* Tablet — single block per row, denser lot grid */
     @media (max-width: 900px) {
@@ -1298,6 +1312,15 @@
         color: #059669;
         font-size: 0.78rem;
         line-height: 1;
+    }
+    .unit-detail-status[data-state="failed"] {
+        display: inline-flex !important;
+        align-items: center;
+        gap: 0.2rem;
+        background: linear-gradient(180deg, #fef2f2 0%, #fee2e2 100%) !important;
+        color: #991b1b !important;
+        border: 2px solid #ef4444 !important;
+        box-shadow: 0 2px 10px rgba(239, 68, 68, 0.2);
     }
     .unit-detail-status {
         margin: 0 !important;
@@ -2236,6 +2259,7 @@
         <div class="vmap-legend" role="group" aria-label="Lot status legend">
             <span class="vmap-legend-title">Site map{% if site %} · {{ site.name }}{% endif %}</span>
             <span class="vmap-legend-item vmap-legend--occupied"><i></i>Occupied</span>
+            <span class="vmap-legend-item vmap-legend--failed"><i></i>Failed</span>
             <span class="vmap-legend-item vmap-legend--housing-file"><i></i>Housing unit</span>
             <span class="vmap-legend-item vmap-legend--vacant"><i></i>Vacant</span>
         </div>
@@ -2252,14 +2276,15 @@
                     <button type="button"
                             data-unit-id="{{ unit.id }}"
                             data-housing-unit-on-file="{% if unit.is_housing_unit_on_file %}1{% else %}0{% endif %}"
-                            class="unit-card vmap-lot {% if unit.is_housing_unit_on_file %}vmap-lot--housing-unit{% elif unit.status == 'Occupied' %}vmap-lot--occupied{% elif unit.status == 'Vacant — available' %}vmap-lot--vacant{% endif %}"
+                            data-extension-failed="{% if unit.extension_final_visit_failed %}1{% else %}0{% endif %}"
+                            class="unit-card vmap-lot {% if unit.is_housing_unit_on_file %}vmap-lot--housing-unit{% elif unit.extension_final_visit_failed %}vmap-lot--extension-failed{% elif unit.status == 'Occupied' %}vmap-lot--occupied{% elif unit.status == 'Vacant — available' %}vmap-lot--vacant{% endif %}"
                             data-status="{{ unit.status }}"
                             data-construction="{{ unit.construction_tokens }}"
                             onclick="openUnitModal('{{ unit.id }}')"
                             title="Block {{ unit.block_number }} · Lot {{ unit.lot_number }} — {% if unit.is_housing_unit_on_file %}Housing unit — final monitoring complete, recorded in inventory{% else %}{{ unit.get_status_display }}{% endif %}{% if unit.current_occupant %} · {{ unit.current_occupant.full_name }}{% elif unit.occupant_name %} · {{ unit.occupant_name }}{% endif %}">
                         <span class="vmap-lot-id">{{ unit.block_number }}-{{ unit.lot_number }}</span>
                         <span class="vmap-lot-occ">{% if unit.current_occupant %}{{ unit.current_occupant.full_name|truncatechars:14 }}{% elif unit.occupant_name %}{{ unit.occupant_name|truncatechars:14 }}{% else %}—{% endif %}</span>
-                        <span class="vmap-lot-tag">{% if unit.is_housing_unit_on_file %}Unit{% elif unit.status == 'Occupied' %}Occupied{% elif unit.status == 'Vacant — available' %}Vacant{% else %}{{ unit.status|default:"—" }}{% endif %}</span>
+                        <span class="vmap-lot-tag">{% if unit.is_housing_unit_on_file %}Unit{% elif unit.extension_final_visit_failed %}Failed{% elif unit.status == 'Occupied' %}Occupied{% elif unit.status == 'Vacant — available' %}Vacant{% else %}{{ unit.status|default:"—" }}{% endif %}</span>
                     </button>
                     {% endfor %}
                 </div>
@@ -2291,12 +2316,18 @@
                             data-status="{{ unit.status }}"
                             data-construction="{{ unit.construction_tokens }}"
                             data-housing-unit-on-file="{% if unit.is_housing_unit_on_file %}1{% else %}0{% endif %}"
+                            data-extension-failed="{% if unit.extension_final_visit_failed %}1{% else %}0{% endif %}"
                             style="border-bottom: 1px solid var(--gray-100); hover:background: #f9fafb;">
                             <td style="padding: 1rem;">{{ block }}</td>
                             <td style="padding: 1rem;">{{ unit.lot_number }}</td>
                             <td style="padding: 1rem;">{% if unit.current_occupant %}{{ unit.current_occupant.full_name }}{% elif unit.occupant_name %}{{ unit.occupant_name }}{% else %}—{% endif %}</td>
                             <td style="padding: 1rem;">
-                                {% if unit.is_housing_unit_on_file %}
+                                {% if unit.extension_final_visit_failed %}
+                                <span style="display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.25rem 0.6rem; border-radius: 4px; font-weight: 600; background: rgba(239, 68, 68, 0.15); color: #b91c1c; border: 1px solid rgba(220, 38, 38, 0.35);">
+                                    <span style="width: 5px; height: 5px; border-radius: 50%; display: inline-block; background: #ef4444;"></span>
+                                    Failed
+                                </span>
+                                {% elif unit.is_housing_unit_on_file %}
                                 <span style="display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.25rem 0.6rem; border-radius: 4px; font-weight: 600; background: rgba(45, 212, 191, 0.2); color: #0f766e; border: 1px solid rgba(13, 148, 136, 0.35);">
                                     <span style="width: 5px; height: 5px; border-radius: 50%; display: inline-block; background: #0d9488;"></span>
                                     Housing unit
@@ -2690,7 +2721,6 @@
                     </svg>
                     Send SMS
                 </button>
-                <button type="button" class="unit-detail-footer-btn unit-detail-action-update" onclick="handleUpdateLotClick()" title="Re-check this lot against the server and refresh the site map badge (Housing unit).">Update lot</button>
                 <a href="#" id="disqualifyBeneficiaryBtn" class="unit-detail-footer-btn unit-detail-action-disqualify" role="button" onclick="event.preventDefault(); openDisqualifyBeneficiaryModal();">Blacklist beneficiary</a>
             </div>
         </div>
@@ -2983,13 +3013,9 @@ function monitoringFlowAlert(message, title, variant, onConfirm) {
 
 function highlightExtensionFailedDisqualifyPath() {
     const onAck = () => {
-        if (currentUnitId) {
-            const uid = String(currentUnitId);
-            const chip = document.querySelector(`button.vmap-lot[data-unit-id="${uid}"]`);
-            if (chip) {
-                const st = chip.dataset.status || '';
-                applyVmapLotHousingUnitVisual(uid, false, st);
-            }
+        if (lastOpenedUnitPayload) {
+            applyVmapLotMapBadge(lastOpenedUnitPayload);
+            applyUnitDrawerStatusPill(lastOpenedUnitPayload);
         }
         const unitModal = document.getElementById('unitModal');
         const disp = unitModal && unitModal.style.display;
@@ -3193,6 +3219,10 @@ function applyUnitDrawerStatusPill(unit) {
         statusPill.textContent = 'Housing unit';
         statusPill.dataset.state = 'housing-unit';
         statusPill.title = 'Recognized housing unit: final monitoring done and construction complete — this lot is counted as a completed unit in inventory.';
+    } else if (unit.extension_final_visit_failed) {
+        statusPill.textContent = 'Failed';
+        statusPill.dataset.state = 'failed';
+        statusPill.title = 'Extension final 30 Day visit marked Failed — review blacklist beneficiary when eligible.';
     } else {
         statusPill.textContent = unit.status_display || unit.status;
         statusPill.dataset.state = statusKeyMap[unit.status] || 'vacant';
@@ -3200,60 +3230,48 @@ function applyUnitDrawerStatusPill(unit) {
     }
 }
 
-function applyVmapLotHousingUnitVisual(unitId, isOnFile, occupancyStatus) {
+function applyVmapLotMapBadge(unit) {
+    const unitId = String((unit && unit.id) != null ? unit.id : unit);
     const chip = document.querySelector(`button.vmap-lot[data-unit-id="${unitId}"]`);
     if (!chip) return;
     const tag = chip.querySelector('.vmap-lot-tag');
-    const st = occupancyStatus != null ? occupancyStatus : (chip.dataset.status || '');
+    const isOnFile = !!(unit && unit.is_housing_unit_on_file);
+    const extFailed = !!(unit && unit.extension_final_visit_failed);
+    const st = (unit && unit.status) != null ? unit.status : (chip.dataset.status || '');
     chip.classList.remove(
-        'vmap-lot--housing-unit', 'vmap-lot--occupied', 'vmap-lot--vacant',
+        'vmap-lot--housing-unit', 'vmap-lot--occupied', 'vmap-lot--vacant', 'vmap-lot--extension-failed',
     );
+    chip.dataset.housingUnitOnFile = isOnFile ? '1' : '0';
+    chip.dataset.extensionFailed = extFailed ? '1' : '0';
     if (isOnFile) {
         chip.classList.add('vmap-lot--housing-unit');
-        chip.dataset.housingUnitOnFile = '1';
         if (tag) tag.textContent = 'Unit';
         return;
     }
-    chip.dataset.housingUnitOnFile = '0';
+    if (extFailed) {
+        chip.classList.add('vmap-lot--extension-failed');
+        if (tag) tag.textContent = 'Failed';
+        return;
+    }
     if (st === 'Occupied') {
         chip.classList.add('vmap-lot--occupied');
         if (tag) tag.textContent = 'Occupied';
     } else if (st === 'Vacant — available') {
         chip.classList.add('vmap-lot--vacant');
         if (tag) tag.textContent = 'Vacant';
-    } else {
-        if (tag) tag.textContent = st || '—';
+    } else if (tag) {
+        tag.textContent = st || '—';
     }
 }
 
-async function handleUpdateLotClick() {
-    const position = '{{ request.user.position }}';
-    if (!currentUnitId) return;
-    const btn = document.querySelector('.unit-detail-action-update');
-    if (btn) btn.disabled = true;
-    try {
-        const res = await fetch(`/units/housing-units/${position}/${encodeURIComponent(currentUnitId)}/details/`);
-        const data = await res.json();
-        if (!data.success) {
-            throw new Error(data.error || 'Could not load lot details.');
-        }
-        const unit = data.unit;
-        applyUnitDetailHeader(unit);
-        applyUnitDrawerStatusPill(unit);
-                applyVmapLotHousingUnitVisual(String(unit.id), !!unit.is_housing_unit_on_file, unit.status);
-        if (!unit.is_housing_unit_on_file) {
-            monitoringFlowAlert(
-                'This lot is not a completed housing unit yet. After final monitoring is assessed as Housing unit and construction reaches 100%, the map tag shows “Unit”.',
-                'Notice',
-                'default',
-                null
-            );
-        }
-    } catch (e) {
-        monitoringFlowAlert((e && e.message) ? e.message : 'Could not update lot.', 'Could not update', 'default', null);
-    } finally {
-        if (btn) btn.disabled = false;
-    }
+/** @deprecated Use applyVmapLotMapBadge({ id, is_housing_unit_on_file, extension_final_visit_failed, status }) */
+function applyVmapLotHousingUnitVisual(unitId, isOnFile, occupancyStatus) {
+    applyVmapLotMapBadge({
+        id: unitId,
+        is_housing_unit_on_file: isOnFile,
+        extension_final_visit_failed: false,
+        status: occupancyStatus,
+    });
 }
 
 function kpiFilter(card) {
@@ -4529,7 +4547,16 @@ async function submitProgressAssessment(decision) {
             String(task.id) === String(updatedTask.id) ? updatedTask : task
         ));
         closeInspectionInfoModal();
-        const extensionMarkedFailed = updatedTask.task_type === 'month_2_inspection' && decision === 'no_progress';
+        const extensionMarkedFailed = Boolean(
+            data.extension_final_visit_failed
+            || (updatedTask.task_type === 'month_2_inspection' && decision === 'no_progress')
+        );
+        if (extensionMarkedFailed && lastOpenedUnitPayload) {
+            lastOpenedUnitPayload.extension_final_visit_failed = true;
+            applyUnitDetailHeader(lastOpenedUnitPayload);
+            applyUnitDrawerStatusPill(lastOpenedUnitPayload);
+            applyVmapLotMapBadge(lastOpenedUnitPayload);
+        }
         if (data.monitoring_program_complete && currentUnitId) {
             openUnitModal(currentUnitId);
         } else {
@@ -4551,7 +4578,7 @@ async function submitProgressAssessment(decision) {
                             lastOpenedUnitPayload = u;
                             applyUnitDetailHeader(u);
                             applyUnitDrawerStatusPill(u);
-                            applyVmapLotHousingUnitVisual(String(u.id), !!u.is_housing_unit_on_file, u.status);
+                            applyVmapLotMapBadge(u);
                         }
                     })
                     .catch(() => { /* ignore */ });
@@ -4565,12 +4592,11 @@ async function submitProgressAssessment(decision) {
                     if (payload.success && payload.unit) {
                         const u = payload.unit;
                         lastOpenedUnitPayload = u;
+                        applyUnitDetailHeader(u);
+                        applyUnitDrawerStatusPill(u);
                         syncExplanationLetterPanel(u);
-                        applyVmapLotHousingUnitVisual(
-                            String(u.id),
-                            !!u.is_housing_unit_on_file,
-                            u.status,
-                        );
+                        applyVmapLotMapBadge(u);
+                        updateFooterSmsButton(u);
                     }
                     setTimeout(() => highlightExtensionFailedDisqualifyPath(), 150);
                 })
@@ -5274,7 +5300,7 @@ function openUnitModal(unitId) {
                 syncExplanationLetterPanel(unit);
                 renderPriorNoProgressVisitsPanel(letterWf);
                 renderExplanationExtension30DayCard(ext30);
-                applyVmapLotHousingUnitVisual(String(unit.id), !!unit.is_housing_unit_on_file, unit.status);
+                applyVmapLotMapBadge(unit);
                 updateFooterSmsButton(unit);
                 document.getElementById('unitModal').style.display = 'flex';
                 if (unit.explanation_letter_workflow_applies === true && (unit.explanation_letter_case || unit.explanation_letter_view_url)) {
