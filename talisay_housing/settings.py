@@ -17,8 +17,8 @@ from dotenv import load_dotenv
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Load environment variables from .env file
-load_dotenv(BASE_DIR / '.env')
+# Load .env — override=True so local .env wins over stale SMS_SERVICE=console shell exports.
+load_dotenv(BASE_DIR / '.env', override=True)
 
 
 def _env_bool(key: str, default: bool = False) -> bool:
@@ -183,9 +183,25 @@ SMS_SERVICE = os.environ.get('SMS_SERVICE', 'console').strip().lower()
 
 SEMAPHORE_API_KEY = os.environ.get('SEMAPHORE_API_KEY', '').strip()
 SEMAPHORE_SENDER_NAME = os.environ.get('SEMAPHORE_SENDER_NAME', '').strip()
-SEMAPHORE_SEND_TIMEOUT_SECONDS = float(os.environ.get('SEMAPHORE_SEND_TIMEOUT_SECONDS', '25'))
-SEMAPHORE_SEND_RETRY_ATTEMPTS = int(os.environ.get('SEMAPHORE_SEND_RETRY_ATTEMPTS', '3'))
-SEMAPHORE_SEND_RETRY_BACKOFF_SECONDS = float(os.environ.get('SEMAPHORE_SEND_RETRY_BACKOFF_SECONDS', '1.5'))
+# Priority queue bypasses Semaphore's standard FIFO backlog (2 credits/SMS). Recommended for staff alerts.
+SEMAPHORE_USE_PRIORITY_QUEUE = _env_bool('SEMAPHORE_USE_PRIORITY_QUEUE', default=True)
+SEMAPHORE_SEND_TIMEOUT_SECONDS = float(os.environ.get('SEMAPHORE_SEND_TIMEOUT_SECONDS', '12'))
+SEMAPHORE_SEND_RETRY_ATTEMPTS = int(os.environ.get('SEMAPHORE_SEND_RETRY_ATTEMPTS', '2'))
+SEMAPHORE_SEND_RETRY_BACKOFF_SECONDS = float(os.environ.get('SEMAPHORE_SEND_RETRY_BACKOFF_SECONDS', '1.0'))
+
+if SMS_SERVICE == 'semaphore' and SEMAPHORE_API_KEY:
+    _sms_queue = 'priority' if SEMAPHORE_USE_PRIORITY_QUEUE else 'standard'
+    _sms_boot = (
+        f'live Semaphore ({_sms_queue} queue, sender: {SEMAPHORE_SENDER_NAME or "account default"})'
+    )
+elif SMS_SERVICE == 'console':
+    _sms_boot = 'console simulation — no real SMS (set SMS_SERVICE=semaphore in .env for live sends)'
+else:
+    _sms_boot = f'{SMS_SERVICE!r} (check SMS_SERVICE / SEMAPHORE_API_KEY in .env)'
+import sys as _sys  # noqa: E402
+
+_sys.stderr.write(f'\n[IHSMS] SMS mode: {_sms_boot}. Restart runserver after any .env change.\n\n')
+_sys.stderr.flush()
 # =============================================================================
 # Jazzmin Admin Configuration
 # =============================================================================

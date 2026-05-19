@@ -95,22 +95,15 @@
         padding-top: 0.55rem;
         padding-bottom: 0.55rem;
     }
-    /* Lot Awarding column widths — extra select col shifts indices,
-       so target by class instead of nth-child. Applicant cell needs
-       room for name + ref + app # + signed-form line. */
-    .lawq-queue .rfq-table th.lawq-select-col,
-    .lawq-queue .rfq-table td.lawq-select-col {
-        width: 2.5rem !important;
-        min-width: 2.5rem !important;
-    }
-    .lawq-queue .rfq-table th:nth-child(2),
-    .lawq-queue .rfq-table td:nth-child(2) {
+    /* Lot Awarding column widths */
+    .lawq-queue .rfq-table th:nth-child(1),
+    .lawq-queue .rfq-table td:nth-child(1) {
         width: 2.5rem !important;
         min-width: 2.5rem !important;
         text-align: center !important;
     }
     .lawq-queue .rfq-table td.lawq-applicant-cell,
-    .lawq-queue .rfq-table th:nth-child(3) {
+    .lawq-queue .rfq-table th:nth-child(2) {
         width: 22% !important;
         min-width: 14rem !important;
         word-break: keep-all;
@@ -705,99 +698,6 @@
         opacity: 1 !important;
     }
 
-    /* Send SMS modal (bulk) — same pattern as award modal */
-    #lawqSmsModal {
-        display: none;
-        position: fixed;
-        inset: 0;
-        z-index: 1250;
-        background: rgba(15, 23, 42, 0.58);
-        align-items: center;
-        justify-content: center;
-        padding: 1rem;
-    }
-    #lawqSmsModal.active {
-        display: flex;
-    }
-    #lawqSmsModal .lawq-sms-modal-card {
-        width: min(28rem, 100%);
-        background: #fff;
-        border: 1px solid #e2e8f0;
-        border-radius: 12px;
-        box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.35);
-        overflow: hidden;
-        max-height: 92vh;
-        display: flex;
-        flex-direction: column;
-    }
-    #lawqSmsModal .lawq-sms-modal-head {
-        display: flex;
-        justify-content: space-between;
-        gap: 0.75rem;
-        align-items: flex-start;
-        padding: 1rem 1.15rem 0.85rem;
-        border-bottom: 1px solid #e5e7eb;
-        background: linear-gradient(180deg, #ecfeff 0%, #f8fafc 100%);
-    }
-    #lawqSmsModal .lawq-sms-recipients {
-        margin: 0;
-        padding: 0.65rem 1.15rem;
-        max-height: 7.5rem;
-        overflow-y: auto;
-        font-size: 0.72rem;
-        color: #475569;
-        background: #f8fafc;
-        border-bottom: 1px solid #e2e8f0;
-        list-style: none;
-    }
-    #lawqSmsModal .lawq-sms-recipients li {
-        padding: 0.15rem 0;
-        border-bottom: 1px solid #e2e8f0;
-    }
-    #lawqSmsModal .lawq-sms-recipients li:last-child {
-        border-bottom: none;
-    }
-    #lawqSmsModal .lawq-sms-field {
-        margin-bottom: 0.85rem;
-    }
-    #lawqSmsModal .lawq-sms-field label {
-        display: block;
-        font-size: 0.72rem;
-        font-weight: 600;
-        color: #374151;
-        margin-bottom: 0.4rem;
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-    }
-    #lawqSmsModal .lawq-sms-orientation-input {
-        width: 100%;
-        padding: 0.55rem 0.65rem;
-        border: 1px solid #cbd5e1;
-        border-radius: 8px;
-        font-size: 0.8rem;
-        box-sizing: border-box;
-        font-family: inherit;
-        color: #0f172a;
-        background: #fff;
-    }
-    #lawqSmsModal textarea.lawq-sms-body {
-        width: 100%;
-        min-height: 6.5rem;
-        padding: 0.65rem 0.75rem;
-        border: 1px solid #cbd5e1;
-        border-radius: 8px;
-        font-size: 0.8rem;
-        line-height: 1.45;
-        resize: vertical;
-        box-sizing: border-box;
-        font-family: inherit;
-    }
-    #lawqSmsModal .lawq-sms-hint {
-        font-size: 0.65rem;
-        color: #64748b;
-        margin-top: 0.35rem;
-        line-height: 1.35;
-    }
     .lawq-controls-inline {
         display: inline-flex;
         align-items: center;
@@ -832,28 +732,13 @@
                 placeholder="Name or reference #…" aria-label="Search queue">
             <button type="submit" class="rfq-btn-search">Search</button>
         </div>
-        {% if queue_rows %}
-        <div class="lawq-controls-inline">
-            <button type="button" class="lawq-bulk-btn" id="lawqBulkSmsBtn" disabled>Send SMS</button>
-            <span id="lawqBulkCount" class="lawq-inline-selected">0 selected</span>
-        </div>
-        {% endif %}
     </form>
 
     <div class="lawq-list-card">
-    {% if queue_rows %}
-    <div class="lawq-bulk-bar" id="lawqBulkBar">
-        <label>
-            <input type="checkbox" id="lawqSelectAll" title="Select all rows on this page" aria-label="Select all on this page">
-            Select all on page
-        </label>
-    </div>
-    {% endif %}
     <div class="rfq-table-wrap">
         <table class="rfq-table">
             <thead>
                 <tr>
-                    <th class="lawq-select-col" title="Select for bulk SMS"><span class="lawq-sr-only">Select</span></th>
                     <th>#</th>
                     <th>Applicant</th>
                     <th class="rfq-col-priority" title="Serve order: Option A first, then C, B, D; within each tier, earliest proceeded time in this queue">Queue priority</th>
@@ -866,11 +751,6 @@
             <tbody>
                 {% for row in queue_rows %}
                 <tr data-application-id="{{ row.application.id }}">
-                    <td class="lawq-select-col">
-                        <input type="checkbox" class="lawq-app-check" value="{{ row.application.id }}"
-                            data-applicant-name="{{ row.applicant.full_name|escape }}"
-                            aria-label="Select {{ row.applicant.full_name }}">
-                    </td>
                     <td style="font-weight:700;color:#1e293b;">{{ page_obj.start_index|add:forloop.counter0 }}</td>
                     <td class="lawq-applicant-cell">
                         <div class="rfq-name {% if row.applicant.displacement_reason == 'danger_zone' %}option-a{% elif row.applicant.displacement_reason == 'ejected' %}option-b{% elif row.applicant.displacement_reason == 'relocated' %}option-c{% elif row.applicant.displacement_reason == 'not_abc' %}option-d{% endif %}">
@@ -936,7 +816,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="8" style="text-align:center;color:#64748b;font-size:0.75rem;padding:1.1rem 0.75rem;line-height:1.5;">
+                    <td colspan="7" style="text-align:center;color:#64748b;font-size:0.75rem;padding:1.1rem 0.75rem;line-height:1.5;">
                         {% if search %}
                         No applicants in this queue match your search.
                         {% else %}
@@ -966,45 +846,6 @@
             {% else %}
             <span class="btn-page is-disabled">Next</span>
             {% endif %}
-        </div>
-    </div>
-</div>
-
-<div class="modal-overlay" id="lawqSmsModal" role="dialog" aria-modal="true" aria-labelledby="lawqSmsModalTitle">
-    <div class="lawq-sms-modal-card" onclick="event.stopPropagation();">
-        <div class="lawq-sms-modal-head">
-            <div>
-                <h2 id="lawqSmsModalTitle" style="margin:0;font-size:1rem;font-weight:700;color:#0f172a;">Send SMS</h2>
-                <p style="font-size:0.78rem;color:#64748b;margin:0.35rem 0 0 0;" id="lawqSmsRecipientSummary"></p>
-            </div>
-            <button type="button" class="modal-close" onclick="closeLawqSmsModal()" aria-label="Close">&times;</button>
-        </div>
-        <ul class="lawq-sms-recipients" id="lawqSmsRecipientList" aria-label="Selected applicants"></ul>
-        <div style="padding:1rem 1.15rem;flex:1;overflow:auto;">
-            <div class="lawq-sms-field">
-                <label for="lawqSmsOrientationAt">Orientation date &amp; time</label>
-                <input type="datetime-local" id="lawqSmsOrientationAt" class="lawq-sms-orientation-input" required
-                    aria-describedby="lawqSmsOrientationHint">
-                <p class="lawq-sms-hint" id="lawqSmsOrientationHint" style="margin-top:0.35rem;">
-                    Set when the GK orientation will be held. The <strong>Message</strong> below updates to include this schedule.
-                </p>
-            </div>
-            <div class="lawq-sms-field">
-                <label for="lawqSmsMessageText">Message</label>
-                <textarea id="lawqSmsMessageText" class="lawq-sms-body" maxlength="900" required
-                    placeholder="Orientation schedule is inserted automatically from the date above…"></textarea>
-                <p class="lawq-sms-hint">Each applicant receives this text with their <strong>full name</strong> appended. Delivery is logged under the staff SMS workflow (same as other Module 2 notices).</p>
-            </div>
-        </div>
-        <div style="padding:0.85rem 1.15rem;border-top:1px solid #e5e7eb;display:flex;justify-content:flex-end;gap:0.5rem;background:#fafafa;">
-            <button type="button" onclick="closeLawqSmsModal()"
-                style="padding:0.55rem 1rem;background:#fff;border:1px solid #d1d5db;border-radius:8px;font-size:0.78rem;cursor:pointer;font-weight:600;color:#475569;">
-                Cancel
-            </button>
-            <button type="button" id="lawqSmsConfirmBtn"
-                style="padding:0.55rem 1rem;background:#0891b2;color:#fff;border:none;border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;">
-                Send SMS
-            </button>
         </div>
     </div>
 </div>
@@ -1050,50 +891,6 @@
 
 {% block extra_js %}
 <script>
-    var LAWQ_SMS_WAIT = (
-        'Congratulations! Pirmanado na ang imo forms. Ikaw ang '
-        + 'assignan na sang lot. Maghulat sang schedule para sa inyo '
-        + 'orientasyon. Salamat!'
-    );
-
-    function lawqFormatOrientationSchedule(isoValue) {
-        if (!isoValue) return '';
-        var d = new Date(isoValue);
-        if (isNaN(d.getTime())) return '';
-        var datePart = d.toLocaleDateString('en-PH', {
-            year: 'numeric', month: 'long', day: 'numeric'
-        });
-        var timePart = d.toLocaleTimeString('en-PH', {
-            hour: 'numeric', minute: '2-digit', hour12: true
-        });
-        return datePart + ', ' + timePart;
-    }
-
-    function lawqBuildSmsBodyFromOrientation(isoValue) {
-        var whenLabel = lawqFormatOrientationSchedule(isoValue);
-        if (!whenLabel) return LAWQ_SMS_WAIT;
-        return (
-            'Congratulations! Pirmanado na ang imo forms. Ikaw ang assignan na sang lot. '
-            + 'Ang inyo orientasyon sa ' + whenLabel + '. Salamat!'
-        );
-    }
-
-    function lawqDefaultOrientationLocalValue() {
-        var d = new Date();
-        d.setDate(d.getDate() + 7);
-        d.setHours(9, 0, 0, 0);
-        var pad = function (n) { return String(n).padStart(2, '0'); };
-        return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate())
-            + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
-    }
-
-    function lawqSyncSmsMessageFromOrientation() {
-        var orient = document.getElementById('lawqSmsOrientationAt');
-        var ta = document.getElementById('lawqSmsMessageText');
-        if (!orient || !ta) return;
-        ta.value = lawqBuildSmsBodyFromOrientation(orient.value);
-    }
-
     function lawqShowAlert(message, title, onConfirm, variant) {
         const overlay = document.getElementById('lawqAlertOverlay');
         if (!overlay) {
@@ -1119,144 +916,9 @@
 
     function lawqCloseAlert(event) {
         if (event && event.target && event.target.id !== 'lawqAlertOverlay') return;
-        document.getElementById('lawqAlertOverlay').classList.remove('active');
+        const overlay = document.getElementById('lawqAlertOverlay');
+        if (overlay) overlay.classList.remove('active');
     }
-
-    function openLawqSmsModal() {
-        var modal = document.getElementById('lawqSmsModal');
-        var listEl = document.getElementById('lawqSmsRecipientList');
-        var summaryEl = document.getElementById('lawqSmsRecipientSummary');
-        var ta = document.getElementById('lawqSmsMessageText');
-        var orient = document.getElementById('lawqSmsOrientationAt');
-        var selected = Array.from(document.querySelectorAll('.lawq-app-check')).filter(function (cb) { return cb.checked; });
-        if (!selected.length || !modal || !listEl || !summaryEl || !ta || !orient) return;
-
-        listEl.innerHTML = '';
-        selected.forEach(function (cb) {
-            var li = document.createElement('li');
-            li.textContent = cb.getAttribute('data-applicant-name') || ('Application ' + cb.value);
-            listEl.appendChild(li);
-        });
-        summaryEl.textContent = selected.length + ' recipient' + (selected.length !== 1 ? 's' : '') + ' (checked rows on this page)';
-        orient.value = lawqDefaultOrientationLocalValue();
-        lawqSyncSmsMessageFromOrientation();
-        modal.classList.add('active');
-        orient.focus();
-    }
-
-    function closeLawqSmsModal() {
-        var modal = document.getElementById('lawqSmsModal');
-        if (modal) modal.classList.remove('active');
-    }
-
-    (function () {
-        var selectAll = document.getElementById('lawqSelectAll');
-        var checks = function () { return Array.from(document.querySelectorAll('.lawq-app-check')); };
-        var bulkBtn = document.getElementById('lawqBulkSmsBtn');
-        var bulkCount = document.getElementById('lawqBulkCount');
-        var smsModal = document.getElementById('lawqSmsModal');
-        var confirmBtn = document.getElementById('lawqSmsConfirmBtn');
-
-        function updateBulkUi() {
-            var c = checks();
-            var n = c.filter(function (x) { return x.checked; }).length;
-            if (bulkCount) bulkCount.textContent = n + ' selected';
-            if (bulkBtn) bulkBtn.disabled = n === 0;
-            if (selectAll && c.length) {
-                selectAll.indeterminate = n > 0 && n < c.length;
-                selectAll.checked = n === c.length;
-            }
-        }
-
-        if (selectAll) {
-            selectAll.addEventListener('change', function () {
-                checks().forEach(function (cb) { cb.checked = selectAll.checked; });
-                updateBulkUi();
-            });
-        }
-        document.querySelectorAll('.lawq-app-check').forEach(function (cb) {
-            cb.addEventListener('change', updateBulkUi);
-        });
-        updateBulkUi();
-
-        if (bulkBtn) {
-            bulkBtn.addEventListener('click', function () {
-                var ids = checks().filter(function (cb) { return cb.checked; }).map(function (cb) { return cb.value; });
-                if (!ids.length) return;
-                openLawqSmsModal();
-            });
-        }
-
-        if (smsModal) {
-            smsModal.addEventListener('click', function (e) {
-                if (e.target === smsModal) closeLawqSmsModal();
-            });
-        }
-
-        var orientInput = document.getElementById('lawqSmsOrientationAt');
-        if (orientInput) {
-            orientInput.addEventListener('change', lawqSyncSmsMessageFromOrientation);
-            orientInput.addEventListener('input', lawqSyncSmsMessageFromOrientation);
-        }
-
-        if (confirmBtn) {
-            confirmBtn.addEventListener('click', async function () {
-                var ids = checks().filter(function (cb) { return cb.checked; }).map(function (cb) { return cb.value; });
-                var ta = document.getElementById('lawqSmsMessageText');
-                var orient = document.getElementById('lawqSmsOrientationAt');
-                var orientVal = (orient && orient.value) ? orient.value.trim() : '';
-                var msg = (ta && ta.value) ? ta.value.trim() : '';
-                if (!ids.length) {
-                    closeLawqSmsModal();
-                    return;
-                }
-                if (!orientVal) {
-                    lawqShowAlert('Please set the orientation date and time.', 'Send SMS', null, 'default');
-                    return;
-                }
-                if (!msg) {
-                    lawqShowAlert('Please enter a message.', 'Send SMS', null, 'default');
-                    return;
-                }
-                var body = new URLSearchParams();
-                body.append('csrfmiddlewaretoken', '{{ csrf_token }}');
-                body.append('message', msg);
-                body.append('orientation_at', orientVal);
-                ids.forEach(function (id) { body.append('application_ids', id); });
-                try {
-                    confirmBtn.disabled = true;
-                    confirmBtn.textContent = 'Sending…';
-                    var res = await fetch('{% url "applications:lot_awarding_bulk_notify_sms" request.user.position %}', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: body.toString()
-                    });
-                    var data = await res.json();
-                    if (data.success) {
-                        closeLawqSmsModal();
-                        var summary = 'SMS sent: ' + (data.sent || 0);
-                        if (data.skipped_no_phone > 0) {
-                            summary += '\nSkipped (no phone): ' + data.skipped_no_phone;
-                        }
-                        if (data.failed > 0) {
-                            summary += '\nFailed: ' + data.failed;
-                        }
-                        lawqShowAlert(summary, 'Send SMS', null, 'success');
-                        checks().forEach(function (cb) { cb.checked = false; });
-                        if (selectAll) selectAll.checked = false;
-                        updateBulkUi();
-                    } else {
-                        lawqShowAlert(data.error || 'Send SMS failed.', 'Send SMS', null, 'default');
-                    }
-                } catch (e) {
-                    lawqShowAlert('Error: ' + (e.message || e), 'Send SMS', null, 'default');
-                } finally {
-                    confirmBtn.disabled = false;
-                    confirmBtn.textContent = 'Send SMS';
-                }
-            });
-        }
-    })();
 
     function openAwardModal(applicationId, applicantName) {
         document.getElementById('awardApplicationId').value = applicationId;
@@ -1316,8 +978,6 @@
         function shouldPauseAutoSync() {
             if (document.hidden) return true;
             if (document.getElementById('awardModal')?.classList.contains('active')) return true;
-            if (document.getElementById('lawqSmsModal')?.classList.contains('active')) return true;
-            if (document.querySelectorAll('.lawq-app-check:checked').length > 0) return true;
             const searchInput = document.querySelector('input[name="search"]');
             if (searchInput && document.activeElement === searchInput) return true;
             return false;

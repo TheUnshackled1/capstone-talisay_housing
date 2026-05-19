@@ -2112,21 +2112,6 @@ def field_verify_cdrrmo(request, position):
             photos_saved += 1
 
         sms_dispatched = None
-        # SMS only fires on first decision; appended-photo runs skip SMS to avoid spam.
-        if not cert_already_decided and applicant.phone_number:
-            if verification_decision == 'certified':
-                sms_body = (
-                    f'THA Module 1: Field inspection supports your declared hazard-area classification. '
-                    f'Ref {applicant.reference_number}. Intake will complete supervisory review; await further SMS or office advice.'
-                )
-                sms_ev = 'field_verification_certified'
-            else:
-                sms_body = (
-                    f'THA Module 1: Field inspection did not sustain hazard-area status for your declared address. '
-                    f'Ref {applicant.reference_number}. Intake will update your record; you may visit THA for clarification.'
-                )
-                sms_ev = 'field_verification_not_certified'
-            sms_dispatched = send_sms(applicant.phone_number, sms_body, sms_ev, applicant=applicant, module='applications')
 
         if cert_already_decided:
             existing_label = '✓ Certified' if cert.status == 'certified' else '✗ Not Certified'
@@ -2840,9 +2825,10 @@ def save_eligibility_check_decision(request, position):
             sms_detail = 'No mobile number on file; SMS not sent.'
         else:
             ref = ((applicant.reference_number or '').strip() or str(applicant.pk))
+            applicant_name = (applicant.full_name or '').strip() or 'Applicant'
             check_label = ELIGIBILITY_CHECK_LABELS.get(check_key, check_key.replace('_', ' '))
             body = (
-                f'[{ref}] Eligibility ({check_label}): {failure_reason}'.strip()
+                f'Applicant: {applicant_name} [{ref}] Eligibility ({check_label}): {failure_reason}'.strip()
             )
             if len(body) > 480:
                 body = body[:477].rstrip() + '...'
@@ -3651,60 +3637,6 @@ def proceed_to_lot_awarding_queue(request, position):
         application.standby_position = last_position + 1
         application.save(update_fields=['status', 'standby_entered_at', 'standby_position', 'updated_at'])
 
-        # --- SMS: Lot-awarding notification ---
-        applicant = application.applicant
-        has_phone = bool((applicant.phone_number or '').strip())
-        ev = sms_workflow.PROCEED_TO_LOT_AWARDING
-        sms_deduped = has_phone and ApplicationSMSLog.objects.filter(
-            applicant=applicant, trigger_event=ev, status='sent',
-        ).exists()
-        if not sms_deduped and has_phone:
-            sms_deduped = IntakeSMSLog.objects.filter(
-                applicant=applicant, trigger_event=ev, status='sent',
-            ).exists()
-        sms_dispatched = False
-        if has_phone and not sms_deduped:
-            message = sms_workflow.message_proceed_to_lot_awarding(applicant)
-            sms_dispatched = bool(
-                send_sms_for_applications(
-                    applicant.phone_number,
-                    message,
-                    ev,
-                    applicant=applicant,
-                )
-            )
-
-        sms_plan_payload = {
-            'active': has_phone,
-            'deduped': sms_deduped,
-            'dispatched': sms_dispatched,
-            'has_phone': has_phone,
-            'note': (
-                'proceed_to_lot_awarding SMS already sent for this applicant; not sent again.'
-                if sms_deduped
-                else (
-                    'Check runserver or SMSLog (SMS_SERVICE=console simulates delivery).'
-                    if sms_dispatched
-                    else (
-                        'No phone on applicant.'
-                        if not has_phone
-                        else 'SMS not logged (invalid number format or send_sms returned false).'
-                    )
-                )
-            ),
-        }
-        logger.info(
-            'proceed_to_lot_awarding_queue ref=%s sms_plan=%s',
-            applicant.reference_number,
-            sms_plan_payload,
-        )
-        if getattr(settings, 'DEBUG', False):
-            print(
-                f"\n[proceed_to_lot_awarding_queue] ref={applicant.reference_number} "
-                f"dispatched={sms_dispatched} deduped={sms_deduped} has_phone={has_phone}\n"
-                f"  {sms_plan_payload['note']}\n"
-            )
-
         return JsonResponse({
             'success': True,
             'standby_position': application.standby_position,
@@ -3712,7 +3644,6 @@ def proceed_to_lot_awarding_queue(request, position):
                 f'Application routed to lot-awarding queue '
                 f'(Standby position #{application.standby_position}).'
             ),
-            'sms_plan': sms_plan_payload,
         })
     except Application.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Application not found.'}, status=404)

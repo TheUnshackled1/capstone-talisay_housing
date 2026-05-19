@@ -13,11 +13,11 @@ Developer console (local only)
     Set ``SMS_SERVICE=console`` in ``.env``. Runserver prints SMS in the terminal; no API key.
 
 Live SMS (Semaphore)
-    In ``.env``: ``SMS_SERVICE=semaphore``, ``SMS_ENABLED=True``, ``SEMAPHORE_API_KEY`` from
-    https://semaphore.co/account — optional ``SEMAPHORE_SENDER_NAME`` (≤11 chars, must be registered
-    in Semaphore). Restart Django after changing ``.env``. If the key is missing while ``DEBUG`` is
-    on, sends fall back to console simulation. Do not start the message body with ``TEST`` (Semaphore
-    ignores those messages).
+    In ``.env``: ``SMS_SERVICE=semaphore``, ``SMS_ENABLED=True``, ``SEMAPHORE_API_KEY``, optional
+    ``SEMAPHORE_SENDER_NAME`` (e.g. THAOFFICE). **Restart runserver** after editing ``.env`` — Django
+    does not reload env on file change. On startup you should see ``[IHSMS] SMS mode: live Semaphore``.
+    If you still see the terminal ``SMS SIMULATED (console)`` banner, the process is on console mode.
+    Do not start the message body with ``TEST`` (Semaphore ignores those).
 
 Smoke test: ``python manage.py test_sms --phone 09XXXXXXXXX --service semaphore``
 """

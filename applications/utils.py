@@ -145,9 +145,9 @@ def check_blacklist_module2(
 
 def send_sms_for_applications(recipient_phone, message_content, trigger_event, applicant=None):
     """
-    Forward applications-module SMS to the shared pipeline (console or Semaphore per settings).
+    Forward applications-module SMS to ``intake.utils.send_sms`` (Semaphore when configured).
 
-    Logs to ``applications.models.SMSLog``; ``trigger_event`` is the audit key (e.g. ``proceed_evaluation``).
+    Uses ``SMS_SERVICE`` / ``SEMAPHORE_API_KEY`` from ``.env``. Logs to ``applications.models.SMSLog``.
     """
     return _base_send_sms(
         recipient_phone,

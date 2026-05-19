@@ -104,8 +104,12 @@ def send_sms(phone_number, message, trigger_event, applicant=None, isf_record=No
             status='pending'
         )
 
-        # Local / CI: no API keys required — full workflow + SMSLog audit trail
+        # Local / CI only — set SMS_SERVICE=semaphore in .env for real delivery (restart runserver after edits).
         if sms_service == 'console':
+            logger.info(
+                'SMS console simulation (SMS_SERVICE=console). Set SMS_SERVICE=semaphore in .env '
+                'and restart runserver to send via Semaphore.'
+            )
             return _sms_simulate_delivery(sms_log, phone_number, message, trigger_event, 'console')
 
         # Backward-compatible service aliases used in older .env files.
@@ -161,12 +165,19 @@ def send_sms(phone_number, message, trigger_event, applicant=None, isf_record=No
 
 
 
+def _semaphore_send_url():
+    """Standard queue can lag minutes at peak; priority queue sends immediately (2 credits/SMS)."""
+    if getattr(settings, 'SEMAPHORE_USE_PRIORITY_QUEUE', True):
+        return 'https://api.semaphore.co/api/v4/priority'
+    return 'https://api.semaphore.co/api/v4/messages'
+
+
 def send_sms_semaphore(phone_number, message, sms_log):
     """
     Send SMS via Semaphore (Philippines).
 
-    POST https://api.semaphore.co/api/v4/messages — parameters apikey, number, message,
-    optional sendername (see https://semaphore.co/docs).
+    Uses the priority endpoint by default (see SEMAPHORE_USE_PRIORITY_QUEUE) so staff alerts
+    are not stuck behind bulk traffic on the standard FIFO queue.
 
     Messages whose body begins with the word 'TEST' are ignored by Semaphore (not billed, not sent).
     """
@@ -174,10 +185,11 @@ def send_sms_semaphore(phone_number, message, sms_log):
     if not api_key:
         raise Exception('Semaphore API key not configured in settings')
 
-    send_url = 'https://api.semaphore.co/api/v4/messages'
-    send_timeout = float(getattr(settings, 'SEMAPHORE_SEND_TIMEOUT_SECONDS', 25))
-    retry_attempts = max(1, int(getattr(settings, 'SEMAPHORE_SEND_RETRY_ATTEMPTS', 3)))
-    retry_backoff = float(getattr(settings, 'SEMAPHORE_SEND_RETRY_BACKOFF_SECONDS', 1.5))
+    send_url = _semaphore_send_url()
+    queue_label = 'priority' if '/priority' in send_url else 'standard'
+    send_timeout = float(getattr(settings, 'SEMAPHORE_SEND_TIMEOUT_SECONDS', 12))
+    retry_attempts = max(1, int(getattr(settings, 'SEMAPHORE_SEND_RETRY_ATTEMPTS', 2)))
+    retry_backoff = float(getattr(settings, 'SEMAPHORE_SEND_RETRY_BACKOFF_SECONDS', 1.0))
 
     payload = {
         'apikey': api_key,
@@ -202,17 +214,41 @@ def send_sms_semaphore(phone_number, message, sms_log):
             response = requests.post(send_url, data=payload, timeout=send_timeout)
             last_request_error = None
             break
-        except requests.RequestException as req_err:
+        except requests.Timeout as req_err:
+            # Do not retry on read/connect timeout — Semaphore may already have accepted the SMS.
             last_request_error = req_err
             logger.warning(
-                'Semaphore send attempt %s/%s failed for %s: %s',
+                'Semaphore %s queue timed out for %s (attempt %s/%s): %s',
+                queue_label,
+                phone_number,
                 attempt,
                 retry_attempts,
+                req_err,
+            )
+            break
+        except requests.ConnectionError as req_err:
+            last_request_error = req_err
+            logger.warning(
+                'Semaphore %s queue connection error for %s (attempt %s/%s): %s',
+                queue_label,
                 phone_number,
+                attempt,
+                retry_attempts,
                 req_err,
             )
             if attempt < retry_attempts:
                 time.sleep(retry_backoff * attempt)
+        except requests.RequestException as req_err:
+            last_request_error = req_err
+            logger.warning(
+                'Semaphore %s queue request failed for %s (attempt %s/%s): %s',
+                queue_label,
+                phone_number,
+                attempt,
+                retry_attempts,
+                req_err,
+            )
+            break
 
     try:
         if response is None:
@@ -264,7 +300,8 @@ def send_sms_semaphore(phone_number, message, sms_log):
         )
         sms_log.save(update_fields=['status', 'external_id', 'error_message'])
         logger.info(
-            'Semaphore SMS queued — message_id=%s status=%s',
+            'Semaphore SMS accepted (%s queue) — message_id=%s status=%s',
+            queue_label,
             external_id,
             item.get('status'),
         )
