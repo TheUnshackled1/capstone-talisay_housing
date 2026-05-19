@@ -9,17 +9,17 @@ Central definitions for Module 1→2 SMS helpers (Hiligaynon) and SMSLog trigger
 Delivery is not implemented here. All sends go through ``intake.utils.send_sms`` (and the applications
 wrapper that forwards to it with ``module='applications'``), which reads Django settings:
 
-Developer console (default)
-    Set ``SMS_SERVICE=console`` in ``.env`` (see ``.env.example``). Runserver prints the full SMS
-    (recipient, event, body) and writes ``SMSLog`` with simulated delivery — no API key.
+Developer console (local only)
+    Set ``SMS_SERVICE=console`` in ``.env``. Runserver prints SMS in the terminal; no API key.
 
-Semaphore (production / staging)
-    Set ``SMS_SERVICE=semaphore``, ``SMS_ENABLED=True``, and ``SEMAPHORE_API_KEY`` from
-    https://semaphore.co/docs — optional ``SEMAPHORE_SENDER_NAME`` (≤11 chars). In ``DEBUG``,
-    missing API key falls back to console simulation. Do not start the message body with the word
-    ``TEST`` if you expect Semaphore to transmit it (provider ignores those).
+Live SMS (Semaphore)
+    In ``.env``: ``SMS_SERVICE=semaphore``, ``SMS_ENABLED=True``, ``SEMAPHORE_API_KEY`` from
+    https://semaphore.co/account — optional ``SEMAPHORE_SENDER_NAME`` (≤11 chars, must be registered
+    in Semaphore). Restart Django after changing ``.env``. If the key is missing while ``DEBUG`` is
+    on, sends fall back to console simulation. Do not start the message body with ``TEST`` (Semaphore
+    ignores those messages).
 
-Smoke test: ``python manage.py test_sms --phone 09123456789 --service console`` (or ``semaphore``).
+Smoke test: ``python manage.py test_sms --phone 09XXXXXXXXX --service semaphore``
 """
 
 # --- trigger_event values (keep ≤ 50 chars; indexed in SMSLog) ---

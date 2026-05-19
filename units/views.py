@@ -17,13 +17,14 @@ import json
 
 from intake.models import Applicant, Barangay, HouseholdMember
 from applications.models import QueueEntry, Application
-from intake.utils import send_sms
+from intake.utils import format_phone_number, send_sms
 from units.models import (
     HousingUnit, LotAward, RelocationSite, CaseRecord, CaseUpdate, WeeklyReport,
     ConstructionProgress, ConstructionProgressUpdate, Blacklist, OccupancyMonitoringCycle,
     MonitoringTask, MonitoringReport, ExplanationReview, ExtensionRecord,
 )
 from accounts.models import FIELD_DESK_POSITIONS
+from units.housing_unit_status import housing_unit_on_file
 
 # Module 4 inventory: who may add housing units (block/lot rows)
 _MODULE4_ADD_HOUSING_UNIT_POSITIONS = frozenset({'fourth_member', 'second_member'})
@@ -54,6 +55,69 @@ def _explanation_letter_deadline_office_payload(deadline):
         local.strftime('%b %d, %Y %I:%M %p'),
         local.strftime('%Y-%m-%dT%H:%M'),
     )
+
+
+def _explanation_letter_sms_for_case(unit, applicant, rev):
+    """
+    Build SMS body and trigger event for the explanation-letter workflow.
+
+    Returns (None, None) when a letter is already on file.
+    """
+    block = unit.block_number
+    lot = unit.lot_number
+    ref = applicant.reference_number or '—'
+    if rev and rev.letter_document:
+        return None, None
+    if not rev or not rev.letter_deadline_at:
+        return (
+            f'THA: Your lot (Block {block} Lot {lot}) was assessed as '
+            f'No Progress. Report to the THA office with a written EXPLANATION letter. '
+            f'Staff will record your submission deadline in the system. Ref: {ref}'
+        ), 'explanation_letter_required'
+    local_disp = timezone.localtime(rev.letter_deadline_at).strftime('%b %d, %Y %I:%M %p')
+    if timezone.now() >= rev.letter_deadline_at:
+        return (
+            f'THA NOTICE: The deadline for your written EXPLANATION letter (Block {block} '
+            f'Lot {lot}) has passed without a scanned letter on file. '
+            f'Report to the Housing Office immediately or your case may be disqualified. '
+            f'Ref: {ref}'
+        ), 'explanation_letter_deadline_passed'
+    return (
+        f'THA: Submit your written EXPLANATION letter for Block {block} Lot {lot} '
+        f'at the Housing Office no later than {local_disp}. '
+        f'Ref: {ref}'
+    ), 'explanation_letter_deadline_set'
+
+
+def _unit_beneficiary_sms_message(unit, applicant, lot_award, progress):
+    """
+    SMS body for footer Send SMS: explanation-letter case when open, else general unit contact.
+    """
+    rev = _active_pending_explanation_for_lot_award(lot_award)
+    if (
+        rev
+        and not rev.letter_document
+        and _explanation_review_triggered_by_day30_inspection(rev)
+    ):
+        body, event = _explanation_letter_sms_for_case(unit, applicant, rev)
+        if body:
+            return body, event
+
+    block = unit.block_number
+    lot = unit.lot_number
+    ref = applicant.reference_number or '—'
+    on_file = housing_unit_on_file(lot_award, progress)
+    if on_file:
+        return (
+            f'THA: Regarding your housing unit at Block {block}, Unit {lot}. '
+            f'For occupancy or monitoring concerns, contact the Talisay Housing Office. '
+            f'Ref: {ref}'
+        ), 'housing_unit_contact'
+    return (
+        f'THA: Regarding your awarded lot at Block {block}, Lot {lot}. '
+        f'For monitoring or housing office concerns, contact the Talisay Housing Office. '
+        f'Ref: {ref}'
+    ), 'awarded_lot_contact'
 
 
 def _unit_has_notice_subject(unit, active_award=None):
@@ -148,6 +212,14 @@ def verify_position(view_func):
         # Check if position in URL matches user's actual position
         if request.user.position != position:
             messages.error(request, f'Access denied. You are logged in as {request.user.get_position_display()}, not {position.replace("_", " ")}.')
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': False,
+                    'error': (
+                        f'Access denied. You are logged in as '
+                        f'{request.user.get_position_display()}, not {position.replace("_", " ")}.'
+                    ),
+                }, status=403)
             return redirect('accounts:dashboard')
         return view_func(request, position, *args, **kwargs)
     return wrapper
@@ -276,11 +348,8 @@ def housing_units_monitoring(request, position):
         for u in units_list:
             p = progress_by_unit_id.get(u.id)
             setattr(u, '_construction_progress', p)
-            on_file = bool(
-                p
-                and p.stage == 'completed'
-                and (p.percent_complete or 0) >= 100
-            )
+            la = getattr(p, 'lot_award', None)
+            on_file = housing_unit_on_file(la, p)
             setattr(u, 'is_housing_unit_on_file', on_file)
             if on_file:
                 housing_unit_on_file_count += 1
@@ -777,13 +846,10 @@ def get_unit_details(request, position, unit_id):
                     and bool(report_summary.get('progress_assessment'))
                 )
                 final_monitoring_program_complete = (
-                    task.task_type == 'day_30_inspection'
+                    task.task_type in ('day_30_inspection', 'month_2_inspection')
                     and report_summary
                     and report_summary.get('progress_assessment') == 'normal_progress'
-                    and not extension_monitoring_active
-                    and progress
-                    and progress.stage == 'completed'
-                    and (progress.percent_complete or 0) >= 100
+                    and housing_unit_on_file(active_lot_award, progress)
                 )
                 if task.task_type in ('day_15_inspection', 'month_1_inspection'):
                     _task_title = '15 Day Inspection'
@@ -947,6 +1013,11 @@ def get_unit_details(request, position, unit_id):
             deadline = rev.letter_deadline_at
             deadline_passed = bool(deadline and now > deadline)
             _iso, _disp, _local_inp = _explanation_letter_deadline_office_payload(deadline)
+            _app_for_sms = getattr(active_lot_award, 'application', None) if active_lot_award else None
+            applicant_for_sms = getattr(_app_for_sms, 'applicant', None) if _app_for_sms else None
+            beneficiary_phone = (
+                (applicant_for_sms.phone_number or '').strip() if applicant_for_sms else ''
+            )
             explanation_case = {
                 'review_id': str(rev.id),
                 'trigger_kind': rev.trigger_kind,
@@ -959,6 +1030,8 @@ def get_unit_details(request, position, unit_id):
                 'can_disqualify': bool(
                     (deadline and deadline_passed and not has_doc) or extension_final_visit_failed
                 ),
+                'beneficiary_has_phone': bool(beneficiary_phone),
+                'can_send_explanation_sms': bool(beneficiary_phone and not has_doc),
                 'letter_document_url': (
                     request.build_absolute_uri(rev.letter_document.url)
                     if has_doc and rev.letter_document
@@ -1017,11 +1090,28 @@ def get_unit_details(request, position, unit_id):
             and request.user.position in _MODULE4_MONITORING_COMPLIANCE_STAFF
         )
 
-        is_housing_unit_on_file = bool(
-            progress
-            and progress.stage == 'completed'
-            and (progress.percent_complete or 0) >= 100
+        is_housing_unit_on_file = housing_unit_on_file(active_lot_award, progress)
+
+        beneficiary_phone = ''
+        if applicant_for_household:
+            beneficiary_phone = (applicant_for_household.phone_number or '').strip()
+        can_send_beneficiary_sms = bool(
+            active_lot_award
+            and applicant_for_household
+            and request.user.position in _MODULE4_MONITORING_COMPLIANCE_STAFF
         )
+        beneficiary_sms_compose = None
+        if can_send_beneficiary_sms:
+            default_body, _default_event = _unit_beneficiary_sms_message(
+                unit, applicant_for_household, active_lot_award, progress
+            )
+            beneficiary_sms_compose = {
+                'applicant_id': str(applicant_for_household.id),
+                'full_name': applicant_for_household.full_name or '',
+                'reference_number': applicant_for_household.reference_number or '',
+                'phone_number': beneficiary_phone,
+                'default_message': default_body or '',
+            }
 
         return JsonResponse({
             'success': True,
@@ -1041,6 +1131,9 @@ def get_unit_details(request, position, unit_id):
                 'is_escalated': unit.is_escalated,
                 'extension_final_visit_failed': extension_final_visit_failed,
                 'lot_award_id': str(active_lot_award.id) if active_lot_award else None,
+                'beneficiary_has_phone': bool(beneficiary_phone),
+                'can_send_beneficiary_sms': can_send_beneficiary_sms,
+                'beneficiary_sms_compose': beneficiary_sms_compose,
                 'can_add_household_members': can_add_household_members,
                 'household_relationship_options': _HOUSEHOLD_RELATIONSHIP_OPTIONS,
                 'notice': notice_info,
@@ -1249,22 +1342,14 @@ def set_explanation_letter_deadline(request, position, unit_id):
     rev.letter_deadline_at = deadline
     rev.save(update_fields=['letter_deadline_at', 'updated_at'])
 
+    sms_sent = False
     if notify:
         applicant = la.application.applicant
         phone = (applicant.phone_number or '').strip()
         if phone:
-            local_disp = timezone.localtime(deadline).strftime('%b %d, %Y %I:%M %p')
-            send_sms(
-                phone,
-                (
-                    f"THA: Submit your written EXPLANATION letter for Block {unit.block_number} Lot {unit.lot_number} "
-                    f"at the Housing Office no later than {local_disp}. "
-                    f"Ref: {applicant.reference_number or '—'}"
-                ),
-                'explanation_letter_deadline_set',
-                applicant=applicant,
-                module='units',
-            )
+            body, event = _explanation_letter_sms_for_case(unit, applicant, rev)
+            if body:
+                sms_sent = bool(send_sms(phone, body, event, applicant=applicant, module='units'))
 
     _iso, _disp, _local_inp = _explanation_letter_deadline_office_payload(rev.letter_deadline_at)
     return JsonResponse({
@@ -1272,7 +1357,105 @@ def set_explanation_letter_deadline(request, position, unit_id):
         'letter_deadline_at': _iso,
         'letter_deadline_display': _disp,
         'letter_deadline_local_input': _local_inp,
+        'sms_sent': sms_sent,
     })
+
+
+@login_required
+@verify_position
+@require_POST
+def send_unit_beneficiary_sms(request, position, unit_id):
+    """Staff-triggered SMS to the active lot award beneficiary (footer Send SMS modal)."""
+    if request.user.position not in _MODULE4_MONITORING_COMPLIANCE_STAFF:
+        return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
+
+    try:
+        payload = json.loads(request.body or '{}')
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'Invalid JSON.'}, status=400)
+
+    message = (payload.get('message') or '').strip()
+    if len(message) < 10:
+        return JsonResponse({
+            'success': False,
+            'error': 'Message must be at least 10 characters.',
+        }, status=400)
+    if len(message) > 900:
+        return JsonResponse({
+            'success': False,
+            'error': 'Message must be 900 characters or fewer.',
+        }, status=400)
+
+    phone_raw = (payload.get('phone_number') or '').strip()
+    save_phone = bool(payload.get('save_phone_to_applicant', True))
+
+    try:
+        unit = HousingUnit.objects.get(id=unit_id)
+    except HousingUnit.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Unit not found'}, status=404)
+
+    la = (
+        LotAward.objects.filter(unit=unit, status='active')
+        .select_related('application__applicant')
+        .order_by('-awarded_at')
+        .first()
+    )
+    if not la:
+        return JsonResponse({'success': False, 'error': 'No active lot award for this unit.'}, status=400)
+
+    application = getattr(la, 'application', None)
+    if not application:
+        return JsonResponse({'success': False, 'error': 'Lot award has no linked application.'}, status=400)
+    applicant = getattr(application, 'applicant', None)
+    if not applicant:
+        return JsonResponse({'success': False, 'error': 'Application has no linked beneficiary record.'}, status=400)
+
+    phone = format_phone_number(phone_raw or (applicant.phone_number or ''))
+    if not phone.startswith('09') or len(phone) != 11:
+        return JsonResponse({
+            'success': False,
+            'error': 'Enter a valid Philippine mobile number (09XXXXXXXXX).',
+        }, status=400)
+
+    progress = (
+        ConstructionProgress.objects.filter(lot_award=la, lot_award__status='active').first()
+    )
+    default_body, default_event = _unit_beneficiary_sms_message(unit, applicant, la, progress)
+    if message == (default_body or '').strip():
+        body, event = default_body, default_event
+    else:
+        body, event = message, 'unit_beneficiary_manual'
+
+    if not body:
+        return JsonResponse({'success': False, 'error': 'SMS is not applicable for this case.'}, status=400)
+
+    phone_updated = False
+    if save_phone and phone != format_phone_number(applicant.phone_number or ''):
+        applicant.phone_number = phone
+        applicant.save(update_fields=['phone_number', 'updated_at'])
+        phone_updated = True
+
+    sent = send_sms(phone, body, event, applicant=applicant, module='units')
+    if not sent:
+        return JsonResponse({
+            'success': False,
+            'error': 'SMS could not be sent. Check the phone number format and Semaphore configuration.',
+        }, status=502)
+
+    return JsonResponse({
+        'success': True,
+        'sms_sent': True,
+        'phone_updated': phone_updated,
+        'phone_number': phone,
+        'message': (
+            'SMS sent to the beneficiary. Contact number updated on file.'
+            if phone_updated
+            else 'SMS sent to the beneficiary.'
+        ),
+    })
+
+
+send_explanation_letter_sms = send_unit_beneficiary_sms
 
 
 @login_required
@@ -2142,17 +2325,9 @@ def _open_explanation_review_after_no_progress(report, _acting_user):
     phone = (applicant.phone_number or '').strip()
     if not phone:
         return
-    send_sms(
-        phone,
-        (
-            f"THA: Your lot (Block {report.unit.block_number} Lot {report.unit.lot_number}) was assessed as "
-            f"No Progress. Report to the THA office with a written EXPLANATION letter. "
-            f"Staff will record your submission deadline in the system. Ref: {applicant.reference_number or '—'}"
-        ),
-        'explanation_letter_required',
-        applicant=applicant,
-        module='units',
-    )
+    body, event = _explanation_letter_sms_for_case(report.unit, applicant, None)
+    if body:
+        send_sms(phone, body, event, applicant=applicant, module='units')
 
 
 def _grant_monitoring_extension_from_explanation_review(review, approved_by_user):
@@ -2332,6 +2507,71 @@ def _complete_original_program_on_day30_normal_progress(task, acting_user):
     }
 
 
+def _complete_extension_on_month2_normal_progress(task, acting_user):
+    """
+    When staff marks the extension final visit (month_2_inspection) as Housing unit,
+    close active monitoring cycles and record construction complete for inventory.
+    """
+    if task.task_type != 'month_2_inspection':
+        return None
+    lot_award = task.lot_award
+    unit = task.unit
+    now_dt = timezone.now()
+    today = now_dt.date()
+
+    cycles_closed = OccupancyMonitoringCycle.objects.filter(
+        lot_award=lot_award,
+        is_active=True,
+    ).update(is_active=False)
+
+    progress, _ = ConstructionProgress.objects.get_or_create(
+        lot_award=lot_award,
+        defaults={'stage': 'not_started', 'percent_complete': 0, 'updated_by': acting_user},
+    )
+    ConstructionProgressUpdate.objects.create(
+        progress=progress,
+        stage='completed',
+        percent_complete=100,
+        visit_date=today,
+        notes=(
+            'Extension final 30 Day visit: Housing unit — monitoring complete; '
+            'awarded lot recorded as housing unit with construction complete.'
+        ),
+        created_by=acting_user,
+    )
+    progress.stage = 'completed'
+    progress.percent_complete = 100
+    progress.last_inspected_at = now_dt
+    progress.updated_by = acting_user
+    progress.is_delayed = False
+    progress.save(
+        update_fields=[
+            'stage',
+            'percent_complete',
+            'last_inspected_at',
+            'updated_by',
+            'is_delayed',
+            'updated_at',
+        ]
+    )
+
+    esc_fields = []
+    if unit.is_escalated:
+        unit.is_escalated = False
+        esc_fields.append('is_escalated')
+    if (unit.escalation_reason or '').strip():
+        unit.escalation_reason = ''
+        esc_fields.append('escalation_reason')
+    if esc_fields:
+        esc_fields.append('updated_at')
+        unit.save(update_fields=esc_fields)
+
+    return {
+        'cycles_deactivated': cycles_closed,
+        'construction_finalized': True,
+    }
+
+
 @login_required
 @require_POST
 def assess_monitoring_report(request, task_id):
@@ -2373,6 +2613,8 @@ def assess_monitoring_report(request, task_id):
             _open_explanation_review_after_no_progress(report, request.user)
         elif decision == 'normal_progress':
             program_payload = _complete_original_program_on_day30_normal_progress(task, request.user)
+            if program_payload is None:
+                program_payload = _complete_extension_on_month2_normal_progress(task, request.user)
 
     payload = {
         'success': True,
@@ -2388,6 +2630,44 @@ def assess_monitoring_report(request, task_id):
         payload['housing_unit_on_file'] = True
         payload['monitoring_program_detail'] = program_payload
     return JsonResponse(payload)
+
+
+def _module1_staff_handled_user(applicant):
+    """Staff who proceeded from Module 1; falls back to encoder."""
+    if not applicant:
+        return None
+    return getattr(applicant, 'module2_handoff_by', None) or getattr(applicant, 'registered_by', None)
+
+
+def _enrich_monitoring_task_staff(task):
+    """Attach staff-handled display fields for monitoring desk tables."""
+    applicant = None
+    lot_award = getattr(task, 'lot_award', None)
+    application = getattr(lot_award, 'application', None) if lot_award else None
+    if application:
+        applicant = application.applicant
+    user = _module1_staff_handled_user(applicant)
+    task.staff_handled_user = user
+    if not user:
+        task.staff_initials = ''
+        task.staff_name = ''
+        task.staff_role = ''
+        task.staff_position_key = ''
+        return
+    first = (user.first_name or '')[:1]
+    last = (user.last_name or '')[:1]
+    task.staff_initials = (first + last).upper() or '??'
+    task.staff_name = user.get_full_name()
+    if hasattr(user, 'get_position_display_short'):
+        task.staff_role = user.get_position_display_short()
+    else:
+        task.staff_role = user.get_position_display()
+    task.staff_position_key = getattr(user, 'position', '') or ''
+
+
+def _enrich_monitoring_tasks_staff(tasks):
+    for task in tasks:
+        _enrich_monitoring_task_staff(task)
 
 
 @login_required
@@ -2412,6 +2692,8 @@ def caretaker_monitoring_dashboard(request):
         'unit',
         'lot_award',
         'lot_award__application__applicant',
+        'lot_award__application__applicant__registered_by',
+        'lot_award__application__applicant__module2_handoff_by',
         'unit__site',
         'assigned_to',
     ).order_by('notified_at', 'due_date', 'pk')
@@ -2426,8 +2708,11 @@ def caretaker_monitoring_dashboard(request):
     ).count()
     active_units = tasks.values('unit_id').distinct().count()
 
-    scheduled_tasks = tasks.filter(status='pending', due_date__gte=today)
-    overdue_tasks = tasks.filter(status='pending', due_date__lt=today)
+    tasks_list = list(tasks)
+    _enrich_monitoring_tasks_staff(tasks_list)
+
+    scheduled_tasks = [t for t in tasks_list if t.status == 'pending' and t.due_date >= today]
+    overdue_tasks = [t for t in tasks_list if t.status == 'pending' and t.due_date < today]
     completed_tasks = MonitoringTask.objects.filter(
         models.Q(assigned_to_id=request.user.id) | models.Q(assigned_to__isnull=True),
         notified_at__isnull=False,
@@ -2436,6 +2721,8 @@ def caretaker_monitoring_dashboard(request):
         'unit',
         'lot_award',
         'lot_award__application__applicant',
+        'lot_award__application__applicant__registered_by',
+        'lot_award__application__applicant__module2_handoff_by',
         'unit__site',
         'assigned_to',
     ).prefetch_related(
@@ -2446,10 +2733,13 @@ def caretaker_monitoring_dashboard(request):
             ),
         )
     ).order_by('-completed_at', '-due_date')
-    active_unit_tasks = tasks.order_by('unit_id', 'notified_at', 'due_date', 'pk')
+    active_unit_tasks = sorted(
+        tasks_list,
+        key=lambda t: (t.unit_id, t.notified_at or timezone.now(), t.due_date, t.pk),
+    )
 
     context = {
-        'tasks': tasks,
+        'tasks': tasks_list,
         'pending_count': pending_count,
         'overdue_count': overdue_count,
         'completed_count': completed_count,
@@ -2622,6 +2912,9 @@ def submit_monitoring_report(request, task_id):
                 'completed_occupied': 'completed',
             }
             stage = stage_map.get(construction_status, 'not_started')
+            if is_final_monitoring_task and stage == 'completed' and percent_complete >= 100:
+                stage = 'finishing'
+                percent_complete = 90
             progress, _created = ConstructionProgress.objects.get_or_create(
                 lot_award=task.lot_award,
                 defaults={'updated_by': request.user},

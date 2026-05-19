@@ -21,6 +21,16 @@ urlpatterns = [
         name='set_explanation_letter_deadline',
     ),
     path(
+        'housing-units/<str:position>/<uuid:unit_id>/sms/',
+        views.send_unit_beneficiary_sms,
+        name='send_unit_beneficiary_sms',
+    ),
+    path(
+        'housing-units/<str:position>/<uuid:unit_id>/explanation-letter/sms/',
+        views.send_unit_beneficiary_sms,
+        name='send_explanation_letter_sms',
+    ),
+    path(
         'housing-units/<str:position>/<uuid:unit_id>/explanation-letter/upload/',
         views.upload_explanation_letter,
         name='upload_explanation_letter',

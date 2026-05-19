@@ -6,24 +6,8 @@ Used by Document Management and Intake Archives.
 from __future__ import annotations
 
 from intake.models import Applicant
-from units.models import Blacklist, ConstructionProgress, LotAward
-
-
-def construction_progress_for_lot_award(lot_award: LotAward | None):
-    if not lot_award:
-        return None
-    try:
-        return lot_award.construction_progress
-    except ConstructionProgress.DoesNotExist:
-        return None
-
-
-def housing_unit_on_file_from_progress(progress) -> bool:
-    return bool(
-        progress
-        and getattr(progress, 'stage', '') == 'completed'
-        and (getattr(progress, 'percent_complete', None) or 0) >= 100
-    )
+from units.models import Blacklist, LotAward
+from units.housing_unit_status import housing_unit_on_file_for_lot_award
 
 
 def active_lot_award_with_unit(app_obj) -> LotAward | None:
@@ -50,8 +34,7 @@ def staff_pipeline_primary_detail(
     if la_active and la_active.unit:
         unit = la_active.unit
         loc = f'Block {unit.block_number}, Lot {unit.lot_number}'
-        prog = construction_progress_for_lot_award(la_active)
-        if housing_unit_on_file_from_progress(prog):
+        if housing_unit_on_file_for_lot_award(la_active):
             status_disp = unit.get_status_display() if hasattr(unit, 'get_status_display') else unit.status
             return (
                 'Housing Units',
