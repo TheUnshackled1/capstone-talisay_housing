@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods, require_POST
 from django.http import JsonResponse
@@ -6,8 +6,12 @@ from django.db import models
 from django.utils import timezone
 from functools import wraps
 import json
+import re
 
-from .models import Case, CaseNote
+from intake.models import Applicant
+from units.models import LotAward, HousingUnit
+from .models import Case, CaseAction, CaseEvidence, CaseNote
+from . import workflow as wf
 from accounts.models import FIELD_DESK_POSITIONS
 
 
@@ -53,14 +57,14 @@ def case_management_dashboard(request, position):
         .order_by('-received_at')
     )
 
-    # Count by status
     status_counts = {
-        'open': cases.filter(status='open').count(),
-        'investigation': cases.filter(status='investigation').count(),
-        'referred': cases.filter(status='referred').count(),
-        'pending_decision': cases.filter(status='pending_decision').count(),
-        'resolved': cases.filter(status='resolved').count(),
-        'closed': cases.filter(status='closed').count(),
+        'pending_review': cases.filter(status=wf.STATUS_PENDING_REVIEW).count(),
+        'under_review': cases.filter(status=wf.STATUS_UNDER_REVIEW).count(),
+        'mediation_monitoring': cases.filter(status=wf.STATUS_MEDIATION).count(),
+        'awaiting_response': cases.filter(status=wf.STATUS_AWAITING_RESPONSE).count(),
+        'referred_engineering': cases.filter(status=wf.STATUS_REFERRED_ENGINEERING).count(),
+        'resolved': cases.filter(status=wf.STATUS_RESOLVED).count(),
+        'closed': cases.filter(status=wf.STATUS_CLOSED).count(),
     }
 
     # Search and filter
@@ -88,6 +92,8 @@ def case_management_dashboard(request, position):
         else 'staff_base.html'
     )
 
+    open_new_case = request.GET.get('new_case', '').strip() in ('1', 'true', 'yes')
+
     context = {
         'cases': cases,
         'status_counts': status_counts,
@@ -96,9 +102,135 @@ def case_management_dashboard(request, position):
         'filter_type': filter_type,
         'case_type_choices': Case.CASE_TYPE_CHOICES,
         'base_template': base_template,
+        'open_new_case': open_new_case,
+        'is_field_desk': request.user.position in FIELD_DESK_POSITIONS,
+        'can_manage_workflow': wf.user_can_manage_workflow(request.user),
+        'workflow_steps': wf.WORKFLOW_STEPS,
+        'workflow_phases': wf.PHASES,
+        'status_colors': wf.STATUS_COLORS,
     }
 
     return render(request, 'cases/case_management.html', context)
+
+
+def _parse_block_lot_query(q):
+    """Match housing map labels used on Unit Monitoring (e.g. 1-1, Block 1 Lot 1)."""
+    text = (q or '').strip()
+    m = re.match(r'^(\d+)\s*[-/]\s*(\d+)$', text)
+    if m:
+        return m.group(1), m.group(2)
+    m = re.match(r'(?i)^block\s*(\d+)\s*lot\s*(\d+)$', text)
+    if m:
+        return m.group(1), m.group(2)
+    return None
+
+
+def _beneficiary_search_payload_from_award(award):
+    """Build JSON row from active lot award (same source as Housing Unit Monitoring)."""
+    applicant = award.application.applicant
+    unit = award.unit
+    block = (unit.block_number or '').strip()
+    lot = (unit.lot_number or '').strip()
+    site_name = unit.site.name if unit.site_id else ''
+    name = (applicant.full_name or unit.occupant_name or '').strip()
+    ref = (applicant.reference_number or unit.occupant_id or '').strip()
+    return {
+        'id': str(applicant.id),
+        'full_name': name,
+        'reference_number': ref,
+        'phone_number': (applicant.phone_number or '').strip(),
+        'block': block,
+        'lot': lot,
+        'site_name': site_name,
+        'unit_id': str(unit.id),
+        'unit_label': f'Block {block}, Lot {lot}' if block and lot else '',
+        'lot_map_label': f'{block}-{lot}' if block and lot else '',
+    }
+
+
+def _beneficiary_search_payload(applicant):
+    """Resolve housing-unit row for an applicant (fallback for create_case linking)."""
+    la = (
+        LotAward.objects.filter(
+            application__applicant=applicant,
+            status='active',
+        )
+        .select_related('application__applicant', 'unit', 'unit__site')
+        .order_by('-awarded_at')
+        .first()
+    )
+    if la:
+        return _beneficiary_search_payload_from_award(la)
+    return {
+        'id': str(applicant.id),
+        'full_name': applicant.full_name or '',
+        'reference_number': applicant.reference_number or '',
+        'phone_number': (applicant.phone_number or '').strip(),
+        'block': '',
+        'lot': '',
+        'site_name': '',
+        'unit_id': None,
+        'unit_label': '',
+        'lot_map_label': '',
+    }
+
+
+@login_required
+@require_http_methods(['GET'])
+@verify_position
+def beneficiary_search(request, position):
+    """
+    Search occupied housing-unit beneficiaries for case recording (Module 4 inventory).
+
+    Same people shown on /units/housing-units/<position>/ — active LotAward + unit block/lot.
+
+    GET /cases/<position>/beneficiary-search/?q=
+    """
+    q = (request.GET.get('q') or '').strip()
+    if len(q) < 2:
+        return JsonResponse({'success': True, 'results': [], 'source': 'housing_units'})
+
+    block_lot = _parse_block_lot_query(q)
+    qs = (
+        LotAward.objects.filter(status='active', unit__isnull=False)
+        .select_related('application__applicant', 'unit', 'unit__site')
+    )
+    text_filter = (
+        models.Q(application__applicant__full_name__icontains=q)
+        | models.Q(application__applicant__reference_number__icontains=q)
+        | models.Q(application__applicant__phone_number__icontains=q)
+        | models.Q(application__applicant__first_name__icontains=q)
+        | models.Q(application__applicant__last_name__icontains=q)
+        | models.Q(unit__occupant_name__icontains=q)
+        | models.Q(unit__occupant_id__icontains=q)
+    )
+    if block_lot:
+        text_filter |= models.Q(
+            unit__block_number=block_lot[0],
+            unit__lot_number=block_lot[1],
+        )
+    qs = qs.filter(text_filter).order_by(
+        'unit__block_number',
+        'unit__lot_number',
+        'application__applicant__full_name',
+    )
+
+    seen = set()
+    results = []
+    for award in qs[:40]:
+        app_id = award.application.applicant_id
+        if app_id in seen:
+            continue
+        seen.add(app_id)
+        results.append(_beneficiary_search_payload_from_award(award))
+        if len(results) >= 15:
+            break
+
+    return JsonResponse({
+        'success': True,
+        'results': results,
+        'source': 'housing_units',
+    })
 
 
 @login_required
@@ -112,7 +244,21 @@ def get_case_details(request, position, case_id):
     URL Route: /cases/<position>/<case_id>/details/
     """
     try:
-        case = Case.objects.prefetch_related('notes__created_by').get(id=case_id)
+        case = (
+            Case.objects
+            .select_related(
+                'complainant_applicant',
+                'subject_applicant',
+                'related_unit',
+                'related_unit__site',
+            )
+            .prefetch_related(
+                'notes__created_by',
+                'evidence__uploaded_by',
+                'actions__created_by',
+            )
+            .get(id=case_id)
+        )
 
         # Prepare notes list
         notes_data = [
@@ -124,12 +270,58 @@ def get_case_details(request, position, case_id):
             for note in case.notes.all()
         ]
 
+        evidence_data = []
+        for ev in case.evidence.all():
+            evidence_data.append({
+                'id': str(ev.id),
+                'caption': ev.caption or '',
+                'url': request.build_absolute_uri(ev.file.url) if ev.file else '',
+                'uploaded_by': ev.uploaded_by.get_full_name() if ev.uploaded_by else 'Staff',
+                'uploaded_at': ev.uploaded_at.isoformat(),
+            })
+
+        complainant_applicant = case.complainant_applicant
+        subject_applicant = case.subject_applicant
+        unit = case.related_unit
+        prior_cases_qs = Case.objects.exclude(id=case.id)
+        linked_applicant_id = complainant_applicant.id if complainant_applicant else None
+        if linked_applicant_id:
+            prior_cases_qs = prior_cases_qs.filter(complainant_applicant_id=linked_applicant_id)
+        elif unit:
+            prior_cases_qs = prior_cases_qs.filter(related_unit=unit)
+        else:
+            prior_cases_qs = prior_cases_qs.none()
+        prior_cases_list = list(prior_cases_qs.order_by('-received_at')[:8])
+        prior_cases = [
+            {
+                'case_number': pc.case_number,
+                'status_display': pc.get_status_display(),
+                'case_type_display': pc.get_case_type_display(),
+                'received_at': pc.received_at.isoformat(),
+            }
+            for pc in prior_cases_list
+        ]
+
+        actions_data = [
+            {
+                'action_type': a.action_type,
+                'action_label': a.get_action_type_display(),
+                'details': a.details,
+                'created_by': a.created_by.get_full_name() if a.created_by else 'Staff',
+                'created_at': a.created_at.isoformat(),
+            }
+            for a in case.actions.all()
+        ]
+
+        can_manage = wf.user_can_manage_workflow(request.user)
+
         return JsonResponse({
             'success': True,
+            'can_manage_workflow': can_manage,
             'case': {
                 'id': str(case.id),
                 'case_number': case.case_number,
-                'status': case.status,
+                'status': wf.normalize_status(case.status),
                 'status_display': case.get_status_display(),
                 'case_type': case.case_type,
                 'case_type_display': case.get_case_type_display(),
@@ -137,7 +329,18 @@ def get_case_details(request, position, case_id):
                 'received_by': case.received_by.get_full_name() if case.received_by else 'Unknown',
                 'complainant_name': case.complainant_name,
                 'complainant_phone': case.complainant_phone or '',
+                'complainant_reference': (
+                    complainant_applicant.reference_number if complainant_applicant else ''
+                ),
+                'complainant_unit_label': (
+                    f'Block {unit.block_number}, Lot {unit.lot_number}'
+                    if unit and unit.block_number and unit.lot_number
+                    else (str(unit) if unit else '')
+                ),
                 'subject_name': case.subject_name or '',
+                'subject_reference': (
+                    subject_applicant.reference_number if subject_applicant else ''
+                ),
                 'initial_description': case.initial_description,
                 'investigation_notes': case.investigation_notes or '',
                 'investigated_by': case.investigated_by.get_full_name() if case.investigated_by else '',
@@ -153,6 +356,21 @@ def get_case_details(request, position, case_id):
                 'days_open': case.days_open,
                 'is_stale': case.is_stale,
                 'notes': notes_data,
+                'evidence': evidence_data,
+                'prior_cases': prior_cases,
+                'prior_cases_count': len(prior_cases_list),
+                'actions': actions_data,
+                'case_type_normalized': wf.normalize_case_type(case.case_type),
+                'workflow_step': wf.workflow_step_for_case(case),
+                'workflow_steps': wf.step_states_for_case(case),
+                'current_phase': wf.current_phase_for_case(case),
+                'workflow_buttons': wf.allowed_workflow_buttons(case, request.user),
+                'type_actions': wf.allowed_type_actions(case.case_type),
+                'monitoring_alerts': wf.monitoring_alerts(case, len(prior_cases_list)),
+                'refer_engineering_allowed': wf.refer_engineering_allowed(case),
+                'follow_up_at': case.follow_up_at.isoformat() if case.follow_up_at else '',
+                'closure_outcome': case.closure_outcome or '',
+                'received_at_location_display': case.get_received_at_location_display(),
             }
         })
 
@@ -194,6 +412,11 @@ def create_case(request, position):
         received_at_location = data.get('received_at_location', 'office').strip()
         initial_description = data.get('initial_description', '').strip()
         subject_name = data.get('subject_name', '').strip()
+        complainant_applicant_id = (data.get('complainant_applicant_id') or '').strip()
+        subject_applicant_id = (data.get('subject_applicant_id') or '').strip()
+        related_unit_id = (data.get('related_unit_id') or '').strip()
+        # Normalize legacy type codes from old forms
+        case_type = wf.LEGACY_TYPE_MAP.get(case_type, case_type)
 
         # Validate required fields
         if not all([complainant_name, case_type, initial_description]):
@@ -210,15 +433,53 @@ def create_case(request, position):
                 'error': 'Invalid case type'
             }, status=400)
 
-        # Create case
+        complainant_applicant = None
+        subject_applicant = None
+        related_unit = None
+        if complainant_applicant_id:
+            complainant_applicant = get_object_or_404(Applicant, id=complainant_applicant_id)
+            if not complainant_name:
+                complainant_name = complainant_applicant.full_name or complainant_name
+            if not complainant_phone:
+                complainant_phone = (complainant_applicant.phone_number or '').strip()
+        if subject_applicant_id:
+            subject_applicant = get_object_or_404(Applicant, id=subject_applicant_id)
+            if not subject_name:
+                subject_name = subject_applicant.full_name or subject_name
+        if related_unit_id:
+            related_unit = get_object_or_404(HousingUnit, id=related_unit_id)
+        elif complainant_applicant:
+            la = (
+                LotAward.objects.filter(
+                    application__applicant=complainant_applicant,
+                    status='active',
+                )
+                .select_related('unit')
+                .order_by('-awarded_at')
+                .first()
+            )
+            if la:
+                related_unit = la.unit
+
         case = Case.objects.create(
             complainant_name=complainant_name,
             complainant_phone=complainant_phone,
             case_type=case_type,
+            status=wf.STATUS_PENDING_REVIEW,
             received_at_location=received_at_location,
             initial_description=initial_description,
             subject_name=subject_name,
             received_by=request.user,
+            complainant_applicant=complainant_applicant,
+            subject_applicant=subject_applicant,
+            related_unit=related_unit,
+        )
+
+        channel = 'On-site (ronda/caretaker)' if received_at_location == 'onsite' else 'THA Office'
+        CaseNote.objects.create(
+            case=case,
+            note=f'Step 1–2: Complaint reported via {channel}. Case recorded — Pending Review.',
+            created_by=request.user,
         )
 
         return JsonResponse({
@@ -246,21 +507,52 @@ def create_case(request, position):
 @login_required
 @require_POST
 @verify_position
+def upload_case_evidence(request, position, case_id):
+    """Upload photo or document for a case (Step 4 review)."""
+    case = get_object_or_404(Case, id=case_id)
+    upload = request.FILES.get('file')
+    if not upload:
+        return JsonResponse({'success': False, 'error': 'No file uploaded.'}, status=400)
+    if upload.size > 6 * 1024 * 1024:
+        return JsonResponse({'success': False, 'error': 'File must be 6 MB or smaller.'}, status=400)
+
+    allowed = ('image/jpeg', 'image/png', 'image/webp', 'application/pdf')
+    if getattr(upload, 'content_type', '') not in allowed:
+        return JsonResponse({
+            'success': False,
+            'error': 'Allowed types: JPEG, PNG, WebP, or PDF.',
+        }, status=400)
+
+    caption = (request.POST.get('caption') or '').strip()[:255]
+    evidence = CaseEvidence.objects.create(
+        case=case,
+        file=upload,
+        caption=caption,
+        uploaded_by=request.user,
+    )
+    return JsonResponse({
+        'success': True,
+        'message': 'Evidence uploaded.',
+        'evidence': {
+            'id': str(evidence.id),
+            'caption': evidence.caption,
+            'url': request.build_absolute_uri(evidence.file.url),
+            'uploaded_by': request.user.get_full_name() or 'Staff',
+            'uploaded_at': evidence.uploaded_at.isoformat(),
+        },
+    })
+
+
+@login_required
+@require_POST
+@verify_position
 def update_case(request, position):
     """
-    AJAX endpoint to update case status and add investigation notes
+    Workflow updates: notes, review, type actions, status transitions, close.
 
-    URL Route: /cases/<position>/update/
-
-    POST data:
-    - case_id: UUID
-    - action: 'add_note' | 'change_status' | 'investigate' | 'refer' | 'resolve'
-    - note: str (for add_note)
-    - new_status: status code (for change_status)
-    - investigation_notes: str (for investigate)
-    - referred_to: str (for refer)
-    - referral_notes: str (for refer)
-    - resolution_notes: str (for resolve)
+    POST action:
+    - add_note, start_review, save_review, record_action, workflow_transition
+    - resolve, close
     """
     try:
         data = json.loads(request.body)
@@ -268,8 +560,13 @@ def update_case(request, position):
         case_id = data.get('case_id')
         action = data.get('action', '').strip()
 
-        # Get case
         case = Case.objects.get(id=case_id)
+        needs_desk = action not in ('add_note',)
+        if needs_desk and not wf.user_can_manage_workflow(request.user):
+            return JsonResponse({
+                'success': False,
+                'error': 'THA desk staff must complete review, actions, and closure. Ronda can log new cases only.',
+            }, status=403)
 
         if action == 'add_note':
             note_text = data.get('note', '').strip()
@@ -279,7 +576,6 @@ def update_case(request, position):
                     'error': 'Note cannot be empty'
                 }, status=400)
 
-            # Create case note
             CaseNote.objects.create(
                 case=case,
                 note=note_text,
@@ -288,94 +584,188 @@ def update_case(request, position):
 
             return JsonResponse({
                 'success': True,
-                'message': '✓ Note added to case',
+                'message': 'Note added to case',
                 'case_number': case.case_number,
             })
 
-        elif action == 'change_status':
-            new_status = data.get('new_status', '').strip()
-            valid_statuses = [code for code, _ in Case.STATUS_CHOICES]
-
-            if new_status not in valid_statuses:
-                return JsonResponse({
-                    'success': False,
-                    'error': 'Invalid status'
-                }, status=400)
-
-            case.status = new_status
-            case.save()
-
-            return JsonResponse({
-                'success': True,
-                'message': f'✓ Case status changed to {case.get_status_display()}',
-                'case_number': case.case_number,
-                'new_status': new_status,
-            })
-
-        elif action == 'investigate':
-            investigation_notes = data.get('investigation_notes', '').strip()
-            if not investigation_notes:
-                return JsonResponse({
-                    'success': False,
-                    'error': 'Investigation notes required'
-                }, status=400)
-
-            case.status = 'investigation'
-            case.investigation_notes = investigation_notes
+        elif action == 'start_review':
+            if not wf.can_transition(case, 'start_review'):
+                return JsonResponse({'success': False, 'error': 'Cannot start review from current status.'}, status=400)
+            wf.apply_transition(case, 'start_review')
             case.investigated_by = request.user
             case.investigated_at = timezone.now()
             case.save()
-
+            CaseNote.objects.create(
+                case=case,
+                note='Step 4: Review started — Under Review.',
+                created_by=request.user,
+            )
             return JsonResponse({
                 'success': True,
-                'message': '✓ Case marked as under investigation',
-                'case_number': case.case_number,
-                'new_status': 'investigation',
+                'message': 'Case is now Under Review',
+                'new_status': case.status,
             })
 
-        elif action == 'refer':
-            referred_to = data.get('referred_to', '').strip()
-            referral_notes = data.get('referral_notes', '').strip()
+        elif action == 'save_review':
+            review_notes = data.get('review_notes', '').strip()
+            if not review_notes:
+                return JsonResponse({'success': False, 'error': 'Review notes required.'}, status=400)
+            if wf.normalize_status(case.status) not in (
+                wf.STATUS_UNDER_REVIEW,
+                wf.STATUS_MEDIATION,
+                wf.STATUS_REFERRED_ENGINEERING,
+                wf.STATUS_AWAITING_RESPONSE,
+                wf.STATUS_PENDING_REVIEW,
+            ):
+                return JsonResponse({'success': False, 'error': 'Begin review before saving review notes.'}, status=400)
+            case.investigation_notes = review_notes
+            case.investigated_by = request.user
+            case.investigated_at = timezone.now()
+            case.save()
+            CaseNote.objects.create(
+                case=case,
+                note=f'Step 4 review: {review_notes}',
+                created_by=request.user,
+            )
+            return JsonResponse({'success': True, 'message': 'Review notes saved'})
 
-            if not referred_to:
+        elif action == 'record_action':
+            action_type = data.get('action_type', '').strip()
+            details = data.get('details', '').strip()
+            follow_up_at = (data.get('follow_up_at') or '').strip()
+            allowed_codes = {a['code'] for a in wf.allowed_type_actions(case.case_type)}
+            allowed_codes |= set(wf.ACTION_LABELS.keys())  # legacy stored actions
+            if action_type not in allowed_codes:
+                return JsonResponse({'success': False, 'error': 'Action not allowed for this complaint type.'}, status=400)
+            if action_type == wf.ACTION_REFER_ENGINEERING and not wf.refer_engineering_allowed(case):
                 return JsonResponse({
                     'success': False,
-                    'error': 'Referral target required'
+                    'error': 'Refer to City Engineering is only available for Lot Boundary issues.',
                 }, status=400)
 
-            case.status = 'referred'
-            case.referred_to = referred_to
-            case.referral_notes = referral_notes
-            case.referred_at = timezone.now()
-            case.save()
+            CaseAction.objects.create(
+                case=case,
+                action_type=action_type,
+                details=details,
+                created_by=request.user,
+            )
+            label = wf.ACTION_LABELS.get(action_type, action_type)
+            CaseNote.objects.create(
+                case=case,
+                note=f'Action recorded — {label}' + (f': {details}' if details else ''),
+                created_by=request.user,
+            )
 
+            try:
+                wf.apply_action_status(case, action_type)
+            except ValueError as exc:
+                return JsonResponse({'success': False, 'error': str(exc)}, status=400)
+            if action_type == wf.ACTION_REFER_ENGINEERING:
+                case.referral_notes = details
+
+            if follow_up_at:
+                from datetime import datetime
+                try:
+                    case.follow_up_at = datetime.strptime(follow_up_at, '%Y-%m-%d').date()
+                except ValueError:
+                    pass
+
+            case.save()
+            return JsonResponse({'success': True, 'message': label, 'new_status': case.status})
+
+        elif action == 'workflow_transition':
+            transition = data.get('transition', '').strip()
+            if transition == 'resolve':
+                resolution_notes = data.get('resolution_notes', '').strip()
+                if not resolution_notes:
+                    return JsonResponse({'success': False, 'error': 'Resolution outcome required.'}, status=400)
+                case.status = wf.STATUS_RESOLVED
+                case.resolution_notes = resolution_notes
+                case.decided_by = request.user
+                case.decided_at = timezone.now()
+                case.resolved_at = timezone.now()
+                case.save()
+                CaseNote.objects.create(
+                    case=case,
+                    note=f'Step 7 — Resolved: {resolution_notes}',
+                    created_by=request.user,
+                )
+                return JsonResponse({'success': True, 'message': 'Case marked resolved', 'new_status': case.status})
+            if transition == 'close':
+                closure_outcome = data.get('closure_outcome', '').strip()
+                if wf.normalize_status(case.status) != wf.STATUS_RESOLVED:
+                    return JsonResponse({'success': False, 'error': 'Resolve the case before closing.'}, status=400)
+                if not closure_outcome:
+                    return JsonResponse({'success': False, 'error': 'Closure outcome required.'}, status=400)
+                case.status = wf.STATUS_CLOSED
+                case.closure_outcome = closure_outcome
+                case.save()
+                CaseNote.objects.create(
+                    case=case,
+                    note=f'Step 7 — Closed: {closure_outcome}',
+                    created_by=request.user,
+                )
+                return JsonResponse({'success': True, 'message': 'Case archived (closed)', 'new_status': case.status})
+            if not wf.can_transition(case, transition):
+                return JsonResponse({'success': False, 'error': 'Invalid workflow transition.'}, status=400)
+            wf.apply_transition(case, transition)
+            if transition == 'start_review':
+                case.investigated_by = request.user
+                case.investigated_at = timezone.now()
+            case.save()
+            spec = wf.WORKFLOW_TRANSITIONS[transition]
+            CaseNote.objects.create(
+                case=case,
+                note=f'Workflow: {spec["label"]} → {case.get_status_display()}',
+                created_by=request.user,
+            )
             return JsonResponse({
                 'success': True,
-                'message': f'✓ Case referred to {referred_to}',
-                'case_number': case.case_number,
-                'new_status': 'referred',
+                'message': case.get_status_display(),
+                'new_status': case.status,
             })
 
         elif action == 'resolve':
             resolution_notes = data.get('resolution_notes', '').strip()
             if not resolution_notes:
-                return JsonResponse({
-                    'success': False,
-                    'error': 'Resolution notes required'
-                }, status=400)
-
-            case.status = 'resolved'
+                return JsonResponse({'success': False, 'error': 'Resolution outcome required.'}, status=400)
+            if not wf.can_transition(case, 'resolve') and wf.normalize_status(case.status) not in wf.WORKFLOW_TRANSITIONS['resolve']['from']:
+                return JsonResponse({'success': False, 'error': 'Case cannot be resolved from current status.'}, status=400)
+            case.status = wf.STATUS_RESOLVED
             case.resolution_notes = resolution_notes
             case.decided_by = request.user
             case.decided_at = timezone.now()
             case.resolved_at = timezone.now()
             case.save()
-
+            CaseNote.objects.create(
+                case=case,
+                note=f'Step 7 — Resolved: {resolution_notes}',
+                created_by=request.user,
+            )
             return JsonResponse({
                 'success': True,
-                'message': '✓ Case marked as resolved',
-                'case_number': case.case_number,
+                'message': 'Case marked resolved',
                 'new_status': 'resolved',
+            })
+
+        elif action == 'close':
+            closure_outcome = data.get('closure_outcome', '').strip()
+            if wf.normalize_status(case.status) != wf.STATUS_RESOLVED:
+                return JsonResponse({'success': False, 'error': 'Resolve the case before closing.'}, status=400)
+            if not closure_outcome:
+                return JsonResponse({'success': False, 'error': 'Closure outcome required.'}, status=400)
+            case.status = wf.STATUS_CLOSED
+            case.closure_outcome = closure_outcome
+            case.save()
+            CaseNote.objects.create(
+                case=case,
+                note=f'Step 7 — Closed: {closure_outcome}',
+                created_by=request.user,
+            )
+            return JsonResponse({
+                'success': True,
+                'message': 'Case archived (closed)',
+                'new_status': 'closed',
             })
 
         else:

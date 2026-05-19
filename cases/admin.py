@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Case, CaseNote, SMSLog
+from .models import Case, CaseAction, CaseEvidence, CaseNote
 
 
 @admin.register(Case)
@@ -32,7 +32,11 @@ class CaseAdmin(admin.ModelAdmin):
             'classes': ('collapse',),
         }),
         ('✅ DECISION & RESOLUTION', {
-            'fields': ('decided_by', 'decided_at', 'resolution_notes', 'resolved_at'),
+            'fields': ('decided_by', 'decided_at', 'resolution_notes', 'resolved_at', 'closure_outcome'),
+            'classes': ('collapse',),
+        }),
+        ('📡 MONITORING', {
+            'fields': ('follow_up_at',),
             'classes': ('collapse',),
         }),
         ('📅 AUDIT TRAIL', {
@@ -40,6 +44,21 @@ class CaseAdmin(admin.ModelAdmin):
             'classes': ('collapse',),
         }),
     )
+
+
+@admin.register(CaseAction)
+class CaseActionAdmin(admin.ModelAdmin):
+    list_display = ('case', 'action_type', 'created_by', 'created_at')
+    list_filter = ('action_type', 'created_at')
+    search_fields = ('case__case_number', 'details')
+
+
+@admin.register(CaseEvidence)
+class CaseEvidenceAdmin(admin.ModelAdmin):
+    list_display = ('case', 'caption', 'uploaded_by', 'uploaded_at')
+    list_filter = ('uploaded_at',)
+    search_fields = ('case__case_number', 'caption')
+    readonly_fields = ('uploaded_at',)
 
 
 @admin.register(CaseNote)
@@ -59,26 +78,4 @@ class CaseNoteAdmin(admin.ModelAdmin):
     )
 
 
-@admin.register(SMSLog)
-class SMSLogAdmin(admin.ModelAdmin):
-    list_display = ('recipient_phone', 'trigger_event', 'status', 'sent_at')
-    list_filter = ('trigger_event', 'status', 'sent_at')
-    search_fields = ('recipient_phone', 'message_content')
-    readonly_fields = ('sent_at', 'id')
 
-    fieldsets = (
-        ('SMS DETAILS', {
-            'fields': ('recipient_phone', 'message_content', 'trigger_event'),
-        }),
-        ('STATUS', {
-            'fields': ('status', 'error_message', 'external_id'),
-        }),
-        ('RECIPIENT', {
-            'fields': ('applicant',),
-            'classes': ('collapse',),
-        }),
-        ('AUDIT TRAIL', {
-            'fields': ('id', 'sent_at'),
-            'classes': ('collapse',),
-        }),
-    )

@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from cases import views as cases_views
 
 app_name = 'units'
 
@@ -50,11 +51,11 @@ urlpatterns = [
     # Phase 4: Report Submission
     path('monitoring-report/<uuid:task_id>/submit/', views.submit_monitoring_report, name='submit_monitoring_report'),
 
-    # Case Management (Module 5)
+    # Case Management (Module 5) — UI at /cases/; legacy /units/cases/ paths proxy to cases app
     path('cases/<str:position>/', views.case_management, name='case_management'),
-    path('cases/<str:position>/<uuid:case_id>/details/', views.get_case_details, name='get_case_details'),
-    path('cases/<str:position>/create/', views.create_case, name='create_case'),
-    path('cases/<str:position>/update/', views.update_case, name='update_case'),
+    path('cases/<str:position>/<uuid:case_id>/details/', cases_views.get_case_details, name='get_case_details'),
+    path('cases/<str:position>/create/', cases_views.create_case, name='create_case'),
+    path('cases/<str:position>/update/', cases_views.update_case, name='update_case'),
 
     # Blacklist Management
     path('blacklists/<str:position>/', views.blacklist_management, name='blacklist_management'),

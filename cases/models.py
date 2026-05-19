@@ -10,23 +10,24 @@ class Case(models.Model):
     Every complaint gets a case record until resolved.
     """
     CASE_TYPE_CHOICES = [
-        ('boundary', 'Boundary Dispute'),
-        ('structural', 'Structural Issue'),
-        ('interpersonal', 'Interpersonal Conflict'),
-        ('illegal_transfer', 'Illegal Transfer'),
-        ('unauthorized', 'Unauthorized Occupant'),
-        ('damage', 'Property Damage'),
-        ('noise', 'Noise/Disturbance'),
-        ('other', 'Other'),
+        ('lot_boundary', 'Lot Boundary Issue'),
+        ('noise', 'Noise Complaint'),
+        ('drunk_disturbance', 'Drunk Disturbance'),
+        ('community_quarrel', 'Community Quarrel'),
+        ('illegal_occupant', 'Illegal Occupant Concern'),
+        ('occupancy_dispute', 'Occupancy Dispute'),
+        ('sanitation', 'Sanitation Complaint'),
+        ('other', 'Other Community Concern'),
     ]
-    
+
     STATUS_CHOICES = [
-        ('open', 'Open'),
-        ('investigation', 'Under Investigation'),
-        ('referred', 'Referred to External Office'),
-        ('pending_decision', 'Pending Decision'),
+        ('pending_review', 'Pending Review'),
+        ('under_review', 'Under Review'),
+        ('mediation_monitoring', 'Under Mediation / Monitoring'),
+        ('awaiting_response', 'Awaiting Response'),
+        ('referred_engineering', 'Awaiting Engineering Findings'),
         ('resolved', 'Resolved'),
-        ('closed', 'Closed - No Action'),
+        ('closed', 'Closed'),
     ]
     
     RECEIVED_AT_CHOICES = [
@@ -38,7 +39,7 @@ class Case(models.Model):
     case_number = models.CharField(max_length=20, unique=True, editable=False)
     
     case_type = models.CharField(max_length=20, choices=CASE_TYPE_CHOICES)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='open')
+    status = models.CharField(max_length=24, choices=STATUS_CHOICES, default='pending_review')
     
     # Complainant/Reporter
     complainant_name = models.CharField(max_length=255)
@@ -120,9 +121,17 @@ class Case(models.Model):
     decided_at = models.DateTimeField(null=True, blank=True)
     resolution_notes = models.TextField(blank=True)
     
-    # Closure
+    # Closure (Step 7)
     resolved_at = models.DateTimeField(null=True, blank=True)
-    
+    closure_outcome = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text='Short outcome summary when case is closed',
+    )
+
+    # Monitoring (Step 6)
+    follow_up_at = models.DateField(null=True, blank=True)
+
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
@@ -154,6 +163,77 @@ class Case(models.Model):
     def is_stale(self):
         """Flag if case has been open > 14 days without resolution."""
         return self.days_open > 14 and self.status not in ['resolved', 'closed']
+
+
+class CaseAction(models.Model):
+    """Step 5 — recorded staff action (warning, mediation, referral, etc.)."""
+    ACTION_CHOICES = [
+        ('refer_engineering', 'Refer to City Engineering'),
+        ('issue_warning', 'Issue warning'),
+        ('schedule_mediation', 'Schedule mediation'),
+        ('monitor_complaint', 'Monitor complaint'),
+        ('record_incident', 'Record incident'),
+        ('record_resolution', 'Record resolution'),
+        ('review_occupancy', 'Review occupancy'),
+        ('request_clarification', 'Request clarification'),
+        ('monitor_case', 'Monitor case'),
+        ('issue_reminder', 'Issue reminder'),
+        ('monitor_compliance', 'Monitor compliance'),
+        ('schedule_inspection', 'Schedule lot survey'),
+        ('verbal_warning', 'Verbal warning issued'),
+        ('written_warning', 'Written warning issued'),
+        ('mediation_held', 'Mediation conducted'),
+        ('notice_issued', 'Notice issued'),
+        ('follow_up', 'Follow-up logged'),
+        ('other', 'Other action recorded'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    case = models.ForeignKey(Case, on_delete=models.CASCADE, related_name='actions')
+    action_type = models.CharField(max_length=32, choices=ACTION_CHOICES)
+    details = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='case_actions_created',
+    )
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Case action'
+        verbose_name_plural = 'Case actions'
+
+    def __str__(self):
+        return f'{self.get_action_type_display()} on {self.case.case_number}'
+
+
+class CaseEvidence(models.Model):
+    """Photos or documents uploaded during case review (Step 4)."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    case = models.ForeignKey(
+        Case,
+        on_delete=models.CASCADE,
+        related_name='evidence',
+    )
+    file = models.FileField(upload_to='cases/evidence/%Y/%m/')
+    caption = models.CharField(max_length=255, blank=True)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    uploaded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='case_evidence_uploaded',
+    )
+
+    class Meta:
+        ordering = ['-uploaded_at']
+        verbose_name = 'Case evidence'
+        verbose_name_plural = 'Case evidence'
+
+    def __str__(self):
+        return f'Evidence for {self.case.case_number}'
 
 
 class CaseNote(models.Model):
@@ -188,44 +268,4 @@ class CaseNote(models.Model):
         return f"Note on {self.case.case_number} by {self.created_by}"
 
 
-class SMSLog(models.Model):
-    """
-    Audit trail for Cases (Complaints/Monitoring) SMS notifications.
-    Tracks case filing, investigation updates, resolutions, etc.
-    """
-    STATUS_CHOICES = [
-        ('pending', 'Pending'),
-        ('sent', 'Sent'),
-        ('failed', 'Failed'),
-    ]
 
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    recipient_phone = models.CharField(max_length=20)
-    message_content = models.TextField()
-    trigger_event = models.CharField(
-        max_length=50,
-        help_text="Event that triggered this SMS (case_filed, investigation_update, resolved, escalated, etc.)"
-    )
-
-    # Optional links to related records
-    applicant = models.ForeignKey(
-        'intake.Applicant',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='cases_sms_logs'
-    )
-
-    # Status tracking
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
-    error_message = models.TextField(blank=True)
-    external_id = models.CharField(max_length=100, blank=True, help_text="SMS provider message ID")
-    sent_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        ordering = ['-sent_at']
-        verbose_name = "SMS Log (Cases)"
-        verbose_name_plural = "SMS Logs (Cases)"
-
-    def __str__(self):
-        return f"SMS to {self.recipient_phone} - {self.trigger_event} ({self.status})"
