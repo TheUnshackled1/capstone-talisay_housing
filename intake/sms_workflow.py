@@ -217,15 +217,38 @@ def message_proceed_to_evaluation(applicant) -> str:
     return f'{base}{situation}{closing}'
 
 
-def message_proceed_to_lot_awarding(applicant) -> str:
+def format_orientation_schedule(when) -> str:
+    """Human-readable orientation schedule for SMS (local time)."""
+    from django.utils import timezone as tz
+
+    if when is None:
+        return ''
+    local = tz.localtime(when) if tz.is_aware(when) else when
+    time_part = local.strftime('%I:%M %p').lstrip('0').replace(' 0', ' ')
+    return f'{local.strftime("%B %d, %Y")}, {time_part}'
+
+
+def lot_awarding_notify_body(*, orientation_at=None) -> str:
+    """
+    Core Hiligaynon body for lot-awarding / orientation SMS (no THA header, no name suffix).
+    When orientation_at is set, include the schedule instead of “wait for schedule”.
+    """
+    if orientation_at:
+        when_label = format_orientation_schedule(orientation_at)
+        return (
+            'Congratulations! Pirmanado na ang imo forms. Ikaw ang assignan na sang lot. '
+            f'Ang inyo orientasyon sa {when_label}. Salamat!'
+        )
+    return (
+        'Congratulations! Pirmanado na ang imo forms. Ikaw ang assignan na sang lot. '
+        'Maghulat sang schedule para sa inyo orientasyon. Salamat!'
+    )
+
+
+def message_proceed_to_lot_awarding(applicant, *, orientation_at=None) -> str:
     """
     Hiligaynon lot-awarding notification.
     Fits in a single SMS (160 chars) if head is standard length.
     """
     head = _tha_ref_name_header(applicant)
-    # Target: Clear, celebratory, and informative.
-    return (
-        f'{head}: Congratulations! Pirmanado na ang imo forms. Ikaw ang '
-        f'assignan na sang lot. Maghulat sang schedule para sa inyo '
-        f'orientasyon. Salamat!'
-    )
+    return f'{head}: {lot_awarding_notify_body(orientation_at=orientation_at)}'

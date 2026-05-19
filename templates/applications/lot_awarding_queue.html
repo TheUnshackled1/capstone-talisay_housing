@@ -757,6 +757,29 @@
     #lawqSmsModal .lawq-sms-recipients li:last-child {
         border-bottom: none;
     }
+    #lawqSmsModal .lawq-sms-field {
+        margin-bottom: 0.85rem;
+    }
+    #lawqSmsModal .lawq-sms-field label {
+        display: block;
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 0.4rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+    #lawqSmsModal .lawq-sms-orientation-input {
+        width: 100%;
+        padding: 0.55rem 0.65rem;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        font-size: 0.8rem;
+        box-sizing: border-box;
+        font-family: inherit;
+        color: #0f172a;
+        background: #fff;
+    }
     #lawqSmsModal textarea.lawq-sms-body {
         width: 100%;
         min-height: 6.5rem;
@@ -958,10 +981,20 @@
         </div>
         <ul class="lawq-sms-recipients" id="lawqSmsRecipientList" aria-label="Selected applicants"></ul>
         <div style="padding:1rem 1.15rem;flex:1;overflow:auto;">
-            <label for="lawqSmsMessageText" style="display:block;font-size:0.72rem;font-weight:600;color:#374151;margin-bottom:0.4rem;text-transform:uppercase;letter-spacing:0.04em;">Message</label>
-            <textarea id="lawqSmsMessageText" class="lawq-sms-body" maxlength="900" required
-                placeholder="Type the SMS text for the selected applicants…"></textarea>
-            <p class="lawq-sms-hint">Each applicant receives this text with their <strong>full name</strong> appended. This does not save an official schedule in the system. Delivery is logged under the staff SMS workflow (same as other Module 2 notices).</p>
+            <div class="lawq-sms-field">
+                <label for="lawqSmsOrientationAt">Orientation date &amp; time</label>
+                <input type="datetime-local" id="lawqSmsOrientationAt" class="lawq-sms-orientation-input" required
+                    aria-describedby="lawqSmsOrientationHint">
+                <p class="lawq-sms-hint" id="lawqSmsOrientationHint" style="margin-top:0.35rem;">
+                    Set when the GK orientation will be held. The <strong>Message</strong> below updates to include this schedule.
+                </p>
+            </div>
+            <div class="lawq-sms-field">
+                <label for="lawqSmsMessageText">Message</label>
+                <textarea id="lawqSmsMessageText" class="lawq-sms-body" maxlength="900" required
+                    placeholder="Orientation schedule is inserted automatically from the date above…"></textarea>
+                <p class="lawq-sms-hint">Each applicant receives this text with their <strong>full name</strong> appended. Delivery is logged under the staff SMS workflow (same as other Module 2 notices).</p>
+            </div>
         </div>
         <div style="padding:0.85rem 1.15rem;border-top:1px solid #e5e7eb;display:flex;justify-content:flex-end;gap:0.5rem;background:#fafafa;">
             <button type="button" onclick="closeLawqSmsModal()"
@@ -1017,11 +1050,49 @@
 
 {% block extra_js %}
 <script>
-    var LAWQ_SMS_DEFAULT = (
+    var LAWQ_SMS_WAIT = (
         'Congratulations! Pirmanado na ang imo forms. Ikaw ang '
         + 'assignan na sang lot. Maghulat sang schedule para sa inyo '
         + 'orientasyon. Salamat!'
     );
+
+    function lawqFormatOrientationSchedule(isoValue) {
+        if (!isoValue) return '';
+        var d = new Date(isoValue);
+        if (isNaN(d.getTime())) return '';
+        var datePart = d.toLocaleDateString('en-PH', {
+            year: 'numeric', month: 'long', day: 'numeric'
+        });
+        var timePart = d.toLocaleTimeString('en-PH', {
+            hour: 'numeric', minute: '2-digit', hour12: true
+        });
+        return datePart + ', ' + timePart;
+    }
+
+    function lawqBuildSmsBodyFromOrientation(isoValue) {
+        var whenLabel = lawqFormatOrientationSchedule(isoValue);
+        if (!whenLabel) return LAWQ_SMS_WAIT;
+        return (
+            'Congratulations! Pirmanado na ang imo forms. Ikaw ang assignan na sang lot. '
+            + 'Ang inyo orientasyon sa ' + whenLabel + '. Salamat!'
+        );
+    }
+
+    function lawqDefaultOrientationLocalValue() {
+        var d = new Date();
+        d.setDate(d.getDate() + 7);
+        d.setHours(9, 0, 0, 0);
+        var pad = function (n) { return String(n).padStart(2, '0'); };
+        return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate())
+            + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+    }
+
+    function lawqSyncSmsMessageFromOrientation() {
+        var orient = document.getElementById('lawqSmsOrientationAt');
+        var ta = document.getElementById('lawqSmsMessageText');
+        if (!orient || !ta) return;
+        ta.value = lawqBuildSmsBodyFromOrientation(orient.value);
+    }
 
     function lawqShowAlert(message, title, onConfirm, variant) {
         const overlay = document.getElementById('lawqAlertOverlay');
@@ -1056,8 +1127,9 @@
         var listEl = document.getElementById('lawqSmsRecipientList');
         var summaryEl = document.getElementById('lawqSmsRecipientSummary');
         var ta = document.getElementById('lawqSmsMessageText');
+        var orient = document.getElementById('lawqSmsOrientationAt');
         var selected = Array.from(document.querySelectorAll('.lawq-app-check')).filter(function (cb) { return cb.checked; });
-        if (!selected.length || !modal || !listEl || !summaryEl || !ta) return;
+        if (!selected.length || !modal || !listEl || !summaryEl || !ta || !orient) return;
 
         listEl.innerHTML = '';
         selected.forEach(function (cb) {
@@ -1066,9 +1138,10 @@
             listEl.appendChild(li);
         });
         summaryEl.textContent = selected.length + ' recipient' + (selected.length !== 1 ? 's' : '') + ' (checked rows on this page)';
-        ta.value = LAWQ_SMS_DEFAULT;
+        orient.value = lawqDefaultOrientationLocalValue();
+        lawqSyncSmsMessageFromOrientation();
         modal.classList.add('active');
-        ta.focus();
+        orient.focus();
     }
 
     function closeLawqSmsModal() {
@@ -1120,13 +1193,25 @@
             });
         }
 
+        var orientInput = document.getElementById('lawqSmsOrientationAt');
+        if (orientInput) {
+            orientInput.addEventListener('change', lawqSyncSmsMessageFromOrientation);
+            orientInput.addEventListener('input', lawqSyncSmsMessageFromOrientation);
+        }
+
         if (confirmBtn) {
             confirmBtn.addEventListener('click', async function () {
                 var ids = checks().filter(function (cb) { return cb.checked; }).map(function (cb) { return cb.value; });
                 var ta = document.getElementById('lawqSmsMessageText');
+                var orient = document.getElementById('lawqSmsOrientationAt');
+                var orientVal = (orient && orient.value) ? orient.value.trim() : '';
                 var msg = (ta && ta.value) ? ta.value.trim() : '';
                 if (!ids.length) {
                     closeLawqSmsModal();
+                    return;
+                }
+                if (!orientVal) {
+                    lawqShowAlert('Please set the orientation date and time.', 'Send SMS', null, 'default');
                     return;
                 }
                 if (!msg) {
@@ -1136,6 +1221,7 @@
                 var body = new URLSearchParams();
                 body.append('csrfmiddlewaretoken', '{{ csrf_token }}');
                 body.append('message', msg);
+                body.append('orientation_at', orientVal);
                 ids.forEach(function (id) { body.append('application_ids', id); });
                 try {
                     confirmBtn.disabled = true;

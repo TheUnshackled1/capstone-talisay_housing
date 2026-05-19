@@ -3767,10 +3767,13 @@ function buildMonitoringHistoryFromTasks(tasks) {
 function renderComplianceRecordsRecord(records) {
     const wrap = document.getElementById('complianceRecordsRecord');
     if (!wrap) return;
+    const card = wrap.closest('.premium-data-card');
     if (!Array.isArray(records) || !records.length) {
-        wrap.innerHTML = '<p class="occupied-record-empty">No compliance records yet.</p>';
+        wrap.innerHTML = '';
+        if (card) card.style.display = 'none';
         return;
     }
+    if (card) card.style.display = '';
     wrap.innerHTML = `
         <div class="compliance-record-list">
             ${records.map((record) => `

@@ -3917,13 +3917,35 @@ def _sync_housing_unit_after_lot_award(application, site_name_raw, block_number,
     _assign_housing_unit_after_lot_award(application, unit, awarded_by_user)
 
 
+def _parse_orientation_at(raw):
+    """Parse datetime-local / ISO value from the lot-awarding SMS modal."""
+    from datetime import datetime
+    from django.utils.dateparse import parse_datetime
+
+    raw = (raw or '').strip()
+    if not raw:
+        return None
+    if 'T' in raw and len(raw) >= 16:
+        try:
+            naive = datetime.fromisoformat(raw[:16])
+            return timezone.make_aware(naive, timezone.get_current_timezone())
+        except ValueError:
+            pass
+    parsed = parse_datetime(raw)
+    if parsed is None:
+        return None
+    if timezone.is_naive(parsed):
+        return timezone.make_aware(parsed, timezone.get_current_timezone())
+    return parsed
+
+
 @login_required
 @verify_position
 @require_POST
 def lot_awarding_bulk_notify_sms(request, position):
     """
     Send a coordination SMS to selected applicants still on the lot-awarding queue.
-    Does not store a release schedule — notification only.
+    Orientation date/time is required and woven into the message body.
     """
     allowed_positions = ['fourth_member', 'second_member', 'oic']
     if request.user.position not in allowed_positions:
@@ -3938,10 +3960,17 @@ def lot_awarding_bulk_notify_sms(request, position):
     if not raw_ids:
         return JsonResponse({'success': False, 'error': 'No applicants selected.'}, status=400)
 
-    # Staff-composed body from the Send SMS modal (reference is appended per recipient below).
+    orientation_at = _parse_orientation_at(request.POST.get('orientation_at'))
+    if not orientation_at:
+        return JsonResponse(
+            {'success': False, 'error': 'Orientation date and time are required.'},
+            status=400,
+        )
+
+    # Staff may edit the textarea; default body includes the orientation schedule.
     message_body = (request.POST.get('message') or '').strip()
     if not message_body:
-        return JsonResponse({'success': False, 'error': 'Message text is required.'}, status=400)
+        message_body = sms_workflow.lot_awarding_notify_body(orientation_at=orientation_at)
     message_body = message_body[:900]
 
     sent = 0
@@ -4091,8 +4120,9 @@ def award_lot(request, position):
                 )
 
         if application.applicant.phone_number:
+            applicant_name = (application.applicant.full_name or '').strip()
             message = (
-                f"Congratulations! You have been awarded Lot {lot_number}"
+                f"Congratulations! {applicant_name} You have been awarded Lot {lot_number}"
                 f"{' Block ' + block_number if block_number else ''}"
                 f"{' at ' + site_name if site_name else ''}. "
                 f"Please visit THA office for contract signing and key turnover. "
