@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Case, CaseAction, CaseEvidence, CaseNote
+from .models import Case, CaseAction, CaseEvidence
 
 
 @admin.register(Case)
@@ -59,23 +59,5 @@ class CaseEvidenceAdmin(admin.ModelAdmin):
     list_filter = ('uploaded_at',)
     search_fields = ('case__case_number', 'caption')
     readonly_fields = ('uploaded_at',)
-
-
-@admin.register(CaseNote)
-class CaseNoteAdmin(admin.ModelAdmin):
-    list_display = ('case', 'created_by', 'created_at')
-    list_filter = ('created_at',)
-    search_fields = ('case__case_number', 'note')
-    readonly_fields = ('created_at',)
-
-    fieldsets = (
-        ('📝 CASE NOTE', {
-            'fields': ('case', 'note'),
-        }),
-        ('🔏 TRACKED BY', {
-            'fields': ('created_by', 'created_at'),
-        }),
-    )
-
 
 

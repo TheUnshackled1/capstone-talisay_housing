@@ -1,5 +1,5 @@
 {% extends base_template|default:'staff_base.html' %}
-{% load static %}
+{% load static humanize %}
 
 {% block title %}Case Management - THA{% endblock %}
 
@@ -136,6 +136,155 @@
         color: #16a34a;
     }
 
+    .monitoring-kpi.is-clickable {
+        cursor: pointer;
+        border: none;
+        font: inherit;
+        text-align: left;
+        width: 100%;
+    }
+    .monitoring-kpi.is-clickable:focus-visible {
+        outline: 2px solid #10b981;
+        outline-offset: 2px;
+    }
+    .monitoring-kpi-resolved.is-active {
+        border-color: #16a34a;
+        box-shadow: 0 4px 14px rgba(22, 163, 74, 0.22);
+    }
+
+    /* Resolved cases — right side drawer */
+    #resolvedCasesDrawer {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 1050;
+        background: rgba(15, 23, 42, 0.45);
+        backdrop-filter: blur(2px);
+        -webkit-backdrop-filter: blur(2px);
+        justify-content: flex-end;
+        align-items: stretch;
+    }
+    #resolvedCasesDrawer.is-open {
+        display: flex;
+    }
+    .cases-resolved-drawer-panel {
+        width: min(420px, 100vw);
+        max-height: 100vh;
+        background: #fff;
+        box-shadow: -12px 0 40px -8px rgba(15, 23, 42, 0.2);
+        display: flex;
+        flex-direction: column;
+        animation: casesResolvedDrawerIn 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+        position: relative;
+    }
+    .cases-resolved-drawer-panel::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #047857 0%, #10b981 50%, #6ee7b7 100%);
+        z-index: 2;
+    }
+    @keyframes casesResolvedDrawerIn {
+        from { transform: translateX(100%); opacity: 0.9; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    .cases-resolved-drawer-head {
+        padding: 1rem 1.1rem 0.85rem;
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 0.75rem;
+        background: linear-gradient(180deg, #ecfdf5 0%, #fff 100%);
+        flex-shrink: 0;
+    }
+    .cases-resolved-drawer-head h2 {
+        margin: 0 0 0.25rem;
+        font-size: 1rem;
+        font-weight: 700;
+        color: #064e3b;
+    }
+    .cases-resolved-drawer-head p {
+        margin: 0;
+        font-size: 0.78rem;
+        color: #64748b;
+    }
+    .cases-resolved-drawer-close {
+        flex-shrink: 0;
+        border: 1px solid #cbd5e1;
+        background: #fff;
+        color: #64748b;
+        width: 2rem;
+        height: 2rem;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        font-size: 1.1rem;
+        line-height: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .cases-resolved-drawer-close:hover {
+        background: #fef2f2;
+        border-color: #fecaca;
+        color: #b91c1c;
+    }
+    .cases-resolved-drawer-scroll {
+        flex: 1;
+        overflow-y: auto;
+        padding: 0.75rem;
+    }
+    .cases-resolved-drawer-item {
+        display: block;
+        width: 100%;
+        text-align: left;
+        padding: 0.85rem 0.9rem;
+        margin-bottom: 0.5rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.65rem;
+        background: #fff;
+        cursor: pointer;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .cases-resolved-drawer-item:hover {
+        border-color: #86efac;
+        box-shadow: 0 2px 8px rgba(16, 185, 129, 0.12);
+    }
+    .cases-resolved-drawer-item-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+        margin-bottom: 0.35rem;
+    }
+    .cases-resolved-drawer-item-top strong {
+        font-family: ui-monospace, monospace;
+        font-size: 0.78rem;
+        color: #475569;
+    }
+    .cases-resolved-drawer-item-name {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #0f172a;
+        margin: 0 0 0.25rem;
+        line-height: 1.35;
+    }
+    .cases-resolved-drawer-item-meta {
+        font-size: 0.72rem;
+        color: #64748b;
+        margin: 0;
+        line-height: 1.4;
+    }
+    .cases-resolved-drawer-empty {
+        text-align: center;
+        padding: 2rem 1rem;
+        color: #94a3b8;
+        font-size: 0.85rem;
+    }
+
     .monitoring-kpi-text h4 {
         margin: 0 0 0.2rem 0;
         font-size: 0.75rem;
@@ -216,22 +365,31 @@
     .cases-add-btn {
         display: inline-flex;
         align-items: center;
-        gap: 0.5rem;
-        padding: 0.6rem 1rem;
-        border-radius: 0.6rem;
-        border: none;
-        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        justify-content: center;
+        gap: 0.45rem;
+        padding: 0.62rem 1.35rem;
+        border-radius: 0.5rem;
+        border: 1px solid #047857;
+        background: linear-gradient(180deg, #10b981 0%, #059669 100%);
         color: #ffffff;
-        font-size: 0.78rem;
+        font-size: 0.82rem;
         font-weight: 700;
+        letter-spacing: 0.02em;
         cursor: pointer;
-        box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        white-space: nowrap;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
     }
 
     .cases-add-btn:hover {
+        background: linear-gradient(180deg, #059669 0%, #047857 100%);
+        box-shadow: 0 4px 14px rgba(5, 150, 105, 0.35);
         transform: translateY(-1px);
-        box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3);
+    }
+
+    .cases-add-btn:focus-visible {
+        outline: 2px solid #6ee7b7;
+        outline-offset: 2px;
     }
 
     .cases-filter-row {
@@ -280,11 +438,645 @@
         background-position: right 0.6rem center;
     }
 
-    .cases-list {
+    .cases-list-section {
+        padding: 0.85rem 1.4rem 1.5rem;
+    }
+
+    .section-title-list {
+        margin: 0 0 0.75rem;
+        font-size: 0.95rem;
+        font-weight: 700;
+        text-align: center;
+        color: #0f172a;
+    }
+
+    .cases-controls-bar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: stretch;
+        gap: 0.65rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .cases-controls-bar .summary-chip-card {
+        flex-shrink: 0;
+    }
+
+    .cases-controls-bar .cases-search-box {
+        flex: 1 1 220px;
+        min-width: min(100%, 280px);
+    }
+
+    .cases-controls-bar .cases-select.filter-select {
+        flex-shrink: 0;
+        min-width: 9.5rem;
+    }
+
+    .cases-controls-bar .cases-add-btn {
+        flex-shrink: 0;
+        margin-left: auto;
+        align-self: center;
+    }
+
+    .summary-chip-card {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.65rem;
+        padding: 0.5rem 0.85rem;
+        border: 1px solid #a7f3d0;
+        border-radius: 0.65rem;
+        background: linear-gradient(180deg, #ecfdf5 0%, #ffffff 100%);
+    }
+
+    .summary-chip-card--emerald p:first-child {
+        font-size: 0.625rem;
+        color: #64748b;
+        margin: 0;
+        text-transform: uppercase;
+        font-weight: 500;
+    }
+
+    .summary-chip-card--emerald p:last-child {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #047857;
+        margin: 0;
+    }
+
+    .cases-search-box {
+        flex: 1;
+        min-width: 200px;
+        display: flex;
+        position: relative;
+    }
+
+    .cases-search-box .search-icon {
+        position: absolute;
+        left: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 1rem;
+        height: 1rem;
+        color: #94a3b8;
+        z-index: 2;
+        pointer-events: none;
+    }
+
+    .cases-search-box input {
+        flex: 1;
+        padding: 0.56rem 0.72rem 0.56rem 2.25rem;
+        border: 1px solid #cbd5e1;
+        border-radius: 0.5rem 0 0 0.5rem;
+        font-size: 0.78rem;
+        outline: none;
+    }
+
+    .cases-search-btn {
+        padding: 0 1.25rem;
+        background: #15803d;
+        color: #fff;
+        border: none;
+        border-radius: 0 0.5rem 0.5rem 0;
+        font-size: 0.78rem;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .cases-search-btn:hover { background: #166534; }
+
+    .cases-table.formal-table {
+        border-collapse: collapse;
+        border: 1px solid #e5e7eb;
+        table-layout: fixed;
+        width: 100%;
+    }
+
+    .cases-table.formal-table thead th {
+        border: 1px solid rgba(255, 255, 255, 0.22);
+    }
+
+    .cases-table.formal-table tbody td {
+        border: 1px solid #e5e7eb;
+        font-size: 0.72rem;
+        vertical-align: middle;
+    }
+
+    .cases-table th:nth-child(1),
+    .cases-table td:nth-child(1) { width: 4%; text-align: center; }
+    .cases-table th:nth-child(2),
+    .cases-table td:nth-child(2) { width: 13%; }
+    .cases-table th:nth-child(3),
+    .cases-table td:nth-child(3) { width: 20%; }
+    .cases-table th:nth-child(4),
+    .cases-table td:nth-child(4) { width: 12%; }
+    .cases-table th:nth-child(5),
+    .cases-table td:nth-child(5) { width: 9%; }
+    .cases-table th:nth-child(6),
+    .cases-table td:nth-child(6) { width: 12%; text-align: center; }
+    .cases-table th:nth-child(7),
+    .cases-table td:nth-child(7) { width: 11%; text-align: center; }
+    .cases-table th:nth-child(8),
+    .cases-table td:nth-child(8) { width: 8%; text-align: center; }
+
+    /* Case detail modal — matches Case Recording Sheet */
+    .tha-case-view-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.5);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+        flex-direction: column;
+    }
+    .tha-case-view-modal.modal-content {
+        width: min(96%, 72rem);
+        max-width: min(96%, 72rem);
+        max-height: 92vh;
         display: flex;
         flex-direction: column;
+        overflow: hidden;
+        border-radius: 1rem;
+        background: #fff;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.12);
+    }
+    .tha-case-view-modal .modal-header {
+        background: #fff;
+        border-bottom: 1px solid #e5e9ef;
+        padding: 0.85rem 1.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        flex-shrink: 0;
+    }
+    .tha-case-view-modal .modal-header .modal-title {
+        margin: 0;
+        font-family: Georgia, 'Times New Roman', serif;
+        font-size: 1rem;
+        font-weight: 700;
+        color: #064e3b;
+    }
+    .tha-case-view-modal .btn-close {
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        background: #f1f5f9;
+        border: none;
+        border-radius: 8px;
+        width: 2rem;
+        height: 2rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: #475569;
+    }
+    .tha-case-view-modal .modal-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 0 1.5rem 1.25rem;
+    }
+    .tha-case-view-modal .tha-form-header {
+        background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+        color: #f8fafc;
+        padding: 1.15rem 1.5rem 1rem;
+        margin: 0 -1.5rem 1.1rem;
+        text-align: center;
+        position: relative;
+    }
+    .tha-case-view-modal .tha-form-header::after {
+        content: '';
+        position: absolute;
+        left: 0; right: 0; bottom: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #047857 0%, #10b981 50%, #6ee7b7 100%);
+    }
+    .tha-case-view-modal .tha-form-header h2 {
+        margin: 0;
+        font-family: Georgia, 'Times New Roman', serif;
+        font-size: 1.05rem;
+        font-weight: 700;
+    }
+    .tha-case-view-modal .tha-form-subtitle {
+        margin: 0.35rem 0 0;
+        font-size: 0.75rem;
+        color: #cbd5e1;
+    }
+    .tha-case-view-modal .case-detail-meta {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-top: 0.65rem;
+    }
+    .tha-case-view-modal #addCaseForm .tha-section-block,
+    .tha-case-view-modal .case-detail-body .tha-section-block {
+        background: #fff;
+        border: 1px solid #e5e9ef;
+        border-left: 3px solid #10b981;
+        border-radius: 0.65rem;
+        padding: 1rem 1.1rem 0.95rem;
+        margin-bottom: 0.9rem;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+    .tha-case-view-modal .case-detail-body .tha-section-title {
+        color: #064e3b;
+        font-size: 0.7rem;
+        font-weight: 800;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        margin: 0 0 0.85rem;
+        padding-bottom: 0.45rem;
+        border-bottom: 1px solid #e5e9ef;
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+    }
+    .tha-case-view-modal .case-detail-body .tha-section-title::before {
+        content: '';
+        width: 0.45rem;
+        height: 0.45rem;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+        flex-shrink: 0;
+    }
+    .tha-case-view-modal .case-detail-staff-card {
+        display: flex;
+        align-items: center;
         gap: 0.75rem;
-        padding: 1rem 1.4rem 1.6rem;
+        padding: 0.75rem;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+    }
+    .tha-case-view-modal .case-detail-staff-card .handled-by-avatar {
+        width: 2.25rem;
+        height: 2.25rem;
+        font-size: 0.75rem;
+    }
+    .tha-case-view-modal .case-detail-field-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem 1rem;
+    }
+    .tha-case-view-modal .case-detail-field-grid .full { grid-column: 1 / -1; }
+    .tha-case-view-modal .case-detail-label {
+        display: block;
+        font-size: 0.68rem;
+        font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin-bottom: 0.25rem;
+    }
+    .tha-case-view-modal .case-detail-value {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #0f172a;
+        margin: 0;
+        line-height: 1.4;
+    }
+    .tha-case-view-modal .case-detail-value.muted { font-weight: 500; color: #475569; }
+    .tha-case-view-modal .case-detail-value.accent { color: #047857; }
+    .tha-case-view-modal .case-detail-description-box {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 0.85rem 1rem;
+        font-size: 0.85rem;
+        color: #1e293b;
+        line-height: 1.5;
+        margin: 0;
+    }
+    .tha-case-view-modal .case-record-card > .tha-section-title,
+    .tha-case-view-modal #evidenceSection > .tha-section-title {
+        justify-content: center;
+        margin-bottom: 0;
+        padding: 1rem 1.1rem 0.85rem;
+        border-bottom: 1px solid #e5e9ef;
+    }
+    .tha-case-view-modal .case-record-card {
+        padding: 0 0 0.25rem;
+        overflow: hidden;
+    }
+    .tha-case-view-modal .case-record-row {
+        display: flex;
+        flex-wrap: nowrap;
+        align-items: stretch;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    .tha-case-view-modal .case-record-part {
+        flex: 1 1 0;
+        min-width: 10.5rem;
+        padding: 0.85rem 0.8rem;
+        border-top: none;
+        border-right: 1px solid #eef2f6;
+        text-align: left;
+    }
+    .tha-case-view-modal .case-record-part:last-child {
+        border-right: none;
+    }
+    .tha-case-view-modal .case-record-part-title {
+        margin: 0 0 0.6rem;
+        font-size: 0.68rem;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #047857;
+        text-align: left;
+        white-space: nowrap;
+    }
+    .tha-case-view-modal .case-record-part-title::before {
+        display: none;
+    }
+    .tha-case-view-modal .case-record-staff {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 0.6rem;
+        padding: 0;
+        background: transparent;
+        border: none;
+        border-radius: 0;
+        max-width: none;
+        margin: 0;
+    }
+    .tha-case-view-modal .case-record-staff .handled-by-avatar {
+        width: 2.35rem;
+        height: 2.35rem;
+        font-size: 0.78rem;
+        flex-shrink: 0;
+    }
+    .tha-case-view-modal .case-record-staff .case-detail-value {
+        font-size: 0.82rem;
+    }
+    .tha-case-view-modal .case-record-kv-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.45rem;
+    }
+    .tha-case-view-modal .case-record-kv {
+        display: flex;
+        flex-direction: column;
+        gap: 0.12rem;
+    }
+    .tha-case-view-modal .case-record-kv .case-detail-label {
+        margin: 0;
+        font-size: 0.65rem;
+    }
+    .tha-case-view-modal .case-record-kv .case-detail-value {
+        font-size: 0.8rem;
+        line-height: 1.35;
+        word-break: break-word;
+    }
+    .tha-case-view-modal .case-record-kv .case-detail-value.accent {
+        font-size: 0.78rem;
+    }
+    .tha-case-view-modal .case-record-respondent {
+        margin: 0;
+        padding: 0.55rem 0.65rem;
+        background: #fffbeb;
+        border: 1px solid #fde68a;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #78350f;
+        line-height: 1.4;
+        text-align: left;
+    }
+    .tha-case-view-modal .case-record-incident-type {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.35rem 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+    .tha-case-view-modal .case-record-incident-type .case-detail-label {
+        margin: 0;
+        font-size: 0.65rem;
+    }
+    .tha-case-view-modal .case-record-text-block {
+        text-align: left;
+        max-width: none;
+        margin: 0;
+    }
+    .tha-case-view-modal .case-record-text-block .case-detail-label {
+        display: block;
+        margin-bottom: 0.25rem;
+        font-size: 0.65rem;
+    }
+    .tha-case-view-modal .case-record-text-block .case-detail-description-box {
+        text-align: left;
+        font-size: 0.8rem;
+        line-height: 1.45;
+        padding: 0.55rem 0.65rem;
+        max-height: 5.5rem;
+        overflow-y: auto;
+    }
+    .tha-case-view-modal .case-record-investigation-box {
+        background: #eff6ff;
+        border-color: #bfdbfe;
+    }
+    .tha-case-view-modal .case-record-meta {
+        margin-top: 0.4rem;
+        font-size: 0.72rem;
+        color: #64748b;
+        text-align: left;
+    }
+    .tha-case-view-modal #evidenceSection {
+        display: block;
+        padding-bottom: 1rem;
+    }
+    .tha-case-view-modal #evidenceSection > .tha-section-title {
+        text-align: center;
+    }
+    .tha-case-view-modal #evidenceSection .case-evidence-inner {
+        max-width: none;
+        margin: 0;
+        padding: 0.75rem 1rem 0.5rem;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 0.75rem 1rem;
+    }
+    .tha-case-view-modal #evidenceList {
+        flex: 1 1 14rem;
+        min-width: 12rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    .tha-case-view-modal .case-evidence-item {
+        font-size: 0.82rem;
+        padding: 0.6rem 0.75rem;
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        border-radius: 8px;
+        text-align: left;
+        line-height: 1.4;
+    }
+    .tha-case-view-modal .case-evidence-item a {
+        font-weight: 600;
+        color: #047857;
+    }
+    .tha-case-view-modal .case-evidence-item .case-evidence-meta {
+        color: #64748b;
+        margin-top: 0.25rem;
+        font-size: 0.72rem;
+    }
+    .tha-case-view-modal .case-evidence-empty {
+        font-size: 0.82rem;
+        color: #64748b;
+        margin: 0;
+        text-align: left;
+    }
+    .tha-case-view-modal #evidenceUploadForm {
+        flex: 1 1 16rem;
+        min-width: 14rem;
+        display: none;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .tha-case-view-modal #evidenceUploadForm .form-input {
+        flex: 1 1 8rem;
+        min-width: 7rem;
+        max-width: none;
+        text-align: left;
+        font-size: 0.8rem;
+        padding: 0.45rem 0.55rem;
+    }
+    .tha-case-view-modal #evidenceUploadForm input[type="file"] {
+        flex: 1 1 9rem;
+    }
+    .tha-case-view-modal #evidenceUploadForm .cases-add-btn {
+        flex-shrink: 0;
+        padding: 0.5rem 0.85rem;
+        font-size: 0.78rem;
+    }
+    .tha-case-view-modal .modal-footer {
+        flex-shrink: 0;
+        padding: 0.85rem 1.5rem;
+        border-top: 1px solid #e2e8f0;
+        background: #f8fafc;
+        display: flex;
+        justify-content: center;
+        gap: 0.75rem;
+    }
+    .tha-case-view-modal .btn-print-case {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        min-width: 10rem;
+        padding: 0.55rem 1.1rem;
+        background: #fff;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #334155;
+        cursor: pointer;
+    }
+    .tha-case-view-modal .btn-print-case:hover { background: #f1f5f9; }
+    @media (max-width: 900px) {
+        .tha-case-view-modal .case-record-row {
+            flex-wrap: wrap;
+        }
+        .tha-case-view-modal .case-record-part {
+            flex: 1 1 45%;
+            min-width: 0;
+            border-right: none;
+            border-bottom: 1px solid #eef2f6;
+        }
+        .tha-case-view-modal #evidenceSection .case-evidence-inner {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .tha-case-view-modal #evidenceUploadForm {
+            flex-direction: column;
+            align-items: stretch;
+        }
+    }
+
+    .case-status-pill {
+        display: inline-block;
+        padding: 0.2rem 0.45rem;
+        border-radius: 4px;
+        font-size: 0.62rem;
+        font-weight: 700;
+        line-height: 1.3;
+        white-space: normal;
+    }
+
+    .case-status-pill--pending_review { background: #ffedd5; color: #b45309; }
+    .case-status-pill--under_review { background: #dbeafe; color: #1e40af; }
+    .case-status-pill--mediation_monitoring { background: #ffedd5; color: #92400e; }
+    .case-status-pill--referred_engineering { background: #f3e8ff; color: #6b21a8; }
+    .case-status-pill--awaiting_response { background: #e0e7ff; color: #3730a3; }
+    .case-status-pill--resolved { background: #dcfce7; color: #15803d; }
+    .case-status-pill--closed { background: #f3f4f6; color: #374151; }
+
+    .case-type-pill {
+        display: inline-block;
+        padding: 0.18rem 0.4rem;
+        border-radius: 4px;
+        font-size: 0.6rem;
+        font-weight: 700;
+        background: rgba(59, 130, 246, 0.12);
+        color: #1e40af;
+        line-height: 1.25;
+    }
+
+    .handled-by-avatar {
+        width: 1.65rem;
+        height: 1.65rem;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.58rem;
+        font-weight: 700;
+        color: #fff;
+        flex-shrink: 0;
+    }
+
+    .handled-by-avatar.second-member { background: linear-gradient(135deg, #4f46e5 0%, #2563eb 100%); }
+    .handled-by-avatar.fourth-member { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+    .handled-by-avatar.ronda { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+    .handled-by-avatar.other { background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%); }
+
+    .cases-handled-name {
+        font-size: 0.68rem;
+        font-weight: 600;
+        color: #1e293b;
+    }
+
+    body .btn-case-view {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.3rem;
+        padding: 0.35rem 0.65rem;
+        border-radius: 999px;
+        border: 1px solid #86efac;
+        background: #ecfdf5;
+        color: #047857;
+        font-size: 0.65rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background 0.15s ease, border-color 0.15s ease;
+    }
+
+    body .btn-case-view:hover {
+        background: #d1fae5;
+        border-color: #10b981;
     }
 
     .monitoring-empty-state {
@@ -328,99 +1120,263 @@
         }
     }
 
-    .case-workflow-stepper {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.35rem;
-        margin-bottom: 1rem;
-    }
-    .case-wf-step {
-        flex: 1 1 4.5rem;
-        min-width: 4.2rem;
-        text-align: center;
-        padding: 0.35rem 0.25rem;
-        border-radius: 6px;
-        font-size: 0.62rem;
-        font-weight: 700;
-        line-height: 1.2;
-        border: 1px solid #e5e7eb;
-        background: #f9fafb;
-        color: #9ca3af;
-    }
-    .case-wf-step.done { background: #ecfdf5; border-color: #6ee7b7; color: #047857; }
-    .case-wf-step.active { background: #eff6ff; border-color: #93c5fd; color: #1d4ed8; }
-    .case-wf-step .num { display: block; font-size: 0.7rem; }
-
-    .case-record-section {
-        border: 1px solid #e2e8f0;
-        border-radius: 10px;
+    /* Add Case modal — matches intake Applicant Registration Sheet (tha-reg-modal) */
+    .tha-case-modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.5);
+        z-index: 1100;
+        align-items: center;
+        justify-content: center;
         padding: 1rem;
-        background: #fafafa;
+        flex-direction: column;
     }
-    .case-record-section h3 {
-        margin: 0 0 0.75rem;
-        font-size: 0.72rem;
+    .tha-case-reg-modal.modal-content {
+        width: min(94%, 52rem);
+        max-width: min(94%, 52rem);
+        max-height: 90vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        border-radius: 1rem;
+        background: #fff;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.12);
+    }
+    .tha-case-reg-modal .modal-header {
+        background: #fff;
+        border-bottom: 1px solid #e5e9ef;
+        padding: 0.85rem 1.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        flex-shrink: 0;
+    }
+    .tha-case-reg-modal .modal-title {
+        margin: 0;
+        font-family: Georgia, 'Times New Roman', serif;
+        font-size: 1rem;
+        font-weight: 700;
+        color: #064e3b;
+    }
+    .tha-case-reg-modal .btn-close {
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        background: #f1f5f9;
+        color: #475569;
+        border: none;
+        border-radius: 8px;
+        width: 2rem;
+        height: 2rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+    }
+    .tha-case-reg-modal .btn-close:hover { background: #e2e8f0; color: #0f172a; }
+    .tha-case-reg-modal .modal-body {
+        flex: 1;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding: 0 1.5rem 1.25rem;
+        max-height: calc(90vh - 8rem);
+    }
+    .tha-case-reg-modal .tha-form-header {
+        background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+        color: #f8fafc;
+        padding: 1.25rem 1.5rem 1.1rem;
+        margin: 0 -1.5rem 1.25rem;
+        text-align: center;
+        position: relative;
+    }
+    .tha-case-reg-modal .tha-form-header::after {
+        content: '';
+        position: absolute;
+        left: 0; right: 0; bottom: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #047857 0%, #10b981 50%, #6ee7b7 100%);
+    }
+    .tha-case-reg-modal .tha-form-crest {
+        width: auto;
+        max-width: min(100%, 16rem);
+        height: 3rem;
+        margin: 0 auto 0.5rem;
+        border: 2px solid rgba(248, 250, 252, 0.95);
+        border-radius: 0.375rem;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #fff;
+        padding: 0.15rem 0.45rem;
+    }
+    .tha-case-reg-modal .tha-form-crest img {
+        height: 100%;
+        max-width: 100%;
+        object-fit: contain;
+    }
+    .tha-case-reg-modal .tha-form-header h2 {
+        margin: 0;
+        font-family: Georgia, 'Times New Roman', serif;
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #f8fafc;
+    }
+    .tha-case-reg-modal .tha-form-subtitle {
+        margin: 0.3rem 0 0;
+        font-size: 0.78rem;
+        color: #cbd5e1;
+    }
+    .tha-case-reg-modal #addCaseForm .tha-section-block {
+        background: #fff;
+        border: 1px solid #e5e9ef;
+        border-left: 3px solid #10b981;
+        border-radius: 0.65rem;
+        padding: 1.05rem 1.15rem 1rem;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+        margin-bottom: 0.95rem;
+    }
+    .tha-case-reg-modal #addCaseForm .tha-section-title {
+        color: #064e3b;
+        font-size: 0.7rem;
         font-weight: 800;
         letter-spacing: 0.14em;
         text-transform: uppercase;
-        color: #334155;
+        margin: 0 0 0.95rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #e5e9ef;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
     }
-    .case-autofill-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 0.65rem 1rem;
-        margin-top: 0.65rem;
-        padding: 0.75rem;
+    .tha-case-reg-modal #addCaseForm .tha-section-title::before {
+        content: '';
+        width: 0.45rem;
+        height: 0.45rem;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+        flex-shrink: 0;
+    }
+    .tha-case-reg-modal #addCaseForm .form-group { margin-bottom: 0.85rem; }
+    .tha-case-reg-modal #addCaseForm .form-label {
+        display: block;
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: #334155;
+        margin-bottom: 0.35rem;
+    }
+    .tha-case-reg-modal #addCaseForm .form-label .req { color: #dc2626; }
+    .tha-case-reg-modal #addCaseForm .form-input,
+    .tha-case-reg-modal #addCaseForm .form-select {
+        width: 100%;
+        padding: 0.55rem 0.7rem;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        color: #0f172a;
         background: #fff;
+        box-sizing: border-box;
+        font-family: inherit;
+    }
+    .tha-case-reg-modal #addCaseForm .form-input:focus,
+    .tha-case-reg-modal #addCaseForm .form-select:focus {
+        outline: none;
+        border-color: #10b981;
+        box-shadow: 0 0 0 3px rgba(167, 243, 208, 0.55);
+    }
+    .tha-case-reg-modal #addCaseForm .form-input[readonly] {
+        background: #f8fafc;
+        color: #475569;
+    }
+    .tha-case-reg-modal #addCaseForm .help-text {
+        font-size: 0.68rem;
+        color: #64748b;
+        margin: 0.3rem 0 0;
+        line-height: 1.4;
+    }
+    .tha-case-reg-modal #addCaseForm .form-row {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.85rem 1rem;
+        margin-bottom: 0;
+    }
+    .tha-case-reg-modal #addCaseForm .form-row.three-cols { grid-template-columns: repeat(3, 1fr); }
+    .tha-case-reg-modal #addCaseForm .form-row.full { grid-template-columns: 1fr; }
+    .tha-case-reg-modal .case-beneficiary-search-wrap { position: relative; }
+    .tha-case-reg-modal .case-search-results {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 100%;
+        margin-top: 0.25rem;
+        z-index: 1200;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        max-height: 16rem;
+        overflow-y: auto;
+        background: #fff;
+        box-shadow: 0 10px 25px rgba(15, 23, 42, 0.12);
+    }
+    .tha-case-reg-modal .case-autofill-panel {
+        margin-top: 0.5rem;
+        padding: 0.75rem;
         border: 1px dashed #cbd5e1;
         border-radius: 8px;
+        background: #f8fafc;
     }
-    .case-autofill-grid.is-linked {
+    .tha-case-reg-modal .case-autofill-panel.is-linked {
         border-style: solid;
         border-color: #6ee7b7;
         background: #f0fdf4;
     }
-    .case-autofill-grid .full { grid-column: 1 / -1; }
-    .case-autofill-grid label {
-        display: block;
-        font-size: 0.65rem;
-        font-weight: 700;
-        color: #64748b;
-        text-transform: uppercase;
-        margin-bottom: 0.2rem;
-    }
-    .case-autofill-grid input[readonly] {
-        width: 100%;
-        padding: 0.5rem 0.6rem;
-        border: 1px solid #e2e8f0;
-        border-radius: 6px;
-        font-size: 0.85rem;
-        font-weight: 600;
-        color: #0f172a;
+    .tha-case-reg-modal .modal-footer {
+        flex-shrink: 0;
+        position: sticky;
+        bottom: 0;
         background: #f8fafc;
-        box-sizing: border-box;
-    }
-    .case-autofill-hint {
-        font-size: 0.72rem;
-        color: #94a3b8;
-        margin: 0.35rem 0 0;
-    }
-    .case-walkin-toggle {
-        margin-top: 0.5rem;
-        font-size: 0.78rem;
-        color: #475569;
+        border-top: 1px solid #e2e8f0;
+        padding: 0.85rem 1.5rem;
         display: flex;
+        gap: 0.75rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    .tha-case-reg-modal .btn-modal {
+        display: inline-flex;
         align-items: center;
+        justify-content: center;
         gap: 0.4rem;
+        min-width: 12rem;
+        padding: 0.6rem 1.25rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        border-radius: 8px;
         cursor: pointer;
+        border: 1px solid transparent;
     }
-    .case-walkin-fields {
-        display: none;
-        margin-top: 0.65rem;
-        flex-direction: column;
-        gap: 0.5rem;
+    .tha-case-reg-modal .btn-modal.success {
+        background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+        color: #fff;
+        border-color: #047857;
     }
-    .case-walkin-fields.is-open { display: flex; }
+    .tha-case-reg-modal .btn-modal.success:hover {
+        background: linear-gradient(180deg, #059669 0%, #047857 100%);
+    }
+    .tha-case-reg-modal .btn-modal.danger {
+        background: #fff;
+        color: #991b1b;
+        border-color: #fca5a5;
+    }
+    .tha-case-reg-modal .btn-modal.danger:hover { background: #fef2f2; }
+    @media (max-width: 720px) {
+        .tha-case-reg-modal #addCaseForm .form-row,
+        .tha-case-reg-modal #addCaseForm .form-row.three-cols {
+            grid-template-columns: 1fr;
+        }
+    }
 
     @media (max-width: 640px) {
         .monitoring-kpis {
@@ -467,7 +1423,7 @@
 <div class="monitoring-shell">
     <div class="monitoring-kicker">Module 5</div>
     <h1 class="monitoring-title">Case Management</h1>
-    <p class="monitoring-subtitle">Every complaint gets a case record · No verbal-only handling</p>
+    <p class="monitoring-subtitle">{% if is_ronda %}Caretaker on-site recording · Search beneficiary, upload evidence · Desk reviews{% else %}Every complaint gets a case record · No verbal-only handling{% endif %}</p>
 </div>
 
 <div class="monitoring-kpis">
@@ -498,30 +1454,8 @@
         </div>
     </div>
 
-    <div class="monitoring-kpi monitoring-kpi-referred">
-        <div class="monitoring-kpi-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path d="M4 12h10"/>
-                <path d="M10 6l6 6-6 6"/>
-            </svg>
-        </div>
-        <div class="monitoring-kpi-text">
-            <h4>Monitoring</h4>
-            <div class="monitoring-kpi-number">{{ status_counts.mediation_monitoring }}</div>
-        </div>
-    </div>
 
-    <div class="monitoring-kpi" style="border-color:#e9d5ff;">
-        <div class="monitoring-kpi-icon" style="background:#f3e8ff;color:#7c3aed;">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2v20M2 12h20"/></svg>
-        </div>
-        <div class="monitoring-kpi-text">
-            <h4>Awaiting Eng.</h4>
-            <div class="monitoring-kpi-number">{{ status_counts.referred_engineering }}</div>
-        </div>
-    </div>
-
-    <div class="monitoring-kpi monitoring-kpi-resolved">
+    <button type="button" class="monitoring-kpi monitoring-kpi-resolved is-clickable" id="resolvedKpiBtn" onclick="openResolvedCasesDrawer()" aria-expanded="false" aria-controls="resolvedCasesDrawer">
         <div class="monitoring-kpi-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <circle cx="12" cy="12" r="9"/>
@@ -532,308 +1466,401 @@
             <h4>Resolved</h4>
             <div class="monitoring-kpi-number">{{ status_counts.resolved }}</div>
         </div>
-    </div>
+    </button>
 </div>
 
+<div id="resolvedCasesDrawer" role="dialog" aria-modal="true" aria-labelledby="resolvedCasesDrawerTitle" onclick="closeResolvedCasesDrawer(event)">
+    <div class="cases-resolved-drawer-panel" onclick="event.stopPropagation();">
+        <div class="cases-resolved-drawer-head">
+            <div>
+                <h2 id="resolvedCasesDrawerTitle">Resolved cases</h2>
+                <p>{{ status_counts.resolved }} case{{ status_counts.resolved|pluralize }} marked resolved</p>
+            </div>
+            <button type="button" class="cases-resolved-drawer-close" onclick="closeResolvedCasesDrawer()" aria-label="Close">&times;</button>
+        </div>
+        <div class="cases-resolved-drawer-scroll">
+            {% for case in resolved_cases %}
+            <button type="button" class="cases-resolved-drawer-item" onclick="openCaseFromResolvedDrawer('{{ case.id }}')">
+                <div class="cases-resolved-drawer-item-top">
+                    <strong>{{ case.case_number }}</strong>
+                    <span class="case-type-pill">{{ case.get_case_type_display }}</span>
+                </div>
+                <p class="cases-resolved-drawer-item-name">{{ case.complainant_name }}</p>
+                <p class="cases-resolved-drawer-item-meta">
+                    Filed {{ case.received_at|date:"M d, Y" }}
+                    {% if case.resolved_at %} · Resolved {{ case.resolved_at|date:"M d, Y" }}{% endif %}
+                </p>
+            </button>
+            {% empty %}
+            <p class="cases-resolved-drawer-empty">No resolved cases yet.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
 <div class="monitoring-work-area">
     <div class="monitoring-work-stripe"></div>
-    <div class="monitoring-work-header">
-        <span class="monitoring-work-badge">▸ CASE MANAGEMENT DESK</span>
-        <h2 class="monitoring-work-title">Case queue &mdash; centralized complaint records</h2>
-        <p class="monitoring-work-lead">1) <strong>Add Case</strong> (search beneficiary) → Pending Review &nbsp;|&nbsp; 2) Open case → <strong>Mark under review</strong> → type buttons → monitor → resolve → close</p>
-    </div>
+    <div class="cases-list-section">
+        {% if is_ronda %}
+        <p style="text-align:center;margin:0 0 0.75rem;font-size:0.72rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#64748b;">▸ Ronda / caretaker — field recording</p>
+        {% endif %}
+        <h3 class="section-title-list">LIST OF CASES</h3>
 
-    <div class="cases-toolbar">
-        <div class="cases-toolbar-actions">
-            <button type="button" onclick="openNewCaseModal()" class="cases-add-btn">Add Case</button>
-        </div>
-        <div class="cases-filter-row">
-            <div class="cases-search">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
-                <input type="text" id="searchInput" placeholder="Complainant, case #, description..." value="{{ search_query }}">
+        <div class="cases-controls-bar">
+            <div class="summary-chip-card summary-chip-card--emerald">
+                <svg style="width: 20px; height: 20px; color: #047857;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                </svg>
+                <div>
+                    <p>Total List</p>
+                    <p>{{ cases|length }}</p>
+                </div>
             </div>
-            <select id="typeFilter" class="cases-select">
+
+            <div class="cases-search-box">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.35-4.35"></path>
+                </svg>
+                <input type="text" id="searchInput" placeholder="Complainant, case #, description..." value="{{ search_query }}">
+                <button type="button" class="cases-search-btn" onclick="applyCaseFilters()">Search</button>
+            </div>
+
+            <select id="typeFilter" class="cases-select filter-select">
                 <option value="all"{% if filter_type == "all" %} selected{% endif %}>All Types</option>
                 {% for code, label in case_type_choices %}
                 <option value="{{ code }}"{% if filter_type == code %} selected{% endif %}>{{ label }}</option>
                 {% endfor %}
             </select>
-        </div>
-    </div>
 
-    <div class="cases-list">
-        {% for case in cases %}
-        <div class="case-item scroll-animate-left" onclick="openCaseModal('{{ case.id }}')" data-case-id="{{ case.id }}" data-status="{{ case.status }}" data-type="{{ case.case_type }}" style="background: white; border-left: 4px solid {% if case.status == 'pending_review' %}#f59e0b{% elif case.status == 'under_review' %}#3b82f6{% elif case.status == 'mediation_monitoring' %}#ea580c{% elif case.status == 'referred_engineering' %}#a855f7{% elif case.status == 'resolved' %}#22c55e{% elif case.status == 'closed' %}#6b7280{% else %}#9ca3af{% endif %}; padding: 1rem 1.25rem; border-radius: 8px; display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; cursor: pointer; transition: all 150ms ease; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-            <div style="flex: 1; min-width: 0;">
-                <!-- Badges Row -->
-                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; align-items: center;">
-                    <span style="font-size: 0.75rem; font-family: monospace; color: var(--gray-600); font-weight: 500;">{{ case.case_number }}</span>
-
-                    <!-- Status Badge -->
-                    <span style="display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;
-                        {% if case.status == 'pending_review' %}background: rgba(245, 158, 11, 0.15); color: #b45309;{% endif %}
-                        {% if case.status == 'under_review' %}background: rgba(59, 130, 246, 0.15); color: #1e40af;{% endif %}
-                        {% if case.status == 'referred_engineering' %}background: rgba(168, 85, 247, 0.15); color: #6b21a8;{% endif %}
-                        {% if case.status == 'mediation_monitoring' %}background: rgba(234, 88, 12, 0.15); color: #92400e;{% endif %}
-                        {% if case.status == 'resolved' %}background: rgba(34, 197, 94, 0.15); color: #15803d;{% endif %}
-                        {% if case.status == 'closed' %}background: rgba(75, 85, 99, 0.15); color: #374151;{% endif %}
-                    ">
-                        <span style="width: 5px; height: 5px; border-radius: 50%; display: inline-block;
-                            {% if case.status == 'pending_review' %}background: #f59e0b;{% endif %}
-                            {% if case.status == 'under_review' %}background: #3b82f6;{% endif %}
-                            {% if case.status == 'referred_engineering' %}background: #a855f7;{% endif %}
-                            {% if case.status == 'mediation_monitoring' %}background: #ea580c;{% endif %}
-                            {% if case.status == 'resolved' %}background: #22c55e;{% endif %}
-                            {% if case.status == 'closed' %}background: #6b7280;{% endif %}
-                        "></span>
-                        {{ case.get_status_display }}
-                    </span>
-
-                    <!-- Type Badge -->
-                    <span style="display: inline-flex; padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;
-                        {% if case.case_type == 'boundary' %}background: rgba(168, 85, 247, 0.15); color: #6b21a8;{% endif %}
-                        {% if case.case_type == 'structural' %}background: rgba(239, 68, 68, 0.15); color: #991b1b;{% endif %}
-                        {% if case.case_type == 'interpersonal' %}background: rgba(234, 88, 12, 0.15); color: #92400e;{% endif %}
-                        {% if case.case_type == 'illegal_transfer' %}background: rgba(59, 130, 246, 0.15); color: #1e40af;{% endif %}
-                        {% if case.case_type == 'unauthorized' %}background: rgba(168, 85, 247, 0.15); color: #6b21a8;{% endif %}
-                        {% if case.case_type == 'damage' %}background: rgba(239, 68, 68, 0.15); color: #991b1b;{% endif %}
-                        {% if case.case_type == 'noise' %}background: rgba(234, 88, 12, 0.15); color: #92400e;{% endif %}
-                        {% if case.case_type == 'other' %}background: rgba(75, 85, 99, 0.15); color: #374151;{% endif %}
-                    ">
-                        {{ case.get_case_type_display }}
-                    </span>
-                </div>
-
-                <!-- Complainant Name -->
-                <p style="margin: 0 0 0.25rem; font-size: 0.95rem; font-weight: 600; color: var(--gray-900);">{{ case.complainant_name }}</p>
-
-                <!-- Description -->
-                <p style="margin: 0 0 0.5rem; font-size: 0.85rem; color: var(--gray-700); line-height: 1.3;">{{ case.initial_description|truncatewords:20 }}</p>
-
-                <!-- Meta Info Row -->
-                <div style="display: flex; flex-wrap: wrap; gap: 1rem; font-size: 0.75rem; color: var(--gray-600);">
-                    <span>📅 Filed: {{ case.received_at|date:"M d, Y" }}</span>
-                    <span>Handler: {{ case.received_by.get_full_name|default:"Unassigned" }}</span>
-                    {% if case.referred_to %}
-                    <span style="color: var(--purple-600); font-weight: 500;">→ {{ case.referred_to }}</span>
-                    {% endif %}
-                    {% if case.status == 'resolved' and case.resolved_at %}
-                    <span style="color: var(--green-600); font-weight: 500;">✓ Resolved: {{ case.resolved_at|date:"M d, Y" }}</span>
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- View Button -->
-            <button style="padding: 0.4rem 0.75rem; background: var(--gray-100); color: var(--gray-700); border: none; border-radius: 6px; font-size: 0.75rem; cursor: pointer; transition: all 150ms ease; white-space: nowrap; flex-shrink: 0;">
-                👁️ View
+            <button type="button" onclick="openNewCaseModal()" class="cases-add-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                Add Case
             </button>
         </div>
-        {% empty %}
-        <div class="monitoring-empty-state">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"/>
-                <path d="M12 16v-4M12 8h.01"/>
-            </svg>
-            <h3>No cases match your search</h3>
-            <p>Try adjusting the filters or log a new case.</p>
+
+        <div class="formal-table-card">
+            <div class="formal-table-scroll">
+                <table class="formal-table compact cases-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Case #</th>
+                            <th>Complainant</th>
+                            <th>Filed</th>
+                            <th>Time ago</th>
+                            <th>Complaint type</th>
+                            <th>Status</th>
+                            <th>View</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for case in cases %}
+                        <tr data-case-id="{{ case.id }}">
+                            <td style="font-weight: 700; color: #1e293b;">{{ forloop.counter }}</td>
+                            <td style="font-family: monospace; font-weight: 600; color: #475569;">{{ case.case_number }}</td>
+                            <td style="font-weight: 600; color: #1e293b;">{{ case.complainant_name }}</td>
+                            <td style="font-size: 0.6875rem; color: #64748b;">{{ case.received_at|date:"M d, Y" }} | {{ case.received_at|time:"g:i A" }}</td>
+                            <td title="{{ case.received_at }}">{{ case.received_at|naturaltime }}</td>
+                            <td><span class="case-type-pill">{{ case.get_case_type_display }}</span></td>
+                            <td>
+                                <span class="case-status-pill case-status-pill--{{ case.status }}">{{ case.get_status_display }}</span>
+                            </td>
+                            <td>
+                                <button type="button" class="btn-case-view" onclick="openCaseModal('{{ case.id }}')">
+                                    <svg class="btn-icon" style="width:0.85rem;height:0.85rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                        <circle cx="12" cy="12" r="3"/>
+                                    </svg>
+                                    View
+                                </button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" style="text-align: center; color: #64748b; font-size: 0.75rem; padding: 1.25rem;">
+                                No cases match your search. Try adjusting filters or add a new case.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
-        {% endfor %}
     </div>
 </div>
 
+
 <!-- Case Detail Modal -->
-<div id="caseModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); align-items: center; justify-content: center; z-index: 1000; padding: 1rem; flex-direction: column;" onclick="closeCaseModal(event)">
-    <div onclick="event.stopPropagation();" style="background: white; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); max-width: 650px; width: 100%; max-height: 90vh; overflow-y: auto; display: flex; flex-direction: column;">
-        <!-- Modal Header -->
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; padding: 1.5rem; border-bottom: 1px solid #e5e7eb; gap: 1rem;">
-            <div>
-                <h2 id="modalCaseNumber" style="margin: 0; font-size: 1.25rem; font-weight: 600; color: #111827;"></h2>
-                <p id="modalCaseDate" style="font-size: 0.75rem; color: #6b7280; margin: 0.5rem 0 0;"></p>
-            </div>
-            <button onclick="closeCaseModal()" style="padding: 0.25rem; background: transparent; border: none; color: #9ca3af; font-size: 1.5rem; cursor: pointer; line-height: 1; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;" title="Close">✕</button>
+<div id="caseModal" class="tha-case-view-overlay" onclick="closeCaseModal(event)">
+    <div class="modal-content tha-reg-modal tha-case-view-modal" onclick="event.stopPropagation();">
+        <div class="modal-header">
+            <h2 class="modal-title">Case record</h2>
+            <button type="button" class="btn-close" onclick="closeCaseModal()" aria-label="Close">
+                <svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
         </div>
 
-        <!-- Modal Body -->
-        <div style="flex: 1; padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; overflow-y: auto;">
-            <!-- Complainant & Type Info -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                <div>
-                    <p style="font-size: 0.75rem; font-weight: 600; color: #6b7280; text-transform: uppercase; margin: 0 0 0.5rem; letter-spacing: 0.05em;">Complainant</p>
-                    <p id="modalComplainantName" style="font-size: 0.9rem; color: #111827; margin: 0; font-weight: 500;"></p>
-                    <p id="modalComplainantPhone" style="font-size: 0.75rem; color: #6b7280; margin: 0;"></p>
-                    <p id="modalComplainantRef" style="font-size: 0.75rem; color: #047857; margin: 0.25rem 0 0; font-weight: 600;"></p>
-                    <p id="modalComplainantUnit" style="font-size: 0.75rem; color: #6b7280; margin: 0;"></p>
-                </div>
-                <div>
-                    <p style="font-size: 0.75rem; font-weight: 600; color: #6b7280; text-transform: uppercase; margin: 0 0 0.5rem; letter-spacing: 0.05em;">Complaint Type</p>
-                    <span id="modalComplaintType"></span>
+        <div class="modal-body case-detail-body">
+            <div class="tha-form-header">
+                <h2 id="modalCaseNumber">—</h2>
+                <p class="tha-form-subtitle">Talisay City Housing Authority · Module 5</p>
+                <div class="case-detail-meta">
+                    <span id="modalStatusBadge" class="case-status-pill"></span>
+                    <span id="modalFiledMeta" style="font-size:0.72rem;color:#cbd5e1;"></span>
                 </div>
             </div>
 
-            <!-- Subject (if exists) -->
-            <div id="subjectSection" style="display: none;">
-                <p style="font-size: 0.75rem; font-weight: 600; color: #6b7280; text-transform: uppercase; margin: 0 0 0.5rem; letter-spacing: 0.05em;">Subject/Respondent</p>
-                <p id="modalSubjectName" style="font-size: 0.9rem; color: #111827; margin: 0;"></p>
-            </div>
+            <div class="tha-section-block case-record-card">
+                <h3 class="tha-section-title">Case details</h3>
 
-            <!-- Description -->
-            <div>
-                <p style="font-size: 0.75rem; font-weight: 600; color: #6b7280; text-transform: uppercase; margin: 0 0 0.75rem; letter-spacing: 0.05em;">Description</p>
-                <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 1rem;">
-                    <p id="modalDescription" style="font-size: 0.9rem; color: #111827; margin: 0; line-height: 1.5;"></p>
+                <div class="case-record-row">
+                <section class="case-record-part">
+                    <h4 class="case-record-part-title">Staff handled</h4>
+                    <div id="modalStaffCard" class="case-record-staff">
+                        <div id="modalStaffAvatar" class="handled-by-avatar other">—</div>
+                        <div>
+                            <p id="modalStaffName" class="case-detail-value">—</p>
+                            <p id="modalStaffRole" class="case-detail-value muted case-record-meta">—</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="case-record-part">
+                    <h4 class="case-record-part-title">Complainant</h4>
+                    <div class="case-record-kv-list">
+                        <div class="case-record-kv">
+                            <span class="case-detail-label">Full name</span>
+                            <p id="modalComplainantName" class="case-detail-value">—</p>
+                        </div>
+                        <div class="case-record-kv">
+                            <span class="case-detail-label">Contact</span>
+                            <p id="modalComplainantPhone" class="case-detail-value muted">—</p>
+                        </div>
+                        <div class="case-record-kv">
+                            <span class="case-detail-label">Reference no</span>
+                            <p id="modalComplainantRef" class="case-detail-value accent">—</p>
+                        </div>
+                        <div class="case-record-kv">
+                            <span class="case-detail-label">Block &amp; lot</span>
+                            <p id="modalComplainantUnit" class="case-detail-value muted">—</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="subjectSection" class="case-record-part" style="display: none;">
+                    <h4 class="case-record-part-title">Respondent</h4>
+                    <p id="modalSubjectName" class="case-record-respondent">—</p>
+                </section>
+
+                <section class="case-record-part">
+                    <h4 class="case-record-part-title">Incident</h4>
+                    <div class="case-record-incident-type">
+                        <span class="case-detail-label">Complaint type</span>
+                        <span id="modalComplaintType"></span>
+                    </div>
+                    <div class="case-record-text-block">
+                        <span class="case-detail-label">Description</span>
+                        <p id="modalDescription" class="case-detail-description-box">—</p>
+                    </div>
+                </section>
+
+                <section id="investigationSection" class="case-record-part" style="display: none;">
+                    <h4 class="case-record-part-title">Investigation</h4>
+                    <div class="case-record-text-block">
+                        <p id="modalInvestigationNotes" class="case-detail-description-box case-record-investigation-box">—</p>
+                        <p id="modalInvestigatedBy" class="case-record-meta"></p>
+                    </div>
+                </section>
+
+                <section id="referralSection" class="case-record-part" style="display: none;">
+                    <h4 class="case-record-part-title">Referral</h4>
+                    <p id="modalReferredTo" class="case-detail-value"></p>
+                    <p id="modalReferralNotes" class="case-detail-description-box" style="margin-top:0.5rem;"></p>
+                    <p id="modalReferralDate" class="case-detail-value muted" style="margin-top:0.35rem;font-size:0.75rem;"></p>
+                </section>
+
+                <section id="resolutionSection" class="case-record-part" style="display: none;">
+                    <h4 class="case-record-part-title">Resolution</h4>
+                    <p id="modalResolutionNotes" class="case-detail-description-box" style="background:#f0fdf4;border-color:#bbf7d0;"></p>
+                    <p id="modalResolvedDate" class="case-detail-value muted case-record-meta"></p>
+                </section>
                 </div>
             </div>
 
-            <!-- Investigation Info (if exists) -->
-            <div id="investigationSection" style="display: none;">
-                <p style="font-size: 0.75rem; font-weight: 600; color: #6b7280; text-transform: uppercase; margin: 0 0 0.75rem; letter-spacing: 0.05em;">Investigation</p>
-                <div style="background: #dbeafe; border: 1px solid #93c5fd; border-radius: 8px; padding: 1rem;">
-                    <p id="modalInvestigationNotes" style="font-size: 0.9rem; color: #111827; margin: 0 0 0.5rem; line-height: 1.5;"></p>
-                    <p id="modalInvestigatedBy" style="font-size: 0.75rem; color: #1d4ed8; margin: 0; font-weight: 500;"></p>
-                </div>
-            </div>
-
-            <!-- Referral Info (if exists) -->
-            <div id="referralSection" style="display: none;">
-                <p style="font-size: 0.75rem; font-weight: 600; color: #6b7280; text-transform: uppercase; margin: 0 0 0.75rem; letter-spacing: 0.05em;">Referral</p>
-                <div style="background: #f3e8ff; border: 1px solid #e9d5ff; border-radius: 8px; padding: 1rem;">
-                    <p id="modalReferredTo" style="font-size: 0.9rem; color: #111827; margin: 0 0 0.5rem; font-weight: 500;"></p>
-                    <p id="modalReferralNotes" style="font-size: 0.9rem; color: #111827; margin: 0 0 0.5rem; line-height: 1.5;"></p>
-                    <p id="modalReferralDate" style="font-size: 0.75rem; color: #6b7280; margin: 0;"></p>
-                </div>
-            </div>
-
-            <!-- Resolution Info (if exists) -->
-            <div id="resolutionSection" style="display: none;">
-                <p style="font-size: 0.75rem; font-weight: 600; color: #6b7280; text-transform: uppercase; margin: 0 0 0.75rem; letter-spacing: 0.05em;">Resolution</p>
-                <div style="background: #dcfce7; border: 1px solid #bbf7d0; border-radius: 8px; padding: 1rem;">
-                    <p id="modalResolutionNotes" style="font-size: 0.9rem; color: #111827; margin: 0 0 0.5rem; line-height: 1.5;"></p>
-                    <p id="modalResolvedDate" style="font-size: 0.75rem; color: #6b7280; margin: 0;"></p>
-                </div>
-            </div>
-
-            <div id="priorCasesSection" style="display: none;">
-                <p style="font-size: 0.75rem; font-weight: 600; color: #6b7280; text-transform: uppercase; margin: 0 0 0.75rem; letter-spacing: 0.05em;">Prior complaints</p>
+            <div id="priorCasesSection" class="tha-section-block" style="display: none;">
+                <h3 class="tha-section-title">Prior complaints</h3>
                 <div id="priorCasesList" style="display: flex; flex-direction: column; gap: 0.5rem;"></div>
             </div>
 
-            {% include "cases/partials/case_workflow_ui.html" %}
-
-            <div id="evidenceSection">
-                <p style="font-size: 0.75rem; font-weight: 600; color: #6b7280; text-transform: uppercase; margin: 0 0 0.75rem; letter-spacing: 0.05em;">Evidence on file</p>
-                <div id="evidenceList" style="display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 0.75rem;"></div>
-                <div id="evidenceUploadForm" style="display: none; flex-direction: column; gap: 0.5rem;">
-                    <input type="file" id="evidenceFile" accept="image/jpeg,image/png,image/webp,application/pdf">
-                    <input type="text" id="evidenceCaption" placeholder="Caption (optional)" style="padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.85rem;">
-                    <button type="button" onclick="uploadCaseEvidence()" style="padding: 0.5rem 0.75rem; background: #047857; color: #fff; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">Upload evidence</button>
+            <div id="evidenceSection" class="tha-section-block tha-section-block--situation">
+                <h3 class="tha-section-title">Evidence on file</h3>
+                <div class="case-evidence-inner">
+                    <div id="evidenceList"></div>
+                    <div id="evidenceUploadForm">
+                        <input type="file" id="evidenceFile" class="form-input" accept="image/jpeg,image/png,image/webp,application/pdf">
+                        <input type="text" id="evidenceCaption" class="form-input" placeholder="Caption (optional)">
+                        <button type="button" onclick="uploadCaseEvidence()" class="cases-add-btn">Upload evidence</button>
+                    </div>
                 </div>
             </div>
 
-            <!-- Case Notes Timeline (if exists) -->
-            <div id="notesSection" style="display: none;">
-                <p style="font-size: 0.75rem; font-weight: 600; color: #6b7280; text-transform: uppercase; margin: 0 0 0.75rem; letter-spacing: 0.05em;">Case Notes</p>
-                <div id="notesList" style="display: flex; flex-direction: column; gap: 0.75rem;"></div>
-            </div>
-
         </div>
 
-        <!-- Modal Footer -->
-        <div style="padding: 1rem 1.5rem; border-top: 1px solid #e5e7eb; background: #f9fafb; display: flex; gap: 0.75rem; flex-wrap: wrap;">
-            <button onclick="printCaseRecord()" style="padding: 0.6875rem 1.25rem; background: #e5e7eb; color: #374151; border: none; border-radius: 8px; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: background-color 150ms ease;" onmouseover="this.style.backgroundColor='#d1d5db'" onmouseout="this.style.backgroundColor='#e5e7eb'">📄 Print</button>
+        <div class="modal-footer">
+            <button type="button" class="btn-print-case" onclick="printCaseRecord()">📄 Print record</button>
         </div>
     </div>
 </div>
+<!-- New Case Modal (layout matches intake Applicant Registration Sheet) -->
+<div id="newCaseModal" class="tha-case-modal-overlay" onclick="closeNewCaseModal(event)">
+    <div class="modal-content tha-reg-modal tha-case-reg-modal" onclick="event.stopPropagation();">
 
-<!-- New Case Modal -->
-<div id="newCaseModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); align-items: center; justify-content: center; z-index: 1100; padding: 1rem; flex-direction: column;" onclick="closeNewCaseModal(event)">
-    <div onclick="event.stopPropagation();" style="background: white; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto; display: flex; flex-direction: column;">
-        <div style="display: flex; justify-content: flex-end; padding: 0.75rem 1rem 0;">
-            <button type="button" onclick="closeNewCaseModal()" style="padding: 0.25rem; background: transparent; border: none; color: #9ca3af; font-size: 1.5rem; cursor: pointer; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;" title="Close">✕</button>
+        <div class="modal-header">
+            <h2 class="modal-title">Case recording</h2>
+            <button type="button" class="btn-close" onclick="closeNewCaseModal()" aria-label="Close">
+                <svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
         </div>
 
-        <div style="flex: 1; padding: 0 1.5rem 1.5rem; display: flex; flex-direction: column; gap: 1rem; overflow-y: auto;">
-            <h2 style="margin: 0; font-size: 1.25rem; font-weight: 600; color: #111827;">Add Case</h2>
-
-            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                <label style="font-size: 0.75rem; font-weight: 600; color: #1f2937; text-transform: uppercase; letter-spacing: 0.05em;">Beneficiary search *</label>
-                <input type="text" id="complainantSearchInput" autocomplete="off" style="padding: 0.625rem; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.875rem; color: #111827; width: 100%; box-sizing: border-box;" placeholder="Name, APP reference, or lot (e.g. 1-1)">
-                <div id="complainantSearchResults" style="display: none; border: 1px solid #e5e7eb; border-radius: 8px; max-height: 10rem; overflow-y: auto; background: #fff;"></div>
+        <div class="modal-body">
+            <div id="addCaseForm">
+                <input type="hidden" id="newReceivedAt" value="{% if is_field_desk %}onsite{% else %}office{% endif %}">
                 <input type="hidden" id="complainantApplicantId">
                 <input type="hidden" id="relatedUnitId">
                 <input type="hidden" id="newComplainantName">
                 <input type="hidden" id="newComplainantPhone">
-                <input type="hidden" id="newReceivedAt" value="{% if is_field_desk %}onsite{% else %}office{% endif %}">
-                <input type="hidden" id="subjectApplicantId" value="">
-                <input type="hidden" id="newSubjectName" value="">
-                <div id="complainantAutoFill" class="case-autofill-grid" style="display: none;">
-                    <div class="full">
-                        <label>Complainant name</label>
-                        <input type="text" id="complainantAutoName" readonly placeholder="—">
+                <input type="hidden" id="subjectApplicantId">
+                <input type="hidden" id="newSubjectName">
+
+                <div class="tha-form-header">
+                    <div class="tha-form-crest" aria-hidden="true">
+                        <img src="{% static 'images/favicon.png' %}" alt="" decoding="async">
                     </div>
-                    <div>
-                        <label>Reference no</label>
-                        <input type="text" id="complainantAutoRef" readonly placeholder="—">
+                    <h2>Case Recording Sheet</h2>
+                    <p class="tha-form-subtitle">Talisay City Housing Authority · Module 5</p>
+                </div>
+
+                <div class="tha-section-block tha-section-block--identity">
+                    <h3 class="tha-section-title">Complainant</h3>
+                    <div class="form-group">
+                        <label class="form-label">Search beneficiary (complainant) <span class="req">*</span></label>
+                        <div class="case-beneficiary-search-wrap">
+                            <input type="text" class="form-input" id="complainantSearchInput" autocomplete="off" placeholder="e.g. Juan Dela Cruz, APP ref, or 1-1">
+                            <div id="complainantSearchResults" class="case-search-results" style="display: none;"></div>
+                        </div>
+                        <p class="help-text">Same occupants as Unit Monitoring — click the field to browse the list, or type to filter.</p>
                     </div>
-                    <div>
-                        <label>Block &amp; lot</label>
-                        <input type="text" id="complainantAutoUnit" readonly placeholder="—">
-                    </div>
-                    <div class="full">
-                        <label>Contact number</label>
-                        <input type="text" id="complainantAutoPhone" readonly placeholder="—">
+                    <div id="complainantAutoFill" class="case-autofill-panel">
+                        <div class="form-row full">
+                            <div class="form-group">
+                                <label class="form-label">Complainant name</label>
+                                <input type="text" class="form-input" id="complainantAutoName" readonly placeholder="—">
+                            </div>
+                        </div>
+                        <div class="form-row three-cols">
+                            <div class="form-group">
+                                <label class="form-label">Reference no</label>
+                                <input type="text" class="form-input" id="complainantAutoRef" readonly placeholder="—">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Block &amp; lot</label>
+                                <input type="text" class="form-input" id="complainantAutoUnit" readonly placeholder="—">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Contact number</label>
+                                <input type="text" class="form-input" id="complainantAutoPhone" readonly placeholder="—">
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <label class="case-walkin-toggle" style="margin-top: 0.25rem;">
-                    <input type="checkbox" id="complainantWalkinToggle" onchange="toggleComplainantWalkin()">
-                    Not in system
-                </label>
-                <div id="complainantWalkinFields" class="case-walkin-fields">
-                    <input type="text" id="complainantWalkinName" style="padding: 0.625rem; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.875rem; width: 100%; box-sizing: border-box;" placeholder="Full name">
-                    <input type="tel" id="complainantWalkinPhone" style="padding: 0.625rem; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.875rem; width: 100%; box-sizing: border-box;" placeholder="Phone (optional)">
+
+                <div class="tha-section-block tha-section-block--household">
+                    <h3 class="tha-section-title">Respondent</h3>
+                    <div class="form-group">
+                        <label class="form-label">Search respondent / against whom</label>
+                        <div class="case-beneficiary-search-wrap">
+                            <input type="text" class="form-input" id="subjectSearchInput" autocomplete="off" placeholder="e.g. name, APP ref, or lot">
+                            <div id="subjectSearchResults" class="case-search-results" style="display: none;"></div>
+                        </div>
+                        <p class="help-text">Optional — pick from the same occupant list.</p>
+                    </div>
+                    <div id="subjectAutoFill" class="case-autofill-panel">
+                        <div class="form-row full">
+                            <div class="form-group">
+                                <label class="form-label">Respondent name</label>
+                                <input type="text" class="form-input" id="subjectAutoName" readonly placeholder="—">
+                            </div>
+                        </div>
+                        <div class="form-row three-cols">
+                            <div class="form-group">
+                                <label class="form-label">Reference no</label>
+                                <input type="text" class="form-input" id="subjectAutoRef" readonly placeholder="—">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Block &amp; lot</label>
+                                <input type="text" class="form-input" id="subjectAutoUnit" readonly placeholder="—">
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <input type="checkbox" id="subjectWalkinToggle" style="display: none;">
-                <div id="subjectWalkinFields" style="display: none;"><input type="text" id="subjectWalkinName"></div>
-                <div id="subjectSearchResults" style="display: none;"></div>
-                <input type="text" id="subjectSearchInput" style="display: none;" tabindex="-1" aria-hidden="true">
-                <div id="subjectAutoFill" style="display: none;"><input id="subjectAutoName"><input id="subjectAutoRef"><input id="subjectAutoUnit"></div>
-                <p id="complainantAutoHint" style="display: none;"></p>
-                <p id="subjectAutoHint" style="display: none;"></p>
-            </div>
 
-            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                <label style="font-size: 0.75rem; font-weight: 600; color: #1f2937; text-transform: uppercase; letter-spacing: 0.05em;">Complaint type *</label>
-                <select id="newCaseType" style="padding: 0.625rem; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.875rem; color: #111827;">
-                    <option value="">— Select —</option>
-                    {% for code, label in case_type_choices %}
-                    <option value="{{ code }}">{{ label }}</option>
-                    {% endfor %}
-                </select>
-            </div>
+                <div class="tha-section-block tha-section-block--income">
+                    <h3 class="tha-section-title">Complaint details</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Complaint type <span class="req">*</span></label>
+                            <select class="form-select" id="newCaseType">
+                                <option value="">— Select —</option>
+                                {% for code, label in case_type_choices %}
+                                <option value="{{ code }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Incident description <span class="req">*</span></label>
+                            <input type="text" class="form-input" id="newDescription" maxlength="100" placeholder="Brief incident summary (max 100 characters)" oninput="updateDescCount()">
+                            <span id="newDescriptionCount" class="help-text">0 / 100</span>
+                        </div>
+                    </div>
+                </div>
 
-            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                <label style="font-size: 0.75rem; font-weight: 600; color: #1f2937; text-transform: uppercase; letter-spacing: 0.05em;">Incident description *</label>
-                <textarea id="newDescription" style="padding: 0.625rem; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.875rem; resize: vertical; min-height: 100px; color: #111827;" placeholder="Describe the complaint..."></textarea>
-            </div>
-
-            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                <label style="font-size: 0.75rem; font-weight: 600; color: #1f2937; text-transform: uppercase; letter-spacing: 0.05em;">Uploaded evidence</label>
-                <input type="file" id="newCaseEvidenceFiles" accept="image/jpeg,image/png,image/webp,application/pdf" multiple style="font-size: 0.8rem;">
+                <div class="tha-section-block tha-section-block--situation">
+                    <h3 class="tha-section-title">{% if is_ronda %}On-site evidence{% else %}Uploaded evidence{% endif %}</h3>
+                    <div class="form-group">
+                        {% if is_ronda %}<p class="help-text" style="margin-bottom: 0.5rem;">Photo or PDF from on-site report (max 6 MB each).</p>{% endif %}
+                        <input type="file" class="form-input" id="newCaseEvidenceFiles" accept="image/jpeg,image/png,image/webp,application/pdf" multiple style="padding: 0.45rem;">
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div style="padding: 1rem 1.5rem; border-top: 1px solid #e5e7eb; background: #f9fafb; display: flex; gap: 0.75rem;">
-            <button type="button" onclick="createNewCase()" style="flex: 1; padding: 0.6875rem 1rem; background: #2563eb; color: white; border: none; border-radius: 8px; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: background-color 150ms ease; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);" onmouseover="this.style.backgroundColor='#1d4ed8'" onmouseout="this.style.backgroundColor='#2563eb'">Add Case</button>
-            <button onclick="closeNewCaseModal()" style="flex: 1; padding: 0.6875rem 1rem; background: white; color: #374151; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: all 150ms ease;" onmouseover="this.style.backgroundColor='#f3f4f6'" onmouseout="this.style.backgroundColor='white'">Cancel</button>
+        <div class="modal-footer">
+            <button type="button" class="btn-modal success" onclick="createNewCase()">
+                <svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 13l4 4L19 7"/></svg>
+                Add Case
+            </button>
+            <button type="button" class="btn-modal danger" onclick="closeNewCaseModal()">Cancel</button>
         </div>
+
     </div>
 </div>
 
 <!-- JavaScript -->
 <script>
 const CASE_POSITION = '{{ request.user.position }}';
-const CAN_MANAGE_WORKFLOW = {{ can_manage_workflow|yesno:'true,false' }};
 let currentCaseId = null;
 let complainantSearchTimer = null;
+let subjectSearchTimer = null;
 
 function csrfToken() {
     return document.querySelector('[name=csrfmiddlewaretoken]').value;
@@ -841,8 +1868,7 @@ function csrfToken() {
 
 function resetCaseModalSections() {
     ['subjectSection', 'investigationSection', 'referralSection', 'resolutionSection',
-     'notesSection', 'priorCasesSection', 'workflowPanelSection', 'actionsHistorySection',
-     'workflowStepper', 'monitoringAlertsBox', 'rondaReadOnlyNotice'].forEach((id) => {
+     'priorCasesSection'].forEach((id) => {
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
     });
@@ -862,33 +1888,77 @@ function openCaseModal(caseId) {
     fetch(`/cases/${CASE_POSITION}/${caseId}/details/`)
         .then((r) => r.json())
         .then((d) => {
-            if (d.success) { window._caseCanManage = d.can_manage_workflow; populateCaseModal(d.case); }
+            if (d.success) populateCaseModal(d.case);
             else alert('Error: ' + d.error);
         });
 }
 
-function populateCaseModal(c) {
-    document.getElementById('modalCaseNumber').textContent = c.case_number;
-    document.getElementById('modalCaseDate').textContent =
-        `Filed: ${new Date(c.received_at).toLocaleDateString()} · ${c.status_display} · Received by: ${c.received_by}`;
-    document.getElementById('modalComplainantName').textContent = c.complainant_name;
-    document.getElementById('modalComplainantPhone').textContent = c.complainant_phone || 'No phone';
-    document.getElementById('modalComplainantRef').textContent = c.complainant_reference
-        ? `Ref: ${c.complainant_reference}` : '';
-    document.getElementById('modalComplainantUnit').textContent = c.complainant_unit_label || '';
-    document.getElementById('modalDescription').textContent = c.initial_description;
-    document.getElementById('modalComplaintType').textContent = c.case_type_display;
+function staffAvatarClass(positionKey) {
+    if (positionKey === 'second_member') return 'second-member';
+    if (positionKey === 'fourth_member') return 'fourth-member';
+    if (positionKey === 'ronda') return 'ronda';
+    return 'other';
+}
 
-    if (c.subject_name) {
-        document.getElementById('subjectSection').style.display = 'block';
-        document.getElementById('modalSubjectName').textContent = c.subject_name +
-            (c.subject_reference ? ` (${c.subject_reference})` : '');
+function populateCaseModal(c) {
+    const filed = new Date(c.received_at);
+    document.getElementById('modalCaseNumber').textContent = c.case_number;
+    const statusEl = document.getElementById('modalStatusBadge');
+    if (statusEl) {
+        statusEl.textContent = c.status_display;
+        statusEl.className = `case-status-pill case-status-pill--${c.status}`;
+    }
+    const filedMeta = document.getElementById('modalFiledMeta');
+    if (filedMeta) {
+        filedMeta.textContent = `Filed ${filed.toLocaleDateString()} · ${filed.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
     }
 
-    if (c.investigation_notes) {
-        document.getElementById('investigationSection').style.display = 'block';
+    const avatarEl = document.getElementById('modalStaffAvatar');
+    const staffName = c.received_by || 'Unassigned';
+    const staffRole = c.received_by_position || '—';
+    const initials = c.received_by_initials || (staffName !== 'Unassigned' ? staffName.slice(0, 2).toUpperCase() : '—');
+    if (avatarEl) {
+        avatarEl.textContent = initials;
+        avatarEl.className = `handled-by-avatar ${staffAvatarClass(c.received_by_position_key || '')}`;
+    }
+    document.getElementById('modalStaffName').textContent = staffName;
+    document.getElementById('modalStaffRole').textContent = staffRole;
+
+    document.getElementById('modalComplainantName').textContent = c.complainant_name;
+    document.getElementById('modalComplainantPhone').textContent = c.complainant_phone || '—';
+    document.getElementById('modalComplainantRef').textContent = c.complainant_reference || '—';
+    document.getElementById('modalComplainantUnit').textContent = c.complainant_unit_label || '—';
+    document.getElementById('modalDescription').textContent = c.initial_description || '—';
+    const typeEl = document.getElementById('modalComplaintType');
+    if (typeEl) {
+        typeEl.innerHTML = `<span class="case-type-pill">${c.case_type_display}</span>`;
+    }
+
+    const subjectSection = document.getElementById('subjectSection');
+    if (c.subject_name) {
+        subjectSection.style.display = 'block';
+        document.getElementById('modalSubjectName').textContent = c.subject_name +
+            (c.subject_reference ? ` (${c.subject_reference})` : '');
+    } else if (subjectSection) {
+        subjectSection.style.display = 'none';
+    }
+
+    const investigationSection = document.getElementById('investigationSection');
+    if (c.investigation_notes && investigationSection) {
+        investigationSection.style.display = 'block';
         document.getElementById('modalInvestigationNotes').textContent = c.investigation_notes;
-        document.getElementById('modalInvestigatedBy').textContent = `Investigated by: ${c.investigated_by}`;
+        const invByEl = document.getElementById('modalInvestigatedBy');
+        if (invByEl) {
+            if (c.investigated_by) {
+                invByEl.textContent = `Investigated by: ${c.investigated_by}`;
+                invByEl.style.display = 'block';
+            } else {
+                invByEl.textContent = '';
+                invByEl.style.display = 'none';
+            }
+        }
+    } else if (investigationSection) {
+        investigationSection.style.display = 'none';
     }
 
     if (c.referred_to) {
@@ -919,29 +1989,21 @@ function populateCaseModal(c) {
     const evidenceList = document.getElementById('evidenceList');
     if (c.evidence && c.evidence.length) {
         evidenceList.innerHTML = c.evidence.map((ev) => `
-            <div style="font-size: 0.8rem; padding: 0.5rem; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px;">
+            <div class="case-evidence-item">
                 <a href="${ev.url}" target="_blank" rel="noopener">${ev.caption || 'View file'}</a>
-                <div style="color: #64748b; margin-top: 0.2rem;">${ev.uploaded_by} · ${new Date(ev.uploaded_at).toLocaleString()}</div>
+                <div class="case-evidence-meta">${ev.uploaded_by} · ${new Date(ev.uploaded_at).toLocaleString()}</div>
             </div>`).join('');
     } else {
-        evidenceList.innerHTML = '<p style="font-size: 0.8rem; color: #64748b; margin: 0;">No evidence uploaded yet.</p>';
+        evidenceList.innerHTML = '<p class="case-evidence-empty">No evidence uploaded yet.</p>';
     }
-    document.getElementById('evidenceUploadForm').style.display =
-        ['resolved', 'closed'].includes(c.status) ? 'none' : 'flex';
-
-    if (c.notes && c.notes.length > 0) {
-        document.getElementById('notesSection').style.display = 'block';
-        document.getElementById('notesList').innerHTML = c.notes.map((n) => `
-            <div style="background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 8px; padding: 0.75rem;">
-                <p style="margin: 0 0 0.25rem; color: var(--gray-900); font-weight: 500; font-size: 0.85rem;">${n.created_by}</p>
-                <p style="margin: 0 0 0.25rem; color: var(--gray-900); font-size: 0.85rem; line-height: 1.4;">${n.note}</p>
-                <p style="margin: 0; font-size: 0.75rem; color: var(--gray-600);">${new Date(n.created_at).toLocaleString()}</p>
-            </div>`).join('');
+    const uploadForm = document.getElementById('evidenceUploadForm');
+    if (uploadForm) {
+        uploadForm.style.display = ['resolved', 'closed'].includes(c.status) ? 'none' : 'flex';
     }
 
-    renderWorkflowUI(c, window._caseCanManage);
-
-    document.getElementById('caseModal').style.display = 'flex';
+    const modal = document.getElementById('caseModal');
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
 }
 
 function closeCaseModal(e) {
@@ -971,11 +2033,7 @@ function setReadonlyField(id, value) {
 
 function clearComplainantAutoFill() {
     ['complainantAutoName', 'complainantAutoRef', 'complainantAutoUnit', 'complainantAutoPhone'].forEach((id) => setReadonlyField(id, ''));
-    const panel = document.getElementById('complainantAutoFill');
-    if (panel) {
-        panel.classList.remove('is-linked');
-        panel.style.display = 'none';
-    }
+    document.getElementById('complainantAutoFill')?.classList.remove('is-linked');
 }
 
 function applyBeneficiarySelection(row) {
@@ -988,21 +2046,14 @@ function applyBeneficiarySelection(row) {
     setReadonlyField('complainantAutoUnit', row.unit_label);
     setReadonlyField('complainantAutoPhone', row.phone_number);
     const panel = document.getElementById('complainantAutoFill');
-    if (panel) {
-        panel.classList.add('is-linked');
-        panel.style.display = 'grid';
-    }
+    if (panel) panel.classList.add('is-linked');
     document.getElementById('complainantSearchResults').style.display = 'none';
     document.getElementById('complainantSearchInput').value = row.full_name || '';
-    const walkin = document.getElementById('complainantWalkinToggle');
-    if (walkin?.checked) { walkin.checked = false; toggleComplainantWalkin(); }
 }
 
 function clearSubjectAutoFill() {
     ['subjectAutoName', 'subjectAutoRef', 'subjectAutoUnit'].forEach((id) => setReadonlyField(id, ''));
     document.getElementById('subjectAutoFill')?.classList.remove('is-linked');
-    const hint = document.getElementById('subjectAutoHint');
-    if (hint) hint.style.display = 'block';
 }
 
 function applySubjectSelection(row) {
@@ -1012,40 +2063,18 @@ function applySubjectSelection(row) {
     setReadonlyField('subjectAutoRef', row.reference_number);
     setReadonlyField('subjectAutoUnit', row.unit_label);
     document.getElementById('subjectAutoFill')?.classList.add('is-linked');
-    const hint = document.getElementById('subjectAutoHint');
-    if (hint) hint.style.display = 'none';
     document.getElementById('subjectSearchResults').style.display = 'none';
     document.getElementById('subjectSearchInput').value = row.full_name || '';
-    const walkin = document.getElementById('subjectWalkinToggle');
-    if (walkin?.checked) { walkin.checked = false; toggleSubjectWalkin(); }
 }
 
-function toggleComplainantWalkin() {
-    const on = document.getElementById('complainantWalkinToggle')?.checked;
-    const fields = document.getElementById('complainantWalkinFields');
-    if (fields) fields.classList.toggle('is-open', !!on);
-    if (on) {
-        document.getElementById('complainantApplicantId').value = '';
-        document.getElementById('relatedUnitId').value = '';
-        clearComplainantAutoFill();
-        document.getElementById('complainantSearchInput').value = '';
-    }
-}
-
-function toggleSubjectWalkin() {
-    const on = document.getElementById('subjectWalkinToggle')?.checked;
-    const fields = document.getElementById('subjectWalkinFields');
-    if (fields) fields.classList.toggle('is-open', !!on);
-    if (on) {
-        document.getElementById('subjectApplicantId').value = '';
-        clearSubjectAutoFill();
-        document.getElementById('subjectSearchInput').value = '';
-    }
+function updateDescCount() {
+    const el = document.getElementById('newDescription');
+    const c = document.getElementById('newDescriptionCount');
+    if (el && c) c.textContent = `${(el.value || '').length} / 100`;
 }
 
 function resetNewCaseForm() {
-    ['complainantSearchInput', 'newDescription', 'subjectSearchInput',
-     'complainantWalkinName', 'complainantWalkinPhone', 'subjectWalkinName'].forEach((id) => {
+    ['complainantSearchInput', 'newDescription', 'subjectSearchInput'].forEach((id) => {
         const el = document.getElementById(id);
         if (el) el.value = '';
     });
@@ -1061,14 +2090,9 @@ function resetNewCaseForm() {
     });
     clearComplainantAutoFill();
     clearSubjectAutoFill();
-    ['complainantWalkinToggle', 'subjectWalkinToggle'].forEach((id) => {
-        const el = document.getElementById(id);
-        if (el) el.checked = false;
-    });
-    document.getElementById('complainantWalkinFields')?.classList.remove('is-open');
-    document.getElementById('subjectWalkinFields')?.classList.remove('is-open');
     const files = document.getElementById('newCaseEvidenceFiles');
     if (files) files.value = '';
+    updateDescCount();
 }
 
 function formatHousingBeneficiaryRow(row) {
@@ -1093,43 +2117,39 @@ function bindBeneficiarySearchResults(box, results, onSelect) {
     });
 }
 
-function runComplainantSearch(q) {
-    const box = document.getElementById('complainantSearchResults');
-    if (!q || q.length < 2) {
-        box.style.display = 'none';
-        box.innerHTML = '';
-        return;
-    }
+function runBeneficiarySearch(q, box, onSelect) {
+    if (!box) return;
+    q = (q || '').trim();
+    box.innerHTML = '<p style="padding:0.5rem;font-size:0.8rem;color:#64748b;margin:0;">Loading…</p>';
+    box.style.display = 'block';
     fetch(`/cases/${CASE_POSITION}/beneficiary-search/?q=${encodeURIComponent(q)}`)
         .then((r) => r.json())
         .then((d) => {
             if (!d.success || !d.results.length) {
-                box.innerHTML = '<p style="padding: 0.5rem; font-size: 0.8rem; color: #64748b; margin: 0;">No occupied unit matches. Try name, APP ref, or lot (e.g. 1-1).</p>';
+                const emptyMsg = q
+                    ? 'No matches. Try name, APP ref, or lot (1-1).'
+                    : 'No occupied housing units in the system yet.';
+                box.innerHTML = `<p style="padding: 0.5rem; font-size: 0.8rem; color: #64748b; margin: 0;">${emptyMsg}</p>`;
                 box.style.display = 'block';
                 return;
             }
-            bindBeneficiarySearchResults(box, d.results, applyBeneficiarySelection);
+            bindBeneficiarySearchResults(box, d.results, onSelect);
+        })
+        .catch(() => {
+            box.innerHTML = '<p style="padding:0.5rem;font-size:0.8rem;color:#b91c1c;margin:0;">Search failed.</p>';
+            box.style.display = 'block';
         });
 }
 
-function syncComplainantPayload() {
-    const walkin = document.getElementById('complainantWalkinToggle')?.checked;
-    if (walkin) {
-        document.getElementById('newComplainantName').value = document.getElementById('complainantWalkinName')?.value.trim() || '';
-        document.getElementById('newComplainantPhone').value = document.getElementById('complainantWalkinPhone')?.value.trim() || '';
-    }
+function runComplainantSearch(q) {
+    runBeneficiarySearch(q, document.getElementById('complainantSearchResults'), applyBeneficiarySelection);
 }
 
-function syncSubjectPayload() {
-    const walkin = document.getElementById('subjectWalkinToggle')?.checked;
-    if (walkin) {
-        document.getElementById('newSubjectName').value = document.getElementById('subjectWalkinName')?.value.trim() || '';
-    }
+function runSubjectSearch(q) {
+    runBeneficiarySearch(q, document.getElementById('subjectSearchResults'), applySubjectSelection);
 }
 
 function createNewCase() {
-    syncComplainantPayload();
-    syncSubjectPayload();
     const data = {
         complainant_name: document.getElementById('newComplainantName').value.trim(),
         complainant_phone: document.getElementById('newComplainantPhone').value.trim(),
@@ -1141,14 +2161,17 @@ function createNewCase() {
         subject_applicant_id: document.getElementById('subjectApplicantId').value,
         related_unit_id: document.getElementById('relatedUnitId').value,
     };
-    const walkin = document.getElementById('complainantWalkinToggle')?.checked;
     const linked = document.getElementById('complainantApplicantId')?.value;
-    if (!walkin && !linked) {
-        alert('Search and select a complainant beneficiary, or check walk-in / not in system.');
+    if (!linked) {
+        alert('Search and select a complainant from the housing unit list.');
         return;
     }
     if (!data.complainant_name || !data.case_type || !data.initial_description) {
         alert('Fill required fields: complainant, complaint type, and incident description.');
+        return;
+    }
+    if (data.initial_description.length > 100) {
+        alert('Incident description must be 100 characters or less.');
         return;
     }
     fetch(`/cases/${CASE_POSITION}/create/`, {
@@ -1159,7 +2182,7 @@ function createNewCase() {
         .then((r) => r.json())
         .then(async (d) => {
             if (!d.success) {
-                alert('Error: ' + d.error);
+                alert('Error: ' + (d.error || 'Could not create case'));
                 return;
             }
             const fileInput = document.getElementById('newCaseEvidenceFiles');
@@ -1179,27 +2202,19 @@ function createNewCase() {
             alert(d.message);
             closeNewCaseModal();
             location.reload();
-        });
-}
-
-async function postCaseUpdate(payload) {
-    const res = await fetch(`/cases/${CASE_POSITION}/update/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken() },
-        body: JSON.stringify(payload),
-    });
-    return res.json();
+        })
+        .catch(() => alert('Could not create case. Try again.'));
 }
 
 function uploadCaseEvidence() {
     const fileInput = document.getElementById('evidenceFile');
-    if (!fileInput.files || !fileInput.files[0]) {
+    if (!fileInput?.files?.[0]) {
         alert('Choose a file to upload.');
         return;
     }
     const fd = new FormData();
     fd.append('file', fileInput.files[0]);
-    fd.append('caption', document.getElementById('evidenceCaption').value.trim());
+    fd.append('caption', document.getElementById('evidenceCaption')?.value.trim() || '');
     fetch(`/cases/${CASE_POSITION}/${currentCaseId}/evidence/upload/`, {
         method: 'POST',
         headers: { 'X-CSRFToken': csrfToken() },
@@ -1216,8 +2231,8 @@ function uploadCaseEvidence() {
 
 function applyCaseFilters() {
     const url = new URL(window.location.href);
-    const q = document.getElementById('searchInput').value.trim();
-    const t = document.getElementById('typeFilter').value;
+    const q = document.getElementById('searchInput')?.value.trim() || '';
+    const t = document.getElementById('typeFilter')?.value || 'all';
     if (q) url.searchParams.set('q', q);
     else url.searchParams.delete('q');
     if (t && t !== 'all') url.searchParams.set('type', t);
@@ -1229,177 +2244,76 @@ function printCaseRecord() {
     window.print();
 }
 
-document.getElementById('searchInput')?.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') applyCaseFilters();
-});
-document.getElementById('typeFilter')?.addEventListener('change', applyCaseFilters);
+function bindBeneficiarySearchFocus(inputId, runSearch) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    const openList = () => runSearch((input.value || '').trim());
+    input.addEventListener('focus', openList);
+    input.addEventListener('click', openList);
+}
+
+bindBeneficiarySearchFocus('complainantSearchInput', runComplainantSearch);
+bindBeneficiarySearchFocus('subjectSearchInput', runSubjectSearch);
+
 document.getElementById('complainantSearchInput')?.addEventListener('input', (e) => {
     clearTimeout(complainantSearchTimer);
     const q = e.target.value.trim();
     complainantSearchTimer = setTimeout(() => runComplainantSearch(q), 300);
 });
-let subjectSearchTimer = null;
+
 document.getElementById('subjectSearchInput')?.addEventListener('input', (e) => {
     clearTimeout(subjectSearchTimer);
     const q = e.target.value.trim();
     subjectSearchTimer = setTimeout(() => runSubjectSearch(q), 300);
 });
 
-function runSubjectSearch(q) {
-    const box = document.getElementById('subjectSearchResults');
-    if (!q || q.length < 2) { box.style.display = 'none'; box.innerHTML = ''; return; }
-    fetch(`/cases/${CASE_POSITION}/beneficiary-search/?q=${encodeURIComponent(q)}`)
-        .then((r) => r.json())
-        .then((d) => {
-            if (!d.success || !d.results.length) {
-                box.innerHTML = '<p style="padding:0.5rem;font-size:0.8rem;color:#64748b;margin:0;">No occupied unit matches.</p>';
-                box.style.display = 'block';
-                return;
-            }
-            bindBeneficiarySearchResults(box, d.results, applySubjectSelection);
-        });
+document.getElementById('searchInput')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') applyCaseFilters();
+});
+
+document.getElementById('typeFilter')?.addEventListener('change', applyCaseFilters);
+
+function openResolvedCasesDrawer() {
+    const drawer = document.getElementById('resolvedCasesDrawer');
+    const btn = document.getElementById('resolvedKpiBtn');
+    if (!drawer) return;
+    drawer.classList.add('is-open');
+    document.body.style.overflow = 'hidden';
+    if (btn) {
+        btn.classList.add('is-active');
+        btn.setAttribute('aria-expanded', 'true');
+    }
+}
+
+function closeResolvedCasesDrawer(e) {
+    if (e && e.target && e.target.id !== 'resolvedCasesDrawer') return;
+    const drawer = document.getElementById('resolvedCasesDrawer');
+    const btn = document.getElementById('resolvedKpiBtn');
+    if (!drawer) return;
+    drawer.classList.remove('is-open');
+    if (btn) {
+        btn.classList.remove('is-active');
+        btn.setAttribute('aria-expanded', 'false');
+    }
+    const caseModalOpen = document.getElementById('caseModal')?.style.display === 'flex';
+    const newCaseModalOpen = document.getElementById('newCaseModal')?.style.display === 'flex';
+    if (!caseModalOpen && !newCaseModalOpen) {
+        document.body.style.overflow = '';
+    }
+}
+
+function openCaseFromResolvedDrawer(caseId) {
+    closeResolvedCasesDrawer();
+    openCaseModal(caseId);
 }
 
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
+        closeResolvedCasesDrawer();
         closeCaseModal();
         closeNewCaseModal();
     }
 });
-
-
-function renderWorkflowUI(c, canManage) {
-    const phaseBanner = document.getElementById('workflowPhaseBanner');
-    if (phaseBanner && c.current_phase) {
-        phaseBanner.style.display = 'block';
-        document.getElementById('workflowPhaseLabel').textContent = c.current_phase.label;
-        document.getElementById('workflowPhaseHint').textContent = c.current_phase.hint;
-    }
-    const stepper = document.getElementById('workflowStepper');
-    if (stepper && c.workflow_steps) {
-        stepper.style.display = 'flex';
-        stepper.innerHTML = c.workflow_steps.map((s) => `
-            <div class="case-wf-step ${s.state}" title="${s.hint}">
-                <span class="num">${s.num}</span>${s.label}
-            </div>`).join('');
-    }
-    const alertsBox = document.getElementById('monitoringAlertsBox');
-    if (alertsBox) {
-        if (c.monitoring_alerts && c.monitoring_alerts.length) {
-            alertsBox.style.display = 'flex';
-            alertsBox.innerHTML = c.monitoring_alerts.map((a) => `
-                <p style="margin:0;font-size:0.8rem;padding:0.5rem 0.65rem;border-radius:6px;
-                    background:${a.level === 'warning' ? '#fffbeb' : '#eff6ff'};
-                    border:1px solid ${a.level === 'warning' ? '#fcd34d' : '#93c5fd'};
-                    color:${a.level === 'warning' ? '#92400e' : '#1e40af'};">${a.text}</p>`).join('');
-        } else {
-            alertsBox.style.display = 'none';
-            alertsBox.innerHTML = '';
-        }
-    }
-    const rondaNotice = document.getElementById('rondaReadOnlyNotice');
-    if (rondaNotice) {
-        rondaNotice.style.display = (!canManage && !['resolved', 'closed'].includes(c.status)) ? 'block' : 'none';
-    }
-    if (c.actions && c.actions.length) {
-        document.getElementById('actionsHistorySection').style.display = 'block';
-        document.getElementById('actionsHistoryList').innerHTML = c.actions.map((a) => `
-            <div style="font-size:0.8rem;padding:0.5rem;background:#fff;border:1px solid #e5e7eb;border-radius:6px;">
-                <strong>${a.action_label}</strong>${a.details ? ' — ' + a.details : ''}
-                <div style="color:#64748b;margin-top:0.2rem;">${a.created_by} · ${new Date(a.created_at).toLocaleString()}</div>
-            </div>`).join('');
-    }
-    const panel = document.getElementById('workflowPanelSection');
-    if (!panel) return;
-    const terminal = ['resolved', 'closed'].includes(c.status);
-    panel.style.display = (canManage && !terminal) ? 'flex' : 'none';
-    if (!canManage || terminal) return;
-    const btnRow = document.getElementById('workflowButtonsRow');
-    btnRow.innerHTML = (c.workflow_buttons || []).map((b) => {
-        const bg = b.style === 'primary' ? '#047857' : '#2563eb';
-        return `<button type="button" onclick="runWorkflowTransition('${b.transition}')" style="padding:0.45rem 0.75rem;background:${bg};color:#fff;border:none;border-radius:6px;font-size:0.8rem;font-weight:600;cursor:pointer;">${b.label}</button>`;
-    }).join('');
-    document.getElementById('reviewNotesBlock').style.display =
-        ['under_review', 'mediation_monitoring', 'referred_engineering', 'awaiting_response', 'pending_review'].includes(c.status) ? 'flex' : 'none';
-    document.getElementById('reviewNotes').value = c.investigation_notes || '';
-    const typeBlock = document.getElementById('typeActionsBlock');
-    const typeBtns = document.getElementById('typeActionButtons');
-    if (typeBlock && typeBtns) {
-        const actions = c.type_actions || [];
-        typeBlock.style.display = actions.length && c.status !== 'pending_review' ? 'flex' : (c.case_type_normalized === 'other' ? 'none' : typeBlock.style.display);
-        if (actions.length) {
-            typeBlock.style.display = 'flex';
-            typeBtns.innerHTML = actions.map((a) =>
-                `<button type="button" onclick="recordTypeAction('${a.code}')" style="padding:0.45rem 0.7rem;background:#1d4ed8;color:#fff;border:none;border-radius:6px;font-size:0.78rem;font-weight:600;cursor:pointer;">${a.label}</button>`
-            ).join('');
-        } else if (c.case_type_normalized === 'other') {
-            typeBlock.style.display = 'none';
-        }
-    }
-    document.getElementById('resolveCloseBlock').style.display = 'flex';
-    document.getElementById('resolveBlock').style.display = c.status !== 'resolved' ? 'flex' : 'none';
-    document.getElementById('closeBlock').style.display = c.status === 'resolved' ? 'flex' : 'none';
-    if (c.follow_up_at) document.getElementById('caseFollowUpDate').value = c.follow_up_at.slice(0, 10);
-    if (c.closure_outcome) document.getElementById('closureOutcome').value = c.closure_outcome;
-}
-
-function runWorkflowTransition(transition) {
-    postCaseUpdate({ case_id: currentCaseId, action: 'workflow_transition', transition })
-        .then((d) => {
-            if (d.success) { alert(d.message); openCaseModal(currentCaseId); }
-            else alert(d.error || 'Failed');
-        });
-}
-
-function saveReviewNotes() {
-    const review_notes = document.getElementById('reviewNotes').value.trim();
-    postCaseUpdate({ case_id: currentCaseId, action: 'save_review', review_notes })
-        .then((d) => {
-            if (d.success) { alert(d.message); openCaseModal(currentCaseId); }
-            else alert(d.error || 'Failed');
-        });
-}
-
-function recordTypeAction(action_type) {
-    const details = document.getElementById('caseActionDetails').value.trim();
-    const follow_up_at = document.getElementById('caseFollowUpDate').value;
-    postCaseUpdate({ case_id: currentCaseId, action: 'record_action', action_type, details, follow_up_at })
-        .then((d) => {
-            if (d.success) { alert(d.message); openCaseModal(currentCaseId); }
-            else alert(d.error || 'Failed');
-        });
-}
-
-function resolveCase() {
-    const resolution_notes = document.getElementById('resolutionNotes').value.trim();
-    if (!resolution_notes) { alert('Enter resolution outcome'); return; }
-    postCaseUpdate({ case_id: currentCaseId, action: 'resolve', resolution_notes })
-        .then((d) => {
-            if (d.success) { alert(d.message); location.reload(); }
-            else alert(d.error || 'Failed');
-        });
-}
-
-function closeCase() {
-    const closure_outcome = document.getElementById('closureOutcome').value.trim();
-    if (!closure_outcome) { alert('Enter closure summary'); return; }
-    postCaseUpdate({ case_id: currentCaseId, action: 'close', closure_outcome })
-        .then((d) => {
-            if (d.success) { alert(d.message); location.reload(); }
-            else alert(d.error || 'Failed');
-        });
-}
-
-function saveCaseNote() {
-    const el = document.getElementById('workflowUpdateNote');
-    const note = (el ? el.value : '').trim();
-    if (!note) { alert('Enter a note'); return; }
-    postCaseUpdate({ case_id: currentCaseId, action: 'add_note', note })
-        .then((d) => {
-            if (d.success) { alert(d.message); openCaseModal(currentCaseId); }
-            else alert(d.error || 'Failed');
-        });
-}
 
 {% if open_new_case %}
 openNewCaseModal();

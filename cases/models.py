@@ -10,14 +10,14 @@ class Case(models.Model):
     Every complaint gets a case record until resolved.
     """
     CASE_TYPE_CHOICES = [
-        ('lot_boundary', 'Lot Boundary Issue'),
-        ('noise', 'Noise Complaint'),
-        ('drunk_disturbance', 'Drunk Disturbance'),
-        ('community_quarrel', 'Community Quarrel'),
-        ('illegal_occupant', 'Illegal Occupant Concern'),
-        ('occupancy_dispute', 'Occupancy Dispute'),
-        ('sanitation', 'Sanitation Complaint'),
-        ('other', 'Other Community Concern'),
+        ('lot_boundary', 'LOT BOUNDARY'),
+        ('noise', 'NOISE COMPLAINT'),
+        ('drunk_disturbance', 'DRUNK DISTURBANCE'),
+        ('community_quarrel', 'COMMUNITY QUARREL'),
+        ('illegal_occupant', 'ILLEGAL OCCUPANT CONCERN'),
+        ('occupancy_dispute', 'OCCUPANCY DISPUTE'),
+        ('sanitation', 'SANITATION COMPLAINT'),
+        ('other', 'OTHER COMMUNITY CONCERN'),
     ]
 
     STATUS_CHOICES = [
@@ -88,7 +88,10 @@ class Case(models.Model):
     )
     
     # Description
-    initial_description = models.TextField(verbose_name="Complaint/Violation Description")
+    initial_description = models.CharField(
+        max_length=100,
+        verbose_name='Incident description',
+    )
     
     # Investigation
     investigation_notes = models.TextField(blank=True)
@@ -234,38 +237,5 @@ class CaseEvidence(models.Model):
 
     def __str__(self):
         return f'Evidence for {self.case.case_number}'
-
-
-class CaseNote(models.Model):
-    """
-    Timeline of notes/updates for a case.
-    Allows multiple staff to add updates without overwriting.
-    """
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    
-    case = models.ForeignKey(
-        Case,
-        on_delete=models.CASCADE,
-        related_name='notes'
-    )
-    
-    note = models.TextField()
-    
-    created_at = models.DateTimeField(auto_now_add=True)
-    created_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        related_name='case_notes_created'
-    )
-    
-    class Meta:
-        ordering = ['created_at']
-        verbose_name = "Case Note"
-        verbose_name_plural = "Case Notes"
-    
-    def __str__(self):
-        return f"Note on {self.case.case_number} by {self.created_by}"
-
 
 
