@@ -11,7 +11,12 @@ from django.views.decorators.csrf import csrf_exempt
 from django.core.exceptions import ObjectDoesNotExist
 from functools import wraps
 from .models import Applicant, Barangay, Archive, SMSLog
-from applications.staff_pipeline_status import archive_applicant_status
+from applications.staff_pipeline_status import (
+    applicant_journey_cycle,
+    archive_applicant_status,
+    CASE_OPEN_STATUSES,
+)
+from cases.models import Case
 from applications.models import QueueEntry
 from units.models import LotAward, Blacklist
 from documents.models import Document, Requirement, document_filed_via_display, upsert_document_vault_upload
@@ -1621,21 +1626,6 @@ def applicants_list(request, position):
             **bl_gate,
         })
 
-    archive_documents_modal = {
-        r['referenceNumber']: {
-            'referenceNumber': r['referenceNumber'],
-            'fullName': r['fullName'],
-            'applicantId': r.get('applicantId', ''),
-            'displacementReason': r.get('displacementReason', ''),
-            'rows': r['requirementScanRows'],
-            'blacklistBlocked': bool(r.get('blacklistBlocked')),
-            'blacklistReason': r.get('blacklistReason', ''),
-            'blacklistRegistryName': r.get('blacklistRegistryName', ''),
-            'blacklistRegistryRef': r.get('blacklistRegistryRef', ''),
-        }
-        for r in archive_records
-    }
-
     archive_form_modal = {}
     for archive in archives:
         ref = archive.reference_number_snapshot or ''
@@ -1696,6 +1686,65 @@ def applicants_list(request, position):
             'displacementDescription': disp_desc,
         }
     
+    active_list_q = (request.GET.get('q') or '').strip()
+    archive_list_q = (request.GET.get('archive_q') or '').strip()
+    archive_list_barangay = (request.GET.get('archive_barangay') or 'all').strip()
+
+    def _intake_table_row_matches_search(row, query, text_keys, blacklist_flag_key=None):
+        if not query:
+            return True
+        ql = query.lower()
+        if 'blacklist' in ql and blacklist_flag_key and row.get(blacklist_flag_key):
+            return True
+        for key in text_keys:
+            if ql in str(row.get(key) or '').lower():
+                return True
+        row_id = str(row.get('id') or '').lower()
+        if row_id and ql.lstrip('#') in row_id:
+            return True
+        return False
+
+    if active_list_q:
+        applicants = [
+            a for a in applicants
+            if _intake_table_row_matches_search(
+                a,
+                active_list_q,
+                ('fullName', 'referenceNumber', 'barangay'),
+            )
+        ]
+
+    if archive_list_q:
+        archive_records = [
+            r for r in archive_records
+            if _intake_table_row_matches_search(
+                r,
+                archive_list_q,
+                ('fullName', 'referenceNumber', 'barangay', 'requirementsStatusLabel'),
+                blacklist_flag_key='blacklistBlocked',
+            )
+        ]
+    if archive_list_barangay and archive_list_barangay != 'all':
+        archive_records = [
+            r for r in archive_records
+            if (r.get('barangay') or '') == archive_list_barangay
+        ]
+
+    archive_documents_modal = {
+        r['referenceNumber']: {
+            'referenceNumber': r['referenceNumber'],
+            'fullName': r['fullName'],
+            'applicantId': r.get('applicantId', ''),
+            'displacementReason': r.get('displacementReason', ''),
+            'rows': r['requirementScanRows'],
+            'blacklistBlocked': bool(r.get('blacklistBlocked')),
+            'blacklistReason': r.get('blacklistReason', ''),
+            'blacklistRegistryName': r.get('blacklistRegistryName', ''),
+            'blacklistRegistryRef': r.get('blacklistRegistryRef', ''),
+        }
+        for r in archive_records
+    }
+
     # Sort all applicants by dateRegistered (FIFO - oldest first)
     applicants.sort(key=lambda x: x['dateRegistered'])
 
@@ -1737,8 +1786,12 @@ def applicants_list(request, position):
             'ready_for_module2': ready_for_module2,
         },
         'archive_records': archive_records,
+        'archive_records_total': len(archive_records),
         'archive_documents_modal': archive_documents_modal,
         'archive_form_modal': json.dumps(archive_form_modal),
+        'active_list_q': active_list_q,
+        'archive_list_q': archive_list_q,
+        'archive_list_barangay': archive_list_barangay,
     }
     return render(request, 'intake/staff/applicants.html', context)
 
@@ -2059,11 +2112,17 @@ def archive_list(request, position):
     if selected_barangay:
         archives_qs = archives_qs.filter(barangay_name_snapshot=selected_barangay)
     if search_query:
-        archives_qs = archives_qs.filter(
+        txn_fragment = search_query.lstrip('#').strip()
+        search_q = (
             Q(full_name_snapshot__icontains=search_query) |
             Q(reference_number_snapshot__icontains=search_query) |
             Q(barangay_name_snapshot__icontains=search_query)
         )
+        if txn_fragment:
+            search_q |= Q(id__icontains=txn_fragment)
+        if 'blacklist' in search_query.lower():
+            search_q |= Q(applicant__blacklist_record__isnull=False)
+        archives_qs = archives_qs.filter(search_q).distinct()
 
     channel_choices = {
         'channel_a': 'Channel A — Walk-in',
@@ -2093,6 +2152,37 @@ def archive_list(request, position):
         ).values_list('applicant_id', 'document_type'):
             docs_by_applicant_id[aid].add(doc_type)
     requirements_group_a = list(Requirement.objects.filter(group='A').order_by('order', 'code'))
+
+    case_stats_by_applicant = defaultdict(lambda: {'total': 0, 'open': 0, 'latest': '', '_seen': set()})
+    applicant_id_set = set(applicant_ids_for_docs)
+    if applicant_id_set:
+        case_rows = (
+            Case.objects.filter(
+                Q(complainant_applicant_id__in=applicant_id_set)
+                | Q(subject_applicant_id__in=applicant_id_set)
+            )
+            .order_by('-received_at')
+            .values_list(
+                'id',
+                'complainant_applicant_id',
+                'subject_applicant_id',
+                'status',
+                'case_number',
+            )
+        )
+        for case_id, complainant_id, subject_id, status, case_number in case_rows:
+            for aid in (complainant_id, subject_id):
+                if not aid or aid not in applicant_id_set:
+                    continue
+                bucket = case_stats_by_applicant[aid]
+                if case_id in bucket['_seen']:
+                    continue
+                bucket['_seen'].add(case_id)
+                bucket['total'] += 1
+                if status in CASE_OPEN_STATUSES:
+                    bucket['open'] += 1
+                if not bucket['latest'] and case_number:
+                    bucket['latest'] = case_number
 
     # Prepare records for template
     records = []
@@ -2158,6 +2248,24 @@ def archive_list(request, position):
         if bool(archive.applicant.phone_number if archive.applicant else False):
             sms_text = 'Sent' if archive.sms_sent else 'Not Sent'
 
+        app_obj = None
+        if archive.applicant_id and archive.applicant:
+            app_obj = getattr(archive.applicant, 'application', None)
+
+        case_bucket = (
+            case_stats_by_applicant.get(archive.applicant_id)
+            if archive.applicant_id
+            else None
+        ) or {'total': 0, 'open': 0, 'latest': ''}
+        journey_cycle = applicant_journey_cycle(
+            applicant_live,
+            app_obj,
+            bl_row,
+            case_total=case_bucket['total'],
+            case_open=case_bucket['open'],
+            case_latest=case_bucket['latest'],
+        )
+
         records.append({
             'id': str(archive.id),
             'dateTime': date_time_display,
@@ -2191,6 +2299,7 @@ def archive_list(request, position):
             'formGenAt': form_gen_at,
             'formGenBy': form_gen_by,
             'readOnlyState': 'Read-only historical record',
+            'journeyCycleJson': json.dumps(journey_cycle),
         })
 
     # Pagination
@@ -2198,17 +2307,22 @@ def archive_list(request, position):
     page_number = request.GET.get('page', 1)
     page_obj = paginator.get_page(page_number)
 
+    _q = request.GET.copy()
+    _q.pop('page', None)
+    pagination_query = _q.urlencode()
+
     # Context: barangay + search only (channel/reason/staff/date filters removed from UI).
     context = {
         'page_title': 'Archive Records',
         'staff_position': position,
         'position': position,
-        'total_archived': archives_qs.count(),
+        'total_archived': paginator.count,
         'barangays': barangays,
         'selected_barangay': selected_barangay,
         'search_query': search_query,
         'archive_records': page_obj.object_list,
         'page_obj': page_obj,
+        'pagination_query': pagination_query,
     }
 
     return render(request, 'intake/archive_list.html', context)

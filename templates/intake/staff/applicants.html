@@ -4204,25 +4204,27 @@
                 <p style="font-size: 1.25rem; font-weight: 700; color: #2563eb; margin: 0;">{{ stats.total }}</p>
             </div>
         </div>
-        <div class="search-box" style="flex: 1; min-width: 200px; position: relative; display: flex;">
+        <form method="get" class="search-box" id="activeApplicantsSearchForm" style="flex: 1; min-width: 200px; position: relative; display: flex;">
             <svg class="search-icon" style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); width: 1rem; height: 1rem; color: #94a3b8; z-index: 2;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="11" cy="11" r="8"></circle>
                 <path d="m21 21-4.35-4.35"></path>
             </svg>
             <input
-                type="text"
+                type="search"
+                name="q"
                 class="search-input"
                 placeholder="Name, ref #, barangay..."
                 id="searchInput"
-                onkeypress="if(event.key === 'Enter') filterTable()"
+                value="{{ active_list_q|default:'' }}"
+                autocomplete="off"
                 style="flex: 1; padding: 0.56rem 0.72rem 0.56rem 2.25rem; border: 1px solid #cbd5e1; border-radius: 0.5rem 0 0 0.5rem; font-size: 0.78rem; outline: none; transition: all 0.15s ease;"
             >
-            <button type="button" onclick="filterTable()"
+            <button type="submit"
                 style="padding: 0 1.25rem; background: #15803d; color: white; border: none; border-radius: 0 0.5rem 0.5rem 0; font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease;"
                 onmouseover="this.style.background='#166534'" onmouseout="this.style.background='#15803d'">
                 Search
             </button>
-        </div>
+        </form>
         <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
             <select class="filter-select" id="filterBarangay" onchange="filterTable()">
                 <option value="all">All Barangays</option>
@@ -4349,36 +4351,39 @@
             </svg>
             <div>
                 <p style="font-size: 0.625rem; color: #64748b; margin: 0; text-transform: uppercase; font-weight: 500;">Total List</p>
-                <p style="font-size: 1.25rem; font-weight: 700; color: #047857; margin: 0;" id="archiveTotalCount">{{ archive_records|length }}</p>
+                <p style="font-size: 1.25rem; font-weight: 700; color: #047857; margin: 0;" id="archiveTotalCount">{{ archive_records_total|default:archive_records|length }}</p>
             </div>
         </div>
 
-        <!-- Search Box -->
-        <div class="search-box" style="flex: 1; min-width: 200px; position: relative; display: flex;">
+        <!-- Search Box (server-side across full LIST OF APPLICANTS, then client pagination) -->
+        <form method="get" class="search-box" id="archiveListSearchForm" style="flex: 1; min-width: 200px; position: relative; display: flex;">
+            {% if active_list_q %}<input type="hidden" name="q" value="{{ active_list_q }}">{% endif %}
             <svg class="search-icon" style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); width: 1rem; height: 1rem; color: #94a3b8; z-index: 2;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="11" cy="11" r="8"></circle>
                 <path d="m21 21-4.35-4.35"></path>
             </svg>
             <input
-                type="text"
+                type="search"
+                name="archive_q"
                 class="search-input"
                 placeholder="Name, ref #, barangay..."
                 id="archiveSearchInput"
-                onkeypress="if(event.key === 'Enter') filterArchiveTable()"
+                value="{{ archive_list_q|default:'' }}"
+                autocomplete="off"
                 style="flex: 1; padding: 0.56rem 0.72rem 0.56rem 2.25rem; border: 1px solid #cbd5e1; border-radius: 0.5rem 0 0 0.5rem; font-size: 0.78rem; outline: none; transition: all 0.15s ease;"
             >
-            <button type="button" onclick="filterArchiveTable()"
+            <button type="submit"
                 style="padding: 0 1.25rem; background: #15803d; color: white; border: none; border-radius: 0 0.5rem 0.5rem 0; font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease;"
                 onmouseover="this.style.background='#166534'" onmouseout="this.style.background='#15803d'">
                 Search
             </button>
-        </div>
+        </form>
 
         <!-- Barangay Filter -->
-        <select class="filter-select" id="archiveFilterBarangay" onchange="filterArchiveTable()">
-            <option value="all">All Barangays</option>
+        <select class="filter-select" id="archiveFilterBarangay" name="archive_barangay" form="archiveListSearchForm" onchange="document.getElementById('archiveListSearchForm')?.submit()">
+            <option value="all" {% if archive_list_barangay == 'all' or not archive_list_barangay %}selected{% endif %}>All Barangays</option>
             {% for brgy in barangays %}
-            <option value="{{ brgy }}">{{ brgy }}</option>
+            <option value="{{ brgy }}" {% if archive_list_barangay == brgy %}selected{% endif %}>{{ brgy }}</option>
             {% endfor %}
         </select>
 
@@ -4412,7 +4417,7 @@
                 data-channel="{{ row.channel }}"
                 data-barangay="{{ row.barangay }}"
                 data-blacklist-blocked="{% if row.blacklistBlocked %}1{% else %}0{% endif %}"
-                data-searchable="{{ row.fullName|lower }} {{ row.referenceNumber|lower }} {{ row.barangay|lower }} {{ row.requirementsStatusLabel|lower }} cannot proceed {{ row.proceededAgo|default:''|lower }}"
+                data-searchable="{{ row.fullName|lower }} {{ row.referenceNumber|lower }} {{ row.barangay|lower }} {{ row.requirementsStatusLabel|lower }} cannot proceed {{ row.proceededAgo|default:''|lower }}{% if row.blacklistBlocked %} blacklisted blacklist registry{% endif %}{% if row.blacklistRegistryName %} {{ row.blacklistRegistryName|lower }}{% endif %}"
             >
                 <td style="font-weight: 700; color: #1e293b;">{{ forloop.counter }}</td>
                 <td>
@@ -4478,7 +4483,7 @@
             {% empty %}
             <tr id="archiveEmptyRow">
                 <td colspan="11" style="text-align:center; color:#64748b; font-size:0.75rem; padding:1rem;">
-                    No proceeded records yet.
+                    {% if archive_list_q %}No applicants match &ldquo;{{ archive_list_q }}&rdquo; on this list. Try another name, APP reference, or search &ldquo;blacklist&rdquo;.{% else %}No proceeded records yet.{% endif %}
                 </td>
             </tr>
             {% endfor %}
@@ -8726,7 +8731,23 @@
             });
         });
         initializeTablePagination();
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('q') && document.getElementById('searchInput')) {
+            document.getElementById('searchInput').value = params.get('q');
+        }
+        if (params.get('archive_q') && document.getElementById('archiveSearchInput')) {
+            document.getElementById('archiveSearchInput').value = params.get('archive_q');
+        }
         filterTable(true);
+    });
+
+    document.getElementById('activeApplicantsSearchForm')?.addEventListener('submit', function () {
+        const pageInput = this.querySelector('input[name="page"]');
+        if (pageInput) pageInput.remove();
+    });
+    document.getElementById('archiveListSearchForm')?.addEventListener('submit', function () {
+        const pageInput = this.querySelector('input[name="page"]');
+        if (pageInput) pageInput.remove();
     });
 
     function initializeTablePagination() {

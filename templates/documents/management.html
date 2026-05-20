@@ -1259,21 +1259,21 @@
 
     <!-- KPI cards -->
     <div class="docs-kpis">
-        <div class="docs-search-wrap" style="flex: 1; min-width: 200px; position: relative; display: flex; border: none; box-shadow: none; background: transparent; padding: 0;">
+        <form method="get" id="documentsSearchForm" class="docs-search-wrap" style="flex: 1; min-width: 200px; position: relative; display: flex; border: none; box-shadow: none; background: transparent; padding: 0;">
             <div style="flex: 1; min-width: 200px; position: relative; display: flex; width: 100%;">
                 <svg style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); width: 1rem; height: 1rem; color: #94a3b8; z-index: 2;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="11" cy="11" r="8"></circle>
                     <path d="m21 21-4.35-4.35"></path>
                 </svg>
-                <input type="text" id="searchInput" placeholder="Search by applicant or document type…"
+                <input type="search" name="search" id="searchInput" value="{{ search_query|default:'' }}" placeholder="Search by applicant or document type…" autocomplete="off"
                     style="flex: 1; padding: 0.56rem 0.72rem 0.56rem 2.25rem; border: 1px solid #cbd5e1; border-radius: 0.5rem 0 0 0.5rem; font-size: 0.78rem; outline: none; transition: all 0.15s ease; background: #fff;">
-                <button type="button"
+                <button type="submit"
                     style="padding: 0 1.25rem; background: #15803d; color: white; border: none; border-radius: 0 0.5rem 0.5rem 0; font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease;"
                     onmouseover="this.style.background='#166534'" onmouseout="this.style.background='#15803d'">
                     Search
                 </button>
             </div>
-        </div>
+        </form>
         <div class="docs-kpi docs-kpi--total">
             <span class="docs-kpi-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
@@ -1322,7 +1322,7 @@
                 {% for applicant in applicants %}
                 <tr class="applicant-row"
                     data-applicant-id="{{ applicant.id }}"
-                    data-search="{{ applicant.full_name|lower }} {{ applicant.reference_number|default:''|lower }}">
+                    data-search="{{ applicant.full_name|lower }} {{ applicant.reference_number|default:''|lower }}{% if applicant.has_blacklist_record %} blacklisted{% endif %} {{ applicant.applicant_status_detail|default:''|lower }}">
                     <td class="col-num">{{ page_obj.start_index|add:forloop.counter0 }}</td>
                     <td class="col-applicant">{{ applicant.full_name }}</td>
                     <td class="col-app-state">
@@ -1365,7 +1365,9 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="7" style="padding: 1.25rem 1rem; font-size: 0.8125rem; color: #64748b; text-align: center;">No documents found</td>
+                    <td colspan="7" style="padding: 1.25rem 1rem; font-size: 0.8125rem; color: #64748b; text-align: center;">
+                        {% if search_query %}No applicants match &ldquo;{{ search_query }}&rdquo;. Try another name, APP reference, or document type.{% else %}No applicants in the document vault yet.{% endif %}
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -1375,7 +1377,8 @@
     {% if applicants_total %}
     <div class="dm-pagination">
         <span class="dm-pagination-info">
-            Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ applicants_total }} applicants
+            {% if search_query %}Matching &ldquo;{{ search_query }}&rdquo; — {% endif %}
+            Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ applicants_total }} applicant{{ applicants_total|pluralize }}
         </span>
         <div class="dm-pagination-controls">
             {% if page_obj.has_previous %}
@@ -2277,10 +2280,16 @@ function applyDocumentsManagementSearch(query) {
         const hay = (item.getAttribute('data-search') || item.textContent || '').toLowerCase();
         item.style.display = !q || hay.includes(q) ? 'flex' : 'none';
     });
-    document.querySelectorAll('.applicant-row').forEach(row => {
-        const hay = (row.getAttribute('data-search') || row.textContent || '').toLowerCase();
-        row.style.display = !q || hay.includes(q) ? '' : 'none';
-    });
+}
+
+function submitDocumentsManagementSearch() {
+    const form = document.getElementById('documentsSearchForm');
+    if (!form) return;
+    const input = document.getElementById('searchInput');
+    if (input && input.name !== 'search') {
+        input.setAttribute('name', 'search');
+    }
+    form.submit();
 }
 
 function clearDocumentsVaultDeepLinkParams() {
@@ -2299,9 +2308,17 @@ function clearDocumentsVaultDeepLinkParams() {
     } catch (_e) {}
 }
 
-// Search functionality
-document.getElementById('searchInput').addEventListener('input', (e) => {
-    applyDocumentsManagementSearch(e.target.value);
+// Search: server-side across all applicants (pagination preserved via GET ?search=)
+document.getElementById('documentsSearchForm')?.addEventListener('submit', function () {
+    const pageInput = this.querySelector('input[name="page"]');
+    if (pageInput) pageInput.remove();
+});
+
+document.getElementById('searchInput')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        submitDocumentsManagementSearch();
+    }
 });
 
 
@@ -2328,12 +2345,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const searchInput = document.getElementById('searchInput');
     const openVaultDeepLink = params.get('open_vault') === '1';
-    if (search && searchInput && !openVaultDeepLink) {
-        searchInput.value = search;
-        applyDocumentsManagementSearch(search);
-    } else if (searchInput && openVaultDeepLink) {
+    if (searchInput && openVaultDeepLink) {
         searchInput.value = '';
-        applyDocumentsManagementSearch('');
     }
 
     if (openUpload === '1') {

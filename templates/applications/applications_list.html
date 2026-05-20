@@ -4114,21 +4114,22 @@
     <!-- Controls Bar (intake-style compact row) -->
     <div class="controls-bar"
         style="display: flex; gap: 0.75rem; margin-bottom: 0.85rem; flex-wrap: wrap; align-items: center; padding: 0.6rem; border: 1px solid #e2e8f0; background: #f8fafc; border-radius: 0.7rem;">
-        <div class="search-box" style="flex: 1; min-width: 200px; position: relative; display: flex;">
+        <form method="get" class="search-box" id="evaluationsSearchForm" style="flex: 1; min-width: 200px; position: relative; display: flex;">
+            {% if filter_stage and filter_stage != 'all' %}<input type="hidden" name="stage" value="{{ filter_stage }}">{% endif %}
             <svg style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); width: 1rem; height: 1rem; color: #94a3b8; z-index: 2;"
                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="11" cy="11" r="8"></circle>
                 <path d="m21 21-4.35-4.35"></path>
             </svg>
-            <input type="text" id="searchInput" placeholder="Name, ref #, barangay..." value="{{ search }}"
-                onkeypress="if(event.key === 'Enter') executeSearch()"
+            <input type="search" name="search" id="searchInput" placeholder="Name, ref #, barangay..." value="{{ search }}"
+                autocomplete="off"
                 style="flex: 1; padding: 0.56rem 0.72rem 0.56rem 2.25rem; border: 1px solid #cbd5e1; border-radius: 0.5rem 0 0 0.5rem; font-size: 0.78rem; outline: none; transition: all 0.15s ease;">
-            <button type="button" onclick="executeSearch()"
+            <button type="submit"
                 style="padding: 0 1.25rem; background: #15803d; color: white; border: none; border-radius: 0 0.5rem 0.5rem 0; font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease;"
                 onmouseover="this.style.background='#166534'" onmouseout="this.style.background='#15803d'">
                 Search
             </button>
-        </div>
+        </form>
         <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
             {% if permissions.can_generate_form %}
             <a href="{% url 'applications:ready_for_form_queue' request.user.position %}"
@@ -4315,6 +4316,7 @@
         <div class="table-footer">
             <div class="table-pagination">
                 <span class="table-pagination-info">
+                    {% if search %}Matching &ldquo;{{ search }}&rdquo; — {% endif %}
                     Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count }} applicant record{{ page_obj.paginator.count|pluralize }}
                 </span>
                 <div class="table-pagination-controls">
@@ -5936,19 +5938,24 @@
 
     let searchTimeout;
     function executeSearch() {
-        const search = document.getElementById('searchInput').value;
+        const form = document.getElementById('evaluationsSearchForm');
+        if (form) {
+            const pageInput = form.querySelector('input[name="page"]');
+            if (pageInput) pageInput.remove();
+            form.submit();
+            return;
+        }
+        const search = document.getElementById('searchInput')?.value || '';
         const stage = document.getElementById('stageFilter')?.value
             || new URLSearchParams(window.location.search).get('stage')
             || 'all';
         window.location.href = `?stage=${stage}&search=${encodeURIComponent(search)}&page=1`;
     }
-    
-    function handleSearch(event) {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(() => {
-            executeSearch();
-        }, 500);
-    }
+
+    document.getElementById('evaluationsSearchForm')?.addEventListener('submit', function () {
+        const pageInput = this.querySelector('input[name="page"]');
+        if (pageInput) pageInput.remove();
+    });
 
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {

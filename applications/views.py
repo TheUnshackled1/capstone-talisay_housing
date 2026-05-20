@@ -1139,14 +1139,29 @@ def applications_list(request, position):
         if target_stage:
             applicants_data = [a for a in applicants_data if a['current_stage'] == target_stage]
 
-    # Search filter
-    search = request.GET.get('search', '')
+    # Search filter (server-side across full list before pagination)
+    search = request.GET.get('search', '').strip()
     if search:
-        applicants_data = [
-            a for a in applicants_data
-            if search.lower() in a['applicant'].full_name.lower() or
-               search.lower() in a['applicant'].reference_number.lower()
-        ]
+        search_lower = search.lower()
+        txn_fragment = search_lower.lstrip('#')
+
+        def _evaluation_row_matches(row):
+            applicant = row['applicant']
+            barangay_name = (
+                applicant.barangay.name if getattr(applicant, 'barangay', None) else ''
+            )
+            if (
+                search_lower in (applicant.full_name or '').lower()
+                or search_lower in (applicant.reference_number or '').lower()
+                or search_lower in barangay_name.lower()
+                or txn_fragment in str(applicant.id).lower()
+            ):
+                return True
+            if 'blacklist' in search_lower and row.get('blacklist_blocked'):
+                return True
+            return False
+
+        applicants_data = [a for a in applicants_data if _evaluation_row_matches(a)]
 
     paginator = Paginator(applicants_data, MODULE2_EVALUATIONS_LIST_PER_PAGE)
     page_number = request.GET.get('page', 1)

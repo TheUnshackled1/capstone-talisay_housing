@@ -456,12 +456,24 @@ def document_management(request, position):
 
     # Filter by search query (skip when opening vault drawer — reference # is not in table row text)
     if search_query and not open_vault_deep_link:
-        applicants_qs = applicants_qs.filter(
+        search_q = (
             Q(full_name__icontains=search_query) |
             Q(reference_number__icontains=search_query) |
             Q(application__lot_awards__unit__block_number__icontains=search_query) |
-            Q(application__lot_awards__unit__lot_number__icontains=search_query)
-        ).distinct()
+            Q(application__lot_awards__unit__lot_number__icontains=search_query) |
+            Q(documents__document_type__icontains=search_query)
+        )
+        doc_type_codes = [
+            code
+            for code, label in Document.DOCUMENT_TYPE_CHOICES
+            if search_query.lower() in label.lower()
+            or search_query.lower() in code.replace('_', ' ')
+        ]
+        if doc_type_codes:
+            search_q |= Q(documents__document_type__in=doc_type_codes)
+        if 'blacklist' in search_query.lower():
+            search_q |= Q(blacklist_record__isnull=False)
+        applicants_qs = applicants_qs.filter(search_q).distinct()
 
     # Queue priority ordering: priority queue first, then walk-in, then none.
     QUEUE_RANK = {'priority': 0, 'walk_in': 1}
