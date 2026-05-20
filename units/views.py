@@ -24,6 +24,7 @@ from units.models import (
     MonitoringTask, MonitoringReport, ExplanationReview, ExtensionRecord,
 )
 from accounts.models import FIELD_DESK_POSITIONS
+from cases.views import cases_page_url, module5_case_rows_for_unit
 from units.housing_unit_status import housing_unit_on_file
 
 # Module 4 inventory: who may add housing units (block/lot rows)
@@ -717,6 +718,7 @@ def get_unit_details(request, position, unit_id):
                     for member in applicant.household_members.all().order_by('created_at')
                 ]
                 beneficiary_info = {
+                    'applicant_id': str(applicant.id),
                     'full_name': applicant.full_name or '',
                     'reference_number': applicant.reference_number or '',
                     'household_members': applicant.household_member_count,
@@ -1113,6 +1115,17 @@ def get_unit_details(request, position, unit_id):
                 'default_message': default_body or '',
             }
 
+        module5_cases = module5_case_rows_for_unit(
+            unit,
+            applicant_for_household,
+            position=position,
+        )
+        record_case_query = {}
+        if applicant_for_household:
+            record_case_query['applicant_id'] = str(applicant_for_household.id)
+        record_case_query['unit_id'] = str(unit.id)
+        record_case_query['new_case'] = '1'
+
         return JsonResponse({
             'success': True,
             'unit': {
@@ -1173,6 +1186,13 @@ def get_unit_details(request, position, unit_id):
                     'count_delayed': count_delayed,
                     'rows': site_rows_payload,
                 },
+                'module5_cases': module5_cases,
+                'module5_cases_url': cases_page_url(position),
+                'module5_record_case_url': (
+                    cases_page_url(position, **record_case_query)
+                    if applicant_for_household
+                    else None
+                ),
             }
         })
 

@@ -1,5 +1,22 @@
 from django.contrib import admin
-from .models import Case, CaseAction, CaseEvidence
+from .models import Case, CaseAction, CaseEvidence, CaseYearSequence
+
+
+@admin.register(CaseYearSequence)
+class CaseYearSequenceAdmin(admin.ModelAdmin):
+    list_display = ('year', 'last_number', 'next_case_preview')
+    readonly_fields = ('year', 'last_number', 'next_case_preview')
+    ordering = ('-year',)
+
+    @admin.display(description='Next case ID')
+    def next_case_preview(self, obj):
+        return f'CASE-{obj.year}-{obj.last_number + 1:04d}'
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(Case)

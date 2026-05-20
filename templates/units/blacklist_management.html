@@ -168,14 +168,14 @@
 
     .blacklist-table th:nth-child(1),
     .blacklist-table td:nth-child(1) {
-        width: 4%;
+        width: 3%;
         text-align: center;
         font-weight: 700;
         color: #1e293b;
     }
 
     .blacklist-table th:nth-child(2),
-    .blacklist-table td:nth-child(2) { width: 15%; }
+    .blacklist-table td:nth-child(2) { width: 28%; }
 
     .blacklist-table td.blacklist-beneficiary-cell {
         font-weight: 700;
@@ -196,16 +196,13 @@
 
     .blacklist-table th:nth-child(3),
     .blacklist-table td:nth-child(3) {
-        width: 11%;
+        width: 18%;
         text-align: center;
     }
 
     .blacklist-table th:nth-child(4),
-    .blacklist-table td:nth-child(4) { width: 30%; }
-
-    .blacklist-table th:nth-child(5),
-    .blacklist-table td:nth-child(5) {
-        width: 10%;
+    .blacklist-table td:nth-child(4) {
+        width: 13%;
         text-align: center;
     }
 
@@ -216,12 +213,12 @@
         white-space: nowrap;
     }
 
-    .blacklist-table th:nth-child(6),
-    .blacklist-table td:nth-child(6) { width: 14%; }
+    .blacklist-table th:nth-child(5),
+    .blacklist-table td:nth-child(5) { width: 22%; }
 
-    .blacklist-table th:nth-child(7),
-    .blacklist-table td:nth-child(7) {
-        width: 10%;
+    .blacklist-table th:nth-child(6),
+    .blacklist-table td:nth-child(6) {
+        width: 16%;
         text-align: center;
     }
 
@@ -290,19 +287,35 @@
         box-sizing: border-box;
         display: inline-flex !important;
         width: 100%;
-        max-width: 7.5rem;
+        max-width: 8rem;
         align-items: center;
         justify-content: center;
-        gap: 0.35rem;
-        min-height: 2.25rem;
-        padding: 0.45rem 0.65rem !important;
-        font-size: 0.6875rem;
+        gap: 0.4rem;
+        min-height: 2.375rem;
+        padding: 0.5rem 1rem !important;
+        font-size: 0.75rem;
         font-weight: 700;
-        letter-spacing: 0.02em;
-        line-height: 1.15;
-        border-radius: 4px !important;
+        letter-spacing: 0.03em;
+        line-height: 1.2;
+        border-radius: 0.6rem !important;
         cursor: pointer;
         white-space: nowrap;
+        background: linear-gradient(135deg, #16a34a 0%, #15803d 100%) !important;
+        color: white !important;
+        border: none !important;
+        box-shadow: 0 2px 8px rgba(22, 163, 74, 0.25) !important;
+        transition: all 0.2s ease !important;
+    }
+
+    body .btn-blacklist-view:hover {
+        background: linear-gradient(135deg, #15803d 0%, #127035 100%) !important;
+        box-shadow: 0 4px 12px rgba(22, 163, 74, 0.35) !important;
+        transform: translateY(-2px) !important;
+    }
+
+    body .btn-blacklist-view:active {
+        transform: translateY(0) !important;
+        box-shadow: 0 1px 4px rgba(22, 163, 74, 0.2) !important;
     }
 
     body .btn-blacklist-view .btn-icon {
@@ -589,7 +602,6 @@
                         <th>#</th>
                         <th>Beneficiary</th>
                         <th>Reason</th>
-                        <th>Details</th>
                         <th>Date</th>
                         <th>Blacklisted By</th>
                         <th>Actions</th>
@@ -608,40 +620,6 @@
                             <span class="status-dot"></span>
                             {{ blacklist.get_reason_display }}
                         </span>
-                    </td>
-                    <td>
-                        <div class="details-container">
-                            {% if blacklist.formatted_notes %}
-                            <div class="details-primary">
-                                <svg class="details-primary-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                    <polyline points="14 2 14 8 20 8"></polyline>
-                                    <line x1="16" y1="13" x2="8" y2="13"></line>
-                                    <line x1="16" y1="17" x2="8" y2="17"></line>
-                                    <polyline points="10 9 9 9 8 9"></polyline>
-                                </svg>
-                                <span>{{ blacklist.formatted_notes }}</span>
-                            </div>
-                            {% endif %}
-                            
-                            {% if blacklist.formatted_details %}
-                            <div class="details-secondary-box" title="Staff Explanation">
-                                <svg class="details-secondary-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                                </svg>
-                                <span class="details-secondary-text">{{ blacklist.formatted_details }}</span>
-                            </div>
-                            {% elif not blacklist.formatted_notes %}
-                            <div class="details-empty">
-                                <svg class="details-empty-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <circle cx="12" cy="12" r="10"></circle>
-                                    <line x1="12" y1="8" x2="12" y2="12"></line>
-                                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                                </svg>
-                                <span>No additional details recorded.</span>
-                            </div>
-                            {% endif %}
-                        </div>
                     </td>
                     <td class="blacklist-date-cell">
                         {{ blacklist.blacklisted_at|date:"M d, Y" }}
@@ -684,7 +662,7 @@
                 </tr>
                 {% empty %}
                 <tr class="formal-table-empty">
-                    <td colspan="7" class="empty-state">
+                    <td colspan="6" class="empty-state">
                         <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="1.5">
                             <circle cx="12" cy="12" r="10" />

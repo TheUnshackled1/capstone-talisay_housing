@@ -1,6 +1,61 @@
-from django.db import models
-from django.conf import settings
+import re
 import uuid
+
+from django.conf import settings
+from django.db import models, transaction
+from django.utils import timezone
+
+# Office-controlled IDs: CASE-2026-0001 (calendar year + 4-digit sequence)
+CASE_NUMBER_PATTERN = re.compile(r'^CASE-(\d{4})-(\d+)$')
+
+
+class CaseYearSequence(models.Model):
+    """Per-calendar-year counter for sequential case numbers (THA office control)."""
+    year = models.PositiveIntegerField(unique=True)
+    last_number = models.PositiveIntegerField(
+        default=0,
+        help_text='Last assigned sequence for this year; next case is last_number + 1.',
+    )
+
+    class Meta:
+        verbose_name = 'Case number sequence'
+        verbose_name_plural = 'Case number sequences'
+
+    def __str__(self):
+        return f'{self.year}: {self.last_number} issued'
+
+
+def _max_sequential_for_year(year: int) -> int:
+    """Highest CASE-YYYY-NNNN already stored for the given year."""
+    prefix = f'CASE-{year}-'
+    max_n = 0
+    for case_number in Case.objects.filter(case_number__startswith=prefix).values_list(
+        'case_number', flat=True
+    ):
+        match = CASE_NUMBER_PATTERN.match(case_number)
+        if match and int(match.group(1)) == year:
+            max_n = max(max_n, int(match.group(2)))
+    return max_n
+
+
+def allocate_case_number() -> str:
+    """
+    Next office case ID for the current calendar year.
+    Thread-safe under concurrent creates (row lock on CaseYearSequence).
+    """
+    year = timezone.now().year
+    with transaction.atomic():
+        seq, _created = CaseYearSequence.objects.select_for_update().get_or_create(
+            year=year,
+            defaults={'last_number': _max_sequential_for_year(year)},
+        )
+        db_max = _max_sequential_for_year(year)
+        if seq.last_number < db_max:
+            seq.last_number = db_max
+        seq.last_number += 1
+        next_num = seq.last_number
+        seq.save(update_fields=['last_number'])
+    return f'CASE-{year}-{next_num:04d}'
 
 
 class Case(models.Model):
@@ -144,11 +199,7 @@ class Case(models.Model):
     
     def save(self, *args, **kwargs):
         if not self.case_number:
-            from django.utils import timezone
-            import random
-            date_str = timezone.now().strftime('%Y%m%d')
-            random_suffix = ''.join([str(random.randint(0, 9)) for _ in range(4)])
-            self.case_number = f"CASE-{date_str}-{random_suffix}"
+            self.case_number = allocate_case_number()
         super().save(*args, **kwargs)
     
     def __str__(self):

@@ -8,12 +8,55 @@ from django.utils import timezone
 from functools import wraps
 import json
 import re
+from urllib.parse import urlencode
 
 from intake.models import Applicant
 from units.models import LotAward, HousingUnit
 from .models import Case, CaseAction, CaseEvidence
 from . import workflow as wf
 from accounts.models import FIELD_DESK_POSITIONS
+
+
+def cases_page_url(position, **query):
+    """Canonical Module 5 page URL for a staff position (accounts routes or legacy /cases/)."""
+    if position in FIELD_DESK_POSITIONS:
+        base = reverse('accounts:field_cases')
+    elif position == 'second_member':
+        base = reverse('accounts:second_member_cases')
+    else:
+        base = reverse('cases:case_dashboard', kwargs={'position': position})
+    params = {k: v for k, v in query.items() if v}
+    return f'{base}?{urlencode(params)}' if params else base
+
+
+def module5_cases_for_unit(unit, applicant=None, limit=20):
+    """Cases tied to this lot: related_unit and/or beneficiary as complainant or respondent."""
+    q = models.Q(related_unit=unit)
+    if applicant:
+        q |= models.Q(complainant_applicant=applicant) | models.Q(subject_applicant=applicant)
+    return (
+        Case.objects.filter(q)
+        .distinct()
+        .order_by('-received_at')[:limit]
+    )
+
+
+def module5_case_rows_for_unit(unit, applicant=None, position='second_member'):
+    """Serialize linked cases for Unit Monitoring drawer JSON."""
+    rows = []
+    for case in module5_cases_for_unit(unit, applicant):
+        rows.append({
+            'id': str(case.id),
+            'case_number': case.case_number,
+            'case_type_display': case.get_case_type_display(),
+            'status': case.status,
+            'status_display': case.get_status_display(),
+            'complainant_name': case.complainant_name or '',
+            'initial_description': case.initial_description or '',
+            'received_at': case.received_at.isoformat() if case.received_at else '',
+            'view_url': cases_page_url(position, case_id=str(case.id)),
+        })
+    return rows
 
 
 def verify_position(view_func):
@@ -94,6 +137,19 @@ def case_management_dashboard(request, position):
         cases = cases.filter(case_type=filter_type)
 
     open_new_case = request.GET.get('new_case', '').strip() in ('1', 'true', 'yes')
+    open_case_id = request.GET.get('case_id', '').strip()
+
+    prefill_beneficiary = None
+    prefill_applicant_id = request.GET.get('applicant_id', '').strip()
+    prefill_unit_id = request.GET.get('unit_id', '').strip()
+    if prefill_applicant_id:
+        try:
+            applicant = Applicant.objects.get(id=prefill_applicant_id)
+            prefill_beneficiary = _beneficiary_search_payload(applicant)
+            if prefill_unit_id:
+                prefill_beneficiary['unit_id'] = prefill_unit_id
+        except Applicant.DoesNotExist:
+            pass
 
     case_templates = {
         'ronda': 'accounts/field/case_management.html',
@@ -112,6 +168,8 @@ def case_management_dashboard(request, position):
         'filter_type': filter_type,
         'case_type_choices': Case.CASE_TYPE_CHOICES,
         'open_new_case': open_new_case,
+        'open_case_id': open_case_id,
+        'prefill_beneficiary': prefill_beneficiary,
         'case_position': position,
     }
 
@@ -306,7 +364,11 @@ def get_case_details(request, position, case_id):
                 'related_unit',
                 'related_unit__site',
             )
-            .prefetch_related('evidence__uploaded_by')
+            .prefetch_related(
+                'evidence__uploaded_by',
+                'complainant_applicant__household_members',
+                'actions__created_by',
+            )
             .get(id=case_id)
         )
 
@@ -334,13 +396,61 @@ def get_case_details(request, position, case_id):
         prior_cases_list = list(prior_cases_qs.order_by('-received_at')[:8])
         prior_cases = [
             {
+                'id': str(pc.id),
                 'case_number': pc.case_number,
+                'status': wf.normalize_status(pc.status),
                 'status_display': pc.get_status_display(),
                 'case_type_display': pc.get_case_type_display(),
                 'received_at': pc.received_at.isoformat(),
             }
             for pc in prior_cases_list
         ]
+
+        beneficiary_profile = None
+        if complainant_applicant:
+            beneficiary_profile = {
+                'applicant_id': str(complainant_applicant.id),
+                'sex_display': (
+                    complainant_applicant.get_sex_display()
+                    if complainant_applicant.sex
+                    else '—'
+                ),
+                'household_members': complainant_applicant.household_member_count,
+                'household_member_rows': [
+                    {
+                        'name': member.full_name,
+                        'relationship': member.get_relationship_display(),
+                        'sex_display': (
+                            member.get_sex_display() if member.sex else '—'
+                        ),
+                    }
+                    for member in complainant_applicant.household_members.all().order_by(
+                        'created_at'
+                    )
+                ],
+            }
+
+        actions_log = [
+            {
+                'action_type': row.action_type,
+                'label': wf.ACTION_LABELS.get(row.action_type, row.get_action_type_display()),
+                'details': row.details or '',
+                'created_by': row.created_by.get_full_name() if row.created_by else 'Staff',
+                'created_at': row.created_at.isoformat(),
+            }
+            for row in case.actions.all()
+        ]
+        can_manage = wf.user_can_manage_workflow(request.user)
+        workflow_payload = {
+            'can_manage_workflow': can_manage,
+            'allowed_actions': wf.allowed_type_actions(case.case_type) if can_manage else [],
+            'workflow_buttons': wf.allowed_workflow_buttons(case, request.user) if can_manage else [],
+            'type_action_guide': wf.type_action_guide(case.case_type),
+            'show_engineering_note': wf.normalize_case_type(case.case_type) == 'lot_boundary',
+            'monitoring_alerts': wf.monitoring_alerts(case, len(prior_cases_list)),
+            'actions_log': actions_log,
+            'is_terminal': wf.normalize_status(case.status) in wf.TERMINAL_STATUSES,
+        }
 
         return JsonResponse({
             'success': True,
@@ -395,6 +505,8 @@ def get_case_details(request, position, case_id):
                 'evidence': evidence_data,
                 'prior_cases': prior_cases,
                 'prior_cases_count': len(prior_cases_list),
+                'beneficiary_profile': beneficiary_profile,
+                'workflow': workflow_payload,
                 'received_at_location_display': case.get_received_at_location_display(),
             }
         })
@@ -448,6 +560,15 @@ def create_case(request, position):
             return JsonResponse({
                 'success': False,
                 'error': 'Select a complainant from the housing unit occupant list.',
+            }, status=400)
+        if (
+            subject_applicant_id
+            and complainant_applicant_id
+            and subject_applicant_id == complainant_applicant_id
+        ):
+            return JsonResponse({
+                'success': False,
+                'error': 'Respondent cannot be the same person as the complainant.',
             }, status=400)
         if not all([complainant_name, case_type, initial_description]):
             return JsonResponse({
@@ -510,14 +631,23 @@ def create_case(request, position):
             subject_applicant=subject_applicant,
             related_unit=related_unit,
         )
+        # Case recording (Add Case) always starts at Pending Review — never skip to mediation.
+        if wf.normalize_status(case.status) != wf.STATUS_PENDING_REVIEW:
+            case.status = wf.STATUS_PENDING_REVIEW
+            case.save(update_fields=['status'])
 
         return JsonResponse({
             'success': True,
-            'message': f'✓ Case {case.case_number} created successfully',
+            'message': (
+                f'✓ Case {case.case_number} saved. '
+                f'Status: {case.get_status_display()}.'
+            ),
             'case': {
                 'id': str(case.id),
                 'case_number': case.case_number,
                 'complainant_name': case.complainant_name,
+                'status': case.status,
+                'status_display': case.get_status_display(),
             }
         })
 
@@ -607,6 +737,7 @@ def update_case(request, position):
                 'success': True,
                 'message': 'Case is now Under Review',
                 'new_status': case.status,
+                'status_display': case.get_status_display(),
             })
 
         elif action == 'save_review':
@@ -628,6 +759,14 @@ def update_case(request, position):
             return JsonResponse({'success': True, 'message': 'Review notes saved'})
 
         elif action == 'record_action':
+            if wf.normalize_status(case.status) == wf.STATUS_PENDING_REVIEW:
+                return JsonResponse({
+                    'success': False,
+                    'error': (
+                        'Case is still pending review. Mark it under review before '
+                        'recording warnings, mediation, or other desk actions.'
+                    ),
+                }, status=400)
             action_type = data.get('action_type', '').strip()
             details = data.get('details', '').strip()
             follow_up_at = (data.get('follow_up_at') or '').strip()
@@ -664,7 +803,12 @@ def update_case(request, position):
                     pass
 
             case.save()
-            return JsonResponse({'success': True, 'message': label, 'new_status': case.status})
+            return JsonResponse({
+                'success': True,
+                'message': label,
+                'new_status': case.status,
+                'status_display': case.get_status_display(),
+            })
 
         elif action == 'workflow_transition':
             transition = data.get('transition', '').strip()

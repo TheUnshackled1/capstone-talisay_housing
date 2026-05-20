@@ -115,41 +115,27 @@ ACTION_LABELS = {
     ACTION_OTHER: 'Other action recorded',
 }
 
-# Spec complaint types → type-specific action buttons only
+# Spec complaint types → type-specific action buttons (desk guide)
 CASE_TYPE_ACTIONS = {
-    'lot_boundary': [
-        ACTION_REFER_ENGINEERING,
-        ACTION_SCHEDULE_INSPECTION,
-    ],
-    'noise': [
-        ACTION_ISSUE_WARNING,
-        ACTION_SCHEDULE_MEDIATION,
-        ACTION_MONITOR_COMPLAINT,
-    ],
-    'drunk_disturbance': [
-        ACTION_RECORD_INCIDENT,
-        ACTION_ISSUE_WARNING,
-        ACTION_SCHEDULE_MEDIATION,
-    ],
-    'community_quarrel': [
-        ACTION_SCHEDULE_MEDIATION,
-        ACTION_RECORD_RESOLUTION,
-    ],
-    'illegal_occupant': [
-        ACTION_REVIEW_OCCUPANCY,
-        ACTION_REQUEST_CLARIFICATION,
-        ACTION_MONITOR_CASE,
-    ],
-    'occupancy_dispute': [
-        ACTION_REVIEW_OCCUPANCY,
-        ACTION_REQUEST_CLARIFICATION,
-        ACTION_MONITOR_CASE,
-    ],
-    'sanitation': [
-        ACTION_ISSUE_REMINDER,
-        ACTION_MONITOR_COMPLIANCE,
-    ],
+    'lot_boundary': [ACTION_REFER_ENGINEERING],
+    'noise': [ACTION_ISSUE_WARNING, ACTION_SCHEDULE_MEDIATION],
+    'drunk_disturbance': [ACTION_ISSUE_WARNING, ACTION_SCHEDULE_MEDIATION],
+    'community_quarrel': [ACTION_SCHEDULE_MEDIATION, ACTION_RECORD_RESOLUTION],
+    'illegal_occupant': [ACTION_REVIEW_OCCUPANCY, ACTION_REQUEST_CLARIFICATION],
+    'occupancy_dispute': [ACTION_REVIEW_OCCUPANCY, ACTION_REQUEST_CLARIFICATION],
+    'sanitation': [ACTION_ISSUE_REMINDER, ACTION_MONITOR_COMPLIANCE],
     'other': [],
+}
+
+TYPE_ACTION_GUIDE = {
+    'lot_boundary': 'Lot boundary → Refer to City Engineering',
+    'noise': 'Noise → Issue warning · Schedule mediation',
+    'drunk_disturbance': 'Drunk disturbance → Issue warning · Schedule mediation',
+    'community_quarrel': 'Community quarrel → Schedule mediation · Record resolution',
+    'illegal_occupant': 'Illegal occupant → Review occupancy · Request clarification',
+    'occupancy_dispute': 'Occupancy dispute → Review occupancy · Request clarification',
+    'sanitation': 'Sanitation → Issue reminder · Monitor compliance',
+    'other': 'Other — record remarks under review notes; resolve when ready.',
 }
 
 # Which action sets status after record
@@ -281,9 +267,14 @@ def refer_engineering_allowed(case) -> bool:
         and normalize_status(case.status) in {
             STATUS_UNDER_REVIEW,
             STATUS_MEDIATION,
-            STATUS_PENDING_REVIEW,
+            STATUS_REFERRED_ENGINEERING,
+            STATUS_AWAITING_RESPONSE,
         }
     )
+
+
+def type_action_guide(case_type: str) -> str:
+    return TYPE_ACTION_GUIDE.get(normalize_case_type(case_type), TYPE_ACTION_GUIDE['other'])
 
 
 def apply_action_status(case, action_type: str):

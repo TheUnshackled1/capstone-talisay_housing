@@ -1063,21 +1063,25 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        gap: 0.3rem;
-        padding: 0.35rem 0.65rem;
-        border-radius: 999px;
-        border: 1px solid #86efac;
-        background: #ecfdf5;
-        color: #047857;
-        font-size: 0.65rem;
+        gap: 0.45rem;
+        padding: 0.5rem 1.15rem;
+        border-radius: 0.5rem;
+        border: 1px solid #047857;
+        background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+        color: #ffffff;
+        font-size: 0.78rem;
         font-weight: 700;
+        letter-spacing: 0.02em;
         cursor: pointer;
-        transition: background 0.15s ease, border-color 0.15s ease;
+        white-space: nowrap;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
     }
 
     body .btn-case-view:hover {
-        background: #d1fae5;
-        border-color: #10b981;
+        background: linear-gradient(180deg, #059669 0%, #047857 100%);
+        box-shadow: 0 4px 14px rgba(5, 150, 105, 0.35);
+        transform: translateY(-1px);
     }
 
     .monitoring-empty-state {
@@ -1422,9 +1426,7 @@
 {% csrf_token %}
 
 <div class="monitoring-shell">
-    <div class="monitoring-kicker">Module 5</div>
     <h1 class="monitoring-title">Case Management</h1>
-    <p class="monitoring-subtitle">Every complaint gets a case record · No verbal-only handling</p>
 </div>
 
 <div class="monitoring-kpis">
@@ -1552,7 +1554,7 @@
                             <th>Time ago</th>
                             <th>Complaint type</th>
                             <th>Status</th>
-                            <th>View</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1628,6 +1630,14 @@
                             <p id="modalStaffRole" class="case-detail-value muted case-record-meta">—</p>
                         </div>
                     </div>
+                    
+                    <div id="investigationSection" style="display: none; margin-top: 1.25rem;">
+                        <h4 class="case-record-part-title">Investigation</h4>
+                        <div class="case-record-text-block">
+                            <p id="modalInvestigationNotes" class="case-detail-description-box case-record-investigation-box">—</p>
+                            <p id="modalInvestigatedBy" class="case-record-meta"></p>
+                        </div>
+                    </div>
                 </section>
 
                 <section class="case-record-part">
@@ -1652,28 +1662,20 @@
                     </div>
                 </section>
 
-                <section id="subjectSection" class="case-record-part" style="display: none;">
-                    <h4 class="case-record-part-title">Respondent</h4>
-                    <p id="modalSubjectName" class="case-record-respondent">—</p>
-                </section>
-
                 <section class="case-record-part">
+                    <div id="subjectSection" style="display: none; margin-bottom: 1.25rem;">
+                        <h4 class="case-record-part-title">Respondent</h4>
+                        <p id="modalSubjectName" class="case-record-respondent">—</p>
+                    </div>
+
                     <h4 class="case-record-part-title">Incident</h4>
                     <div class="case-record-incident-type">
                         <span class="case-detail-label">Complaint type</span>
                         <span id="modalComplaintType"></span>
                     </div>
-                    <div class="case-record-text-block">
+                    <div class="case-record-text-block" style="margin-top: 0.5rem;">
                         <span class="case-detail-label">Description</span>
                         <p id="modalDescription" class="case-detail-description-box">—</p>
-                    </div>
-                </section>
-
-                <section id="investigationSection" class="case-record-part" style="display: none;">
-                    <h4 class="case-record-part-title">Investigation</h4>
-                    <div class="case-record-text-block">
-                        <p id="modalInvestigationNotes" class="case-detail-description-box case-record-investigation-box">—</p>
-                        <p id="modalInvestigatedBy" class="case-record-meta"></p>
                     </div>
                 </section>
 

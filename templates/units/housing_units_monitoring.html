@@ -1622,6 +1622,101 @@
         text-transform: uppercase;
         color: #475569;
     }
+    .unit-case-record-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.85rem;
+    }
+    .unit-case-record-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 0.35rem;
+        padding: 1.25rem 1rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        background: #f8fafc;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+        transition: box-shadow 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+    }
+    .unit-case-record-item:hover {
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.06);
+        border-color: #cbd5e1;
+        background: #ffffff;
+    }
+    .unit-case-record-item strong {
+        font-size: 0.85rem;
+        color: #0f172a;
+        letter-spacing: 0.02em;
+    }
+    .unit-case-record-meta {
+        font-size: 0.75rem;
+        color: #475569;
+        line-height: 1.5;
+        max-width: 95%;
+    }
+    .unit-case-record-actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+        gap: 0.65rem;
+        margin-top: 0.5rem;
+        width: 100%;
+    }
+    .unit-case-record-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.45rem 1rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-decoration: none;
+        background: #ffffff;
+        color: #334155;
+        border: 1px solid #cbd5e1;
+        transition: all 0.2s ease;
+    }
+    .unit-case-record-link:hover {
+        background: #f1f5f9;
+        color: #0f172a;
+        border-color: #94a3b8;
+    }
+    .unit-case-record-link.btn-case-open {
+        background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
+        color: #ffffff;
+        border: none;
+        box-shadow: 0 2px 4px rgba(15, 23, 42, 0.2);
+    }
+    .unit-case-record-link.btn-case-open:hover {
+        background: linear-gradient(135deg, #020617 0%, #1e293b 100%);
+        color: #ffffff;
+        box-shadow: 0 4px 6px rgba(15, 23, 42, 0.25);
+    }
+    .unit-case-record-link.btn-case-record {
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        color: #ffffff;
+        border: none;
+        box-shadow: 0 2px 4px rgba(5, 150, 105, 0.2);
+    }
+    .unit-case-record-link.btn-case-record:hover {
+        background: linear-gradient(135deg, #047857 0%, #065f46 100%);
+        color: #ffffff;
+        box-shadow: 0 4px 6px rgba(5, 150, 105, 0.25);
+    }
+    .unit-case-record-link.btn-case-all {
+        background: #f1f5f9;
+        color: #334155;
+        border: 1px solid #cbd5e1;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+    .unit-case-record-link.btn-case-all:hover {
+        background: #e2e8f0;
+        color: #0f172a;
+        border-color: #94a3b8;
+    }
     .household-add-form {
         display: flex;
         flex-direction: column;
@@ -4046,6 +4141,48 @@ function buildMonitoringHistoryFromTasks(tasks) {
     });
 }
 
+function renderUnitCaseRecord(unit) {
+    const wrap = document.getElementById('unitCaseRecord');
+    if (!wrap) return;
+    const cases = unit && Array.isArray(unit.module5_cases) ? unit.module5_cases : [];
+    const recordUrl = unit && unit.module5_record_case_url;
+    const listUrl = unit && unit.module5_cases_url;
+    const ben = unit && unit.beneficiary_info;
+
+    if (!cases.length) {
+        let html = '<p class="occupied-record-empty">No case linked to this lot yet.</p>';
+        if (recordUrl && ben && ben.applicant_id) {
+            html += `
+                <div class="unit-case-record-actions" style="margin-top: 0.75rem;">
+                    <a href="${escapeHtml(recordUrl)}" class="unit-case-record-link btn-case-record">Record case for this beneficiary</a>
+                </div>
+            `;
+        } else if (!ben || !ben.applicant_id) {
+            html += '<p class="occupied-record-empty" style="margin-top: 0.5rem;">Link a formal lot award beneficiary to record a case.</p>';
+        }
+        wrap.innerHTML = html;
+        return;
+    }
+
+    wrap.innerHTML = `
+        <div class="unit-case-record-list">
+            ${cases.map((c, index) => `
+                <div class="unit-case-record-item">
+                    <strong>${escapeHtml(c.case_number || 'Case')}</strong>
+                    <span class="unit-case-record-meta">${escapeHtml(c.case_type_display || '')} · ${escapeHtml(c.status_display || '')}</span>
+                    <span class="unit-case-record-meta">Complainant: ${escapeHtml(c.complainant_name || '—')}</span>
+                    ${c.initial_description ? `<span class="unit-case-record-meta">${escapeHtml(c.initial_description)}</span>` : ''}
+                    <div class="unit-case-record-actions">
+                        <a href="${escapeHtml(c.view_url || '#')}" class="unit-case-record-link btn-case-open">Open case record</a>
+                        ${(index === cases.length - 1 && recordUrl) ? `<a href="${escapeHtml(recordUrl)}" class="unit-case-record-link btn-case-record">Record another case</a>` : ''}
+                        ${(index === cases.length - 1 && listUrl) ? `<a href="${escapeHtml(listUrl)}" class="unit-case-record-link btn-case-all">All cases</a>` : ''}
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
 function renderComplianceRecordsRecord(records) {
     const wrap = document.getElementById('complianceRecordsRecord');
     if (!wrap) return;
@@ -5297,6 +5434,7 @@ function openUnitModal(unitId) {
                 renderMonitoringTaskCards(main, merged, letterWf);
                 renderMonitoringHistoryRecord(unit.monitoring_history || []);
                 renderComplianceRecordsRecord(unit.compliance_records || []);
+                renderUnitCaseRecord(unit);
                 syncExplanationLetterPanel(unit);
                 renderPriorNoProgressVisitsPanel(letterWf);
                 renderExplanationExtension30DayCard(ext30);
