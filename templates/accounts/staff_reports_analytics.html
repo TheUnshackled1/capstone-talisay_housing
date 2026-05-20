@@ -1095,7 +1095,7 @@
         <p class="rep-section-note">Module 2 applications and Module 4 inventory.</p>
         <span class="rep-section-rule"></span>
     </div>
-    <div class="rep-grid-2 rep-grid-charts">
+    <div class="rep-grid-3 rep-grid-charts">
         <div class="rep-card">
             <p class="rep-card-title">Housing applications by status</p>
             <p class="rep-card-sub">Module 2 records by application status.</p>
@@ -1106,6 +1106,11 @@
             <p class="rep-card-sub">Module 4 inventory occupancy / notice state.</p>
             <div class="rep-chart-canvas"><canvas id="chartHousing"></canvas></div>
         </div>
+        <div class="rep-card">
+            <p class="rep-card-title">Blacklisted</p>
+            <p class="rep-card-sub">Permanently disqualified beneficiaries.</p>
+            <div class="rep-chart-canvas"><canvas id="chartBlacklist"></canvas></div>
+        </div>
     </div>
 
     <!-- Section: Operations -->
@@ -1115,61 +1120,7 @@
         <span class="rep-section-rule"></span>
     </div>
 
-    <!-- Operational Gauges Row -->
-    <div class="rep-ops-gauges">
-        <div class="rep-gauge">
-            <div class="rep-gauge-ring">
-                <svg viewBox="0 0 36 36">
-                    <circle class="ring-bg" cx="18" cy="18" r="15.5"/>
-                    <circle class="ring-fg is-emerald" cx="18" cy="18" r="15.5"
-                            stroke-dasharray="97.4"
-                            stroke-dashoffset="{{ housing_occupancy_offset }}"/>
-                </svg>
-                <span class="rep-gauge-pct">{{ housing_occupancy_rate }}%</span>
-            </div>
-            <p class="rep-gauge-label">Housing occupancy</p>
-            <p class="rep-gauge-sub">{{ occupied_units|default:0 }} of {{ housing_units_total|default:0 }} occupied</p>
-        </div>
-        <div class="rep-gauge">
-            <div class="rep-gauge-ring">
-                <svg viewBox="0 0 36 36">
-                    <circle class="ring-bg" cx="18" cy="18" r="15.5"/>
-                    <circle class="ring-fg is-cyan" cx="18" cy="18" r="15.5"
-                            stroke-dasharray="97.4"
-                            stroke-dashoffset="{{ req_verification_offset }}"/>
-                </svg>
-                <span class="rep-gauge-pct">{{ req_verification_rate }}%</span>
-            </div>
-            <p class="rep-gauge-label">Verification rate</p>
-            <p class="rep-gauge-sub">{{ requirements_verified_period|default:0 }} of {{ req_submitted_period|default:0 }} this period</p>
-        </div>
-        <div class="rep-gauge">
-            <div class="rep-gauge-ring">
-                <svg viewBox="0 0 36 36">
-                    <circle class="ring-bg" cx="18" cy="18" r="15.5"/>
-                    <circle class="ring-fg {% if stale_cases_count > 0 %}is-rose{% else %}is-emerald{% endif %}" cx="18" cy="18" r="15.5"
-                            stroke-dasharray="97.4"
-                            stroke-dashoffset="{{ stale_cases_offset }}"/>
-                </svg>
-                <span class="rep-gauge-pct">{{ open_cases_count|default:0 }}</span>
-            </div>
-            <p class="rep-gauge-label">Open cases</p>
-            <p class="rep-gauge-sub">{{ stale_cases_count|default:0 }} stale (&gt;14 d)</p>
-        </div>
-        <div class="rep-gauge">
-            <div class="rep-gauge-ring">
-                <svg viewBox="0 0 36 36">
-                    <circle class="ring-bg" cx="18" cy="18" r="15.5"/>
-                    <circle class="ring-fg is-violet" cx="18" cy="18" r="15.5"
-                            stroke-dasharray="97.4"
-                            stroke-dashoffset="{{ construction_progress_offset }}"/>
-                </svg>
-                <span class="rep-gauge-pct">{{ construction_in_progress|default:0 }}</span>
-            </div>
-            <p class="rep-gauge-label">Building in progress</p>
-            <p class="rep-gauge-sub">{{ construction_delayed|default:0 }} delayed &middot; {{ construction_completed|default:0 }} done</p>
-        </div>
-    </div>
+
 
     <!-- Mini-KPI row -->
     <div class="rep-ops-mini-grid">
@@ -1199,13 +1150,16 @@
         </div>
     </div>
 
-    <!-- Operations charts row 1: Workflow Funnel + Case Aging -->
-    <div class="rep-ops-row-2" style="margin-top: 0.85rem;">
+    <!-- Operations charts: 3 per row layout -->
+    <div class="rep-grid-3" style="margin-top: 0.85rem;">
+        <!-- Card 1: Applicant workflow funnel -->
         <div class="rep-card">
             <p class="rep-card-title">Applicant workflow funnel</p>
             <p class="rep-card-sub">Pipeline conversion from registration to lot award.</p>
-            <div class="rep-ops-funnel-canvas"><canvas id="chartFunnel"></canvas></div>
+            <div class="rep-ops-chart-canvas"><canvas id="chartFunnel"></canvas></div>
         </div>
+
+        <!-- Card 2: Case aging distribution -->
         <div class="rep-card">
             <p class="rep-card-title">Case aging distribution</p>
             <p class="rep-card-sub">{{ open_cases_count|default:0 }} open case{{ open_cases_count|pluralize }} by age band.</p>
@@ -1226,396 +1180,33 @@
             {% endif %}
             <div class="rep-ops-chart-canvas" style="margin-top:0.5rem;"><canvas id="chartCaseAging"></canvas></div>
         </div>
-    </div>
 
-    <!-- Operations charts row 2: Requirement Status + Cases by Status + Cases by Type -->
-    <div class="rep-ops-row-3" style="margin-top: 0.85rem;">
-        <div class="rep-card">
-            <p class="rep-card-title">Requirement submissions</p>
-            <p class="rep-card-sub">Status mix across all submission rows.</p>
-            <div class="rep-chart-canvas"><canvas id="chartRequirements"></canvas></div>
-        </div>
+        <!-- Card 3: Cases by status -->
         <div class="rep-card">
             <p class="rep-card-title">Cases by status</p>
             <p class="rep-card-sub">Open / resolved / closed across all case types.</p>
-            <div class="rep-chart-canvas"><canvas id="chartCasesStatus"></canvas></div>
+            <div class="rep-ops-chart-canvas"><canvas id="chartCasesStatus"></canvas></div>
         </div>
+
+        <!-- Card 4: Cases by type -->
         <div class="rep-card">
             <p class="rep-card-title">Cases by type</p>
             <p class="rep-card-sub">Distribution by case category.</p>
-            <div class="rep-chart-canvas"><canvas id="chartCasesType"></canvas></div>
+            <div class="rep-ops-chart-canvas"><canvas id="chartCasesType"></canvas></div>
         </div>
-    </div>
 
-    <!-- Operations charts row 3: Queue lifecycle + Active queues -->
-    <div class="rep-ops-row-2" style="margin-top: 0.85rem;">
+        <!-- Card 5: Queue lifecycle -->
         <div class="rep-card">
             <p class="rep-card-title">Queue lifecycle</p>
             <p class="rep-card-sub">All queue entries by current status (active → completed).</p>
             <div class="rep-ops-chart-canvas"><canvas id="chartQueueLifecycle"></canvas></div>
         </div>
+
+        <!-- Card 6: Active desk queues -->
         <div class="rep-card">
             <p class="rep-card-title">Active desk queues</p>
             <p class="rep-card-sub">Live counts on staff desk queues across the workflow.</p>
             <div class="rep-ops-chart-canvas"><canvas id="chartQueues"></canvas></div>
-        </div>
-    </div>
-
-    <!-- Section: Detailed breakdowns — surface raw rows the charts summarize -->
-    <div class="rep-section">
-        <h2>Detailed breakdowns</h2>
-        <p class="rep-section-note">Same data behind the charts above — exact per-row counts, mirrors the CSV export.</p>
-        <span class="rep-section-rule"></span>
-    </div>
-    <div class="rep-breakdown-grid">
-        <div class="rep-card rep-breakdown-card">
-            <div class="rep-breakdown-head">
-                <h3>Applicants by status</h3>
-                <p>{{ total_applications|default:0 }} applicant{{ total_applications|pluralize }} on masterlist.</p>
-            </div>
-            <ul class="rep-breakdown-list">
-                {% for row in applicant_by_status %}
-                <li class="rep-breakdown-row">
-                    <div class="rep-breakdown-label-wrap">
-                        <span class="rep-breakdown-label" title="{{ row.label }}">{{ row.label }}</span>
-                        <div class="rep-breakdown-bar"><div class="rep-breakdown-bar-fill" style="width: {{ row.bar_pct|default:0 }}%;"></div></div>
-                    </div>
-                    <span class="rep-breakdown-count">{{ row.count|default:0 }}</span>
-                </li>
-                {% empty %}
-                <li class="rep-breakdown-empty">No applicants on masterlist yet.</li>
-                {% endfor %}
-            </ul>
-        </div>
-
-        <div class="rep-card rep-breakdown-card">
-            <div class="rep-breakdown-head">
-                <h3>Housing applications by status</h3>
-                <p>{{ housing_application_records|default:0 }} Module 2 record{{ housing_application_records|pluralize }}.</p>
-            </div>
-            <ul class="rep-breakdown-list">
-                {% for row in application_by_status %}
-                <li class="rep-breakdown-row">
-                    <div class="rep-breakdown-label-wrap">
-                        <span class="rep-breakdown-label" title="{{ row.label }}">{{ row.label }}</span>
-                        <div class="rep-breakdown-bar"><div class="rep-breakdown-bar-fill" style="width: {{ row.bar_pct|default:0 }}%;"></div></div>
-                    </div>
-                    <span class="rep-breakdown-count">{{ row.count|default:0 }}</span>
-                </li>
-                {% empty %}
-                <li class="rep-breakdown-empty">No Module 2 applications yet.</li>
-                {% endfor %}
-            </ul>
-        </div>
-
-        <div class="rep-card rep-breakdown-card">
-            <div class="rep-breakdown-head">
-                <h3>Housing units by status</h3>
-                <p>{{ housing_units_total|default:0 }} unit{{ housing_units_total|pluralize }} tracked across all sites.</p>
-            </div>
-            <ul class="rep-breakdown-list">
-                {% for row in housing_units_by_status %}
-                <li class="rep-breakdown-row">
-                    <div class="rep-breakdown-label-wrap">
-                        <span class="rep-breakdown-label" title="{{ row.label }}">{{ row.label }}</span>
-                        <div class="rep-breakdown-bar"><div class="rep-breakdown-bar-fill" style="width: {{ row.bar_pct|default:0 }}%;"></div></div>
-                    </div>
-                    <span class="rep-breakdown-count">{{ row.count|default:0 }}</span>
-                </li>
-                {% empty %}
-                <li class="rep-breakdown-empty">No housing units recorded.</li>
-                {% endfor %}
-            </ul>
-        </div>
-
-        <div class="rep-card rep-breakdown-card">
-            <div class="rep-breakdown-head">
-                <h3>Applicant situation</h3>
-                <p>Options A–D — displacement category breakdown for all applicants.</p>
-            </div>
-            <ul class="rep-breakdown-list">
-                {% for row in applicants_by_channel %}
-                <li class="rep-breakdown-row">
-                    <div class="rep-breakdown-label-wrap">
-                        <span class="rep-breakdown-label" title="{{ row.label }}">{{ row.label }}</span>
-                        <div class="rep-breakdown-bar"><div class="rep-breakdown-bar-fill" style="width: {{ row.bar_pct|default:0 }}%;"></div></div>
-                    </div>
-                    <span class="rep-breakdown-count">{{ row.count|default:0 }}</span>
-                </li>
-                {% endfor %}
-            </ul>
-        </div>
-
-        <div class="rep-card rep-breakdown-card">
-            <div class="rep-breakdown-head">
-                <h3>Top barangays</h3>
-                <p>Highest applicant counts per barangay (top 12).</p>
-            </div>
-            <ul class="rep-breakdown-list">
-                {% for row in applicants_top_barangays %}
-                <li class="rep-breakdown-row">
-                    <div class="rep-breakdown-label-wrap">
-                        <span class="rep-breakdown-label" title="{{ row.place_name }}">{{ row.place_name }}</span>
-                        <div class="rep-breakdown-bar"><div class="rep-breakdown-bar-fill" style="width: {{ row.bar_pct|default:0 }}%;"></div></div>
-                    </div>
-                    <span class="rep-breakdown-count">{{ row.count|default:0 }}</span>
-                </li>
-                {% empty %}
-                <li class="rep-breakdown-empty">No barangay distribution yet.</li>
-                {% endfor %}
-            </ul>
-        </div>
-
-        <div class="rep-card rep-breakdown-card">
-            <div class="rep-breakdown-head">
-                <h3>Documents uploaded · {{ period_label }}</h3>
-                <p>{{ docs_filed|default:0 }} vault upload{{ docs_filed|pluralize }} this period, by type.</p>
-            </div>
-            <ul class="rep-breakdown-list">
-                {% for row in documents_by_type %}
-                <li class="rep-breakdown-row">
-                    <div class="rep-breakdown-label-wrap">
-                        <span class="rep-breakdown-label" title="{{ row.label }}">{{ row.label }}</span>
-                        <div class="rep-breakdown-bar"><div class="rep-breakdown-bar-fill" style="width: {{ row.bar_pct|default:0 }}%;"></div></div>
-                    </div>
-                    <span class="rep-breakdown-count">{{ row.count|default:0 }}</span>
-                </li>
-                {% empty %}
-                <li class="rep-breakdown-empty">No vault uploads in this period.</li>
-                {% endfor %}
-            </ul>
-        </div>
-
-        <div class="rep-card rep-breakdown-card">
-            <div class="rep-breakdown-head">
-                <h3>Requirement submissions by status</h3>
-                <p>Status mix across all submission rows ({{ requirement_submissions_submitted_period|default:0 }} this period).</p>
-            </div>
-            <ul class="rep-breakdown-list">
-                {% for row in requirement_by_status %}
-                <li class="rep-breakdown-row">
-                    <div class="rep-breakdown-label-wrap">
-                        <span class="rep-breakdown-label" title="{{ row.label }}">{{ row.label }}</span>
-                        <div class="rep-breakdown-bar"><div class="rep-breakdown-bar-fill" style="width: {{ row.bar_pct|default:0 }}%;"></div></div>
-                    </div>
-                    <span class="rep-breakdown-count">{{ row.count|default:0 }}</span>
-                </li>
-                {% empty %}
-                <li class="rep-breakdown-empty">No requirement submissions yet.</li>
-                {% endfor %}
-            </ul>
-        </div>
-
-        <div class="rep-card rep-breakdown-card">
-            <div class="rep-breakdown-head">
-                <h3>Cases by status</h3>
-                <p>{{ cases_total|default:0 }} case{{ cases_total|pluralize }} tracked across all types.</p>
-            </div>
-            <ul class="rep-breakdown-list">
-                {% for row in cases_by_status %}
-                <li class="rep-breakdown-row">
-                    <div class="rep-breakdown-label-wrap">
-                        <span class="rep-breakdown-label" title="{{ row.label }}">{{ row.label }}</span>
-                        <div class="rep-breakdown-bar"><div class="rep-breakdown-bar-fill" style="width: {{ row.bar_pct|default:0 }}%;"></div></div>
-                    </div>
-                    <span class="rep-breakdown-count">{{ row.count|default:0 }}</span>
-                </li>
-                {% empty %}
-                <li class="rep-breakdown-empty">No cases recorded.</li>
-                {% endfor %}
-            </ul>
-        </div>
-
-        <div class="rep-card rep-breakdown-card">
-            <div class="rep-breakdown-head">
-                <h3>Workflow funnel</h3>
-                <p>Applicant pipeline from registration through lot award.</p>
-            </div>
-            <ul class="rep-breakdown-list">
-                {% for row in funnel_stages %}
-                <li class="rep-breakdown-row">
-                    <div class="rep-breakdown-label-wrap">
-                        <span class="rep-breakdown-label" title="{{ row.label }}">{{ row.label }}</span>
-                        <div class="rep-breakdown-bar"><div class="rep-breakdown-bar-fill" style="width: {{ row.bar_pct|default:0 }};"></div></div>
-                    </div>
-                    <span class="rep-breakdown-count">{{ row.count|default:0 }}</span>
-                </li>
-                {% empty %}
-                <li class="rep-breakdown-empty">No pipeline data.</li>
-                {% endfor %}
-            </ul>
-        </div>
-
-        <!-- Session Monitoring & Security Dashboard -->
-        <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 2px solid #e5e9ef;">
-            <h2 style="font-size: 0.95rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #475569; margin-bottom: 1rem;">Session Monitoring & Security</h2>
-
-            <!-- Stats Row -->
-            <div class="rep-grid-3" style="margin-bottom: 1.25rem;">
-                <!-- Active Users Now -->
-                <div class="rep-card">
-                    <div style="padding: 1rem;">
-                        <div style="font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: #64748b; margin-bottom: 0.5rem; letter-spacing: 0.05em;">👥 Users Online</div>
-                        <div style="font-size: 1.8rem; font-weight: 800; color: #10b981; font-variant-numeric: tabular-nums;">{{ active_sessions }}</div>
-                        <div style="font-size: 0.75rem; color: #64748b; margin-top: 0.4rem;">Active right now</div>
-                    </div>
-                </div>
-
-                <!-- Last 24 Hours -->
-                <div class="rep-card">
-                    <div style="padding: 1rem;">
-                        <div style="font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: #64748b; margin-bottom: 0.5rem; letter-spacing: 0.05em;">📊 24h Logins</div>
-                        <div style="font-size: 1.8rem; font-weight: 800; color: #0ea5e9; font-variant-numeric: tabular-nums;">{{ sessions_24h }}</div>
-                        <div style="font-size: 0.75rem; color: #64748b; margin-top: 0.4rem;">Last 24 hours</div>
-                    </div>
-                </div>
-
-                <!-- Expiring Soon -->
-                <div class="rep-card">
-                    <div style="padding: 1rem;">
-                        <div style="font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: #64748b; margin-bottom: 0.5rem; letter-spacing: 0.05em;">⏱️ Expiring Soon</div>
-                        <div style="font-size: 1.8rem; font-weight: 800; color: {% if expiring_soon > 0 %}#f59e0b{% else %}#10b981{% endif %}; font-variant-numeric: tabular-nums;">{{ expiring_soon }}</div>
-                        <div style="font-size: 0.75rem; color: #64748b; margin-top: 0.4rem;">Within 30 min</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Feature Row 1: Active Users Monitor -->
-            <div class="rep-card rep-table-card" style="margin-bottom: 1.25rem;">
-                <div class="rep-table-head">
-                    <h3>👥 Active Users — Real-Time Monitor</h3>
-                    <span style="font-size: 0.7rem; color: #94a3b8;">{{ active_sessions }} logged in</span>
-                </div>
-                <div style="padding: 1rem; border-top: 1px solid #e5e9ef;">
-                    {% if active_user_sessions %}
-                    <div style="overflow-x: auto;">
-                        <table style="width: 100%; font-size: 0.8rem; border-collapse: collapse;">
-                            <thead style="background: #f8fafc; border-bottom: 1px solid #e5e9ef;">
-                                <tr>
-                                    <th style="padding: 0.6rem; text-align: left; font-weight: 700; color: #475569;">User</th>
-                                    <th style="padding: 0.6rem; text-align: left; font-weight: 700; color: #475569;">Position</th>
-                                    <th style="padding: 0.6rem; text-align: left; font-weight: 700; color: #475569;">Session Age</th>
-                                    <th style="padding: 0.6rem; text-align: left; font-weight: 700; color: #475569;">Expires In</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for sess in active_user_sessions %}
-                                <tr style="border-bottom: 1px solid #f1f5f9;">
-                                    <td style="padding: 0.6rem;">{{ sess.user_email }}</td>
-                                    <td style="padding: 0.6rem; color: #0ea5e9; font-weight: 600;">{{ sess.user_position }}</td>
-                                    <td style="padding: 0.6rem; color: #64748b;">{{ sess.session_age_minutes }}m</td>
-                                    <td style="padding: 0.6rem; color: {% if sess.time_remaining_minutes < 30 %}#f97316{% else %}#10b981{% endif %}; font-weight: 600;">{{ sess.time_remaining_minutes }}m</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    {% else %}
-                    <div style="text-align: center; padding: 2rem; color: #94a3b8;">No active sessions</div>
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- Feature Row 2 & 3: Login Analytics & Decision Tools -->
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); gap: 0.85rem; margin-bottom: 1.25rem;">
-                <!-- Login Trend (Peak Times) -->
-                <div class="rep-card">
-                    <div class="rep-table-head">
-                        <h3 style="margin: 0; font-size: 0.75rem;">📈 7-Day Login Trend</h3>
-                    </div>
-                    <div style="padding: 1rem; border-top: 1px solid #e5e9ef;">
-                        <table style="width: 100%; font-size: 0.75rem;">
-                            <tbody>
-                                {% for day in login_trend %}
-                                <tr style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
-                                    <td style="min-width: 2.5rem; font-weight: 600; color: #334155;">{{ day.date }}</td>
-                                    <td style="flex: 1;">
-                                        <div style="height: 20px; background: linear-gradient(90deg, #10b981, #0ea5e9); border-radius: 2px; width: {{ day.bar_width }}px; min-width: 4px;"></div>
-                                    </td>
-                                    <td style="min-width: 2rem; text-align: right; color: #64748b;">{{ day.count }}</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Peak Hours & Security Status -->
-                <div class="rep-card">
-                    <div class="rep-table-head">
-                        <h3 style="margin: 0; font-size: 0.75rem;">⏰ Peak Activity & Security</h3>
-                    </div>
-                    <div style="padding: 1rem; border-top: 1px solid #e5e9ef;">
-                        <div style="margin-bottom: 1rem;">
-                            <div style="font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: #64748b; margin-bottom: 0.4rem;">Peak Hour</div>
-                            <div style="font-size: 1.3rem; font-weight: 800; color: #f59e0b;">{{ peak_hour }}</div>
-                            <div style="font-size: 0.7rem; color: #64748b;">{{ peak_count }} sessions</div>
-                        </div>
-                        <div style="padding-top: 1rem; border-top: 1px solid #f1f5f9;">
-                            <div style="font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: #64748b; margin-bottom: 0.4rem;">Total This Period</div>
-                            <div style="font-size: 1.3rem; font-weight: 800; color: #0ea5e9;">{{ sessions_7d }}</div>
-                            <div style="font-size: 0.7rem; color: #64748b;">Last 7 days</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Feature Row 4: Remote Logout Capability -->
-            <div class="rep-card rep-table-card" style="margin-bottom: 1.25rem; background: linear-gradient(135deg, #fef7ee 0%, #fffbf5 100%); border: 1px solid #fed7aa;">
-                <div class="rep-table-head">
-                    <h3 style="margin: 0;">🔐 Admin Session Control — Logout Users Remotely</h3>
-                    <span style="font-size: 0.7rem; color: #b45309;">Termination capability</span>
-                </div>
-                <div style="padding: 1rem; border-top: 1px solid #fed7aa;">
-                    <div style="background: white; padding: 0.8rem; border-radius: 0.5rem; border-left: 3px solid #f59e0b;">
-                        <div style="font-size: 0.75rem; color: #92400e; line-height: 1.5;">
-                            <strong>Admin Control:</strong> Authorized staff can remotely terminate user sessions from the admin panel.
-                            <br><br>
-                            <strong>Access:</strong> Available to Second Member & Fourth Member roles at <code style="background: #fef3c7; padding: 0.2rem 0.4rem; border-radius: 2px;">{{ REQUEST_CONTEXT|default:'/admin/sessions/' }}</code>
-                            <br><br>
-                            <strong>Active Sessions:</strong> <strong style="color: #047857;">{{ active_sessions }}</strong> — Verify these users before terminating.
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Feature Row 5: User Activity & Audit -->
-            <div class="rep-card" style="background: #f0f9ff; border: 1px solid #bae6fd;">
-                <div class="rep-table-head">
-                    <h3 style="margin: 0;">🔍 User Activity Tracking & Audit Readiness</h3>
-                    <span style="font-size: 0.7rem; color: #0369a1;">Linked to action logs</span>
-                </div>
-                <div style="padding: 1rem; border-top: 1px solid #bae6fd;">
-                    <div style="background: white; padding: 0.8rem; border-radius: 0.5rem; border-left: 3px solid #0ea5e9;">
-                        <div style="font-size: 0.75rem; color: #0c4a6e; line-height: 1.6;">
-                            <strong>Session Tracking:</strong> Each active session is linked to:
-                            <ul style="margin: 0.4rem 0 0; padding-left: 1.2rem;">
-                                <li><strong>Django Admin Logs</strong> — All database changes timestamped</li>
-                                <li><strong>SMS Event Logs</strong> — Communication history per session user</li>
-                                <li><strong>Staff Decision Logs</strong> — Case decisions attributed to session user</li>
-                                <li><strong>Document Audit Trail</strong> — Upload/delete actions per user</li>
-                            </ul>
-                            <br>
-                            <strong>Reports Available:</strong> Export audit trail, session duration analysis, and user-action mappings via CSV.
-                            <br>
-                            <strong>Compliance:</strong> Full session audit reports annually for governance review.
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Session Health Summary -->
-            <div style="margin-top: 1rem; padding: 0.8rem; background: #f8fafc; border: 1px solid #e5e9ef; border-radius: 0.55rem;">
-                <div style="font-size: 0.7rem; color: #64748b; line-height: 1.6;">
-                    <strong>Session Health:</strong>
-                    {{ active_sessions }} user{{ active_sessions|pluralize }} online •
-                    {{ expiring_soon }} session{{ expiring_soon|pluralize }} expiring soon •
-                    {{ total_sessions }} total session{{ total_sessions|pluralize }} recorded •
-                    <span style="color: {% if sessions_24h > 0 %}#10b981{% else %}#64748b{% endif %}">
-                        {{ sessions_24h }} login{{ sessions_24h|pluralize }} (24h)
-                    </span>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -1635,342 +1226,736 @@
     try { D = JSON.parse(el.textContent); } catch (e) { return; }
     if (!D) return;
 
-    /* Emerald-led palette — primary emerald with supporting slate / amber /
-       indigo / cyan / rose so chart slices stay readable side-by-side
-       without the previous rainbow look. */
     var PALETTE = [
         '#10b981', '#0ea5e9', '#7c3aed', '#f59e0b', '#dc2626', '#0891b2',
         '#65a30d', '#4f46e5', '#0d9488', '#d97706', '#9333ea', '#e11d48',
         '#22c55e', '#a855f7', '#f43f5e', '#06b6d4',
     ];
 
-    function sum(a) { return a.reduce(function (s, n) { return s + n; }, 0); }
-
-    function showBarPlaceholder(canvas, message) {
-        if (!canvas || !canvas.parentElement) return;
-        canvas.style.display = 'none';
-        var wrap = canvas.parentElement;
-        var prev = wrap.querySelector('.chart-placeholder');
-        if (prev) prev.remove();
-        var d = document.createElement('div');
-        d.className = 'chart-placeholder';
-        d.setAttribute('role', 'status');
-        d.textContent = message;
-        wrap.appendChild(d);
+    function hexToRgba(hex, alpha) {
+        hex = hex.replace('#', '');
+        var r = parseInt(hex.substring(0, 2), 16);
+        var g = parseInt(hex.substring(2, 4), 16);
+        var b = parseInt(hex.substring(4, 6), 16);
+        return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
     }
 
-    function doughnut(canvas, key, emptyCaption) {
-        if (!canvas) return;
-        emptyCaption = emptyCaption || 'No records yet';
+    function sum(arr) {
+        return arr.reduce(function (s, n) { return s + (Number(n) || 0); }, 0);
+    }
+
+    function getSingleSeriesDataset(key) {
         var spec = D[key];
-        var rawLabels = (spec && spec.labels) ? spec.labels.slice() : [];
-        var rawValues = (spec && spec.values) ? spec.values.map(function (v) { return Number(v); }) : [];
-        var isEmpty = !rawLabels.length || sum(rawValues) === 0;
-        var labels = isEmpty ? [emptyCaption] : rawLabels;
-        var values = isEmpty ? [1] : rawValues;
-        var bg = isEmpty
-            ? ['#e8ecf1']
-            : labels.map(function (_, i) { return PALETTE[i % PALETTE.length]; });
-        new Chart(canvas, {
-            type: 'doughnut',
-            data: {
-                labels: labels,
-                datasets: [{
-                    data: values,
-                    backgroundColor: bg,
-                    borderWidth: 2,
-                    borderColor: '#ffffff',
-                    hoverOffset: 6,
-                }],
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '62%',
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: { boxWidth: 10, padding: 8, font: { size: 10 }, usePointStyle: true },
-                    },
-                    tooltip: {
-                        enabled: !isEmpty,
-                        callbacks: {
-                            footer: function (items) {
-                                var total = sum(values);
-                                var i = items[0] && items[0].dataIndex;
-                                if (i == null || !total) return '';
-                                var pct = Math.round((values[i] / total) * 1000) / 10;
-                                return pct + '% of total';
-                            },
-                        },
-                    },
-                },
-            },
-        });
+        if (!spec || !spec.labels || !spec.values || !spec.labels.length) return null;
+        return {
+            type: 'single',
+            labels: spec.labels.map(function(l) { return String(l); }),
+            values: spec.values.map(function(v) { return Number(v) || 0; })
+        };
     }
 
-    function barHorizontal(canvas, key, emptyCaption) {
-        if (!canvas) return;
-        emptyCaption = emptyCaption || 'No records yet';
-        canvas.style.display = '';
-        var wrap = canvas.parentElement;
-        if (wrap) {
-            var ph = wrap.querySelector('.chart-placeholder');
-            if (ph) ph.remove();
+    function getStandardizedDataset(canvasId) {
+        switch (canvasId) {
+            case 'chartTrend':
+                if (!D.trend || !D.trend.labels) return null;
+                return {
+                    type: 'multi',
+                    labels: D.trend.labels,
+                    datasets: [
+                        { label: 'New applicants', values: D.trend.registrations || [], color: '#0ea5e9', fillOpacity: 0.12 },
+                        { label: 'Vault uploads', values: D.trend.vaultUploads || [], color: '#10b981', fillOpacity: 0.14 }
+                    ]
+                };
+            case 'chartApplicants':
+                return getSingleSeriesDataset('applicantsByStatus');
+            case 'chartChannels':
+                return getSingleSeriesDataset('channels');
+            case 'chartBarangays':
+                return getSingleSeriesDataset('topBarangays');
+            case 'chartApplications':
+                return getSingleSeriesDataset('applicationsByStatus');
+            case 'chartHousing':
+                return getSingleSeriesDataset('housingByStatus');
+            case 'chartBlacklist':
+                return {
+                    type: 'single',
+                    labels: ['Unit Repossessed', 'Fraudulent Info', 'Illegal Transfer', 'Other Violations'],
+                    values: [{{ blacklist_count|default:0 }}, 0, 0, 0]
+                };
+            case 'chartFunnel':
+                return getSingleSeriesDataset('workflowFunnel');
+            case 'chartCaseAging':
+                return getSingleSeriesDataset('caseAging');
+            case 'chartRequirements':
+                return getSingleSeriesDataset('requirementsByStatus');
+            case 'chartCasesStatus':
+                return getSingleSeriesDataset('casesByStatus');
+            case 'chartCasesType':
+                return getSingleSeriesDataset('casesByType');
+            case 'chartQueueLifecycle':
+                return getSingleSeriesDataset('queueByStatus');
+            case 'chartQueues':
+                return getSingleSeriesDataset('activeQueues');
+            default:
+                return null;
         }
-        var spec = D[key];
-        if (!spec || !spec.labels || !spec.values || !spec.labels.length || sum(spec.values) === 0) {
-            showBarPlaceholder(canvas, emptyCaption);
-            return;
+    }
+
+    function getDefaultMode(canvasId) {
+        switch (canvasId) {
+            case 'chartTrend':
+                return 'line';
+            case 'chartApplicants':
+            case 'chartChannels':
+            case 'chartApplications':
+            case 'chartHousing':
+            case 'chartBlacklist':
+            case 'chartRequirements':
+            case 'chartCasesStatus':
+            case 'chartCasesType':
+            case 'chartQueueLifecycle':
+                return 'donut';
+            case 'chartBarangays':
+            case 'chartQueues':
+            case 'chartFunnel':
+            case 'chartCaseAging':
+                return 'bar';
+            default:
+                return 'bar';
         }
-        new Chart(canvas, {
-            type: 'bar',
-            data: {
-                labels: spec.labels,
-                datasets: [{
-                    label: 'Count',
-                    data: spec.values,
-                    backgroundColor: '#10b981',
-                    borderRadius: 4,
-                    barThickness: spec.labels.length > 8 ? 'flex' : 18,
-                }],
-            },
-            options: {
-                indexAxis: 'y',
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    x: {
-                        beginAtZero: true,
-                        grid: { color: '#f1f5f9' },
-                        ticks: { precision: 0, font: { size: 10 } },
-                    },
-                    y: {
-                        grid: { display: false },
-                        ticks: { font: { size: 10 } },
-                    },
-                },
-            },
-        });
     }
 
-    function hasChartData(key) {
-        var spec = D[key];
-        if (!spec || !Array.isArray(spec.values) || !spec.values.length) return false;
-        return sum(spec.values.map(function (v) { return Number(v) || 0; })) > 0;
-    }
+    var chartInstances = {};
 
-    function hideChartCardByCanvasId(canvasId) {
+    function switchChartMode(canvasId, mode) {
         var canvas = document.getElementById(canvasId);
         if (!canvas) return;
         var card = canvas.closest('.rep-card');
-        if (card) card.style.display = 'none';
+        if (!card) return;
+
+        // Toggle active button state
+        card.querySelectorAll('.rep-switch-btn').forEach(function (btn) {
+            if (btn.getAttribute('data-mode') === mode) {
+                btn.classList.add('is-active');
+            } else {
+                btn.classList.remove('is-active');
+            }
+        });
+
+        // Destroy existing Chart.js instance
+        if (chartInstances[canvasId]) {
+            chartInstances[canvasId].destroy();
+            chartInstances[canvasId] = null;
+        }
+
+        var canvasWrap = canvas.parentNode;
+        var htmlContainer = card.querySelector('.rep-dynamic-container');
+        var dataset = getStandardizedDataset(canvasId);
+
+        if (!dataset) return;
+
+        var htmlModes = ['kpi', 'heatmap', 'timeline'];
+        if (htmlModes.indexOf(mode) >= 0) {
+            canvasWrap.style.display = 'none';
+            htmlContainer.style.display = '';
+            renderHtmlFallback(htmlContainer, dataset, mode, canvasId);
+        } else {
+            htmlContainer.style.display = 'none';
+            canvasWrap.style.display = '';
+            canvas.style.display = '';
+            renderChartJS(canvas, dataset, mode, canvasId);
+        }
     }
 
-    Chart.defaults.font.family = "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif";
-    Chart.defaults.color = '#475569';
-
-    /* Trend: registrations vs vault uploads (twin-axis line) */
-    var trendEl = document.getElementById('chartTrend');
-    if (trendEl && D.trend && D.trend.labels && D.trend.labels.length) {
-        new Chart(trendEl, {
-            type: 'line',
-            data: {
-                labels: D.trend.labels,
-                datasets: [
-                    {
-                        label: 'New applicants',
-                        data: D.trend.registrations,
-                        borderColor: '#0ea5e9',
-                        backgroundColor: 'rgba(14, 165, 233, 0.12)',
-                        yAxisID: 'y',
-                        tension: 0.3,
-                        fill: true,
-                        pointRadius: 4,
-                        pointHoverRadius: 6,
-                        borderWidth: 2.5,
-                    },
-                    {
-                        label: 'Vault uploads',
-                        data: D.trend.vaultUploads,
-                        borderColor: '#10b981',
-                        backgroundColor: 'rgba(16, 185, 129, 0.14)',
-                        yAxisID: 'y1',
-                        tension: 0.3,
-                        fill: true,
-                        pointRadius: 4,
-                        pointHoverRadius: 6,
-                        borderWidth: 2.5,
-                    },
-                ],
-            },
+    function renderChartJS(canvas, dataset, mode, canvasId) {
+        var config = {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                interaction: { mode: 'index', intersect: false },
                 plugins: {
                     legend: {
-                        position: 'top',
-                        align: 'end',
-                        labels: { usePointStyle: true, padding: 14, font: { size: 11 } },
+                        position: 'bottom',
+                        labels: { boxWidth: 10, padding: 8, font: { size: 10 }, usePointStyle: true }
                     },
-                    title: { display: false },
-                    tooltip: { backgroundColor: '#0f172a', padding: 10, cornerRadius: 6 },
-                },
-                scales: {
-                    y: {
-                        type: 'linear',
-                        position: 'left',
-                        beginAtZero: true,
-                        title: { display: true, text: 'Applicants', font: { size: 11 } },
-                        grid: { color: '#f1f5f9' },
-                        ticks: { precision: 0 },
-                    },
-                    y1: {
-                        type: 'linear',
-                        position: 'right',
-                        beginAtZero: true,
-                        title: { display: true, text: 'Uploads', font: { size: 11 } },
-                        grid: { drawOnChartArea: false },
-                        ticks: { precision: 0 },
-                    },
-                    x: {
-                        grid: { color: '#f8fafc' },
-                        ticks: { font: { size: 11 } },
-                    },
-                },
-            },
-        });
-    }
+                    tooltip: {
+                        backgroundColor: '#0f172a',
+                        padding: 10,
+                        cornerRadius: 6
+                    }
+                }
+            }
+        };
 
-    /* Pipeline snapshot — vertical bars with emerald + supporting palette */
-    var pipeEl = document.getElementById('chartPipeline');
-    if (pipeEl && D.pipelineSnapshot && D.pipelineSnapshot.labels.length) {
-        new Chart(pipeEl, {
-            type: 'bar',
-            data: {
-                labels: D.pipelineSnapshot.labels,
-                datasets: [{
-                    data: D.pipelineSnapshot.values,
-                    backgroundColor: ['#7c3aed', '#0ea5e9', '#10b981', '#f59e0b'],
-                    borderRadius: 6,
-                }],
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: { backgroundColor: '#0f172a', padding: 10, cornerRadius: 6 },
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: { precision: 0 },
-                        grid: { color: '#f1f5f9' },
-                    },
-                    x: {
-                        ticks: { font: { size: 10 }, maxRotation: 35 },
-                        grid: { display: false },
-                    },
-                },
-            },
-        });
-    }
+        if (canvasId === 'chartTrend') {
+            config.options.maintainAspectRatio = false;
+            config.options.interaction = { mode: 'index', intersect: false };
+        }
 
-    doughnut(document.getElementById('chartApplicants'), 'applicantsByStatus', 'No applicants on masterlist');
-    doughnut(document.getElementById('chartApplications'), 'applicationsByStatus', 'No Module 2 applications yet');
-    doughnut(document.getElementById('chartHousing'), 'housingByStatus', 'No housing units tracked');
-    doughnut(document.getElementById('chartChannels'), 'channels', 'No applicant-situation breakdown');
-    if (hasChartData('requirementsByStatus')) {
-        doughnut(document.getElementById('chartRequirements'), 'requirementsByStatus', 'No checklist rows yet');
-    } else {
-        hideChartCardByCanvasId('chartRequirements');
-    }
-    if (hasChartData('casesByStatus')) {
-        doughnut(document.getElementById('chartCasesStatus'), 'casesByStatus', 'No cases recorded');
-    } else {
-        hideChartCardByCanvasId('chartCasesStatus');
-    }
-    if (hasChartData('casesByType')) {
-        doughnut(document.getElementById('chartCasesType'), 'casesByType', 'No cases recorded');
-    } else {
-        hideChartCardByCanvasId('chartCasesType');
-    }
-    barHorizontal(document.getElementById('chartBarangays'), 'topBarangays', 'No barangay breakdown yet');
-    barHorizontal(document.getElementById('chartQueues'), 'activeQueues', 'No active desk queues');
+        if (dataset.type === 'single') {
+            var total = sum(dataset.values);
+            if (mode === 'line' || mode === 'area') {
+                config.type = 'line';
+                config.data = {
+                    labels: dataset.labels,
+                    datasets: [{
+                        label: 'Count',
+                        data: dataset.values,
+                        borderColor: '#10b981',
+                        backgroundColor: mode === 'area' ? 'rgba(16, 185, 129, 0.15)' : 'transparent',
+                        tension: 0.35,
+                        fill: mode === 'area',
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        borderWidth: 2.5
+                    }]
+                };
+                config.options.plugins.legend.display = false;
+                config.options.scales = {
+                    y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { precision: 0 } },
+                    x: { grid: { display: false } }
+                };
+            } else if (mode === 'bar') {
+                var isHorizontal = ['chartBarangays', 'chartQueues', 'chartFunnel'].indexOf(canvasId) >= 0;
+                config.type = 'bar';
+                config.data = {
+                    labels: dataset.labels,
+                    datasets: [{
+                        label: 'Count',
+                        data: dataset.values,
+                        backgroundColor: isHorizontal ? '#10b981' : dataset.labels.map(function(_, i) { return PALETTE[i % PALETTE.length]; }),
+                        borderRadius: 4,
+                        barThickness: dataset.labels.length > 8 ? 'flex' : 18
+                    }]
+                };
+                config.options.indexAxis = isHorizontal ? 'y' : 'x';
+                config.options.plugins.legend.display = false;
+                config.options.scales = isHorizontal ? {
+                    x: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { precision: 0 } },
+                    y: { grid: { display: false } }
+                } : {
+                    y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { precision: 0 } },
+                    x: { grid: { display: false }, ticks: { font: { size: 9 }, maxRotation: 45 } }
+                };
+            } else if (mode === 'stacked') {
+                config.type = 'bar';
+                var isHorizontal = ['chartBarangays', 'chartQueues', 'chartFunnel'].indexOf(canvasId) >= 0;
+                config.data = {
+                    labels: isHorizontal ? ['Total Distribution'] : dataset.labels,
+                    datasets: isHorizontal ? dataset.labels.map(function(lbl, i) {
+                        return {
+                            label: lbl,
+                            data: [dataset.values[i]],
+                            backgroundColor: PALETTE[i % PALETTE.length]
+                        };
+                    }) : [{
+                        label: 'Value',
+                        data: dataset.values,
+                        backgroundColor: dataset.labels.map(function(_, i) { return PALETTE[i % PALETTE.length]; }),
+                        borderRadius: 4
+                    }]
+                };
+                config.options.indexAxis = isHorizontal ? 'y' : 'x';
+                config.options.plugins.legend.display = isHorizontal;
+                config.options.scales = {
+                    x: { stacked: true, grid: { display: false } },
+                    y: { stacked: true, grid: { color: '#f1f5f9' }, ticks: { precision: 0 } }
+                };
+            } else if (mode === 'pie' || mode === 'donut') {
+                config.type = mode === 'pie' ? 'pie' : 'doughnut';
+                config.data = {
+                    labels: dataset.labels,
+                    datasets: [{
+                        data: dataset.values,
+                        backgroundColor: dataset.labels.map(function(_, i) { return PALETTE[i % PALETTE.length]; }),
+                        borderWidth: 2,
+                        borderColor: '#ffffff',
+                        hoverOffset: 6
+                    }]
+                };
+                if (mode === 'donut') {
+                    config.options.cutout = '62%';
+                }
+                config.options.plugins.tooltip.callbacks = {
+                    footer: function (items) {
+                        var i = items[0] && items[0].dataIndex;
+                        if (i == null || !total) return '';
+                        var pct = Math.round((dataset.values[i] / total) * 1000) / 10;
+                        return pct + '% of total';
+                    }
+                };
+            }
+        } else if (dataset.type === 'multi') {
+            var total1 = sum(dataset.datasets[0].values);
+            var total2 = sum(dataset.datasets[1].values);
 
-    /* Workflow funnel — horizontal bar in pipeline stage order */
-    var funnelEl = document.getElementById('chartFunnel');
-    if (funnelEl && D.workflowFunnel && D.workflowFunnel.labels && D.workflowFunnel.labels.length) {
-        new Chart(funnelEl, {
-            type: 'bar',
-            data: {
-                labels: D.workflowFunnel.labels,
-                datasets: [{
-                    label: 'Applicants',
-                    data: D.workflowFunnel.values,
-                    backgroundColor: ['#0ea5e9', '#10b981', '#8b5cf6', '#f59e0b', '#06b6d4', '#047857'],
-                    borderRadius: 5,
-                    barThickness: 18,
-                }],
-            },
-            options: {
-                indexAxis: 'y',
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: { backgroundColor: '#0f172a', padding: 10, cornerRadius: 6 },
-                },
-                scales: {
-                    x: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { precision: 0, font: { size: 10 } } },
-                    y: { grid: { display: false }, ticks: { font: { size: 10 } } },
-                },
-            },
-        });
-    } else {
-        showBarPlaceholder(funnelEl, 'No pipeline data yet');
-    }
-
-    /* Case aging — bar chart with warning gradient */
-    var agingEl = document.getElementById('chartCaseAging');
-    if (agingEl && D.caseAging && D.caseAging.labels && D.caseAging.labels.length && sum(D.caseAging.values) > 0) {
-        new Chart(agingEl, {
-            type: 'bar',
-            data: {
-                labels: D.caseAging.labels,
-                datasets: [{
-                    label: 'Cases',
-                    data: D.caseAging.values,
-                    backgroundColor: ['#10b981', '#34d399', '#fbbf24', '#f97316', '#ef4444'],
-                    borderRadius: 4,
-                }],
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: { backgroundColor: '#0f172a', padding: 10, cornerRadius: 6 },
-                },
-                scales: {
+            if (mode === 'line' || mode === 'area') {
+                config.type = 'line';
+                config.data = {
+                    labels: dataset.labels,
+                    datasets: dataset.datasets.map(function(ds, idx) {
+                        return {
+                            label: ds.label,
+                            data: ds.values,
+                            borderColor: ds.color,
+                            backgroundColor: mode === 'area' ? hexToRgba(ds.color, ds.fillOpacity) : 'transparent',
+                            yAxisID: idx === 0 ? 'y' : 'y1',
+                            tension: 0.3,
+                            fill: mode === 'area',
+                            pointRadius: 4,
+                            pointHoverRadius: 6,
+                            borderWidth: 2.5
+                        };
+                    })
+                };
+                config.options.scales = {
+                    y: { type: 'linear', position: 'left', beginAtZero: true, title: { display: true, text: 'Applicants', font: { size: 10 } }, grid: { color: '#f1f5f9' }, ticks: { precision: 0 } },
+                    y1: { type: 'linear', position: 'right', beginAtZero: true, title: { display: true, text: 'Uploads', font: { size: 10 } }, grid: { drawOnChartArea: false }, ticks: { precision: 0 } },
+                    x: { grid: { color: '#f8fafc' } }
+                };
+            } else if (mode === 'bar') {
+                config.type = 'bar';
+                config.data = {
+                    labels: dataset.labels,
+                    datasets: dataset.datasets.map(function(ds) {
+                        return {
+                            label: ds.label,
+                            data: ds.values,
+                            backgroundColor: ds.color,
+                            borderRadius: 4
+                        };
+                    })
+                };
+                config.options.scales = {
                     y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: '#f1f5f9' } },
-                    x: { grid: { display: false }, ticks: { font: { size: 10 } } },
-                },
-            },
-        });
-    } else {
-        showBarPlaceholder(agingEl, 'No open cases to chart');
+                    x: { grid: { display: false } }
+                };
+            } else if (mode === 'stacked') {
+                config.type = 'bar';
+                config.data = {
+                    labels: dataset.labels,
+                    datasets: dataset.datasets.map(function(ds) {
+                        return {
+                            label: ds.label,
+                            data: ds.values,
+                            backgroundColor: ds.color
+                        };
+                    })
+                };
+                config.options.scales = {
+                    x: { stacked: true, grid: { display: false } },
+                    y: { stacked: true, beginAtZero: true, ticks: { precision: 0 }, grid: { color: '#f1f5f9' } }
+                };
+            } else if (mode === 'pie' || mode === 'donut') {
+                config.type = mode === 'pie' ? 'pie' : 'doughnut';
+                config.data = {
+                    labels: dataset.labels,
+                    datasets: dataset.datasets.map(function(ds) {
+                        return {
+                            label: ds.label,
+                            data: ds.values,
+                            backgroundColor: dataset.labels.map(function(_, i) {
+                                return hexToRgba(ds.color, 0.4 + 0.6 * (i / dataset.labels.length));
+                            }),
+                            borderWidth: 2,
+                            borderColor: '#ffffff',
+                            hoverOffset: 6
+                        };
+                    })
+                };
+                if (mode === 'donut') {
+                    config.options.cutout = '45%';
+                }
+            }
+        }
+
+        Chart.defaults.font.family = "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif";
+        Chart.defaults.color = '#475569';
+        chartInstances[canvasId] = new Chart(canvas, config);
     }
 
-    /* Queue lifecycle — doughnut with full status breakdown */
-    if (hasChartData('queueByStatus')) {
-        doughnut(document.getElementById('chartQueueLifecycle'), 'queueByStatus', 'No queue entries recorded');
-    } else {
-        showBarPlaceholder(document.getElementById('chartQueueLifecycle'), 'No queue entries recorded');
+    function renderHtmlFallback(container, dataset, mode, canvasId) {
+        container.innerHTML = '';
+        var hasData = false;
+        if (dataset.type === 'single') {
+            hasData = dataset.values && dataset.values.length && sum(dataset.values) > 0;
+        } else if (dataset.type === 'multi') {
+            hasData = dataset.datasets && dataset.datasets.length && (sum(dataset.datasets[0].values) > 0 || sum(dataset.datasets[1].values) > 0);
+        }
+        
+        if (!hasData) {
+            var emptyDiv = document.createElement('div');
+            emptyDiv.className = 'chart-placeholder';
+            emptyDiv.textContent = 'No records recorded to display';
+            container.appendChild(emptyDiv);
+            return;
+        }
+
+        if (mode === 'kpi') {
+            var grid = document.createElement('div');
+            grid.className = 'rep-kpi-card-grid';
+            
+            if (dataset.type === 'single') {
+                var total = sum(dataset.values);
+                dataset.labels.forEach(function (label, idx) {
+                    var val = dataset.values[idx];
+                    var pct = total > 0 ? ((val / total) * 100).toFixed(1) : '0.0';
+                    
+                    var card = document.createElement('div');
+                    card.className = 'rep-kpi-card';
+                    
+                    var rail = document.createElement('div');
+                    rail.className = 'rep-kpi-card-rail';
+                    rail.style.backgroundColor = PALETTE[idx % PALETTE.length];
+                    card.appendChild(rail);
+                    
+                    var labelP = document.createElement('p');
+                    labelP.className = 'rep-kpi-card-label';
+                    labelP.textContent = label;
+                    card.appendChild(labelP);
+                    
+                    var valP = document.createElement('p');
+                    valP.className = 'rep-kpi-card-value';
+                    valP.textContent = val;
+                    card.appendChild(valP);
+                    
+                    var pctSpan = document.createElement('span');
+                    pctSpan.className = 'rep-kpi-card-percentage';
+                    pctSpan.textContent = pct + '%';
+                    card.appendChild(pctSpan);
+                    
+                    grid.appendChild(card);
+                });
+            } else if (dataset.type === 'multi') {
+                dataset.datasets.forEach(function (ds) {
+                    var total = sum(ds.values);
+                    var avg = (total / ds.values.length).toFixed(1);
+                    
+                    var card = document.createElement('div');
+                    card.className = 'rep-kpi-card';
+                    
+                    var rail = document.createElement('div');
+                    rail.className = 'rep-kpi-card-rail';
+                    rail.style.backgroundColor = ds.color;
+                    card.appendChild(rail);
+                    
+                    var labelP = document.createElement('p');
+                    labelP.className = 'rep-kpi-card-label';
+                    labelP.textContent = ds.label + ' (Total)';
+                    card.appendChild(labelP);
+                    
+                    var valP = document.createElement('p');
+                    valP.className = 'rep-kpi-card-value';
+                    valP.textContent = total;
+                    card.appendChild(valP);
+                    
+                    var pctSpan = document.createElement('span');
+                    pctSpan.className = 'rep-kpi-card-percentage';
+                    pctSpan.textContent = 'Avg: ' + avg + '/mo';
+                    card.appendChild(pctSpan);
+                    
+                    grid.appendChild(card);
+                });
+                
+                dataset.labels.forEach(function (month, mIdx) {
+                    var val1 = dataset.datasets[0].values[mIdx] || 0;
+                    var val2 = dataset.datasets[1].values[mIdx] || 0;
+                    
+                    var card = document.createElement('div');
+                    card.className = 'rep-kpi-card';
+                    
+                    var rail = document.createElement('div');
+                    rail.className = 'rep-kpi-card-rail';
+                    rail.style.backgroundColor = '#64748b';
+                    card.appendChild(rail);
+                    
+                    var labelP = document.createElement('p');
+                    labelP.className = 'rep-kpi-card-label';
+                    labelP.textContent = month + ' Activity';
+                    card.appendChild(labelP);
+                    
+                    var valP = document.createElement('p');
+                    valP.className = 'rep-kpi-card-value';
+                    valP.style.fontSize = '1rem';
+                    valP.innerHTML = '👤 ' + val1 + ' &nbsp;📂 ' + val2;
+                    card.appendChild(valP);
+                    
+                    var pctSpan = document.createElement('span');
+                    pctSpan.className = 'rep-kpi-card-percentage';
+                    pctSpan.textContent = 'Ratio: ' + (val1 > 0 ? (val2 / val1).toFixed(1) : val2) + ' doc/app';
+                    card.appendChild(pctSpan);
+                    
+                    grid.appendChild(card);
+                });
+            }
+            container.appendChild(grid);
+        } else if (mode === 'heatmap') {
+            var grid = document.createElement('div');
+            grid.className = 'rep-heatmap-grid';
+            
+            if (dataset.type === 'single') {
+                var total = sum(dataset.values);
+                var maxVal = Math.max.apply(null, dataset.values);
+                
+                dataset.labels.forEach(function (label, idx) {
+                    var val = dataset.values[idx];
+                    var pct = total > 0 ? ((val / total) * 100).toFixed(1) : '0.0';
+                    
+                    var cell = document.createElement('div');
+                    cell.className = 'rep-heatmap-cell';
+                    
+                    var baseHex = PALETTE[idx % PALETTE.length];
+                    var weight = maxVal > 0 ? val / maxVal : 0;
+                    cell.style.backgroundColor = hexToRgba(baseHex, 0.08 + 0.92 * weight);
+                    cell.style.color = weight > 0.45 ? '#ffffff' : '#0f172a';
+                    
+                    var labelDiv = document.createElement('div');
+                    labelDiv.className = 'rep-heatmap-cell-label';
+                    labelDiv.textContent = label;
+                    cell.appendChild(labelDiv);
+                    
+                    var metaDiv = document.createElement('div');
+                    metaDiv.className = 'rep-heatmap-cell-meta';
+                    
+                    var valDiv = document.createElement('span');
+                    valDiv.className = 'rep-heatmap-cell-value';
+                    valDiv.textContent = val;
+                    metaDiv.appendChild(valDiv);
+                    
+                    var pctDiv = document.createElement('span');
+                    pctDiv.className = 'rep-heatmap-cell-pct';
+                    pctDiv.textContent = pct + '%';
+                    metaDiv.appendChild(pctDiv);
+                    
+                    cell.appendChild(metaDiv);
+                    grid.appendChild(cell);
+                });
+            } else if (dataset.type === 'multi') {
+                var allValues = dataset.datasets[0].values.concat(dataset.datasets[1].values);
+                var maxVal = Math.max.apply(null, allValues);
+                
+                dataset.labels.forEach(function (month, mIdx) {
+                    dataset.datasets.forEach(function (ds) {
+                        var val = ds.values[mIdx] || 0;
+                        var weight = maxVal > 0 ? val / maxVal : 0;
+                        
+                        var cell = document.createElement('div');
+                        cell.className = 'rep-heatmap-cell';
+                        
+                        cell.style.backgroundColor = hexToRgba(ds.color, 0.08 + 0.92 * weight);
+                        cell.style.color = weight > 0.45 ? '#ffffff' : '#0f172a';
+                        
+                        var labelDiv = document.createElement('div');
+                        labelDiv.className = 'rep-heatmap-cell-label';
+                        labelDiv.textContent = month + ' · ' + ds.label;
+                        cell.appendChild(labelDiv);
+                        
+                        var metaDiv = document.createElement('div');
+                        metaDiv.className = 'rep-heatmap-cell-meta';
+                        
+                        var valDiv = document.createElement('span');
+                        valDiv.className = 'rep-heatmap-cell-value';
+                        valDiv.textContent = val;
+                        metaDiv.appendChild(valDiv);
+                        
+                        cell.appendChild(metaDiv);
+                        grid.appendChild(cell);
+                    });
+                });
+            }
+            container.appendChild(grid);
+        } else if (mode === 'timeline') {
+            var timeline = document.createElement('div');
+            timeline.className = 'rep-timeline-layout';
+            
+            if (dataset.type === 'single') {
+                var items = [];
+                dataset.labels.forEach(function (lbl, i) {
+                    items.push({ label: lbl, value: dataset.values[i], originalIndex: i });
+                });
+                
+                var sequentialCharts = ['chartFunnel', 'chartCaseAging'];
+                if (sequentialCharts.indexOf(canvasId) === -1) {
+                    items.sort(function (a, b) { return b.value - a.value; });
+                }
+                
+                var total = sum(dataset.values);
+                items.forEach(function (item) {
+                    var node = document.createElement('div');
+                    node.className = 'rep-timeline-node';
+                    
+                    var dot = document.createElement('div');
+                    dot.className = 'rep-timeline-dot';
+                    dot.style.borderColor = PALETTE[item.originalIndex % PALETTE.length];
+                    node.appendChild(dot);
+                    
+                    var content = document.createElement('div');
+                    content.className = 'rep-timeline-content';
+                    
+                    var labelGroup = document.createElement('div');
+                    labelGroup.className = 'rep-timeline-label-group';
+                    
+                    var labelNode = document.createElement('span');
+                    labelNode.className = 'rep-timeline-node-label';
+                    labelNode.textContent = item.label;
+                    labelGroup.appendChild(labelNode);
+                    
+                    var subNode = document.createElement('span');
+                    subNode.className = 'rep-timeline-node-sub';
+                    subNode.textContent = total > 0 ? ((item.value / total) * 100).toFixed(1) + '% contribution' : '0.0%';
+                    labelGroup.appendChild(subNode);
+                    
+                    content.appendChild(labelGroup);
+                    
+                    var valNode = document.createElement('span');
+                    valNode.className = 'rep-timeline-node-value';
+                    valNode.textContent = item.value;
+                    content.appendChild(valNode);
+                    
+                    node.appendChild(content);
+                    timeline.appendChild(node);
+                });
+            } else if (dataset.type === 'multi') {
+                dataset.labels.forEach(function (month, mIdx) {
+                    var val1 = dataset.datasets[0].values[mIdx] || 0;
+                    var val2 = dataset.datasets[1].values[mIdx] || 0;
+                    
+                    var node = document.createElement('div');
+                    node.className = 'rep-timeline-node';
+                    
+                    var dot = document.createElement('div');
+                    dot.className = 'rep-timeline-dot';
+                    dot.style.borderColor = '#10b981';
+                    node.appendChild(dot);
+                    
+                    var content = document.createElement('div');
+                    content.className = 'rep-timeline-content';
+                    
+                    var labelGroup = document.createElement('div');
+                    labelGroup.className = 'rep-timeline-label-group';
+                    
+                    var labelNode = document.createElement('span');
+                    labelNode.className = 'rep-timeline-node-label';
+                    labelNode.textContent = month + ' Monthly Rollout';
+                    labelGroup.appendChild(labelNode);
+                    
+                    var subNode = document.createElement('span');
+                    subNode.className = 'rep-timeline-node-sub';
+                    subNode.innerHTML = '👤 New: ' + val1 + ' &nbsp;•&nbsp; 📂 Uploads: ' + val2;
+                    labelGroup.appendChild(subNode);
+                    
+                    content.appendChild(labelGroup);
+                    
+                    var valNode = document.createElement('span');
+                    valNode.className = 'rep-timeline-node-value';
+                    valNode.innerHTML = '<span style="color:#0ea5e9;">' + val1 + '</span> / <span style="color:#10b981;">' + val2 + '</span>';
+                    content.appendChild(valNode);
+                    
+                    node.appendChild(content);
+                    timeline.appendChild(node);
+                });
+            }
+            container.appendChild(timeline);
+        }
     }
+
+    // Process DOM Elements and dynamic wrapping
+    document.querySelectorAll('.rep-card').forEach(function (card) {
+        var canvas = card.querySelector('canvas');
+        if (!canvas) return;
+        
+        var canvasId = canvas.id;
+        var dataset = getStandardizedDataset(canvasId);
+        if (!dataset) {
+            if (['chartRequirements', 'chartCasesStatus', 'chartCasesType'].indexOf(canvasId) >= 0) {
+                card.style.display = 'none';
+            }
+            return;
+        }
+
+        var titleEl = card.querySelector('.rep-card-title');
+        var subEl = card.querySelector('.rep-card-sub');
+
+        var header = document.createElement('div');
+        header.className = 'rep-card-header';
+
+        var titleGroup = document.createElement('div');
+        titleGroup.className = 'rep-card-title-group';
+
+        if (titleEl) {
+            titleEl.parentNode.insertBefore(header, titleEl);
+            titleGroup.appendChild(titleEl);
+            if (subEl) {
+                titleGroup.appendChild(subEl);
+            }
+            header.appendChild(titleGroup);
+        } else {
+            card.insertBefore(header, card.firstChild);
+            var prev = card.previousElementSibling;
+            if (prev && prev.classList.contains('rep-section')) {
+                var h2 = prev.querySelector('h2');
+                var note = prev.querySelector('.rep-section-note');
+                if (h2) {
+                    var pTitle = document.createElement('p');
+                    pTitle.className = 'rep-card-title';
+                    pTitle.textContent = h2.textContent;
+                    titleGroup.appendChild(pTitle);
+                    
+                    if (note) {
+                        var pSub = document.createElement('p');
+                        pSub.className = 'rep-card-sub';
+                        pSub.textContent = note.textContent;
+                        titleGroup.appendChild(pSub);
+                    }
+                    header.appendChild(titleGroup);
+                    prev.style.display = 'none';
+                }
+            }
+        }
+
+        var switcher = document.createElement('div');
+        switcher.className = 'rep-chart-switcher';
+        
+        var modes = [
+            { type: 'line', icon: '📈', label: 'Line' },
+            { type: 'bar', icon: '📊', label: 'Bar' },
+            { type: 'stacked', icon: '🥞', label: 'Stacked' },
+            { type: 'area', icon: '📉', label: 'Area' },
+            { type: 'pie', icon: '🍕', label: 'Pie' },
+            { type: 'donut', icon: '🍩', label: 'Donut' },
+            { type: 'kpi', icon: '📇', label: 'KPI' },
+            { type: 'heatmap', icon: '🌡️', label: 'Heat' },
+            { type: 'timeline', icon: '⏳', label: 'Time' }
+        ];
+
+        modes.forEach(function (m) {
+            var btn = document.createElement('button');
+            btn.className = 'rep-switch-btn';
+            btn.setAttribute('data-mode', m.type);
+            btn.setAttribute('data-canvas-id', canvasId);
+            btn.setAttribute('title', m.label + ' view');
+            btn.innerHTML = '<span>' + m.icon + '</span> ' + m.label;
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                switchChartMode(canvasId, m.type);
+            });
+            switcher.appendChild(btn);
+        });
+
+        header.appendChild(switcher);
+
+        var canvasWrap = canvas.parentNode;
+        canvasWrap.style.position = 'relative';
+
+        var htmlContainer = document.createElement('div');
+        htmlContainer.className = 'rep-dynamic-container';
+        htmlContainer.style.display = 'none';
+        canvasWrap.parentNode.insertBefore(htmlContainer, canvasWrap.nextSibling);
+
+        // Initialize in its default mode!
+        var defMode = getDefaultMode(canvasId);
+        switchChartMode(canvasId, defMode);
+    });
+
 })();
 </script>
 {% endblock %}
