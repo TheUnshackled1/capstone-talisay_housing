@@ -1,4 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods, require_POST
 from django.http import JsonResponse
@@ -92,13 +93,15 @@ def case_management_dashboard(request, position):
     if filter_type != 'all':
         cases = cases.filter(case_type=filter_type)
 
-    base_template = (
-        'field_base.html'
-        if request.user.position in FIELD_DESK_POSITIONS
-        else 'staff_base.html'
-    )
-
     open_new_case = request.GET.get('new_case', '').strip() in ('1', 'true', 'yes')
+
+    case_templates = {
+        'ronda': 'accounts/field/case_management.html',
+        'field': 'accounts/field/case_management.html',
+        'second_member': 'accounts/second_member/case_management.html',
+        'fourth_member': 'accounts/second_member/case_management.html',
+    }
+    template_name = case_templates.get(position, 'accounts/second_member/case_management.html')
 
     context = {
         'cases': cases,
@@ -108,13 +111,31 @@ def case_management_dashboard(request, position):
         'filter_status': filter_status,
         'filter_type': filter_type,
         'case_type_choices': Case.CASE_TYPE_CHOICES,
-        'base_template': base_template,
         'open_new_case': open_new_case,
-        'is_field_desk': request.user.position in FIELD_DESK_POSITIONS,
-        'is_ronda': request.user.position == 'ronda',
+        'case_position': position,
     }
 
-    return render(request, 'cases/case_management.html', context)
+    return render(request, template_name, context)
+
+
+@login_required
+@verify_position
+def case_dashboard_redirect(request, position):
+    """
+    Legacy /cases/<position>/ entry — routes field desk and second member to accounts URLs.
+    """
+    accounts_routes = {
+        'ronda': 'accounts:field_cases',
+        'field': 'accounts:field_cases',
+        'second_member': 'accounts:second_member_cases',
+    }
+    route = accounts_routes.get(position)
+    if route:
+        url = reverse(route)
+        if request.GET:
+            url = f'{url}?{request.GET.urlencode()}'
+        return redirect(url)
+    return case_management_dashboard(request, position)
 
 
 def _parse_block_lot_query(q):

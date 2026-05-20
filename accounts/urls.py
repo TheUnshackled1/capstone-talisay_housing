@@ -23,6 +23,10 @@ urlpatterns = [
         name='field_applicant_cdrrmo_meta',
     ),
 
+    # Case management (Module 5) — UI pages; JSON API stays under /cases/<position>/
+    path('second-member/cases/', views.second_member_case_management, name='second_member_cases'),
+    path('field/cases/', views.field_case_management, name='field_cases'),
+
     # Second Member-Specific Views
     path('second-member/analytics/', views.second_member_analytics, name='second_member_analytics'),
 

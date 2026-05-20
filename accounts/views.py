@@ -1938,5 +1938,26 @@ def applicants_list(request):
     return render(request, 'accounts/applicants.html', context)
 
 
+# ==================== CASE MANAGEMENT (Module 5) ====================
+
+
+@login_required
+def second_member_case_management(request):
+    if request.user.position != 'second_member':
+        messages.error(request, 'Access denied. This page is for the Second Member only.')
+        return redirect('accounts:dashboard')
+    from cases.views import case_management_dashboard
+    return case_management_dashboard(request, 'second_member')
+
+
+@login_required
+def field_case_management(request):
+    if request.user.position not in FIELD_DESK_POSITIONS:
+        messages.error(request, 'Access denied. This page is for field desk staff only.')
+        return redirect('accounts:dashboard')
+    from cases.views import case_management_dashboard
+    return case_management_dashboard(request, request.user.position)
+
+
 # ==================== OIC-SPECIFIC VIEWS ====================
 

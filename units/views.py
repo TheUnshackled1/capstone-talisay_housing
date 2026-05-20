@@ -1861,7 +1861,7 @@ def case_management(request, position):
     Legacy URL: /units/cases/<position>/
 
     Case management UI and primary data model live in the ``cases`` app
-    (``/cases/<position>/``, template ``cases/case_management.html``).
+    (``/accounts/second-member/cases/``, ``/accounts/field/cases/``; legacy ``/cases/<position>/`` redirects).
     Legacy ``/units/cases/`` JSON paths proxy to ``cases.views`` (see ``units.urls``).
     """
     return redirect('cases:case_dashboard', position=position)

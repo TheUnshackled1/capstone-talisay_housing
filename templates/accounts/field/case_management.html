@@ -1,5 +1,4 @@
-{# Deprecated — use accounts/second_member/case_management.html or accounts/field/case_management.html #}
-{% extends 'staff_base.html' %}
+{% extends 'field_base.html' %}
 {% load static humanize %}
 
 {% block title %}Case Management - THA{% endblock %}
@@ -1424,7 +1423,9 @@
 <div class="monitoring-shell">
     <div class="monitoring-kicker">Module 5</div>
     <h1 class="monitoring-title">Case Management</h1>
-    <p class="monitoring-subtitle">Every complaint gets a case record · No verbal-only handling</p>
+    <p class="monitoring-subtitle">Caretaker on-site recording · Search beneficiary, upload evidence · Desk reviews</p>
+
+    <p style="text-align:center;margin:0 0 0.75rem;font-size:0.72rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#64748b;">▸ Ronda / caretaker — field recording</p>
 </div>
 
 <div class="monitoring-kpis">
@@ -1732,7 +1733,7 @@
 
         <div class="modal-body">
             <div id="addCaseForm">
-                <input type="hidden" id="newReceivedAt" value="office">
+                <input type="hidden" id="newReceivedAt" value="onsite">
                 <input type="hidden" id="complainantApplicantId">
                 <input type="hidden" id="relatedUnitId">
                 <input type="hidden" id="newComplainantName">
@@ -1833,7 +1834,8 @@
                 </div>
 
                 <div class="tha-section-block tha-section-block--situation">
-                    <h3 class="tha-section-title">Uploaded evidence</h3>
+                    <h3 class="tha-section-title">On-site evidence</h3>
+                        <p class="help-text" style="margin-bottom: 0.5rem;">Photo or PDF from on-site report (max 6 MB each).</p>
                     <div class="form-group">
                         <input type="file" class="form-input" id="newCaseEvidenceFiles" accept="image/jpeg,image/png,image/webp,application/pdf" multiple style="padding: 0.45rem;">
                     </div>
@@ -1854,7 +1856,7 @@
 
 <!-- JavaScript -->
 <script>
-const CASE_POSITION = 'second_member';
+const CASE_POSITION = '{{ case_position }}';
 let currentCaseId = null;
 let complainantSearchTimer = null;
 let subjectSearchTimer = null;
