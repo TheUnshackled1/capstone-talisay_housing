@@ -255,20 +255,6 @@
     </div>
 </div>
 
-<!-- Styled alert modal — replaces native alert() for success / error notices. -->
-<div class="rfq-confirm-overlay" id="rfqAlertOverlay" role="dialog" aria-modal="true" aria-labelledby="rfqAlertTitle" onclick="rfqCloseAlert(event)">
-    <div class="rfq-confirm-card" onclick="event.stopPropagation();">
-        <div class="rfq-confirm-stripe" aria-hidden="true"></div>
-        <div class="rfq-confirm-body">
-            <div class="rfq-alert-icon" id="rfqAlertIcon" aria-hidden="true">&#10003;</div>
-            <h3 class="rfq-confirm-title" id="rfqAlertTitle">Notice</h3>
-            <p class="rfq-confirm-message rfq-alert-message" id="rfqAlertMessage"></p>
-        </div>
-        <div class="rfq-confirm-actions">
-            <button type="button" class="tha-btn tha-btn-success" id="rfqAlertOk">OK</button>
-        </div>
-    </div>
-</div>
 
 <style>
     .rfq-confirm-overlay {
@@ -333,21 +319,7 @@
         background: #fafbfc;
     }
     .rfq-confirm-actions .tha-btn { min-width: 8rem; }
-    .rfq-alert-icon {
-        width: 2.4rem;
-        height: 2.4rem;
-        border-radius: 9999px;
-        background: #16a34a;
-        color: #ffffff;
-        display: none;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.25rem;
-        font-weight: 800;
-        line-height: 1;
-        margin: 0 auto 0.6rem;
-    }
-    .rfq-alert-message { white-space: pre-line; }
+
     .rfq-replace-doc-body {
         text-align: left;
     }
@@ -639,11 +611,6 @@
         showFlowAlert(message, title, null, variant);
     }
 
-    function rfqCloseAlert(event) {
-        if (event && event.target && event.target.id !== 'rfqAlertOverlay') return;
-        const overlay = document.getElementById('rfqAlertOverlay');
-        if (overlay) overlay.classList.remove('active');
-    }
 
     function rfqQueueUrlWithoutRetrySign() {
         try {
