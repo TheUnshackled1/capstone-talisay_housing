@@ -17,8 +17,14 @@ from datetime import date, datetime, timedelta
 from urllib.parse import urlencode
 from .forms import LoginForm
 from .models import FIELD_DESK_POSITIONS
-from intake.models import Applicant, SMSLog
+from intake.models import Applicant, Archive, SMSLog
+from accounts.oic_activity import (
+    OIC_ACTIVITY_MAX_ITEMS,
+    build_oic_recent_activity,
+    paginate_oic_activity,
+)
 from applications.models import CDRRMOCertification, FieldVerificationPhoto
+from applications.views import module2_ready_for_form_queue_rows
 from units.models import Blacklist as UnitsBlacklist
 from applications.models import QueueEntry, Application
 from documents.models import Document, RequirementSubmission
@@ -172,24 +178,62 @@ def dashboard_oic(request):
     under_notice_units = HousingUnit.objects.filter(status__in=['Under notice (30-day)', 'Final notice (10-day)']).count()
     repossessed_units = HousingUnit.objects.filter(status='Repossessed').count()
 
+    ready_for_form_rows = module2_ready_for_form_queue_rows(request.user)
+    ready_for_form_count = len(ready_for_form_rows)
+    total_applicants = Applicant.objects.count()
+    applicants_with_application = Applicant.objects.filter(application__isnull=False).count()
+    applicants_in_evaluation = Applicant.objects.filter(module2_handoff_at__isnull=False).count()
+    total_archives = Archive.objects.count()
+
     total_applications = Application.objects.count()
     awarded_applications = Application.objects.filter(status='awarded').count()
     standby_applications = Application.objects.filter(status='standby').count()
     completed_applications = Application.objects.filter(status='completed').count()
     draft_applications = Application.objects.filter(status='draft').count()
 
+    total_cases = Case.objects.count()
+    open_cases = Case.objects.exclude(
+        status__in=['resolved', 'closed']
+    ).count()
+
     occupancy_rate_pct = int(round((occupied_units / total_housing_units) * 100)) if total_housing_units else 0
     vacancy_rate_pct = int(round((vacant_units / total_housing_units) * 100)) if total_housing_units else 0
     awarded_rate_pct = int(round((awarded_applications / total_applications) * 100)) if total_applications else 0
     ready_for_award_pct = int(round((standby_applications / total_applications) * 100)) if total_applications else 0
 
+    applicants_for_modal = list(
+        Applicant.objects.select_related('registered_by').order_by('-created_at')[:300]
+    )
     apps_for_modal = list(
         Application.objects.select_related('applicant').order_by('-updated_at')[:300]
     )
     units_for_modal = list(
         HousingUnit.objects.select_related('site').order_by('block_number', 'lot_number')[:300]
     )
+    recent_activity = build_oic_recent_activity(limit=OIC_ACTIVITY_MAX_ITEMS)
+    recent_activity_pages = paginate_oic_activity(recent_activity)
+
     oic_modal_lists = {
+        'total_applicants': [
+            {
+                'primary': app.reference_number,
+                'secondary': app.full_name,
+                'meta': app.get_status_display() if hasattr(app, 'get_status_display') else app.status,
+            }
+            for app in applicants_for_modal
+        ],
+        'ready_for_form': [
+            {
+                'primary': row['applicant'].reference_number,
+                'secondary': row['applicant'].full_name,
+                'meta': (
+                    row['application'].get_status_display()
+                    if row.get('application')
+                    else 'Ready for Form'
+                ),
+            }
+            for row in ready_for_form_rows[:300]
+        ],
         'total_applications': [
             {
                 'primary': app.application_number,
@@ -197,15 +241,6 @@ def dashboard_oic(request):
                 'meta': app.get_status_display(),
             }
             for app in apps_for_modal
-        ],
-        'completed_applications': [
-            {
-                'primary': app.application_number,
-                'secondary': app.applicant.full_name,
-                'meta': app.get_status_display(),
-            }
-            for app in apps_for_modal
-            if app.status == 'completed'
         ],
         'awarded_applications': [
             {
@@ -243,8 +278,17 @@ def dashboard_oic(request):
         'vacancy_rate_pct': vacancy_rate_pct,
         'awarded_rate_pct': awarded_rate_pct,
         'ready_for_award_pct': ready_for_award_pct,
+        'total_applicants': total_applicants,
+        'ready_for_form_count': ready_for_form_count,
+        'applicants_with_application': applicants_with_application,
+        'applicants_in_evaluation': applicants_in_evaluation,
+        'total_archives': total_archives,
+        'total_cases': total_cases,
+        'open_cases': open_cases,
         'oic_analytics_updated_at': timezone.now(),
         'oic_modal_data_json': json.dumps(oic_modal_lists),
+        'recent_activity': recent_activity,
+        'recent_activity_pages': recent_activity_pages,
     }
     return render(request, 'accounts/dashboard.html', context)
 

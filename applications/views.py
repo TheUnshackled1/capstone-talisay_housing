@@ -1204,6 +1204,44 @@ def applications_list(request, position):
     return render(request, 'applications/applications_list.html', context)
 
 
+def module2_ready_for_form_queue_rows(acting_user):
+    """
+    Ready for Form queue rows (same filter/sort as ready_for_form_queue view).
+    Returns list of _module2_applicant_row_payload dicts.
+    """
+    permissions = get_module2_permissions(acting_user)
+    _module2_run_handoff_preflight(acting_user)
+    applicants = _module2_evaluations_applicants_queryset()
+    required_group_a_submission_total = Requirement.objects.filter(
+        group='A',
+        is_active=True,
+        is_required_for_form=True,
+    ).count()
+
+    applicants_data = []
+    for applicant in applicants:
+        row = _module2_applicant_row_payload(
+            applicant,
+            permissions,
+            required_group_a_submission_total,
+            acting_user,
+        )
+        if row is None:
+            continue
+        if _module2_on_ready_for_form_queue_track(applicant, row['application']):
+            applicants_data.append(row)
+
+    applicants_data.sort(
+        key=lambda r: (
+            _ready_for_form_situation_priority(getattr(r['applicant'], 'displacement_reason', None)),
+            r.get('routed_sort_at') is None,
+            r.get('routed_sort_at') or timezone.now(),
+            str(r['applicant'].pk),
+        ),
+    )
+    return applicants_data
+
+
 @login_required
 @verify_position
 def ready_for_form_queue(request, position):
@@ -1219,9 +1257,6 @@ def ready_for_form_queue(request, position):
 
     permissions = get_module2_permissions(request.user)
 
-    _module2_run_handoff_preflight(request.user)
-    applicants = _module2_evaluations_applicants_queryset()
-
     requirements = Requirement.objects.filter(is_active=True).order_by('group', 'order')
     group_a_requirements = requirements.filter(group='A')
     group_b_requirements = requirements.filter(group='B')
@@ -1232,28 +1267,7 @@ def ready_for_form_queue(request, position):
         is_required_for_form=True,
     ).count()
 
-    applicants_data = []
-    for applicant in applicants:
-        row = _module2_applicant_row_payload(
-            applicant,
-            permissions,
-            required_group_a_submission_total,
-            request.user,
-        )
-        if row is None:
-            continue
-        if _module2_on_ready_for_form_queue_track(applicant, row['application']):
-            applicants_data.append(row)
-
-    # Situation tier (A → C → B → D), then FIFO by Proceed-to-Form routing time within tier.
-    applicants_data.sort(
-        key=lambda r: (
-            _ready_for_form_situation_priority(getattr(r['applicant'], 'displacement_reason', None)),
-            r.get('routed_sort_at') is None,
-            r.get('routed_sort_at') or timezone.now(),
-            str(r['applicant'].pk),
-        ),
-    )
+    applicants_data = module2_ready_for_form_queue_rows(request.user)
 
     ready_queue_total = len(applicants_data)
 

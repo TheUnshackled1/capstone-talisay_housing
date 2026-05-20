@@ -180,6 +180,97 @@
     /* Responsive Text Sizes */
     [class*="text-\[11px\]"] { font-size: 11px; }
     [class*="text-\[10px\]"] { font-size: 10px; }
+
+    /* OIC Recent Activity carousel (10 items per page) */
+    .oic-activity-carousel {
+        padding: 0 0 0.35rem;
+    }
+    .oic-activity-carousel-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        padding: 0.65rem 1rem;
+        border-bottom: 1px solid #f1f5f9;
+        background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+    }
+    .oic-activity-carousel-counter {
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: #475569;
+        white-space: nowrap;
+    }
+    .oic-activity-carousel-dots {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        justify-content: flex-end;
+        flex: 1;
+        min-width: 0;
+    }
+    .oic-activity-carousel-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 9999px;
+        border: none;
+        padding: 0;
+        background: #cbd5e1;
+        cursor: pointer;
+        transition: background 0.2s ease, transform 0.2s ease;
+    }
+    .oic-activity-carousel-dot.is-active {
+        background: #2563eb;
+        transform: scale(1.15);
+    }
+    .oic-activity-carousel-dot:hover {
+        background: #94a3b8;
+    }
+    .oic-activity-carousel-viewport {
+        display: flex;
+        align-items: stretch;
+        gap: 0.25rem;
+        padding: 0.35rem 0.5rem 0.65rem;
+    }
+    .oic-activity-carousel-track-wrap {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+    }
+    .oic-activity-carousel-track {
+        display: flex;
+        transition: transform 0.35s ease;
+        will-change: transform;
+    }
+    .oic-activity-carousel-slide {
+        flex: 0 0 100%;
+        min-width: 0;
+    }
+    .oic-activity-carousel-nav {
+        flex-shrink: 0;
+        align-self: center;
+        width: 2rem;
+        height: 2rem;
+        border-radius: 9999px;
+        border: 1px solid #e2e8f0;
+        background: #fff;
+        color: #334155;
+        font-size: 1.1rem;
+        line-height: 1;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.15s ease, border-color 0.15s ease;
+    }
+    .oic-activity-carousel-nav:hover:not(:disabled) {
+        background: #f8fafc;
+        border-color: #cbd5e1;
+    }
+    .oic-activity-carousel-nav:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+    }
     </style>
 </head>
 <body>
@@ -471,7 +562,7 @@
             <div class="stats-grid">
                 {% if user.position == 'oic' %}
                 <!-- Analytics-first executive stats -->
-                <div class="stat-card blue scroll-animate-left scroll-delay-1 js-oic-stat-card" data-stat-key="total_applications" data-stat-label="Total Applications" style="cursor:pointer;">
+                <div class="stat-card blue scroll-animate-left scroll-delay-1 js-oic-stat-card" data-stat-key="total_applicants" data-stat-label="Total Applicants" style="cursor:pointer;">
                     <div class="stat-header">
                         <div class="stat-icon-wrapper blue">
                             <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -481,21 +572,23 @@
                             </svg>
                         </div>
                     </div>
-                    <div class="stat-value">{{ total_applications|default:0 }}</div>
-                    <div class="stat-label">Total Applications</div>
+                    <div class="stat-value">{{ total_applicants|default:0 }}</div>
+                    <div class="stat-label">Total Applicants</div>
                 </div>
 
-                <div class="stat-card green scroll-animate-scale scroll-delay-2 js-oic-stat-card" data-stat-key="completed_applications" data-stat-label="Completed Applications" style="cursor:pointer;">
+                <div class="stat-card green scroll-animate-scale scroll-delay-2 js-oic-stat-card" data-stat-key="ready_for_form" data-stat-label="Ready for Form" style="cursor:pointer;">
                     <div class="stat-header">
                         <div class="stat-icon-wrapper green">
                             <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                                <polyline points="22 4 12 14.01 9 11.01"/>
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14 2 14 8 20 8"/>
+                                <line x1="16" y1="13" x2="8" y2="13"/>
+                                <line x1="16" y1="17" x2="8" y2="17"/>
                             </svg>
                         </div>
                     </div>
-                    <div class="stat-value">{{ completed_applications|default:0 }}</div>
-                    <div class="stat-label">Completed Applications</div>
+                    <div class="stat-value">{{ ready_for_form_count|default:0 }}</div>
+                    <div class="stat-label">Ready for Form</div>
                 </div>
 
                 <div class="stat-card amber scroll-animate-scale scroll-delay-3 js-oic-stat-card" data-stat-key="housing_units" data-stat-label="Housing Units" style="cursor:pointer;">
@@ -849,21 +942,6 @@
                     </div>
                 </a>
 
-                <a href="{% url 'intake:applicants_list' request.user.position %}" class="action-card scroll-animate scroll-delay-3">
-                    <div class="action-icon-wrapper">
-                        <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                            <line x1="16" y1="2" x2="16" y2="6"/>
-                            <line x1="8" y1="2" x2="8" y2="6"/>
-                            <line x1="3" y1="10" x2="21" y2="10"/>
-                        </svg>
-                    </div>
-                    <div class="action-text">
-                        <h4>Manage Queue</h4>
-                        <p>Eligibility & FIFO queue</p>
-                    </div>
-                </a>
-
                 <a href="#" class="action-card scroll-animate-right scroll-delay-4">
                     <div class="action-icon-wrapper">
                         <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -949,23 +1027,17 @@
             </div>
             {% endif %}
 
-            <!-- Role-Specific Dashboard Widgets -->
-            {% if user.position != 'oic' %}
+            <!-- Role-Specific Dashboard Widgets (OIC + field staff; not second/fourth member) -->
+            {% if user.position == 'oic' or user.position != 'second_member' and user.position != 'fourth_member' %}
+            {% if user.position == 'oic' %}
             <div class="section-header scroll-animate" style="margin-top: 2rem;">
                 <h2 class="section-title">My Workspace</h2>
             </div>
             {% endif %}
-            
+
             <div class="widgets-grid {% if user.position == 'oic' %}oic-widgets-inline{% endif %}">
                 {% if user.position == 'oic' %}
                     {% include 'accounts/oic/dashboard.html' %}
-                
-                {% elif user.position == 'second_member' %}
-                    {% include 'accounts/second_member/dashboard.html' %}
-
-                {% elif user.position == 'fourth_member' %}
-                    {% include 'accounts/fourth_member/dashboard.html' %}
-                
                 {% else %}
                     <!-- Default widgets for other staff -->
                     <div class="card scroll-animate">
@@ -984,6 +1056,7 @@
                     </div>
                 {% endif %}
             </div>
+            {% endif %}
 
             <!-- Recent Activity Section -->
             <div class="section-header scroll-animate" style="margin-top: 2rem;">
@@ -996,8 +1069,49 @@
                 </a>
             </div>
             <div class="card scroll-animate-scale">
-                <div class="card-body">
-                    <div class="empty-state">
+                <div class="card-body" style="padding: 0;">
+                    {% if user.position == 'oic' and recent_activity_pages %}
+                    <div class="oic-activity-carousel" id="oicActivityCarousel" data-page-size="10">
+                        <div class="oic-activity-carousel-toolbar">
+                            <span class="oic-activity-carousel-counter" id="oicActivityCarouselCounter">Page 1 of {{ recent_activity_pages|length }}</span>
+                            <div class="oic-activity-carousel-dots" id="oicActivityCarouselDots" role="tablist" aria-label="Activity pages">
+                                {% for page in recent_activity_pages %}
+                                <button type="button" class="oic-activity-carousel-dot{% if forloop.first %} is-active{% endif %}" data-page-index="{{ forloop.counter0 }}" aria-label="Page {{ forloop.counter }} of {{ recent_activity_pages|length }}"{% if forloop.first %} aria-current="true"{% endif %}></button>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="oic-activity-carousel-viewport">
+                            <button type="button" class="oic-activity-carousel-nav" id="oicActivityCarouselPrev" aria-label="Previous page" disabled>‹</button>
+                            <div class="oic-activity-carousel-track-wrap">
+                                <div class="oic-activity-carousel-track" id="oicActivityCarouselTrack">
+                                    {% for page in recent_activity_pages %}
+                                    <div class="oic-activity-carousel-slide" role="group" aria-roledescription="slide" aria-label="Page {{ forloop.counter }} of {{ recent_activity_pages|length }}">
+                                        <ul class="oic-activity-feed" style="list-style: none; margin: 0; padding: 0;">
+                                            {% for item in page %}
+                                            <li class="oic-activity-item" style="display: flex; gap: 0.75rem; padding: 0.85rem 1rem; border-bottom: 1px solid #f1f5f9; align-items: flex-start;">
+                                                <div style="flex: 1; min-width: 0;">
+                                                    <div style="display: flex; flex-wrap: wrap; gap: 0.35rem 0.5rem; align-items: center; margin-bottom: 0.25rem;">
+                                                        <span style="font-size: 0.8rem; font-weight: 600; color: #0f172a;">{{ item.title }}</span>
+                                                        <span style="font-size: 0.62rem; font-weight: 600; padding: 0.12rem 0.45rem; border-radius: 9999px; background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe;">{{ item.module }}</span>
+                                                    </div>
+                                                    <p style="margin: 0; font-size: 0.75rem; color: #475569; line-height: 1.4;">{{ item.detail }}</p>
+                                                    <p style="margin: 0.35rem 0 0; font-size: 0.68rem; color: #64748b;">
+                                                        {{ item.staff_name }}{% if item.staff_role %} · {{ item.staff_role }}{% endif %}
+                                                    </p>
+                                                </div>
+                                                <span style="font-size: 0.68rem; color: #94a3b8; white-space: nowrap; flex-shrink: 0;" title="{{ item.at }}">{{ item.ago }}</span>
+                                            </li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <button type="button" class="oic-activity-carousel-nav" id="oicActivityCarouselNext" aria-label="Next page">›</button>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="empty-state" style="padding: 1.25rem 1rem;">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                             <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
                             <line x1="16" y1="2" x2="16" y2="6"/>
@@ -1005,8 +1119,9 @@
                             <line x1="3" y1="10" x2="21" y2="10"/>
                         </svg>
                         <h3>No recent activity</h3>
-                        <p>Activity from applicant intake, applications, and cases will appear here.</p>
+                        <p>Activity from 2nd Member, 4th Member, and Field verification desk will appear here.</p>
                     </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -1100,6 +1215,53 @@
         modal.addEventListener('click', function (e) {
             if (e.target === modal) closeModal();
         });
+    })();
+
+    (function () {
+        const carousel = document.getElementById('oicActivityCarousel');
+        if (!carousel) return;
+        const track = document.getElementById('oicActivityCarouselTrack');
+        const prevBtn = document.getElementById('oicActivityCarouselPrev');
+        const nextBtn = document.getElementById('oicActivityCarouselNext');
+        const counterEl = document.getElementById('oicActivityCarouselCounter');
+        const dots = carousel.querySelectorAll('.oic-activity-carousel-dot');
+        const slides = track ? track.querySelectorAll('.oic-activity-carousel-slide') : [];
+        const total = slides.length;
+        if (!total || !track) return;
+
+        let current = 0;
+
+        function goToPage(index) {
+            current = Math.max(0, Math.min(index, total - 1));
+            track.style.transform = 'translateX(-' + (current * 100) + '%)';
+            if (counterEl) {
+                counterEl.textContent = 'Page ' + (current + 1) + ' of ' + total;
+            }
+            if (prevBtn) prevBtn.disabled = current === 0;
+            if (nextBtn) nextBtn.disabled = current >= total - 1;
+            dots.forEach(function (dot, i) {
+                dot.classList.toggle('is-active', i === current);
+                if (i === current) {
+                    dot.setAttribute('aria-current', 'true');
+                } else {
+                    dot.removeAttribute('aria-current');
+                }
+            });
+        }
+
+        if (prevBtn) {
+            prevBtn.addEventListener('click', function () { goToPage(current - 1); });
+        }
+        if (nextBtn) {
+            nextBtn.addEventListener('click', function () { goToPage(current + 1); });
+        }
+        dots.forEach(function (dot) {
+            dot.addEventListener('click', function () {
+                goToPage(parseInt(dot.getAttribute('data-page-index'), 10) || 0);
+            });
+        });
+
+        goToPage(0);
     })();
     </script>
     {% endif %}

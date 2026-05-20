@@ -42,9 +42,19 @@
                 <div class="oic-compact-sub" style="font-size:0.64rem; color:#475569; line-height:1.25;">{{ occupied_units|default:0 }} occupied / {{ vacant_units|default:0 }} vacant</div>
             </div>
             <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:0.55rem; padding:0.35rem 0.45rem;">
-                <div class="oic-compact-title" style="font-size:0.64rem; color:#64748b;">Total Applications</div>
+                <div class="oic-compact-title" style="font-size:0.64rem; color:#64748b;">Total Applicants</div>
+                <div class="oic-compact-value" style="font-size:0.95rem; font-weight:700; color:#0f172a; line-height:1.2;">{{ total_applicants|default:0 }}</div>
+                <div class="oic-compact-sub" style="font-size:0.64rem; color:#475569; line-height:1.25;">{{ applicants_with_application|default:0 }} with app · {{ applicants_in_evaluation|default:0 }} in evaluation</div>
+            </div>
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:0.55rem; padding:0.35rem 0.45rem;">
+                <div class="oic-compact-title" style="font-size:0.64rem; color:#64748b;">Applications</div>
                 <div class="oic-compact-value" style="font-size:0.95rem; font-weight:700; color:#0f172a; line-height:1.2;">{{ total_applications|default:0 }}</div>
-                <div class="oic-compact-sub" style="font-size:0.64rem; color:#475569; line-height:1.25;">{{ standby_applications|default:0 }} standby / {{ awarded_applications|default:0 }} awarded</div>
+                <div class="oic-compact-sub" style="font-size:0.64rem; color:#475569; line-height:1.25;">{{ standby_applications|default:0 }} standby · {{ awarded_applications|default:0 }} awarded</div>
+            </div>
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:0.55rem; padding:0.35rem 0.45rem;">
+                <div class="oic-compact-title" style="font-size:0.64rem; color:#64748b;">Cases</div>
+                <div class="oic-compact-value" style="font-size:0.95rem; font-weight:700; color:#0f172a; line-height:1.2;">{{ total_cases|default:0 }}</div>
+                <div class="oic-compact-sub" style="font-size:0.64rem; color:#475569; line-height:1.25;">{{ open_cases|default:0 }} open · {{ total_archives|default:0 }} archived</div>
             </div>
         </div>
         <div style="margin-top:0.85rem; display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:0.9rem;">
@@ -86,7 +96,7 @@
                     </div>
                     <div class="oic-donut-meta" style="font-size:0.72rem; color:#64748b; line-height:1.4; min-width:0; flex:1;">
                         <div><strong style="color:#0f172a;">{{ standby_applications|default:0 }}</strong> standby</div>
-                        <div><strong style="color:#0f172a;">{{ total_applications|default:0 }}</strong> total apps</div>
+                        <div><strong style="color:#0f172a;">{{ total_applications|default:0 }}</strong> applications</div>
                     </div>
                 </div>
             </div>
@@ -158,6 +168,12 @@
                 <div class="oic-compact-title" style="font-size: 0.75rem; color: #15803d;">Awarded</div>
                 <div class="oic-compact-value" style="font-size: 1.5rem; font-weight: 700; color: #15803d;">{{ awarded_applications|default:0 }}</div>
             </div>
+            {% if draft_applications %}
+            <div style="background: #fff7ed; border: 1px solid #fed7aa; border-radius: 0.5rem; padding: 0.75rem;">
+                <div class="oic-compact-title" style="font-size: 0.75rem; color: #c2410c;">Draft (form released)</div>
+                <div class="oic-compact-value" style="font-size: 1.5rem; font-weight: 700; color: #c2410c;">{{ draft_applications|default:0 }}</div>
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>
