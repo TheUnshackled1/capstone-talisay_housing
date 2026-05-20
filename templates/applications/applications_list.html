@@ -2314,6 +2314,143 @@
     .flow-alert-next:hover {
         background: #1d4ed8;
     }
+
+    /* Flow Alert Success Celebration (Glassmorphism & premium styling overrides) */
+    .flow-alert-card.flow-alert-card--celebration {
+        width: min(28rem, calc(100vw - 1.5rem));
+        border-radius: 1.5rem !important;
+        border-color: #bbf7d0 !important;
+        background: linear-gradient(165deg, #ecfdf5 0%, #ffffff 35%, #ffffff 100%) !important;
+        box-shadow: 0 25px 50px -12px rgba(16, 185, 129, 0.15), 0 0 0 1px rgba(16, 185, 129, 0.05) !important;
+        padding: 0.5rem 0.5rem 0;
+        position: relative;
+        overflow: hidden;
+    }
+    .flow-alert-card.flow-alert-card--celebration::before {
+        display: none !important;
+    }
+    .flow-alert-celebration-icon {
+        display: flex;
+        width: 4.5rem;
+        height: 4.5rem;
+        border-radius: 1.25rem;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: #ffffff;
+        align-items: center;
+        justify-content: center;
+        margin: 1.5rem auto 0.75rem;
+        box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+        animation: flowPulseIcon 2s infinite ease-in-out;
+    }
+    .flow-alert-celebration-icon .checkmark-svg {
+        width: 2.25rem;
+        height: 2.25rem;
+        display: block;
+    }
+    .flow-alert-celebration-icon .checkmark-circle {
+        stroke-dasharray: 166;
+        stroke-dashoffset: 166;
+        stroke-width: 3.5;
+        stroke-miterlimit: 10;
+        stroke: #ffffff;
+        fill: none;
+        animation: flowStrokeCircle 0.5s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+    }
+    .flow-alert-celebration-icon .checkmark-check {
+        transform-origin: 50% 50%;
+        stroke-dasharray: 48;
+        stroke-dashoffset: 48;
+        stroke-width: 3.5;
+        stroke: #ffffff;
+        fill: none;
+        animation: flowStrokeCheck 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.6s forwards;
+    }
+    .flow-alert-card.flow-alert-card--celebration .flow-alert-head {
+        border-bottom: none !important;
+        padding: 0 1.25rem 0.35rem !important;
+        justify-content: center !important;
+        background: transparent !important;
+    }
+    .flow-alert-card.flow-alert-card--celebration .flow-alert-title {
+        color: #0f5132 !important;
+        font-size: 1.25rem !important;
+        font-weight: 800 !important;
+        letter-spacing: 0.05em !important;
+        text-transform: uppercase !important;
+        padding-right: 0 !important;
+        margin-top: 0.5rem !important;
+        text-align: center !important;
+        flex: none !important;
+    }
+    .flow-alert-card.flow-alert-card--celebration .flow-alert-message {
+        padding: 0.35rem 1.5rem 0.25rem !important;
+        font-size: 0.95rem !important;
+        color: #166534 !important;
+        text-align: center !important;
+        font-weight: 500 !important;
+        line-height: 1.55 !important;
+    }
+    .flow-alert-card.flow-alert-card--celebration .flow-alert-actions {
+        justify-content: center !important;
+        align-items: center !important;
+        padding: 1.25rem 1.5rem 1.75rem !important;
+        margin-top: 0.25rem !important;
+        border-top: none !important;
+        background: transparent !important;
+    }
+    .flow-alert-card.flow-alert-card--celebration .flow-alert-ok {
+        width: auto !important;
+        min-width: 8.5rem !important;
+        justify-content: center !important;
+        padding: 0.75rem 2.5rem !important;
+        font-size: 0.95rem !important;
+        font-weight: 700 !important;
+        border-radius: 0.75rem !important;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+        color: #ffffff !important;
+        border: none !important;
+        box-shadow: 0 6px 18px rgba(16, 185, 129, 0.25) !important;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        cursor: pointer;
+    }
+    .flow-alert-card.flow-alert-card--celebration .flow-alert-ok:hover {
+        background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+        box-shadow: 0 8px 24px rgba(16, 185, 129, 0.35) !important;
+        transform: translateY(-2px) !important;
+    }
+    .flow-alert-card.flow-alert-card--celebration .flow-alert-ok:active {
+        transform: translateY(0) !important;
+    }
+    .flow-alert-progress-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #10b981, #34d399);
+        width: 100%;
+        transform-origin: left;
+        animation: flowProgressCountdown 4s linear forwards;
+    }
+
+    /* Keyframes */
+    @keyframes flowStrokeCircle {
+        to { stroke-dashoffset: 0; }
+    }
+    @keyframes flowStrokeCheck {
+        to { stroke-dashoffset: 0; }
+    }
+    @keyframes flowPulseIcon {
+        0%, 100% {
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3), 0 0 0 0px rgba(16, 185, 129, 0.25);
+        }
+        50% {
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.2), 0 0 0 12px rgba(16, 185, 129, 0.15);
+        }
+    }
+    @keyframes flowProgressCountdown {
+        from { transform: scaleX(1); }
+        to { transform: scaleX(0); }
+    }
     .eligibility-next-modal {
         background: #ffffff;
         border: 1px solid #cbd5e1;
@@ -4233,6 +4370,12 @@
 
 <div class="modal-overlay" id="flowAlertModal" onclick="closeFlowAlert(event)">
     <div class="flow-alert-card" id="flowAlertCard" onclick="event.stopPropagation()">
+        <div class="flow-alert-celebration-icon" id="flowAlertCelebrationIcon" style="display: none;">
+            <svg class="checkmark-svg" viewBox="0 0 52 52">
+                <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
+                <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+            </svg>
+        </div>
         <div class="flow-alert-head">
             <span class="flow-alert-icon" id="flowAlertIcon" style="display:none;">✓</span>
             <h3 class="flow-alert-title" id="flowAlertTitle">Notice</h3>
@@ -4242,6 +4385,7 @@
             <button type="button" class="flow-alert-ok" onclick="confirmFlowAlert()">OK</button>
             <button type="button" class="flow-alert-next" id="flowAlertNextBtn" onclick="confirmFlowAlertNext()" style="display:none;">Next</button>
         </div>
+        <div class="flow-alert-progress-bar" id="flowAlertProgressBar" style="display: none;"></div>
     </div>
 </div>
 
@@ -4888,35 +5032,87 @@
         const iconEl = document.getElementById('flowAlertIcon');
         const nextBtn = document.getElementById('flowAlertNextBtn');
         const actionsEl = document.getElementById('flowAlertActions');
+        const celIcon = document.getElementById('flowAlertCelebrationIcon');
+        const progBar = document.getElementById('flowAlertProgressBar');
+
         if (!modal || !titleEl || !messageEl) {
             alert(message);
             if (typeof onConfirm === 'function') onConfirm();
             return;
         }
+
+        // Reset countdown timer if active
+        if (window.flowAlertCountdownTimeout) {
+            clearTimeout(window.flowAlertCountdownTimeout);
+            window.flowAlertCountdownTimeout = null;
+        }
+
         titleEl.textContent = title;
         messageEl.textContent = message || '';
+
+        const isCelebration = !!(tone === 'success' || tone === 'proceed_success');
+
         if (card) {
-            card.classList.toggle('success', tone === 'success');
-            card.classList.toggle('proceed-success', tone === 'proceed_success');
+            card.classList.remove('success', 'proceed-success', 'flow-alert-card--celebration');
+            if (tone === 'success') card.classList.add('success');
+            if (tone === 'proceed_success') card.classList.add('proceed-success');
+            if (isCelebration) {
+                card.classList.add('flow-alert-card--celebration');
+            }
         }
-        if (iconEl) iconEl.style.display = (tone === 'success' || tone === 'proceed_success') ? 'inline-flex' : 'none';
-        if (nextBtn) nextBtn.style.display = (tone === 'success' && title === 'Evaluation Precheck') ? 'inline-flex' : 'none';
-        if (actionsEl) actionsEl.style.justifyContent = (tone === 'success' && title === 'Evaluation Precheck') ? 'space-between' : 'flex-end';
+
+        if (celIcon) {
+            celIcon.style.display = isCelebration ? 'flex' : 'none';
+        }
+        if (progBar) {
+            progBar.style.display = 'none';
+        }
+
+        if (iconEl) {
+            iconEl.style.display = isCelebration ? 'none' : ((tone !== 'default') ? 'inline-flex' : 'none');
+        }
+        if (nextBtn) {
+            nextBtn.style.display = (tone === 'success' && title === 'Evaluation Precheck') ? 'inline-flex' : 'none';
+        }
+        if (actionsEl) {
+            actionsEl.style.justifyContent = (tone === 'success' && title === 'Evaluation Precheck') ? 'space-between' : 'flex-end';
+        }
+
         flowAlertOnConfirm = onConfirm;
         flowAlertOnNext = onNext;
         modal.classList.add('active');
+
+        // Start 4-second countdown if celebration is true
+        if (isCelebration) {
+            if (progBar) {
+                progBar.style.display = 'block';
+                // Trigger reflow to restart CSS animation
+                progBar.offsetHeight;
+            }
+            window.flowAlertCountdownTimeout = setTimeout(function() {
+                confirmFlowAlert();
+            }, 4000);
+        }
     }
 
     function closeFlowAlert(event) {
         if (event && event.target && event.target.id !== 'flowAlertModal') return;
         const modal = document.getElementById('flowAlertModal');
         if (modal) modal.classList.remove('active');
+        if (window.flowAlertCountdownTimeout) {
+            clearTimeout(window.flowAlertCountdownTimeout);
+            window.flowAlertCountdownTimeout = null;
+        }
     }
 
     function confirmFlowAlert() {
         const onConfirm = flowAlertOnConfirm;
         flowAlertOnConfirm = null;
         flowAlertOnNext = null;
+        if (window.flowAlertCountdownTimeout) {
+            clearTimeout(window.flowAlertCountdownTimeout);
+            window.flowAlertCountdownTimeout = null;
+        }
         closeFlowAlert();
         if (typeof onConfirm === 'function') onConfirm();
     }

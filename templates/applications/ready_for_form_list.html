@@ -636,20 +636,7 @@
     }
 
     function rfqShowAlert(message, title, variant) {
-        const overlay = document.getElementById('rfqAlertOverlay');
-        if (!overlay) {
-            window.alert(message);
-            return;
-        }
-        const titleEl = document.getElementById('rfqAlertTitle');
-        const messageEl = document.getElementById('rfqAlertMessage');
-        const iconEl = document.getElementById('rfqAlertIcon');
-        const okBtn = document.getElementById('rfqAlertOk');
-        if (titleEl) titleEl.textContent = title || 'Notice';
-        if (messageEl) messageEl.textContent = message || '';
-        if (iconEl) iconEl.style.display = (variant === 'success') ? 'inline-flex' : 'none';
-        if (okBtn) okBtn.onclick = function () { overlay.classList.remove('active'); };
-        overlay.classList.add('active');
+        showFlowAlert(message, title, null, variant);
     }
 
     function rfqCloseAlert(event) {
@@ -669,10 +656,14 @@
     }
 
     function rfqPromptSignedDocReview(reviewUrl, successMsg, applicationId, referenceNumber, applicantId) {
-        rfqShowAlert(successMsg || 'Signed application saved.', 'Application Form', 'success');
-        window.setTimeout(function () {
-            window.location.href = rfqQueueUrlWithoutRetrySign();
-        }, 500);
+        showFlowAlert(
+            successMsg || 'Signed application scan saved to the vault.',
+            'Application Form',
+            function () {
+                window.location.href = rfqQueueUrlWithoutRetrySign();
+            },
+            'success'
+        );
     }
 
     async function generateFormFromQueue(applicantId) {
@@ -689,12 +680,14 @@
                         } else if (pdfHold) {
                             pdfHold.close();
                         }
-                        rfqShowAlert(
-                            'Application #' + data.application_number + ' generated. Returning to this queue…',
+                        showFlowAlert(
+                            'Application #' + data.application_number + ' generated. Returning to this queue...',
                             'Form generated',
+                            function () {
+                                window.location.href = queueUrl;
+                            },
                             'success'
                         );
-                        setTimeout(() => { window.location.href = queueUrl; }, 1200);
                     } else {
                         if (pdfHold) pdfHold.close();
                         rfqShowAlert(data.error || 'Failed to generate form', 'Generation failed', 'default');
@@ -733,15 +726,15 @@
                     if (!response.ok || !data.success) {
                         throw new Error(data.error || 'Unable to proceed to lot-awarding queue.');
                     }
-                    const alertMsg = data.message || 'Application moved to lot-awarding queue.';
-                    rfqShowAlert(
+                    const alertMsg = data.message || 'Application routed to lot-awarding queue (Standby position #2).';
+                    showFlowAlert(
                         alertMsg,
                         'Lot awarding queue',
+                        function () {
+                            window.location.href = lotAwardingQueueUrl;
+                        },
                         'success'
                     );
-                    setTimeout(() => {
-                        window.location.href = lotAwardingQueueUrl;
-                    }, 900);
                 } catch (error) {
                     rfqShowAlert(
                         (error && error.message) ? error.message : 'Unable to proceed to lot-awarding queue.',

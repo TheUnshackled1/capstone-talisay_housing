@@ -7,10 +7,22 @@
     function resetFlowAlertVariant() {
         var card = document.getElementById('flowAlertCard');
         var refWrap = document.getElementById('flowAlertRefWrap');
-        if (card) card.classList.remove('flow-alert-card--success');
+        var celIcon = document.getElementById('flowAlertCelebrationIcon');
+        var progBar = document.getElementById('flowAlertProgressBar');
+        var defaultBadge = document.getElementById('flowAlertSuccessBadge');
+        if (card) {
+            card.classList.remove('flow-alert-card--success', 'flow-alert-card--celebration');
+        }
         if (refWrap) {
             refWrap.innerHTML = '';
             refWrap.style.display = 'none';
+        }
+        if (celIcon) celIcon.style.display = 'none';
+        if (progBar) progBar.style.display = 'none';
+        if (defaultBadge) defaultBadge.style.display = 'none';
+        if (global.flowAlertCountdownTimeout) {
+            clearTimeout(global.flowAlertCountdownTimeout);
+            global.flowAlertCountdownTimeout = null;
         }
     }
 
@@ -36,40 +48,76 @@
         var messageEl = document.getElementById('flowAlertMessage');
         var card = document.getElementById('flowAlertCard');
         var refWrap = document.getElementById('flowAlertRefWrap');
+        var celIcon = document.getElementById('flowAlertCelebrationIcon');
+        var progBar = document.getElementById('flowAlertProgressBar');
+        var defaultBadge = document.getElementById('flowAlertSuccessBadge');
+
         if (!modal || !titleEl || !messageEl) {
             global.alert(message);
             if (typeof onConfirm === 'function') onConfirm();
             return;
         }
-        if (card) {
-            card.classList.toggle('flow-alert-card--success', variant === 'success');
+
+        // Reset countdown timer if active
+        if (global.flowAlertCountdownTimeout) {
+            clearTimeout(global.flowAlertCountdownTimeout);
+            global.flowAlertCountdownTimeout = null;
         }
+
+        if (card) {
+            card.classList.remove('flow-alert-card--success', 'flow-alert-card--celebration');
+        }
+
+        var isCelebration = (variant === 'success' || variant === 'proceed_success');
+
+        if (isCelebration) {
+            if (card) {
+                card.classList.add('flow-alert-card--success');
+                card.classList.add('flow-alert-card--celebration');
+            }
+            if (celIcon) celIcon.style.display = 'flex';
+            if (defaultBadge) defaultBadge.style.display = 'none';
+        } else {
+            if (variant === 'success' && card) {
+                card.classList.add('flow-alert-card--success');
+            }
+            if (defaultBadge) {
+                defaultBadge.style.display = (variant === 'success') ? 'flex' : 'none';
+            }
+            if (celIcon) celIcon.style.display = 'none';
+        }
+
         if (refWrap) {
             refWrap.innerHTML = '';
             refWrap.style.display = 'none';
         }
+
         titleEl.textContent = title;
         messageEl.textContent = message || '';
         flowAlertOnConfirm = onConfirm || null;
         modal.classList.add('active');
+
+        // Start 4-second countdown if celebration is true
+        if (isCelebration) {
+            if (progBar) {
+                progBar.style.display = 'block';
+                // Trigger reflow to restart CSS animation
+                progBar.offsetHeight;
+            }
+            global.flowAlertCountdownTimeout = setTimeout(function() {
+                confirmFlowAlert();
+            }, 4000);
+        }
     }
 
     function showHandoffSuccessAlert(refText, onConfirm) {
-        var modal = document.getElementById('flowAlertModal');
-        var titleEl = document.getElementById('flowAlertTitle');
-        var messageEl = document.getElementById('flowAlertMessage');
-        var card = document.getElementById('flowAlertCard');
+        showFlowAlert(
+            'This applicant was proceeded from Module 1 and is now available here for Application & Eligibility.',
+            'Handoff successful',
+            onConfirm,
+            'success'
+        );
         var refWrap = document.getElementById('flowAlertRefWrap');
-        if (!modal || !titleEl || !messageEl || !card) {
-            var fallback = 'Handoff successful. This applicant was proceeded from Module 1 and is now available here for Application & Eligibility'
-                + (refText ? ' (ref ' + refText + ').' : '.');
-            global.alert(fallback);
-            if (typeof onConfirm === 'function') onConfirm();
-            return;
-        }
-        card.classList.add('flow-alert-card--success');
-        titleEl.textContent = 'Handoff successful';
-        messageEl.textContent = 'This applicant was proceeded from Module 1 and is now available here for Application & Eligibility.';
         if (refWrap) {
             refWrap.innerHTML = '';
             refWrap.style.display = 'none';
@@ -82,8 +130,6 @@
                 refWrap.style.display = 'block';
             }
         }
-        flowAlertOnConfirm = onConfirm || null;
-        modal.classList.add('active');
     }
 
     global.showFlowAlert = showFlowAlert;

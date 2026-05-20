@@ -158,3 +158,137 @@
     background: linear-gradient(180deg, #059669 0%, #047857 100%);
     box-shadow: 0 20px 25px -5px rgba(16, 185, 129, 0.2);
 }
+
+/* Flow Alert Success Celebration (Glassmorphism & premium styling overrides) */
+.flow-alert-card.flow-alert-card--celebration {
+    width: min(28rem, calc(100vw - 1.5rem));
+    border-radius: 1.5rem !important;
+    border-color: #bbf7d0 !important;
+    background: linear-gradient(165deg, #ecfdf5 0%, #ffffff 35%, #ffffff 100%) !important;
+    box-shadow: 0 25px 50px -12px rgba(16, 185, 129, 0.15), 0 0 0 1px rgba(16, 185, 129, 0.05) !important;
+    padding: 0.5rem 0.5rem 0;
+    position: relative;
+    overflow: hidden;
+}
+.flow-alert-card.flow-alert-card--celebration::before {
+    display: none !important;
+}
+.flow-alert-card.flow-alert-card--celebration .flow-alert-success-badge {
+    display: none !important;
+}
+.flow-alert-celebration-icon {
+    display: flex;
+    width: 4.5rem;
+    height: 4.5rem;
+    border-radius: 1.25rem;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: #ffffff;
+    align-items: center;
+    justify-content: center;
+    margin: 1.5rem auto 0.75rem;
+    box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+    animation: flowPulseIcon 2s infinite ease-in-out;
+}
+.flow-alert-celebration-icon .checkmark-svg {
+    width: 2.25rem;
+    height: 2.25rem;
+    display: block;
+}
+.flow-alert-celebration-icon .checkmark-circle {
+    stroke-dasharray: 166;
+    stroke-dashoffset: 166;
+    stroke-width: 3.5;
+    stroke-miterlimit: 10;
+    stroke: #ffffff;
+    fill: none;
+    animation: flowStrokeCircle 0.5s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+}
+.flow-alert-celebration-icon .checkmark-check {
+    transform-origin: 50% 50%;
+    stroke-dasharray: 48;
+    stroke-dashoffset: 48;
+    stroke-width: 3.5;
+    stroke: #ffffff;
+    fill: none;
+    animation: flowStrokeCheck 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.6s forwards;
+}
+.flow-alert-card.flow-alert-card--celebration .flow-alert-title {
+    color: #0f5132 !important;
+    font-size: 1.25rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.05em !important;
+    text-transform: uppercase !important;
+    padding-right: 0 !important;
+    margin-top: 0.5rem !important;
+    text-align: center !important;
+    flex: none !important;
+}
+.flow-alert-card.flow-alert-card--celebration .flow-alert-message {
+    padding: 0.35rem 1.5rem 0.25rem !important;
+    font-size: 0.95rem !important;
+    color: #166534 !important;
+    text-align: center !important;
+    font-weight: 500 !important;
+    line-height: 1.55 !important;
+}
+.flow-alert-card.flow-alert-card--celebration .flow-alert-actions {
+    justify-content: center !important;
+    align-items: center !important;
+    padding: 1.25rem 1.5rem 1.75rem !important;
+    margin-top: 0.25rem !important;
+    border-top: none !important;
+    background: transparent !important;
+}
+.flow-alert-card.flow-alert-card--celebration .flow-alert-ok {
+    width: auto !important;
+    min-width: 8.5rem !important;
+    justify-content: center !important;
+    padding: 0.75rem 2.5rem !important;
+    font-size: 0.95rem !important;
+    font-weight: 700 !important;
+    border-radius: 0.75rem !important;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+    color: #ffffff !important;
+    border: none !important;
+    box-shadow: 0 6px 18px rgba(16, 185, 129, 0.25) !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    cursor: pointer;
+}
+.flow-alert-card.flow-alert-card--celebration .flow-alert-ok:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.35) !important;
+    transform: translateY(-2px) !important;
+}
+.flow-alert-card.flow-alert-card--celebration .flow-alert-ok:active {
+    transform: translateY(0) !important;
+}
+.flow-alert-progress-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #10b981, #34d399);
+    width: 100%;
+    transform-origin: left;
+    animation: flowProgressCountdown 4s linear forwards;
+}
+
+/* Keyframes */
+@keyframes flowStrokeCircle {
+    to { stroke-dashoffset: 0; }
+}
+@keyframes flowStrokeCheck {
+    to { stroke-dashoffset: 0; }
+}
+@keyframes flowPulseIcon {
+    0%, 100% {
+        box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3), 0 0 0 0px rgba(16, 185, 129, 0.25);
+    }
+    50% {
+        box-shadow: 0 10px 25px rgba(16, 185, 129, 0.2), 0 0 0 12px rgba(16, 185, 129, 0.15);
+    }
+}
+@keyframes flowProgressCountdown {
+    from { transform: scaleX(1); }
+    to { transform: scaleX(0); }
+}

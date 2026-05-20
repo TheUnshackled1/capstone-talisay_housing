@@ -892,26 +892,7 @@
 {% block extra_js %}
 <script>
     function lawqShowAlert(message, title, onConfirm, variant) {
-        const overlay = document.getElementById('lawqAlertOverlay');
-        if (!overlay) {
-            window.alert(message);
-            if (typeof onConfirm === 'function') onConfirm();
-            return;
-        }
-        const titleEl = document.getElementById('lawqAlertTitle');
-        const messageEl = document.getElementById('lawqAlertMessage');
-        const iconEl = document.getElementById('lawqAlertIcon');
-        const okBtn = document.getElementById('lawqAlertOk');
-        if (titleEl) titleEl.textContent = title || 'Notice';
-        if (messageEl) messageEl.textContent = message || '';
-        if (iconEl) iconEl.style.display = (variant === 'success') ? 'inline-flex' : 'none';
-        if (okBtn) {
-            okBtn.onclick = function () {
-                overlay.classList.remove('active');
-                if (typeof onConfirm === 'function') onConfirm();
-            };
-        }
-        overlay.classList.add('active');
+        showFlowAlert(message, title, onConfirm, variant);
     }
 
     function lawqCloseAlert(event) {

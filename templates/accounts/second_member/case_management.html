@@ -1883,6 +1883,258 @@
             align-self: flex-start;
         }
     }
+
+    /* ===================================================================
+       Custom Success Notification Modal (Web App Guidance compliant)
+       =================================================================== */
+    .success-modal-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        background: rgba(15, 23, 42, 0.45);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        animation: fadeInOverlay 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .success-modal-card {
+        background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
+        border: 1px solid rgba(16, 185, 129, 0.25);
+        border-radius: 1.25rem;
+        width: 100%;
+        max-width: 440px;
+        padding: 2.2rem;
+        text-align: center;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(16, 185, 129, 0.05);
+        position: relative;
+        overflow: hidden;
+        animation: scaleInCard 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    .success-icon-wrapper {
+        width: 80px;
+        height: 80px;
+        background: #dcfce7;
+        border-radius: 50%;
+        margin: 0 auto 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        box-shadow: 0 0 0 8px rgba(220, 252, 231, 0.5), 0 0 0 16px rgba(220, 252, 231, 0.25);
+        animation: pulseIcon 2s infinite ease-in-out;
+    }
+
+    .checkmark-svg {
+        width: 44px;
+        height: 44px;
+        stroke: #16a34a;
+        stroke-width: 3.5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        fill: none;
+    }
+
+    .checkmark-circle {
+        stroke-dasharray: 166;
+        stroke-dashoffset: 166;
+        stroke-width: 3.5;
+        stroke-miterlimit: 10;
+        stroke: #16a34a;
+        fill: none;
+        animation: strokeCircle 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+    }
+
+    .checkmark-check {
+        transform-origin: 50% 50%;
+        stroke-dasharray: 48;
+        stroke-dashoffset: 48;
+        animation: strokeCheck 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.6s forwards;
+    }
+
+    .success-modal-title {
+        font-family: 'Source Serif Pro', Georgia, serif;
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: #064e3b;
+        margin: 0 0 0.5rem;
+        letter-spacing: -0.01em;
+    }
+
+    .success-modal-message {
+        font-size: 0.92rem;
+        color: #475569;
+        margin-bottom: 1.5rem;
+        line-height: 1.5;
+    }
+
+    .success-details-card {
+        background: rgba(255, 255, 255, 0.7);
+        border: 1px dashed #a7f3d0;
+        border-radius: 0.85rem;
+        padding: 1rem 1.2rem;
+        margin-bottom: 1.8rem;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        text-align: left;
+        backdrop-filter: blur(4px);
+    }
+
+    .success-detail-item {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .success-detail-label {
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: #047857;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.25rem;
+    }
+
+    .success-detail-value {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #1e293b;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .success-copy-btn {
+        background: none;
+        border: none;
+        padding: 0.25rem;
+        color: #94a3b8;
+        cursor: pointer;
+        border-radius: 0.25rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+
+    .success-copy-btn:hover {
+        color: #047857;
+        background: #e2e8f0;
+    }
+
+    .success-copy-btn svg {
+        width: 13px;
+        height: 13px;
+    }
+
+    .success-status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.2rem 0.6rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        background: #fef3c7;
+        color: #d97706;
+        border: 1px solid #fde68a;
+    }
+
+    .success-status-badge::before {
+        content: '';
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #d97706;
+        box-shadow: 0 0 0 2px rgba(217, 119, 6, 0.2);
+        animation: pulseBadge 1.5s infinite ease-in-out;
+    }
+
+    .success-action-btn {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: #ffffff;
+        font-weight: 600;
+        font-size: 0.95rem;
+        border: none;
+        border-radius: 0.75rem;
+        padding: 0.75rem 2.2rem;
+        width: 100%;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+        transition: all 0.25s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .success-action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(16, 185, 129, 0.35);
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    }
+
+    .success-action-btn:active {
+        transform: translateY(0);
+    }
+
+    .success-progress-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #10b981, #34d399);
+        width: 100%;
+        transform-origin: left;
+        animation: progressCountdown 4s linear forwards;
+    }
+
+    /* Keyframes */
+    @keyframes fadeInOverlay {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    @keyframes scaleInCard {
+        from {
+            opacity: 0;
+            transform: scale(0.8) translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+    }
+
+    @keyframes strokeCircle {
+        to { stroke-dashoffset: 0; }
+    }
+
+    @keyframes strokeCheck {
+        to { stroke-dashoffset: 0; }
+    }
+
+    @keyframes pulseIcon {
+        0%, 100% {
+            box-shadow: 0 0 0 8px rgba(220, 252, 231, 0.5), 0 0 0 16px rgba(220, 252, 231, 0.25);
+        }
+        50% {
+            box-shadow: 0 0 0 12px rgba(220, 252, 231, 0.6), 0 0 0 24px rgba(220, 252, 231, 0.3);
+        }
+    }
+
+    @keyframes pulseBadge {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.2); opacity: 0.6; }
+    }
+
+    @keyframes progressCountdown {
+        from { transform: scaleX(1); }
+        to { transform: scaleX(0); }
+    }
 </style>
 {% endblock %}
 
@@ -2387,6 +2639,51 @@
             <button type="button" class="btn-modal danger" onclick="closeNewCaseModal()">Cancel</button>
         </div>
 
+    </div>
+</div>
+
+<!-- Custom Success Modal -->
+<div id="customSuccessModal" class="success-modal-overlay">
+    <div class="success-modal-card">
+        <div class="success-icon-wrapper">
+            <svg class="checkmark-svg" viewBox="0 0 52 52">
+                <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
+                <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+            </svg>
+        </div>
+        <h3 class="success-modal-title">Case Recorded</h3>
+        <p class="success-modal-message" id="successModalMessage">The complaint has been successfully created and logged into the monitoring database.</p>
+        
+        <div class="success-details-card">
+            <div class="success-detail-item">
+                <span class="success-detail-label">Case Number</span>
+                <span class="success-detail-value" id="successCaseNum">
+                    <span id="successCaseNumText">—</span>
+                    <button type="button" class="success-copy-btn" onclick="copyCaseNumber(event)" title="Copy Case Number">
+                        <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                    </button>
+                </span>
+            </div>
+            <div class="success-detail-item" style="text-align: right; align-items: flex-end;">
+                <span class="success-detail-label">Intake Status</span>
+                <div class="success-detail-value">
+                    <span class="success-status-badge" id="successStatusBadge">—</span>
+                </div>
+            </div>
+        </div>
+        
+        <button type="button" class="success-action-btn" onclick="proceedAfterSuccess()">
+            Proceed to Dashboard
+            <svg style="width: 1.1rem; height: 1.1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+                <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+        </button>
+        
+        <div class="success-progress-bar"></div>
     </div>
 </div>
 
@@ -3002,9 +3299,8 @@
                         });
                     }
                 }
-                alert(d.message);
-                closeNewCaseModal();
-                location.reload();
+                // Trigger premium custom success notification modal instead of basic browser alert
+                triggerSuccessNotification(d.message);
             })
             .catch(() => alert('Could not create case. Try again.'));
     }
@@ -3134,6 +3430,64 @@
         }
         const openId = params.get('case_id') || '{{ open_case_id|escapejs }}';
         if (openId) openCaseModal(openId);
+    }
+
+    function triggerSuccessNotification(message) {
+        let caseNumber = 'CASE-UNKNOWN';
+        let statusText = 'Pending Review';
+        
+        const caseMatch = message.match(/CASE-[A-Za-z0-9-]+/i);
+        if (caseMatch) {
+            caseNumber = caseMatch[0];
+        }
+        const statusMatch = message.match(/Status:\s*([A-Za-z\s]+)/i);
+        if (statusMatch) {
+            statusText = statusMatch[1].replace(/\.$/, '').trim();
+        }
+        
+        document.getElementById('successCaseNumText').textContent = caseNumber;
+        document.getElementById('successStatusBadge').textContent = statusText;
+        
+        // Hide the input modal overlay first
+        document.getElementById('newCaseModal').style.display = 'none';
+        
+        // Show our success notification
+        const overlay = document.getElementById('customSuccessModal');
+        overlay.style.display = 'flex';
+        
+        // Auto-redirect after 4 seconds
+        window.successRedirectTimeout = setTimeout(() => {
+            proceedAfterSuccess();
+        }, 4000);
+    }
+
+    window.copyCaseNumber = function(e) {
+        e.stopPropagation();
+        const caseNum = document.getElementById('successCaseNumText').textContent;
+        if (!caseNum || caseNum === '—' || caseNum === 'CASE-UNKNOWN') return;
+        
+        navigator.clipboard.writeText(caseNum).then(() => {
+            const copyBtn = document.querySelector('.success-copy-btn');
+            const originalHTML = copyBtn.innerHTML;
+            
+            copyBtn.innerHTML = `
+                <svg viewBox="0 0 24 24" width="13" height="13" stroke="#16a34a" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+            `;
+            
+            setTimeout(() => {
+                copyBtn.innerHTML = originalHTML;
+            }, 1500);
+        });
+    }
+
+    window.proceedAfterSuccess = function() {
+        if (window.successRedirectTimeout) {
+            clearTimeout(window.successRedirectTimeout);
+        }
+        closeNewCaseModal();
+        location.reload();
     }
 
     document.addEventListener('DOMContentLoaded', loadCasePageDeepLinks);
