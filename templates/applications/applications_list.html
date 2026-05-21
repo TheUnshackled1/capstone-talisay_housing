@@ -364,7 +364,7 @@
     }
 
     .applications-table thead {
-        background: linear-gradient(180deg, #1d4ed8 0%, #1e3a8a 100%);
+        background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
         position: sticky;
         top: 0;
         z-index: 2;
@@ -383,7 +383,7 @@
         text-overflow: ellipsis;
         border: 1px solid rgba(255, 255, 255, 0.22);
         position: relative;
-        background: linear-gradient(180deg, #1d4ed8 0%, #1e3a8a 100%);
+        background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
     }
 
     .applications-table th::after {
@@ -608,7 +608,7 @@
     }
 
     .applications-table.compact-table .col-num {
-        width: 2.5rem;
+        width: 4%;
         text-align: center;
     }
 
@@ -617,50 +617,31 @@
         color: #1e3a8a;
         font-size: 0.7rem;
         font-variant-numeric: tabular-nums;
+        text-align: center;
     }
 
     .applications-table.compact-table .col-applicant {
-        width: 16%;
-    }
-
-    .applications-table.compact-table .col-transaction {
-        width: 12%;
-    }
-
-    .applications-table.compact-table .col-reference {
-        width: 9%;
+        width: 30%;
     }
 
     .applications-table.compact-table .col-encoded {
-        width: 9%;
+        width: 16%;
     }
 
-    .applications-table.compact-table .col-encoded-ago {
-        width: 7%;
+    .applications-table.compact-table .col-status {
+        width: 18%;
     }
 
-    .applications-table.compact-table .col-eligibility {
-        width: 14%;
-    }
-
-    .applications-table.compact-table .col-channel {
+    .applications-table.compact-table .col-staff:not(.col-status) {
         width: 12%;
     }
 
-    .applications-table.compact-table .col-queue {
-        width: 8%;
-    }
-
-    .applications-table.compact-table .col-staff {
-        width: 14%;
-    }
-
-    .applications-table.compact-table .col-gate {
-        width: 8%;
+    .applications-table.compact-table .col-eligibility {
+        width: 10%;
     }
 
     .applications-table.compact-table .col-actions {
-        width: 8%;
+        width: 10%;
     }
 
     .applications-table.compact-table .m2-record-meta {
@@ -4091,6 +4072,265 @@
         line-height: 1 !important;
         flex-shrink: 0 !important;
     }
+
+    /* Premium Applicant Cell details for Evaluation Queue */
+    .complainant-cell-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+    }
+
+    .complainant-name-card {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+    }
+
+    .complainant-name {
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: #0f172a;
+        letter-spacing: -0.01em;
+        line-height: 1.25;
+    }
+
+    .complainant-meta {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-size: 0.68rem;
+        color: #64748b;
+        font-weight: 500;
+    }
+
+    .complainant-ref-code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-weight: 600;
+        background: #f1f5f9;
+        padding: 0.1rem 0.4rem;
+        border-radius: 4px;
+        color: #475569;
+        font-size: 0.7rem;
+        border: 1px solid #e2e8f0;
+    }
+
+    .case-number-badge {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-weight: 700;
+        background: #eff6ff;
+        padding: 0.1rem 0.4rem;
+        border-radius: 4px;
+        color: #1e40af;
+        font-size: 0.7rem;
+        border: 1px solid #bfdbfe;
+    }
+
+    /* Date column vertical stack */
+    .date-cell-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .date-main {
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: #334155;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+
+    .date-sub {
+        font-size: 0.68rem;
+        color: #64748b;
+        font-weight: 500;
+    }
+
+    /* Premium Situation badge colors */
+    .situation-badge {
+        display: inline-flex !important;
+        align-items: center !important;
+        padding: 0.35rem 0.6rem !important;
+        border-radius: 6px !important;
+        font-size: 0.68rem !important;
+        font-weight: 700 !important;
+        line-height: 1.25 !important;
+        border: 1px solid transparent !important;
+        width: 100% !important;
+        justify-content: center !important;
+        text-align: center !important;
+        box-sizing: border-box !important;
+        margin-bottom: 0.25rem !important;
+        white-space: normal !important;
+    }
+    .situation-badge--danger {
+        background: #fee2e2 !important;
+        color: #991b1b !important;
+        border-color: #fca5a5 !important;
+    }
+    .situation-badge--ejected {
+        background: #ffedd5 !important;
+        color: #9a3412 !important;
+        border-color: #fdba74 !important;
+    }
+    .situation-badge--relocated {
+        background: #dcfce7 !important;
+        color: #065f46 !important;
+        border-color: #86efac !important;
+    }
+    .situation-badge--other {
+        background: #f1f5f9 !important;
+        color: #475569 !important;
+        border-color: #cbd5e1 !important;
+    }
+
+    /* Status pill updates with active pulsing indicator */
+    .m2-readiness-chip {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 0.35rem !important;
+        padding: 0.25rem 0.6rem !important;
+        border-radius: 9999px !important;
+        font-size: 0.68rem !important;
+        font-weight: 700 !important;
+        border: 1px solid transparent !important;
+        line-height: 1.2 !important;
+    }
+
+    .m2-readiness-chip.blocked {
+        background: #fef2f2 !important;
+        color: #b91c1c !important;
+        border-color: #fee2e2 !important;
+    }
+    .m2-readiness-chip.blocked::before {
+        content: '';
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #ef4444;
+        box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+        animation: pulse-red-el 1.8s infinite ease-in-out;
+    }
+
+    .m2-readiness-chip.ready {
+        background: #f0fdf4 !important;
+        color: #15803d !important;
+        border-color: #dcfce7 !important;
+    }
+    .m2-readiness-chip.ready::before {
+        content: '';
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #10b981;
+        box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+        animation: pulse-green-el 1.8s infinite ease-in-out;
+    }
+
+    .m2-readiness-chip.pending {
+        background: #eff6ff !important;
+        color: #1d4ed8 !important;
+        border-color: #dbeafe !important;
+    }
+    .m2-readiness-chip.pending::before {
+        content: '';
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #3b82f6;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        animation: pulse-blue-el 1.8s infinite ease-in-out;
+    }
+
+    .m2-readiness-chip.followup {
+        background: #fff7ed !important;
+        color: #c2410c !important;
+        border-color: #ffedd5 !important;
+    }
+    .m2-readiness-chip.followup::before {
+        content: '';
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #f97316;
+        box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.2);
+        animation: pulse-amber-el 1.8s infinite ease-in-out;
+    }
+
+    @keyframes pulse-red-el {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+        50% { box-shadow: 0 0 0 4px rgba(239, 68, 68, 0); }
+    }
+    @keyframes pulse-green-el {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+        50% { box-shadow: 0 0 0 4px rgba(16, 185, 129, 0); }
+    }
+    @keyframes pulse-blue-el {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+        50% { box-shadow: 0 0 0 4px rgba(59, 130, 246, 0); }
+    }
+    @keyframes pulse-amber-el {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.4); }
+        50% { box-shadow: 0 0 0 4px rgba(249, 115, 22, 0); }
+    }
+
+    /* Modern action buttons */
+    body .btn-review-walkin {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 0.4rem !important;
+        padding: 0.45rem 0.85rem !important;
+        border-radius: 0.5rem !important;
+        border: 1px solid #1d4ed8 !important;
+        background: linear-gradient(180deg, #2563eb 0%, #1e3a8a 100%) !important;
+        color: #ffffff !important;
+        font-size: 0.72rem !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.02em !important;
+        cursor: pointer !important;
+        white-space: nowrap !important;
+        box-shadow: 0 1px 2px rgba(37, 99, 235, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    }
+
+    body .btn-review-walkin:hover {
+        background: linear-gradient(180deg, #1d4ed8 0%, #1e3a8a 100%) !important;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3) !important;
+        transform: translateY(-1.5px) scale(1.02) !important;
+        color: #ffffff !important;
+    }
+
+    body .btn-review-walkin:active {
+        transform: translateY(0) scale(1) !important;
+    }
+
+    body .action-btn {
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    }
+    body .action-btn:hover {
+        transform: translateY(-1.5px) scale(1.02) !important;
+    }
+    body .action-btn:active {
+        transform: translateY(0) scale(1) !important;
+    }
+
+    body .action-btn--proceed-form {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 0.4rem !important;
+        padding: 0.45rem 0.85rem !important;
+        border-radius: 0.5rem !important;
+        background: linear-gradient(180deg, #10b981 0%, #059669 100%) !important;
+        color: #ffffff !important;
+        border-color: #047857 !important;
+    }
+    body .action-btn--proceed-form:hover {
+        background: linear-gradient(180deg, #059669 0%, #047857 100%) !important;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3) !important;
+    }
 </style>
 {% endblock %}
 
@@ -4151,12 +4391,9 @@
             <thead>
                 <tr>
                     <th class="col-num" title="Row number in this list">#</th>
-                    <th class="col-applicant" title="Applicant full name">Applicant record</th>
-                    <th class="col-transaction" title="Applicant transaction ID">Transaction #</th>
-                    <th class="col-reference" title="Applicant reference number">Reference #</th>
+                    <th class="col-applicant" title="Applicant &amp; Transactions">Applicant record</th>
                     <th class="col-encoded" title="Date and time proceeded to Application & Evaluation">Proceeded time</th>
-                    <th class="col-encoded-ago" title="Relative to now since this record proceeded to Application & Evaluation">Time ago</th>
-                    <th class="col-staff col-status" title="Applicant Situation selected during intake">Situation Status</th>
+                    <th class="col-status" title="Applicant Situation selected during intake">Situation Status</th>
                     <th class="col-staff" title="Staff who proceeded from Module 1 (same as Intake Staff Handled)">Staff</th>
                     <th class="col-eligibility" title="Module 2 eligibility evaluation readiness (documents, checks, certification)">Eligibility status</th>
                     <th class="col-actions">Actions</th>
@@ -4173,53 +4410,76 @@
                 >
                     <td class="col-num" style="font-weight:700;color:#1e293b;">{{ page_obj.start_index|add:forloop.counter0 }}</td>
                     <td class="col-applicant">
-                        <div class="applicant-cell">
-                            <span class="applicant-name {% if data.applicant.displacement_reason == 'danger_zone' %}option-a{% elif data.applicant.displacement_reason == 'ejected' %}option-b{% elif data.applicant.displacement_reason == 'relocated' %}option-c{% elif data.applicant.displacement_reason == 'not_abc' %}option-d{% endif %}">{{ data.applicant.full_name }}</span>
-                            {% if data.blacklist_blocked %}
-                            <span style="font-size:0.5625rem;color:#b91c1c;font-weight:600;">
-                                Blacklist — Module 2 blocked
-                                {% if data.blacklist_source %}
-                                <span class="blacklist-source-chip {% if data.blacklist_source == 'Units Blacklist Entries' %}source-units{% else %}source-module1{% endif %}">{{ data.blacklist_source }}</span>
+                        <div class="complainant-cell-info">
+                            <div class="complainant-name-card">
+                                <svg class="applicant-meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 0.9rem; height: 0.9rem; flex-shrink: 0; color: #475569;">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="12" cy="7" r="4"></circle>
+                                </svg>
+                                <span class="complainant-name applicant-name {% if data.applicant.displacement_reason == 'danger_zone' %}option-a{% elif data.applicant.displacement_reason == 'ejected' %}option-b{% elif data.applicant.displacement_reason == 'relocated' %}option-c{% elif data.applicant.displacement_reason == 'not_abc' %}option-d{% endif %}" style="font-size:0.8rem; font-weight:700; color:#0f172a;">{{ data.applicant.full_name }}</span>
+                            </div>
+                            <div class="complainant-meta">
+                                <span class="case-number-badge" title="Transaction ID: APP-{{ data.applicant.id }}">APP-{{ data.applicant.id|slice:":8" }}...</span>
+                                {% if data.applicant.reference_number %}
+                                <span class="complainant-ref-code" title="Reference Code: {{ data.applicant.reference_number }}">{{ data.applicant.reference_number }}</span>
                                 {% endif %}
-                            </span>
+                            </div>
+                            {% if data.blacklist_blocked %}
+                            <div style="margin-top: 0.15rem; display: flex; align-items: center; gap: 0.25rem;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 0.75rem; height: 0.75rem; color: #ef4444; flex-shrink:0;">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                </svg>
+                                <span style="font-size:0.5625rem;color:#b91c1c;font-weight:700;">
+                                    Blacklist blocked
+                                    {% if data.blacklist_source %}
+                                    <span class="blacklist-source-chip {% if data.blacklist_source == 'Units Blacklist Entries' %}source-units{% else %}source-module1{% endif %}" style="font-size: 0.5rem; padding: 0.05rem 0.2rem;">{{ data.blacklist_source }}</span>
+                                    {% endif %}
+                                </span>
+                            </div>
                             {% endif %}
                         </div>
                     </td>
-                    <td class="col-transaction">
-                        <span class="m2-cell-code">APP-{{ data.applicant.id }}</span>
-                    </td>
-                    <td class="col-reference">
-                        <span class="m2-cell-code">{{ data.applicant.reference_number }}</span>
-                    </td>
                     <td class="col-encoded">
-                        <span style="font-size:0.6875rem;color:#334155;" title="Date &amp; time proceeded to Application &amp; Evaluation">{{ data.applicant.module2_handoff_at|default:data.applicant.created_at|date:"n/j/Y, P" }}</span>
+                        <div class="date-cell-stack">
+                            <div class="date-main">
+                                <svg class="applicant-meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 0.8rem; height: 0.8rem; color: #3b82f6;">
+                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                                </svg>
+                                <span>{{ data.applicant.module2_handoff_at|default:data.applicant.created_at|date:"M d, Y" }}</span>
+                            </div>
+                            <div class="date-sub">
+                                {{ data.applicant.module2_handoff_at|default:data.applicant.created_at|date:"g:i A" }} · <span style="font-weight: 600; color: #475569;">{{ data.proceededAgo|default:"—" }}</span>
+                            </div>
+                        </div>
                     </td>
-                    <td class="col-encoded-ago" title="Same moment as Proceeded time — relative to now">
-                        <span style="font-size:0.625rem;color:#475569;font-weight:600;white-space:nowrap;">{{ data.proceededAgo|default:"—" }}</span>
-                    </td>
-                    <td class="col-staff col-status">
+                    <td class="col-status">
                         <div class="col-status-wrap">
                         {% if data.applicant.displacement_reason == 'danger_zone' %}
-                        <span style="background:#fee2e2;border:1px solid #fecaca;color:#b91c1c;font-weight:700;">
+                        <span class="situation-badge situation-badge--danger">
                             Resident of Danger Zone or Hazard Area
                         </span>
                         <div style="font-size:0.55rem;color:#7f1d1d;margin-top:0.25rem;line-height:1.3;">Required: CDRRMO certification + Ronda / field photo evidence</div>
                         {% elif data.applicant.displacement_reason == 'ejected' %}
-                        <span style="background:#ffedd5;border:1px solid #fdba74;color:#b45309;font-weight:700;">
+                        <span class="situation-badge situation-badge--ejected">
                             Ejected or Evicted from Prior Residence
                         </span>
-                        <div style="font-size:0.55rem;color:#9a3412;margin-top:0.25rem;line-height:1.3;">Required: Court Order / Legal Office / Barangay certification + ISF situational documentation</div>
+                        <div style="font-size:0.55rem;color:#9a3412;margin-top:0.25rem;line-height:1.3;">Required: Court Order / Barangay cert + ISF docs</div>
                         {% elif data.applicant.displacement_reason == 'relocated' %}
-                        <span style="background:#dcfce7;border:1px solid #86efac;color:#047857;font-weight:700;">
-                            Displaced by Government Project or Infrastructure
+                        <span class="situation-badge situation-badge--relocated">
+                            Displaced by Gov Project / Infra
                         </span>
-                        <div style="font-size:0.55rem;color:#065f46;margin-top:0.25rem;line-height:1.3;">Required: Notice of Relocation / ROW Documentation / Project Order + ISF situational documentation</div>
+                        <div style="font-size:0.55rem;color:#065f46;margin-top:0.25rem;line-height:1.3;">Required: Notice of Relocation / Project Order + ISF docs</div>
                         {% elif data.applicant.displacement_reason == 'not_abc' %}
-                        <span style="background:#f1f5f9;border:1px solid #cbd5e1;color:#475569;font-weight:700;">
-                            None of A, B, or C (Other / not listed)
+                        <span class="situation-badge situation-badge--other">
+                            None of A, B, or C (Other)
                         </span>
                         {% else %}
-                        <span style="background:#fef3c7;border:1px solid #fde68a;color:#92400e;font-weight:700;">
+                        <span class="situation-badge situation-badge--other">
                             Not set
                         </span>
                         {% endif %}
@@ -4276,10 +4536,9 @@
                         <div class="m2-actions-stack">
                             <button type="button" class="btn-review btn-review-walkin"
                                 onclick="runEvaluatePrecheck('{{ data.applicant.id }}', '{{ data.applicant.full_name|escapejs }}')">
-                                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
-                                    <circle cx="9" cy="7" r="4"></circle>
-                                    <polyline points="16 11 18 13 22 9"></polyline>
+                                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true" style="width:0.85rem; height:0.85rem;">
+                                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                                    <circle cx="12" cy="14" r="2"></circle>
                                 </svg>
                                 Evaluate
                             </button>
@@ -4292,7 +4551,7 @@
                             {% endif %}
 
                             {% if 'award_lot' in data.user_actions %}
-                            <button class="action-btn" style="background: #f3e8ff; color: #7c3aed;"
+                            <button class="action-btn" style="background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%) !important; color:#ffffff !important; border:1px solid #6d28d9 !important;"
                                 onclick="openAwardModal('{{ data.application.id }}', '{{ data.applicant.full_name }}')">
                                 🏠 Award Lot
                             </button>
@@ -4302,7 +4561,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="10" style="text-align:center;color:#64748b;font-size:0.75rem;padding:1.1rem 0.75rem;line-height:1.5;">
+                    <td colspan="7" style="text-align:center;color:#64748b;font-size:0.75rem;padding:1.1rem 0.75rem;line-height:1.5;">
                         {% if search %}
                         No results match your search &ldquo;{{ search }}&rdquo;.
                         {% else %}
