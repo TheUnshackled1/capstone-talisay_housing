@@ -66,6 +66,15 @@ def _applicant_intake_docs_done_count(applicant):
     return sum(1 for k in keys if getattr(applicant, k, False))
 
 
+def _dashboard_recent_activity_context():
+    """Recent activity feed + paginated pages (10 per carousel page) for staff dashboards."""
+    recent_activity = build_oic_recent_activity(limit=OIC_ACTIVITY_MAX_ITEMS)
+    return {
+        'recent_activity': recent_activity,
+        'recent_activity_pages': paginate_oic_activity(recent_activity),
+    }
+
+
 def login_view(request):
     """Staff login page."""
     if request.user.is_authenticated:
@@ -210,9 +219,6 @@ def dashboard_oic(request):
     units_for_modal = list(
         HousingUnit.objects.select_related('site').order_by('block_number', 'lot_number')[:300]
     )
-    recent_activity = build_oic_recent_activity(limit=OIC_ACTIVITY_MAX_ITEMS)
-    recent_activity_pages = paginate_oic_activity(recent_activity)
-
     oic_modal_lists = {
         'total_applicants': [
             {
@@ -287,8 +293,7 @@ def dashboard_oic(request):
         'open_cases': open_cases,
         'oic_analytics_updated_at': timezone.now(),
         'oic_modal_data_json': json.dumps(oic_modal_lists),
-        'recent_activity': recent_activity,
-        'recent_activity_pages': recent_activity_pages,
+        **_dashboard_recent_activity_context(),
     }
     return render(request, 'accounts/dashboard.html', context)
 
@@ -400,6 +405,7 @@ def dashboard_second_member(request):
         'pending_cdrrmo_count': pending_cdrrmo_count,
         'requirements_verified_month': requirements_verified_month,
         'vacant_units_award': vacant_units_award,
+        **_dashboard_recent_activity_context(),
     }
 
     return render(request, 'accounts/dashboard.html', context)
@@ -1409,6 +1415,7 @@ def dashboard_fourth_member(request):
         'repossessed_count': repossessed_count,
         'awaiting_reaward': awaiting_reaward,
         'ready_to_award': ready_to_award,
+        **_dashboard_recent_activity_context(),
     }
 
     return render(request, 'accounts/dashboard.html', context)
