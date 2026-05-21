@@ -208,10 +208,10 @@ _sys.stderr.flush()
 # =============================================================================
 JAZZMIN_SETTINGS = {
     # Title & branding
-    "site_title": "THA Admin",
+    "site_title": "IHSMS Admin",
     "site_header": "Talisay City Housing Authority",
     "site_brand": "IHSMS",
-    "welcome_sign": "Welcome to Talisay City Housing Authority Admin Panel",
+    "welcome_sign": "Integrated Housing Services and Monitoring System — Talisay City Housing Authority",
     "login_logo": None,
 
     # UI customization
