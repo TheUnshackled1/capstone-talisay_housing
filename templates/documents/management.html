@@ -155,7 +155,7 @@
     }
 
     .documents-table thead {
-        background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+        background: linear-gradient(180deg, #2563eb 0%, #1e3a8a 100%);
         position: sticky;
         top: 0;
         z-index: 2;
@@ -169,14 +169,14 @@
         color: #f8fafc;
         text-transform: uppercase;
         letter-spacing: 0.08em;
-        border-bottom: 2px solid #334155;
+        border-bottom: 2px solid #1d4ed8;
         border-right: 1px solid rgba(255, 255, 255, 0.08);
         white-space: normal;
         word-break: normal;
         line-height: 1.35;
         vertical-align: middle;
         position: relative;
-        background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+        background: linear-gradient(180deg, #2563eb 0%, #1e3a8a 100%);
     }
 
     .documents-table th:last-child {
@@ -1544,42 +1544,87 @@
                     data-applicant-id="{{ applicant.id }}"
                     data-search="{{ applicant.full_name|lower }} {{ applicant.reference_number|default:''|lower }}{% if applicant.has_blacklist_record %} blacklisted{% endif %} {{ applicant.applicant_status_detail|default:''|lower }}">
                     <td class="col-num">{{ page_obj.start_index|add:forloop.counter0 }}</td>
-                    <td class="col-applicant">{{ applicant.full_name }}</td>
+                    <td class="col-applicant">
+                        <div class="applicant-cell-info">
+                            <div class="applicant-name">{{ applicant.full_name }}</div>
+                            <div class="applicant-meta">
+                                <svg class="applicant-meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                    <circle cx="12" cy="7" r="4"/>
+                                </svg>
+                                <span class="applicant-ref-code">{{ applicant.reference_number|default:"No Reference" }}</span>
+                            </div>
+                        </div>
+                    </td>
                     <td class="col-app-state">
                         {% if applicant.has_blacklist_record %}
-                        <span class="dm-status-pill dm-status--blacklist">Blacklisted</span>
+                        <span class="dm-status-pill dm-status--blacklist">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                            Blacklisted
+                        </span>
                         {% else %}
-                        <span class="dm-status-pill dm-status--active">Active</span>
+                        <span class="dm-status-pill dm-status--active">
+                            <span class="status-dot-active"></span>
+                            Active
+                        </span>
                         {% endif %}
                     </td>
                     <td class="col-workflow-status">
-                        <span class="dm-workflow-badge">{{ applicant.applicant_workflow_status|default:"Evaluation & Eligibility" }}</span>
+                        <span class="dm-workflow-badge {% if 'Intake' in applicant.applicant_workflow_status %}dm-workflow-badge--intake{% elif 'Eligibility' in applicant.applicant_workflow_status %}dm-workflow-badge--eligibility{% elif 'Form' in applicant.applicant_workflow_status %}dm-workflow-badge--form{% elif 'Award' in applicant.applicant_workflow_status %}dm-workflow-badge--award{% elif 'Units' in applicant.applicant_workflow_status %}dm-workflow-badge--units{% else %}dm-workflow-badge--default{% endif %}">
+                            {{ applicant.applicant_workflow_status|default:"Evaluation & Eligibility" }}
+                        </span>
                         {% if applicant.applicant_status_detail %}
-                        <div class="dm-applicant-status-detail">{{ applicant.applicant_status_detail }}</div>
+                        <div class="dm-applicant-status-detail">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                                <polyline points="9 22 9 12 15 12 15 22"/>
+                            </svg>
+                            <span>{{ applicant.applicant_status_detail }}</span>
+                        </div>
                         {% endif %}
                     </td>
                     <td class="col-documents">
-                        <span style="display: inline-block; padding: 0.35rem 0.65rem; background: #eff6ff; color: #1e40af; border-radius: 4px; font-weight: 600; font-size: 0.75rem;">{{ applicant.doc_count }}</span>
+                        <div class="doc-count-widget">
+                            <div class="doc-count-badge">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                    <polyline points="14 2 14 8 20 8"/>
+                                </svg>
+                                <span>{{ applicant.doc_count }}</span>
+                            </div>
+                            <div class="doc-progress-track" title="{{ applicant.doc_count }} documents verified (8 standard target)">
+                                <div class="doc-progress-bar {% if applicant.doc_count >= 8 %}doc-progress-bar--full{% elif applicant.doc_count > 0 %}doc-progress-bar--partial{% else %}doc-progress-bar--empty{% endif %}" style="width: {% if applicant.doc_count == 1 %}12.5%{% elif applicant.doc_count == 2 %}25%{% elif applicant.doc_count == 3 %}37.5%{% elif applicant.doc_count == 4 %}50%{% elif applicant.doc_count == 5 %}62.5%{% elif applicant.doc_count == 6 %}75%{% elif applicant.doc_count == 7 %}87.5%{% elif applicant.doc_count >= 8 %}100%{% else %}0%{% endif %};"></div>
+                            </div>
+                        </div>
                     </td>
                     <td class="col-doc-status">
                         {% if applicant.doc_count >= 8 %}
-                        <span class="dm-status-pill dm-status--complete">Complete</span>
+                        <span class="dm-status-pill dm-status--complete">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                            Complete
+                        </span>
                         {% elif applicant.doc_count > 0 %}
-                        <span class="dm-status-pill dm-status--partial">Partial</span>
+                        <span class="dm-status-pill dm-status--partial">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                            Partial
+                        </span>
                         {% else %}
-                        <span class="dm-status-pill dm-status--pending">Pending</span>
+                        <span class="dm-status-pill dm-status--pending">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                            Pending
+                        </span>
                         {% endif %}
                     </td>
                     <td class="col-actions" style="vertical-align: middle;">
                         <button type="button"
                             class="dm-action-btn dm-action-btn--view"
                             data-applicant-id="{{ applicant.id }}"
-                            onclick="openVaultDrawer(this.dataset.applicantId)">
+                            onclick="openVaultDrawer(this.dataset.applicantId)"
+                            title="Open document vault for {{ applicant.full_name }}">
                             <svg class="dm-action-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                                <circle cx="12" cy="12" r="3"/>
+                                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
                             </svg>
-                            View
+                            Open Vault
                         </button>
                     </td>
                 </tr>
