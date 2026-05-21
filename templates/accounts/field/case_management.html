@@ -736,8 +736,37 @@
         display: flex;
         flex-wrap: wrap;
         justify-content: center;
+        align-items: center;
         gap: 0.5rem;
         margin-top: 0.65rem;
+    }
+
+    .tha-case-view-modal .case-filed-meta {
+        font-size: 0.72rem;
+        color: #cbd5e1;
+    }
+
+    .tha-case-view-modal .case-desk-badge {
+        display: inline-block;
+        padding: 0.15rem 0.5rem;
+        border-radius: 999px;
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+
+    .tha-case-view-modal .case-desk-badge--intake {
+        background: rgba(16, 185, 129, 0.2);
+        border: 1px solid rgba(110, 231, 183, 0.45);
+        color: #d1fae5;
+    }
+
+    .tha-case-view-modal .case-evidence-intake-hint {
+        margin: 0 0 0.65rem;
+        font-size: 0.72rem;
+        color: #64748b;
+        line-height: 1.45;
     }
 
     .tha-case-view-modal #addCaseForm .tha-section-block,
@@ -804,7 +833,7 @@
         display: block;
         font-size: 0.68rem;
         font-weight: 700;
-        color: #64748b;
+        color: #047857; /* Green color from image */
         text-transform: uppercase;
         letter-spacing: 0.04em;
         margin-bottom: 0.25rem;
@@ -817,6 +846,36 @@
         margin: 0;
         line-height: 1.4;
     }
+
+    .case-record-respondent .case-detail-value,
+    #modalCaseRecordedBy .case-detail-value {
+        background-color: #fffbeb; /* Yellowish background */
+        border: 1px solid #fef3c7; /* Yellowish border */
+        padding: 0.5rem;
+        border-radius: 0.5rem;
+    }
+    
+    .case-record-incident-type .case-detail-value {
+        background-color: #eef2ff;
+        border-color: #e0e7ff;
+        color: #4338ca;
+        padding: 0.2rem 0.6rem;
+        border-radius: 0.375rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: inline-block;
+    }
+
+    .case-detail-description-box {
+        background-color: #f8fafc;
+        border: 1px solid #e2e8f0;
+        padding: 0.75rem;
+        border-radius: 0.5rem;
+        font-size: 0.85rem;
+        color: #334155;
+        line-height: 1.5;
+    }
+    
 
     .tha-case-view-modal .case-detail-value.muted {
         font-weight: 500;
@@ -838,12 +897,17 @@
         margin: 0;
     }
 
-    .tha-case-view-modal .case-record-card>.tha-section-title,
-    .tha-case-view-modal #evidenceSection>.tha-section-title {
+    .tha-case-view-modal .case-record-card>.tha-section-title {
         justify-content: center;
         margin-bottom: 0;
         padding: 1rem 1.1rem 0.85rem;
         border-bottom: 1px solid #e5e9ef;
+    }
+
+    .tha-case-view-modal .field-case-settlement-card>.tha-section-title {
+        justify-content: flex-start;
+        padding: 0;
+        border-bottom: none;
     }
 
     .tha-case-view-modal .case-record-card {
@@ -912,8 +976,21 @@
     }
 
     .tha-case-view-modal .case-record-part--profile {
-        flex: 1.15 1 0;
-        min-width: 12.5rem;
+        flex: 0 0 42%;
+        min-width: 14rem;
+        max-width: 22rem;
+    }
+
+    .tha-case-view-modal .case-record-part--respondent {
+        flex: 1 1 0;
+        min-width: 16rem;
+    }
+
+    .tha-case-view-modal .case-record-incident-block,
+    .tha-case-view-modal .case-record-investigation-block {
+        margin-top: 1rem;
+        padding-top: 0.85rem;
+        border-top: 1px solid #e2e8f0;
     }
 
     .tha-case-view-modal .beneficiary-profile-panel {
@@ -987,10 +1064,426 @@
         color: #64748b;
     }
 
-    .tha-case-view-modal .case-record-prior #priorCasesList {
+    .tha-case-view-modal .case-record-prior--respondent {
+        margin: 0 0 1.1rem;
+        padding: 0.75rem 0.8rem;
+        background: #fffbeb;
+        border: 1px solid #fde68a;
+        border-radius: 0.6rem;
+    }
+
+    .tha-case-view-modal .case-prior-table-wrap {
+        margin-top: 0.5rem;
+        overflow-x: auto;
+        border: 1px solid #fde68a;
+        border-radius: 0.5rem;
+        background: #fff;
+    }
+
+    .tha-case-view-modal .case-prior-table {
+        width: 100%;
+        min-width: 32rem;
+        border-collapse: collapse;
+        font-size: 0.74rem;
+    }
+
+    .tha-case-view-modal .case-prior-table thead th {
+        padding: 0.45rem 0.55rem;
+        text-align: left;
+        font-size: 0.65rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #78350f;
+        background: #fef3c7;
+        border-bottom: 1px solid #fde68a;
+        white-space: nowrap;
+    }
+
+    .tha-case-view-modal .case-prior-table tbody td {
+        padding: 0.5rem 0.55rem;
+        vertical-align: top;
+        border-bottom: 1px solid #f1f5f9;
+        color: #334155;
+        line-height: 1.4;
+    }
+
+    .tha-case-view-modal .case-prior-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .tha-case-view-modal .case-prior-table-case strong {
+        font-size: 0.76rem;
+        color: #0f172a;
+        white-space: nowrap;
+    }
+
+    .tha-case-view-modal .case-prior-table-status {
+        min-width: 7.5rem;
+    }
+
+    .tha-case-view-modal .case-prior-status-pill {
+        display: inline-block;
+        margin-bottom: 0.15rem;
+        padding: 0.12rem 0.4rem;
+        border-radius: 999px;
+        font-size: 0.62rem;
+        font-weight: 700;
+        line-height: 1.3;
+        background: #e2e8f0;
+        color: #334155;
+    }
+
+    .tha-case-view-modal .case-prior-status-pill--under_review {
+        background: #dbeafe;
+        color: #1d4ed8;
+    }
+
+    .tha-case-view-modal .case-prior-status-pill--mediation_monitoring {
+        background: #ffedd5;
+        color: #c2410c;
+    }
+
+    .tha-case-view-modal .case-prior-status-pill--pending_review {
+        background: #fef3c7;
+        color: #b45309;
+    }
+
+    .tha-case-view-modal .case-prior-table-date {
+        display: block;
+        font-size: 0.65rem;
+        color: #64748b;
+    }
+
+    .tha-case-view-modal .case-prior-table-type {
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        color: #92400e;
+        white-space: nowrap;
+    }
+
+    .tha-case-view-modal .case-prior-table-desc {
+        max-width: 12rem;
+        word-break: break-word;
+    }
+
+    .tha-case-view-modal .case-prior-table-action {
+        text-align: right;
+        white-space: nowrap;
+    }
+
+    .tha-case-view-modal .case-prior-open-link {
+        padding: 0;
+        border: none;
+        background: none;
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: #047857;
+        cursor: pointer;
+        text-decoration: underline;
+    }
+
+    .tha-case-view-modal .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
+
+    .tha-case-view-modal .case-record-prior-empty {
+        margin: 0.35rem 0 0;
+        font-size: 0.74rem;
+        color: #78716c;
+    }
+
+    .tha-case-view-modal .case-mark-reviewed-row {
+        display: grid;
+        grid-template-columns: minmax(4.8rem, 14%) minmax(6.5rem, 22%) minmax(5.5rem, 18%) 1fr minmax(4.2rem, 12%);
+        align-items: center;
+        margin-top: 0.6rem;
+        padding: 0 0.55rem 0.1rem;
+    }
+
+    .tha-case-view-modal .btn-mark-reviewed-inline {
+        grid-column: 3;
+        justify-self: start;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: auto;
+        max-width: 8.5rem;
+        margin: 0;
+        padding: 0.38rem 0.65rem;
+        border: none;
+        border-radius: 0.45rem;
+        background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
+        color: #fff;
+        font-size: 0.68rem;
+        font-weight: 700;
+        line-height: 1.2;
+        white-space: nowrap;
+        cursor: pointer;
+        box-shadow: 0 4px 10px rgba(37, 99, 235, 0.22);
+    }
+
+    .tha-case-view-modal .btn-mark-reviewed-inline:disabled {
+        opacity: 0.65;
+        cursor: not-allowed;
+    }
+
+    .field-case-carousel-wrap {
+        margin-top: 0.5rem;
+    }
+
+    .field-case-carousel-labels {
+        display: flex;
+        gap: 0.35rem;
+        margin-bottom: 0.55rem;
+        flex-wrap: wrap;
+    }
+
+    .field-case-carousel-label {
+        flex: 1;
+        min-width: 8rem;
+        padding: 0.35rem 0.5rem;
+        border: none;
+        border-radius: 0.45rem;
+        font-size: 0.68rem;
+        font-weight: 700;
+        font-family: inherit;
+        text-align: center;
+        color: #64748b;
+        background: #f1f5f9;
+        cursor: pointer;
+        transition: background 0.15s ease, color 0.15s ease;
+    }
+
+    .field-case-carousel-label:hover {
+        background: #e2e8f0;
+    }
+
+    .field-case-carousel-label.is-active {
+        color: #047857;
+        background: #ecfdf5;
+    }
+
+    .field-case-carousel-label.is-active:hover {
+        background: #d1fae5;
+    }
+
+    .field-case-carousel-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+    }
+
+    .field-case-carousel-counter {
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: #64748b;
+    }
+
+    .field-case-carousel-dots {
+        display: flex;
+        gap: 0.35rem;
+    }
+
+    .field-case-carousel-dot {
+        width: 0.45rem;
+        height: 0.45rem;
+        padding: 0;
+        border: none;
+        border-radius: 50%;
+        background: #cbd5e1;
+        cursor: pointer;
+    }
+
+    .field-case-carousel-dot.is-active {
+        background: #047857;
+    }
+
+    .field-case-carousel-viewport {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .field-case-carousel-nav {
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.35rem;
+        height: 2.35rem;
+        padding: 0;
+        border: 1px solid #cbd5e1;
+        border-radius: 0.55rem;
+        background: #fff;
+        color: #047857;
+        cursor: pointer;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+        transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .field-case-carousel-nav svg {
+        width: 1.15rem;
+        height: 1.15rem;
+        pointer-events: none;
+    }
+
+    .field-case-carousel-nav:hover:not(:disabled) {
+        background: #ecfdf5;
+        border-color: #86efac;
+        box-shadow: 0 2px 6px rgba(4, 120, 87, 0.12);
+    }
+
+    .field-case-carousel-nav:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+        color: #94a3b8;
+        box-shadow: none;
+    }
+
+    .field-case-carousel-track-wrap {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        border-radius: 0.65rem;
+        border: 1px solid #e2e8f0;
+        background: #f8fafc;
+    }
+
+    .field-case-carousel-track {
+        display: flex;
+        width: 100%;
+        transition: transform 0.38s cubic-bezier(0.4, 0, 0.2, 1);
+        will-change: transform;
+    }
+
+    .field-case-modal-slide {
+        flex: 0 0 100%;
+        width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+        padding: 0.15rem 0;
+    }
+
+    .field-case-modal-slide .case-record-card--review {
+        border-left-color: #3b82f6;
+    }
+
+    .field-case-settlement-workspace {
+        padding: 0.35rem 0.5rem 0.5rem;
+    }
+
+    .field-case-settlement-card {
+        margin: 0;
+        padding: 0.9rem 1rem 1rem;
+        border: 1px solid #fde68a;
+        border-left: 4px solid #ea580c;
+        border-radius: 0.65rem;
+        background: #fff;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+    }
+
+    .field-case-settlement-card .tha-section-title {
+        margin-bottom: 0.35rem;
+        color: #9a3412;
+        text-align: left;
+    }
+
+    .field-case-settlement-card .case-settlement-lead {
+        margin: 0 0 0.85rem;
+        font-size: 0.78rem;
+        line-height: 1.45;
+        color: #64748b;
+    }
+
+    .field-case-settlement-card .case-settlement-evidence-block {
+        padding-top: 0.75rem;
+        border-top: 1px solid #f1f5f9;
+    }
+
+    .field-case-settlement-card .case-settlement-evidence-block .case-record-part-title {
+        margin-bottom: 0.35rem;
+    }
+
+    .field-case-settlement-card .case-settlement-evidence-inner {
         display: flex;
         flex-direction: column;
-        gap: 0.45rem;
+        gap: 0.65rem;
+        margin-top: 0.5rem;
+    }
+
+    .tha-case-view-modal .case-evidence-file-hidden {
+        display: none !important;
+    }
+
+    .tha-case-view-modal .case-evidence-upload-form {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+        width: 100%;
+    }
+
+    .tha-case-view-modal .case-evidence-pick-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .tha-case-view-modal .case-evidence-pick-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.35rem;
+        padding: 0.45rem 0.75rem;
+        border: 1px solid #cbd5e1;
+        border-radius: 0.45rem;
+        background: #fff;
+        color: #334155;
+        font-size: 0.72rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background 0.15s ease, border-color 0.15s ease;
+    }
+
+    .tha-case-view-modal .case-evidence-pick-btn:hover {
+        background: #f8fafc;
+        border-color: #94a3b8;
+    }
+
+    .tha-case-view-modal .case-evidence-pick-btn--camera {
+        border-color: #86efac;
+        background: #ecfdf5;
+        color: #047857;
+    }
+
+    .tha-case-view-modal .case-evidence-pick-btn--camera:hover {
+        background: #d1fae5;
+    }
+
+    .tha-case-view-modal .case-evidence-btn-icon {
+        width: 1rem;
+        height: 1rem;
+        flex-shrink: 0;
+    }
+
+    .tha-case-view-modal .case-evidence-file-label {
+        margin: 0;
+        font-size: 0.72rem;
+        color: #64748b;
+        word-break: break-word;
     }
 
     .tha-case-view-modal .case-record-respondent {
@@ -1054,28 +1547,10 @@
 
     .tha-case-view-modal #evidenceSection {
         display: block;
-        padding-bottom: 1rem;
-    }
-
-    .tha-case-view-modal #evidenceSection>.tha-section-title {
-        text-align: center;
-    }
-
-    .tha-case-view-modal #evidenceSection .case-evidence-inner {
-        max-width: none;
-        margin: 0;
-        padding: 0.75rem 1rem 0.5rem;
-        display: flex;
-        flex-direction: row;
-        flex-wrap: wrap;
-        align-items: center;
-        justify-content: flex-start;
-        gap: 0.75rem 1rem;
     }
 
     .tha-case-view-modal #evidenceList {
-        flex: 1 1 14rem;
-        min-width: 12rem;
+        width: 100%;
         display: flex;
         flex-direction: column;
         gap: 0.5rem;
@@ -1109,29 +1584,6 @@
         text-align: left;
     }
 
-    .prior-case-item {
-        display: block;
-        width: 100%;
-        text-align: left;
-        padding: 0.55rem 0.65rem;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        background: #f8fafc;
-        cursor: pointer;
-        font-size: 0.8rem;
-        color: #0f172a;
-        transition: background 0.15s ease, border-color 0.15s ease;
-    }
-
-    .prior-case-item:hover {
-        background: #eff6ff;
-        border-color: #bfdbfe;
-    }
-
-    .prior-case-item strong {
-        color: #1d4ed8;
-    }
-
     .modal-household-table {
         width: 100%;
         margin-top: 0.5rem;
@@ -1155,26 +1607,20 @@
     }
 
     .tha-case-view-modal #evidenceUploadForm {
-        flex: 1 1 16rem;
-        min-width: 14rem;
-        display: none;
-        flex-direction: row;
-        flex-wrap: wrap;
-        align-items: center;
+        width: 100%;
+        flex-direction: column;
+        flex-wrap: nowrap;
+        align-items: stretch;
         gap: 0.5rem;
     }
 
     .tha-case-view-modal #evidenceUploadForm .form-input {
-        flex: 1 1 8rem;
-        min-width: 7rem;
+        width: 100%;
         max-width: none;
         text-align: left;
         font-size: 0.8rem;
         padding: 0.45rem 0.55rem;
-    }
-
-    .tha-case-view-modal #evidenceUploadForm input[type="file"] {
-        flex: 1 1 9rem;
+        box-sizing: border-box;
     }
 
     .tha-case-view-modal #evidenceUploadForm .cases-add-btn {
@@ -1222,11 +1668,6 @@
             min-width: 0;
             border-right: none;
             border-bottom: 1px solid #eef2f6;
-        }
-
-        .tha-case-view-modal #evidenceSection .case-evidence-inner {
-            flex-direction: column;
-            align-items: stretch;
         }
 
         .tha-case-view-modal #evidenceUploadForm {
@@ -2250,6 +2691,9 @@
 
 <div class="monitoring-shell">
     <h1 class="monitoring-title">Case Management</h1>
+    <p class="monitoring-subtitle">
+        Field desk intake — use <strong>Add Case</strong> to log complaints. New cases appear below as <strong>Pending Review</strong> for THA monitoring.
+    </p>
 </div>
 
 <div class="monitoring-kpis">
@@ -2388,7 +2832,7 @@
                     </thead>
                     <tbody>
                         {% for case in cases %}
-                        <tr data-case-id="{{ case.id }}">
+                        <tr data-case-id="{{ case.id }}" data-case-status="{{ case.status }}">
                             <td style="font-weight: 700; color: #1e293b;">{{ forloop.counter }}</td>
                             <td>
                                 <div class="complainant-cell-info">
@@ -2428,7 +2872,7 @@
                                 <span class="case-type-badge case-type-badge--standard">{{ case.get_case_type_display }}</span>
                             </td>
                             <td>
-                                <span class="status-pill-flex status-pill-flex--{{ case.status }}">
+                                <span class="status-pill-flex status-pill-flex--{{ case.status }}" data-case-status-pill>
                                     {% if case.status == 'resolved' %}
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="width: 0.75rem; height: 0.75rem; color: #16a34a; flex-shrink: 0; margin-right: 0.15rem;">
                                         <path d="M20 6L9 17l-5-5"></path>
@@ -2474,7 +2918,7 @@
 <div id="caseModal" class="tha-case-view-overlay" onclick="closeCaseModal(event)">
     <div class="modal-content tha-reg-modal tha-case-view-modal" onclick="event.stopPropagation();">
         <div class="modal-header">
-            <h2 class="modal-title">Case record</h2>
+            <h2 class="modal-title" id="caseModalTitle">Case record</h2>
             <button type="button" class="btn-close" onclick="closeCaseModal()" aria-label="Close">
                 <svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                     stroke-width="2">
@@ -2490,34 +2934,16 @@
                 <p class="tha-form-subtitle">Talisay City Housing Authority · Module 5</p>
                 <div class="case-detail-meta">
                     <span id="modalStatusBadge" class="case-status-pill"></span>
-                    <span id="modalFiledMeta" style="font-size:0.72rem;color:#cbd5e1;"></span>
+                    <span id="modalFiledMeta" class="case-filed-meta"></span>
+                    <span id="modalDeskBadge" class="case-desk-badge case-desk-badge--intake">Field intake</span>
                 </div>
             </div>
 
-            <div class="tha-section-block case-record-card">
+            <div id="fieldCaseStaticWrap">
+            <div id="caseRecordPrimary" class="tha-section-block case-record-card">
                 <h3 class="tha-section-title">Case details</h3>
 
                 <div class="case-record-row">
-                    <section class="case-record-part">
-                        <h4 class="case-record-part-title">Staff handled</h4>
-                        <div id="modalStaffCard" class="case-record-staff">
-                            <div id="modalStaffAvatar" class="handled-by-avatar other">—</div>
-                            <div>
-                                <p id="modalStaffName" class="case-detail-value">—</p>
-                                <p id="modalStaffRole" class="case-detail-value muted case-record-meta">—</p>
-                            </div>
-                        </div>
-
-                        <div id="investigationSection" style="display: none; margin-top: 1.25rem;">
-                            <h4 class="case-record-part-title">Investigation</h4>
-                            <div class="case-record-text-block">
-                                <p id="modalInvestigationNotes"
-                                    class="case-detail-description-box case-record-investigation-box">—</p>
-                                <p id="modalInvestigatedBy" class="case-record-meta"></p>
-                            </div>
-                        </div>
-                    </section>
-
                     <section class="case-record-part case-record-part--profile">
                         <h4 class="case-record-part-title">Beneficiary profile</h4>
                         <div class="beneficiary-profile-panel">
@@ -2549,66 +2975,161 @@
                                 <div id="modalHouseholdMembersList"></div>
                             </div>
                         </div>
+
+                        <div class="case-record-incident-block">
+                            <h4 class="case-record-part-title">Incident</h4>
+                            <div class="case-record-incident-type">
+                                <span class="case-detail-label">Complaint type</span>
+                                <span id="modalComplaintType"></span>
+                            </div>
+                            <div class="case-record-text-block" style="margin-top: 0.5rem;">
+                                <span class="case-detail-label">Description</span>
+                                <p id="modalDescription" class="case-detail-description-box">—</p>
+                            </div>
+                        </div>
+
+                        <div id="investigationSection" class="case-record-investigation-block" style="display: none;">
+                            <h4 class="case-record-part-title">Investigation</h4>
+                            <div class="case-record-text-block">
+                                <p id="modalInvestigationNotes"
+                                    class="case-detail-description-box case-record-investigation-box">—</p>
+                                <p id="modalInvestigatedBy" class="case-record-meta"></p>
+                            </div>
+                        </div>
                     </section>
 
-                    <section class="case-record-part">
+                    <section class="case-record-part case-record-part--respondent">
                         <div id="subjectSection" style="display: none; margin-bottom: 1.25rem;">
                             <h4 class="case-record-part-title">Respondent</h4>
                             <p id="modalSubjectName" class="case-record-respondent">—</p>
                         </div>
 
-                        <h4 class="case-record-part-title">Incident</h4>
-                        <div class="case-record-incident-type">
-                            <span class="case-detail-label">Complaint type</span>
-                            <span id="modalComplaintType"></span>
+                        <div id="respondentPriorSection" class="case-record-prior case-record-prior--respondent" style="display: none;">
+                            <h4 class="case-record-part-title">Previous complaint history for respondent</h4>
+                            <p id="respondentPriorHeading" class="case-record-prior-hint"></p>
+                            <div id="respondentPriorTableWrap" class="case-prior-table-wrap" style="display: none;">
+                                <table class="case-prior-table">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">Case</th>
+                                            <th scope="col">Status</th>
+                                            <th scope="col">Type</th>
+                                            <th scope="col">Description</th>
+                                            <th scope="col"><span class="sr-only">Action</span></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="respondentPriorList"></tbody>
+                                </table>
+                            </div>
+                            <p id="respondentPriorEmpty" class="case-record-prior-empty" style="display: none;">
+                                No prior complaints on file for this respondent.
+                            </p>
+                            <div id="fieldMarkReviewedWrap" class="case-mark-reviewed-row" style="display: none;">
+                                <button type="button" id="btnMarkReviewed" class="btn-mark-reviewed-inline"
+                                    onclick="markFieldCaseReviewed()">Mark Reviewed</button>
+                            </div>
                         </div>
-                        <div class="case-record-text-block" style="margin-top: 0.5rem;">
-                            <span class="case-detail-label">Description</span>
-                            <p id="modalDescription" class="case-detail-description-box">—</p>
+
+                        <div id="referralSection" style="display: none; margin-top: 1.25rem;">
+                            <h4 class="case-record-part-title">Referral</h4>
+                            <p id="modalReferredTo" class="case-detail-value"></p>
+                            <p id="modalReferralNotes" class="case-detail-description-box" style="margin-top:0.5rem;"></p>
+                            <p id="modalReferralDate" class="case-detail-value muted"
+                                style="margin-top:0.35rem;font-size:0.75rem;"></p>
                         </div>
-                    </section>
 
-                    <section id="referralSection" class="case-record-part" style="display: none;">
-                        <h4 class="case-record-part-title">Referral</h4>
-                        <p id="modalReferredTo" class="case-detail-value"></p>
-                        <p id="modalReferralNotes" class="case-detail-description-box" style="margin-top:0.5rem;"></p>
-                        <p id="modalReferralDate" class="case-detail-value muted"
-                            style="margin-top:0.35rem;font-size:0.75rem;"></p>
-                    </section>
-
-                    <section id="resolutionSection" class="case-record-part" style="display: none;">
-                        <h4 class="case-record-part-title">Resolution</h4>
-                        <p id="modalResolutionNotes" class="case-detail-description-box"
-                            style="background:#f0fdf4;border-color:#bbf7d0;"></p>
-                        <p id="modalResolvedDate" class="case-detail-value muted case-record-meta"></p>
+                        <div id="resolutionSection" style="display: none; margin-top: 1.25rem;">
+                            <h4 class="case-record-part-title">Resolution</h4>
+                            <p id="modalResolutionNotes" class="case-detail-description-box"
+                                style="background:#f0fdf4;border-color:#bbf7d0;"></p>
+                            <p id="modalResolvedDate" class="case-detail-value muted case-record-meta"></p>
+                        </div>
                     </section>
                 </div>
 
-                <div id="priorCasesSection" class="case-record-prior" style="display: none;">
-                    <h4 class="case-record-part-title">Previous complaint history</h4>
-                    <p class="case-record-prior-hint">Other cases for this beneficiary or lot — click to open.</p>
-                    <div id="priorCasesList"></div>
-                </div>
+            </div>
             </div>
 
-            <div id="evidenceSection" class="tha-section-block tha-section-block--situation">
-                <h3 class="tha-section-title">Evidence on file</h3>
-                <div class="case-evidence-inner">
-                    <div id="evidenceList"></div>
-                    <div id="evidenceUploadForm">
-                        <input type="file" id="evidenceFile" class="form-input"
-                            accept="image/jpeg,image/png,image/webp,application/pdf">
-                        <input type="text" id="evidenceCaption" class="form-input" placeholder="Caption (optional)">
-                        <button type="button" onclick="uploadCaseEvidence()" class="cases-add-btn">Upload
-                            evidence</button>
+            <div id="fieldCaseCarouselWrap" class="field-case-carousel-wrap" style="display: none;">
+                <div class="field-case-carousel-labels" role="tablist">
+                    <button type="button" class="field-case-carousel-label is-active" data-slide-index="0"
+                        role="tab" aria-selected="true">1 — Case details</button>
+                    <button type="button" class="field-case-carousel-label" data-slide-index="1"
+                        role="tab" aria-selected="false">2 — Settlement</button>
+                </div>
+                <div class="field-case-carousel-toolbar">
+                    <span class="field-case-carousel-counter" id="fieldCaseCarouselCounter">Section 1 of 2</span>
+                    <div class="field-case-carousel-dots" id="fieldCaseCarouselDots" role="tablist"></div>
+                </div>
+                <div class="field-case-carousel-viewport">
+                    <button type="button" class="field-case-carousel-nav" id="fieldCaseCarouselPrev"
+                        aria-label="Previous section" disabled>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <polyline points="15 18 9 12 15 6"></polyline>
+                        </svg>
+                    </button>
+                    <div class="field-case-carousel-track-wrap">
+                        <div class="field-case-carousel-track" id="fieldCaseCarouselTrack">
+                            <div class="field-case-modal-slide" id="fieldCaseSlide1Mount"></div>
+                            <div class="field-case-modal-slide" id="fieldCaseSlide2">
+                                <div class="field-case-settlement-workspace">
+                                    <div id="evidenceSection"
+                                        class="tha-section-block case-record-card case-record-card--settlement field-case-settlement-card">
+                                        <h3 class="tha-section-title">Settlement</h3>
+                                        <p class="case-settlement-lead">Ronda field follow-up — upload or capture a photo from the settlement visit.</p>
+
+                                        <div class="case-settlement-evidence-block">
+                                            <h4 class="case-record-part-title">Evidence intake</h4>
+                                            <p class="case-evidence-intake-hint">Upload a photo from your device or take one with the camera (images only).</p>
+                                            <div class="case-settlement-evidence-inner">
+                                                <div id="evidenceList"></div>
+                                                <div id="evidenceUploadForm" class="case-evidence-upload-form">
+                                                    <input type="file" id="evidenceFile" class="case-evidence-file-hidden"
+                                                        accept="image/jpeg,image/png,image/webp" tabindex="-1" aria-hidden="true">
+                                                    <input type="file" id="evidenceCamera" class="case-evidence-file-hidden"
+                                                        accept="image/jpeg,image/png,image/webp" capture="environment"
+                                                        tabindex="-1" aria-hidden="true">
+                                                    <div class="case-evidence-pick-actions">
+                                                        <button type="button" class="case-evidence-pick-btn"
+                                                            onclick="pickCaseEvidenceFile('gallery')">Upload photo</button>
+                                                        <button type="button"
+                                                            class="case-evidence-pick-btn case-evidence-pick-btn--camera"
+                                                            onclick="pickCaseEvidenceFile('camera')">
+                                                            <svg class="case-evidence-btn-icon" viewBox="0 0 24 24" fill="none"
+                                                                stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                                stroke-linejoin="round" aria-hidden="true">
+                                                                <path
+                                                                    d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z">
+                                                                </path>
+                                                                <circle cx="12" cy="13" r="4"></circle>
+                                                            </svg>
+                                                            Take photo
+                                                        </button>
+                                                    </div>
+                                                    <p id="evidenceFileLabel" class="case-evidence-file-label">No file chosen</p>
+                                                    <input type="text" id="evidenceCaption" class="form-input"
+                                                        placeholder="Caption (optional)">
+                                                    <button type="button" onclick="uploadCaseEvidence()"
+                                                        class="cases-add-btn">Upload evidence</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
+                    <button type="button" class="field-case-carousel-nav" id="fieldCaseCarouselNext"
+                        aria-label="Next section">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </button>
                 </div>
             </div>
 
-        </div>
-
-        <div class="modal-footer">
-            <button type="button" class="btn-print-case" onclick="printCaseRecord()">📄 Print record</button>
         </div>
     </div>
 </div>
@@ -2817,10 +3338,12 @@
 
     function resetCaseModalSections() {
         ['subjectSection', 'investigationSection', 'referralSection', 'resolutionSection',
-            'priorCasesSection'].forEach((id) => {
+            'respondentPriorSection'].forEach((id) => {
                 const el = document.getElementById(id);
                 if (el) el.style.display = 'none';
             });
+        const respPriorTableWrap = document.getElementById('respondentPriorTableWrap');
+        if (respPriorTableWrap) respPriorTableWrap.style.display = 'none';
         const evidenceList = document.getElementById('evidenceList');
         if (evidenceList) evidenceList.innerHTML = '';
         const updateNote = document.getElementById('updateNote');
@@ -2829,16 +3352,52 @@
         if (newStatus) newStatus.value = '';
     }
 
+    function fetchCaseDetails(caseId) {
+        return fetch(`/cases/${CASE_POSITION}/${caseId}/details/`)
+            .then((r) => {
+                if (!r.ok) throw new Error('Could not load case (' + r.status + ')');
+                return r.json();
+            });
+    }
+
     function openCaseModal(caseId) {
         currentCaseId = caseId;
         document.getElementById('newCaseModal').style.display = 'none';
         resetCaseModalSections();
         document.body.style.overflow = 'hidden';
-        fetch(`/cases/${CASE_POSITION}/${caseId}/details/`)
-            .then((r) => r.json())
+
+        function showCaseFromResponse(d) {
+            if (d.success) populateCaseModal(d.case);
+            else alert('Error: ' + (d.error || 'Could not load case'));
+        }
+
+        fetchCaseDetails(caseId)
             .then((d) => {
-                if (d.success) populateCaseModal(d.case);
-                else alert('Error: ' + d.error);
+                if (!d.success) {
+                    showCaseFromResponse(d);
+                    return;
+                }
+                const wf = d.case.workflow || {};
+                if (!wf.needs_auto_start_review) {
+                    showCaseFromResponse(d);
+                    return;
+                }
+                return postCaseUpdate({ action: 'start_review' })
+                    .then((upd) => {
+                        if (!upd.success) {
+                            alert(upd.error || 'Could not start review');
+                            return;
+                        }
+                        updateCaseListRowStatus(
+                            caseId,
+                            upd.new_status || 'under_review',
+                            upd.status_display || 'Under Review'
+                        );
+                        return fetchCaseDetails(caseId).then(showCaseFromResponse);
+                    });
+            })
+            .catch(() => {
+                alert('Could not load case details. Make sure the server is running, then try again.');
             });
     }
 
@@ -2857,7 +3416,7 @@
         return 'other';
     }
 
-    function populateCaseModal(c) {
+    function populateCaseModal(c, options = {}) {
         const filed = new Date(c.received_at);
         document.getElementById('modalCaseNumber').textContent = c.case_number;
         const statusEl = document.getElementById('modalStatusBadge');
@@ -2867,19 +3426,15 @@
         }
         const filedMeta = document.getElementById('modalFiledMeta');
         if (filedMeta) {
-            filedMeta.textContent = `Filed ${filed.toLocaleDateString()} · ${filed.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
+            let filedText = `Filed ${filed.toLocaleDateString()} · ${filed.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
+            if (c.received_by) {
+                filedText += ` · Recorded by ${c.received_by}`;
+                if (c.received_by_position) filedText += ` (${c.received_by_position})`;
+            }
+            filedMeta.textContent = filedText;
         }
-
-        const avatarEl = document.getElementById('modalStaffAvatar');
-        const staffName = c.received_by || 'Unassigned';
-        const staffRole = c.received_by_position || '—';
-        const initials = c.received_by_initials || (staffName !== 'Unassigned' ? staffName.slice(0, 2).toUpperCase() : '—');
-        if (avatarEl) {
-            avatarEl.textContent = initials;
-            avatarEl.className = `handled-by-avatar ${staffAvatarClass(c.received_by_position_key || '')}`;
-        }
-        document.getElementById('modalStaffName').textContent = staffName;
-        document.getElementById('modalStaffRole').textContent = staffRole;
+        const deskBadge = document.getElementById('modalDeskBadge');
+        if (deskBadge) deskBadge.style.display = 'inline-block';
 
         document.getElementById('modalComplainantName').textContent = c.complainant_name;
         document.getElementById('modalComplainantPhone').textContent = c.complainant_phone || '—';
@@ -2966,46 +3521,286 @@
                 ? `Resolved: ${new Date(c.resolved_at).toLocaleDateString()}` : '';
         }
 
-        const priorSection = document.getElementById('priorCasesSection');
-        const priorList = document.getElementById('priorCasesList');
-        if (priorSection && priorList) {
-            if (profile || c.complainant_reference || c.complainant_unit_label) {
-                priorSection.style.display = 'block';
-                if (c.prior_cases && c.prior_cases.length) {
-                    priorList.innerHTML = c.prior_cases.map((pc) => `
-                        <button type="button" class="prior-case-item" onclick="openCaseModal('${pc.id}')">
-                            <strong>${escapeHtml(pc.case_number)}</strong>
-                            — ${escapeHtml(pc.case_type_display)} · ${escapeHtml(pc.status_display)}
-                        </button>`).join('');
+        const respPriorSection = document.getElementById('respondentPriorSection');
+        const respPriorList = document.getElementById('respondentPriorList');
+        const respPriorTableWrap = document.getElementById('respondentPriorTableWrap');
+        const respPriorHeading = document.getElementById('respondentPriorHeading');
+        const respPriorEmpty = document.getElementById('respondentPriorEmpty');
+        if (respPriorSection) {
+            if (c.subject_name) {
+                respPriorSection.style.display = 'block';
+                const respLabel = c.subject_name + (c.subject_reference ? ` (${c.subject_reference})` : '');
+                if (respPriorHeading) respPriorHeading.textContent = respLabel;
+                const respPriors = c.respondent_prior_cases || [];
+                if (respPriors.length && respPriorList) {
+                    if (respPriorEmpty) respPriorEmpty.style.display = 'none';
+                    if (respPriorTableWrap) respPriorTableWrap.style.display = 'block';
+                    respPriorList.innerHTML = respPriors.map((pc) => {
+                        const statusKey = escapeHtml(pc.status || '');
+                        const filed = pc.received_at
+                            ? new Date(pc.received_at).toLocaleDateString()
+                            : '';
+                        return `
+                        <tr>
+                            <td class="case-prior-table-case"><strong>${escapeHtml(pc.case_number)}</strong></td>
+                            <td class="case-prior-table-status">
+                                <span class="case-prior-status-pill case-prior-status-pill--${statusKey}">${escapeHtml(pc.status_display)}</span>
+                                ${filed ? `<span class="case-prior-table-date">${escapeHtml(filed)}</span>` : ''}
+                            </td>
+                            <td class="case-prior-table-type">${escapeHtml(pc.case_type_display)}</td>
+                            <td class="case-prior-table-desc">${escapeHtml(pc.initial_description || '—')}</td>
+                            <td class="case-prior-table-action">
+                                <button type="button" class="case-prior-open-link" onclick="openCaseModal('${pc.id}')">Open record</button>
+                            </td>
+                        </tr>`;
+                    }).join('');
                 } else {
-                    priorList.innerHTML = '<p class="case-evidence-empty">No prior complaints on file for this beneficiary.</p>';
+                    if (respPriorList) respPriorList.innerHTML = '';
+                    if (respPriorTableWrap) respPriorTableWrap.style.display = 'none';
+                    if (respPriorEmpty) respPriorEmpty.style.display = 'block';
                 }
             } else {
-                priorSection.style.display = 'none';
-                priorList.innerHTML = '';
+                respPriorSection.style.display = 'none';
+                if (respPriorList) respPriorList.innerHTML = '';
+                if (respPriorTableWrap) respPriorTableWrap.style.display = 'none';
+                if (respPriorEmpty) respPriorEmpty.style.display = 'none';
             }
         }
 
-        const evidenceSection = document.getElementById('evidenceSection');
-        evidenceSection.style.display = 'block';
-        const evidenceList = document.getElementById('evidenceList');
-        if (c.evidence && c.evidence.length) {
-            evidenceList.innerHTML = c.evidence.map((ev) => `
-            <div class="case-evidence-item">
-                <a href="${ev.url}" target="_blank" rel="noopener">${ev.caption || 'View file'}</a>
-                <div class="case-evidence-meta">${ev.uploaded_by} · ${new Date(ev.uploaded_at).toLocaleString()}</div>
-            </div>`).join('');
-        } else {
-            evidenceList.innerHTML = '<p class="case-evidence-empty">No evidence uploaded yet.</p>';
-        }
-        const uploadForm = document.getElementById('evidenceUploadForm');
-        if (uploadForm) {
-            uploadForm.style.display = ['resolved', 'closed'].includes(c.status) ? 'none' : 'flex';
+        const wf = c.workflow || {};
+        applyFieldCaseModalLayout(c, wf, options);
+        if (wf.show_case_carousel) {
+            populateFieldCaseEvidence(c, wf);
         }
 
         const modal = document.getElementById('caseModal');
         modal.style.display = 'flex';
         document.body.style.overflow = 'hidden';
+    }
+
+    let fieldCaseCarouselIndex = 0;
+
+    function postCaseUpdate(body) {
+        return fetch(`/cases/${CASE_POSITION}/update/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken() },
+            body: JSON.stringify({ case_id: currentCaseId, ...body }),
+        }).then((r) => r.json());
+    }
+
+    function updateCaseListRowStatus(caseId, status, statusDisplay) {
+        const row = document.querySelector(`tr[data-case-id="${caseId}"]`);
+        if (!row) return;
+        row.dataset.caseStatus = status;
+        const pill = row.querySelector('[data-case-status-pill]');
+        if (pill) {
+            pill.className = `status-pill-flex status-pill-flex--${status}`;
+            pill.textContent = statusDisplay;
+        }
+    }
+
+    function populateFieldCaseEvidence(c, wf) {
+        const evidenceSection = document.getElementById('evidenceSection');
+        const evidenceList = document.getElementById('evidenceList');
+        const uploadForm = document.getElementById('evidenceUploadForm');
+        if (!evidenceSection || !evidenceList) return;
+
+        evidenceSection.style.display = 'block';
+        if (c.evidence && c.evidence.length) {
+            evidenceList.innerHTML = c.evidence.map((ev) => `
+                <div class="case-evidence-item">
+                    <a href="${ev.url}" target="_blank" rel="noopener">${escapeHtml(ev.caption || 'View file')}</a>
+                    <div class="case-evidence-meta">${escapeHtml(ev.uploaded_by)} · ${new Date(ev.uploaded_at).toLocaleString()}</div>
+                </div>`).join('');
+        } else {
+            evidenceList.innerHTML = '<p class="case-evidence-empty">No photos yet. Upload or take a photo below.</p>';
+        }
+        if (uploadForm) {
+            const canUpload = wf.can_upload_evidence !== false && !['resolved', 'closed'].includes(c.status);
+            uploadForm.style.display = canUpload ? 'flex' : 'none';
+            uploadForm.style.flexDirection = 'column';
+        }
+        const captionInput = document.getElementById('evidenceCaption');
+        const fileInput = document.getElementById('evidenceFile');
+        const cameraInput = document.getElementById('evidenceCamera');
+        const fileLabel = document.getElementById('evidenceFileLabel');
+        if (captionInput) captionInput.value = '';
+        if (fileInput) fileInput.value = '';
+        if (cameraInput) cameraInput.value = '';
+        if (fileLabel) fileLabel.textContent = 'No file chosen';
+        bindCaseEvidencePickers();
+    }
+
+    function bindCaseEvidencePickers() {
+        if (window._caseEvidencePickersBound) return;
+        window._caseEvidencePickersBound = true;
+        ['evidenceFile', 'evidenceCamera'].forEach((id) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.addEventListener('change', () => {
+                const otherId = id === 'evidenceFile' ? 'evidenceCamera' : 'evidenceFile';
+                const other = document.getElementById(otherId);
+                if (other) other.value = '';
+                const f = el.files?.[0];
+                const label = document.getElementById('evidenceFileLabel');
+                if (label) {
+                    label.textContent = f ? (f.name || 'Photo selected') : 'No file chosen';
+                }
+            });
+        });
+    }
+
+    function pickCaseEvidenceFile(mode) {
+        const fileInput = document.getElementById('evidenceFile');
+        const cameraInput = document.getElementById('evidenceCamera');
+        const target = mode === 'camera' ? cameraInput : fileInput;
+        if (!target) return;
+        if (mode === 'camera' && fileInput) fileInput.value = '';
+        if (mode !== 'camera' && cameraInput) cameraInput.value = '';
+        target.click();
+    }
+
+    function getCaseEvidenceSelectedFile() {
+        return document.getElementById('evidenceCamera')?.files?.[0]
+            || document.getElementById('evidenceFile')?.files?.[0]
+            || null;
+    }
+
+    function applyFieldCaseModalLayout(c, wf, options = {}) {
+        const staticWrap = document.getElementById('fieldCaseStaticWrap');
+        const markWrap = document.getElementById('fieldMarkReviewedWrap');
+        const carouselWrap = document.getElementById('fieldCaseCarouselWrap');
+        const primary = document.getElementById('caseRecordPrimary');
+        const slide1 = document.getElementById('fieldCaseSlide1Mount');
+
+        if (wf.can_mark_reviewed) {
+            if (staticWrap) staticWrap.style.display = 'block';
+            if (markWrap) markWrap.style.display = 'block';
+            if (carouselWrap) carouselWrap.style.display = 'none';
+            if (primary && staticWrap && !staticWrap.contains(primary)) {
+                staticWrap.appendChild(primary);
+            }
+            const btn = document.getElementById('btnMarkReviewed');
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = 'Mark Reviewed';
+            }
+        } else if (wf.show_case_carousel) {
+            if (staticWrap) staticWrap.style.display = 'none';
+            if (markWrap) markWrap.style.display = 'none';
+            if (carouselWrap) carouselWrap.style.display = 'block';
+            if (primary && slide1 && !slide1.contains(primary)) {
+                slide1.appendChild(primary);
+            }
+            const startSlide = options.carouselSlide ?? 0;
+            initFieldCaseSectionCarousel(2, startSlide);
+        } else {
+            if (staticWrap) staticWrap.style.display = 'block';
+            if (markWrap) markWrap.style.display = 'none';
+            if (carouselWrap) carouselWrap.style.display = 'none';
+            if (primary && staticWrap && !staticWrap.contains(primary)) {
+                staticWrap.appendChild(primary);
+            }
+        }
+    }
+
+    function markFieldCaseReviewed() {
+        const btn = document.getElementById('btnMarkReviewed');
+        if (!currentCaseId || !btn) return;
+        btn.disabled = true;
+        btn.textContent = 'Saving…';
+        postCaseUpdate({ action: 'mark_field_reviewed' })
+            .then((d) => {
+                if (!d.success) {
+                    alert(d.error || 'Could not update case');
+                    btn.disabled = false;
+                    btn.textContent = 'Mark Reviewed';
+                    return;
+                }
+                if (d.new_status && d.status_display) {
+                    updateCaseListRowStatus(currentCaseId, d.new_status, d.status_display);
+                }
+                fetchCaseDetails(currentCaseId)
+                    .then((resp) => {
+                        if (resp.success) {
+                            populateCaseModal(resp.case, { carouselSlide: 1 });
+                        }
+                    });
+            })
+            .catch(() => {
+                alert('Could not update case. Check that the server is running.');
+                btn.disabled = false;
+                btn.textContent = 'Mark Reviewed';
+            });
+    }
+
+    function setFieldCaseCarouselPage(index) {
+        const track = document.getElementById('fieldCaseCarouselTrack');
+        const wrap = track?.parentElement;
+        const total = 2;
+        if (!track || !wrap) return;
+        fieldCaseCarouselIndex = Math.max(0, Math.min(index, total - 1));
+        const slideWidth = wrap.getBoundingClientRect().width;
+        track.style.transform = `translateX(-${fieldCaseCarouselIndex * slideWidth}px)`;
+
+        const counter = document.getElementById('fieldCaseCarouselCounter');
+        if (counter) counter.textContent = `Section ${fieldCaseCarouselIndex + 1} of ${total}`;
+
+        document.querySelectorAll('.field-case-carousel-dot').forEach((dot, i) => {
+            dot.classList.toggle('is-active', i === fieldCaseCarouselIndex);
+            dot.setAttribute('aria-current', i === fieldCaseCarouselIndex ? 'true' : 'false');
+        });
+
+        document.querySelectorAll('.field-case-carousel-label').forEach((label, i) => {
+            const active = i === fieldCaseCarouselIndex;
+            label.classList.toggle('is-active', active);
+            label.setAttribute('aria-selected', active ? 'true' : 'false');
+        });
+
+        const prev = document.getElementById('fieldCaseCarouselPrev');
+        const next = document.getElementById('fieldCaseCarouselNext');
+        if (prev) prev.disabled = fieldCaseCarouselIndex <= 0;
+        if (next) next.disabled = fieldCaseCarouselIndex >= total - 1;
+    }
+
+    function initFieldCaseSectionCarousel(slideCount, startIndex = 0) {
+        const dotsWrap = document.getElementById('fieldCaseCarouselDots');
+        if (dotsWrap) {
+            dotsWrap.innerHTML = Array.from({ length: slideCount }, (_, i) => `
+                <button type="button" class="field-case-carousel-dot${i === startIndex ? ' is-active' : ''}"
+                    data-index="${i}" aria-label="Section ${i + 1} of ${slideCount}"${i === startIndex ? ' aria-current="true"' : ''}></button>
+            `).join('');
+            dotsWrap.querySelectorAll('.field-case-carousel-dot').forEach((dot) => {
+                dot.addEventListener('click', () => {
+                    setFieldCaseCarouselPage(parseInt(dot.dataset.index, 10) || 0);
+                });
+            });
+        }
+
+        const prev = document.getElementById('fieldCaseCarouselPrev');
+        const next = document.getElementById('fieldCaseCarouselNext');
+        if (prev && !prev.dataset.bound) {
+            prev.dataset.bound = '1';
+            prev.addEventListener('click', () => setFieldCaseCarouselPage(fieldCaseCarouselIndex - 1));
+        }
+        if (next && !next.dataset.bound) {
+            next.dataset.bound = '1';
+            next.addEventListener('click', () => setFieldCaseCarouselPage(fieldCaseCarouselIndex + 1));
+        }
+
+        document.querySelectorAll('.field-case-carousel-label').forEach((label) => {
+            if (label.dataset.bound) return;
+            label.dataset.bound = '1';
+            label.addEventListener('click', () => {
+                const idx = parseInt(label.dataset.slideIndex, 10);
+                setFieldCaseCarouselPage(Number.isNaN(idx) ? 0 : idx);
+            });
+        });
+
+        requestAnimationFrame(() => {
+            setFieldCaseCarouselPage(startIndex);
+            requestAnimationFrame(() => setFieldCaseCarouselPage(startIndex));
+        });
     }
 
     function closeCaseModal(e) {
@@ -3261,13 +4056,17 @@
     }
 
     function uploadCaseEvidence() {
-        const fileInput = document.getElementById('evidenceFile');
-        if (!fileInput?.files?.[0]) {
-            alert('Choose a file to upload.');
+        const file = getCaseEvidenceSelectedFile();
+        if (!file) {
+            alert('Upload a photo or take one with the camera first.');
+            return;
+        }
+        if (!/^image\/(jpeg|png|webp)$/i.test(file.type || '')) {
+            alert('Only JPEG, PNG, or WebP photos are allowed.');
             return;
         }
         const fd = new FormData();
-        fd.append('file', fileInput.files[0]);
+        fd.append('file', file);
         fd.append('caption', document.getElementById('evidenceCaption')?.value.trim() || '');
         fetch(`/cases/${CASE_POSITION}/${currentCaseId}/evidence/upload/`, {
             method: 'POST',
@@ -3278,7 +4077,9 @@
             .then((d) => {
                 if (d.success) {
                     alert(d.message);
-                    openCaseModal(currentCaseId);
+                    fetchCaseDetails(currentCaseId).then((resp) => {
+                        if (resp.success) populateCaseModal(resp.case, { carouselSlide: 1 });
+                    });
                 } else alert(d.error || 'Upload failed');
             });
     }

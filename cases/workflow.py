@@ -6,6 +6,9 @@ Phases: Recording → Type ID → Review → Action/Decision → Monitoring → 
 
 from accounts.models import FIELD_DESK_POSITIONS
 
+# Field/Ronda file complaints; Second/Fourth Member monitor the same case list.
+CASE_MONITOR_DESK_POSITIONS = frozenset({'second_member', 'fourth_member'})
+
 # --- Phases (desk guide) ---
 PHASES = [
     {'key': 'recording', 'label': 'Case recording', 'hint': 'Add Case · beneficiary search · Pending Review'},
@@ -163,7 +166,7 @@ WORKFLOW_TRANSITIONS = {
     'enter_monitoring': {
         'from': {STATUS_UNDER_REVIEW, STATUS_REFERRED_ENGINEERING, STATUS_AWAITING_RESPONSE},
         'to': STATUS_MEDIATION,
-        'label': 'Under mediation / monitoring',
+        'label': 'Settlement',
     },
 }
 
@@ -176,12 +179,34 @@ def normalize_status(status: str) -> str:
     return LEGACY_STATUS_MAP.get(status, status)
 
 
+def user_is_case_monitor_desk(user) -> bool:
+    return getattr(user, 'position', None) in CASE_MONITOR_DESK_POSITIONS
+
+
 def user_can_manage_workflow(user) -> bool:
-    return getattr(user, 'position', None) not in FIELD_DESK_POSITIONS
+    """Desk workflow (review, actions, closure) — disabled; intake is field desk only for now."""
+    return False
+
+
+def user_can_upload_case_evidence(user) -> bool:
+    return getattr(user, 'position', None) in FIELD_DESK_POSITIONS
+
+
+def user_can_field_mark_under_review(user) -> bool:
+    """Field / Ronda may move Pending Review → Under Review."""
+    return getattr(user, 'position', None) in FIELD_DESK_POSITIONS
 
 
 def user_can_record_case(user) -> bool:
     return user.is_authenticated
+
+
+def case_desk_mode_for_position(position: str) -> str:
+    if position in FIELD_DESK_POSITIONS:
+        return 'intake'
+    if position in CASE_MONITOR_DESK_POSITIONS:
+        return 'monitor'
+    return 'intake'
 
 
 def workflow_step_for_case(case) -> int:

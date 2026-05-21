@@ -171,6 +171,7 @@ def case_management_dashboard(request, position):
         'open_case_id': open_case_id,
         'prefill_beneficiary': prefill_beneficiary,
         'case_position': position,
+        'case_desk_mode': wf.case_desk_mode_for_position(position),
     }
 
     return render(request, template_name, context)
@@ -194,6 +195,45 @@ def case_dashboard_redirect(request, position):
             url = f'{url}?{request.GET.urlencode()}'
         return redirect(url)
     return case_management_dashboard(request, position)
+
+
+def _prior_case_detail_payload(case):
+    """Serialize a case row for prior-history lists in the view modal."""
+    return {
+        'id': str(case.id),
+        'case_number': case.case_number,
+        'status': wf.normalize_status(case.status),
+        'status_display': case.get_status_display(),
+        'case_type_display': case.get_case_type_display(),
+        'initial_description': case.initial_description or '',
+        'received_at': case.received_at.isoformat() if case.received_at else '',
+    }
+
+
+def _prior_cases_for_complainant(case, complainant_applicant, unit, limit=8):
+    qs = Case.objects.exclude(id=case.id)
+    if complainant_applicant:
+        qs = qs.filter(complainant_applicant_id=complainant_applicant.id)
+    elif unit:
+        qs = qs.filter(related_unit=unit)
+    else:
+        return []
+    return list(qs.order_by('-received_at')[:limit])
+
+
+def _prior_cases_for_respondent(case, subject_applicant, limit=8):
+    """Other cases involving the respondent (as subject or as complainant)."""
+    qs = Case.objects.exclude(id=case.id)
+    if subject_applicant:
+        qs = qs.filter(
+            models.Q(subject_applicant_id=subject_applicant.id)
+            | models.Q(complainant_applicant_id=subject_applicant.id)
+        )
+    elif (case.subject_name or '').strip():
+        qs = qs.filter(subject_name__iexact=(case.subject_name or '').strip())
+    else:
+        return []
+    return list(qs.order_by('-received_at')[:limit])
 
 
 def _parse_block_lot_query(q):
@@ -385,26 +425,11 @@ def get_case_details(request, position, case_id):
         complainant_applicant = case.complainant_applicant
         subject_applicant = case.subject_applicant
         unit = case.related_unit
-        prior_cases_qs = Case.objects.exclude(id=case.id)
-        linked_applicant_id = complainant_applicant.id if complainant_applicant else None
-        if linked_applicant_id:
-            prior_cases_qs = prior_cases_qs.filter(complainant_applicant_id=linked_applicant_id)
-        elif unit:
-            prior_cases_qs = prior_cases_qs.filter(related_unit=unit)
-        else:
-            prior_cases_qs = prior_cases_qs.none()
-        prior_cases_list = list(prior_cases_qs.order_by('-received_at')[:8])
-        prior_cases = [
-            {
-                'id': str(pc.id),
-                'case_number': pc.case_number,
-                'status': wf.normalize_status(pc.status),
-                'status_display': pc.get_status_display(),
-                'case_type_display': pc.get_case_type_display(),
-                'received_at': pc.received_at.isoformat(),
-            }
-            for pc in prior_cases_list
-        ]
+        prior_cases_list = _prior_cases_for_complainant(case, complainant_applicant, unit)
+        prior_cases = [_prior_case_detail_payload(pc) for pc in prior_cases_list]
+
+        respondent_prior_list = _prior_cases_for_respondent(case, subject_applicant)
+        respondent_prior_cases = [_prior_case_detail_payload(pc) for pc in respondent_prior_list]
 
         beneficiary_profile = None
         if complainant_applicant:
@@ -441,8 +466,36 @@ def get_case_details(request, position, case_id):
             for row in case.actions.all()
         ]
         can_manage = wf.user_can_manage_workflow(request.user)
+        can_upload_evidence = wf.user_can_upload_case_evidence(request.user)
+        is_monitor_desk = wf.user_is_case_monitor_desk(request.user)
+        case_status = wf.normalize_status(case.status)
+        if (
+            wf.user_can_field_mark_under_review(request.user)
+            and case_status == wf.STATUS_UNDER_REVIEW
+            and case.field_intake_reviewed_at
+            and wf.can_transition(case, 'enter_monitoring')
+        ):
+            wf.apply_transition(case, 'enter_monitoring')
+            case.save(update_fields=['status', 'updated_at'])
+            case_status = wf.normalize_status(case.status)
+
         workflow_payload = {
             'can_manage_workflow': can_manage,
+            'can_upload_evidence': can_upload_evidence,
+            'is_monitor_desk': is_monitor_desk,
+            'needs_auto_start_review': (
+                wf.user_can_field_mark_under_review(request.user)
+                and case_status == wf.STATUS_PENDING_REVIEW
+            ),
+            'can_mark_reviewed': (
+                wf.user_can_field_mark_under_review(request.user)
+                and case_status == wf.STATUS_UNDER_REVIEW
+                and not case.field_intake_reviewed_at
+            ),
+            'show_case_carousel': (
+                bool(case.field_intake_reviewed_at)
+                and case_status == wf.STATUS_MEDIATION
+            ),
             'allowed_actions': wf.allowed_type_actions(case.case_type) if can_manage else [],
             'workflow_buttons': wf.allowed_workflow_buttons(case, request.user) if can_manage else [],
             'type_action_guide': wf.type_action_guide(case.case_type),
@@ -505,6 +558,8 @@ def get_case_details(request, position, case_id):
                 'evidence': evidence_data,
                 'prior_cases': prior_cases,
                 'prior_cases_count': len(prior_cases_list),
+                'respondent_prior_cases': respondent_prior_cases,
+                'respondent_prior_cases_count': len(respondent_prior_list),
                 'beneficiary_profile': beneficiary_profile,
                 'workflow': workflow_payload,
                 'received_at_location_display': case.get_received_at_location_display(),
@@ -667,7 +722,12 @@ def create_case(request, position):
 @require_POST
 @verify_position
 def upload_case_evidence(request, position, case_id):
-    """Upload photo or document for a case (Step 4 review)."""
+    """Upload photo or document for a case (field desk intake)."""
+    if not wf.user_can_upload_case_evidence(request.user):
+        return JsonResponse({
+            'success': False,
+            'error': 'Evidence uploads are handled at the field desk.',
+        }, status=403)
     case = get_object_or_404(Case, id=case_id)
     upload = request.FILES.get('file')
     if not upload:
@@ -675,12 +735,14 @@ def upload_case_evidence(request, position, case_id):
     if upload.size > 6 * 1024 * 1024:
         return JsonResponse({'success': False, 'error': 'File must be 6 MB or smaller.'}, status=400)
 
-    allowed = ('image/jpeg', 'image/png', 'image/webp', 'application/pdf')
+    if wf.user_can_upload_case_evidence(request.user):
+        allowed = ('image/jpeg', 'image/png', 'image/webp')
+        type_error = 'Allowed types: JPEG, PNG, or WebP photos only.'
+    else:
+        allowed = ('image/jpeg', 'image/png', 'image/webp', 'application/pdf')
+        type_error = 'Allowed types: JPEG, PNG, WebP, or PDF.'
     if getattr(upload, 'content_type', '') not in allowed:
-        return JsonResponse({
-            'success': False,
-            'error': 'Allowed types: JPEG, PNG, WebP, or PDF.',
-        }, status=400)
+        return JsonResponse({'success': False, 'error': type_error}, status=400)
 
     caption = (request.POST.get('caption') or '').strip()[:255]
     evidence = CaseEvidence.objects.create(
@@ -720,10 +782,27 @@ def update_case(request, position):
         action = data.get('action', '').strip()
 
         case = Case.objects.get(id=case_id)
-        if not wf.user_can_manage_workflow(request.user):
+        transition_key = (data.get('transition') or '').strip()
+        field_review_only = (
+            wf.user_can_field_mark_under_review(request.user)
+            and not wf.user_can_manage_workflow(request.user)
+        )
+        if field_review_only and action not in (
+            'start_review', 'mark_field_reviewed', 'workflow_transition',
+        ):
             return JsonResponse({
                 'success': False,
-                'error': 'THA desk staff must complete review, actions, and closure. Ronda can log new cases only.',
+                'error': 'Field desk cannot perform that update.',
+            }, status=403)
+        if field_review_only and action == 'workflow_transition' and transition_key != 'start_review':
+            return JsonResponse({
+                'success': False,
+                'error': 'Field desk cannot perform that update.',
+            }, status=403)
+        if not wf.user_can_manage_workflow(request.user) and not wf.user_can_field_mark_under_review(request.user):
+            return JsonResponse({
+                'success': False,
+                'error': 'This desk is view-only for case monitoring. New complaints are filed at the field desk.',
             }, status=403)
 
         if action == 'start_review':
@@ -736,6 +815,25 @@ def update_case(request, position):
             return JsonResponse({
                 'success': True,
                 'message': 'Case is now Under Review',
+                'new_status': case.status,
+                'status_display': case.get_status_display(),
+            })
+
+        elif action == 'mark_field_reviewed':
+            if wf.normalize_status(case.status) != wf.STATUS_UNDER_REVIEW:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Case must be Under Review before marking reviewed.',
+                }, status=400)
+            if not case.field_intake_reviewed_at:
+                case.field_intake_reviewed_at = timezone.now()
+            if wf.can_transition(case, 'enter_monitoring'):
+                wf.apply_transition(case, 'enter_monitoring')
+            case.save(update_fields=['field_intake_reviewed_at', 'status', 'updated_at'])
+            return JsonResponse({
+                'success': True,
+                'message': 'Case is now in Settlement.',
+                'show_case_carousel': True,
                 'new_status': case.status,
                 'status_display': case.get_status_display(),
             })

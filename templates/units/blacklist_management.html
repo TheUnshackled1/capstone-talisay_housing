@@ -166,6 +166,16 @@
         min-width: 1000px;
     }
 
+    .blacklist-table thead {
+        background: linear-gradient(180deg, #2563eb 0%, #1e3a8a 100%) !important;
+    }
+    
+    .blacklist-table th {
+        background: linear-gradient(180deg, #2563eb 0%, #1e3a8a 100%) !important;
+        color: #ffffff !important;
+        border: 1px solid rgba(255, 255, 255, 0.22) !important;
+    }
+
     .blacklist-table th:nth-child(1),
     .blacklist-table td:nth-child(1) {
         width: 3%;
@@ -300,22 +310,22 @@
         border-radius: 0.6rem !important;
         cursor: pointer;
         white-space: nowrap;
-        background: linear-gradient(135deg, #16a34a 0%, #15803d 100%) !important;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
         color: white !important;
         border: none !important;
-        box-shadow: 0 2px 8px rgba(22, 163, 74, 0.25) !important;
+        box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25) !important;
         transition: all 0.2s ease !important;
     }
 
     body .btn-blacklist-view:hover {
-        background: linear-gradient(135deg, #15803d 0%, #127035 100%) !important;
-        box-shadow: 0 4px 12px rgba(22, 163, 74, 0.35) !important;
+        background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35) !important;
         transform: translateY(-2px) !important;
     }
 
     body .btn-blacklist-view:active {
         transform: translateY(0) !important;
-        box-shadow: 0 1px 4px rgba(22, 163, 74, 0.2) !important;
+        box-shadow: 0 1px 4px rgba(16, 185, 129, 0.2) !important;
     }
 
     body .btn-blacklist-view .btn-icon {
@@ -613,8 +623,21 @@
                 <tr>
                     <td>{{ forloop.counter }}</td>
                     <td class="blacklist-beneficiary-cell">
-                        {{ blacklist.applicant.full_name|upper }}
-                        <span class="blacklist-ref">{{ blacklist.applicant.reference_number }}</span>
+                        <div class="complainant-cell-info" style="display: flex; flex-direction: column; gap: 0.35rem;">
+                            <div class="complainant-name-card" style="display: flex; align-items: center; gap: 0.45rem;">
+                                <svg class="applicant-meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 0.9rem; height: 0.9rem; flex-shrink: 0; color: #475569;">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="12" cy="7" r="4"></circle>
+                                </svg>
+                                <span class="complainant-name applicant-name" style="font-size: 0.8rem; font-weight: 700; color: #0f172a; letter-spacing: -0.01em; line-height: 1.25;">{{ blacklist.applicant.full_name|upper }}</span>
+                            </div>
+                            <div class="complainant-meta" style="display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.68rem; color: #64748b; font-weight: 500;">
+                                <span class="case-number-badge" title="Transaction ID: APP-{{ blacklist.applicant.id }}" style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-weight: 700; background: #eff6ff; padding: 0.1rem 0.4rem; border-radius: 4px; color: #1e40af; font-size: 0.7rem; border: 1px solid #bfdbfe;">APP-{{ blacklist.applicant.id|slice:":8" }}...</span>
+                                {% if blacklist.applicant.reference_number %}
+                                <span class="complainant-ref-code" title="Reference Code: {{ blacklist.applicant.reference_number }}" style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-weight: 600; background: #f1f5f9; padding: 0.1rem 0.4rem; border-radius: 4px; color: #475569; font-size: 0.7rem; border: 1px solid #e2e8f0;">{{ blacklist.applicant.reference_number }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
                     </td>
                     <td>
                         <span class="badge badge-reason">

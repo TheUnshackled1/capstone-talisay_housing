@@ -78,7 +78,7 @@ class Case(models.Model):
     STATUS_CHOICES = [
         ('pending_review', 'Pending Review'),
         ('under_review', 'Under Review'),
-        ('mediation_monitoring', 'Under Mediation / Monitoring'),
+        ('mediation_monitoring', 'Settlement'),
         ('awaiting_response', 'Awaiting Response'),
         ('referred_engineering', 'Awaiting Engineering Findings'),
         ('resolved', 'Resolved'),
@@ -158,7 +158,9 @@ class Case(models.Model):
         related_name='cases_investigated'
     )
     investigated_at = models.DateTimeField(null=True, blank=True)
-    
+    # Field desk acknowledged case details; unlocks mediation evidence (carousel section 2).
+    field_intake_reviewed_at = models.DateTimeField(null=True, blank=True)
+
     # Referral tracking
     referred_to = models.CharField(
         max_length=100,

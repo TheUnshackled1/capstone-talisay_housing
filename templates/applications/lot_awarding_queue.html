@@ -592,18 +592,144 @@
         opacity: 1 !important;
     }
 
-    .lawq-controls-inline {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        flex-wrap: wrap;
-    }
     .lawq-inline-selected {
         color: #64748b;
         font-weight: 600;
         font-size: 0.78rem;
         white-space: nowrap;
     }
+
+    /* Royal Blue Headers */
+    .lawq-queue .rfq-table thead {
+        background: linear-gradient(180deg, #2563eb 0%, #1e3a8a 100%) !important;
+        position: sticky !important;
+        top: 0 !important;
+        z-index: 2 !important;
+    }
+    .lawq-queue .rfq-table th {
+        background: linear-gradient(180deg, #2563eb 0%, #1e3a8a 100%) !important;
+        border: 1px solid rgba(255, 255, 255, 0.22) !important;
+        color: #ffffff !important;
+    }
+
+    /* Demographic Metadata Card */
+    .complainant-cell-info {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 0.35rem !important;
+    }
+    .complainant-name-card {
+        display: flex !important;
+        align-items: center !important;
+        gap: 0.45rem !important;
+    }
+    .complainant-name {
+        font-size: 0.8rem !important;
+        font-weight: 700 !important;
+        color: #0f172a !important;
+        letter-spacing: -0.01em !important;
+        line-height: 1.25 !important;
+    }
+    .complainant-meta {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 0.35rem !important;
+        font-size: 0.68rem !important;
+        color: #64748b !important;
+        font-weight: 500 !important;
+    }
+    .complainant-ref-code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+        font-weight: 600 !important;
+        background: #f1f5f9 !important;
+        padding: 0.1rem 0.4rem !important;
+        border-radius: 4px !important;
+        color: #475569 !important;
+        font-size: 0.7rem !important;
+        border: 1px solid #e2e8f0 !important;
+    }
+    .case-number-badge {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+        font-weight: 700 !important;
+        background: #eff6ff !important;
+        padding: 0.1rem 0.4rem !important;
+        border-radius: 4px !important;
+        color: #1e40af !important;
+        font-size: 0.7rem !important;
+        border: 1px solid #bfdbfe !important;
+    }
+    .complainant-name.option-a { color: #b91c1c !important; }
+    .complainant-name.option-b { color: #b45309 !important; }
+    .complainant-name.option-c { color: #047857 !important; }
+    .complainant-name.option-d { color: #475569 !important; }
+
+    /* Date column vertical stack */
+    .date-cell-stack {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 0.25rem !important;
+        align-items: center !important;
+    }
+    .date-main {
+        font-size: 0.78rem !important;
+        font-weight: 600 !important;
+        color: #334155 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 0.3rem !important;
+    }
+    .date-sub {
+        font-size: 0.68rem !important;
+        color: #64748b !important;
+        font-weight: 500 !important;
+    }
+    
+    /* Soft HSL Status Chips */
+    .lawq-chip.ready-awarding {
+        background: #dcfce7 !important;
+        border-color: #bbf7d0 !important;
+        color: #15803d !important;
+    }
+    .rfq-status-pulse {
+        width: 6px !important;
+        height: 6px !important;
+        background-color: currentColor !important;
+        border-radius: 50% !important;
+        display: inline-block !important;
+        animation: rfq-status-pulse-anim 1.5s infinite ease-in-out !important;
+        flex-shrink: 0 !important;
+    }
+    @keyframes rfq-status-pulse-anim {
+        0% { opacity: 0.4; transform: scale(0.8); }
+        50% { opacity: 1; transform: scale(1.2); }
+        100% { opacity: 0.4; transform: scale(0.8); }
+    }
+    
+    /* Soft HSL Priority Stacks */
+    .rfq-priority-stack {
+        display: inline-flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 0.35rem 0.6rem !important;
+        border-radius: 8px !important;
+        border: 1px solid transparent !important;
+        width: 100% !important;
+        gap: 0.15rem !important;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02) !important;
+    }
+    .rfq-priority-stack.stack-option-a { background: #fee2e2 !important; border-color: #fca5a5 !important; }
+    .rfq-priority-stack.stack-option-a .rfq-priority-tier { color: #991b1b !important; font-weight: 800 !important; }
+    .rfq-priority-stack.stack-option-a .rfq-priority-name { color: #7f1d1d !important; }
+    .rfq-priority-stack.stack-option-b { background: #ffedd5 !important; border-color: #fdba74 !important; }
+    .rfq-priority-stack.stack-option-b .rfq-priority-tier { color: #9a3412 !important; font-weight: 800 !important; }
+    .rfq-priority-stack.stack-option-b .rfq-priority-name { color: #7c2d12 !important; }
+    .rfq-priority-stack.stack-option-c { background: #dcfce7 !important; border-color: #86efac !important; }
+    .rfq-priority-stack.stack-option-c .rfq-priority-tier { color: #065f46 !important; font-weight: 800 !important; }
+    .rfq-priority-stack.stack-option-c .rfq-priority-name { color: #064e3b !important; }
+    .rfq-priority-stack.stack-option-d, .rfq-priority-stack.stack-option-unknown { background: #f1f5f9 !important; border-color: #cbd5e1 !important; }
+    .rfq-priority-stack.stack-option-d .rfq-priority-tier, .rfq-priority-stack.stack-option-unknown .rfq-priority-tier { color: #475569 !important; font-weight: 800 !important; }
+    .rfq-priority-stack.stack-option-d .rfq-priority-name, .rfq-priority-stack.stack-option-unknown .rfq-priority-name { color: #334155 !important; }
 </style>
 {% endblock %}
 
@@ -636,8 +762,7 @@
                     <th>#</th>
                     <th>Applicant</th>
                     <th class="rfq-col-priority" title="Serve order: Option A first, then C, B, D; within each tier, earliest proceeded time in this queue">Queue priority</th>
-                    <th class="rfq-col-proceeded">Proceeded Date &amp; Time</th>
-                    <th class="rfq-col-proceeded-ago" title="Relative to now since this record entered lot awarding queue">Time ago</th>
+                    <th class="rfq-col-proceeded" style="width: 14rem !important;">Proceeded Date &amp; Time</th>
                     <th class="rfq-col-status">Status</th>
                     <th class="rfq-col-actions">Actions</th>
                 </tr>
@@ -647,10 +772,22 @@
                 <tr data-application-id="{{ row.application.id }}">
                     <td style="font-weight:700;color:#1e293b;">{{ page_obj.start_index|add:forloop.counter0 }}</td>
                     <td class="lawq-applicant-cell">
-                        <div class="rfq-name {% if row.applicant.displacement_reason == 'danger_zone' %}option-a{% elif row.applicant.displacement_reason == 'ejected' %}option-b{% elif row.applicant.displacement_reason == 'relocated' %}option-c{% elif row.applicant.displacement_reason == 'not_abc' %}option-d{% endif %}">
-                            {{ row.applicant.full_name }}
+                        <div class="complainant-cell-info">
+                            <div class="complainant-name-card">
+                                <svg class="applicant-meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 0.9rem; height: 0.9rem; flex-shrink: 0; color: #475569;">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="12" cy="7" r="4"></circle>
+                                </svg>
+                                <span class="complainant-name applicant-name {% if row.applicant.displacement_reason == 'danger_zone' %}option-a{% elif row.applicant.displacement_reason == 'ejected' %}option-b{% elif row.applicant.displacement_reason == 'relocated' %}option-c{% elif row.applicant.displacement_reason == 'not_abc' %}option-d{% endif %}">{{ row.applicant.full_name }}</span>
+                            </div>
+                            <div class="complainant-meta">
+                                <span class="case-number-badge" title="Transaction ID: APP-{{ row.application.id }}">APP-{{ row.application.id|slice:":8" }}...</span>
+                                {% if row.applicant.reference_number %}
+                                <span class="complainant-ref-code" title="Reference Code: {{ row.applicant.reference_number }}">{{ row.applicant.reference_number }}</span>
+                                {% endif %}
+                            </div>
                         </div>
-                        <div class="lawq-detail">
+                        <div class="lawq-detail" style="margin-top: 0.5rem; display: flex; align-items: center; gap: 0.25rem;">
                             Signed form:
                             {% if row.signed_form_on_file %}
                             <a href="{{ row.signed_form_vault_url }}" class="lawq-signed-link" title="View uploaded documents for this applicant">On file</a>
@@ -677,18 +814,29 @@
                     </td>
                     <td class="rfq-col-proceeded">
                         {% if row.routed_at %}
-                        <time datetime="{{ row.routed_at|date:'c' }}" title="Entered lot awarding queue (standby)">
-                            {{ row.routed_at|date:"M d, Y" }} | {{ row.routed_at|date:"h:i A" }}
-                        </time>
+                        <div class="date-cell-stack">
+                            <div class="date-main">
+                                <svg class="applicant-meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 0.8rem; height: 0.8rem; color: #3b82f6;">
+                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                                </svg>
+                                <span>{{ row.routed_at|date:"M d, Y" }}</span>
+                            </div>
+                            <div class="date-sub">
+                                {{ row.routed_at|date:"h:i A" }} · <span style="font-weight: 600; color: #475569;">{{ row.routedAgo|default:"—" }}</span>
+                            </div>
+                        </div>
                         {% else %}
                         <span class="rfq-proceeded-missing">—</span>
                         {% endif %}
                     </td>
-                    <td class="rfq-col-proceeded-ago" title="Same moment as Proceeded Date &amp; Time — relative to now">
-                        {{ row.routedAgo|default:"—" }}
-                    </td>
                     <td class="rfq-col-status">
-                        <span class="lawq-chip">{{ row.status_label }}</span>
+                        <span class="lawq-chip ready-awarding">
+                            <span class="rfq-status-pulse" style="margin-right: 0.3rem;"></span>
+                            {{ row.status_label }}
+                        </span>
                     </td>
                     <td class="rfq-col-actions">
                         <div class="lawq-actions-inline">
