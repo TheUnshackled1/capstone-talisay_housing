@@ -27,6 +27,32 @@ from applications.form_pipeline import applicant_has_signed_application_payload
 
 DOCUMENTS_MANAGEMENT_PER_PAGE = 10
 
+# Vault drawer type_key → intake upload_scanned_requirement (doc_key, requirement code).
+VAULT_TYPE_TO_INTAKE_DOC = {
+    'barangay_residency': ('doc_brgy_residency', 'R01'),
+    'barangay_indigency': ('doc_brgy_indigency', 'R02'),
+    'cedula': ('doc_cedula', 'R03'),
+    'police_clearance': ('doc_police_clearance', 'R04'),
+    'no_property': ('doc_no_property', 'R05'),
+    'photo_2x2': ('doc_2x2_picture', 'R06'),
+    'house_sketch': ('doc_sketch_location', 'R07'),
+    'voter_certification': ('doc_voter_cert', 'RVT'),
+    'signed_application': ('doc_signed_application', 'SIGNED'),
+    'cdrrmo_cert': ('doc_cdrrmo', 'CDRRMO'),
+    'incident_report': ('doc_incident_report', 'INCRPT'),
+    'isf_situational_docs': ('doc_isf_situational', 'ISF-SIT'),
+}
+
+
+def _vault_drawer_intake_fields(type_key: str | None) -> dict:
+    """Optional intake_doc_key / intake_doc_code for drawer Upload & Scan buttons."""
+    if not type_key:
+        return {}
+    pair = VAULT_TYPE_TO_INTAKE_DOC.get(type_key)
+    if not pair:
+        return {}
+    return {'intake_doc_key': pair[0], 'intake_doc_code': pair[1]}
+
 
 def _vault_blob_view_url(
     type_key: str | None,
@@ -222,6 +248,7 @@ def _build_situation_vault_block(
                     'view_url': _vault_blob_view_url(
                         'cdrrmo_cert', has_cdrrmo, latest_doc_by_type, position
                     ),
+                    **_vault_drawer_intake_fields('cdrrmo_cert'),
                 },
                 {
                     'slot_id': 'inspection_report',
@@ -237,6 +264,7 @@ def _build_situation_vault_block(
                         latest_doc_by_type,
                         position,
                     ),
+                    **_vault_drawer_intake_fields('incident_report'),
                 },
                 {
                     'slot_id': 'ronda_verification',
@@ -285,6 +313,7 @@ def _build_situation_vault_block(
                     'view_url': _vault_blob_view_url(
                         'isf_situational_docs', has_isf, latest_doc_by_type, position
                     ),
+                    **_vault_drawer_intake_fields('isf_situational_docs'),
                 },
             ],
         }
@@ -313,6 +342,7 @@ def _build_situation_vault_block(
                     'view_url': _vault_blob_view_url(
                         'isf_situational_docs', has_isf, latest_doc_by_type, position
                     ),
+                    **_vault_drawer_intake_fields('isf_situational_docs'),
                 },
             ],
         }
@@ -714,6 +744,7 @@ def document_management(request, position):
                     'group_label': group['label'],
                     'on_file': on_file,
                     'view_url': view_url,
+                    **_vault_drawer_intake_fields(type_key),
                 })
         row['vault_checklist'] = checklist
 
@@ -768,6 +799,7 @@ def document_management(request, position):
             'group_label': 'Housing application (Module 2)',
             'on_file': signed_on_file,
             'view_url': signed_view_url,
+            **_vault_drawer_intake_fields('signed_application'),
         }
         if not signed_on_file:
             if app_obj and app_obj.status == 'draft':
@@ -830,6 +862,7 @@ def document_management(request, position):
         'total_size_gb': round(sum(doc.file_size for doc in documents_qs) / (1024*1024*1024), 2),
         'blacklisted_registry_count': blacklisted_registry_count,
         'vault_drawer_data': vault_drawer_data,
+        'vault_drawer_can_intake_scan': request.user.position in ('second_member', 'fourth_member'),
     }
 
     return render(request, 'documents/management.html', context)

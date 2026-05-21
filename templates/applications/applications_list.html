@@ -4465,28 +4465,6 @@
     </div>
 </div>
 
-<div class="modal-overlay" id="m2ReplaceDocConfirmModal" onclick="m2CloseReplaceDocConfirm(event)">
-    <div class="eligibility-next-modal" style="max-width: 33rem;" onclick="event.stopPropagation()">
-        <div class="eligibility-next-header">
-            <h3 class="eligibility-next-title">Replace existing document?</h3>
-            <p class="eligibility-next-subtitle">A scanned file is already attached for this requirement.</p>
-        </div>
-        <div class="eligibility-next-body">
-            <div style="padding:0.7rem 0.8rem;border:1px solid #fde68a;background:#fffbeb;border-radius:0.6rem;text-align:center;">
-                <div style="font-size:0.74rem;font-weight:700;color:#92400e;margin-bottom:0.2rem;">Existing document on file</div>
-                <div id="m2ReplaceDocConfirmName" style="font-size:0.8rem;color:#334155;font-weight:600;line-height:1.35;">Document</div>
-            </div>
-            <p style="margin:0.7rem 0 0;font-size:0.78rem;color:#475569;line-height:1.45;text-align:center;">
-                Replacing will update this requirement in the checklist and also in Document Management for this applicant.
-            </p>
-        </div>
-        <div class="eligibility-next-footer">
-            <button type="button" class="eligibility-next-back" onclick="m2ResolveReplaceDocConfirm(false)">No</button>
-            <button type="button" class="eligibility-next-close" onclick="m2ResolveReplaceDocConfirm(true)">Yes, replace</button>
-        </div>
-    </div>
-</div>
-
 <input type="file" id="m2RequirementFileInput" accept="image/*,application/pdf,.pdf" tabindex="-1" aria-hidden="true" style="position:absolute;width:0;height:0;opacity:0;pointer-events:none;">
 
 {% endblock %}
@@ -5119,32 +5097,11 @@
         if (typeof onConfirm === 'function') onConfirm();
     }
 
-    function m2CloseReplaceDocConfirm(event) {
-        if (event && event.target && event.target.id !== 'm2ReplaceDocConfirmModal') return;
-        m2ResolveReplaceDocConfirm(false);
-    }
-
-    function m2ResolveReplaceDocConfirm(approved) {
-        const modal = document.getElementById('m2ReplaceDocConfirmModal');
-        if (modal) modal.classList.remove('active');
-        if (typeof m2ReplaceDocConfirmResolver === 'function') {
-            const resolver = m2ReplaceDocConfirmResolver;
-            m2ReplaceDocConfirmResolver = null;
-            resolver(!!approved);
-        }
-    }
-
     function m2ConfirmReplaceExistingDocument(docName) {
-        const modal = document.getElementById('m2ReplaceDocConfirmModal');
-        const nameEl = document.getElementById('m2ReplaceDocConfirmName');
-        if (!modal || !nameEl) {
-            return Promise.resolve(window.confirm('A document is already attached. Do you want to replace it?'));
+        if (typeof showFlowConfirmReplaceDocument === 'function') {
+            return showFlowConfirmReplaceDocument(docName || 'Scanned document');
         }
-        nameEl.textContent = docName || 'Scanned document';
-        modal.classList.add('active');
-        return new Promise(function (resolve) {
-            m2ReplaceDocConfirmResolver = resolve;
-        });
+        return Promise.resolve(window.confirm('A document is already attached. Do you want to replace it?'));
     }
 
     async function m2HandleReplaceAwareVaultLinkClick(event) {

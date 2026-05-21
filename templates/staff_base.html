@@ -251,6 +251,34 @@
         </div>
     </main>
 
+    <div class="modal-overlay" id="flowReplaceDocModal" onclick="closeFlowReplaceDocConfirm(event)" aria-hidden="true">
+        <div class="flow-replace-card" onclick="event.stopPropagation()" role="dialog" aria-modal="true"
+            aria-labelledby="flowReplaceDocTitle">
+            <div class="flow-replace-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <path d="M12 18v-6"></path>
+                    <path d="M9 15l3-3 3 3"></path>
+                </svg>
+            </div>
+            <h3 class="flow-replace-title" id="flowReplaceDocTitle">Replace file on record?</h3>
+            <p class="flow-replace-lead">A file is already stored for this requirement.</p>
+            <div class="flow-replace-doc-box">
+                <span class="flow-replace-doc-label">Document</span>
+                <span class="flow-replace-doc-name" id="flowReplaceDocName">Document</span>
+            </div>
+            <p class="flow-replace-hint">Proceeding will replace the file on record for this applicant.</p>
+            <div class="flow-replace-actions">
+                <button type="button" class="flow-replace-cancel" id="flowReplaceDocCancelBtn"
+                    onclick="resolveFlowReplaceDocConfirm(false)">Cancel</button>
+                <button type="button" class="flow-replace-proceed" id="flowReplaceDocProceedBtn"
+                    onclick="resolveFlowReplaceDocConfirm(true)">Proceed</button>
+            </div>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="flowAlertModal" onclick="closeFlowAlert(event)">
         <div class="flow-alert-card" id="flowAlertCard" onclick="event.stopPropagation()" role="dialog"
             aria-modal="true" aria-labelledby="flowAlertTitle">

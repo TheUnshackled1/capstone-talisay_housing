@@ -127,12 +127,12 @@
     /* Document Management Table — Institutional UX (styled like applications table) */
     .documents-table-container {
         background: white;
-        border-radius: 14px;
+        border-radius: 16px;
         border: 1px solid #e2e8f0;
         overflow: hidden;
-        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 4px 16px rgba(15, 23, 42, 0.04);
+        box-shadow: 0 4px 20px rgba(15, 23, 42, 0.03), 0 10px 30px rgba(15, 23, 42, 0.05);
         position: relative;
-        margin-top: 1rem;
+        margin-top: 1.25rem;
     }
 
     .documents-table-container::before {
@@ -141,113 +141,98 @@
         top: 0;
         left: 0;
         right: 0;
-        height: 3px;
-        background: linear-gradient(90deg, #1e3a8a 0%, #2563eb 35%, #0ea5e9 70%, #06b6d4 100%);
-        z-index: 1;
+        height: 4px;
+        background: linear-gradient(90deg, #1e3a8a 0%, #3b82f6 30%, #06b6d4 70%, #10b981 100%);
+        z-index: 3;
     }
 
     .documents-table {
         width: 100%;
         table-layout: fixed;
-        border-collapse: collapse;
-        border: 1px solid #e5e7eb;
+        border-collapse: separate;
+        border-spacing: 0;
+        border: none;
     }
 
     .documents-table thead {
-        background: linear-gradient(180deg, #1d4ed8 0%, #1e3a8a 100%);
+        background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
         position: sticky;
         top: 0;
         z-index: 2;
     }
 
     .documents-table th {
-        padding: 0.6rem 0.55rem;
+        padding: 0.9rem 0.85rem;
         text-align: left;
-        font-size: 0.58rem;
+        font-size: 0.72rem;
         font-weight: 700;
-        color: #ffffff;
+        color: #f8fafc;
         text-transform: uppercase;
-        letter-spacing: 0.04em;
-        border: 1px solid rgba(255, 255, 255, 0.22);
+        letter-spacing: 0.08em;
+        border-bottom: 2px solid #334155;
+        border-right: 1px solid rgba(255, 255, 255, 0.08);
         white-space: normal;
         word-break: normal;
-        line-height: 1.25;
-        vertical-align: bottom;
+        line-height: 1.35;
+        vertical-align: middle;
         position: relative;
-        background: linear-gradient(180deg, #1d4ed8 0%, #1e3a8a 100%);
+        background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
     }
 
-    .documents-table th::after {
-        content: '';
-        position: absolute;
-        bottom: -2px;
-        left: 0;
-        right: 0;
-        height: 2px;
-        background: transparent;
-        transition: background 0.2s ease;
-    }
-
-    .documents-table th:hover::after {
-        background: #2563eb;
+    .documents-table th:last-child {
+        border-right: none;
     }
 
     .documents-table td {
-        padding: 0.7rem 0.75rem;
-        border: 1px solid #e5e7eb;
+        padding: 1rem 0.85rem;
+        border-bottom: 1px solid #e2e8f0;
+        border-right: 1px solid #f1f5f9;
         vertical-align: middle;
-        font-size: 0.6875rem;
+        font-size: 0.82rem;
         color: #334155;
-        overflow: hidden;
+        overflow: visible;
         position: relative;
+        transition: background-color 0.15s ease;
     }
 
-    .documents-table td.col-workflow-status {
-        overflow: visible;
+    .documents-table td:last-child {
+        border-right: none;
     }
 
     .documents-table tbody tr {
-        transition: background 0.18s ease, box-shadow 0.18s ease, transform 0.12s ease;
+        transition: all 0.2s ease;
         position: relative;
     }
 
     .documents-table tbody tr:nth-child(even) {
-        background: #fafbfc;
+        background: #f8fafc;
+    }
+
+    .documents-table tbody tr:last-child td {
+        border-bottom: none;
     }
 
     .documents-table tbody tr:hover {
-        background: #f0fdf4;
-        box-shadow: inset 3px 0 0 #10b981;
+        background: #f0fdf4 !important;
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.02);
     }
 
-    .documents-table tbody tr:hover td:first-child {
-        color: #047857;
-        font-weight: 700;
+    .documents-table tbody tr:hover td {
+        color: #0f172a;
     }
 
     /* Row counter column */
     .documents-table .col-num {
-        width: 3%;
+        width: 4%;
         text-align: center;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
         font-weight: 700;
-        color: #1e293b;
+        color: #64748b;
+        font-size: 0.78rem;
     }
 
     .documents-table .col-applicant {
-        width: 26%;
-        font-size: 0.9rem;
-        font-weight: 500;
-        letter-spacing: 0.01em;
-    }
-
-    .documents-table .col-documents {
-        width: 9%;
-        text-align: center;
-    }
-
-    .documents-table .col-status {
-        width: 12%;
-        text-align: center;
+        width: 25%;
     }
 
     .documents-table .col-app-state {
@@ -256,68 +241,13 @@
     }
 
     .documents-table .col-workflow-status {
-        width: 22%;
+        width: 23%;
         text-align: center;
-        vertical-align: top;
     }
 
-    /* Applicant Status — one pill style so Lot Awarded / Ready for Awarding match */
-    .dm-workflow-badge {
-        display: flex !important;
-        width: 100%;
-        align-items: center;
-        justify-content: center;
-        box-sizing: border-box;
-        min-height: 2.25rem;
-        padding: 0.45rem 0.55rem !important;
-        background-color: #dbeafe;
-        color: #1e40af;
-        border: 1px solid #93c5fd;
-        border-radius: 4px !important;
-        font-size: 0.5625rem !important;
-        font-weight: 700;
-        letter-spacing: 0.04em;
-        line-height: 1.2;
-        text-transform: uppercase;
+    .documents-table .col-documents {
+        width: 13%;
         text-align: center;
-        white-space: normal;
-        word-break: break-word;
-        hyphens: none;
-    }
-
-    .dm-status-pill {
-        display: flex !important;
-        width: 100%;
-        align-items: center;
-        justify-content: center;
-        gap: 0.18rem;
-        padding: 0.45rem 0.5rem !important;
-        border-radius: 4px !important;
-        font-size: 0.5625rem !important;
-        font-weight: 700;
-        letter-spacing: 0.04em;
-        text-transform: uppercase;
-        box-sizing: border-box;
-        text-align: center;
-        line-height: 1.2;
-    }
-    .dm-status--active { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
-    .dm-status--blacklist { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
-    .dm-status--complete { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
-    .dm-status--partial { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
-    .dm-status--pending { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
-
-    .dm-applicant-status-detail {
-        margin-top: 0.35rem;
-        font-size: 0.62rem;
-        font-weight: 500;
-        color: #64748b;
-        line-height: 1.35;
-        text-align: center;
-        text-transform: none;
-        letter-spacing: 0.02em;
-        word-break: break-word;
-        padding: 0 0.15rem;
     }
 
     .documents-table .col-doc-status {
@@ -326,17 +256,299 @@
     }
 
     .documents-table .col-actions {
-        width: 24%;
-        overflow: visible;
-        text-align: left;
+        width: 13%;
+        text-align: center;
     }
-    .documents-table td.col-actions {
+
+    /* Premium Applicant Cell details */
+    .applicant-cell-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+    }
+
+    .applicant-name {
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: #0f172a;
+        letter-spacing: -0.01em;
+        line-height: 1.25;
+    }
+
+    .applicant-meta {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-size: 0.68rem;
+        color: #64748b;
+        font-weight: 500;
+    }
+
+    .applicant-meta-icon {
+        width: 0.8rem;
+        height: 0.8rem;
+        color: #94a3b8;
+        flex-shrink: 0;
+    }
+
+    .applicant-ref-code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-weight: 600;
+        background: #f1f5f9;
+        padding: 0.1rem 0.4rem;
+        border-radius: 4px;
+        color: #475569;
+        border: 1px solid #e2e8f0;
+    }
+
+    /* Applicant Status / Workflow Badges */
+    .dm-workflow-badge {
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+        padding: 0.35rem 0.65rem !important;
+        border-radius: 6px !important;
+        font-size: 0.65rem !important;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        line-height: 1.1;
+        border: 1px solid transparent;
+        box-sizing: border-box;
+        text-align: center;
         white-space: normal;
-        overflow: visible;
+        word-break: break-word;
     }
-    .documents-table td.col-actions > div {
-        overflow: visible;
-        word-break: normal;
+
+    .dm-workflow-badge--intake {
+        background: #fff7ed !important;
+        color: #c2410c !important;
+        border-color: #ffedd5 !important;
+    }
+
+    .dm-workflow-badge--eligibility {
+        background: #faf5ff !important;
+        color: #6b21a8 !important;
+        border-color: #f3e8ff !important;
+    }
+
+    .dm-workflow-badge--form {
+        background: #f0f9ff !important;
+        color: #0369a1 !important;
+        border-color: #e0f2fe !important;
+    }
+
+    .dm-workflow-badge--award {
+        background: #f0fdfa !important;
+        color: #0d9488 !important;
+        border-color: #ccfbf1 !important;
+    }
+
+    .dm-workflow-badge--units {
+        background: #ecfdf5 !important;
+        color: #047857 !important;
+        border-color: #d1fae5 !important;
+    }
+
+    .dm-workflow-badge--default {
+        background: #f1f5f9 !important;
+        color: #475569 !important;
+        border-color: #e2e8f0 !important;
+    }
+
+    .dm-applicant-status-detail {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.3rem;
+        margin-top: 0.4rem;
+        font-size: 0.64rem;
+        font-weight: 600;
+        color: #475569;
+        background: #f8fafc;
+        border: 1px dashed #cbd5e1;
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        line-height: 1.25;
+        text-align: center;
+        word-break: break-word;
+    }
+
+    .dm-applicant-status-detail svg {
+        width: 0.75rem;
+        height: 0.75rem;
+        color: #64748b;
+        flex-shrink: 0;
+    }
+
+    /* Document Count Widget */
+    .doc-count-widget {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.35rem;
+        width: 100%;
+        max-width: 7rem;
+    }
+
+    .doc-count-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.3rem 0.6rem;
+        background: #f0f9ff;
+        border: 1px solid #bae6fd;
+        color: #0369a1;
+        border-radius: 6px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        line-height: 1;
+    }
+
+    .doc-count-badge svg {
+        width: 0.8rem;
+        height: 0.8rem;
+        color: #0284c7;
+        flex-shrink: 0;
+    }
+
+    .doc-progress-track {
+        width: 100%;
+        height: 5px;
+        background: #e2e8f0;
+        border-radius: 9999px;
+        overflow: hidden;
+    }
+
+    .doc-progress-bar {
+        height: 100%;
+        border-radius: 9999px;
+        transition: width 0.3s ease;
+    }
+
+    .doc-progress-bar--empty {
+        background: #cbd5e1;
+    }
+
+    .doc-progress-bar--partial {
+        background: #f59e0b;
+    }
+
+    .doc-progress-bar--full {
+        background: #10b981;
+    }
+
+    /* Refined Status Badges */
+    .dm-status-pill {
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+        gap: 0.35rem;
+        padding: 0.35rem 0.65rem !important;
+        border-radius: 6px !important;
+        font-size: 0.68rem !important;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+        line-height: 1.1;
+        border: 1px solid transparent;
+        box-sizing: border-box;
+        text-align: center;
+    }
+
+    .dm-status-pill svg {
+        width: 0.8rem;
+        height: 0.8rem;
+        flex-shrink: 0;
+    }
+
+    .dm-status--active {
+        background: #ecfdf5 !important;
+        color: #047857 !important;
+        border-color: #d1fae5 !important;
+    }
+
+    .dm-status--blacklist {
+        background: #fff1f2 !important;
+        color: #be123c !important;
+        border-color: #fecdd3 !important;
+    }
+
+    .dm-status--complete {
+        background: #ecfdf5 !important;
+        color: #047857 !important;
+        border-color: #d1fae5 !important;
+    }
+
+    .dm-status--partial {
+        background: #fffbeb !important;
+        color: #d97706 !important;
+        border-color: #fef3c7 !important;
+    }
+
+    .dm-status--pending {
+        background: #fff1f2 !important;
+        color: #be123c !important;
+        border-color: #fecdd3 !important;
+    }
+
+    /* Pulsing Dot for Active Records */
+    .status-dot-active {
+        width: 0.4rem;
+        height: 0.4rem;
+        background-color: #10b981;
+        border-radius: 50%;
+        display: inline-block;
+        animation: pulse-green 2s infinite;
+        flex-shrink: 0;
+    }
+
+    @keyframes pulse-green {
+        0% {
+            transform: scale(0.9);
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6);
+        }
+        70% {
+            transform: scale(1);
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0);
+        }
+        100% {
+            transform: scale(0.9);
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+        }
+    }
+
+    /* Premium View Folder / Open Vault button */
+    .dm-action-btn--view {
+        border: 1px solid #1e3a8a !important;
+        background: linear-gradient(135deg, #2563eb 0%, #1e3a8a 100%) !important;
+        color: #ffffff !important;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08) !important;
+        font-weight: 700 !important;
+        padding: 0 0.85rem !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 0.4rem !important;
+        height: 2.1rem !important;
+        min-height: 0 !important;
+        border-radius: 6px !important;
+        font-size: 0.72rem !important;
+        transition: all 0.2s ease !important;
+        cursor: pointer;
+        text-decoration: none;
+    }
+
+    .dm-action-btn--view:hover {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3) !important;
+        transform: translateY(-1px) !important;
+        color: #ffffff !important;
+        text-decoration: none;
+    }
+
+    .dm-action-btn--view:active {
+        transform: translateY(0) !important;
     }
 
     /* Horizontal scroll fallback when viewport is too narrow. */
@@ -344,7 +556,7 @@
         overflow-x: auto;
     }
     .documents-table {
-        min-width: 720px;
+        min-width: 900px;
     }
 
     /* ===================================================================
@@ -723,6 +935,8 @@
        visual language everywhere they perform these four actions. */
     .dm-action-btn,
     .vault-add-file-btn,
+    .vault-upload-btn,
+    .vault-scan-btn,
     .vault-view-btn {
         appearance: none;
         -webkit-appearance: none;
@@ -753,6 +967,8 @@
     }
     .dm-action-btn:focus-visible,
     .vault-add-file-btn:focus-visible,
+    .vault-upload-btn:focus-visible,
+    .vault-scan-btn:focus-visible,
     .vault-view-btn:focus-visible {
         outline: 2px solid #5eead4;
         outline-offset: 2px;
@@ -781,14 +997,16 @@
 
     /* SCAN / UPLOAD — solid blue (Scan document / Upload document / Add file) */
     .dm-action-btn--scan,
-    .vault-add-file-btn {
+    .vault-add-file-btn,
+    .vault-upload-btn {
         border: none;
         background: #2563eb;
         color: #fff;
         box-shadow: none;
     }
     .dm-action-btn--scan:hover,
-    .vault-add-file-btn:hover {
+    .vault-add-file-btn:hover,
+    .vault-upload-btn:hover {
         background: #3b82f6;
         color: #fff;
         transform: translateY(-1px);
@@ -796,7 +1014,9 @@
         text-decoration: none;
     }
     .dm-action-btn--scan:focus-visible,
-    .vault-add-file-btn:focus-visible {
+    .vault-add-file-btn:focus-visible,
+    .vault-upload-btn:focus-visible,
+    .vault-scan-btn:focus-visible {
         outline: 2px solid #60a5fa;
         outline-offset: 2px;
     }
@@ -1597,14 +1817,17 @@
 </div>
 
 <div id="dwtcontrolContainer" style="width: 0; height: 0; overflow: hidden; position: absolute; left: -9999px;" aria-hidden="true"></div>
+<input type="file" id="vaultDrawerFileInput" accept=".pdf,.jpg,.jpeg,.png,image/*,application/pdf" style="display: none;" aria-hidden="true">
 <script src="{% static 'Dynamic Web TWAIN SDK 19.3.3/Resources/dynamsoft.webtwain.initiate.js' %}"></script>
 <script src="{% static 'Dynamic Web TWAIN SDK 19.3.3/Resources/dynamsoft.webtwain.config.js' %}"></script>
 
 <!-- JavaScript -->
 <script>
     const VAULT_MGMT_INTAKE_DWT_URL = '{% url "intake:upload_scanned_requirement" request.user.position %}';
+    const VAULT_DRAWER_CAN_INTAKE_SCAN = {{ vault_drawer_can_intake_scan|yesno:"true,false" }};
 
     let VaultMgmtDWTObject = null;
+    let vaultDrawerPendingUploadContext = null;
     if (window.Dynamsoft && window.Dynamsoft.DWT) {
         Dynamsoft.DWT.RegisterEvent('OnWebTwainReady', function () {
             VaultMgmtDWTObject = Dynamsoft.DWT.GetWebTwain('dwtcontrolContainer');
@@ -1760,6 +1983,223 @@ function vaultOpenUploadForMissingDoc(docTypeKey) {
     if (!vaultDrawerApplicantId || !docTypeKey) return;
     closeVaultDrawer();
     openUploadModalForApplicant(vaultDrawerApplicantId, vaultDrawerApplicantName, docTypeKey);
+}
+
+function vaultOpenScanForMissingDoc(docTypeKey) {
+    if (!vaultDrawerApplicantId || !docTypeKey) return;
+    closeVaultDrawer();
+    openUploadModalForApplicant(vaultDrawerApplicantId, vaultDrawerApplicantName, docTypeKey, 'scan');
+}
+
+async function vaultDrawerConfirmReplace(docName) {
+    if (typeof showFlowConfirmReplaceDocument === 'function') {
+        return showFlowConfirmReplaceDocument(docName || 'Document');
+    }
+    const label = docName || 'Document';
+    return window.confirm('Replace the file already on record?\n\n' + label + '\n\nProceed?');
+}
+
+async function vaultDrawerTriggerUpload(buttonEl) {
+    if (!buttonEl || !VAULT_DRAWER_CAN_INTAKE_SCAN) {
+        const tk = buttonEl && buttonEl.dataset.vaultTypeKey;
+        if (tk) vaultOpenUploadForMissingDoc(tk);
+        return;
+    }
+    const docKey = String(buttonEl.dataset.intakeDocKey || '').trim();
+    const docCode = String(buttonEl.dataset.intakeDocCode || '').trim();
+    if (!docKey || !vaultDrawerApplicantId) return;
+    if (String(buttonEl.dataset.hasExistingDoc || '0') === '1') {
+        const ok = await vaultDrawerConfirmReplace(buttonEl.dataset.existingDocName || 'Document');
+        if (!ok) return;
+    }
+    vaultDrawerPendingUploadContext = {
+        docKey: docKey,
+        docCode: docCode,
+        triggerBtn: buttonEl,
+    };
+    const inp = document.getElementById('vaultDrawerFileInput');
+    if (!inp) return;
+    inp.value = '';
+    inp.click();
+}
+
+async function vaultDrawerTriggerScan(buttonEl) {
+    if (!buttonEl || !VAULT_DRAWER_CAN_INTAKE_SCAN) {
+        const tk = buttonEl && buttonEl.dataset.vaultTypeKey;
+        if (tk) vaultOpenScanForMissingDoc(tk);
+        return;
+    }
+    const docKey = String(buttonEl.dataset.intakeDocKey || '').trim();
+    const docCode = String(buttonEl.dataset.intakeDocCode || '').trim();
+    if (!docKey || !vaultDrawerApplicantId) return;
+    if (String(buttonEl.dataset.hasExistingDoc || '0') === '1') {
+        const ok = await vaultDrawerConfirmReplace(buttonEl.dataset.existingDocName || 'Document');
+        if (!ok) return;
+    }
+    const oldText = buttonEl.textContent;
+    buttonEl.disabled = true;
+    buttonEl.textContent = 'Scanning…';
+    try {
+        const dwt = await vaultMgmtWaitForDwt();
+        if (!dwt) throw new Error('Scanner SDK is not ready. Refresh the page and try again.');
+        await dwt.SelectSourceAsync();
+        const beforeCount = Number(dwt.HowManyImagesInBuffer || 0);
+        await dwt.AcquireImageAsync({ IfCloseSourceAfterAcquire: true });
+        if (Number(dwt.HowManyImagesInBuffer || 0) <= beforeCount) {
+            throw new Error('No image was acquired from the scanner.');
+        }
+        const index = Number(dwt.CurrentImageIndexInBuffer);
+        const uploadUrl = VAULT_MGMT_INTAKE_DWT_URL
+            + '?applicant_id=' + encodeURIComponent(vaultDrawerApplicantId)
+            + '&doc_key=' + encodeURIComponent(docKey)
+            + '&doc_code=' + encodeURIComponent(docCode)
+            + '&capture_method=scan';
+        const refLabel = (vaultDrawerApplicantName || 'applicant').replace(/\s+/g, '_').slice(0, 80);
+        const fileName = refLabel + '_' + (docCode || 'scan') + '.png';
+        await new Promise(function (resolve, reject) {
+            dwt.HTTPUpload(
+                uploadUrl,
+                [index],
+                Dynamsoft.DWT.EnumDWT_ImageType.IT_PNG,
+                Dynamsoft.DWT.EnumDWT_UploadDataFormat.Binary,
+                fileName,
+                function (httpResponse) { resolve(httpResponse); },
+                function (_code, errorString, httpResponse) {
+                    let message = errorString || 'Upload failed.';
+                    const normalized = String(message || '').replace(/\s+/g, ' ').trim();
+                    if (/^HTTP process:\s*OK\s*\(200\)/i.test(normalized) || normalized.toLowerCase().startsWith('http process: ok')) {
+                        resolve(httpResponse);
+                        return;
+                    }
+                    if (httpResponse) {
+                        try {
+                            const parsed = JSON.parse(httpResponse);
+                            if (parsed && parsed.success) {
+                                resolve(httpResponse);
+                                return;
+                            }
+                            if (parsed && parsed.error) message = parsed.error;
+                        } catch (_err) {}
+                    }
+                    reject(new Error(message));
+                }
+            );
+        });
+        vaultMgmtNotify('Scan saved to the document vault.', 'Scan complete', 'success');
+        location.reload();
+    } catch (error) {
+        vaultMgmtNotify((error && error.message) ? error.message : 'Unable to complete scan.');
+        buttonEl.textContent = oldText;
+    } finally {
+        buttonEl.disabled = false;
+        if (buttonEl.textContent === 'Scanning…') buttonEl.textContent = 'Scan';
+    }
+}
+
+async function vaultDrawerHandleFileSelected(ev) {
+    const input = ev.target;
+    const file = input.files && input.files[0];
+    const ctx = vaultDrawerPendingUploadContext;
+    vaultDrawerPendingUploadContext = null;
+    if (!file || !ctx || !vaultDrawerApplicantId) {
+        if (input) input.value = '';
+        return;
+    }
+    const formData = new FormData();
+    formData.append('applicant_id', vaultDrawerApplicantId);
+    formData.append('doc_key', ctx.docKey);
+    formData.append('doc_code', String(ctx.docCode || '').toUpperCase());
+    formData.append('file', file);
+    formData.append('capture_method', 'upload');
+    const busyBtn = ctx.triggerBtn;
+    const oldText = busyBtn ? busyBtn.textContent : '';
+    if (busyBtn) {
+        busyBtn.disabled = true;
+        busyBtn.textContent = 'Uploading…';
+    }
+    try {
+        const response = await fetch(VAULT_MGMT_INTAKE_DWT_URL, {
+            method: 'POST',
+            body: formData,
+            credentials: 'same-origin',
+        });
+        const ct = (response.headers.get('content-type') || '').toLowerCase();
+        const data = ct.includes('application/json') ? await response.json() : null;
+        if (!data || !data.success) {
+            throw new Error((data && data.error) ? data.error : 'Upload failed.');
+        }
+        vaultMgmtNotify('File saved to the document vault.', 'Upload complete', 'success');
+        location.reload();
+    } catch (err) {
+        vaultMgmtNotify(err.message || 'Upload failed.');
+        if (busyBtn) {
+            busyBtn.disabled = false;
+            busyBtn.textContent = oldText || 'Upload';
+        }
+    } finally {
+        if (input) input.value = '';
+    }
+}
+
+function vaultAppendDrawerDocActions(actionsEl, item) {
+    if (!actionsEl || !item || item.is_monitoring_report) return;
+    const typeKey = item.type_key;
+    const hideActions = item.hide_add_file;
+    const docKey = item.intake_doc_key;
+    const docCode = item.intake_doc_code;
+    const canInline = VAULT_DRAWER_CAN_INTAKE_SCAN && docKey && docCode && !hideActions;
+
+    if (item.on_file && item.view_url) {
+        vaultAppendViewButton(actionsEl, item.view_url, 'View');
+    } else if (item.on_file && item.view_urls && item.view_urls.length) {
+        vaultAppendGalleryViewButton(actionsEl, item.view_urls, item.label || 'Photos');
+    }
+
+    if (!docKey || hideActions) return;
+
+    if (canInline) {
+        const uploadBtn = document.createElement('button');
+        uploadBtn.type = 'button';
+        uploadBtn.className = 'vault-upload-btn';
+        uploadBtn.textContent = 'Upload';
+        uploadBtn.dataset.vaultTypeKey = typeKey || '';
+        uploadBtn.dataset.intakeDocKey = docKey;
+        uploadBtn.dataset.intakeDocCode = docCode;
+        uploadBtn.dataset.hasExistingDoc = item.on_file ? '1' : '0';
+        uploadBtn.dataset.existingDocName = item.label || 'Document';
+        uploadBtn.title = 'Choose a file from this computer — saves to document vault';
+        uploadBtn.addEventListener('click', function () { vaultDrawerTriggerUpload(uploadBtn); });
+        actionsEl.appendChild(uploadBtn);
+
+        const scanBtn = document.createElement('button');
+        scanBtn.type = 'button';
+        scanBtn.className = 'vault-scan-btn dm-action-btn dm-action-btn--scan';
+        scanBtn.textContent = 'Scan';
+        scanBtn.dataset.vaultTypeKey = typeKey || '';
+        scanBtn.dataset.intakeDocKey = docKey;
+        scanBtn.dataset.intakeDocCode = docCode;
+        scanBtn.dataset.hasExistingDoc = item.on_file ? '1' : '0';
+        scanBtn.dataset.existingDocName = item.label || 'Document';
+        scanBtn.title = 'Scan with Dynamsoft (TWAIN) — saves to document vault';
+        scanBtn.addEventListener('click', function () { vaultDrawerTriggerScan(scanBtn); });
+        actionsEl.appendChild(scanBtn);
+    } else if (typeKey) {
+        const uploadBtn = document.createElement('button');
+        uploadBtn.type = 'button';
+        uploadBtn.className = 'vault-upload-btn';
+        uploadBtn.textContent = 'Upload';
+        uploadBtn.dataset.vaultTypeKey = typeKey;
+        uploadBtn.addEventListener('click', function () { vaultOpenUploadForMissingDoc(typeKey); });
+        actionsEl.appendChild(uploadBtn);
+
+        const scanBtn = document.createElement('button');
+        scanBtn.type = 'button';
+        scanBtn.className = 'vault-scan-btn dm-action-btn dm-action-btn--scan';
+        scanBtn.textContent = 'Scan';
+        scanBtn.dataset.vaultTypeKey = typeKey;
+        scanBtn.addEventListener('click', function () { vaultOpenScanForMissingDoc(typeKey); });
+        actionsEl.appendChild(scanBtn);
+    }
 }
 
 function vaultAppendViewButton(actionsEl, viewUrl, label) {
@@ -2089,20 +2529,8 @@ function openVaultDrawer(applicantId) {
                     openMonitoringReportDocument(item.report);
                 });
                 actions.appendChild(reportBtn);
-            } else if (item.on_file && item.view_url) {
-                vaultAppendViewButton(actions, item.view_url);
-            }
-
-            if (!item.on_file && item.type_key && !item.hide_add_file) {
-                const addBtn = document.createElement('button');
-                addBtn.type = 'button';
-                addBtn.className = 'vault-add-file-btn';
-                addBtn.textContent = 'Add file';
-                const tk = item.type_key;
-                addBtn.addEventListener('click', function () {
-                    vaultOpenUploadForMissingDoc(tk);
-                });
-                actions.appendChild(addBtn);
+            } else {
+                vaultAppendDrawerDocActions(actions, item);
             }
 
             row.appendChild(labelSpan);
@@ -2151,28 +2579,16 @@ function openVaultDrawer(applicantId) {
                     sb.className = sr.on_file ? 'vault-badge vault-badge--ok' : 'vault-badge vault-badge--missing';
                     sb.textContent = sr.on_file ? 'On file' : 'Missing';
                     sact.appendChild(sb);
-                    if (sr.on_file) {
-                        if (sr.view_urls && sr.view_urls.length) {
-                            vaultAppendGalleryViewButton(
-                                sact,
-                                sr.view_urls,
-                                sr.label || 'Photos'
-                            );
-                        } else if (sr.view_url) {
-                            vaultAppendViewButton(sact, sr.view_url);
-                        }
-                    }
-                    if (sr.add_file && sr.type_key && !sr.on_file) {
-                        const ab = document.createElement('button');
-                        ab.type = 'button';
-                        ab.className = 'vault-add-file-btn';
-                        ab.textContent = 'Add file';
-                        const tk2 = sr.type_key;
-                        ab.addEventListener('click', function () {
-                            vaultOpenUploadForMissingDoc(tk2);
-                        });
-                        sact.appendChild(ab);
-                    }
+                    vaultAppendDrawerDocActions(sact, {
+                        type_key: sr.type_key,
+                        label: sr.label,
+                        on_file: sr.on_file,
+                        view_url: sr.view_url,
+                        view_urls: sr.view_urls,
+                        hide_add_file: !sr.add_file,
+                        intake_doc_key: sr.intake_doc_key,
+                        intake_doc_code: sr.intake_doc_code,
+                    });
                     srow.appendChild(lab);
                     srow.appendChild(sact);
                     listEl.appendChild(srow);
@@ -2210,7 +2626,7 @@ function openUploadModal() {
     document.getElementById('uploadModal').style.display = 'flex';
 }
 
-function openUploadModalForApplicant(applicantId, applicantName, docTypeKey) {
+function openUploadModalForApplicant(applicantId, applicantName, docTypeKey, intent) {
     // Pre-select the applicant (and optional document type), then open the modal.
     const applicantSelect = document.querySelector('#applicantSelect, select[name="applicant"]');
     if (applicantSelect) {
@@ -2241,6 +2657,27 @@ function openUploadModalForApplicant(applicantId, applicantName, docTypeKey) {
         searchInput.value = applicantName;
     }
     openUploadModal();
+    if (intent === 'scan' || intent === 'upload') {
+        const titleEl = document.getElementById('uploadModalTitle');
+        const hintEl = document.getElementById('uploadModalIntentHint');
+        const dwtStrip = document.getElementById('uploadModalDwtStrip');
+        const fileInput = document.getElementById('fileInput');
+        if (titleEl && hintEl) {
+            if (intent === 'scan') {
+                titleEl.textContent = '📷 Scan document';
+                hintEl.textContent = 'Use Dynamsoft (TWAIN) for scanner capture — same as checklist Scan. Or pick a file below.';
+                hintEl.style.display = 'block';
+                if (dwtStrip) dwtStrip.style.display = 'flex';
+                if (fileInput) fileInput.removeAttribute('required');
+            } else {
+                titleEl.textContent = '📁 Upload document';
+                hintEl.textContent = 'Choose a file from this computer.';
+                hintEl.style.display = 'block';
+                if (dwtStrip) dwtStrip.style.display = 'none';
+                if (fileInput) fileInput.setAttribute('required', 'required');
+            }
+        }
+    }
 }
 
 function closeUploadModal(e) {
@@ -2384,6 +2821,10 @@ document.addEventListener('keydown', e => {
 // Deep link from Module 2 Applicant Situation Certification (vault upload shortcuts).
 document.addEventListener('DOMContentLoaded', () => {
     loadVaultDrawerMapFromDom();
+    const vaultDrawerFileInput = document.getElementById('vaultDrawerFileInput');
+    if (vaultDrawerFileInput) {
+        vaultDrawerFileInput.addEventListener('change', vaultDrawerHandleFileSelected);
+    }
 
     const params = new URLSearchParams(window.location.search);
     const search = params.get('search');

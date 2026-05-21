@@ -132,9 +132,51 @@
         }
     }
 
+    var flowReplaceDocResolver = null;
+
+    function closeFlowReplaceDocConfirm(event) {
+        if (event && event.target && event.target.id !== 'flowReplaceDocModal') return;
+        resolveFlowReplaceDocConfirm(false);
+    }
+
+    function resolveFlowReplaceDocConfirm(approved) {
+        var modal = document.getElementById('flowReplaceDocModal');
+        if (modal) {
+            modal.classList.remove('active');
+            modal.setAttribute('aria-hidden', 'true');
+        }
+        if (typeof flowReplaceDocResolver === 'function') {
+            var resolver = flowReplaceDocResolver;
+            flowReplaceDocResolver = null;
+            resolver(!!approved);
+        }
+    }
+
+    function showFlowConfirmReplaceDocument(docName) {
+        var modal = document.getElementById('flowReplaceDocModal');
+        var nameEl = document.getElementById('flowReplaceDocName');
+        var label = docName && String(docName).trim() ? String(docName).trim() : 'Document';
+        if (!modal || !nameEl) {
+            return Promise.resolve(global.confirm(
+                'Replace the file already on record?\n\n' + label + '\n\nProceed?'
+            ));
+        }
+        nameEl.textContent = label;
+        modal.classList.add('active');
+        modal.setAttribute('aria-hidden', 'false');
+        var proceedBtn = document.getElementById('flowReplaceDocProceedBtn');
+        if (proceedBtn) proceedBtn.focus();
+        return new Promise(function (resolve) {
+            flowReplaceDocResolver = resolve;
+        });
+    }
+
     global.showFlowAlert = showFlowAlert;
     global.showHandoffSuccessAlert = showHandoffSuccessAlert;
     global.resetFlowAlertVariant = resetFlowAlertVariant;
     global.closeFlowAlert = closeFlowAlert;
     global.confirmFlowAlert = confirmFlowAlert;
+    global.showFlowConfirmReplaceDocument = showFlowConfirmReplaceDocument;
+    global.closeFlowReplaceDocConfirm = closeFlowReplaceDocConfirm;
+    global.resolveFlowReplaceDocConfirm = resolveFlowReplaceDocConfirm;
 })(typeof window !== 'undefined' ? window : this);
