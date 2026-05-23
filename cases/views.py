@@ -172,6 +172,8 @@ def case_management_dashboard(request, position):
         'prefill_beneficiary': prefill_beneficiary,
         'case_position': position,
         'case_desk_mode': wf.case_desk_mode_for_position(position),
+        'field_intake_positions': tuple(wf.FIELD_DESK_POSITIONS),
+        'monitor_intake_positions': tuple(wf.CASE_MONITOR_DESK_POSITIONS),
     }
 
     return render(request, template_name, context)
@@ -494,7 +496,7 @@ def get_case_details(request, position, case_id):
             ),
             'show_case_carousel': (
                 bool(case.field_intake_reviewed_at)
-                and case_status == wf.STATUS_MEDIATION
+                and case_status in (wf.STATUS_MEDIATION, wf.STATUS_RESOLVED)
             ),
             'allowed_actions': wf.allowed_type_actions(case.case_type) if can_manage else [],
             'workflow_buttons': wf.allowed_workflow_buttons(case, request.user) if can_manage else [],
@@ -552,6 +554,17 @@ def get_case_details(request, position, case_id):
                 'decided_by': case.decided_by.get_full_name() if case.decided_by else '',
                 'decided_at': case.decided_at.isoformat() if case.decided_at else None,
                 'resolved_at': case.resolved_at.isoformat() if case.resolved_at else None,
+                'field_settlement_outcome': case.field_settlement_outcome or '',
+                'field_settlement_outcome_display': (
+                    case.get_field_settlement_outcome_display()
+                    if case.field_settlement_outcome
+                    else ''
+                ),
+                'field_settlement_saved_at': (
+                    case.field_settlement_saved_at.isoformat()
+                    if case.field_settlement_saved_at
+                    else None
+                ),
                 'related_unit': str(case.related_unit) if case.related_unit else None,
                 'days_open': case.days_open,
                 'is_stale': case.is_stale,
@@ -761,6 +774,83 @@ def upload_case_evidence(request, position, case_id):
             'uploaded_by': request.user.get_full_name() or 'Staff',
             'uploaded_at': evidence.uploaded_at.isoformat(),
         },
+    })
+
+
+@login_required
+@require_POST
+@verify_position
+def save_field_settlement(request, position, case_id):
+    """Field desk: save settlement outcome, optional photo, and status."""
+    if not wf.user_can_upload_case_evidence(request.user):
+        return JsonResponse({
+            'success': False,
+            'error': 'Settlement is handled at the field desk.',
+        }, status=403)
+    case = get_object_or_404(Case, id=case_id)
+    case_status = wf.normalize_status(case.status)
+    if not case.field_intake_reviewed_at:
+        return JsonResponse({
+            'success': False,
+            'error': 'Mark the case reviewed before saving settlement.',
+        }, status=400)
+    if case_status not in (wf.STATUS_MEDIATION, wf.STATUS_RESOLVED):
+        return JsonResponse({
+            'success': False,
+            'error': 'Case must be in Settlement before saving.',
+        }, status=400)
+
+    outcome = (request.POST.get('settlement_outcome') or '').strip()
+    if outcome not in ('settled', 'not_settled'):
+        return JsonResponse({
+            'success': False,
+            'error': 'Select Settled or Not settled.',
+        }, status=400)
+
+    caption = (request.POST.get('caption') or '').strip()[:255]
+    upload = request.FILES.get('file')
+    if upload:
+        if upload.size > 6 * 1024 * 1024:
+            return JsonResponse({'success': False, 'error': 'File must be 6 MB or smaller.'}, status=400)
+        allowed = ('image/jpeg', 'image/png', 'image/webp')
+        if getattr(upload, 'content_type', '') not in allowed:
+            return JsonResponse({
+                'success': False,
+                'error': 'Allowed types: JPEG, PNG, or WebP photos only.',
+            }, status=400)
+        CaseEvidence.objects.create(
+            case=case,
+            file=upload,
+            caption=caption,
+            uploaded_by=request.user,
+        )
+
+    case.field_settlement_outcome = outcome
+    case.field_settlement_saved_at = timezone.now()
+    case.decided_by = request.user
+    case.decided_at = timezone.now()
+
+    if outcome == 'settled':
+        case.status = wf.STATUS_RESOLVED
+        case.resolved_at = timezone.now()
+        case.resolution_notes = caption or 'Settled during field settlement visit.'
+    else:
+        case.status = wf.STATUS_MEDIATION
+        follow_note = caption or 'Not settled — follow-up required.'
+        if case.investigation_notes:
+            case.investigation_notes = f'{case.investigation_notes}\n{follow_note}'
+        else:
+            case.investigation_notes = follow_note
+
+    case.save()
+
+    outcome_label = 'Settled' if outcome == 'settled' else 'Not settled'
+    return JsonResponse({
+        'success': True,
+        'message': f'Settlement saved ({outcome_label}).',
+        'new_status': case.status,
+        'status_display': case.get_status_display(),
+        'field_settlement_outcome': outcome,
     })
 
 

@@ -160,6 +160,16 @@ class Case(models.Model):
     investigated_at = models.DateTimeField(null=True, blank=True)
     # Field desk acknowledged case details; unlocks mediation evidence (carousel section 2).
     field_intake_reviewed_at = models.DateTimeField(null=True, blank=True)
+    SETTLEMENT_OUTCOME_CHOICES = [
+        ('settled', 'Settled'),
+        ('not_settled', 'Not settled'),
+    ]
+    field_settlement_outcome = models.CharField(
+        max_length=16,
+        choices=SETTLEMENT_OUTCOME_CHOICES,
+        blank=True,
+    )
+    field_settlement_saved_at = models.DateTimeField(null=True, blank=True)
 
     # Referral tracking
     referred_to = models.CharField(

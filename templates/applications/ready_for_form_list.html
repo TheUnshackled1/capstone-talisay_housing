@@ -64,13 +64,13 @@
                                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                                     <circle cx="12" cy="7" r="4"></circle>
                                 </svg>
-                                <span class="complainant-name applicant-name {% if data.applicant.displacement_reason == 'danger_zone' %}option-a{% elif data.applicant.displacement_reason == 'ejected' %}option-b{% elif data.applicant.displacement_reason == 'relocated' %}option-c{% elif data.applicant.displacement_reason == 'not_abc' %}option-d{% endif %}" style="font-size:0.8rem; font-weight:700; color:#0f172a;">{{ data.applicant.full_name }}</span>
-                            </div>
-                            <div class="complainant-meta">
-                                <span class="case-number-badge" title="Transaction ID: APP-{{ data.applicant.id }}">APP-{{ data.applicant.id|slice:":8" }}...</span>
-                                {% if data.applicant.reference_number %}
-                                <span class="complainant-ref-code" title="Reference Code: {{ data.applicant.reference_number }}">{{ data.applicant.reference_number }}</span>
-                                {% endif %}
+                                <span class="complainant-name applicant-name {% if data.applicant.displacement_reason == 'danger_zone' %}option-a{% elif data.applicant.displacement_reason == 'ejected' %}option-b{% elif data.applicant.displacement_reason == 'relocated' %}option-c{% elif data.applicant.displacement_reason == 'not_abc' %}option-d{% endif %}" 
+                                      style="font-size: 0.8rem; font-weight: 700; color: #0f172a; cursor: pointer;"
+                                      data-full-name="{{ data.applicant.full_name }}"
+                                      data-tx-id="APP-{{ data.applicant.id|slice:":8" }}..."
+                                      data-ref-code="{{ data.applicant.reference_number|default:'' }}"
+                                      data-barangay="{{ data.applicant.barangay.name|default:'Not specified' }}"
+                                      data-dob="{{ data.applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}">{{ data.applicant.full_name }}</span>
                             </div>
                         </div>
                     </td>
@@ -900,6 +900,165 @@
     .rfq-confirm-stripe {
         background: linear-gradient(90deg, #1e293b 0%, #334155 50%, #475569 100%) !important;
     }
+
+    /* Premium Hover Card Popover CSS */
+    .applicant-hover-card {
+        position: absolute;
+        z-index: 10000;
+        width: 290px;
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05);
+        padding: 0.85rem;
+        display: none;
+        pointer-events: auto;
+        opacity: 0;
+        transform: translateY(8px) scale(0.97);
+        transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        font-family: inherit;
+        box-sizing: border-box;
+    }
+    
+    .applicant-hover-card.active {
+        display: block;
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    
+    .applicant-hover-card.position-below {
+        transform: translateY(-8px) scale(0.97);
+    }
+    
+    .applicant-hover-card.position-below.active {
+        transform: translateY(0) scale(1);
+    }
+    
+    .hover-card-arrow {
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        background: #ffffff;
+        transform: rotate(45deg);
+        box-shadow: -1px -1px 0 0 rgba(0, 0, 0, 0.03);
+        border-left: 1px solid rgba(0,0,0,0.04);
+        border-top: 1px solid rgba(0,0,0,0.04);
+        top: -5px;
+        left: calc(50% - 5px);
+    }
+    
+    .applicant-hover-card:not(.position-below) .hover-card-arrow {
+        top: auto;
+        bottom: -5px;
+        transform: rotate(225deg);
+        box-shadow: 1px 1px 0 0 rgba(0,0,0,0.03);
+    }
+    
+    .hover-card-header {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        border-bottom: 1px solid #f1f5f9;
+        padding-bottom: 0.6rem;
+        margin-bottom: 0.6rem;
+    }
+    
+    .hover-card-avatar {
+        width: 38px;
+        height: 38px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.85rem;
+        font-weight: 800;
+        letter-spacing: -0.01em;
+        box-shadow: 0 2px 4px rgba(37, 99, 235, 0.15);
+        flex-shrink: 0;
+    }
+    
+    .hover-card-title-group {
+        min-width: 0;
+        flex: 1;
+    }
+    
+    .hover-card-name {
+        font-size: 0.84rem;
+        font-weight: 800;
+        color: #0f172a;
+        line-height: 1.25;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .hover-card-tag {
+        font-size: 0.62rem;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-top: 0.05rem;
+    }
+    
+    .hover-card-body {
+        display: flex;
+        flex-direction: column;
+        gap: 0.45rem;
+    }
+    
+    .hover-card-meta-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        font-size: 0.72rem;
+    }
+    
+    .hover-card-label {
+        font-weight: 600;
+        color: #64748b;
+        font-size: 0.68rem;
+    }
+    
+    .hover-card-value {
+        font-weight: 700;
+        color: #1e293b;
+    }
+    
+    .hover-card-footer {
+        border-top: 1px solid #f1f5f9;
+        margin-top: 0.6rem;
+        padding-top: 0.4rem;
+        font-size: 0.62rem;
+        color: #94a3b8;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        text-align: center;
+    }
+
+    .case-number-badge {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+        font-weight: 700 !important;
+        background: #eff6ff !important;
+        padding: 0.1rem 0.4rem !important;
+        border-radius: 4px !important;
+        color: #1e40af !important;
+        font-size: 0.7rem !important;
+        border: 1px solid #bfdbfe !important;
+    }
+    
+    .complainant-ref-code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+        font-weight: 600 !important;
+        background: #f1f5f9 !important;
+        padding: 0.1rem 0.4rem !important;
+        border-radius: 4px !important;
+        color: #475569 !important;
+        font-size: 0.7rem !important;
+        border: 1px solid #e2e8f0 !important;
+    }
 </style>
 {% endblock %}
 
@@ -1321,6 +1480,121 @@
             });
         }
 
+        // Premium Hover Card popover initialization
+        const hoverCard = document.getElementById('applicantHoverCard');
+        const hcAvatar = document.getElementById('hcAvatar');
+        const hcName = document.getElementById('hcName');
+        const hcTx = document.getElementById('hcTx');
+        const hcRef = document.getElementById('hcRef');
+        const hcRefRow = document.getElementById('hcRefRow');
+        const hcBrgy = document.getElementById('hcBrgy');
+        const hcDob = document.getElementById('hcDob');
+
+        let hideTimeout;
+
+        document.addEventListener('mouseover', function (e) {
+            const nameSpan = e.target.closest('.complainant-name.applicant-name');
+            const isHoverCard = e.target.closest('#applicantHoverCard');
+
+            if (!nameSpan) {
+                if (isHoverCard) {
+                    clearTimeout(hideTimeout);
+                }
+                return;
+            }
+
+            clearTimeout(hideTimeout);
+
+            const fullName = nameSpan.dataset.fullName || nameSpan.textContent.trim();
+            const txId = nameSpan.dataset.txId || '';
+            const refCode = nameSpan.dataset.refCode || '';
+            const barangay = nameSpan.dataset.barangay || 'Not specified';
+            const dob = nameSpan.dataset.dob || 'Not specified';
+
+            // Populate card
+            hcName.textContent = fullName;
+            hcAvatar.textContent = fullName.slice(0, 2).toUpperCase();
+            
+            // Client-side slicing safety for UUIDs and long transaction IDs
+            let displayTx = txId;
+            if (displayTx.startsWith('APP-')) {
+                const rawId = displayTx.substring(4).replace(/[^a-fA-F0-9\-]/g, '');
+                const cleanId = rawId.replace(/-/g, '');
+                displayTx = 'APP-' + cleanId.slice(0, 8) + '...';
+            } else if (displayTx.startsWith('TX-')) {
+                const rawId = displayTx.substring(3).replace(/[^a-fA-F0-9\-]/g, '');
+                const cleanId = rawId.replace(/-/g, '');
+                displayTx = 'TX-' + cleanId.slice(0, 8) + '...';
+            } else if (displayTx.length > 15) {
+                displayTx = displayTx.slice(0, 12) + '...';
+            }
+            hcTx.textContent = displayTx;
+
+            if (refCode) {
+                hcRef.textContent = refCode;
+                hcRefRow.style.display = 'flex';
+            } else {
+                hcRefRow.style.display = 'none';
+            }
+            hcBrgy.textContent = barangay;
+            hcDob.textContent = dob;
+
+            // Position card
+            const rect = nameSpan.getBoundingClientRect();
+            
+            // Temporarily display to measure height
+            hoverCard.style.display = 'block';
+            const cardWidth = hoverCard.offsetWidth || 290;
+            const cardHeight = hoverCard.offsetHeight || 190;
+            hoverCard.style.display = ''; // reset to CSS state
+
+            const scrollX = window.pageXOffset || document.documentElement.scrollLeft;
+            const scrollY = window.pageYOffset || document.documentElement.scrollTop;
+
+            // Position directly above, centered
+            let targetLeft = rect.left + scrollX + (rect.width / 2) - (cardWidth / 2);
+            let targetTop = rect.top + scrollY - cardHeight - 12; // 12px gap
+
+            // Boundaries checks
+            if (targetLeft < 10) targetLeft = 10;
+            if (targetLeft + cardWidth > window.innerWidth - 10) {
+                targetLeft = window.innerWidth - cardWidth - 10;
+            }
+
+            if (rect.top - cardHeight - 12 < 10) {
+                // Flip below
+                targetTop = rect.bottom + scrollY + 12;
+                hoverCard.classList.add('position-below');
+            } else {
+                hoverCard.classList.remove('position-below');
+            }
+
+            hoverCard.style.left = targetLeft + 'px';
+            hoverCard.style.top = targetTop + 'px';
+            hoverCard.classList.add('active');
+        });
+
+        document.addEventListener('mouseout', function (e) {
+            const nameSpan = e.target.closest('.complainant-name.applicant-name');
+            const isHoverCard = e.target.closest('#applicantHoverCard');
+
+            if (nameSpan || isHoverCard) {
+                hideTimeout = setTimeout(function () {
+                    hoverCard.classList.remove('active');
+                }, 250);
+            }
+        });
+
+        hoverCard.addEventListener('mouseenter', function () {
+            clearTimeout(hideTimeout);
+        });
+
+        hoverCard.addEventListener('mouseleave', function () {
+            hideTimeout = setTimeout(function () {
+                hoverCard.classList.remove('active');
+            }, 250);
+        });
+
         if (!selectedApplicantId) return;
         const targetRow = document.querySelector(`tr[data-applicant-id="${selectedApplicantId}"]`);
         if (!targetRow) return;
@@ -1328,4 +1602,40 @@
         targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
     });
 </script>
+
+<!-- Premium Hover Card Popover Template -->
+<div id="applicantHoverCard" class="applicant-hover-card">
+    <div class="hover-card-arrow"></div>
+    <div class="hover-card-banner">
+        <img src="{% static 'images/tha_logo.png' %}" alt="Talisay City Housing Authority Logo" style="width: 100%; height: auto; display: block; border-radius: 6px; margin-bottom: 0.75rem; border: 1px solid #cbd5e1; padding: 0.2rem; background: #ffffff; box-sizing: border-box;">
+    </div>
+    <div class="hover-card-header">
+        <div class="hover-card-avatar" id="hcAvatar">—</div>
+        <div class="hover-card-title-group">
+            <div class="hover-card-name" id="hcName">—</div>
+            <div class="hover-card-tag">Applicant Profile</div>
+        </div>
+    </div>
+    <div class="hover-card-body">
+        <div class="hover-card-meta-row">
+            <span class="hover-card-label">Transaction ID</span>
+            <span class="case-number-badge" id="hcTx" style="font-family: monospace;">—</span>
+        </div>
+        <div class="hover-card-meta-row" id="hcRefRow">
+            <span class="hover-card-label">Reference Code</span>
+            <span class="complainant-ref-code" id="hcRef" style="font-family: monospace;">—</span>
+        </div>
+        <div class="hover-card-meta-row">
+            <span class="hover-card-label">Barangay</span>
+            <span class="hover-card-value" id="hcBrgy">—</span>
+        </div>
+        <div class="hover-card-meta-row">
+            <span class="hover-card-label">Birth Date</span>
+            <span class="hover-card-value" id="hcDob">—</span>
+        </div>
+    </div>
+    <div class="hover-card-footer">
+        <span>Talisay City Housing Authority</span>
+    </div>
+</div>
 {% endblock %}

@@ -1,0 +1,32 @@
+{# Button reflects viewing desk + who filed the case. #}
+{% if case_desk_mode == 'monitor' %}
+<button type="button" class="btn-case-view" onclick="openCaseModal('{{ case.id }}')"
+    title="{% if case.received_by and case.received_by.position in field_intake_positions %}Field desk intake — monitor this record{% else %}Recorded at this desk{% endif %}">
+    <svg class="btn-icon" style="width:0.85rem;height:0.85rem;" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+        <circle cx="12" cy="12" r="3"></circle>
+    </svg>
+    View{% if case.received_by and case.received_by.position in field_intake_positions %} <span class="case-action-desk-tag">· Field</span>{% endif %}
+</button>
+{% elif case.received_by and case.received_by.position in monitor_intake_positions %}
+<button type="button" class="btn-case-view" onclick="openCaseModal('{{ case.id }}')"
+    title="Recorded at Second Member desk">
+    <svg class="btn-icon" style="width:0.85rem;height:0.85rem;" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+        <circle cx="12" cy="12" r="3"></circle>
+    </svg>
+    View
+</button>
+{% else %}
+<button type="button" class="btn-open-record" onclick="openCaseModal('{{ case.id }}')"
+    title="{% if case.received_by %}Recorded at Field desk{% else %}Field intake{% endif %}">
+    <svg class="btn-icon" style="width:0.85rem;height:0.85rem;" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+        <circle cx="12" cy="14" r="2"></circle>
+    </svg>
+    Open Record
+</button>
+{% endif %}
