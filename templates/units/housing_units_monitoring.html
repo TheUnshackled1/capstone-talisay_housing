@@ -1650,6 +1650,31 @@
         color: #0f172a;
         letter-spacing: 0.02em;
     }
+
+    a.unit-case-record-case-link {
+        font-size: 0.9rem;
+        font-weight: 800;
+        color: #047857;
+        text-decoration: none;
+        letter-spacing: 0.02em;
+    }
+
+    a.unit-case-record-case-link:hover {
+        color: #065f46;
+        text-decoration: underline;
+    }
+
+    .unit-case-record-footer {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.65rem;
+        margin-top: 0.85rem;
+        padding-top: 0.85rem;
+        border-top: 1px solid #e2e8f0;
+        width: 100%;
+    }
+
     .unit-case-record-meta {
         font-size: 0.75rem;
         color: #475569;
@@ -2253,7 +2278,143 @@
         }
         .household-add-actions--inline .household-add-btn {
             width: 100%;
-        }
+    }
+
+    /* Premium Hover Card Popover CSS */
+    .applicant-hover-card {
+        position: absolute;
+        z-index: 10000;
+        width: 290px;
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05);
+        padding: 0.85rem;
+        display: none;
+        pointer-events: auto;
+        opacity: 0;
+        transform: translateY(8px) scale(0.97);
+        transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        font-family: inherit;
+        box-sizing: border-box;
+    }
+    
+    .applicant-hover-card.active {
+        display: block;
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    
+    .applicant-hover-card.position-below {
+        transform: translateY(-8px) scale(0.97);
+    }
+    
+    .applicant-hover-card.position-below.active {
+        transform: translateY(0) scale(1);
+    }
+    
+    .hover-card-arrow {
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        background: #ffffff;
+        transform: rotate(45deg);
+        box-shadow: -1px -1px 0 0 rgba(0, 0, 0, 0.03);
+        border-left: 1px solid rgba(0,0,0,0.04);
+        border-top: 1px solid rgba(0,0,0,0.04);
+        top: -5px;
+        left: calc(50% - 5px);
+    }
+    
+    .applicant-hover-card:not(.position-below) .hover-card-arrow {
+        top: auto;
+        bottom: -5px;
+        transform: rotate(225deg);
+        box-shadow: 1px 1px 0 0 rgba(0,0,0,0.03);
+    }
+    
+    .hover-card-header {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        border-bottom: 1px solid #f1f5f9;
+        padding-bottom: 0.6rem;
+        margin-bottom: 0.6rem;
+    }
+    
+    .hover-card-avatar {
+        width: 38px;
+        height: 38px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.85rem;
+        font-weight: 800;
+        letter-spacing: -0.01em;
+        box-shadow: 0 2px 4px rgba(37, 99, 235, 0.15);
+        flex-shrink: 0;
+    }
+    
+    .hover-card-title-group {
+        min-width: 0;
+        flex: 1;
+    }
+    
+    .hover-card-name {
+        font-size: 0.84rem;
+        font-weight: 800;
+        color: #0f172a;
+        line-height: 1.25;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .hover-card-tag {
+        font-size: 0.62rem;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-top: 0.05rem;
+    }
+    
+    .hover-card-body {
+        display: flex;
+        flex-direction: column;
+        gap: 0.45rem;
+    }
+    
+    .hover-card-meta-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        font-size: 0.72rem;
+    }
+    
+    .hover-card-label {
+        font-weight: 600;
+        color: #64748b;
+        font-size: 0.68rem;
+    }
+    
+    .hover-card-value {
+        font-weight: 700;
+        color: #1e293b;
+    }
+    
+    .hover-card-footer {
+        border-top: 1px solid #f1f5f9;
+        margin-top: 0.6rem;
+        padding-top: 0.4rem;
+        font-size: 0.62rem;
+        color: #94a3b8;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        text-align: center;
     }
 </style>
 {% endblock %}
@@ -2378,7 +2539,22 @@
                             onclick="openUnitModal('{{ unit.id }}')"
                             title="Block {{ unit.block_number }} · Lot {{ unit.lot_number }} — {% if unit.is_housing_unit_on_file %}Housing unit — final monitoring complete, recorded in inventory{% else %}{{ unit.get_status_display }}{% endif %}{% if unit.current_occupant %} · {{ unit.current_occupant.full_name }}{% elif unit.occupant_name %} · {{ unit.occupant_name }}{% endif %}">
                         <span class="vmap-lot-id">{{ unit.block_number }}-{{ unit.lot_number }}</span>
-                        <span class="vmap-lot-occ">{% if unit.current_occupant %}{{ unit.current_occupant.full_name|truncatechars:14 }}{% elif unit.occupant_name %}{{ unit.occupant_name|truncatechars:14 }}{% else %}—{% endif %}</span>
+                        <span class="vmap-lot-occ occupant-name applicant-name" 
+                              style="cursor: pointer;"
+                              {% if unit.current_occupant %}
+                              data-full-name="{{ unit.current_occupant.full_name }}"
+                              data-tx-id="APP-{{ unit.current_occupant.id|slice:":8" }}..."
+                              data-ref-code="{{ unit.current_occupant.reference_number|default:'' }}"
+                              data-barangay="{{ unit.current_occupant.barangay.name|default:'Not specified' }}"
+                              data-dob="{{ unit.current_occupant.date_of_birth|date:'M d, Y'|default:'Not specified' }}"
+                              {% elif unit.occupant_name %}
+                              data-full-name="{{ unit.occupant_name }}"
+                              data-tx-id="{% if unit.occupant_id %}{{ unit.occupant_id }}{% else %}—{% endif %}"
+                              data-ref-code=""
+                              data-barangay="Not specified"
+                              data-dob="Not specified"
+                              {% endif %}
+                        >{% if unit.current_occupant %}{{ unit.current_occupant.full_name|truncatechars:14 }}{% elif unit.occupant_name %}{{ unit.occupant_name|truncatechars:14 }}{% else %}—{% endif %}</span>
                         <span class="vmap-lot-tag">{% if unit.is_housing_unit_on_file %}Unit{% elif unit.extension_final_visit_failed %}Failed{% elif unit.status == 'Occupied' %}Occupied{% elif unit.status == 'Vacant — available' %}Vacant{% else %}{{ unit.status|default:"—" }}{% endif %}</span>
                     </button>
                     {% endfor %}
@@ -2392,15 +2568,15 @@
     <div id="tableView-content" style="display: none;">
         <div style="background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
             <table style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">
-                <thead style="background: var(--gray-50); border-bottom: 1px solid var(--gray-200);">
+                <thead style="background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); border-bottom: 2px solid #0f172a;">
                     <tr>
-                        <th style="padding: 1rem; text-align: left; font-weight: 600; color: var(--gray-700);">BLOCK</th>
-                        <th style="padding: 1rem; text-align: left; font-weight: 600; color: var(--gray-700);">LOT</th>
-                        <th style="padding: 1rem; text-align: left; font-weight: 600; color: var(--gray-700);">OCCUPANT</th>
-                        <th style="padding: 1rem; text-align: left; font-weight: 600; color: var(--gray-700);">STATUS</th>
-                        <th style="padding: 1rem; text-align: left; font-weight: 600; color: var(--gray-700);">NOTICE DEADLINE</th>
-                        <th style="padding: 1rem; text-align: left; font-weight: 600; color: var(--gray-700);">CARETAKER REPORT</th>
-                        <th style="padding: 1rem; text-align: center; font-weight: 600; color: var(--gray-700);"></th>
+                        <th style="padding: 1rem; text-align: left; font-weight: 700; color: #ffffff; border-right: 1px solid rgba(255, 255, 255, 0.22); background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); letter-spacing: 0.05em; text-transform: uppercase;">BLOCK</th>
+                        <th style="padding: 1rem; text-align: left; font-weight: 700; color: #ffffff; border-right: 1px solid rgba(255, 255, 255, 0.22); background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); letter-spacing: 0.05em; text-transform: uppercase;">LOT</th>
+                        <th style="padding: 1rem; text-align: left; font-weight: 700; color: #ffffff; border-right: 1px solid rgba(255, 255, 255, 0.22); background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); letter-spacing: 0.05em; text-transform: uppercase;">OCCUPANT</th>
+                        <th style="padding: 1rem; text-align: left; font-weight: 700; color: #ffffff; border-right: 1px solid rgba(255, 255, 255, 0.22); background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); letter-spacing: 0.05em; text-transform: uppercase;">STATUS</th>
+                        <th style="padding: 1rem; text-align: left; font-weight: 700; color: #ffffff; border-right: 1px solid rgba(255, 255, 255, 0.22); background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); letter-spacing: 0.05em; text-transform: uppercase;">NOTICE DEADLINE</th>
+                        <th style="padding: 1rem; text-align: left; font-weight: 700; color: #ffffff; border-right: 1px solid rgba(255, 255, 255, 0.22); background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); letter-spacing: 0.05em; text-transform: uppercase;">CARETAKER REPORT</th>
+                        <th style="padding: 1rem; text-align: center; font-weight: 700; color: #ffffff; background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); letter-spacing: 0.05em; text-transform: uppercase;"></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -2415,7 +2591,27 @@
                             style="border-bottom: 1px solid var(--gray-100); hover:background: #f9fafb;">
                             <td style="padding: 1rem;">{{ block }}</td>
                             <td style="padding: 1rem;">{{ unit.lot_number }}</td>
-                            <td style="padding: 1rem;">{% if unit.current_occupant %}{{ unit.current_occupant.full_name }}{% elif unit.occupant_name %}{{ unit.occupant_name }}{% else %}—{% endif %}</td>
+                            <td style="padding: 1rem;">
+                                {% if unit.current_occupant %}
+                                <span class="occupant-name applicant-name" 
+                                      style="cursor: pointer; font-weight: 700; color: #1e3a8a;"
+                                      data-full-name="{{ unit.current_occupant.full_name }}"
+                                      data-tx-id="APP-{{ unit.current_occupant.id|slice:":8" }}..."
+                                      data-ref-code="{{ unit.current_occupant.reference_number|default:'' }}"
+                                      data-barangay="{{ unit.current_occupant.barangay.name|default:'Not specified' }}"
+                                      data-dob="{{ unit.current_occupant.date_of_birth|date:'M d, Y'|default:'Not specified' }}">{{ unit.current_occupant.full_name }}</span>
+                                {% elif unit.occupant_name %}
+                                <span class="occupant-name applicant-name" 
+                                      style="cursor: pointer; font-weight: 600; color: #475569;"
+                                      data-full-name="{{ unit.occupant_name }}"
+                                      data-tx-id="{% if unit.occupant_id %}{{ unit.occupant_id }}{% else %}—{% endif %}"
+                                      data-ref-code=""
+                                      data-barangay="Not specified"
+                                      data-dob="Not specified">{{ unit.occupant_name }}</span>
+                                {% else %}
+                                <span style="color: #94a3b8;">—</span>
+                                {% endif %}
+                            </td>
                             <td style="padding: 1rem;">
                                 {% if unit.extension_final_visit_failed %}
                                 <span style="display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.25rem 0.6rem; border-radius: 4px; font-weight: 600; background: rgba(239, 68, 68, 0.15); color: #b91c1c; border: 1px solid rgba(220, 38, 38, 0.35);">
@@ -2922,6 +3118,35 @@
 <!-- Styles & Scripts -->
 <script>
 let currentUnitId = null;
+let currentUnitDetail = null;
+const MODULE5_CASES_LIST_URL = '{% if request.user.position == "second_member" or request.user.position == "fourth_member" %}{% url "accounts:second_member_cases" %}{% else %}{% url "accounts:field_cases" %}{% endif %}';
+
+function module5CaseOpenUrl(caseId) {
+    if (!caseId) return MODULE5_CASES_LIST_URL;
+    const sep = MODULE5_CASES_LIST_URL.includes('?') ? '&' : '?';
+    return `${MODULE5_CASES_LIST_URL}${sep}case_id=${encodeURIComponent(caseId)}`;
+}
+
+function module5RecordCaseUrl(unit) {
+    if (unit && unit.module5_record_case_url) {
+        return unit.module5_record_case_url;
+    }
+    const ben = unit && unit.beneficiary_info;
+    if (!ben || !ben.applicant_id || !unit || !unit.id) {
+        return null;
+    }
+    const params = new URLSearchParams({
+        applicant_id: ben.applicant_id,
+        unit_id: unit.id,
+        new_case: '1',
+    });
+    const sep = MODULE5_CASES_LIST_URL.includes('?') ? '&' : '?';
+    return `${MODULE5_CASES_LIST_URL}${sep}${params.toString()}`;
+}
+
+function module5CasesListUrl(unit) {
+    return (unit && unit.module5_cases_url) || MODULE5_CASES_LIST_URL;
+}
 let pendingInspectionTask = null;
 let activeInspectionTask = null;
 let currentMonitoringTasks = [];
@@ -4144,17 +4369,19 @@ function buildMonitoringHistoryFromTasks(tasks) {
 function renderUnitCaseRecord(unit) {
     const wrap = document.getElementById('unitCaseRecord');
     if (!wrap) return;
+    currentUnitDetail = unit || null;
     const cases = unit && Array.isArray(unit.module5_cases) ? unit.module5_cases : [];
-    const recordUrl = unit && unit.module5_record_case_url;
-    const listUrl = unit && unit.module5_cases_url;
+    const recordUrl = module5RecordCaseUrl(unit);
+    const listUrl = module5CasesListUrl(unit);
     const ben = unit && unit.beneficiary_info;
 
     if (!cases.length) {
         let html = '<p class="occupied-record-empty">No case linked to this lot yet.</p>';
         if (recordUrl && ben && ben.applicant_id) {
             html += `
-                <div class="unit-case-record-actions" style="margin-top: 0.75rem;">
+                <div class="unit-case-record-footer">
                     <a href="${escapeHtml(recordUrl)}" class="unit-case-record-link btn-case-record">Record case for this beneficiary</a>
+                    <a href="${escapeHtml(listUrl)}" class="unit-case-record-link btn-case-all">All cases</a>
                 </div>
             `;
         } else if (!ben || !ben.applicant_id) {
@@ -4164,23 +4391,29 @@ function renderUnitCaseRecord(unit) {
         return;
     }
 
-    wrap.innerHTML = `
-        <div class="unit-case-record-list">
-            ${cases.map((c, index) => `
-                <div class="unit-case-record-item">
-                    <strong>${escapeHtml(c.case_number || 'Case')}</strong>
+    const caseRows = cases.map((c) => {
+        const openUrl = (c.view_url && c.view_url !== '#') ? c.view_url : module5CaseOpenUrl(c.id);
+        return `
+                <article class="unit-case-record-item">
+                    <a href="${escapeHtml(openUrl)}" class="unit-case-record-case-link">${escapeHtml(c.case_number || 'Case')}</a>
                     <span class="unit-case-record-meta">${escapeHtml(c.case_type_display || '')} · ${escapeHtml(c.status_display || '')}</span>
                     <span class="unit-case-record-meta">Complainant: ${escapeHtml(c.complainant_name || '—')}</span>
                     ${c.initial_description ? `<span class="unit-case-record-meta">${escapeHtml(c.initial_description)}</span>` : ''}
                     <div class="unit-case-record-actions">
-                        <a href="${escapeHtml(c.view_url || '#')}" class="unit-case-record-link btn-case-open">Open case record</a>
-                        ${(index === cases.length - 1 && recordUrl) ? `<a href="${escapeHtml(recordUrl)}" class="unit-case-record-link btn-case-record">Record another case</a>` : ''}
-                        ${(index === cases.length - 1 && listUrl) ? `<a href="${escapeHtml(listUrl)}" class="unit-case-record-link btn-case-all">All cases</a>` : ''}
+                        <a href="${escapeHtml(openUrl)}" class="unit-case-record-link btn-case-open">Open case record</a>
                     </div>
-                </div>
-            `).join('')}
+                </article>
+            `;
+    }).join('');
+
+    const footerLinks = `
+        <div class="unit-case-record-footer">
+            ${recordUrl ? `<a href="${escapeHtml(recordUrl)}" class="unit-case-record-link btn-case-record">Record another case</a>` : ''}
+            <a href="${escapeHtml(listUrl)}" class="unit-case-record-link btn-case-all">All cases</a>
         </div>
     `;
+
+    wrap.innerHTML = `<div class="unit-case-record-list">${caseRows}</div>${footerLinks}`;
 }
 
 function renderComplianceRecordsRecord(records) {
@@ -5512,6 +5745,157 @@ document.addEventListener('keydown', e => {
     closeUnitModal();
 });
 
+document.addEventListener('DOMContentLoaded', () => {
+    // Premium Hover Card popover initialization
+    const hoverCard = document.getElementById('applicantHoverCard');
+    const hcAvatar = document.getElementById('hcAvatar');
+    const hcName = document.getElementById('hcName');
+    const hcTx = document.getElementById('hcTx');
+    const hcRef = document.getElementById('hcRef');
+    const hcRefRow = document.getElementById('hcRefRow');
+    const hcBrgy = document.getElementById('hcBrgy');
+    const hcDob = document.getElementById('hcDob');
+
+    let hideTimeout;
+
+    document.addEventListener('mouseover', function (e) {
+        const nameSpan = e.target.closest('.occupant-name.applicant-name');
+        const isHoverCard = e.target.closest('#applicantHoverCard');
+
+        if (!nameSpan) {
+            if (isHoverCard) {
+                clearTimeout(hideTimeout);
+            }
+            return;
+        }
+
+        clearTimeout(hideTimeout);
+
+        const fullName = nameSpan.dataset.fullName || nameSpan.textContent.trim();
+        const txId = nameSpan.dataset.txId || '';
+        const refCode = nameSpan.dataset.refCode || '';
+        const barangay = nameSpan.dataset.barangay || 'Not specified';
+        const dob = nameSpan.dataset.dob || 'Not specified';
+
+        // Populate card
+        hcName.textContent = fullName;
+        hcAvatar.textContent = fullName.slice(0, 2).toUpperCase();
+        
+        // Client-side slicing safety for UUIDs and long transaction IDs
+        let displayTx = txId;
+        if (displayTx.startsWith('APP-')) {
+            const rawId = displayTx.substring(4).replace(/[^a-fA-F0-9\-]/g, '');
+            const cleanId = rawId.replace(/-/g, '');
+            displayTx = 'APP-' + cleanId.slice(0, 8) + '...';
+        } else if (displayTx.startsWith('TX-')) {
+            const rawId = displayTx.substring(3).replace(/[^a-fA-F0-9\-]/g, '');
+            const cleanId = rawId.replace(/-/g, '');
+            displayTx = 'TX-' + cleanId.slice(0, 8) + '...';
+        } else if (displayTx.length > 15) {
+            displayTx = displayTx.slice(0, 12) + '...';
+        }
+        hcTx.textContent = displayTx;
+
+        if (refCode) {
+            hcRef.textContent = refCode;
+            hcRefRow.style.display = 'flex';
+        } else {
+            hcRefRow.style.display = 'none';
+        }
+        hcBrgy.textContent = barangay;
+        hcDob.textContent = dob;
+
+        // Position card
+        const rect = nameSpan.getBoundingClientRect();
+        
+        // Temporarily display to measure height
+        hoverCard.style.display = 'block';
+        const cardWidth = hoverCard.offsetWidth || 290;
+        const cardHeight = hoverCard.offsetHeight || 190;
+        hoverCard.style.display = ''; // reset to CSS state
+
+        const scrollX = window.pageXOffset || document.documentElement.scrollLeft;
+        const scrollY = window.pageYOffset || document.documentElement.scrollTop;
+
+        // Position directly above, centered
+        let targetLeft = rect.left + scrollX + (rect.width / 2) - (cardWidth / 2);
+        let targetTop = rect.top + scrollY - cardHeight - 12; // 12px gap
+
+        // Boundaries checks
+        if (targetLeft < 10) targetLeft = 10;
+        if (targetLeft + cardWidth > window.innerWidth - 10) {
+            targetLeft = window.innerWidth - cardWidth - 10;
+        }
+
+        if (rect.top - cardHeight - 12 < 10) {
+            // Flip below
+            targetTop = rect.bottom + scrollY + 12;
+            hoverCard.classList.add('position-below');
+        } else {
+            hoverCard.classList.remove('position-below');
+        }
+
+        hoverCard.style.left = targetLeft + 'px';
+        hoverCard.style.top = targetTop + 'px';
+        hoverCard.classList.add('active');
+    });
+
+    document.addEventListener('mouseout', function (e) {
+        const nameSpan = e.target.closest('.occupant-name.applicant-name');
+        const isHoverCard = e.target.closest('#applicantHoverCard');
+
+        if (nameSpan || isHoverCard) {
+            hideTimeout = setTimeout(function () {
+                hoverCard.classList.remove('active');
+            }, 250);
+        }
+    });
+
+    hoverCard.addEventListener('mouseenter', function () {
+        clearTimeout(hideTimeout);
+    });
+
+    hoverCard.addEventListener('mouseleave', function () {
+        hideTimeout = setTimeout(function () {
+            hoverCard.classList.remove('active');
+        }, 250);
+    });
+});
 </script>
 
+<!-- Premium Hover Card Popover Template -->
+<div id="applicantHoverCard" class="applicant-hover-card">
+    <div class="hover-card-arrow"></div>
+    <div class="hover-card-banner">
+        <img src="{% static 'images/tha_logo.png' %}" alt="Talisay City Housing Authority Logo" style="width: 100%; height: auto; display: block; border-radius: 6px; margin-bottom: 0.75rem; border: 1px solid #cbd5e1; padding: 0.2rem; background: #ffffff; box-sizing: border-box;">
+    </div>
+    <div class="hover-card-header">
+        <div class="hover-card-avatar" id="hcAvatar">—</div>
+        <div class="hover-card-title-group">
+            <div class="hover-card-name" id="hcName">—</div>
+            <div class="hover-card-tag">Applicant Profile</div>
+        </div>
+    </div>
+    <div class="hover-card-body">
+        <div class="hover-card-meta-row">
+            <span class="hover-card-label">Transaction ID</span>
+            <span class="case-number-badge" id="hcTx" style="font-family: monospace;">—</span>
+        </div>
+        <div class="hover-card-meta-row" id="hcRefRow">
+            <span class="hover-card-label">Reference Code</span>
+            <span class="complainant-ref-code" id="hcRef" style="font-family: monospace;">—</span>
+        </div>
+        <div class="hover-card-meta-row">
+            <span class="hover-card-label">Barangay</span>
+            <span class="hover-card-value" id="hcBrgy">—</span>
+        </div>
+        <div class="hover-card-meta-row">
+            <span class="hover-card-label">Birth Date</span>
+            <span class="hover-card-value" id="hcDob">—</span>
+        </div>
+    </div>
+    <div class="hover-card-footer">
+        <span>Talisay City Housing Authority</span>
+    </div>
+</div>
 {% endblock %}

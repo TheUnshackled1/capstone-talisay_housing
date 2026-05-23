@@ -21,7 +21,7 @@ def cases_page_url(position, **query):
     """Canonical Module 5 page URL for a staff position (accounts routes or legacy /cases/)."""
     if position in FIELD_DESK_POSITIONS:
         base = reverse('accounts:field_cases')
-    elif position == 'second_member':
+    elif position in ('second_member', 'fourth_member'):
         base = reverse('accounts:second_member_cases')
     else:
         base = reverse('cases:case_dashboard', kwargs={'position': position})
@@ -800,19 +800,29 @@ def save_field_settlement(request, position, case_id):
             'error': 'Case must be in Settlement before saving.',
         }, status=400)
 
-    outcome = (request.POST.get('settlement_outcome') or '').strip()
+    outcome = (request.POST.get('settlement_outcome') or 'settled').strip()
     if outcome not in ('settled', 'not_settled'):
         return JsonResponse({
             'success': False,
-            'error': 'Select Settled or Not settled.',
+            'error': 'Invalid settlement outcome.',
         }, status=400)
 
     caption = (request.POST.get('caption') or '').strip()[:255]
-    upload = request.FILES.get('file')
-    if upload:
+    uploads = list(request.FILES.getlist('files'))
+    single = request.FILES.get('file')
+    if single:
+        uploads.insert(0, single)
+
+    if outcome == 'settled' and not uploads:
+        return JsonResponse({
+            'success': False,
+            'error': 'Add at least one settlement photograph before marking resolved.',
+        }, status=400)
+
+    allowed = ('image/jpeg', 'image/png', 'image/webp')
+    for upload in uploads[:4]:
         if upload.size > 6 * 1024 * 1024:
             return JsonResponse({'success': False, 'error': 'File must be 6 MB or smaller.'}, status=400)
-        allowed = ('image/jpeg', 'image/png', 'image/webp')
         if getattr(upload, 'content_type', '') not in allowed:
             return JsonResponse({
                 'success': False,
@@ -844,10 +854,13 @@ def save_field_settlement(request, position, case_id):
 
     case.save()
 
-    outcome_label = 'Settled' if outcome == 'settled' else 'Not settled'
+    if outcome == 'settled':
+        message = 'Case marked resolved.'
+    else:
+        message = 'Settlement saved (Not settled).'
     return JsonResponse({
         'success': True,
-        'message': f'Settlement saved ({outcome_label}).',
+        'message': message,
         'new_status': case.status,
         'status_display': case.get_status_display(),
         'field_settlement_outcome': outcome,

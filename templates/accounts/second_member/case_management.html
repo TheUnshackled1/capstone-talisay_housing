@@ -2904,7 +2904,13 @@
                     <strong>{{ case.case_number }}</strong>
                     <span class="case-type-pill">{{ case.get_case_type_display }}</span>
                 </div>
-                <p class="cases-resolved-drawer-item-name">{{ case.complainant_name }}</p>
+                <p class="cases-resolved-drawer-item-name complainant-name applicant-name"
+                   style="cursor: pointer; font-weight: 700; color: #1e3a8a;"
+                   data-full-name="{{ case.complainant_name }}"
+                   data-tx-id="{% if case.complainant_applicant %}APP-{{ case.complainant_applicant.id|slice:":8" }}...{% else %}{{ case.case_number }}{% endif %}"
+                   data-ref-code="{{ case.complainant_applicant.reference_number|default:'' }}"
+                   data-barangay="{{ case.complainant_applicant.barangay.name|default:'Not specified' }}"
+                   data-dob="{{ case.complainant_applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}">{{ case.complainant_name }}</p>
                 <p class="cases-resolved-drawer-item-meta">
                     Filed {{ case.received_at|date:"M d, Y" }}
                     {% if case.resolved_at %} · Resolved {{ case.resolved_at|date:"M d, Y" }}{% endif %}

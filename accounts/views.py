@@ -1578,6 +1578,7 @@ def dashboard_field(request):
             'sms_status': '✓ Sent' if cert.applicant.registration_sms_sent else '✗ Not Sent',
             'created_at': cert.requested_at,
             'days_pending': days_pending,
+            'dob': cert.applicant.date_of_birth.strftime('%b %d, %Y') if cert.applicant.date_of_birth else 'Not specified',
         })
 
     total_pending = len(pending_verifications)
