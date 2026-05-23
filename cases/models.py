@@ -201,6 +201,14 @@ class Case(models.Model):
 
     # Monitoring (Step 6)
     follow_up_at = models.DateField(null=True, blank=True)
+    monitored_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='monitored_cases',
+        help_text='Ronda tagged by staff to observe this case on-site.',
+    )
 
     updated_at = models.DateTimeField(auto_now=True)
     
