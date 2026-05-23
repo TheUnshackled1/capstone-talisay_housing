@@ -1193,6 +1193,19 @@
     }
 
     /* Responsive table scrolling */
+    .table-responsive-wrapper {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        display: block;
+    }
+
+    /* Responsive Mobile Card View Default Hidden */
+    .mobile-cards-view {
+        display: none !important;
+    }
+
     @media (max-width: 1024px) {
         table:not(.modal-household-table) {
             font-size: 12px;
@@ -1213,31 +1226,126 @@
         table td, table th {
             padding: 8px 6px;
         }
+        
+        /* Toggle Table and Card Views */
+        .table-responsive-wrapper {
+            display: none !important;
+        }
 
-        /* Ensure scrollable containers scroll smoothly on touch devices */
-        div[style*="overflow-x: auto"], div[style*="overflow: auto"] {
-            overflow-x: auto !important;
-            -webkit-overflow-scrolling: touch;
+        .mobile-cards-view {
+            display: flex !important;
+            flex-direction: column;
+            gap: 0.85rem;
+            margin-top: 0.5rem;
+        }
+
+        .mobile-verification-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            text-align: left;
+        }
+
+        .mobile-verification-card:hover {
+            border-color: #cbd5e1;
+            box-shadow: 0 4px 6px rgba(15, 23, 42, 0.05);
+        }
+
+        .m-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #f1f5f9;
+            padding-bottom: 0.55rem;
+        }
+
+        .m-card-visit-order {
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: #1e3a8a;
+            text-transform: uppercase;
+        }
+
+        .m-card-badge {
+            font-size: 0.65rem;
+            font-weight: 700;
+            background: #e0f2fe;
+            color: #0369a1;
+            padding: 0.15rem 0.45rem;
+            border-radius: 4px;
+            border: 1px solid #bae6fd;
+        }
+
+        .m-card-body {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .m-card-title {
+            margin: 0;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .m-card-meta-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.78rem;
+        }
+
+        .m-card-meta-label {
+            font-weight: 600;
+            color: #64748b;
+        }
+
+        .m-card-meta-value {
+            font-weight: 700;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .m-card-actions {
+            border-top: 1px solid #f1f5f9;
+            padding-top: 0.65rem;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .m-card-btn {
+            width: 100% !important;
+            justify-content: center !important;
         }
         
+        .field-staff-handled {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
         /* Premium custom scrollbars to make it visually obvious that the table is scrollable on mobile */
-        div[style*="overflow-x: auto"]::-webkit-scrollbar, 
-        div[style*="overflow: auto"]::-webkit-scrollbar {
+        .table-responsive-wrapper::-webkit-scrollbar {
             height: 6px;
             display: block !important;
         }
-        div[style*="overflow-x: auto"]::-webkit-scrollbar-track,
-        div[style*="overflow: auto"]::-webkit-scrollbar-track {
+        .table-responsive-wrapper::-webkit-scrollbar-track {
             background: #f8fafc;
             border-radius: 4px;
         }
-        div[style*="overflow-x: auto"]::-webkit-scrollbar-thumb,
-        div[style*="overflow: auto"]::-webkit-scrollbar-thumb {
+        .table-responsive-wrapper::-webkit-scrollbar-thumb {
             background: #cbd5e1;
             border-radius: 4px;
         }
-        div[style*="overflow-x: auto"]::-webkit-scrollbar-thumb:hover,
-        div[style*="overflow: auto"]::-webkit-scrollbar-thumb:hover {
+        .table-responsive-wrapper::-webkit-scrollbar-thumb:hover {
             background: #94a3b8;
         }
     }
@@ -1913,7 +2021,7 @@
 
             <div class="widget" style="margin-top: 0; border-top-left-radius: 0; border-top-right-radius: 0; border-top: none;">
             {% if pending_verifications %}
-            <div style="overflow-x: auto;">
+            <div class="table-responsive-wrapper">
                 <table class="field-desk-table">
                     <thead>
                         <tr>
@@ -1939,7 +2047,7 @@
                                          data-barangay="{% if cert.barangay %}{{ cert.barangay.name }}{% else %}Not specified{% endif %}"
                                          data-dob="{% if cert.dob %}{{ cert.dob }}{% else %}Not specified{% endif %}">
                                          {{ cert.applicant_name }}
-                                    </div>
+                                     </div>
                                 </div>
                             </td>
                             <td style="font-size: 12px; color: #475569; font-weight: 500;">
@@ -1984,6 +2092,69 @@
                         {% endfor %}
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Responsive Mobile Card View (Option 2 — Tables-to-Cards Pattern) -->
+            <div class="mobile-cards-view">
+                {% for cert in pending_verifications %}
+                <article class="mobile-verification-card">
+                    <div class="m-card-header">
+                        <span class="m-card-visit-order">Verification #{{ forloop.counter }}</span>
+                        <span class="m-card-badge">Queue #{{ cert.queue_position }}</span>
+                    </div>
+                    
+                    <div class="m-card-body">
+                        <h4 class="m-card-title applicant-name" 
+                            style="cursor: pointer; font-weight: 700; color: #1e3a8a;"
+                            data-full-name="{{ cert.applicant_name }}"
+                            data-tx-id="APP-{{ cert.id|slice:":8" }}..."
+                            data-ref-code="{{ cert.reference_number|default:'' }}"
+                            data-barangay="{% if cert.barangay %}{{ cert.barangay.name }}{% else %}Not specified{% endif %}"
+                            data-dob="{% if cert.dob %}{{ cert.dob }}{% else %}Not specified{% endif %}">
+                            {{ cert.applicant_name }}
+                        </h4>
+                        
+                        <div class="m-card-meta-row">
+                            <span class="m-card-meta-label">Recorded:</span>
+                            <span class="m-card-meta-value" style="font-size: 0.75rem;">
+                                <svg class="applicant-meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 0.8rem; height: 0.8rem; color: #3b82f6; display: inline; vertical-align: middle; margin-right: 0.2rem;">
+                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                                </svg>
+                                {{ cert.created_at|date:"M d, Y h:i A" }}
+                            </span>
+                        </div>
+                        
+                        <div class="m-card-meta-row">
+                            <span class="m-card-meta-label">Staff Handled:</span>
+                            <div class="m-card-meta-value">
+                                {% if cert.staff_user %}
+                                <div class="field-staff-handled">
+                                    <div class="handled-by-avatar {% if cert.staff_user.position == 'second_member' %}second-member{% elif cert.staff_user.position == 'fourth_member' %}fourth-member{% else %}other{% endif %}">{{ cert.staff_user.first_name|default:''|slice:':1'|upper }}{{ cert.staff_user.last_name|default:''|slice:':1'|upper }}</div>
+                                    <div style="min-width:0; text-align:left;">
+                                        <div class="field-staff-handled__name" style="font-size: 11px;">{{ cert.staff_user.get_full_name }}</div>
+                                        <div class="field-staff-handled__role" style="font-size: 10px; color:#64748b;">{{ cert.staff_user.get_position_display_short }}</div>
+                                    </div>
+                                </div>
+                                {% else %}
+                                <span style="color:#64748b; font-style:italic;">—</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="m-card-actions">
+                        <button type="button" class="table-verify-btn m-card-btn" onclick="openVerificationModal('{{ cert.id }}', '{{ cert.applicant_name|escapejs }}', '{{ cert.address|escapejs }}', '{{ cert.danger_zone_type|escapejs }}', '{{ cert.danger_zone_location|escapejs }}', '{{ cert.reference_number|escapejs }}')">
+                            Verify Applicant
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-left: 4px;">
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                                <polyline points="12 5 19 12 12 19"></polyline>
+                            </svg>
+                        </button>
+                </article>
+                {% endfor %}
             </div>
             <div class="table-pagination">
                 <div class="table-pagination-info">
@@ -2057,7 +2228,7 @@
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
             </div>
-            <div style="overflow: auto; padding: 0;">
+            <div class="table-responsive-wrapper" style="padding: 0;">
                 {% if certified_applicants %}
                 <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
                     <thead style="background: linear-gradient(180deg, #2563eb 0%, #1e3a8a 100%); position: sticky; top: 0; z-index: 2;">
@@ -2121,7 +2292,7 @@
                     <div style="font-size: 11.5px; color: #64748b;">Photos taken, certification pending</div>
                 </div>
             </div>
-            <div style="overflow: auto;">
+            <div class="table-responsive-wrapper">
                 {% if today_summary %}
                 <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
                     <thead style="background: linear-gradient(180deg, #2563eb 0%, #1e3a8a 100%); position: sticky; top: 0; z-index: 2;">

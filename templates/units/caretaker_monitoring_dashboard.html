@@ -393,7 +393,10 @@
     }
 
     .kpi-modal-table-scroll {
-        overflow: auto;
+        width: 100%;
+        max-width: 100%;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
         flex: 1;
         min-height: 0;
     }
@@ -581,7 +584,11 @@
     }
 
     .monitoring-table-scroll {
-        overflow-x: auto;
+        width: 100%;
+        max-width: 100%;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        display: block;
     }
 
     /* Tasks Table */
@@ -1685,8 +1692,133 @@
         border-top: 1px solid #e2e8f0;
     }
 
+    /* Desktop Table/Mobile Card View Toggle */
+    .mobile-cards-view {
+        display: none !important;
+    }
+
     /* Responsive */
     @media (max-width: 768px) {
+        /* Hide Table Scroll wrapper on Mobile, show Card view instead */
+        .monitoring-table-scroll {
+            display: none !important;
+        }
+
+        .mobile-cards-view {
+            display: flex !important;
+            flex-direction: column;
+            gap: 0.85rem;
+            margin-top: 0.5rem;
+        }
+
+        .mobile-verification-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            text-align: left;
+        }
+
+        .mobile-verification-card:hover {
+            border-color: #cbd5e1;
+            box-shadow: 0 4px 6px rgba(15, 23, 42, 0.05);
+        }
+
+        .m-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #f1f5f9;
+            padding-bottom: 0.55rem;
+        }
+
+        .m-card-visit-order {
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: #1e3a8a;
+            text-transform: uppercase;
+        }
+
+        .m-card-badge {
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 0.15rem 0.45rem;
+            border-radius: 4px;
+            border: 1px solid #bae6fd;
+        }
+        
+        .m-card-badge.day-15 {
+            background: #f0fdf4;
+            color: #16a34a;
+            border-color: #bbf7d0;
+        }
+        
+        .m-card-badge.day-30 {
+            background: #fef9c3;
+            color: #ca8a04;
+            border-color: #fef08a;
+        }
+        
+        .m-card-badge.month {
+            background: #eff6ff;
+            color: #2563eb;
+            border-color: #bfdbfe;
+        }
+
+        .m-card-body {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .m-card-title {
+            margin: 0;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .m-card-meta-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.78rem;
+        }
+
+        .m-card-meta-label {
+            font-weight: 600;
+            color: #64748b;
+        }
+
+        .m-card-meta-value {
+            font-weight: 700;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+        
+        .m-card-meta-value.urgent {
+            color: #dc2626;
+        }
+
+        .m-card-actions {
+            border-top: 1px solid #f1f5f9;
+            padding-top: 0.65rem;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .m-card-btn {
+            width: 100% !important;
+            justify-content: center !important;
+            display: flex !important;
+        }
+
         .monitoring-shell {
             padding: 1.2rem 1rem;
         }
@@ -1763,12 +1895,41 @@
             padding: 1.1rem 0.9rem 1rem;
         }
 
-        .monitoring-table-scroll {
-            overflow-x: auto;
+        .monitoring-table-scroll, .kpi-modal-table-scroll {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+            display: block;
         }
 
         .monitoring-tasks-table {
-            min-width: 720px;
+            min-width: 760px;
+        }
+
+        .monitoring-kpi-detail-table {
+            min-width: 600px;
+        }
+
+        /* Styled scrollbars for horizontal tables in caretaker dashboard on mobile */
+        .monitoring-table-scroll::-webkit-scrollbar, 
+        .kpi-modal-table-scroll::-webkit-scrollbar {
+            height: 6px;
+            display: block !important;
+        }
+        .monitoring-table-scroll::-webkit-scrollbar-track,
+        .kpi-modal-table-scroll::-webkit-scrollbar-track {
+            background: #f8fafc;
+            border-radius: 4px;
+        }
+        .monitoring-table-scroll::-webkit-scrollbar-thumb,
+        .kpi-modal-table-scroll::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .monitoring-table-scroll::-webkit-scrollbar-thumb:hover,
+        .kpi-modal-table-scroll::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
         }
 
         .kpi-modal-card {
@@ -2354,6 +2515,95 @@
         {% endfor %}
     </tbody>
 </table>
+    </div>
+
+    <!-- Responsive Mobile Card View (Option 2 — Tables-to-Cards Pattern) -->
+    <div class="mobile-cards-view mobile-tasks-cards">
+        {% for task in tasks %}
+        <article class="mobile-verification-card m-task-card" id="task-card-{{ task.id }}">
+            <div class="m-card-header">
+                <span class="m-card-visit-order">Task #{{ forloop.counter }}</span>
+                <span class="m-card-badge {% if 'day_15' in task.task_type %}day-15{% elif 'day_30' in task.task_type %}day-30{% else %}month{% endif %}">
+                    {% if task.task_type == 'day_15_inspection' %}15 Day{% elif task.task_type == 'day_30_inspection' %}30 Day{% else %}{{ task.get_task_type_display }}{% endif %}
+                </span>
+            </div>
+            
+            <div class="m-card-body">
+                <h4 class="m-card-title applicant-name" 
+                    style="cursor: pointer; font-weight: 700; color: #1e3a8a;"
+                    data-full-name="{{ task.lot_award.application.applicant.full_name }}"
+                    data-tx-id="APP-{{ task.lot_award.application.applicant.id|slice:":8" }}..."
+                    data-ref-code="{{ task.lot_award.application.applicant.reference_number|default:'' }}"
+                    data-barangay="{{ task.lot_award.application.applicant.barangay.name|default:'Not specified' }}"
+                    data-dob="{{ task.lot_award.application.applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}">
+                    {{ task.lot_award.application.applicant.full_name }}
+                </h4>
+                
+                <div class="m-card-meta-row">
+                    <span class="m-card-meta-label">Location:</span>
+                    <span class="m-card-meta-value">
+                        Block {{ task.unit.block_number }} Lot {{ task.unit.lot_number }} · <small style="color:#64748b;">{{ task.unit.site.name|default:"Relocation site" }}</small>
+                    </span>
+                </div>
+                
+                <div class="m-card-meta-row">
+                    <span class="m-card-meta-label">Due Date:</span>
+                    <span class="m-card-meta-value {% if task.is_overdue %}urgent{% endif %}">
+                        {{ task.due_date|date:"M d, Y" }}
+                    </span>
+                </div>
+
+                <div class="m-card-meta-row">
+                    <span class="m-card-meta-label">Status:</span>
+                    <span class="m-card-meta-value">
+                        {% if task.status == 'pending' and task.scheduled_date > today %}
+                            <span class="monitoring-task-status pending">Upcoming</span>
+                        {% elif task.status == 'pending' and task.is_overdue %}
+                            <span class="monitoring-task-status overdue">Overdue</span>
+                        {% elif task.status == 'completed' %}
+                            <span class="monitoring-task-status completed">Completed</span>
+                        {% else %}
+                            <span class="monitoring-task-status pending">{{ task.get_status_display }}</span>
+                        {% endif %}
+                    </span>
+                </div>
+                
+                <div class="m-card-meta-row">
+                    <span class="m-card-meta-label">Handled by:</span>
+                    <div class="m-card-meta-value">
+                        {% if task.staff_handled_user %}
+                        <div class="field-staff-handled">
+                            <div class="handled-by-avatar {% if task.staff_position_key == 'second_member' %}second-member{% elif task.staff_position_key == 'fourth_member' %}fourth-member{% else %}other{% endif %}">
+                                {{ task.staff_initials }}
+                            </div>
+                            <div>
+                                <div class="field-staff-handled__name" style="font-size: 11px;">{{ task.staff_name }}</div>
+                            </div>
+                        </div>
+                        {% else %}
+                        <span style="color: #64748b; font-style: italic;">—</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="m-card-actions">
+                {% if task.status == 'pending' and task.scheduled_date > today %}
+                    <button type="button" class="btn-submit-report m-card-btn" onclick="openReportModal('{{ task.id }}', true, '{{ task.scheduled_date|date:"F j, Y" }}', '{% if task.task_type == "day_15_inspection" %}15 Day Inspection{% elif task.task_type == "day_30_inspection" %}30 Day Inspection{% else %}{{ task.get_task_type_display|escapejs }}{% endif %}', 'Block {{ task.unit.block_number|escapejs }} Lot {{ task.unit.lot_number|escapejs }}', '{{ task.due_date|date:"F j, Y"|escapejs }}', '{{ task.task_type|escapejs }}')">
+                        {% if task.notified_at %}Open notified task{% else %}Notify / test early{% endif %}
+                    </button>
+                {% else %}
+                    <button type="button" class="btn-submit-report m-card-btn" onclick="openReportModal('{{ task.id }}', false, '', '{% if task.task_type == "day_15_inspection" %}15 Day Inspection{% elif task.task_type == "day_30_inspection" %}30 Day Inspection{% else %}{{ task.get_task_type_display|escapejs }}{% endif %}', 'Block {{ task.unit.block_number|escapejs }} Lot {{ task.unit.lot_number|escapejs }}', '{{ task.due_date|date:"F j, Y"|escapejs }}', '{{ task.task_type|escapejs }}')">
+                        {% if task.status == 'completed' %}
+                            View Report
+                        {% else %}
+                            Submit Report
+                        {% endif %}
+                    </button>
+                {% endif %}
+            </div>
+        </article>
+        {% endfor %}
     </div>
       <div class="table-pagination">
           <div class="table-pagination-info">

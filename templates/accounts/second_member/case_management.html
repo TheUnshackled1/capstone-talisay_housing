@@ -1269,7 +1269,8 @@
         gap: 0.75rem;
     }
 
-    .tha-case-view-modal--monitor .case-monitor-col-left {
+    .tha-case-view-modal--monitor .case-monitor-col-left,
+    .tha-case-view-modal--monitor .case-monitor-col-right {
         display: flex;
         flex-direction: column;
         gap: 0.75rem;
@@ -1294,9 +1295,9 @@
         grid-column: 1 / -1;
     }
 
-    .tha-case-view-modal--monitor .case-monitor-card--resolved {
+    .tha-case-view-modal--monitor .case-monitor-card--resolution {
         border-color: #bbf7d0;
-        background: linear-gradient(180deg, #f0fdf4 0%, #fff 100%);
+        background: #fff;
     }
 
     .tha-case-view-modal--monitor .case-monitor-card-title {
@@ -1318,6 +1319,26 @@
     .tha-case-view-modal--monitor .case-monitor-card--respondent .case-monitor-card-title {
         color: #b45309;
         border-bottom-color: #ffedd5;
+    }
+
+    .tha-case-view-modal--monitor .case-monitor-card--resolution .case-monitor-card-title {
+        color: #047857;
+        border-bottom-color: #d1fae5;
+    }
+
+    .tha-case-view-modal--monitor .case-monitor-person-name--resolution {
+        margin: 0 0 0.2rem;
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: #0f172a;
+        line-height: 1.35;
+    }
+
+    .tha-case-view-modal--monitor .case-monitor-resolved-meta {
+        margin: 0;
+        font-size: 0.72rem;
+        color: #64748b;
+        line-height: 1.35;
     }
 
     .tha-case-view-modal--monitor .case-monitor-staff {
@@ -3240,6 +3261,7 @@
                     </div>
                 </article>
 
+                <div class="case-monitor-col-right">
                 <article class="case-monitor-card case-monitor-card--incident">
                     <h3 class="case-monitor-card-title">Incident</h3>
                     <div class="case-monitor-incident-type">
@@ -3251,6 +3273,13 @@
                         <p id="modalDescription" class="case-monitor-description">—</p>
                     </div>
                 </article>
+
+                <article id="resolutionSection" class="case-monitor-card case-monitor-card--resolution" style="display: none;">
+                    <h3 class="case-monitor-card-title">Resolution</h3>
+                    <p id="modalResolutionNotes" class="case-monitor-person-name case-monitor-person-name--resolution">—</p>
+                    <p id="modalResolvedDate" class="case-monitor-resolved-meta"></p>
+                </article>
+                </div>
 
                 <article id="caseIntakeEvidenceSection" class="case-monitor-card case-monitor-card--full case-intake-evidence-card" style="display: none;">
                     <h3 class="case-monitor-card-title">Uploaded evidence</h3>
@@ -3292,12 +3321,6 @@
                     <p id="modalReferredTo" class="case-detail-value"></p>
                     <p id="modalReferralNotes" class="case-monitor-description"></p>
                     <p id="modalReferralDate" class="case-monitor-meta-line"></p>
-                </article>
-
-                <article id="resolutionSection" class="case-monitor-card case-monitor-card--full case-monitor-card--resolved" style="display: none;">
-                    <h3 class="case-monitor-card-title">Resolution</h3>
-                    <p id="modalResolutionNotes" class="case-monitor-description"></p>
-                    <p id="modalResolvedDate" class="case-monitor-meta-line"></p>
                 </article>
 
                 <article id="priorCasesSection" class="case-monitor-card case-monitor-card--full" style="display: none;">
@@ -3685,6 +3708,34 @@
         return 'other';
     }
 
+    function populateResolutionMonitorCard(c) {
+        const section = document.getElementById('resolutionSection');
+        const notesEl = document.getElementById('modalResolutionNotes');
+        const dateEl = document.getElementById('modalResolvedDate');
+        if (!section) return;
+
+        const isResolved = c.status === 'resolved' || c.status === 'closed';
+        const hasNotes = !!(c.resolution_notes && String(c.resolution_notes).trim());
+        const hasDate = !!c.resolved_at;
+
+        if (!isResolved && !hasNotes && !hasDate) {
+            section.style.display = 'none';
+            if (notesEl) notesEl.textContent = '—';
+            if (dateEl) dateEl.textContent = '';
+            return;
+        }
+
+        section.style.display = 'block';
+        if (notesEl) {
+            notesEl.textContent = hasNotes ? c.resolution_notes.trim() : 'Case resolved.';
+        }
+        if (dateEl) {
+            dateEl.textContent = hasDate
+                ? `Resolved: ${new Date(c.resolved_at).toLocaleDateString()}`
+                : '';
+        }
+    }
+
     function populateCaseModal(c) {
         const filed = new Date(c.received_at);
         document.getElementById('modalCaseNumber').textContent = c.case_number;
@@ -3802,12 +3853,7 @@
                 ? `Referred: ${new Date(c.referred_at).toLocaleDateString()}` : '';
         }
 
-        if (c.resolution_notes) {
-            document.getElementById('resolutionSection').style.display = 'block';
-            document.getElementById('modalResolutionNotes').textContent = c.resolution_notes;
-            document.getElementById('modalResolvedDate').textContent = c.resolved_at
-                ? `Resolved: ${new Date(c.resolved_at).toLocaleDateString()}` : '';
-        }
+        populateResolutionMonitorCard(c);
 
         const priorSection = document.getElementById('priorCasesSection');
         const priorList = document.getElementById('priorCasesList');

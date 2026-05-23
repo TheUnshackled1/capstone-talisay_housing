@@ -478,8 +478,9 @@
     .cases-list-section .formal-table-scroll {
         width: 100%;
         max-width: 100%;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        display: block;
     }
 
     .cases-table.formal-table.compact thead th {
@@ -2359,27 +2360,110 @@
         }
     }
 
+    /* Responsive Mobile Card View Default Hidden */
+    .mobile-cards-view {
+        display: none !important;
+    }
+
     @media (max-width: 768px) {
-        .cases-table.formal-table {
-            min-width: 680px;
-            table-layout: auto !important; /* Allow columns to dynamically adjust on mobile scroll views */
+        .formal-table-scroll {
+            display: none !important;
         }
 
-        /* Styled horizontal scrollbars for formal-table-scroll on mobile */
-        .cases-list-section .formal-table-scroll::-webkit-scrollbar {
-            height: 6px;
-            display: block !important;
+        .mobile-cards-view {
+            display: flex !important;
+            flex-direction: column;
+            gap: 0.85rem;
+            margin-top: 0.5rem;
         }
-        .cases-list-section .formal-table-scroll::-webkit-scrollbar-track {
-            background: #f8fafc;
+
+        .mobile-verification-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            text-align: left;
+        }
+
+        .mobile-verification-card:hover {
+            border-color: #cbd5e1;
+            box-shadow: 0 4px 6px rgba(15, 23, 42, 0.05);
+        }
+
+        .m-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #f1f5f9;
+            padding-bottom: 0.55rem;
+        }
+
+        .m-card-visit-order {
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: #1e3a8a;
+            text-transform: uppercase;
+        }
+
+        .m-card-badge {
+            font-size: 0.65rem;
+            font-weight: 700;
+            background: #eff6ff;
+            color: #2563eb;
+            padding: 0.15rem 0.45rem;
             border-radius: 4px;
+            border: 1px solid #bfdbfe;
         }
-        .cases-list-section .formal-table-scroll::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 4px;
+
+        .m-card-body {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
         }
-        .cases-list-section .formal-table-scroll::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
+
+        .m-card-title {
+            margin: 0;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .m-card-meta-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.78rem;
+        }
+
+        .m-card-meta-label {
+            font-weight: 600;
+            color: #64748b;
+        }
+
+        .m-card-meta-value {
+            font-weight: 700;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .m-card-actions {
+            border-top: 1px solid #f1f5f9;
+            padding-top: 0.65rem;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .m-card-actions button,
+        .m-card-actions a {
+            width: 100% !important;
+            justify-content: center !important;
+            display: flex !important;
         }
     }
 
@@ -3296,7 +3380,8 @@
         margin-top: 0.5rem;
     }
 
-    .case-monitor-col-left {
+    .case-monitor-col-left,
+    .case-monitor-col-right {
         display: flex;
         flex-direction: column;
         gap: 0.75rem;
@@ -3321,9 +3406,9 @@
         grid-column: 1 / -1;
     }
 
-    .case-monitor-card--resolved {
+    .case-monitor-card--resolution {
         border-color: #bbf7d0;
-        background: linear-gradient(180deg, #f0fdf4 0%, #fff 100%);
+        background: #fff;
     }
 
     .case-monitor-card-title {
@@ -3346,6 +3431,26 @@
     .case-monitor-card--respondent .case-monitor-card-title {
         color: #b45309;
         border-bottom-color: #ffedd5;
+    }
+
+    .case-monitor-card--resolution .case-monitor-card-title {
+        color: #047857;
+        border-bottom-color: #d1fae5;
+    }
+
+    .case-monitor-person-name--resolution {
+        margin: 0 0 0.2rem;
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: #0f172a;
+        line-height: 1.35;
+    }
+
+    .case-monitor-resolved-meta {
+        margin: 0;
+        font-size: 0.72rem;
+        color: #64748b;
+        line-height: 1.35;
     }
 
     .case-monitor-staff {
@@ -3680,6 +3785,81 @@
                     </tbody>
                 </table>
             </div>
+
+            <!-- Responsive Mobile Card View (Option 2 – Tables-to-Cards Pattern) -->
+            <div class="mobile-cards-view mobile-cases-cards">
+                {% for case in cases %}
+                <article class="mobile-verification-card m-case-card" id="case-card-{{ case.id }}">
+                    <div class="m-card-header">
+                        <span class="m-card-visit-order">Case #{{ forloop.counter }}</span>
+                        <span class="m-card-badge case-type-badge case-type-badge--standard">{{ case.get_case_type_display }}</span>
+                    </div>
+
+                    <div class="m-card-body">
+                        <h4 class="m-card-title applicant-name"
+                            style="cursor: pointer; font-weight: 700; color: #1e3a8a;"
+                            data-full-name="{{ case.complainant_name }}"
+                            data-tx-id="{% if case.complainant_applicant %}APP-{{ case.complainant_applicant.id|slice:":8" }}...{% else %}{{ case.case_number }}{% endif %}"
+                            data-ref-code="{{ case.complainant_applicant.reference_number|default:'' }}"
+                            data-barangay="{{ case.complainant_applicant.barangay.name|default:'Not specified' }}"
+                            data-dob="{{ case.complainant_applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}">
+                            {{ case.complainant_name }}
+                        </h4>
+
+                        <div class="m-card-meta-row">
+                            <span class="m-card-meta-label">Respondent:</span>
+                            <span class="m-card-meta-value">
+                                {% if case.subject_applicant %}
+                                <span class="respondent-name-cell" title="{{ case.subject_applicant.full_name }}">{{ case.subject_applicant.full_name }}</span>
+                                {% if case.subject_applicant.reference_number %}
+                                <span class="respondent-ref-code" title="{{ case.subject_applicant.reference_number }}">{{ case.subject_applicant.reference_number }}</span>
+                                {% endif %}
+                                {% elif case.subject_name %}
+                                <span class="respondent-name-cell" title="{{ case.subject_name }}">{{ case.subject_name }}</span>
+                                {% else %}
+                                <span class="respondent-name-cell is-empty">—</span>
+                                {% endif %}
+                            </span>
+                        </div>
+
+                        <div class="m-card-meta-row">
+                            <span class="m-card-meta-label">Filed Date:</span>
+                            <span class="m-card-meta-value">
+                                <span>{{ case.received_at|date:"M d, Y" }} · {{ case.received_at|time:"g:i A" }}</span>
+                            </span>
+                        </div>
+
+                        <div class="m-card-meta-row">
+                            <span class="m-card-meta-label">Status:</span>
+                            <span class="m-card-meta-value">
+                                <span class="status-pill-flex status-pill-flex--{{ case.status }}">
+                                    {% if case.status == 'resolved' %}
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="width: 0.75rem; height: 0.75rem; color: #16a34a; flex-shrink: 0; margin-right: 0.15rem;">
+                                        <path d="M20 6L9 17l-5-5"></path>
+                                    </svg>
+                                    {% elif case.status == 'closed' %}
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 0.75rem; height: 0.75rem; color: #475569; flex-shrink: 0; margin-right: 0.15rem;">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <line x1="15" y1="9" x2="9" y2="15"></line>
+                                        <line x1="9" y1="9" x2="15" y2="15"></line>
+                                    </svg>
+                                    {% endif %}
+                                    {{ case.get_status_display }}
+                                </span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="m-card-actions">
+                        {% include "accounts/includes/case_row_action_button.html" %}
+                    </div>
+                </article>
+                {% empty %}
+                <div class="monitoring-empty-state" style="padding: 2rem; text-align: center; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 0.75rem; width: 100%;">
+                    <p style="color: #64748b; font-size: 0.85rem; margin: 0;">No cases match your search. Try adjusting filters or add a new case.</p>
+                </div>
+                {% endfor %}
+            </div>
         </div>
     </div>
 </div>
@@ -3749,6 +3929,7 @@
                     </div>
                 </article>
 
+                <div class="case-monitor-col-right">
                 <!-- Incident Card -->
                 <article class="case-monitor-card case-monitor-card--incident">
                     <h3 class="case-monitor-card-title">Incident</h3>
@@ -3761,6 +3942,13 @@
                         <p id="modalDescription" class="case-monitor-description">—</p>
                     </div>
                 </article>
+
+                <article id="resolutionSection" class="case-monitor-card case-monitor-card--resolution" style="display: none;">
+                    <h3 class="case-monitor-card-title">Resolution</h3>
+                    <p id="modalResolutionNotes" class="case-monitor-person-name case-monitor-person-name--resolution">—</p>
+                    <p id="modalResolvedDate" class="case-monitor-resolved-meta"></p>
+                </article>
+                </div>
 
                 <article id="caseIntakeEvidenceSection" class="case-monitor-card case-monitor-card--full case-intake-evidence-card" style="display: none;">
                     <h3 class="case-monitor-card-title">Uploaded evidence</h3>
@@ -3790,13 +3978,6 @@
                     <p id="modalReferredTo" class="case-monitor-person-name" style="font-size: 0.82rem; margin-bottom: 0.35rem;"></p>
                     <p id="modalReferralNotes" class="case-monitor-description"></p>
                     <p id="modalReferralDate" class="case-monitor-meta-line"></p>
-                </article>
-
-                <!-- Resolution Card (Full Width) -->
-                <article id="resolutionSection" class="case-monitor-card case-monitor-card--full case-monitor-card--resolved" style="display: none;">
-                    <h3 class="case-monitor-card-title">Resolution</h3>
-                    <p id="modalResolutionNotes" class="case-monitor-description" style="background:#f0fdf4;border-color:#bbf7d0;"></p>
-                    <p id="modalResolvedDate" class="case-monitor-meta-line"></p>
                 </article>
 
                 <!-- Previous Complaint History for Respondent Card (Full Width) -->
@@ -4201,6 +4382,34 @@
         return 'other';
     }
 
+    function populateResolutionMonitorCard(c) {
+        const section = document.getElementById('resolutionSection');
+        const notesEl = document.getElementById('modalResolutionNotes');
+        const dateEl = document.getElementById('modalResolvedDate');
+        if (!section) return;
+
+        const isResolved = c.status === 'resolved' || c.status === 'closed';
+        const hasNotes = !!(c.resolution_notes && String(c.resolution_notes).trim());
+        const hasDate = !!c.resolved_at;
+
+        if (!isResolved && !hasNotes && !hasDate) {
+            section.style.display = 'none';
+            if (notesEl) notesEl.textContent = '—';
+            if (dateEl) dateEl.textContent = '';
+            return;
+        }
+
+        section.style.display = 'block';
+        if (notesEl) {
+            notesEl.textContent = hasNotes ? c.resolution_notes.trim() : 'Case resolved.';
+        }
+        if (dateEl) {
+            dateEl.textContent = hasDate
+                ? `Resolved: ${new Date(c.resolved_at).toLocaleDateString()}`
+                : '';
+        }
+    }
+
     function populateCaseModal(c, options = {}) {
         const filed = new Date(c.received_at);
         document.getElementById('modalCaseNumber').textContent = c.case_number;
@@ -4313,12 +4522,7 @@
                 ? `Referred: ${new Date(c.referred_at).toLocaleDateString()}` : '';
         }
 
-        if (c.resolution_notes) {
-            document.getElementById('resolutionSection').style.display = 'block';
-            document.getElementById('modalResolutionNotes').textContent = c.resolution_notes;
-            document.getElementById('modalResolvedDate').textContent = c.resolved_at
-                ? `Resolved: ${new Date(c.resolved_at).toLocaleDateString()}` : '';
-        }
+        populateResolutionMonitorCard(c);
 
         const respPriorSection = document.getElementById('respondentPriorSection');
         const respPriorList = document.getElementById('respondentPriorList');
