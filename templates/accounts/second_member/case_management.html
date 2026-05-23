@@ -465,7 +465,20 @@
     }
 
     .cases-list-section {
-        padding: 0.85rem 1.4rem 1.5rem;
+        padding: 0.85rem 0.65rem 1.25rem;
+        max-width: 100%;
+        overflow: hidden;
+    }
+
+    .cases-list-section .formal-table-card {
+        max-width: 100%;
+        overflow: hidden;
+    }
+
+    .cases-list-section .formal-table-scroll {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: hidden;
     }
 
     .section-title-list {
@@ -588,49 +601,175 @@
         vertical-align: middle;
     }
 
-    .cases-table.formal-table tbody td {
+    .cases-table.formal-table.compact thead th {
+        white-space: normal;
+        font-size: 0.58rem;
+        line-height: 1.15;
+        padding: 0.42rem 0.3rem;
+        letter-spacing: 0.04em;
+        word-break: break-word;
+        hyphens: auto;
+    }
+
+    .cases-table.formal-table.compact tbody td {
         border: 1px solid #e5e7eb;
-        font-size: 0.72rem;
+        padding: 0.38rem 0.3rem;
+        font-size: 0.65rem;
+        overflow: hidden;
+        word-wrap: break-word;
         vertical-align: middle;
     }
 
     .cases-table th:nth-child(1),
     .cases-table td:nth-child(1) {
-        width: 4%;
+        width: 3%;
         text-align: center;
+        padding-left: 0.2rem;
+        padding-right: 0.2rem;
     }
 
     .cases-table th:nth-child(2),
     .cases-table td:nth-child(2) {
-        width: 30%;
+        width: 18%;
     }
 
     .cases-table th:nth-child(3),
     .cases-table td:nth-child(3) {
-        width: 16%;
+        width: 14%;
     }
 
     .cases-table th:nth-child(4),
     .cases-table td:nth-child(4) {
-        width: 12%;
+        width: 11%;
     }
 
     .cases-table th:nth-child(5),
     .cases-table td:nth-child(5) {
-        width: 14%;
-        text-align: center;
+        width: 9%;
     }
 
     .cases-table th:nth-child(6),
     .cases-table td:nth-child(6) {
-        width: 12%;
+        width: 13%;
         text-align: center;
     }
 
     .cases-table th:nth-child(7),
     .cases-table td:nth-child(7) {
-        width: 12%;
+        width: 11%;
         text-align: center;
+    }
+
+    .cases-table th:nth-child(8),
+    .cases-table td:nth-child(8) {
+        width: 13%;
+        text-align: center;
+    }
+
+    .cases-table .complainant-name-card .applicant-meta-icon,
+    .cases-table .date-cell-stack .applicant-meta-icon {
+        display: none;
+    }
+
+    .cases-table .complainant-name {
+        font-size: 0.68rem;
+        line-height: 1.2;
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .cases-table .respondent-name-cell {
+        font-weight: 600;
+        color: #334155;
+        line-height: 1.2;
+        font-size: 0.68rem;
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .cases-table .respondent-name-cell.is-empty {
+        color: #94a3b8;
+        font-weight: 500;
+    }
+
+    .cases-table .respondent-ref-code {
+        display: block;
+        margin-top: 0.1rem;
+        font-size: 0.58rem;
+        font-weight: 600;
+        color: #64748b;
+        font-family: ui-monospace, monospace;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .cases-table .date-main {
+        font-size: 0.62rem;
+        gap: 0;
+        line-height: 1.2;
+    }
+
+    .cases-table .date-sub {
+        font-size: 0.58rem;
+        line-height: 1.15;
+    }
+
+    .cases-table .cases-table-time-ago {
+        font-size: 0.62rem;
+        line-height: 1.2;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .cases-table .case-type-badge {
+        font-size: 0.58rem;
+        padding: 0.12rem 0.28rem;
+        line-height: 1.2;
+        white-space: normal;
+        word-break: break-word;
+    }
+
+    .cases-table .status-pill-flex {
+        font-size: 0.58rem;
+        padding: 0.15rem 0.3rem;
+        gap: 0.15rem;
+        white-space: normal;
+        word-break: break-word;
+        line-height: 1.15;
+    }
+
+    .cases-table .status-pill-flex svg {
+        width: 0.65rem !important;
+        height: 0.65rem !important;
+        margin-right: 0.1rem !important;
+    }
+
+    .cases-table .btn-open-record,
+    .cases-table .btn-case-view {
+        width: 100%;
+        max-width: 100%;
+        padding: 0.32rem 0.35rem;
+        font-size: 0.6rem;
+        line-height: 1.15;
+        white-space: normal;
+        gap: 0.2rem;
+        box-shadow: none;
+    }
+
+    .cases-table .btn-open-record .btn-icon,
+    .cases-table .btn-case-view .btn-icon {
+        display: none;
+    }
+
+    .cases-table .btn-open-record:hover,
+    .cases-table .btn-case-view:hover {
+        transform: none;
     }
 
     /* Case detail modal — matches Case Recording Sheet */
@@ -647,8 +786,8 @@
     }
 
     .tha-case-view-modal.modal-content {
-        width: min(96%, 72rem);
-        max-width: min(96%, 72rem);
+        width: min(96%, 56rem);
+        max-width: min(96%, 56rem);
         max-height: 92vh;
         display: flex;
         flex-direction: column;
@@ -1096,7 +1235,7 @@
 
     /* Second Member — view-only case monitoring modal */
     .tha-case-view-modal--monitor {
-        max-width: 42rem;
+        max-width: 52rem;
     }
 
     .tha-case-view-modal--monitor .case-monitor-body {
@@ -1126,11 +1265,17 @@
 
     .tha-case-view-modal--monitor .case-monitor-grid {
         display: grid;
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: 1.1fr 1.4fr 1.3fr;
         gap: 0.75rem;
     }
 
-    @media (max-width: 640px) {
+    .tha-case-view-modal--monitor .case-monitor-col-left {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    @media (max-width: 900px) {
         .tha-case-view-modal--monitor .case-monitor-grid {
             grid-template-columns: 1fr;
         }
@@ -1146,10 +1291,6 @@
     }
 
     .tha-case-view-modal--monitor .case-monitor-card--full {
-        grid-column: 1 / -1;
-    }
-
-    .tha-case-view-modal--monitor .case-monitor-card--incident {
         grid-column: 1 / -1;
     }
 
@@ -2421,256 +2562,223 @@
         }
     }
 
-    /* ===================================================================
-       Custom Success Notification Modal (Web App Guidance compliant)
-       =================================================================== */
-    .success-modal-overlay {
-        position: fixed;
-        inset: 0;
-        z-index: 9999;
-        background: rgba(15, 23, 42, 0.45);
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
-        display: none;
-        align-items: center;
-        justify-content: center;
-        animation: fadeInOverlay 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
-
-    .success-modal-card {
-        background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
-        border: 1px solid rgba(16, 185, 129, 0.25);
-        border-radius: 1.25rem;
-        width: 100%;
-        max-width: 440px;
-        padding: 2.2rem;
+    /* Case recording / settlement — shared evidence intake (camera + carousel) */
+    .field-evidence-intake .field-evidence-section {
+        margin: 0 0 1rem;
+        padding: 1.1rem;
+        border: 1px dashed #94a3b8;
+        border-radius: 0.75rem;
+        background: #f8fafc;
         text-align: center;
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(16, 185, 129, 0.05);
-        position: relative;
-        overflow: hidden;
-        animation: scaleInCard 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        width: 100%;
+        box-sizing: border-box;
     }
 
-    .success-icon-wrapper {
-        width: 80px;
-        height: 80px;
-        background: #dcfce7;
-        border-radius: 50%;
-        margin: 0 auto 1.5rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        position: relative;
-        box-shadow: 0 0 0 8px rgba(220, 252, 231, 0.5), 0 0 0 16px rgba(220, 252, 231, 0.25);
-        animation: pulseIcon 2s infinite ease-in-out;
-    }
-
-    .checkmark-svg {
-        width: 44px;
-        height: 44px;
-        stroke: #16a34a;
-        stroke-width: 3.5;
-        stroke-linecap: round;
-        stroke-linejoin: round;
-        fill: none;
-    }
-
-    .checkmark-circle {
-        stroke-dasharray: 166;
-        stroke-dashoffset: 166;
-        stroke-width: 3.5;
-        stroke-miterlimit: 10;
-        stroke: #16a34a;
-        fill: none;
-        animation: strokeCircle 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
-    }
-
-    .checkmark-check {
-        transform-origin: 50% 50%;
-        stroke-dasharray: 48;
-        stroke-dashoffset: 48;
-        animation: strokeCheck 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.6s forwards;
-    }
-
-    .success-modal-title {
-        font-family: 'Source Serif Pro', Georgia, serif;
-        font-size: 1.6rem;
+    .field-evidence-intake .field-evidence-label {
+        display: block;
+        font-size: 0.75rem;
         font-weight: 700;
-        color: #064e3b;
-        margin: 0 0 0.5rem;
-        letter-spacing: -0.01em;
+        color: #334155;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.5rem;
     }
 
-    .success-modal-message {
-        font-size: 0.92rem;
-        color: #475569;
-        margin-bottom: 1.5rem;
+    .field-evidence-intake .field-evidence-hint {
+        margin: 0 auto 0.85rem;
+        max-width: 40rem;
+        font-size: 0.8125rem;
+        color: #64748b;
         line-height: 1.5;
     }
 
-    .success-details-card {
-        background: rgba(255, 255, 255, 0.7);
-        border: 1px dashed #a7f3d0;
-        border-radius: 0.85rem;
-        padding: 1rem 1.2rem;
-        margin-bottom: 1.8rem;
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 0.75rem;
-        text-align: left;
-        backdrop-filter: blur(4px);
-    }
-
-    .success-detail-item {
+    .field-evidence-intake .field-evidence-buttons {
         display: flex;
-        flex-direction: column;
-    }
-
-    .success-detail-label {
-        font-size: 0.68rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        color: #047857;
-        letter-spacing: 0.05em;
-        margin-bottom: 0.25rem;
-    }
-
-    .success-detail-value {
-        font-size: 0.95rem;
-        font-weight: 700;
-        color: #1e293b;
-        display: flex;
-        align-items: center;
-        gap: 0.4rem;
-    }
-
-    .success-copy-btn {
-        background: none;
-        border: none;
-        padding: 0.25rem;
-        color: #94a3b8;
-        cursor: pointer;
-        border-radius: 0.25rem;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.2s;
-    }
-
-    .success-copy-btn:hover {
-        color: #047857;
-        background: #e2e8f0;
-    }
-
-    .success-copy-btn svg {
-        width: 13px;
-        height: 13px;
-    }
-
-    .success-status-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.35rem;
-        padding: 0.2rem 0.6rem;
-        border-radius: 9999px;
-        font-size: 0.75rem;
-        font-weight: 700;
-        background: #fef3c7;
-        color: #d97706;
-        border: 1px solid #fde68a;
-    }
-
-    .success-status-badge::before {
-        content: '';
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
-        background: #d97706;
-        box-shadow: 0 0 0 2px rgba(217, 119, 6, 0.2);
-        animation: pulseBadge 1.5s infinite ease-in-out;
-    }
-
-    .success-action-btn {
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-        color: #ffffff;
-        font-weight: 600;
-        font-size: 0.95rem;
-        border: none;
-        border-radius: 0.75rem;
-        padding: 0.75rem 2.2rem;
-        width: 100%;
-        cursor: pointer;
-        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
-        transition: all 0.25s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        flex-wrap: wrap;
         gap: 0.5rem;
+        margin-bottom: 0.65rem;
+        align-items: center;
+        justify-content: center;
     }
 
-    .success-action-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(16, 185, 129, 0.35);
+    .field-evidence-intake .table-verify-btn {
+        display: inline-block;
+        padding: 0.45rem 0.85rem;
+        border: none;
+        border-radius: 0.5rem;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        color: #fff;
+        cursor: pointer;
         background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        box-shadow: 0 2px 4px rgba(5, 150, 105, 0.25);
     }
 
-    .success-action-btn:active {
-        transform: translateY(0);
+    .field-evidence-intake .table-verify-btn:hover {
+        filter: brightness(1.05);
     }
 
-    .success-progress-bar {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        height: 4px;
-        background: linear-gradient(90deg, #10b981, #34d399);
+    .field-evidence-intake .table-verify-btn--muted {
+        background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+        box-shadow: 0 2px 4px rgba(71, 85, 105, 0.25);
+    }
+
+    .field-evidence-intake .field-evidence-file-btn {
+        display: inline-block;
+        padding: 0.45rem 0.85rem;
+        background: #fff;
+        border: 1px solid #cbd5e1;
+        border-radius: 0.5rem;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        color: #334155;
+        cursor: pointer;
+        margin-bottom: 0.5rem;
+    }
+
+    .field-evidence-intake .field-evidence-file-btn:hover {
+        border-color: #3b82f6;
+        color: #1e40af;
+    }
+
+    .field-evidence-intake .case-settlement-inline-carousel {
         width: 100%;
-        transform-origin: left;
-        animation: progressCountdown 4s linear forwards;
+        max-width: none;
+        margin: 0.85rem auto 0;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.65rem;
+        background: #fff;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
     }
 
-    /* Keyframes */
-    @keyframes fadeInOverlay {
-        from { opacity: 0; }
-        to { opacity: 1; }
+    .field-evidence-intake .case-settlement-inline-carousel[hidden] {
+        display: none !important;
     }
 
-    @keyframes scaleInCard {
-        from {
-            opacity: 0;
-            transform: scale(0.8) translateY(20px);
-        }
-        to {
-            opacity: 1;
-            transform: scale(1) translateY(0);
-        }
+    .field-evidence-intake .case-settlement-inline-carousel-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+        padding: 0.45rem 0.65rem;
+        background: #f8fafc;
+        border-bottom: 1px solid #e2e8f0;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #475569;
     }
 
-    @keyframes strokeCircle {
-        to { stroke-dashoffset: 0; }
+    .field-evidence-intake .case-settlement-inline-carousel-remove {
+        border: none;
+        background: transparent;
+        color: #b91c1c;
+        font-size: 0.72rem;
+        font-weight: 700;
+        cursor: pointer;
+        padding: 0.15rem 0;
     }
 
-    @keyframes strokeCheck {
-        to { stroke-dashoffset: 0; }
+    .field-evidence-intake .case-settlement-inline-carousel-remove:hover {
+        text-decoration: underline;
     }
 
-    @keyframes pulseIcon {
-        0%, 100% {
-            box-shadow: 0 0 0 8px rgba(220, 252, 231, 0.5), 0 0 0 16px rgba(220, 252, 231, 0.25);
-        }
-        50% {
-            box-shadow: 0 0 0 12px rgba(220, 252, 231, 0.6), 0 0 0 24px rgba(220, 252, 231, 0.3);
-        }
+    .field-evidence-intake .case-settlement-inline-carousel-stage {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 12rem;
+        padding: 0.5rem 2.25rem;
+        background: #f1f5f9;
     }
 
-    @keyframes pulseBadge {
-        0%, 100% { transform: scale(1); opacity: 1; }
-        50% { transform: scale(1.2); opacity: 0.6; }
+    .field-evidence-intake .case-settlement-inline-carousel-stage img {
+        display: block;
+        width: 100%;
+        max-width: 100%;
+        max-height: min(16rem, 42vh);
+        height: auto;
+        object-fit: contain;
+        border-radius: 0.35rem;
+        background: #0f172a;
     }
 
-    @keyframes progressCountdown {
-        from { transform: scaleX(1); }
-        to { transform: scaleX(0); }
+    .field-evidence-intake .case-settlement-inline-carousel-nav {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 2rem;
+        height: 2rem;
+        border: none;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.95);
+        color: #334155;
+        font-size: 1.35rem;
+        line-height: 1;
+        cursor: pointer;
+        box-shadow: 0 2px 6px rgba(15, 23, 42, 0.12);
+        z-index: 2;
+    }
+
+    .field-evidence-intake .case-settlement-inline-carousel-nav:hover {
+        background: #fff;
+        color: #047857;
+    }
+
+    .field-evidence-intake .case-settlement-inline-carousel-nav[hidden] {
+        display: none;
+    }
+
+    .field-evidence-intake .case-settlement-inline-carousel-nav--prev {
+        left: 0.35rem;
+    }
+
+    .field-evidence-intake .case-settlement-inline-carousel-nav--next {
+        right: 0.35rem;
+    }
+
+    .field-evidence-intake .field-evidence-camera-video {
+        display: none;
+        width: 100%;
+        max-width: 320px;
+        margin: 0 auto 0.65rem;
+        border-radius: 0.5rem;
+        background: #0f172a;
+    }
+
+    .tha-case-reg-modal .new-case-evidence-intake {
+        margin-top: 0.35rem;
+    }
+
+    .tha-case-reg-modal .new-case-evidence-intake .field-evidence-section {
+        text-align: left;
+    }
+
+    .tha-case-reg-modal .new-case-evidence-intake .field-evidence-hint {
+        margin-left: 0;
+        margin-right: 0;
+        max-width: none;
+    }
+
+    .tha-case-view-modal--monitor .case-record-evidence-carousel.case-settlement-inline-carousel {
+        margin-top: 0.35rem;
+    }
+
+    .tha-case-view-modal--monitor .case-record-evidence-carousel .case-settlement-inline-carousel-stage {
+        min-height: 7.5rem;
+        max-height: min(14rem, 32vh);
+        padding: 0.45rem 2rem;
+    }
+
+    .tha-case-view-modal--monitor .case-record-evidence-carousel .case-settlement-inline-carousel-stage img {
+        max-height: min(12.5rem, 28vh);
+    }
+
+    .case-intake-evidence-empty {
+        margin: 0;
+        font-size: 0.78rem;
+        color: #64748b;
     }
 
     /* Premium Hover Card Popover CSS */
@@ -2973,10 +3081,11 @@
                     <thead>
                         <tr>
                             <th>#</th>
-                            <th>Case &amp; Complainant</th>
-                            <th>Filed</th>
+                            <th>Complainant</th>
+                            <th>Respondent</th>
+                            <th>Filed Date &amp; Time</th>
                             <th>Time ago</th>
-                            <th>Complaint type</th>
+                            <th>Type</th>
                             <th>Status</th>
                             <th>Action</th>
                         </tr>
@@ -2987,20 +3096,32 @@
                             <td style="font-weight: 700; color: #1e293b;">{{ forloop.counter }}</td>
                             <td>
                                 <div class="complainant-cell-info">
-                                    <div class="complainant-name-card">
+                                    <div class="complainant-name-card applicant-name" 
+                                         style="cursor: pointer;"
+                                         data-full-name="{{ case.complainant_name }}"
+                                         data-tx-id="{% if case.complainant_applicant %}APP-{{ case.complainant_applicant.id|slice:":8" }}...{% else %}{{ case.case_number }}{% endif %}"
+                                         data-ref-code="{{ case.complainant_applicant.reference_number|default:'' }}"
+                                         data-barangay="{{ case.complainant_applicant.barangay.name|default:'Not specified' }}"
+                                         data-dob="{{ case.complainant_applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}">
                                         <svg class="applicant-meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 0.9rem; height: 0.9rem;">
                                             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                                             <circle cx="12" cy="7" r="4"></circle>
                                         </svg>
-                                        <span class="complainant-name applicant-name" 
-                                              style="cursor: pointer;"
-                                              data-full-name="{{ case.complainant_name }}"
-                                              data-tx-id="{% if case.complainant_applicant %}APP-{{ case.complainant_applicant.id|slice:":8" }}...{% else %}{{ case.case_number }}{% endif %}"
-                                              data-ref-code="{{ case.complainant_applicant.reference_number|default:'' }}"
-                                              data-barangay="{{ case.complainant_applicant.barangay.name|default:'Not specified' }}"
-                                              data-dob="{{ case.complainant_applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}">{{ case.complainant_name }}</span>
+                                        <span class="complainant-name" title="{{ case.complainant_name }}">{{ case.complainant_name }}</span>
                                     </div>
                                 </div>
+                            </td>
+                            <td>
+                                {% if case.subject_applicant %}
+                                <span class="respondent-name-cell" title="{{ case.subject_applicant.full_name }}">{{ case.subject_applicant.full_name }}</span>
+                                {% if case.subject_applicant.reference_number %}
+                                <span class="respondent-ref-code" title="{{ case.subject_applicant.reference_number }}">{{ case.subject_applicant.reference_number }}</span>
+                                {% endif %}
+                                {% elif case.subject_name %}
+                                <span class="respondent-name-cell" title="{{ case.subject_name }}">{{ case.subject_name }}</span>
+                                {% else %}
+                                <span class="respondent-name-cell is-empty">—</span>
+                                {% endif %}
                             </td>
                             <td>
                                 <div class="date-cell-stack">
@@ -3016,7 +3137,7 @@
                                     <div class="date-sub">{{ case.received_at|time:"g:i A" }}</div>
                                 </div>
                             </td>
-                            <td title="{{ case.received_at }}" style="font-weight: 500; color: #475569;">
+                            <td class="cases-table-time-ago" title="{{ case.received_at|date:'M d, Y g:i A' }}" style="font-weight: 500; color: #475569;">
                                 {{ case.received_at|naturaltime }}
                             </td>
                             <td>
@@ -3044,7 +3165,7 @@
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="7"
+                            <td colspan="8"
                                 style="text-align: center; color: #64748b; font-size: 0.75rem; padding: 1.25rem;">
                                 No cases match your search. Try adjusting filters or add a new case.
                             </td>
@@ -3085,16 +3206,23 @@
             </div>
 
             <div class="case-monitor-grid">
-                <article class="case-monitor-card">
-                    <h3 class="case-monitor-card-title">Recorded by</h3>
-                    <div id="modalStaffCard" class="case-monitor-staff">
-                        <div id="modalStaffAvatar" class="handled-by-avatar other">—</div>
-                        <div class="case-monitor-staff-text">
-                            <p id="modalStaffName" class="case-monitor-staff-name">—</p>
-                            <p id="modalStaffRole" class="case-monitor-staff-role">—</p>
+                <div class="case-monitor-col-left">
+                    <article class="case-monitor-card">
+                        <h3 class="case-monitor-card-title">Recorded by</h3>
+                        <div id="modalStaffCard" class="case-monitor-staff">
+                            <div id="modalStaffAvatar" class="handled-by-avatar other">—</div>
+                            <div class="case-monitor-staff-text">
+                                <p id="modalStaffName" class="case-monitor-staff-name">—</p>
+                                <p id="modalStaffRole" class="case-monitor-staff-role">—</p>
+                            </div>
                         </div>
-                    </div>
-                </article>
+                    </article>
+
+                    <article id="subjectSection" class="case-monitor-card case-monitor-card--respondent" style="display: none;">
+                        <h3 class="case-monitor-card-title">Respondent</h3>
+                        <p id="modalSubjectName" class="case-monitor-person-name case-monitor-person-name--respondent">—</p>
+                    </article>
+                </div>
 
                 <article class="case-monitor-card case-monitor-card--complainant">
                     <h3 class="case-monitor-card-title">Complainant</h3>
@@ -3112,11 +3240,6 @@
                     </div>
                 </article>
 
-                <article id="subjectSection" class="case-monitor-card case-monitor-card--respondent" style="display: none;">
-                    <h3 class="case-monitor-card-title">Respondent</h3>
-                    <p id="modalSubjectName" class="case-monitor-person-name case-monitor-person-name--respondent">—</p>
-                </article>
-
                 <article class="case-monitor-card case-monitor-card--incident">
                     <h3 class="case-monitor-card-title">Incident</h3>
                     <div class="case-monitor-incident-type">
@@ -3126,6 +3249,35 @@
                     <div class="case-monitor-incident-desc">
                         <span class="case-detail-label">Description</span>
                         <p id="modalDescription" class="case-monitor-description">—</p>
+                    </div>
+                </article>
+
+                <article id="caseIntakeEvidenceSection" class="case-monitor-card case-monitor-card--full case-intake-evidence-card" style="display: none;">
+                    <h3 class="case-monitor-card-title">Uploaded evidence</h3>
+                    <p id="caseIntakeEvidenceEmpty" class="case-intake-evidence-empty" hidden>No intake photographs on file.</p>
+                    <div id="caseIntakeSavedCarousel" class="case-settlement-inline-carousel case-record-evidence-carousel field-evidence-intake" hidden>
+                        <div class="case-settlement-inline-carousel-toolbar">
+                            <span class="case-settlement-inline-carousel-counter" id="caseIntakeSavedCounter"></span>
+                        </div>
+                        <div class="case-settlement-inline-carousel-stage">
+                            <button type="button" class="case-settlement-inline-carousel-nav case-settlement-inline-carousel-nav--prev" id="caseIntakeSavedPrev" aria-label="Previous photo">‹</button>
+                            <img id="caseIntakeSavedImg" src="" alt="Intake evidence photograph" />
+                            <button type="button" class="case-settlement-inline-carousel-nav case-settlement-inline-carousel-nav--next" id="caseIntakeSavedNext" aria-label="Next photo">›</button>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="caseSettlementEvidenceSection" class="case-monitor-card case-monitor-card--full" style="display: none;">
+                    <h3 class="case-monitor-card-title">Settlement evidence</h3>
+                    <div id="caseSettlementViewCarousel" class="case-settlement-inline-carousel case-record-evidence-carousel field-evidence-intake" hidden>
+                        <div class="case-settlement-inline-carousel-toolbar">
+                            <span class="case-settlement-inline-carousel-counter" id="caseSettlementViewCounter"></span>
+                        </div>
+                        <div class="case-settlement-inline-carousel-stage">
+                            <button type="button" class="case-settlement-inline-carousel-nav case-settlement-inline-carousel-nav--prev" id="caseSettlementViewPrev" aria-label="Previous photo">‹</button>
+                            <img id="caseSettlementViewImg" src="" alt="Settlement evidence photograph" />
+                            <button type="button" class="case-settlement-inline-carousel-nav case-settlement-inline-carousel-nav--next" id="caseSettlementViewNext" aria-label="Next photo">›</button>
+                        </div>
                     </div>
                 </article>
 
@@ -3277,10 +3429,34 @@
                             <span id="newDescriptionCount" class="help-text">0 / 100</span>
                         </div>
                     </div>
-                    <div class="form-group" style="margin-top: 0.75rem; margin-bottom: 0;">
+                    <div class="form-group new-case-evidence-wrap" style="margin-top: 0.75rem; margin-bottom: 0;">
                         <label class="form-label">Uploaded evidence</label>
-                        <input type="file" class="form-input" id="newCaseEvidenceFiles"
-                            accept="image/jpeg,image/png,image/webp,application/pdf" multiple style="padding: 0.45rem;">
+                        <div class="field-evidence-intake new-case-evidence-intake">
+                            <div class="field-evidence-section">
+                                <span class="field-evidence-label">Supporting photographs (optional)</span>
+                                <p class="field-evidence-hint">You may capture images using this device or attach files from storage. Accepted types: JPEG, PNG, or WebP. Maximum four (4) files, six (6) MB each. Camera access generally requires HTTPS or <code>localhost</code>.</p>
+                                <video id="newCaseCameraVideo" class="field-evidence-camera-video" playsinline autoplay muted></video>
+                                <canvas id="newCaseCameraCanvas" style="display:none;"></canvas>
+                                <div class="field-evidence-buttons">
+                                    <button type="button" id="newCaseCameraStartBtn" class="table-verify-btn">Activate camera</button>
+                                    <button type="button" id="newCaseCameraCaptureBtn" class="table-verify-btn" style="display:none;">Capture frame</button>
+                                    <button type="button" id="newCaseCameraStopBtn" class="table-verify-btn table-verify-btn--muted" style="display:none;">Stop camera</button>
+                                </div>
+                                <input type="file" id="newCaseEvidenceFileInput" accept="image/jpeg,image/png,image/webp,image/*" multiple style="display:none;">
+                                <button type="button" class="field-evidence-file-btn" id="newCaseEvidenceFilePickBtn">Attach from device</button>
+                                <div id="newCasePendingCarousel" class="case-settlement-inline-carousel" hidden>
+                                    <div class="case-settlement-inline-carousel-toolbar">
+                                        <span class="case-settlement-inline-carousel-counter" id="newCasePendingCounter"></span>
+                                        <button type="button" class="case-settlement-inline-carousel-remove" id="newCasePendingRemoveBtn">Remove photo</button>
+                                    </div>
+                                    <div class="case-settlement-inline-carousel-stage">
+                                        <button type="button" class="case-settlement-inline-carousel-nav case-settlement-inline-carousel-nav--prev" id="newCasePendingPrev" aria-label="Previous photo">‹</button>
+                                        <img id="newCasePendingImg" src="" alt="Evidence photo preview" />
+                                        <button type="button" class="case-settlement-inline-carousel-nav case-settlement-inline-carousel-nav--next" id="newCasePendingNext" aria-label="Next photo">›</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -3297,51 +3473,6 @@
             <button type="button" class="btn-modal danger" onclick="closeNewCaseModal()">Cancel</button>
         </div>
 
-    </div>
-</div>
-
-<!-- Custom Success Modal -->
-<div id="customSuccessModal" class="success-modal-overlay">
-    <div class="success-modal-card">
-        <div class="success-icon-wrapper">
-            <svg class="checkmark-svg" viewBox="0 0 52 52">
-                <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
-                <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
-            </svg>
-        </div>
-        <h3 class="success-modal-title">Case Recorded</h3>
-        <p class="success-modal-message" id="successModalMessage">The complaint has been successfully created and logged into the monitoring database.</p>
-        
-        <div class="success-details-card">
-            <div class="success-detail-item">
-                <span class="success-detail-label">Case Number</span>
-                <span class="success-detail-value" id="successCaseNum">
-                    <span id="successCaseNumText">—</span>
-                    <button type="button" class="success-copy-btn" onclick="copyCaseNumber(event)" title="Copy Case Number">
-                        <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                        </svg>
-                    </button>
-                </span>
-            </div>
-            <div class="success-detail-item" style="text-align: right; align-items: flex-end;">
-                <span class="success-detail-label">Intake Status</span>
-                <div class="success-detail-value">
-                    <span class="success-status-badge" id="successStatusBadge">—</span>
-                </div>
-            </div>
-        </div>
-        
-        <button type="button" class="success-action-btn" onclick="proceedAfterSuccess()">
-            Proceed to Dashboard
-            <svg style="width: 1.1rem; height: 1.1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-                <polyline points="12 5 19 12 12 19"></polyline>
-            </svg>
-        </button>
-        
-        <div class="success-progress-bar"></div>
     </div>
 </div>
 
@@ -3363,12 +3494,163 @@
 
     function resetCaseModalSections() {
         ['subjectSection', 'investigationSection', 'referralSection', 'resolutionSection',
-            'priorCasesSection', 'modalHouseholdMembersWrap'].forEach((id) => {
+            'priorCasesSection', 'modalHouseholdMembersWrap', 'caseIntakeEvidenceSection',
+            'caseSettlementEvidenceSection'].forEach((id) => {
                 const el = document.getElementById(id);
                 if (el) el.style.display = 'none';
             });
         const householdList = document.getElementById('modalHouseholdMembersList');
         if (householdList) householdList.innerHTML = '';
+        caseIntakeSavedUrls = [];
+        caseIntakeSavedIndex = 0;
+        caseSettlementViewUrls = [];
+        caseSettlementViewIndex = 0;
+        const intakeCarousel = document.getElementById('caseIntakeSavedCarousel');
+        if (intakeCarousel) intakeCarousel.hidden = true;
+        const settlementCarousel = document.getElementById('caseSettlementViewCarousel');
+        if (settlementCarousel) settlementCarousel.hidden = true;
+    }
+
+    let caseIntakeSavedUrls = [];
+    let caseIntakeSavedIndex = 0;
+    let caseSettlementViewUrls = [];
+    let caseSettlementViewIndex = 0;
+
+    function classifyCaseEvidenceList(evidence) {
+        const intake = [];
+        const settlement = [];
+        (evidence || []).forEach((ev) => {
+            const cap = (ev.caption || '').toLowerCase();
+            if (cap.includes('initial intake')) {
+                intake.push(ev);
+            } else {
+                settlement.push(ev);
+            }
+        });
+        return { intake, settlement };
+    }
+
+    function refreshCaseIntakeSavedCarousel() {
+        const carousel = document.getElementById('caseIntakeSavedCarousel');
+        const img = document.getElementById('caseIntakeSavedImg');
+        const counter = document.getElementById('caseIntakeSavedCounter');
+        const prev = document.getElementById('caseIntakeSavedPrev');
+        const next = document.getElementById('caseIntakeSavedNext');
+        const n = caseIntakeSavedUrls.length;
+
+        if (!carousel || !img) return;
+        if (!n) {
+            carousel.hidden = true;
+            caseIntakeSavedIndex = 0;
+            img.removeAttribute('src');
+            return;
+        }
+
+        carousel.hidden = false;
+        if (caseIntakeSavedIndex >= n) caseIntakeSavedIndex = n - 1;
+        img.src = caseIntakeSavedUrls[caseIntakeSavedIndex];
+        img.alt = 'Intake photo ' + String(caseIntakeSavedIndex + 1) + ' of ' + String(n);
+        if (counter) {
+            counter.textContent = n > 1 ? String(caseIntakeSavedIndex + 1) + ' / ' + String(n) : '1 photo';
+        }
+        if (prev) prev.hidden = n <= 1;
+        if (next) next.hidden = n <= 1;
+    }
+
+    function caseIntakeSavedCarouselStep(delta) {
+        const n = caseIntakeSavedUrls.length;
+        if (n <= 1) return;
+        caseIntakeSavedIndex = (caseIntakeSavedIndex + delta + n) % n;
+        refreshCaseIntakeSavedCarousel();
+    }
+
+    function refreshCaseSettlementViewCarousel() {
+        const carousel = document.getElementById('caseSettlementViewCarousel');
+        const img = document.getElementById('caseSettlementViewImg');
+        const counter = document.getElementById('caseSettlementViewCounter');
+        const prev = document.getElementById('caseSettlementViewPrev');
+        const next = document.getElementById('caseSettlementViewNext');
+        const n = caseSettlementViewUrls.length;
+
+        if (!carousel || !img) return;
+        if (!n) {
+            carousel.hidden = true;
+            caseSettlementViewIndex = 0;
+            img.removeAttribute('src');
+            return;
+        }
+
+        carousel.hidden = false;
+        if (caseSettlementViewIndex >= n) caseSettlementViewIndex = n - 1;
+        img.src = caseSettlementViewUrls[caseSettlementViewIndex];
+        img.alt = 'Settlement photo ' + String(caseSettlementViewIndex + 1) + ' of ' + String(n);
+        if (counter) {
+            counter.textContent = n > 1 ? String(caseSettlementViewIndex + 1) + ' / ' + String(n) : '1 photo';
+        }
+        if (prev) prev.hidden = n <= 1;
+        if (next) next.hidden = n <= 1;
+    }
+
+    function caseSettlementViewCarouselStep(delta) {
+        const n = caseSettlementViewUrls.length;
+        if (n <= 1) return;
+        caseSettlementViewIndex = (caseSettlementViewIndex + delta + n) % n;
+        refreshCaseSettlementViewCarousel();
+    }
+
+    function renderCaseIntakeEvidenceOnRecord(evidence) {
+        const section = document.getElementById('caseIntakeEvidenceSection');
+        const { intake } = classifyCaseEvidenceList(evidence);
+
+        if (!section) return;
+        if (!intake.length) {
+            section.style.display = 'none';
+            caseIntakeSavedUrls = [];
+            caseIntakeSavedIndex = 0;
+            const carousel = document.getElementById('caseIntakeSavedCarousel');
+            if (carousel) carousel.hidden = true;
+            return;
+        }
+
+        section.style.display = 'block';
+        caseIntakeSavedUrls = intake.map((ev) => ev.url).filter(Boolean);
+        caseIntakeSavedIndex = 0;
+        refreshCaseIntakeSavedCarousel();
+    }
+
+    function renderCaseSettlementEvidenceOnRecord(evidence) {
+        const section = document.getElementById('caseSettlementEvidenceSection');
+        const { settlement } = classifyCaseEvidenceList(evidence);
+
+        if (!section) return;
+        if (!settlement.length) {
+            section.style.display = 'none';
+            caseSettlementViewUrls = [];
+            caseSettlementViewIndex = 0;
+            const carousel = document.getElementById('caseSettlementViewCarousel');
+            if (carousel) carousel.hidden = true;
+            return;
+        }
+
+        section.style.display = 'block';
+        caseSettlementViewUrls = settlement.map((ev) => ev.url).filter(Boolean);
+        caseSettlementViewIndex = 0;
+        refreshCaseSettlementViewCarousel();
+    }
+
+    function renderCaseEvidenceOnMonitor(evidence) {
+        renderCaseIntakeEvidenceOnRecord(evidence);
+        renderCaseSettlementEvidenceOnRecord(evidence);
+        bindCaseEvidenceViewControls();
+    }
+
+    function bindCaseEvidenceViewControls() {
+        if (window._staffCaseEvidenceViewBound) return;
+        window._staffCaseEvidenceViewBound = true;
+        document.getElementById('caseIntakeSavedPrev')?.addEventListener('click', () => caseIntakeSavedCarouselStep(-1));
+        document.getElementById('caseIntakeSavedNext')?.addEventListener('click', () => caseIntakeSavedCarouselStep(1));
+        document.getElementById('caseSettlementViewPrev')?.addEventListener('click', () => caseSettlementViewCarouselStep(-1));
+        document.getElementById('caseSettlementViewNext')?.addEventListener('click', () => caseSettlementViewCarouselStep(1));
     }
 
     function isMonitorCaseDesk(c) {
@@ -3542,6 +3824,8 @@
                 priorList.innerHTML = '';
             }
         }
+
+        renderCaseEvidenceOnMonitor(c.evidence || []);
 
         const modal = document.getElementById('caseModal');
         modal.style.display = 'flex';
@@ -3749,16 +4033,206 @@
         document.body.style.overflow = '';
     }
 
+    const CASE_EVIDENCE_MAX_PHOTOS = 4;
+    let newCaseEvidencePendingFiles = [];
+    let newCaseEvidencePendingObjectUrls = [];
+    let newCaseEvidencePendingIndex = 0;
+    let newCaseCameraStream = null;
+
+    function clearNewCasePendingEvidence() {
+        newCaseEvidencePendingObjectUrls.forEach((u) => {
+            try { URL.revokeObjectURL(u); } catch (e) { /* ignore */ }
+        });
+        newCaseEvidencePendingObjectUrls = [];
+        newCaseEvidencePendingFiles = [];
+        newCaseEvidencePendingIndex = 0;
+        const carousel = document.getElementById('newCasePendingCarousel');
+        if (carousel) carousel.hidden = true;
+        const fi = document.getElementById('newCaseEvidenceFileInput');
+        if (fi) fi.value = '';
+    }
+
+    function refreshNewCasePendingCarousel() {
+        newCaseEvidencePendingObjectUrls.forEach((u) => {
+            try { URL.revokeObjectURL(u); } catch (e) { /* ignore */ }
+        });
+        newCaseEvidencePendingObjectUrls = newCaseEvidencePendingFiles.map((file) => URL.createObjectURL(file));
+
+        const carousel = document.getElementById('newCasePendingCarousel');
+        const img = document.getElementById('newCasePendingImg');
+        const counter = document.getElementById('newCasePendingCounter');
+        const prev = document.getElementById('newCasePendingPrev');
+        const next = document.getElementById('newCasePendingNext');
+        const n = newCaseEvidencePendingObjectUrls.length;
+
+        if (!carousel || !img) return;
+        if (!n) {
+            carousel.hidden = true;
+            newCaseEvidencePendingIndex = 0;
+            img.removeAttribute('src');
+            return;
+        }
+
+        carousel.hidden = false;
+        if (newCaseEvidencePendingIndex >= n) {
+            newCaseEvidencePendingIndex = n - 1;
+        }
+        if (newCaseEvidencePendingIndex < 0) {
+            newCaseEvidencePendingIndex = 0;
+        }
+
+        img.src = newCaseEvidencePendingObjectUrls[newCaseEvidencePendingIndex];
+        img.alt = 'Evidence photo ' + String(newCaseEvidencePendingIndex + 1) + ' of ' + String(n);
+        if (counter) {
+            counter.textContent = n > 1 ? String(newCaseEvidencePendingIndex + 1) + ' / ' + String(n) : '1 photo';
+        }
+        if (prev) prev.hidden = n <= 1;
+        if (next) next.hidden = n <= 1;
+    }
+
+    function newCasePendingCarouselStep(delta) {
+        const n = newCaseEvidencePendingObjectUrls.length;
+        if (n <= 1) return;
+        newCaseEvidencePendingIndex = (newCaseEvidencePendingIndex + delta + n) % n;
+        refreshNewCasePendingCarousel();
+    }
+
+    function addNewCasePendingFile(file) {
+        if (newCaseEvidencePendingFiles.length >= CASE_EVIDENCE_MAX_PHOTOS) {
+            alert('Maximum 4 evidence photos.');
+            return;
+        }
+        const maxBytes = 6 * 1024 * 1024;
+        if (file.size > maxBytes) {
+            alert('Each photo must be 6 MB or smaller.');
+            return;
+        }
+        const okType = /^image\/(jpeg|png|webp)$/i.test(file.type || '');
+        if (!okType) {
+            alert('Only JPEG, PNG, or WebP photos are allowed.');
+            return;
+        }
+        newCaseEvidencePendingFiles.push(file);
+        if (newCaseEvidencePendingFiles.length === 1) {
+            newCaseEvidencePendingIndex = 0;
+        } else {
+            newCaseEvidencePendingIndex = newCaseEvidencePendingFiles.length - 1;
+        }
+        refreshNewCasePendingCarousel();
+    }
+
+    function removeNewCasePendingAt(index) {
+        if (index < 0 || index >= newCaseEvidencePendingFiles.length) return;
+        newCaseEvidencePendingFiles.splice(index, 1);
+        if (newCaseEvidencePendingIndex >= newCaseEvidencePendingFiles.length) {
+            newCaseEvidencePendingIndex = Math.max(0, newCaseEvidencePendingFiles.length - 1);
+        }
+        refreshNewCasePendingCarousel();
+    }
+
+    function removeCurrentNewCasePendingPhoto() {
+        removeNewCasePendingAt(newCaseEvidencePendingIndex);
+    }
+
+    function stopNewCaseCamera() {
+        if (newCaseCameraStream) {
+            newCaseCameraStream.getTracks().forEach((t) => t.stop());
+            newCaseCameraStream = null;
+        }
+        const v = document.getElementById('newCaseCameraVideo');
+        if (v) {
+            v.srcObject = null;
+            v.style.display = 'none';
+        }
+        const start = document.getElementById('newCaseCameraStartBtn');
+        const cap = document.getElementById('newCaseCameraCaptureBtn');
+        const stp = document.getElementById('newCaseCameraStopBtn');
+        if (start) start.style.display = 'inline-block';
+        if (cap) cap.style.display = 'none';
+        if (stp) stp.style.display = 'none';
+    }
+
+    async function startNewCaseCamera() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            alert('This browser does not support in-page camera access. Use Attach from device.');
+            return;
+        }
+        try {
+            newCaseCameraStream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: { ideal: 'environment' } },
+                audio: false,
+            });
+            const v = document.getElementById('newCaseCameraVideo');
+            if (v) {
+                v.srcObject = newCaseCameraStream;
+                v.style.display = 'block';
+                await v.play();
+            }
+            const start = document.getElementById('newCaseCameraStartBtn');
+            const cap = document.getElementById('newCaseCameraCaptureBtn');
+            const stp = document.getElementById('newCaseCameraStopBtn');
+            if (start) start.style.display = 'none';
+            if (cap) cap.style.display = 'inline-block';
+            if (stp) stp.style.display = 'inline-block';
+        } catch (err) {
+            alert('Could not open camera. Use Attach from device, or ensure you are on HTTPS or localhost.');
+        }
+    }
+
+    function captureNewCasePhoto() {
+        const v = document.getElementById('newCaseCameraVideo');
+        const c = document.getElementById('newCaseCameraCanvas');
+        if (!v || !c || !v.videoWidth) {
+            alert('Wait for the camera preview, then capture again.');
+            return;
+        }
+        c.width = v.videoWidth;
+        c.height = v.videoHeight;
+        c.getContext('2d').drawImage(v, 0, 0);
+        c.toBlob((blob) => {
+            if (!blob) return;
+            const file = new File([blob], 'intake-' + Date.now() + '.jpg', { type: 'image/jpeg' });
+            addNewCasePendingFile(file);
+        }, 'image/jpeg', 0.88);
+    }
+
+    function onNewCaseEvidenceFilesSelected(ev) {
+        const files = ev.target.files;
+        if (!files) return;
+        for (let i = 0; i < files.length; i++) {
+            if (newCaseEvidencePendingFiles.length >= CASE_EVIDENCE_MAX_PHOTOS) break;
+            addNewCasePendingFile(files[i]);
+        }
+        ev.target.value = '';
+    }
+
+    function bindNewCaseEvidenceControls() {
+        if (window._newCaseEvidenceBound) return;
+        window._newCaseEvidenceBound = true;
+        document.getElementById('newCaseCameraStartBtn')?.addEventListener('click', startNewCaseCamera);
+        document.getElementById('newCaseCameraCaptureBtn')?.addEventListener('click', captureNewCasePhoto);
+        document.getElementById('newCaseCameraStopBtn')?.addEventListener('click', stopNewCaseCamera);
+        document.getElementById('newCaseEvidenceFilePickBtn')?.addEventListener('click', () => {
+            document.getElementById('newCaseEvidenceFileInput')?.click();
+        });
+        document.getElementById('newCaseEvidenceFileInput')?.addEventListener('change', onNewCaseEvidenceFilesSelected);
+        document.getElementById('newCasePendingPrev')?.addEventListener('click', () => newCasePendingCarouselStep(-1));
+        document.getElementById('newCasePendingNext')?.addEventListener('click', () => newCasePendingCarouselStep(1));
+        document.getElementById('newCasePendingRemoveBtn')?.addEventListener('click', removeCurrentNewCasePendingPhoto);
+    }
+
     function openNewCaseModal() {
         const caseModal = document.getElementById('caseModal');
         if (caseModal) caseModal.style.display = 'none';
         resetNewCaseForm();
+        bindNewCaseEvidenceControls();
         document.body.style.overflow = 'hidden';
         document.getElementById('newCaseModal').style.display = 'flex';
     }
 
     function closeNewCaseModal(e) {
         if (e && e.target.id !== 'newCaseModal') return;
+        stopNewCaseCamera();
         document.getElementById('newCaseModal').style.display = 'none';
         document.body.style.overflow = '';
     }
@@ -3852,8 +4326,8 @@
         });
         clearComplainantAutoFill();
         clearSubjectAutoFill();
-        const files = document.getElementById('newCaseEvidenceFiles');
-        if (files) files.value = '';
+        clearNewCasePendingEvidence();
+        stopNewCaseCamera();
         updateDescCount();
     }
 
@@ -3975,8 +4449,7 @@
                     alert('Error: ' + (d.error || 'Could not create case'));
                     return;
                 }
-                const fileInput = document.getElementById('newCaseEvidenceFiles');
-                const files = fileInput?.files ? Array.from(fileInput.files) : [];
+                const files = newCaseEvidencePendingFiles.slice();
                 if (files.length && d.case?.id) {
                     for (const file of files) {
                         const fd = new FormData();
@@ -3990,7 +4463,7 @@
                     }
                 }
                 // Trigger premium custom success notification modal instead of basic browser alert
-                triggerSuccessNotification(d.message);
+                showCaseRecordedSuccess(d.case, d.message);
             })
             .catch(() => alert('Could not create case. Try again.'));
     }
@@ -4122,66 +4595,44 @@
         if (openId) openCaseModal(openId);
     }
 
-    function triggerSuccessNotification(message) {
-        let caseNumber = 'CASE-UNKNOWN';
+    function caseFlowAlert(message, title, variant, onConfirm) {
+        const tone = variant === 'success' ? 'success' : 'default';
+        if (typeof showFlowAlert === 'function') {
+            showFlowAlert(message || '', title || 'Notice', onConfirm || null, tone);
+            return;
+        }
+        alert(message || '');
+        if (typeof onConfirm === 'function') onConfirm();
+    }
+
+    function showCaseRecordedSuccess(casePayload, fallbackMessage) {
+        let caseNumber = (casePayload && casePayload.case_number) ? String(casePayload.case_number).trim() : '';
         let statusText = 'Pending Review';
-        
-        const caseMatch = message.match(/CASE-[A-Za-z0-9-]+/i);
-        if (caseMatch) {
-            caseNumber = caseMatch[0];
-        }
-        const statusMatch = message.match(/Status:\s*([A-Za-z\s]+)/i);
-        if (statusMatch) {
-            statusText = statusMatch[1].replace(/\.$/, '').trim();
-        }
-        
-        document.getElementById('successCaseNumText').textContent = caseNumber;
-        document.getElementById('successStatusBadge').textContent = statusText;
-        
-        // Hide the input modal overlay first
-        document.getElementById('newCaseModal').style.display = 'none';
-        
-        // Show our success notification
-        const overlay = document.getElementById('customSuccessModal');
-        overlay.style.display = 'flex';
-        
-        // Auto-redirect after 4 seconds
-        window.successRedirectTimeout = setTimeout(() => {
-            proceedAfterSuccess();
-        }, 4000);
-    }
-
-    window.copyCaseNumber = function(e) {
-        e.stopPropagation();
-        const caseNum = document.getElementById('successCaseNumText').textContent;
-        if (!caseNum || caseNum === '—' || caseNum === 'CASE-UNKNOWN') return;
-        
-        navigator.clipboard.writeText(caseNum).then(() => {
-            const copyBtn = document.querySelector('.success-copy-btn');
-            const originalHTML = copyBtn.innerHTML;
-            
-            copyBtn.innerHTML = `
-                <svg viewBox="0 0 24 24" width="13" height="13" stroke="#16a34a" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-            `;
-            
-            setTimeout(() => {
-                copyBtn.innerHTML = originalHTML;
-            }, 1500);
-        });
-    }
-
-    window.proceedAfterSuccess = function() {
-        if (window.successRedirectTimeout) {
-            clearTimeout(window.successRedirectTimeout);
+        if (fallbackMessage) {
+            const caseMatch = fallbackMessage.match(/CASE-[A-Za-z0-9-]+/i);
+            if (!caseNumber && caseMatch) caseNumber = caseMatch[0];
+            const statusMatch = fallbackMessage.match(/Status:\s*([A-Za-z\s]+)/i);
+            if (statusMatch) statusText = statusMatch[1].replace(/\.$/, '').trim();
         }
         closeNewCaseModal();
-        location.reload();
+        const message = caseNumber
+            ? `Case ${caseNumber} was saved and added to the case list.\nStatus: ${statusText}.`
+            : `The complaint was saved and added to the case list.\nStatus: ${statusText}.`;
+        caseFlowAlert(message, 'Case recorded', 'success', () => location.reload());
+        const refWrap = document.getElementById('flowAlertRefWrap');
+        if (refWrap && caseNumber) {
+            refWrap.innerHTML = '';
+            const pill = document.createElement('span');
+            pill.className = 'flow-alert-ref-pill';
+            pill.textContent = caseNumber;
+            refWrap.appendChild(pill);
+            refWrap.style.display = 'block';
+        }
     }
 
     document.addEventListener('DOMContentLoaded', () => {
         loadCasePageDeepLinks();
+        bindNewCaseEvidenceControls();
 
         // Premium Hover Card popover initialization
         const hoverCard = document.getElementById('applicantHoverCard');
@@ -4196,7 +4647,7 @@
         let hideTimeout;
 
         document.addEventListener('mouseover', function (e) {
-            const nameSpan = e.target.closest('.complainant-name.applicant-name');
+            const nameSpan = e.target.closest('.applicant-name');
             const isHoverCard = e.target.closest('#applicantHoverCard');
 
             if (!nameSpan) {
@@ -4278,7 +4729,7 @@
         });
 
         document.addEventListener('mouseout', function (e) {
-            const nameSpan = e.target.closest('.complainant-name.applicant-name');
+            const nameSpan = e.target.closest('.applicant-name');
             const isHoverCard = e.target.closest('#applicantHoverCard');
 
             if (nameSpan || isHoverCard) {

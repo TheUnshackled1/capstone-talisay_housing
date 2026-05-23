@@ -1834,7 +1834,8 @@
     .premium-table-wrap {
         border: 1px solid #e2e8f0;
         border-radius: 10px;
-        overflow: hidden;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
         margin-top: 1rem;
     }
     .premium-table {
@@ -1859,6 +1860,29 @@
     }
     .premium-table tr:hover td {
         background: #fafbfc;
+    }
+
+    @media (max-width: 768px) {
+        .premium-table {
+            min-width: 680px;
+        }
+        
+        /* Premium custom scrollbars to make it visually obvious that the table is scrollable on mobile */
+        .premium-table-wrap::-webkit-scrollbar {
+            height: 6px;
+            display: block !important;
+        }
+        .premium-table-wrap::-webkit-scrollbar-track {
+            background: #f8fafc;
+            border-radius: 4px;
+        }
+        .premium-table-wrap::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .premium-table-wrap::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
     }
 
     /* Monitoring Cards in Timeline */
@@ -2566,8 +2590,8 @@
 
     <!-- TABLE VIEW -->
     <div id="tableView-content" style="display: none;">
-        <div style="background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-            <table style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">
+        <div class="premium-table-wrap" style="background: white; border-radius: 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-top: 0;">
+            <table class="premium-table" style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">
                 <thead style="background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); border-bottom: 2px solid #0f172a;">
                     <tr>
                         <th style="padding: 1rem; text-align: left; font-weight: 700; color: #ffffff; border-right: 1px solid rgba(255, 255, 255, 0.22); background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); letter-spacing: 0.05em; text-transform: uppercase;">BLOCK</th>

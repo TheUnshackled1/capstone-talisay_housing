@@ -1194,8 +1194,9 @@
 
     /* Responsive table scrolling */
     @media (max-width: 1024px) {
-        table {
+        table:not(.modal-household-table) {
             font-size: 12px;
+            min-width: 720px;
         }
 
         table td, table th {
@@ -1204,12 +1205,40 @@
     }
 
     @media (max-width: 768px) {
-        table {
+        table:not(.modal-household-table) {
             font-size: 11px;
+            min-width: 680px;
         }
 
         table td, table th {
             padding: 8px 6px;
+        }
+
+        /* Ensure scrollable containers scroll smoothly on touch devices */
+        div[style*="overflow-x: auto"], div[style*="overflow: auto"] {
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        /* Premium custom scrollbars to make it visually obvious that the table is scrollable on mobile */
+        div[style*="overflow-x: auto"]::-webkit-scrollbar, 
+        div[style*="overflow: auto"]::-webkit-scrollbar {
+            height: 6px;
+            display: block !important;
+        }
+        div[style*="overflow-x: auto"]::-webkit-scrollbar-track,
+        div[style*="overflow: auto"]::-webkit-scrollbar-track {
+            background: #f8fafc;
+            border-radius: 4px;
+        }
+        div[style*="overflow-x: auto"]::-webkit-scrollbar-thumb,
+        div[style*="overflow: auto"]::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        div[style*="overflow-x: auto"]::-webkit-scrollbar-thumb:hover,
+        div[style*="overflow: auto"]::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
         }
     }
 

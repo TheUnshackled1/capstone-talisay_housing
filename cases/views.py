@@ -97,7 +97,7 @@ def case_management_dashboard(request, position):
     cases = (
         Case.objects
         .select_related('received_by', 'investigated_by', 'decided_by', 'complainant_applicant', 'subject_applicant', 'related_unit')
-        .order_by('-received_at')
+        .order_by('received_at')
     )
 
     status_counts = {
