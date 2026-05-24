@@ -1377,21 +1377,25 @@
     }
     .tha-case-reg-modal .btn-modal.danger:hover { background: #fef2f2; }
     @media (max-width: 768px) {
-        /* ── Add Case Modal: full-screen on mobile ── */
+        /* ── Add Case Modal: full-width; overlay scrolls (no clipped white gap) ── */
         .tha-case-modal-overlay {
-            padding: 0 !important;
+            padding: 0.5rem 0 1.5rem !important;
             align-items: flex-start !important;
+            overflow-y: auto !important;
         }
 
         .tha-case-reg-modal.modal-content {
             width: 100% !important;
             max-width: 100% !important;
-            max-height: 100dvh !important;
-            height: 100dvh !important;
+            margin: 0 !important;
+            min-height: auto !important;
+            height: auto !important;
+            max-height: none !important;
             border-radius: 0 !important;
+            border: none !important;
+            overflow: visible !important;
         }
 
-        /* Compact top bar */
         .tha-case-reg-modal .modal-header {
             padding: 0.7rem 1rem !important;
         }
@@ -1400,12 +1404,11 @@
             font-size: 0.88rem !important;
         }
 
-        /* Body scrolls, takes remaining height */
         .tha-case-reg-modal .modal-body {
             padding: 0 1rem 1rem !important;
             max-height: none !important;
-            flex: 1 !important;
-            overflow-y: auto !important;
+            flex: none !important;
+            overflow: visible !important;
         }
 
         /* Form banner header — tighter */

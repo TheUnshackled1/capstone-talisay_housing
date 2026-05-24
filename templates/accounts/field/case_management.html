@@ -3606,40 +3606,50 @@
     }
 
     @media (max-width: 768px) {
-        /* ── Both modals: full-screen on mobile ── */
-        .tha-case-modal-overlay {
-            padding: 0 !important;
+        /* ── Case recording + settled incident + case monitoring: mobile full-width ── */
+        .tha-case-modal-overlay,
+        .tha-case-view-overlay {
+            padding: 0.5rem 0 1.5rem !important;
             align-items: flex-start !important;
-        }
-
-        .tha-case-reg-modal.modal-content {
-            width: 100% !important;
-            max-width: 100% !important;
-            max-height: 100dvh !important;
-            height: 100dvh !important;
-            border-radius: 0 !important;
-            /* Keep flex column so header/body/footer all scroll correctly */
-        }
-
-        /* Compact top bar */
-        .tha-case-reg-modal .modal-header {
-            padding: 0.7rem 1rem !important;
-        }
-
-        .tha-case-reg-modal .modal-title {
-            font-size: 0.88rem !important;
-        }
-
-        /* Body scrolls, takes all remaining height */
-        .tha-case-reg-modal .modal-body {
-            padding: 0 1rem 1rem !important;
-            max-height: none !important;
-            flex: 1 !important;
             overflow-y: auto !important;
         }
 
-        /* Form banner header — tighter */
-        .tha-case-reg-modal .tha-form-header {
+        .tha-case-reg-modal.modal-content,
+        .tha-case-view-modal.modal-content {
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            min-height: auto !important;
+            height: auto !important;
+            max-height: none !important;
+            border-radius: 0 !important;
+            border: none !important;
+            overflow: visible !important;
+        }
+
+        .tha-case-reg-modal .modal-header,
+        .tha-case-view-modal .modal-header {
+            padding: 0.7rem 1rem !important;
+            flex-shrink: 0;
+        }
+
+        .tha-case-reg-modal .modal-title,
+        .tha-case-view-modal .modal-header .modal-title {
+            font-size: 0.88rem !important;
+        }
+
+        /* Let content flow — overlay scrolls (avoids white gap / clipped footer) */
+        .tha-case-reg-modal .modal-body,
+        .tha-case-view-modal .modal-body {
+            padding: 0 1rem 1.25rem !important;
+            max-height: none !important;
+            flex: none !important;
+            overflow: visible !important;
+        }
+
+        .tha-case-reg-modal .tha-form-header,
+        .tha-case-view-modal .tha-form-header,
+        .tha-case-view-modal--monitor .case-monitor-hero {
             padding: 1rem 1rem 0.85rem !important;
             margin: 0 -1rem 1rem !important;
         }
@@ -3649,45 +3659,115 @@
             max-width: 10rem !important;
         }
 
-        .tha-case-reg-modal .tha-form-header h2 {
+        .tha-case-reg-modal .tha-form-header h2,
+        .tha-case-view-modal .tha-form-header h2,
+        .tha-case-view-modal--monitor .case-monitor-hero h2 {
             font-size: 0.9rem !important;
         }
 
-        .tha-case-reg-modal .tha-form-subtitle {
+        .tha-case-reg-modal .tha-form-subtitle,
+        .tha-case-view-modal .tha-form-subtitle {
             font-size: 0.7rem !important;
         }
 
-        /* Section blocks: compact */
         .tha-case-reg-modal .tha-case-reg-form .tha-section-block {
             padding: 0.85rem 0.9rem 0.9rem !important;
             margin-bottom: 0.75rem !important;
         }
 
-        /* ── All form rows: stack to 1 column ── */
         .tha-case-reg-modal .tha-case-reg-form .form-row,
         .tha-case-reg-modal .tha-case-reg-form .form-row.three-cols {
             grid-template-columns: 1fr !important;
             gap: 0.6rem !important;
         }
 
-        /* Autofill panel: tighter */
         .tha-case-reg-modal .case-autofill-panel {
             padding: 0.6rem 0.7rem !important;
         }
 
-        /* ── Evidence (camera) section ── */
-        .tha-case-reg-modal .new-case-evidence-intake .field-evidence-section {
+        /* Case monitoring: stack cards + fact grids */
+        .tha-case-view-modal .case-monitor-grid,
+        .tha-case-view-modal #caseRecordPrimary.case-monitor-grid {
+            grid-template-columns: 1fr !important;
+            gap: 0.65rem !important;
+        }
+
+        .tha-case-view-modal .case-monitor-col-left,
+        .tha-case-view-modal .case-monitor-col-right {
+            gap: 0.65rem !important;
+        }
+
+        .tha-case-view-modal .case-monitor-card {
+            padding: 0.8rem 0.9rem !important;
+        }
+
+        .tha-case-view-modal .case-monitor-facts,
+        .tha-case-view-modal .beneficiary-profile-grid {
+            grid-template-columns: 1fr !important;
+            gap: 0.5rem !important;
+        }
+
+        .tha-case-view-modal .case-detail-field-grid {
+            grid-template-columns: 1fr !important;
+        }
+
+        .tha-case-view-modal .case-record-row {
+            flex-direction: column !important;
+        }
+
+        .tha-case-view-modal .case-record-part {
+            flex: 1 1 auto !important;
+            width: 100% !important;
+            border-right: none !important;
+            border-bottom: 1px solid #eef2f6;
+        }
+
+        /* Settlement carousel tabs: full-width stacked */
+        .tha-case-view-modal .field-case-carousel-labels {
+            flex-direction: column !important;
+            gap: 0.45rem !important;
+        }
+
+        .tha-case-view-modal .field-case-carousel-label {
+            width: 100% !important;
+            min-width: unset !important;
+            padding: 0.55rem 0.65rem !important;
+            font-size: 0.72rem !important;
+        }
+
+        .tha-case-view-modal .field-case-carousel-viewport {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 0.5rem !important;
+        }
+
+        .tha-case-view-modal .field-case-carousel-nav {
+            width: 100% !important;
+            height: 2.5rem !important;
+        }
+
+        .tha-case-view-modal .field-case-carousel-track-wrap {
+            width: 100% !important;
+            order: -1;
+        }
+
+        /* Evidence sections (new case + settlement) */
+        .tha-case-reg-modal .new-case-evidence-intake .field-evidence-section,
+        .tha-case-view-modal .field-evidence-intake .field-evidence-section,
+        .tha-case-view-modal .field-case-settlement-card .field-evidence-section {
             padding: 0.9rem !important;
             text-align: left !important;
         }
 
-        .tha-case-reg-modal .new-case-evidence-intake .field-evidence-hint {
+        .tha-case-reg-modal .new-case-evidence-intake .field-evidence-hint,
+        .tha-case-view-modal .field-evidence-intake .field-evidence-hint {
             text-align: left !important;
             font-size: 0.78rem !important;
             max-width: 100% !important;
         }
 
-        .tha-case-reg-modal .field-evidence-buttons {
+        .tha-case-reg-modal .field-evidence-buttons,
+        .tha-case-view-modal .field-evidence-intake .field-evidence-buttons {
             flex-direction: column !important;
             align-items: stretch !important;
             width: 100% !important;
@@ -3695,7 +3775,10 @@
         }
 
         .tha-case-reg-modal .table-verify-btn,
-        .tha-case-reg-modal .field-evidence-file-btn {
+        .tha-case-reg-modal .field-evidence-file-btn,
+        .tha-case-view-modal .field-evidence-intake .table-verify-btn,
+        .tha-case-view-modal .field-evidence-intake .field-evidence-file-btn,
+        .tha-case-view-modal .field-evidence-intake .case-evidence-save-submit {
             width: 100% !important;
             display: flex !important;
             justify-content: center !important;
@@ -3703,13 +3786,15 @@
             box-sizing: border-box !important;
             padding: 0.65rem 1rem !important;
             font-size: 0.78rem !important;
+            margin-left: 0 !important;
+            margin-right: 0 !important;
         }
 
-        .tha-case-reg-modal .field-evidence-strip {
+        .tha-case-reg-modal .field-evidence-strip,
+        .tha-case-view-modal .field-evidence-intake .field-evidence-strip {
             justify-content: flex-start !important;
         }
 
-        /* ── Footer buttons: full-width stacked ── */
         .tha-case-reg-modal .modal-footer {
             padding: 0.75rem 1rem !important;
             flex-direction: column !important;
@@ -3722,11 +3807,20 @@
             padding: 0.75rem 1rem !important;
             font-size: 0.82rem !important;
         }
+
+        .tha-case-reg-modal .btn-modal.success {
+            order: 1;
+        }
+
+        .tha-case-reg-modal .btn-modal.danger {
+            order: 2;
+        }
     }
 
-    /* Extra small phones (320–480px) */
     @media (max-width: 480px) {
-        .tha-case-reg-modal .tha-form-header h2 {
+        .tha-case-reg-modal .tha-form-header h2,
+        .tha-case-view-modal .tha-form-header h2,
+        .tha-case-view-modal--monitor .case-monitor-hero h2 {
             font-size: 0.8rem !important;
         }
 
@@ -3734,13 +3828,22 @@
             display: none !important;
         }
 
-        .tha-case-reg-modal .tha-case-reg-form .form-label {
-            font-size: 0.68rem !important;
+        .tha-case-reg-modal .tha-case-reg-form .form-label,
+        .tha-case-view-modal .case-monitor-facts dt,
+        .tha-case-view-modal .case-detail-label {
+            font-size: 0.58rem !important;
         }
 
         .tha-case-reg-modal .tha-case-reg-form .form-input,
-        .tha-case-reg-modal .tha-case-reg-form .form-select {
-            font-size: 0.8rem !important;
+        .tha-case-reg-modal .tha-case-reg-form .form-select,
+        .tha-case-view-modal .case-monitor-facts dd,
+        .tha-case-view-modal .case-monitor-description {
+            font-size: 0.78rem !important;
+        }
+
+        .tha-case-view-modal--monitor .case-monitor-hero-kicker,
+        .tha-case-view-modal--monitor .case-monitor-filed-line {
+            font-size: 0.65rem !important;
         }
     }
 
