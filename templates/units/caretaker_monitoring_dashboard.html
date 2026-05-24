@@ -2434,6 +2434,96 @@
         #kpiActiveUnitsModal .monitoring-kpi-detail-table tbody td:nth-child(4)::before {
             content: "Notified:" !important;
         }
+
+        /* KPI modals: full-width, natural height — overlay scrolls (no white gap) */
+        .modal-overlay.kpi-modal {
+            padding: 0.5rem 0 1.5rem !important;
+            align-items: flex-start !important;
+            overflow-y: auto !important;
+        }
+
+        .modal-overlay.kpi-modal .modal-content.kpi-modal-card--tabular {
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            min-height: auto !important;
+            height: auto !important;
+            max-height: none !important;
+            border-radius: 0 !important;
+            overflow: visible !important;
+        }
+
+        .modal-content.kpi-modal-card--tabular .modal-header {
+            padding: 0.85rem 1rem !important;
+        }
+
+        .modal-content.kpi-modal-card--tabular .modal-title {
+            font-size: 1rem !important;
+        }
+
+        .kpi-modal-subtitle {
+            font-size: 0.75rem !important;
+        }
+
+        .modal-content.kpi-modal-card--tabular .kpi-modal-body {
+            flex: none !important;
+            overflow: visible !important;
+            max-height: none !important;
+        }
+
+        .kpi-modal-table-scroll {
+            flex: none !important;
+            overflow-x: visible !important;
+            max-height: none !important;
+        }
+
+        /* Stack field rows so values are not clipped on narrow screens */
+        .monitoring-kpi-detail-table tbody td:not(:first-child) {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            text-align: left !important;
+            gap: 0.15rem !important;
+        }
+
+        .monitoring-kpi-detail-table tbody td::before {
+            margin-right: 0 !important;
+            display: block !important;
+            width: 100% !important;
+        }
+
+        .monitoring-kpi-detail-table tbody td .kpi-cell-muted {
+            text-align: left !important;
+        }
+
+        .kpi-modal-footer {
+            flex-direction: column !important;
+            padding: 0.75rem 1rem !important;
+            gap: 0.5rem !important;
+        }
+
+        .kpi-modal-footer .btn-kpi-modal-close {
+            width: 100% !important;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            padding: 0.75rem 1rem !important;
+            font-size: 0.82rem !important;
+            box-sizing: border-box !important;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .modal-content.kpi-modal-card--tabular .modal-title {
+            font-size: 0.9rem !important;
+        }
+
+        .monitoring-kpi-detail-table tbody td::before {
+            font-size: 0.58rem !important;
+        }
+
+        .monitoring-kpi-detail-table tbody td {
+            font-size: 0.78rem !important;
+        }
     }
 </style>
 {% endblock %}

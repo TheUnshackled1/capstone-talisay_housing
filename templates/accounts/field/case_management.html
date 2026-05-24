@@ -532,6 +532,62 @@
         white-space: nowrap;
     }
 
+    .m-case-card--incident-log {
+        background: #fafafa;
+        border-color: #ddd6fe;
+    }
+
+    .m-card-incident-desc {
+        margin: 0.35rem 0 0.65rem;
+        padding: 0.45rem 0.55rem;
+        font-size: 0.78rem;
+        line-height: 1.4;
+        color: #64748b;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.45rem;
+        text-align: center;
+        word-break: break-word;
+    }
+
+    .m-card-meta-sub {
+        display: block;
+        margin-top: 0.15rem;
+        font-size: 0.68rem;
+        color: #94a3b8;
+        font-weight: 500;
+    }
+
+    .m-card-header {
+        flex-wrap: wrap;
+        gap: 0.35rem;
+    }
+
+    .m-card-incident-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        width: 100%;
+    }
+
+    .m-card-incident-actions .btn-open-record {
+        width: 100%;
+        padding: 0.55rem 1rem;
+        font-size: 0.78rem;
+    }
+
+    body .btn-open-record--danger {
+        border: 1px solid #b91c1c;
+        background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%);
+        box-shadow: 0 1px 2px rgba(220, 38, 38, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    }
+
+    body .btn-open-record--danger:hover {
+        background: linear-gradient(180deg, #dc2626 0%, #b91c1c 100%);
+        box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+        transform: translateY(-1.5px) scale(1.02);
+    }
+
     .case-desk-incident-actions {
         display: flex;
         align-items: center;
@@ -2828,10 +2884,16 @@
         }
 
         .m-card-actions button,
-        .m-card-actions a {
+        .m-card-actions a,
+        .m-card-incident-actions .btn-open-record {
             width: 100% !important;
             justify-content: center !important;
-            display: flex !important;
+            display: inline-flex !important;
+        }
+
+        .m-card-incident-actions {
+            flex-direction: column !important;
+            gap: 0.5rem !important;
         }
 
         /* Center the Total List chip on mobile viewports */
@@ -4534,79 +4596,9 @@
                 </table>
             </div>
 
-            <!-- Responsive Mobile Card View (Option 2 – Tables-to-Cards Pattern) -->
+            <!-- Responsive Mobile Card View (cases + incident logs via desk_rows) -->
             <div class="mobile-cards-view mobile-cases-cards">
-                {% for case in cases %}
-                <article class="mobile-verification-card m-case-card" id="case-card-{{ case.id }}">
-                    <div class="m-card-header">
-                        <span class="m-card-visit-order">Case #{{ forloop.counter }}</span>
-                        <span class="m-card-badge case-type-badge case-type-badge--standard">{{ case.get_case_type_display }}</span>
-                    </div>
-
-                    <div class="m-card-body">
-                        <h4 class="m-card-title applicant-name"
-                            style="cursor: pointer; font-weight: 700; color: #1e3a8a; text-align: center;"
-                            data-full-name="{{ case.complainant_name }}"
-                            data-tx-id="{% if case.complainant_applicant %}APP-{{ case.complainant_applicant.id|slice:":8" }}...{% else %}{{ case.case_number }}{% endif %}"
-                            data-ref-code="{{ case.complainant_applicant.reference_number|default:'' }}"
-                            data-barangay="{{ case.complainant_applicant.barangay.name|default:'Not specified' }}"
-                            data-dob="{{ case.complainant_applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}">
-                            {{ case.complainant_name }}
-                        </h4>
-
-                        <div class="m-card-meta-row">
-                            <span class="m-card-meta-label">Reported Party:</span>
-                            <span class="m-card-meta-value m-respondent-value">
-                                {% if case.subject_applicant %}
-                                <span class="respondent-name-cell" title="{{ case.subject_applicant.full_name }}">{{ case.subject_applicant.full_name }}</span>
-                                {% if case.subject_applicant.reference_number %}
-                                <span class="respondent-ref-code" title="{{ case.subject_applicant.reference_number }}">{{ case.subject_applicant.reference_number }}</span>
-                                {% endif %}
-                                {% elif case.subject_name %}
-                                <span class="respondent-name-cell" title="{{ case.subject_name }}">{{ case.subject_name }}</span>
-                                {% else %}
-                                <span class="respondent-name-cell is-empty">—</span>
-                                {% endif %}
-                            </span>
-                        </div>
-
-                        <div class="m-card-meta-row">
-                            <span class="m-card-meta-label">Filed Date:</span>
-                            <span class="m-card-meta-value">
-                                <span>{{ case.received_at|date:"M d, Y" }} · {{ case.received_at|time:"g:i A" }}</span>
-                            </span>
-                        </div>
-
-                        <div class="m-card-meta-row">
-                            <span class="m-card-meta-label">Status:</span>
-                            <span class="m-card-meta-value">
-                                <span class="status-pill-flex status-pill-flex--{{ case.status }}">
-                                    {% if case.status == 'resolved' %}
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="width: 0.75rem; height: 0.75rem; color: #16a34a; flex-shrink: 0; margin-right: 0.15rem;">
-                                        <path d="M20 6L9 17l-5-5"></path>
-                                    </svg>
-                                    {% elif case.status == 'closed' %}
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 0.75rem; height: 0.75rem; color: #475569; flex-shrink: 0; margin-right: 0.15rem;">
-                                        <circle cx="12" cy="12" r="10"></circle>
-                                        <line x1="15" y1="9" x2="9" y2="15"></line>
-                                        <line x1="9" y1="9" x2="15" y2="15"></line>
-                                    </svg>
-                                    {% endif %}
-                                    {{ case.get_status_display }}
-                                </span>
-                            </span>
-                        </div>
-                    </div>
-
-                    <div class="m-card-actions">
-                        {% include "accounts/includes/case_row_action_button.html" %}
-                    </div>
-                </article>
-                {% empty %}
-                <div class="monitoring-empty-state" style="padding: 2rem; text-align: center; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 0.75rem; width: 100%;">
-                    <p style="color: #64748b; font-size: 0.85rem; margin: 0;">No cases match your search. Try adjusting filters or add a new case.</p>
-                </div>
-                {% endfor %}
+                {% include "accounts/includes/case_desk_mobile_cards.html" with can_delete_incident_logs=can_delete_incident_logs %}
             </div>
     </div>
 </div>
