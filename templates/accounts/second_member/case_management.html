@@ -3341,7 +3341,10 @@
                     <article class="case-monitor-card case-monitor-card--respondent" style="flex: 1; margin: 0; display: flex; flex-direction: column;">
                         <h3 class="case-monitor-card-title">Reported Party</h3>
                         <div style="flex: 1;">
-                            <p id="settledIncidentSubjectName" class="case-monitor-person-name case-monitor-person-name--respondent">—</p>
+                            <p id="settledIncidentSubjectName" class="case-monitor-person-name case-monitor-person-name--respondent" style="margin-bottom: 0.75rem;">—</p>
+                            <dl class="case-monitor-facts" id="settledIncidentSubjectUnitWrap">
+                                <div class="case-monitor-facts-wide"><dt>Block &amp; lot</dt><dd id="settledIncidentSubjectUnit">—</dd></div>
+                            </dl>
                         </div>
                     </article>
                 </div>
@@ -4763,6 +4766,17 @@
         document.getElementById('settledIncidentSubjectName').textContent = respondent;
         document.getElementById('settledIncidentComplainantName').textContent = complainant;
         document.getElementById('settledIncidentComplainantUnit').textContent = unit;
+
+        const subjUnitEl = document.getElementById('settledIncidentSubjectUnit');
+        const subjUnitWrap = document.getElementById('settledIncidentSubjectUnitWrap');
+        if (subjUnitEl && subjUnitWrap) {
+            if (respondent && respondent !== '—' && respondent !== '') {
+                subjUnitEl.textContent = unit;
+                subjUnitWrap.style.display = 'block';
+            } else {
+                subjUnitWrap.style.display = 'none';
+            }
+        }
 
         document.getElementById('settledIncidentComplaintType').innerHTML = `<span class="case-type-pill">${typeDisplay}</span>`;
         document.getElementById('settledIncidentDescription').textContent = description;

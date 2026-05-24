@@ -19,6 +19,9 @@
             data-dob="{{ case.complainant_applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}">
             {{ case.complainant_name }}
         </h4>
+        <span class="complaints-count-badge" style="display: block; font-size: 0.65rem; color: #64748b; font-weight: 500; text-align: center; margin-top: 0.15rem; margin-bottom: 0.5rem;">
+            Complaints filed: {% if case.complainant_applicant %}{{ case.complainant_applicant.cases_filed.count|add:case.complainant_applicant.settled_incident_logs_as_complainant.count }}{% else %}1{% endif %}
+        </span>
 
         <div class="m-card-meta-row">
             <span class="m-card-meta-label">Reported Party:</span>
@@ -32,6 +35,9 @@
                       data-barangay="{% if case.subject_applicant and case.subject_applicant.active_unit_label != 'Not specified' %}{{ case.subject_applicant.active_unit_label }}{% elif case.related_unit %}Block {{ case.related_unit.block_number }}, Lot {{ case.related_unit.lot_number }}{% else %}Not specified{% endif %}"
                       data-dob="{{ case.subject_applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}"
                       title="{{ case.subject_applicant.full_name }}">{{ case.subject_applicant.full_name }}</span>
+                <span class="complaints-count-badge" style="display: block; font-size: 0.65rem; color: #b91c1c; font-weight: 500; margin-top: 0.15rem;">
+                    Complaints received: {{ case.subject_applicant.cases_against.count|add:case.subject_applicant.settled_incident_logs.count }}
+                </span>
                 {% elif case.subject_name %}
                 <span class="respondent-name-cell" title="{{ case.subject_name }}">{{ case.subject_name }}</span>
                 {% else %}
@@ -95,6 +101,9 @@
             {% endif %}>
             {{ row.incident_complainant_name|default:"—" }}
         </h4>
+        <span class="complaints-count-badge" style="display: block; font-size: 0.65rem; color: #64748b; font-weight: 500; text-align: center; margin-top: 0.15rem; margin-bottom: 0.5rem;">
+            Complaints filed: {% if log.complainant_applicant %}{{ log.complainant_applicant.cases_filed.count|add:log.complainant_applicant.settled_incident_logs_as_complainant.count }}{% else %}1{% endif %}
+        </span>
         <p class="m-card-incident-desc" title="{{ log.description }}">{{ log.description }}</p>
 
         <div class="m-card-meta-row">
@@ -109,8 +118,17 @@
                       data-barangay="{% if log.subject_applicant.active_unit_label != 'Not specified' %}{{ log.subject_applicant.active_unit_label }}{% elif log.related_unit %}Block {{ log.related_unit.block_number }}, Lot {{ log.related_unit.lot_number }}{% else %}Not specified{% endif %}"
                       data-dob="{{ log.subject_applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}"
                       title="{{ row.incident_respondent_name }}">{{ row.incident_respondent_name }}</span>
+                {% if row.incident_unit_label %}
+                <span style="display: block; font-size: 0.7rem; color: #64748b; font-weight: 500; margin-top: 0.15rem;">{{ row.incident_unit_label }}</span>
+                {% endif %}
+                <span class="complaints-count-badge" style="display: block; font-size: 0.65rem; color: #b91c1c; font-weight: 500; margin-top: 0.15rem;">
+                    Complaints received: {{ log.subject_applicant.cases_against.count|add:log.subject_applicant.settled_incident_logs.count }}
+                </span>
                 {% elif row.incident_respondent_name %}
                 <span class="respondent-name-cell" title="{{ row.incident_respondent_name }}">{{ row.incident_respondent_name }}</span>
+                {% if row.incident_unit_label %}
+                <span style="display: block; font-size: 0.7rem; color: #64748b; font-weight: 500; margin-top: 0.15rem;">{{ row.incident_unit_label }}</span>
+                {% endif %}
                 {% else %}
                 <span class="respondent-name-cell is-empty">—</span>
                 {% endif %}
