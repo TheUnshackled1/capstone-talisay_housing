@@ -98,8 +98,8 @@ class FieldReportAdmin(admin.ModelAdmin):
 class FieldSettledIncidentLogAdmin(admin.ModelAdmin):
     list_display = ('related_unit', 'case_type', 'logged_by', 'logged_at')
     list_filter = ('case_type', 'logged_at')
-    search_fields = ('description', 'subject_name')
-    raw_id_fields = ('related_unit', 'subject_applicant', 'logged_by')
+    search_fields = ('description', 'subject_name', 'complainant_name')
+    raw_id_fields = ('related_unit', 'complainant_applicant', 'subject_applicant', 'logged_by')
 
 
 @admin.register(CaseFieldUpdate)

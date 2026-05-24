@@ -138,20 +138,24 @@ def case_management_dashboard(request, position):
 
     open_new_case = request.GET.get('new_case', '').strip() in ('1', 'true', 'yes')
     open_case_id = request.GET.get('case_id', '').strip()
-    desk_tab = request.GET.get('tab', 'cases').strip() or 'cases'
-    if desk_tab not in ('cases', 'incident-log'):
-        desk_tab = 'cases'
 
-    settled_incident_logs = []
-    settled_incident_log_count = 0
-    if position in wf.FIELD_DESK_POSITIONS:
-        settled_incident_log_count = FieldSettledIncidentLog.objects.count()
-        if desk_tab == 'incident-log':
-            settled_incident_logs = (
-                FieldSettledIncidentLog.objects
-                .select_related('related_unit', 'logged_by', 'subject_applicant')
-                .order_by('-logged_at')[:200]
-            )
+    if request.GET.get('tab') == 'incident-log':
+        params = request.GET.copy()
+        params.pop('tab', None)
+        if filter_status != 'all':
+            params['status'] = 'all'
+        query = params.urlencode()
+        url = request.path + (f'?{query}' if query else '')
+        return redirect(url)
+
+    include_incident_logs = filter_status == 'all'
+    desk_rows = _build_case_desk_rows(
+        cases,
+        include_incident_logs=include_incident_logs,
+        search_query=search_query,
+        filter_type=filter_type,
+    )
+    can_delete_incident_logs = position in wf.FIELD_DESK_POSITIONS
 
     prefill_beneficiary = None
     prefill_applicant_id = request.GET.get('applicant_id', '').strip()
@@ -188,9 +192,8 @@ def case_management_dashboard(request, position):
         'case_desk_mode': wf.case_desk_mode_for_position(position),
         'field_intake_positions': tuple(wf.FIELD_DESK_POSITIONS),
         'monitor_intake_positions': tuple(wf.CASE_MONITOR_DESK_POSITIONS),
-        'desk_tab': desk_tab,
-        'settled_incident_logs': settled_incident_logs,
-        'settled_incident_log_count': settled_incident_log_count,
+        'desk_rows': desk_rows,
+        'can_delete_incident_logs': can_delete_incident_logs,
     }
 
     return render(request, template_name, context)
@@ -270,19 +273,127 @@ def _subject_housing_unit(subject_applicant):
     return la.unit if la else None
 
 
+def _settled_incident_unit_label(log):
+    unit = log.related_unit
+    if unit and unit.block_number and unit.lot_number:
+        return f'Block {unit.block_number}, Lot {unit.lot_number}'
+    return str(unit) if unit else ''
+
+
+def _parties_are_same_person(
+    complainant_applicant_id,
+    subject_applicant_id,
+    complainant_name='',
+    subject_name='',
+):
+    if complainant_applicant_id and subject_applicant_id:
+        if str(complainant_applicant_id) == str(subject_applicant_id):
+            return True
+    cname = (complainant_name or '').strip().casefold()
+    sname = (subject_name or '').strip().casefold()
+    return bool(cname and sname and cname == sname)
+
+
+def _settled_log_has_complainant_fields(log):
+    return bool(log.complainant_applicant_id or (log.complainant_name or '').strip())
+
+
+def _settled_incident_parties_same(log, complainant_name='', respondent_name=''):
+    return _parties_are_same_person(
+        log.complainant_applicant_id,
+        log.subject_applicant_id,
+        complainant_name,
+        respondent_name,
+    )
+
+
+def _settled_incident_complainant_name(log):
+    if _settled_log_has_complainant_fields(log):
+        if log.complainant_applicant_id and log.complainant_applicant:
+            return log.complainant_applicant.full_name or log.complainant_name or ''
+        return (log.complainant_name or '').strip()
+    if log.subject_applicant_id and log.subject_applicant:
+        return log.subject_applicant.full_name or log.subject_name or ''
+    return (log.subject_name or '').strip()
+
+
+def _settled_incident_respondent_name(log):
+    if not _settled_log_has_complainant_fields(log):
+        return ''
+    if log.subject_applicant_id and log.subject_applicant:
+        respondent = log.subject_applicant.full_name or log.subject_name or ''
+    else:
+        respondent = (log.subject_name or '').strip()
+    if not respondent:
+        return ''
+    complainant = _settled_incident_complainant_name(log)
+    if _settled_incident_parties_same(log, complainant, respondent):
+        return ''
+    return respondent
+
+
+def _filter_settled_incident_logs_queryset(qs, search_query, filter_type):
+    if search_query:
+        qs = qs.filter(
+            models.Q(description__icontains=search_query)
+            | models.Q(subject_name__icontains=search_query)
+            | models.Q(related_unit__block_number__icontains=search_query)
+            | models.Q(related_unit__lot_number__icontains=search_query)
+            |             models.Q(subject_applicant__full_name__icontains=search_query)
+            | models.Q(subject_applicant__reference_number__icontains=search_query)
+            | models.Q(complainant_name__icontains=search_query)
+            | models.Q(complainant_applicant__full_name__icontains=search_query)
+            | models.Q(complainant_applicant__reference_number__icontains=search_query)
+        )
+    if filter_type != 'all':
+        qs = qs.filter(case_type=filter_type)
+    return qs
+
+
+def _build_case_desk_rows(cases_qs, include_incident_logs, search_query, filter_type):
+    """
+    Merge formal cases and on-site settled incident logs for one desk list.
+    Incident logs appear only when include_incident_logs is True (status filter = all).
+    """
+    rows = []
+    for case in cases_qs:
+        rows.append({
+            'kind': 'case',
+            'sort_at': case.received_at,
+            'case': case,
+            'incident_log': None,
+        })
+    if include_incident_logs:
+        incident_qs = FieldSettledIncidentLog.objects.select_related(
+            'related_unit', 'logged_by', 'subject_applicant', 'complainant_applicant',
+        )
+        incident_qs = _filter_settled_incident_logs_queryset(incident_qs, search_query, filter_type)
+        for log in incident_qs:
+            rows.append({
+                'kind': 'incident_log',
+                'sort_at': log.logged_at,
+                'case': None,
+                'incident_log': log,
+                'incident_unit_label': _settled_incident_unit_label(log),
+                'incident_complainant_name': _settled_incident_complainant_name(log),
+                'incident_respondent_name': _settled_incident_respondent_name(log),
+            })
+    rows.sort(key=lambda row: row['sort_at'] or timezone.now())
+    return rows
+
+
 def _settled_incident_log_payload(log):
     unit = log.related_unit
-    unit_label = (
-        f'Block {unit.block_number}, Lot {unit.lot_number}'
-        if unit and unit.block_number and unit.lot_number
-        else (str(unit) if unit else '')
-    )
+    unit_label = _settled_incident_unit_label(log)
     return {
         'id': str(log.id),
         'case_type': log.case_type,
         'case_type_display': log.get_case_type_display(),
         'description': log.description,
         'subject_name': log.subject_name or '',
+        'complainant_name': _settled_incident_complainant_name(log),
+        'respondent_name': _settled_incident_respondent_name(log),
+        'occupant_name': _settled_incident_complainant_name(log),
         'unit_label': unit_label,
         'logged_at': log.logged_at.isoformat(),
         'logged_by': log.logged_by.get_full_name() if log.logged_by else 'Field',
@@ -702,14 +813,15 @@ def create_case(request, position):
                 'success': False,
                 'error': 'Select a complainant from the housing unit occupant list.',
             }, status=400)
-        if (
-            subject_applicant_id
-            and complainant_applicant_id
-            and subject_applicant_id == complainant_applicant_id
+        if _parties_are_same_person(
+            complainant_applicant_id,
+            subject_applicant_id,
+            complainant_name,
+            subject_name,
         ):
             return JsonResponse({
                 'success': False,
-                'error': 'Respondent cannot be the same person as the complainant.',
+                'error': 'Reported party cannot be the same person as the complainant.',
             }, status=400)
         if not all([complainant_name, case_type, initial_description]):
             return JsonResponse({
@@ -818,12 +930,15 @@ def create_settled_incident_log(request, position):
         related_unit_id = (data.get('related_unit_id') or '').strip()
         case_type = (data.get('case_type') or '').strip()
         description = (data.get('description') or '').strip()
+        complainant_applicant_id = (data.get('complainant_applicant_id') or '').strip()
+        complainant_name = (data.get('complainant_name') or '').strip()
+        complainant_phone = (data.get('complainant_phone') or '').strip()
         subject_applicant_id = (data.get('subject_applicant_id') or '').strip()
         subject_name = (data.get('subject_name') or '').strip()
         case_type = wf.LEGACY_TYPE_MAP.get(case_type, case_type)
 
         if not related_unit_id:
-            return JsonResponse({'success': False, 'error': 'Select a housing unit.'}, status=400)
+            return JsonResponse({'success': False, 'error': 'Select a complainant with a housing unit.'}, status=400)
         if not case_type:
             return JsonResponse({
                 'success': False,
@@ -842,6 +957,30 @@ def create_settled_incident_log(request, position):
             return JsonResponse({'success': False, 'error': 'Invalid case type.'}, status=400)
 
         related_unit = get_object_or_404(HousingUnit, id=related_unit_id)
+        complainant_applicant = None
+        if complainant_applicant_id:
+            complainant_applicant = get_object_or_404(Applicant, id=complainant_applicant_id)
+            if not complainant_name:
+                complainant_name = complainant_applicant.full_name or ''
+            if not complainant_phone:
+                complainant_phone = getattr(complainant_applicant, 'phone_number', '') or ''
+        if not complainant_name:
+            return JsonResponse({
+                'success': False,
+                'error': 'Select a complainant from the beneficiary search.',
+            }, status=400)
+
+        if _parties_are_same_person(
+            complainant_applicant_id,
+            subject_applicant_id,
+            complainant_name,
+            subject_name,
+        ):
+            return JsonResponse({
+                'success': False,
+                'error': 'Reported party cannot be the same person as the complainant.',
+            }, status=400)
+
         subject_applicant = None
         if subject_applicant_id:
             subject_applicant = get_object_or_404(Applicant, id=subject_applicant_id)
@@ -850,6 +989,9 @@ def create_settled_incident_log(request, position):
 
         log = FieldSettledIncidentLog.objects.create(
             related_unit=related_unit,
+            complainant_applicant=complainant_applicant,
+            complainant_name=complainant_name,
+            complainant_phone=complainant_phone,
             subject_applicant=subject_applicant,
             subject_name=subject_name,
             case_type=case_type,
@@ -865,6 +1007,21 @@ def create_settled_incident_log(request, position):
         return JsonResponse({'success': False, 'error': 'Invalid JSON'}, status=400)
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@login_required
+@require_POST
+@verify_position
+def delete_settled_incident_log(request, position, log_id):
+    """Field desk only — remove an on-site settled incident log entry."""
+    if position not in wf.FIELD_DESK_POSITIONS:
+        return JsonResponse({'success': False, 'error': 'Field desk only.'}, status=403)
+    try:
+        log = FieldSettledIncidentLog.objects.get(id=log_id)
+        log.delete()
+        return JsonResponse({'success': True, 'message': 'Incident log removed.'})
+    except FieldSettledIncidentLog.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Incident log not found.'}, status=404)
 
 
 @login_required

@@ -1,0 +1,147 @@
+{% load humanize %}
+{% for row in desk_rows %}
+{% if row.kind == 'case' %}
+{% with case=row.case %}
+<tr data-case-id="{{ case.id }}" data-case-status="{{ case.status }}" data-desk-record-kind="case">
+    <td style="font-weight: 700; color: #1e293b;">{{ forloop.counter }}</td>
+    <td>
+        <div class="complainant-cell-info">
+            <div class="complainant-name-card applicant-name"
+                 style="cursor: pointer;"
+                 data-full-name="{{ case.complainant_name }}"
+                 data-tx-id="{% if case.complainant_applicant %}APP-{{ case.complainant_applicant.id|slice:":8" }}...{% else %}{{ case.case_number }}{% endif %}"
+                 data-ref-code="{{ case.complainant_applicant.reference_number|default:'' }}"
+                 data-barangay="{{ case.complainant_applicant.barangay.name|default:'Not specified' }}"
+                 data-dob="{{ case.complainant_applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}">
+                <svg class="applicant-meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 0.9rem; height: 0.9rem;">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                <span class="complainant-name" title="{{ case.complainant_name }}">{{ case.complainant_name }}</span>
+            </div>
+        </div>
+    </td>
+    <td>
+        <span class="case-record-kind-pill case-record-kind-pill--case" title="Formal case record">Case</span>
+    </td>
+    <td>
+        {% if case.subject_applicant %}
+        <span class="respondent-name-cell" title="{{ case.subject_applicant.full_name }}">{{ case.subject_applicant.full_name }}</span>
+        {% if case.subject_applicant.reference_number %}
+        <span class="respondent-ref-code" title="{{ case.subject_applicant.reference_number }}">{{ case.subject_applicant.reference_number }}</span>
+        {% endif %}
+        {% elif case.subject_name %}
+        <span class="respondent-name-cell" title="{{ case.subject_name }}">{{ case.subject_name }}</span>
+        {% else %}
+        <span class="respondent-name-cell is-empty">—</span>
+        {% endif %}
+    </td>
+    <td>
+        <div class="date-cell-stack">
+            <div class="date-main">
+                <svg class="applicant-meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 0.8rem; height: 0.8rem; color: #3b82f6;">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+                <span>{{ case.received_at|date:"M d, Y" }} · {{ case.received_at|time:"g:i A" }}</span>
+            </div>
+            <div class="date-sub">{{ case.received_at|naturaltime }}</div>
+        </div>
+    </td>
+    {% if show_time_ago %}
+    <td class="cases-table-time-ago" title="{{ case.received_at|date:'M d, Y g:i A' }}" style="font-weight: 500; color: #475569;">
+        {{ case.received_at|naturaltime }}
+    </td>
+    {% endif %}
+    <td>
+        <span class="case-type-badge case-type-badge--standard">{{ case.get_case_type_display }}</span>
+    </td>
+    <td>
+        <span class="status-pill-flex status-pill-flex--{{ case.status }}" data-case-status-pill>
+            {% if case.status == 'resolved' %}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="width: 0.75rem; height: 0.75rem; color: #16a34a; flex-shrink: 0; margin-right: 0.15rem;">
+                <path d="M20 6L9 17l-5-5"></path>
+            </svg>
+            {% elif case.status == 'closed' %}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 0.75rem; height: 0.75rem; color: #475569; flex-shrink: 0; margin-right: 0.15rem;">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="15" y1="9" x2="9" y2="15"></line>
+                <line x1="9" y1="9" x2="15" y2="15"></line>
+            </svg>
+            {% endif %}
+            {{ case.get_status_display }}
+        </span>
+    </td>
+    <td>
+        {% include "accounts/includes/case_row_action_button.html" %}
+    </td>
+</tr>
+{% endwith %}
+{% else %}
+{% with log=row.incident_log %}
+<tr data-incident-log-id="{{ log.id }}" data-desk-record-kind="incident_log" class="cases-row--incident-log">
+    <td style="font-weight: 700; color: #1e293b;">{{ forloop.counter }}</td>
+    <td>
+        <div class="complainant-cell-info">
+            <span class="complainant-name" title="{{ row.incident_complainant_name }}">{{ row.incident_complainant_name|default:"—" }}</span>
+            <span class="incident-log-desc-preview" title="{{ log.description }}">{{ log.description }}</span>
+        </div>
+    </td>
+    <td>
+        <span class="case-record-kind-pill case-record-kind-pill--incident" title="On-site settled incident — not a formal case">Incident log</span>
+    </td>
+    <td>
+        {% if row.incident_respondent_name %}
+        <span class="respondent-name-cell" title="{{ row.incident_respondent_name }}">{{ row.incident_respondent_name }}</span>
+        {% if row.incident_unit_label %}
+        <span class="respondent-ref-code" title="{{ row.incident_unit_label }}">{{ row.incident_unit_label }}</span>
+        {% endif %}
+        {% else %}
+        <span class="respondent-name-cell is-empty">—</span>
+        {% endif %}
+    </td>
+    <td>
+        <div class="date-cell-stack">
+            <div class="date-main">{{ log.logged_at|date:"M d, Y" }} · {{ log.logged_at|time:"g:i A" }}</div>
+            <div class="date-sub">{{ log.logged_at|naturaltime }}</div>
+        </div>
+    </td>
+    {% if show_time_ago %}
+    <td class="cases-table-time-ago" style="font-weight: 500; color: #475569;">{{ log.logged_at|naturaltime }}</td>
+    {% endif %}
+    <td>
+        <span class="case-type-badge case-type-badge--standard">{{ log.get_case_type_display }}</span>
+    </td>
+    <td>
+        <span class="status-pill-flex status-pill-flex--incident_log">Settled on-site</span>
+    </td>
+    <td>
+        <div class="case-desk-incident-actions">
+            <button type="button" class="case-prior-open-link"
+                onclick="viewSettledIncidentLog(this)"
+                data-unit-label="{{ row.incident_unit_label|escape }}"
+                data-complainant-name="{{ row.incident_complainant_name|escape }}"
+                data-respondent-name="{{ row.incident_respondent_name|escape }}"
+                data-case-type-display="{{ log.get_case_type_display|escape }}"
+                data-description="{{ log.description|escape }}"
+                data-logged-at="{{ log.logged_at|date:'M d, Y' }} · {{ log.logged_at|time:'g:i A' }}"
+                data-logged-by="{{ log.logged_by.get_full_name|default:'Field'|escape }}">View</button>
+            {% if can_delete_incident_logs %}
+            <button type="button" class="case-prior-open-link case-prior-open-link--danger"
+                onclick="deleteSettledIncidentLog('{{ log.id }}')">Remove</button>
+            {% endif %}
+        </div>
+    </td>
+</tr>
+{% endwith %}
+{% endif %}
+{% empty %}
+<tr>
+    <td colspan="{% if show_time_ago %}9{% else %}8{% endif %}"
+        style="text-align: center; color: #64748b; font-size: 0.75rem; padding: 1.25rem;">
+        No records match your search. Try adjusting filters, log a settled incident, or add a case.
+    </td>
+</tr>
+{% endfor %}

@@ -12,5 +12,6 @@ urlpatterns = [
     path('<str:position>/<uuid:case_id>/settlement/save/', views.save_field_settlement, name='save_field_settlement'),
     path('<str:position>/create/', views.create_case, name='create'),
     path('<str:position>/settled-log/create/', views.create_settled_incident_log, name='create_settled_log'),
+    path('<str:position>/settled-log/<uuid:log_id>/delete/', views.delete_settled_incident_log, name='delete_settled_log'),
     path('<str:position>/update/', views.update_case, name='update'),
 ]
