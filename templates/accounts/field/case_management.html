@@ -394,10 +394,13 @@
     }
 
     .cases-toolbar-actions--desk {
-        justify-content: flex-end;
+        justify-content: flex-start;
         margin-bottom: 0.75rem;
         margin-left: 0;
         width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
     }
 
     .cases-secondary-btn {
@@ -3823,42 +3826,32 @@
             </button>
         </div>
 
+        {% if desk_tab == 'incident-log' %}
         <div class="cases-toolbar-actions cases-toolbar-actions--desk">
             <button type="button" class="cases-secondary-btn" onclick="openSettledLogModal()"
                 title="On-site incident handled without opening a formal case">
                 Log settled incident
             </button>
-            <button type="button" id="settlementFilterBtn"
-                class="cases-secondary-btn cases-secondary-btn--settlement{% if filter_status == 'mediation_monitoring' %} is-active{% endif %}"
-                onclick="filterSettlementCases()"
-                title="On-site follow-up / mediation phase (Mark Reviewed → staff Enter monitoring)">
-                Settlement{% if status_counts.mediation_monitoring %} ({{ status_counts.mediation_monitoring }}){% endif %}
-            </button>
-            <button type="button" onclick="openNewCaseModal()" class="cases-add-btn">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                    aria-hidden="true">
-                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                </svg>
-                Add Case
-            </button>
         </div>
+        {% endif %}
 
         <div id="casesListPanel"{% if desk_tab == 'incident-log' %} hidden{% endif %}>
         <div class="cases-controls-bar">
-            <div class="summary-chip-card summary-chip-card--emerald">
-                <svg style="width: 20px; height: 20px; color: #047857;" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2">
+            <!-- Total List -->
+            <div class="summary-chip-card summary-chip-card--emerald" style="height: 2.3rem; margin: 0; box-sizing: border-box; display: inline-flex; align-items: center; align-self: center;">
+                <svg style="width: 18px; height: 18px; color: #047857;" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2.5">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                     <polyline points="14 2 14 8 20 8"></polyline>
                 </svg>
-                <div>
-                    <p>Total List</p>
-                    <p>{{ cases|length }}</p>
+                <div style="display: flex; flex-direction: column; justify-content: center; line-height: 1.15;">
+                    <p style="margin: 0; font-size: 0.625rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;">Total List</p>
+                    <p style="margin: 0; font-size: 0.95rem; color: #0f172a; font-weight: 800;">{{ cases|length }}</p>
                 </div>
             </div>
 
-            <div class="cases-search-box">
+            <!-- Search box -->
+            <div class="cases-search-box" style="height: 2.3rem; margin: 0; box-sizing: border-box;">
                 <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="11" cy="11" r="8"></circle>
                     <path d="m21 21-4.35-4.35"></path>
@@ -3868,12 +3861,29 @@
                 <button type="button" class="cases-search-btn" onclick="applyCaseFilters()">Search</button>
             </div>
 
-            <select id="typeFilter" class="cases-select filter-select">
+            <!-- Select Type dropdown -->
+            <select id="typeFilter" class="cases-select filter-select" style="height: 2.3rem; margin: 0; box-sizing: border-box;">
                 <option value="all" {% if filter_type == "all" %}selected{% endif %}>All Types</option>
                 {% for code, label in case_type_choices %}
                 <option value="{{ code }}" {% if filter_type == code %}selected{% endif %}>{{ label }}</option>
                 {% endfor %}
             </select>
+
+            <!-- Log settled incident -->
+            <button type="button" class="cases-secondary-btn" onclick="openSettledLogModal()"
+                title="On-site incident handled without opening a formal case" style="height: 2.3rem; margin: 0; box-sizing: border-box;">
+                Log settled incident
+            </button>
+
+            <!-- Add Case -->
+            <button type="button" onclick="openNewCaseModal()" class="cases-add-btn" style="height: 2.3rem; margin: 0; box-sizing: border-box;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    aria-hidden="true">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                Add Case
+            </button>
         </div>
 
         <div class="formal-table-card">
