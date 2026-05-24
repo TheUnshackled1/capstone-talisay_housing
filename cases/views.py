@@ -790,7 +790,7 @@ def create_case(request, position):
     - case_type: case type code
     - received_at_location: 'office' | 'onsite'
     - initial_description: str
-    - subject_name: str (optional)
+    - subject_name: str (required — linked beneficiary)
     """
     try:
         data = json.loads(request.body)
@@ -812,6 +812,11 @@ def create_case(request, position):
             return JsonResponse({
                 'success': False,
                 'error': 'Select a complainant from the housing unit occupant list.',
+            }, status=400)
+        if not subject_applicant_id:
+            return JsonResponse({
+                'success': False,
+                'error': 'Select a reported party from the housing unit occupant list.',
             }, status=400)
         if _parties_are_same_person(
             complainant_applicant_id,
@@ -964,10 +969,20 @@ def create_settled_incident_log(request, position):
                 complainant_name = complainant_applicant.full_name or ''
             if not complainant_phone:
                 complainant_phone = getattr(complainant_applicant, 'phone_number', '') or ''
+        if not complainant_applicant_id:
+            return JsonResponse({
+                'success': False,
+                'error': 'Select a complainant from the beneficiary search.',
+            }, status=400)
         if not complainant_name:
             return JsonResponse({
                 'success': False,
                 'error': 'Select a complainant from the beneficiary search.',
+            }, status=400)
+        if not subject_applicant_id:
+            return JsonResponse({
+                'success': False,
+                'error': 'Select a reported party from the beneficiary search.',
             }, status=400)
 
         if _parties_are_same_person(
