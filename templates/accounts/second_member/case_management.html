@@ -3243,6 +3243,24 @@
                         <h3 class="case-monitor-card-title">Respondent</h3>
                         <p id="modalSubjectName" class="case-monitor-person-name case-monitor-person-name--respondent">—</p>
                     </article>
+
+                    <article id="respondentSettledLogsSection" class="case-monitor-card case-monitor-card--full" style="display: none;">
+                        <h3 class="case-monitor-card-title">On-site settled logs (field memory)</h3>
+                        <p class="case-monitor-meta-line">Incidents settled on-site without opening a formal case.</p>
+                        <div class="case-prior-table-wrap">
+                            <table class="case-prior-table case-prior-table--settled-logs">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">When</th>
+                                        <th scope="col">Unit</th>
+                                        <th scope="col">Type</th>
+                                        <th scope="col">Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="respondentSettledLogsList"></tbody>
+                            </table>
+                        </div>
+                    </article>
                 </div>
 
                 <article class="case-monitor-card case-monitor-card--complainant">
@@ -3517,13 +3535,15 @@
 
     function resetCaseModalSections() {
         ['subjectSection', 'investigationSection', 'referralSection', 'resolutionSection',
-            'priorCasesSection', 'modalHouseholdMembersWrap', 'caseIntakeEvidenceSection',
+            'priorCasesSection', 'respondentSettledLogsSection', 'modalHouseholdMembersWrap', 'caseIntakeEvidenceSection',
             'caseSettlementEvidenceSection'].forEach((id) => {
                 const el = document.getElementById(id);
                 if (el) el.style.display = 'none';
             });
         const householdList = document.getElementById('modalHouseholdMembersList');
         if (householdList) householdList.innerHTML = '';
+        const settledLogsList = document.getElementById('respondentSettledLogsList');
+        if (settledLogsList) settledLogsList.innerHTML = '';
         caseIntakeSavedUrls = [];
         caseIntakeSavedIndex = 0;
         caseSettlementViewUrls = [];
@@ -3854,6 +3874,30 @@
         }
 
         populateResolutionMonitorCard(c);
+
+        const settledLogsSection = document.getElementById('respondentSettledLogsSection');
+        const settledLogsList = document.getElementById('respondentSettledLogsList');
+        const settledLogs = c.respondent_settled_incident_logs || [];
+        if (settledLogsSection && settledLogsList) {
+            if (c.subject_name && settledLogs.length) {
+                settledLogsSection.style.display = 'block';
+                settledLogsList.innerHTML = settledLogs.map((log) => {
+                    const when = log.logged_at
+                        ? new Date(log.logged_at).toLocaleDateString()
+                        : '';
+                    return `
+                    <tr>
+                        <td>${escapeHtml(when)}</td>
+                        <td>${escapeHtml(log.unit_label || '—')}</td>
+                        <td>${escapeHtml(log.case_type_display || '—')}</td>
+                        <td>${escapeHtml(log.description || '—')}</td>
+                    </tr>`;
+                }).join('');
+            } else {
+                settledLogsSection.style.display = 'none';
+                settledLogsList.innerHTML = '';
+            }
+        }
 
         const priorSection = document.getElementById('priorCasesSection');
         const priorList = document.getElementById('priorCasesList');

@@ -12,7 +12,7 @@ from urllib.parse import urlencode
 
 from intake.models import Applicant
 from units.models import LotAward, HousingUnit
-from .models import Case, CaseAction, CaseEvidence
+from .models import Case, CaseAction, CaseEvidence, FieldSettledIncidentLog
 from . import workflow as wf
 from accounts.models import FIELD_DESK_POSITIONS
 
@@ -138,6 +138,20 @@ def case_management_dashboard(request, position):
 
     open_new_case = request.GET.get('new_case', '').strip() in ('1', 'true', 'yes')
     open_case_id = request.GET.get('case_id', '').strip()
+    desk_tab = request.GET.get('tab', 'cases').strip() or 'cases'
+    if desk_tab not in ('cases', 'incident-log'):
+        desk_tab = 'cases'
+
+    settled_incident_logs = []
+    settled_incident_log_count = 0
+    if position in wf.FIELD_DESK_POSITIONS:
+        settled_incident_log_count = FieldSettledIncidentLog.objects.count()
+        if desk_tab == 'incident-log':
+            settled_incident_logs = (
+                FieldSettledIncidentLog.objects
+                .select_related('related_unit', 'logged_by', 'subject_applicant')
+                .order_by('-logged_at')[:200]
+            )
 
     prefill_beneficiary = None
     prefill_applicant_id = request.GET.get('applicant_id', '').strip()
@@ -174,6 +188,9 @@ def case_management_dashboard(request, position):
         'case_desk_mode': wf.case_desk_mode_for_position(position),
         'field_intake_positions': tuple(wf.FIELD_DESK_POSITIONS),
         'monitor_intake_positions': tuple(wf.CASE_MONITOR_DESK_POSITIONS),
+        'desk_tab': desk_tab,
+        'settled_incident_logs': settled_incident_logs,
+        'settled_incident_log_count': settled_incident_log_count,
     }
 
     return render(request, template_name, context)
@@ -236,6 +253,55 @@ def _prior_cases_for_respondent(case, subject_applicant, limit=8):
     else:
         return []
     return list(qs.order_by('-received_at')[:limit])
+
+
+def _subject_housing_unit(subject_applicant):
+    if not subject_applicant:
+        return None
+    la = (
+        LotAward.objects.filter(
+            application__applicant=subject_applicant,
+            status='active',
+        )
+        .select_related('unit')
+        .order_by('-awarded_at')
+        .first()
+    )
+    return la.unit if la else None
+
+
+def _settled_incident_log_payload(log):
+    unit = log.related_unit
+    unit_label = (
+        f'Block {unit.block_number}, Lot {unit.lot_number}'
+        if unit and unit.block_number and unit.lot_number
+        else (str(unit) if unit else '')
+    )
+    return {
+        'id': str(log.id),
+        'case_type': log.case_type,
+        'case_type_display': log.get_case_type_display(),
+        'description': log.description,
+        'subject_name': log.subject_name or '',
+        'unit_label': unit_label,
+        'logged_at': log.logged_at.isoformat(),
+        'logged_by': log.logged_by.get_full_name() if log.logged_by else 'Field',
+    }
+
+
+def _settled_incident_logs_for_subject(subject_applicant, unit=None, limit=10):
+    q = models.Q()
+    if subject_applicant:
+        q |= models.Q(subject_applicant_id=subject_applicant.id)
+    if unit:
+        q |= models.Q(related_unit_id=unit.id)
+    if not q:
+        return []
+    return list(
+        FieldSettledIncidentLog.objects.filter(q)
+        .select_related('related_unit', 'logged_by', 'subject_applicant')
+        .order_by('-logged_at')[:limit]
+    )
 
 
 def _parse_block_lot_query(q):
@@ -432,6 +498,11 @@ def get_case_details(request, position, case_id):
 
         respondent_prior_list = _prior_cases_for_respondent(case, subject_applicant)
         respondent_prior_cases = [_prior_case_detail_payload(pc) for pc in respondent_prior_list]
+        subject_unit = _subject_housing_unit(subject_applicant) or case.related_unit
+        respondent_settled_incident_logs = [
+            _settled_incident_log_payload(log)
+            for log in _settled_incident_logs_for_subject(subject_applicant, subject_unit)
+        ]
 
         beneficiary_profile = None
         if complainant_applicant:
@@ -573,6 +644,8 @@ def get_case_details(request, position, case_id):
                 'prior_cases_count': len(prior_cases_list),
                 'respondent_prior_cases': respondent_prior_cases,
                 'respondent_prior_cases_count': len(respondent_prior_list),
+                'respondent_settled_incident_logs': respondent_settled_incident_logs,
+                'respondent_settled_incident_logs_count': len(respondent_settled_incident_logs),
                 'beneficiary_profile': beneficiary_profile,
                 'workflow': workflow_payload,
                 'received_at_location_display': case.get_received_at_location_display(),
@@ -729,6 +802,69 @@ def create_case(request, position):
             'success': False,
             'error': str(e)
         }, status=500)
+
+
+@login_required
+@require_POST
+@verify_position
+def create_settled_incident_log(request, position):
+    """
+    Field desk only — log an on-site incident settled without opening a formal case.
+    """
+    if position not in wf.FIELD_DESK_POSITIONS:
+        return JsonResponse({'success': False, 'error': 'Field desk only.'}, status=403)
+    try:
+        data = json.loads(request.body)
+        related_unit_id = (data.get('related_unit_id') or '').strip()
+        case_type = (data.get('case_type') or '').strip()
+        description = (data.get('description') or '').strip()
+        subject_applicant_id = (data.get('subject_applicant_id') or '').strip()
+        subject_name = (data.get('subject_name') or '').strip()
+        case_type = wf.LEGACY_TYPE_MAP.get(case_type, case_type)
+
+        if not related_unit_id:
+            return JsonResponse({'success': False, 'error': 'Select a housing unit.'}, status=400)
+        if not case_type:
+            return JsonResponse({
+                'success': False,
+                'error': 'Select a complaint type.',
+            }, status=400)
+        if not description:
+            return JsonResponse({'success': False, 'error': 'Description is required.'}, status=400)
+        if len(description) > 150:
+            return JsonResponse({
+                'success': False,
+                'error': 'Description must be 150 characters or less.',
+            }, status=400)
+
+        valid_types = [code for code, _ in Case.CASE_TYPE_CHOICES]
+        if case_type not in valid_types:
+            return JsonResponse({'success': False, 'error': 'Invalid case type.'}, status=400)
+
+        related_unit = get_object_or_404(HousingUnit, id=related_unit_id)
+        subject_applicant = None
+        if subject_applicant_id:
+            subject_applicant = get_object_or_404(Applicant, id=subject_applicant_id)
+            if not subject_name:
+                subject_name = subject_applicant.full_name or ''
+
+        log = FieldSettledIncidentLog.objects.create(
+            related_unit=related_unit,
+            subject_applicant=subject_applicant,
+            subject_name=subject_name,
+            case_type=case_type,
+            description=description,
+            logged_by=request.user,
+        )
+        return JsonResponse({
+            'success': True,
+            'message': 'Settled incident logged.',
+            'log': _settled_incident_log_payload(log),
+        })
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'Invalid JSON'}, status=400)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
 @login_required

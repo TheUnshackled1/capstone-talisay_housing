@@ -385,7 +385,129 @@
 
     .cases-toolbar-actions {
         display: flex;
+        flex-wrap: wrap;
+        align-items: center;
         justify-content: flex-end;
+        gap: 0.5rem;
+        margin-left: auto;
+        flex-shrink: 0;
+    }
+
+    .cases-toolbar-actions--desk {
+        justify-content: flex-end;
+        margin-bottom: 0.75rem;
+        margin-left: 0;
+        width: 100%;
+    }
+
+    .cases-secondary-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        padding: 0.62rem 1rem;
+        border-radius: 0.5rem;
+        border: 1px solid #cbd5e1;
+        background: #ffffff;
+        color: #334155;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+        cursor: pointer;
+        white-space: nowrap;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+        transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+    }
+
+    .cases-secondary-btn:hover {
+        background: #f8fafc;
+        border-color: #94a3b8;
+        transform: translateY(-1px);
+    }
+
+    .cases-secondary-btn.is-active {
+        border-color: #7c3aed;
+        background: #f5f3ff;
+        color: #5b21b6;
+    }
+
+    .cases-secondary-btn--settlement.is-active {
+        border-color: #d97706;
+        background: #fffbeb;
+        color: #b45309;
+    }
+
+    .cases-desk-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.45rem;
+        justify-content: center;
+        margin-bottom: 0.75rem;
+    }
+
+    .cases-desk-tab {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.45rem 0.95rem;
+        border-radius: 999px;
+        border: 1px solid #e2e8f0;
+        background: #ffffff;
+        color: #64748b;
+        font-size: 0.74rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+        cursor: pointer;
+    }
+
+    .cases-desk-tab.is-active {
+        border-color: #047857;
+        background: #ecfdf5;
+        color: #047857;
+    }
+
+    .cases-desk-tab-count {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 1.25rem;
+        height: 1.25rem;
+        padding: 0 0.35rem;
+        border-radius: 999px;
+        background: #e2e8f0;
+        color: #475569;
+        font-size: 0.62rem;
+        font-weight: 800;
+    }
+
+    .cases-desk-tab.is-active .cases-desk-tab-count {
+        background: #a7f3d0;
+        color: #047857;
+    }
+
+    .incident-log-hint {
+        margin: 0 0 0.75rem;
+        font-size: 0.76rem;
+        line-height: 1.45;
+        color: #64748b;
+        text-align: center;
+    }
+
+    .tha-case-view-modal .case-record-part-subtitle {
+        margin: 0 0 0.35rem;
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: #475569;
+    }
+
+    .tha-case-view-modal .case-record-settled-logs {
+        padding: 0.65rem 0.75rem;
+        background: #f8fafc;
+        border: 1px dashed #cbd5e1;
+        border-radius: 0.55rem;
     }
 
     .cases-add-btn {
@@ -669,10 +791,13 @@
         min-width: 9.5rem;
     }
 
-    .cases-controls-bar .cases-add-btn {
+    .cases-controls-bar .cases-toolbar-actions {
         flex-shrink: 0;
         margin-left: auto;
-        align-self: center;
+    }
+
+    .cases-controls-bar .cases-add-btn {
+        flex-shrink: 0;
     }
 
     .summary-chip-card {
@@ -2452,6 +2577,36 @@
             gap: 0.35rem;
         }
 
+        .m-respondent-value {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: flex-end !important;
+            text-align: right !important;
+            gap: 0.15rem !important;
+            max-width: 60%;
+        }
+
+        .m-respondent-value .respondent-name-cell {
+            font-size: 0.78rem !important;
+            font-weight: 700 !important;
+            color: #1e293b !important;
+            white-space: normal !important;
+            word-break: break-word !important;
+            text-align: right !important;
+            display: block !important;
+            line-height: 1.25 !important;
+        }
+
+        .m-respondent-value .respondent-ref-code {
+            font-size: 0.68rem !important;
+            color: #64748b !important;
+            font-weight: 600 !important;
+            font-family: ui-monospace, monospace !important;
+            margin-top: 0 !important;
+            display: block !important;
+            text-align: right !important;
+        }
+
         .m-card-actions {
             border-top: 1px solid #f1f5f9;
             padding-top: 0.65rem;
@@ -2464,6 +2619,11 @@
             width: 100% !important;
             justify-content: center !important;
             display: flex !important;
+        }
+
+        /* Center the Total List chip on mobile viewports */
+        .cases-controls-bar .summary-chip-card {
+            margin: 0 auto !important;
         }
     }
 
@@ -3205,8 +3365,11 @@
 
         .cases-toolbar-actions {
             justify-content: stretch;
+            width: 100%;
+            margin-left: 0;
         }
 
+        .cases-secondary-btn,
         .cases-add-btn {
             width: 100%;
             justify-content: center;
@@ -3650,6 +3813,38 @@
     <div class="cases-list-section">
         <h3 class="section-title-list">LIST OF CASES</h3>
 
+        <div class="cases-desk-tabs" role="tablist" aria-label="Case desk views">
+            <button type="button" class="cases-desk-tab{% if desk_tab != 'incident-log' %} is-active{% endif %}"
+                data-desk-tab="cases" onclick="switchCasesDeskTab('cases')">List of cases</button>
+            <button type="button" class="cases-desk-tab{% if desk_tab == 'incident-log' %} is-active{% endif %}"
+                data-desk-tab="incident-log" onclick="switchCasesDeskTab('incident-log')">
+                Incident log
+                {% if settled_incident_log_count %}<span class="cases-desk-tab-count">{{ settled_incident_log_count }}</span>{% endif %}
+            </button>
+        </div>
+
+        <div class="cases-toolbar-actions cases-toolbar-actions--desk">
+            <button type="button" class="cases-secondary-btn" onclick="openSettledLogModal()"
+                title="On-site incident handled without opening a formal case">
+                Log settled incident
+            </button>
+            <button type="button" id="settlementFilterBtn"
+                class="cases-secondary-btn cases-secondary-btn--settlement{% if filter_status == 'mediation_monitoring' %} is-active{% endif %}"
+                onclick="filterSettlementCases()"
+                title="On-site follow-up / mediation phase (Mark Reviewed → staff Enter monitoring)">
+                Settlement{% if status_counts.mediation_monitoring %} ({{ status_counts.mediation_monitoring }}){% endif %}
+            </button>
+            <button type="button" onclick="openNewCaseModal()" class="cases-add-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    aria-hidden="true">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                Add Case
+            </button>
+        </div>
+
+        <div id="casesListPanel"{% if desk_tab == 'incident-log' %} hidden{% endif %}>
         <div class="cases-controls-bar">
             <div class="summary-chip-card summary-chip-card--emerald">
                 <svg style="width: 20px; height: 20px; color: #047857;" viewBox="0 0 24 24" fill="none"
@@ -3679,15 +3874,6 @@
                 <option value="{{ code }}" {% if filter_type == code %}selected{% endif %}>{{ label }}</option>
                 {% endfor %}
             </select>
-
-            <button type="button" onclick="openNewCaseModal()" class="cases-add-btn">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                    aria-hidden="true">
-                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                </svg>
-                Add Case
-            </button>
         </div>
 
         <div class="formal-table-card">
@@ -3797,7 +3983,7 @@
 
                     <div class="m-card-body">
                         <h4 class="m-card-title applicant-name"
-                            style="cursor: pointer; font-weight: 700; color: #1e3a8a;"
+                            style="cursor: pointer; font-weight: 700; color: #1e3a8a; text-align: center;"
                             data-full-name="{{ case.complainant_name }}"
                             data-tx-id="{% if case.complainant_applicant %}APP-{{ case.complainant_applicant.id|slice:":8" }}...{% else %}{{ case.case_number }}{% endif %}"
                             data-ref-code="{{ case.complainant_applicant.reference_number|default:'' }}"
@@ -3808,7 +3994,7 @@
 
                         <div class="m-card-meta-row">
                             <span class="m-card-meta-label">Respondent:</span>
-                            <span class="m-card-meta-value">
+                            <span class="m-card-meta-value m-respondent-value">
                                 {% if case.subject_applicant %}
                                 <span class="respondent-name-cell" title="{{ case.subject_applicant.full_name }}">{{ case.subject_applicant.full_name }}</span>
                                 {% if case.subject_applicant.reference_number %}
@@ -3859,6 +4045,64 @@
                     <p style="color: #64748b; font-size: 0.85rem; margin: 0;">No cases match your search. Try adjusting filters or add a new case.</p>
                 </div>
                 {% endfor %}
+            </div>
+        </div>
+        </div>
+
+        <div id="incidentLogPanel"{% if desk_tab != 'incident-log' %} hidden{% endif %}>
+            <p class="incident-log-hint">
+                On-site incidents settled without a formal case. Ronda logs these for pattern memory — staff see them when opening cases.
+            </p>
+            <div class="formal-table-card">
+                <div class="formal-table-scroll">
+                    <table class="formal-table compact cases-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Unit</th>
+                                <th>Occupant</th>
+                                <th>Logged</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                                <th>Logged by</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for log in settled_incident_logs %}
+                            <tr>
+                                <td style="font-weight: 700; color: #1e293b;">{{ forloop.counter }}</td>
+                                <td>
+                                    {% if log.related_unit %}
+                                    Block {{ log.related_unit.block_number }}, Lot {{ log.related_unit.lot_number }}
+                                    {% else %}—{% endif %}
+                                </td>
+                                <td>
+                                    {% if log.subject_applicant %}
+                                    <span class="respondent-name-cell">{{ log.subject_applicant.full_name }}</span>
+                                    {% elif log.subject_name %}
+                                    <span class="respondent-name-cell">{{ log.subject_name }}</span>
+                                    {% else %}—{% endif %}
+                                </td>
+                                <td>
+                                    <div class="date-cell">
+                                        <div class="date-main">{{ log.logged_at|date:"M d, Y" }} · {{ log.logged_at|time:"g:i A" }}</div>
+                                        <div class="date-sub">{{ log.logged_at|naturaltime }}</div>
+                                    </div>
+                                </td>
+                                <td><span class="case-type-badge case-type-badge--standard">{{ log.get_case_type_display }}</span></td>
+                                <td>{{ log.description }}</td>
+                                <td>{{ log.logged_by.get_full_name|default:"Field" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" style="text-align: center; color: #64748b; font-size: 0.75rem; padding: 1.25rem;">
+                                    No settled incidents logged yet. Use <strong>Log settled incident</strong> when something was handled on-site without opening a case.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -4002,6 +4246,24 @@
                     <p id="respondentPriorEmpty" class="case-record-prior-empty" style="display: none; color: #64748b; font-size: 0.8rem; margin: 0.5rem 0 0;">
                         No prior complaints on file for this respondent.
                     </p>
+
+                    <div id="respondentSettledLogsSection" class="case-record-prior case-record-settled-logs" style="display: none; margin-top: 1rem;">
+                        <h5 class="case-record-part-subtitle">On-site settled logs (field memory)</h5>
+                        <p class="case-record-prior-hint">Incidents settled on-site without opening a formal case.</p>
+                        <div class="case-prior-table-wrap">
+                            <table class="case-prior-table case-prior-table--settled-logs">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">When</th>
+                                        <th scope="col">Unit</th>
+                                        <th scope="col">Type</th>
+                                        <th scope="col">Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="respondentSettledLogsList"></tbody>
+                            </table>
+                        </div>
+                    </div>
                     
                     <!-- Mark Reviewed Section Inside Respondent Prior Card -->
                     <div id="fieldMarkReviewedWrap" class="case-mark-reviewed-row" style="display: none; margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid #f1f5f9; text-align: right;">
@@ -4271,6 +4533,79 @@
     </div>
 </div>
 
+<!-- Log settled incident (field memory — no formal case) -->
+<div id="settledLogModal" class="tha-case-modal-overlay" onclick="closeSettledLogModal(event)">
+    <div class="modal-content tha-reg-modal tha-case-reg-modal" onclick="event.stopPropagation();">
+        <div class="modal-header">
+            <h2 class="modal-title">Log settled incident</h2>
+            <button type="button" class="btn-close" onclick="closeSettledLogModal()" aria-label="Close">
+                <svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="settledLogUnitId">
+            <input type="hidden" id="settledLogApplicantId">
+            <input type="hidden" id="settledLogSubjectName">
+            <p class="help-text" style="margin-top: 0;">Optional Step 3 — parallel to a case. Use when something was handled on-site and does not need a formal case.</p>
+            <div class="tha-section-block">
+                <h3 class="tha-section-title">Unit</h3>
+                <div class="form-group">
+                    <label class="form-label">Search block / lot <span class="req">*</span></label>
+                    <div class="case-beneficiary-search-wrap">
+                        <input type="text" class="form-input" id="settledLogSearchInput" autocomplete="off"
+                            placeholder="e.g. 1-1, Block 1 Lot 1, name, or APP ref">
+                        <div id="settledLogSearchResults" class="case-search-results" style="display: none;"></div>
+                    </div>
+                </div>
+                <div id="settledLogAutoFill" class="case-autofill-panel">
+                    <div class="form-row three-cols">
+                        <div class="form-group">
+                            <label class="form-label">Occupant</label>
+                            <input type="text" class="form-input" id="settledLogAutoName" readonly placeholder="—">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Reference no</label>
+                            <input type="text" class="form-input" id="settledLogAutoRef" readonly placeholder="—">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Block &amp; lot</label>
+                            <input type="text" class="form-input" id="settledLogAutoUnit" readonly placeholder="—">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="tha-section-block tha-section-block--income">
+                <h3 class="tha-section-title">Incident</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Complaint type <span class="req">*</span></label>
+                        <select class="form-select" id="settledLogType">
+                            <option value="">— Select —</option>
+                            {% for code, label in case_type_choices %}
+                            <option value="{{ code }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">One-sentence description <span class="req">*</span></label>
+                        <input type="text" class="form-input" id="settledLogDescription" maxlength="150"
+                            placeholder="Brief summary (max 150 characters)" oninput="updateSettledLogDescCount()">
+                        <span id="settledLogDescriptionCount" class="help-text">0 / 150</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-modal success" onclick="submitSettledLog()">Save log</button>
+            <button type="button" class="btn-modal danger" onclick="closeSettledLogModal()">Cancel</button>
+        </div>
+    </div>
+</div>
+
 
 {% if prefill_beneficiary %}
 {{ prefill_beneficiary|json_script:"prefill-beneficiary" }}
@@ -4282,6 +4617,7 @@
     let currentCaseId = null;
     let complainantSearchTimer = null;
     let subjectSearchTimer = null;
+    let settledLogSearchTimer = null;
 
     function csrfToken() {
         return document.querySelector('[name=csrfmiddlewaretoken]').value;
@@ -4295,6 +4631,10 @@
             });
         const respPriorTableWrap = document.getElementById('respondentPriorTableWrap');
         if (respPriorTableWrap) respPriorTableWrap.style.display = 'none';
+        const settledLogsSection = document.getElementById('respondentSettledLogsSection');
+        if (settledLogsSection) settledLogsSection.style.display = 'none';
+        const settledLogsList = document.getElementById('respondentSettledLogsList');
+        if (settledLogsList) settledLogsList.innerHTML = '';
         const evidenceList = document.getElementById('evidenceList');
         if (evidenceList) {
             evidenceList.innerHTML = '';
@@ -4567,6 +4907,30 @@
                 if (respPriorList) respPriorList.innerHTML = '';
                 if (respPriorTableWrap) respPriorTableWrap.style.display = 'none';
                 if (respPriorEmpty) respPriorEmpty.style.display = 'none';
+            }
+        }
+
+        const settledLogsSection = document.getElementById('respondentSettledLogsSection');
+        const settledLogsList = document.getElementById('respondentSettledLogsList');
+        const settledLogs = c.respondent_settled_incident_logs || [];
+        if (settledLogsSection && settledLogsList) {
+            if (c.subject_name && settledLogs.length) {
+                settledLogsSection.style.display = 'block';
+                settledLogsList.innerHTML = settledLogs.map((log) => {
+                    const when = log.logged_at
+                        ? new Date(log.logged_at).toLocaleDateString()
+                        : '';
+                    return `
+                    <tr>
+                        <td>${escapeHtml(when)}</td>
+                        <td>${escapeHtml(log.unit_label || '—')}</td>
+                        <td>${escapeHtml(log.case_type_display || '—')}</td>
+                        <td>${escapeHtml(log.description || '—')}</td>
+                    </tr>`;
+                }).join('');
+            } else {
+                settledLogsSection.style.display = 'none';
+                settledLogsList.innerHTML = '';
             }
         }
 
@@ -5578,7 +5942,7 @@
             });
     }
 
-    function applyCaseFilters() {
+    function applyCaseFilters(options = {}) {
         const url = new URL(window.location.href);
         const q = document.getElementById('searchInput')?.value.trim() || '';
         const t = document.getElementById('typeFilter')?.value || 'all';
@@ -5586,7 +5950,140 @@
         else url.searchParams.delete('q');
         if (t && t !== 'all') url.searchParams.set('type', t);
         else url.searchParams.delete('type');
+        if (options.status === 'mediation_monitoring') {
+            url.searchParams.set('status', 'mediation_monitoring');
+        } else if (options.clearStatus) {
+            url.searchParams.delete('status');
+        }
+        url.searchParams.set('tab', 'cases');
         window.location.href = url.toString();
+    }
+
+    function filterSettlementCases() {
+        const url = new URL(window.location.href);
+        const isActive = url.searchParams.get('status') === 'mediation_monitoring';
+        if (isActive) {
+            url.searchParams.delete('status');
+        } else {
+            url.searchParams.set('status', 'mediation_monitoring');
+        }
+        url.searchParams.set('tab', 'cases');
+        window.location.href = url.toString();
+    }
+
+    function switchCasesDeskTab(tab) {
+        const url = new URL(window.location.href);
+        if (tab === 'incident-log') {
+            url.searchParams.set('tab', 'incident-log');
+        } else {
+            url.searchParams.delete('tab');
+        }
+        window.location.href = url.toString();
+    }
+
+    function openSettledLogModal() {
+        document.getElementById('caseModal').style.display = 'none';
+        document.getElementById('newCaseModal').style.display = 'none';
+        resetSettledLogForm();
+        document.body.style.overflow = 'hidden';
+        document.getElementById('settledLogModal').style.display = 'flex';
+    }
+
+    function closeSettledLogModal(e) {
+        if (e && e.target.id !== 'settledLogModal') return;
+        document.getElementById('settledLogModal').style.display = 'none';
+        document.body.style.overflow = '';
+    }
+
+    function resetSettledLogForm() {
+        ['settledLogSearchInput', 'settledLogDescription'].forEach((id) => {
+            const el = document.getElementById(id);
+            if (el) el.value = '';
+        });
+        ['settledLogUnitId', 'settledLogApplicantId', 'settledLogSubjectName'].forEach((id) => {
+            const el = document.getElementById(id);
+            if (el) el.value = '';
+        });
+        const typeEl = document.getElementById('settledLogType');
+        if (typeEl) typeEl.value = '';
+        ['settledLogAutoName', 'settledLogAutoRef', 'settledLogAutoUnit'].forEach((id) => setReadonlyField(id, ''));
+        const results = document.getElementById('settledLogSearchResults');
+        if (results) {
+            results.style.display = 'none';
+            results.innerHTML = '';
+        }
+        updateSettledLogDescCount();
+    }
+
+    function updateSettledLogDescCount() {
+        const el = document.getElementById('settledLogDescription');
+        const c = document.getElementById('settledLogDescriptionCount');
+        if (el && c) c.textContent = `${(el.value || '').length} / 150`;
+    }
+
+    function applySettledLogSelection(row) {
+        document.getElementById('settledLogUnitId').value = row.unit_id || '';
+        document.getElementById('settledLogApplicantId').value = row.id || '';
+        document.getElementById('settledLogSubjectName').value = row.full_name || '';
+        setReadonlyField('settledLogAutoName', row.full_name);
+        setReadonlyField('settledLogAutoRef', row.reference_number);
+        setReadonlyField('settledLogAutoUnit', row.unit_label);
+        document.getElementById('settledLogSearchResults').style.display = 'none';
+        document.getElementById('settledLogSearchInput').value = row.unit_label || row.full_name || '';
+    }
+
+    function runSettledLogSearch(q) {
+        runBeneficiarySearch(q, document.getElementById('settledLogSearchResults'), applySettledLogSelection);
+    }
+
+    function submitSettledLog() {
+        const relatedUnitId = (document.getElementById('settledLogUnitId')?.value || '').trim();
+        const caseType = (document.getElementById('settledLogType')?.value || '').trim();
+        const description = (document.getElementById('settledLogDescription')?.value || '').trim();
+        if (!relatedUnitId) {
+            alert('Select a housing unit from the search results.');
+            return;
+        }
+        if (!caseType) {
+            alert('Select a complaint type.');
+            return;
+        }
+        if (!description) {
+            alert('Enter a one-sentence description.');
+            return;
+        }
+        if (description.length > 150) {
+            alert('Description must be 150 characters or less.');
+            return;
+        }
+        fetch(`/cases/${CASE_POSITION}/settled-log/create/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken() },
+            body: JSON.stringify({
+                related_unit_id: relatedUnitId,
+                subject_applicant_id: (document.getElementById('settledLogApplicantId')?.value || '').trim(),
+                subject_name: (document.getElementById('settledLogSubjectName')?.value || '').trim(),
+                case_type: caseType,
+                description,
+            }),
+        })
+            .then((r) => r.json())
+            .then((d) => {
+                if (!d.success) {
+                    alert('Error: ' + (d.error || 'Could not save log'));
+                    return;
+                }
+                closeSettledLogModal();
+                if (typeof showFlowAlert === 'function') {
+                    showFlowAlert('success', d.message || 'Settled incident logged.');
+                } else {
+                    alert(d.message || 'Settled incident logged.');
+                }
+                const url = new URL(window.location.href);
+                url.searchParams.set('tab', 'incident-log');
+                window.location.href = url.toString();
+            })
+            .catch(() => alert('Could not save log. Try again.'));
     }
 
     function printCaseRecord() {
@@ -5603,6 +6100,13 @@
 
     bindBeneficiarySearchFocus('complainantSearchInput', runComplainantSearch);
     bindBeneficiarySearchFocus('subjectSearchInput', runSubjectSearch);
+    bindBeneficiarySearchFocus('settledLogSearchInput', runSettledLogSearch);
+
+    document.getElementById('settledLogSearchInput')?.addEventListener('input', (e) => {
+        clearTimeout(settledLogSearchTimer);
+        const q = e.target.value.trim();
+        settledLogSearchTimer = setTimeout(() => runSettledLogSearch(q), 300);
+    });
 
     document.getElementById('complainantSearchInput')?.addEventListener('input', (e) => {
         clearTimeout(complainantSearchTimer);
