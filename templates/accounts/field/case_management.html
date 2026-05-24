@@ -6751,20 +6751,20 @@
             .then((r) => r.json())
             .then((d) => {
                 if (!d.success) {
-                    alert(d.error || 'Could not mark case resolved');
+                    caseFlowAlert(d.error || 'Could not mark case resolved', 'Error', 'warning');
                     return;
                 }
                 if (d.new_status && d.status_display) {
                     updateCaseListRowStatus(currentCaseId, d.new_status, d.status_display);
                 }
-                alert(d.message || 'Case marked resolved.');
+                caseFlowAlert(d.message || 'Case marked resolved.', 'Success', 'success');
                 clearCaseSettlementPendingEvidence();
                 stopCaseSettlementCamera();
                 fetchCaseDetails(currentCaseId).then((resp) => {
                     if (resp.success) populateCaseModal(resp.case, { carouselSlide: 1 });
                 });
             })
-            .catch(() => alert('Could not mark case resolved. Check that the server is running.'))
+            .catch(() => caseFlowAlert('Could not mark case resolved. Check that the server is running.', 'Connection Error', 'warning'))
             .finally(() => {
                 if (btn) {
                     btn.disabled = false;

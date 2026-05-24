@@ -4256,11 +4256,11 @@
         if (!resolution_notes || !resolution_notes.trim()) return;
         postCaseUpdate({ action: 'workflow_transition', transition: 'resolve', resolution_notes: resolution_notes.trim() })
             .then((d) => {
-                if (!d.success) { alert(d.error || 'Could not resolve'); return; }
-                alert(d.message || 'Case resolved');
+                if (!d.success) { caseFlowAlert(d.error || 'Could not resolve', 'Error', 'warning'); return; }
+                caseFlowAlert(d.message || 'Case resolved', 'Success', 'success');
                 reloadCaseModal();
             })
-            .catch(() => alert('Could not resolve case.'));
+            .catch(() => caseFlowAlert('Could not resolve case.', 'Error', 'warning'));
     }
 
     function closeCasePrompt() {
@@ -4268,11 +4268,11 @@
         if (!closure_outcome || !closure_outcome.trim()) return;
         postCaseUpdate({ action: 'workflow_transition', transition: 'close', closure_outcome: closure_outcome.trim() })
             .then((d) => {
-                if (!d.success) { alert(d.error || 'Could not close'); return; }
-                alert(d.message || 'Case closed');
+                if (!d.success) { caseFlowAlert(d.error || 'Could not close', 'Error', 'warning'); return; }
+                caseFlowAlert(d.message || 'Case closed', 'Success', 'success');
                 reloadCaseModal();
             })
-            .catch(() => alert('Could not close case.'));
+            .catch(() => caseFlowAlert('Could not close case.', 'Error', 'warning'));
     }
 
     function closeCaseModal(e) {
