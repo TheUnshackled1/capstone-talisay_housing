@@ -3605,11 +3605,142 @@
         background: linear-gradient(180deg, #dc2626 0%, #b91c1c 100%);
     }
 
-    @media (max-width: 720px) {
+    @media (max-width: 768px) {
+        /* ── Both modals: full-screen on mobile ── */
+        .tha-case-modal-overlay {
+            padding: 0 !important;
+            align-items: flex-start !important;
+        }
 
+        .tha-case-reg-modal.modal-content {
+            width: 100% !important;
+            max-width: 100% !important;
+            max-height: 100dvh !important;
+            height: 100dvh !important;
+            border-radius: 0 !important;
+            /* Keep flex column so header/body/footer all scroll correctly */
+        }
+
+        /* Compact top bar */
+        .tha-case-reg-modal .modal-header {
+            padding: 0.7rem 1rem !important;
+        }
+
+        .tha-case-reg-modal .modal-title {
+            font-size: 0.88rem !important;
+        }
+
+        /* Body scrolls, takes all remaining height */
+        .tha-case-reg-modal .modal-body {
+            padding: 0 1rem 1rem !important;
+            max-height: none !important;
+            flex: 1 !important;
+            overflow-y: auto !important;
+        }
+
+        /* Form banner header — tighter */
+        .tha-case-reg-modal .tha-form-header {
+            padding: 1rem 1rem 0.85rem !important;
+            margin: 0 -1rem 1rem !important;
+        }
+
+        .tha-case-reg-modal .tha-form-crest {
+            height: 2.2rem !important;
+            max-width: 10rem !important;
+        }
+
+        .tha-case-reg-modal .tha-form-header h2 {
+            font-size: 0.9rem !important;
+        }
+
+        .tha-case-reg-modal .tha-form-subtitle {
+            font-size: 0.7rem !important;
+        }
+
+        /* Section blocks: compact */
+        .tha-case-reg-modal .tha-case-reg-form .tha-section-block {
+            padding: 0.85rem 0.9rem 0.9rem !important;
+            margin-bottom: 0.75rem !important;
+        }
+
+        /* ── All form rows: stack to 1 column ── */
         .tha-case-reg-modal .tha-case-reg-form .form-row,
         .tha-case-reg-modal .tha-case-reg-form .form-row.three-cols {
-            grid-template-columns: 1fr;
+            grid-template-columns: 1fr !important;
+            gap: 0.6rem !important;
+        }
+
+        /* Autofill panel: tighter */
+        .tha-case-reg-modal .case-autofill-panel {
+            padding: 0.6rem 0.7rem !important;
+        }
+
+        /* ── Evidence (camera) section ── */
+        .tha-case-reg-modal .new-case-evidence-intake .field-evidence-section {
+            padding: 0.9rem !important;
+            text-align: left !important;
+        }
+
+        .tha-case-reg-modal .new-case-evidence-intake .field-evidence-hint {
+            text-align: left !important;
+            font-size: 0.78rem !important;
+            max-width: 100% !important;
+        }
+
+        .tha-case-reg-modal .field-evidence-buttons {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            width: 100% !important;
+            gap: 0.5rem !important;
+        }
+
+        .tha-case-reg-modal .table-verify-btn,
+        .tha-case-reg-modal .field-evidence-file-btn {
+            width: 100% !important;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            box-sizing: border-box !important;
+            padding: 0.65rem 1rem !important;
+            font-size: 0.78rem !important;
+        }
+
+        .tha-case-reg-modal .field-evidence-strip {
+            justify-content: flex-start !important;
+        }
+
+        /* ── Footer buttons: full-width stacked ── */
+        .tha-case-reg-modal .modal-footer {
+            padding: 0.75rem 1rem !important;
+            flex-direction: column !important;
+            gap: 0.55rem !important;
+        }
+
+        .tha-case-reg-modal .btn-modal {
+            width: 100% !important;
+            min-width: unset !important;
+            padding: 0.75rem 1rem !important;
+            font-size: 0.82rem !important;
+        }
+    }
+
+    /* Extra small phones (320–480px) */
+    @media (max-width: 480px) {
+        .tha-case-reg-modal .tha-form-header h2 {
+            font-size: 0.8rem !important;
+        }
+
+        .tha-case-reg-modal .tha-form-crest {
+            display: none !important;
+        }
+
+        .tha-case-reg-modal .tha-case-reg-form .form-label {
+            font-size: 0.68rem !important;
+        }
+
+        .tha-case-reg-modal .tha-case-reg-form .form-input,
+        .tha-case-reg-modal .tha-case-reg-form .form-select {
+            font-size: 0.8rem !important;
         }
     }
 
@@ -3975,6 +4106,163 @@
         margin: 0.35rem 0 0;
         font-size: 0.72rem;
         color: #64748b;
+    }
+
+    /* Helper utility classes for responsive table-to-card display */
+    .show-on-mobile {
+        display: none !important;
+    }
+
+    @media (max-width: 768px) {
+        .hide-on-mobile {
+            display: none !important;
+        }
+        .show-on-mobile {
+            display: block !important;
+        }
+        .tha-case-view-modal .case-prior-table-wrap {
+            border: none !important;
+            background: transparent !important;
+            margin-top: 0.5rem;
+            overflow-x: visible !important;
+        }
+    }
+
+    /* Mobile Cards View Layout */
+    .mobile-prior-cards-view,
+    .mobile-settled-logs-cards-view {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        margin-top: 0.5rem;
+    }
+
+    .prior-case-mobile-card,
+    .settled-log-mobile-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.6rem;
+        padding: 0.85rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .prior-case-mobile-card:hover,
+    .settled-log-mobile-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.08);
+    }
+
+    /* Card Header */
+    .prior-card-header,
+    .settled-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #f1f5f9;
+        padding-bottom: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .prior-card-case strong {
+        font-size: 0.85rem;
+        color: #0f172a;
+    }
+
+    .prior-card-type,
+    .settled-card-unit {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        color: #b45309;
+        background: #fef3c7;
+        padding: 0.15rem 0.45rem;
+        border-radius: 4px;
+    }
+
+    .settled-card-header {
+        border-color: #ecfdf5;
+    }
+
+    .settled-card-unit {
+        color: #047857;
+        background: #d1fae5;
+    }
+
+    /* Card Body & Rows */
+    .prior-card-body,
+    .settled-card-body {
+        display: flex;
+        flex-direction: column;
+        gap: 0.45rem;
+    }
+
+    .prior-card-row,
+    .settled-card-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        font-size: 0.78rem;
+    }
+
+    .prior-card-label,
+    .settled-card-label {
+        font-weight: 600;
+        color: #64748b;
+        min-width: 5.5rem;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+    }
+
+    .prior-card-value,
+    .settled-card-value {
+        color: #334155;
+        flex: 1;
+        text-align: right;
+    }
+
+    .prior-card-desc,
+    .settled-card-desc {
+        text-align: left;
+        color: #475569;
+        background: #f8fafc;
+        padding: 0.4rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        margin-top: 0.15rem;
+        border: 1px solid #f1f5f9;
+        word-break: break-word;
+    }
+
+    /* Card Actions */
+    .prior-card-actions {
+        display: flex;
+        justify-content: flex-end;
+        border-top: 1px solid #f1f5f9;
+        margin-top: 0.5rem;
+        padding-top: 0.5rem;
+    }
+
+    .prior-card-actions .case-prior-open-link {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #047857;
+        text-decoration: none;
+        background: #ecfdf5;
+        border: 1px solid #a7f3d0;
+        padding: 0.3rem 0.75rem;
+        border-radius: 4px;
+        transition: background-color 0.15s ease, transform 0.1s ease;
+    }
+
+    .prior-card-actions .case-prior-open-link:hover {
+        background: #d1fae5;
+    }
+
+    .prior-card-actions .case-prior-open-link:active {
+        transform: scale(0.97);
     }
 </style>
 {% endblock %}
@@ -4423,7 +4711,7 @@
                     <p id="respondentPriorHeading" class="case-monitor-meta-line" style="font-weight: 700; color: #1e293b; margin-bottom: 0.55rem;"></p>
                     
                     <div id="respondentPriorTableWrap" class="case-prior-table-wrap" style="display: none; margin-top: 0.5rem;">
-                        <table class="case-prior-table">
+                        <table class="case-prior-table hide-on-mobile">
                             <thead>
                                 <tr>
                                     <th scope="col">Case</th>
@@ -4435,6 +4723,7 @@
                             </thead>
                             <tbody id="respondentPriorList"></tbody>
                         </table>
+                        <div id="respondentPriorCards" class="mobile-prior-cards-view show-on-mobile"></div>
                     </div>
                     <p id="respondentPriorEmpty" class="case-record-prior-empty" style="display: none; color: #64748b; font-size: 0.8rem; margin: 0.5rem 0 0;">
                         No prior complaints on file for this reported party.
@@ -4444,7 +4733,7 @@
                         <h5 class="case-record-part-subtitle">On-site settled logs (field memory)</h5>
                         <p class="case-record-prior-hint">Incidents settled on-site without opening a formal case.</p>
                         <div class="case-prior-table-wrap">
-                            <table class="case-prior-table case-prior-table--settled-logs">
+                            <table class="case-prior-table case-prior-table--settled-logs hide-on-mobile">
                                 <thead>
                                     <tr>
                                         <th scope="col">When</th>
@@ -4455,6 +4744,7 @@
                                 </thead>
                                 <tbody id="respondentSettledLogsList"></tbody>
                             </table>
+                            <div id="respondentSettledLogsCards" class="mobile-settled-logs-cards-view show-on-mobile"></div>
                         </div>
                     </div>
                     
@@ -4887,6 +5177,10 @@
         if (settledLogsSection) settledLogsSection.style.display = 'none';
         const settledLogsList = document.getElementById('respondentSettledLogsList');
         if (settledLogsList) settledLogsList.innerHTML = '';
+        const respondentPriorCards = document.getElementById('respondentPriorCards');
+        if (respondentPriorCards) respondentPriorCards.innerHTML = '';
+        const respondentSettledLogsCards = document.getElementById('respondentSettledLogsCards');
+        if (respondentSettledLogsCards) respondentSettledLogsCards.innerHTML = '';
         const evidenceList = document.getElementById('evidenceList');
         if (evidenceList) {
             evidenceList.innerHTML = '';
@@ -5118,6 +5412,7 @@
 
         const respPriorSection = document.getElementById('respondentPriorSection');
         const respPriorList = document.getElementById('respondentPriorList');
+        const respPriorCards = document.getElementById('respondentPriorCards');
         const respPriorTableWrap = document.getElementById('respondentPriorTableWrap');
         const respPriorHeading = document.getElementById('respondentPriorHeading');
         const respPriorEmpty = document.getElementById('respondentPriorEmpty');
@@ -5127,36 +5422,73 @@
                 const respLabel = c.subject_name + (c.subject_reference ? ` (${c.subject_reference})` : '');
                 if (respPriorHeading) respPriorHeading.textContent = respLabel;
                 const respPriors = c.respondent_prior_cases || [];
-                if (respPriors.length && respPriorList) {
+                if (respPriors.length) {
                     if (respPriorEmpty) respPriorEmpty.style.display = 'none';
                     if (respPriorTableWrap) respPriorTableWrap.style.display = 'block';
-                    respPriorList.innerHTML = respPriors.map((pc) => {
-                        const statusKey = escapeHtml(pc.status || '');
-                        const filed = pc.received_at
-                            ? new Date(pc.received_at).toLocaleDateString()
-                            : '';
-                        return `
-                        <tr>
-                            <td class="case-prior-table-case"><strong>${escapeHtml(pc.case_number)}</strong></td>
-                            <td class="case-prior-table-status">
-                                <span class="case-prior-status-pill case-prior-status-pill--${statusKey}">${escapeHtml(pc.status_display)}</span>
-                                ${filed ? `<span class="case-prior-table-date">${escapeHtml(filed)}</span>` : ''}
-                            </td>
-                            <td class="case-prior-table-type">${escapeHtml(pc.case_type_display)}</td>
-                            <td class="case-prior-table-desc">${escapeHtml(pc.initial_description || '—')}</td>
-                            <td class="case-prior-table-action">
-                                <button type="button" class="case-prior-open-link" onclick="openCaseModal('${pc.id}')">Open record</button>
-                            </td>
-                        </tr>`;
-                    }).join('');
+                    
+                    if (respPriorList) {
+                        respPriorList.innerHTML = respPriors.map((pc) => {
+                            const statusKey = escapeHtml(pc.status || '');
+                            const filed = pc.received_at
+                                ? new Date(pc.received_at).toLocaleDateString()
+                                : '';
+                            return `
+                            <tr>
+                                <td class="case-prior-table-case"><strong>${escapeHtml(pc.case_number)}</strong></td>
+                                <td class="case-prior-table-status">
+                                    <span class="case-prior-status-pill case-prior-status-pill--${statusKey}">${escapeHtml(pc.status_display)}</span>
+                                    ${filed ? `<span class="case-prior-table-date">${escapeHtml(filed)}</span>` : ''}
+                                </td>
+                                <td class="case-prior-table-type">${escapeHtml(pc.case_type_display)}</td>
+                                <td class="case-prior-table-desc">${escapeHtml(pc.initial_description || '—')}</td>
+                                <td class="case-prior-table-action">
+                                    <button type="button" class="case-prior-open-link" onclick="openCaseModal('${pc.id}')">Open record</button>
+                                </td>
+                            </tr>`;
+                        }).join('');
+                    }
+
+                    if (respPriorCards) {
+                        respPriorCards.innerHTML = respPriors.map((pc) => {
+                            const statusKey = escapeHtml(pc.status || '');
+                            const filed = pc.received_at
+                                ? new Date(pc.received_at).toLocaleDateString()
+                                : '';
+                            return `
+                            <div class="prior-case-mobile-card">
+                                <div class="prior-card-header">
+                                    <span class="prior-card-case"><strong>${escapeHtml(pc.case_number)}</strong></span>
+                                    <span class="prior-card-type">${escapeHtml(pc.case_type_display)}</span>
+                                </div>
+                                <div class="prior-card-body">
+                                    <div class="prior-card-row">
+                                        <span class="prior-card-label">Status:</span>
+                                        <span class="prior-card-value">
+                                            <span class="case-prior-status-pill case-prior-status-pill--${statusKey}">${escapeHtml(pc.status_display)}</span>
+                                            ${filed ? `<span class="case-prior-table-date">${escapeHtml(filed)}</span>` : ''}
+                                        </span>
+                                    </div>
+                                    <div class="prior-card-row">
+                                        <span class="prior-card-label">Description:</span>
+                                        <span class="prior-card-value prior-card-desc">${escapeHtml(pc.initial_description || '—')}</span>
+                                    </div>
+                                </div>
+                                <div class="prior-card-actions">
+                                    <button type="button" class="case-prior-open-link" onclick="openCaseModal('${pc.id}')">Open record</button>
+                                </div>
+                            </div>`;
+                        }).join('');
+                    }
                 } else {
                     if (respPriorList) respPriorList.innerHTML = '';
+                    if (respPriorCards) respPriorCards.innerHTML = '';
                     if (respPriorTableWrap) respPriorTableWrap.style.display = 'none';
                     if (respPriorEmpty) respPriorEmpty.style.display = 'block';
                 }
             } else {
                 respPriorSection.style.display = 'none';
                 if (respPriorList) respPriorList.innerHTML = '';
+                if (respPriorCards) respPriorCards.innerHTML = '';
                 if (respPriorTableWrap) respPriorTableWrap.style.display = 'none';
                 if (respPriorEmpty) respPriorEmpty.style.display = 'none';
             }
@@ -5164,25 +5496,53 @@
 
         const settledLogsSection = document.getElementById('respondentSettledLogsSection');
         const settledLogsList = document.getElementById('respondentSettledLogsList');
+        const settledLogsCards = document.getElementById('respondentSettledLogsCards');
         const settledLogs = c.respondent_settled_incident_logs || [];
-        if (settledLogsSection && settledLogsList) {
+        if (settledLogsSection) {
             if (c.subject_name && settledLogs.length) {
                 settledLogsSection.style.display = 'block';
-                settledLogsList.innerHTML = settledLogs.map((log) => {
-                    const when = log.logged_at
-                        ? new Date(log.logged_at).toLocaleDateString()
-                        : '';
-                    return `
-                    <tr>
-                        <td>${escapeHtml(when)}</td>
-                        <td>${escapeHtml(log.unit_label || '—')}</td>
-                        <td>${escapeHtml(log.case_type_display || '—')}</td>
-                        <td>${escapeHtml(log.description || '—')}</td>
-                    </tr>`;
-                }).join('');
+                if (settledLogsList) {
+                    settledLogsList.innerHTML = settledLogs.map((log) => {
+                        const when = log.logged_at
+                            ? new Date(log.logged_at).toLocaleDateString()
+                            : '';
+                        return `
+                        <tr>
+                            <td>${escapeHtml(when)}</td>
+                            <td>${escapeHtml(log.unit_label || '—')}</td>
+                            <td>${escapeHtml(log.case_type_display || '—')}</td>
+                            <td>${escapeHtml(log.description || '—')}</td>
+                        </tr>`;
+                    }).join('');
+                }
+                if (settledLogsCards) {
+                    settledLogsCards.innerHTML = settledLogs.map((log) => {
+                        const when = log.logged_at
+                            ? new Date(log.logged_at).toLocaleDateString()
+                            : '';
+                        return `
+                        <div class="settled-log-mobile-card">
+                            <div class="settled-card-header">
+                                <span class="settled-card-date"><strong>${escapeHtml(when)}</strong></span>
+                                <span class="settled-card-unit">${escapeHtml(log.unit_label || '—')}</span>
+                            </div>
+                            <div class="settled-card-body">
+                                <div class="settled-card-row">
+                                    <span class="settled-card-label">Type:</span>
+                                    <span class="settled-card-value">${escapeHtml(log.case_type_display || '—')}</span>
+                                </div>
+                                <div class="settled-card-row">
+                                    <span class="settled-card-label">Description:</span>
+                                    <span class="settled-card-value settled-card-desc">${escapeHtml(log.description || '—')}</span>
+                                </div>
+                            </div>
+                        </div>`;
+                    }).join('');
+                }
             } else {
                 settledLogsSection.style.display = 'none';
-                settledLogsList.innerHTML = '';
+                if (settledLogsList) settledLogsList.innerHTML = '';
+                if (settledLogsCards) settledLogsCards.innerHTML = '';
             }
         }
 
