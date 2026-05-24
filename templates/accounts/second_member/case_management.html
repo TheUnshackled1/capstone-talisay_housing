@@ -542,9 +542,10 @@
     }
 
     .status-pill-flex--incident_log {
-        background: #f5f3ff;
-        color: #6d28d9;
-        border: 1px solid #ddd6fe;
+        background: #10b981;
+        color: #ffffff;
+        border: none;
+        font-weight: 700;
     }
 
     .cases-row--incident-log {
@@ -3164,7 +3165,7 @@
                    data-full-name="{{ case.complainant_name }}"
                    data-tx-id="{% if case.complainant_applicant %}APP-{{ case.complainant_applicant.id|slice:":8" }}...{% else %}{{ case.case_number }}{% endif %}"
                    data-ref-code="{{ case.complainant_applicant.reference_number|default:'' }}"
-                   data-barangay="{{ case.complainant_applicant.barangay.name|default:'Not specified' }}"
+                   data-barangay="{% if case.complainant_applicant and case.complainant_applicant.active_unit_label != 'Not specified' %}{{ case.complainant_applicant.active_unit_label }}{% elif case.related_unit %}Block {{ case.related_unit.block_number }}, Lot {{ case.related_unit.lot_number }}{% else %}Not specified{% endif %}"
                    data-dob="{{ case.complainant_applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}">{{ case.complainant_name }}</p>
                 <p class="cases-resolved-drawer-item-meta">
                     Filed {{ case.received_at|date:"M d, Y" }}
@@ -5042,7 +5043,7 @@
             <span class="complainant-ref-code" id="hcRef" style="font-family: monospace;">—</span>
         </div>
         <div class="hover-card-meta-row">
-            <span class="hover-card-label">Barangay</span>
+            <span class="hover-card-label">Block &amp; Lot</span>
             <span class="hover-card-value" id="hcBrgy">—</span>
         </div>
         <div class="hover-card-meta-row">

@@ -10,8 +10,9 @@
         var celIcon = document.getElementById('flowAlertCelebrationIcon');
         var progBar = document.getElementById('flowAlertProgressBar');
         var defaultBadge = document.getElementById('flowAlertSuccessBadge');
+        var warningBadge = document.getElementById('flowAlertWarningBadge');
         if (card) {
-            card.classList.remove('flow-alert-card--success', 'flow-alert-card--celebration');
+            card.classList.remove('flow-alert-card--success', 'flow-alert-card--celebration', 'flow-alert-card--warning');
         }
         if (refWrap) {
             refWrap.innerHTML = '';
@@ -20,6 +21,7 @@
         if (celIcon) celIcon.style.display = 'none';
         if (progBar) progBar.style.display = 'none';
         if (defaultBadge) defaultBadge.style.display = 'none';
+        if (warningBadge) warningBadge.style.display = 'none';
         if (global.flowAlertCountdownTimeout) {
             clearTimeout(global.flowAlertCountdownTimeout);
             global.flowAlertCountdownTimeout = null;
@@ -51,6 +53,7 @@
         var celIcon = document.getElementById('flowAlertCelebrationIcon');
         var progBar = document.getElementById('flowAlertProgressBar');
         var defaultBadge = document.getElementById('flowAlertSuccessBadge');
+        var warningBadge = document.getElementById('flowAlertWarningBadge');
 
         if (!modal || !titleEl || !messageEl) {
             global.alert(message);
@@ -65,10 +68,11 @@
         }
 
         if (card) {
-            card.classList.remove('flow-alert-card--success', 'flow-alert-card--celebration');
+            card.classList.remove('flow-alert-card--success', 'flow-alert-card--celebration', 'flow-alert-card--warning');
         }
 
         var isCelebration = (variant === 'success' || variant === 'proceed_success');
+        var isWarning = (variant === 'warning');
 
         if (isCelebration) {
             if (card) {
@@ -77,6 +81,12 @@
             }
             if (celIcon) celIcon.style.display = 'flex';
             if (defaultBadge) defaultBadge.style.display = 'none';
+            if (warningBadge) warningBadge.style.display = 'none';
+        } else if (isWarning) {
+            if (card) card.classList.add('flow-alert-card--warning');
+            if (warningBadge) warningBadge.style.display = 'flex';
+            if (defaultBadge) defaultBadge.style.display = 'none';
+            if (celIcon) celIcon.style.display = 'none';
         } else {
             if (variant === 'success' && card) {
                 card.classList.add('flow-alert-card--success');
@@ -84,6 +94,7 @@
             if (defaultBadge) {
                 defaultBadge.style.display = (variant === 'success') ? 'flex' : 'none';
             }
+            if (warningBadge) warningBadge.style.display = 'none';
             if (celIcon) celIcon.style.display = 'none';
         }
 

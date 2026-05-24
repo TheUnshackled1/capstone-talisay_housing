@@ -9,6 +9,72 @@
 
 {% block extra_css %}
 <style>
+    .table-pagination {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        padding: 0.75rem 1.2rem;
+        flex-wrap: wrap;
+        border-top: 1px solid #e2e8f0;
+        background: #fafafa;
+    }
+
+    .table-pagination-info {
+        font-size: 0.6875rem;
+        color: #64748b;
+        font-weight: 500;
+    }
+
+    .table-pagination-controls {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+    }
+
+    .btn-page {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        border: none;
+        border-radius: 0.4rem;
+        background: linear-gradient(135deg, #047857 0%, #10b981 100%);
+        color: #ffffff;
+        font-size: 0.67rem;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        padding: 0.3rem 0.75rem;
+        cursor: pointer;
+        box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+        transition: all 0.15s ease;
+    }
+
+    .btn-page:hover:not(:disabled) {
+        background: linear-gradient(135deg, #065f46 0%, #059669 100%);
+        box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);
+        transform: translateY(-1px);
+    }
+
+    .btn-page:disabled,
+    .btn-page.is-disabled {
+        background: #e2e8f0;
+        color: #94a3b8;
+        box-shadow: none;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .page-indicator {
+        font-size: 0.67rem;
+        font-weight: 700;
+        color: #047857;
+        background: #ecfdf5;
+        border: 1px solid #a7f3d0;
+        border-radius: 0.4rem;
+        padding: 0.28rem 0.65rem;
+        letter-spacing: 0.02em;
+    }
+
     /* ===================================================================
        Case Management (Module 5) — Monitoring-style layout
        =================================================================== */
@@ -511,9 +577,10 @@
     }
 
     .status-pill-flex--incident_log {
-        background: #f5f3ff;
-        color: #6d28d9;
-        border: 1px solid #ddd6fe;
+        background: #10b981;
+        color: #ffffff;
+        border: none;
+        font-weight: 700;
     }
 
     .cases-row--incident-log {
@@ -4507,7 +4574,7 @@
                    data-full-name="{{ case.complainant_name }}"
                    data-tx-id="{% if case.complainant_applicant %}APP-{{ case.complainant_applicant.id|slice:":8" }}...{% else %}{{ case.case_number }}{% endif %}"
                    data-ref-code="{{ case.complainant_applicant.reference_number|default:'' }}"
-                   data-barangay="{{ case.complainant_applicant.barangay.name|default:'Not specified' }}"
+                   data-barangay="{% if case.complainant_applicant and case.complainant_applicant.active_unit_label != 'Not specified' %}{{ case.complainant_applicant.active_unit_label }}{% elif case.related_unit %}Block {{ case.related_unit.block_number }}, Lot {{ case.related_unit.lot_number }}{% else %}Not specified{% endif %}"
                    data-dob="{{ case.complainant_applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}">{{ case.complainant_name }}</p>
                 <p class="cases-resolved-drawer-item-meta">
                     Filed {{ case.received_at|date:"M d, Y" }}
@@ -4590,15 +4657,25 @@
                             <th>Action</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="caseDeskTableBody">
                         {% include "accounts/includes/case_desk_unified_tbody.html" with show_time_ago=False can_delete_incident_logs=can_delete_incident_logs %}
                     </tbody>
                 </table>
             </div>
 
             <!-- Responsive Mobile Card View (cases + incident logs via desk_rows) -->
-            <div class="mobile-cards-view mobile-cases-cards">
+            <div class="mobile-cards-view mobile-cases-cards" id="caseDeskMobileCards">
                 {% include "accounts/includes/case_desk_mobile_cards.html" with can_delete_incident_logs=can_delete_incident_logs %}
+            </div>
+            <div class="table-pagination" id="caseDeskPagination">
+                <div class="table-pagination-info" id="caseDeskPaginationInfo">
+                    Showing 1-{{ desk_rows|length }} of {{ desk_rows|length }}
+                </div>
+                <div class="table-pagination-controls">
+                    <button type="button" class="btn-page is-disabled" id="caseDeskPrevBtn" disabled>Prev</button>
+                    <span class="page-indicator" id="caseDeskPageIndicator">Page 1 of 1</span>
+                    <button type="button" class="btn-page is-disabled" id="caseDeskNextBtn" disabled>Next</button>
+                </div>
             </div>
     </div>
 </div>
@@ -5852,7 +5929,7 @@
 
     function addCaseSettlementPendingFile(file) {
         if (caseSettlementPendingFiles.length >= CASE_SETTLEMENT_MAX_PHOTOS) {
-            alert('Maximum 4 evidence photos.');
+            casePhotoLimitAlert();
             return;
         }
         const maxBytes = 6 * 1024 * 1024;
@@ -6041,7 +6118,7 @@
 
     function addNewCasePendingFile(file) {
         if (newCaseEvidencePendingFiles.length >= CASE_SETTLEMENT_MAX_PHOTOS) {
-            alert('Maximum 4 evidence photos.');
+            casePhotoLimitAlert();
             return;
         }
         const maxBytes = 6 * 1024 * 1024;
@@ -7052,13 +7129,23 @@
     }
 
     function caseFlowAlert(message, title, variant, onConfirm) {
-        const tone = variant === 'success' ? 'success' : 'default';
+        var tone = 'default';
+        if (variant === 'success') tone = 'success';
+        else if (variant === 'warning') tone = 'warning';
         if (typeof showFlowAlert === 'function') {
             showFlowAlert(message || '', title || 'Notice', onConfirm || null, tone);
             return;
         }
         alert(message || '');
         if (typeof onConfirm === 'function') onConfirm();
+    }
+
+    function casePhotoLimitAlert() {
+        caseFlowAlert(
+            'Maximum 4 evidence photos.\n\nRemove one before adding another.',
+            'Photo limit reached',
+            'warning'
+        );
     }
 
     function showCaseRecordedSuccess(casePayload, fallbackMessage) {
@@ -7089,6 +7176,17 @@
     document.addEventListener('DOMContentLoaded', () => {
         loadCasePageDeepLinks();
         bindNewCaseEvidenceControls();
+        if (typeof initListPagination === 'function') {
+            initListPagination({
+                pageSize: 5,
+                rowSelector: '#caseDeskTableBody > tr',
+                cardSelector: '#caseDeskMobileCards .m-case-card',
+                infoEl: 'caseDeskPaginationInfo',
+                prevBtn: 'caseDeskPrevBtn',
+                nextBtn: 'caseDeskNextBtn',
+                pageIndicator: 'caseDeskPageIndicator'
+            });
+        }
 
         // Premium Hover Card popover initialization
         const hoverCard = document.getElementById('applicantHoverCard');
@@ -7243,7 +7341,7 @@
             <span class="complainant-ref-code" id="hcRef" style="font-family: monospace;">—</span>
         </div>
         <div class="hover-card-meta-row">
-            <span class="hover-card-label">Barangay</span>
+            <span class="hover-card-label">Block &amp; Lot</span>
             <span class="hover-card-value" id="hcBrgy">—</span>
         </div>
         <div class="hover-card-meta-row">

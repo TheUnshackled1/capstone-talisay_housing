@@ -2223,7 +2223,7 @@
                             <th>Action</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="fieldPendingTableBody">
                         {% for cert in pending_verifications %}
                         <tr class="scroll-animate {% cycle "scroll-delay-1" "scroll-delay-2" "scroll-delay-3" "scroll-delay-4" %}">
                             <td>{{ forloop.counter }}</td>
@@ -2285,7 +2285,7 @@
             </div>
 
             <!-- Responsive Mobile Card View (Option 2 — Tables-to-Cards Pattern) -->
-            <div class="mobile-cards-view">
+            <div id="fieldPendingMobileCards" class="mobile-cards-view">
                 {% for cert in pending_verifications %}
                 <article class="mobile-verification-card">
                     <div class="m-card-header">
@@ -2345,14 +2345,14 @@
                 </article>
                 {% endfor %}
             </div>
-            <div class="table-pagination">
-                <div class="table-pagination-info">
+            <div class="table-pagination" id="fieldPendingPagination">
+                <div class="table-pagination-info" id="fieldPendingPaginationInfo">
                     Showing 1-{{ pending_verifications|length }} of {{ pending_verifications|length }}
                 </div>
                 <div class="table-pagination-controls">
-                    <button type="button" class="btn-page is-disabled" disabled>Prev</button>
-                    <span class="page-indicator">Page 1 of 1</span>
-                    <button type="button" class="btn-page is-disabled" disabled>Next</button>
+                    <button type="button" class="btn-page is-disabled" id="fieldPendingPrevBtn" disabled>Prev</button>
+                    <span class="page-indicator" id="fieldPendingPageIndicator">Page 1 of 1</span>
+                    <button type="button" class="btn-page is-disabled" id="fieldPendingNextBtn" disabled>Next</button>
                 </div>
             </div>
             {% else %}
@@ -2548,6 +2548,17 @@
         document.addEventListener('DOMContentLoaded', function() {
             initScrollAnimations();
             initFieldKpiCards();
+            if (typeof initListPagination === 'function') {
+                initListPagination({
+                    pageSize: 5,
+                    rowSelector: '#fieldPendingTableBody > tr',
+                    cardSelector: '#fieldPendingMobileCards .mobile-verification-card',
+                    infoEl: 'fieldPendingPaginationInfo',
+                    prevBtn: 'fieldPendingPrevBtn',
+                    nextBtn: 'fieldPendingNextBtn',
+                    pageIndicator: 'fieldPendingPageIndicator'
+                });
+            }
             const startBtn = document.getElementById('fieldCameraStartBtn');
             const capBtn = document.getElementById('fieldCameraCaptureBtn');
             const stopBtn = document.getElementById('fieldCameraStopBtn');
@@ -2765,7 +2776,7 @@
                 return;
             }
             if (fieldEvidenceFiles.length >= 4) {
-                fieldNotify('Maximum 4 evidence photos.', 'Photo limit reached');
+                fieldNotify('Maximum 4 evidence photos.', 'Photo limit reached', 'warning');
                 return;
             }
             c.width = v.videoWidth;
@@ -2780,7 +2791,7 @@
 
         function addFieldEvidenceFile(file) {
             if (fieldEvidenceFiles.length >= 4) {
-                fieldNotify('Maximum 4 evidence photos.', 'Photo limit reached');
+                fieldNotify('Maximum 4 evidence photos.', 'Photo limit reached', 'warning');
                 return;
             }
             const maxBytes = 6 * 1024 * 1024;

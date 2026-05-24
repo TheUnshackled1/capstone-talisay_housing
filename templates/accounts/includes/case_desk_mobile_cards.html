@@ -15,7 +15,7 @@
             data-full-name="{{ case.complainant_name }}"
             data-tx-id="{% if case.complainant_applicant %}APP-{{ case.complainant_applicant.id|slice:":8" }}...{% else %}{{ case.case_number }}{% endif %}"
             data-ref-code="{{ case.complainant_applicant.reference_number|default:'' }}"
-            data-barangay="{{ case.complainant_applicant.barangay.name|default:'Not specified' }}"
+            data-barangay="{% if case.complainant_applicant and case.complainant_applicant.active_unit_label != 'Not specified' %}{{ case.complainant_applicant.active_unit_label }}{% elif case.related_unit %}Block {{ case.related_unit.block_number }}, Lot {{ case.related_unit.lot_number }}{% else %}Not specified{% endif %}"
             data-dob="{{ case.complainant_applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}">
             {{ case.complainant_name }}
         </h4>
@@ -24,10 +24,14 @@
             <span class="m-card-meta-label">Reported Party:</span>
             <span class="m-card-meta-value m-respondent-value">
                 {% if case.subject_applicant %}
-                <span class="respondent-name-cell" title="{{ case.subject_applicant.full_name }}">{{ case.subject_applicant.full_name }}</span>
-                {% if case.subject_applicant.reference_number %}
-                <span class="respondent-ref-code" title="{{ case.subject_applicant.reference_number }}">{{ case.subject_applicant.reference_number }}</span>
-                {% endif %}
+                <span class="respondent-name-cell applicant-name"
+                      style="cursor: pointer; font-weight: 700; color: #1e3a8a;"
+                      data-full-name="{{ case.subject_applicant.full_name }}"
+                      data-tx-id="APP-{{ case.subject_applicant.id|slice:":8" }}..."
+                      data-ref-code="{{ case.subject_applicant.reference_number|default:'' }}"
+                      data-barangay="{% if case.subject_applicant and case.subject_applicant.active_unit_label != 'Not specified' %}{{ case.subject_applicant.active_unit_label }}{% elif case.related_unit %}Block {{ case.related_unit.block_number }}, Lot {{ case.related_unit.lot_number }}{% else %}Not specified{% endif %}"
+                      data-dob="{{ case.subject_applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}"
+                      title="{{ case.subject_applicant.full_name }}">{{ case.subject_applicant.full_name }}</span>
                 {% elif case.subject_name %}
                 <span class="respondent-name-cell" title="{{ case.subject_name }}">{{ case.subject_name }}</span>
                 {% else %}
@@ -80,7 +84,15 @@
     </div>
 
     <div class="m-card-body">
-        <h4 class="m-card-title" style="font-weight: 700; color: #6d28d9; text-align: center;">
+        <h4 class="m-card-title{% if log.complainant_applicant %} applicant-name{% endif %}" 
+            style="font-weight: 700; color: #6d28d9; text-align: center;{% if log.complainant_applicant %} cursor: pointer;{% endif %}"
+            {% if log.complainant_applicant %}
+            data-full-name="{{ row.incident_complainant_name }}"
+            data-tx-id="APP-{{ log.complainant_applicant.id|slice:":8" }}..."
+            data-ref-code="{{ log.complainant_applicant.reference_number|default:'' }}"
+            data-barangay="{% if log.complainant_applicant.active_unit_label != 'Not specified' %}{{ log.complainant_applicant.active_unit_label }}{% elif log.related_unit %}Block {{ log.related_unit.block_number }}, Lot {{ log.related_unit.lot_number }}{% else %}Not specified{% endif %}"
+            data-dob="{{ log.complainant_applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}"
+            {% endif %}>
             {{ row.incident_complainant_name|default:"—" }}
         </h4>
         <p class="m-card-incident-desc" title="{{ log.description }}">{{ log.description }}</p>
@@ -88,11 +100,17 @@
         <div class="m-card-meta-row">
             <span class="m-card-meta-label">Reported Party:</span>
             <span class="m-card-meta-value m-respondent-value">
-                {% if row.incident_respondent_name %}
-                <span class="respondent-name-cell">{{ row.incident_respondent_name }}</span>
-                {% if row.incident_unit_label %}
-                <span class="respondent-ref-code">{{ row.incident_unit_label }}</span>
-                {% endif %}
+                {% if log.subject_applicant %}
+                <span class="respondent-name-cell applicant-name"
+                      style="cursor: pointer; font-weight: 700; color: #1e3a8a;"
+                      data-full-name="{{ row.incident_respondent_name }}"
+                      data-tx-id="APP-{{ log.subject_applicant.id|slice:":8" }}..."
+                      data-ref-code="{{ log.subject_applicant.reference_number|default:'' }}"
+                      data-barangay="{% if log.subject_applicant.active_unit_label != 'Not specified' %}{{ log.subject_applicant.active_unit_label }}{% elif log.related_unit %}Block {{ log.related_unit.block_number }}, Lot {{ log.related_unit.lot_number }}{% else %}Not specified{% endif %}"
+                      data-dob="{{ log.subject_applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}"
+                      title="{{ row.incident_respondent_name }}">{{ row.incident_respondent_name }}</span>
+                {% elif row.incident_respondent_name %}
+                <span class="respondent-name-cell" title="{{ row.incident_respondent_name }}">{{ row.incident_respondent_name }}</span>
                 {% else %}
                 <span class="respondent-name-cell is-empty">—</span>
                 {% endif %}

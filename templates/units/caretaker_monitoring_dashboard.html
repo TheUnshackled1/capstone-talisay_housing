@@ -2997,14 +2997,14 @@
         </article>
         {% endfor %}
     </div>
-      <div class="table-pagination">
-          <div class="table-pagination-info">
+      <div class="table-pagination" id="monitoringTasksPagination">
+          <div class="table-pagination-info" id="monitoringTasksPaginationInfo">
               Showing 1-{{ tasks|length }} of {{ tasks|length }}
           </div>
           <div class="table-pagination-controls">
-              <button type="button" class="btn-page is-disabled" disabled>Prev</button>
-              <span class="page-indicator">Page 1 of 1</span>
-              <button type="button" class="btn-page is-disabled" disabled>Next</button>
+              <button type="button" class="btn-page is-disabled" id="monitoringTasksPrevBtn" disabled>Prev</button>
+              <span class="page-indicator" id="monitoringTasksPageIndicator">Page 1 of 1</span>
+              <button type="button" class="btn-page is-disabled" id="monitoringTasksNextBtn" disabled>Next</button>
           </div>
       </div>
 {% else %}
@@ -3613,6 +3613,18 @@ function submitReport(event) {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
+    if (typeof initListPagination === 'function') {
+        initListPagination({
+            pageSize: 5,
+            rowSelector: '#tasksTableBody > tr',
+            cardSelector: '.mobile-tasks-cards .mobile-verification-card',
+            infoEl: 'monitoringTasksPaginationInfo',
+            prevBtn: 'monitoringTasksPrevBtn',
+            nextBtn: 'monitoringTasksNextBtn',
+            pageIndicator: 'monitoringTasksPageIndicator'
+        });
+    }
+
     const reportModalEl = document.getElementById('reportModal');
     if (reportModalEl) {
         reportModalEl.addEventListener('click', function (event) {

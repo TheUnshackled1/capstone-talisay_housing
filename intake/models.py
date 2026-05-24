@@ -416,6 +416,27 @@ class Applicant(models.Model):
         actual_count = self.household_members.count() + 1
         # Return declared size if larger (members not yet added individually)
         return max(actual_count, self.household_size or 1)
+
+    @property
+    def active_unit(self):
+        try:
+            if hasattr(self, 'application') and self.application:
+                award = self.application.lot_awards.filter(status='active').first()
+                if award:
+                    return award.unit
+        except Exception:
+            pass
+        return None
+
+    @property
+    def active_unit_label(self):
+        unit = self.active_unit
+        if unit:
+            block = getattr(unit, 'block_number', '')
+            lot = getattr(unit, 'lot_number', '')
+            if block and lot:
+                return f"Block {block}, Lot {lot}"
+        return "Not specified"
     
 class HouseholdMember(models.Model):
     """
