@@ -1367,6 +1367,28 @@
         display: grid;
         grid-template-columns: 1.1fr 1.4fr 1.3fr;
         gap: 0.75rem;
+     }
+
+    .settled-incident-grid-custom {
+        grid-template-columns: 1fr 2fr !important;
+    }
+    
+    .settled-incident-right-cols {
+        grid-column: 2;
+        display: flex;
+        flex-direction: row;
+        gap: 0.75rem;
+        align-items: stretch;
+    }
+
+    @media (max-width: 900px) {
+        .settled-incident-grid-custom {
+            grid-template-columns: 1fr !important;
+        }
+        .settled-incident-right-cols {
+            grid-column: 1;
+            flex-direction: column;
+        }
     }
 
     .tha-case-view-modal--monitor .case-monitor-col-left,
@@ -3275,7 +3297,7 @@
                 <p id="settledIncidentLoggedMeta" class="case-monitor-filed-line">Logged: —</p>
             </div>
 
-            <div class="case-monitor-grid">
+            <div class="case-monitor-grid settled-incident-grid-custom">
                 <div class="case-monitor-col-left">
                     <!-- Recorded by Card -->
                     <article class="case-monitor-card">
@@ -3289,25 +3311,7 @@
                         </div>
                     </article>
 
-                    <!-- Reported Party Card -->
-                    <article class="case-monitor-card case-monitor-card--respondent">
-                        <h3 class="case-monitor-card-title">Reported Party</h3>
-                        <p id="settledIncidentSubjectName" class="case-monitor-person-name case-monitor-person-name--respondent">—</p>
-                    </article>
-                </div>
-
-                <!-- Complainant Card -->
-                <article class="case-monitor-card case-monitor-card--complainant">
-                    <h3 class="case-monitor-card-title">Complainant</h3>
-                    <p id="settledIncidentComplainantName" class="case-monitor-person-name applicant-name">—</p>
-                    <dl class="case-monitor-facts">
-                        <div class="case-monitor-facts-wide"><dt>Block &amp; lot</dt><dd id="settledIncidentComplainantUnit">—</dd></div>
-                    </dl>
-                </article>
-
-                <div class="case-monitor-col-right">
                     <!-- Incident Card -->
-
                     <article class="case-monitor-card case-monitor-card--incident">
                         <h3 class="case-monitor-card-title">Incident</h3>
                         <div class="case-monitor-incident-type">
@@ -3317,6 +3321,27 @@
                         <div class="case-monitor-incident-desc" style="margin-top: 0.5rem;">
                             <span class="case-detail-label">Description</span>
                             <p id="settledIncidentDescription" class="case-monitor-description">—</p>
+                        </div>
+                    </article>
+                </div>
+
+                <div class="settled-incident-right-cols">
+                    <!-- Complainant Card -->
+                    <article class="case-monitor-card case-monitor-card--complainant" style="flex: 1; margin: 0; display: flex; flex-direction: column;">
+                        <h3 class="case-monitor-card-title">Complainant</h3>
+                        <div style="flex: 1;">
+                            <p id="settledIncidentComplainantName" class="case-monitor-person-name applicant-name" style="margin-bottom: 0.75rem;">—</p>
+                            <dl class="case-monitor-facts">
+                                <div class="case-monitor-facts-wide"><dt>Block &amp; lot</dt><dd id="settledIncidentComplainantUnit">—</dd></div>
+                            </dl>
+                        </div>
+                    </article>
+
+                    <!-- Reported Party Card -->
+                    <article class="case-monitor-card case-monitor-card--respondent" style="flex: 1; margin: 0; display: flex; flex-direction: column;">
+                        <h3 class="case-monitor-card-title">Reported Party</h3>
+                        <div style="flex: 1;">
+                            <p id="settledIncidentSubjectName" class="case-monitor-person-name case-monitor-person-name--respondent">—</p>
                         </div>
                     </article>
                 </div>
