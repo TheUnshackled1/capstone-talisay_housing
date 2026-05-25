@@ -3364,7 +3364,7 @@
         </div>
         <div class="monitoring-kpi-text">
             <h4>Pending Review</h4>
-            <div class="monitoring-kpi-number">{{ status_counts.pending_review }}</div>
+            <div class="monitoring-kpi-number" id="caseDeskKpiPending">{{ status_counts.pending_review }}</div>
         </div>
     </div>
 
@@ -3377,7 +3377,7 @@
         </div>
         <div class="monitoring-kpi-text">
             <h4>Settled on-site</h4>
-            <div class="monitoring-kpi-number">{{ settled_on_site_count }}</div>
+            <div class="monitoring-kpi-number" id="caseDeskKpiSettled">{{ settled_on_site_count }}</div>
         </div>
     </button>
 
@@ -3391,7 +3391,7 @@
         </div>
         <div class="monitoring-kpi-text">
             <h4>Resolved</h4>
-            <div class="monitoring-kpi-number">{{ status_counts.resolved }}</div>
+            <div class="monitoring-kpi-number" id="caseDeskKpiResolved">{{ status_counts.resolved }}</div>
         </div>
     </button>
 </div>
@@ -3402,33 +3402,13 @@
         <div class="cases-resolved-drawer-head">
             <div>
                 <h2 id="resolvedCasesDrawerTitle">Resolved cases</h2>
-                <p>{{ status_counts.resolved }} case{{ status_counts.resolved|pluralize }} marked resolved</p>
+                <p id="caseDeskResolvedDrawerSubtitle">{{ status_counts.resolved }} case{{ status_counts.resolved|pluralize }} marked resolved</p>
             </div>
             <button type="button" class="cases-resolved-drawer-close" onclick="closeResolvedCasesDrawer()"
                 aria-label="Close">&times;</button>
         </div>
-        <div class="cases-resolved-drawer-scroll">
-            {% for case in resolved_cases %}
-            <button type="button" class="cases-resolved-drawer-item"
-                onclick="openCaseFromResolvedDrawer('{{ case.id }}')">
-                <div class="cases-resolved-drawer-item-top">
-                    <strong>{{ case.case_number }}</strong>
-                    <span class="case-type-pill">{{ case.get_case_type_display }}</span>
-                </div>
-                <p class="cases-resolved-drawer-item-name">{{ case.complainant_name }}</p>
-                <p class="cases-resolved-drawer-item-meta">
-                    Reported party:
-                    {% if case.subject_applicant %}{{ case.subject_applicant.full_name }}{% elif case.subject_name %}{{ case.subject_name }}{% else %}—{% endif %}
-                </p>
-                <p class="cases-resolved-drawer-item-meta">
-                    Filed {{ case.received_at|date:"M d, Y" }} · {{ case.received_at|time:"g:i A" }}
-                    {% if case.resolved_at %} · Resolved {{ case.resolved_at|date:"M d, Y" }}{% endif %}
-                </p>
-                <p class="cases-resolved-drawer-item-meta" style="margin-top:0.25rem;font-weight:600;color:#047857;">View case →</p>
-            </button>
-            {% empty %}
-            <p class="cases-resolved-drawer-empty">No resolved cases yet.</p>
-            {% endfor %}
+        <div class="cases-resolved-drawer-scroll" id="caseDeskResolvedDrawerScroll">
+            {% include "accounts/includes/case_desk_resolved_drawer_inner.html" %}
         </div>
     </div>
 </div>
@@ -3439,44 +3419,13 @@
         <div class="cases-resolved-drawer-head cases-settled-drawer-head">
             <div>
                 <h2 id="settledIncidentsDrawerTitle">Settled on-site</h2>
-                <p>{{ settled_on_site_count }} incident log{{ settled_on_site_count|pluralize }} — handled without a formal case</p>
+                <p id="caseDeskSettledDrawerSubtitle">{{ settled_on_site_count }} incident log{{ settled_on_site_count|pluralize }} — handled without a formal case</p>
             </div>
             <button type="button" class="cases-resolved-drawer-close" onclick="closeSettledIncidentsDrawer()"
                 aria-label="Close">&times;</button>
         </div>
-        <div class="cases-resolved-drawer-scroll">
-            {% for row in settled_incident_rows %}
-            {% with log=row.incident_log %}
-            <article class="cases-settled-drawer-item">
-                <div class="cases-resolved-drawer-item-top">
-                    <span class="case-record-kind-pill case-record-kind-pill--incident">Incident log</span>
-                    <span class="case-type-pill">{{ log.get_case_type_display }}</span>
-                </div>
-                <p class="cases-resolved-drawer-item-name">{{ row.incident_complainant_name|default:"—" }}</p>
-                <p class="cases-resolved-drawer-item-meta">
-                    Reported party:
-                    {% if row.incident_respondent_name %}{{ row.incident_respondent_name }}{% else %}—{% endif %}
-                    {% if row.incident_unit_label %} · {{ row.incident_unit_label }}{% endif %}
-                </p>
-                <p class="cases-resolved-drawer-item-meta">
-                    Logged {{ log.logged_at|date:"M d, Y" }} · {{ log.logged_at|time:"g:i A" }}
-                </p>
-                <div class="cases-settled-drawer-item-actions">
-                    <button type="button" class="case-prior-open-link"
-                        onclick="viewSettledIncidentLog(this)"
-                        data-unit-label="{{ row.incident_unit_label|escape }}"
-                        data-complainant-name="{{ row.incident_complainant_name|escape }}"
-                        data-respondent-name="{{ row.incident_respondent_name|escape }}"
-                        data-case-type-display="{{ log.get_case_type_display|escape }}"
-                        data-description="{{ log.description|escape }}"
-                        data-logged-at="{{ log.logged_at|date:'M d, Y' }} · {{ log.logged_at|time:'g:i A' }}"
-                        data-logged-by="{{ log.logged_by.get_full_name|default:'Field'|escape }}">View</button>
-                </div>
-            </article>
-            {% endwith %}
-            {% empty %}
-            <p class="cases-resolved-drawer-empty">No on-site settled incidents logged yet.</p>
-            {% endfor %}
+        <div class="cases-resolved-drawer-scroll" id="caseDeskSettledDrawerScroll">
+            {% include "accounts/includes/case_desk_settled_drawer_inner.html" with can_delete_incident_logs=False %}
         </div>
     </div>
 </div>
@@ -3494,7 +3443,7 @@
                 </svg>
                 <div>
                     <p>Total List</p>
-                    <p>{{ desk_rows|length }}</p>
+                    <p id="caseDeskTotalCount">{{ desk_rows|length }}</p>
                 </div>
             </div>
 
@@ -3541,7 +3490,7 @@
                             <th>Action</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="caseDeskTableBody">
                         {% include "accounts/includes/case_desk_unified_tbody.html" with show_time_ago=True can_delete_incident_logs=False %}
                     </tbody>
                 </table>
@@ -3943,6 +3892,14 @@
 {{ prefill_beneficiary|json_script:"prefill-beneficiary" }}
 {% endif %}
 
+<script src="{% static 'js/case-desk-sync.js' %}"></script>
+<script>
+    window.CASE_DESK_SYNC = {
+        position: '{{ case_position }}',
+        pollMs: 6000,
+        initialVersion: '{{ desk_feed_version }}',
+    };
+</script>
 <!-- JavaScript -->
 <script>
     const CASE_POSITION = '{{ case_position }}';
@@ -5055,7 +5012,9 @@
         const message = caseNumber
             ? `Case ${caseNumber} was saved.\nStatus: ${statusText}.\n\nThe field desk will open this record for site monitoring and settlement photographs.`
             : `The complaint was saved.\nStatus: ${statusText}.\n\nThe field desk will open this record for site monitoring and settlement photographs.`;
-        caseFlowAlert(message, 'Case recorded', 'success', () => location.reload());
+        caseFlowAlert(message, 'Case recorded', 'success', () => {
+            if (window.CaseDeskSync) window.CaseDeskSync.notifyChange();
+        });
         const refWrap = document.getElementById('flowAlertRefWrap');
         if (refWrap && caseNumber) {
             refWrap.innerHTML = '';

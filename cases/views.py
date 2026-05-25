@@ -4,8 +4,10 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods, require_POST
 from django.http import JsonResponse
 from django.db import models
+from django.template.loader import render_to_string
 from django.utils import timezone
 from functools import wraps
+import hashlib
 import json
 import re
 from urllib.parse import urlencode
@@ -21,8 +23,10 @@ def cases_page_url(position, **query):
     """Canonical Module 5 page URL for a staff position (accounts routes or legacy /cases/)."""
     if position in FIELD_DESK_POSITIONS:
         base = reverse('accounts:field_cases')
-    elif position in ('second_member', 'fourth_member'):
+    elif position == 'second_member':
         base = reverse('accounts:second_member_cases')
+    elif position == 'fourth_member':
+        base = reverse('accounts:fourth_member_cases')
     else:
         base = reverse('cases:case_dashboard', kwargs={'position': position})
     params = {k: v for k, v in query.items() if v}
@@ -79,24 +83,14 @@ def verify_position(view_func):
 # CASE MANAGEMENT - Module 5
 # ===================================================================
 
-@login_required
-@require_http_methods(["GET"])
-@verify_position
-def case_management_dashboard(request, position):
-    """
-    Case Management Dashboard
-    Displays all cases with search, filtering, and status tracking
-
-    URL Route: /cases/<position>/
-
-    Actors: All staff
-    Purpose: Track complaints, disputes, and case resolutions
-    """
-
-    # Get all cases with related data
+def _case_management_list_context(request, position):
+    """Shared list/KPI context for case desk page and live desk-feed API."""
     cases = (
         Case.objects
-        .select_related('received_by', 'investigated_by', 'decided_by', 'complainant_applicant', 'subject_applicant', 'related_unit')
+        .select_related(
+            'received_by', 'investigated_by', 'decided_by',
+            'complainant_applicant', 'subject_applicant', 'related_unit',
+        )
         .order_by('received_at')
     )
 
@@ -110,7 +104,6 @@ def case_management_dashboard(request, position):
         'closed': cases.filter(status=wf.STATUS_CLOSED).count(),
     }
 
-    # Search and filter
     search_query = request.GET.get('q', '').strip()
     filter_status = request.GET.get('status', 'all')
     filter_type = request.GET.get('type', 'all')
@@ -129,18 +122,6 @@ def case_management_dashboard(request, position):
     if filter_type != 'all':
         cases = cases.filter(case_type=filter_type)
 
-    open_new_case = request.GET.get('new_case', '').strip() in ('1', 'true', 'yes')
-    open_case_id = request.GET.get('case_id', '').strip()
-
-    if request.GET.get('tab') == 'incident-log':
-        params = request.GET.copy()
-        params.pop('tab', None)
-        if filter_status != 'all':
-            params['status'] = 'all'
-        query = params.urlencode()
-        url = request.path + (f'?{query}' if query else '')
-        return redirect(url)
-
     is_field_desk = position in FIELD_DESK_POSITIONS
     use_split_case_desk = (
         position in FIELD_DESK_POSITIONS
@@ -150,7 +131,6 @@ def case_management_dashboard(request, position):
     settled_on_site_count = 0
 
     if use_split_case_desk:
-        # Main table: active cases only (exclude resolved + incident logs).
         desk_cases = cases.exclude(status=wf.STATUS_RESOLVED)
         desk_rows = _build_case_desk_rows(
             desk_cases,
@@ -198,7 +178,63 @@ def case_management_dashboard(request, position):
                 filter_type,
             ).order_by('-resolved_at', '-received_at')
 
-    can_delete_incident_logs = position in wf.FIELD_DESK_POSITIONS
+    return {
+        'cases': cases,
+        'resolved_cases': resolved_cases,
+        'status_counts': status_counts,
+        'search_query': search_query,
+        'filter_status': filter_status,
+        'filter_type': filter_type,
+        'desk_rows': desk_rows,
+        'can_delete_incident_logs': position in wf.FIELD_DESK_POSITIONS,
+        'is_field_desk': is_field_desk,
+        'use_split_case_desk': use_split_case_desk,
+        'settled_incident_rows': settled_incident_rows,
+        'settled_on_site_count': settled_on_site_count,
+    }
+
+
+def _case_desk_feed_version(list_ctx):
+    tokens = []
+    for row in list_ctx['desk_rows']:
+        if row['kind'] == 'case':
+            case = row['case']
+            ts = case.updated_at or case.received_at
+            tokens.append(f"c{case.pk}:{int(ts.timestamp())}")
+        else:
+            log = row['incident_log']
+            tokens.append(f"i{log.pk}:{int(log.logged_at.timestamp())}")
+    tokens.append(f"r{list_ctx['resolved_cases'].count()}")
+    tokens.append(f"s{list_ctx.get('settled_on_site_count', 0)}")
+    sc = list_ctx['status_counts']
+    tokens.append(f"p{sc['pending_review']}:v{sc['resolved']}")
+    digest = hashlib.sha256('|'.join(tokens).encode()).hexdigest()
+    return digest[:16]
+
+
+@login_required
+@require_http_methods(["GET"])
+@verify_position
+def case_management_dashboard(request, position):
+    """
+    Case Management Dashboard
+    Displays all cases with search, filtering, and status tracking
+
+    URL Route: /cases/<position>/
+
+    Actors: All staff
+    Purpose: Track complaints, disputes, and case resolutions
+    """
+    if request.GET.get('tab') == 'incident-log':
+        params = request.GET.copy()
+        params.pop('tab', None)
+        if params.get('status', 'all') != 'all':
+            params['status'] = 'all'
+        query = params.urlencode()
+        url = request.path + (f'?{query}' if query else '')
+        return redirect(url)
+
+    list_ctx = _case_management_list_context(request, position)
 
     prefill_beneficiary = None
     prefill_applicant_id = request.GET.get('applicant_id', '').strip()
@@ -221,29 +257,63 @@ def case_management_dashboard(request, position):
     template_name = case_templates.get(position, 'accounts/second_member/case_management.html')
 
     context = {
-        'cases': cases,
-        'resolved_cases': resolved_cases,
-        'status_counts': status_counts,
-        'search_query': search_query,
-        'filter_status': filter_status,
-        'filter_type': filter_type,
+        **list_ctx,
         'case_type_choices': Case.CASE_TYPE_CHOICES,
-        'open_new_case': open_new_case,
-        'open_case_id': open_case_id,
+        'open_new_case': request.GET.get('new_case', '').strip() in ('1', 'true', 'yes'),
+        'open_case_id': request.GET.get('case_id', '').strip(),
         'prefill_beneficiary': prefill_beneficiary,
         'case_position': position,
         'case_desk_mode': wf.case_desk_mode_for_position(position),
         'field_intake_positions': tuple(wf.FIELD_DESK_POSITIONS),
         'monitor_intake_positions': tuple(wf.CASE_MONITOR_DESK_POSITIONS),
-        'desk_rows': desk_rows,
-        'can_delete_incident_logs': can_delete_incident_logs,
-        'is_field_desk': is_field_desk,
-        'use_split_case_desk': use_split_case_desk,
-        'settled_incident_rows': settled_incident_rows,
-        'settled_on_site_count': settled_on_site_count,
+        'desk_feed_version': _case_desk_feed_version(list_ctx),
     }
 
     return render(request, template_name, context)
+
+
+@login_required
+@require_http_methods(["GET"])
+@verify_position
+def case_desk_feed(request, position):
+    """JSON + HTML fragments for live desk list sync (field ↔ monitor desks)."""
+    list_ctx = _case_management_list_context(request, position)
+    fragment_ctx = {
+        **list_ctx,
+        'show_time_ago': position in wf.CASE_MONITOR_DESK_POSITIONS,
+        'can_delete_incident_logs': position in wf.FIELD_DESK_POSITIONS,
+    }
+    html = {
+        'table_body': render_to_string(
+            'accounts/includes/case_desk_unified_tbody.html',
+            fragment_ctx,
+            request=request,
+        ),
+        'settled_drawer': render_to_string(
+            'accounts/includes/case_desk_settled_drawer_inner.html',
+            fragment_ctx,
+            request=request,
+        ),
+        'resolved_drawer': render_to_string(
+            'accounts/includes/case_desk_resolved_drawer_inner.html',
+            fragment_ctx,
+            request=request,
+        ),
+    }
+    if position in FIELD_DESK_POSITIONS:
+        html['mobile_cards'] = render_to_string(
+            'accounts/includes/case_desk_mobile_cards.html',
+            fragment_ctx,
+            request=request,
+        )
+    return JsonResponse({
+        'success': True,
+        'version': _case_desk_feed_version(list_ctx),
+        'desk_row_count': len(list_ctx['desk_rows']),
+        'status_counts': list_ctx['status_counts'],
+        'settled_on_site_count': list_ctx.get('settled_on_site_count', 0),
+        'html': html,
+    })
 
 
 @login_required

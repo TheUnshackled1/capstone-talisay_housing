@@ -1,0 +1,36 @@
+{% for row in settled_incident_rows %}
+{% with log=row.incident_log %}
+<article class="cases-settled-drawer-item">
+    <div class="cases-resolved-drawer-item-top">
+        <span class="case-record-kind-pill case-record-kind-pill--incident">Incident log</span>
+        <span class="case-type-pill">{{ log.get_case_type_display }}</span>
+    </div>
+    <p class="cases-resolved-drawer-item-name">{{ row.incident_complainant_name|default:"—" }}</p>
+    <p class="cases-resolved-drawer-item-meta">
+        Reported party:
+        {% if row.incident_respondent_name %}{{ row.incident_respondent_name }}{% else %}—{% endif %}
+        {% if row.incident_unit_label %} · {{ row.incident_unit_label }}{% endif %}
+    </p>
+    <p class="cases-resolved-drawer-item-meta">
+        Logged {{ log.logged_at|date:"M d, Y" }} · {{ log.logged_at|time:"g:i A" }}
+    </p>
+    <div class="cases-settled-drawer-item-actions">
+        <button type="button" class="case-prior-open-link"
+            onclick="viewSettledIncidentLog(this)"
+            data-unit-label="{{ row.incident_unit_label|escape }}"
+            data-complainant-name="{{ row.incident_complainant_name|escape }}"
+            data-respondent-name="{{ row.incident_respondent_name|escape }}"
+            data-case-type-display="{{ log.get_case_type_display|escape }}"
+            data-description="{{ log.description|escape }}"
+            data-logged-at="{{ log.logged_at|date:'M d, Y' }} · {{ log.logged_at|time:'g:i A' }}"
+            data-logged-by="{{ log.logged_by.get_full_name|default:'Field'|escape }}">View</button>
+        {% if can_delete_incident_logs %}
+        <button type="button" class="case-prior-open-link case-prior-open-link--danger"
+            onclick="deleteSettledIncidentLog('{{ log.id }}')">Remove</button>
+        {% endif %}
+    </div>
+</article>
+{% endwith %}
+{% empty %}
+<p class="cases-resolved-drawer-empty">No on-site settled incidents logged yet.</p>
+{% endfor %}

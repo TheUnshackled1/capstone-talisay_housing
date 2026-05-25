@@ -6,6 +6,7 @@ app_name = 'cases'
 urlpatterns = [
     # Case Management Dashboard
     path('<str:position>/', views.case_dashboard_redirect, name='case_dashboard'),
+    path('<str:position>/desk-feed/', views.case_desk_feed, name='desk_feed'),
     path('<str:position>/beneficiary-search/', views.beneficiary_search, name='beneficiary_search'),
     path('<str:position>/<uuid:case_id>/details/', views.get_case_details, name='get_details'),
     path('<str:position>/<uuid:case_id>/evidence/upload/', views.upload_case_evidence, name='upload_evidence'),

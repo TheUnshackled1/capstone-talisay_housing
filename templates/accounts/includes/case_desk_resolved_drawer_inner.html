@@ -1,0 +1,21 @@
+{% for case in resolved_cases %}
+<button type="button" class="cases-resolved-drawer-item"
+    onclick="openCaseFromResolvedDrawer('{{ case.id }}')">
+    <div class="cases-resolved-drawer-item-top">
+        <strong>{{ case.case_number }}</strong>
+        <span class="case-type-pill">{{ case.get_case_type_display }}</span>
+    </div>
+    <p class="cases-resolved-drawer-item-name">{{ case.complainant_name }}</p>
+    <p class="cases-resolved-drawer-item-meta">
+        Reported party:
+        {% if case.subject_applicant %}{{ case.subject_applicant.full_name }}{% elif case.subject_name %}{{ case.subject_name }}{% else %}—{% endif %}
+    </p>
+    <p class="cases-resolved-drawer-item-meta">
+        Filed {{ case.received_at|date:"M d, Y" }} · {{ case.received_at|time:"g:i A" }}
+        {% if case.resolved_at %} · Resolved {{ case.resolved_at|date:"M d, Y" }}{% endif %}
+    </p>
+    <p class="cases-resolved-drawer-item-meta" style="margin-top:0.25rem;font-weight:600;color:#047857;">{% if is_field_desk %}Open Record →{% else %}View case →{% endif %}</p>
+</button>
+{% empty %}
+<p class="cases-resolved-drawer-empty">No resolved cases yet.</p>
+{% endfor %}

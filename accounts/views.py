@@ -2003,6 +2003,15 @@ def second_member_case_management(request):
 
 
 @login_required
+def fourth_member_case_management(request):
+    if request.user.position != 'fourth_member':
+        messages.error(request, 'Access denied. This page is for the Fourth Member only.')
+        return redirect('accounts:dashboard')
+    from cases.views import case_management_dashboard
+    return case_management_dashboard(request, 'fourth_member')
+
+
+@login_required
 def field_case_management(request):
     if request.user.position not in FIELD_DESK_POSITIONS:
         messages.error(request, 'Access denied. This page is for field desk staff only.')
