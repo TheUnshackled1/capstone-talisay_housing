@@ -142,10 +142,14 @@ def case_management_dashboard(request, position):
         return redirect(url)
 
     is_field_desk = position in FIELD_DESK_POSITIONS
+    use_split_case_desk = (
+        position in FIELD_DESK_POSITIONS
+        or position in wf.CASE_MONITOR_DESK_POSITIONS
+    )
     settled_incident_rows = []
     settled_on_site_count = 0
 
-    if is_field_desk:
+    if use_split_case_desk:
         # Main table: active cases only (exclude resolved + incident logs).
         desk_cases = cases.exclude(status=wf.STATUS_RESOLVED)
         desk_rows = _build_case_desk_rows(
@@ -234,6 +238,7 @@ def case_management_dashboard(request, position):
         'desk_rows': desk_rows,
         'can_delete_incident_logs': can_delete_incident_logs,
         'is_field_desk': is_field_desk,
+        'use_split_case_desk': use_split_case_desk,
         'settled_incident_rows': settled_incident_rows,
         'settled_on_site_count': settled_on_site_count,
     }
