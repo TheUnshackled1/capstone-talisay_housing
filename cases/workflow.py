@@ -189,7 +189,14 @@ def user_can_manage_workflow(user) -> bool:
 
 
 def user_can_upload_case_evidence(user) -> bool:
+    """Field desk: settlement photos and general case evidence."""
     return getattr(user, 'position', None) in FIELD_DESK_POSITIONS
+
+
+def user_can_upload_case_intake_evidence(user) -> bool:
+    """Office or field desk may attach optional intake files when recording a case."""
+    pos = getattr(user, 'position', None)
+    return pos in FIELD_DESK_POSITIONS or pos in CASE_MONITOR_DESK_POSITIONS
 
 
 def user_can_field_mark_under_review(user) -> bool:

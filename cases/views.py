@@ -760,6 +760,10 @@ def get_case_details(request, position, case_id):
         workflow_payload = {
             'can_manage_workflow': can_manage,
             'can_upload_evidence': can_upload_evidence,
+            'can_upload_intake_evidence': (
+                wf.user_can_upload_case_intake_evidence(request.user)
+                and case_status not in (wf.STATUS_RESOLVED, wf.STATUS_CLOSED)
+            ),
             'is_monitor_desk': is_monitor_desk,
             'needs_auto_start_review': (
                 wf.user_can_field_mark_under_review(request.user)
@@ -1144,11 +1148,11 @@ def delete_settled_incident_log(request, position, log_id):
 @require_POST
 @verify_position
 def upload_case_evidence(request, position, case_id):
-    """Upload photo or document for a case (field desk intake)."""
-    if not wf.user_can_upload_case_evidence(request.user):
+    """Upload optional intake photo/document for a case."""
+    if not wf.user_can_upload_case_intake_evidence(request.user):
         return JsonResponse({
             'success': False,
-            'error': 'Evidence uploads are handled at the field desk.',
+            'error': 'You do not have permission to upload case evidence.',
         }, status=403)
     case = get_object_or_404(Case, id=case_id)
     upload = request.FILES.get('file')
@@ -1157,12 +1161,8 @@ def upload_case_evidence(request, position, case_id):
     if upload.size > 6 * 1024 * 1024:
         return JsonResponse({'success': False, 'error': 'File must be 6 MB or smaller.'}, status=400)
 
-    if wf.user_can_upload_case_evidence(request.user):
-        allowed = ('image/jpeg', 'image/png', 'image/webp')
-        type_error = 'Allowed types: JPEG, PNG, or WebP photos only.'
-    else:
-        allowed = ('image/jpeg', 'image/png', 'image/webp', 'application/pdf')
-        type_error = 'Allowed types: JPEG, PNG, WebP, or PDF.'
+    allowed = ('image/jpeg', 'image/png', 'image/webp')
+    type_error = 'Allowed types: JPEG, PNG, or WebP photos only.'
     if getattr(upload, 'content_type', '') not in allowed:
         return JsonResponse({'success': False, 'error': type_error}, status=400)
 
@@ -1216,7 +1216,7 @@ def save_field_settlement(request, position, case_id):
             'error': 'Invalid settlement outcome.',
         }, status=400)
 
-    caption = (request.POST.get('caption') or '').strip()[:255]
+    caption = (request.POST.get('caption') or 'Field settlement photograph').strip()[:255]
     uploads = list(request.FILES.getlist('files'))
     single = request.FILES.get('file')
     if single:

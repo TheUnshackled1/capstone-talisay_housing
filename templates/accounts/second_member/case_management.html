@@ -3136,18 +3136,33 @@
         background: #0f172a;
     }
 
+    .tha-case-reg-modal .new-case-evidence-wrap {
+        text-align: center;
+    }
+
+    .tha-case-reg-modal .new-case-evidence-wrap > .form-label {
+        display: block;
+        text-align: center;
+        margin-bottom: 0.5rem;
+    }
+
     .tha-case-reg-modal .new-case-evidence-intake {
         margin-top: 0.35rem;
     }
 
     .tha-case-reg-modal .new-case-evidence-intake .field-evidence-section {
-        text-align: left;
+        text-align: center;
     }
 
     .tha-case-reg-modal .new-case-evidence-intake .field-evidence-hint {
-        margin-left: 0;
-        margin-right: 0;
-        max-width: none;
+        margin-left: auto;
+        margin-right: auto;
+        max-width: 36rem;
+    }
+
+    .tha-case-reg-modal .new-case-evidence-intake .field-evidence-file-btn {
+        margin-left: auto;
+        margin-right: auto;
     }
 
     .tha-case-view-modal--monitor .case-record-evidence-carousel.case-settlement-inline-carousel {
@@ -3859,13 +3874,13 @@
                 <div class="tha-section-block tha-section-block--household">
                     <h3 class="tha-section-title">Reported Party</h3>
                     <div class="form-group">
-                        <label class="form-label">Search reported party / against whom</label>
+                        <label class="form-label">Search reported party / against whom <span class="req">*</span></label>
                         <div class="case-beneficiary-search-wrap">
                             <input type="text" class="form-input" id="subjectSearchInput" autocomplete="off"
                                 placeholder="e.g. name, APP ref, or lot">
                             <div id="subjectSearchResults" class="case-search-results" style="display: none;"></div>
                         </div>
-                        <p class="help-text">Optional — pick a different occupant. The complainant cannot be the reported party.</p>
+                        <p class="help-text">Required — pick a different occupant. The complainant cannot be the reported party.</p>
                     </div>
                     <div id="subjectAutoFill" class="case-autofill-panel">
                         <div class="form-row full">
@@ -3904,36 +3919,6 @@
                             <input type="text" class="form-input" id="newDescription" maxlength="100"
                                 placeholder="Brief incident summary (max 100 characters)" oninput="updateDescCount()">
                             <span id="newDescriptionCount" class="help-text">0 / 100</span>
-                        </div>
-                    </div>
-                    <div class="form-group new-case-evidence-wrap" style="margin-top: 0.75rem; margin-bottom: 0;">
-                        <label class="form-label">Uploaded evidence</label>
-                        <div class="field-evidence-intake new-case-evidence-intake">
-                            <div class="field-evidence-section">
-                                <span class="field-evidence-label">Supporting photographs (optional)</span>
-                                <p class="field-evidence-hint">You may capture images using this device or attach files from storage. Accepted types: JPEG, PNG, or WebP. Maximum four (4) files, six (6) MB each. Camera access generally requires HTTPS or <code>localhost</code>.</p>
-                                <video id="newCaseCameraVideo" class="field-evidence-camera-video" playsinline autoplay muted></video>
-                                <canvas id="newCaseCameraCanvas" style="display:none;"></canvas>
-                                <div class="field-evidence-buttons">
-                                    <button type="button" id="newCaseCameraStartBtn" class="table-verify-btn">Activate camera</button>
-                                    <button type="button" id="newCaseCameraCaptureBtn" class="table-verify-btn" style="display:none;">Capture frame</button>
-                                    <button type="button" id="newCaseCameraSwitchBtn" class="table-verify-btn table-verify-btn--muted" style="display:none;">Switch camera</button>
-                                     <button type="button" id="newCaseCameraStopBtn" class="table-verify-btn table-verify-btn--muted" style="display:none;">Stop camera</button>
-                                </div>
-                                <input type="file" id="newCaseEvidenceFileInput" accept="image/jpeg,image/png,image/webp,image/*" multiple style="display:none;">
-                                <button type="button" class="field-evidence-file-btn" id="newCaseEvidenceFilePickBtn">Attach from device</button>
-                                <div id="newCasePendingCarousel" class="case-settlement-inline-carousel" hidden>
-                                    <div class="case-settlement-inline-carousel-toolbar">
-                                        <span class="case-settlement-inline-carousel-counter" id="newCasePendingCounter"></span>
-                                        <button type="button" class="case-settlement-inline-carousel-remove" id="newCasePendingRemoveBtn">Remove photo</button>
-                                    </div>
-                                    <div class="case-settlement-inline-carousel-stage">
-                                        <button type="button" class="case-settlement-inline-carousel-nav case-settlement-inline-carousel-nav--prev" id="newCasePendingPrev" aria-label="Previous photo">‹</button>
-                                        <img id="newCasePendingImg" src="" alt="Evidence photo preview" />
-                                        <button type="button" class="case-settlement-inline-carousel-nav case-settlement-inline-carousel-nav--next" id="newCasePendingNext" aria-label="Next photo">›</button>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -4589,222 +4574,16 @@
         document.body.style.overflow = '';
     }
 
-    const CASE_EVIDENCE_MAX_PHOTOS = 4;
-    let newCaseEvidencePendingFiles = [];
-    let newCaseEvidencePendingObjectUrls = [];
-    let newCaseEvidencePendingIndex = 0;
-    let newCaseCameraStream = null;
-    let newCaseCameraFacingMode = 'environment';
-
-    function clearNewCasePendingEvidence() {
-        newCaseEvidencePendingObjectUrls.forEach((u) => {
-            try { URL.revokeObjectURL(u); } catch (e) { /* ignore */ }
-        });
-        newCaseEvidencePendingObjectUrls = [];
-        newCaseEvidencePendingFiles = [];
-        newCaseEvidencePendingIndex = 0;
-        const carousel = document.getElementById('newCasePendingCarousel');
-        if (carousel) carousel.hidden = true;
-        const fi = document.getElementById('newCaseEvidenceFileInput');
-        if (fi) fi.value = '';
-    }
-
-    function refreshNewCasePendingCarousel() {
-        newCaseEvidencePendingObjectUrls.forEach((u) => {
-            try { URL.revokeObjectURL(u); } catch (e) { /* ignore */ }
-        });
-        newCaseEvidencePendingObjectUrls = newCaseEvidencePendingFiles.map((file) => URL.createObjectURL(file));
-
-        const carousel = document.getElementById('newCasePendingCarousel');
-        const img = document.getElementById('newCasePendingImg');
-        const counter = document.getElementById('newCasePendingCounter');
-        const prev = document.getElementById('newCasePendingPrev');
-        const next = document.getElementById('newCasePendingNext');
-        const n = newCaseEvidencePendingObjectUrls.length;
-
-        if (!carousel || !img) return;
-        if (!n) {
-            carousel.hidden = true;
-            newCaseEvidencePendingIndex = 0;
-            img.removeAttribute('src');
-            return;
-        }
-
-        carousel.hidden = false;
-        if (newCaseEvidencePendingIndex >= n) {
-            newCaseEvidencePendingIndex = n - 1;
-        }
-        if (newCaseEvidencePendingIndex < 0) {
-            newCaseEvidencePendingIndex = 0;
-        }
-
-        img.src = newCaseEvidencePendingObjectUrls[newCaseEvidencePendingIndex];
-        img.alt = 'Evidence photo ' + String(newCaseEvidencePendingIndex + 1) + ' of ' + String(n);
-        if (counter) {
-            counter.textContent = n > 1 ? String(newCaseEvidencePendingIndex + 1) + ' / ' + String(n) : '1 photo';
-        }
-        if (prev) prev.hidden = n <= 1;
-        if (next) next.hidden = n <= 1;
-    }
-
-    function newCasePendingCarouselStep(delta) {
-        const n = newCaseEvidencePendingObjectUrls.length;
-        if (n <= 1) return;
-        newCaseEvidencePendingIndex = (newCaseEvidencePendingIndex + delta + n) % n;
-        refreshNewCasePendingCarousel();
-    }
-
-    function addNewCasePendingFile(file) {
-        if (newCaseEvidencePendingFiles.length >= CASE_EVIDENCE_MAX_PHOTOS) {
-            alert('Maximum 4 evidence photos.');
-            return;
-        }
-        const maxBytes = 6 * 1024 * 1024;
-        if (file.size > maxBytes) {
-            alert('Each photo must be 6 MB or smaller.');
-            return;
-        }
-        const okType = /^image\/(jpeg|png|webp)$/i.test(file.type || '');
-        if (!okType) {
-            alert('Only JPEG, PNG, or WebP photos are allowed.');
-            return;
-        }
-        newCaseEvidencePendingFiles.push(file);
-        if (newCaseEvidencePendingFiles.length === 1) {
-            newCaseEvidencePendingIndex = 0;
-        } else {
-            newCaseEvidencePendingIndex = newCaseEvidencePendingFiles.length - 1;
-        }
-        refreshNewCasePendingCarousel();
-    }
-
-    function removeNewCasePendingAt(index) {
-        if (index < 0 || index >= newCaseEvidencePendingFiles.length) return;
-        newCaseEvidencePendingFiles.splice(index, 1);
-        if (newCaseEvidencePendingIndex >= newCaseEvidencePendingFiles.length) {
-            newCaseEvidencePendingIndex = Math.max(0, newCaseEvidencePendingFiles.length - 1);
-        }
-        refreshNewCasePendingCarousel();
-    }
-
-    function removeCurrentNewCasePendingPhoto() {
-        removeNewCasePendingAt(newCaseEvidencePendingIndex);
-    }
-
-    function stopNewCaseCamera() {
-        if (newCaseCameraStream) {
-            newCaseCameraStream.getTracks().forEach((t) => t.stop());
-            newCaseCameraStream = null;
-        }
-        const v = document.getElementById('newCaseCameraVideo');
-        if (v) {
-            v.srcObject = null;
-            v.style.display = 'none';
-        }
-        const start = document.getElementById('newCaseCameraStartBtn');
-        const cap = document.getElementById('newCaseCameraCaptureBtn');
-        const stp = document.getElementById('newCaseCameraStopBtn');
-        const swt = document.getElementById('newCaseCameraSwitchBtn');
-        if (start) start.style.display = 'inline-block';
-        if (cap) cap.style.display = 'none';
-        if (stp) stp.style.display = 'none';
-        if (swt) swt.style.display = 'none';
-    }
-
-    async function startNewCaseCamera() {
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            alert('This browser does not support in-page camera access. Use Attach from device.');
-            return;
-        }
-        try {
-            if (newCaseCameraStream) {
-                newCaseCameraStream.getTracks().forEach((t) => t.stop());
-            }
-            newCaseCameraStream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: { ideal: newCaseCameraFacingMode } },
-                audio: false,
-            });
-            const v = document.getElementById('newCaseCameraVideo');
-            if (v) {
-                v.srcObject = newCaseCameraStream;
-                v.style.display = 'block';
-                await v.play();
-            }
-            const start = document.getElementById('newCaseCameraStartBtn');
-            const cap = document.getElementById('newCaseCameraCaptureBtn');
-            const stp = document.getElementById('newCaseCameraStopBtn');
-            const swt = document.getElementById('newCaseCameraSwitchBtn');
-            if (start) start.style.display = 'none';
-            if (cap) cap.style.display = 'inline-block';
-            if (stp) stp.style.display = 'inline-block';
-            if (swt) swt.style.display = 'inline-block';
-        } catch (err) {
-            alert('Could not open camera. Use Attach from device, or ensure you are on HTTPS or localhost.');
-        }
-    }
-
-    async function toggleNewCaseCamera() {
-        newCaseCameraFacingMode = (newCaseCameraFacingMode === 'environment') ? 'user' : 'environment';
-        if (newCaseCameraStream) {
-            await startNewCaseCamera();
-        }
-    }
-
-    function captureNewCasePhoto() {
-        const v = document.getElementById('newCaseCameraVideo');
-        const c = document.getElementById('newCaseCameraCanvas');
-        if (!v || !c || !v.videoWidth) {
-            alert('Wait for the camera preview, then capture again.');
-            return;
-        }
-        c.width = v.videoWidth;
-        c.height = v.videoHeight;
-        c.getContext('2d').drawImage(v, 0, 0);
-        c.toBlob((blob) => {
-            if (!blob) return;
-            const file = new File([blob], 'intake-' + Date.now() + '.jpg', { type: 'image/jpeg' });
-            addNewCasePendingFile(file);
-        }, 'image/jpeg', 0.88);
-    }
-
-    function onNewCaseEvidenceFilesSelected(ev) {
-        const files = ev.target.files;
-        if (!files) return;
-        for (let i = 0; i < files.length; i++) {
-            if (newCaseEvidencePendingFiles.length >= CASE_EVIDENCE_MAX_PHOTOS) break;
-            addNewCasePendingFile(files[i]);
-        }
-        ev.target.value = '';
-    }
-
-    function bindNewCaseEvidenceControls() {
-        if (window._newCaseEvidenceBound) return;
-        window._newCaseEvidenceBound = true;
-        document.getElementById('newCaseCameraStartBtn')?.addEventListener('click', startNewCaseCamera);
-        document.getElementById('newCaseCameraCaptureBtn')?.addEventListener('click', captureNewCasePhoto);
-        document.getElementById('newCaseCameraStopBtn')?.addEventListener('click', stopNewCaseCamera);
-        document.getElementById('newCaseCameraSwitchBtn')?.addEventListener('click', toggleNewCaseCamera);
-        document.getElementById('newCaseEvidenceFilePickBtn')?.addEventListener('click', () => {
-            document.getElementById('newCaseEvidenceFileInput')?.click();
-        });
-        document.getElementById('newCaseEvidenceFileInput')?.addEventListener('change', onNewCaseEvidenceFilesSelected);
-        document.getElementById('newCasePendingPrev')?.addEventListener('click', () => newCasePendingCarouselStep(-1));
-        document.getElementById('newCasePendingNext')?.addEventListener('click', () => newCasePendingCarouselStep(1));
-        document.getElementById('newCasePendingRemoveBtn')?.addEventListener('click', removeCurrentNewCasePendingPhoto);
-    }
-
     function openNewCaseModal() {
         const caseModal = document.getElementById('caseModal');
         if (caseModal) caseModal.style.display = 'none';
         resetNewCaseForm();
-        bindNewCaseEvidenceControls();
         document.body.style.overflow = 'hidden';
         document.getElementById('newCaseModal').style.display = 'flex';
     }
 
     function closeNewCaseModal(e) {
         if (e && e.target.id !== 'newCaseModal') return;
-        stopNewCaseCamera();
         document.getElementById('newCaseModal').style.display = 'none';
         document.body.style.overflow = '';
     }
@@ -4898,8 +4677,6 @@
         });
         clearComplainantAutoFill();
         clearSubjectAutoFill();
-        clearNewCasePendingEvidence();
-        stopNewCaseCamera();
         updateDescCount();
     }
 
@@ -4998,12 +4775,16 @@
             return;
         }
         const subjectId = (document.getElementById('subjectApplicantId')?.value || '').trim();
-        if (subjectId && subjectId === linked) {
+        if (!subjectId) {
+            alert('Search and select a reported party from the housing unit list.');
+            return;
+        }
+        if (subjectId === linked) {
             alert('Reported party cannot be the same person as the complainant.');
             return;
         }
         if (!data.complainant_name || !data.case_type || !data.initial_description) {
-            alert('Fill required fields: complainant, complaint type, and incident description.');
+            alert('Fill required fields: complainant, reported party, complaint type, and incident description.');
             return;
         }
         if (data.initial_description.length > 100) {
@@ -5016,25 +4797,11 @@
             body: JSON.stringify(data),
         })
             .then((r) => r.json())
-            .then(async (d) => {
+            .then((d) => {
                 if (!d.success) {
                     alert('Error: ' + (d.error || 'Could not create case'));
                     return;
                 }
-                const files = newCaseEvidencePendingFiles.slice();
-                if (files.length && d.case?.id) {
-                    for (const file of files) {
-                        const fd = new FormData();
-                        fd.append('file', file);
-                        fd.append('caption', 'Initial intake evidence');
-                        await fetch(`/cases/${CASE_POSITION}/${d.case.id}/evidence/upload/`, {
-                            method: 'POST',
-                            headers: { 'X-CSRFToken': csrfToken() },
-                            body: fd,
-                        });
-                    }
-                }
-                // Trigger premium custom success notification modal instead of basic browser alert
                 showCaseRecordedSuccess(d.case, d.message);
             })
             .catch(() => alert('Could not create case. Try again.'));
@@ -5286,8 +5053,8 @@
         }
         closeNewCaseModal();
         const message = caseNumber
-            ? `Case ${caseNumber} was saved and added to the case list.\nStatus: ${statusText}.`
-            : `The complaint was saved and added to the case list.\nStatus: ${statusText}.`;
+            ? `Case ${caseNumber} was saved.\nStatus: ${statusText}.\n\nThe field desk will open this record for site monitoring and settlement photographs.`
+            : `The complaint was saved.\nStatus: ${statusText}.\n\nThe field desk will open this record for site monitoring and settlement photographs.`;
         caseFlowAlert(message, 'Case recorded', 'success', () => location.reload());
         const refWrap = document.getElementById('flowAlertRefWrap');
         if (refWrap && caseNumber) {
@@ -5302,7 +5069,6 @@
 
     document.addEventListener('DOMContentLoaded', () => {
         loadCasePageDeepLinks();
-        bindNewCaseEvidenceControls();
 
         // Premium Hover Card popover initialization
         const hoverCard = document.getElementById('applicantHoverCard');
