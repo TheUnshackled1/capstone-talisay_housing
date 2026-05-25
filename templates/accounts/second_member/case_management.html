@@ -3803,7 +3803,8 @@
                                 <div class="field-evidence-buttons">
                                     <button type="button" id="newCaseCameraStartBtn" class="table-verify-btn">Activate camera</button>
                                     <button type="button" id="newCaseCameraCaptureBtn" class="table-verify-btn" style="display:none;">Capture frame</button>
-                                    <button type="button" id="newCaseCameraStopBtn" class="table-verify-btn table-verify-btn--muted" style="display:none;">Stop camera</button>
+                                    <button type="button" id="newCaseCameraSwitchBtn" class="table-verify-btn table-verify-btn--muted" style="display:none;">Switch camera</button>
+                                     <button type="button" id="newCaseCameraStopBtn" class="table-verify-btn table-verify-btn--muted" style="display:none;">Stop camera</button>
                                 </div>
                                 <input type="file" id="newCaseEvidenceFileInput" accept="image/jpeg,image/png,image/webp,image/*" multiple style="display:none;">
                                 <button type="button" class="field-evidence-file-btn" id="newCaseEvidenceFilePickBtn">Attach from device</button>
@@ -4479,6 +4480,7 @@
     let newCaseEvidencePendingObjectUrls = [];
     let newCaseEvidencePendingIndex = 0;
     let newCaseCameraStream = null;
+    let newCaseCameraFacingMode = 'environment';
 
     function clearNewCasePendingEvidence() {
         newCaseEvidencePendingObjectUrls.forEach((u) => {
@@ -4588,9 +4590,11 @@
         const start = document.getElementById('newCaseCameraStartBtn');
         const cap = document.getElementById('newCaseCameraCaptureBtn');
         const stp = document.getElementById('newCaseCameraStopBtn');
+        const swt = document.getElementById('newCaseCameraSwitchBtn');
         if (start) start.style.display = 'inline-block';
         if (cap) cap.style.display = 'none';
         if (stp) stp.style.display = 'none';
+        if (swt) swt.style.display = 'none';
     }
 
     async function startNewCaseCamera() {
@@ -4599,8 +4603,11 @@
             return;
         }
         try {
+            if (newCaseCameraStream) {
+                newCaseCameraStream.getTracks().forEach((t) => t.stop());
+            }
             newCaseCameraStream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: { ideal: 'environment' } },
+                video: { facingMode: { ideal: newCaseCameraFacingMode } },
                 audio: false,
             });
             const v = document.getElementById('newCaseCameraVideo');
@@ -4612,11 +4619,20 @@
             const start = document.getElementById('newCaseCameraStartBtn');
             const cap = document.getElementById('newCaseCameraCaptureBtn');
             const stp = document.getElementById('newCaseCameraStopBtn');
+            const swt = document.getElementById('newCaseCameraSwitchBtn');
             if (start) start.style.display = 'none';
             if (cap) cap.style.display = 'inline-block';
             if (stp) stp.style.display = 'inline-block';
+            if (swt) swt.style.display = 'inline-block';
         } catch (err) {
             alert('Could not open camera. Use Attach from device, or ensure you are on HTTPS or localhost.');
+        }
+    }
+
+    async function toggleNewCaseCamera() {
+        newCaseCameraFacingMode = (newCaseCameraFacingMode === 'environment') ? 'user' : 'environment';
+        if (newCaseCameraStream) {
+            await startNewCaseCamera();
         }
     }
 
@@ -4653,6 +4669,7 @@
         document.getElementById('newCaseCameraStartBtn')?.addEventListener('click', startNewCaseCamera);
         document.getElementById('newCaseCameraCaptureBtn')?.addEventListener('click', captureNewCasePhoto);
         document.getElementById('newCaseCameraStopBtn')?.addEventListener('click', stopNewCaseCamera);
+        document.getElementById('newCaseCameraSwitchBtn')?.addEventListener('click', toggleNewCaseCamera);
         document.getElementById('newCaseEvidenceFilePickBtn')?.addEventListener('click', () => {
             document.getElementById('newCaseEvidenceFileInput')?.click();
         });
