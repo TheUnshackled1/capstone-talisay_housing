@@ -3738,9 +3738,9 @@
         /* ── Case recording + settled incident + case monitoring: mobile full-width ── */
         .tha-case-modal-overlay,
         .tha-case-view-overlay {
-            padding: 0.5rem 0 1.5rem !important;
-            align-items: flex-start !important;
-            overflow-y: auto !important;
+            padding: 0 !important;
+            align-items: stretch !important;
+            overflow: hidden !important;
         }
 
         .tha-case-reg-modal.modal-content,
@@ -3749,11 +3749,13 @@
             max-width: 100% !important;
             margin: 0 !important;
             min-height: auto !important;
-            height: auto !important;
-            max-height: none !important;
+            height: 100dvh !important;
+            max-height: 100dvh !important;
             border-radius: 0 !important;
             border: none !important;
-            overflow: visible !important;
+            overflow: hidden !important;
+            display: flex !important;
+            flex-direction: column !important;
         }
 
         .tha-case-reg-modal .modal-header,
@@ -3767,13 +3769,16 @@
             font-size: 0.88rem !important;
         }
 
-        /* Let content flow — overlay scrolls (avoids white gap / clipped footer) */
+        /* Enable independent scrolling on the modal body */
         .tha-case-reg-modal .modal-body,
-        .tha-case-view-modal .modal-body {
+        .tha-case-view-modal .modal-body,
+        .tha-case-view-modal--monitor .case-monitor-body {
             padding: 0 1rem 1.25rem !important;
+            flex: 1 !important;
+            height: 100% !important;
+            overflow-y: auto !important;
             max-height: none !important;
-            flex: none !important;
-            overflow: visible !important;
+            -webkit-overflow-scrolling: touch !important;
         }
 
         .tha-case-reg-modal .tha-form-header,
@@ -4192,6 +4197,7 @@
         display: flex;
         flex-direction: column;
         gap: 0.75rem;
+        height: 100%;
     }
 
     @media (max-width: 900px) {
@@ -4228,6 +4234,14 @@
         letter-spacing: 0.06em;
         color: #64748b;
         text-align: left;
+    }
+
+    .case-monitor-card--complainant {
+        height: 100%;
+    }
+
+    .case-monitor-card--respondent {
+        flex: 1;
     }
 
     .case-monitor-card--complainant .case-monitor-card-title {
