@@ -127,7 +127,7 @@
         var config = cfg();
         if (!config) return;
         stopPolling();
-        var ms = config.pollMs || 6000;
+        var ms = config.pollMs || 4000;
         pollTimer = global.setInterval(function () {
             refreshDeskList('poll');
         }, ms);
@@ -149,6 +149,7 @@
             var bc = new global.BroadcastChannel(CHANNEL_NAME);
             bc.onmessage = function (ev) {
                 if (ev.data && ev.data.type === 'desk-changed') {
+                    lastVersion = null;
                     refreshDeskList('broadcast');
                 }
             };

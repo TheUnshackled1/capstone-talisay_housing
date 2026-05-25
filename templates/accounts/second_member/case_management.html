@@ -3896,7 +3896,7 @@
 <script>
     window.CASE_DESK_SYNC = {
         position: '{{ case_position }}',
-        pollMs: 6000,
+        pollMs: 4000,
         initialVersion: '{{ desk_feed_version }}',
     };
 </script>
@@ -4759,6 +4759,7 @@
                     alert('Error: ' + (d.error || 'Could not create case'));
                     return;
                 }
+                if (window.CaseDeskSync) window.CaseDeskSync.notifyChange();
                 showCaseRecordedSuccess(d.case, d.message);
             })
             .catch(() => alert('Could not create case. Try again.'));
@@ -5012,9 +5013,7 @@
         const message = caseNumber
             ? `Case ${caseNumber} was saved.\nStatus: ${statusText}.\n\nThe field desk will open this record for site monitoring and settlement photographs.`
             : `The complaint was saved.\nStatus: ${statusText}.\n\nThe field desk will open this record for site monitoring and settlement photographs.`;
-        caseFlowAlert(message, 'Case recorded', 'success', () => {
-            if (window.CaseDeskSync) window.CaseDeskSync.notifyChange();
-        });
+        caseFlowAlert(message, 'Case recorded', 'success');
         const refWrap = document.getElementById('flowAlertRefWrap');
         if (refWrap && caseNumber) {
             refWrap.innerHTML = '';

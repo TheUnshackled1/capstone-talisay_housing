@@ -5484,7 +5484,7 @@
 <script>
     window.CASE_DESK_SYNC = {
         position: '{{ case_position }}',
-        pollMs: 6000,
+        pollMs: 4000,
         initialVersion: '{{ desk_feed_version }}',
     };
 </script>
@@ -7236,7 +7236,7 @@
                         });
                     }
                 }
-                // Trigger premium custom success notification modal instead of basic browser alert
+                if (window.CaseDeskSync) window.CaseDeskSync.notifyChange();
                 showCaseRecordedSuccess(d.case, d.message);
             })
             .catch(() => alert('Could not create case. Try again.'));
@@ -7751,9 +7751,7 @@
         const message = caseNumber
             ? `Case ${caseNumber} was saved and added to the case list.\nStatus: ${statusText}.`
             : `The complaint was saved and added to the case list.\nStatus: ${statusText}.`;
-        caseFlowAlert(message, 'Case recorded', 'success', () => {
-            if (window.CaseDeskSync) window.CaseDeskSync.notifyChange();
-        });
+        caseFlowAlert(message, 'Case recorded', 'success');
         const refWrap = document.getElementById('flowAlertRefWrap');
         if (refWrap && caseNumber) {
             refWrap.innerHTML = '';
