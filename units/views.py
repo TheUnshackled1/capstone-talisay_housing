@@ -1035,7 +1035,7 @@ def get_unit_details(request, position, unit_id):
                 'beneficiary_has_phone': bool(beneficiary_phone),
                 'can_send_explanation_sms': bool(beneficiary_phone and not has_doc),
                 'letter_document_url': (
-                    request.build_absolute_uri(rev.letter_document.url)
+                    rev.letter_document.url
                     if has_doc and rev.letter_document
                     else None
                 ),
@@ -1079,7 +1079,7 @@ def get_unit_details(request, position, unit_id):
                 if not _explanation_review_triggered_by_day30_inspection(_r):
                     continue
                 if _r.letter_document and getattr(_r.letter_document, 'name', None):
-                    explanation_letter_view_url = request.build_absolute_uri(_r.letter_document.url)
+                    explanation_letter_view_url = _r.letter_document.url
                     break
 
         explanation_letter_workflow_applies = bool(

@@ -220,8 +220,31 @@
         box-shadow: 0 4px 14px rgba(22, 163, 74, 0.22);
     }
 
-    /* Resolved cases — right side drawer */
-    #resolvedCasesDrawer {
+    .monitoring-kpi-settled .monitoring-kpi-icon {
+        background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+        color: #fff;
+    }
+
+    .monitoring-kpi-settled.is-clickable {
+        cursor: pointer;
+        border: 1px solid transparent;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+    }
+
+    .monitoring-kpi-settled.is-clickable:hover {
+        border-color: #c4b5fd;
+        box-shadow: 0 4px 14px rgba(109, 40, 217, 0.18);
+        transform: translateY(-1px);
+    }
+
+    .monitoring-kpi-settled.is-active {
+        border-color: #7c3aed;
+        box-shadow: 0 4px 14px rgba(109, 40, 217, 0.22);
+    }
+
+    /* Resolved / settled-on-site — right side drawers */
+    #resolvedCasesDrawer,
+    #settledIncidentsDrawer {
         display: none;
         position: fixed;
         inset: 0;
@@ -233,11 +256,13 @@
         align-items: stretch;
     }
 
-    #resolvedCasesDrawer.is-open {
+    #resolvedCasesDrawer.is-open,
+    #settledIncidentsDrawer.is-open {
         display: flex;
     }
 
-    .cases-resolved-drawer-panel {
+    .cases-resolved-drawer-panel,
+    .cases-settled-drawer-panel {
         width: min(420px, 100vw);
         max-height: 100vh;
         background: #fff;
@@ -257,6 +282,55 @@
         height: 4px;
         background: linear-gradient(90deg, #047857 0%, #10b981 50%, #6ee7b7 100%);
         z-index: 2;
+    }
+
+    .cases-settled-drawer-panel::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #6d28d9 0%, #8b5cf6 50%, #c4b5fd 100%);
+        z-index: 2;
+    }
+
+    .cases-settled-drawer-head {
+        background: linear-gradient(180deg, #f5f3ff 0%, #fff 100%);
+    }
+
+    .cases-settled-drawer-head h2 {
+        color: #5b21b6;
+    }
+
+    .cases-settled-drawer-item {
+        display: block;
+        width: 100%;
+        text-align: left;
+        padding: 0.85rem 0.9rem;
+        margin-bottom: 0.5rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.65rem;
+        background: #fff;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .cases-settled-drawer-item:hover {
+        border-color: #c4b5fd;
+        box-shadow: 0 2px 8px rgba(109, 40, 217, 0.12);
+    }
+
+    .cases-settled-drawer-item-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        margin-top: 0.55rem;
+    }
+
+    .cases-settled-drawer-item-actions .case-prior-open-link {
+        flex: 1 1 auto;
+        min-width: 4.5rem;
+        justify-content: center;
     }
 
     @keyframes casesResolvedDrawerIn {
@@ -4557,19 +4631,18 @@
         </div>
     </div>
 
-    <div class="monitoring-kpi monitoring-kpi-investigation">
+    <button type="button" class="monitoring-kpi monitoring-kpi-settled is-clickable" id="settledOnSiteKpiBtn"
+        onclick="openSettledIncidentsDrawer()" aria-expanded="false" aria-controls="settledIncidentsDrawer">
         <div class="monitoring-kpi-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <circle cx="11" cy="11" r="7" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                <path d="M9 12l2 2 4-4m6-2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
         </div>
         <div class="monitoring-kpi-text">
-            <h4>Under Review</h4>
-            <div class="monitoring-kpi-number">{{ status_counts.under_review }}</div>
+            <h4>Settled on-site</h4>
+            <div class="monitoring-kpi-number">{{ settled_on_site_count }}</div>
         </div>
-    </div>
-
+    </button>
 
     <button type="button" class="monitoring-kpi monitoring-kpi-resolved is-clickable" id="resolvedKpiBtn"
         onclick="openResolvedCasesDrawer()" aria-expanded="false" aria-controls="resolvedCasesDrawer">
@@ -4605,20 +4678,71 @@
                     <strong>{{ case.case_number }}</strong>
                     <span class="case-type-pill">{{ case.get_case_type_display }}</span>
                 </div>
-                <p class="cases-resolved-drawer-item-name complainant-name applicant-name"
-                   style="cursor: pointer; font-weight: 700; color: #1e3a8a;"
-                   data-full-name="{{ case.complainant_name }}"
-                   data-tx-id="{% if case.complainant_applicant %}APP-{{ case.complainant_applicant.id|slice:":8" }}...{% else %}{{ case.case_number }}{% endif %}"
-                   data-ref-code="{{ case.complainant_applicant.reference_number|default:'' }}"
-                   data-barangay="{% if case.complainant_applicant and case.complainant_applicant.active_unit_label != 'Not specified' %}{{ case.complainant_applicant.active_unit_label }}{% elif case.related_unit %}Block {{ case.related_unit.block_number }}, Lot {{ case.related_unit.lot_number }}{% else %}Not specified{% endif %}"
-                   data-dob="{{ case.complainant_applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}">{{ case.complainant_name }}</p>
+                <p class="cases-resolved-drawer-item-name">{{ case.complainant_name }}</p>
                 <p class="cases-resolved-drawer-item-meta">
-                    Filed {{ case.received_at|date:"M d, Y" }}
+                    Reported party:
+                    {% if case.subject_applicant %}{{ case.subject_applicant.full_name }}{% elif case.subject_name %}{{ case.subject_name }}{% else %}—{% endif %}
+                </p>
+                <p class="cases-resolved-drawer-item-meta">
+                    Filed {{ case.received_at|date:"M d, Y" }} · {{ case.received_at|time:"g:i A" }}
                     {% if case.resolved_at %} · Resolved {{ case.resolved_at|date:"M d, Y" }}{% endif %}
                 </p>
+                <p class="cases-resolved-drawer-item-meta" style="margin-top:0.25rem;font-weight:600;color:#047857;">Open Record →</p>
             </button>
             {% empty %}
             <p class="cases-resolved-drawer-empty">No resolved cases yet.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div id="settledIncidentsDrawer" role="dialog" aria-modal="true" aria-labelledby="settledIncidentsDrawerTitle"
+    onclick="closeSettledIncidentsDrawer(event)">
+    <div class="cases-resolved-drawer-panel cases-settled-drawer-panel" onclick="event.stopPropagation();">
+        <div class="cases-resolved-drawer-head cases-settled-drawer-head">
+            <div>
+                <h2 id="settledIncidentsDrawerTitle">Settled on-site</h2>
+                <p>{{ settled_on_site_count }} incident log{{ settled_on_site_count|pluralize }} — handled without a formal case</p>
+            </div>
+            <button type="button" class="cases-resolved-drawer-close" onclick="closeSettledIncidentsDrawer()"
+                aria-label="Close">&times;</button>
+        </div>
+        <div class="cases-resolved-drawer-scroll">
+            {% for row in settled_incident_rows %}
+            {% with log=row.incident_log %}
+            <article class="cases-settled-drawer-item">
+                <div class="cases-resolved-drawer-item-top">
+                    <span class="case-record-kind-pill case-record-kind-pill--incident">Incident log</span>
+                    <span class="case-type-pill">{{ log.get_case_type_display }}</span>
+                </div>
+                <p class="cases-resolved-drawer-item-name">{{ row.incident_complainant_name|default:"—" }}</p>
+                <p class="cases-resolved-drawer-item-meta">
+                    Reported party:
+                    {% if row.incident_respondent_name %}{{ row.incident_respondent_name }}{% else %}—{% endif %}
+                    {% if row.incident_unit_label %} · {{ row.incident_unit_label }}{% endif %}
+                </p>
+                <p class="cases-resolved-drawer-item-meta">
+                    Logged {{ log.logged_at|date:"M d, Y" }} · {{ log.logged_at|time:"g:i A" }}
+                </p>
+                <div class="cases-settled-drawer-item-actions">
+                    <button type="button" class="case-prior-open-link"
+                        onclick="viewSettledIncidentLog(this)"
+                        data-unit-label="{{ row.incident_unit_label|escape }}"
+                        data-complainant-name="{{ row.incident_complainant_name|escape }}"
+                        data-respondent-name="{{ row.incident_respondent_name|escape }}"
+                        data-case-type-display="{{ log.get_case_type_display|escape }}"
+                        data-description="{{ log.description|escape }}"
+                        data-logged-at="{{ log.logged_at|date:'M d, Y' }} · {{ log.logged_at|time:'g:i A' }}"
+                        data-logged-by="{{ log.logged_by.get_full_name|default:'Field'|escape }}">View</button>
+                    {% if can_delete_incident_logs %}
+                    <button type="button" class="case-prior-open-link case-prior-open-link--danger"
+                        onclick="deleteSettledIncidentLog('{{ log.id }}')">Remove</button>
+                    {% endif %}
+                </div>
+            </article>
+            {% endwith %}
+            {% empty %}
+            <p class="cases-resolved-drawer-empty">No on-site settled incidents logged yet.</p>
             {% endfor %}
         </div>
     </div>
@@ -7188,7 +7312,23 @@
 
     document.getElementById('typeFilter')?.addEventListener('change', applyCaseFilters);
 
+    function anyCaseDeskDrawerOpen() {
+        return document.getElementById('resolvedCasesDrawer')?.classList.contains('is-open')
+            || document.getElementById('settledIncidentsDrawer')?.classList.contains('is-open');
+    }
+
+    function restoreCaseDeskBodyScroll() {
+        const caseModalOpen = document.getElementById('caseModal')?.style.display === 'flex';
+        const newCaseModalOpen = document.getElementById('newCaseModal')?.style.display === 'flex';
+        const settledModalOpen = document.getElementById('settledIncidentModal')?.style.display === 'flex';
+        const settledLogModalOpen = document.getElementById('settledLogModal')?.style.display === 'flex';
+        if (!caseModalOpen && !newCaseModalOpen && !settledModalOpen && !settledLogModalOpen && !anyCaseDeskDrawerOpen()) {
+            document.body.style.overflow = '';
+        }
+    }
+
     function openResolvedCasesDrawer() {
+        closeSettledIncidentsDrawer();
         const drawer = document.getElementById('resolvedCasesDrawer');
         const btn = document.getElementById('resolvedKpiBtn');
         if (!drawer) return;
@@ -7210,11 +7350,33 @@
             btn.classList.remove('is-active');
             btn.setAttribute('aria-expanded', 'false');
         }
-        const caseModalOpen = document.getElementById('caseModal')?.style.display === 'flex';
-        const newCaseModalOpen = document.getElementById('newCaseModal')?.style.display === 'flex';
-        if (!caseModalOpen && !newCaseModalOpen) {
-            document.body.style.overflow = '';
+        restoreCaseDeskBodyScroll();
+    }
+
+    function openSettledIncidentsDrawer() {
+        closeResolvedCasesDrawer();
+        const drawer = document.getElementById('settledIncidentsDrawer');
+        const btn = document.getElementById('settledOnSiteKpiBtn');
+        if (!drawer) return;
+        drawer.classList.add('is-open');
+        document.body.style.overflow = 'hidden';
+        if (btn) {
+            btn.classList.add('is-active');
+            btn.setAttribute('aria-expanded', 'true');
         }
+    }
+
+    function closeSettledIncidentsDrawer(e) {
+        if (e && e.target && e.target.id !== 'settledIncidentsDrawer') return;
+        const drawer = document.getElementById('settledIncidentsDrawer');
+        const btn = document.getElementById('settledOnSiteKpiBtn');
+        if (!drawer) return;
+        drawer.classList.remove('is-open');
+        if (btn) {
+            btn.classList.remove('is-active');
+            btn.setAttribute('aria-expanded', 'false');
+        }
+        restoreCaseDeskBodyScroll();
     }
 
     function openCaseFromResolvedDrawer(caseId) {
@@ -7225,6 +7387,7 @@
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             closeResolvedCasesDrawer();
+            closeSettledIncidentsDrawer();
             closeCaseModal();
             closeNewCaseModal();
             closeSettledIncidentModal();

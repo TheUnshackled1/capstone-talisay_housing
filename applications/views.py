@@ -1687,9 +1687,9 @@ def application_detail(request, position, application_id):
             cert = applicant.cdrrmo_certification
             photo_urls = []
             for ph in cert.field_photos.all():
-                if ph.image:
+                if ph.image and ph.image.name:
                     try:
-                        photo_urls.append(request.build_absolute_uri(ph.image.url))
+                        photo_urls.append(ph.image.url)
                     except (ValueError, AttributeError):
                         pass
             data['cdrrmo'] = {
@@ -2766,7 +2766,7 @@ def eligibility_snapshot(request, position):
                     image__isnull=False
                 ).order_by('uploaded_at', 'id'):
                     try:
-                        photo_urls.append(request.build_absolute_uri(ph.image.url))
+                        photo_urls.append(ph.image.url)
                     except (ValueError, AttributeError):
                         pass
             except CDRRMOCertification.DoesNotExist:

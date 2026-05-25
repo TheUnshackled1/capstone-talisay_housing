@@ -110,13 +110,6 @@ def case_management_dashboard(request, position):
         'closed': cases.filter(status=wf.STATUS_CLOSED).count(),
     }
 
-    resolved_cases = (
-        Case.objects
-        .filter(status=wf.STATUS_RESOLVED)
-        .select_related('received_by', 'complainant_applicant')
-        .order_by('-resolved_at', '-received_at')
-    )
-
     # Search and filter
     search_query = request.GET.get('q', '').strip()
     filter_status = request.GET.get('status', 'all')
@@ -148,13 +141,59 @@ def case_management_dashboard(request, position):
         url = request.path + (f'?{query}' if query else '')
         return redirect(url)
 
-    include_incident_logs = filter_status == 'all'
-    desk_rows = _build_case_desk_rows(
-        cases,
-        include_incident_logs=include_incident_logs,
-        search_query=search_query,
-        filter_type=filter_type,
-    )
+    is_field_desk = position in FIELD_DESK_POSITIONS
+    settled_incident_rows = []
+    settled_on_site_count = 0
+
+    if is_field_desk:
+        # Main table: active cases only (exclude resolved + incident logs).
+        desk_cases = cases.exclude(status=wf.STATUS_RESOLVED)
+        desk_rows = _build_case_desk_rows(
+            desk_cases,
+            include_incident_logs=False,
+            search_query=search_query,
+            filter_type=filter_type,
+        )
+        settled_base = FieldSettledIncidentLog.objects.select_related(
+            'related_unit', 'logged_by', 'subject_applicant', 'complainant_applicant',
+        )
+        settled_filtered = _filter_settled_incident_logs_queryset(
+            settled_base, search_query, filter_type,
+        )
+        settled_on_site_count = FieldSettledIncidentLog.objects.count()
+        settled_incident_rows = _settled_incident_desk_rows(settled_filtered)
+        resolved_cases = (
+            Case.objects
+            .filter(status=wf.STATUS_RESOLVED)
+            .select_related(
+                'received_by', 'complainant_applicant', 'subject_applicant', 'related_unit',
+            )
+        )
+        resolved_cases = _apply_case_list_filters(resolved_cases, search_query, filter_type)
+        resolved_cases = resolved_cases.order_by('-resolved_at', '-received_at')
+    else:
+        include_incident_logs = filter_status == 'all'
+        desk_rows = _build_case_desk_rows(
+            cases,
+            include_incident_logs=include_incident_logs,
+            search_query=search_query,
+            filter_type=filter_type,
+        )
+        resolved_cases = (
+            Case.objects
+            .filter(status=wf.STATUS_RESOLVED)
+            .select_related('received_by', 'complainant_applicant', 'subject_applicant')
+            .order_by('-resolved_at', '-received_at')
+        )
+        if search_query or filter_type != 'all':
+            resolved_cases = _apply_case_list_filters(
+                Case.objects.filter(status=wf.STATUS_RESOLVED).select_related(
+                    'received_by', 'complainant_applicant', 'subject_applicant',
+                ),
+                search_query,
+                filter_type,
+            ).order_by('-resolved_at', '-received_at')
+
     can_delete_incident_logs = position in wf.FIELD_DESK_POSITIONS
 
     prefill_beneficiary = None
@@ -194,6 +233,9 @@ def case_management_dashboard(request, position):
         'monitor_intake_positions': tuple(wf.CASE_MONITOR_DESK_POSITIONS),
         'desk_rows': desk_rows,
         'can_delete_incident_logs': can_delete_incident_logs,
+        'is_field_desk': is_field_desk,
+        'settled_incident_rows': settled_incident_rows,
+        'settled_on_site_count': settled_on_site_count,
     }
 
     return render(request, template_name, context)
@@ -350,6 +392,37 @@ def _filter_settled_incident_logs_queryset(qs, search_query, filter_type):
     return qs
 
 
+def _settled_incident_desk_rows(incident_qs):
+    """Build display rows for on-site settled incident logs (newest first)."""
+    rows = []
+    for log in incident_qs.order_by('-logged_at', '-pk'):
+        rows.append({
+            'kind': 'incident_log',
+            'sort_at': log.logged_at,
+            'case': None,
+            'incident_log': log,
+            'incident_unit_label': _settled_incident_unit_label(log),
+            'incident_complainant_name': _settled_incident_complainant_name(log),
+            'incident_respondent_name': _settled_incident_respondent_name(log),
+        })
+    return rows
+
+
+def _apply_case_list_filters(qs, search_query, filter_type):
+    if search_query:
+        qs = qs.filter(
+            models.Q(complainant_name__icontains=search_query)
+            | models.Q(case_number__icontains=search_query)
+            | models.Q(initial_description__icontains=search_query)
+            | models.Q(subject_name__icontains=search_query)
+            | models.Q(subject_applicant__full_name__icontains=search_query)
+            | models.Q(complainant_applicant__full_name__icontains=search_query)
+        )
+    if filter_type != 'all':
+        qs = qs.filter(case_type=filter_type)
+    return qs
+
+
 def _build_case_desk_rows(cases_qs, include_incident_logs, search_query, filter_type):
     """
     Merge formal cases and on-site settled incident logs for one desk list.
@@ -368,16 +441,7 @@ def _build_case_desk_rows(cases_qs, include_incident_logs, search_query, filter_
             'related_unit', 'logged_by', 'subject_applicant', 'complainant_applicant',
         )
         incident_qs = _filter_settled_incident_logs_queryset(incident_qs, search_query, filter_type)
-        for log in incident_qs:
-            rows.append({
-                'kind': 'incident_log',
-                'sort_at': log.logged_at,
-                'case': None,
-                'incident_log': log,
-                'incident_unit_label': _settled_incident_unit_label(log),
-                'incident_complainant_name': _settled_incident_complainant_name(log),
-                'incident_respondent_name': _settled_incident_respondent_name(log),
-            })
+        rows.extend(_settled_incident_desk_rows(incident_qs))
     rows.sort(key=lambda row: row['sort_at'] or timezone.now())
     return rows
 
@@ -597,7 +661,7 @@ def get_case_details(request, position, case_id):
             evidence_data.append({
                 'id': str(ev.id),
                 'caption': ev.caption or '',
-                'url': request.build_absolute_uri(ev.file.url) if ev.file else '',
+                'url': ev.file.url if ev.file and ev.file.name else '',
                 'uploaded_by': ev.uploaded_by.get_full_name() if ev.uploaded_by else 'Staff',
                 'uploaded_at': ev.uploaded_at.isoformat(),
             })
@@ -1110,7 +1174,7 @@ def upload_case_evidence(request, position, case_id):
         'evidence': {
             'id': str(evidence.id),
             'caption': evidence.caption,
-            'url': request.build_absolute_uri(evidence.file.url),
+            'url': evidence.file.url if evidence.file and evidence.file.name else '',
             'uploaded_by': request.user.get_full_name() or 'Staff',
             'uploaded_at': evidence.uploaded_at.isoformat(),
         },
