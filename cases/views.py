@@ -586,6 +586,7 @@ def get_case_details(request, position, case_id):
             .prefetch_related(
                 'evidence__uploaded_by',
                 'complainant_applicant__household_members',
+                'subject_applicant__household_members',
                 'actions__created_by',
             )
             .get(id=case_id)
@@ -634,6 +635,30 @@ def get_case_details(request, position, case_id):
                         ),
                     }
                     for member in complainant_applicant.household_members.all().order_by(
+                        'created_at'
+                    )
+                ],
+            }
+
+        subject_profile = None
+        if subject_applicant:
+            subject_profile = {
+                'applicant_id': str(subject_applicant.id),
+                'sex_display': (
+                    subject_applicant.get_sex_display()
+                    if subject_applicant.sex
+                    else '—'
+                ),
+                'household_members': subject_applicant.household_member_count,
+                'household_member_rows': [
+                    {
+                        'name': member.full_name,
+                        'relationship': member.get_relationship_display(),
+                        'sex_display': (
+                            member.get_sex_display() if member.sex else '—'
+                        ),
+                    }
+                    for member in subject_applicant.household_members.all().order_by(
                         'created_at'
                     )
                 ],
@@ -722,8 +747,14 @@ def get_case_details(request, position, case_id):
                     else (str(unit) if unit else '')
                 ),
                 'subject_name': case.subject_name or '',
+                'subject_phone': subject_applicant.phone_number if subject_applicant else '',
                 'subject_reference': (
                     subject_applicant.reference_number if subject_applicant else ''
+                ),
+                'subject_unit_label': (
+                    f'Block {subject_unit.block_number}, Lot {subject_unit.lot_number}'
+                    if subject_unit and subject_unit.block_number and subject_unit.lot_number
+                    else (str(subject_unit) if subject_unit else '')
                 ),
                 'initial_description': case.initial_description,
                 'investigation_notes': case.investigation_notes or '',
@@ -758,6 +789,7 @@ def get_case_details(request, position, case_id):
                 'respondent_settled_incident_logs': respondent_settled_incident_logs,
                 'respondent_settled_incident_logs_count': len(respondent_settled_incident_logs),
                 'beneficiary_profile': beneficiary_profile,
+                'subject_profile': subject_profile,
                 'workflow': workflow_payload,
                 'received_at_location_display': case.get_received_at_location_display(),
             }

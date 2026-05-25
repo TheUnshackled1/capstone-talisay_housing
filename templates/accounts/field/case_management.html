@@ -4806,7 +4806,7 @@
 
         <div class="modal-body case-detail-body case-monitor-body">
             <div class="tha-form-header case-monitor-hero">
-                <p class="case-monitor-hero-kicker">Module 5 · Field complaint</p>
+                <p class="case-monitor-hero-kicker">Field complaint</p>
                 <h2 id="modalCaseNumber">—</h2>
                 <p class="tha-form-subtitle">Talisay City Housing Authority</p>
                 <div class="case-detail-meta">
@@ -4831,10 +4831,23 @@
                         </div>
                     </article>
 
-                    <!-- Respondent Card -->
-                    <article id="subjectSection" class="case-monitor-card case-monitor-card--respondent" style="display: none;">
-                        <h3 class="case-monitor-card-title">Reported Party</h3>
-                        <p id="modalSubjectName" class="case-monitor-person-name case-monitor-person-name--respondent">—</p>
+                    <!-- Incident Card -->
+                    <article class="case-monitor-card case-monitor-card--incident">
+                        <h3 class="case-monitor-card-title">Incident</h3>
+                        <div class="case-monitor-incident-type">
+                            <span class="case-detail-label">Complaint type</span>
+                            <span id="modalComplaintType"></span>
+                        </div>
+                        <div class="case-monitor-incident-desc" style="margin-top: 0.5rem;">
+                            <span class="case-detail-label">Description</span>
+                            <p id="modalDescription" class="case-monitor-description">—</p>
+                        </div>
+                    </article>
+
+                    <article id="resolutionSection" class="case-monitor-card case-monitor-card--resolution" style="display: none;">
+                        <h3 class="case-monitor-card-title">Resolution</h3>
+                        <p id="modalResolutionNotes" class="case-monitor-person-name case-monitor-person-name--resolution">—</p>
+                        <p id="modalResolvedDate" class="case-monitor-resolved-meta"></p>
                     </article>
                 </div>
 
@@ -4856,24 +4869,22 @@
                 </article>
 
                 <div class="case-monitor-col-right">
-                <!-- Incident Card -->
-                <article class="case-monitor-card case-monitor-card--incident">
-                    <h3 class="case-monitor-card-title">Incident</h3>
-                    <div class="case-monitor-incident-type">
-                        <span class="case-detail-label">Complaint type</span>
-                        <span id="modalComplaintType"></span>
-                    </div>
-                    <div class="case-monitor-incident-desc" style="margin-top: 0.5rem;">
-                        <span class="case-detail-label">Description</span>
-                        <p id="modalDescription" class="case-monitor-description">—</p>
-                    </div>
-                </article>
-
-                <article id="resolutionSection" class="case-monitor-card case-monitor-card--resolution" style="display: none;">
-                    <h3 class="case-monitor-card-title">Resolution</h3>
-                    <p id="modalResolutionNotes" class="case-monitor-person-name case-monitor-person-name--resolution">—</p>
-                    <p id="modalResolvedDate" class="case-monitor-resolved-meta"></p>
-                </article>
+                    <!-- Respondent Card structured exactly like Complainant -->
+                    <article id="subjectSection" class="case-monitor-card case-monitor-card--respondent" style="display: none;">
+                        <h3 class="case-monitor-card-title">Reported Party</h3>
+                        <p id="modalSubjectName" class="case-monitor-person-name case-monitor-person-name--respondent">—</p>
+                        <dl class="case-monitor-facts">
+                            <div><dt>Sex</dt><dd id="modalSubjectSex">—</dd></div>
+                            <div><dt>Household</dt><dd id="modalSubjectHousehold">—</dd></div>
+                            <div><dt>Contact</dt><dd id="modalSubjectPhone">—</dd></div>
+                            <div><dt>Reference</dt><dd id="modalSubjectRef" class="case-monitor-ref">—</dd></div>
+                            <div class="case-monitor-facts-wide"><dt>Block &amp; lot</dt><dd id="modalSubjectUnit">—</dd></div>
+                        </dl>
+                        <div id="modalSubjectHouseholdMembersWrap" class="case-monitor-household" style="display: none; margin-top: 0.65rem;">
+                            <p class="case-monitor-household-label" style="font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #94a3b8; margin: 0 0 0.45rem;">Household members</p>
+                            <div id="modalSubjectHouseholdMembersList"></div>
+                        </div>
+                    </article>
                 </div>
 
                 <article id="caseIntakeEvidenceSection" class="case-monitor-card case-monitor-card--full case-intake-evidence-card" style="display: none;">
@@ -5577,8 +5588,43 @@
         const subjectSection = document.getElementById('subjectSection');
         if (c.subject_name) {
             subjectSection.style.display = 'block';
-            document.getElementById('modalSubjectName').textContent = c.subject_name +
-                (c.subject_reference ? ` (${c.subject_reference})` : '');
+            document.getElementById('modalSubjectName').textContent = c.subject_name;
+            document.getElementById('modalSubjectPhone').textContent = c.subject_phone || '—';
+            document.getElementById('modalSubjectRef').textContent = c.subject_reference || '—';
+            document.getElementById('modalSubjectUnit').textContent = c.subject_unit_label || '—';
+
+            const sProfile = c.subject_profile;
+            const sSexEl = document.getElementById('modalSubjectSex');
+            const sHouseholdEl = document.getElementById('modalSubjectHousehold');
+            const sHouseholdWrap = document.getElementById('modalSubjectHouseholdMembersWrap');
+            const sHouseholdList = document.getElementById('modalSubjectHouseholdMembersList');
+            if (sSexEl) sSexEl.textContent = sProfile?.sex_display || '—';
+            if (sHouseholdEl) {
+                const n = sProfile?.household_members;
+                sHouseholdEl.textContent = n != null ? `${n} member${n === 1 ? '' : 's'}` : '—';
+            }
+            if (sHouseholdWrap && sHouseholdList) {
+                const rows = sProfile?.household_member_rows || [];
+                if (rows.length) {
+                    sHouseholdWrap.style.display = 'block';
+                    sHouseholdList.innerHTML = `
+                        <table class="modal-household-table">
+                            <thead><tr><th>Name</th><th>Relationship</th><th>Sex</th></tr></thead>
+                            <tbody>
+                                ${rows.map((m) => `
+                                    <tr>
+                                        <td style="font-weight:600;">${escapeHtml(m.name || '—')}</td>
+                                        <td>${escapeHtml(m.relationship || '—')}</td>
+                                        <td>${escapeHtml(m.sex_display || '—')}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>`;
+                } else {
+                    sHouseholdWrap.style.display = 'none';
+                    sHouseholdList.innerHTML = '';
+                }
+            }
         } else if (subjectSection) {
             subjectSection.style.display = 'none';
         }
@@ -6306,14 +6352,35 @@
     }
 
     function updateCaseListRowStatus(caseId, status, statusDisplay) {
+        // Desktop table row status update
         const row = document.querySelector(`tr[data-case-id="${caseId}"]`);
-        if (!row) return;
-        row.dataset.caseStatus = status;
-        const pill = row.querySelector('[data-case-status-pill]');
-        if (pill) {
-            pill.className = `status-pill-flex status-pill-flex--${status}`;
-            pill.textContent = statusDisplay;
+        if (row) {
+            row.dataset.caseStatus = status;
+            const pill = row.querySelector('[data-case-status-pill]');
+            if (pill) {
+                updateStatusPill(pill, status, statusDisplay);
+            }
         }
+        
+        // Mobile card simulator status update
+        const card = document.getElementById(`case-card-${caseId}`);
+        if (card) {
+            const pill = card.querySelector('[data-case-status-pill]');
+            if (pill) {
+                updateStatusPill(pill, status, statusDisplay);
+            }
+        }
+    }
+
+    function updateStatusPill(pill, status, statusDisplay) {
+        pill.className = `status-pill-flex status-pill-flex--${status}`;
+        let innerHTML = '';
+        if (status === 'resolved') {
+            innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="width: 0.75rem; height: 0.75rem; color: #16a34a; flex-shrink: 0; margin-right: 0.15rem;"><path d="M20 6L9 17l-5-5"></path></svg>`;
+        } else if (status === 'closed') {
+            innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 0.75rem; height: 0.75rem; color: #475569; flex-shrink: 0; margin-right: 0.15rem;"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`;
+        }
+        pill.innerHTML = innerHTML + statusDisplay;
     }
 
     function applyFieldCaseModalLayout(c, wf, options = {}) {

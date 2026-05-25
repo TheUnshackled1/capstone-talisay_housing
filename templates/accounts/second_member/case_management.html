@@ -3374,7 +3374,7 @@
 
         <div class="modal-body case-detail-body case-monitor-body">
             <div class="tha-form-header case-monitor-hero">
-                <p class="case-monitor-hero-kicker">Module 5 · Field complaint</p>
+                <p class="case-monitor-hero-kicker">Field complaint</p>
                 <h2 id="modalCaseNumber">—</h2>
                 <p class="tha-form-subtitle">Talisay City Housing Authority</p>
                 <div class="case-detail-meta">
@@ -3397,9 +3397,23 @@
                         </div>
                     </article>
 
-                    <article id="subjectSection" class="case-monitor-card case-monitor-card--respondent" style="display: none;">
-                        <h3 class="case-monitor-card-title">Reported Party</h3>
-                        <p id="modalSubjectName" class="case-monitor-person-name case-monitor-person-name--respondent">—</p>
+                    <!-- Incident Card -->
+                    <article class="case-monitor-card case-monitor-card--incident">
+                        <h3 class="case-monitor-card-title">Incident</h3>
+                        <div class="case-monitor-incident-type">
+                            <span class="case-detail-label">Type</span>
+                            <span id="modalComplaintType"></span>
+                        </div>
+                        <div class="case-monitor-incident-desc">
+                            <span class="case-detail-label">Description</span>
+                            <p id="modalDescription" class="case-monitor-description">—</p>
+                        </div>
+                    </article>
+
+                    <article id="resolutionSection" class="case-monitor-card case-monitor-card--resolution" style="display: none;">
+                        <h3 class="case-monitor-card-title">Resolution</h3>
+                        <p id="modalResolutionNotes" class="case-monitor-person-name case-monitor-person-name--resolution">—</p>
+                        <p id="modalResolvedDate" class="case-monitor-resolved-meta"></p>
                     </article>
 
                     <article id="respondentSettledLogsSection" class="case-monitor-card case-monitor-card--full" style="display: none;">
@@ -3438,23 +3452,22 @@
                 </article>
 
                 <div class="case-monitor-col-right">
-                <article class="case-monitor-card case-monitor-card--incident">
-                    <h3 class="case-monitor-card-title">Incident</h3>
-                    <div class="case-monitor-incident-type">
-                        <span class="case-detail-label">Type</span>
-                        <span id="modalComplaintType"></span>
-                    </div>
-                    <div class="case-monitor-incident-desc">
-                        <span class="case-detail-label">Description</span>
-                        <p id="modalDescription" class="case-monitor-description">—</p>
-                    </div>
-                </article>
-
-                <article id="resolutionSection" class="case-monitor-card case-monitor-card--resolution" style="display: none;">
-                    <h3 class="case-monitor-card-title">Resolution</h3>
-                    <p id="modalResolutionNotes" class="case-monitor-person-name case-monitor-person-name--resolution">—</p>
-                    <p id="modalResolvedDate" class="case-monitor-resolved-meta"></p>
-                </article>
+                    <!-- Respondent Card structured exactly like Complainant -->
+                    <article id="subjectSection" class="case-monitor-card case-monitor-card--respondent" style="display: none;">
+                        <h3 class="case-monitor-card-title">Reported Party</h3>
+                        <p id="modalSubjectName" class="case-monitor-person-name case-monitor-person-name--respondent">—</p>
+                        <dl class="case-monitor-facts">
+                            <div><dt>Sex</dt><dd id="modalSubjectSex">—</dd></div>
+                            <div><dt>Household</dt><dd id="modalSubjectHousehold">—</dd></div>
+                            <div><dt>Contact</dt><dd id="modalSubjectPhone">—</dd></div>
+                            <div><dt>Reference</dt><dd id="modalSubjectRef" class="case-monitor-ref">—</dd></div>
+                            <div class="case-monitor-facts-wide"><dt>Block &amp; lot</dt><dd id="modalSubjectUnit">—</dd></div>
+                        </dl>
+                        <div id="modalSubjectHouseholdMembersWrap" class="case-monitor-household" style="display: none;">
+                            <p class="case-monitor-household-label">Household members</p>
+                            <div id="modalSubjectHouseholdMembersList"></div>
+                        </div>
+                    </article>
                 </div>
 
                 <article id="caseIntakeEvidenceSection" class="case-monitor-card case-monitor-card--full case-intake-evidence-card" style="display: none;">
@@ -3993,12 +4006,41 @@
         const subjectSection = document.getElementById('subjectSection');
         if (c.subject_name && subjectSection) {
             subjectSection.style.display = 'block';
-            const subjEl = document.getElementById('modalSubjectName');
-            if (subjEl) {
-                if (c.subject_reference) {
-                    subjEl.innerHTML = `${escapeHtml(c.subject_name)} <span class="case-monitor-ref">${escapeHtml(c.subject_reference)}</span>`;
+            document.getElementById('modalSubjectName').textContent = c.subject_name;
+            document.getElementById('modalSubjectPhone').textContent = c.subject_phone || '—';
+            document.getElementById('modalSubjectRef').textContent = c.subject_reference || '—';
+            document.getElementById('modalSubjectUnit').textContent = c.subject_unit_label || '—';
+
+            const sProfile = c.subject_profile;
+            const sSexEl = document.getElementById('modalSubjectSex');
+            const sHouseholdEl = document.getElementById('modalSubjectHousehold');
+            const sHouseholdWrap = document.getElementById('modalSubjectHouseholdMembersWrap');
+            const sHouseholdList = document.getElementById('modalSubjectHouseholdMembersList');
+            if (sSexEl) sSexEl.textContent = sProfile?.sex_display || '—';
+            if (sHouseholdEl) {
+                const n = sProfile?.household_members;
+                sHouseholdEl.textContent = n != null ? `${n} member${n === 1 ? '' : 's'}` : '—';
+            }
+            if (sHouseholdWrap && sHouseholdList) {
+                const rows = sProfile?.household_member_rows || [];
+                if (rows.length) {
+                    sHouseholdWrap.style.display = 'block';
+                    sHouseholdList.innerHTML = `
+                        <table class="modal-household-table">
+                            <thead><tr><th>Name</th><th>Relationship</th><th>Sex</th></tr></thead>
+                            <tbody>
+                                ${rows.map((m) => `
+                                    <tr>
+                                        <td style="font-weight:600;">${escapeHtml(m.name || '—')}</td>
+                                        <td>${escapeHtml(m.relationship || '—')}</td>
+                                        <td>${escapeHtml(m.sex_display || '—')}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>`;
                 } else {
-                    subjEl.textContent = c.subject_name;
+                    sHouseholdWrap.style.display = 'none';
+                    sHouseholdList.innerHTML = '';
                 }
             }
         } else if (subjectSection) {
