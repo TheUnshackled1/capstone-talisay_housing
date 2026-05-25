@@ -1427,6 +1427,16 @@
         transform: translateY(0) scale(1) !important;
     }
 
+    .table-verify-btn--muted {
+        border-color: #475569 !important;
+        background: linear-gradient(135deg, #64748b 0%, #475569 100%) !important;
+        box-shadow: 0 1px 2px rgba(71, 85, 105, 0.2) !important;
+    }
+    .table-verify-btn--muted:hover {
+        background: linear-gradient(135deg, #475569 0%, #334155 100%) !important;
+        box-shadow: 0 4px 12px rgba(71, 85, 105, 0.35) !important;
+    }
+
     /* Premium Applicant Cell details */
     .applicant-cell-info {
         display: flex;
@@ -2542,6 +2552,7 @@
 {% block extra_js %}
 <script>
         let fieldCameraStream = null;
+        let fieldCameraFacingMode = 'environment';
         const fieldEvidenceFiles = [];
         const fieldEvidenceObjectUrls = [];
 
@@ -2561,11 +2572,13 @@
             }
             const startBtn = document.getElementById('fieldCameraStartBtn');
             const capBtn = document.getElementById('fieldCameraCaptureBtn');
+            const switchBtn = document.getElementById('fieldCameraSwitchBtn');
             const stopBtn = document.getElementById('fieldCameraStopBtn');
             const pickBtn = document.getElementById('fieldEvidenceFilePickBtn');
             const fileInput = document.getElementById('fieldEvidenceFileInput');
             if (startBtn) startBtn.addEventListener('click', startFieldCamera);
             if (capBtn) capBtn.addEventListener('click', captureFieldPhoto);
+            if (switchBtn) switchBtn.addEventListener('click', toggleFieldCamera);
             if (stopBtn) stopBtn.addEventListener('click', stopFieldCamera);
             if (pickBtn && fileInput) {
                 pickBtn.addEventListener('click', function() { fileInput.click(); });
@@ -2721,6 +2734,55 @@
             });
         }
 
+        function requestFieldDashboardCameraStream(onSuccess, onError) {
+            const facing = fieldCameraFacingMode;
+            const attempts = [
+                { video: { facingMode: { ideal: facing } }, audio: false },
+                { video: { facingMode: facing }, audio: false },
+                { video: true, audio: false },
+            ];
+            let lastErr = null;
+            let index = 0;
+            function tryNext() {
+                if (index >= attempts.length) {
+                    onError(lastErr || new Error('Could not open camera'));
+                    return;
+                }
+                navigator.mediaDevices.getUserMedia(attempts[index++])
+                    .then(onSuccess)
+                    .catch(function(err) {
+                        lastErr = err;
+                        if (err && (err.name === 'NotAllowedError' || err.name === 'SecurityError' || err.name === 'NotReadableError')) {
+                            onError(err);
+                            return;
+                        }
+                        tryNext();
+                    });
+            }
+            tryNext();
+        }
+
+        function showFieldCameraUi(stream) {
+            fieldCameraStream = stream;
+            const start = document.getElementById('fieldCameraStartBtn');
+            const cap = document.getElementById('fieldCameraCaptureBtn');
+            const swt = document.getElementById('fieldCameraSwitchBtn');
+            const stp = document.getElementById('fieldCameraStopBtn');
+            if (start) start.style.display = 'none';
+            if (cap) cap.style.display = 'inline-block';
+            if (swt) swt.style.display = 'inline-block';
+            if (stp) stp.style.display = 'inline-block';
+            const v = document.getElementById('fieldCameraVideo');
+            if (v) {
+                v.style.display = 'block';
+                v.srcObject = stream;
+                const playPromise = v.play();
+                if (playPromise && typeof playPromise.catch === 'function') {
+                    playPromise.catch(function() {});
+                }
+            }
+        }
+
         function stopFieldCamera() {
             if (fieldCameraStream) {
                 fieldCameraStream.getTracks().forEach(function(t) { t.stop(); });
@@ -2733,9 +2795,11 @@
             }
             const start = document.getElementById('fieldCameraStartBtn');
             const cap = document.getElementById('fieldCameraCaptureBtn');
+            const swt = document.getElementById('fieldCameraSwitchBtn');
             const stp = document.getElementById('fieldCameraStopBtn');
             if (start) start.style.display = 'inline-block';
             if (cap) cap.style.display = 'none';
+            if (swt) swt.style.display = 'none';
             if (stp) stp.style.display = 'none';
         }
 
@@ -2747,24 +2811,29 @@
             }
         }
 
-        async function startFieldCamera() {
+        function startFieldCamera() {
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                 fieldNotify('This browser does not support in-page camera access. Please use “Attach from device” to upload photographs.', 'Camera unavailable');
                 return;
             }
-            try {
-                fieldCameraStream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: { ideal: 'environment' } },
-                    audio: false
-                });
-                const v = document.getElementById('fieldCameraVideo');
-                v.srcObject = fieldCameraStream;
-                v.style.display = 'block';
-                document.getElementById('fieldCameraStartBtn').style.display = 'none';
-                document.getElementById('fieldCameraCaptureBtn').style.display = 'inline-block';
-                document.getElementById('fieldCameraStopBtn').style.display = 'inline-block';
-            } catch (err) {
-                fieldNotify('Could not open camera: ' + (err && err.message ? err.message : 'permission denied') + '\n\nUse “Attach from device”, or ensure you are on HTTPS or localhost.', 'Camera blocked');
+            if (fieldCameraStream) {
+                fieldCameraStream.getTracks().forEach(function(t) { t.stop(); });
+                fieldCameraStream = null;
+            }
+            requestFieldDashboardCameraStream(
+                showFieldCameraUi,
+                function(err) {
+                    stopFieldCamera();
+                    const detail = err && err.message ? err.message : 'permission denied';
+                    fieldNotify('Could not open camera: ' + detail + '. Click Allow when prompted, or use Attach from device.', 'Camera blocked');
+                }
+            );
+        }
+
+        function toggleFieldCamera() {
+            fieldCameraFacingMode = (fieldCameraFacingMode === 'environment') ? 'user' : 'environment';
+            if (fieldCameraStream) {
+                startFieldCamera();
             }
         }
 
@@ -3255,7 +3324,8 @@
                         <div class="field-evidence-buttons">
                             <button type="button" id="fieldCameraStartBtn" class="table-verify-btn">Activate camera</button>
                             <button type="button" id="fieldCameraCaptureBtn" class="table-verify-btn" style="display: none;">Capture frame</button>
-                            <button type="button" id="fieldCameraStopBtn" class="table-verify-btn" style="display: none; background: linear-gradient(135deg, #64748b 0%, #475569 100%);">Stop camera</button>
+                            <button type="button" id="fieldCameraSwitchBtn" class="table-verify-btn table-verify-btn--muted" style="display: none;"><svg class="btn-icon" style="width: 0.9rem; height: 0.9rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path><path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"></path></svg> Switch camera</button>
+                            <button type="button" id="fieldCameraStopBtn" class="table-verify-btn table-verify-btn--muted" style="display: none;">Stop camera</button>
                         </div>
                         <input type="file" id="fieldEvidenceFileInput" accept="image/jpeg,image/png,image/webp,image/*" multiple style="display: none;">
                         <button type="button" class="field-evidence-file-btn" id="fieldEvidenceFilePickBtn">Attach from device</button>

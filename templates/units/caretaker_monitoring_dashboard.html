@@ -1218,6 +1218,14 @@
     .table-verify-btn:active {
         transform: translateY(0);
     }
+    .table-verify-btn--muted {
+        background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+        box-shadow: 0 2px 4px rgba(71, 85, 105, 0.3);
+    }
+    .table-verify-btn--muted:hover {
+        background: linear-gradient(135deg, #475569 0%, #334155 100%);
+        box-shadow: 0 6px 12px rgba(71, 85, 105, 0.4);
+    }
 
     .field-evidence-thumb {
         position: relative;
@@ -3146,7 +3154,8 @@
                     <canvas id="photoCameraCanvas" style="display: none;"></canvas>
                     <div class="field-evidence-buttons">
                         <button type="button" class="table-verify-btn" onclick="capturePhotoEvidence()">Capture frame</button>
-                        <button type="button" class="table-verify-btn" onclick="stopPhotoEvidenceCamera()" style="background: linear-gradient(135deg, #64748b 0%, #475569 100%);">Stop camera</button>
+                        <button type="button" id="photoCameraSwitchBtn" class="table-verify-btn table-verify-btn--muted" onclick="togglePhotoEvidenceCamera()" style="display: none;"><svg class="btn-icon" style="width: 0.9rem; height: 0.9rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path><path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"></path></svg> Switch camera</button>
+                        <button type="button" class="table-verify-btn table-verify-btn--muted" onclick="stopPhotoEvidenceCamera()">Stop camera</button>
                     </div>
                 </div>
 
@@ -3180,6 +3189,7 @@
 let pendingEarlyTaskId = null;
 let pendingEarlyTaskDetails = null;
 let photoCameraStream = null;
+let photoCameraFacingMode = 'environment';
 const selectedTaskId = '{{ selected_task_id|escapejs }}';
 
 function showToast(message, type = 'success') {
@@ -3444,7 +3454,71 @@ function setPhotoEvidenceFiles(files) {
     updatePhotoEvidenceName(input);
 }
 
-async function openPhotoEvidenceInput(useCamera) {
+function requestPhotoCameraStream(onSuccess, onError) {
+    const facing = photoCameraFacingMode;
+    const attempts = [
+        { video: { facingMode: { ideal: facing } }, audio: false },
+        { video: { facingMode: facing }, audio: false },
+        { video: true, audio: false },
+    ];
+    let lastErr = null;
+    let index = 0;
+    function tryNext() {
+        if (index >= attempts.length) {
+            onError(lastErr || new Error('Could not open camera'));
+            return;
+        }
+        navigator.mediaDevices.getUserMedia(attempts[index++])
+            .then(onSuccess)
+            .catch(function (err) {
+                lastErr = err;
+                if (err && (err.name === 'NotAllowedError' || err.name === 'SecurityError' || err.name === 'NotReadableError')) {
+                    onError(err);
+                    return;
+                }
+                tryNext();
+            });
+    }
+    tryNext();
+}
+
+function showPhotoCameraStream(stream) {
+    photoCameraStream = stream;
+    const preview = document.getElementById('cameraPreview');
+    const swt = document.getElementById('photoCameraSwitchBtn');
+    const mainBtns = document.getElementById('mainEvidenceButtons');
+    if (preview) preview.classList.add('active');
+    if (swt) swt.style.display = 'inline-block';
+    if (mainBtns) mainBtns.style.display = 'none';
+    const video = document.getElementById('photoCameraVideo');
+    if (video) {
+        video.srcObject = stream;
+        const playPromise = video.play();
+        if (playPromise && typeof playPromise.catch === 'function') {
+            playPromise.catch(function () {});
+        }
+    }
+}
+
+function startPhotoEvidenceCamera() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        showToast('This browser does not support live camera access. Use Attach from device instead.', 'error');
+        return;
+    }
+    if (photoCameraStream) {
+        photoCameraStream.getTracks().forEach(function (track) { track.stop(); });
+        photoCameraStream = null;
+    }
+    requestPhotoCameraStream(
+        showPhotoCameraStream,
+        function () {
+            stopPhotoEvidenceCamera();
+            showToast('Could not open camera. Click Allow when prompted, or use Attach from device.', 'error');
+        }
+    );
+}
+
+function openPhotoEvidenceInput(useCamera) {
     const input = document.getElementById('photoEvidenceInput');
     if (!input) return;
     if (!useCamera) {
@@ -3454,21 +3528,13 @@ async function openPhotoEvidenceInput(useCamera) {
         input.click();
         return;
     }
+    startPhotoEvidenceCamera();
+}
 
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        showToast('This browser does not support live camera access. Use Choose photo instead.', 'error');
-        return;
-    }
-    try {
-        photoCameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
-        const video = document.getElementById('photoCameraVideo');
-        const preview = document.getElementById('cameraPreview');
-        if (video) video.srcObject = photoCameraStream;
-        if (preview) preview.classList.add('active');
-        const mainBtns = document.getElementById('mainEvidenceButtons');
-        if (mainBtns) mainBtns.style.display = 'none';
-    } catch (error) {
-        showToast('Could not open camera. Please allow camera access or use Choose photo.', 'error');
+function togglePhotoEvidenceCamera() {
+    photoCameraFacingMode = (photoCameraFacingMode === 'environment') ? 'user' : 'environment';
+    if (photoCameraStream) {
+        startPhotoEvidenceCamera();
     }
 }
 
@@ -3483,6 +3549,8 @@ function stopPhotoEvidenceCamera() {
     if (preview) preview.classList.remove('active');
     const mainBtns = document.getElementById('mainEvidenceButtons');
     if (mainBtns) mainBtns.style.display = 'flex';
+    const swt = document.getElementById('photoCameraSwitchBtn');
+    if (swt) swt.style.display = 'none';
 }
 
 function capturePhotoEvidence() {
