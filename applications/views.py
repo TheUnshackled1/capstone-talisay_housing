@@ -2359,7 +2359,7 @@ def _situation_certification_gate(applicant):
                 'label': 'CDRRMO certification (uploaded or scanned)',
                 'detail': (
                     'Separate vault slot: upload or scan as document type “CDRRMO Certification” '
-                    '(not the incident report).'
+                    '(not the Inspection Report).'
                 ),
                 'done': bool(has_cdrrmo_doc),
                 'vault_document_type': 'cdrrmo_cert',

@@ -925,7 +925,7 @@ def upload_document(request, position):
 
     URL: /documents/<position>/upload/
 
-    Staff-facing: ``incident_report`` is for the incident report document only; field verification
+    Staff-facing: ``incident_report`` is for the Inspection Report document only; field verification
     photos belong on the CDRRMO record as FieldVerificationPhoto, not this vault type.
     """
     if not request.user.is_staff:

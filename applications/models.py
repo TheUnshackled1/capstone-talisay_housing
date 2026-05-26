@@ -348,7 +348,7 @@ class FieldVerificationPhoto(models.Model):
     Moved to applications app for Module 2+ operations.
 
     These images are never vault ``Document`` rows and never use ``document_type='incident_report'``.
-    That vault slot is reserved for the written/scanned incident report only.
+    That vault slot is reserved for the written/scanned Inspection Report only.
     """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     certification = models.ForeignKey(

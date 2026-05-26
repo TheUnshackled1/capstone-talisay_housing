@@ -21,7 +21,7 @@ class Document(models.Model):
     Replaces physical folders as primary working reference.
 
     Hazard / Option A invariant — do not collapse these into one vault slot:
-    - ``document_type='incident_report'``: written or scanned incident report in the vault only.
+    - ``document_type='incident_report'``: written or scanned Inspection Report in the vault only.
     - On-site verification photographs: stored as ``applications.FieldVerificationPhoto`` on the
       applicant's ``CDRRMOCertification`` (``field_photos``), never as ``Document(incident_report)``.
       Field desk code must not create ``Document`` rows for those images.
