@@ -53,7 +53,7 @@ class Document(models.Model):
         # Group C - Post-Award
         ('lot_award', 'Lot Award Document'),
         ('cdrrmo_cert', 'CDRRMO Certification'),
-        ('incident_report', 'Incident report'),
+        ('incident_report', 'Inspection Report'),
         ('explanation_letter', 'Explanation Letter'),
         
         # Other

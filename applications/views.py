@@ -2309,7 +2309,7 @@ def _situation_certification_gate(applicant):
     """
     Required uploads/evidence before Module 2 staff finish the situation step.
     Option D: informational only — no situation-specific vault uploads; staff uses Continue.
-    Option A: (1) vault “CDRRMO Certification”; (2) vault “Incident report” (written report,
+    Option A: (1) vault “CDRRMO Certification”; (2) vault “Inspection Report” (written report,
     scan/upload only — separate from photos); (3) site photographs on the CDRRMO field record via
     FieldVerificationPhoto (never vault incident_report — no shared vault slot).
     Options B/C: at least one ISF situational supporting document with labels keyed to situation.
@@ -2366,9 +2366,9 @@ def _situation_certification_gate(applicant):
             },
             {
                 'key': 'incident_report_vault',
-                'label': 'Incident report',
+                'label': 'Inspection Report',
                 'detail': (
-                    'Vault document type “Incident report” — formal written / scanned incident report. '
+                    'Vault document type “Inspection Report” — formal written / scanned incident report. '
                     'On-site images are attached separately via Field verification desk (next row).'
                 ),
                 'done': bool(has_incident_report),
@@ -2381,7 +2381,7 @@ def _situation_certification_gate(applicant):
                     f'{field_photo_count} photo(s) on the applicant’s CDRRMO field record. '
                     'Field inspectors attach images when submitting field certification '
                     '(Dashboard → Field verification desk). '
-                    'These are not the same files as vault type “Incident report”.'
+                    'These are not the same files as vault type “Inspection Report”.'
                 ),
                 'done': field_photo_count >= 1,
             },

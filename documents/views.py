@@ -213,7 +213,7 @@ def _build_situation_vault_block(
             if has_inspection_report
             else (
                 'No inspection report in the vault yet. Upload the written or scanned '
-                'report here (Incident report), or complete the site-inspection workflow in Application & Eligibility.'
+                'report here (Inspection Report), or complete the site-inspection workflow in Application & Eligibility.'
             )
         )
         n_ronda = 0
