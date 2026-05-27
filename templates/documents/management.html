@@ -1500,6 +1500,79 @@
         color: #334155;
     }
 
+    /* Folder Hover Card inside the checklist drawer */
+    .applicant-folder-hover-card {
+        display: block;
+        position: absolute;
+        right: calc(100% + 16px);
+        top: 0;
+        width: 320px;
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05);
+        z-index: 10000;
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transform: translateX(12px) scale(0.97);
+        transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1), transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.22s;
+        box-sizing: border-box;
+        padding: 0.85rem;
+    }
+    
+    .applicant-folder-card-wrapper:hover .applicant-folder-hover-card {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+        transform: translateX(0) scale(1);
+    }
+    
+    .applicant-folder-hover-card-arrow {
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        background: #ffffff;
+        transform: rotate(45deg);
+        box-shadow: 2px -2px 0 0 rgba(0, 0, 0, 0.02);
+        border-right: 1px solid rgba(0,0,0,0.04);
+        border-top: 1px solid rgba(0,0,0,0.04);
+        top: 24px;
+        right: -6px;
+    }
+    
+    /* Responsive adjustment for small viewports */
+    @media (max-width: 820px) {
+        .applicant-folder-hover-card {
+            position: relative;
+            right: auto;
+            top: auto;
+            width: 100%;
+            margin-top: 0.5rem;
+            opacity: 1 !important;
+            visibility: visible !important;
+            pointer-events: auto !important;
+            transform: none !important;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(0, 0, 0, 0.05);
+            display: none;
+        }
+        .applicant-folder-card-wrapper:hover .applicant-folder-hover-card {
+            display: block;
+        }
+        .applicant-folder-hover-card-arrow {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #ffffff;
+            transform: rotate(45deg);
+            box-shadow: -1px -1px 0 0 rgba(0, 0, 0, 0.02);
+            border-left: 1px solid rgba(0,0,0,0.04);
+            border-top: 1px solid rgba(0,0,0,0.04);
+            top: -5px;
+            right: auto;
+            left: calc(50% - 5px);
+        }
+    }
+
     /* Premium Hover Card Popover CSS */
     .applicant-hover-card {
         position: absolute;
@@ -2649,48 +2722,92 @@ function openVaultDrawer(applicantId) {
     const meta = document.getElementById('vaultDrawerMeta');
     if (meta) {
         const sit = data.situation;
-        let metaHtml =
-            '<section style="background: #f0fdfa; border: 1px solid #ccfbf1; border-radius: 0.75rem; padding: 0.85rem 1rem; display: flex; align-items: center; gap: 0.85rem; margin-bottom: 0.75rem;">' +
-                '<div style="width: 2.5rem; height: 2.5rem; border-radius: 50%; background: linear-gradient(135deg, #99f6e4 0%, #0d9488 100%); display: flex; align-items: center; justify-content: center; color: white; box-shadow: 0 4px 10px rgba(13, 148, 136, 0.2); flex-shrink: 0;">' +
-                    '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5">' +
-                        '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>' +
-                        '<polyline points="14 2 14 8 20 8"/>' +
-                    '</svg>' +
-                '</div>' +
-                '<div style="min-width: 0; flex: 1;">' +
-                    '<div style="font-size: 0.62rem; text-transform: uppercase; color: #0f766e; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 0.15rem;">Applicant Folder</div>' +
-                    '<div style="color: #115e59; font-size: 1.05rem; font-weight: 800; line-height: 1.2; overflow-wrap: anywhere;">' + vaultDrawerEscapeHtml(data.full_name) + '</div>' +
-                    '<div style="font-size: 0.72rem; color: #0d9488; font-weight: 600; margin-top: 0.2rem; font-family: monospace; letter-spacing: 0.02em;">Ref: ' + vaultDrawerEscapeHtml(data.reference_number || '—') + '</div>' +
-                '</div>' +
-            '</section>';
+        const fullName = data.full_name || '';
+        const initials = fullName.slice(0, 2).toUpperCase();
+        
+        let displayTx = data.id || '';
+        if (displayTx.startsWith('APP-')) {
+            const rawId = displayTx.substring(4).replace(/[^a-fA-F0-9\-]/g, '');
+            const cleanId = rawId.replace(/-/g, '');
+            displayTx = 'APP-' + cleanId.slice(0, 8) + '...';
+        } else if (displayTx.startsWith('TX-')) {
+            const rawId = displayTx.substring(3).replace(/[^a-fA-F0-9\-]/g, '');
+            const cleanId = rawId.replace(/-/g, '');
+            displayTx = 'TX-' + cleanId.slice(0, 8) + '...';
+        } else if (displayTx.length > 15) {
+            displayTx = displayTx.slice(0, 12) + '...';
+        }
 
-        metaHtml +=
-            '<section style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.65rem; margin-bottom: 0.75rem;">' +
-                '<div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.6rem; padding: 0.55rem 0.75rem;">' +
-                    '<div style="font-size: 0.58rem; text-transform: uppercase; color: #64748b; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 0.15rem;">Barangay</div>' +
-                    '<div style="font-size: 0.8rem; font-weight: 700; color: #1e293b; overflow-wrap: anywhere;">' + vaultDrawerEscapeHtml(data.barangay || '—') + '</div>' +
-                '</div>' +
-                '<div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.6rem; padding: 0.55rem 0.75rem;">' +
-                    '<div style="font-size: 0.58rem; text-transform: uppercase; color: #64748b; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 0.15rem;">Application Stage</div>' +
-                    '<div style="font-size: 0.8rem; font-weight: 700; color: #1e293b;">' + vaultDrawerEscapeHtml(data.status_display || '—') + '</div>' +
-                '</div>' +
-            '</section>';
+        let metaHtml =
+            '<div class="applicant-folder-card-wrapper" style="position: relative;">' +
+                '<section class="applicant-folder-card" style="position: relative; cursor: pointer; background: #f0fdfa; border: 1px solid #ccfbf1; border-radius: 0.75rem; padding: 0.85rem 1rem; display: flex; align-items: center; gap: 0.85rem; margin-bottom: 0.75rem;">' +
+                    '<div style="width: 2.5rem; height: 2.5rem; border-radius: 50%; background: linear-gradient(135deg, #99f6e4 0%, #0d9488 100%); display: flex; align-items: center; justify-content: center; color: white; box-shadow: 0 4px 10px rgba(13, 148, 136, 0.2); flex-shrink: 0;">' +
+                        '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5">' +
+                            '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>' +
+                            '<polyline points="14 2 14 8 20 8"/>' +
+                        '</svg>' +
+                    '</div>' +
+                    '<div style="min-width: 0; flex: 1; text-align: left;">' +
+                        '<div style="font-size: 0.62rem; text-transform: uppercase; color: #0f766e; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 0.15rem;">Applicant Folder</div>' +
+                        '<div style="color: #115e59; font-size: 1.05rem; font-weight: 800; line-height: 1.2; overflow-wrap: anywhere;">' + vaultDrawerEscapeHtml(fullName) + '</div>' +
+                        '<div style="font-size: 0.72rem; color: #0d9488; font-weight: 600; margin-top: 0.2rem; font-family: monospace; letter-spacing: 0.02em;">Ref: ' + vaultDrawerEscapeHtml(data.reference_number || '—') + '</div>' +
+                    '</div>' +
+                    '<div class="folder-hover-trigger" style="margin-left: auto; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.1rem; background: #ccfbf1; color: #0f766e; border-radius: 0.5rem; padding: 0.35rem 0.5rem;">' +
+                        '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5">' +
+                            '<circle cx="12" cy="12" r="10"/>' +
+                            '<line x1="12" y1="16" x2="12" y2="12"/>' +
+                            '<line x1="12" y1="8" x2="12.01" y2="8"/>' +
+                        '</svg>' +
+                        '<span style="font-size: 0.52rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em;">Details</span>' +
+                    '</div>' +
+                '</section>' +
+                
+                // Floating Popover Hover Card
+                '<div class="applicant-folder-hover-card">' +
+                    '<div class="applicant-folder-hover-card-arrow"></div>' +
+                    '<div class="hover-card-banner" style="margin: -0.85rem -0.85rem 0.75rem -0.85rem; border-top-left-radius: 12px; border-top-right-radius: 12px; overflow: hidden; background: #ffffff; padding: 0.6rem 0.85rem; border-bottom: 1px solid #cbd5e1; display: flex; justify-content: center; align-items: center;">' +
+                        '<img src="/static/images/tha_logo.png" alt="Talisay City Housing Authority Logo" style="width: 100%; max-width: 240px; height: auto; display: block; border-radius: 6px; border: 1px solid #cbd5e1; padding: 0.2rem; background: #ffffff; box-sizing: border-box;">' +
+                    '</div>' +
+                    '<div class="hover-card-header" style="margin-bottom: 0.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 0.65rem;">' +
+                        '<div class="hover-card-avatar" style="width: 36px; height: 36px; border-radius: 8px; background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%); color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.95rem; flex-shrink: 0;">' + initials + '</div>' +
+                        '<div class="hover-card-title-group" style="min-width: 0; flex: 1;">' +
+                            '<div class="hover-card-name" style="font-size: 0.9rem; font-weight: 800; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="' + vaultDrawerEscapeHtml(fullName) + '">' + vaultDrawerEscapeHtml(fullName) + '</div>' +
+                            '<div class="hover-card-tag" style="font-size: 0.58rem; font-weight: 700; text-transform: uppercase; color: #0d9488; letter-spacing: 0.05em; display: inline-block;">Applicant Profile</div>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="hover-card-body" style="display: flex; flex-direction: column; gap: 0.45rem;">' +
+                        '<div class="hover-card-meta-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.72rem; line-height: 1.2;">' +
+                            '<span class="hover-card-label" style="color: #64748b; font-weight: 600;">Transaction ID</span>' +
+                            '<span class="case-number-badge" style="font-family: monospace; font-size: 0.68rem; padding: 0.15rem 0.35rem; border-radius: 0.25rem; font-weight: 700; color: #2563eb; background: #eff6ff; border: 1px solid #dbeafe;">' + vaultDrawerEscapeHtml(displayTx || '—') + '</span>' +
+                        '</div>' +
+                        '<div class="hover-card-meta-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.72rem; line-height: 1.2;">' +
+                            '<span class="hover-card-label" style="color: #64748b; font-weight: 600;">Reference Code</span>' +
+                            '<span class="complainant-ref-code" style="font-family: monospace; font-size: 0.68rem; padding: 0.15rem 0.35rem; border-radius: 0.25rem; font-weight: 700; color: #475569; background: #f1f5f9; border: 1px solid #e2e8f0;">' + vaultDrawerEscapeHtml(data.reference_number || '—') + '</span>' +
+                        '</div>' +
+                        '<div class="hover-card-meta-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.72rem; line-height: 1.2;">' +
+                            '<span class="hover-card-label" style="color: #64748b; font-weight: 600;">Barangay</span>' +
+                            '<span class="hover-card-value" style="font-weight: 700; color: #1e293b;">' + vaultDrawerEscapeHtml(data.barangay || '—') + '</span>' +
+                        '</div>' +
+                        '<div class="hover-card-meta-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.72rem; line-height: 1.2;">' +
+                            '<span class="hover-card-label" style="color: #64748b; font-weight: 600;">Application Stage</span>' +
+                            '<span class="hover-card-value" style="font-weight: 700; color: #1e293b;">' + vaultDrawerEscapeHtml(data.status_display || '—') + '</span>' +
+                        '</div>';
 
         if (data.applicant_workflow_status) {
             metaHtml +=
-                '<section style="background: #f0fdf4; border: 1px solid #bbf7d0; border-left: 4px solid #22c55e; border-radius: 0.6rem; padding: 0.75rem 0.9rem; margin-bottom: 0.75rem; display: flex; flex-direction: column; gap: 0.25rem;">' +
-                    '<div style="font-size: 0.58rem; text-transform: uppercase; color: #166534; font-weight: 700; letter-spacing: 0.05em; display: flex; align-items: center; gap: 0.3rem;">' +
-                        '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5">' +
+                '<div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-left: 3px solid #22c55e; border-radius: 0.5rem; padding: 0.55rem 0.7rem; display: flex; flex-direction: column; gap: 0.15rem; text-align: left; margin-top: 0.25rem;">' +
+                    '<div style="font-size: 0.55rem; text-transform: uppercase; color: #166534; font-weight: 700; letter-spacing: 0.05em; display: flex; align-items: center; gap: 0.25rem;">' +
+                        '<svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;">' +
                             '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>' +
                             '<polyline points="22 4 12 14.01 9 11.01"/>' +
                         '</svg>' +
                         'Applicant Status' +
                     '</div>' +
-                    '<div style="font-size: 0.8rem; font-weight: 700; color: #14532d; line-height: 1.35;">' + vaultDrawerEscapeHtml(data.applicant_workflow_status) + '</div>';
+                    '<div style="font-size: 0.72rem; font-weight: 700; color: #14532d; line-height: 1.3;">' + vaultDrawerEscapeHtml(data.applicant_workflow_status) + '</div>';
             if (data.applicant_status_detail) {
                 metaHtml +=
-                    '<div style="font-size: 0.72rem; font-weight: 600; color: #15803d; border-top: 1px dashed #bbf7d0; padding-top: 0.35rem; margin-top: 0.15rem; display: flex; align-items: center; gap: 0.25rem;">' +
-                        '<svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;">' +
+                    '<div style="font-size: 0.68rem; font-weight: 600; color: #15803d; border-top: 1px dashed #bbf7d0; padding-top: 0.25rem; margin-top: 0.1rem; display: flex; align-items: center; gap: 0.2rem;">' +
+                        '<svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;">' +
                             '<circle cx="12" cy="12" r="10"/>' +
                             '<line x1="12" y1="8" x2="12" y2="12"/>' +
                             '<line x1="12" y1="16" x2="12.01" y2="16"/>' +
@@ -2698,43 +2815,51 @@ function openVaultDrawer(applicantId) {
                         vaultDrawerEscapeHtml(data.applicant_status_detail) +
                     '</div>';
             }
-            metaHtml += '</section>';
+            metaHtml += '</div>';
         }
 
         if (data.why_disqualified) {
             metaHtml +=
-                '<section style="background: #fef2f2; border: 1px solid #fecaca; border-left: 4px solid #ef4444; border-radius: 0.6rem; padding: 0.75rem 0.9rem; margin-bottom: 0.75rem;">' +
-                    '<div style="font-size: 0.58rem; text-transform: uppercase; color: #991b1b; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.3rem;">' +
-                        '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5">' +
+                '<div style="background: #fef2f2; border: 1px solid #fecaca; border-left: 3px solid #ef4444; border-radius: 0.5rem; padding: 0.55rem 0.7rem; display: flex; flex-direction: column; gap: 0.15rem; text-align: left; margin-top: 0.25rem;">' +
+                    '<div style="font-size: 0.55rem; text-transform: uppercase; color: #991b1b; font-weight: 700; letter-spacing: 0.05em; display: flex; align-items: center; gap: 0.25rem;">' +
+                        '<svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;">' +
                             '<circle cx="12" cy="12" r="10"/>' +
                             '<line x1="12" y1="8" x2="12" y2="12"/>' +
                             '<line x1="12" y1="16" x2="12.01" y2="16"/>' +
                         '</svg>' +
                         'Disqualification Notes' +
                     '</div>' +
-                    '<div style="font-size: 0.78rem; font-weight: 500; color: #7f1d1d; line-height: 1.4;">' + vaultDrawerEscapeHtml(data.why_disqualified) + '</div>' +
-                '</section>';
+                    '<div style="font-size: 0.7rem; font-weight: 500; color: #7f1d1d; line-height: 1.35;">' + vaultDrawerEscapeHtml(data.why_disqualified) + '</div>' +
+                '</div>';
         }
 
         if (sit && sit.title) {
             metaHtml +=
-                '<section style="background: #fffbeb; border: 1px solid #fde68a; border-left: 4px solid #f59e0b; border-radius: 0.6rem; padding: 0.75rem 0.9rem; margin-bottom: 0.75rem;">' +
-                    '<div style="font-size: 0.58rem; text-transform: uppercase; color: #b45309; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.3rem;">' +
-                        '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5">' +
+                '<div style="background: #fffbeb; border: 1px solid #fde68a; border-left: 3px solid #f59e0b; border-radius: 0.5rem; padding: 0.55rem 0.7rem; display: flex; flex-direction: column; gap: 0.15rem; text-align: left; margin-top: 0.25rem;">' +
+                    '<div style="font-size: 0.55rem; text-transform: uppercase; color: #b45309; font-weight: 700; letter-spacing: 0.05em; display: flex; align-items: center; gap: 0.25rem;">' +
+                        '<svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;">' +
                             '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>' +
                         '</svg>' +
                         'Applicant Situation' +
                     '</div>' +
-                    '<div style="font-size: 0.8rem; font-weight: 700; color: #78350f; line-height: 1.35;">' + vaultDrawerEscapeHtml(sit.title) + '</div>';
+                    '<div style="font-size: 0.72rem; font-weight: 700; color: #78350f; line-height: 1.3;">' + vaultDrawerEscapeHtml(sit.title) + '</div>';
             if (sit.blurb) {
-                metaHtml += '<p style="margin: 0.3rem 0 0; font-size: 0.74rem; color: #92400e; line-height: 1.4; font-weight: 500;">' + vaultDrawerEscapeHtml(sit.blurb) + '</p>';
+                metaHtml += '<p style="margin: 0.15rem 0 0; font-size: 0.68rem; color: #92400e; line-height: 1.35; font-weight: 500;">' + vaultDrawerEscapeHtml(sit.blurb) + '</p>';
             }
             if (sit.detail_line) {
-                metaHtml += '<div style="margin-top: 0.45rem; padding-top: 0.45rem; border-top: 1px dashed #fde68a; font-size: 0.74rem; color: #78350f; line-height: 1.4; word-break: break-all; overflow-wrap: anywhere;">' +
+                metaHtml += '<div style="margin-top: 0.35rem; padding-top: 0.35rem; border-top: 1px dashed #fde68a; font-size: 0.68rem; color: #78350f; line-height: 1.35; word-break: break-all; overflow-wrap: anywhere;">' +
                     '<strong>Details</strong> — ' + vaultDrawerEscapeHtml(sit.detail_line) + '</div>';
             }
-            metaHtml += '</section>';
+            metaHtml += '</div>';
         }
+
+        metaHtml +=
+                    '</div>' +
+                    '<div style="text-align: center; border-top: 1px solid #f1f5f9; margin: 0.75rem -0.85rem -0.85rem -0.85rem; padding: 0.5rem; font-size: 0.62rem; color: #64748b; font-weight: 600; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; background: #f8fafc;">' +
+                        'Talisay City Housing Authority' +
+                    '</div>' +
+                '</div>' +
+            '</div>';
         meta.innerHTML = metaHtml;
     }
     const listEl = document.getElementById('vaultDrawerChecklist');
