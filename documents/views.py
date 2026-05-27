@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
-from django.db.models import Q, Prefetch
+from django.db.models import Q, Prefetch, Sum
 from django.http import JsonResponse, HttpResponse, Http404
 from django.urls import reverse
 from django.utils import timezone
@@ -453,6 +453,7 @@ def document_management(request, position):
 
     search_query = request.GET.get('search', '').strip()
     status_filter = request.GET.get('status', 'all').strip()
+    kpi_filter = request.GET.get('kpi_filter', '').strip()
     open_vault_deep_link = request.GET.get('open_vault') == '1'
 
     # Vault list scope: anyone on Intake "LIST OF APPLICATIONS" (has an Archive row) and/or
@@ -504,6 +505,25 @@ def document_management(request, position):
         if 'blacklist' in search_query.lower():
             search_q |= Q(blacklist_record__isnull=False)
         applicants_qs = applicants_qs.filter(search_q).distinct()
+
+    # Store unfiltered counts for statistics display (before KPI filter)
+    base_applicants_qs = applicants_qs
+    base_applicants_ordered = list(base_applicants_qs)
+    base_applicants_total = len(base_applicants_ordered)
+    base_applicant_ids = [a.pk for a in base_applicants_ordered]
+    base_documents_qs = (
+        Document.objects
+        .filter(applicant_id__in=base_applicant_ids)
+    )
+    base_documents_count = base_documents_qs.count()
+    base_size_sum = base_documents_qs.aggregate(total_size=Sum('file_size'))['total_size'] or 0
+    base_total_size_gb = round(base_size_sum / (1024*1024*1024), 2)
+
+    # Filter by KPI card (Applicants vs Blacklisted) - for display only
+    if kpi_filter == 'blacklisted':
+        applicants_qs = applicants_qs.filter(blacklist_record__isnull=False)
+    elif kpi_filter == 'applicants':
+        applicants_qs = applicants_qs.filter(blacklist_record__isnull=True)
 
     # Queue priority ordering: priority queue first, then walk-in, then none.
     QUEUE_RANK = {'priority': 0, 'walk_in': 1}
@@ -857,9 +877,9 @@ def document_management(request, position):
         ],
         # New template context variables
         'documents': documents_qs,
-        'total_documents': documents_qs.count() + total_monitoring_report_documents,
-        'total_applicants': applicants_total,
-        'total_size_gb': round(sum(doc.file_size for doc in documents_qs) / (1024*1024*1024), 2),
+        'total_documents': base_documents_count + total_monitoring_report_documents,
+        'total_applicants': base_applicants_total,
+        'total_size_gb': base_total_size_gb,
         'blacklisted_registry_count': blacklisted_registry_count,
         'vault_drawer_data': vault_drawer_data,
         'vault_drawer_can_intake_scan': request.user.position in ('second_member', 'fourth_member'),
