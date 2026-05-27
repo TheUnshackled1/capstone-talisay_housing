@@ -6,11 +6,28 @@
         <span class="case-type-pill">{{ log.get_case_type_display }}</span>
     </div>
     <p class="cases-resolved-drawer-item-name">{{ row.incident_complainant_name|default:"—" }}</p>
-    <p class="cases-resolved-drawer-item-meta">
-        Reported party:
-        {% if row.incident_respondent_name %}{{ row.incident_respondent_name }}{% else %}—{% endif %}
-        {% if row.incident_unit_label %} · {{ row.incident_unit_label }}{% endif %}
-    </p>
+    <span class="complaints-count-badge" style="display: block; font-size: 0.65rem; color: #64748b; font-weight: 500; margin-top: 0.15rem; margin-bottom: 0.5rem; text-align: left;">
+        Complaints filed: {% if log.complainant_applicant %}{{ log.complainant_applicant.cases_filed.count|add:log.complainant_applicant.settled_incident_logs_as_complainant.count }}{% else %}1{% endif %}
+    </span>
+
+    <div class="cases-resolved-drawer-item-meta" style="margin-bottom: 0.4rem;">
+        <span class="meta-label" style="font-weight: 600;">Reported party:</span>
+        <span class="meta-val">
+            {% if log.subject_applicant %}
+                {{ log.subject_applicant.full_name }}
+                {% if row.incident_unit_label %} · {{ row.incident_unit_label }}{% endif %}
+                <span class="complaints-count-badge" style="display: block; font-size: 0.65rem; color: #b91c1c; font-weight: 500; margin-top: 0.15rem;">
+                    Complaints received: {{ log.subject_applicant.cases_against.count|add:log.subject_applicant.settled_incident_logs.count }}
+                </span>
+            {% elif row.incident_respondent_name %}
+                {{ row.incident_respondent_name }}
+                {% if row.incident_unit_label %} · {{ row.incident_unit_label }}{% endif %}
+            {% else %}
+                —
+            {% endif %}
+        </span>
+    </div>
+
     <p class="cases-resolved-drawer-item-meta">
         Logged {{ log.logged_at|date:"M d, Y" }} · {{ log.logged_at|time:"g:i A" }}
     </p>
