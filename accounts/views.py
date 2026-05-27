@@ -576,6 +576,17 @@ def _build_analytics_charts_data(
                 int(isf_population_data.get('female_household', 0))
             ]
         }
+        # ISF Overall - comprehensive breakdown
+        data['isfOverall'] = {
+            'labels': [
+                'Total ISF',
+                'Total Population'
+            ],
+            'values': [
+                int(isf_population_data.get('total_isf', 0)),
+                int(isf_population_data.get('total_population', 0))
+            ]
+        }
 
     return data
 
@@ -907,8 +918,9 @@ def _staff_reports_analytics_payload(request):
         row['place_name'] = row.get('place_name') or '—'
     _analytics_rows_bar_pct(applicants_top_barangays)
 
-    # ISF (Identified Social Families) Population Statistics
+    # ISF (Identified Social Families) Population Statistics - COMPREHENSIVE OVERVIEW
     total_applicants_count = Applicant.objects.count()
+    total_housing_units = HousingUnit.objects.count()
 
     # Calculate household size totals by sex
     male_stats = Applicant.objects.filter(sex='M').aggregate(
@@ -920,9 +932,14 @@ def _staff_reports_analytics_payload(request):
         household_total=Sum('household_size')
     )
 
-    # Build ISF population data
+    # Calculate total population (sum of all household members)
+    total_population = (male_stats['household_total'] or 0) + (female_stats['household_total'] or 0)
+
+    # Build comprehensive ISF population data
     isf_population_data = {
         'total_isf': total_applicants_count,
+        'total_population': total_population,
+        'total_housing_units': total_housing_units,
         'male_household': male_stats['household_total'] or 0,
         'female_household': female_stats['household_total'] or 0,
         'male_count': male_stats['count'] or 0,
