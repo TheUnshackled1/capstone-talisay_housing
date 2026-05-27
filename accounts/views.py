@@ -308,9 +308,8 @@ def dashboard_second_member(request):
         messages.error(request, 'Access denied. This dashboard is for the Second Member position only.')
         return redirect('accounts:dashboard')
 
-    # ==================== MODULE 4: legacy compliance notices list removed ====================
-    pending_notices_count = 0
-    notices_to_prepare = []
+    # ==================== MODULE 4: CASES OVERVIEW (M4) ==========
+    cases_total = Case.objects.count()
 
     # ==================== MODULE 3: DOCUMENT OVERSIGHT (M3) — Module 1 seven-document checklist ====================
     incomplete_module1_qs = (
@@ -374,9 +373,8 @@ def dashboard_second_member(request):
         'page_title': 'Second Member Dashboard',
         'user_position': 'second_member',
 
-        # ========== MODULE 4: COMPLIANCE NOTICES (M4) ==========
-        'pending_notices': pending_notices_count,
-        'notices_to_prepare': notices_to_prepare,
+        # ========== MODULE 4: CASES OVERVIEW (M4) ==========
+        'cases_total': cases_total,
 
         # ========== MODULE 3: DOCUMENT OVERSIGHT (M3) ==========
         'incomplete_docs': incomplete_docs_count,
@@ -1427,6 +1425,7 @@ def dashboard_fourth_member(request):
     blacklist_count = UnitsBlacklist.objects.count()
     repossessed_count = HousingUnit.objects.filter(status='Repossessed').count()
     awaiting_reaward = Application.objects.filter(status='standby').count()
+    cases_total = Case.objects.count()
 
     standby_count = len(standby_queue)
     available_count = len(available_lots)
@@ -1439,6 +1438,8 @@ def dashboard_fourth_member(request):
         'awaiting_signature': awaiting_signature_count,
         'housing_units': total_housing_units,
         'approved_this_month': approved_this_month,
+        'cases_total': cases_total,
+        'incomplete_docs': incomplete_requirements,
         'queue_today': queue_today,
         'incomplete_requirements': incomplete_requirements,
         'pending_cdrrmo_stat': pending_cdrrmo_count,
