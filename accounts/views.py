@@ -310,7 +310,6 @@ def dashboard_second_member(request):
 
     # ==================== MODULE 4: legacy compliance notices list removed ====================
     pending_notices_count = 0
-    urgent_notices_count = 0
     notices_to_prepare = []
 
     # ==================== MODULE 3: DOCUMENT OVERSIGHT (M3) — Module 1 seven-document checklist ====================
@@ -371,21 +370,12 @@ def dashboard_second_member(request):
         updated_at__gte=this_month_start
     ).count()
 
-    intake_incomplete_module1 = Applicant.objects.filter(_applicant_missing_intake_doc_q()).count()
-    pending_cdrrmo_count = CDRRMOCertification.objects.filter(status='pending').count()
-    requirements_verified_month = RequirementSubmission.objects.filter(
-        status='verified',
-        verified_at__gte=this_month_start,
-    ).count()
-    vacant_units_award = HousingUnit.objects.filter(status='Vacant — available').count()
-
     context = {
         'page_title': 'Second Member Dashboard',
         'user_position': 'second_member',
 
         # ========== MODULE 4: COMPLIANCE NOTICES (M4) ==========
         'pending_notices': pending_notices_count,
-        'urgent_notices': urgent_notices_count,
         'notices_to_prepare': notices_to_prepare,
 
         # ========== MODULE 3: DOCUMENT OVERSIGHT (M3) ==========
@@ -400,11 +390,6 @@ def dashboard_second_member(request):
         'awaiting_signature': awaiting_signature_count,  # Shared stat card
         'housing_units': total_housing_units,  # Shared stat card
         'approved_this_month': approved_this_month,  # Shared stat card
-        # Second-row stat cards (aligned to Joie’s intake + oversight role)
-        'intake_incomplete_module1': intake_incomplete_module1,
-        'pending_cdrrmo_count': pending_cdrrmo_count,
-        'requirements_verified_month': requirements_verified_month,
-        'vacant_units_award': vacant_units_award,
         **_dashboard_recent_activity_context(),
     }
 
