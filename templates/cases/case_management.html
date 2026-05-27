@@ -279,6 +279,87 @@
         margin: 0;
         line-height: 1.4;
     }
+
+    /* ── Resolved drawer card readability upgrades ── */
+    .cases-resolved-drawer-complaints-filed {
+        display: block;
+        font-size: 0.68rem;
+        font-weight: 600;
+        color: #475569;
+        margin-top: 0.2rem;
+        margin-bottom: 0.6rem;
+        letter-spacing: 0.01em;
+    }
+
+    .cases-resolved-drawer-reported-block {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.5rem;
+        padding: 0.5rem 0.7rem;
+        margin-bottom: 0.55rem;
+    }
+
+    .cases-resolved-drawer-reported-label {
+        display: block;
+        font-size: 0.64rem;
+        font-weight: 700;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 0.2rem;
+    }
+
+    .cases-resolved-drawer-reported-name {
+        display: block;
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: #1e293b;
+        line-height: 1.35;
+    }
+
+    .cases-resolved-drawer-complaints-received {
+        display: block;
+        font-size: 0.65rem;
+        font-weight: 600;
+        color: #b91c1c;
+        margin-top: 0.2rem;
+    }
+
+    .cases-resolved-drawer-item-date {
+        font-size: 0.68rem;
+        color: #94a3b8;
+        margin: 0 0 0.65rem;
+        line-height: 1.4;
+    }
+
+    .cases-resolved-drawer-item-actions {
+        margin-top: 0.1rem;
+    }
+
+    .cases-resolved-drawer-item-actions .btn-open-record {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.42rem 0.9rem;
+        border-radius: 0.45rem;
+        border: none;
+        background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+        color: #ffffff !important;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        cursor: pointer;
+        box-shadow: 0 3px 8px rgba(30, 64, 175, 0.25);
+        transition: all 0.18s ease;
+        text-decoration: none;
+    }
+
+    .cases-resolved-drawer-item:hover .cases-resolved-drawer-item-actions .btn-open-record {
+        background: linear-gradient(135deg, #1e3a8a 0%, #172554 100%);
+        box-shadow: 0 5px 12px rgba(30, 64, 175, 0.35);
+        transform: translateY(-1px);
+    }
+
     .cases-resolved-drawer-empty {
         text-align: center;
         padding: 2rem 1rem;
@@ -1870,10 +1951,41 @@
                     <span class="case-type-pill">{{ case.get_case_type_display }}</span>
                 </div>
                 <p class="cases-resolved-drawer-item-name">{{ case.complainant_name }}</p>
-                <p class="cases-resolved-drawer-item-meta">
-                    Filed {{ case.received_at|date:"M d, Y" }}
+                <span class="cases-resolved-drawer-complaints-filed">
+                    Complaints filed: {% if case.complainant_applicant %}{{ case.complainant_applicant.cases_filed.count|add:case.complainant_applicant.settled_incident_logs_as_complainant.count }}{% else %}1{% endif %}
+                </span>
+
+                <div class="cases-resolved-drawer-reported-block">
+                    <span class="cases-resolved-drawer-reported-label">Reported party</span>
+                    <span class="cases-resolved-drawer-reported-name">
+                        {% if case.subject_applicant %}
+                            {{ case.subject_applicant.full_name }}
+                            {% if case.subject_applicant.active_unit_label and case.subject_applicant.active_unit_label != 'Not specified' %}
+                                · {{ case.subject_applicant.active_unit_label }}
+                            {% endif %}
+                        {% elif case.subject_name %}
+                            {{ case.subject_name }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </span>
+                    {% if case.subject_applicant %}
+                    <span class="cases-resolved-drawer-complaints-received">
+                        Complaints received: {{ case.subject_applicant.cases_against.count|add:case.subject_applicant.settled_incident_logs.count }}
+                    </span>
+                    {% endif %}
+                </div>
+
+                <p class="cases-resolved-drawer-item-date">
+                    Filed {{ case.received_at|date:"M d, Y" }} · {{ case.received_at|time:"g:i A" }}
                     {% if case.resolved_at %} · Resolved {{ case.resolved_at|date:"M d, Y" }}{% endif %}
                 </p>
+                <div class="cases-resolved-drawer-item-actions">
+                    <span class="btn-open-record">
+                        Open Record
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true" style="flex-shrink:0;"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    </span>
+                </div>
             </button>
             {% empty %}
             <p class="cases-resolved-drawer-empty">No resolved cases yet.</p>
