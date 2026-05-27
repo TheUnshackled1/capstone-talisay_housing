@@ -4475,6 +4475,16 @@
                 class="archive-proceed-hint"
             >
             </span>
+            <button
+                type="button"
+                class="btn-modal"
+                id="archiveDeleteBlacklistedBtn"
+                style="background-color: #dc2626; border-color: #dc2626; color: white; display: none;"
+                onclick="deleteBlacklistedApplicantFromModal()"
+                title="Delete blacklisted applicant from active list"
+            >
+                Delete Blacklisted Applicant
+            </button>
             <button type="button" class="btn-modal secondary" onclick="closeArchiveRequirementsModal()">Close</button>
         </div>
     </div>
@@ -7429,6 +7439,16 @@
             </div>
         </div>
         <div class="modal-footer">
+            <button
+                type="button"
+                class="btn-modal"
+                id="archiveFormDeleteBlacklistedBtn"
+                style="background-color: #dc2626; border-color: #dc2626; color: white; display: none;"
+                onclick="deleteBlacklistedApplicantFromFormModal()"
+                title="Delete blacklisted applicant from active list"
+            >
+                Delete Blacklisted Applicant
+            </button>
             <button type="button" class="btn-modal secondary" onclick="closeArchiveFormViewModal()">Close</button>
         </div>
     </div>
@@ -7445,6 +7465,7 @@
     // Store applicants data in JavaScript
     const applicantsData = JSON.parse(document.getElementById('applicantsDataJson')?.textContent || '[]');
     const archiveFormData = JSON.parse(document.getElementById('archiveFormDataJson')?.textContent || '{}');
+    let currentArchiveFormPayload = null;
     function openArchiveFormViewModal(buttonEl) {
         const ref = buttonEl?.dataset?.reference || '';
         const payload = archiveFormData[ref];
@@ -7456,6 +7477,8 @@
             });
             return;
         }
+
+        currentArchiveFormPayload = payload;
 
         const setValue = (id, value) => {
             const el = document.getElementById(id);
@@ -7500,6 +7523,16 @@
                 : 'Household members were declared during registration.',
         );
 
+        // Show/hide delete button based on blacklist status
+        const deleteBtn = document.getElementById('archiveFormDeleteBlacklistedBtn');
+        if (deleteBtn) {
+            if (payload.blacklistBlocked) {
+                deleteBtn.style.display = '';
+            } else {
+                deleteBtn.style.display = 'none';
+            }
+        }
+
         const modal = document.getElementById('archiveFormViewModal');
         if (modal) modal.classList.add('active');
     }
@@ -7508,6 +7541,64 @@
         const modal = document.getElementById('archiveFormViewModal');
         if (modal) modal.classList.remove('active');
     }
+
+    function deleteBlacklistedApplicantFromFormModal() {
+        if (!currentArchiveFormPayload) {
+            showFlowAlert('Error: Applicant data not found.');
+            return;
+        }
+
+        const ref = currentArchiveFormPayload.referenceNumber || '';
+        const fullName = currentArchiveFormPayload.fullName || 'This applicant';
+        const applicantId = currentArchiveFormPayload.applicantId || '';
+
+        if (!applicantId) {
+            showFlowAlert('Error: Applicant ID not found.');
+            return;
+        }
+
+        if (!confirm(`Delete blacklisted applicant from the active list?\n\nName: ${fullName}\nReference: ${ref}\n\nThis action cannot be undone.`)) {
+            return;
+        }
+
+        const deleteBtn = document.getElementById('archiveFormDeleteBlacklistedBtn');
+        if (deleteBtn) {
+            deleteBtn.disabled = true;
+            deleteBtn.textContent = 'Deleting...';
+        }
+
+        const formData = new FormData();
+        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+        formData.append('applicant_id', applicantId);
+
+        fetch('{% url "intake:delete_applicant" request.user.position %}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showFlowAlert('Blacklisted applicant deleted successfully.', 'Success', null, 'success');
+                closeArchiveFormViewModal();
+                setTimeout(() => location.reload(), 600);
+            } else {
+                if (deleteBtn) {
+                    deleteBtn.disabled = false;
+                    deleteBtn.textContent = 'Delete Blacklisted Applicant';
+                }
+                showFlowAlert('Error: ' + (data.error || 'Unable to delete applicant'));
+            }
+        })
+        .catch(error => {
+            if (deleteBtn) {
+                deleteBtn.disabled = false;
+                deleteBtn.textContent = 'Delete Blacklisted Applicant';
+            }
+            showFlowAlert('Error: ' + error.message);
+        });
+    }
+    window.deleteBlacklistedApplicantFromFormModal = deleteBlacklistedApplicantFromFormModal;
+
     const FIRST_REVIEW_INDEX = applicantsData.length > 0 ? 0 : -1;
     const canModify = (document.getElementById('canModifyFlag')?.value || 'false') === 'true';
     const duplicatePreviewUrl = '{% url "intake:duplicate_preview" request.user.position %}';
@@ -7850,6 +7941,7 @@
     function applyArchiveRequirementsBlacklistState(payload) {
         const banner = document.getElementById('archiveBlacklistBanner');
         const proceedBtn = document.getElementById('archiveProceedToEvaluationBtn');
+        const deleteBtn = document.getElementById('archiveDeleteBlacklistedBtn');
         const blocked = !!(payload && payload.blacklistBlocked);
         if (banner) {
             if (blocked) {
@@ -7876,10 +7968,75 @@
             proceedBtn.disabled = true;
             proceedBtn.classList.remove('is-ready');
         }
+        if (deleteBtn) {
+            if (blocked) {
+                deleteBtn.style.display = '';
+            } else {
+                deleteBtn.style.display = 'none';
+            }
+        }
         return blocked;
     }
 
-    // NOTE: Proceed-to-Module-2 action removed from Intake Archive table.
+    // Delete Blacklisted Applicant from Requirements Modal
+    function deleteBlacklistedApplicantFromModal() {
+        if (!currentArchiveRequirementsPayload) {
+            showFlowAlert('Error: Applicant data not found.');
+            return;
+        }
+
+        const ref = currentArchiveRequirementsPayload.referenceNumber || '';
+        const fullName = currentArchiveRequirementsPayload.fullName || 'This applicant';
+        const applicantId = currentArchiveRequirementsPayload.applicantId || '';
+
+        if (!applicantId) {
+            showFlowAlert('Error: Applicant ID not found.');
+            return;
+        }
+
+        if (!confirm(`Delete blacklisted applicant from the active list?\n\nName: ${fullName}\nReference: ${ref}\n\nThis cannot be undone.`)) {
+            return;
+        }
+
+        const deleteBtn = document.getElementById('archiveDeleteBlacklistedBtn');
+        if (deleteBtn) {
+            deleteBtn.disabled = true;
+            deleteBtn.textContent = 'Deleting...';
+        }
+
+        const formData = new FormData();
+        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+        formData.append('applicant_id', applicantId);
+
+        fetch('{% url "intake:delete_applicant" request.user.position %}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showFlowAlert('Blacklisted applicant deleted successfully.', 'Success', null, 'success');
+                closeArchiveRequirementsModal();
+                setTimeout(() => location.reload(), 600);
+            } else {
+                if (deleteBtn) {
+                    deleteBtn.disabled = false;
+                    deleteBtn.textContent = 'Delete Blacklisted Applicant';
+                }
+                showFlowAlert('Error: ' + (data.error || 'Unable to delete applicant'));
+            }
+        })
+        .catch(error => {
+            if (deleteBtn) {
+                deleteBtn.disabled = false;
+                deleteBtn.textContent = 'Delete Blacklisted Applicant';
+            }
+            showFlowAlert('Error: ' + error.message);
+        });
+    }
+    window.deleteBlacklistedApplicantFromModal = deleteBlacklistedApplicantFromModal;
+
+
 
     function openArchiveHandoffSummary(buttonEl) {
         if (!buttonEl) return;
@@ -8044,7 +8201,7 @@
         });
     }
 
-    /** Actions column — Upload + Scan always available (same pattern as Eligibility checklist). */
+    /** Actions column — Upload + Scan disabled when blacklisted. */
     function buildArchiveReqActionsInnerHtml(safeCode, row) {
         const rawCode = String(safeCode || '').trim().toUpperCase();
         if (!ARCHIVE_DOC_KEY_BY_CODE[rawCode]) {
@@ -8053,13 +8210,16 @@
         const hasFile = archiveReqRowHasFile(row);
         const docName = escapeHtml(String((row && row.latest_file_name) || (row && row.name) || rawCode).trim() || 'Document on file');
         const hasExistingAttr = hasFile ? '1' : '0';
-        
+        const isBlacklisted = !!(currentArchiveRequirementsPayload && currentArchiveRequirementsPayload.blacklistBlocked);
+        const disabledAttr = isBlacklisted ? ' disabled' : '';
+        const disabledTitle = isBlacklisted ? ' — Resolve blacklist first' : '';
+
         const uploadSvg = '<svg class="action-btn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:0.8rem; height:0.8rem; vertical-align:middle; margin-right:0.25rem;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>';
         const scanSvg = '<svg class="action-btn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:0.8rem; height:0.8rem; vertical-align:middle; margin-right:0.25rem;"><path d="M3 7V5a2 2 0 0 1 2-2h2"></path><path d="M17 3h2a2 2 0 0 1 2 2v2"></path><path d="M21 17v2a2 2 0 0 1-2 2h-2"></path><path d="M7 21H5a2 2 0 0 1-2-2v-2"></path><line x1="3" y1="12" x2="21" y2="12"></line></svg>';
 
         return '<div class="archive-req-actions-group">'
-            + '<button type="button" class="btn-modal secondary archive-req-upload-btn" data-archive-upload-code="' + safeCode + '" data-has-existing-doc="' + hasExistingAttr + '" data-existing-doc-name="' + docName + '" onclick="triggerArchiveRowDocumentUpload(this.getAttribute(\'data-archive-upload-code\'))" title="Choose a file from this computer — saves to document vault">' + uploadSvg + 'Upload</button>'
-            + '<button type="button" class="btn-modal secondary archive-req-row-scan-btn" data-archive-scan-code="' + safeCode + '" data-has-existing-doc="' + hasExistingAttr + '" data-existing-doc-name="' + docName + '" onclick="scanArchiveRequirementByCode(this.getAttribute(\'data-archive-scan-code\'))" title="Capture from scanner (TWAIN) — saves to document vault">' + scanSvg + 'Scan</button>'
+            + '<button type="button" class="btn-modal secondary archive-req-upload-btn" data-archive-upload-code="' + safeCode + '" data-has-existing-doc="' + hasExistingAttr + '" data-existing-doc-name="' + docName + '" onclick="triggerArchiveRowDocumentUpload(this.getAttribute(\'data-archive-upload-code\'))" title="Choose a file from this computer — saves to document vault' + disabledTitle + '"' + disabledAttr + '>' + uploadSvg + 'Upload</button>'
+            + '<button type="button" class="btn-modal secondary archive-req-row-scan-btn" data-archive-scan-code="' + safeCode + '" data-has-existing-doc="' + hasExistingAttr + '" data-existing-doc-name="' + docName + '" onclick="scanArchiveRequirementByCode(this.getAttribute(\'data-archive-scan-code\'))" title="Capture from scanner (TWAIN) — saves to document vault' + disabledTitle + '"' + disabledAttr + '>' + scanSvg + 'Scan</button>'
             + '</div>';
     }
 
@@ -11150,7 +11310,7 @@
         });
     }
 
-    // Add Modal — Flatpickr instances (destroyed when registration modal closes)
+
     let dateOfBirthPicker = null;
     let ejectionDatePicker = null;
 
