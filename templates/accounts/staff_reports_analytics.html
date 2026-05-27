@@ -1083,9 +1083,9 @@
             <div class="rep-chart-canvas"><canvas id="chartChannels"></canvas></div>
         </div>
         <div class="rep-card">
-            <p class="rep-card-title">Top barangays</p>
-            <p class="rep-card-sub">Top 12 barangays by applicant count.</p>
-            <div class="rep-chart-canvas" style="height: 280px;"><canvas id="chartBarangays"></canvas></div>
+            <p class="rep-card-title">Applicant workflow funnel</p>
+            <p class="rep-card-sub">Pipeline conversion from registration to lot award.</p>
+            <div class="rep-ops-chart-canvas"><canvas id="chartFunnel"></canvas></div>
         </div>
     </div>
 
@@ -1097,9 +1097,9 @@
     </div>
     <div class="rep-grid-3 rep-grid-charts">
         <div class="rep-card">
-            <p class="rep-card-title">Housing applications by status</p>
-            <p class="rep-card-sub">Module 2 records by application status.</p>
-            <div class="rep-chart-canvas"><canvas id="chartApplications"></canvas></div>
+            <p class="rep-card-title">ISF Population</p>
+            <p class="rep-card-sub">Identified Social Families - Male & Female Household.</p>
+            <div class="rep-chart-canvas"><canvas id="chartISFPopulation"></canvas></div>
         </div>
         <div class="rep-card">
             <p class="rep-card-title">Housing units by status</p>
@@ -1152,11 +1152,11 @@
 
     <!-- Operations charts: 3 per row layout -->
     <div class="rep-grid-3" style="margin-top: 0.85rem;">
-        <!-- Card 1: Applicant workflow funnel -->
+        <!-- Card 1: Top barangays -->
         <div class="rep-card">
-            <p class="rep-card-title">Applicant workflow funnel</p>
-            <p class="rep-card-sub">Pipeline conversion from registration to lot award.</p>
-            <div class="rep-ops-chart-canvas"><canvas id="chartFunnel"></canvas></div>
+            <p class="rep-card-title">Top barangays</p>
+            <p class="rep-card-sub">Top 12 barangays by applicant count.</p>
+            <div class="rep-chart-canvas" style="height: 280px;"><canvas id="chartBarangays"></canvas></div>
         </div>
 
         <!-- Card 2: Case aging distribution -->
@@ -1276,6 +1276,8 @@
                 return getSingleSeriesDataset('applicationsByStatus');
             case 'chartHousing':
                 return getSingleSeriesDataset('housingByStatus');
+            case 'chartISFPopulation':
+                return getSingleSeriesDataset('isfPopulation');
             case 'chartBlacklist':
                 return {
                     type: 'single',
@@ -1309,6 +1311,7 @@
             case 'chartChannels':
             case 'chartApplications':
             case 'chartHousing':
+            case 'chartISFPopulation':
             case 'chartBlacklist':
             case 'chartRequirements':
             case 'chartCasesStatus':

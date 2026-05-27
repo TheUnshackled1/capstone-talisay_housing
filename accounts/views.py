@@ -9,7 +9,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
-from django.db.models import Count, F, Q, Prefetch
+from django.db.models import Count, F, Q, Prefetch, Sum
 from django.urls import reverse
 from django.contrib.sessions.models import Session
 from django.contrib.auth import get_user_model
@@ -503,6 +503,7 @@ def _build_analytics_charts_data(
     queue_by_status=None,
     case_aging_bands=None,
     funnel_stages=None,
+    isf_population_data=None,
 ):
     """
     Build a JSON-serializable dict for Chart.js (staff analytics page).
@@ -565,6 +566,16 @@ def _build_analytics_charts_data(
         }
     if funnel_stages:
         data['workflowFunnel'] = pair_labels_counts(funnel_stages)
+
+    # ISF Population data
+    if isf_population_data:
+        data['isfPopulation'] = {
+            'labels': ['Male Household', 'Female Household'],
+            'values': [
+                int(isf_population_data.get('male_household', 0)),
+                int(isf_population_data.get('female_household', 0))
+            ]
+        }
 
     return data
 
@@ -896,6 +907,28 @@ def _staff_reports_analytics_payload(request):
         row['place_name'] = row.get('place_name') or '—'
     _analytics_rows_bar_pct(applicants_top_barangays)
 
+    # ISF (Identified Social Families) Population Statistics
+    total_applicants_count = Applicant.objects.count()
+
+    # Calculate household size totals by sex
+    male_stats = Applicant.objects.filter(sex='M').aggregate(
+        count=Count('id'),
+        household_total=Sum('household_size')
+    )
+    female_stats = Applicant.objects.filter(sex='F').aggregate(
+        count=Count('id'),
+        household_total=Sum('household_size')
+    )
+
+    # Build ISF population data
+    isf_population_data = {
+        'total_isf': total_applicants_count,
+        'male_household': male_stats['household_total'] or 0,
+        'female_household': female_stats['household_total'] or 0,
+        'male_count': male_stats['count'] or 0,
+        'female_count': female_stats['count'] or 0,
+    }
+
     intake_registration_trend = []
     reg_max = 1
     for y, m, lbl in _six_month_sequence_end(report_year, report_month):
@@ -1074,6 +1107,7 @@ def _staff_reports_analytics_payload(request):
         queue_by_status=queue_by_status,
         case_aging_bands=case_aging_bands,
         funnel_stages=funnel_stages,
+        isf_population_data=isf_population_data,
     )
 
     year_options = list(range(now.year - 5, now.year + 2))
@@ -1097,6 +1131,8 @@ def _staff_reports_analytics_payload(request):
         'applicant_by_status': applicant_by_status,
         'application_by_status': application_by_status,
         'documents_by_type': documents_by_type,
+        # ISF Population Statistics
+        'isf_population_data': isf_population_data,
         'monthly_upload_trend': monthly_upload_trend,
         'applicants_registered_period': applicants_registered_period,
         'housing_apps_created_period': housing_apps_created_period,
