@@ -203,12 +203,17 @@
         font-size: 0.74rem;
         color: var(--rep-muted);
         line-height: 1.4;
+        display: none;
+    }
+    .rep-section h2 {
+        display: none;
     }
     .rep-section-rule {
         flex: 1;
         height: 1px;
         background: linear-gradient(90deg, #e2e8f0 0%, transparent 100%);
         margin-left: 0.25rem;
+        display: none;
     }
 
     /* Card primitives */
@@ -236,6 +241,7 @@
         font-size: 0.72rem;
         color: var(--rep-muted);
         line-height: 1.4;
+        display: none;
     }
 
     /* KPI grids */
@@ -1113,44 +1119,6 @@
         </div>
     </div>
 
-    <!-- Section: Operations -->
-    <div class="rep-section">
-        <h2>Operations</h2>
-        <p class="rep-section-note">Requirement intake, case load, active desk queues, and workflow health.</p>
-        <span class="rep-section-rule"></span>
-    </div>
-
-
-
-    <!-- Mini-KPI row -->
-    <div class="rep-ops-mini-grid">
-        <div class="rep-ops-mini">
-            <p class="rep-ops-mini-value">{{ active_lot_awards|default:0 }}</p>
-            <p class="rep-ops-mini-label">Active lot awards</p>
-        </div>
-        <div class="rep-ops-mini">
-            <p class="rep-ops-mini-value {% if units_under_notice > 0 %}is-warn{% endif %}">{{ units_under_notice|default:0 }}</p>
-            <p class="rep-ops-mini-label">Units under notice</p>
-        </div>
-        <div class="rep-ops-mini">
-            <p class="rep-ops-mini-value {% if repossessed_units > 0 %}is-alert{% endif %}">{{ repossessed_units|default:0 }}</p>
-            <p class="rep-ops-mini-label">Repossessed units</p>
-        </div>
-        <div class="rep-ops-mini">
-            <p class="rep-ops-mini-value {% if blacklist_count > 0 %}is-alert{% endif %}">{{ blacklist_count|default:0 }}</p>
-            <p class="rep-ops-mini-label">Blacklisted</p>
-        </div>
-        <div class="rep-ops-mini">
-            <p class="rep-ops-mini-value is-good">{{ vacant_units_count|default:0 }}</p>
-            <p class="rep-ops-mini-label">Vacant available</p>
-        </div>
-        <div class="rep-ops-mini">
-            <p class="rep-ops-mini-value">{{ construction_total|default:0 }}</p>
-            <p class="rep-ops-mini-label">Construction records</p>
-        </div>
-    </div>
-
-    <!-- Operations charts: 3 per row layout -->
     <div class="rep-grid-3" style="margin-top: 0.85rem;">
         <!-- Card 1: Top barangays -->
         <div class="rep-card">
@@ -1922,7 +1890,6 @@
         switcher.className = 'rep-chart-switcher';
         
         var modes = [
-            { type: 'line', icon: '📈', label: 'Line' },
             { type: 'bar', icon: '📊', label: 'Bar' },
             { type: 'stacked', icon: '🥞', label: 'Stacked' },
             { type: 'area', icon: '📉', label: 'Area' },
