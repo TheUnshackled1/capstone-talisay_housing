@@ -8394,7 +8394,7 @@
                 try { dwt.CloseSource(); } catch (_err) {}
             }
         } catch (error) {
-            showFlowAlert(error.message || 'Unable to scan this requirement.');
+            showFlowAlert(error.message || 'Unable to scan this requirement.', 'Notice', null, 'warning');
         } finally {
             if (rowScanBtn) {
                 rowScanBtn.disabled = false;
@@ -8497,7 +8497,7 @@
                 }
             })
             .catch(function (err) {
-                showFlowAlert(err.message || 'Upload failed.');
+                showFlowAlert(err.message || 'Upload failed.', 'Notice', null, 'warning');
             })
             .finally(function () {
                 if (input) input.value = '';
@@ -8915,7 +8915,7 @@
                 try { dwt.CloseSource(); } catch (_err) {}
             }
         } catch (error) {
-            showFlowAlert(error.message || 'Unable to scan all documents.');
+            showFlowAlert(error.message || 'Unable to scan all documents.', 'Notice', null, 'warning');
         } finally {
             setArchiveScanButtonBusy(false);
         }
@@ -10796,7 +10796,7 @@
             updateDocumentScanProgress();
             buttonEl.textContent = 'Scan';
         } catch (error) {
-            showFlowAlert('Unable to scan ' + name + ': ' + (error.message || 'unknown error'));
+            showFlowAlert('Unable to scan ' + name + ': ' + (error.message || 'unknown error'), 'Notice', null, 'warning');
             buttonEl.textContent = oldText;
             buttonEl.disabled = false;
             return;
@@ -10898,7 +10898,7 @@
             }
         } catch (error) {
             console.error('Error scanning all documents:', error);
-            showFlowAlert(error.message || 'Unable to scan all documents. Please try again.');
+            showFlowAlert(error.message || 'Unable to scan all documents. Please try again.', 'Notice', null, 'warning');
         } finally {
             setDocumentScanButtonsBusy(false);
         }
