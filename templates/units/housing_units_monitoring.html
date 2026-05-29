@@ -3402,10 +3402,12 @@ async function submitUnitBeneficiarySms() {
 
 /**
  * Uses global showFlowAlert (staff_base + flow-alert.css) instead of window.alert.
- * variant: 'success' | 'default'
+ * variant: 'success' | 'warning' | 'default'
  */
 function monitoringFlowAlert(message, title, variant, onConfirm) {
-    const tone = variant === 'success' ? 'success' : 'default';
+    let tone = 'default';
+    if (variant === 'success') tone = 'success';
+    else if (variant === 'warning') tone = 'warning';
     if (typeof showFlowAlert === 'function') {
         showFlowAlert(message || '', title || 'Notice', onConfirm || null, tone);
         return;
@@ -3547,7 +3549,7 @@ document.getElementById('addUnitForm')?.addEventListener('submit', async functio
             closeAddUnitModal();
             window.location.reload();
         } else if (data.duplicate) {
-            monitoringFlowAlert(data.error || 'Existing block or lot!', 'Add housing unit', 'default', null);
+            monitoringFlowAlert(data.error || 'Existing block or lot!', 'Add housing unit', 'warning', null);
         } else {
             errEl.textContent = data.error || 'Could not add unit.';
             errEl.style.display = 'block';
