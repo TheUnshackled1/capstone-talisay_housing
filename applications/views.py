@@ -3810,17 +3810,25 @@ def _assign_housing_unit_after_lot_award(application, unit, awarded_by_user):
         assigned_caretaker = unit.site.caretaker if unit.site else None
 
         # Office policy: 30-day possession grace, then monitoring. First field visit is at
-        # monitoring day 15; the final (30 Day) visit is 30 calendar days after that due date
-        # (not monitoring_start + 30, which was only 15 days after the 15 Day visit).
-        day_15_due = monitoring_start_date + timedelta(days=15)
-        day_30_due = day_15_due + timedelta(days=30)
+        # monitoring day 60; the final (30 Day) visit is 30 calendar days after that due date.
+        from units.monitoring_policy import (
+            TASK_TYPE_FINAL_INSPECTION,
+            TASK_TYPE_INITIAL_INSPECTION,
+            final_inspection_days_from_award,
+            final_inspection_due,
+            initial_inspection_days_from_award,
+            initial_inspection_due,
+        )
+
+        initial_due = initial_inspection_due(award_date)
+        final_due = final_inspection_due(award_date)
         MonitoringTask.objects.create(
             unit=unit,
             lot_award=award,
-            task_type='day_15_inspection',
-            scheduled_date=day_15_due,
-            due_date=day_15_due,
-            days_from_award=15,
+            task_type=TASK_TYPE_INITIAL_INSPECTION,
+            scheduled_date=initial_due,
+            due_date=initial_due,
+            days_from_award=initial_inspection_days_from_award(),
             status='pending',
             assigned_to=assigned_caretaker,
         )
@@ -3828,10 +3836,10 @@ def _assign_housing_unit_after_lot_award(application, unit, awarded_by_user):
         MonitoringTask.objects.create(
             unit=unit,
             lot_award=award,
-            task_type='day_30_inspection',
-            scheduled_date=day_30_due,
-            due_date=day_30_due,
-            days_from_award=45,
+            task_type=TASK_TYPE_FINAL_INSPECTION,
+            scheduled_date=final_due,
+            due_date=final_due,
+            days_from_award=final_inspection_days_from_award(),
             status='pending',
             assigned_to=assigned_caretaker,
         )

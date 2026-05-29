@@ -7,6 +7,10 @@ binding final monitoring visit — not caretaker submit alone.
 
 from __future__ import annotations
 
+from units.monitoring_policy import (
+    TASK_TYPE_EXTENSION_FINAL,
+    TASK_TYPE_FINAL_INSPECTION,
+)
 from units.models import ConstructionProgress, LotAward, MonitoringTask, OccupancyMonitoringCycle
 
 
@@ -33,11 +37,11 @@ def housing_unit_staff_final_approved(lot_award: LotAward | None) -> bool:
 
     if MonitoringTask.objects.filter(
         lot_award=lot_award,
-        task_type='month_2_inspection',
+        task_type=TASK_TYPE_EXTENSION_FINAL,
     ).exists():
-        return _report_staff_approved_normal_progress(lot_award, 'month_2_inspection')
+        return _report_staff_approved_normal_progress(lot_award, TASK_TYPE_EXTENSION_FINAL)
 
-    if not _report_staff_approved_normal_progress(lot_award, 'day_30_inspection'):
+    if not _report_staff_approved_normal_progress(lot_award, TASK_TYPE_FINAL_INSPECTION):
         return False
 
     if OccupancyMonitoringCycle.objects.filter(

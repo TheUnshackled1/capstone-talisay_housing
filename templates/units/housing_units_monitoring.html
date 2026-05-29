@@ -2980,7 +2980,7 @@
                                 </div>
                                 <div class="premium-data-cell">
                                     <p class="cell-label">Monitoring policy</p>
-                                    <p class="cell-value">30-day grace, then 15 Day / 30 Day</p>
+                                    <p class="cell-value">30-day grace, then 60 Day / 30 Day</p>
                                 </div>
                             </div>
                         </div>
@@ -3722,7 +3722,8 @@ function kpiFilter(card) {
 function monitoringTaskDisplayTitle(task) {
     if (!task) return '—';
     if (task.label) return task.label;
-    if (task.task_type === 'day_15_inspection') return '15 Day Inspection';
+    if (task.task_type === 'day_60_inspection') return '60 Day Inspection';
+    if (task.task_type === 'month_1_inspection') return '60 Day Inspection';
     if (task.task_type === 'month_2_inspection') return 'Extension 30 Day Inspection';
     if (task.task_type === 'day_30_inspection') return '30 Day Inspection';
     return '—';
@@ -3730,7 +3731,7 @@ function monitoringTaskDisplayTitle(task) {
 
 function monitoringTaskPhase(task) {
     if (!task) return 'other';
-    if (task.task_type === 'day_15_inspection' || task.task_type === 'month_1_inspection') return 'initial';
+    if (task.task_type === 'day_60_inspection' || task.task_type === 'month_1_inspection') return 'initial';
     if (task.task_type === 'day_30_inspection' || task.task_type === 'month_2_inspection') return 'final';
     return 'other';
 }
@@ -3774,7 +3775,7 @@ function monitoringReportIsUnoccupied(report) {
 
 /**
  * Caretaker report → recommended staff outcome: normal_progress | no_progress | null.
- * 15 Day: Normal Progress vs No Progress. Final / extension 30 Day: Housing unit vs Explanation letter or Failed.
+ * 60 Day: Normal Progress vs No Progress. Final / extension 30 Day: Housing unit vs Explanation letter or Failed.
  */
 function monitoringRecommendedStaffDecision(task, report) {
     if (!task || !report || (report.progress_assessment || '').trim()) return null;
@@ -3787,7 +3788,7 @@ function monitoringRecommendedStaffDecision(task, report) {
         if (unoccupied && conKey === 'no_structure') return 'no_progress';
         return null;
     }
-    if (task.task_type === 'day_15_inspection') {
+    if (task.task_type === 'day_60_inspection') {
         if (occKey === 'properly_occupied' && conKey === 'ongoing_construction') return 'normal_progress';
         if (unoccupied && conKey === 'no_structure') return 'no_progress';
         return null;
@@ -3808,7 +3809,7 @@ function isMonitoringReportReadyForExplanationLetter(task, report) {
 
 function monitoringRecommendedDecisionHint(task, recommendation) {
     if (!task || !recommendation) return '';
-    if (task.task_type === 'day_15_inspection') {
+    if (task.task_type === 'day_60_inspection') {
         if (recommendation === 'normal_progress') {
             return 'Caretaker reported Properly Occupied and Ongoing Construction — use Normal Progress.';
         }
@@ -3863,7 +3864,7 @@ function monitoringTaskRelativeLine(task) {
         return 'Extension period — final 30 Day visit (after explanation letter)';
     }
     if (task.monitoring_window_line) return task.monitoring_window_line;
-    if (monitoringTaskPhase(task) === 'initial') return 'Initial monitoring — first 15 days';
+    if (monitoringTaskPhase(task) === 'initial') return 'Initial monitoring — first 60 days';
     if (monitoringTaskPhase(task) === 'final') return 'Final monitoring — confirm lot build is finished';
     const d = task.days_from_award;
     return (d != null && d !== '') ? `${d} days after monitoring starts` : '';
@@ -3885,7 +3886,7 @@ function monitoringEarlyScheduleHint(task) {
 
 function isPriorNoProgressLetterVisit(task, letterWorkflowApplies) {
     if (!letterWorkflowApplies || !task) return false;
-    if (task.task_type !== 'day_15_inspection' && task.task_type !== 'day_30_inspection') return false;
+    if (task.task_type !== 'day_60_inspection' && task.task_type !== 'day_30_inspection') return false;
     return task.status === 'completed'
         && task.report
         && task.report.progress_assessment === 'no_progress';
@@ -3900,9 +3901,9 @@ function premiumCardChevronHtml() {
     return '<span class="premium-card-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></span>';
 }
 
-function buildMonitoringTaskCardElement(task, day15Reviewed) {
+function buildMonitoringTaskCardElement(task, day60Reviewed) {
     const details = document.createElement('details');
-    const borderTone = task.task_type === 'day_15_inspection' ? 'border-green' : 'border-amber';
+    const borderTone = task.task_type === 'day_60_inspection' ? 'border-green' : 'border-amber';
     details.className = `premium-data-card premium-data-card--collapsible ${borderTone} monitoring-task-details`;
     details.open = false;
 
@@ -3910,8 +3911,8 @@ function buildMonitoringTaskCardElement(task, day15Reviewed) {
     const isNotified = Boolean(task.notified_at);
     const isCompleted = task.status === 'completed';
     const isBlocked = (
-        (task.task_type === 'day_30_inspection' && !day15Reviewed) ||
-        Boolean(task.extension_30day_blocked)
+        (task.task_type === 'day_30_inspection' && !day60Reviewed) ||
+        Boolean(task.extension_midpoint_blocked)
     );
 
     let statusClass = 'upcoming';
@@ -3937,9 +3938,9 @@ function buildMonitoringTaskCardElement(task, day15Reviewed) {
     let availabilityText;
     let hintClass = 'monitoring-task-hint';
     if (isBlocked) {
-        availabilityText = task.extension_30day_blocked
-            ? 'Finish the extension midpoint field visit first (caretaker dashboard), then staff must assess it'
-            : 'Finish and review the 15 Day Inspection first';
+        availabilityText = task.extension_midpoint_blocked
+            ? 'Finish and review the extension 30 Day Inspection first'
+            : 'Finish and review the 60 Day Inspection first';
         hintClass += ' monitoring-task-hint--blocked';
     } else if (isCompleted && task.report) {
         const by = task.report.assessed_by ? ` · ${task.report.assessed_by}` : '';
@@ -4029,12 +4030,12 @@ function renderMonitoringTaskCards(mainTasks, mergedForState, letterWorkflowAppl
     const gridTasks = filterMainTasksForTopGrid(mainTasks, letterWorkflowApplies);
     wrap.innerHTML = '';
 
-    const day15Task = merged.find((item) => item.task_type === 'day_15_inspection');
-    const day15Reviewed = Boolean(
-        day15Task &&
-        day15Task.status === 'completed' &&
-        day15Task.report &&
-        day15Task.report.progress_assessment
+    const day60Task = merged.find((item) => item.task_type === 'day_60_inspection');
+    const day60Reviewed = Boolean(
+        day60Task &&
+        day60Task.status === 'completed' &&
+        day60Task.report &&
+        day60Task.report.progress_assessment
     );
 
     if (!gridTasks.length) {
@@ -4043,13 +4044,13 @@ function renderMonitoringTaskCards(mainTasks, mergedForState, letterWorkflowAppl
         const nestedInSeparateCard = letterWorkflowApplies && (merged || []).some((t) => isPriorNoProgressLetterVisit(t, true));
         empty.textContent = nestedInSeparateCard
             ? 'Completed visits that used the Explanation letter path are listed in the separate card below.'
-            : 'No 15 Day or 30 Day monitoring tasks generated yet.';
+            : 'No 60 Day or 30 Day monitoring tasks generated yet.';
         wrap.appendChild(empty);
         return;
     }
 
     gridTasks.forEach((task) => {
-        wrap.appendChild(buildMonitoringTaskCardElement(task, day15Reviewed));
+        wrap.appendChild(buildMonitoringTaskCardElement(task, day60Reviewed));
     });
 }
 
@@ -4070,36 +4071,36 @@ function renderPriorNoProgressVisitsPanel(letterWorkflowApplies) {
         panel.style.display = 'none';
         return;
     }
-    const day15Task = merged.find((item) => item.task_type === 'day_15_inspection');
-    const day15Reviewed = Boolean(
-        day15Task &&
-        day15Task.status === 'completed' &&
-        day15Task.report &&
-        day15Task.report.progress_assessment
+    const day60Task = merged.find((item) => item.task_type === 'day_60_inspection');
+    const day60Reviewed = Boolean(
+        day60Task &&
+        day60Task.status === 'completed' &&
+        day60Task.report &&
+        day60Task.report.progress_assessment
     );
     panel.style.display = 'block';
     prior.forEach((task) => {
-        wrap.appendChild(buildMonitoringTaskCardElement(task, day15Reviewed));
+        wrap.appendChild(buildMonitoringTaskCardElement(task, day60Reviewed));
     });
 }
 
-function renderExplanationExtension30DayCard(ext30) {
+function renderExplanationExtensionFinalCard(extFinal) {
     const wrap = document.getElementById('explanationExtension30DayCardWrap');
     if (!wrap) return;
     wrap.innerHTML = '';
-    if (!ext30 || ext30.task_type !== 'month_2_inspection') {
+    if (!extFinal || extFinal.task_type !== 'month_2_inspection') {
         wrap.style.display = 'none';
         return;
     }
-    const day15Task = (currentMonitoringTasks || []).find((item) => item.task_type === 'day_15_inspection');
-    const day15Reviewed = Boolean(
-        day15Task &&
-        day15Task.status === 'completed' &&
-        day15Task.report &&
-        day15Task.report.progress_assessment
+    const day60Task = (currentMonitoringTasks || []).find((item) => item.task_type === 'day_60_inspection');
+    const day60Reviewed = Boolean(
+        day60Task &&
+        day60Task.status === 'completed' &&
+        day60Task.report &&
+        day60Task.report.progress_assessment
     );
     wrap.style.display = 'grid';
-    wrap.appendChild(buildMonitoringTaskCardElement(ext30, day15Reviewed));
+    wrap.appendChild(buildMonitoringTaskCardElement(extFinal, day60Reviewed));
 }
 
 function openInspectionConfirmModal(task) {
@@ -4126,7 +4127,7 @@ function openInspectionConfirmModal(task) {
             const until = formatDisplayDate(String(ext.end_date).slice(0, 10));
             scheduleText = (
                 'This is the extension 30 Day inspection after the written explanation letter was placed on file. '
-                + `Another 30-day build extension applies from ${fromD} through ${until}.`
+                + `Another 60-day build extension applies from ${fromD} through ${until}.`
                 + (ms
                     ? ` Extension monitoring is counted from ${ms}, then ${relative} — inspection due ${due}.${extStaffChoice} Continue?`
                     : ` Then ${relative} — inspection due ${due}.${extStaffChoice} Continue?`)
@@ -4139,7 +4140,7 @@ function openInspectionConfirmModal(task) {
                     : `Schedule: ${relative} — inspection due ${due}.${extStaffChoice} Continue?`)
             );
         }
-    } else if (task.task_type === 'day_15_inspection') {
+    } else if (task.task_type === 'day_60_inspection') {
         const awardDate = task.award_date ? formatDisplayDate(task.award_date) : 'award date';
         scheduleText = (
             `Initial monitoring: award ${awardDate} + 30-day grace, then ${relative} — due ${due}. `
@@ -4199,14 +4200,14 @@ function openInspectionBlockedModal(task) {
 
     activeInspectionTask = null;
     title.textContent = `${monitoringTaskDisplayTitle(task)} is blocked`;
-    if (task.extension_30day_blocked) {
+    if (task.extension_midpoint_blocked) {
         text.textContent = (
-            'This 30 Day Inspection (after your explanation-letter extension) cannot be opened yet. ' +
-            'The extension midpoint visit must be completed on the caretaker monitoring dashboard first, ' +
-            'then housing staff must record Normal Progress or No Progress on that midpoint report.'
+            'This extension 60 Day midpoint visit cannot be opened yet. ' +
+            'Complete the extension 30 Day Inspection on the caretaker monitoring dashboard first, ' +
+            'then housing staff must record Normal Progress or No Progress on that report.'
         );
     } else {
-        text.textContent = '30 Day Inspection cannot be opened yet. Complete the 15 Day Inspection caretaker report first, then staff must mark the 15 Day Inspection result as Normal Progress or No Progress.';
+        text.textContent = '30 Day Inspection cannot be opened yet. Complete the 60 Day Inspection caretaker report first, then staff must mark the 60 Day Inspection result as Normal Progress or No Progress.';
     }
     if (summary) {
         summary.classList.remove('active');
@@ -4366,7 +4367,7 @@ function renderMonitoringHistoryRecord(history) {
     const wrap = document.getElementById('monitoringHistoryRecord');
     if (!wrap) return;
     if (!Array.isArray(history) || !history.length) {
-        wrap.innerHTML = '<p class="occupied-record-empty">No 15 Day / 30 Day monitoring history yet.</p>';
+        wrap.innerHTML = '<p class="occupied-record-empty">No 60 Day / 30 Day monitoring history yet.</p>';
         return;
     }
     wrap.innerHTML = `
@@ -4791,7 +4792,7 @@ function openInspectionInfoModal(task) {
                 + 'Choose Failed when the lot does not pass—Failed leads toward Blacklist beneficiary when office rules allow. '
                 + 'Housing unit does not apply for this visit.'
             );
-        } else if (recommendNormal && task.task_type === 'day_15_inspection') {
+        } else if (recommendNormal && task.task_type === 'day_60_inspection') {
             const labels = monitoringStaffDecisionLabels(task);
             text.textContent = (
                 'Initial monitoring supports ' + labels.normal_progress + '. '
@@ -4799,7 +4800,7 @@ function openInspectionInfoModal(task) {
                 + 'Choose ' + labels.normal_progress + ' to record initial monitoring. '
                 + labels.no_progress + ' does not match this visit.'
             );
-        } else if (recommendNoProgress && task.task_type === 'day_15_inspection') {
+        } else if (recommendNoProgress && task.task_type === 'day_60_inspection') {
             const labels = monitoringStaffDecisionLabels(task);
             text.textContent = (
                 'Initial monitoring supports ' + labels.no_progress + '. '
@@ -4832,7 +4833,7 @@ function openInspectionInfoModal(task) {
             const ext = unit && unit.explanation_build_extension;
             const extLine = (ext && ext.start_date && ext.end_date)
                 ? (
-                    ` The 30-day build extension runs from ${formatDisplayDate(String(ext.start_date).slice(0, 10))} `
+                    ` The 60-day build extension runs from ${formatDisplayDate(String(ext.start_date).slice(0, 10))} `
                     + `through ${formatDisplayDate(String(ext.end_date).slice(0, 10))}.`
                 )
                 : '';
@@ -4846,7 +4847,7 @@ function openInspectionInfoModal(task) {
                 `Final monitoring opens on ${formatDisplayDate(task.due_date)} (${monitoringTaskRelativeLine(task)}). `
                 + 'Use this visit to confirm the lot build is finished. Housing unit records the lot and closes monitoring; Explanation letter opens that workflow.'
             );
-        } else if (task.task_type === 'day_15_inspection') {
+        } else if (task.task_type === 'day_60_inspection') {
             text.textContent = (
                 `Initial monitoring opens on ${formatDisplayDate(task.due_date)} (${monitoringTaskRelativeLine(task)}). `
                 + 'Use Monitoring Dashboard if you want to proceed early for testing.'
@@ -4907,7 +4908,7 @@ function alertMonitoringStaffDecisionMismatch(task, attemptedDecision, recommend
             + ' did not pass the extension final visit (Unoccupied and Build not finished). '
             + 'Choose Failed to continue—Failed leads toward Blacklist beneficiary when office rules allow.'
         );
-    } else if (task.task_type === 'day_15_inspection' && recommendedDecision === 'normal_progress') {
+    } else if (task.task_type === 'day_60_inspection' && recommendedDecision === 'normal_progress') {
         title = 'Use ' + recommendedLabel;
         body = (
             'You cannot record ' + attemptedLabel + ' for this beneficiary because '
@@ -4916,7 +4917,7 @@ function alertMonitoringStaffDecisionMismatch(task, attemptedDecision, recommend
             + ' (Properly Occupied and Ongoing Construction on the initial visit). Choose '
             + recommendedLabel + ' instead.'
         );
-    } else if (task.task_type === 'day_15_inspection' && recommendedDecision === 'no_progress') {
+    } else if (task.task_type === 'day_60_inspection' && recommendedDecision === 'no_progress') {
         title = 'Use ' + recommendedLabel;
         body = (
             'You cannot record ' + attemptedLabel + ' for this beneficiary because '
@@ -4968,7 +4969,7 @@ async function submitProgressAssessment(decision) {
         const updatedTask = {
             ...activeInspectionTask,
             initial_monitoring_complete: Boolean(
-                activeInspectionTask.task_type === 'day_15_inspection'
+                activeInspectionTask.task_type === 'day_60_inspection'
                 && (decision === 'normal_progress' || decision === 'no_progress')
             ),
             final_monitoring_program_complete: Boolean(
@@ -4978,7 +4979,7 @@ async function submitProgressAssessment(decision) {
                 && decision === 'normal_progress'
             ),
             initial_monitoring_program_complete: Boolean(
-                activeInspectionTask.task_type === 'day_15_inspection'
+                activeInspectionTask.task_type === 'day_60_inspection'
                 && (decision === 'normal_progress' || decision === 'no_progress')
             ),
             report: {
@@ -5013,7 +5014,7 @@ async function submitProgressAssessment(decision) {
             const letterWf = lastOpenedUnitPayload && lastOpenedUnitPayload.explanation_letter_workflow_applies === true;
             renderMonitoringTaskCards(main, merged, letterWf);
             renderPriorNoProgressVisitsPanel(letterWf);
-            renderExplanationExtension30DayCard(ext30);
+            renderExplanationExtensionFinalCard(ext30);
             renderMonitoringHistoryRecord(buildMonitoringHistoryFromTasks(currentMonitoringTasks));
             if (data.housing_unit_on_file && currentUnitId) {
                 const position = '{{ request.user.position }}';
@@ -5123,7 +5124,7 @@ async function notifySelectedInspectionTask() {
         const letterWf = lastOpenedUnitPayload && lastOpenedUnitPayload.explanation_letter_workflow_applies === true;
         renderMonitoringTaskCards(main, merged, letterWf);
         renderPriorNoProgressVisitsPanel(letterWf);
-        renderExplanationExtension30DayCard(ext30);
+        renderExplanationExtensionFinalCard(ext30);
     } catch (err) {
         if (text) {
             text.textContent = err.message || 'Could not notify monitoring dashboard.';
@@ -5272,12 +5273,12 @@ function updateExplanationBuildExtensionNote(unit) {
         const fromD = ext.start_date ? formatDisplayDate(String(ext.start_date).slice(0, 10)) : '';
         el.textContent = fromD
             ? (
-                `Letter on file triggers a 30-day build extension (${fromD}–${until}). `
-                + 'Original 15 Day and 30 Day visits stay in the card above; extension visits (caretaker midpoint, then final 30 Day) appear below.'
+                `Letter on file triggers a 60-day build extension (${fromD}–${until}). `
+                + 'Original 60 Day and 30 Day visits stay in the card above; extension visits (30 Day, then 60 Day midpoint) appear below.'
             )
             : (
-                `Letter on file triggers a 30-day build extension (through ${until}). `
-                + 'Original visits stay above; extension visits appear below (caretaker assigns the midpoint visit first).'
+                `Letter on file triggers a 60-day build extension (through ${until}). `
+                + 'Original visits stay above; extension visits appear below (extension 30 Day first, then 60 Day midpoint).'
             );
         el.style.display = 'block';
     } else {
@@ -5592,7 +5593,7 @@ function fillBlacklistModalSituation() {
     }
 
     const ext = unit.explanation_build_extension;
-    const ext30 = unit.explanation_extension_30day_task;
+    const ext30 = unit.explanation_extension_final_task;
     const extFailed = Boolean(unit.extension_final_visit_failed);
     const c = unit.explanation_letter_case;
 
@@ -5738,7 +5739,7 @@ function openUnitModal(unitId) {
                 document.getElementById('awardActivationDate').textContent = possession && possession.awarded_at ? formatDisplayDate(possession.awarded_at) : '—';
                 document.getElementById('monitoringStartsOn').textContent = possession && possession.monitoring_starts_on ? formatDisplayDate(possession.monitoring_starts_on) : '—';
                 const main = unit.monitoring_tasks || [];
-                const ext30 = unit.explanation_extension_30day_task || null;
+                const ext30 = unit.explanation_extension_final_task || null;
                 const merged = ext30 ? [...main, ext30] : [...main];
                 const letterWf = unit.explanation_letter_workflow_applies === true;
                 renderMonitoringTaskCards(main, merged, letterWf);
@@ -5747,7 +5748,7 @@ function openUnitModal(unitId) {
                 renderUnitCaseRecord(unit);
                 syncExplanationLetterPanel(unit);
                 renderPriorNoProgressVisitsPanel(letterWf);
-                renderExplanationExtension30DayCard(ext30);
+                renderExplanationExtensionFinalCard(ext30);
                 applyVmapLotMapBadge(unit);
                 updateFooterSmsButton(unit);
                 document.getElementById('unitModal').style.display = 'flex';

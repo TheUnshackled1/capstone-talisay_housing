@@ -772,7 +772,7 @@
         text-align: center !important;
     }
 
-    .monitoring-task-type.day-15 {
+    .monitoring-task-type.day-60 {
         background: #f0f9ff !important;
         color: #0369a1 !important;
         border-color: #e0f2fe !important;
@@ -1759,7 +1759,7 @@
             border: 1px solid #bae6fd;
         }
         
-        .m-card-badge.day-15 {
+        .m-card-badge.day-60 {
             background: #f0fdf4;
             color: #16a34a;
             border-color: #bbf7d0;
@@ -2624,7 +2624,7 @@
                                      data-dob="{{ task.lot_award.application.applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}">{{ task.lot_award.application.applicant.full_name }}</div>
                                 <div class="kpi-applicant-addr">📍 {{ task.lot_award.application.applicant.current_address|default:"—" }}</div>
                             </td>
-                            <td>{% if task.task_type == 'day_15_inspection' %}15 Day Inspection{% elif task.task_type == 'day_30_inspection' %}30 Day Inspection{% else %}{{ task.get_task_type_display }}{% endif %}</td>
+                            <td>{% if task.task_type == 'day_60_inspection' %}60 Day Inspection{% elif task.task_type == 'day_30_inspection' %}30 Day Inspection{% else %}{{ task.get_task_type_display }}{% endif %}</td>
                             <td>{{ task.due_date|date:"M d, Y" }}</td>
                             <td>{% if task.notified_at %}{{ task.notified_at|date:"M d, Y" }}<div class="kpi-cell-muted">{{ task.notified_at|time:"H:i" }}</div>{% else %}—{% endif %}</td>
                         </tr>
@@ -2677,7 +2677,7 @@
                                      data-dob="{{ task.lot_award.application.applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}">{{ task.lot_award.application.applicant.full_name }}</div>
                                 <div class="kpi-applicant-addr">📍 {{ task.lot_award.application.applicant.current_address|default:"—" }}</div>
                             </td>
-                            <td>{% if task.task_type == 'day_15_inspection' %}15 Day Inspection{% elif task.task_type == 'day_30_inspection' %}30 Day Inspection{% else %}{{ task.get_task_type_display }}{% endif %}</td>
+                            <td>{% if task.task_type == 'day_60_inspection' %}60 Day Inspection{% elif task.task_type == 'day_30_inspection' %}30 Day Inspection{% else %}{{ task.get_task_type_display }}{% endif %}</td>
                             <td>
                                 {% if task.completed_at %}
                                     {{ task.completed_at|date:"M d, Y" }}<div class="kpi-cell-muted">{{ task.completed_at|time:"H:i" }}</div>
@@ -2740,7 +2740,7 @@
                                      data-dob="{{ task.lot_award.application.applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}">{{ task.lot_award.application.applicant.full_name }}</div>
                                 <div class="kpi-applicant-addr">📍 {{ task.lot_award.application.applicant.current_address|default:"—" }}</div>
                             </td>
-                            <td>{% if task.task_type == 'day_15_inspection' %}15 Day Inspection{% elif task.task_type == 'day_30_inspection' %}30 Day Inspection{% else %}{{ task.get_task_type_display }}{% endif %}</td>
+                            <td>{% if task.task_type == 'day_60_inspection' %}60 Day Inspection{% elif task.task_type == 'day_30_inspection' %}30 Day Inspection{% else %}{{ task.get_task_type_display }}{% endif %}</td>
                             <td>{{ task.due_date|date:"M d, Y" }}</td>
                             <td>{% if task.notified_at %}{{ task.notified_at|date:"M d, Y" }}<div class="kpi-cell-muted">{{ task.notified_at|time:"H:i" }}</div>{% else %}—{% endif %}</td>
                         </tr>
@@ -2833,8 +2833,8 @@
                 <div class="monitoring-address-note">{{ task.unit.site.name|default:"Relocation site" }}</div>
             </td>
             <td>
-                <span class="monitoring-task-type {% if 'day_15' in task.task_type %}day-15{% elif 'day_30' in task.task_type %}day-30{% else %}month{% endif %}">
-                    {% if task.task_type == 'day_15_inspection' %}15 Day Inspection{% elif task.task_type == 'day_30_inspection' %}30 Day Inspection{% else %}{{ task.get_task_type_display }}{% endif %}
+                <span class="monitoring-task-type {% if 'day_60' in task.task_type %}day-60{% elif 'day_30' in task.task_type %}day-30{% else %}month{% endif %}">
+                    {% if task.task_type == 'day_60_inspection' %}60 Day Inspection{% elif task.task_type == 'day_30_inspection' %}30 Day Inspection{% else %}{{ task.get_task_type_display }}{% endif %}
                 </span>
             </td>
             <td>
@@ -2864,7 +2864,7 @@
                 {% endif %}
             </td>
             <td>
-                <div class="monitoring-schedule-note">{% if task.task_type == 'day_15_inspection' %}<strong>Initial monitoring — during 15 days</strong>{% elif task.task_type == 'day_30_inspection' %}<strong>Final monitoring — confirm lot build is finished</strong>{% else %}<strong>{{ task.days_from_award }}</strong> days after monitoring starts{% endif %}</div>
+                <div class="monitoring-schedule-note">{% if task.task_type == 'day_60_inspection' %}<strong>Initial monitoring — during 60 days</strong>{% elif task.task_type == 'day_30_inspection' %}<strong>Final monitoring — confirm lot build is finished</strong>{% else %}<strong>{{ task.days_from_award }}</strong> days after monitoring starts{% endif %}</div>
             </td>
             <td>
                 {% if task.staff_handled_user %}
@@ -2882,7 +2882,7 @@
             <td>
                 <div class="monitoring-task-actions">
                     {% if task.status == 'pending' and task.scheduled_date > today %}
-                        <button type="button" class="btn-submit-report" onclick="openReportModal('{{ task.id }}', true, '{{ task.scheduled_date|date:"F j, Y" }}', '{% if task.task_type == "day_15_inspection" %}15 Day Inspection{% elif task.task_type == "day_30_inspection" %}30 Day Inspection{% else %}{{ task.get_task_type_display|escapejs }}{% endif %}', 'Block {{ task.unit.block_number|escapejs }} Lot {{ task.unit.lot_number|escapejs }}', '{{ task.due_date|date:"F j, Y"|escapejs }}', '{{ task.task_type|escapejs }}')">
+                        <button type="button" class="btn-submit-report" onclick="openReportModal('{{ task.id }}', true, '{{ task.scheduled_date|date:"F j, Y" }}', '{% if task.task_type == "day_60_inspection" %}60 Day Inspection{% elif task.task_type == "day_30_inspection" %}30 Day Inspection{% else %}{{ task.get_task_type_display|escapejs }}{% endif %}', 'Block {{ task.unit.block_number|escapejs }} Lot {{ task.unit.lot_number|escapejs }}', '{{ task.due_date|date:"F j, Y"|escapejs }}', '{{ task.task_type|escapejs }}')">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="width: 0.9rem; height: 0.9rem; flex-shrink: 0; display: inline-block;">
                                 <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
                                 <line x1="12" y1="9" x2="12" y2="13"/>
@@ -2891,7 +2891,7 @@
                             {% if task.notified_at %}Open notified task{% else %}Notify / test early{% endif %}
                         </button>
                     {% else %}
-                        <button type="button" class="btn-submit-report" onclick="openReportModal('{{ task.id }}', false, '', '{% if task.task_type == "day_15_inspection" %}15 Day Inspection{% elif task.task_type == "day_30_inspection" %}30 Day Inspection{% else %}{{ task.get_task_type_display|escapejs }}{% endif %}', 'Block {{ task.unit.block_number|escapejs }} Lot {{ task.unit.lot_number|escapejs }}', '{{ task.due_date|date:"F j, Y"|escapejs }}', '{{ task.task_type|escapejs }}')">
+                        <button type="button" class="btn-submit-report" onclick="openReportModal('{{ task.id }}', false, '', '{% if task.task_type == "day_60_inspection" %}60 Day Inspection{% elif task.task_type == "day_30_inspection" %}30 Day Inspection{% else %}{{ task.get_task_type_display|escapejs }}{% endif %}', 'Block {{ task.unit.block_number|escapejs }} Lot {{ task.unit.lot_number|escapejs }}', '{{ task.due_date|date:"F j, Y"|escapejs }}', '{{ task.task_type|escapejs }}')">
                             {% if task.status == 'completed' %}
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="width: 0.9rem; height: 0.9rem; flex-shrink: 0; display: inline-block;">
                                     <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/>
@@ -2921,8 +2921,8 @@
         <article class="mobile-verification-card m-task-card" id="task-card-{{ task.id }}">
             <div class="m-card-header">
                 <span class="m-card-visit-order">Task #{{ forloop.counter }}</span>
-                <span class="m-card-badge {% if 'day_15' in task.task_type %}day-15{% elif 'day_30' in task.task_type %}day-30{% else %}month{% endif %}">
-                    {% if task.task_type == 'day_15_inspection' %}15 Day{% elif task.task_type == 'day_30_inspection' %}30 Day{% else %}{{ task.get_task_type_display }}{% endif %}
+                <span class="m-card-badge {% if 'day_60' in task.task_type %}day-60{% elif 'day_30' in task.task_type %}day-30{% else %}month{% endif %}">
+                    {% if task.task_type == 'day_60_inspection' %}60 Day{% elif task.task_type == 'day_30_inspection' %}30 Day{% else %}{{ task.get_task_type_display }}{% endif %}
                 </span>
             </div>
             
@@ -2987,11 +2987,11 @@
             
             <div class="m-card-actions">
                 {% if task.status == 'pending' and task.scheduled_date > today %}
-                    <button type="button" class="btn-submit-report m-card-btn" onclick="openReportModal('{{ task.id }}', true, '{{ task.scheduled_date|date:"F j, Y" }}', '{% if task.task_type == "day_15_inspection" %}15 Day Inspection{% elif task.task_type == "day_30_inspection" %}30 Day Inspection{% else %}{{ task.get_task_type_display|escapejs }}{% endif %}', 'Block {{ task.unit.block_number|escapejs }} Lot {{ task.unit.lot_number|escapejs }}', '{{ task.due_date|date:"F j, Y"|escapejs }}', '{{ task.task_type|escapejs }}')">
+                    <button type="button" class="btn-submit-report m-card-btn" onclick="openReportModal('{{ task.id }}', true, '{{ task.scheduled_date|date:"F j, Y" }}', '{% if task.task_type == "day_60_inspection" %}60 Day Inspection{% elif task.task_type == "day_30_inspection" %}30 Day Inspection{% else %}{{ task.get_task_type_display|escapejs }}{% endif %}', 'Block {{ task.unit.block_number|escapejs }} Lot {{ task.unit.lot_number|escapejs }}', '{{ task.due_date|date:"F j, Y"|escapejs }}', '{{ task.task_type|escapejs }}')">
                         {% if task.notified_at %}Open notified task{% else %}Notify / test early{% endif %}
                     </button>
                 {% else %}
-                    <button type="button" class="btn-submit-report m-card-btn" onclick="openReportModal('{{ task.id }}', false, '', '{% if task.task_type == "day_15_inspection" %}15 Day Inspection{% elif task.task_type == "day_30_inspection" %}30 Day Inspection{% else %}{{ task.get_task_type_display|escapejs }}{% endif %}', 'Block {{ task.unit.block_number|escapejs }} Lot {{ task.unit.lot_number|escapejs }}', '{{ task.due_date|date:"F j, Y"|escapejs }}', '{{ task.task_type|escapejs }}')">
+                    <button type="button" class="btn-submit-report m-card-btn" onclick="openReportModal('{{ task.id }}', false, '', '{% if task.task_type == "day_60_inspection" %}60 Day Inspection{% elif task.task_type == "day_30_inspection" %}30 Day Inspection{% else %}{{ task.get_task_type_display|escapejs }}{% endif %}', 'Block {{ task.unit.block_number|escapejs }} Lot {{ task.unit.lot_number|escapejs }}', '{{ task.due_date|date:"F j, Y"|escapejs }}', '{{ task.task_type|escapejs }}')">
                         {% if task.status == 'completed' %}
                             View Report
                         {% else %}
@@ -3252,7 +3252,7 @@ function filterTasks() {
 
 function caretakerTaskPhase(taskType) {
     const t = String(taskType || '');
-    if (t === 'day_15_inspection' || t === 'month_1_inspection') return 'initial';
+    if (t === 'day_60_inspection' || t === 'month_1_inspection') return 'initial';
     if (t === 'day_30_inspection' || t === 'month_2_inspection') return 'final';
     return 'other';
 }
@@ -3261,7 +3261,7 @@ function caretakerMonitoringWindowLine(taskType) {
     const t = String(taskType || '');
     if (t === 'month_2_inspection') return 'Extension period — final 30 Day visit (after explanation letter)';
     const phase = caretakerTaskPhase(taskType);
-    if (phase === 'initial') return 'Initial monitoring — during 15 days';
+    if (phase === 'initial') return 'Initial monitoring — during 60 days';
     if (phase === 'final') return 'Final monitoring — confirm lot build is finished';
     return 'Scheduled monitoring visit';
 }
@@ -3323,11 +3323,11 @@ function applyReportModalPhase(taskType) {
         noticeEl.className = 'monitoring-phase-notice monitoring-phase-notice--initial';
         noticeEl.hidden = false;
         noticeEl.innerHTML = (
-            '<strong>15 Day Inspection (initial)</strong> '
+            '<strong>60 Day Inspection (initial)</strong> '
             + 'Housing staff will mark this visit as <strong>Normal Progress</strong> or <strong>No Progress</strong> after you submit. '
             + 'This records initial monitoring only; the 30 Day final visit comes later.'
         );
-        evidenceEl.textContent = 'Capture or attach up to 4 images of the lot during the 15-day monitoring window.';
+        evidenceEl.textContent = 'Capture or attach up to 4 images of the lot during the 60-day monitoring window.';
     } else if (phase === 'final') {
         const isExtensionFinal = String(taskType) === 'month_2_inspection';
         if (isExtensionFinal) {

@@ -2,6 +2,14 @@ from django.db import models
 from django.conf import settings
 from django.core.validators import RegexValidator
 import uuid
+from units.monitoring_policy import (
+    TASK_TYPE_EXTENSION_FINAL,
+    TASK_TYPE_EXTENSION_MIDPOINT,
+    TASK_TYPE_EXTENSION_MONTH_3,
+    TASK_TYPE_FINAL_INSPECTION,
+    TASK_TYPE_FINAL_NOTICE,
+    TASK_TYPE_INITIAL_INSPECTION,
+)
 
 _DIGITS_ONLY = RegexValidator(r'^\d+$', message='Must be digits only (0-9).')
 
@@ -658,15 +666,15 @@ class MonitoringTask(models.Model):
     Scheduled inspection task assigned to caretaker/ronda.
     Created automatically when lot is awarded or extension is approved.
 
-    Task types include: Day 15 Inspection, Day 30 Inspection, Month 1-3 Inspections, Final Inspection.
+    Task types include: Day 60 Inspection, Day 30 Inspection, Month 1-3 Inspections, Final Inspection.
     """
     TASK_TYPE_CHOICES = [
-        ('day_15_inspection', 'Day 15 Inspection'),
-        ('day_30_inspection', 'Day 30 Inspection'),
-        ('month_1_inspection', 'Extension Month 1 — Inspection'),
-        ('month_2_inspection', 'Extension Month 2 — Inspection'),
-        ('month_3_inspection', 'Extension Month 3 — Inspection'),
-        ('final_inspection', 'Final Inspection (Post-Notice)'),
+        (TASK_TYPE_INITIAL_INSPECTION, 'Day 60 Inspection'),
+        (TASK_TYPE_FINAL_INSPECTION, 'Day 30 Inspection'),
+        (TASK_TYPE_EXTENSION_MIDPOINT, 'Extension Month 1 — Inspection'),
+        (TASK_TYPE_EXTENSION_FINAL, 'Extension Month 2 — Inspection'),
+        (TASK_TYPE_EXTENSION_MONTH_3, 'Extension Month 3 — Inspection'),
+        (TASK_TYPE_FINAL_NOTICE, 'Final Inspection (Post-Notice)'),
     ]
 
     TASK_STATUS_CHOICES = [
@@ -707,7 +715,7 @@ class MonitoringTask(models.Model):
     days_from_award = models.PositiveIntegerField(
         help_text=(
             "Monitoring day after the 30-day possession grace period when the visit is due "
-            "(15 for the first visit; 45 for the final 30 Day visit, i.e. 30 days after the 15 Day due date)."
+            "(60 for the first visit; 90 for the final 30 Day visit, i.e. 30 days after the 60 Day due date)."
         ),
     )
 
