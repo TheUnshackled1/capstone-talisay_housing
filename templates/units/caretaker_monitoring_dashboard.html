@@ -3557,7 +3557,11 @@ function capturePhotoEvidence() {
     const canvas = document.getElementById('photoCameraCanvas');
     if (!input || !video || !canvas) return;
     if (input.files && input.files.length >= 4) {
-        showToast('Maximum of 4 photo evidence files allowed.', 'error');
+        if (typeof showFlowAlert === 'function') {
+            showFlowAlert('Maximum of 4 photo evidence files allowed.', 'Photo limit', null, 'warning');
+        } else {
+            showToast('Maximum of 4 photo evidence files allowed.', 'error');
+        }
         return;
     }
     canvas.width = video.videoWidth || 1280;
@@ -3600,7 +3604,11 @@ function updatePhotoEvidenceName(input) {
     }
 
     if (count > 4) {
-        showToast('Maximum of 4 photo evidence files allowed.', 'error');
+        if (typeof showFlowAlert === 'function') {
+            showFlowAlert('Maximum of 4 photo evidence files allowed.', 'Photo limit', null, 'warning');
+        } else {
+            showToast('Maximum of 4 photo evidence files allowed.', 'error');
+        }
         input.value = '';
         updatePhotoEvidenceName(input);
         return;
