@@ -1,0 +1,299 @@
+{% extends 'staff_base.html' %}
+{% load static %}
+
+{% block title %}GK Masterlist - THA{% endblock %}
+
+{% block nav_housing_monitoring %}active{% endblock %}
+
+{% block page_title %}Staff Portal{% endblock %}
+
+{% block extra_css %}
+<style>
+    .gk-shell {
+        position: relative;
+        overflow: hidden;
+        padding: 1.4rem 1.25rem 1.1rem;
+        max-width: 100%;
+        background: linear-gradient(180deg, #ecfdf5 0%, #ffffff 14%);
+        border: 1px solid #a7f3d0;
+        border-radius: 0.95rem;
+        box-shadow: 0 2px 6px rgba(5, 150, 105, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
+        margin-bottom: 0.95rem;
+    }
+    .gk-page-header {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 0.85rem;
+        margin-bottom: 1rem;
+    }
+    .gk-page-title {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: #065f46;
+        letter-spacing: -0.02em;
+    }
+    .gk-page-sub {
+        margin: 0.35rem 0 0;
+        font-size: 0.74rem;
+        color: #64748b;
+        line-height: 1.45;
+        max-width: 36rem;
+    }
+    .gk-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .gk-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.55rem 0.85rem;
+        border-radius: 0.55rem;
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-decoration: none;
+        cursor: pointer;
+        border: 1px solid #cbd5e1;
+        background: #fff;
+        color: #334155;
+        transition: border-color 0.15s, color 0.15s, box-shadow 0.15s;
+    }
+    .gk-btn:hover {
+        border-color: #6ee7b7;
+        color: #047857;
+        text-decoration: none;
+    }
+    .gk-btn--primary {
+        background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+        border-color: #047857;
+        color: #fff;
+    }
+    .gk-btn--primary:hover {
+        color: #fff;
+        box-shadow: 0 4px 14px rgba(5, 150, 105, 0.28);
+    }
+    .gk-filters {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.65rem;
+        margin-bottom: 0.85rem;
+    }
+    .gk-site-select {
+        padding: 0.5rem 0.65rem;
+        border: 1px solid #cbd5e1;
+        border-radius: 0.55rem;
+        font-size: 0.78rem;
+        font-family: inherit;
+        min-width: 12rem;
+        background: #fff;
+    }
+    .gk-search {
+        flex: 1;
+        min-width: 14rem;
+        display: flex;
+        border: 1px solid #cbd5e1;
+        border-radius: 0.55rem;
+        overflow: hidden;
+        background: #fff;
+    }
+    .gk-search input {
+        flex: 1;
+        border: none;
+        padding: 0.52rem 0.65rem;
+        font-size: 0.78rem;
+        font-family: inherit;
+        outline: none;
+    }
+    .gk-search button {
+        border: none;
+        border-left: 1px solid #e2e8f0;
+        background: #f8fafc;
+        padding: 0 0.85rem;
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: #047857;
+        cursor: pointer;
+    }
+    .gk-count {
+        font-size: 0.72rem;
+        color: #64748b;
+        font-weight: 600;
+    }
+    .gk-table-scroll {
+        overflow-x: auto;
+        border: 1px solid #d1fae5;
+        border-radius: 0.65rem;
+        background: #fff;
+    }
+    .gk-table {
+        width: 100%;
+        min-width: 40rem;
+        border-collapse: collapse;
+        table-layout: fixed;
+        font-size: 0.78rem;
+    }
+    .gk-table th {
+        text-align: left;
+        padding: 0.65rem 0.85rem;
+        background: #f0fdf4;
+        color: #065f46;
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        border-bottom: 1px solid #bbf7d0;
+    }
+    .gk-table th:nth-child(1) { width: 58%; }
+    .gk-table th:nth-child(2) { width: 42%; }
+    .gk-table td {
+        padding: 0.7rem 0.85rem;
+        border-bottom: 1px solid #f1f5f9;
+        vertical-align: top;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+    }
+    .gk-table tr:last-child td { border-bottom: none; }
+    .gk-table tr:hover td { background: #f8fafc; }
+    .gk-name {
+        font-weight: 700;
+        color: #0f172a;
+        line-height: 1.35;
+    }
+    .gk-meta {
+        margin-top: 0.2rem;
+        font-size: 0.7rem;
+        color: #64748b;
+        line-height: 1.4;
+    }
+    .gk-role {
+        display: inline-block;
+        margin-top: 0.25rem;
+        padding: 0.12rem 0.45rem;
+        border-radius: 999px;
+        font-size: 0.65rem;
+        font-weight: 700;
+        background: #ecfdf5;
+        color: #047857;
+        border: 1px solid #a7f3d0;
+    }
+    .gk-role--primary {
+        background: #d1fae5;
+        color: #065f46;
+    }
+    .gk-empty {
+        padding: 2.5rem 1rem;
+        text-align: center;
+        color: #64748b;
+        font-size: 0.8rem;
+    }
+    .gk-action-btn {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.4rem 0.75rem;
+        background: #f1f5f9;
+        color: #334155;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        font-size: 0.72rem;
+        font-weight: 600;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+    .gk-action-btn:hover {
+        background: #ecfdf5;
+        border-color: #6ee7b7;
+        color: #047857;
+        text-decoration: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="gk-shell">
+    <header class="gk-page-header">
+        <div>
+            <h1 class="gk-page-title">GK Masterlist</h1>
+            <p class="gk-page-sub">
+                {% if site %}
+                Beneficiaries and household members on housing units at <strong>{{ site.name }}</strong>.
+                {% else %}
+                No relocation site selected. Add a site on the monitoring page to populate this list.
+                {% endif %}
+            </p>
+        </div>
+        <div class="gk-toolbar">
+            <a href="{{ monitoring_url }}" class="gk-btn">← Back to monitoring</a>
+            <a href="{% url 'units:housing_units_monitoring' request.user.position %}{% if site %}?site_id={{ site.id }}{% endif %}" class="gk-btn gk-btn--primary">Grid / Table</a>
+        </div>
+    </header>
+
+    {% if no_relocation_sites %}
+    <div class="gk-empty">No relocation sites yet. Create one from Housing Unit &amp; Occupancy Monitoring.</div>
+    {% else %}
+    <form method="get" class="gk-filters">
+        {% if all_sites|length > 1 %}
+        <select name="site_id" class="gk-site-select" aria-label="Relocation site" onchange="this.form.submit()">
+            {% for s in all_sites %}
+            <option value="{{ s.id }}" {% if site and s.id == site.id %}selected{% endif %}>{{ s.name }}</option>
+            {% endfor %}
+        </select>
+        {% endif %}
+        <div class="gk-search">
+            <input type="search" name="search" value="{{ search }}" placeholder="Search name, reference, block/lot…" aria-label="Search masterlist">
+            <button type="submit">Search</button>
+        </div>
+        {% if search %}
+        <a href="{% url 'units:gk_masterlist' request.user.position %}{% if site %}?site_id={{ site.id }}{% endif %}" class="gk-btn">Clear</a>
+        {% endif %}
+        <span class="gk-count">{{ masterlist_total }} {% if masterlist_total == 1 %}person{% else %}people{% endif %}</span>
+    </form>
+
+    <div class="gk-table-scroll">
+        <table class="gk-table">
+            <thead>
+                <tr>
+                    <th scope="col">Name</th>
+                    <th scope="col">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in masterlist_rows %}
+                <tr>
+                    <td>
+                        <div class="gk-name">{{ row.name }}</div>
+                        <div class="gk-meta">
+                            {{ row.block_lot }}
+                            {% if row.reference %} · Ref {{ row.reference }}{% endif %}
+                        </div>
+                        <span class="gk-role{% if row.is_primary %} gk-role--primary{% endif %}">{{ row.role_label }}</span>
+                    </td>
+                    <td>
+                        <a class="gk-action-btn"
+                           href="{% url 'units:housing_units_monitoring' request.user.position %}?{% if site %}site_id={{ site.id }}&{% endif %}unit_id={{ row.unit_id }}">
+                            View unit
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="2" class="gk-empty">
+                        {% if search %}
+                        No matches for your search.
+                        {% else %}
+                        No occupants on file for this site yet.
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

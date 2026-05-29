@@ -1,6 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.conf import settings
 from django.shortcuts import render, redirect
+from django.urls import reverse
 from django.http import JsonResponse, HttpResponseForbidden
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods, require_POST
@@ -424,6 +425,139 @@ def housing_units_monitoring(request, position):
     return render(request, 'units/housing_units_monitoring.html', context)
 
 
+def _gk_masterlist_site(request):
+    """Resolve relocation site for GK masterlist (same rules as monitoring dashboard)."""
+    site_id = request.GET.get('site_id')
+    if site_id:
+        site = RelocationSite.objects.filter(id=site_id).first()
+        if site:
+            return site
+    sites = request.user.assigned_sites.all()
+    if sites.exists():
+        return sites.first()
+    return RelocationSite.objects.order_by('name').first()
+
+
+def _gk_masterlist_rows(site):
+    """
+    People currently tied to housing inventory at a site: lot beneficiaries
+    plus registered household members (active lot award), or legacy occupant_name.
+    """
+    if site is None:
+        return []
+
+    active_award_qs = (
+        LotAward.objects.filter(status='active')
+        .select_related('application__applicant')
+        .prefetch_related('application__applicant__household_members')
+    )
+    units = (
+        HousingUnit.objects.filter(site=site)
+        .prefetch_related(Prefetch('lot_awards', queryset=active_award_qs))
+        .order_by('block_number', 'lot_number')
+    )
+
+    rows = []
+    seen_keys = set()
+
+    def _append_row(*, unit_id, name, role_label, reference, block_lot, is_primary=False):
+        name_clean = (name or '').strip()
+        if not name_clean:
+            return
+        key = (str(unit_id), name_clean.lower(), (role_label or '').lower())
+        if key in seen_keys:
+            return
+        seen_keys.add(key)
+        rows.append({
+            'unit_id': unit_id,
+            'name': name_clean,
+            'role_label': role_label or '—',
+            'reference': (reference or '').strip(),
+            'block_lot': block_lot,
+            'is_primary': is_primary,
+            'sort_key': name_clean.lower(),
+        })
+
+    for unit in units:
+        block_lot = f"Block {unit.block_number} · Lot {unit.lot_number}"
+        active_award = None
+        for award in unit.lot_awards.all():
+            if award.status == 'active':
+                active_award = award
+                break
+        if active_award:
+            applicant = getattr(active_award.application, 'applicant', None)
+            if applicant:
+                _append_row(
+                    unit_id=unit.id,
+                    name=applicant.full_name,
+                    role_label='Head / Beneficiary',
+                    reference=applicant.reference_number,
+                    block_lot=block_lot,
+                    is_primary=True,
+                )
+                for member in applicant.household_members.all().order_by('created_at'):
+                    _append_row(
+                        unit_id=unit.id,
+                        name=member.full_name,
+                        role_label=member.get_relationship_display(),
+                        reference=applicant.reference_number,
+                        block_lot=block_lot,
+                        is_primary=False,
+                    )
+                continue
+        if (unit.occupant_name or '').strip():
+            _append_row(
+                unit_id=unit.id,
+                name=unit.occupant_name,
+                role_label='Occupant (on file)',
+                reference=unit.occupant_id or '',
+                block_lot=block_lot,
+                is_primary=True,
+            )
+
+    rows.sort(key=lambda r: (r['sort_key'], r['block_lot']))
+    return rows
+
+
+@login_required
+@verify_position
+def gk_masterlist(request, position):
+    """
+    GK Masterlist — all beneficiaries and household members on housing units at a site.
+    URL: /units/housing-units/<position>/gk-masterlist/
+    """
+    site = _gk_masterlist_site(request)
+    all_sites = RelocationSite.objects.filter(is_active=True).order_by('name')
+    no_relocation_sites = not all_sites.exists()
+
+    search = (request.GET.get('search') or '').strip().lower()
+    masterlist_rows = _gk_masterlist_rows(site)
+    if search:
+        masterlist_rows = [
+            row for row in masterlist_rows
+            if search in row['name'].lower()
+            or search in (row['reference'] or '').lower()
+            or search in row['block_lot'].lower()
+            or search in row['role_label'].lower()
+        ]
+
+    monitoring_url = reverse('units:housing_units_monitoring', kwargs={'position': position})
+    if site:
+        monitoring_url = f"{monitoring_url}?site_id={site.id}"
+
+    context = {
+        'site': site,
+        'all_sites': all_sites,
+        'no_relocation_sites': no_relocation_sites,
+        'masterlist_rows': masterlist_rows,
+        'masterlist_total': len(masterlist_rows),
+        'search': request.GET.get('search', '').strip(),
+        'monitoring_url': monitoring_url,
+    }
+    return render(request, 'units/gk_masterlist.html', context)
+
+
 @login_required
 @verify_position
 @require_POST
@@ -497,8 +631,10 @@ def create_housing_unit(request, position):
 
     URL: /units/housing-units/<position>/unit/create/
 
-    POST: site_id, block_number, lot_number, location_notes (optional)
+    POST: site_id, block_number, lot_number
     """
+    _DUPLICATE_UNIT_MSG = 'Existing block or lot!'
+
     if request.user.position not in _MODULE4_ADD_HOUSING_UNIT_POSITIONS:
         return JsonResponse(
             {'success': False, 'error': 'Only housing staff (4th / 2nd Member) can add units.'},

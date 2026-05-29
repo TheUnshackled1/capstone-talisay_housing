@@ -288,6 +288,16 @@
         color: #047857;
         box-shadow: 0 1px 2px rgba(5, 150, 105, 0.08);
     }
+    .units-masterlist-btn {
+        text-decoration: none;
+        background: linear-gradient(180deg, #ecfdf5 0%, #ffffff 100%);
+        border-color: #6ee7b7;
+        color: #047857;
+    }
+    .units-masterlist-btn:hover {
+        background: linear-gradient(180deg, #d1fae5 0%, #ecfdf5 100%);
+        color: #065f46;
+    }
 
     /* ==========================================================
        Vicinity Map — replaces card grid. Site canvas, block zones,
@@ -2527,6 +2537,7 @@
             {% endif %}
             <button id="gridView" class="view-btn units-view-btn" onclick="switchView('grid')">Grid</button>
             <button id="tableView" class="view-btn units-view-btn" onclick="switchView('table')">Table</button>
+            <a href="{% url 'units:gk_masterlist' request.user.position %}{% if site %}?site_id={{ site.id }}{% endif %}" class="units-view-btn units-masterlist-btn">GK Masterlist</a>
         </div>
     </header>
 
@@ -5811,6 +5822,11 @@ function sendSMS() {
             bc.onmessage = function () { refreshOpenUnitIfNeeded(); };
         } catch (ignoreBc) { /* unsupported */ }
     }
+})();
+
+(function openUnitFromQuery() {
+    const uid = new URLSearchParams(window.location.search).get('unit_id');
+    if (uid) openUnitModal(uid);
 })();
 
 document.addEventListener('keydown', e => {
