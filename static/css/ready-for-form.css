@@ -505,7 +505,8 @@ body .rfq-shell a.eligibility-view-doc-btn.rfq-signed-application-view:focus-vis
 
 .rfq-table td.rfq-col-status,
 .rfq-table td.rfq-col-actions {
-    overflow: visible;
+    overflow: hidden;
+    box-sizing: border-box;
 }
 
 .rfq-name {
@@ -1333,5 +1334,96 @@ body .rfq-shell a.eligibility-view-doc-btn.rfq-signed-application-view:focus-vis
 @media (max-width: 640px) {
     .rfq-shell { padding: 1rem 0.85rem 0.95rem !important; }
     .rfq-head h1 { font-size: 1.1rem !important; }
+}
+
+/* ==========================================================
+   Zoom-stable queues (Ready for Form + Lot Awarding)
+   Horizontal scroll floor at 140–175% zoom; no cell bleed.
+   ========================================================== */
+.rfq-shell {
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+}
+
+.rfq-table-wrap {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+}
+
+.rfq-shell:not(.lawq-queue) .rfq-table {
+    min-width: 68rem !important;
+}
+
+.lawq-queue .rfq-table {
+    min-width: 80rem !important;
+}
+
+.lawq-queue .lawq-list-card {
+    overflow: visible !important;
+}
+
+.rfq-table td {
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    overflow: hidden !important;
+    box-sizing: border-box;
+    vertical-align: middle !important;
+}
+
+.rfq-table td.rfq-col-status,
+.rfq-table td.rfq-col-actions,
+.lawq-queue .rfq-table td.lawq-col-sms {
+    overflow: hidden !important;
+}
+
+.rfq-table td.rfq-col-status .rfq-chip,
+.rfq-table td.rfq-col-status .rfq-chip--status,
+.lawq-queue .lawq-chip,
+.lawq-queue .lawq-sms-badge {
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    white-space: normal !important;
+    word-break: break-word;
+    line-height: 1.2 !important;
+}
+
+.rfq-table td.rfq-col-actions .rfq-actions-inline,
+.lawq-queue .lawq-actions-inline {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+}
+
+.rfq-table td.rfq-col-actions .rfq-action-btn,
+.rfq-table td.rfq-col-actions .generate-form-btn,
+.rfq-table td.rfq-col-actions .rfq-action-placeholder,
+.rfq-table td.rfq-col-actions .eligibility-view-doc-btn,
+.lawq-queue .lawq-actions-inline .rfq-action-btn {
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    white-space: normal !important;
+    word-break: break-word;
+    line-height: 1.1 !important;
+}
+
+.lawq-queue .rfq-table th.rfq-col-actions,
+.lawq-queue .rfq-table td.rfq-col-actions {
+    width: 11rem !important;
+    min-width: 10rem !important;
+    max-width: none !important;
+}
+
+.lawq-queue .rfq-table th.rfq-col-status,
+.lawq-queue .rfq-table td.rfq-col-status {
+    width: 7.5rem !important;
+    min-width: 7rem !important;
+}
+
+.lawq-queue .rfq-table th.lawq-col-sms,
+.lawq-queue .rfq-table td.lawq-col-sms {
+    width: 5.75rem !important;
+    min-width: 5.5rem !important;
 }
 
