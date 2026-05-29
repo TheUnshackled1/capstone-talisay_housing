@@ -125,6 +125,45 @@
         color: #64748b;
         margin-top: 0.25rem;
     }
+    .lawq-queue .rfq-table th.lawq-col-sms,
+    .lawq-queue .rfq-table td.lawq-col-sms {
+        width: 5.75rem !important;
+        min-width: 5.25rem !important;
+        text-align: center !important;
+        vertical-align: middle !important;
+        padding-left: 0.35rem !important;
+        padding-right: 0.35rem !important;
+    }
+    .lawq-sms-badge {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.12rem;
+        padding: 0.35rem 0.45rem;
+        border-radius: 6px;
+        font-size: 0.62rem;
+        font-weight: 700;
+        line-height: 1.25;
+        border: 1px solid transparent;
+        max-width: 5.5rem;
+        box-sizing: border-box;
+    }
+    .lawq-sms-badge--sent {
+        background: #ecfdf5;
+        color: #047857;
+        border-color: #a7f3d0;
+    }
+    .lawq-sms-badge--none {
+        background: #f8fafc;
+        color: #64748b;
+        border-color: #e2e8f0;
+    }
+    .lawq-sms-badge-count {
+        font-size: 0.58rem;
+        font-weight: 600;
+        opacity: 0.92;
+    }
     .lawq-queue .rfq-table th.rfq-col-priority,
     .lawq-queue .rfq-table td.rfq-col-priority {
         width: 14% !important;
@@ -1021,6 +1060,7 @@
                     <th class="lawq-select-col" title="Select for bulk SMS"><span class="lawq-sr-only">Select</span></th>
                     <th>#</th>
                     <th>Applicant</th>
+                    <th class="lawq-col-sms" title="Lot-awarding coordination SMS sent from this queue">SMS</th>
                     <th class="rfq-col-priority" title="Serve order: Option A first, then C, B, D; within each tier, earliest proceeded time in this queue">Queue priority</th>
                     <th class="rfq-col-proceeded" style="width: 14rem !important;">Proceeded Date &amp; Time</th>
                     <th class="rfq-col-status">Status</th>
@@ -1060,6 +1100,17 @@
                             <strong style="color:#b91c1c;">Missing</strong>
                             {% endif %}
                         </div>
+                    </td>
+                    <td class="lawq-col-sms">
+                        {% if row.lot_awarding_sms_count %}
+                        <span class="lawq-sms-badge lawq-sms-badge--sent"
+                            {% if row.lot_awarding_sms_last_at %}title="Last sent {{ row.lot_awarding_sms_last_at|date:'M d, Y h:i A' }}"{% endif %}>
+                            <span>Sent</span>
+                            <span class="lawq-sms-badge-count">×{{ row.lot_awarding_sms_count }}</span>
+                        </span>
+                        {% else %}
+                        <span class="lawq-sms-badge lawq-sms-badge--none" title="No lot-awarding SMS logged yet">Not sent</span>
+                        {% endif %}
                     </td>
                     <td class="rfq-col-priority">
                         <div class="rfq-priority-stack {% if row.applicant.displacement_reason == 'danger_zone' %}stack-option-a{% elif row.applicant.displacement_reason == 'relocated' %}stack-option-c{% elif row.applicant.displacement_reason == 'ejected' %}stack-option-b{% elif row.applicant.displacement_reason == 'not_abc' %}stack-option-d{% else %}stack-option-unknown{% endif %}">
@@ -1123,7 +1174,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="8" style="text-align:center;color:#64748b;font-size:0.75rem;padding:1.1rem 0.75rem;line-height:1.5;">
+                    <td colspan="9" style="text-align:center;color:#64748b;font-size:0.75rem;padding:1.1rem 0.75rem;line-height:1.5;">
                         {% if search %}
                         No applicants in this queue match your search.
                         {% else %}
@@ -1405,7 +1456,7 @@
                         if (data.failed > 0) {
                             summary += '\nFailed: ' + data.failed;
                         }
-                        lawqShowAlert(summary, 'Send SMS', null, 'success');
+                        lawqShowAlert(summary, 'Send SMS', function () { location.reload(); }, 'success');
                         checks().forEach(function (cb) { cb.checked = false; });
                         if (selectAll) selectAll.checked = false;
                         updateBulkUi();

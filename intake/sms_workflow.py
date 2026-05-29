@@ -28,6 +28,12 @@ PROCEED_TO_APPLICANT_LIST = 'proceed_applicant_list'
 READY_FOR_FORM_QUEUE_REMINDER = 'ready_for_form_queue_reminder'
 PROCEED_TO_LOT_AWARDING = 'proceed_to_lot_awarding'
 
+# Hiligaynon phrases in lot-awarding queue bulk SMS (for SMSLog lookup / legacy rows).
+LOT_AWARDING_SMS_BODY_MARKERS = (
+    'Pirmanado na ang imo forms',
+    'assignan na sang lot',
+)
+
 
 def _tha_ref_name_header(applicant) -> str:
     """

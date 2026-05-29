@@ -1348,6 +1348,44 @@ def ready_for_form_queue(request, position):
     return render(request, 'applications/ready_for_form_list.html', context)
 
 
+def _lot_awarding_queue_sms_filter(qs):
+    """SMSLog rows that count as lot-awarding queue coordination SMS."""
+    marker_q = Q()
+    for phrase in sms_workflow.LOT_AWARDING_SMS_BODY_MARKERS:
+        marker_q |= Q(message_content__icontains=phrase)
+    return qs.filter(
+        Q(trigger_event=sms_workflow.PROCEED_TO_LOT_AWARDING)
+        | (Q(trigger_event='Applicant Notification') & marker_q),
+        status='sent',
+    )
+
+
+def _lot_awarding_queue_sms_stats_by_applicant(applicant_ids):
+    """Return {applicant_id: {'count': int, 'last_at': datetime|None}} for queue SMS column."""
+    ids = [aid for aid in applicant_ids if aid]
+    if not ids:
+        return {}
+    stats = {aid: {'count': 0, 'last_at': None} for aid in ids}
+    for model in (ApplicationSMSLog, IntakeSMSLog):
+        rows = (
+            _lot_awarding_queue_sms_filter(model.objects.all())
+            .filter(applicant_id__in=ids)
+            .values('applicant_id')
+            .annotate(n=Count('id'), last_at=Max('sent_at'))
+        )
+        for row in rows:
+            aid = row['applicant_id']
+            if aid not in stats:
+                continue
+            stats[aid]['count'] += row['n'] or 0
+            last_at = row['last_at']
+            if last_at and (
+                stats[aid]['last_at'] is None or last_at > stats[aid]['last_at']
+            ):
+                stats[aid]['last_at'] = last_at
+    return stats
+
+
 @login_required
 @verify_position
 def lot_awarding_queue(request, position):
@@ -1403,6 +1441,14 @@ def lot_awarding_queue(request, position):
             str(r['applicant'].pk),
         ),
     )
+
+    sms_stats = _lot_awarding_queue_sms_stats_by_applicant(
+        [r['applicant'].pk for r in queue_rows]
+    )
+    for row in queue_rows:
+        s = sms_stats.get(row['applicant'].pk, {'count': 0, 'last_at': None})
+        row['lot_awarding_sms_count'] = s['count']
+        row['lot_awarding_sms_last_at'] = s['last_at']
 
     search = request.GET.get('search', '').strip()
     if search:
@@ -3968,7 +4014,13 @@ def lot_awarding_bulk_notify_sms(request, position):
             sys.stderr.write(f"  WARNING: {applicant.full_name}: no phone -- skipped\n")
             continue
         msg = f'{message_body} — {applicant.full_name}.'
-        ok = send_sms(phone, msg, 'Applicant Notification', applicant=applicant, module='applications')
+        ok = send_sms(
+            phone,
+            msg,
+            sms_workflow.PROCEED_TO_LOT_AWARDING,
+            applicant=applicant,
+            module='applications',
+        )
         if ok:
             sent += 1
         else:
