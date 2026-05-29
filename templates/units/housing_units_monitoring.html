@@ -1384,6 +1384,55 @@
         gap: 0.5rem;
         align-items: center;
     }
+    #explanationLetterPanel .explanation-upload-btn,
+    #explanationLetterPanel .explanation-scan-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.35rem;
+        font-size: 0.68rem;
+        font-weight: 700;
+        padding: 0.4rem 0.55rem;
+        border-radius: 0.5rem;
+        line-height: 1.2;
+        min-width: 4.5rem;
+        border-width: 1px;
+        border-style: solid;
+        white-space: nowrap;
+        cursor: pointer;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+        transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+    }
+    #explanationLetterPanel .explanation-upload-btn {
+        border-color: #bfdbfe;
+        color: #1e40af;
+        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    }
+    #explanationLetterPanel .explanation-upload-btn:hover {
+        border-color: #2563eb;
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        color: #ffffff;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.22);
+        transform: translateY(-1.5px) scale(1.04);
+    }
+    #explanationLetterPanel .explanation-upload-btn svg.action-btn-svg {
+        stroke: currentColor;
+    }
+    #explanationLetterPanel .explanation-scan-btn {
+        border-color: #a7f3d0;
+        color: #065f46;
+        background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+    }
+    #explanationLetterPanel .explanation-scan-btn:hover {
+        border-color: #10b981;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: #ffffff;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.22);
+        transform: translateY(-1.5px) scale(1.04);
+    }
+    #explanationLetterPanel .explanation-scan-btn svg.action-btn-svg {
+        stroke: currentColor;
+    }
     .explanation-build-extension-note {
         margin-top: 0.55rem;
         padding: 0.55rem 0.7rem;
@@ -2998,8 +3047,12 @@
                         </div>
                         <div id="explanationLetterFileActions" style="margin-bottom: 0.65rem;">
                             <div class="explanation-letter-file-actions-row">
-                                <button type="button" class="inspection-info-btn primary" id="explanationUploadLetterBtn" onclick="explanationUploadLetterFromComputer()">Upload</button>
-                                <button type="button" class="inspection-info-btn primary" id="explanationTwainScanBtn" onclick="explanationScanLetterWithDwt()">Scan</button>
+                                <button type="button" class="inspection-info-btn explanation-upload-btn" id="explanationUploadLetterBtn" onclick="explanationUploadLetterFromComputer()">
+                                    <svg class="action-btn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:0.8rem; height:0.8rem; vertical-align:middle; margin-right:0.25rem;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>Upload
+                                </button>
+                                <button type="button" class="inspection-info-btn explanation-scan-btn" id="explanationTwainScanBtn" onclick="explanationScanLetterWithDwt()">
+                                    <svg class="action-btn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:0.8rem; height:0.8rem; vertical-align:middle; margin-right:0.25rem;"><path d="M3 7V5a2 2 0 0 1 2-2h2"></path><path d="M17 3h2a2 2 0 0 1 2 2v2"></path><path d="M21 17v2a2 2 0 0 1-2 2h-2"></path><path d="M7 21H5a2 2 0 0 1-2-2v-2"></path><line x1="3" y1="12" x2="21" y2="12"></line></svg>Scan
+                                </button>
                                 <button type="button" class="inspection-info-btn" id="explanationViewLetterBtn" onclick="explanationViewLetter()">View explanation letter</button>
                             </div>
                             <input type="file" id="explanationLetterFile" accept=".pdf,image/*" style="position: absolute; width: 0.1px; height: 0.1px; opacity: 0; overflow: hidden; z-index: -1;" aria-hidden="true" tabindex="-1" onchange="explanationLetterFileChosen()">
