@@ -9,16 +9,30 @@
 
 {% block extra_css %}
 <style>
+    /* ── Shell ── */
     .gk-shell {
         position: relative;
-        overflow: hidden;
-        padding: 1.4rem 1.25rem 1.1rem;
+        padding: 0;
         max-width: 100%;
-        background: linear-gradient(180deg, #ecfdf5 0%, #ffffff 14%);
-        border: 1px solid #a7f3d0;
-        border-radius: 0.95rem;
-        box-shadow: 0 2px 6px rgba(5, 150, 105, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
-        margin-bottom: 0.95rem;
+    }
+
+    /* ── Top header card ── */
+    .gk-header-card {
+        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        border: 1px solid #e2e8f0;
+        border-radius: 0.85rem;
+        box-shadow: 0 1px 3px rgba(15,23,42,0.04), 0 4px 14px rgba(15,23,42,0.04);
+        padding: 1.4rem 1.5rem 1.1rem;
+        margin-bottom: 1rem;
+        position: relative;
+        overflow: hidden;
+    }
+    .gk-header-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #1e3a8a 0%, #2563eb 35%, #0ea5e9 70%, #06b6d4 100%);
     }
     .gk-page-header {
         display: flex;
@@ -32,16 +46,23 @@
         margin: 0;
         font-size: 1.25rem;
         font-weight: 800;
-        color: #065f46;
+        color: #0f172a;
         letter-spacing: -0.02em;
     }
     .gk-page-sub {
-        margin: 0.35rem 0 0;
+        margin: 0.3rem 0 0;
         font-size: 0.74rem;
         color: #64748b;
         line-height: 1.45;
-        max-width: 36rem;
+        max-width: 40rem;
     }
+    .gk-page-sub a,
+    .gk-page-sub strong {
+        color: #2563eb;
+        font-weight: 600;
+    }
+
+    /* ── Toolbar buttons ── */
     .gk-toolbar {
         display: flex;
         flex-wrap: wrap;
@@ -52,248 +73,452 @@
         display: inline-flex;
         align-items: center;
         gap: 0.4rem;
-        padding: 0.55rem 0.85rem;
-        border-radius: 0.55rem;
+        padding: 0.55rem 0.9rem;
+        border-radius: 0.5rem;
         font-size: 0.72rem;
         font-weight: 700;
         text-decoration: none;
         cursor: pointer;
-        border: 1px solid #cbd5e1;
+        border: 1px solid #e2e8f0;
         background: #fff;
-        color: #334155;
-        transition: border-color 0.15s, color 0.15s, box-shadow 0.15s;
+        color: #475569;
+        transition: border-color 0.15s, color 0.15s, box-shadow 0.15s, background 0.15s;
+        white-space: nowrap;
     }
     .gk-btn:hover {
-        border-color: #6ee7b7;
-        color: #047857;
+        border-color: #cbd5e1;
+        color: #1e293b;
+        background: #f8fafc;
         text-decoration: none;
+        box-shadow: 0 2px 6px rgba(15,23,42,0.07);
     }
     .gk-btn--primary {
-        background: linear-gradient(180deg, #10b981 0%, #059669 100%);
-        border-color: #047857;
+        background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
+        border-color: #1e40af;
         color: #fff;
+        box-shadow: 0 1px 3px rgba(37,99,235,0.25);
     }
     .gk-btn--primary:hover {
         color: #fff;
-        box-shadow: 0 4px 14px rgba(5, 150, 105, 0.28);
+        background: linear-gradient(180deg, #1d4ed8 0%, #1e40af 100%);
+        box-shadow: 0 4px 14px rgba(37,99,235,0.3);
     }
-    .gk-filters {
+
+    /* ── Filter bar ── */
+    .gk-filter-bar {
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-        gap: 0.65rem;
-        margin-bottom: 0.85rem;
+        gap: 0.6rem;
+        padding: 0.75rem 0.85rem;
+        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        border: 1px solid #e2e8f0;
+        border-radius: 0.75rem;
+        box-shadow: 0 1px 2px rgba(15,23,42,0.03);
+        margin-bottom: 1rem;
+    }
+    .gk-search-box {
+        flex: 1;
+        min-width: 200px;
+        position: relative;
+    }
+    .gk-search-box .gk-search-icon {
+        position: absolute;
+        left: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #94a3b8;
+        pointer-events: none;
+        display: flex;
+    }
+    .gk-search-box input {
+        width: 100%;
+        padding: 0.6rem 0.75rem 0.6rem 2.4rem;
+        border: 1px solid #cbd5e1;
+        border-radius: 0.55rem;
+        font-size: 0.8rem;
+        font-family: inherit;
+        background: #fff;
+        color: #0f172a;
+        outline: none;
+        transition: border-color 0.18s, box-shadow 0.18s;
+        box-sizing: border-box;
+    }
+    .gk-search-box input:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+    }
+    .gk-search-box input::placeholder {
+        color: #94a3b8;
+    }
+    .gk-search-submit {
+        padding: 0.6rem 1.1rem;
+        background: #1d4ed8;
+        color: #fff;
+        border: none;
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+        cursor: pointer;
+        font-family: inherit;
+        transition: background 0.15s, box-shadow 0.15s;
+        white-space: nowrap;
+    }
+    .gk-search-submit:hover {
+        background: #1e40af;
+        box-shadow: 0 2px 8px rgba(29,78,216,0.25);
     }
     .gk-site-select {
-        padding: 0.5rem 0.65rem;
-        border: 1px solid #cbd5e1;
-        border-radius: 0.55rem;
-        font-size: 0.78rem;
+        padding: 0.6rem 2rem 0.6rem 0.75rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.5rem;
+        font-size: 0.8rem;
         font-family: inherit;
         min-width: 12rem;
-        background: #fff;
-    }
-    .gk-search {
-        flex: 1;
-        min-width: 14rem;
-        display: flex;
-        border: 1px solid #cbd5e1;
-        border-radius: 0.55rem;
-        overflow: hidden;
-        background: #fff;
-    }
-    .gk-search input {
-        flex: 1;
-        border: none;
-        padding: 0.52rem 0.65rem;
-        font-size: 0.78rem;
-        font-family: inherit;
+        background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2364748b'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E") no-repeat right 0.5rem center;
+        appearance: none;
+        cursor: pointer;
         outline: none;
+        color: #334155;
     }
-    .gk-search button {
-        border: none;
-        border-left: 1px solid #e2e8f0;
-        background: #f8fafc;
-        padding: 0 0.85rem;
+    .gk-site-select:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+    }
+    .gk-count-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.35rem 0.75rem;
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        border-radius: 9999px;
         font-size: 0.72rem;
         font-weight: 700;
-        color: #047857;
-        cursor: pointer;
+        color: #1d4ed8;
+        white-space: nowrap;
     }
-    .gk-count {
-        font-size: 0.72rem;
-        color: #64748b;
-        font-weight: 600;
+
+    /* ── Table container ── */
+    .gk-table-container {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.85rem;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(15,23,42,0.04), 0 4px 14px rgba(15,23,42,0.04);
+        position: relative;
+    }
+    .gk-table-container::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #1e3a8a 0%, #2563eb 35%, #0ea5e9 70%, #06b6d4 100%);
+        z-index: 1;
     }
     .gk-table-scroll {
         overflow-x: auto;
-        border: 1px solid #d1fae5;
-        border-radius: 0.65rem;
-        background: #fff;
     }
     .gk-table {
         width: 100%;
-        min-width: 40rem;
         border-collapse: collapse;
         table-layout: fixed;
+        min-width: 36rem;
         font-size: 0.78rem;
     }
-    .gk-table th {
-        text-align: left;
-        padding: 0.65rem 0.85rem;
-        background: #f0fdf4;
-        color: #065f46;
-        font-size: 0.68rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-        border-bottom: 1px solid #bbf7d0;
+
+    /* ── Table header ── */
+    .gk-table thead {
+        background: linear-gradient(180deg, #2563eb 0%, #1e3a8a 100%);
+        position: sticky;
+        top: 0;
+        z-index: 2;
     }
-    .gk-table th:nth-child(1) { width: 58%; }
-    .gk-table th:nth-child(2) { width: 42%; }
-    .gk-table td {
+    .gk-table th {
         padding: 0.7rem 0.85rem;
-        border-bottom: 1px solid #f1f5f9;
-        vertical-align: top;
+        text-align: left;
+        font-size: 0.6rem;
+        font-weight: 700;
+        color: #ffffff;
+        text-transform: uppercase;
+        letter-spacing: 0.085em;
+        white-space: nowrap;
+        border: 1px solid rgba(255,255,255,0.18);
+    }
+    .gk-table th:nth-child(1) { width: 46%; }
+    .gk-table th:nth-child(2) { width: 24%; }
+    .gk-table th:nth-child(3) { width: 30%; }
+
+    /* ── Table body ── */
+    .gk-table td {
+        padding: 0.75rem 0.85rem;
+        border: 1px solid #e5e7eb;
+        vertical-align: middle;
+        color: #334155;
         overflow-wrap: anywhere;
         word-break: break-word;
     }
-    .gk-table tr:last-child td { border-bottom: none; }
-    .gk-table tr:hover td { background: #f8fafc; }
+    .gk-table tbody tr {
+        transition: background 0.15s ease, box-shadow 0.15s ease;
+    }
+    .gk-table tbody tr:nth-child(even) {
+        background: #fafbfc;
+    }
+    .gk-table tbody tr:hover {
+        background: #eff6ff;
+        box-shadow: inset 3px 0 0 #2563eb;
+    }
+    .gk-table tbody tr:hover td:first-child {
+        color: #1e3a8a;
+    }
+    .gk-table tbody tr:last-child td {
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    /* ── Name cell ── */
+    .gk-name-cell {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    .gk-avatar {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #2563eb 0%, #1e3a8a 100%);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.6rem;
+        font-weight: 800;
+        flex-shrink: 0;
+        box-shadow: 0 2px 6px rgba(37,99,235,0.22), inset 0 0 0 2px rgba(255,255,255,0.15);
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+    }
+    .gk-avatar--spouse {
+        background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+        box-shadow: 0 2px 6px rgba(124,58,237,0.22), inset 0 0 0 2px rgba(255,255,255,0.15);
+    }
+    .gk-name-info {
+        min-width: 0;
+    }
     .gk-name {
         font-weight: 700;
         color: #0f172a;
-        line-height: 1.35;
+        line-height: 1.3;
+        font-size: 0.78rem;
     }
     .gk-meta {
-        margin-top: 0.2rem;
-        font-size: 0.7rem;
+        margin-top: 0.18rem;
+        font-size: 0.67rem;
         color: #64748b;
         line-height: 1.4;
+        font-family: ui-monospace, monospace;
     }
     .gk-role {
-        display: inline-block;
-        margin-top: 0.25rem;
-        padding: 0.12rem 0.45rem;
-        border-radius: 999px;
-        font-size: 0.65rem;
+        display: inline-flex;
+        align-items: center;
+        margin-top: 0.28rem;
+        padding: 0.15rem 0.5rem;
+        border-radius: 9999px;
+        font-size: 0.6rem;
         font-weight: 700;
-        background: #ecfdf5;
-        color: #047857;
-        border: 1px solid #a7f3d0;
+        letter-spacing: 0.02em;
+        background: #dbeafe;
+        color: #1e40af;
+        border: 1px solid #bfdbfe;
     }
     .gk-role--primary {
-        background: #d1fae5;
-        color: #065f46;
+        background: #dcfce7;
+        color: #166534;
+        border-color: #bbf7d0;
     }
-    .gk-empty {
-        padding: 2.5rem 1rem;
-        text-align: center;
-        color: #64748b;
-        font-size: 0.8rem;
-    }
+
+    /* ── Action button ── */
     .gk-action-btn {
         display: inline-flex;
         align-items: center;
-        padding: 0.4rem 0.75rem;
-        background: #f1f5f9;
-        color: #334155;
-        border: 1px solid #e2e8f0;
-        border-radius: 6px;
-        font-size: 0.72rem;
-        font-weight: 600;
+        gap: 0.35rem;
+        padding: 0.45rem 0.85rem;
+        background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
+        color: #fff;
+        border: none;
+        border-radius: 0.45rem;
+        font-size: 0.7rem;
+        font-weight: 700;
         text-decoration: none;
         white-space: nowrap;
+        box-shadow: 0 1px 3px rgba(37,99,235,0.25);
+        transition: background 0.15s, box-shadow 0.15s, transform 0.12s;
+        letter-spacing: 0.01em;
     }
     .gk-action-btn:hover {
-        background: #ecfdf5;
-        border-color: #6ee7b7;
-        color: #047857;
+        background: linear-gradient(180deg, #1d4ed8 0%, #1e40af 100%);
+        box-shadow: 0 4px 12px rgba(37,99,235,0.32);
+        transform: translateY(-1px);
+        color: #fff;
         text-decoration: none;
+    }
+
+    /* ── Empty state ── */
+    .gk-empty {
+        padding: 3rem 1rem;
+        text-align: center;
+        color: #64748b;
+        font-size: 0.82rem;
+    }
+    .gk-empty svg {
+        display: block;
+        margin: 0 auto 0.75rem;
+        color: #cbd5e1;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+        .gk-header-card {
+            padding: 1rem 1rem 0.9rem;
+        }
+        .gk-page-header {
+            flex-direction: column;
+            gap: 0.65rem;
+        }
+        .gk-filter-bar {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .gk-search-box { min-width: 0; }
+        .gk-table th:nth-child(1) { width: 60%; }
+        .gk-table th:nth-child(2) { width: 40%; }
+    }
+    @media (max-width: 480px) {
+        .gk-page-title { font-size: 1.05rem; }
+        .gk-name { font-size: 0.72rem; }
+        .gk-avatar { width: 28px; height: 28px; font-size: 0.55rem; }
     }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="gk-shell">
-    <header class="gk-page-header">
-        <div>
-            <h1 class="gk-page-title">GK Masterlist</h1>
-            <p class="gk-page-sub">
-                {% if site %}
-                Beneficiaries and household members on housing units at <strong>{{ site.name }}</strong>.
-                {% else %}
-                No relocation site selected. Add a site on the monitoring page to populate this list.
-                {% endif %}
-            </p>
-        </div>
-        <div class="gk-toolbar">
-            <a href="{{ monitoring_url }}" class="gk-btn">← Back to monitoring</a>
-            <a href="{% url 'units:housing_units_monitoring' request.user.position %}{% if site %}?site_id={{ site.id }}{% endif %}" class="gk-btn gk-btn--primary">Grid / Table</a>
-        </div>
-    </header>
+
+    <!-- Header card -->
+    <div class="gk-header-card">
+        <header class="gk-page-header">
+            <div>
+                <h1 class="gk-page-title">GK Masterlist</h1>
+                <p class="gk-page-sub">
+                    {% if site %}
+                    Beneficiaries and household members on housing units at <strong>{{ site.name }}</strong>.
+                    {% else %}
+                    No relocation site selected. Add a site on the monitoring page to populate this list.
+                    {% endif %}
+                </p>
+            </div>
+            <div class="gk-toolbar">
+                <a href="{{ monitoring_url }}" class="gk-btn">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                    Back to monitoring
+                </a>
+                <a href="{% url 'units:housing_units_monitoring' request.user.position %}{% if site %}?site_id={{ site.id }}{% endif %}" class="gk-btn gk-btn--primary">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                    Grid / Table
+                </a>
+            </div>
+        </header>
+
+        {% if not no_relocation_sites %}
+        <!-- Filter bar -->
+        <form method="get" class="gk-filter-bar">
+            {% if all_sites|length > 1 %}
+            <select name="site_id" class="gk-site-select" aria-label="Relocation site" onchange="this.form.submit()">
+                {% for s in all_sites %}
+                <option value="{{ s.id }}" {% if site and s.id == site.id %}selected{% endif %}>{{ s.name }}</option>
+                {% endfor %}
+            </select>
+            {% endif %}
+            <div class="gk-search-box">
+                <span class="gk-search-icon">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </span>
+                <input type="search" name="search" value="{{ search }}" placeholder="Search name, reference, block/lot…" aria-label="Search masterlist">
+            </div>
+            <button type="submit" class="gk-search-submit">Search</button>
+            {% if search %}
+            <a href="{% url 'units:gk_masterlist' request.user.position %}{% if site %}?site_id={{ site.id }}{% endif %}" class="gk-btn">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                Clear
+            </a>
+            {% endif %}
+            <span class="gk-count-chip">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                {{ masterlist_total }} {% if masterlist_total == 1 %}person{% else %}people{% endif %}
+            </span>
+        </form>
+        {% endif %}
+    </div>
 
     {% if no_relocation_sites %}
-    <div class="gk-empty">No relocation sites yet. Create one from Housing Unit &amp; Occupancy Monitoring.</div>
-    {% else %}
-    <form method="get" class="gk-filters">
-        {% if all_sites|length > 1 %}
-        <select name="site_id" class="gk-site-select" aria-label="Relocation site" onchange="this.form.submit()">
-            {% for s in all_sites %}
-            <option value="{{ s.id }}" {% if site and s.id == site.id %}selected{% endif %}>{{ s.name }}</option>
-            {% endfor %}
-        </select>
-        {% endif %}
-        <div class="gk-search">
-            <input type="search" name="search" value="{{ search }}" placeholder="Search name, reference, block/lot…" aria-label="Search masterlist">
-            <button type="submit">Search</button>
-        </div>
-        {% if search %}
-        <a href="{% url 'units:gk_masterlist' request.user.position %}{% if site %}?site_id={{ site.id }}{% endif %}" class="gk-btn">Clear</a>
-        {% endif %}
-        <span class="gk-count">{{ masterlist_total }} {% if masterlist_total == 1 %}person{% else %}people{% endif %}</span>
-    </form>
-
-    <div class="gk-table-scroll">
-        <table class="gk-table">
-            <thead>
-                <tr>
-                    <th scope="col">Name</th>
-                    <th scope="col">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for row in masterlist_rows %}
-                <tr>
-                    <td>
-                        <div class="gk-name">{{ row.name }}</div>
-                        <div class="gk-meta">
-                            {{ row.block_lot }}
-                            {% if row.reference %} · Ref {{ row.reference }}{% endif %}
-                        </div>
-                        <span class="gk-role{% if row.is_primary %} gk-role--primary{% endif %}">{{ row.role_label }}</span>
-                    </td>
-                    <td>
-                        <a class="gk-action-btn"
-                           href="{% url 'units:housing_units_monitoring' request.user.position %}?{% if site %}site_id={{ site.id }}&{% endif %}unit_id={{ row.unit_id }}">
-                            View unit
-                        </a>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="2" class="gk-empty">
-                        {% if search %}
-                        No matches for your search.
-                        {% else %}
-                        No occupants on file for this site yet.
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <div class="gk-empty">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        No relocation sites yet. Create one from Housing Unit &amp; Occupancy Monitoring.
     </div>
+    {% else %}
+
+    <!-- Table -->
+    <div class="gk-table-container">
+        <div class="gk-table-scroll">
+            <table class="gk-table">
+                <thead>
+                    <tr>
+                        <th scope="col">#&nbsp;&nbsp;Name</th>
+                        <th scope="col">Block &amp; Lot</th>
+                        <th scope="col">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in masterlist_rows %}
+                    <tr>
+                        <td>
+                            <div class="gk-name-cell">
+                                <div class="gk-avatar{% if not row.is_primary %} gk-avatar--spouse{% endif %}" aria-hidden="true">
+                                    {{ row.name|slice:":2"|upper }}
+                                </div>
+                                <div class="gk-name-info">
+                                    <div class="gk-name">{{ row.name }}</div>
+                                    <span class="gk-role{% if row.is_primary %} gk-role--primary{% endif %}">{{ row.role_label }}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span style="font-size:0.75rem;font-weight:600;color:#1e293b;">{{ row.block_lot }}</span>
+                        </td>
+                        <td>
+                            <a class="gk-action-btn"
+                               href="{% url 'units:housing_units_monitoring' request.user.position %}?{% if site %}site_id={{ site.id }}&{% endif %}unit_id={{ row.unit_id }}">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                View unit
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="gk-empty">
+                            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                            {% if search %}
+                            No matches for <strong>"{{ search }}"</strong>. Try a different name or reference.
+                            {% else %}
+                            No occupants on file for this site yet.
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
     {% endif %}
 </div>
 {% endblock %}
