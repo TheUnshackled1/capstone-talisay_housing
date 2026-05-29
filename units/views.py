@@ -644,7 +644,6 @@ def create_housing_unit(request, position):
     site_id = (request.POST.get('site_id') or '').strip()
     block_number = (request.POST.get('block_number') or '').strip()[:10]
     lot_number = (request.POST.get('lot_number') or '').strip()[:10]
-    location_notes = (request.POST.get('location_notes') or '').strip()[:500]
 
     if not block_number or not lot_number:
         return JsonResponse(
@@ -665,23 +664,27 @@ def create_housing_unit(request, position):
             status=400,
         )
 
+    if HousingUnit.objects.filter(
+        site=site,
+        block_number=block_number,
+        lot_number=lot_number,
+    ).exists():
+        return JsonResponse(
+            {'success': False, 'duplicate': True, 'error': _DUPLICATE_UNIT_MSG},
+            status=400,
+        )
+
     try:
         unit = HousingUnit.objects.create(
             site=site,
             block_number=block_number,
             lot_number=lot_number,
             status='Vacant — available',
-            location_notes=location_notes,
+            location_notes='',
         )
     except IntegrityError:
         return JsonResponse(
-            {
-                'success': False,
-                'error': (
-                    f'Block {block_number} Lot {lot_number} already exists at {site.name}. '
-                    'Use different numbers or edit the existing unit.'
-                ),
-            },
+            {'success': False, 'duplicate': True, 'error': _DUPLICATE_UNIT_MSG},
             status=400,
         )
     except Exception as e:

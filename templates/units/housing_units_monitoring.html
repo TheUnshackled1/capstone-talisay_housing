@@ -2851,11 +2851,6 @@
                         oninput="this.value=this.value.replace(/\D/g,'')">
                 </div>
             </div>
-            <div style="margin-bottom: 0.85rem;">
-                <label for="addUnitNotes" style="display: block; font-size: 0.68rem; font-weight: 600; color: #374151; margin-bottom: 0.35rem; text-transform: uppercase; letter-spacing: 0.04em;">Location notes <span style="font-weight: 500; text-transform: none; letter-spacing: 0; color: #94a3b8;">(optional)</span></label>
-                <textarea id="addUnitNotes" name="location_notes" rows="2" maxlength="500" placeholder="Landmarks, access, etc."
-                    style="width: 100%; padding: 0.55rem 0.65rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.8rem; resize: vertical; box-sizing: border-box; font-family: inherit; line-height: 1.4;"></textarea>
-            </div>
             <p id="addUnitFormError" style="display: none; margin: 0 0 0.65rem; font-size: 0.75rem; color: #b91c1c; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 0.5rem 0.65rem;"></p>
             <div style="display: flex; justify-content: center; gap: 0.6rem; padding: 0.85rem 0 0.1rem; margin-top: 0.4rem; border-top: 1px solid #f1f5f9;">
                 <button type="button" onclick="closeAddUnitModal()"
@@ -3539,7 +3534,6 @@ document.getElementById('addUnitForm')?.addEventListener('submit', async functio
     body.append('site_id', siteField ? siteField.value : '');
     body.append('block_number', (document.getElementById('addUnitBlock')?.value || '').trim());
     body.append('lot_number', (document.getElementById('addUnitLot')?.value || '').trim());
-    body.append('location_notes', (document.getElementById('addUnitNotes')?.value || '').trim());
     errEl.style.display = 'none';
     btn.disabled = true;
     try {
@@ -3552,6 +3546,8 @@ document.getElementById('addUnitForm')?.addEventListener('submit', async functio
         if (data.success) {
             closeAddUnitModal();
             window.location.reload();
+        } else if (data.duplicate) {
+            monitoringFlowAlert(data.error || 'Existing block or lot!', 'Add housing unit', 'default', null);
         } else {
             errEl.textContent = data.error || 'Could not add unit.';
             errEl.style.display = 'block';
