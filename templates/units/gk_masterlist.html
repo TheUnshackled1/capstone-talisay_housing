@@ -36,10 +36,10 @@
     }
     .gk-page-header {
         display: flex;
-        flex-wrap: wrap;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: 0.85rem;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 0.75rem;
         margin-bottom: 1rem;
     }
     .gk-page-title {
@@ -245,8 +245,8 @@
         white-space: nowrap;
         border: 1px solid rgba(255,255,255,0.18);
     }
-    .gk-table th:nth-child(1) { width: 46%; }
-    .gk-table th:nth-child(2) { width: 24%; }
+    .gk-table th:nth-child(1) { width: 54%; }
+    .gk-table th:nth-child(2) { width: 16%; }
     .gk-table th:nth-child(3) { width: 30%; }
 
     /* ── Table body ── */
@@ -362,6 +362,123 @@
         text-decoration: none;
     }
 
+    /* ── Block sections ── */
+    .gk-block-section {
+        margin-bottom: 1.5rem;
+    }
+    .gk-block-section:last-child {
+        margin-bottom: 0;
+    }
+    .gk-block-label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.55rem 0.85rem;
+        background: linear-gradient(90deg, #1e3a8a 0%, #2563eb 60%, #0ea5e9 100%);
+        color: #fff;
+        border-radius: 0.6rem 0.6rem 0 0;
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+    }
+    .gk-block-label .gk-count-chip {
+        margin-left: auto;
+        background: rgba(255,255,255,0.15);
+        border-color: rgba(255,255,255,0.25);
+        color: #fff;
+        font-size: 0.67rem;
+    }
+    .gk-block-section .gk-table-container {
+        border-radius: 0 0 0.85rem 0.85rem;
+        border-top: none;
+    }
+    .gk-block-section .gk-table-container::before {
+        display: none;
+    }
+
+    /* ── Carousel ── */
+    .gk-carousel { position: relative; }
+    .gk-carousel-track-wrap { overflow: hidden; }
+    .gk-carousel-track {
+        display: flex;
+        transition: transform 0.38s cubic-bezier(0.4, 0, 0.2, 1);
+        will-change: transform;
+    }
+    .gk-carousel-slide {
+        flex-shrink: 0;
+        min-width: 0;
+        /* width is set by JS to match the wrapper */
+    }
+    .gk-carousel-slide .gk-block-section {
+        margin-bottom: 0;
+    }
+    /* Nav bar */
+    .gk-carousel-nav {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.6rem;
+        margin-top: 1rem;
+    }
+    .gk-carousel-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        color: #475569;
+        cursor: pointer;
+        transition: background 0.15s, color 0.15s, box-shadow 0.15s, border-color 0.15s;
+        box-shadow: 0 1px 3px rgba(15,23,42,0.07);
+        flex-shrink: 0;
+        padding: 0;
+    }
+    .gk-carousel-btn:hover:not(:disabled) {
+        background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
+        color: #fff;
+        border-color: #1e40af;
+        box-shadow: 0 4px 12px rgba(37,99,235,0.28);
+    }
+    .gk-carousel-btn:disabled {
+        opacity: 0.28;
+        cursor: not-allowed;
+    }
+    /* Dots */
+    .gk-carousel-dots {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+    .gk-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 9999px;
+        background: #cbd5e1;
+        border: none;
+        padding: 0;
+        cursor: pointer;
+        transition: background 0.22s, width 0.28s cubic-bezier(0.4,0,0.2,1);
+        flex-shrink: 0;
+    }
+    .gk-dot.is-active {
+        background: #2563eb;
+        width: 22px;
+    }
+    /* Counter */
+    .gk-carousel-counter {
+        font-size: 0.69rem;
+        font-weight: 700;
+        color: #64748b;
+        min-width: 2.6rem;
+        text-align: center;
+        font-variant-numeric: tabular-nums;
+        letter-spacing: 0.02em;
+    }
+
     /* ── Empty state ── */
     .gk-empty {
         padding: 3rem 1rem;
@@ -389,8 +506,9 @@
             align-items: stretch;
         }
         .gk-search-box { min-width: 0; }
-        .gk-table th:nth-child(1) { width: 60%; }
-        .gk-table th:nth-child(2) { width: 40%; }
+        .gk-table th:nth-child(1) { width: 55%; }
+        .gk-table th:nth-child(2) { width: 15%; }
+        .gk-table th:nth-child(3) { width: 30%; }
     }
     @media (max-width: 480px) {
         .gk-page-title { font-size: 1.05rem; }
@@ -466,59 +584,171 @@
     </div>
     {% else %}
 
-    <!-- Table -->
-    <div class="gk-table-container">
-        <div class="gk-table-scroll">
-            <table class="gk-table">
-                <thead>
-                    <tr>
-                        <th scope="col">#&nbsp;&nbsp;Name</th>
-                        <th scope="col">Block &amp; Lot</th>
-                        <th scope="col">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for row in masterlist_rows %}
-                    <tr>
-                        <td>
-                            <div class="gk-name-cell">
-                                <div class="gk-avatar{% if not row.is_primary %} gk-avatar--spouse{% endif %}" aria-hidden="true">
-                                    {{ row.name|slice:":2"|upper }}
-                                </div>
-                                <div class="gk-name-info">
-                                    <div class="gk-name">{{ row.name }}</div>
-                                    <span class="gk-role{% if row.is_primary %} gk-role--primary{% endif %}">{{ row.role_label }}</span>
-                                </div>
+    <!-- Block carousel -->
+    {% if masterlist_by_block %}
+    <div class="gk-carousel" id="gkCarousel">
+        <div class="gk-carousel-track-wrap">
+            <div class="gk-carousel-track" id="gkTrack">
+                {% for block_name, block_rows in masterlist_by_block.items %}
+                <div class="gk-carousel-slide">
+                    <div class="gk-block-section">
+                        <div class="gk-block-label">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                            Block {{ block_name }}
+                            <span class="gk-count-chip">{{ block_rows|length }} {% if block_rows|length == 1 %}person{% else %}people{% endif %}</span>
+                        </div>
+                        <div class="gk-table-container">
+                            <div class="gk-table-scroll">
+                                <table class="gk-table">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">#&nbsp;&nbsp;Name</th>
+                                            <th scope="col">Lot</th>
+                                            <th scope="col">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for row in block_rows %}
+                                        <tr>
+                                            <td>
+                                                <div class="gk-name-cell">
+                                                    <div class="gk-avatar{% if not row.is_primary %} gk-avatar--spouse{% endif %}" aria-hidden="true">
+                                                        {{ row.name|slice:":2"|upper }}
+                                                    </div>
+                                                    <div class="gk-name-info">
+                                                        <div class="gk-name">{{ row.name }}</div>
+                                                        <span class="gk-role{% if row.is_primary %} gk-role--primary{% endif %}">{{ row.role_label }}</span>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span style="font-size:0.75rem;font-weight:600;color:#1e293b;">Lot {{ row.lot_number }}</span>
+                                            </td>
+                                            <td>
+                                                <a class="gk-action-btn"
+                                                   href="{% url 'units:housing_units_monitoring' request.user.position %}?{% if site %}site_id={{ site.id }}&{% endif %}unit_id={{ row.unit_id }}">
+                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                                    View unit
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
                             </div>
-                        </td>
-                        <td>
-                            <span style="font-size:0.75rem;font-weight:600;color:#1e293b;">{{ row.block_lot }}</span>
-                        </td>
-                        <td>
-                            <a class="gk-action-btn"
-                               href="{% url 'units:housing_units_monitoring' request.user.position %}?{% if site %}site_id={{ site.id }}&{% endif %}unit_id={{ row.unit_id }}">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                                View unit
-                            </a>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="3" class="gk-empty">
-                            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                            {% if search %}
-                            No matches for <strong>"{{ search }}"</strong>. Try a different name or reference.
-                            {% else %}
-                            No occupants on file for this site yet.
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        {% if masterlist_by_block|length > 1 %}
+        <div class="gk-carousel-nav" id="gkNav">
+            <button class="gk-carousel-btn" id="gkPrev" aria-label="Previous block" disabled>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <div class="gk-carousel-dots" id="gkDots">
+                {% for block_name, block_rows_unused in masterlist_by_block.items %}
+                <button class="gk-dot{% if forloop.first %} is-active{% endif %}"
+                        data-idx="{{ forloop.counter0 }}"
+                        aria-label="Block {{ block_name }}"></button>
+                {% endfor %}
+            </div>
+            <span class="gk-carousel-counter" id="gkCounter">1 / {{ masterlist_by_block|length }}</span>
+            <button class="gk-carousel-btn" id="gkNext" aria-label="Next block">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+        </div>
+        {% endif %}
+    </div>
+    {% else %}
+    <div class="gk-table-container">
+        <div class="gk-empty">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            {% if search %}
+            No matches for <strong>"{{ search }}"</strong>. Try a different name or reference.
+            {% else %}
+            No occupants on file for this site yet.
+            {% endif %}
         </div>
     </div>
+    {% endif %}
 
     {% endif %}
 </div>
+
+<script>
+(function () {
+    'use strict';
+    var wrap    = document.querySelector('.gk-carousel-track-wrap');
+    var track   = document.getElementById('gkTrack');
+    if (!track || !wrap) return;
+
+    var prevBtn = document.getElementById('gkPrev');
+    var nextBtn = document.getElementById('gkNext');
+    var counter = document.getElementById('gkCounter');
+    var dots    = Array.prototype.slice.call(document.querySelectorAll('.gk-dot'));
+    var slides  = Array.prototype.slice.call(track.children);
+    var total   = slides.length;
+    var current = 0;
+
+    /* Give every slide the exact pixel width of the visible wrapper */
+    function sizeSlides() {
+        var w = wrap.getBoundingClientRect().width || wrap.offsetWidth;
+        slides.forEach(function (s) { s.style.width = w + 'px'; });
+    }
+
+    function slideWidth() {
+        return wrap.getBoundingClientRect().width || wrap.offsetWidth;
+    }
+
+    function goTo(idx) {
+        current = Math.max(0, Math.min(idx, total - 1));
+        track.style.transform = 'translateX(-' + (current * slideWidth()) + 'px)';
+        dots.forEach(function (d, i) { d.classList.toggle('is-active', i === current); });
+        if (counter) counter.textContent = (current + 1) + ' / ' + total;
+        if (prevBtn) prevBtn.disabled = current === 0;
+        if (nextBtn) nextBtn.disabled = current === total - 1;
+    }
+
+    if (prevBtn) prevBtn.addEventListener('click', function () { goTo(current - 1); });
+    if (nextBtn) nextBtn.addEventListener('click', function () { goTo(current + 1); });
+    dots.forEach(function (d) {
+        d.addEventListener('click', function () { goTo(parseInt(d.dataset.idx, 10)); });
+    });
+
+    /* Keyboard ← → */
+    document.addEventListener('keydown', function (e) {
+        if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
+        if (e.key === 'ArrowLeft')  goTo(current - 1);
+        if (e.key === 'ArrowRight') goTo(current + 1);
+    });
+
+    /* Touch / pointer swipe */
+    var startX = 0;
+    track.addEventListener('pointerdown', function (e) {
+        startX = e.clientX;
+        track.setPointerCapture(e.pointerId);
+    });
+    track.addEventListener('pointerup', function (e) {
+        var diff = e.clientX - startX;
+        if (Math.abs(diff) > 55) goTo(diff < 0 ? current + 1 : current - 1);
+    });
+
+    /* Resize: re-size slides and re-apply translate */
+    window.addEventListener('resize', function () {
+        sizeSlides();
+        goTo(current);
+    });
+
+    /* Init — defer until browser has finished layout so offsetWidth is non-zero */
+    requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+            sizeSlides();
+            goTo(0);
+        });
+    });
+}());
+</script>
 {% endblock %}

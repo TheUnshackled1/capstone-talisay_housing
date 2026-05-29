@@ -449,7 +449,6 @@ def _gk_masterlist_rows(site):
     active_award_qs = (
         LotAward.objects.filter(status='active')
         .select_related('application__applicant')
-        .prefetch_related('application__applicant__household_members')
     )
     units = (
         HousingUnit.objects.filter(site=site)
@@ -460,7 +459,7 @@ def _gk_masterlist_rows(site):
     rows = []
     seen_keys = set()
 
-    def _append_row(*, unit_id, name, role_label, reference, block_lot, is_primary=False):
+    def _append_row(*, unit_id, name, role_label, reference, block_lot, block_number, lot_number, is_primary=False):
         name_clean = (name or '').strip()
         if not name_clean:
             return
@@ -474,6 +473,8 @@ def _gk_masterlist_rows(site):
             'role_label': role_label or '—',
             'reference': (reference or '').strip(),
             'block_lot': block_lot,
+            'block_number': block_number,
+            'lot_number': lot_number,
             'is_primary': is_primary,
             'sort_key': name_clean.lower(),
         })
@@ -494,17 +495,10 @@ def _gk_masterlist_rows(site):
                     role_label='Head / Beneficiary',
                     reference=applicant.reference_number,
                     block_lot=block_lot,
+                    block_number=unit.block_number,
+                    lot_number=unit.lot_number,
                     is_primary=True,
                 )
-                for member in applicant.household_members.all().order_by('created_at'):
-                    _append_row(
-                        unit_id=unit.id,
-                        name=member.full_name,
-                        role_label=member.get_relationship_display(),
-                        reference=applicant.reference_number,
-                        block_lot=block_lot,
-                        is_primary=False,
-                    )
                 continue
         if (unit.occupant_name or '').strip():
             _append_row(
@@ -513,10 +507,16 @@ def _gk_masterlist_rows(site):
                 role_label='Occupant (on file)',
                 reference=unit.occupant_id or '',
                 block_lot=block_lot,
+                block_number=unit.block_number,
+                lot_number=unit.lot_number,
                 is_primary=True,
             )
 
-    rows.sort(key=lambda r: (r['sort_key'], r['block_lot']))
+    rows.sort(key=lambda r: (
+        int(r['block_number']) if str(r['block_number']).isdigit() else 0,
+        int(r['lot_number']) if str(r['lot_number']).isdigit() else 0,
+        r['sort_key'],
+    ))
     return rows
 
 
@@ -542,6 +542,11 @@ def gk_masterlist(request, position):
             or search in row['role_label'].lower()
         ]
 
+    # Group by block number for block-sectioned display
+    masterlist_by_block = OrderedDict()
+    for row in masterlist_rows:
+        masterlist_by_block.setdefault(row.get('block_number', '?'), []).append(row)
+
     monitoring_url = reverse('units:housing_units_monitoring', kwargs={'position': position})
     if site:
         monitoring_url = f"{monitoring_url}?site_id={site.id}"
@@ -551,6 +556,7 @@ def gk_masterlist(request, position):
         'all_sites': all_sites,
         'no_relocation_sites': no_relocation_sites,
         'masterlist_rows': masterlist_rows,
+        'masterlist_by_block': masterlist_by_block,
         'masterlist_total': len(masterlist_rows),
         'search': request.GET.get('search', '').strip(),
         'monitoring_url': monitoring_url,
