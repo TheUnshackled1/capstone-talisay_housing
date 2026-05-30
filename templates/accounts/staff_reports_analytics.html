@@ -1047,8 +1047,17 @@
                     {% endfor %}
                 </select>
             </div>
+            <div class="rep-field">
+                <label for="report-site">Relocation site</label>
+                <select id="report-site" name="site_id">
+                    <option value="all" {% if isf_site_id == 'all' %}selected{% endif %}>All sites</option>
+                    {% for s in relocation_sites %}
+                    <option value="{{ s.id }}" {% if isf_site_id == s.id|stringformat:"s" %}selected{% endif %}>{{ s.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
             <button type="submit" class="rep-btn rep-btn-primary">Apply</button>
-            <a class="rep-btn rep-btn-outline" href="?year={{ report_year }}&amp;month={{ report_month }}&amp;export=csv">
+            <a class="rep-btn rep-btn-outline" href="?year={{ report_year }}&amp;month={{ report_month }}&amp;site_id={{ isf_site_id|urlencode }}&amp;export=csv">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                     <polyline points="7 10 12 15 17 10"/>
@@ -1090,7 +1099,7 @@
         </div>
         <div class="rep-card">
             <p class="rep-card-title">ISF Population Overall</p>
-            <p class="rep-card-sub">Total population statistics (Applicants, Housing Units, Male/Female Household).</p>
+            <p class="rep-card-sub">Lot-awarded families and total on-site population · {{ isf_site_name }} · active lot awards from housing units / GK Masterlist.</p>
             <div class="rep-chart-canvas" style="height: 280px;"><canvas id="chartISFOverall"></canvas></div>
         </div>
     </div>
@@ -1104,7 +1113,7 @@
     <div class="rep-grid-3 rep-grid-charts">
         <div class="rep-card">
             <p class="rep-card-title">ISF Population</p>
-            <p class="rep-card-sub">Identified Social Families - Male & Female Household.</p>
+            <p class="rep-card-sub">Male &amp; female individuals on lot-awarded units · {{ isf_site_name }} · heads plus registered household members.</p>
             <div class="rep-chart-canvas"><canvas id="chartISFPopulation"></canvas></div>
         </div>
         <div class="rep-card">

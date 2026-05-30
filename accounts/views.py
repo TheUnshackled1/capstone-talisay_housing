@@ -9,7 +9,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
-from django.db.models import Count, F, Q, Prefetch, Sum
+from django.db.models import Count, F, Q, Prefetch
 from django.urls import reverse
 from django.contrib.sessions.models import Session
 from django.contrib.auth import get_user_model
@@ -28,7 +28,8 @@ from applications.views import module2_ready_for_form_queue_rows
 from units.models import Blacklist as UnitsBlacklist
 from applications.models import QueueEntry, Application
 from documents.models import Document, RequirementSubmission
-from units.models import HousingUnit, LotAward, ConstructionProgress
+from units.models import HousingUnit, LotAward, ConstructionProgress, RelocationSite
+from units.isf_population import isf_population_stats, resolve_isf_population_site
 from cases.models import Case
 
 
@@ -553,7 +554,7 @@ def _build_analytics_charts_data(
     # ISF Population data
     if isf_population_data:
         data['isfPopulation'] = {
-            'labels': ['Male Household', 'Female Household'],
+            'labels': ['Male', 'Female'],
             'values': [
                 int(isf_population_data.get('male_household', 0)),
                 int(isf_population_data.get('female_household', 0))
@@ -562,8 +563,8 @@ def _build_analytics_charts_data(
         # ISF Overall - comprehensive breakdown
         data['isfOverall'] = {
             'labels': [
-                'Total ISF',
-                'Total Population'
+                'Lot-awarded families',
+                'Total on-site population',
             ],
             'values': [
                 int(isf_population_data.get('total_isf', 0)),
@@ -901,33 +902,12 @@ def _staff_reports_analytics_payload(request):
         row['place_name'] = row.get('place_name') or '—'
     _analytics_rows_bar_pct(applicants_top_barangays)
 
-    # ISF (Identified Social Families) Population Statistics - COMPREHENSIVE OVERVIEW
-    total_applicants_count = Applicant.objects.count()
-    total_housing_units = HousingUnit.objects.count()
-
-    # Calculate household size totals by sex
-    male_stats = Applicant.objects.filter(sex='M').aggregate(
-        count=Count('id'),
-        household_total=Sum('household_size')
+    # ISF population — lot-awarded beneficiaries (Module 4 / GK Masterlist source)
+    isf_site, isf_site_id = resolve_isf_population_site(request.GET.get('site_id'))
+    isf_population_data = isf_population_stats(isf_site)
+    relocation_sites = list(
+        RelocationSite.objects.filter(is_active=True).order_by('name').values('id', 'name')
     )
-    female_stats = Applicant.objects.filter(sex='F').aggregate(
-        count=Count('id'),
-        household_total=Sum('household_size')
-    )
-
-    # Calculate total population (sum of all household members)
-    total_population = (male_stats['household_total'] or 0) + (female_stats['household_total'] or 0)
-
-    # Build comprehensive ISF population data
-    isf_population_data = {
-        'total_isf': total_applicants_count,
-        'total_population': total_population,
-        'total_housing_units': total_housing_units,
-        'male_household': male_stats['household_total'] or 0,
-        'female_household': female_stats['household_total'] or 0,
-        'male_count': male_stats['count'] or 0,
-        'female_count': female_stats['count'] or 0,
-    }
 
     intake_registration_trend = []
     reg_max = 1
@@ -1133,6 +1113,9 @@ def _staff_reports_analytics_payload(request):
         'documents_by_type': documents_by_type,
         # ISF Population Statistics
         'isf_population_data': isf_population_data,
+        'isf_site_id': isf_site_id,
+        'isf_site_name': isf_population_data.get('site_name', 'All relocation sites'),
+        'relocation_sites': relocation_sites,
         'monthly_upload_trend': monthly_upload_trend,
         'applicants_registered_period': applicants_registered_period,
         'housing_apps_created_period': housing_apps_created_period,
@@ -1240,6 +1223,17 @@ def _staff_reports_analytics_csv_response(data, export_role_title, filename_pref
     writer.writerow(['Applications marked awarded (updated in period)', data['awarded_transition_period']])
     writer.writerow(['Requirements verified (in period)', data['requirements_verified_period']])
     writer.writerow(['Vault document uploads (in period)', data['docs_filed']])
+    writer.writerow([])
+    isf = data.get('isf_population_data') or {}
+    writer.writerow(['ISF population (lot-awarded — housing units / GK Masterlist)'])
+    writer.writerow(['Relocation site scope', data.get('isf_site_name', 'All relocation sites')])
+    writer.writerow(['Metric', 'Value'])
+    writer.writerow(['Lot-awarded families (beneficiary heads)', isf.get('total_isf', 0)])
+    writer.writerow(['Total on-site population (heads + household members)', isf.get('total_population', 0)])
+    writer.writerow(['Male individuals', isf.get('male_count', 0)])
+    writer.writerow(['Female individuals', isf.get('female_count', 0)])
+    writer.writerow(['Units with active lot award', isf.get('awarded_units', 0)])
+    writer.writerow(['Housing units in scope', isf.get('total_housing_units', 0)])
     writer.writerow([])
     writer.writerow(['Module summaries'])
     writer.writerow(['Applicants by applicant situation (Options A-D)', '', ''])
