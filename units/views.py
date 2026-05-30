@@ -2,7 +2,7 @@ from django.core.exceptions import ValidationError
 from django.conf import settings
 from django.shortcuts import render, redirect
 from django.urls import reverse
-from django.http import JsonResponse, HttpResponseForbidden
+from django.http import JsonResponse, HttpResponse, HttpResponseForbidden
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods, require_POST
 from django.db import transaction, models, IntegrityError
@@ -27,6 +27,16 @@ from units.models import (
 from accounts.models import FIELD_DESK_POSITIONS
 from cases.views import cases_page_url, module5_case_rows_for_unit
 from units.housing_unit_status import housing_unit_on_file
+from units.historical_beneficiary import (
+    HISTORICAL_BACKFILL_NOTE,
+    HISTORICAL_MONITORING_EMPTY_MESSAGE,
+    HISTORICAL_POSSESSION_NOTE,
+    CSV_HEADERS,
+    csv_template_text,
+    import_historical_beneficiaries_csv,
+    is_historical_lot_award,
+    register_historical_beneficiary,
+)
 from units.monitoring_policy import (
     EXTENSION_BUILD_DAYS,
     EXTENSION_FINAL_INSPECTION_OFFSET_DAYS,
@@ -140,6 +150,21 @@ def _unit_has_notice_subject(unit, active_award=None):
     if active_award is not None:
         return True
     return bool((unit.occupant_name or '').strip())
+
+
+def _active_lot_award_for_unit(unit):
+    awards = getattr(unit, 'lot_awards', None)
+    if awards is None:
+        return (
+            LotAward.objects.filter(unit=unit, status='active')
+            .select_related('application__applicant')
+            .order_by('-awarded_at')
+            .first()
+        )
+    for award in awards.all():
+        if award.status == 'active':
+            return award
+    return None
 
 
 def _sync_site_housing_unit_occupancy(site):
@@ -295,8 +320,13 @@ def housing_units_monitoring(request, position):
             .order_by('block_number', 'lot_number')
         )
 
-    # Count by status
-    occupied_count = units.filter(status='Occupied').count()
+    units_list = list(units)
+    for u in units_list:
+        setattr(u, 'is_historical_beneficiary', is_historical_lot_award(_active_lot_award_for_unit(u)))
+    occupied_count = sum(
+        1 for u in units_list
+        if u.status == 'Occupied' and not getattr(u, 'is_historical_beneficiary', False)
+    )
     vacant_count = units.filter(status='Vacant — available').count()
     notice_30_count = units.filter(status='Under notice (30-day)').count()
     notice_10_count = units.filter(status='Final notice (10-day)').count()
@@ -317,9 +347,6 @@ def housing_units_monitoring(request, position):
             f"{escalated_units.occupant_name or 'Unknown'}. "
             f"Deadline: {escalated_units.notice_deadline}. No response received — case escalated."
         )
-
-    # Materialize once so per-unit annotations survive into the template
-    units_list = list(units)
 
     # Group units by block (OrderedDict so template can use .items() like a dict)
     units_by_block = OrderedDict()
@@ -366,6 +393,7 @@ def housing_units_monitoring(request, position):
             if on_file:
                 housing_unit_on_file_count += 1
             if not p:
+                setattr(u, 'is_housing_unit_on_file', False)
                 setattr(u, 'construction_tokens', '')
                 continue
             tokens = []
@@ -449,6 +477,7 @@ def _gk_masterlist_rows(site):
     active_award_qs = (
         LotAward.objects.filter(status='active')
         .select_related('application__applicant')
+        .prefetch_related('application__applicant__household_members')
     )
     units = (
         HousingUnit.objects.filter(site=site)
@@ -459,7 +488,19 @@ def _gk_masterlist_rows(site):
     rows = []
     seen_keys = set()
 
-    def _append_row(*, unit_id, name, role_label, reference, block_lot, block_number, lot_number, is_primary=False):
+    def _append_row(
+        *,
+        unit_id,
+        name,
+        role_label,
+        reference,
+        block_lot,
+        block_number,
+        lot_number,
+        beneficiary_year=None,
+        is_historical=False,
+        is_primary=False,
+    ):
         name_clean = (name or '').strip()
         if not name_clean:
             return
@@ -475,6 +516,8 @@ def _gk_masterlist_rows(site):
             'block_lot': block_lot,
             'block_number': block_number,
             'lot_number': lot_number,
+            'beneficiary_year': beneficiary_year,
+            'is_historical': is_historical,
             'is_primary': is_primary,
             'sort_key': name_clean.lower(),
         })
@@ -489,6 +532,12 @@ def _gk_masterlist_rows(site):
         if active_award:
             applicant = getattr(active_award.application, 'applicant', None)
             if applicant:
+                award_year = (
+                    timezone.localtime(active_award.awarded_at).year
+                    if active_award.awarded_at
+                    else None
+                )
+                is_hist = HISTORICAL_BACKFILL_NOTE in (active_award.notes or '')
                 _append_row(
                     unit_id=unit.id,
                     name=applicant.full_name,
@@ -497,8 +546,23 @@ def _gk_masterlist_rows(site):
                     block_lot=block_lot,
                     block_number=unit.block_number,
                     lot_number=unit.lot_number,
+                    beneficiary_year=award_year,
+                    is_historical=is_hist,
                     is_primary=True,
                 )
+                for member in applicant.household_members.all().order_by('created_at'):
+                    _append_row(
+                        unit_id=unit.id,
+                        name=member.full_name,
+                        role_label=member.get_relationship_display(),
+                        reference=applicant.reference_number,
+                        block_lot=block_lot,
+                        block_number=unit.block_number,
+                        lot_number=unit.lot_number,
+                        beneficiary_year=award_year,
+                        is_historical=is_hist,
+                        is_primary=False,
+                    )
                 continue
         if (unit.occupant_name or '').strip():
             _append_row(
@@ -509,6 +573,8 @@ def _gk_masterlist_rows(site):
                 block_lot=block_lot,
                 block_number=unit.block_number,
                 lot_number=unit.lot_number,
+                beneficiary_year=None,
+                is_historical=False,
                 is_primary=True,
             )
 
@@ -532,7 +598,19 @@ def gk_masterlist(request, position):
     no_relocation_sites = not all_sites.exists()
 
     search = (request.GET.get('search') or '').strip().lower()
+    beneficiary_year_filter = (request.GET.get('beneficiary_year') or 'all').strip()
     masterlist_rows = _gk_masterlist_rows(site)
+
+    if beneficiary_year_filter and beneficiary_year_filter.lower() != 'all':
+        try:
+            year_val = int(beneficiary_year_filter)
+            masterlist_rows = [
+                row for row in masterlist_rows
+                if row.get('beneficiary_year') == year_val
+            ]
+        except ValueError:
+            beneficiary_year_filter = 'all'
+
     if search:
         masterlist_rows = [
             row for row in masterlist_rows
@@ -540,7 +618,14 @@ def gk_masterlist(request, position):
             or search in (row['reference'] or '').lower()
             or search in row['block_lot'].lower()
             or search in row['role_label'].lower()
+            or (row.get('beneficiary_year') and search in str(row['beneficiary_year']))
         ]
+
+    beneficiary_years = sorted({
+        row['beneficiary_year']
+        for row in _gk_masterlist_rows(site)
+        if row.get('beneficiary_year') is not None
+    }, reverse=True)
 
     # Group by block number for block-sectioned display
     masterlist_by_block = OrderedDict()
@@ -551,6 +636,8 @@ def gk_masterlist(request, position):
     if site:
         monitoring_url = f"{monitoring_url}?site_id={site.id}"
 
+    can_import_historical = request.user.position in _MODULE4_ADD_HOUSING_UNIT_POSITIONS
+
     context = {
         'site': site,
         'all_sites': all_sites,
@@ -559,9 +646,91 @@ def gk_masterlist(request, position):
         'masterlist_by_block': masterlist_by_block,
         'masterlist_total': len(masterlist_rows),
         'search': request.GET.get('search', '').strip(),
+        'beneficiary_year_filter': beneficiary_year_filter,
+        'beneficiary_years': beneficiary_years,
         'monitoring_url': monitoring_url,
+        'can_import_historical': can_import_historical,
+        'historical_csv_headers': CSV_HEADERS,
     }
     return render(request, 'units/gk_masterlist.html', context)
+
+
+@login_required
+@verify_position
+def historical_beneficiary_template(request, position):
+    """Download CSV template for historical beneficiary backfill."""
+    if request.user.position not in _MODULE4_ADD_HOUSING_UNIT_POSITIONS:
+        return HttpResponseForbidden('Only housing staff can download the import template.')
+    response = HttpResponse(csv_template_text(), content_type='text/csv; charset=utf-8')
+    response['Content-Disposition'] = 'attachment; filename="historical_beneficiaries_template.csv"'
+    return response
+
+
+@login_required
+@verify_position
+@require_POST
+def historical_beneficiary_import(request, position):
+    """Bulk CSV import of historical on-site beneficiaries."""
+    if request.user.position not in _MODULE4_ADD_HOUSING_UNIT_POSITIONS:
+        return JsonResponse({'success': False, 'error': 'Permission denied.'}, status=403)
+
+    site_id = (request.POST.get('site_id') or request.GET.get('site_id') or '').strip()
+    site = RelocationSite.objects.filter(id=site_id, is_active=True).first()
+    if not site:
+        return JsonResponse({'success': False, 'error': 'Select a valid relocation site.'}, status=400)
+
+    upload = request.FILES.get('csv_file')
+    if not upload:
+        return JsonResponse({'success': False, 'error': 'Choose a CSV file to import.'}, status=400)
+
+    try:
+        result = import_historical_beneficiaries_csv(site=site, uploaded_file=upload, user=request.user)
+    except ValueError as exc:
+        return JsonResponse({'success': False, 'error': str(exc)}, status=400)
+    except Exception as exc:
+        return JsonResponse({'success': False, 'error': str(exc)}, status=500)
+
+    return JsonResponse({
+        'success': True,
+        'created_count': result['created_count'],
+        'error_count': result['error_count'],
+        'errors': result['errors'][:20],
+        'message': (
+            f"Imported {result['created_count']} historical beneficiary record(s)."
+            + (f" {result['error_count']} row(s) failed." if result['error_count'] else '')
+        ),
+    })
+
+
+@login_required
+@verify_position
+@require_POST
+def historical_beneficiary_register(request, position):
+    """Register a single historical beneficiary on an existing block/lot."""
+    if request.user.position not in _MODULE4_ADD_HOUSING_UNIT_POSITIONS:
+        return JsonResponse({'success': False, 'error': 'Permission denied.'}, status=403)
+
+    site_id = (request.POST.get('site_id') or '').strip()
+    site = RelocationSite.objects.filter(id=site_id, is_active=True).first()
+    if not site:
+        return JsonResponse({'success': False, 'error': 'Select a valid relocation site.'}, status=400)
+
+    row = {key: (request.POST.get(key) or '').strip() for key in CSV_HEADERS}
+    try:
+        created = register_historical_beneficiary(site=site, row=row, user=request.user)
+    except ValueError as exc:
+        return JsonResponse({'success': False, 'error': str(exc)}, status=400)
+    except Exception as exc:
+        return JsonResponse({'success': False, 'error': str(exc)}, status=500)
+
+    return JsonResponse({
+        'success': True,
+        'message': (
+            f"Registered {created['full_name']} ({created['reference_number']}) "
+            f"on Block {created['block']} Lot {created['lot']} — since {created['beneficiary_year']}."
+        ),
+        'record': created,
+    })
 
 
 @login_required
@@ -1254,6 +1423,7 @@ def get_unit_details(request, position, unit_id):
         )
 
         is_housing_unit_on_file = housing_unit_on_file(active_lot_award, progress)
+        is_historical_beneficiary = is_historical_lot_award(active_lot_award)
 
         beneficiary_phone = ''
         if applicant_for_household:
@@ -1295,13 +1465,24 @@ def get_unit_details(request, position, unit_id):
                 'lot': unit.lot_number,
                 'status': unit.status,
                 'is_housing_unit_on_file': is_housing_unit_on_file,
+                'is_historical_beneficiary': is_historical_beneficiary,
+                'historical_monitoring_message': (
+                    HISTORICAL_MONITORING_EMPTY_MESSAGE if is_historical_beneficiary else ''
+                ),
+                'historical_possession_note': (
+                    HISTORICAL_POSSESSION_NOTE if is_historical_beneficiary else ''
+                ),
                 'status_display': (
                     'Housing unit'
                     if is_housing_unit_on_file
                     else (
-                        'Failed'
-                        if extension_final_visit_failed
-                        else unit.status
+                        'Unit'
+                        if is_historical_beneficiary
+                        else (
+                            'Failed'
+                            if extension_final_visit_failed
+                            else unit.status
+                        )
                     )
                 ),
                 'occupant_name': unit.occupant_name or '',

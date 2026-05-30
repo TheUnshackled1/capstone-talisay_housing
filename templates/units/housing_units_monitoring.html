@@ -112,6 +112,17 @@
             justify-content: center;
         }
     }
+    @media (max-width: 560px) {
+        .units-page-header__toolbar {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .units-header-action,
+        .units-view-btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
 
     /* Unified KPI card style — neutral white card body, semantic tile
        on the small icon. Numerals stay slate-900 except where the state
@@ -290,13 +301,16 @@
     }
     .units-masterlist-btn {
         text-decoration: none;
-        background: linear-gradient(180deg, #ecfdf5 0%, #ffffff 100%);
-        border-color: #6ee7b7;
-        color: #047857;
+        background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
+        border-color: #1e40af;
+        color: #fff;
+        box-shadow: 0 1px 3px rgba(37,99,235,0.25);
     }
     .units-masterlist-btn:hover {
-        background: linear-gradient(180deg, #d1fae5 0%, #ecfdf5 100%);
-        color: #065f46;
+        background: linear-gradient(180deg, #1d4ed8 0%, #1e40af 100%);
+        border-color: #1e3a8a;
+        color: #fff;
+        box-shadow: 0 4px 14px rgba(37,99,235,0.32);
     }
 
     /* ==========================================================
@@ -1304,6 +1318,17 @@
         font-weight: 700 !important;
         color: #0f172a !important;
         margin-bottom: 0.75rem !important;
+    }
+    .unit-detail-status[data-state="historical-unit"] {
+        display: inline-flex !important;
+        align-items: center;
+        gap: 0.2rem;
+        font-size: 0.7rem !important;
+        padding: 0.45rem 1.15rem !important;
+        background: linear-gradient(180deg, #f0fdfa 0%, #ccfbf1 100%) !important;
+        color: #0f766e !important;
+        border: 2px solid #2dd4bf !important;
+        box-shadow: 0 2px 10px rgba(45, 212, 191, 0.22);
     }
     .unit-detail-status[data-state="housing-unit"] {
         display: inline-flex !important;
@@ -2530,14 +2555,21 @@
         </div>
         <div class="units-page-header__toolbar">
             {% if can_create_relocation_site and no_relocation_sites %}
-            <button type="button" class="units-header-action" onclick="openCreateSiteModal()">+ Create site</button>
+            <button type="button" class="units-header-action" onclick="openCreateSiteModal()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Create site
+            </button>
             {% endif %}
             {% if can_add_housing_unit %}
-            <button type="button" id="openAddUnitModalBtn" class="units-header-action" onclick="openAddUnitModal()">+ Add block / lot</button>
+            <button type="button" id="openAddUnitModalBtn" class="units-header-action" onclick="openAddUnitModal()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Add block / lot
+            </button>
             {% endif %}
-            <button id="gridView" class="view-btn units-view-btn" onclick="switchView('grid')">Grid</button>
-            <button id="tableView" class="view-btn units-view-btn" onclick="switchView('table')">Table</button>
-            <a href="{% url 'units:gk_masterlist' request.user.position %}{% if site %}?site_id={{ site.id }}{% endif %}" class="units-view-btn units-masterlist-btn">GK Masterlist</a>
+            <a href="{% url 'units:gk_masterlist' request.user.position %}{% if site %}?site_id={{ site.id }}{% endif %}" class="units-view-btn units-masterlist-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                GK Masterlist
+            </a>
         </div>
     </header>
 
@@ -2616,12 +2648,13 @@
                     <button type="button"
                             data-unit-id="{{ unit.id }}"
                             data-housing-unit-on-file="{% if unit.is_housing_unit_on_file %}1{% else %}0{% endif %}"
+                            data-historical-beneficiary="{% if unit.is_historical_beneficiary %}1{% else %}0{% endif %}"
                             data-extension-failed="{% if unit.extension_final_visit_failed %}1{% else %}0{% endif %}"
-                            class="unit-card vmap-lot {% if unit.is_housing_unit_on_file %}vmap-lot--housing-unit{% elif unit.extension_final_visit_failed %}vmap-lot--extension-failed{% elif unit.status == 'Occupied' %}vmap-lot--occupied{% elif unit.status == 'Vacant — available' %}vmap-lot--vacant{% endif %}"
+                            class="unit-card vmap-lot {% if unit.is_housing_unit_on_file %}vmap-lot--housing-unit{% elif unit.is_historical_beneficiary %}vmap-lot--housing-unit{% elif unit.extension_final_visit_failed %}vmap-lot--extension-failed{% elif unit.status == 'Occupied' %}vmap-lot--occupied{% elif unit.status == 'Vacant — available' %}vmap-lot--vacant{% endif %}"
                             data-status="{{ unit.status }}"
                             data-construction="{{ unit.construction_tokens }}"
                             onclick="openUnitModal('{{ unit.id }}')"
-                            title="Block {{ unit.block_number }} · Lot {{ unit.lot_number }} — {% if unit.is_housing_unit_on_file %}Housing unit — final monitoring complete, recorded in inventory{% else %}{{ unit.get_status_display }}{% endif %}{% if unit.current_occupant %} · {{ unit.current_occupant.full_name }}{% elif unit.occupant_name %} · {{ unit.occupant_name }}{% endif %}">
+                            title="Block {{ unit.block_number }} · Lot {{ unit.lot_number }} — {% if unit.is_housing_unit_on_file %}Housing unit — final monitoring complete, recorded in inventory{% elif unit.is_historical_beneficiary %}Unit — historical on-site beneficiary{% else %}{{ unit.get_status_display }}{% endif %}{% if unit.current_occupant %} · {{ unit.current_occupant.full_name }}{% elif unit.occupant_name %} · {{ unit.occupant_name }}{% endif %}">
                         <span class="vmap-lot-id">{{ unit.block_number }}-{{ unit.lot_number }}</span>
                         <span class="vmap-lot-occ occupant-name applicant-name" 
                               style="cursor: pointer;"
@@ -2639,7 +2672,7 @@
                               data-dob="Not specified"
                               {% endif %}
                         >{% if unit.current_occupant %}{{ unit.current_occupant.full_name|truncatechars:14 }}{% elif unit.occupant_name %}{{ unit.occupant_name|truncatechars:14 }}{% else %}—{% endif %}</span>
-                        <span class="vmap-lot-tag">{% if unit.is_housing_unit_on_file %}Unit{% elif unit.extension_final_visit_failed %}Failed{% elif unit.status == 'Occupied' %}Occupied{% elif unit.status == 'Vacant — available' %}Vacant{% else %}{{ unit.status|default:"—" }}{% endif %}</span>
+                        <span class="vmap-lot-tag">{% if unit.is_housing_unit_on_file %}Unit{% elif unit.is_historical_beneficiary %}Unit{% elif unit.extension_final_visit_failed %}Failed{% elif unit.status == 'Occupied' %}Occupied{% elif unit.status == 'Vacant — available' %}Vacant{% else %}{{ unit.status|default:"—" }}{% endif %}</span>
                     </button>
                     {% endfor %}
                 </div>
@@ -2671,6 +2704,7 @@
                             data-status="{{ unit.status }}"
                             data-construction="{{ unit.construction_tokens }}"
                             data-housing-unit-on-file="{% if unit.is_housing_unit_on_file %}1{% else %}0{% endif %}"
+                            data-historical-beneficiary="{% if unit.is_historical_beneficiary %}1{% else %}0{% endif %}"
                             data-extension-failed="{% if unit.extension_final_visit_failed %}1{% else %}0{% endif %}"
                             style="border-bottom: 1px solid var(--gray-100); hover:background: #f9fafb;">
                             <td style="padding: 1rem;">{{ block }}</td>
@@ -2706,6 +2740,11 @@
                                 <span style="display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.25rem 0.6rem; border-radius: 4px; font-weight: 600; background: rgba(45, 212, 191, 0.2); color: #0f766e; border: 1px solid rgba(13, 148, 136, 0.35);">
                                     <span style="width: 5px; height: 5px; border-radius: 50%; display: inline-block; background: #0d9488;"></span>
                                     Housing unit
+                                </span>
+                                {% elif unit.is_historical_beneficiary %}
+                                <span style="display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.25rem 0.6rem; border-radius: 4px; font-weight: 600; background: rgba(45, 212, 191, 0.2); color: #0f766e; border: 1px solid rgba(13, 148, 136, 0.35);">
+                                    <span style="width: 5px; height: 5px; border-radius: 50%; display: inline-block; background: #0d9488;"></span>
+                                    Unit
                                 </span>
                                 {% else %}
                                 <span style="display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.25rem 0.6rem; border-radius: 4px; font-weight: 500;
@@ -2944,7 +2983,7 @@
                                 <p id="lotPossessedDays" class="cell-value">—</p>
                             </div>
                             </div>
-                            <p class="premium-card-footnote">
+                            <p id="lotPossessionFootnote" class="premium-card-footnote">
                                 The award date starts possession. The beneficiary has 30 days to show house-building progress before scheduled monitoring begins.
                             </p>
                         </div>
@@ -3575,25 +3614,21 @@ document.addEventListener('keydown', e => {
 });
 
 function switchView(view) {
-    const gridView = document.getElementById('gridView-content');
-    const tableView = document.getElementById('tableView-content');
+    const gridViewContent = document.getElementById('gridView-content');
+    const tableViewContent = document.getElementById('tableView-content');
     const gridBtn = document.getElementById('gridView');
     const tableBtn = document.getElementById('tableView');
 
     if (view === 'grid') {
-        gridView.style.display = 'grid';
-        tableView.style.display = 'none';
-        gridBtn.style.background = 'var(--primary-600)';
-        gridBtn.style.color = 'white';
-        tableBtn.style.background = 'white';
-        tableBtn.style.color = 'var(--gray-700)';
+        if (gridViewContent) gridViewContent.style.display = 'grid';
+        if (tableViewContent) tableViewContent.style.display = 'none';
+        if (gridBtn) { gridBtn.style.background = 'var(--primary-600)'; gridBtn.style.color = 'white'; }
+        if (tableBtn) { tableBtn.style.background = 'white'; tableBtn.style.color = 'var(--gray-700)'; }
     } else {
-        gridView.style.display = 'none';
-        tableView.style.display = 'block';
-        tableBtn.style.background = 'var(--primary-600)';
-        tableBtn.style.color = 'white';
-        gridBtn.style.background = 'white';
-        gridBtn.style.color = 'var(--gray-700)';
+        if (gridViewContent) gridViewContent.style.display = 'none';
+        if (tableViewContent) tableViewContent.style.display = 'block';
+        if (tableBtn) { tableBtn.style.background = 'var(--primary-600)'; tableBtn.style.color = 'white'; }
+        if (gridBtn) { gridBtn.style.background = 'white'; gridBtn.style.color = 'var(--gray-700)'; }
     }
 }
 
@@ -3601,11 +3636,12 @@ function applyUnitDetailHeader(unit) {
     const kicker = document.getElementById('modalUnitKicker');
     const titleEl = document.getElementById('modalUnitTitle');
     if (!unit || !titleEl) return;
+    const isHistorical = !!unit.is_historical_beneficiary;
     const isHu = !!(unit.is_housing_unit_on_file || unit.status_display === 'Housing unit');
     if (kicker) {
-        kicker.textContent = isHu ? 'Unit detail' : 'Lot detail';
+        kicker.textContent = (isHu || isHistorical) ? 'Unit detail' : 'Lot detail';
     }
-    titleEl.textContent = isHu
+    titleEl.textContent = (isHu || isHistorical)
         ? `Block ${unit.block}, Unit ${unit.lot}`
         : `Block ${unit.block}, Lot ${unit.lot}`;
 }
@@ -3620,11 +3656,16 @@ function applyUnitDrawerStatusPill(unit) {
         'Final notice (10-day)': 'final',
         Repossessed: 'repo',
         'Housing unit': 'housing-unit',
+        Unit: 'historical-unit',
     };
     if (unit.is_housing_unit_on_file || unit.status_display === 'Housing unit') {
         statusPill.textContent = 'Housing unit';
         statusPill.dataset.state = 'housing-unit';
         statusPill.title = 'Recognized housing unit: final monitoring done and construction complete — this lot is counted as a completed unit in inventory.';
+    } else if (unit.is_historical_beneficiary) {
+        statusPill.textContent = 'Unit';
+        statusPill.dataset.state = 'historical-unit';
+        statusPill.title = 'Historical on-site beneficiary — registered before THA field monitoring was tracked in this system.';
     } else if (unit.extension_final_visit_failed) {
         statusPill.textContent = 'Failed';
         statusPill.dataset.state = 'failed';
@@ -3642,14 +3683,21 @@ function applyVmapLotMapBadge(unit) {
     if (!chip) return;
     const tag = chip.querySelector('.vmap-lot-tag');
     const isOnFile = !!(unit && unit.is_housing_unit_on_file);
+    const isHistorical = !!(unit && unit.is_historical_beneficiary);
     const extFailed = !!(unit && unit.extension_final_visit_failed);
     const st = (unit && unit.status) != null ? unit.status : (chip.dataset.status || '');
     chip.classList.remove(
         'vmap-lot--housing-unit', 'vmap-lot--occupied', 'vmap-lot--vacant', 'vmap-lot--extension-failed',
     );
     chip.dataset.housingUnitOnFile = isOnFile ? '1' : '0';
+    chip.dataset.historicalBeneficiary = isHistorical ? '1' : '0';
     chip.dataset.extensionFailed = extFailed ? '1' : '0';
     if (isOnFile) {
+        chip.classList.add('vmap-lot--housing-unit');
+        if (tag) tag.textContent = 'Unit';
+        return;
+    }
+    if (isHistorical) {
         chip.classList.add('vmap-lot--housing-unit');
         if (tag) tag.textContent = 'Unit';
         return;
@@ -3694,7 +3742,12 @@ function kpiFilter(card) {
         let show = true;
         if (!showAll) {
             if (kind === 'status') {
-                show = (lot.dataset.status || '') === val;
+                if (val === 'Occupied') {
+                    show = (lot.dataset.status || '') === val
+                        && (lot.dataset.historicalBeneficiary || '') !== '1';
+                } else {
+                    show = (lot.dataset.status || '') === val;
+                }
             } else if (kind === 'housing_unit') {
                 show = (lot.dataset.housingUnitOnFile || '') === '1';
             } else {
@@ -3715,7 +3768,12 @@ function kpiFilter(card) {
         let show = true;
         if (!showAll) {
             if (kind === 'status') {
-                show = (row.dataset.status || '') === val;
+                if (val === 'Occupied') {
+                    show = (row.dataset.status || '') === val
+                        && (row.dataset.historicalBeneficiary || '') !== '1';
+                } else {
+                    show = (row.dataset.status || '') === val;
+                }
             } else if (kind === 'housing_unit') {
                 show = (row.dataset.housingUnitOnFile || '') === '1';
             } else if (kind === 'construction') {
@@ -4031,9 +4089,10 @@ function buildMonitoringTaskCardElement(task, day60Reviewed) {
     return details;
 }
 
-function renderMonitoringTaskCards(mainTasks, mergedForState, letterWorkflowApplies) {
+function renderMonitoringTaskCards(mainTasks, mergedForState, letterWorkflowApplies, unitContext) {
     const wrap = document.getElementById('monitoringTaskCards');
     if (!wrap) return;
+    const unit = unitContext || lastOpenedUnitPayload;
     const merged = mergedForState != null ? mergedForState : (mainTasks || []);
     currentMonitoringTasks = merged;
     const gridTasks = filterMainTasksForTopGrid(mainTasks, letterWorkflowApplies);
@@ -4051,9 +4110,12 @@ function renderMonitoringTaskCards(mainTasks, mergedForState, letterWorkflowAppl
         const empty = document.createElement('div');
         empty.style.cssText = 'padding:0.8rem;border:1px dashed #cbd5e1;border-radius:0.75rem;color:#64748b;font-size:0.8rem;';
         const nestedInSeparateCard = letterWorkflowApplies && (merged || []).some((t) => isPriorNoProgressLetterVisit(t, true));
-        empty.textContent = nestedInSeparateCard
-            ? 'Completed visits that used the Explanation letter path are listed in the separate card below.'
-            : 'No 60 Day or 30 Day monitoring tasks generated yet.';
+        const historicalMsg = unit && unit.historical_monitoring_message;
+        empty.textContent = historicalMsg || (
+            nestedInSeparateCard
+                ? 'Completed visits that used the Explanation letter path are listed in the separate card below.'
+                : 'No 60 Day or 30 Day monitoring tasks generated yet.'
+        );
         wrap.appendChild(empty);
         return;
     }
@@ -4372,11 +4434,15 @@ async function submitAddHouseholdMember(event) {
     }
 }
 
-function renderMonitoringHistoryRecord(history) {
+function renderMonitoringHistoryRecord(history, unitContext) {
     const wrap = document.getElementById('monitoringHistoryRecord');
     if (!wrap) return;
+    const unit = unitContext || lastOpenedUnitPayload;
     if (!Array.isArray(history) || !history.length) {
-        wrap.innerHTML = '<p class="occupied-record-empty">No 60 Day / 30 Day monitoring history yet.</p>';
+        const historicalMsg = unit && unit.historical_monitoring_message;
+        wrap.innerHTML = `<p class="occupied-record-empty">${escapeHtml(
+            historicalMsg || 'No 60 Day / 30 Day monitoring history yet.'
+        )}</p>`;
         return;
     }
     wrap.innerHTML = `
@@ -5718,6 +5784,7 @@ function openUnitModal(unitId) {
         .then(data => {
             if (data.success) {
                 const unit = data.unit;
+                lastOpenedUnitPayload = unit;
                 applyUnitDetailHeader(unit);
                 applyUnitDrawerStatusPill(unit);
                 const ben = unit.beneficiary_info;
@@ -5747,12 +5814,17 @@ function openUnitModal(unitId) {
                     : '—';
                 document.getElementById('awardActivationDate').textContent = possession && possession.awarded_at ? formatDisplayDate(possession.awarded_at) : '—';
                 document.getElementById('monitoringStartsOn').textContent = possession && possession.monitoring_starts_on ? formatDisplayDate(possession.monitoring_starts_on) : '—';
+                const footnoteEl = document.getElementById('lotPossessionFootnote');
+                if (footnoteEl) {
+                    footnoteEl.textContent = unit.historical_possession_note
+                        || 'The award date starts possession. The beneficiary has 30 days to show house-building progress before scheduled monitoring begins.';
+                }
                 const main = unit.monitoring_tasks || [];
                 const ext30 = unit.explanation_extension_final_task || null;
                 const merged = ext30 ? [...main, ext30] : [...main];
                 const letterWf = unit.explanation_letter_workflow_applies === true;
-                renderMonitoringTaskCards(main, merged, letterWf);
-                renderMonitoringHistoryRecord(unit.monitoring_history || []);
+                renderMonitoringTaskCards(main, merged, letterWf, unit);
+                renderMonitoringHistoryRecord(unit.monitoring_history || [], unit);
                 renderComplianceRecordsRecord(unit.compliance_records || []);
                 renderUnitCaseRecord(unit);
                 syncExplanationLetterPanel(unit);

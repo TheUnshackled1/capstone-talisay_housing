@@ -85,6 +85,16 @@
         transition: border-color 0.15s, color 0.15s, box-shadow 0.15s, background 0.15s;
         white-space: nowrap;
     }
+    @media (max-width: 560px) {
+        .gk-toolbar {
+            flex-direction: column;
+            width: 100%;
+        }
+        .gk-btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
     .gk-btn:hover {
         border-color: #cbd5e1;
         color: #1e293b;
@@ -102,6 +112,18 @@
         color: #fff;
         background: linear-gradient(180deg, #1d4ed8 0%, #1e40af 100%);
         box-shadow: 0 4px 14px rgba(37,99,235,0.3);
+    }
+    .gk-btn--green {
+        background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+        border-color: #047857;
+        color: #fff;
+        box-shadow: 0 1px 3px rgba(5,150,105,0.25);
+    }
+    .gk-btn--green:hover {
+        color: #fff;
+        background: linear-gradient(180deg, #059669 0%, #047857 100%);
+        box-shadow: 0 4px 14px rgba(5,150,105,0.32);
+        border-color: #065f46;
     }
 
     /* ── Filter bar ── */
@@ -199,6 +221,269 @@
         white-space: nowrap;
     }
 
+    .gk-year-badge {
+        display: inline-block;
+        padding: 0.15rem 0.45rem;
+        border-radius: 999px;
+        font-size: 0.65rem;
+        font-weight: 700;
+        background: #eff6ff;
+        color: #1d4ed8;
+        border: 1px solid #bfdbfe;
+    }
+    .gk-year-badge--legacy {
+        background: #f8fafc;
+        color: #64748b;
+        border-color: #e2e8f0;
+    }
+    .gk-hist-tag {
+        display: inline-block;
+        margin-left: 0.35rem;
+        font-size: 0.58rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #92400e;
+        background: #fef3c7;
+        border: 1px solid #fcd34d;
+        border-radius: 4px;
+        padding: 0.05rem 0.3rem;
+        vertical-align: middle;
+    }
+
+    /* ── Modal overlay ── */
+    .gk-modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.6);
+        z-index: 1100;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+        backdrop-filter: blur(2px);
+    }
+    .gk-modal-overlay.is-open { display: flex; }
+
+    /* ── Modal shell ── */
+    .gk-modal {
+        background: #f8fafc;
+        border-radius: 16px;
+        max-width: 540px;
+        width: 100%;
+        max-height: 92vh;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 32px 64px -12px rgba(15, 23, 42, 0.45), 0 0 0 1px rgba(255,255,255,0.06);
+    }
+    .gk-modal form {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        overflow: hidden;
+        min-height: 0;
+    }
+
+    /* ── Modal hero banner (dark header like Case Recording) ── */
+    .gk-modal-hero {
+        background: linear-gradient(160deg, #0f172a 0%, #1e293b 55%, #0f2d4a 100%);
+        padding: 1.4rem 1.5rem 1.25rem;
+        text-align: center;
+        position: relative;
+        flex-shrink: 0;
+    }
+    .gk-modal-hero::after {
+        content: '';
+        position: absolute;
+        bottom: 0; left: 0; right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #10b981 0%, #2563eb 50%, #10b981 100%);
+    }
+    .gk-modal-logo-wrap {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: #fff;
+        border-radius: 10px;
+        padding: 0.45rem 1rem;
+        margin-bottom: 0.85rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+    }
+    .gk-modal-logo-wrap img {
+        height: 38px;
+        width: auto;
+        display: block;
+    }
+    .gk-modal-hero-title {
+        margin: 0 0 0.2rem;
+        font-size: 1.05rem;
+        font-weight: 800;
+        color: #f8fafc;
+        letter-spacing: -0.01em;
+    }
+    .gk-modal-hero-sub {
+        margin: 0;
+        font-size: 0.72rem;
+        color: #94a3b8;
+        letter-spacing: 0.02em;
+    }
+    .gk-modal-close {
+        position: absolute;
+        top: 0.75rem;
+        right: 0.85rem;
+        background: rgba(255,255,255,0.08);
+        border: 1px solid rgba(255,255,255,0.12);
+        color: #94a3b8;
+        border-radius: 8px;
+        width: 2rem;
+        height: 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 1rem;
+        line-height: 1;
+        transition: background 0.15s, color 0.15s;
+    }
+    .gk-modal-close:hover { background: rgba(255,255,255,0.16); color: #fff; }
+
+    /* ── Scrollable body ── */
+    .gk-modal-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1.1rem 1.25rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    /* ── Section card (like COMPLAINANT / REPORTED PARTY) ── */
+    .gk-modal-section {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        overflow: hidden;
+        border-left: 3px solid #10b981;
+    }
+    .gk-modal-section-head {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.65rem 0.9rem 0.55rem;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    .gk-modal-section-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #10b981;
+        flex-shrink: 0;
+    }
+    .gk-modal-section-label {
+        font-size: 0.6rem;
+        font-weight: 800;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: #0f172a;
+        margin: 0;
+    }
+    .gk-modal-section-body {
+        padding: 0.85rem 0.9rem;
+    }
+
+    /* ── Grid layout ── */
+    .gk-modal-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.65rem;
+    }
+
+    /* ── Field ── */
+    .gk-modal-field label {
+        display: block;
+        font-size: 0.63rem;
+        font-weight: 700;
+        color: #64748b;
+        margin-bottom: 0.28rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+    }
+    .gk-modal-field input,
+    .gk-modal-field select {
+        width: 100%;
+        padding: 0.52rem 0.65rem;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        font-size: 0.78rem;
+        font-family: inherit;
+        box-sizing: border-box;
+        background: #fff;
+        color: #0f172a;
+        transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .gk-modal-field input:focus,
+    .gk-modal-field select:focus {
+        outline: none;
+        border-color: #10b981;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+    }
+    .gk-input-uppercase {
+        text-transform: uppercase;
+    }
+    .gk-input-uppercase::placeholder {
+        text-transform: none;
+        color: #94a3b8;
+    }
+    .gk-modal-field--full { grid-column: 1 / -1; }
+
+    /* ── Error ── */
+    .gk-modal-error {
+        display: none;
+        margin-top: 0.65rem;
+        padding: 0.55rem 0.65rem;
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        border-radius: 8px;
+        font-size: 0.72rem;
+        color: #b91c1c;
+    }
+
+    /* ── Sticky footer ── */
+    .gk-modal-foot {
+        display: flex;
+        gap: 0.65rem;
+        padding: 0.9rem 1.25rem;
+        border-top: 1px solid #e2e8f0;
+        background: #fff;
+        flex-shrink: 0;
+    }
+    .gk-modal-foot .gk-btn {
+        flex: 1;
+        justify-content: center;
+        padding: 0.65rem 1rem;
+        font-size: 0.78rem;
+    }
+    .gk-btn--accent {
+        background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+        border-color: #047857;
+        color: #fff;
+        box-shadow: 0 1px 3px rgba(16, 185, 129, 0.3);
+    }
+    .gk-btn--accent:hover { color: #fff; background: linear-gradient(180deg, #059669 0%, #047857 100%); box-shadow: 0 4px 14px rgba(16,185,129,0.3); }
+    .gk-btn--danger {
+        background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%);
+        border-color: #b91c1c;
+        color: #fff;
+        box-shadow: 0 1px 3px rgba(220, 38, 38, 0.25);
+    }
+    .gk-btn--danger:hover {
+        color: #fff;
+        background: linear-gradient(180deg, #dc2626 0%, #b91c1c 100%);
+        border-color: #991b1b;
+        box-shadow: 0 4px 12px rgba(220, 38, 38, 0.28);
+    }
+
     /* ── Table container ── */
     .gk-table-container {
         background: #fff;
@@ -245,9 +530,10 @@
         white-space: nowrap;
         border: 1px solid rgba(255,255,255,0.18);
     }
-    .gk-table th:nth-child(1) { width: 54%; }
-    .gk-table th:nth-child(2) { width: 16%; }
-    .gk-table th:nth-child(3) { width: 30%; }
+    .gk-table th:nth-child(1) { width: 46%; }
+    .gk-table th:nth-child(2) { width: 12%; }
+    .gk-table th:nth-child(3) { width: 14%; }
+    .gk-table th:nth-child(4) { width: 28%; }
 
     /* ── Table body ── */
     .gk-table td {
@@ -506,9 +792,10 @@
             align-items: stretch;
         }
         .gk-search-box { min-width: 0; }
-        .gk-table th:nth-child(1) { width: 55%; }
-        .gk-table th:nth-child(2) { width: 15%; }
-        .gk-table th:nth-child(3) { width: 30%; }
+        .gk-table th:nth-child(1) { width: 48%; }
+        .gk-table th:nth-child(2) { width: 12%; }
+        .gk-table th:nth-child(3) { width: 14%; }
+        .gk-table th:nth-child(4) { width: 26%; }
     }
     @media (max-width: 480px) {
         .gk-page-title { font-size: 1.05rem; }
@@ -535,14 +822,16 @@
                 </p>
             </div>
             <div class="gk-toolbar">
-                <a href="{{ monitoring_url }}" class="gk-btn">
+                <a href="{{ monitoring_url }}" class="gk-btn gk-btn--primary">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
                     Back to monitoring
                 </a>
-                <a href="{% url 'units:housing_units_monitoring' request.user.position %}{% if site %}?site_id={{ site.id }}{% endif %}" class="gk-btn gk-btn--primary">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-                    Grid / Table
-                </a>
+                {% if can_import_historical and site %}
+                <button type="button" class="gk-btn gk-btn--green" onclick="openGkRegisterModal()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+                    Add a beneficiary
+                </button>
+                {% endif %}
             </div>
         </header>
 
@@ -555,7 +844,15 @@
                 <option value="{{ s.id }}" {% if site and s.id == site.id %}selected{% endif %}>{{ s.name }}</option>
                 {% endfor %}
             </select>
+            {% elif site %}
+            <input type="hidden" name="site_id" value="{{ site.id }}">
             {% endif %}
+            <select name="beneficiary_year" class="gk-site-select" aria-label="Beneficiary year" onchange="this.form.submit()">
+                <option value="all" {% if beneficiary_year_filter == 'all' %}selected{% endif %}>All years</option>
+                {% for y in beneficiary_years %}
+                <option value="{{ y }}" {% if beneficiary_year_filter == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>
+                {% endfor %}
+            </select>
             <div class="gk-search-box">
                 <span class="gk-search-icon">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -563,7 +860,7 @@
                 <input type="search" name="search" value="{{ search }}" placeholder="Search name, reference, block/lot…" aria-label="Search masterlist">
             </div>
             <button type="submit" class="gk-search-submit">Search</button>
-            {% if search %}
+            {% if search or beneficiary_year_filter != 'all' %}
             <a href="{% url 'units:gk_masterlist' request.user.position %}{% if site %}?site_id={{ site.id }}{% endif %}" class="gk-btn">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 Clear
@@ -575,6 +872,109 @@
             </span>
         </form>
         {% endif %}
+        {% if not no_relocation_sites %}
+        <!-- Block carousel (Now inside the header card) -->
+        {% if masterlist_by_block %}
+        <div class="gk-carousel" id="gkCarousel" style="margin-top: 1.5rem;">
+            <div class="gk-carousel-track-wrap">
+                <div class="gk-carousel-track" id="gkTrack">
+                    {% for block_name, block_rows in masterlist_by_block.items %}
+                    <div class="gk-carousel-slide">
+                        <div class="gk-block-section">
+                            <div class="gk-block-label">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                                Block {{ block_name }}
+                                <span class="gk-count-chip">{{ block_rows|length }} {% if block_rows|length == 1 %}person{% else %}people{% endif %}</span>
+                            </div>
+                            <div class="gk-table-container">
+                                <div class="gk-table-scroll">
+                                    <table class="gk-table">
+                                        <thead>
+                                            <tr>
+                                                <th scope="col">#&nbsp;&nbsp;Name</th>
+                                                <th scope="col">Lot</th>
+                                                <th scope="col">Since</th>
+                                                <th scope="col">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for row in block_rows %}
+                                            <tr>
+                                                <td>
+                                                    <div class="gk-name-cell">
+                                                        <div class="gk-avatar{% if not row.is_primary %} gk-avatar--spouse{% endif %}" aria-hidden="true">
+                                                            {{ row.name|slice:":2"|upper }}
+                                                        </div>
+                                                        <div class="gk-name-info">
+                                                            <div class="gk-name">
+                                                                {{ row.name }}
+                                                                {% if row.is_historical and row.is_primary %}<span class="gk-hist-tag">Historical</span>{% endif %}
+                                                            </div>
+                                                            <span class="gk-role{% if row.is_primary %} gk-role--primary{% endif %}">{{ row.role_label }}</span>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <span style="font-size:0.75rem;font-weight:600;color:#1e293b;">Lot {{ row.lot_number }}</span>
+                                                </td>
+                                                <td>
+                                                    {% if row.beneficiary_year %}
+                                                    <span class="gk-year-badge">{{ row.beneficiary_year }}</span>
+                                                    {% else %}
+                                                    <span class="gk-year-badge gk-year-badge--legacy">—</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <a class="gk-action-btn"
+                                                       href="{% url 'units:housing_units_monitoring' request.user.position %}?{% if site %}site_id={{ site.id }}&{% endif %}unit_id={{ row.unit_id }}">
+                                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                                        View unit
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            {% if masterlist_by_block|length > 1 %}
+            <div class="gk-carousel-nav" id="gkNav">
+                <button class="gk-carousel-btn" id="gkPrev" aria-label="Previous block" disabled>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                </button>
+                <div class="gk-carousel-dots" id="gkDots">
+                    {% for block_name, block_rows_unused in masterlist_by_block.items %}
+                    <button class="gk-dot{% if forloop.first %} is-active{% endif %}"
+                            data-idx="{{ forloop.counter0 }}"
+                            aria-label="Block {{ block_name }}"></button>
+                    {% endfor %}
+                </div>
+                <span class="gk-carousel-counter" id="gkCounter">1 / {{ masterlist_by_block|length }}</span>
+                <button class="gk-carousel-btn" id="gkNext" aria-label="Next block">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                </button>
+            </div>
+            {% endif %}
+        </div>
+        {% else %}
+        <div class="gk-table-container" style="margin-top: 1.5rem;">
+            <div class="gk-empty">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                {% if search %}
+                No matches for <strong>"{{ search }}"</strong>. Try a different name or reference.
+                {% else %}
+                No occupants on file for this site yet.
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        {% endif %}
     </div>
 
     {% if no_relocation_sites %}
@@ -582,101 +982,322 @@
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
         No relocation sites yet. Create one from Housing Unit &amp; Occupancy Monitoring.
     </div>
-    {% else %}
+    {% endif %}
+</div>
 
-    <!-- Block carousel -->
-    {% if masterlist_by_block %}
-    <div class="gk-carousel" id="gkCarousel">
-        <div class="gk-carousel-track-wrap">
-            <div class="gk-carousel-track" id="gkTrack">
-                {% for block_name, block_rows in masterlist_by_block.items %}
-                <div class="gk-carousel-slide">
-                    <div class="gk-block-section">
-                        <div class="gk-block-label">
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-                            Block {{ block_name }}
-                            <span class="gk-count-chip">{{ block_rows|length }} {% if block_rows|length == 1 %}person{% else %}people{% endif %}</span>
-                        </div>
-                        <div class="gk-table-container">
-                            <div class="gk-table-scroll">
-                                <table class="gk-table">
-                                    <thead>
-                                        <tr>
-                                            <th scope="col">#&nbsp;&nbsp;Name</th>
-                                            <th scope="col">Lot</th>
-                                            <th scope="col">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for row in block_rows %}
-                                        <tr>
-                                            <td>
-                                                <div class="gk-name-cell">
-                                                    <div class="gk-avatar{% if not row.is_primary %} gk-avatar--spouse{% endif %}" aria-hidden="true">
-                                                        {{ row.name|slice:":2"|upper }}
-                                                    </div>
-                                                    <div class="gk-name-info">
-                                                        <div class="gk-name">{{ row.name }}</div>
-                                                        <span class="gk-role{% if row.is_primary %} gk-role--primary{% endif %}">{{ row.role_label }}</span>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <span style="font-size:0.75rem;font-weight:600;color:#1e293b;">Lot {{ row.lot_number }}</span>
-                                            </td>
-                                            <td>
-                                                <a class="gk-action-btn"
-                                                   href="{% url 'units:housing_units_monitoring' request.user.position %}?{% if site %}site_id={{ site.id }}&{% endif %}unit_id={{ row.unit_id }}">
-                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                                                    View unit
-                                                </a>
-                                            </td>
-                                        </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
+{% if can_import_historical and site %}
+<div id="gkImportModal" class="gk-modal-overlay" onclick="if(event.target===this) closeGkImportModal();">
+    <div class="gk-modal" onclick="event.stopPropagation();">
+        <div class="gk-modal-head">
+            <h2>Import historical beneficiaries</h2>
+            <p>CSV rows create Applicant + Application + lot award on existing Block/Lot at <strong>{{ site.name }}</strong>. Units must already exist in inventory.</p>
+        </div>
+        <form id="gkImportForm" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="hidden" name="site_id" value="{{ site.id }}">
+            <div class="gk-modal-body">
+                <div class="gk-modal-field gk-modal-field--full">
+                    <label for="gkCsvFile">CSV file</label>
+                    <input type="file" id="gkCsvFile" name="csv_file" accept=".csv,text/csv" required>
+                </div>
+                <p style="font-size:0.68rem;color:#64748b;margin:0;line-height:1.45;">
+                    Columns: {{ historical_csv_headers|join:", " }}
+                </p>
+                <p id="gkImportError" class="gk-modal-error"></p>
+            </div>
+            <div class="gk-modal-foot">
+                <button type="button" class="gk-btn" onclick="closeGkImportModal()">Cancel</button>
+                <button type="submit" class="gk-btn gk-btn--accent" id="gkImportSubmit">Import</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="gkRegisterModal" class="gk-modal-overlay" onclick="if(event.target===this) closeGkRegisterModal();">
+    <div class="gk-modal" onclick="event.stopPropagation();">
+
+        <!-- Dark hero header -->
+        <div class="gk-modal-hero">
+            <button type="button" class="gk-modal-close" onclick="closeGkRegisterModal()" aria-label="Close">&times;</button>
+            <div class="gk-modal-logo-wrap">
+                <img src="{% static 'images/tha_logo.png' %}" alt="THA Logo">
+            </div>
+            <h2 class="gk-modal-hero-title">Add Historical Beneficiary</h2>
+            <p class="gk-modal-hero-sub">Talisay City Housing Authority &middot; GK Masterlist</p>
+        </div>
+
+        <form id="gkRegisterForm">
+            {% csrf_token %}
+            <input type="hidden" name="site_id" value="{{ site.id }}">
+
+            <div class="gk-modal-body">
+
+                <!-- Beneficiary Info section -->
+                <div class="gk-modal-section">
+                    <div class="gk-modal-section-head">
+                        <span class="gk-modal-section-dot"></span>
+                        <p class="gk-modal-section-label">Beneficiary Information</p>
+                    </div>
+                    <div class="gk-modal-section-body">
+                        <div class="gk-modal-grid">
+                            <div class="gk-modal-field">
+                                <label for="gkRegLast">Last name</label>
+                                <input id="gkRegLast" name="last_name" class="gk-input-uppercase" required maxlength="10" placeholder="e.g. DELA CRUZ" autocomplete="family-name">
+                            </div>
+                            <div class="gk-modal-field">
+                                <label for="gkRegFirst">First name</label>
+                                <input id="gkRegFirst" name="first_name" class="gk-input-uppercase" required maxlength="15" placeholder="e.g. JUAN" autocomplete="given-name">
+                            </div>
+                            <div class="gk-modal-field">
+                                <label for="gkRegMiddle">Middle name</label>
+                                <input id="gkRegMiddle" name="middle_name" class="gk-input-uppercase" maxlength="10" placeholder="e.g. SANTOS" autocomplete="additional-name">
+                            </div>
+                            <div class="gk-modal-field">
+                                <label for="gkRegSex">Sex</label>
+                                <select id="gkRegSex" name="sex">
+                                    <option value="">—</option>
+                                    <option value="M">Male</option>
+                                    <option value="F">Female</option>
+                                </select>
+                            </div>
+                            <div class="gk-modal-field">
+                                <label for="gkRegPhone">Phone</label>
+                                <input id="gkRegPhone" name="phone" maxlength="11" inputmode="numeric" pattern="09[0-9]{9}" placeholder="09171234567" autocomplete="tel" title="11 digits starting with 09">
+                            </div>
+
+                            <div class="gk-modal-field">
+                                <label for="gkRegDisp">Situation</label>
+                                <select id="gkRegDisp" name="displacement_reason">
+                                    <option value="">—</option>
+                                    <option value="danger_zone">Option A — Danger zone</option>
+                                    <option value="ejected">Option B — Ejected</option>
+                                    <option value="relocated">Option C — Relocated</option>
+                                    <option value="not_abc">Option D — Other</option>
+                                </select>
                             </div>
                         </div>
                     </div>
                 </div>
-                {% endfor %}
-            </div>
-        </div>
 
-        {% if masterlist_by_block|length > 1 %}
-        <div class="gk-carousel-nav" id="gkNav">
-            <button class="gk-carousel-btn" id="gkPrev" aria-label="Previous block" disabled>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-            </button>
-            <div class="gk-carousel-dots" id="gkDots">
-                {% for block_name, block_rows_unused in masterlist_by_block.items %}
-                <button class="gk-dot{% if forloop.first %} is-active{% endif %}"
-                        data-idx="{{ forloop.counter0 }}"
-                        aria-label="Block {{ block_name }}"></button>
-                {% endfor %}
-            </div>
-            <span class="gk-carousel-counter" id="gkCounter">1 / {{ masterlist_by_block|length }}</span>
-            <button class="gk-carousel-btn" id="gkNext" aria-label="Next block">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-            </button>
-        </div>
-        {% endif %}
-    </div>
-    {% else %}
-    <div class="gk-table-container">
-        <div class="gk-empty">
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            {% if search %}
-            No matches for <strong>"{{ search }}"</strong>. Try a different name or reference.
-            {% else %}
-            No occupants on file for this site yet.
-            {% endif %}
-        </div>
-    </div>
-    {% endif %}
+                <!-- Lot assignment section -->
+                <div class="gk-modal-section">
+                    <div class="gk-modal-section-head">
+                        <span class="gk-modal-section-dot"></span>
+                        <p class="gk-modal-section-label">Lot Assignment</p>
+                    </div>
+                    <div class="gk-modal-section-body">
+                        <div class="gk-modal-grid">
+                            <div class="gk-modal-field">
+                                <label for="gkRegBlock">Block</label>
+                                <input id="gkRegBlock" name="block" class="gk-input-whole" required inputmode="numeric" pattern="[1-9][0-9]*" placeholder="e.g. 1">
+                            </div>
+                            <div class="gk-modal-field">
+                                <label for="gkRegLot">Lot</label>
+                                <input id="gkRegLot" name="lot" class="gk-input-whole" required inputmode="numeric" pattern="[1-9][0-9]*" placeholder="e.g. 3">
+                            </div>
+                            <div class="gk-modal-field">
+                                <label for="gkRegYear">Beneficiary year *</label>
+                                <input id="gkRegYear" name="beneficiary_year" class="gk-input-whole" required maxlength="4" inputmode="numeric" pattern="[0-9]{4}" placeholder="e.g. 2019">
+                            </div>
+                        </div>
 
-    {% endif %}
+                    </div>
+                </div>
+
+                <p id="gkRegisterError" class="gk-modal-error"></p>
+            </div>
+
+            <!-- Sticky footer -->
+            <div class="gk-modal-foot">
+                <button type="button" class="gk-btn gk-btn--danger" onclick="closeGkRegisterModal()">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    Cancel
+                </button>
+                <button type="submit" class="gk-btn gk-btn--accent" id="gkRegisterSubmit">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    Save
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
+{% endif %}
+
+<script>
+function getGkCsrf() {
+    const el = document.querySelector('#gkImportForm input[name=csrfmiddlewaretoken], #gkRegisterForm input[name=csrfmiddlewaretoken]');
+    if (el && el.value) return el.value;
+    const m = document.cookie.match(/csrftoken=([^;]+)/);
+    return m ? decodeURIComponent(m[1]) : '';
+}
+function openGkImportModal() {
+    const m = document.getElementById('gkImportModal');
+    if (!m) return;
+    document.getElementById('gkImportError').style.display = 'none';
+    m.classList.add('is-open');
+}
+function closeGkImportModal() {
+    document.getElementById('gkImportModal')?.classList.remove('is-open');
+}
+function openGkRegisterModal() {
+    const m = document.getElementById('gkRegisterModal');
+    if (!m) return;
+    document.getElementById('gkRegisterError').style.display = 'none';
+    m.classList.add('is-open');
+}
+function closeGkRegisterModal() {
+    document.getElementById('gkRegisterModal')?.classList.remove('is-open');
+}
+
+function gkBindUpperNameInput(el) {
+    if (!el) return;
+    el.addEventListener('input', function () {
+        const start = el.selectionStart;
+        const end = el.selectionEnd;
+        el.value = el.value.toUpperCase();
+        if (start != null && end != null) {
+            el.setSelectionRange(start, end);
+        }
+    });
+}
+
+function gkBindPhoneInput(el) {
+    if (!el) return;
+    el.addEventListener('input', function () {
+        let digits = el.value.replace(/\D/g, '').slice(0, 11);
+        if (digits.length && !digits.startsWith('09')) {
+            if (digits.startsWith('9')) {
+                digits = '0' + digits;
+            } else if (digits.startsWith('0')) {
+                digits = ('09' + digits.slice(1)).slice(0, 11);
+            } else {
+                digits = ('09' + digits).slice(0, 11);
+            }
+        }
+        el.value = digits;
+    });
+}
+
+function gkBindWholeNumberInput(el) {
+    if (!el) return;
+    el.addEventListener('input', function () {
+        el.value = el.value.replace(/\D/g, '');
+    });
+}
+
+function validateGkRegisterForm(form) {
+    ['last_name', 'first_name', 'middle_name'].forEach(function (field) {
+        if (form[field]) {
+            form[field].value = form[field].value.trim().toUpperCase();
+        }
+    });
+    const last = (form.last_name.value || '').trim();
+    const first = (form.first_name.value || '').trim();
+    if (!last || !first) {
+        return 'Last name and first name are required.';
+    }
+    const nameRe = /^[A-Z\s'\-\.]+$/;
+    if (!nameRe.test(last)) return 'Last name must contain letters only.';
+    if (!nameRe.test(first)) return 'First name must contain letters only.';
+    const middle = (form.middle_name.value || '').trim();
+    if (middle && !nameRe.test(middle)) return 'Middle name must contain letters only.';
+
+    const phone = (form.phone.value || '').trim();
+    if (phone && !/^09\d{9}$/.test(phone)) {
+        return 'Phone must be exactly 11 digits starting with 09 (e.g. 09171234567).';
+    }
+
+    const block = (form.block.value || '').trim();
+    const lot = (form.lot.value || '').trim();
+    if (!/^[1-9]\d*$/.test(block)) return 'Block must be a whole number (e.g. 1).';
+    if (!/^[1-9]\d*$/.test(lot)) return 'Lot must be a whole number (e.g. 3).';
+
+    const year = (form.beneficiary_year.value || '').trim();
+    if (!/^\d{4}$/.test(year)) {
+        return 'Beneficiary year must be a 4-digit whole number (e.g. 2019).';
+    }
+    return '';
+}
+
+(function initGkRegisterFieldMasks() {
+    gkBindUpperNameInput(document.getElementById('gkRegLast'));
+    gkBindUpperNameInput(document.getElementById('gkRegFirst'));
+    gkBindUpperNameInput(document.getElementById('gkRegMiddle'));
+    gkBindPhoneInput(document.getElementById('gkRegPhone'));
+    ['gkRegBlock', 'gkRegLot', 'gkRegYear'].forEach(function (id) {
+        gkBindWholeNumberInput(document.getElementById(id));
+    });
+})();
+document.getElementById('gkImportForm')?.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const errEl = document.getElementById('gkImportError');
+    const btn = document.getElementById('gkImportSubmit');
+    errEl.style.display = 'none';
+    btn.disabled = true;
+    try {
+        const fd = new FormData(this);
+        const res = await fetch('{% url "units:historical_beneficiary_import" request.user.position %}', {
+            method: 'POST',
+            headers: { 'X-CSRFToken': getGkCsrf() },
+            body: fd,
+        });
+        const data = await res.json();
+        if (data.success) {
+            let msg = data.message || 'Import complete.';
+            if (data.errors && data.errors.length) {
+                msg += '\n\n' + data.errors.map(function (x) { return 'Line ' + x.line + ': ' + x.message; }).join('\n');
+            }
+            alert(msg);
+            window.location.reload();
+        } else {
+            errEl.textContent = data.error || 'Import failed.';
+            errEl.style.display = 'block';
+        }
+    } catch (ex) {
+        errEl.textContent = ex.message || 'Network error.';
+        errEl.style.display = 'block';
+    } finally {
+        btn.disabled = false;
+    }
+});
+document.getElementById('gkRegisterForm')?.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const errEl = document.getElementById('gkRegisterError');
+    const btn = document.getElementById('gkRegisterSubmit');
+    errEl.style.display = 'none';
+    const validationError = validateGkRegisterForm(this);
+    if (validationError) {
+        errEl.textContent = validationError;
+        errEl.style.display = 'block';
+        return;
+    }
+    btn.disabled = true;
+    try {
+        const body = new URLSearchParams(new FormData(this));
+        const res = await fetch('{% url "units:historical_beneficiary_register" request.user.position %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': getGkCsrf(),
+            },
+            body: body.toString(),
+        });
+        const data = await res.json();
+        if (data.success) {
+            alert(data.message || 'Registered.');
+            window.location.reload();
+        } else {
+            errEl.textContent = data.error || 'Could not register.';
+            errEl.style.display = 'block';
+        }
+    } catch (ex) {
+        errEl.textContent = ex.message || 'Network error.';
+        errEl.style.display = 'block';
+    } finally {
+        btn.disabled = false;
+    }
+});
+</script>
 
 <script>
 (function () {

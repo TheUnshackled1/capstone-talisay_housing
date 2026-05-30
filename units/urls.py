@@ -8,6 +8,21 @@ urlpatterns = [
     # Housing Units Monitoring Dashboard (Module 4)
     path('housing-units/<str:position>/', views.housing_units_monitoring, name='housing_units_monitoring'),
     path('housing-units/<str:position>/gk-masterlist/', views.gk_masterlist, name='gk_masterlist'),
+    path(
+        'housing-units/<str:position>/historical-beneficiaries/template.csv',
+        views.historical_beneficiary_template,
+        name='historical_beneficiary_template',
+    ),
+    path(
+        'housing-units/<str:position>/historical-beneficiaries/import/',
+        views.historical_beneficiary_import,
+        name='historical_beneficiary_import',
+    ),
+    path(
+        'housing-units/<str:position>/historical-beneficiaries/register/',
+        views.historical_beneficiary_register,
+        name='historical_beneficiary_register',
+    ),
     path('housing-units/<str:position>/site/create/', views.create_relocation_site, name='create_relocation_site'),
     path('housing-units/<str:position>/unit/create/', views.create_housing_unit, name='create_housing_unit'),
     path('housing-units/<str:position>/unit/construction/update/', views.add_construction_update, name='add_construction_update'),

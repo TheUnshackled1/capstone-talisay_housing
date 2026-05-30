@@ -8,6 +8,7 @@ from __future__ import annotations
 from intake.models import Applicant
 from units.models import Blacklist, LotAward
 from units.housing_unit_status import housing_unit_on_file_for_lot_award
+from units.historical_beneficiary import is_historical_lot_award
 
 
 def active_lot_award_with_unit(app_obj) -> LotAward | None:
@@ -39,6 +40,11 @@ def staff_pipeline_primary_detail(
             return (
                 'Housing Units',
                 f'{loc} · Housing unit on file · {status_disp}',
+            )
+        if is_historical_lot_award(la_active):
+            return (
+                'Historical beneficiary',
+                f'{loc} · Document vault reserved · uploads pending',
             )
         status_disp = unit.get_status_display() if hasattr(unit, 'get_status_display') else unit.status
         return (

@@ -18,6 +18,10 @@ from intake.models import Applicant
 from units.models import LotAward, MonitoringReport, Blacklist
 from applications.models import QueueEntry
 from applications.staff_pipeline_status import staff_pipeline_primary_detail
+from units.historical_beneficiary import (
+    document_vault_applicant_q,
+    is_historical_applicant,
+)
 from documents.models import (
     Document,
     DocumentBlob,
@@ -176,6 +180,20 @@ def _build_situation_vault_block(
 
     Option D: message only, no extra checklist rows.
     """
+    if is_historical_applicant(applicant):
+        return {
+            'letter': '—',
+            'title': 'Historical on-site beneficiary',
+            'blurb': (
+                'Registered via GK masterlist backfill. Intake situation documentation was not '
+                'captured when this beneficiary was placed on-site. Upload or scan files in the '
+                'checklist below when they become available.'
+            ),
+            'detail_line': 'Document slots are reserved; files are blank until staff add them.',
+            'option_d_message': None,
+            'rows': [],
+        }
+
     dr = (getattr(applicant, 'displacement_reason', None) or '').strip()
 
     option_a_blurb = (
@@ -462,6 +480,7 @@ def document_management(request, position):
     # Ordering: Module 2 queue first when present — priority, then walk-in, then no queue.
     applicants_qs = (
         Applicant.objects
+        .select_related('application')
         .prefetch_related(
             Prefetch(
                 'application__lot_awards',
@@ -476,7 +495,9 @@ def document_management(request, position):
             ),
         )
         .filter(
-            Q(archives__isnull=False) | Q(module2_handoff_at__isnull=False)
+            Q(archives__isnull=False)
+            | Q(module2_handoff_at__isnull=False)
+            | document_vault_applicant_q()
         )
         .distinct()
     )
@@ -614,6 +635,7 @@ def document_management(request, position):
             'reference_number': applicant.reference_number,
             'status': applicant.status,
             'status_display': applicant.get_status_display() if hasattr(applicant, 'get_status_display') else applicant.status,
+            'is_historical_beneficiary': is_historical_applicant(applicant),
             'barangay': applicant.barangay.name if applicant.barangay else 'N/A',
             'monthly_income': applicant.monthly_income or 0,
             'household_members': applicant.household_member_count,
@@ -838,6 +860,7 @@ def document_management(request, position):
             'barangay': row['barangay'],
             'status': row['status'],
             'status_display': row['status_display'],
+            'is_historical_beneficiary': bool(row.get('is_historical_beneficiary')),
             'applicant_workflow_status': row.get('applicant_workflow_status') or '',
             'applicant_status_detail': row.get('applicant_status_detail') or '',
             'why_disqualified': row.get('why_disqualified') or '',
@@ -846,7 +869,11 @@ def document_management(request, position):
         }
 
     blacklisted_registry_count = (
-        Blacklist.objects.filter(Q(applicant__archives__isnull=False) | Q(applicant__module2_handoff_at__isnull=False))
+        Blacklist.objects.filter(
+            Q(applicant__archives__isnull=False)
+            | Q(applicant__module2_handoff_at__isnull=False)
+            | document_vault_applicant_q(prefix='applicant__')
+        )
         .distinct()
         .count()
     )

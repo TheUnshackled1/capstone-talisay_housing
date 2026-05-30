@@ -34,6 +34,7 @@ from .models import (
     SMSLog as ApplicationSMSLog,
 )
 from units.models import HousingUnit, LotAward, RelocationSite, ConstructionProgress
+from units.historical_beneficiary import document_vault_applicant_q
 from .form_pipeline import applicant_has_signed_application_payload
 from .utils import check_blacklist_module2, send_sms_for_applications
 from .application_form_pdf import build_filled_application_pdf
@@ -798,6 +799,8 @@ def _module2_evaluations_applicants_queryset():
         | Q(status='disqualified', module2_handoff_at__isnull=False)
     ).filter(
         Q(module2_handoff_at__isnull=False) | Q(application__isnull=False)
+    ).exclude(
+        document_vault_applicant_q()
     ).exclude(
         evaluation_approval_status='approved'
     )
