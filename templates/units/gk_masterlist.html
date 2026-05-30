@@ -705,7 +705,7 @@
         align-items: center;
         justify-content: center;
         gap: 0.6rem;
-        margin-top: 1rem;
+        margin-bottom: 1rem;
     }
     .gk-carousel-btn {
         display: inline-flex;
@@ -876,6 +876,25 @@
         <!-- Block carousel (Now inside the header card) -->
         {% if masterlist_by_block %}
         <div class="gk-carousel" id="gkCarousel" style="margin-top: 1.5rem;">
+            {% if masterlist_by_block|length > 1 %}
+            <div class="gk-carousel-nav" id="gkNav">
+                <button class="gk-carousel-btn" id="gkPrev" aria-label="Previous block" disabled>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                </button>
+                <div class="gk-carousel-dots" id="gkDots">
+                    {% for block_name, block_rows_unused in masterlist_by_block.items %}
+                    <button class="gk-dot{% if forloop.first %} is-active{% endif %}"
+                            data-idx="{{ forloop.counter0 }}"
+                            aria-label="Block {{ block_name }}"></button>
+                    {% endfor %}
+                </div>
+                <span class="gk-carousel-counter" id="gkCounter">1 / {{ masterlist_by_block|length }}</span>
+                <button class="gk-carousel-btn" id="gkNext" aria-label="Next block">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                </button>
+            </div>
+            {% endif %}
+
             <div class="gk-carousel-track-wrap">
                 <div class="gk-carousel-track" id="gkTrack">
                     {% for block_name, block_rows in masterlist_by_block.items %}
@@ -942,25 +961,6 @@
                     {% endfor %}
                 </div>
             </div>
-
-            {% if masterlist_by_block|length > 1 %}
-            <div class="gk-carousel-nav" id="gkNav">
-                <button class="gk-carousel-btn" id="gkPrev" aria-label="Previous block" disabled>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-                </button>
-                <div class="gk-carousel-dots" id="gkDots">
-                    {% for block_name, block_rows_unused in masterlist_by_block.items %}
-                    <button class="gk-dot{% if forloop.first %} is-active{% endif %}"
-                            data-idx="{{ forloop.counter0 }}"
-                            aria-label="Block {{ block_name }}"></button>
-                    {% endfor %}
-                </div>
-                <span class="gk-carousel-counter" id="gkCounter">1 / {{ masterlist_by_block|length }}</span>
-                <button class="gk-carousel-btn" id="gkNext" aria-label="Next block">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-                </button>
-            </div>
-            {% endif %}
         </div>
         {% else %}
         <div class="gk-table-container" style="margin-top: 1.5rem;">
@@ -1284,8 +1284,14 @@ document.getElementById('gkRegisterForm')?.addEventListener('submit', async func
         });
         const data = await res.json();
         if (data.success) {
-            alert(data.message || 'Registered.');
-            window.location.reload();
+            if (typeof showFlowAlert === 'function') {
+                showFlowAlert(data.message || 'Registered.', 'Success', function() {
+                    window.location.reload();
+                }, 'success');
+            } else {
+                alert(data.message || 'Registered.');
+                window.location.reload();
+            }
         } else {
             errEl.textContent = data.error || 'Could not register.';
             errEl.style.display = 'block';

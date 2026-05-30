@@ -3586,7 +3586,12 @@ document.getElementById('addUnitForm')?.addEventListener('submit', async functio
         const data = await res.json();
         if (data.success) {
             closeAddUnitModal();
-            window.location.reload();
+            monitoringFlowAlert(
+                data.message || 'Housing unit added.',
+                'Success',
+                'success',
+                function() { window.location.reload(); }
+            );
         } else if (data.duplicate) {
             monitoringFlowAlert(data.error || 'Existing block or lot!', 'Add housing unit', 'warning', null);
         } else {
