@@ -43,7 +43,6 @@ VAULT_TYPE_TO_INTAKE_DOC = {
     'voter_certification': ('doc_voter_cert', 'RVT'),
     'signed_application': ('doc_signed_application', 'SIGNED'),
     'cdrrmo_cert': ('doc_cdrrmo', 'CDRRMO'),
-    'incident_report': ('doc_incident_report', 'INCRPT'),
     'isf_situational_docs': ('doc_isf_situational', 'ISF-SIT'),
 }
 
@@ -173,8 +172,7 @@ def _build_situation_vault_block(
     """
     Vault drawer: Applicant Situation (Options A–D) summary + situation-specific slots.
 
-    Option A: CDRRMO cert (vault); inspection report as vault ``Document(incident_report)``;
-    Ronda/CDRRMO on-site verification photos on FieldVerificationPhoto (not vault Documents).
+    Option A: CDRRMO cert (vault); Ronda/CDRRMO on-site verification photos on FieldVerificationPhoto (not vault Documents).
 
     Options B/C: single ISF situational documentation bundle (isf_situational_docs).
 
@@ -225,15 +223,6 @@ def _build_situation_vault_block(
         has_cdrrmo = ('cdrrmo_cert' in types_set) or bool(
             cert and getattr(cert, 'status', '') == 'certified'
         )
-        has_inspection_report = 'incident_report' in types_set
-        inspection_note = (
-            'Written or scanned inspection report on file in this vault.'
-            if has_inspection_report
-            else (
-                'No inspection report in the vault yet. Upload the written or scanned '
-                'report here (Inspection Report), or complete the site-inspection workflow in Application & Eligibility.'
-            )
-        )
         n_ronda = 0
         if cert:
             n_ronda = cert.field_photos.count()
@@ -267,22 +256,6 @@ def _build_situation_vault_block(
                         'cdrrmo_cert', has_cdrrmo, latest_doc_by_type, position
                     ),
                     **_vault_drawer_intake_fields('cdrrmo_cert'),
-                },
-                {
-                    'slot_id': 'inspection_report',
-                    'label': 'Inspection report (field / Ronda site visit)',
-                    'kind': 'document',
-                    'on_file': has_inspection_report,
-                    'type_key': 'incident_report',
-                    'add_file': not has_inspection_report,
-                    'note': inspection_note,
-                    'view_url': _vault_blob_view_url(
-                        'incident_report',
-                        has_inspection_report,
-                        latest_doc_by_type,
-                        position,
-                    ),
-                    **_vault_drawer_intake_fields('incident_report'),
                 },
                 {
                     'slot_id': 'ronda_verification',
@@ -971,9 +944,6 @@ def upload_document(request, position):
     Returns JSON response with upload status.
 
     URL: /documents/<position>/upload/
-
-    Staff-facing: ``incident_report`` is for the Inspection Report document only; field verification
-    photos belong on the CDRRMO record as FieldVerificationPhoto, not this vault type.
     """
     if not request.user.is_staff:
         return JsonResponse({'success': False, 'error': 'Access denied'}, status=403)

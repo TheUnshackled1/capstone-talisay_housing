@@ -142,7 +142,6 @@ APPLICANT_DOC_KEY_TO_VAULT_TYPE = {
     'doc_isf_situational': ISF_EXTRA_VAULT_DOC_TYPE,
     'doc_voter_cert': 'voter_certification',
     'doc_cdrrmo': CDRRMO_EXTRA_VAULT_DOC_TYPE,
-    'doc_incident_report': 'incident_report',
     'doc_signed_application': 'signed_application',
 }
 

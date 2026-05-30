@@ -19,12 +19,6 @@ class Document(models.Model):
     """
     Centralized digital archive for all applicant/beneficiary documents.
     Replaces physical folders as primary working reference.
-
-    Hazard / Option A invariant — do not collapse these into one vault slot:
-    - ``document_type='incident_report'``: written or scanned Inspection Report in the vault only.
-    - On-site verification photographs: stored as ``applications.FieldVerificationPhoto`` on the
-      applicant's ``CDRRMOCertification`` (``field_photos``), never as ``Document(incident_report)``.
-      Field desk code must not create ``Document`` rows for those images.
     """
     DOCUMENT_TYPE_CHOICES = [
         # Group A - Applicant Requirements
@@ -53,9 +47,8 @@ class Document(models.Model):
         # Group C - Post-Award
         ('lot_award', 'Lot Award Document'),
         ('cdrrmo_cert', 'CDRRMO Certification'),
-        ('incident_report', 'Inspection Report'),
         ('explanation_letter', 'Explanation Letter'),
-        
+
         # Other
         ('other', 'Other Document'),
     ]
@@ -208,9 +201,6 @@ def upsert_document_vault_upload(
     """
     Create or replace a vault Document for this applicant/type.
     Stores bytes in DocumentBlob and clears FileField so scans do not require disk writes.
-
-    When ``document_type == 'incident_report'``, this must remain the formal incident-report file only —
-    not Ronda/field verification photos (those stay ``FieldVerificationPhoto`` records).
     """
     raw = uploaded_file.read()
     if not raw:

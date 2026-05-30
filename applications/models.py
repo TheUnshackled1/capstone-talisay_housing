@@ -346,9 +346,6 @@ class FieldVerificationPhoto(models.Model):
     On-site photos taken by field/ronda staff as evidence for danger-zone verification.
     Stored when submitting field verification (Module 1, Channel B).
     Moved to applications app for Module 2+ operations.
-
-    These images are never vault ``Document`` rows and never use ``document_type='incident_report'``.
-    That vault slot is reserved for the written/scanned Inspection Report only.
     """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     certification = models.ForeignKey(

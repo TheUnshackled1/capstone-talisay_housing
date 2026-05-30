@@ -45,10 +45,10 @@ MODULE2_EVALUATIONS_LIST_PER_PAGE = 10
 MODULE2_READY_FOR_FORM_QUEUE_PER_PAGE = 10
 MODULE2_LOT_AWARDING_QUEUE_PER_PAGE = 10
 MODULE2_LIST_PER_PAGE = 20
-# Routed “Proceed to Form” applicants stay on Ready for Form until Application leaves this pipeline.
+# Routed "Proceed to Form" applicants stay on Ready for Form until Application leaves this pipeline.
 _MODULE2_FORM_PIPELINE_STATUSES = frozenset({'draft', 'completed'})
 # Minimum years of residence in Talisay City for Module 2 Layer 2 (2.6) eligibility.
-# Mirror of `MODULE1_MIN_YEARS_RESIDING_TALISAY` in intake/views.py — keep in sync.
+# Mirror of `MODULE1_MIN_YEARS_RESIDING_TALISAY` in intake/views.py - keep in sync.
 MODULE1_MIN_YEARS_RESIDING_TALISAY = 5
 ELIGIBILITY_CHECK_KEYS = frozenset({'property', 'age_residency', 'income', 'household', 'voter'})
 # Short labels for readiness hints (Application & Evaluation table).
@@ -71,7 +71,7 @@ def _relative_time_ago(dt):
     (intake imports applications models).
     """
     if dt is None:
-        return '—'
+        return '-'
     now = timezone.now()
     if timezone.is_naive(dt):
         dt = timezone.make_aware(dt, timezone.get_current_timezone())
@@ -101,7 +101,7 @@ def _relative_time_ago(dt):
 
 def send_sms(recipient_phone, message_content, trigger_event, applicant=None, module='applications'):
     """
-    Applications-module SMS: ``send_sms_for_applications`` → ``intake.utils.send_sms``
+    Applications-module SMS: ``send_sms_for_applications`` -> ``intake.utils.send_sms``
     (``SMS_SERVICE=console`` or ``semaphore`` in settings).
     """
     if module != 'applications':
@@ -439,12 +439,12 @@ def _module2_eligibility_snapshot(applicant, checked_by=None):
         blacklist_policy_note = (getattr(bl_entry, 'policy_note', '') or '').strip()
         blacklist_detail = bl_entry.get_reason_display()
         if bl_entry.notes:
-            blacklist_detail += f' — {bl_entry.notes[:200]}'
+            blacklist_detail += f' - {bl_entry.notes[:200]}'
         advisories.append(f'Blacklist match [{blacklist_source}] ({blacklist_detail}).')
         if blacklist_policy_note:
             advisories.append(blacklist_policy_note)
 
-    # Layer 2 profile checks — kept for API / Evaluate modal (passed vs failed).
+    # Layer 2 profile checks - kept for API / Evaluate modal (passed vs failed).
     # Policy: these do NOT restrict Priority vs Walk-in queue placement.
     income_ok = bool(applicant.is_income_eligible)
 
@@ -598,7 +598,7 @@ def _module2_eligibility_snapshot(applicant, checked_by=None):
         and not has_failed_checks
     )
 
-    # Subtitle under Eligibility status chip — mirrors template branch order.
+    # Subtitle under Eligibility status chip - mirrors template branch order.
     readiness_hint = ''
     if not is_bl:
         if not required_docs_complete:
@@ -620,7 +620,7 @@ def _module2_eligibility_snapshot(applicant, checked_by=None):
         elif has_failed_checks:
             labels = [ELIGIBILITY_CHECK_LABELS.get(k, k.replace('_', ' ')) for k in failed_check_keys]
             readiness_hint = (
-                'Compliance: failed checklist — '
+                'Compliance: failed checklist - '
                 + ', '.join(labels)
                 + '. Correct records or documents, then re-mark each as Passed to reach Ready for Form.'
             )
@@ -634,7 +634,7 @@ def _module2_eligibility_snapshot(applicant, checked_by=None):
             elif not queue_ready:
                 readiness_hint = (
                     'Compliance: finish the Applicant Situation step from Evaluate '
-                    '(checklist → situation modal → Continue / certify).'
+                    '(checklist -> situation modal -> Continue / certify).'
                 )
             elif not all_checks_decided:
                 pending_n = len(ELIGIBILITY_CHECK_KEYS - decided_check_keys)
@@ -792,7 +792,7 @@ def _module2_evaluations_applicants_queryset():
     Applicants shown on Application & Evaluation (Module 2 handoff + baseline Group A scans).
 
     Handed-off applicants who were auto-disqualified (e.g. blacklist) remain visible so staff
-    see the same record they promoted from Intake — not a silent drop after proceed SMS.
+    see the same record they promoted from Intake - not a silent drop after proceed SMS.
     """
     applicants = Applicant.objects.filter(
         Q(status__in=_MODULE2_EVALUATION_ACTIVE_STATUSES)
@@ -915,7 +915,7 @@ def _module2_applicant_row_payload(applicant, permissions, required_group_a_subm
 
     application = getattr(applicant, 'application', None)
 
-    # RequirementSubmission counts reflect Module 1 “List of Applicants” only — informational on this screen.
+    # RequirementSubmission counts reflect Module 1 "List of Applicants" only - informational on this screen.
     group_a_verified = RequirementSubmission.objects.filter(
         applicant_id=applicant.id,
         requirement__group='A',
@@ -993,9 +993,9 @@ def _module2_applicant_row_payload(applicant, permissions, required_group_a_subm
         signed_form_vault_url = signed_form_vault_url_upload
 
     proceeded_dt = applicant.module2_handoff_at or applicant.created_at
-    proceeded_ago = _relative_time_ago(proceeded_dt) if proceeded_dt else '—'
+    proceeded_ago = _relative_time_ago(proceeded_dt) if proceeded_dt else '-'
     routed_dt = applicant.form_queue_routed_at or proceeded_dt
-    routed_ago = _relative_time_ago(routed_dt) if routed_dt else '—'
+    routed_ago = _relative_time_ago(routed_dt) if routed_dt else '-'
     staff_display = _staff_handled_display(_module1_staff_handled_user(applicant))
 
     return {
@@ -1250,7 +1250,7 @@ def module2_ready_for_form_queue_rows(acting_user):
 def ready_for_form_queue(request, position):
     """
     Routed Proceed-to-Form queue: pending Generate Form, then Form Released pipeline (draft/completed)
-    until fully approved — hidden from the main Application & Evaluation ledger during that window.
+    until fully approved - hidden from the main Application & Evaluation ledger during that window.
     URL: /applications/<position>/ready-for-form/
     """
     allowed_positions = ['fourth_member', 'second_member', 'oic']
@@ -1427,7 +1427,7 @@ def lot_awarding_queue(request, position):
             'application': app,
             'applicant': applicant,
             'status_label': 'Ready for awarding',
-            'situation_label': applicant.get_displacement_reason_display() if applicant.displacement_reason else '—',
+            'situation_label': applicant.get_displacement_reason_display() if applicant.displacement_reason else '-',
             'routed_at': routed_dt,
             'routedAgo': _relative_time_ago(routed_dt),
             'can_award_lot': bool(permissions.get('can_award_lot')),
@@ -1934,7 +1934,7 @@ def _layer3_queue_placement_bundle(applicant, acting_user):
 @require_POST
 def record_displacement_classification(request, position):
     """
-    Module 2 — Layer 3 acknowledgement (particulars are captured at Module 1 registration).
+    Module 2 - Layer 3 acknowledgement (particulars are captured at Module 1 registration).
 
     For new applicants, ``review_only=1`` runs queue placement using the
     displacement reason and details already stored on the Applicant record.
@@ -1973,7 +1973,7 @@ def record_displacement_classification(request, position):
             queue_placement = _layer3_queue_placement_bundle(applicant, request.user)
             return JsonResponse({
                 'success': True,
-                'message': 'Layer 3 acknowledged — particulars are on file from Module 1 intake.',
+                'message': 'Layer 3 acknowledged - particulars are on file from Module 1 intake.',
                 'displacement_reason': reason,
                 'displacement_reason_display': applicant.get_displacement_reason_display(),
                 'queue_placement': queue_placement,
@@ -2076,7 +2076,7 @@ def record_displacement_classification(request, position):
 
         # Auto-promote queue placement now that Layer 3 has been classified.
         # Policy: once a displacement reason is recorded AND Layer 2 is clean,
-        # the applicant is moved to the Priority Queue immediately — regardless
+        # the applicant is moved to the Priority Queue immediately - regardless
         # of CDRRMO certification state for danger-zone cases. CDRRMO finalization
         # (`update_cdrrmo_certification` / `update_cdrrmo_status`) still owns the
         # demotion path: a `not_certified` outcome will move the applicant back
@@ -2133,7 +2133,7 @@ def field_verify_cdrrmo(request, position):
         cert = applicant.cdrrmo_certification
         cert_already_decided = (cert.status != 'pending')
 
-        # Evidence photos MUST stay FieldVerificationPhoto rows only — never Document(incident_report).
+        # Evidence photos stored as FieldVerificationPhoto rows only.
         photos = request.FILES.getlist('evidence_photos')
         if not photos:
             return JsonResponse({
@@ -2169,7 +2169,7 @@ def field_verify_cdrrmo(request, position):
                 ),
             })
 
-        # If cert already decided, append photos only — do NOT change decision/source/notes.
+        # If cert already decided, append photos only - do NOT change decision/source/notes.
         # If cert pending, flip status + persist decision metadata.
         if not cert_already_decided:
             cert.status = verification_decision
@@ -2267,7 +2267,7 @@ def update_cdrrmo_status(request, position):
                 msg_outcome = 'moved to Priority Queue'
                 applicant.disqualification_reason = ''
             else:
-                # Not certified finding approved by staff — assign to Walk-in queue.
+                # Not certified finding approved by staff - assign to Walk-in queue.
                 applicant.status = 'eligible'
                 queue_entry, _ = _ensure_module2_queue_entry(applicant, 'walk_in', added_by=request.user)
                 queue_type = 'Walk-in'
@@ -2294,7 +2294,7 @@ def update_cdrrmo_status(request, position):
                 'queue_type': queue_type
             })
 
-        # Staff rejected CDRRMO finding — assign to Walk-in queue instead of disqualifying.
+        # Staff rejected CDRRMO finding - assign to Walk-in queue instead of disqualifying.
         applicant.status = 'eligible'
         applicant.disqualification_reason = ''
         applicant.eligibility_checked_by = request.user
@@ -2355,14 +2355,10 @@ def evaluate_precheck(request, position):
 
 
 def _situation_certification_gate(applicant):
-    """
-    Required uploads/evidence before Module 2 staff finish the situation step.
-    Option D: informational only — no situation-specific vault uploads; staff uses Continue.
-    Option A: (1) vault “CDRRMO Certification”; (2) vault “Inspection Report” (written report,
-    scan/upload only — separate from photos); (3) site photographs on the CDRRMO field record via
-    FieldVerificationPhoto (never vault incident_report — no shared vault slot).
-    Options B/C: at least one ISF situational supporting document with labels keyed to situation.
-    """
+    # Required uploads/evidence before Module 2 staff finish the situation step.
+    # Option D: informational only - no situation-specific vault uploads
+    # Option A: (1) vault CDRRMO Certification; (2) site photographs on CDRRMO field record
+    # Options B/C: at least one ISF situational supporting document
     dr = (applicant.displacement_reason or '').strip()
     unknown = dr not in ('danger_zone', 'ejected', 'relocated', 'not_abc')
     base = {
@@ -2386,7 +2382,7 @@ def _situation_certification_gate(applicant):
             'key': 'option_d_walk_in',
             'label': 'Option D review',
             'detail': (
-                'Applicant Situation is Option D — none of A, B, or C. '
+                'Applicant Situation is Option D - none of A, B, or C. '
                 'No situation-specific supporting uploads apply.'
             ),
             'done': True,
@@ -2396,7 +2392,6 @@ def _situation_certification_gate(applicant):
     if dr == 'danger_zone':
         base['requires_documents'] = True
         has_cdrrmo_doc = applicant.documents.filter(document_type='cdrrmo_cert').exists()
-        has_incident_report = applicant.documents.filter(document_type='incident_report').exists()
         field_photo_count = 0
         try:
             field_photo_count = applicant.cdrrmo_certification.field_photos.count()
@@ -2407,30 +2402,18 @@ def _situation_certification_gate(applicant):
                 'key': 'cdrrmo_cert_document',
                 'label': 'CDRRMO certification (uploaded or scanned)',
                 'detail': (
-                    'Separate vault slot: upload or scan as document type “CDRRMO Certification” '
-                    '(not the Inspection Report).'
+                    'Separate vault slot: upload or scan as document type "CDRRMO Certification".'
                 ),
                 'done': bool(has_cdrrmo_doc),
                 'vault_document_type': 'cdrrmo_cert',
             },
             {
-                'key': 'incident_report_vault',
-                'label': 'Inspection Report',
-                'detail': (
-                    'Vault document type “Inspection Report” — formal written / scanned incident report. '
-                    'On-site images are attached separately via Field verification desk (next row).'
-                ),
-                'done': bool(has_incident_report),
-                'vault_document_type': 'incident_report',
-            },
-            {
                 'key': 'field_site_photos',
                 'label': 'Site photographs (field verification)',
                 'detail': (
-                    f'{field_photo_count} photo(s) on the applicant’s CDRRMO field record. '
+                    f"{field_photo_count} photo(s) on the applicant's CDRRMO field record. "
                     'Field inspectors attach images when submitting field certification '
-                    '(Dashboard → Field verification desk). '
-                    'These are not the same files as vault type “Inspection Report”.'
+                    '(Dashboard -> Field verification desk).'
                 ),
                 'done': field_photo_count >= 1,
             },
@@ -2491,9 +2474,9 @@ def _situation_certification_gate(applicant):
     return base
 
 
-# Eligibility evidence copy — vault row counts whether staff used Upload or Scan.
+# Eligibility evidence copy - vault row counts whether staff used Upload or Scan.
 M2_REQUIREMENT_ON_FILE_LABEL = 'On file (scan or upload)'
-M2_REQUIREMENT_MISSING_LABEL = 'Missing — scan or upload'
+M2_REQUIREMENT_MISSING_LABEL = 'Missing - scan or upload'
 
 
 @login_required
@@ -3199,7 +3182,7 @@ def record_evaluation_approval(request, position):
             'error': 'Record 2.8 approval only after queue assignment (Priority or Walk-in) is active.',
         }, status=400)
 
-    # NOTE: Layer 3 CDRRMO completion gate temporarily disabled — 2.8 approval can
+    # NOTE: Layer 3 CDRRMO completion gate temporarily disabled - 2.8 approval can
     # be recorded while CDRRMO certification is still Pending. Re-enable later if
     # the policy needs to require Certified/Denied before final 2.8 approval.
 
@@ -3504,7 +3487,7 @@ def update_routing(request, position):
     """
     Record OIC full approval after the applicant-signed application is on file (AJAX).
 
-    POST URL: ``applications:update_routing`` → ``/applications/staff/<position>/routing/update/``.
+    POST URL: ``applications:update_routing`` -> ``/applications/staff/<position>/routing/update/``.
 
     Applicant signature is captured in the vault scan (application status ``completed``).
     This endpoint sets ``standby``, records ``fully_approved_at``, and sends the standby SMS.
@@ -3737,11 +3720,11 @@ def proceed_to_lot_awarding_queue(request, position):
 def vacant_units_grouped_for_award_select():
     """
     Vacant housing units for the Award Lot picker (Module 4 inventory).
-    Matches dashboard: status 'Vacant — available' and no active units.LotAward.
+    Matches dashboard: status 'Vacant - available' and no active units.LotAward.
     """
     active_lot = LotAward.objects.filter(unit_id=OuterRef('pk'), status='active')
     units = (
-        HousingUnit.objects.filter(status='Vacant — available', site__is_active=True)
+        HousingUnit.objects.filter(status='Vacant - available', site__is_active=True)
         .annotate(_has_active=Exists(active_lot))
         .filter(_has_active=False)
         .select_related('site')
@@ -3791,10 +3774,10 @@ def _assign_housing_unit_after_lot_award(application, unit, awarded_by_user):
     """
     Create units.LotAward and mark HousingUnit occupied. ``unit`` must be vacant.
     """
-    if unit.status != 'Vacant — available':
+    if unit.status != 'Vacant - available':
         raise ValueError(
             f'This housing unit is not available for awarding (current status: {unit.status}). '
-            'Choose a unit listed as Vacant — available in Housing Unit & Occupancy Monitoring.'
+            'Choose a unit listed as Vacant - available in Housing Unit & Occupancy Monitoring.'
         )
 
     block = unit.block_number
@@ -3929,7 +3912,7 @@ def _sync_housing_unit_after_lot_award(application, site_name_raw, block_number,
         site=site,
         block_number=block,
         lot_number=lot,
-        defaults={'status': 'Vacant — available'},
+        defaults={'status': 'Vacant - available'},
     )
     _assign_housing_unit_after_lot_award(application, unit, awarded_by_user)
 
@@ -4016,7 +3999,7 @@ def lot_awarding_bulk_notify_sms(request, position):
             skipped_no_phone += 1
             sys.stderr.write(f"  WARNING: {applicant.full_name}: no phone -- skipped\n")
             continue
-        msg = f'{message_body} — {applicant.full_name}.'
+        msg = f'{message_body} - {applicant.full_name}.'
         ok = send_sms(
             phone,
             msg,
@@ -4078,12 +4061,12 @@ def award_lot(request, position):
             unit_for_assign = HousingUnit.objects.select_related('site').get(id=housing_unit_id)
         except (HousingUnit.DoesNotExist, ValueError):
             return JsonResponse({'success': False, 'error': 'Invalid or unknown housing unit.'}, status=400)
-        if unit_for_assign.status != 'Vacant — available':
+        if unit_for_assign.status != 'Vacant - available':
             return JsonResponse({
                 'success': False,
                 'error': (
                     f'This unit is not vacant (status: {unit_for_assign.status}). '
-                    'Refresh the page and choose a unit marked Vacant — available in Module 4.'
+                    'Refresh the page and choose a unit marked Vacant - available in Module 4.'
                 ),
             }, status=400)
         if LotAward.objects.filter(unit=unit_for_assign, status='active').exists():
