@@ -445,9 +445,14 @@ class HouseholdMember(models.Model):
     """
     RELATIONSHIP_CHOICES = [
         ('spouse', 'Spouse'),
-        ('child', 'Child'),
-        ('parent', 'Parent'),
-        ('sibling', 'Sibling'),
+        ('son', 'Son'),
+        ('daughter', 'Daughter'),
+        ('mother', 'Mother'),
+        ('father', 'Father'),
+        ('uncle', 'Uncle'),
+        ('aunt', 'Aunt'),
+        ('grandfather', 'Grandfather'),
+        ('grandmother', 'Grandmother'),
         ('grandchild', 'Grandchild'),
         ('live_in_partner', 'Live-in Partner'),
         ('other', 'Other Relative'),
