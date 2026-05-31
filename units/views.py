@@ -41,11 +41,16 @@ from units.monitoring_policy import (
     EXTENSION_BUILD_DAYS,
     EXTENSION_FINAL_INSPECTION_OFFSET_DAYS,
     EXTENSION_MIDPOINT_INSPECTION_OFFSET_DAYS,
+    FINAL_INSPECTION_INSPECTION_LABEL,
+    FINAL_INSPECTION_LABEL,
+    INITIAL_INSPECTION_INSPECTION_LABEL,
+    INITIAL_INSPECTION_LABEL,
     POSSESSION_GRACE_DAYS,
     TASK_TYPE_EXTENSION_FINAL,
     TASK_TYPE_EXTENSION_MIDPOINT,
     TASK_TYPE_FINAL_INSPECTION,
     TASK_TYPE_INITIAL_INSPECTION,
+    inspection_display_label,
 )
 
 # Module 4 inventory: who may add housing units (block/lot rows)
@@ -927,7 +932,7 @@ _FINAL_MONITORING_TASK_TYPES = frozenset({TASK_TYPE_FINAL_INSPECTION, TASK_TYPE_
 
 
 def _report_indicates_housing_unit_ready(report):
-    """Final 30 Day caretaker report: properly occupied + build finished → staff should choose Housing unit."""
+    """Final 120 Day caretaker report: properly occupied + build finished → staff should choose Housing unit."""
     if not report:
         return False
     return (
@@ -1178,16 +1183,16 @@ def get_unit_details(request, position, unit_id):
                     and housing_unit_on_file(active_lot_award, progress)
                 )
                 if task.task_type in (TASK_TYPE_INITIAL_INSPECTION, TASK_TYPE_EXTENSION_MIDPOINT):
-                    _task_title = '60 Day Inspection'
-                    _history_row_label = '60 Day'
+                    _task_title = inspection_display_label(task.task_type)
+                    _history_row_label = inspection_display_label(task.task_type, short=True)
                     if task.task_type == TASK_TYPE_EXTENSION_MIDPOINT:
-                        monitoring_window_line = 'Extension monitoring — 60-day midpoint'
+                        monitoring_window_line = 'Extension monitoring — end of 90-day window'
                     else:
-                        monitoring_window_line = 'Initial monitoring — first 60 days'
+                        monitoring_window_line = 'Initial monitoring — first 90 days'
                 elif task.task_type in (TASK_TYPE_FINAL_INSPECTION, TASK_TYPE_EXTENSION_FINAL):
-                    _task_title = '30 Day Inspection'
-                    _history_row_label = '30 Day'
-                    monitoring_window_line = 'Final monitoring — confirm lot build is finished'
+                    _task_title = inspection_display_label(task.task_type)
+                    _history_row_label = inspection_display_label(task.task_type, short=True)
+                    monitoring_window_line = 'Final monitoring — 120 days after 90 Day visit'
                 else:
                     _task_title = task.get_task_type_display()
                     _history_row_label = task.get_task_type_display().replace(' Inspection', '')
@@ -1224,7 +1229,7 @@ def get_unit_details(request, position, unit_id):
                     'report': report_summary,
                     'initial_monitoring_complete': initial_monitoring_complete,
                     'final_monitoring_program_complete': final_monitoring_program_complete,
-                    # Deprecated alias — use initial_monitoring_complete for 60 Day only.
+                    # Deprecated alias — use initial_monitoring_complete for 90 Day only.
                     'initial_monitoring_program_complete': initial_monitoring_complete,
                 }
                 if letter_extension_cards and task.task_type == TASK_TYPE_EXTENSION_FINAL:
@@ -1390,11 +1395,11 @@ def get_unit_details(request, position, unit_id):
                 )
             else:
                 ex_detail = (
-                    'Opened when the final 30 Day Inspection was marked No Progress (not the 60 Day). '
+                    f'Opened when the final {FINAL_INSPECTION_INSPECTION_LABEL} was marked No Progress (not the {INITIAL_INSPECTION_LABEL}). '
                     'Set the letter deadline in the panel below, notify by SMS, then scan the letter to grant another 30 days to build.'
                 )
             compliance_records.insert(0, {
-                'title': 'Final 30 Day No Progress — explanation letter',
+                'title': f'Final {FINAL_INSPECTION_LABEL} No Progress — explanation letter',
                 'status': ex_row_status,
                 'detail': ex_detail,
             })
@@ -1698,7 +1703,7 @@ def set_explanation_letter_deadline(request, position, unit_id):
     if not _explanation_review_triggered_by_day30_inspection(rev):
         return JsonResponse({
             'success': False,
-            'error': 'Explanation letter workflow applies only after the 30 Day Inspection is marked No Progress.',
+            'error': f'Explanation letter workflow applies only after the {FINAL_INSPECTION_INSPECTION_LABEL} is marked No Progress.',
         }, status=400)
     if rev.letter_document:
         return JsonResponse({'success': False, 'error': 'Letter already uploaded for this case.'}, status=400)
@@ -1849,7 +1854,7 @@ def upload_explanation_letter(request, position, unit_id):
     if not _explanation_review_triggered_by_day30_inspection(rev):
         return JsonResponse({
             'success': False,
-            'error': 'Explanation letter workflow applies only after the 30 Day Inspection is marked No Progress.',
+            'error': f'Explanation letter workflow applies only after the {FINAL_INSPECTION_INSPECTION_LABEL} is marked No Progress.',
         }, status=400)
     if not rev.letter_deadline_at:
         return JsonResponse({'success': False, 'error': 'Set the submission deadline before scanning the letter.'}, status=400)
@@ -1866,7 +1871,7 @@ def upload_explanation_letter(request, position, unit_id):
 
     return JsonResponse({
         'success': True,
-        'message': 'Explanation letter stored. A 60-day extension and monitoring tasks were created.',
+        'message': 'Explanation letter stored. A 90-day extension and monitoring tasks were created.',
     })
 
 
@@ -1915,7 +1920,7 @@ def disqualify_beneficiary_monitoring(request, position, unit_id):
     if not _explanation_review_triggered_by_day30_inspection(rev):
         return JsonResponse({
             'success': False,
-            'error': 'Explanation letter workflow applies only after the 30 Day Inspection is marked No Progress.',
+            'error': f'Explanation letter workflow applies only after the {FINAL_INSPECTION_INSPECTION_LABEL} is marked No Progress.',
         }, status=400)
     if not extension_final_failed:
         if not rev.letter_deadline_at:
@@ -1972,7 +1977,7 @@ def disqualify_beneficiary_monitoring(request, position, unit_id):
             )
             if extension_final_failed
             else (
-                'Module 4 — Final 30 Day No Progress: explanation letter office deadline passed '
+                f'Module 4 — Final {FINAL_INSPECTION_LABEL} No Progress: explanation letter office deadline passed '
                 'with no scanned or uploaded letter on file; beneficiary disqualified from the awarded lot.'
             ),
         )
@@ -1988,7 +1993,7 @@ def disqualify_beneficiary_monitoring(request, position, unit_id):
             )
             if extension_final_failed
             else (
-                'Explanation letter non-compliance after 30 Day No Progress (deadline passed, no letter on file). '
+                f'Explanation letter non-compliance after {FINAL_INSPECTION_LABEL} No Progress (deadline passed, no letter on file). '
                 f'Staff notes: {reason[:1500]}'
             )
         )
@@ -2265,7 +2270,13 @@ def blacklist_management(request, position):
                 "final extension monitoring phase. The housing lot has been repossessed and "
                 "the beneficiary permanently disqualified."
             )
-        elif 'Final 30 Day No Progress' in notes or 'deadline passed' in notes or 'Final 30 Day' in notes:
+        elif (
+            'Final 30 Day No Progress' in notes
+            or f'Final {FINAL_INSPECTION_LABEL} No Progress' in notes
+            or 'deadline passed' in notes
+            or 'Final 30 Day' in notes
+            or f'Final {FINAL_INSPECTION_LABEL}' in notes
+        ):
             item.formatted_notes = (
                 "Failed to submit the required written explanation letter within the official "
                 "30-day grace period for non-compliance (No Progress). The housing lot has been "
@@ -2351,7 +2362,7 @@ def notify_monitoring_task(request, task_id):
             return JsonResponse({
                 'success': False,
                 'error': (
-                    'Extension 60 Day midpoint is locked until the extension 30 Day Inspection '
+                    'Extension 90 Day visit is locked until the extension 30 Day Inspection '
                     'is completed and reviewed by staff.'
                 ),
             }, status=400)
@@ -2371,7 +2382,7 @@ def notify_monitoring_task(request, task_id):
         ):
             return JsonResponse({
                 'success': False,
-                'error': 'Day 30 is locked until the 60 Day Inspection is completed and reviewed by staff.',
+                'error': f'{FINAL_INSPECTION_LABEL} is locked until the {INITIAL_INSPECTION_INSPECTION_LABEL} is completed and reviewed by staff.',
             }, status=400)
 
     task.notified_at = timezone.now()
@@ -2399,7 +2410,7 @@ def _active_pending_explanation_for_lot_award(lot_award):
 
 def _latest_day30_triggered_explanation_review(lot_award):
     """
-    Most recent explanation case opened from a 30 Day No Progress assessment.
+    Most recent explanation case opened from a 120 Day No Progress assessment.
     Used when the letter workflow moved the review out of pending_review (e.g. approved
     after letter on file) but staff must still disqualify after extension final Failed.
     """
@@ -2417,7 +2428,7 @@ def _latest_day30_triggered_explanation_review(lot_award):
 
 
 def _explanation_review_triggered_by_day30_inspection(rev):
-    """True when the case was opened from a 30 Day Inspection monitoring report."""
+    """True when the case was opened from a 120 Day Inspection monitoring report."""
     if not rev or not rev.triggered_by_report_id:
         return False
     report = rev.triggered_by_report
@@ -2427,7 +2438,7 @@ def _explanation_review_triggered_by_day30_inspection(rev):
 
 def _open_explanation_review_after_no_progress(report, _acting_user):
     """
-    When staff marks the **30 Day** monitoring report as No Progress, open (or reuse)
+    When staff marks the **120 Day** monitoring report as No Progress, open (or reuse)
     an explanation review and notify the beneficiary to submit a written explanation letter.
 
     If a pending explanation case already exists for this lot award, do not create a
@@ -2455,12 +2466,12 @@ def _open_explanation_review_after_no_progress(report, _acting_user):
 
 def _grant_monitoring_extension_from_explanation_review(review, approved_by_user):
     """
-    After staff uploads the explanation letter on file, grant a 60-day extension window
-    with Month 1 / Month 2 monitoring tasks (extension 30 Day at day 30, midpoint at day 60).
+    After staff uploads the explanation letter on file, grant a 90-day extension window
+    with extension monitoring tasks (extension 30 Day at day 30, 90 Day visit at day 90).
 
     The extension must begin only after initial monitoring has finished: the first day
     of the build extension is the calendar day after the letter is received, and is
-    never earlier than the day after the original 30 Day inspection due date that
+    never earlier than the day after the original 120 Day inspection due date that
     triggered this case.
     """
     if ExtensionRecord.objects.filter(explanation_review=review).exists():
@@ -2490,7 +2501,7 @@ def _grant_monitoring_extension_from_explanation_review(review, approved_by_user
             day30_due = d30.due_date
 
     earliest_start = day30_due + timedelta(days=1) if day30_due else today + timedelta(days=1)
-    # First build-extension day: day after letter on file, but not before initial 30 Day window has ended.
+    # First build-extension day: day after letter on file, but not before initial 120 Day window has ended.
     start = max(today + timedelta(days=1), earliest_start)
     end = start + timedelta(days=EXTENSION_BUILD_DAYS)
 
@@ -2524,7 +2535,7 @@ def _grant_monitoring_extension_from_explanation_review(review, approved_by_user
             extension_start_date=start,
             extension_end_date=end,
             approved_by=approved_by_user,
-            approval_notes='60-day extension after explanation letter compliance.',
+            approval_notes='90-day extension after explanation letter compliance.',
         )
 
         OccupancyMonitoringCycle.objects.filter(lot_award=lot_award, is_active=True).update(is_active=False)
@@ -2561,7 +2572,7 @@ def _grant_monitoring_extension_from_explanation_review(review, approved_by_user
 
 def _complete_original_program_on_day30_normal_progress(task, acting_user):
     """
-    When staff marks the Day 30 report as Normal Progress while the original 30-day
+    When staff marks the 120 Day report as Normal Progress while the original monitoring
     monitoring cycle is still active (no extension cycle running), close out that
     cycle, finalize construction progress for the awarded lot (lot → housing unit on
     file), and clear monitoring escalation on the unit row.
@@ -2594,7 +2605,7 @@ def _complete_original_program_on_day30_normal_progress(task, acting_user):
         stage='completed',
         percent_complete=100,
         visit_date=today,
-        notes='Day 30 inspection: Normal Progress — final monitoring complete; awarded lot recorded as housing unit with construction complete.',
+        notes='120 Day inspection: Normal Progress — final monitoring complete; awarded lot recorded as housing unit with construction complete.',
         created_by=acting_user,
     )
     progress.stage = 'completed'
@@ -2701,11 +2712,11 @@ def assess_monitoring_report(request, task_id):
     """
     Staff marks a submitted caretaker monitoring report as normal progress or no progress.
 
-    Day 30 + Normal Progress while the original monitoring cycle is active closes the
+    120 Day + Normal Progress while the original monitoring cycle is active closes the
     award-cycle monitoring program and finalizes construction for the lot (housing unit framing).
 
-    No Progress on the **30 Day Inspection** opens the explanation-letter workflow
-    (deadline, scan, extension / disqualify). No Progress on the 60 Day Inspection does not.
+    No Progress on the **120 Day Inspection** opens the explanation-letter workflow
+    (deadline, scan, extension / disqualify). No Progress on the 90 Day Inspection does not.
     """
     allowed_positions = _MODULE4_ADD_HOUSING_UNIT_POSITIONS | FIELD_DESK_POSITIONS
     if request.user.position not in allowed_positions:
@@ -3097,7 +3108,7 @@ def submit_monitoring_report(request, task_id):
 def _evaluate_monitoring_report(report):
     """
     Evaluates monitoring report against three rules for auto-escalation.
-    - Rule 1: Detect no progress at Day 30
+    - Rule 1: Detect no progress at 120 Day
     - Rule 2: Handle extension period failures
     - Rule 3: Continue normal monitoring if progress shown
     """

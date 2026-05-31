@@ -3,6 +3,8 @@ from django.conf import settings
 from django.core.validators import RegexValidator
 import uuid
 from units.monitoring_policy import (
+    FINAL_INSPECTION_INSPECTION_LABEL,
+    INITIAL_INSPECTION_INSPECTION_LABEL,
     TASK_TYPE_EXTENSION_FINAL,
     TASK_TYPE_EXTENSION_MIDPOINT,
     TASK_TYPE_EXTENSION_MONTH_3,
@@ -62,15 +64,19 @@ class RelocationSite(models.Model):
 
     @property
     def vacant_units_count(self):
-        return self.units.filter(status='Vacant — available').count()
+        return self.units.filter(status=HousingUnit.STATUS_VACANT_AVAILABLE).count()
 
 
 class HousingUnit(models.Model):
     """
     Individual housing unit (block/lot) at a relocation site.
     """
+    STATUS_VACANT_AVAILABLE = 'Vacant — available'
+    # Legacy typo (ASCII hyphen) from early lot-award code — still match for safety.
+    STATUS_VACANT_AVAILABLE_LEGACY = 'Vacant - available'
+
     STATUS_CHOICES = [
-        ('Vacant — available', 'Vacant — available'),
+        (STATUS_VACANT_AVAILABLE, 'Vacant — available'),
         ('Occupied', 'Occupied'),
         ('Under notice (30-day)', 'Under notice (30-day)'),
         ('Final notice (10-day)', 'Final notice (10-day)'),
@@ -103,7 +109,11 @@ class HousingUnit(models.Model):
         verbose_name="Area (sq.m.)"
     )
 
-    status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='Vacant — available')
+    status = models.CharField(
+        max_length=50,
+        choices=STATUS_CHOICES,
+        default=STATUS_VACANT_AVAILABLE,
+    )
 
     # Occupancy tracking (for monitoring dashboard)
     occupant_name = models.CharField(max_length=200, blank=True, null=True)
@@ -142,6 +152,27 @@ class HousingUnit(models.Model):
     
     def __str__(self):
         return f"{self.site.code} Block {self.block_number} Lot {self.lot_number}"
+
+    @classmethod
+    def is_vacant_available_status(cls, value) -> bool:
+        """True when status is Module 4 vacant (em dash or legacy hyphen spelling)."""
+        if not value:
+            return False
+        text = (value or '').strip()
+        if text in (cls.STATUS_VACANT_AVAILABLE, cls.STATUS_VACANT_AVAILABLE_LEGACY):
+            return True
+        normalized = text
+        for ch in ('\u2014', '\u2013', '\u2212'):
+            normalized = normalized.replace(ch, '-')
+        return normalized == cls.STATUS_VACANT_AVAILABLE_LEGACY
+
+    @classmethod
+    def vacant_available_status_filter(cls):
+        from django.db.models import Q
+
+        return Q(status=cls.STATUS_VACANT_AVAILABLE) | Q(
+            status=cls.STATUS_VACANT_AVAILABLE_LEGACY
+        )
 
     @property
     def current_occupant(self):
@@ -666,11 +697,11 @@ class MonitoringTask(models.Model):
     Scheduled inspection task assigned to caretaker/ronda.
     Created automatically when lot is awarded or extension is approved.
 
-    Task types include: Day 60 Inspection, Day 30 Inspection, Month 1-3 Inspections, Final Inspection.
+    Task types include: Day 90 Inspection, Day 120 Inspection, extension visits, Final Inspection.
     """
     TASK_TYPE_CHOICES = [
-        (TASK_TYPE_INITIAL_INSPECTION, 'Day 60 Inspection'),
-        (TASK_TYPE_FINAL_INSPECTION, 'Day 30 Inspection'),
+        (TASK_TYPE_INITIAL_INSPECTION, INITIAL_INSPECTION_INSPECTION_LABEL),
+        (TASK_TYPE_FINAL_INSPECTION, FINAL_INSPECTION_INSPECTION_LABEL),
         (TASK_TYPE_EXTENSION_MIDPOINT, 'Extension Month 1 — Inspection'),
         (TASK_TYPE_EXTENSION_FINAL, 'Extension Month 2 — Inspection'),
         (TASK_TYPE_EXTENSION_MONTH_3, 'Extension Month 3 — Inspection'),
@@ -715,7 +746,7 @@ class MonitoringTask(models.Model):
     days_from_award = models.PositiveIntegerField(
         help_text=(
             "Monitoring day after the 30-day possession grace period when the visit is due "
-            "(60 for the first visit; 90 for the final 30 Day visit, i.e. 30 days after the 60 Day due date)."
+            "(90 for the first visit; 210 for the final visit, i.e. 120 calendar days after the 90 Day due date)."
         ),
     )
 

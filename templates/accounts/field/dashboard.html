@@ -1639,136 +1639,208 @@
         margin-bottom: 10px;
     }
 
-    /* ----- Formal field verification modal (THA) ----- */
-    /* === FIELD CERTIFICATION MODAL — design-system polish ===
-       Colors and rhythm match the active work area (emerald +
-       Republic accent), with color-coded decision cards. */
-    .tha-field-modal-inner {
-        background: #fff;
-        margin: 2rem auto;
-        width: 92%;
-        max-width: 44rem;
-        border-radius: 14px;
-        box-shadow:
-            0 25px 50px -12px rgba(15, 23, 42, 0.4),
-            0 16px 32px -8px rgba(15, 23, 42, 0.18);
+    /* Add Case modal layout matching intake Applicant Registration Sheet (tha-reg-modal) */
+    .tha-case-modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.55);
+        z-index: 1100;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+        flex-direction: column;
+    }
+    .tha-case-reg-modal.modal-content {
+        width: min(94%, 52rem);
+        max-width: min(94%, 52rem);
+        max-height: 90vh;
+        display: flex;
+        flex-direction: column;
         overflow: hidden;
+        border-radius: 1rem;
+        background: #fff;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.12);
         border: 1px solid #cbd5e1;
     }
-    .tha-field-modal-header {
-        position: relative;
-        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
-        color: #f8fafc;
-        padding: 1.4rem 1.5rem 1.25rem;
-        border-bottom: none;
-    }
-    .tha-field-modal-header::before {
-        content: '';
-        position: absolute;
-        top: 0; left: 0; right: 0;
-        height: 3px;
-        background: linear-gradient(90deg, #f59e0b 0%, #fcd34d 50%, #f59e0b 100%);
-    }
-    .tha-field-modal-header::after {
-        content: '';
-        position: absolute;
-        bottom: 0; left: 0; right: 0;
-        height: 3px;
-        background: linear-gradient(90deg, #047857 0%, #10b981 35%, #fbbf24 70%, #10b981 100%);
-    }
-    .tha-field-modal-header-row {
-        display: flex;
-        align-items: center;
-        gap: 0.95rem;
-    }
-    .tha-field-modal-crest {
-        flex-shrink: 0;
-        width: 3rem;
-        height: 3rem;
-        border: 2px solid rgba(251, 191, 36, 0.55);
-        border-radius: 50%;
+    .tha-case-reg-modal .modal-header {
+        background: #fff;
+        border-bottom: 1px solid #e5e9ef;
+        padding: 0.85rem 1.25rem;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-family: 'Source Serif Pro', Georgia, serif;
-        font-size: 0.625rem;
-        font-weight: 700;
-        letter-spacing: 0.12em;
-        line-height: 1.1;
-        text-align: center;
-        color: #0f172a;
-        background: #f8fafc;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.3), 0 0 0 4px rgba(251, 191, 36, 0.08);
+        position: relative;
+        flex-shrink: 0;
     }
-    .tha-field-modal-header h2 {
+    .tha-case-reg-modal .modal-title {
         margin: 0;
-        font-family: 'Source Serif Pro', Georgia, serif;
-        font-size: 1.2rem;
+        font-family: Georgia, 'Times New Roman', serif;
+        font-size: 1rem;
         font-weight: 700;
-        letter-spacing: -0.005em;
-        color: #ffffff;
-        line-height: 1.25;
+        color: #064e3b;
     }
-    .tha-field-modal-header p {
-        margin: 0.3rem 0 0;
-        font-size: 0.75rem;
-        font-weight: 500;
-        letter-spacing: 0.02em;
-        color: #fde68a;
-        opacity: 0.92;
+    .tha-case-reg-modal .btn-close {
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        background: #f1f5f9;
+        color: #475569;
+        border: none;
+        border-radius: 8px;
+        width: 2rem;
+        height: 2rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: background 0.15s ease, color 0.15s ease;
     }
-    .tha-field-modal-body {
-        padding: 1.5rem 1.5rem 1.75rem;
-        max-height: 72vh;
+    .tha-case-reg-modal .btn-close:hover { background: #e2e8f0; color: #0f172a; }
+    .tha-case-reg-modal .modal-body {
+        flex: 1;
         overflow-y: auto;
-        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        overflow-x: hidden;
+        padding: 0 1.5rem 1.25rem;
+        max-height: calc(90vh - 8rem);
     }
-    .tha-field-claim-panel {
-        margin-bottom: 1.5rem;
-        padding: 1.1rem 1.2rem 1.2rem;
-        background: linear-gradient(180deg, #eff6ff 0%, #ffffff 30%);
-        border: 1px solid #bfdbfe;
-        border-left: 4px solid #1d4ed8;
-        border-radius: 10px;
-        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    .tha-case-reg-modal .tha-form-header {
+        background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+        color: #f8fafc;
+        padding: 1.25rem 1.5rem 1.1rem;
+        margin: 0 -1.5rem 1.25rem;
+        text-align: center;
+        position: relative;
     }
-    .tha-field-claim-title {
-        margin: 0 0 0.95rem;
-        padding-bottom: 0.55rem;
-        border-bottom: 1px solid #bfdbfe;
-        font-family: 'Source Serif Pro', Georgia, serif;
-        font-size: 0.95rem;
-        font-weight: 700;
-        letter-spacing: -0.005em;
-        text-transform: none;
-        color: #1e3a8a;
+    .tha-case-reg-modal .tha-form-header::after {
+        content: '';
+        position: absolute;
+        left: 0; right: 0; bottom: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #047857 0%, #10b981 50%, #6ee7b7 100%);
+    }
+    .tha-case-reg-modal .tha-form-crest {
+        width: auto;
+        max-width: min(100%, 16rem);
+        height: 3rem;
+        margin: 0 auto 0.5rem;
+        border: 2px solid rgba(248, 250, 252, 0.95);
+        border-radius: 0.375rem;
+        overflow: hidden;
         display: flex;
         align-items: center;
-        gap: 0.45rem;
+        justify-content: center;
+        background: #fff;
+        padding: 0.15rem 0.45rem;
     }
-    .tha-field-claim-title::before {
-        content: '▸';
-        color: #1d4ed8;
-        font-size: 0.85rem;
+    .tha-case-reg-modal .tha-form-crest img {
+        height: 100%;
+        max-width: 100%;
+        object-fit: contain;
+    }
+    .tha-case-reg-modal .tha-form-header h2 {
+        margin: 0;
+        font-family: Georgia, 'Times New Roman', serif;
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #f8fafc;
+    }
+    .tha-case-reg-modal .tha-form-subtitle {
+        margin: 0.3rem 0 0;
+        font-size: 0.78rem;
+        color: #cbd5e1;
+    }
+    .tha-case-reg-modal .tha-section-block {
+        background: #fff;
+        border: 1px solid #e5e9ef;
+        border-left: 3px solid #10b981;
+        border-radius: 0.65rem;
+        padding: 1.05rem 1.15rem 1rem;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+        margin-bottom: 0.95rem;
+        text-align: left;
+    }
+    .tha-case-reg-modal .tha-section-title {
+        color: #064e3b;
+        font-size: 0.7rem;
         font-weight: 800;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        margin: 0 0 0.95rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #e5e9ef;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-family: inherit;
     }
+    .tha-case-reg-modal .tha-section-title::before {
+        content: '';
+        width: 0.45rem;
+        height: 0.45rem;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+        flex-shrink: 0;
+    }
+    .tha-case-reg-modal .modal-footer {
+        flex-shrink: 0;
+        position: sticky;
+        bottom: 0;
+        background: #f8fafc;
+        border-top: 1px solid #e2e8f0;
+        padding: 0.85rem 1.5rem;
+        display: flex;
+        gap: 0.75rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    .tha-case-reg-modal .btn-modal {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        min-width: 12rem;
+        padding: 0.6rem 1.25rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        border-radius: 8px;
+        cursor: pointer;
+        border: 1px solid transparent;
+        transition: all 0.2s ease;
+    }
+    .tha-case-reg-modal .btn-modal.success {
+        background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+        color: #fff;
+        border-color: #047857;
+    }
+    .tha-case-reg-modal .btn-modal.success:hover {
+        background: linear-gradient(180deg, #059669 0%, #047857 100%);
+    }
+    .tha-case-reg-modal .btn-modal.danger {
+        background: #fff;
+        color: #991b1b;
+        border-color: #fca5a5;
+    }
+    .tha-case-reg-modal .btn-modal.danger:hover { background: #fef2f2; }
+
+    /* Verification Sworn Declaration Claim Grid */
     .tha-field-claim-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 0.75rem;
     }
     .tha-field-claim-cell {
-        background: #fff;
+        background: #f8fafc;
         padding: 0.78rem 0.9rem;
-        border: 1px solid #dbeafe;
+        border: 1px solid #e2e8f0;
         border-radius: 8px;
-        box-shadow: 0 1px 1px rgba(15, 23, 42, 0.03);
     }
     .tha-field-claim-cell .fld-lbl {
         display: block;
         font-size: 0.62rem;
         font-weight: 800;
-        color: #1e40af;
+        color: #64748b;
         text-transform: uppercase;
         letter-spacing: 0.08em;
         margin-bottom: 0.32rem;
@@ -1781,180 +1853,186 @@
         line-height: 1.4;
         word-break: break-word;
     }
-    .tha-field-modal-divider {
-        height: 1px;
-        background: linear-gradient(90deg, transparent 0%, #cbd5e1 25%, #94a3b8 50%, #cbd5e1 75%, transparent 100%);
-        margin: 1.5rem 0;
-    }
+
+    /* CDRRMO Panel styling */
     .tha-field-cdrrmo-panel {
-        background: linear-gradient(180deg, #fffbeb 0%, #ffffff 30%) !important;
+        background: #fff !important;
         border: 1px solid #fde68a !important;
-        border-left: 4px solid #d97706 !important;
-        border-radius: 10px !important;
+        border-left: 3px solid #d97706 !important;
+        border-radius: 0.65rem !important;
+        padding: 1.05rem 1.15rem 1rem !important;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+        margin-bottom: 0.95rem !important;
+        text-align: left;
     }
     .tha-field-cdrrmo-panel .cdrrmo-cert-header {
-        border-bottom-color: #fde68a !important;
+        border-bottom: 1px solid #fde68a !important;
+        margin-bottom: 0.95rem !important;
+        padding-bottom: 0.5rem !important;
     }
     .tha-field-cdrrmo-panel .cdrrmo-cert-header h3 {
         color: #92400e !important;
-        font-family: 'Source Serif Pro', Georgia, serif;
-        letter-spacing: -0.005em;
-        font-weight: 700;
+        font-size: 0.7rem !important;
+        font-weight: 800 !important;
+        letter-spacing: 0.14em !important;
+        text-transform: uppercase !important;
+        margin: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 0.5rem !important;
     }
-    .tha-field-cdrrmo-panel .cdrrmo-cert-cell {
-        border-color: #fde68a !important;
-        border-radius: 8px !important;
+    .tha-field-cdrrmo-panel .cdrrmo-cert-header h3::before {
+        content: '' !important;
+        width: 0.45rem !important;
+        height: 0.45rem !important;
+        border-radius: 50% !important;
+        background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%) !important;
+        flex-shrink: 0 !important;
+        display: inline-block !important;
     }
-    .tha-field-cdrrmo-panel .cdrrmo-cert-label {
-        color: #b45309 !important;
+    .cdrrmo-cert-body {
+        display: flex;
+        flex-direction: column;
+        gap: 0.85rem;
+    }
+    .cdrrmo-cert-cell {
+        background: #fffbeb;
+        padding: 0.78rem 0.9rem;
+        border: 1px solid #fde68a;
+        border-radius: 8px;
+    }
+    .cdrrmo-cert-label {
+        display: block;
+        font-size: 0.62rem;
         font-weight: 800;
+        color: #b45309;
         text-transform: uppercase;
         letter-spacing: 0.06em;
+        margin-bottom: 0.32rem;
     }
-    .tha-field-form-actions {
+    .cdrrmo-cert-body p {
+        margin: 0;
+        font-size: 0.92rem;
+        font-weight: 600;
+        color: #78350f;
+        line-height: 1.4;
+    }
+    .cdrrmo-cert-row2 {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 0.75rem;
     }
-    .tha-field-btn-submit {
-        background: linear-gradient(135deg, #059669 0%, #047857 100%);
-        color: #fff;
-        padding: 0.85rem 1rem;
-        border: 1px solid #047857;
-        border-radius: 9px;
-        cursor: pointer;
-        font-weight: 700;
-        font-size: 0.875rem;
-        letter-spacing: 0.02em;
-        transition: all 0.2s ease;
-        box-shadow:
-            0 1px 2px rgba(15, 23, 42, 0.06),
-            0 6px 16px rgba(16, 185, 129, 0.18),
-            inset 0 1px 0 rgba(255, 255, 255, 0.16);
-    }
-    .tha-field-btn-submit:hover {
-        background: linear-gradient(135deg, #047857 0%, #065f46 100%);
-        transform: translateY(-1px);
-        box-shadow:
-            0 1px 2px rgba(15, 23, 42, 0.08),
-            0 12px 28px rgba(16, 185, 129, 0.30),
-            inset 0 1px 0 rgba(255, 255, 255, 0.18);
-    }
-    .tha-field-btn-cancel {
-        background: #dc2626;
-        color: #ffffff;
-        padding: 0.85rem 1rem;
-        border: 1px solid #dc2626;
-        border-radius: 9px;
-        cursor: pointer;
-        font-weight: 700;
-        font-size: 0.875rem;
-        letter-spacing: 0.02em;
-        transition: all 0.2s ease;
-    }
-    .tha-field-btn-cancel:hover {
-        background: #b91c1c;
-        border-color: #b91c1c;
-        color: #ffffff;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 14px rgba(220, 38, 38, 0.35);
-    }
-    @media (max-width: 768px) {
-        /* ── Field Certification Modal: full-width, natural height ── */
-        #verificationModal {
-            padding: 0.5rem 0 1.5rem !important;
-        }
 
-        .tha-field-modal-inner {
+    /* Evidence input section */
+    .field-evidence-section {
+        background: #fff;
+        padding: 0;
+        margin-bottom: 0;
+    }
+    .field-evidence-label {
+        display: none; /* Handled by section title now */
+    }
+    .field-evidence-hint {
+        font-size: 0.68rem;
+        color: #64748b;
+        margin: 0 0 0.85rem;
+        line-height: 1.4;
+    }
+    .field-evidence-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.65rem;
+        margin-bottom: 0.85rem;
+    }
+    .field-evidence-file-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.55rem 0.95rem;
+        background: #fff;
+        color: #1e293b;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        margin-bottom: 0.85rem;
+    }
+    .field-evidence-file-btn:hover {
+        background: #f8fafc;
+        border-color: #94a3b8;
+    }
+    .field-evidence-strip {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.65rem;
+        margin-top: 0.75rem;
+    }
+
+    @media (max-width: 768px) {
+        .tha-case-modal-overlay {
+            padding: 0 !important;
+        }
+        .tha-case-reg-modal.modal-content {
             width: 100% !important;
             max-width: 100% !important;
-            margin: 0 !important;
+            height: 100% !important;
+            max-height: 100% !important;
             border-radius: 0 !important;
             border: none !important;
-            /* KEY FIX: let content flow — outer overlay handles scrolling */
-            overflow: visible !important;
         }
-
-        /* Compact header */
-        .tha-field-modal-header {
-            padding: 1rem 1rem 0.9rem !important;
+        .tha-case-reg-modal .modal-header {
+            padding: 0.75rem 1rem !important;
         }
-
-        .tha-field-modal-crest {
-            width: 2.4rem !important;
-            height: 2.4rem !important;
-            font-size: 0.55rem !important;
+        .tha-case-reg-modal .modal-title {
+            font-size: 0.95rem !important;
         }
-
-        .tha-field-modal-header h2 {
-            font-size: 1rem !important;
+        .tha-case-reg-modal .modal-body {
+            padding: 0 1rem 1rem !important;
+            max-height: calc(100vh - 7rem) !important;
         }
-
-        .tha-field-modal-body {
-            padding: 1rem 0.9rem 1.4rem !important;
+        .tha-case-reg-modal .tha-form-header {
+            padding: 1rem 1rem 0.85rem !important;
+            margin: 0 -1rem 1rem !important;
         }
-
-        /* Claim panel: compact padding */
-        .tha-field-claim-panel {
-            padding: 0.85rem 0.9rem !important;
-            margin-bottom: 1rem !important;
+        .tha-case-reg-modal .tha-form-crest {
+            height: 2.5rem !important;
+            margin-bottom: 0.4rem !important;
         }
-
-        /* Reference info grid: stack to 1 column */
-        .tha-field-claim-grid {
-            grid-template-columns: 1fr !important;
-            gap: 0.6rem !important;
+        .tha-case-reg-modal .tha-form-header h2 {
+            font-size: 0.95rem !important;
         }
-
-        .tha-field-claim-cell {
-            padding: 0.6rem 0.75rem !important;
+        .tha-case-reg-modal .tha-form-subtitle {
+            font-size: 0.72rem !important;
         }
-
-        .tha-field-claim-cell p {
-            font-size: 0.82rem !important;
+        .tha-case-reg-modal .tha-section-block {
+            padding: 0.85rem 0.9rem 0.8rem !important;
+            margin-bottom: 0.75rem !important;
         }
-
-        /* CDRRMO panel: compact */
-        .cdrrmo-cert-panel {
-            padding: 0.85rem 0.9rem !important;
-            margin-bottom: 1rem !important;
-        }
-
-        .cdrrmo-cert-cell {
-            padding: 0.65rem 0.8rem !important;
-        }
-
-        .cdrrmo-cert-cell p {
-            font-size: 0.85rem !important;
-        }
-
-        /* CDRRMO row2: stack to 1 column */
+        .tha-field-claim-grid,
         .cdrrmo-cert-row2 {
             grid-template-columns: 1fr !important;
             gap: 0.6rem !important;
         }
-
-        /* ── Field evidence section ── */
-        .field-evidence-section {
-            padding: 1rem 0.9rem !important;
-            text-align: left !important;
-            margin-bottom: 1rem !important;
+        .tha-field-claim-cell {
+            padding: 0.6rem 0.75rem !important;
         }
-
-        .field-evidence-hint {
-            text-align: left !important;
-            font-size: 0.8rem !important;
-            max-width: 100% !important;
+        .tha-field-claim-cell p {
+            font-size: 0.82rem !important;
         }
-
-        /* Evidence buttons: full-width stacked column */
+        .cdrrmo-cert-cell {
+            padding: 0.65rem 0.8rem !important;
+        }
+        .cdrrmo-cert-cell p {
+            font-size: 0.85rem !important;
+        }
         .field-evidence-buttons {
             flex-direction: column !important;
             align-items: stretch !important;
             width: 100% !important;
             gap: 0.55rem !important;
         }
-
         .table-verify-btn,
         .field-evidence-file-btn {
             width: 100% !important;
@@ -1965,52 +2043,12 @@
             padding: 0.7rem 1rem !important;
             font-size: 0.8rem !important;
         }
-
-        .field-evidence-strip {
-            justify-content: flex-start !important;
-        }
-
-        /* ── Submit / Close actions: stack vertically ── */
-        .tha-field-form-actions {
-            grid-template-columns: 1fr !important;
-            gap: 0.6rem !important;
-        }
-
-        /* Submit first, Cancel second */
-        .tha-field-btn-submit {
-            order: 1 !important;
-            padding: 0.9rem 1rem !important;
-        }
-
-        .tha-field-btn-cancel {
-            order: 2 !important;
+        .tha-case-reg-modal .modal-footer {
             padding: 0.75rem 1rem !important;
         }
-
-        /* Divider tighter */
-        .tha-field-modal-divider {
-            margin: 1rem 0 !important;
-        }
-    }
-
-    /* Extra small phones (320–480px) */
-    @media (max-width: 480px) {
-        .tha-field-modal-header h2 {
-            font-size: 0.9rem !important;
-        }
-
-        .tha-field-modal-crest {
-            display: none !important;
-        }
-
-        .tha-field-claim-cell .fld-lbl,
-        .cdrrmo-cert-cell .cdrrmo-cert-label {
-            font-size: 0.58rem !important;
-        }
-
-        .tha-field-claim-cell p,
-        .cdrrmo-cert-cell p {
-            font-size: 0.78rem !important;
+        .tha-case-reg-modal .btn-modal {
+            width: 100% !important;
+            min-width: 0 !important;
         }
     }
 
@@ -2597,6 +2635,8 @@
             }
             document.addEventListener('keydown', function(e) {
                 if (e.key !== 'Escape') return;
+                const vm = document.getElementById('verificationModal');
+                if (vm && vm.style.display === 'flex') { closeVerificationModal(); return; }
                 const cm = document.getElementById('certifiedApplicantsModal');
                 if (cm && cm.style.display === 'flex') { closeCertifiedApplicantsModal(); return; }
                 const tm = document.getElementById('todaySummaryModal');
@@ -2997,7 +3037,7 @@
                 applyFieldCdrrmoMeta(null);
             }
 
-            document.getElementById('verificationModal').style.display = 'block';
+            document.getElementById('verificationModal').style.display = 'flex';
             document.body.style.overflow = 'hidden';
         }
 
@@ -3251,71 +3291,77 @@
 </script>
 
     <!-- FIELD VERIFICATION MODAL -->
-    <div id="verificationModal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(15, 23, 42, 0.55); overflow-y: auto; padding: 1rem 0;">
-        <div class="tha-field-modal-inner" role="dialog" aria-labelledby="verificationModalTitle" aria-modal="true">
-            <div class="tha-field-modal-header">
-                <div class="tha-field-modal-header-row">
-                    <div class="tha-field-modal-crest" aria-hidden="true">THA</div>
-                    <div>
-                        <h2 id="verificationModalTitle">Hazard-area field certification</h2>
-                    </div>
-                </div>
+    <div id="verificationModal" class="tha-case-modal-overlay" style="display: none;">
+        <div class="modal-content tha-reg-modal tha-case-reg-modal" onclick="event.stopPropagation();">
+            <div class="modal-header">
+                <h2 class="modal-title">Hazard-area field certification</h2>
+                <button type="button" class="btn-close" onclick="closeVerificationModal()" aria-label="Close">
+                    <svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
             </div>
 
-            <div class="tha-field-modal-body">
+            <form id="verificationForm" onsubmit="submitVerification(event)">
                 <input type="hidden" id="verificationModalApplicantId">
+                <input type="hidden" name="verification_decision" value="certified">
 
-                <div class="tha-field-claim-panel">
-                    <h3 class="tha-field-claim-title">Part I — Applicant’s sworn declaration (reference)</h3>
-                    <div class="tha-field-claim-grid">
-                        <div class="tha-field-claim-cell">
-                            <span class="fld-lbl">Full name</span>
-                            <p id="verificationModalName"></p>
+                <div class="modal-body">
+                    <div class="tha-form-header">
+                        <div class="tha-form-crest" aria-hidden="true">
+                            <img src="{% static 'images/favicon.png' %}" alt="" decoding="async">
                         </div>
-                        <div class="tha-field-claim-cell">
-                            <span class="fld-lbl">Present address</span>
-                            <p id="verificationModalAddress"></p>
-                        </div>
-                        <div class="tha-field-claim-cell">
-                            <span class="fld-lbl">Declared hazard classification</span>
-                            <p id="verificationModalDangerZone"></p>
-                        </div>
-                        <div class="tha-field-claim-cell">
-                            <span class="fld-lbl">Declared location particulars</span>
-                            <p id="verificationModalLocation"></p>
-                        </div>
+                        <h2>Hazard-area field certification</h2>
+                        <p class="tha-form-subtitle">Talisay City Housing Authority · Field Verification</p>
                     </div>
-                </div>
 
-                <div id="cdrrmoStatusBox" class="cdrrmo-cert-panel tha-field-cdrrmo-panel" style="display: none;">
-                    <div class="cdrrmo-cert-header">
-                        <h3>CDRRMO certification status</h3>
-                    </div>
-                    <div class="cdrrmo-cert-body">
-                        <div class="cdrrmo-cert-cell">
-                            <span class="cdrrmo-cert-label">Government record status</span>
-                            <p id="cdrrmoStatusText">—</p>
-                        </div>
-                        <div class="cdrrmo-cert-row2">
-                            <div class="cdrrmo-cert-cell">
-                                <span class="cdrrmo-cert-label">Date verified (CDRRMO)</span>
-                                <p id="cdrrmoDateText">—</p>
+                    <div class="tha-section-block">
+                        <h3 class="tha-section-title">Part I — Applicant’s sworn declaration (reference)</h3>
+                        <div class="tha-field-claim-grid">
+                            <div class="tha-field-claim-cell">
+                                <span class="fld-lbl">Full name</span>
+                                <p id="verificationModalName"></p>
                             </div>
-                            <div class="cdrrmo-cert-cell">
-                                <span class="cdrrmo-cert-label">Applicant reference no.</span>
-                                <p id="cdrrmoRefText">—</p>
+                            <div class="tha-field-claim-cell">
+                                <span class="fld-lbl">Present address</span>
+                                <p id="verificationModalAddress"></p>
+                            </div>
+                            <div class="tha-field-claim-cell">
+                                <span class="fld-lbl">Declared hazard classification</span>
+                                <p id="verificationModalDangerZone"></p>
+                            </div>
+                            <div class="tha-field-claim-cell">
+                                <span class="fld-lbl">Declared location particulars</span>
+                                <p id="verificationModalLocation"></p>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="tha-field-modal-divider" role="presentation"></div>
+                    <div id="cdrrmoStatusBox" class="cdrrmo-cert-panel tha-field-cdrrmo-panel" style="display: none;">
+                        <div class="cdrrmo-cert-header">
+                            <h3>CDRRMO certification status</h3>
+                        </div>
+                        <div class="cdrrmo-cert-body">
+                            <div class="cdrrmo-cert-cell">
+                                <span class="cdrrmo-cert-label">Government record status</span>
+                                <p id="cdrrmoStatusText">—</p>
+                            </div>
+                            <div class="cdrrmo-cert-row2">
+                                <div class="cdrrmo-cert-cell">
+                                    <span class="cdrrmo-cert-label">Date verified (CDRRMO)</span>
+                                    <p id="cdrrmoDateText">—</p>
+                                </div>
+                                <div class="cdrrmo-cert-cell">
+                                    <span class="cdrrmo-cert-label">Applicant reference no.</span>
+                                    <p id="cdrrmoRefText">—</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-                <form id="verificationForm" onsubmit="submitVerification(event)">
-                    <input type="hidden" name="verification_decision" value="certified">
-
-                    <div class="field-evidence-section">
-                        <span class="field-evidence-label">Site photographs (supporting evidence)</span>
+                    <div class="tha-section-block">
+                        <h3 class="tha-section-title">Site photographs (supporting evidence)</h3>
                         <p class="field-evidence-hint">You may capture images using this device or attach files from storage. Accepted types: JPEG, PNG, or WebP. Maximum four (4) files, six (6) MB each. Camera access generally requires HTTPS or <code>localhost</code>.</p>
                         <video id="fieldCameraVideo" playsinline autoplay muted style="display: none;"></video>
                         <canvas id="fieldCameraCanvas" style="display: none;"></canvas>
@@ -3329,13 +3375,16 @@
                         <button type="button" class="field-evidence-file-btn" id="fieldEvidenceFilePickBtn">Attach from device</button>
                         <div id="fieldEvidenceStrip" class="field-evidence-strip"></div>
                     </div>
+                </div>
 
-                    <div class="tha-field-form-actions">
-                        <button type="submit" class="tha-field-btn-submit">Submit field certification</button>
-                        <button type="button" class="tha-field-btn-cancel" onclick="closeVerificationModal()">Close without submitting</button>
-                    </div>
-                </form>
-            </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn-modal success">
+                        <svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 13l4 4L19 7"/></svg>
+                        Submit field certification
+                    </button>
+                    <button type="button" class="btn-modal danger" onclick="closeVerificationModal()">Close without submitting</button>
+                </div>
+            </form>
         </div>
     </div>
 

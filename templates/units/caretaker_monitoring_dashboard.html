@@ -772,16 +772,28 @@
         text-align: center !important;
     }
 
-    .monitoring-task-type.day-60 {
+    .monitoring-task-type.visit-program-initial {
         background: #f0f9ff !important;
         color: #0369a1 !important;
         border-color: #e0f2fe !important;
     }
 
-    .monitoring-task-type.day-30 {
+    .monitoring-task-type.visit-program-final {
         background: #faf5ff !important;
         color: #6b21a8 !important;
         border-color: #f3e8ff !important;
+    }
+
+    .monitoring-task-type.visit-extension-early {
+        background: #fff7ed !important;
+        color: #c2410c !important;
+        border-color: #ffedd5 !important;
+    }
+
+    .monitoring-task-type.visit-extension-late {
+        background: #ecfdf5 !important;
+        color: #047857 !important;
+        border-color: #d1fae5 !important;
     }
 
     .monitoring-task-type.month {
@@ -1405,256 +1417,221 @@
         color: #ffffff;
     }
 
-    .monitoring-report-modal {
-        background: #fff;
-        margin: 2rem auto;
-        width: 92%;
-        max-width: 44rem;
-        border-radius: 14px;
-        box-shadow:
-            0 25px 50px -12px rgba(15, 23, 42, 0.4),
-            0 16px 32px -8px rgba(15, 23, 42, 0.18);
-        overflow: hidden;
-        border: 1px solid #cbd5e1;
+    .tha-case-modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.55);
+        z-index: 1100;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+        flex-direction: column;
+    }
+    .tha-case-modal-overlay.active {
+        display: flex;
+    }
+    .tha-case-reg-modal.modal-content {
+        width: min(94%, 52rem);
+        max-width: min(94%, 52rem);
+        max-height: 90vh;
         display: flex;
         flex-direction: column;
-        max-height: 90vh;
+        overflow: hidden;
+        border-radius: 1rem;
+        background: #fff;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.12);
+        border: 1px solid #cbd5e1;
     }
-
-    .monitoring-report-header {
-        position: relative;
-        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
-        color: #f8fafc;
-        padding: 1.4rem 1.5rem 1.25rem;
-        border-bottom: none;
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        gap: 1rem;
-    }
-
-    .monitoring-report-header::before {
-        content: '';
-        position: absolute;
-        top: 0; left: 0; right: 0;
-        height: 3px;
-        background: linear-gradient(90deg, #f59e0b 0%, #fcd34d 50%, #f59e0b 100%);
-    }
-
-    .monitoring-report-header::after {
-        content: '';
-        position: absolute;
-        bottom: 0; left: 0; right: 0;
-        height: 3px;
-        background: linear-gradient(90deg, #047857 0%, #10b981 35%, #fbbf24 70%, #10b981 100%);
-    }
-
-    .monitoring-report-title-row {
-        display: flex;
-        align-items: center;
-        gap: 0.95rem;
-    }
-
-    .monitoring-report-crest {
-        flex-shrink: 0;
-        width: 3rem;
-        height: 3rem;
-        border: 2px solid rgba(251, 191, 36, 0.55);
-        border-radius: 50%;
+    .tha-case-reg-modal .modal-header {
+        background: #fff;
+        border-bottom: 1px solid #e5e9ef;
+        padding: 0.85rem 1.25rem;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-family: 'Source Serif Pro', Georgia, serif;
-        font-size: 0.625rem;
-        font-weight: 700;
-        letter-spacing: 0.12em;
-        line-height: 1.1;
-        text-align: center;
-        color: #0f172a;
-        background: #f8fafc;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.3), 0 0 0 4px rgba(251, 191, 36, 0.08);
+        position: relative;
+        flex-shrink: 0;
     }
-
-    .monitoring-report-title {
+    .tha-case-reg-modal .modal-title {
         margin: 0;
-        font-family: 'Source Serif Pro', Georgia, serif;
-        font-size: 1.2rem;
+        font-family: Georgia, 'Times New Roman', serif;
+        font-size: 1rem;
         font-weight: 700;
-        letter-spacing: -0.005em;
-        color: #ffffff;
-        line-height: 1.25;
+        color: #064e3b;
     }
-
-    .monitoring-report-subtitle {
-        margin: 0.3rem 0 0;
-        font-size: 0.75rem;
-        font-weight: 500;
-        letter-spacing: 0.02em;
-        color: #fde68a;
-        opacity: 0.92;
-        line-height: 1.45;
+    .tha-case-reg-modal .btn-close {
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        background: #f1f5f9;
+        color: #475569;
+        border: none;
+        border-radius: 8px;
+        width: 2rem;
+        height: 2rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: background 0.15s ease, color 0.15s ease;
     }
-    .monitoring-report-phase-badge {
-        display: inline-block;
-        margin-top: 0.45rem;
-        padding: 0.2rem 0.55rem;
-        border-radius: 999px;
-        font-size: 0.62rem;
-        font-weight: 800;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        background: rgba(255, 255, 255, 0.14);
-        color: #ecfdf5;
-        border: 1px solid rgba(255, 255, 255, 0.22);
-    }
-    .monitoring-phase-notice {
-        margin: 0 0 1.15rem;
-        padding: 0.85rem 1rem;
-        border-radius: 10px;
-        font-size: 0.8rem;
-        line-height: 1.5;
-        font-weight: 500;
-    }
-    .monitoring-phase-notice--initial {
-        background: #eff6ff;
-        border: 1px solid #bfdbfe;
-        color: #1e40af;
-    }
-    .monitoring-phase-notice--final {
-        background: #fffbeb;
-        border: 1px solid #fde68a;
-        color: #92400e;
-    }
-    .monitoring-phase-notice strong {
-        font-weight: 800;
-    }
-
-    .monitoring-report-body {
-        padding: 1.5rem 1.5rem 1.75rem;
+    .tha-case-reg-modal .btn-close:hover { background: #e2e8f0; color: #0f172a; }
+    .tha-case-reg-modal .modal-body {
+        flex: 1;
         overflow-y: auto;
-        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-        min-height: 0;
+        overflow-x: hidden;
+        padding: 0 1.5rem 1.25rem;
+        max-height: calc(90vh - 8rem);
     }
-
-    .monitoring-reference-panel {
-        margin-bottom: 1.5rem;
-        padding: 1.1rem 1.2rem 1.2rem;
-        background: linear-gradient(180deg, #eff6ff 0%, #ffffff 30%);
-        border: 1px solid #bfdbfe;
-        border-left: 4px solid #1d4ed8;
-        border-radius: 10px;
+    .tha-case-reg-modal .tha-form-header {
+        background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+        color: #f8fafc;
+        padding: 1.25rem 1.5rem 1.1rem;
+        margin: 0 -1.5rem 1.25rem;
+        text-align: center;
+        position: relative;
+    }
+    .tha-case-reg-modal .tha-form-header::after {
+        content: '';
+        position: absolute;
+        left: 0; right: 0; bottom: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #047857 0%, #10b981 50%, #6ee7b7 100%);
+    }
+    .tha-case-reg-modal .tha-form-crest {
+        width: auto;
+        max-width: min(100%, 16rem);
+        height: 3rem;
+        margin: 0 auto 0.5rem;
+        border: 2px solid rgba(248, 250, 252, 0.95);
+        border-radius: 0.375rem;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #fff;
+        padding: 0.15rem 0.45rem;
+    }
+    .tha-case-reg-modal .tha-form-crest img {
+        height: 100%;
+        max-width: 100%;
+        object-fit: contain;
+    }
+    .tha-case-reg-modal .tha-form-header h2 {
+        margin: 0;
+        font-family: Georgia, 'Times New Roman', serif;
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #f8fafc;
+    }
+    .tha-case-reg-modal .tha-form-subtitle {
+        margin: 0.3rem 0 0;
+        font-size: 0.78rem;
+        color: #cbd5e1;
+    }
+    .tha-case-reg-modal .tha-section-block {
+        background: #fff;
+        border: 1px solid #e5e9ef;
+        border-left: 3px solid #10b981;
+        border-radius: 0.65rem;
+        padding: 1.05rem 1.15rem 1rem;
         box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+        margin-bottom: 0.95rem;
+        text-align: left;
     }
-
-    .monitoring-section-heading {
-        margin: 0 0 0.65rem;
-        color: #0f172a;
-        font-size: 0.98rem;
-        font-weight: 900;
+    .tha-case-reg-modal .tha-section-title {
+        color: #064e3b;
+        font-size: 0.7rem;
+        font-weight: 800;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        margin: 0 0 0.95rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #e5e9ef;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-family: inherit;
     }
+    .tha-case-reg-modal .tha-section-title::before {
+        content: '';
+        width: 0.45rem;
+        height: 0.45rem;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+        flex-shrink: 0;
+    }
+    .tha-case-reg-modal .modal-footer {
+        flex-shrink: 0;
+        position: sticky;
+        bottom: 0;
+        background: #f8fafc;
+        border-top: 1px solid #e2e8f0;
+        padding: 0.85rem 1.5rem;
+        display: flex;
+        gap: 0.75rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    .tha-case-reg-modal .btn-modal {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        min-width: 12rem;
+        padding: 0.6rem 1.25rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        border-radius: 8px;
+        cursor: pointer;
+        border: 1px solid transparent;
+        transition: all 0.2s ease;
+    }
+    .tha-case-reg-modal .btn-modal.success {
+        background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+        color: #fff;
+        border-color: #047857;
+    }
+    .tha-case-reg-modal .btn-modal.success:hover {
+        background: linear-gradient(180deg, #059669 0%, #047857 100%);
+    }
+    .tha-case-reg-modal .btn-modal.danger {
+        background: #fff;
+        color: #991b1b;
+        border-color: #fca5a5;
+    }
+    .tha-case-reg-modal .btn-modal.danger:hover { background: #fef2f2; }
 
-    .monitoring-reference-grid {
+    /* Verification Sworn Declaration Claim Grid */
+    .tha-field-claim-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 0.75rem;
     }
-
-    .monitoring-reference-cell {
-        background: #fff;
+    .tha-field-claim-cell {
+        background: #f8fafc;
         padding: 0.78rem 0.9rem;
-        border: 1px solid #dbeafe;
+        border: 1px solid #e2e8f0;
         border-radius: 8px;
-        box-shadow: 0 1px 1px rgba(15, 23, 42, 0.03);
     }
-
-    .monitoring-reference-label {
+    .tha-field-claim-cell .fld-lbl {
         display: block;
         font-size: 0.62rem;
         font-weight: 800;
-        color: #1e40af;
+        color: #64748b;
         text-transform: uppercase;
         letter-spacing: 0.08em;
         margin-bottom: 0.32rem;
     }
-
-    .monitoring-reference-value {
+    .tha-field-claim-cell p {
         margin: 0;
         font-size: 0.92rem;
         font-weight: 600;
         color: #0f172a;
         line-height: 1.4;
         word-break: break-word;
-    }
-
-    .monitoring-report-divider {
-        height: 1px;
-        background: linear-gradient(90deg, transparent 0%, #cbd5e1 25%, #94a3b8 50%, #cbd5e1 75%, transparent 100%);
-        margin: 1.5rem 0;
-    }
-
-    .monitoring-section-lead {
-        margin: -0.25rem 0 1rem;
-        color: #475569;
-        font-size: 0.86rem;
-        line-height: 1.55;
-    }
-
-    .monitoring-report-actions {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 0.75rem;
-        margin-top: 1.5rem;
-    }
-
-    .monitoring-report-actions .btn-submit-report {
-        background: linear-gradient(135deg, #059669 0%, #047857 100%);
-        color: #fff;
-        padding: 0.85rem 1rem;
-        border: 1px solid #047857;
-        border-radius: 9px;
-        cursor: pointer;
-        font-weight: 700;
-        font-size: 0.875rem;
-        letter-spacing: 0.02em;
-        transition: all 0.2s ease;
-        box-shadow:
-            0 1px 2px rgba(15, 23, 42, 0.06),
-            0 6px 16px rgba(16, 185, 129, 0.18),
-            inset 0 1px 0 rgba(255, 255, 255, 0.16);
-        margin: 0 !important;
-        text-align: center;
-    }
-    
-    .monitoring-report-actions .btn-submit-report:hover {
-        background: linear-gradient(135deg, #047857 0%, #065f46 100%);
-        transform: translateY(-1px);
-        box-shadow:
-            0 1px 2px rgba(15, 23, 42, 0.08),
-            0 12px 28px rgba(16, 185, 129, 0.30),
-            inset 0 1px 0 rgba(255, 255, 255, 0.18);
-    }
-    
-    .monitoring-report-actions .btn-view-details {
-        background: #dc2626;
-        color: #ffffff;
-        padding: 0.85rem 1rem;
-        border: 1px solid #dc2626;
-        border-radius: 9px;
-        cursor: pointer;
-        font-weight: 700;
-        font-size: 0.875rem;
-        letter-spacing: 0.02em;
-        transition: all 0.2s ease;
-        margin: 0 !important;
-        text-align: center;
-    }
-    
-    .monitoring-report-actions .btn-view-details:hover {
-        background: #b91c1c;
-        border-color: #b91c1c;
-        color: #ffffff;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 14px rgba(220, 38, 38, 0.35);
     }
 
     .early-confirm-card {
@@ -1759,16 +1736,28 @@
             border: 1px solid #bae6fd;
         }
         
-        .m-card-badge.day-60 {
+        .m-card-badge.visit-program-initial {
             background: #f0fdf4;
             color: #16a34a;
             border-color: #bbf7d0;
         }
         
-        .m-card-badge.day-30 {
+        .m-card-badge.visit-program-final {
             background: #fef9c3;
             color: #ca8a04;
             border-color: #fef08a;
+        }
+
+        .m-card-badge.visit-extension-early {
+            background: #fff7ed;
+            color: #c2410c;
+            border-color: #ffedd5;
+        }
+
+        .m-card-badge.visit-extension-late {
+            background: #ecfdf5;
+            color: #047857;
+            border-color: #d1fae5;
         }
         
         .m-card-badge.month {
@@ -2624,7 +2613,7 @@
                                      data-dob="{{ task.lot_award.application.applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}">{{ task.lot_award.application.applicant.full_name }}</div>
                                 <div class="kpi-applicant-addr">📍 {{ task.lot_award.application.applicant.current_address|default:"—" }}</div>
                             </td>
-                            <td>{% if task.task_type == 'day_60_inspection' %}60 Day Inspection{% elif task.task_type == 'day_30_inspection' %}30 Day Inspection{% else %}{{ task.get_task_type_display }}{% endif %}</td>
+                            <td>{% if task.task_type == 'day_60_inspection' %}90 Day Inspection{% elif task.task_type == 'day_30_inspection' %}120 Day Inspection{% else %}{{ task.get_task_type_display }}{% endif %}</td>
                             <td>{{ task.due_date|date:"M d, Y" }}</td>
                             <td>{% if task.notified_at %}{{ task.notified_at|date:"M d, Y" }}<div class="kpi-cell-muted">{{ task.notified_at|time:"H:i" }}</div>{% else %}—{% endif %}</td>
                         </tr>
@@ -2677,7 +2666,7 @@
                                      data-dob="{{ task.lot_award.application.applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}">{{ task.lot_award.application.applicant.full_name }}</div>
                                 <div class="kpi-applicant-addr">📍 {{ task.lot_award.application.applicant.current_address|default:"—" }}</div>
                             </td>
-                            <td>{% if task.task_type == 'day_60_inspection' %}60 Day Inspection{% elif task.task_type == 'day_30_inspection' %}30 Day Inspection{% else %}{{ task.get_task_type_display }}{% endif %}</td>
+                            <td>{% if task.task_type == 'day_60_inspection' %}90 Day Inspection{% elif task.task_type == 'day_30_inspection' %}120 Day Inspection{% else %}{{ task.get_task_type_display }}{% endif %}</td>
                             <td>
                                 {% if task.completed_at %}
                                     {{ task.completed_at|date:"M d, Y" }}<div class="kpi-cell-muted">{{ task.completed_at|time:"H:i" }}</div>
@@ -2740,7 +2729,7 @@
                                      data-dob="{{ task.lot_award.application.applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}">{{ task.lot_award.application.applicant.full_name }}</div>
                                 <div class="kpi-applicant-addr">📍 {{ task.lot_award.application.applicant.current_address|default:"—" }}</div>
                             </td>
-                            <td>{% if task.task_type == 'day_60_inspection' %}60 Day Inspection{% elif task.task_type == 'day_30_inspection' %}30 Day Inspection{% else %}{{ task.get_task_type_display }}{% endif %}</td>
+                            <td>{% if task.task_type == 'day_60_inspection' %}90 Day Inspection{% elif task.task_type == 'day_30_inspection' %}120 Day Inspection{% else %}{{ task.get_task_type_display }}{% endif %}</td>
                             <td>{{ task.due_date|date:"M d, Y" }}</td>
                             <td>{% if task.notified_at %}{{ task.notified_at|date:"M d, Y" }}<div class="kpi-cell-muted">{{ task.notified_at|time:"H:i" }}</div>{% else %}—{% endif %}</td>
                         </tr>
@@ -2833,8 +2822,8 @@
                 <div class="monitoring-address-note">{{ task.unit.site.name|default:"Relocation site" }}</div>
             </td>
             <td>
-                <span class="monitoring-task-type {% if 'day_60' in task.task_type %}day-60{% elif 'day_30' in task.task_type %}day-30{% else %}month{% endif %}">
-                    {% if task.task_type == 'day_60_inspection' %}60 Day Inspection{% elif task.task_type == 'day_30_inspection' %}30 Day Inspection{% else %}{{ task.get_task_type_display }}{% endif %}
+                <span class="monitoring-task-type {% if task.task_type == 'day_60_inspection' %}visit-program-initial{% elif task.task_type == 'day_30_inspection' %}visit-program-final{% elif task.task_type == 'month_2_inspection' %}visit-extension-early{% elif task.task_type == 'month_1_inspection' %}visit-extension-late{% else %}month{% endif %}">
+                    {% if task.task_type == 'day_60_inspection' %}90 Day Inspection{% elif task.task_type == 'day_30_inspection' %}120 Day Inspection{% else %}{{ task.get_task_type_display }}{% endif %}
                 </span>
             </td>
             <td>
@@ -2864,7 +2853,7 @@
                 {% endif %}
             </td>
             <td>
-                <div class="monitoring-schedule-note">{% if task.task_type == 'day_60_inspection' %}<strong>Initial monitoring — during 60 days</strong>{% elif task.task_type == 'day_30_inspection' %}<strong>Final monitoring — confirm lot build is finished</strong>{% else %}<strong>{{ task.days_from_award }}</strong> days after monitoring starts{% endif %}</div>
+                <div class="monitoring-schedule-note">{% if task.task_type == 'day_60_inspection' %}<strong>Initial monitoring — during 90 days</strong>{% elif task.task_type == 'day_30_inspection' %}<strong>Final monitoring — confirm lot build is finished</strong>{% else %}<strong>{{ task.days_from_award }}</strong> days after monitoring starts{% endif %}</div>
             </td>
             <td>
                 {% if task.staff_handled_user %}
@@ -2882,7 +2871,7 @@
             <td>
                 <div class="monitoring-task-actions">
                     {% if task.status == 'pending' and task.scheduled_date > today %}
-                        <button type="button" class="btn-submit-report" onclick="openReportModal('{{ task.id }}', true, '{{ task.scheduled_date|date:"F j, Y" }}', '{% if task.task_type == "day_60_inspection" %}60 Day Inspection{% elif task.task_type == "day_30_inspection" %}30 Day Inspection{% else %}{{ task.get_task_type_display|escapejs }}{% endif %}', 'Block {{ task.unit.block_number|escapejs }} Lot {{ task.unit.lot_number|escapejs }}', '{{ task.due_date|date:"F j, Y"|escapejs }}', '{{ task.task_type|escapejs }}')">
+                        <button type="button" class="btn-submit-report" onclick="openReportModal('{{ task.id }}', true, '{{ task.scheduled_date|date:"F j, Y" }}', '{% if task.task_type == "day_60_inspection" %}90 Day Inspection{% elif task.task_type == "day_30_inspection" %}120 Day Inspection{% else %}{{ task.get_task_type_display|escapejs }}{% endif %}', 'Block {{ task.unit.block_number|escapejs }} Lot {{ task.unit.lot_number|escapejs }}', '{{ task.due_date|date:"F j, Y"|escapejs }}', '{{ task.task_type|escapejs }}')">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="width: 0.9rem; height: 0.9rem; flex-shrink: 0; display: inline-block;">
                                 <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
                                 <line x1="12" y1="9" x2="12" y2="13"/>
@@ -2891,7 +2880,7 @@
                             {% if task.notified_at %}Open notified task{% else %}Notify / test early{% endif %}
                         </button>
                     {% else %}
-                        <button type="button" class="btn-submit-report" onclick="openReportModal('{{ task.id }}', false, '', '{% if task.task_type == "day_60_inspection" %}60 Day Inspection{% elif task.task_type == "day_30_inspection" %}30 Day Inspection{% else %}{{ task.get_task_type_display|escapejs }}{% endif %}', 'Block {{ task.unit.block_number|escapejs }} Lot {{ task.unit.lot_number|escapejs }}', '{{ task.due_date|date:"F j, Y"|escapejs }}', '{{ task.task_type|escapejs }}')">
+                        <button type="button" class="btn-submit-report" onclick="openReportModal('{{ task.id }}', false, '', '{% if task.task_type == "day_60_inspection" %}90 Day Inspection{% elif task.task_type == "day_30_inspection" %}120 Day Inspection{% else %}{{ task.get_task_type_display|escapejs }}{% endif %}', 'Block {{ task.unit.block_number|escapejs }} Lot {{ task.unit.lot_number|escapejs }}', '{{ task.due_date|date:"F j, Y"|escapejs }}', '{{ task.task_type|escapejs }}')">
                             {% if task.status == 'completed' %}
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="width: 0.9rem; height: 0.9rem; flex-shrink: 0; display: inline-block;">
                                     <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/>
@@ -2921,8 +2910,8 @@
         <article class="mobile-verification-card m-task-card" id="task-card-{{ task.id }}">
             <div class="m-card-header">
                 <span class="m-card-visit-order">Task #{{ forloop.counter }}</span>
-                <span class="m-card-badge {% if 'day_60' in task.task_type %}day-60{% elif 'day_30' in task.task_type %}day-30{% else %}month{% endif %}">
-                    {% if task.task_type == 'day_60_inspection' %}60 Day{% elif task.task_type == 'day_30_inspection' %}30 Day{% else %}{{ task.get_task_type_display }}{% endif %}
+                <span class="m-card-badge {% if task.task_type == 'day_60_inspection' %}visit-program-initial{% elif task.task_type == 'day_30_inspection' %}visit-program-final{% elif task.task_type == 'month_2_inspection' %}visit-extension-early{% elif task.task_type == 'month_1_inspection' %}visit-extension-late{% else %}month{% endif %}">
+                    {% if task.task_type == 'day_60_inspection' %}90 Day{% elif task.task_type == 'day_30_inspection' %}120 Day{% elif task.task_type == 'month_2_inspection' %}Ext. day 30{% elif task.task_type == 'month_1_inspection' %}Ext. day 90{% else %}{{ task.get_task_type_display }}{% endif %}
                 </span>
             </div>
             
@@ -2987,11 +2976,11 @@
             
             <div class="m-card-actions">
                 {% if task.status == 'pending' and task.scheduled_date > today %}
-                    <button type="button" class="btn-submit-report m-card-btn" onclick="openReportModal('{{ task.id }}', true, '{{ task.scheduled_date|date:"F j, Y" }}', '{% if task.task_type == "day_60_inspection" %}60 Day Inspection{% elif task.task_type == "day_30_inspection" %}30 Day Inspection{% else %}{{ task.get_task_type_display|escapejs }}{% endif %}', 'Block {{ task.unit.block_number|escapejs }} Lot {{ task.unit.lot_number|escapejs }}', '{{ task.due_date|date:"F j, Y"|escapejs }}', '{{ task.task_type|escapejs }}')">
+                    <button type="button" class="btn-submit-report m-card-btn" onclick="openReportModal('{{ task.id }}', true, '{{ task.scheduled_date|date:"F j, Y" }}', '{% if task.task_type == "day_60_inspection" %}90 Day Inspection{% elif task.task_type == "day_30_inspection" %}120 Day Inspection{% else %}{{ task.get_task_type_display|escapejs }}{% endif %}', 'Block {{ task.unit.block_number|escapejs }} Lot {{ task.unit.lot_number|escapejs }}', '{{ task.due_date|date:"F j, Y"|escapejs }}', '{{ task.task_type|escapejs }}')">
                         {% if task.notified_at %}Open notified task{% else %}Notify / test early{% endif %}
                     </button>
                 {% else %}
-                    <button type="button" class="btn-submit-report m-card-btn" onclick="openReportModal('{{ task.id }}', false, '', '{% if task.task_type == "day_60_inspection" %}60 Day Inspection{% elif task.task_type == "day_30_inspection" %}30 Day Inspection{% else %}{{ task.get_task_type_display|escapejs }}{% endif %}', 'Block {{ task.unit.block_number|escapejs }} Lot {{ task.unit.lot_number|escapejs }}', '{{ task.due_date|date:"F j, Y"|escapejs }}', '{{ task.task_type|escapejs }}')">
+                    <button type="button" class="btn-submit-report m-card-btn" onclick="openReportModal('{{ task.id }}', false, '', '{% if task.task_type == "day_60_inspection" %}90 Day Inspection{% elif task.task_type == "day_30_inspection" %}120 Day Inspection{% else %}{{ task.get_task_type_display|escapejs }}{% endif %}', 'Block {{ task.unit.block_number|escapejs }} Lot {{ task.unit.lot_number|escapejs }}', '{{ task.due_date|date:"F j, Y"|escapejs }}', '{{ task.task_type|escapejs }}')">
                         {% if task.status == 'completed' %}
                             View Report
                         {% else %}
@@ -3259,10 +3248,11 @@ function caretakerTaskPhase(taskType) {
 
 function caretakerMonitoringWindowLine(taskType) {
     const t = String(taskType || '');
-    if (t === 'month_2_inspection') return 'Extension period — final 30 Day visit (after explanation letter)';
+    if (t === 'month_2_inspection') return '90-day extension — day 30 visit (after explanation letter; not the original 120 Day visit)';
+    if (t === 'month_1_inspection') return 'Extension monitoring — end of 90-day window';
     const phase = caretakerTaskPhase(taskType);
-    if (phase === 'initial') return 'Initial monitoring — during 60 days';
-    if (phase === 'final') return 'Final monitoring — confirm lot build is finished';
+    if (phase === 'initial') return 'Initial monitoring — during 90 days';
+    if (phase === 'final') return 'Final monitoring — 120 days after 90 Day visit';
     return 'Scheduled monitoring visit';
 }
 
@@ -3323,15 +3313,15 @@ function applyReportModalPhase(taskType) {
         noticeEl.className = 'monitoring-phase-notice monitoring-phase-notice--initial';
         noticeEl.hidden = false;
         noticeEl.innerHTML = (
-            '<strong>60 Day Inspection (initial)</strong> '
+            '<strong>90 Day Inspection (initial)</strong> '
             + 'Housing staff will mark this visit as <strong>Normal Progress</strong> or <strong>No Progress</strong> after you submit. '
-            + 'This records initial monitoring only; the 30 Day final visit comes later.'
+            + 'This records initial monitoring only; the 120 Day final visit comes later.'
         );
-        evidenceEl.textContent = 'Capture or attach up to 4 images of the lot during the 60-day monitoring window.';
+        evidenceEl.textContent = 'Capture or attach up to 4 images of the lot during the 90-day monitoring window.';
     } else if (phase === 'final') {
         const isExtensionFinal = String(taskType) === 'month_2_inspection';
         if (isExtensionFinal) {
-            titleEl.textContent = 'Caretaker monitoring report — extension 30 Day (final)';
+            titleEl.textContent = 'Caretaker monitoring report — extension window (day 30)';
             subtitleEl.textContent = '';
             if (badgeEl) {
                 badgeEl.textContent = 'Extension · final';
@@ -3340,7 +3330,7 @@ function applyReportModalPhase(taskType) {
             noticeEl.className = 'monitoring-phase-notice monitoring-phase-notice--final';
             noticeEl.hidden = false;
             noticeEl.innerHTML = (
-                '<strong>Extension 30 Day (final)</strong> '
+                '<strong>Extension day 30 visit</strong> (first visit in the 90-day extension window — not the original program 120 Day visit). '
                 + 'Housing staff choose <strong>Housing unit</strong> if the build is finished, or <strong>Failed</strong> if this extension visit does not pass. '
                 + 'Failed is the staff path toward <strong>Blacklist beneficiary</strong> when office rules allow (e.g. letter deadline passed with no compliant letter on file).'
             );
@@ -3355,7 +3345,7 @@ function applyReportModalPhase(taskType) {
             noticeEl.className = 'monitoring-phase-notice monitoring-phase-notice--final';
             noticeEl.hidden = false;
             noticeEl.innerHTML = (
-                '<strong>30 Day Inspection (final)</strong> '
+                '<strong>120 Day Inspection (final)</strong> '
                 + 'Staff use your report to decide: '
                 + '<strong>Housing unit</strong> — lot build is finished; the lot is counted as a completed unit and monitoring closes. '
                 + '<strong>Explanation letter</strong> — opens the explanation-letter workflow.'

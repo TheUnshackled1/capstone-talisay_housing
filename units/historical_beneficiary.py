@@ -23,7 +23,7 @@ from units.models import ConstructionProgress, HousingUnit, LotAward, Relocation
 HISTORICAL_BACKFILL_NOTE = 'Historical backfill'
 
 HISTORICAL_MONITORING_EMPTY_MESSAGE = (
-    'There is no 60 Day / 30 Day monitoring history for this beneficiary because they '
+    'There is no 90 Day / 120 Day monitoring history for this beneficiary because they '
     'were registered on-site before the THA monitoring system was created. Scheduled '
     'field visits were not recorded in this system.'
 )

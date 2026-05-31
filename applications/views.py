@@ -33,7 +33,12 @@ from .models import (
     EligibilityCheckDecision,
     SMSLog as ApplicationSMSLog,
 )
-from units.models import HousingUnit, LotAward, RelocationSite, ConstructionProgress
+from units.models import (
+    HousingUnit,
+    LotAward,
+    RelocationSite,
+    ConstructionProgress,
+)
 from units.historical_beneficiary import document_vault_applicant_q
 from .form_pipeline import applicant_has_signed_application_payload
 from .utils import check_blacklist_module2, send_sms_for_applications
@@ -2350,7 +2355,7 @@ def evaluate_precheck(request, position):
 
     return JsonResponse({
         'success': True,
-        'message': 'Precheck passed: applicant is not blacklisted and may proceed to eligibility evaluation.',
+        'message': 'Precheck passed: applicant is not blacklisted and may proceed to Eligibility Evaluation Checklist.',
     })
 
 
@@ -3720,11 +3725,14 @@ def proceed_to_lot_awarding_queue(request, position):
 def vacant_units_grouped_for_award_select():
     """
     Vacant housing units for the Award Lot picker (Module 4 inventory).
-    Matches dashboard: status 'Vacant - available' and no active units.LotAward.
+    Matches Module 4: status Vacant — available and no active LotAward on the unit.
     """
     active_lot = LotAward.objects.filter(unit_id=OuterRef('pk'), status='active')
     units = (
-        HousingUnit.objects.filter(status='Vacant - available', site__is_active=True)
+        HousingUnit.objects.filter(
+            HousingUnit.vacant_available_status_filter(),
+            site__is_active=True,
+        )
         .annotate(_has_active=Exists(active_lot))
         .filter(_has_active=False)
         .select_related('site')
@@ -3774,10 +3782,10 @@ def _assign_housing_unit_after_lot_award(application, unit, awarded_by_user):
     """
     Create units.LotAward and mark HousingUnit occupied. ``unit`` must be vacant.
     """
-    if unit.status != 'Vacant - available':
+    if not HousingUnit.is_vacant_available_status(unit.status):
         raise ValueError(
-            f'This housing unit is not available for awarding (current status: {unit.status}). '
-            'Choose a unit listed as Vacant - available in Housing Unit & Occupancy Monitoring.'
+            f'This housing unit is not available for awarding (current status: {unit.status!r}). '
+            'Choose a unit listed as Vacant — available in Housing Unit & Occupancy Monitoring.'
         )
 
     block = unit.block_number
@@ -3842,7 +3850,7 @@ def _assign_housing_unit_after_lot_award(application, unit, awarded_by_user):
         assigned_caretaker = unit.site.caretaker if unit.site else None
 
         # Office policy: 30-day possession grace, then monitoring. First field visit is at
-        # monitoring day 60; the final (30 Day) visit is 30 calendar days after that due date.
+        # monitoring day 90; the final (120 Day) visit is 120 calendar days after that due date.
         from units.monitoring_policy import (
             TASK_TYPE_FINAL_INSPECTION,
             TASK_TYPE_INITIAL_INSPECTION,
@@ -3912,7 +3920,7 @@ def _sync_housing_unit_after_lot_award(application, site_name_raw, block_number,
         site=site,
         block_number=block,
         lot_number=lot,
-        defaults={'status': 'Vacant - available'},
+        defaults={'status': HousingUnit.STATUS_VACANT_AVAILABLE},
     )
     _assign_housing_unit_after_lot_award(application, unit, awarded_by_user)
 
@@ -4061,12 +4069,12 @@ def award_lot(request, position):
             unit_for_assign = HousingUnit.objects.select_related('site').get(id=housing_unit_id)
         except (HousingUnit.DoesNotExist, ValueError):
             return JsonResponse({'success': False, 'error': 'Invalid or unknown housing unit.'}, status=400)
-        if unit_for_assign.status != 'Vacant - available':
+        if not HousingUnit.is_vacant_available_status(unit_for_assign.status):
             return JsonResponse({
                 'success': False,
                 'error': (
-                    f'This unit is not vacant (status: {unit_for_assign.status}). '
-                    'Refresh the page and choose a unit marked Vacant - available in Module 4.'
+                    f'This unit cannot be awarded — status must be Vacant — available '
+                    f'(current: {unit_for_assign.status}). Refresh and pick a vacant lot in Module 4.'
                 ),
             }, status=400)
         if LotAward.objects.filter(unit=unit_for_assign, status='active').exists():

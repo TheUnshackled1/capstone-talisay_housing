@@ -5054,7 +5054,7 @@
     let flowAlertOnNext = null;
     let lastPrecheckApplicantName = '';
     let lastPrecheckApplicantId = '';
-    let lastPrecheckMessage = 'Precheck passed: applicant is not blacklisted and may proceed to eligibility evaluation.';
+    let lastPrecheckMessage = 'Precheck passed: applicant is not blacklisted and may proceed to Eligibility Evaluation Checklist.';
     let currentEligibilityApplicantId = '';
     let lastEligibilitySnapshot = null;
     const eligibilityManualDecisions = {};
@@ -5633,10 +5633,16 @@
             iconEl.style.display = isCelebration ? 'none' : ((tone !== 'default') ? 'inline-flex' : 'none');
         }
         if (nextBtn) {
+            // Show Next only for Evaluation Precheck success; hide for all other tones/titles (incl. Situation Certification, Proceed to Ready for Form queue)
             nextBtn.style.display = (tone === 'success' && title === 'Evaluation Precheck') ? 'inline-flex' : 'none';
         }
+        const okBtn = document.querySelector('.flow-alert-ok');
+        if (okBtn) {
+            // Hide OK for Evaluation Precheck success (Next is used instead); show OK for everything else (incl. Situation Certification)
+            okBtn.style.display = (tone === 'success' && title === 'Evaluation Precheck') ? 'none' : 'inline-flex';
+        }
         if (actionsEl) {
-            actionsEl.style.justifyContent = (tone === 'success' && title === 'Evaluation Precheck') ? 'space-between' : 'flex-end';
+            actionsEl.style.justifyContent = (tone === 'success' && title === 'Evaluation Precheck') ? 'flex-end' : 'flex-end';
         }
 
         flowAlertOnConfirm = onConfirm;
