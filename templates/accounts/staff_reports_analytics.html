@@ -1899,11 +1899,11 @@
         switcher.className = 'rep-chart-switcher';
         
         var modes = [
-            { type: 'bar', icon: '📊', label: 'Bar' },
-            { type: 'stacked', icon: '🥞', label: 'Stacked' },
-            { type: 'area', icon: '📉', label: 'Area' },
-            { type: 'pie', icon: '🍕', label: 'Pie' },
-            { type: 'donut', icon: '🍩', label: 'Donut' }
+            { type: 'bar', label: 'Bar' },
+            { type: 'stacked', label: 'Stacked' },
+            { type: 'area', label: 'Area' },
+            { type: 'pie', label: 'Pie' },
+            { type: 'donut', label: 'Donut' }
         ];
 
         modes.forEach(function (m) {
@@ -1912,7 +1912,7 @@
             btn.setAttribute('data-mode', m.type);
             btn.setAttribute('data-canvas-id', canvasId);
             btn.setAttribute('title', m.label + ' view');
-            btn.innerHTML = '<span>' + m.icon + '</span> ' + m.label;
+            btn.textContent = m.label;
             btn.addEventListener('click', function (e) {
                 e.preventDefault();
                 switchChartMode(canvasId, m.type);
