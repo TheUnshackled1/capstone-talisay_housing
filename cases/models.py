@@ -310,73 +310,6 @@ class CaseEvidence(models.Model):
         return f'Evidence for {self.case.case_number}'
 
 
-class FieldReport(models.Model):
-    """Ronda escalation before staff opens a formal case."""
-
-    STATUS_PENDING = 'pending'
-    STATUS_ACCEPTED = 'accepted'
-    STATUS_DISMISSED = 'dismissed'
-    STATUS_CLARIFICATION = 'clarification_requested'
-
-    STATUS_CHOICES = [
-        (STATUS_PENDING, 'Pending staff review'),
-        (STATUS_ACCEPTED, 'Accepted — case opened'),
-        (STATUS_DISMISSED, 'Dismissed'),
-        (STATUS_CLARIFICATION, 'Clarification requested'),
-    ]
-
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    ronda = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name='field_reports_submitted',
-    )
-    related_unit = models.ForeignKey(
-        'units.HousingUnit',
-        on_delete=models.CASCADE,
-        related_name='field_reports',
-    )
-    subject_applicant = models.ForeignKey(
-        'intake.Applicant',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='field_reports_as_subject',
-    )
-    subject_name = models.CharField(max_length=255, blank=True)
-    complaint_type = models.CharField(max_length=20, choices=Case.CASE_TYPE_CHOICES)
-    description = models.CharField(max_length=200)
-    what_was_tried = models.CharField(max_length=200)
-    photo = models.FileField(upload_to='cases/reports/%Y/%m/', blank=True)
-    is_urgent = models.BooleanField(default=False)
-    status = models.CharField(max_length=32, choices=STATUS_CHOICES, default=STATUS_PENDING)
-    staff_remarks = models.TextField(blank=True)
-    reviewed_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='field_reports_reviewed',
-    )
-    reviewed_at = models.DateTimeField(null=True, blank=True)
-    case = models.ForeignKey(
-        Case,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='source_field_reports',
-    )
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        ordering = ['-created_at']
-        verbose_name = 'Field report'
-        verbose_name_plural = 'Field reports'
-
-    def __str__(self):
-        return f'Report {self.id} ({self.get_status_display()})'
-
-
 class FieldSettledIncidentLog(models.Model):
     """On-site memory log — not a formal case."""
 
@@ -421,34 +354,4 @@ class FieldSettledIncidentLog(models.Model):
 
     def __str__(self):
         return f'Settled log {self.id}'
-
-
-class CaseFieldUpdate(models.Model):
-    """Ronda field observation on a monitored case."""
-
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    case = models.ForeignKey(
-        Case,
-        on_delete=models.CASCADE,
-        related_name='field_updates',
-    )
-    submitted_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='case_field_updates',
-    )
-    note = models.TextField()
-    photo = models.FileField(upload_to='cases/field-updates/%Y/%m/', blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        ordering = ['-created_at']
-        verbose_name = 'Case field update'
-        verbose_name_plural = 'Case field updates'
-
-    def __str__(self):
-        return f'Field update on {self.case.case_number}'
-
 

@@ -3,9 +3,7 @@ from .models import (
     Case,
     CaseAction,
     CaseEvidence,
-    CaseFieldUpdate,
     CaseYearSequence,
-    FieldReport,
     FieldSettledIncidentLog,
 )
 
@@ -86,26 +84,10 @@ class CaseEvidenceAdmin(admin.ModelAdmin):
     readonly_fields = ('uploaded_at',)
 
 
-@admin.register(FieldReport)
-class FieldReportAdmin(admin.ModelAdmin):
-    list_display = ('id', 'ronda', 'related_unit', 'complaint_type', 'status', 'is_urgent', 'case', 'created_at')
-    list_filter = ('status', 'complaint_type', 'is_urgent', 'created_at')
-    search_fields = ('subject_name', 'description', 'ronda__username')
-    raw_id_fields = ('ronda', 'related_unit', 'subject_applicant', 'reviewed_by', 'case')
-
-
 @admin.register(FieldSettledIncidentLog)
 class FieldSettledIncidentLogAdmin(admin.ModelAdmin):
     list_display = ('related_unit', 'case_type', 'logged_by', 'logged_at')
     list_filter = ('case_type', 'logged_at')
     search_fields = ('description', 'subject_name', 'complainant_name')
     raw_id_fields = ('related_unit', 'complainant_applicant', 'subject_applicant', 'logged_by')
-
-
-@admin.register(CaseFieldUpdate)
-class CaseFieldUpdateAdmin(admin.ModelAdmin):
-    list_display = ('case', 'submitted_by', 'created_at')
-    list_filter = ('created_at',)
-    search_fields = ('case__case_number', 'note')
-    raw_id_fields = ('case', 'submitted_by')
 
