@@ -1844,8 +1844,8 @@
                                       data-full-name="{{ applicant.full_name }}"
                                       data-tx-id="APP-{{ applicant.id|slice:":8" }}..."
                                       data-ref-code="{{ applicant.reference_number|default:'' }}"
-                                      data-barangay="{{ applicant.barangay.name|default:'Not specified' }}"
-                                      data-dob="{{ applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}">{{ applicant.full_name }}</span>
+                                      data-barangay="{{ applicant.hover_location|default:'Not specified' }}"
+                                      data-dob="{% if applicant.date_of_birth %}{{ applicant.date_of_birth|date:'M d, Y' }}{% else %}Not specified{% endif %}">{{ applicant.full_name }}</span>
                             </div>
                         </div>
                     </td>
@@ -2795,8 +2795,8 @@ function openVaultDrawer(applicantId) {
                             '<span class="complainant-ref-code" style="font-family: monospace; font-size: 0.68rem; padding: 0.15rem 0.35rem; border-radius: 0.25rem; font-weight: 700; color: #475569; background: #f1f5f9; border: 1px solid #e2e8f0;">' + vaultDrawerEscapeHtml(data.reference_number || '—') + '</span>' +
                         '</div>' +
                         '<div class="hover-card-meta-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.72rem; line-height: 1.2;">' +
-                            '<span class="hover-card-label" style="color: #64748b; font-weight: 600;">Barangay</span>' +
-                            '<span class="hover-card-value" style="font-weight: 700; color: #1e293b;">' + vaultDrawerEscapeHtml(data.barangay || '—') + '</span>' +
+                            '<span class="hover-card-label" style="color: #64748b; font-weight: 600;">' + (String(data.hover_location || data.barangay || '').startsWith('Block ') ? 'Block &amp; lot' : 'Barangay') + '</span>' +
+                            '<span class="hover-card-value" style="font-weight: 700; color: #1e293b;">' + vaultDrawerEscapeHtml(data.hover_location || data.barangay || '—') + '</span>' +
                         '</div>' +
                         '<div class="hover-card-meta-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.72rem; line-height: 1.2;">' +
                             '<span class="hover-card-label" style="color: #64748b; font-weight: 600;">Application Stage</span>' +
@@ -3457,6 +3457,10 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             hcRefRow.style.display = 'none';
         }
+        const hcBrgyLabel = document.getElementById('hcBrgyLabel');
+        if (hcBrgyLabel) {
+            hcBrgyLabel.textContent = barangay.startsWith('Block ') ? 'Block & lot' : 'Barangay';
+        }
         hcBrgy.textContent = barangay;
         hcDob.textContent = dob;
 
@@ -3556,7 +3560,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <span class="complainant-ref-code" id="hcRef" style="font-family: monospace;">—</span>
         </div>
         <div class="hover-card-meta-row">
-            <span class="hover-card-label">Barangay</span>
+            <span class="hover-card-label" id="hcBrgyLabel">Barangay</span>
             <span class="hover-card-value" id="hcBrgy">—</span>
         </div>
         <div class="hover-card-meta-row">

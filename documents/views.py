@@ -31,6 +31,22 @@ from applications.form_pipeline import applicant_has_signed_application_payload
 
 DOCUMENTS_MANAGEMENT_PER_PAGE = 10
 
+
+def _applicant_hover_location(applicant: Applicant, lot_info: dict | None) -> str:
+    """Barangay for hover card when set; otherwise block/lot (Unit Monitoring alignment)."""
+    if applicant.barangay_id and applicant.barangay:
+        return applicant.barangay.name
+    if lot_info:
+        block = (lot_info.get('block') or '').strip()
+        lot = (lot_info.get('lot') or '').strip()
+        if block and lot and block != 'N/A' and lot != 'N/A':
+            return f'Block {block}, Lot {lot}'
+    label = (applicant.active_unit_label or '').strip()
+    if label and label != 'Not specified':
+        return label
+    return 'Not specified'
+
+
 # Vault drawer type_key → intake upload_scanned_requirement (doc_key, requirement code).
 VAULT_TYPE_TO_INTAKE_DOC = {
     'barangay_residency': ('doc_brgy_residency', 'R01'),
@@ -453,7 +469,7 @@ def document_management(request, position):
     # Ordering: Module 2 queue first when present — priority, then walk-in, then no queue.
     applicants_qs = (
         Applicant.objects
-        .select_related('application')
+        .select_related('application', 'barangay')
         .prefetch_related(
             Prefetch(
                 'application__lot_awards',
@@ -610,6 +626,8 @@ def document_management(request, position):
             'status_display': applicant.get_status_display() if hasattr(applicant, 'get_status_display') else applicant.status,
             'is_historical_beneficiary': is_historical_applicant(applicant),
             'barangay': applicant.barangay.name if applicant.barangay else 'N/A',
+            'hover_location': _applicant_hover_location(applicant, lot_info),
+            'date_of_birth': applicant.date_of_birth,
             'monthly_income': applicant.monthly_income or 0,
             'household_members': applicant.household_member_count,
             'lot_assignment': lot_info,
@@ -831,6 +849,7 @@ def document_management(request, position):
             'full_name': row['full_name'],
             'reference_number': row['reference_number'] or '',
             'barangay': row['barangay'],
+            'hover_location': row.get('hover_location') or row['barangay'],
             'status': row['status'],
             'status_display': row['status_display'],
             'is_historical_beneficiary': bool(row.get('is_historical_beneficiary')),
