@@ -1128,14 +1128,3 @@ def delete_document(request, position, doc_id):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
-
-@login_required
-@verify_position
-@require_POST
-def update_requirement_submission(request, position):
-    """
-    Documents-module alias for Module 2 requirement submission updates.
-    Delegates to applications logic to preserve behavior.
-    """
-    from applications.views import update_requirement
-    return update_requirement(request, position)

@@ -774,6 +774,94 @@
         .gk-name { font-size: 0.72rem; }
         .gk-avatar { width: 28px; height: 28px; font-size: 0.55rem; }
     }
+
+    /* ── CSV Upload Custom Styles ── */
+    .gk-upload-container {
+        position: relative;
+        width: 100%;
+    }
+    .gk-upload-dropzone {
+        border: 2px dashed #cbd5e1;
+        border-radius: 10px;
+        padding: 1.5rem 1rem;
+        text-align: center;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.6rem;
+        background: #ffffff;
+        transition: border-color 0.2s ease, background-color 0.2s ease, transform 0.15s ease;
+    }
+    .gk-upload-dropzone:hover {
+        border-color: #10b981;
+        background-color: #f0fdf4;
+        transform: translateY(-1px);
+    }
+    .gk-upload-icon {
+        color: #94a3b8;
+        transition: color 0.2s ease;
+    }
+    .gk-upload-dropzone:hover .gk-upload-icon {
+        color: #10b981;
+    }
+    .gk-upload-text {
+        font-size: 0.76rem;
+        font-weight: 700;
+        color: #475569;
+    }
+    .gk-upload-selected-file {
+        font-size: 0.7rem;
+        font-weight: 600;
+        color: #64748b;
+        background: #f1f5f9;
+        padding: 0.25rem 0.65rem;
+        border-radius: 6px;
+        display: inline-block;
+        max-width: 90%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        transition: all 0.2s ease;
+    }
+
+    /* ── Micro-animations & Interactive Overrides ── */
+    .gk-btn {
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .gk-btn:hover {
+        transform: translateY(-1px);
+    }
+    .gk-btn:active {
+        transform: translateY(0);
+    }
+    .gk-modal-overlay {
+        backdrop-filter: blur(4px);
+        background: rgba(15, 23, 42, 0.65);
+        transition: opacity 0.25s ease;
+    }
+    .gk-modal {
+        transform: scale(0.96);
+        transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .gk-modal-overlay.is-open .gk-modal {
+        transform: scale(1);
+    }
+    .gk-btn--accent {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+        box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2) !important;
+    }
+    .gk-btn--accent:hover {
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3) !important;
+    }
+    .gk-btn--danger {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+        box-shadow: 0 2px 4px rgba(220, 38, 38, 0.2) !important;
+    }
+    .gk-btn--danger:hover {
+        box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3) !important;
+    }
 </style>
 {% endblock %}
 
@@ -952,26 +1040,71 @@
 {% if can_import_historical and site %}
 <div id="gkImportModal" class="gk-modal-overlay" onclick="if(event.target===this) closeGkImportModal();">
     <div class="gk-modal" onclick="event.stopPropagation();">
-        <div class="gk-modal-head">
-            <h2>Import historical beneficiaries</h2>
-            <p>CSV rows create Applicant + Application + lot award on existing Block/Lot at <strong>{{ site.name }}</strong>. Units must already exist in inventory.</p>
+        
+        <!-- Dark hero header -->
+        <div class="gk-modal-hero">
+            <button type="button" class="gk-modal-close" onclick="closeGkImportModal()" aria-label="Close">&times;</button>
+            <div class="gk-modal-logo-wrap">
+                <img src="{% static 'images/tha_logo.png' %}" alt="THA Logo">
+            </div>
+            <h2 class="gk-modal-hero-title">Import Beneficiaries</h2>
+            <p class="gk-modal-hero-sub">Talisay City Housing Authority &middot; GK Masterlist</p>
         </div>
+
         <form id="gkImportForm" enctype="multipart/form-data">
             {% csrf_token %}
             <input type="hidden" name="site_id" value="{{ site.id }}">
             <div class="gk-modal-body">
-                <div class="gk-modal-field gk-modal-field--full">
-                    <label for="gkCsvFile">CSV file</label>
-                    <input type="file" id="gkCsvFile" name="csv_file" accept=".csv,text/csv" required>
+                
+                <!-- CSV Upload Section -->
+                <div class="gk-modal-section">
+                    <div class="gk-modal-section-head">
+                        <span class="gk-modal-section-dot"></span>
+                        <p class="gk-modal-section-label">Upload CSV File</p>
+                    </div>
+                    <div class="gk-modal-section-body">
+                        <div class="gk-upload-container">
+                            <input type="file" id="gkCsvFile" name="csv_file" accept=".csv,text/csv" required style="display: none;">
+                            <div class="gk-upload-dropzone" onclick="document.getElementById('gkCsvFile').click();">
+                                <svg class="gk-upload-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                    <polyline points="17 8 12 3 7 8"/>
+                                    <line x1="12" y1="3" x2="12" y2="15"/>
+                                </svg>
+                                <span class="gk-upload-text">Click to choose or drag CSV file here</span>
+                                <span class="gk-upload-selected-file" id="gkCsvFileName">No file selected</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <p style="font-size:0.68rem;color:#64748b;margin:0;line-height:1.45;">
-                    Columns: {{ historical_csv_headers|join:", " }}
-                </p>
+
+                <!-- CSV Template Info Section -->
+                <div class="gk-modal-section" style="border-left-color: #2563eb;">
+                    <div class="gk-modal-section-head">
+                        <span class="gk-modal-section-dot" style="background-color: #2563eb;"></span>
+                        <p class="gk-modal-section-label">Required Columns</p>
+                    </div>
+                    <div class="gk-modal-section-body" style="background: #f8fafc; padding: 0.75rem 0.9rem;">
+                        <p style="font-size:0.68rem;color:#64748b;margin:0;line-height:1.45;font-family:ui-monospace,monospace;word-break:break-all;">
+                            {{ historical_csv_headers|join:", " }}
+                        </p>
+                        <p style="font-size:0.65rem;color:#94a3b8;margin:0.4rem 0 0 0;line-height:1.35;">
+                            Note: CSV rows will create Applicant, Application, and lot award on existing Block/Lot at <strong>{{ site.name }}</strong>. Units must already exist in inventory.
+                        </p>
+                    </div>
+                </div>
+
                 <p id="gkImportError" class="gk-modal-error"></p>
             </div>
             <div class="gk-modal-foot">
-                <button type="button" class="gk-btn" onclick="closeGkImportModal()">Cancel</button>
-                <button type="submit" class="gk-btn gk-btn--accent" id="gkImportSubmit">Import</button>
+                <button type="button" class="gk-btn gk-btn--danger" onclick="closeGkImportModal()">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    Cancel
+                </button>
+                <button type="submit" class="gk-btn gk-btn--accent" id="gkImportSubmit">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    Import
+                </button>
             </div>
         </form>
     </div>
@@ -1192,6 +1325,22 @@ function validateGkRegisterForm(form) {
         gkBindWholeNumberInput(document.getElementById(id));
     });
 })();
+
+document.getElementById('gkCsvFile')?.addEventListener('change', function () {
+    const file = this.files[0];
+    const nameEl = document.getElementById('gkCsvFileName');
+    if (nameEl) {
+        if (file) {
+            nameEl.textContent = file.name;
+            nameEl.style.color = '#166534';
+            nameEl.style.background = '#dcfce7';
+        } else {
+            nameEl.textContent = 'No file selected';
+            nameEl.style.color = '#64748b';
+            nameEl.style.background = '#f1f5f9';
+        }
+    }
+});
 document.getElementById('gkImportForm')?.addEventListener('submit', async function (e) {
     e.preventDefault();
     const errEl = document.getElementById('gkImportError');

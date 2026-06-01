@@ -41,8 +41,6 @@ urlpatterns = [
         name='application_form_pdf',
     ),
 
-    # Move to standby queue (Jocel, Joie)
-    path('staff/<str:position>/move-to-standby/', views.move_to_standby, name='move_to_standby'),
     path(
         'staff/<str:position>/proceed-to-lot-awarding-queue/',
         views.proceed_to_lot_awarding_queue,
@@ -56,8 +54,5 @@ urlpatterns = [
         views.lot_awarding_bulk_notify_sms,
         name='lot_awarding_bulk_notify_sms',
     ),
-
-    # OIC full approval after applicant-signed scan (same handler as documents API alias)
-    path('staff/<str:position>/routing/update/', views.update_routing, name='update_routing'),
 
 ]
