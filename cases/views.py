@@ -18,6 +18,41 @@ from .models import Case, CaseAction, CaseEvidence, FieldSettledIncidentLog
 from . import workflow as wf
 from accounts.models import FIELD_DESK_POSITIONS
 
+# Monitor desk case recording + field settled log: no illegal occupant or occupancy dispute.
+CASE_TYPE_EXCLUDED_FROM_MONITOR_INTAKE_FORMS = frozenset({
+    'illegal_occupant',
+    'occupancy_dispute',
+})
+# Field case recording only: occupancy dispute hidden; illegal occupant stays available.
+CASE_TYPE_EXCLUDED_FROM_FIELD_CASE_RECORDING = frozenset({'occupancy_dispute'})
+
+
+def case_type_choices_for_monitor_intake_forms():
+    return [
+        c for c in Case.CASE_TYPE_CHOICES
+        if c[0] not in CASE_TYPE_EXCLUDED_FROM_MONITOR_INTAKE_FORMS
+    ]
+
+
+def case_type_choices_for_field_case_recording():
+    return [
+        c for c in Case.CASE_TYPE_CHOICES
+        if c[0] not in CASE_TYPE_EXCLUDED_FROM_FIELD_CASE_RECORDING
+    ]
+
+
+def case_type_choices_for_intake_forms():
+    """Alias — monitor desk + field settled log."""
+    return case_type_choices_for_monitor_intake_forms()
+
+
+def _valid_case_types_for_create(position, *, settled_log=False):
+    if settled_log or position in wf.CASE_MONITOR_DESK_POSITIONS:
+        return [code for code, _ in case_type_choices_for_monitor_intake_forms()]
+    if position in FIELD_DESK_POSITIONS:
+        return [code for code, _ in case_type_choices_for_field_case_recording()]
+    return [code for code, _ in Case.CASE_TYPE_CHOICES]
+
 
 def cases_page_url(position, **query):
     """Canonical Module 5 page URL for a staff position (accounts routes or legacy /cases/)."""
@@ -259,6 +294,8 @@ def case_management_dashboard(request, position):
     context = {
         **list_ctx,
         'case_type_choices': Case.CASE_TYPE_CHOICES,
+        'case_type_choices_intake_form': case_type_choices_for_monitor_intake_forms(),
+        'case_type_choices_field_recording_form': case_type_choices_for_field_case_recording(),
         'open_new_case': request.GET.get('new_case', '').strip() in ('1', 'true', 'yes'),
         'open_case_id': request.GET.get('case_id', '').strip(),
         'prefill_beneficiary': prefill_beneficiary,
@@ -1044,8 +1081,7 @@ def create_case(request, position):
                 'error': 'Incident description must be 100 characters or less.',
             }, status=400)
 
-        # Validate case type
-        valid_types = [code for code, _ in Case.CASE_TYPE_CHOICES]
+        valid_types = _valid_case_types_for_create(position)
         if case_type not in valid_types:
             return JsonResponse({
                 'success': False,
@@ -1161,7 +1197,7 @@ def create_settled_incident_log(request, position):
                 'error': 'Description must be 150 characters or less.',
             }, status=400)
 
-        valid_types = [code for code, _ in Case.CASE_TYPE_CHOICES]
+        valid_types = _valid_case_types_for_create(position, settled_log=True)
         if case_type not in valid_types:
             return JsonResponse({'success': False, 'error': 'Invalid case type.'}, status=400)
 
