@@ -2397,6 +2397,12 @@
         border-top: none !important;
         background: transparent !important;
     }
+    .flow-alert-card.flow-alert-card--celebration .flow-alert-next {
+        display: none !important;
+    }
+    .flow-alert-card.flow-alert-card--celebration.flow-alert-card--precheck-next .flow-alert-ok {
+        display: none !important;
+    }
     .flow-alert-card.flow-alert-card--celebration .flow-alert-ok {
         display: inline-flex !important;
         align-items: center !important;
@@ -2423,7 +2429,7 @@
     .flow-alert-card.flow-alert-card--celebration .flow-alert-ok:active {
         transform: translateY(0) !important;
     }
-    .flow-alert-card.flow-alert-card--celebration .flow-alert-next {
+    .flow-alert-card.flow-alert-card--celebration.flow-alert-card--precheck-next .flow-alert-next {
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
@@ -2441,12 +2447,12 @@
         transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
         cursor: pointer;
     }
-    .flow-alert-card.flow-alert-card--celebration .flow-alert-next:hover {
+    .flow-alert-card.flow-alert-card--celebration.flow-alert-card--precheck-next .flow-alert-next:hover {
         background: linear-gradient(135deg, #1d4ed8 0%, #172554 100%) !important;
         box-shadow: 0 8px 24px rgba(37, 99, 235, 0.35) !important;
         transform: translateY(-2px) !important;
     }
-    .flow-alert-card.flow-alert-card--celebration .flow-alert-next:active {
+    .flow-alert-card.flow-alert-card--celebration.flow-alert-card--precheck-next .flow-alert-next:active {
         transform: translateY(0) !important;
     }
     .flow-alert-progress-bar {
@@ -5613,12 +5619,17 @@
 
         const isCelebration = !!(tone === 'success' || tone === 'proceed_success');
 
+        const isPrecheckNextStep = tone === 'success' && title === 'Evaluation Precheck' && typeof onNext === 'function';
+
         if (card) {
-            card.classList.remove('success', 'proceed-success', 'flow-alert-card--celebration');
+            card.classList.remove('success', 'proceed-success', 'flow-alert-card--celebration', 'flow-alert-card--precheck-next');
             if (tone === 'success') card.classList.add('success');
             if (tone === 'proceed_success') card.classList.add('proceed-success');
             if (isCelebration) {
                 card.classList.add('flow-alert-card--celebration');
+            }
+            if (isPrecheckNextStep) {
+                card.classList.add('flow-alert-card--precheck-next');
             }
         }
 
@@ -5633,16 +5644,14 @@
             iconEl.style.display = isCelebration ? 'none' : ((tone !== 'default') ? 'inline-flex' : 'none');
         }
         if (nextBtn) {
-            // Show Next only for Evaluation Precheck success; hide for all other tones/titles (incl. Situation Certification, Proceed to Ready for Form queue)
-            nextBtn.style.display = (tone === 'success' && title === 'Evaluation Precheck') ? 'inline-flex' : 'none';
+            nextBtn.style.display = isPrecheckNextStep ? 'inline-flex' : 'none';
         }
-        const okBtn = document.querySelector('.flow-alert-ok');
+        const okBtn = document.querySelector('#flowAlertModal .flow-alert-ok');
         if (okBtn) {
-            // Hide OK for Evaluation Precheck success (Next is used instead); show OK for everything else (incl. Situation Certification)
-            okBtn.style.display = (tone === 'success' && title === 'Evaluation Precheck') ? 'none' : 'inline-flex';
+            okBtn.style.display = isPrecheckNextStep ? 'none' : 'inline-flex';
         }
         if (actionsEl) {
-            actionsEl.style.justifyContent = (tone === 'success' && title === 'Evaluation Precheck') ? 'flex-end' : 'flex-end';
+            actionsEl.style.justifyContent = 'center';
         }
 
         flowAlertOnConfirm = onConfirm;
