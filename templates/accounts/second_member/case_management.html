@@ -1526,7 +1526,7 @@
 
     /* Second Member — view-only case monitoring modal */
     .tha-case-view-modal--monitor {
-        max-width: 52rem;
+        max-width: min(96vw, 56rem);
     }
 
     .tha-case-view-modal--monitor .case-monitor-body {
@@ -1607,6 +1607,127 @@
 
     .tha-case-view-modal--monitor .case-monitor-card--full {
         grid-column: 1 / -1;
+        min-width: 0;
+    }
+
+    .tha-case-view-modal--monitor .case-monitor-card--complainant,
+    .tha-case-view-modal--monitor .case-monitor-card--respondent {
+        min-width: 0;
+    }
+
+    .tha-case-view-modal--monitor .case-prior-table-wrap {
+        margin-top: 0.5rem;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.5rem;
+        background: #fff;
+    }
+
+    .tha-case-view-modal--monitor .case-prior-table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+        font-size: 0.74rem;
+    }
+
+    .tha-case-view-modal--monitor .case-prior-table thead th {
+        padding: 0.45rem 0.55rem;
+        text-align: left;
+        font-size: 0.65rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #475569;
+        background: #f8fafc;
+        border-bottom: 1px solid #e2e8f0;
+        vertical-align: bottom;
+    }
+
+    .tha-case-view-modal--monitor .case-prior-table tbody td {
+        padding: 0.5rem 0.55rem;
+        vertical-align: top;
+        border-bottom: 1px solid #f1f5f9;
+        color: #334155;
+        line-height: 1.4;
+        overflow-wrap: anywhere;
+    }
+
+    .tha-case-view-modal--monitor .case-prior-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .tha-case-view-modal--monitor .case-prior-table--settled-logs .case-settled-log-col-when {
+        width: 5.75rem;
+    }
+
+    .tha-case-view-modal--monitor .case-prior-table--settled-logs .case-settled-log-col-unit {
+        width: 7.5rem;
+    }
+
+    .tha-case-view-modal--monitor .case-prior-table--settled-logs .case-settled-log-col-type {
+        width: 8.5rem;
+    }
+
+    .tha-case-view-modal--monitor .case-prior-table--settled-logs .case-settled-log-col-desc {
+        width: auto;
+    }
+
+    .tha-case-view-modal--monitor .case-prior-table--settled-logs td:nth-child(1) {
+        white-space: nowrap;
+    }
+
+    .tha-case-view-modal--monitor .case-prior-table--settled-logs td:nth-child(3) {
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+        color: #92400e;
+    }
+
+    .tha-case-view-modal--monitor .case-record-settled-logs .case-monitor-meta-line {
+        margin: 0 0 0.35rem;
+    }
+
+    /* Full-width monitor sections: centered headings, table, and evidence carousel */
+    .tha-case-view-modal--monitor .case-record-settled-logs,
+    .tha-case-view-modal--monitor .case-intake-evidence-card,
+    .tha-case-view-modal--monitor #caseSettlementEvidenceSection {
+        text-align: center;
+    }
+
+    .tha-case-view-modal--monitor .case-record-settled-logs .case-monitor-card-title,
+    .tha-case-view-modal--monitor .case-intake-evidence-card .case-monitor-card-title,
+    .tha-case-view-modal--monitor #caseSettlementEvidenceSection .case-monitor-card-title {
+        text-align: center;
+    }
+
+    .tha-case-view-modal--monitor .case-record-settled-logs .case-record-prior-hint,
+    .tha-case-view-modal--monitor .case-intake-evidence-card .case-intake-evidence-empty {
+        text-align: center;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .tha-case-view-modal--monitor .case-record-settled-logs .case-prior-table-wrap {
+        text-align: center;
+    }
+
+    .tha-case-view-modal--monitor .case-prior-table--settled-logs thead th,
+    .tha-case-view-modal--monitor .case-prior-table--settled-logs tbody td {
+        text-align: center;
+    }
+
+    .tha-case-view-modal--monitor .case-intake-evidence-card .case-record-evidence-carousel,
+    .tha-case-view-modal--monitor #caseSettlementEvidenceSection .case-record-evidence-carousel {
+        max-width: 28rem;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .tha-case-view-modal--monitor .case-intake-evidence-card .case-settlement-inline-carousel-toolbar,
+    .tha-case-view-modal--monitor #caseSettlementEvidenceSection .case-settlement-inline-carousel-toolbar {
+        justify-content: center;
     }
 
     .tha-case-view-modal--monitor .case-monitor-card--resolution {
@@ -1719,6 +1840,8 @@
         font-size: 0.78rem;
         font-weight: 600;
         color: #1e293b;
+        min-width: 0;
+        overflow-wrap: anywhere;
     }
 
     .tha-case-view-modal--monitor .case-monitor-facts-wide {
@@ -1729,6 +1852,7 @@
         font-family: ui-monospace, monospace;
         font-size: 0.72rem;
         color: #047857;
+        word-break: break-all;
     }
 
     .tha-case-view-modal--monitor .case-monitor-incident-type,
@@ -3341,8 +3465,8 @@
         max-height: min(12.5rem, 28vh);
     }
 
-    .case-intake-evidence-empty {
-        margin: 0;
+    .tha-case-view-modal--monitor .case-intake-evidence-empty {
+        margin: 0 auto;
         font-size: 0.78rem;
         color: #64748b;
     }
@@ -3806,24 +3930,6 @@
                         <p id="modalResolutionNotes" class="case-monitor-person-name case-monitor-person-name--resolution">—</p>
                         <p id="modalResolvedDate" class="case-monitor-resolved-meta"></p>
                     </article>
-
-                    <article id="respondentSettledLogsSection" class="case-monitor-card case-monitor-card--full" style="display: none;">
-                        <h3 class="case-monitor-card-title">On-site settled logs (field memory)</h3>
-                        <p class="case-monitor-meta-line">Incidents settled on-site without opening a formal case.</p>
-                        <div class="case-prior-table-wrap">
-                            <table class="case-prior-table case-prior-table--settled-logs">
-                                <thead>
-                                    <tr>
-                                        <th scope="col">When</th>
-                                        <th scope="col">Unit</th>
-                                        <th scope="col">Type</th>
-                                        <th scope="col">Description</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="respondentSettledLogsList"></tbody>
-                            </table>
-                        </div>
-                    </article>
                 </div>
 
                 <article class="case-monitor-card case-monitor-card--complainant">
@@ -3860,6 +3966,30 @@
                         </div>
                     </article>
                 </div>
+
+                <article id="respondentSettledLogsSection" class="case-monitor-card case-monitor-card--full case-record-settled-logs" style="display: none;">
+                    <h3 class="case-monitor-card-title">On-site settled logs (field memory)</h3>
+                    <p class="case-monitor-meta-line case-record-prior-hint">Incidents settled on-site without opening a formal case.</p>
+                    <div class="case-prior-table-wrap">
+                        <table class="case-prior-table case-prior-table--settled-logs">
+                            <colgroup>
+                                <col class="case-settled-log-col-when">
+                                <col class="case-settled-log-col-unit">
+                                <col class="case-settled-log-col-type">
+                                <col class="case-settled-log-col-desc">
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th scope="col">When</th>
+                                    <th scope="col">Unit</th>
+                                    <th scope="col">Type</th>
+                                    <th scope="col">Description</th>
+                                </tr>
+                            </thead>
+                            <tbody id="respondentSettledLogsList"></tbody>
+                        </table>
+                    </div>
+                </article>
 
                 <article id="caseIntakeEvidenceSection" class="case-monitor-card case-monitor-card--full case-intake-evidence-card" style="display: none;">
                     <h3 class="case-monitor-card-title">Uploaded evidence</h3>
@@ -4455,10 +4585,11 @@
                     const when = log.logged_at
                         ? new Date(log.logged_at).toLocaleDateString()
                         : '';
+                    const unit = log.respondent_unit_label || log.unit_label || '—';
                     return `
                     <tr>
                         <td>${escapeHtml(when)}</td>
-                        <td>${escapeHtml(log.unit_label || '—')}</td>
+                        <td>${escapeHtml(unit)}</td>
                         <td>${escapeHtml(log.case_type_display || '—')}</td>
                         <td>${escapeHtml(log.description || '—')}</td>
                     </tr>`;
