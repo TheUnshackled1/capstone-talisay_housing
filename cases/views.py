@@ -390,11 +390,34 @@ def _subject_housing_unit(subject_applicant):
     return la.unit if la else None
 
 
-def _settled_incident_unit_label(log):
-    unit = log.related_unit
+def _housing_unit_label(unit):
     if unit and unit.block_number and unit.lot_number:
         return f'Block {unit.block_number}, Lot {unit.lot_number}'
     return str(unit) if unit else ''
+
+
+def _settled_incident_unit_label(log):
+    """Complainant lot (stored on log.related_unit). Kept for backward compatibility."""
+    return _settled_incident_complainant_unit_label(log)
+
+
+def _settled_incident_complainant_unit_label(log):
+    if log.complainant_applicant_id and log.complainant_applicant:
+        label = (log.complainant_applicant.active_unit_label or '').strip()
+        if label and label != 'Not specified':
+            return label
+    return _housing_unit_label(log.related_unit)
+
+
+def _settled_incident_respondent_unit_label(log):
+    if not _settled_incident_respondent_name(log):
+        return ''
+    if log.subject_applicant_id and log.subject_applicant:
+        label = (log.subject_applicant.active_unit_label or '').strip()
+        if label and label != 'Not specified':
+            return label
+        return _housing_unit_label(_subject_housing_unit(log.subject_applicant))
+    return ''
 
 
 def _parties_are_same_person(
@@ -476,7 +499,9 @@ def _settled_incident_desk_rows(incident_qs):
             'sort_at': log.logged_at,
             'case': None,
             'incident_log': log,
-            'incident_unit_label': _settled_incident_unit_label(log),
+            'incident_unit_label': _settled_incident_complainant_unit_label(log),
+            'incident_complainant_unit_label': _settled_incident_complainant_unit_label(log),
+            'incident_respondent_unit_label': _settled_incident_respondent_unit_label(log),
             'incident_complainant_name': _settled_incident_complainant_name(log),
             'incident_respondent_name': _settled_incident_respondent_name(log),
         })
@@ -522,8 +547,8 @@ def _build_case_desk_rows(cases_qs, include_incident_logs, search_query, filter_
 
 
 def _settled_incident_log_payload(log):
-    unit = log.related_unit
-    unit_label = _settled_incident_unit_label(log)
+    complainant_unit_label = _settled_incident_complainant_unit_label(log)
+    respondent_unit_label = _settled_incident_respondent_unit_label(log)
     return {
         'id': str(log.id),
         'case_type': log.case_type,
@@ -533,7 +558,9 @@ def _settled_incident_log_payload(log):
         'complainant_name': _settled_incident_complainant_name(log),
         'respondent_name': _settled_incident_respondent_name(log),
         'occupant_name': _settled_incident_complainant_name(log),
-        'unit_label': unit_label,
+        'unit_label': respondent_unit_label or complainant_unit_label,
+        'complainant_unit_label': complainant_unit_label,
+        'respondent_unit_label': respondent_unit_label,
         'logged_at': log.logged_at.isoformat(),
         'logged_by': log.logged_by.get_full_name() if log.logged_by else 'Field',
     }
@@ -549,7 +576,9 @@ def _settled_incident_logs_for_subject(subject_applicant, unit=None, limit=10):
         return []
     return list(
         FieldSettledIncidentLog.objects.filter(q)
-        .select_related('related_unit', 'logged_by', 'subject_applicant')
+        .select_related(
+            'related_unit', 'logged_by', 'subject_applicant', 'complainant_applicant',
+        )
         .order_by('-logged_at')[:limit]
     )
 

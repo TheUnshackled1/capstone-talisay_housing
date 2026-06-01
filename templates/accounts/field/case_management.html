@@ -5330,7 +5330,7 @@
                         <img src="{% static 'images/favicon.png' %}" alt="" decoding="async">
                     </div>
                     <h2>Case Recording Sheet</h2>
-                    <p class="tha-form-subtitle">Talisay City Housing Authority · Module 5</p>
+                    <p class="tha-form-subtitle">Talisay City Housing Authority</p>
                 </div>
 
                 <div class="tha-section-block tha-section-block--identity">
@@ -5495,7 +5495,7 @@
                         <img src="{% static 'images/favicon.png' %}" alt="" decoding="async">
                     </div>
                     <h2>Settled Incident Log</h2>
-                    <p class="tha-form-subtitle">Talisay City Housing Authority · Module 5</p>
+                    <p class="tha-form-subtitle">Talisay City Housing Authority</p>
                 </div>
 
                 <div class="tha-section-block tha-section-block--identity">
@@ -7161,7 +7161,10 @@
 
     function viewSettledIncidentLog(btn) {
         if (!btn) return;
-        const unit = btn.getAttribute('data-unit-label') || '—';
+        const complainantUnit = btn.getAttribute('data-complainant-unit-label')
+            || btn.getAttribute('data-unit-label')
+            || '—';
+        const respondentUnit = btn.getAttribute('data-respondent-unit-label') || '—';
         const complainant = btn.getAttribute('data-complainant-name') || '—';
         const respondent = btn.getAttribute('data-respondent-name') || '—';
         const typeDisplay = btn.getAttribute('data-case-type-display') || '—';
@@ -7185,13 +7188,13 @@
 
         document.getElementById('settledIncidentSubjectName').textContent = respondent;
         document.getElementById('settledIncidentComplainantName').textContent = complainant;
-        document.getElementById('settledIncidentComplainantUnit').textContent = unit;
+        document.getElementById('settledIncidentComplainantUnit').textContent = complainantUnit;
 
         const subjUnitEl = document.getElementById('settledIncidentSubjectUnit');
         const subjUnitWrap = document.getElementById('settledIncidentSubjectUnitWrap');
         if (subjUnitEl && subjUnitWrap) {
             if (respondent && respondent !== '—' && respondent !== '') {
-                subjUnitEl.textContent = unit;
+                subjUnitEl.textContent = respondentUnit || '—';
                 subjUnitWrap.style.display = 'block';
             } else {
                 subjUnitWrap.style.display = 'none';

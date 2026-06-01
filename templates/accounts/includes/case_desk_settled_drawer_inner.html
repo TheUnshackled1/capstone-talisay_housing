@@ -5,7 +5,7 @@
         <span class="case-record-kind-pill case-record-kind-pill--incident">Incident log</span>
         <span class="case-type-pill">{{ log.get_case_type_display }}</span>
     </div>
-    <p class="cases-resolved-drawer-item-name">{{ row.incident_complainant_name|default:"—" }}</p>
+    <p class="cases-resolved-drawer-item-name">{{ row.incident_complainant_name|default:"—" }}{% if row.incident_complainant_unit_label %} · {{ row.incident_complainant_unit_label }}{% endif %}</p>
     <span class="complaints-count-badge" style="display: block; font-size: 0.65rem; color: #64748b; font-weight: 500; margin-top: 0.15rem; margin-bottom: 0.5rem; text-align: left;">
         Complaints filed: {% if log.complainant_applicant %}{{ log.complainant_applicant.cases_filed.count|add:log.complainant_applicant.settled_incident_logs_as_complainant.count }}{% else %}1{% endif %}
     </span>
@@ -15,13 +15,13 @@
         <span class="meta-val">
             {% if log.subject_applicant %}
                 {{ log.subject_applicant.full_name }}
-                {% if row.incident_unit_label %} · {{ row.incident_unit_label }}{% endif %}
+                {% if row.incident_respondent_unit_label %} · {{ row.incident_respondent_unit_label }}{% endif %}
                 <span class="complaints-count-badge" style="display: block; font-size: 0.65rem; color: #b91c1c; font-weight: 500; margin-top: 0.15rem;">
                     Complaints received: {{ log.subject_applicant.cases_against.count|add:log.subject_applicant.settled_incident_logs.count }}
                 </span>
             {% elif row.incident_respondent_name %}
                 {{ row.incident_respondent_name }}
-                {% if row.incident_unit_label %} · {{ row.incident_unit_label }}{% endif %}
+                {% if row.incident_respondent_unit_label %} · {{ row.incident_respondent_unit_label }}{% endif %}
             {% else %}
                 —
             {% endif %}
@@ -34,7 +34,8 @@
     <div class="cases-settled-drawer-item-actions">
         <button type="button" class="case-prior-open-link"
             onclick="viewSettledIncidentLog(this)"
-            data-unit-label="{{ row.incident_unit_label|escape }}"
+            data-complainant-unit-label="{{ row.incident_complainant_unit_label|escape }}"
+            data-respondent-unit-label="{{ row.incident_respondent_unit_label|escape }}"
             data-complainant-name="{{ row.incident_complainant_name|escape }}"
             data-respondent-name="{{ row.incident_respondent_name|escape }}"
             data-case-type-display="{{ log.get_case_type_display|escape }}"
