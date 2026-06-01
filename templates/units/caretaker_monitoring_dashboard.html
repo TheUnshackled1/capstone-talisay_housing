@@ -1074,7 +1074,7 @@
         border-radius: 10px;
         cursor: pointer;
         text-align: center;
-        transition: all 0.18s ease;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -1093,10 +1093,28 @@
         transform: translateY(-2px);
         box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
     }
-    .monitoring-decision-label input {
-        margin-bottom: 0.55rem;
-        width: 1.15rem;
-        height: 1.15rem;
+    .monitoring-decision-label:active {
+        transform: translateY(0);
+    }
+    .monitoring-decision-label:has(input:checked) {
+        transform: scale(1.02) translateY(-2px);
+    }
+    .monitoring-decision-label input[type="radio"] {
+        appearance: none;
+        -webkit-appearance: none;
+        width: 1.25rem;
+        height: 1.25rem;
+        border: 2px solid #cbd5e1;
+        border-radius: 50%;
+        background: #ffffff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 0;
+        margin-bottom: 0.6rem;
+        position: relative;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        outline: none;
         cursor: pointer;
     }
     .monitoring-decision-title {
@@ -1129,7 +1147,25 @@
         background: linear-gradient(180deg, #d1fae5 0%, #ffffff 50%);
         box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.18), 0 6px 16px rgba(16, 185, 129, 0.20);
     }
-    .monitoring-decision-label.positive input { accent-color: #047857; }
+    .monitoring-decision-label.positive input[type="radio"] {
+        border-color: #a7f3d0;
+    }
+    .monitoring-decision-label.positive input[type="radio"]:checked {
+        border-color: #047857;
+        background: #ffffff;
+    }
+    .monitoring-decision-label.positive input[type="radio"]:checked::after {
+        content: '';
+        width: 0.65rem;
+        height: 0.65rem;
+        border-radius: 50%;
+        background: #047857;
+        display: block;
+        animation: scale-up-radio 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .monitoring-decision-label.positive:hover input[type="radio"] {
+        border-color: #10b981;
+    }
     .monitoring-decision-label.positive .monitoring-decision-title { color: #064e3b; }
     .monitoring-decision-label.positive .monitoring-decision-sub { color: #047857; }
 
@@ -1150,9 +1186,90 @@
         background: linear-gradient(180deg, #ffe4e6 0%, #ffffff 50%);
         box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.18), 0 6px 16px rgba(225, 29, 72, 0.20);
     }
-    .monitoring-decision-label.negative input { accent-color: #be123c; }
+    .monitoring-decision-label.negative input[type="radio"] {
+        border-color: #fecdd3;
+    }
+    .monitoring-decision-label.negative input[type="radio"]:checked {
+        border-color: #be123c;
+        background: #ffffff;
+    }
+    .monitoring-decision-label.negative input[type="radio"]:checked::after {
+        content: '';
+        width: 0.65rem;
+        height: 0.65rem;
+        border-radius: 50%;
+        background: #be123c;
+        display: block;
+        animation: scale-up-radio 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .monitoring-decision-label.negative:hover input[type="radio"] {
+        border-color: #fb7185;
+    }
     .monitoring-decision-label.negative .monitoring-decision-title { color: #881337; }
     .monitoring-decision-label.negative .monitoring-decision-sub { color: #9f1239; }
+
+    @keyframes scale-up-radio {
+        0% { transform: scale(0); opacity: 0; }
+        100% { transform: scale(1); opacity: 1; }
+    }
+
+    .monitoring-decision-label input[type="radio"]:focus-visible {
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.35);
+    }
+
+    /* Decision Grid group headers style */
+    .decision-group-header {
+        margin-top: 1.6rem;
+        margin-bottom: 0.65rem;
+        padding: 0 0.2rem;
+    }
+    .decision-group-label {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        color: #0f172a;
+        font-family: 'Source Serif Pro', Georgia, serif;
+        font-size: 1.05rem;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+    }
+
+    #reportForm {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    /* Phase Notice Styles */
+    .monitoring-phase-notice {
+        padding: 0.9rem 1.1rem;
+        border-radius: 8px;
+        font-size: 0.84rem;
+        line-height: 1.5;
+        margin-bottom: 1.25rem;
+        font-weight: 500;
+        border: 1px solid transparent;
+        text-align: left;
+    }
+    .monitoring-phase-notice--initial {
+        background: linear-gradient(180deg, #ecfdf5 0%, #d1fae5 100%);
+        border-color: #a7f3d0;
+        color: #065f46;
+    }
+    .monitoring-phase-notice--initial strong {
+        color: #047857;
+    }
+    .monitoring-phase-notice--final {
+        background: linear-gradient(180deg, #fffbeb 0%, #fef3c7 100%);
+        border-color: #fde047;
+        color: #78350f;
+    }
+    .monitoring-phase-notice--final strong {
+        color: #b45309;
+    }
 
     /* Field evidence (camera / gallery) */
     .field-evidence-section {
@@ -1598,11 +1715,14 @@
         background: linear-gradient(180deg, #059669 0%, #047857 100%);
     }
     .tha-case-reg-modal .btn-modal.danger {
-        background: #fff;
-        color: #991b1b;
-        border-color: #fca5a5;
+        background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%);
+        color: #ffffff;
+        border-color: #b91c1c;
+        box-shadow: 0 1px 2px rgba(220, 38, 38, 0.2);
     }
-    .tha-case-reg-modal .btn-modal.danger:hover { background: #fef2f2; }
+    .tha-case-reg-modal .btn-modal.danger:hover {
+        background: linear-gradient(180deg, #dc2626 0%, #b91c1c 100%);
+    }
 
     /* Verification Sworn Declaration Claim Grid */
     .tha-field-claim-grid {
@@ -2522,6 +2642,81 @@
             font-size: 0.78rem !important;
         }
     }
+
+    /* Mobile Responsive Caretaker Monitoring Modal Form Fixes */
+    @media (max-width: 600px) {
+        .monitoring-decision-grid {
+            grid-template-columns: 1fr !important;
+            gap: 0.65rem !important;
+            margin-bottom: 1.15rem !important;
+        }
+        .monitoring-decision-label {
+            padding: 0.95rem 0.85rem !important;
+        }
+        .monitoring-decision-title {
+            font-size: 0.95rem !important;
+            margin-bottom: 0.25rem !important;
+        }
+        .monitoring-decision-sub {
+            font-size: 0.75rem !important;
+            line-height: 1.38 !important;
+        }
+        .tha-case-reg-modal .tha-form-header {
+            padding: 1.1rem 1rem 0.95rem !important;
+            margin-bottom: 1rem !important;
+        }
+        .tha-case-reg-modal .tha-form-header h2 {
+            font-size: 1.125rem !important;
+            line-height: 1.35 !important;
+            margin-top: 0.15rem !important;
+        }
+        .tha-case-reg-modal .tha-form-subtitle {
+            font-size: 0.72rem !important;
+        }
+        .tha-case-reg-modal .tha-section-block {
+            padding: 0.85rem 0.95rem 0.85rem !important;
+            margin-bottom: 0.75rem !important;
+        }
+        .tha-case-reg-modal .modal-body {
+            padding: 0 0.85rem 1rem !important;
+        }
+        .tha-case-reg-modal .modal-footer {
+            padding: 0.75rem 1rem !important;
+            gap: 0.5rem !important;
+            flex-direction: column !important;
+            background: #f8fafc !important;
+        }
+        .tha-case-reg-modal .modal-footer .btn-modal {
+            width: 100% !important;
+            min-width: 0 !important;
+            max-width: none !important;
+            padding: 0.65rem 1rem !important;
+            font-size: 0.82rem !important;
+            box-sizing: border-box !important;
+        }
+        
+        /* 2-column reference grid on mobile for compactness */
+        .monitoring-reference-grid {
+            grid-template-columns: 1fr 1fr !important;
+            gap: 0.55rem !important;
+        }
+        .monitoring-reference-cell {
+            padding: 0.45rem 0.55rem !important;
+        }
+        .monitoring-reference-label {
+            font-size: 0.6rem !important;
+            margin-bottom: 0.15rem !important;
+        }
+        .monitoring-reference-value {
+            font-size: 0.76rem !important;
+            line-height: 1.3 !important;
+        }
+        
+        /* Expand modal-body bottom padding for photo scrolling breathing room */
+        .tha-case-reg-modal .modal-body {
+            padding: 0 0.85rem 2.25rem !important;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -3037,25 +3232,33 @@
 </div>
 
 <!-- Report Submission Modal -->
-<div class="modal-overlay" id="reportModal">
-    <div class="modal-content monitoring-report-modal">
-        <div class="monitoring-report-header">
-            <div class="monitoring-report-title-row">
-                <div class="monitoring-report-crest" aria-hidden="true">THA</div>
-                <div>
-                    <h2 id="reportModalTitle" class="monitoring-report-title">Caretaker monitoring report</h2>
-                    <p id="reportModalSubtitle" class="monitoring-report-subtitle"></p>
-                    <span id="reportModalPhaseBadge" class="monitoring-report-phase-badge" hidden></span>
-                </div>
-            </div>
-            <button type="button" class="modal-close" onclick="closeReportModal()">×</button>
+<div class="modal-overlay" id="reportModal" onclick="if (event.target === this) closeReportModal();">
+    <div class="modal-content tha-reg-modal tha-case-reg-modal">
+        <div class="modal-header">
+            <h2 class="modal-title">Caretaker monitoring</h2>
+            <button type="button" class="btn-close" onclick="closeReportModal()" aria-label="Close">
+                <svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
         </div>
 
-        <div class="monitoring-report-body">
-            <form id="reportForm" enctype="multipart/form-data" onsubmit="submitReport(event)">
-                {% csrf_token %}
-                <input type="hidden" id="taskId" name="task_id">
-                <input type="hidden" id="allowEarlyInspection" name="allow_early_inspection" value="0">
+        <form id="reportForm" enctype="multipart/form-data" onsubmit="submitReport(event)">
+            {% csrf_token %}
+            <input type="hidden" id="taskId" name="task_id">
+            <input type="hidden" id="allowEarlyInspection" name="allow_early_inspection" value="0">
+
+            <div class="modal-body" style="flex: 1; overflow-y: auto; padding: 0 1.5rem 2rem; min-height: 0;">
+                <div class="tha-form-header">
+                    <div class="tha-form-crest" aria-hidden="true">
+                        <img src="{% static 'images/favicon.png' %}" alt="" decoding="async">
+                    </div>
+                    <h2 id="reportModalTitle">Caretaker monitoring report</h2>
+                    <p class="tha-form-subtitle">Talisay City Housing Authority · <span id="reportModalSubtitle">Module 4</span></p>
+                    <span id="reportModalPhaseBadge" class="monitoring-report-phase-badge" hidden></span>
+                </div>
 
                 <div class="monitoring-reference-panel">
                     <div class="monitoring-reference-grid">
@@ -3080,95 +3283,99 @@
 
                 <div id="reportModalPhaseNotice" class="monitoring-phase-notice" hidden></div>
 
-                <div class="report-field" style="margin-bottom: 0;">
-                    <label>
-                        Occupancy classification
-                        <span class="report-required">Required</span>
-                    </label>
-                </div>
-                <div class="monitoring-decision-grid" id="occupancyDecisionGrid">
-                    <label class="monitoring-decision-label positive">
-                        <input type="radio" name="occupancy_status" value="occupied" required>
-                        <strong class="monitoring-decision-title">Properly Occupied</strong>
-                        <p id="occupancySubPositive" class="monitoring-decision-sub">Beneficiary or immediate family is residing in the unit.</p>
-                    </label>
-                    <label class="monitoring-decision-label negative">
-                        <input type="radio" name="occupancy_status" value="unoccupied" required>
-                        <strong class="monitoring-decision-title">Unoccupied</strong>
-                        <p id="occupancySubNegative" class="monitoring-decision-sub">Unit is abandoned, temporarily vacant, or occupied by unauthorized persons.</p>
-                    </label>
-                </div>
-
-                <div class="report-field" style="margin-bottom: 0;">
-                    <label>
-                        <span id="constructionFieldLabel">Construction status</span>
-                        <span class="report-required">Required</span>
-                    </label>
-                </div>
-                <div class="monitoring-decision-grid" id="constructionChoicesInitial">
-                    <label class="monitoring-decision-label positive">
-                        <input type="radio" name="construction_status" value="ongoing_construction" required>
-                        <strong class="monitoring-decision-title">Ongoing Construction</strong>
-                        <p class="monitoring-decision-sub">Active building, structural improvements, or materials present on site.</p>
-                    </label>
-                    <label class="monitoring-decision-label negative">
-                        <input type="radio" name="construction_status" value="no_structure">
-                        <strong class="monitoring-decision-title">No Structure</strong>
-                        <p class="monitoring-decision-sub">No signs of construction; lot remains vacant or untouched.</p>
-                    </label>
-                </div>
-                <div class="monitoring-decision-grid" id="constructionChoicesFinal" hidden>
-                    <label class="monitoring-decision-label positive">
-                        <input type="radio" name="construction_status" value="completed_occupied">
-                        <strong class="monitoring-decision-title">Build finished</strong>
-                        <p class="monitoring-decision-sub">Structure is substantially complete — the lot build is ready to count as a finished housing unit.</p>
-                    </label>
-                    <label class="monitoring-decision-label negative">
-                        <input type="radio" name="construction_status" value="no_structure">
-                        <strong class="monitoring-decision-title">Build not finished</strong>
-                        <p class="monitoring-decision-sub">No finished structure on site, or construction is clearly incomplete at this final visit.</p>
-                    </label>
-                </div>
-
-                <div class="field-evidence-section" style="margin-bottom: 0;">
-                    <span class="field-evidence-label">
-                        Photo evidence <span class="report-required" style="margin-left: 5px;">Required</span>
-                    </span>
-                    <p id="reportEvidenceHint" class="field-evidence-hint"></p>
-
-                <div id="cameraPreview">
-                    <video id="photoCameraVideo" playsinline autoplay muted style="width: 100%; max-height: 220px; border-radius: 10px; background: #0f172a; margin-bottom: 10px;"></video>
-                    <canvas id="photoCameraCanvas" style="display: none;"></canvas>
-                    <div class="field-evidence-buttons">
-                        <button type="button" class="table-verify-btn" onclick="capturePhotoEvidence()">Capture frame</button>
-                        <button type="button" id="photoCameraSwitchBtn" class="table-verify-btn table-verify-btn--muted" onclick="togglePhotoEvidenceCamera()" style="display: none;"><svg class="btn-icon" style="width: 0.9rem; height: 0.9rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path><path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"></path></svg> Switch camera</button>
-                        <button type="button" class="table-verify-btn table-verify-btn--muted" onclick="stopPhotoEvidenceCamera()">Stop camera</button>
+                <div class="tha-section-block">
+                    <h3 class="tha-section-title">
+                        <span>Occupancy classification</span>
+                        <span class="report-required" style="margin-left: auto;">Required</span>
+                    </h3>
+                    <div class="monitoring-decision-grid" id="occupancyDecisionGrid">
+                        <label class="monitoring-decision-label positive">
+                            <input type="radio" name="occupancy_status" value="occupied" required>
+                            <strong class="monitoring-decision-title">Properly Occupied</strong>
+                            <p id="occupancySubPositive" class="monitoring-decision-sub">Beneficiary or immediate family is residing in the unit.</p>
+                        </label>
+                        <label class="monitoring-decision-label negative">
+                            <input type="radio" name="occupancy_status" value="unoccupied" required>
+                            <strong class="monitoring-decision-title">Unoccupied</strong>
+                            <p id="occupancySubNegative" class="monitoring-decision-sub">Unit is abandoned, temporarily vacant, or occupied by unauthorized persons.</p>
+                        </label>
                     </div>
                 </div>
 
-                <div class="field-evidence-buttons" id="mainEvidenceButtons">
-                    <button type="button" class="table-verify-btn" onclick="openPhotoEvidenceInput(true)">Activate camera</button>
-                    <button type="button" class="field-evidence-file-btn" onclick="openPhotoEvidencePicker()">Attach from device</button>
+                <div class="tha-section-block">
+                    <h3 class="tha-section-title">
+                        <span id="constructionFieldLabel">Construction status</span>
+                        <span class="report-required" style="margin-left: auto;">Required</span>
+                    </h3>
+                    <div class="monitoring-decision-grid" id="constructionChoicesInitial">
+                        <label class="monitoring-decision-label positive">
+                            <input type="radio" name="construction_status" value="ongoing_construction" required>
+                            <strong class="monitoring-decision-title">Ongoing Construction</strong>
+                            <p class="monitoring-decision-sub">Active building, structural improvements, or materials present on site.</p>
+                        </label>
+                        <label class="monitoring-decision-label negative">
+                            <input type="radio" name="construction_status" value="no_structure">
+                            <strong class="monitoring-decision-title">No Structure</strong>
+                            <p class="monitoring-decision-sub">No signs of construction; lot remains vacant or untouched.</p>
+                        </label>
+                    </div>
+                    <div class="monitoring-decision-grid" id="constructionChoicesFinal" hidden>
+                        <label class="monitoring-decision-label positive">
+                            <input type="radio" name="construction_status" value="completed_occupied">
+                            <strong class="monitoring-decision-title">Build finished</strong>
+                            <p class="monitoring-decision-sub">Structure is substantially complete — the lot build is ready to count as a finished housing unit.</p>
+                        </label>
+                        <label class="monitoring-decision-label negative">
+                            <input type="radio" name="construction_status" value="no_structure">
+                            <strong class="monitoring-decision-title">Build not finished</strong>
+                            <p class="monitoring-decision-sub">No finished structure on site, or construction is clearly incomplete at this final visit.</p>
+                        </label>
+                    </div>
                 </div>
-                
-                <input id="photoEvidenceInput" type="file" name="photo_evidence" accept="image/*" multiple required onchange="setPhotoEvidenceFiles(this.files)" style="display: none;">
-                
-                <div id="photoEvidenceStrip" class="field-evidence-strip">
-                    <span id="photoEvidenceFileName" style="display: block; font-size: 0.85rem; color: #475569; font-weight: 600;">No photo selected</span>
+
+                <div class="tha-section-block">
+                    <h3 class="tha-section-title">
+                        <span>Photo evidence</span>
+                        <span class="report-required" style="margin-left: auto;">Required</span>
+                    </h3>
+                    <div class="field-evidence-section" style="margin-bottom: 0; background: #fafafa; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 1.25rem;">
+                        <p id="reportEvidenceHint" class="field-evidence-hint" style="margin: 0 auto 12px; font-size: 0.85rem; color: #64748b; line-height: 1.5;"></p>
+
+                        <div id="cameraPreview">
+                            <video id="photoCameraVideo" playsinline autoplay muted style="width: 100%; max-height: 220px; border-radius: 10px; background: #0f172a; margin-bottom: 10px;"></video>
+                            <canvas id="photoCameraCanvas" style="display: none;"></canvas>
+                            <div class="field-evidence-buttons">
+                                <button type="button" class="table-verify-btn" onclick="capturePhotoEvidence()">Capture frame</button>
+                                <button type="button" id="photoCameraSwitchBtn" class="table-verify-btn table-verify-btn--muted" onclick="togglePhotoEvidenceCamera()" style="display: none;"><svg class="btn-icon" style="width: 0.9rem; height: 0.9rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path><path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"></path></svg> Switch camera</button>
+                                <button type="button" class="table-verify-btn table-verify-btn--muted" onclick="stopPhotoEvidenceCamera()">Stop camera</button>
+                            </div>
+                        </div>
+
+                        <div class="field-evidence-buttons" id="mainEvidenceButtons">
+                            <button type="button" class="table-verify-btn" onclick="openPhotoEvidenceInput(true)">Activate camera</button>
+                            <button type="button" class="field-evidence-file-btn" onclick="openPhotoEvidencePicker()">Attach from device</button>
+                        </div>
+                        
+                        <input id="photoEvidenceInput" type="file" name="photo_evidence" accept="image/*" multiple required onchange="setPhotoEvidenceFiles(this.files)" style="display: none;">
+                        
+                        <div id="photoEvidenceStrip" class="field-evidence-strip">
+                            <span id="photoEvidenceFileName" style="display: block; font-size: 0.85rem; color: #475569; font-weight: 600;">No photo selected</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-                <!-- Submit Button -->
-                <div class="monitoring-report-actions">
-                <button type="submit" class="btn-submit-report" style="margin: 0;">
+            <div class="modal-footer">
+                <button type="submit" class="btn-modal success">
+                    <svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5">
+                        <path d="M5 13l4 4L19 7" />
+                    </svg>
                     Submit Report
                 </button>
-                    <button type="button" class="btn-view-details" onclick="closeReportModal()">
-                        Close without submitting
-                    </button>
-                </div>
-            </form>
-        </div>
+                <button type="button" class="btn-modal danger" onclick="closeReportModal()">Cancel</button>
+            </div>
+        </form>
     </div>
 </div>
 
