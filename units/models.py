@@ -196,46 +196,6 @@ class HousingUnit(models.Model):
             return None
 
 
-class WeeklyReport(models.Model):
-    """
-    Weekly occupancy report for a housing unit.
-    Submitted by caretaker, contains comfort status and any concerns.
-    """
-    REPORT_STATUS_CHOICES = [
-        ('Occupied', 'Occupied'),
-        ('Vacant', 'Vacant'),
-        ('Concern', 'Concern - Needs Follow-up'),
-    ]
-
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-
-    unit = models.OneToOneField(
-        HousingUnit,
-        on_delete=models.CASCADE,
-        related_name='weekly_report'
-    )
-
-    reported_status = models.CharField(max_length=50, choices=REPORT_STATUS_CHOICES)
-    concern_notes = models.TextField(blank=True)
-
-    last_updated = models.DateTimeField(auto_now=True)
-    reported_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='weekly_reports_submitted'
-    )
-
-    class Meta:
-        ordering = ['-last_updated']
-        verbose_name = "Weekly Report"
-        verbose_name_plural = "Weekly Reports"
-
-    def __str__(self):
-        return f"Weekly Report - {self.unit}"
-
-
 class LotAward(models.Model):
     """
     Lot assignment record linking application to housing unit.

@@ -1,6 +1,6 @@
 from django.contrib import admin
 from .models import (
-    RelocationSite, HousingUnit, WeeklyReport, LotAward,
+    RelocationSite, HousingUnit, LotAward,
     Blacklist,
     CaseRecord, CaseUpdate, SMSLog,
     ConstructionProgress, ConstructionProgressUpdate,
@@ -74,26 +74,6 @@ class HousingUnitAdmin(admin.ModelAdmin):
         ('📅 AUDIT TRAIL', {
             'fields': ('created_at', 'updated_at'),
             'classes': ('collapse',),
-        }),
-    )
-
-
-@admin.register(WeeklyReport)
-class WeeklyReportAdmin(admin.ModelAdmin):
-    list_display = ('unit', 'reported_status', 'last_updated', 'reported_by')
-    list_filter = ('reported_status', 'last_updated')
-    search_fields = ('unit__lot_number', 'concern_notes')
-    readonly_fields = ('last_updated',)
-
-    fieldsets = (
-        ('📋 WEEKLY REPORT', {
-            'fields': ('unit', 'reported_status'),
-        }),
-        ('🚨 CONCERNS', {
-            'fields': ('concern_notes',),
-        }),
-        ('🔏 SUBMITTED BY', {
-            'fields': ('reported_by', 'last_updated'),
         }),
     )
 

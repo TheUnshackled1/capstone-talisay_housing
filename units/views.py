@@ -20,7 +20,7 @@ from intake.models import Applicant, Barangay, HouseholdMember
 from applications.models import QueueEntry, Application
 from intake.utils import format_phone_number, send_sms
 from units.models import (
-    HousingUnit, LotAward, RelocationSite, WeeklyReport,
+    HousingUnit, LotAward, RelocationSite,
     ConstructionProgress, ConstructionProgressUpdate, Blacklist, OccupancyMonitoringCycle,
     MonitoringTask, MonitoringReport, ExplanationReview, ExtensionRecord,
 )
@@ -320,7 +320,6 @@ def housing_units_monitoring(request, position):
         units = (
             HousingUnit.objects
             .filter(site=site)
-            .select_related('weekly_report')
             .prefetch_related('lot_awards__application__applicant')
             .order_by('block_number', 'lot_number')
         )
@@ -971,12 +970,12 @@ def _staff_progress_assessment_display(task_type, assessment):
 def get_unit_details(request, position, unit_id):
     """
     AJAX endpoint to fetch unit details for modal display
-    Returns JSON with unit info, occupant, notices, and weekly report
+    Returns JSON with unit info, occupant, and notices.
 
     URL: /units/<position>/detail/<unit_id>/
     """
     try:
-        unit = HousingUnit.objects.prefetch_related('weekly_report').get(id=unit_id)
+        unit = HousingUnit.objects.get(id=unit_id)
 
         # Prepare notice info
         notice_info = None
@@ -986,18 +985,6 @@ def get_unit_details(request, position, unit_id):
                 'issued': unit.notice_date_issued.isoformat(),
                 'deadline': unit.notice_deadline.isoformat() if unit.notice_deadline else None,
             }
-
-        # Prepare weekly report
-        weekly_report = None
-        try:
-            if unit.weekly_report:
-                weekly_report = {
-                    'reported_status': unit.weekly_report.reported_status,
-                    'concern_notes': unit.weekly_report.concern_notes,
-                    'last_updated': unit.weekly_report.last_updated.isoformat(),
-                }
-        except HousingUnit.weekly_report.RelatedObjectDoesNotExist:
-            weekly_report = None
 
         # Construction snapshot + last updates (MVP)
         progress = (
@@ -1501,7 +1488,6 @@ def get_unit_details(request, position, unit_id):
                 'can_add_household_members': can_add_household_members,
                 'household_relationship_options': _HOUSEHOLD_RELATIONSHIP_OPTIONS,
                 'notice': notice_info,
-                'weekly_report': weekly_report,
                 'construction': (
                     {
                         'stage': progress.stage,
