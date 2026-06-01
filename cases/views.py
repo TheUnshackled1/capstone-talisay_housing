@@ -1048,27 +1048,39 @@ def create_case(request, position):
         # Normalize legacy type codes from old forms
         case_type = wf.LEGACY_TYPE_MAP.get(case_type, case_type)
 
-        # Validate required fields
-        if not complainant_applicant_id:
-            return JsonResponse({
-                'success': False,
-                'error': 'Select a complainant from the housing unit occupant list.',
-            }, status=400)
-        if not subject_applicant_id:
-            return JsonResponse({
-                'success': False,
-                'error': 'Select a reported party from the housing unit occupant list.',
-            }, status=400)
-        if _parties_are_same_person(
-            complainant_applicant_id,
-            subject_applicant_id,
-            complainant_name,
-            subject_name,
-        ):
-            return JsonResponse({
-                'success': False,
-                'error': 'Reported party cannot be the same person as the complainant.',
-            }, status=400)
+        is_illegal_occupant = case_type == 'illegal_occupant'
+
+        if is_illegal_occupant:
+            if not subject_applicant_id:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Select the beneficiary for this illegal occupant concern.',
+                }, status=400)
+            complainant_applicant_id = subject_applicant_id
+            if not complainant_name:
+                complainant_name = subject_name
+        else:
+            if not complainant_applicant_id:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Select a complainant from the housing unit occupant list.',
+                }, status=400)
+            if not subject_applicant_id:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Select a reported party from the housing unit occupant list.',
+                }, status=400)
+            if _parties_are_same_person(
+                complainant_applicant_id,
+                subject_applicant_id,
+                complainant_name,
+                subject_name,
+            ):
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Reported party cannot be the same person as the complainant.',
+                }, status=400)
+
         if not all([complainant_name, case_type, initial_description]):
             return JsonResponse({
                 'success': False,
@@ -1103,18 +1115,20 @@ def create_case(request, position):
                 subject_name = subject_applicant.full_name or subject_name
         if related_unit_id:
             related_unit = get_object_or_404(HousingUnit, id=related_unit_id)
-        elif complainant_applicant:
-            la = (
-                LotAward.objects.filter(
-                    application__applicant=complainant_applicant,
-                    status='active',
+        else:
+            unit_applicant = subject_applicant if is_illegal_occupant else complainant_applicant
+            if unit_applicant:
+                la = (
+                    LotAward.objects.filter(
+                        application__applicant=unit_applicant,
+                        status='active',
+                    )
+                    .select_related('unit')
+                    .order_by('-awarded_at')
+                    .first()
                 )
-                .select_related('unit')
-                .order_by('-awarded_at')
-                .first()
-            )
-            if la:
-                related_unit = la.unit
+                if la:
+                    related_unit = la.unit
 
         case = Case.objects.create(
             complainant_name=complainant_name,

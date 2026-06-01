@@ -3636,6 +3636,15 @@
         box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.12);
     }
 
+    #addCaseForm.is-illegal-occupant-mode #newCaseComplainantSection {
+        display: none !important;
+    }
+
+    #addCaseForm.is-illegal-occupant-mode #newCaseSubjectSection {
+        border-color: #fcd34d;
+        background: linear-gradient(180deg, #fffbeb 0%, #fff 100%);
+    }
+
     .tha-case-reg-modal .modal-header {
         background: #fff;
         border-bottom: 1px solid #e5e9ef;
@@ -5333,7 +5342,7 @@
                     <p class="tha-form-subtitle">Talisay City Housing Authority</p>
                 </div>
 
-                <div class="tha-section-block tha-section-block--identity">
+                <div id="newCaseComplainantSection" class="tha-section-block tha-section-block--identity">
                     <h3 class="tha-section-title">Complainant</h3>
                     <div class="form-group">
                         <label class="form-label">Search beneficiary (complainant) <span class="req">*</span></label>
@@ -5370,21 +5379,31 @@
                     </div>
                 </div>
 
-                <div class="tha-section-block tha-section-block--household">
-                    <h3 class="tha-section-title">Reported Party</h3>
+                <div id="newCaseSubjectSection" class="tha-section-block tha-section-block--household"
+                    data-title-standard="Reported Party"
+                    data-title-illegal="Beneficiary (illegal occupant concern)"
+                    data-search-label-standard="Search reported party / against whom"
+                    data-search-label-illegal="Search beneficiary (illegal occupant concern)"
+                    data-search-placeholder-standard="e.g. name, APP ref, or lot"
+                    data-search-placeholder-illegal="e.g. Juan Dela Cruz, APP ref, or 1-1"
+                    data-help-standard="Required — pick a different occupant from the list. The complainant cannot be the reported party."
+                    data-help-illegal="Select the occupant who is the subject of this illegal occupant concern — same list as Unit Monitoring."
+                    data-name-label-standard="Reported party name"
+                    data-name-label-illegal="Beneficiary name">
+                    <h3 id="newCaseSubjectSectionTitle" class="tha-section-title">Reported Party</h3>
                     <div class="form-group">
-                        <label class="form-label">Search reported party / against whom <span class="req">*</span></label>
+                        <label id="newCaseSubjectSearchLabel" class="form-label">Search reported party / against whom <span class="req">*</span></label>
                         <div class="case-beneficiary-search-wrap">
                             <input type="text" class="form-input" id="subjectSearchInput" autocomplete="off"
                                 placeholder="e.g. name, APP ref, or lot">
                             <div id="subjectSearchResults" class="case-search-results" style="display: none;"></div>
                         </div>
-                        <p class="help-text">Required — pick a different occupant from the list. The complainant cannot be the reported party.</p>
+                        <p id="newCaseSubjectSearchHelp" class="help-text">Required — pick a different occupant from the list. The complainant cannot be the reported party.</p>
                     </div>
                     <div id="subjectAutoFill" class="case-autofill-panel">
                         <div class="form-row full">
                             <div class="form-group">
-                                <label class="form-label">Reported party name</label>
+                                <label id="newCaseSubjectAutoNameLabel" class="form-label">Reported party name</label>
                                 <input type="text" class="form-input" id="subjectAutoName" readonly placeholder="—">
                             </div>
                         </div>
@@ -6837,6 +6856,7 @@
         if (caseModal) caseModal.style.display = 'none';
         resetNewCaseForm();
         bindNewCaseEvidenceControls();
+        syncNewCasePartyMode();
         document.body.style.overflow = 'hidden';
         document.getElementById('newCaseModal').style.display = 'flex';
     }
@@ -6860,6 +6880,55 @@
 
     function getSelectedComplainantApplicantId() {
         return (document.getElementById('complainantApplicantId')?.value || '').trim();
+    }
+
+    function isIllegalOccupantCaseType() {
+        return document.getElementById('newCaseType')?.value === 'illegal_occupant';
+    }
+
+    function syncNewCasePartyMode() {
+        const form = document.getElementById('addCaseForm');
+        const section = document.getElementById('newCaseSubjectSection');
+        const illegal = isIllegalOccupantCaseType();
+        if (form) {
+            form.classList.toggle('is-illegal-occupant-mode', illegal);
+        }
+        if (!section) return;
+        const title = document.getElementById('newCaseSubjectSectionTitle');
+        const searchLabel = document.getElementById('newCaseSubjectSearchLabel');
+        const searchHelp = document.getElementById('newCaseSubjectSearchHelp');
+        const nameLabel = document.getElementById('newCaseSubjectAutoNameLabel');
+        const searchInput = document.getElementById('subjectSearchInput');
+        if (illegal) {
+            if (title) title.textContent = section.dataset.titleIllegal || 'Beneficiary (illegal occupant concern)';
+            if (searchLabel) {
+                searchLabel.innerHTML = `${section.dataset.searchLabelIllegal || 'Search beneficiary (illegal occupant concern)'} <span class="req">*</span>`;
+            }
+            if (searchHelp) {
+                searchHelp.textContent = section.dataset.helpIllegal || '';
+            }
+            if (nameLabel) nameLabel.textContent = section.dataset.nameLabelIllegal || 'Beneficiary name';
+            if (searchInput) {
+                searchInput.placeholder = section.dataset.searchPlaceholderIllegal || 'e.g. Juan Dela Cruz, APP ref, or 1-1';
+            }
+            clearComplainantAutoFill();
+            ['complainantApplicantId', 'relatedUnitId', 'newComplainantName', 'newComplainantPhone'].forEach((id) => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+            const cSearch = document.getElementById('complainantSearchInput');
+            if (cSearch) cSearch.value = '';
+        } else {
+            if (title) title.textContent = section.dataset.titleStandard || 'Reported Party';
+            if (searchLabel) {
+                searchLabel.innerHTML = `${section.dataset.searchLabelStandard || 'Search reported party / against whom'} <span class="req">*</span>`;
+            }
+            if (searchHelp) searchHelp.textContent = section.dataset.helpStandard || '';
+            if (nameLabel) nameLabel.textContent = section.dataset.nameLabelStandard || 'Reported party name';
+            if (searchInput) {
+                searchInput.placeholder = section.dataset.searchPlaceholderStandard || 'e.g. name, APP ref, or lot';
+            }
+        }
     }
 
     function isSameApplicantAsComplainant(applicantId) {
@@ -6900,7 +6969,7 @@
     }
 
     function applySubjectSelection(row) {
-        if (isSameApplicantAsComplainant(row.id)) {
+        if (!isIllegalOccupantCaseType() && isSameApplicantAsComplainant(row.id)) {
             alert('Reported party cannot be the same person as the complainant. Choose a different occupant.');
             return;
         }
@@ -6912,6 +6981,9 @@
         document.getElementById('subjectAutoFill')?.classList.add('is-linked');
         document.getElementById('subjectSearchResults').style.display = 'none';
         document.getElementById('subjectSearchInput').value = row.full_name || '';
+        if (isIllegalOccupantCaseType()) {
+            document.getElementById('relatedUnitId').value = row.unit_id || '';
+        }
     }
 
     function updateDescCount() {
@@ -6940,6 +7012,7 @@
         clearNewCasePendingEvidence();
         stopNewCaseCamera();
         updateDescCount();
+        syncNewCasePartyMode();
     }
 
     function formatHousingBeneficiaryRow(row) {
@@ -7011,7 +7084,7 @@
     }
 
     function runSubjectSearch(q) {
-        if (!getSelectedComplainantApplicantId()) {
+        if (!isIllegalOccupantCaseType() && !getSelectedComplainantApplicantId()) {
             const box = document.getElementById('subjectSearchResults');
             if (box) {
                 box.innerHTML = '<p style="padding: 0.5rem; font-size: 0.8rem; color: #64748b; margin: 0;">Select the complainant first.</p>';
@@ -7019,36 +7092,62 @@
             }
             return;
         }
-        runBeneficiarySearch(q, document.getElementById('subjectSearchResults'), applySubjectSelection, { excludeComplainant: true });
+        const options = isIllegalOccupantCaseType()
+            ? {}
+            : { excludeComplainant: true };
+        runBeneficiarySearch(q, document.getElementById('subjectSearchResults'), applySubjectSelection, options);
     }
 
     function createNewCase() {
+        const illegalOccupant = isIllegalOccupantCaseType();
+        const subjectId = (document.getElementById('subjectApplicantId')?.value || '').trim();
+        const subjectName = document.getElementById('newSubjectName').value.trim();
+        let complainantId = (document.getElementById('complainantApplicantId')?.value || '').trim();
+        let complainantName = document.getElementById('newComplainantName').value.trim();
+        let complainantPhone = document.getElementById('newComplainantPhone').value.trim();
+        let relatedUnitId = document.getElementById('relatedUnitId').value;
+
+        if (illegalOccupant) {
+            if (!subjectId) {
+                alert('Search and select the beneficiary for this illegal occupant concern.');
+                return;
+            }
+            complainantId = subjectId;
+            complainantName = subjectName;
+            relatedUnitId = relatedUnitId || '';
+        } else {
+            if (!complainantId) {
+                alert('Search and select a complainant from the housing unit list.');
+                return;
+            }
+            if (!subjectId) {
+                alert('Search and select a reported party from the housing unit list.');
+                return;
+            }
+            if (subjectId === complainantId) {
+                alert('Reported party cannot be the same person as the complainant.');
+                return;
+            }
+        }
+
         const data = {
-            complainant_name: document.getElementById('newComplainantName').value.trim(),
-            complainant_phone: document.getElementById('newComplainantPhone').value.trim(),
+            complainant_name: complainantName,
+            complainant_phone: complainantPhone,
             case_type: document.getElementById('newCaseType').value,
             received_at_location: document.getElementById('newReceivedAt').value,
             initial_description: document.getElementById('newDescription').value.trim(),
-            subject_name: document.getElementById('newSubjectName').value.trim(),
-            complainant_applicant_id: document.getElementById('complainantApplicantId').value,
-            subject_applicant_id: document.getElementById('subjectApplicantId').value,
-            related_unit_id: document.getElementById('relatedUnitId').value,
+            subject_name: subjectName,
+            complainant_applicant_id: complainantId,
+            subject_applicant_id: subjectId,
+            related_unit_id: relatedUnitId,
         };
-        const linked = document.getElementById('complainantApplicantId')?.value;
-        if (!linked) {
-            alert('Search and select a complainant from the housing unit list.');
+        if (!data.case_type || !data.initial_description) {
+            alert(illegalOccupant
+                ? 'Fill complaint type, beneficiary, and incident description.'
+                : 'Fill all required fields: complainant, reported party, complaint type, and incident description.');
             return;
         }
-        const subjectId = (document.getElementById('subjectApplicantId')?.value || '').trim();
-        if (!subjectId) {
-            alert('Search and select a reported party from the housing unit list.');
-            return;
-        }
-        if (subjectId === linked) {
-            alert('Reported party cannot be the same person as the complainant.');
-            return;
-        }
-        if (!data.complainant_name || !data.case_type || !data.initial_description) {
+        if (!illegalOccupant && !data.complainant_name) {
             alert('Fill all required fields: complainant, reported party, complaint type, and incident description.');
             return;
         }
@@ -7464,6 +7563,8 @@
     });
 
     document.getElementById('typeFilter')?.addEventListener('change', applyCaseFilters);
+
+    document.getElementById('newCaseType')?.addEventListener('change', syncNewCasePartyMode);
 
     function anyCaseDeskDrawerOpen() {
         return document.getElementById('resolvedCasesDrawer')?.classList.contains('is-open')
