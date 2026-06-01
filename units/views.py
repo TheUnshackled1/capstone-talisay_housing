@@ -3166,12 +3166,15 @@ def _evaluate_monitoring_report(report):
             monitoring_cycle.is_active = False
             monitoring_cycle.save()
 
+            from units.monitoring_policy import FINAL_NOTICE_COMPLIANCE_DAYS
+
+            final_deadline = today + timedelta(days=FINAL_NOTICE_COMPLIANCE_DAYS)
             final_cycle = OccupancyMonitoringCycle.objects.create(
                 lot_award=lot_award,
                 cycle_stage='final_notice_30_day',
                 stage_start_date=today,
-                stage_end_date=today + timedelta(days=30),
-                days_allowed=30,
+                stage_end_date=final_deadline,
+                days_allowed=FINAL_NOTICE_COMPLIANCE_DAYS,
                 is_active=True,
             )
 
@@ -3180,7 +3183,7 @@ def _evaluate_monitoring_report(report):
                 lot_award=lot_award,
                 task_type='final_inspection',
                 scheduled_date=today,
-                due_date=today + timedelta(days=30),
+                due_date=final_deadline,
                 days_from_award=days_since_award,
                 status='pending',
                 assigned_to=report.unit.site.caretaker,
@@ -3188,7 +3191,9 @@ def _evaluate_monitoring_report(report):
 
             result['actions'].append({
                 'type': 'final_notice',
-                'message': 'Extension period ended. Final 30-day notice issued.',
+                'message': (
+                    f'Extension period ended. Final {FINAL_NOTICE_COMPLIANCE_DAYS}-day notice issued.'
+                ),
                 'cycle_id': str(final_cycle.id),
             })
 
@@ -3196,8 +3201,10 @@ def _evaluate_monitoring_report(report):
             if lot_award.application.applicant.phone_number:
                 send_sms(
                     lot_award.application.applicant.phone_number,
-                    f"FINAL NOTICE: You have 30 days to show construction progress on Block {report.unit.block_number} Lot {report.unit.lot_number}. "
-                    f"Deadline: {final_cycle.stage_end_date}. Reference: {lot_award.application.applicant.reference_number}",
+                    f"FINAL NOTICE: You have {FINAL_NOTICE_COMPLIANCE_DAYS} days to show construction progress "
+                    f"on Block {report.unit.block_number} Lot {report.unit.lot_number}. "
+                    f"Deadline: {final_cycle.stage_end_date}. "
+                    f"Reference: {lot_award.application.applicant.reference_number}",
                     'final_notice',
                     applicant=lot_award.application.applicant,
                     module='units',

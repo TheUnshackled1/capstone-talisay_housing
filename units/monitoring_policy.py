@@ -28,6 +28,9 @@ EXTENSION_BUILD_DAYS = 90
 EXTENSION_FINAL_INSPECTION_OFFSET_DAYS = 30
 EXTENSION_MIDPOINT_INSPECTION_OFFSET_DAYS = 90
 
+# Post-extension compliance window before repossession / final inspection task.
+FINAL_NOTICE_COMPLIANCE_DAYS = 90
+
 # MonitoringTask.task_type values (stored in DB; labels are 90 Day / 120 Day in UI)
 TASK_TYPE_INITIAL_INSPECTION = 'day_60_inspection'
 TASK_TYPE_FINAL_INSPECTION = 'day_30_inspection'

@@ -583,7 +583,7 @@ class SMSLog(models.Model):
 class OccupancyMonitoringCycle(models.Model):
     """
     Tracks the overall occupancy monitoring lifecycle for a lot award.
-    Manages transitions through: Original 30-day → Extension (1-3 months) → Final Notice (30 days)
+    Manages transitions through: Original 30-day → Extension (1-3 months) → Final Notice (90 days)
 
     Each stage represents a distinct monitoring period with its own deadline.
     """
@@ -592,7 +592,7 @@ class OccupancyMonitoringCycle(models.Model):
         ('extension_month_1', 'Extension Month 1'),
         ('extension_month_2', 'Extension Month 2'),
         ('extension_month_3', 'Extension Month 3'),
-        ('final_notice_30_day', 'Final Notice — 30 Days'),
+        ('final_notice_30_day', 'Final Notice — 90 Days'),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
