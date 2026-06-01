@@ -5138,38 +5138,6 @@
                             <button type="button" class="case-settlement-inline-carousel-nav case-settlement-inline-carousel-nav--next" id="caseIntakeSavedNext" aria-label="Next photo">›</button>
                         </div>
                     </div>
-                    <p id="caseIntakeEvidenceEmpty" class="case-intake-evidence-empty" hidden>No intake photographs on file.</p>
-                    <div id="caseIntakeUploadForm" class="case-evidence-upload-form" style="display: none;">
-                        <div class="field-evidence-intake">
-                            <div class="field-evidence-section">
-                                <span class="field-evidence-label">Supporting photographs (optional)</span>
-                                <p class="field-evidence-hint">You may capture images using this device or attach files from storage. Accepted types: JPEG, PNG, or WebP. Maximum four (4) files, six (6) MB each. Camera access generally requires HTTPS or <code>localhost</code>.</p>
-                                <video id="caseIntakeCameraVideo" class="field-evidence-camera-video" playsinline autoplay muted></video>
-                                <canvas id="caseIntakeCameraCanvas" style="display:none;"></canvas>
-                                <div class="field-evidence-buttons">
-                                    <button type="button" id="caseIntakeCameraStartBtn" class="table-verify-btn"><svg class="btn-icon" style="width: 0.9rem; height: 0.9rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg> Activate camera</button>
-                                    <button type="button" id="caseIntakeCameraCaptureBtn" class="table-verify-btn" style="display:none;"><svg class="btn-icon" style="width: 0.9rem; height: 0.9rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg> Capture frame</button>
-                                    <button type="button" id="caseIntakeCameraSwitchBtn" class="table-verify-btn table-verify-btn--muted" style="display:none;"><svg class="btn-icon" style="width: 0.9rem; height: 0.9rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path><path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"></path></svg> Switch camera</button>
-                                    <button type="button" id="caseIntakeCameraStopBtn" class="table-verify-btn table-verify-btn--muted" style="display:none;"><svg class="btn-icon" style="width: 0.9rem; height: 0.9rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect></svg> Stop camera</button>
-                                </div>
-                                <input type="file" id="caseIntakeEvidenceFileInput" accept="image/jpeg,image/png,image/webp,image/*" multiple style="display:none;">
-                                <button type="button" class="field-evidence-file-btn" id="caseIntakeEvidenceFilePickBtn"><svg class="btn-icon" style="width: 0.9rem; height: 0.9rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path><line x1="12" y1="11" x2="12" y2="17"></line><line x1="9" y1="14" x2="15" y2="14"></line></svg> Attach from device</button>
-                                <div id="caseIntakePendingCarousel" class="case-settlement-inline-carousel" hidden>
-                                    <div class="case-settlement-inline-carousel-toolbar">
-                                        <span class="case-settlement-inline-carousel-counter" id="caseIntakePendingCounter"></span>
-                                        <button type="button" class="case-settlement-inline-carousel-remove" id="caseIntakePendingRemoveBtn">Remove photo</button>
-                                    </div>
-                                    <div class="case-settlement-inline-carousel-stage">
-                                        <button type="button" class="case-settlement-inline-carousel-nav case-settlement-inline-carousel-nav--prev" id="caseIntakePendingPrev" aria-label="Previous photo">‹</button>
-                                        <img id="caseIntakePendingImg" src="" alt="Intake photo preview" />
-                                        <button type="button" class="case-settlement-inline-carousel-nav case-settlement-inline-carousel-nav--next" id="caseIntakePendingNext" aria-label="Next photo">›</button>
-                                    </div>
-                                </div>
-                                <button type="button" onclick="saveCaseIntakeEvidence()"
-                                    class="cases-add-btn case-evidence-save-submit case-intake-evidence-save-btn"><svg class="btn-icon" style="width: 0.95rem; height: 0.95rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Save photographs</button>
-                            </div>
-                        </div>
-                    </div>
                 </article>
 
                 <!-- Investigation Notes Card (Full Width) -->
@@ -5684,12 +5652,8 @@
         caseIntakeSavedIndex = 0;
         const intakeSection = document.getElementById('caseIntakeEvidenceSection');
         if (intakeSection) intakeSection.style.display = 'none';
-        const intakeUpload = document.getElementById('caseIntakeUploadForm');
-        if (intakeUpload) intakeUpload.style.display = 'none';
         const intakeCarousel = document.getElementById('caseIntakeSavedCarousel');
         if (intakeCarousel) intakeCarousel.hidden = true;
-        clearCaseIntakePendingEvidence();
-        stopCaseIntakeCamera();
         const savedCarousel = document.getElementById('caseSettlementSavedCarousel');
         if (savedCarousel) savedCarousel.hidden = true;
         clearCaseSettlementPendingEvidence();
@@ -6085,15 +6049,12 @@
             } else if (wf.show_case_carousel) {
                 deskBadge.textContent = 'Settlement';
                 deskBadge.className = 'case-desk-badge case-desk-badge--intake';
-            } else if (wf.can_upload_intake_evidence) {
-                deskBadge.textContent = 'Add evidence';
-                deskBadge.className = 'case-desk-badge case-desk-badge--intake';
             } else {
                 deskBadge.textContent = 'View only';
                 deskBadge.className = 'case-desk-badge case-desk-badge--monitor';
             }
         }
-        populateCaseIntakeEvidenceSection(c, wf);
+        populateCaseIntakeEvidenceSection(c);
         applyFieldCaseModalLayout(c, wf, options);
         if (wf.show_case_carousel) {
             populateFieldCaseEvidence(c, wf);
@@ -6129,14 +6090,6 @@
         });
         return { intake, settlement };
     }
-
-    const CASE_INTAKE_MAX_PHOTOS = 4;
-    let caseIntakePendingFiles = [];
-    let caseIntakePendingObjectUrls = [];
-    let caseIntakePendingIndex = 0;
-    let caseIntakeSavedCount = 0;
-    let caseIntakeCameraStream = null;
-    let caseIntakeCameraFacingMode = 'environment';
 
     function refreshCaseIntakeSavedCarousel() {
         const carousel = document.getElementById('caseIntakeSavedCarousel');
@@ -6175,50 +6128,24 @@
         refreshCaseIntakeSavedCarousel();
     }
 
-    function populateCaseIntakeEvidenceSection(c, wf) {
+    function populateCaseIntakeEvidenceSection(c) {
         const section = document.getElementById('caseIntakeEvidenceSection');
-        const empty = document.getElementById('caseIntakeEvidenceEmpty');
-        const uploadForm = document.getElementById('caseIntakeUploadForm');
         const { intake } = classifyCaseEvidenceList(c.evidence || []);
-        const canUpload = !!wf.can_upload_intake_evidence;
-        const showSection = canUpload || intake.length > 0;
 
         if (!section) return;
-        if (!showSection) {
+        if (!intake.length) {
             section.style.display = 'none';
-            if (empty) empty.hidden = true;
-            if (uploadForm) uploadForm.style.display = 'none';
-            caseIntakeSavedUrls = [];
-            caseIntakeSavedCount = 0;
-            caseIntakeSavedIndex = 0;
-            clearCaseIntakePendingEvidence();
-            stopCaseIntakeCamera();
-            return;
-        }
-
-        section.style.display = 'block';
-        caseIntakeSavedCount = intake.length;
-        if (intake.length) {
-            if (empty) empty.hidden = true;
-            caseIntakeSavedUrls = intake.map((ev) => ev.url).filter(Boolean);
-            caseIntakeSavedIndex = 0;
-            refreshCaseIntakeSavedCarousel();
-        } else {
             caseIntakeSavedUrls = [];
             caseIntakeSavedIndex = 0;
             const carousel = document.getElementById('caseIntakeSavedCarousel');
             if (carousel) carousel.hidden = true;
-            if (empty) empty.hidden = canUpload ? true : false;
+            return;
         }
 
-        if (uploadForm) {
-            uploadForm.style.display = canUpload ? 'block' : 'none';
-            if (canUpload) {
-                clearCaseIntakePendingEvidence();
-                stopCaseIntakeCamera();
-                bindCaseIntakeEvidenceControls();
-            }
-        }
+        section.style.display = 'block';
+        caseIntakeSavedUrls = intake.map((ev) => ev.url).filter(Boolean);
+        caseIntakeSavedIndex = 0;
+        refreshCaseIntakeSavedCarousel();
         bindCaseIntakeEvidenceViewControls();
     }
 
@@ -6227,245 +6154,6 @@
         window._caseIntakeEvidenceViewBound = true;
         document.getElementById('caseIntakeSavedPrev')?.addEventListener('click', () => caseIntakeSavedCarouselStep(-1));
         document.getElementById('caseIntakeSavedNext')?.addEventListener('click', () => caseIntakeSavedCarouselStep(1));
-    }
-
-    function getCaseIntakePhotoSlotsRemaining() {
-        return Math.max(0, CASE_INTAKE_MAX_PHOTOS - caseIntakeSavedCount - caseIntakePendingFiles.length);
-    }
-
-    function clearCaseIntakePendingEvidence() {
-        caseIntakePendingObjectUrls.forEach((u) => {
-            try { URL.revokeObjectURL(u); } catch (e) { /* ignore */ }
-        });
-        caseIntakePendingObjectUrls = [];
-        caseIntakePendingFiles = [];
-        caseIntakePendingIndex = 0;
-        const carousel = document.getElementById('caseIntakePendingCarousel');
-        if (carousel) carousel.hidden = true;
-        const fi = document.getElementById('caseIntakeEvidenceFileInput');
-        if (fi) fi.value = '';
-    }
-
-    function refreshCaseIntakePendingCarousel() {
-        caseIntakePendingObjectUrls.forEach((u) => {
-            try { URL.revokeObjectURL(u); } catch (e) { /* ignore */ }
-        });
-        caseIntakePendingObjectUrls = caseIntakePendingFiles.map((file) => URL.createObjectURL(file));
-
-        const carousel = document.getElementById('caseIntakePendingCarousel');
-        const img = document.getElementById('caseIntakePendingImg');
-        const counter = document.getElementById('caseIntakePendingCounter');
-        const prev = document.getElementById('caseIntakePendingPrev');
-        const next = document.getElementById('caseIntakePendingNext');
-        const n = caseIntakePendingObjectUrls.length;
-
-        if (!carousel || !img) return;
-        if (!n) {
-            carousel.hidden = true;
-            caseIntakePendingIndex = 0;
-            img.removeAttribute('src');
-            return;
-        }
-
-        carousel.hidden = false;
-        if (caseIntakePendingIndex >= n) {
-            caseIntakePendingIndex = n - 1;
-        }
-        img.src = caseIntakePendingObjectUrls[caseIntakePendingIndex];
-        img.alt = 'Intake photo ' + String(caseIntakePendingIndex + 1) + ' of ' + String(n);
-        if (counter) {
-            counter.textContent = n > 1 ? String(caseIntakePendingIndex + 1) + ' / ' + String(n) : '1 photo';
-        }
-        if (prev) prev.hidden = n <= 1;
-        if (next) next.hidden = n <= 1;
-    }
-
-    function caseIntakePendingCarouselStep(delta) {
-        const n = caseIntakePendingObjectUrls.length;
-        if (n <= 1) return;
-        caseIntakePendingIndex = (caseIntakePendingIndex + delta + n) % n;
-        refreshCaseIntakePendingCarousel();
-    }
-
-    function addCaseIntakePendingFile(file) {
-        if (getCaseIntakePhotoSlotsRemaining() <= 0) {
-            casePhotoLimitAlert();
-            return;
-        }
-        const maxBytes = 6 * 1024 * 1024;
-        if (file.size > maxBytes) {
-            alert('Each photo must be 6 MB or smaller.');
-            return;
-        }
-        const okType = /^image\/(jpeg|png|webp)$/i.test(file.type || '');
-        if (!okType) {
-            alert('Only JPEG, PNG, or WebP photos are allowed.');
-            return;
-        }
-        caseIntakePendingFiles.push(file);
-        if (caseIntakePendingFiles.length === 1) {
-            caseIntakePendingIndex = 0;
-        } else {
-            caseIntakePendingIndex = caseIntakePendingFiles.length - 1;
-        }
-        refreshCaseIntakePendingCarousel();
-    }
-
-    function removeCaseIntakePendingAt(index) {
-        if (index < 0 || index >= caseIntakePendingFiles.length) return;
-        caseIntakePendingFiles.splice(index, 1);
-        if (caseIntakePendingIndex >= caseIntakePendingFiles.length) {
-            caseIntakePendingIndex = Math.max(0, caseIntakePendingFiles.length - 1);
-        }
-        refreshCaseIntakePendingCarousel();
-    }
-
-    function removeCurrentCaseIntakePendingPhoto() {
-        removeCaseIntakePendingAt(caseIntakePendingIndex);
-    }
-
-    function stopCaseIntakeCamera() {
-        if (caseIntakeCameraStream) {
-            caseIntakeCameraStream.getTracks().forEach((t) => t.stop());
-            caseIntakeCameraStream = null;
-        }
-        const v = document.getElementById('caseIntakeCameraVideo');
-        if (v) {
-            v.srcObject = null;
-            v.style.display = 'none';
-        }
-        const start = document.getElementById('caseIntakeCameraStartBtn');
-        const cap = document.getElementById('caseIntakeCameraCaptureBtn');
-        const stp = document.getElementById('caseIntakeCameraStopBtn');
-        const swt = document.getElementById('caseIntakeCameraSwitchBtn');
-        if (start) start.style.display = 'inline-block';
-        if (cap) cap.style.display = 'none';
-        if (stp) stp.style.display = 'none';
-        if (swt) swt.style.display = 'none';
-    }
-
-    async function startCaseIntakeCamera() {
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            alert('This browser does not support in-page camera access. Use Attach from device.');
-            return;
-        }
-        try {
-            if (caseIntakeCameraStream) {
-                caseIntakeCameraStream.getTracks().forEach((t) => t.stop());
-            }
-            caseIntakeCameraStream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: { ideal: caseIntakeCameraFacingMode } },
-                audio: false,
-            });
-            const v = document.getElementById('caseIntakeCameraVideo');
-            if (v) {
-                v.srcObject = caseIntakeCameraStream;
-                v.style.display = 'block';
-                await v.play();
-            }
-            const start = document.getElementById('caseIntakeCameraStartBtn');
-            const cap = document.getElementById('caseIntakeCameraCaptureBtn');
-            const stp = document.getElementById('caseIntakeCameraStopBtn');
-            const swt = document.getElementById('caseIntakeCameraSwitchBtn');
-            if (start) start.style.display = 'none';
-            if (cap) cap.style.display = 'inline-block';
-            if (stp) stp.style.display = 'inline-block';
-            if (swt) swt.style.display = 'inline-block';
-        } catch (err) {
-            alert('Could not open camera. Use Attach from device, or ensure you are on HTTPS or localhost.');
-        }
-    }
-
-    async function toggleCaseIntakeCamera() {
-        caseIntakeCameraFacingMode = (caseIntakeCameraFacingMode === 'environment') ? 'user' : 'environment';
-        if (caseIntakeCameraStream) {
-            await startCaseIntakeCamera();
-        }
-    }
-
-    function captureCaseIntakePhoto() {
-        const v = document.getElementById('caseIntakeCameraVideo');
-        const c = document.getElementById('caseIntakeCameraCanvas');
-        if (!v || !c || !v.videoWidth) {
-            alert('Wait for the camera preview, then capture again.');
-            return;
-        }
-        c.width = v.videoWidth;
-        c.height = v.videoHeight;
-        c.getContext('2d').drawImage(v, 0, 0);
-        c.toBlob((blob) => {
-            if (!blob) return;
-            const file = new File([blob], 'intake-' + Date.now() + '.jpg', { type: 'image/jpeg' });
-            addCaseIntakePendingFile(file);
-        }, 'image/jpeg', 0.88);
-    }
-
-    function onCaseIntakeEvidenceFilesSelected(ev) {
-        const files = ev.target.files;
-        if (!files) return;
-        for (let i = 0; i < files.length; i++) {
-            if (getCaseIntakePhotoSlotsRemaining() <= 0) break;
-            addCaseIntakePendingFile(files[i]);
-        }
-        ev.target.value = '';
-    }
-
-    function bindCaseIntakeEvidenceControls() {
-        if (window._caseIntakeUploadBound) return;
-        window._caseIntakeUploadBound = true;
-        document.getElementById('caseIntakeCameraStartBtn')?.addEventListener('click', startCaseIntakeCamera);
-        document.getElementById('caseIntakeCameraCaptureBtn')?.addEventListener('click', captureCaseIntakePhoto);
-        document.getElementById('caseIntakeCameraStopBtn')?.addEventListener('click', stopCaseIntakeCamera);
-        document.getElementById('caseIntakeCameraSwitchBtn')?.addEventListener('click', toggleCaseIntakeCamera);
-        document.getElementById('caseIntakeEvidenceFilePickBtn')?.addEventListener('click', () => {
-            document.getElementById('caseIntakeEvidenceFileInput')?.click();
-        });
-        document.getElementById('caseIntakeEvidenceFileInput')?.addEventListener('change', onCaseIntakeEvidenceFilesSelected);
-        document.getElementById('caseIntakePendingPrev')?.addEventListener('click', () => caseIntakePendingCarouselStep(-1));
-        document.getElementById('caseIntakePendingNext')?.addEventListener('click', () => caseIntakePendingCarouselStep(1));
-        document.getElementById('caseIntakePendingRemoveBtn')?.addEventListener('click', removeCurrentCaseIntakePendingPhoto);
-    }
-
-    async function saveCaseIntakeEvidence() {
-        if (!currentCaseId) return;
-        if (!caseIntakePendingFiles.length) {
-            alert('Add at least one photograph, then tap Save photographs.');
-            return;
-        }
-        const btn = document.querySelector('.case-intake-evidence-save-btn');
-        if (btn) {
-            btn.disabled = true;
-            btn.textContent = 'Saving…';
-        }
-        try {
-            for (const file of caseIntakePendingFiles) {
-                const fd = new FormData();
-                fd.append('file', file);
-                fd.append('caption', 'Initial intake evidence');
-                const resp = await fetch(`/cases/${CASE_POSITION}/${currentCaseId}/evidence/upload/`, {
-                    method: 'POST',
-                    headers: { 'X-CSRFToken': csrfToken() },
-                    body: fd,
-                });
-                const data = await resp.json();
-                if (!data.success) {
-                    caseFlowAlert(data.error || 'Could not upload photograph', 'Error', 'warning');
-                    return;
-                }
-            }
-            caseFlowAlert('Photographs saved.', 'Success', 'success');
-            clearCaseIntakePendingEvidence();
-            stopCaseIntakeCamera();
-            const details = await fetchCaseDetails(currentCaseId);
-            if (details.success) populateCaseModal(details.case);
-        } catch (e) {
-            caseFlowAlert('Could not upload photographs. Check that the server is running.', 'Error', 'warning');
-        } finally {
-            if (btn) {
-                btn.disabled = false;
-                btn.innerHTML = `<svg class="btn-icon" style="width: 0.95rem; height: 0.95rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Save photographs`;
-            }
-        }
     }
 
     function syncFieldCaseCarouselLayout() {
