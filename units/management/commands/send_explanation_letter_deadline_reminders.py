@@ -69,9 +69,9 @@ class Command(BaseCommand):
                 send_sms(
                     phone,
                     (
-                        f"THA NOTICE: The deadline for your written EXPLANATION letter (Block {rev.unit.block_number} "
-                        f"Lot {rev.unit.lot_number}) has passed without a scanned letter on file. "
-                        f"Report to the Housing Office immediately or your case may be disqualified. "
+                        f"THA NOTICE: Nalabyan na ang deadline sang imo explanation letter para sa Block {rev.unit.block_number} "
+                        f"Lot {rev.unit.lot_number}, kag wala pa sang scanned nga kopya nga na-file. "
+                        f"Palihog magkadto dayon sa Housing Office ukon mahimo nga ma-disqualify ang imo aplikasyon. "
                         f"Ref: {applicant.reference_number or '—'}"
                     ),
                     'explanation_letter_deadline_passed',

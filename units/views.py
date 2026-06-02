@@ -97,22 +97,21 @@ def _explanation_letter_sms_for_case(unit, applicant, rev):
         return None, None
     if not rev or not rev.letter_deadline_at:
         return (
-            f'THA: Your lot (Block {block} Lot {lot}) was assessed as '
-            f'No Progress. Report to the THA office with a written EXPLANATION letter. '
-            f'Staff will record your submission deadline in the system. Ref: {ref}'
+            f'THA: Ang imo lote (Block {block} Lot {lot}) gin-report nga wala sang progreso sa konstruksyon. '
+            f'Palihog magkadto sa THA Office kag magsumite sang explanation letter. '
+            f'Ang deadline sang pagsumite ihatag sang staff. Ref: {ref}'
         ), 'explanation_letter_required'
     local_disp = timezone.localtime(rev.letter_deadline_at).strftime('%b %d, %Y %I:%M %p')
     if timezone.now() >= rev.letter_deadline_at:
         return (
-            f'THA NOTICE: The deadline for your written EXPLANATION letter (Block {block} '
-            f'Lot {lot}) has passed without a scanned letter on file. '
-            f'Report to the Housing Office immediately or your case may be disqualified. '
+            f'THA NOTICE: Nalabyan na ang deadline sang imo explanation letter para sa Block {block} Lot {lot}, kag wala pa sang scanned nga kopya nga na-file. '
+            f'Palihog magkadto dayon sa Housing Office ukon mahimo nga ma-disqualify ang imo aplikasyon. '
             f'Ref: {ref}'
         ), 'explanation_letter_deadline_passed'
     return (
-        f'THA: Submit your written EXPLANATION letter for Block {block} Lot {lot} '
-        f'at the Housing Office no later than {local_disp}. '
-        f'Ref: {ref}'
+        f'May ara ka tubtob {local_disp} agud magsumite sang imo sinulat nga pagpahayag '
+        f'parte sa pagkaantala sang konstruksyon sa Block {block} Lot {lot}. '
+        f'Reference: {ref}'
     ), 'explanation_letter_deadline_set'
 
 
@@ -3147,8 +3146,7 @@ def _evaluate_monitoring_report(report):
             if lot_award.application.applicant.phone_number:
                 send_sms(
                     lot_award.application.applicant.phone_number,
-                    f"No construction progress detected on your lot (Block {report.unit.block_number} Lot {report.unit.lot_number}). "
-                    f"Please explain the delay. Reference: {lot_award.application.applicant.reference_number}",
+                    f"Wala sang nakita nga progreso sa konstruksyon sang imo lote (Block {report.unit.block_number} Lot {report.unit.lot_number}). Reference: {lot_award.application.applicant.reference_number}",
                     'no_progress',
                     applicant=lot_award.application.applicant,
                     module='units',
@@ -3201,8 +3199,7 @@ def _evaluate_monitoring_report(report):
             if lot_award.application.applicant.phone_number:
                 send_sms(
                     lot_award.application.applicant.phone_number,
-                    f"FINAL NOTICE: You have {FINAL_NOTICE_COMPLIANCE_DAYS} days to show construction progress "
-                    f"on Block {report.unit.block_number} Lot {report.unit.lot_number}. "
+                    f"PINAKAULIHI NGA PAHIBALO: May ara ka sang {FINAL_NOTICE_COMPLIANCE_DAYS} ka adlaw para magpakita sang progreso sa konstruksyon sang imo lote (Block {report.unit.block_number} Lot {report.unit.lot_number}). "
                     f"Deadline: {final_cycle.stage_end_date}. "
                     f"Reference: {lot_award.application.applicant.reference_number}",
                     'final_notice',
