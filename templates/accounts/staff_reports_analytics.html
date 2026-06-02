@@ -1171,20 +1171,6 @@
             <p class="rep-card-sub">Distribution by case category.</p>
             <div class="rep-ops-chart-canvas"><canvas id="chartCasesType"></canvas></div>
         </div>
-
-        <!-- Card 5: Queue lifecycle -->
-        <div class="rep-card">
-            <p class="rep-card-title">Queue lifecycle</p>
-            <p class="rep-card-sub">All queue entries by current status (active → completed).</p>
-            <div class="rep-ops-chart-canvas"><canvas id="chartQueueLifecycle"></canvas></div>
-        </div>
-
-        <!-- Card 6: Queue Count by Situation -->
-        <div class="rep-card">
-            <p class="rep-card-title">Queue Count by Situation</p>
-            <p class="rep-card-sub">All applicants in entire database grouped by status.</p>
-            <div class="rep-ops-chart-canvas"><canvas id="chartQueues"></canvas></div>
-        </div>
     </div>
 
     <div class="rep-footer">
@@ -1273,10 +1259,6 @@
                 return getSingleSeriesDataset('casesByStatus');
             case 'chartCasesType':
                 return getSingleSeriesDataset('casesByType');
-            case 'chartQueueLifecycle':
-                return getSingleSeriesDataset('queueByStatus');
-            case 'chartQueues':
-                return getSingleSeriesDataset('applicantsByStatus');
             default:
                 return null;
         }
@@ -1296,10 +1278,8 @@
             case 'chartRequirements':
             case 'chartCasesStatus':
             case 'chartCasesType':
-            case 'chartQueueLifecycle':
                 return 'donut';
             case 'chartBarangays':
-            case 'chartQueues':
             case 'chartFunnel':
             case 'chartCaseAging':
                 return 'bar';
@@ -1398,7 +1378,7 @@
                     x: { grid: { display: false } }
                 };
             } else if (mode === 'bar') {
-                var isHorizontal = ['chartBarangays', 'chartQueues', 'chartFunnel'].indexOf(canvasId) >= 0;
+                var isHorizontal = ['chartBarangays', 'chartFunnel'].indexOf(canvasId) >= 0;
                 config.type = 'bar';
                 config.data = {
                     labels: dataset.labels,
@@ -1421,7 +1401,7 @@
                 };
             } else if (mode === 'stacked') {
                 config.type = 'bar';
-                var isHorizontal = ['chartBarangays', 'chartQueues', 'chartFunnel'].indexOf(canvasId) >= 0;
+                var isHorizontal = ['chartBarangays', 'chartFunnel'].indexOf(canvasId) >= 0;
                 config.data = {
                     labels: isHorizontal ? ['Total Distribution'] : dataset.labels,
                     datasets: isHorizontal ? dataset.labels.map(function(lbl, i) {

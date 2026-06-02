@@ -484,7 +484,6 @@ def _build_analytics_charts_data(
     housing_application_records,
     applicants_registered_period,
     *,
-    queue_by_status=None,
     case_aging_bands=None,
     funnel_stages=None,
     isf_population_data=None,
@@ -541,8 +540,6 @@ def _build_analytics_charts_data(
     }
 
     # Enriched operational charts
-    if queue_by_status:
-        data['queueByStatus'] = pair_labels_counts(queue_by_status)
     if case_aging_bands:
         data['caseAging'] = {
             'labels': list(case_aging_bands.keys()),
@@ -980,16 +977,6 @@ def _staff_reports_analytics_payload(request):
 
     # ===== ENRICHED OPERATIONAL ANALYTICS =====
 
-    # Queue entries by status (full lifecycle)
-    queue_status_labels = dict(QueueEntry.STATUS_CHOICES)
-    queue_by_status = sorted(
-        QueueEntry.objects.values('status').annotate(count=Count('id')),
-        key=lambda x: (-x['count'], x['status'] or ''),
-    )
-    for row in queue_by_status:
-        row['label'] = queue_status_labels.get(row['status'], row['status'] or '—')
-    _analytics_rows_bar_pct(queue_by_status)
-
     # Queue entries by type (priority vs walk-in)
     queue_type_labels = dict(QueueEntry.QUEUE_TYPE_CHOICES)
     queue_by_type = sorted(
@@ -1084,7 +1071,6 @@ def _staff_reports_analytics_payload(request):
         module2_handoff_count,
         housing_application_records,
         applicants_registered_period,
-        queue_by_status=queue_by_status,
         case_aging_bands=case_aging_bands,
         funnel_stages=funnel_stages,
         isf_population_data=isf_population_data,
@@ -1142,7 +1128,6 @@ def _staff_reports_analytics_payload(request):
         'cases_closed_period': cases_closed_period,
         'analytics_charts_data': analytics_charts_data,
         # Enriched operational analytics
-        'queue_by_status': queue_by_status,
         'queue_by_type': queue_by_type,
         'case_aging_bands': case_aging_bands,
         'stale_cases_count': stale_cases_count,
