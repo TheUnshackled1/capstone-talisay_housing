@@ -322,6 +322,48 @@
         grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
         gap: 0.85rem;
     }
+    /* Four operational charts in one row (barangays, aging, cases) */
+    .rep-grid-4 {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 0.85rem;
+        align-items: stretch;
+    }
+    .rep-grid-4 > .rep-card {
+        min-width: 0;
+    }
+    .rep-grid-4 .rep-card-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+    }
+    .rep-grid-4 .rep-card-title-group {
+        min-width: 0;
+    }
+    .rep-grid-4 .rep-chart-switcher {
+        width: 100%;
+        justify-content: stretch;
+    }
+    .rep-grid-4 .rep-switch-btn {
+        flex: 1 1 0;
+        justify-content: center;
+        padding: 0.28rem 0.3rem;
+        font-size: 0.6rem;
+    }
+    .rep-grid-4 .rep-chart-canvas,
+    .rep-grid-4 .rep-ops-chart-canvas {
+        height: 220px;
+    }
+    @media (max-width: 1200px) {
+        .rep-grid-4 {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+    @media (max-width: 640px) {
+        .rep-grid-4 {
+            grid-template-columns: 1fr;
+        }
+    }
     .rep-grid-2 {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr));
@@ -1128,12 +1170,12 @@
         </div>
     </div>
 
-    <div class="rep-grid-3" style="margin-top: 0.85rem;">
+    <div class="rep-grid-4 rep-grid-charts" style="margin-top: 0.85rem;">
         <!-- Card 1: Top barangays -->
         <div class="rep-card">
             <p class="rep-card-title">Top barangays</p>
             <p class="rep-card-sub">Top 12 barangays by applicant count.</p>
-            <div class="rep-chart-canvas" style="height: 280px;"><canvas id="chartBarangays"></canvas></div>
+            <div class="rep-chart-canvas"><canvas id="chartBarangays"></canvas></div>
         </div>
 
         <!-- Card 2: Case aging distribution -->
@@ -1246,7 +1288,7 @@
             case 'chartBlacklist':
                 return {
                     type: 'single',
-                    labels: ['Unit Repossessed', 'Fraudulent Info', 'Illegal Transfer', 'Other Violations'],
+                    labels: ['Unit Repossessed', 'Other Violations'],
                     values: [{{ blacklist_count|default:0 }}, 0, 0, 0]
                 };
             case 'chartFunnel':
