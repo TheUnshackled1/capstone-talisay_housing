@@ -43,20 +43,6 @@ class Command(BaseCommand):
                 'last_name': 'Cura',
                 'position': 'ronda',
             },
-            {
-                'username': 'paul.betila',
-                'email': 'paul.betila@talisayhousing.gov.ph',
-                'first_name': 'Paul Martin',
-                'last_name': 'Betila',
-                'position': 'ronda',
-            },
-            {
-                'username': 'roberto.dreyfus',
-                'email': 'roberto.dreyfus@talisayhousing.gov.ph',
-                'first_name': 'Roberto',
-                'last_name': 'Dreyfus',
-                'position': 'ronda',
-            },
         ]
 
         created_count = 0
