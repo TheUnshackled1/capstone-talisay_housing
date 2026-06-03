@@ -26,6 +26,7 @@ from units.models import (
 )
 from accounts.models import FIELD_DESK_POSITIONS
 from cases.views import cases_page_url, module5_case_rows_for_unit
+from units.block_lot_sort import block_lot_sort_key as _block_lot_sort_key
 from units.housing_unit_status import housing_unit_on_file
 from units.historical_beneficiary import (
     HISTORICAL_BACKFILL_NOTE,
@@ -63,17 +64,6 @@ _NOTICE_STATUS_VALUES = frozenset({'Under notice (30-day)', 'Final notice (10-da
 _HOUSEHOLD_RELATIONSHIP_OPTIONS = [
     {'value': key, 'label': label} for key, label in HouseholdMember.RELATIONSHIP_CHOICES
 ]
-
-
-def _block_lot_sort_key(block_number, lot_number=''):
-    """Numeric sort for block/lot CharFields so Block 2 precedes Block 10."""
-    def _part(value):
-        text = str(value or '').strip()
-        if text.isdigit():
-            return (0, int(text))
-        return (1, text.lower())
-
-    return (_part(block_number), _part(lot_number))
 
 
 def _explanation_letter_deadline_office_payload(deadline):
@@ -367,6 +357,9 @@ def housing_units_monitoring(request, position):
     units_by_block = OrderedDict()
     for u in units_list:
         units_by_block.setdefault(u.block_number, []).append(u)
+    units_by_block = OrderedDict(
+        sorted(units_by_block.items(), key=lambda item: _block_lot_sort_key(item[0]))
+    )
 
     from applications.views import get_module2_permissions
 
@@ -483,8 +476,8 @@ def _gk_masterlist_site(request):
 
 def _gk_masterlist_rows(site):
     """
-    People currently tied to housing inventory at a site: lot beneficiaries
-    plus registered household members (active lot award), or legacy occupant_name.
+    Head beneficiaries on housing units at a site (active lot award), or legacy occupant_name.
+    Household members are not listed on the GK Masterlist.
     """
     if site is None:
         return []
@@ -492,7 +485,6 @@ def _gk_masterlist_rows(site):
     active_award_qs = (
         LotAward.objects.filter(status='active')
         .select_related('application__applicant')
-        .prefetch_related('application__applicant__household_members')
     )
     units = (
         HousingUnit.objects.filter(site=site)
@@ -513,7 +505,6 @@ def _gk_masterlist_rows(site):
         block_number,
         lot_number,
         beneficiary_year=None,
-        is_historical=False,
         is_primary=False,
     ):
         name_clean = (name or '').strip()
@@ -532,7 +523,6 @@ def _gk_masterlist_rows(site):
             'block_number': block_number,
             'lot_number': lot_number,
             'beneficiary_year': beneficiary_year,
-            'is_historical': is_historical,
             'is_primary': is_primary,
             'sort_key': name_clean.lower(),
         })
@@ -552,7 +542,6 @@ def _gk_masterlist_rows(site):
                     if active_award.awarded_at
                     else None
                 )
-                is_hist = HISTORICAL_BACKFILL_NOTE in (active_award.notes or '')
                 _append_row(
                     unit_id=unit.id,
                     name=applicant.full_name,
@@ -562,22 +551,8 @@ def _gk_masterlist_rows(site):
                     block_number=unit.block_number,
                     lot_number=unit.lot_number,
                     beneficiary_year=award_year,
-                    is_historical=is_hist,
                     is_primary=True,
                 )
-                for member in applicant.household_members.all().order_by('created_at'):
-                    _append_row(
-                        unit_id=unit.id,
-                        name=member.full_name,
-                        role_label=member.get_relationship_display(),
-                        reference=applicant.reference_number,
-                        block_lot=block_lot,
-                        block_number=unit.block_number,
-                        lot_number=unit.lot_number,
-                        beneficiary_year=award_year,
-                        is_historical=is_hist,
-                        is_primary=False,
-                    )
                 continue
         if (unit.occupant_name or '').strip():
             _append_row(
@@ -589,7 +564,6 @@ def _gk_masterlist_rows(site):
                 block_number=unit.block_number,
                 lot_number=unit.lot_number,
                 beneficiary_year=None,
-                is_historical=False,
                 is_primary=True,
             )
 
@@ -604,7 +578,7 @@ def _gk_masterlist_rows(site):
 @verify_position
 def gk_masterlist(request, position):
     """
-    GK Masterlist — all beneficiaries and household members on housing units at a site.
+    GK Masterlist — head beneficiaries on housing units at a site.
     URL: /units/housing-units/<position>/gk-masterlist/
     """
     site = _gk_masterlist_site(request)

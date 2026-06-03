@@ -39,6 +39,7 @@ from units.models import (
     RelocationSite,
     ConstructionProgress,
 )
+from units.block_lot_sort import block_lot_sort_key
 from units.historical_beneficiary import document_vault_applicant_q
 from .form_pipeline import applicant_has_signed_application_payload
 from .utils import check_blacklist_module2, send_sms_for_applications
@@ -3459,11 +3460,17 @@ def vacant_units_grouped_for_award_select():
         .annotate(_has_active=Exists(active_lot))
         .filter(_has_active=False)
         .select_related('site')
-        .order_by('site__name', 'block_number', 'lot_number')
+    )
+    units_list = sorted(
+        units,
+        key=lambda u: (
+            (u.site.name or '').lower(),
+            *block_lot_sort_key(u.block_number, u.lot_number),
+        ),
     )
     groups = []
     index_by_site = {}
-    for u in units:
+    for u in units_list:
         sid = u.site_id
         if sid not in index_by_site:
             index_by_site[sid] = len(groups)
