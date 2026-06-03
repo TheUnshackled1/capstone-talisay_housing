@@ -65,6 +65,17 @@ _HOUSEHOLD_RELATIONSHIP_OPTIONS = [
 ]
 
 
+def _block_lot_sort_key(block_number, lot_number=''):
+    """Numeric sort for block/lot CharFields so Block 2 precedes Block 10."""
+    def _part(value):
+        text = str(value or '').strip()
+        if text.isdigit():
+            return (0, int(text))
+        return (1, text.lower())
+
+    return (_part(block_number), _part(lot_number))
+
+
 def _explanation_letter_deadline_office_payload(deadline):
     """
     Format ``letter_deadline_at`` for THA office wall clock (``settings.TIME_ZONE``).
@@ -324,6 +335,7 @@ def housing_units_monitoring(request, position):
         )
 
     units_list = list(units)
+    units_list.sort(key=lambda u: _block_lot_sort_key(u.block_number, u.lot_number))
     for u in units_list:
         setattr(u, 'is_historical_beneficiary', is_historical_lot_award(_active_lot_award_for_unit(u)))
     occupied_count = sum(
@@ -582,8 +594,7 @@ def _gk_masterlist_rows(site):
             )
 
     rows.sort(key=lambda r: (
-        int(r['block_number']) if str(r['block_number']).isdigit() else 0,
-        int(r['lot_number']) if str(r['lot_number']).isdigit() else 0,
+        *_block_lot_sort_key(r['block_number'], r['lot_number']),
         r['sort_key'],
     ))
     return rows
