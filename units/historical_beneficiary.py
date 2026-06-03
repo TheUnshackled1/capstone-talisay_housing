@@ -69,6 +69,32 @@ def document_vault_applicant_q(*, prefix=''):
         **{f'{prefix}application__lot_awards__notes__icontains': HISTORICAL_BACKFILL_NOTE}
     )
 
+
+def intake_registration_exclude_q(*, prefix=''):
+    """
+    Applicants who belong on Module 4 (housing units / GK Masterlist), not Module 1 ISF Registration.
+
+    Covers historical GK backfill and any head beneficiary with an active lot award on site.
+    Pass prefix='applicant__' when filtering from related models.
+    """
+    from django.db.models import Q
+
+    p = prefix
+    return document_vault_applicant_q(prefix=prefix) | Q(
+        **{f'{p}application__lot_awards__status': 'active'}
+    )
+
+
+def applicant_excluded_from_intake_registration(applicant) -> bool:
+    """True when the person should not appear on Module 1 ISF Registration."""
+    if not applicant or not getattr(applicant, 'pk', None):
+        return False
+    return (
+        Applicant.objects.filter(pk=applicant.pk)
+        .filter(intake_registration_exclude_q())
+        .exists()
+    )
+
 CSV_HEADERS = [
     'block',
     'lot',

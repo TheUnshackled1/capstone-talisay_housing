@@ -19,6 +19,10 @@ from applications.staff_pipeline_status import (
 from cases.models import Case
 from applications.models import QueueEntry
 from units.models import LotAward, Blacklist
+from units.historical_beneficiary import (
+    applicant_excluded_from_intake_registration,
+    intake_registration_exclude_q,
+)
 from documents.models import Document, Requirement, document_filed_via_display, upsert_document_vault_upload
 from .forms import (
     HouseholdMemberForm,
@@ -501,6 +505,9 @@ def _describe_applicant_location(applicant):
     if applicant.status == 'disqualified':
         location = 'Disqualified Registry'
         status_text = 'Permanently Disqualified / Blacklisted'
+    elif applicant_excluded_from_intake_registration(applicant):
+        location = 'Housing Units / GK Masterlist (Module 4)'
+        status_text = 'On-site beneficiary (active lot award)'
     elif application is not None:
         location = 'Applications (Module 2)'
         status_text = application.get_status_display()
@@ -580,7 +587,10 @@ def duplicate_preview(request, position):
         'location': location,
         'status': status_text,
         'handled_by': handled_by,
-        'can_open_in_intake': not duplicate_applicant.archives.exists(),
+        'can_open_in_intake': (
+            not duplicate_applicant.archives.exists()
+            and not applicant_excluded_from_intake_registration(duplicate_applicant)
+        ),
     })
 
 
@@ -1019,6 +1029,15 @@ def proceed_to_applications(request, position):
         return JsonResponse({'success': False, 'error': 'Missing applicant_id.'}, status=400)
 
     applicant = get_object_or_404(Applicant, id=applicant_id)
+    if applicant_excluded_from_intake_registration(applicant):
+        return JsonResponse({
+            'success': False,
+            'error': (
+                'This beneficiary is already on a housing unit (GK Masterlist / Module 4). '
+                'Manage them under Housing Unit monitoring, not ISF Registration or Intake Archives proceed.'
+            ),
+        }, status=400)
+
     promote_to_module2 = str(request.POST.get('promote_to_module2', '')).strip().lower() in {'1', 'true', 'yes', 'on'}
 
     if promote_to_module2:
@@ -1317,7 +1336,9 @@ def applicants_list(request, position):
     walk_in_applicants = list(
         Applicant.objects.filter(
             archives__isnull=True,
-        ).select_related(
+        ).exclude(
+            intake_registration_exclude_q(),
+        ).distinct().select_related(
             'barangay', 'eligibility_checked_by', 'registered_by'
         ).prefetch_related(
             Prefetch(
