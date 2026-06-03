@@ -2440,7 +2440,7 @@ def _situation_certification_gate(applicant):
             'label': 'Supporting documentation',
             'detail': (
                 f'{n} file(s) on record under ISF situational documentation '
-                '(Court Order, Legal Office certification, or Barangay certification).'
+                '(Court Order).'
             ),
             'done': done,
             'files_count': n,
@@ -2449,8 +2449,7 @@ def _situation_certification_gate(applicant):
         base['ready'] = done
         if not done:
             base['blocking_summary'] = (
-                'Upload at least one supporting document (Court Order, Legal Office certification, '
-                'or Barangay certification) as ISF situational documentation.'
+                'Upload at least one supporting document (Court Order) as ISF situational documentation.'
             )
         return base
 
@@ -2463,7 +2462,7 @@ def _situation_certification_gate(applicant):
             'label': 'Supporting documentation',
             'detail': (
                 f'{n} file(s) on record under ISF situational documentation '
-                '(Notice of Relocation, ROW documentation, or Project Order).'
+                '(Demand letter from legal office).'
             ),
             'done': done,
             'files_count': n,
@@ -2472,8 +2471,7 @@ def _situation_certification_gate(applicant):
         base['ready'] = done
         if not done:
             base['blocking_summary'] = (
-                'Upload at least one supporting document (Notice of Relocation, ROW documentation, '
-                'or Project Order) as ISF situational documentation.'
+                'Upload at least one supporting document (Demand letter from legal office) as ISF situational documentation.'
             )
         return base
 

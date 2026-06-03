@@ -77,7 +77,7 @@ def _situation_clause_proceed_sms(displacement_reason: str, *, has_isf_situation
             return intro
         return (
             intro
-            + 'Magasumiter ka sang Required Documentation: Court Order, Legal Office Certification, or Barangay Certification. '
+            + 'Magasumiter ka sang Required Documentation: Court Order. '
         )
     if dr == 'relocated':
         intro = (
@@ -87,7 +87,7 @@ def _situation_clause_proceed_sms(displacement_reason: str, *, has_isf_situation
             return intro
         return (
             intro
-            + 'Magasumiter ka sang imo Required Documentation: Notice of Relocation, Right-of-Way Documentation, or Project Order. '
+            + 'Magasumiter ka sang imo Required Documentation: Demand letter from legal office. '
         )
     if dr == 'not_abc':
         return (
