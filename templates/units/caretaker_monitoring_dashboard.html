@@ -3142,8 +3142,8 @@
                 <div class="monitoring-address-note">{{ task.unit.site.name|default:"Relocation site" }}</div>
             </td>
             <td>
-                <span class="monitoring-task-type {% if task.task_type == 'day_60_inspection' %}visit-program-initial{% elif task.task_type == 'day_30_inspection' %}visit-program-final{% elif task.task_type == 'month_2_inspection' %}visit-extension-early{% elif task.task_type == 'month_1_inspection' %}visit-extension-late{% else %}month{% endif %}">
-                    {% if task.task_type == 'day_60_inspection' %}90 Day Inspection{% elif task.task_type == 'day_30_inspection' %}120 Day Inspection{% else %}{{ task.get_task_type_display }}{% endif %}
+                <span class="monitoring-task-type {% if task.task_type == 'day_60_inspection' %}visit-program-initial{% elif task.task_type == 'day_30_inspection' %}visit-program-final{% elif task.task_type == 'month_2_inspection' %}visit-extension-early{% else %}month{% endif %}">
+                    {% if task.task_type == 'day_60_inspection' %}90 Day Inspection{% elif task.task_type == 'day_30_inspection' %}120 Day Inspection{% elif task.task_type == 'month_2_inspection' %}Extension 120 Day Inspection{% else %}{{ task.get_task_type_display }}{% endif %}
                 </span>
             </td>
             <td>
@@ -3173,7 +3173,7 @@
                 {% endif %}
             </td>
             <td>
-                <div class="monitoring-schedule-note">{% if task.task_type == 'day_60_inspection' %}<strong>Initial monitoring — during 90 days</strong>{% elif task.task_type == 'day_30_inspection' %}<strong>Final monitoring — confirm lot build is finished</strong>{% else %}<strong>{{ task.days_from_award }}</strong> days after monitoring starts{% endif %}</div>
+                <div class="monitoring-schedule-note">{% if task.task_type == 'day_60_inspection' %}<strong>Initial monitoring — during 90 days</strong>{% elif task.task_type == 'day_30_inspection' %}<strong>Final monitoring — confirm lot build is finished</strong>{% elif task.task_type == 'month_2_inspection' %}<strong>120-day extension — Extension 120 Day visit</strong>{% else %}<strong>{{ task.days_from_award }}</strong> days after monitoring starts{% endif %}</div>
             </td>
             <td>
                 {% if task.staff_handled_user %}
@@ -3191,7 +3191,7 @@
             <td>
                 <div class="monitoring-task-actions">
                     {% if task.status == 'pending' and task.scheduled_date > today %}
-                        <button type="button" class="btn-submit-report" onclick="openReportModal('{{ task.id }}', true, '{{ task.scheduled_date|date:"F j, Y" }}', '{% if task.task_type == "day_60_inspection" %}90 Day Inspection{% elif task.task_type == "day_30_inspection" %}120 Day Inspection{% else %}{{ task.get_task_type_display|escapejs }}{% endif %}', 'Block {{ task.unit.block_number|escapejs }} Lot {{ task.unit.lot_number|escapejs }}', '{{ task.due_date|date:"F j, Y"|escapejs }}', '{{ task.task_type|escapejs }}')">
+                        <button type="button" class="btn-submit-report" onclick="openReportModal('{{ task.id }}', true, '{{ task.scheduled_date|date:"F j, Y" }}', '{% if task.task_type == "day_60_inspection" %}90 Day Inspection{% elif task.task_type == "day_30_inspection" %}120 Day Inspection{% elif task.task_type == "month_2_inspection" %}Extension 120 Day Inspection{% else %}{{ task.get_task_type_display|escapejs }}{% endif %}', 'Block {{ task.unit.block_number|escapejs }} Lot {{ task.unit.lot_number|escapejs }}', '{{ task.due_date|date:"F j, Y"|escapejs }}', '{{ task.task_type|escapejs }}')">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="width: 0.9rem; height: 0.9rem; flex-shrink: 0; display: inline-block;">
                                 <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
                                 <line x1="12" y1="9" x2="12" y2="13"/>
@@ -3230,8 +3230,8 @@
         <article class="mobile-verification-card m-task-card" id="task-card-{{ task.id }}">
             <div class="m-card-header">
                 <span class="m-card-visit-order">Task #{{ forloop.counter }}</span>
-                <span class="m-card-badge {% if task.task_type == 'day_60_inspection' %}visit-program-initial{% elif task.task_type == 'day_30_inspection' %}visit-program-final{% elif task.task_type == 'month_2_inspection' %}visit-extension-early{% elif task.task_type == 'month_1_inspection' %}visit-extension-late{% else %}month{% endif %}">
-                    {% if task.task_type == 'day_60_inspection' %}90 Day{% elif task.task_type == 'day_30_inspection' %}120 Day{% elif task.task_type == 'month_2_inspection' %}Ext. day 30{% elif task.task_type == 'month_1_inspection' %}Ext. day 90{% else %}{{ task.get_task_type_display }}{% endif %}
+                <span class="m-card-badge {% if task.task_type == 'day_60_inspection' %}visit-program-initial{% elif task.task_type == 'day_30_inspection' %}visit-program-final{% elif task.task_type == 'month_2_inspection' %}visit-extension-early{% else %}month{% endif %}">
+                    {% if task.task_type == 'day_60_inspection' %}90 Day{% elif task.task_type == 'day_30_inspection' %}120 Day{% elif task.task_type == 'month_2_inspection' %}Ext. 120 Day{% else %}{{ task.get_task_type_display }}{% endif %}
                 </span>
             </div>
             
@@ -3584,15 +3584,14 @@ function filterTasks() {
 
 function caretakerTaskPhase(taskType) {
     const t = String(taskType || '');
-    if (t === 'day_60_inspection' || t === 'month_1_inspection') return 'initial';
+    if (t === 'day_60_inspection') return 'initial';
     if (t === 'day_30_inspection' || t === 'month_2_inspection') return 'final';
     return 'other';
 }
 
 function caretakerMonitoringWindowLine(taskType) {
     const t = String(taskType || '');
-    if (t === 'month_2_inspection') return '90-day extension — day 30 visit (after explanation letter; not the original 120 Day visit)';
-    if (t === 'month_1_inspection') return 'Extension monitoring — end of 90-day window';
+    if (t === 'month_2_inspection') return '120-day extension — Extension 120 Day visit (120 days after extension start; not the original program 120 Day visit)';
     const phase = caretakerTaskPhase(taskType);
     if (phase === 'initial') return 'Initial monitoring — during 90 days';
     if (phase === 'final') return 'Final monitoring — 120 days after 90 Day visit';
@@ -3664,7 +3663,7 @@ function applyReportModalPhase(taskType) {
     } else if (phase === 'final') {
         const isExtensionFinal = String(taskType) === 'month_2_inspection';
         if (isExtensionFinal) {
-            titleEl.textContent = 'Caretaker monitoring report — extension window (day 30)';
+            titleEl.textContent = 'Caretaker monitoring report — extension window (120 Day)';
             subtitleEl.textContent = '';
             if (badgeEl) {
                 badgeEl.textContent = 'Extension · final';
@@ -3673,7 +3672,7 @@ function applyReportModalPhase(taskType) {
             noticeEl.className = 'monitoring-phase-notice monitoring-phase-notice--final';
             noticeEl.hidden = false;
             noticeEl.innerHTML = (
-                '<strong>Extension day 30 visit</strong> (first visit in the 90-day extension window — not the original program 120 Day visit). '
+                '<strong>Extension 120 Day visit</strong> (120 days after the extension start date). '
                 + 'Housing staff choose <strong>Housing unit</strong> if the build is finished, or <strong>Failed</strong> if this extension visit does not pass. '
                 + 'Failed is the staff path toward <strong>Blacklist beneficiary</strong> when office rules allow (e.g. letter deadline passed with no compliant letter on file).'
             );

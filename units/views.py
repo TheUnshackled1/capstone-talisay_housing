@@ -40,15 +40,15 @@ from units.historical_beneficiary import (
 )
 from units.monitoring_policy import (
     EXTENSION_BUILD_DAYS,
-    EXTENSION_FINAL_INSPECTION_OFFSET_DAYS,
-    EXTENSION_MIDPOINT_INSPECTION_OFFSET_DAYS,
+    EXTENSION_120_DAY_OFFSET_DAYS,
+    extension_120_day_due,
+    extension_build_end_date,
     FINAL_INSPECTION_INSPECTION_LABEL,
     FINAL_INSPECTION_LABEL,
     INITIAL_INSPECTION_INSPECTION_LABEL,
     INITIAL_INSPECTION_LABEL,
     POSSESSION_GRACE_DAYS,
     TASK_TYPE_EXTENSION_FINAL,
-    TASK_TYPE_EXTENSION_MIDPOINT,
     TASK_TYPE_FINAL_INSPECTION,
     TASK_TYPE_INITIAL_INSPECTION,
     inspection_display_label,
@@ -889,7 +889,7 @@ def _month_2_inspection_marked_no_progress(lot_award):
 
 
 def _unit_ids_with_extension_month_2_failed(units_list):
-    """For site map: units whose extension 30 Day visit was assessed Failed."""
+    """For site map: units whose extension 120 Day visit was assessed Failed."""
     if not units_list:
         return frozenset()
     unit_ids = [u.id for u in units_list]
@@ -1085,26 +1085,10 @@ def get_unit_details(request, position, unit_id):
                     'end_date': ext_row.extension_end_date.isoformat(),
                 }
             task_types = (
-                [TASK_TYPE_INITIAL_INSPECTION, TASK_TYPE_FINAL_INSPECTION, TASK_TYPE_EXTENSION_FINAL, TASK_TYPE_EXTENSION_MIDPOINT]
+                [TASK_TYPE_INITIAL_INSPECTION, TASK_TYPE_FINAL_INSPECTION, TASK_TYPE_EXTENSION_FINAL]
                 if letter_extension_cards
                 else [TASK_TYPE_INITIAL_INSPECTION, TASK_TYPE_FINAL_INSPECTION]
             )
-            extension_final_30day_cleared = True
-            if letter_extension_cards:
-                m2 = (
-                    MonitoringTask.objects.filter(
-                        lot_award=active_lot_award,
-                        task_type=TASK_TYPE_EXTENSION_FINAL,
-                    )
-                    .first()
-                )
-                if m2:
-                    r2 = m2.reports.order_by('-submitted_at').first()
-                    extension_final_30day_cleared = bool(
-                        m2.status == 'completed' and r2 and r2.progress_assessment
-                    )
-                else:
-                    extension_final_30day_cleared = False
             for task in (
                 MonitoringTask.objects
                 .filter(lot_award=active_lot_award, task_type__in=task_types)
@@ -1153,17 +1137,21 @@ def get_unit_details(request, position, unit_id):
                     and report_summary.get('progress_assessment') == 'normal_progress'
                     and housing_unit_on_file(active_lot_award, progress)
                 )
-                if task.task_type in (TASK_TYPE_INITIAL_INSPECTION, TASK_TYPE_EXTENSION_MIDPOINT):
+                if task.task_type == TASK_TYPE_INITIAL_INSPECTION:
                     _task_title = inspection_display_label(task.task_type)
                     _history_row_label = inspection_display_label(task.task_type, short=True)
-                    if task.task_type == TASK_TYPE_EXTENSION_MIDPOINT:
-                        monitoring_window_line = 'Extension monitoring — end of 90-day window'
-                    else:
-                        monitoring_window_line = 'Initial monitoring — first 90 days'
-                elif task.task_type in (TASK_TYPE_FINAL_INSPECTION, TASK_TYPE_EXTENSION_FINAL):
+                    monitoring_window_line = 'Initial monitoring — first 90 days'
+                elif task.task_type == TASK_TYPE_FINAL_INSPECTION:
                     _task_title = inspection_display_label(task.task_type)
                     _history_row_label = inspection_display_label(task.task_type, short=True)
                     monitoring_window_line = 'Final monitoring — 120 days after 90 Day visit'
+                elif task.task_type == TASK_TYPE_EXTENSION_FINAL:
+                    _task_title = inspection_display_label(task.task_type)
+                    _history_row_label = inspection_display_label(task.task_type, short=True)
+                    monitoring_window_line = (
+                        '120-day extension — Extension 120 Day visit (120 days after extension start; '
+                        'not the original program 120 Day visit)'
+                    )
                 else:
                     _task_title = task.get_task_type_display()
                     _history_row_label = task.get_task_type_display().replace(' Inspection', '')
@@ -1204,14 +1192,7 @@ def get_unit_details(request, position, unit_id):
                     'initial_monitoring_program_complete': initial_monitoring_complete,
                 }
                 if letter_extension_cards and task.task_type == TASK_TYPE_EXTENSION_FINAL:
-                    task_row['extension_30day_blocked'] = False
                     explanation_extension_final_task = task_row
-                elif letter_extension_cards and task.task_type == TASK_TYPE_EXTENSION_MIDPOINT:
-                    if settings.EXTENSION_30DAY_SKIP_MIDPOINT_BLOCK:
-                        task_row['extension_midpoint_blocked'] = False
-                    else:
-                        task_row['extension_midpoint_blocked'] = not extension_final_30day_cleared
-                    monitoring_tasks.append(task_row)
                 else:
                     monitoring_tasks.append(task_row)
                 monitoring_history.append({
@@ -1841,7 +1822,7 @@ def upload_explanation_letter(request, position, unit_id):
 
     return JsonResponse({
         'success': True,
-        'message': 'Explanation letter stored. A 90-day extension and monitoring tasks were created.',
+        'message': 'Explanation letter stored. A 120-day extension and monitoring tasks were created.',
     })
 
 
@@ -2316,27 +2297,6 @@ def notify_monitoring_task(request, task_id):
     except MonitoringTask.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Task not found'}, status=404)
 
-    if task.task_type == TASK_TYPE_EXTENSION_MIDPOINT:
-        m2 = (
-            MonitoringTask.objects
-            .filter(lot_award=task.lot_award, task_type=TASK_TYPE_EXTENSION_FINAL)
-            .first()
-        )
-        m2_report = m2.reports.order_by('-submitted_at').first() if m2 else None
-        if not (
-            m2
-            and m2.status == 'completed'
-            and m2_report
-            and m2_report.progress_assessment
-        ):
-            return JsonResponse({
-                'success': False,
-                'error': (
-                    'Extension 90 Day visit is locked until the extension 30 Day Inspection '
-                    'is completed and reviewed by staff.'
-                ),
-            }, status=400)
-
     if task.task_type == TASK_TYPE_FINAL_INSPECTION:
         initial_task = (
             MonitoringTask.objects
@@ -2436,8 +2396,8 @@ def _open_explanation_review_after_no_progress(report, _acting_user):
 
 def _grant_monitoring_extension_from_explanation_review(review, approved_by_user):
     """
-    After staff uploads the explanation letter on file, grant a 90-day extension window
-    with extension monitoring tasks (extension 30 Day at day 30, 90 Day visit at day 90).
+    After staff uploads the explanation letter on file, grant a 120-day build extension window
+    with a single extension monitoring task (Extension 120 Day at day 120).
 
     The extension must begin only after initial monitoring has finished: the first day
     of the build extension is the calendar day after the letter is received, and is
@@ -2473,7 +2433,8 @@ def _grant_monitoring_extension_from_explanation_review(review, approved_by_user
     earliest_start = day30_due + timedelta(days=1) if day30_due else today + timedelta(days=1)
     # First build-extension day: day after letter on file, but not before initial 120 Day window has ended.
     start = max(today + timedelta(days=1), earliest_start)
-    end = start + timedelta(days=EXTENSION_BUILD_DAYS)
+    ext_120_due = extension_120_day_due(start)
+    end = extension_build_end_date(start)
 
     with transaction.atomic():
         review.letter_received_at = now
@@ -2505,7 +2466,7 @@ def _grant_monitoring_extension_from_explanation_review(review, approved_by_user
             extension_start_date=start,
             extension_end_date=end,
             approved_by=approved_by_user,
-            approval_notes='90-day extension after explanation letter compliance.',
+            approval_notes='120-day extension after explanation letter compliance.',
         )
 
         OccupancyMonitoringCycle.objects.filter(lot_award=lot_award, is_active=True).update(is_active=False)
@@ -2521,20 +2482,10 @@ def _grant_monitoring_extension_from_explanation_review(review, approved_by_user
         MonitoringTask.objects.create(
             unit=unit,
             lot_award=lot_award,
-            task_type=TASK_TYPE_EXTENSION_MIDPOINT,
-            scheduled_date=start + timedelta(days=EXTENSION_MIDPOINT_INSPECTION_OFFSET_DAYS),
-            due_date=start + timedelta(days=EXTENSION_MIDPOINT_INSPECTION_OFFSET_DAYS),
-            days_from_award=EXTENSION_MIDPOINT_INSPECTION_OFFSET_DAYS,
-            status='pending',
-            assigned_to=caretaker,
-        )
-        MonitoringTask.objects.create(
-            unit=unit,
-            lot_award=lot_award,
             task_type=TASK_TYPE_EXTENSION_FINAL,
-            scheduled_date=start + timedelta(days=EXTENSION_FINAL_INSPECTION_OFFSET_DAYS),
-            due_date=start + timedelta(days=EXTENSION_FINAL_INSPECTION_OFFSET_DAYS),
-            days_from_award=EXTENSION_FINAL_INSPECTION_OFFSET_DAYS,
+            scheduled_date=ext_120_due,
+            due_date=ext_120_due,
+            days_from_award=EXTENSION_120_DAY_OFFSET_DAYS,
             status='pending',
             assigned_to=caretaker,
         )
@@ -2638,7 +2589,7 @@ def _complete_extension_on_month2_normal_progress(task, acting_user):
         percent_complete=100,
         visit_date=today,
         notes=(
-            'Extension final 30 Day visit: Housing unit — monitoring complete; '
+            'Extension final 120 Day visit: Housing unit — monitoring complete; '
             'awarded lot recorded as housing unit with construction complete.'
         ),
         created_by=acting_user,
@@ -2797,6 +2748,8 @@ def caretaker_monitoring_dashboard(request):
         models.Q(assigned_to_id=request.user.id) | models.Q(assigned_to__isnull=True),
         notified_at__isnull=False,
         status__in=['pending', 'overdue'],
+    ).exclude(
+        task_type='month_1_inspection',
     ).select_related(
         'unit',
         'lot_award',
@@ -2825,7 +2778,9 @@ def caretaker_monitoring_dashboard(request):
     completed_tasks = MonitoringTask.objects.filter(
         models.Q(assigned_to_id=request.user.id) | models.Q(assigned_to__isnull=True),
         notified_at__isnull=False,
-        status='completed'
+        status='completed',
+    ).exclude(
+        task_type='month_1_inspection',
     ).select_related(
         'unit',
         'lot_award',

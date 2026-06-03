@@ -6,9 +6,8 @@ Timeline after lot award:
   - Initial field visit at monitoring day 90
   - Final (120 Day) visit 120 calendar days after the 90 Day due date
 
-Explanation-letter extension (90-day build window):
-  - Extension 30 Day visit at extension start + 30 days
-  - Extension midpoint visit at extension start + 90 days
+Explanation-letter extension (120-day build window):
+  - Extension 120 Day visit at extension start + 120 days (final extension inspection)
 """
 
 from __future__ import annotations
@@ -24,9 +23,10 @@ FINAL_INSPECTION_DAYS_FROM_MONITORING_START = (
     INITIAL_INSPECTION_DAYS + FINAL_INSPECTION_GAP_AFTER_INITIAL_DAYS
 )
 
-EXTENSION_BUILD_DAYS = 90
-EXTENSION_FINAL_INSPECTION_OFFSET_DAYS = 30
-EXTENSION_MIDPOINT_INSPECTION_OFFSET_DAYS = 90
+EXTENSION_BUILD_DAYS = 120
+EXTENSION_90_DAY_OFFSET_DAYS = 90
+# Extension 120 Day visit — same 120-day offset used after the original 90 Day visit.
+EXTENSION_120_DAY_OFFSET_DAYS = FINAL_INSPECTION_GAP_AFTER_INITIAL_DAYS
 
 # Post-extension compliance window before repossession / final inspection task.
 FINAL_NOTICE_COMPLIANCE_DAYS = 90
@@ -62,6 +62,18 @@ def final_inspection_due(award_date: date) -> date:
     return initial_inspection_due(award_date) + timedelta(days=FINAL_INSPECTION_GAP_AFTER_INITIAL_DAYS)
 
 
+def extension_90_day_due(extension_start: date) -> date:
+    return extension_start + timedelta(days=EXTENSION_90_DAY_OFFSET_DAYS)
+
+
+def extension_120_day_due(extension_start: date) -> date:
+    return extension_start + timedelta(days=EXTENSION_120_DAY_OFFSET_DAYS)
+
+
+def extension_build_end_date(extension_start: date) -> date:
+    return extension_120_day_due(extension_start)
+
+
 def initial_inspection_days_from_award() -> int:
     return INITIAL_INSPECTION_DAYS
 
@@ -79,5 +91,5 @@ def inspection_display_label(task_type: str, *, short: bool = False) -> str:
     if task_type == TASK_TYPE_EXTENSION_MIDPOINT:
         return 'Extension 90 Day' if short else 'Extension 90 Day Inspection'
     if task_type == TASK_TYPE_EXTENSION_FINAL:
-        return 'Extension 30 Day' if short else 'Extension 30 Day Inspection'
+        return 'Extension 120 Day' if short else 'Extension 120 Day Inspection'
     return task_type.replace('_', ' ').title()
