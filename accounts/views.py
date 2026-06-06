@@ -18,10 +18,10 @@ from urllib.parse import urlencode
 from .forms import LoginForm
 from .models import FIELD_DESK_POSITIONS
 from intake.models import Applicant, Archive, SMSLog
-from accounts.oic_activity import (
-    OIC_ACTIVITY_MAX_ITEMS,
-    build_oic_recent_activity,
-    paginate_oic_activity,
+from accounts.staff_activity import (
+    STAFF_ACTIVITY_MAX_ITEMS,
+    build_staff_recent_activity,
+    paginate_staff_activity,
 )
 from applications.models import CDRRMOCertification, FieldVerificationPhoto
 from applications.views import module2_ready_for_form_queue_rows
@@ -69,10 +69,10 @@ def _applicant_intake_docs_done_count(applicant):
 
 def _dashboard_recent_activity_context():
     """Recent activity feed + paginated pages (10 per carousel page) for staff dashboards."""
-    recent_activity = build_oic_recent_activity(limit=OIC_ACTIVITY_MAX_ITEMS)
+    recent_activity = build_staff_recent_activity(limit=STAFF_ACTIVITY_MAX_ITEMS)
     return {
         'recent_activity': recent_activity,
-        'recent_activity_pages': paginate_oic_activity(recent_activity),
+        'recent_activity_pages': paginate_staff_activity(recent_activity),
     }
 
 
@@ -90,7 +90,6 @@ def login_view(request):
 
     # Map role codes to display names
     role_map = {
-        'oic': 'OIC-THA',
         'second_member': 'Second Member',
         'fourth_member': 'Fourth Member',
         'ronda': 'Ronda / Field Personnel',
@@ -161,7 +160,6 @@ def dashboard_redirect(request):
     
     # Map position to URL name
     position_urls = {
-        'oic': 'accounts:dashboard_oic',
         'second_member': 'accounts:dashboard_second_member',
         'fourth_member': 'accounts:dashboard_fourth_member',
         'ronda': 'accounts:dashboard_field',
@@ -171,132 +169,6 @@ def dashboard_redirect(request):
     # Get URL for user's position, default to field dashboard
     url_name = position_urls.get(position, 'accounts:dashboard_field')
     return redirect(url_name)
-
-
-@login_required
-def dashboard_oic(request):
-    """
-    OIC dashboard focused on read-only analytics, with emphasis on housing-unit data.
-    """
-    if request.user.position != 'oic':
-        messages.error(request, 'Access denied. This dashboard is for the OIC position only.')
-        return redirect('accounts:dashboard')
-
-    total_housing_units = HousingUnit.objects.count()
-    occupied_units = HousingUnit.objects.filter(status='Occupied').count()
-    vacant_units = HousingUnit.objects.filter(status='Vacant — available').count()
-    under_notice_units = HousingUnit.objects.filter(status__in=['Under notice (30-day)', 'Final notice (10-day)']).count()
-    repossessed_units = HousingUnit.objects.filter(status='Repossessed').count()
-
-    ready_for_form_rows = module2_ready_for_form_queue_rows(request.user)
-    ready_for_form_count = len(ready_for_form_rows)
-    total_applicants = Applicant.objects.count()
-    applicants_with_application = Applicant.objects.filter(application__isnull=False).count()
-    applicants_in_evaluation = Applicant.objects.filter(module2_handoff_at__isnull=False).count()
-    total_archives = Archive.objects.count()
-
-    total_applications = Application.objects.count()
-    awarded_applications = Application.objects.filter(status='awarded').count()
-    standby_applications = Application.objects.filter(status='standby').count()
-    completed_applications = Application.objects.filter(status='completed').count()
-    draft_applications = Application.objects.filter(status='draft').count()
-
-    total_cases = Case.objects.count()
-    open_cases = Case.objects.exclude(
-        status__in=['resolved', 'closed']
-    ).count()
-
-    occupancy_rate_pct = int(round((occupied_units / total_housing_units) * 100)) if total_housing_units else 0
-    vacancy_rate_pct = int(round((vacant_units / total_housing_units) * 100)) if total_housing_units else 0
-    awarded_rate_pct = int(round((awarded_applications / total_applications) * 100)) if total_applications else 0
-    ready_for_award_pct = int(round((standby_applications / total_applications) * 100)) if total_applications else 0
-
-    applicants_for_modal = list(
-        Applicant.objects.select_related('registered_by').order_by('-created_at')[:300]
-    )
-    apps_for_modal = list(
-        Application.objects.select_related('applicant').order_by('-updated_at')[:300]
-    )
-    units_for_modal = list(
-        HousingUnit.objects.select_related('site').order_by('block_number', 'lot_number')[:300]
-    )
-    oic_modal_lists = {
-        'total_applicants': [
-            {
-                'primary': app.reference_number,
-                'secondary': app.full_name,
-                'meta': app.get_status_display() if hasattr(app, 'get_status_display') else app.status,
-            }
-            for app in applicants_for_modal
-        ],
-        'ready_for_form': [
-            {
-                'primary': row['applicant'].reference_number,
-                'secondary': row['applicant'].full_name,
-                'meta': (
-                    row['application'].get_status_display()
-                    if row.get('application')
-                    else 'Ready for Form'
-                ),
-            }
-            for row in ready_for_form_rows[:300]
-        ],
-        'total_applications': [
-            {
-                'primary': app.application_number,
-                'secondary': app.applicant.full_name,
-                'meta': app.get_status_display(),
-            }
-            for app in apps_for_modal
-        ],
-        'awarded_applications': [
-            {
-                'primary': app.application_number,
-                'secondary': app.applicant.full_name,
-                'meta': app.get_status_display(),
-            }
-            for app in apps_for_modal
-            if app.status == 'awarded'
-        ],
-        'housing_units': [
-            {
-                'primary': f'Block {unit.block_number}, Lot {unit.lot_number}',
-                'secondary': getattr(unit, 'occupant_name', '') or 'No assigned occupant',
-                'meta': unit.status,
-            }
-            for unit in units_for_modal
-        ],
-    }
-
-    context = {
-        'page_title': 'OIC Dashboard',
-        'user_position': 'oic',
-        'total_housing_units': total_housing_units,
-        'occupied_units': occupied_units,
-        'vacant_units': vacant_units,
-        'under_notice_units': under_notice_units,
-        'repossessed_units': repossessed_units,
-        'total_applications': total_applications,
-        'awarded_applications': awarded_applications,
-        'standby_applications': standby_applications,
-        'completed_applications': completed_applications,
-        'draft_applications': draft_applications,
-        'occupancy_rate_pct': occupancy_rate_pct,
-        'vacancy_rate_pct': vacancy_rate_pct,
-        'awarded_rate_pct': awarded_rate_pct,
-        'ready_for_award_pct': ready_for_award_pct,
-        'total_applicants': total_applicants,
-        'ready_for_form_count': ready_for_form_count,
-        'applicants_with_application': applicants_with_application,
-        'applicants_in_evaluation': applicants_in_evaluation,
-        'total_archives': total_archives,
-        'total_cases': total_cases,
-        'open_cases': open_cases,
-        'oic_analytics_updated_at': timezone.now(),
-        'oic_modal_data_json': json.dumps(oic_modal_lists),
-        **_dashboard_recent_activity_context(),
-    }
-    return render(request, 'accounts/dashboard.html', context)
 
 
 @login_required
@@ -355,7 +227,7 @@ def dashboard_second_member(request):
     total_applicants = Applicant.objects.count()
 
     # Shared stat card data (for dashboard headers)
-    # Applications fully approved by OIC (final signature)
+    # Applications awaiting applicant-signed form scan (completed status)
     awaiting_signature_count = Application.objects.filter(
         status='standby'
     ).count()
@@ -623,14 +495,14 @@ def _calculate_analytics_enhancements(data):
 
     # 5. Bottleneck identification
     incomplete_docs = data.get('incomplete_docs', 0)
-    pending_oic = data.get('pending_oic_signature_count', 0)
+    pending_final_signature = data.get('pending_final_signature_count', 0)
     stale_cases = data.get('stale_cases_count', 0)
 
     bottlenecks = []
     if incomplete_docs > 5:
         bottlenecks.append({'issue': 'incomplete_docs', 'count': incomplete_docs, 'severity': 'high'})
-    if pending_oic > 10:
-        bottlenecks.append({'issue': 'pending_oic', 'count': pending_oic, 'severity': 'high'})
+    if pending_final_signature > 10:
+        bottlenecks.append({'issue': 'pending_final_signature', 'count': pending_final_signature, 'severity': 'high'})
     if stale_cases > 3:
         bottlenecks.append({'issue': 'stale_cases', 'count': stale_cases, 'severity': 'medium'})
 
@@ -918,7 +790,7 @@ def _staff_reports_analytics_payload(request):
 
     module2_handoff_count = Applicant.objects.filter(module2_handoff_at__isnull=False).count()
     ready_for_form_queue_count = _staff_analytics_ready_for_form_count(request.user)
-    pending_oic_signature_count = Application.objects.filter(status='completed').count()
+    pending_final_signature_count = Application.objects.filter(status='completed').count()
 
     requirement_submission_labels = dict(RequirementSubmission.STATUS_CHOICES)
     requirement_by_status = sorted(
@@ -1115,7 +987,7 @@ def _staff_reports_analytics_payload(request):
         'intake_registration_trend': intake_registration_trend,
         'module2_handoff_count': module2_handoff_count,
         'ready_for_form_queue_count': ready_for_form_queue_count,
-        'pending_oic_signature_count': pending_oic_signature_count,
+        'pending_final_signature_count': pending_final_signature_count,
         'requirement_by_status': requirement_by_status,
         'requirement_submissions_submitted_period': requirement_submissions_submitted_period,
         'documents_total_count': documents_total_count,
@@ -1243,8 +1115,8 @@ def _staff_reports_analytics_csv_response(data, export_role_title, filename_pref
         data.get('module2_handoff_count'),
     ])
     writer.writerow([
-        'Pending OIC signature (applications)',
-        data.get('pending_oic_signature_count'),
+        'Pending final signature (applications)',
+        data.get('pending_final_signature_count'),
     ])
     writer.writerow([])
     writer.writerow(['Requirement submissions by status'])
@@ -1961,7 +1833,7 @@ def applicants_list(request):
             'dangerZoneType': 'Flood-prone area',
             'isCdrrmoFlagged': False,
             'signatoryRoutingDelayed': True,
-            'signatoryRoutingDelayedAt': 'OIC Signature',
+            'signatoryRoutingDelayedAt': 'Final signature',
             'disqualificationReason': None,
             'documents': {
                 'barangayCertResidency': True,
@@ -2036,7 +1908,4 @@ def field_case_management(request):
         return redirect('accounts:dashboard')
     from cases.views import case_management_dashboard
     return case_management_dashboard(request, request.user.position)
-
-
-# ==================== OIC-SPECIFIC VIEWS ====================
 

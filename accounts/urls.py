@@ -12,7 +12,6 @@ urlpatterns = [
     path('dashboard/', views.dashboard_redirect, name='dashboard'),
 
     # Position-Specific Dashboards
-    path('dashboard/oic/', views.dashboard_oic, name='dashboard_oic'),
     path('dashboard/second-member/', views.dashboard_second_member, name='dashboard_second_member'),
     path('dashboard/fourth-member/', views.dashboard_fourth_member, name='dashboard_fourth_member'),
     path('dashboard/caretaker/', views.dashboard_caretaker, name='dashboard_caretaker'),

@@ -63,7 +63,7 @@ class Migration(migrations.Migration):
                     name="SignatoryRouting",
                     fields=[
                         ("id", models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                        ("step", models.CharField(choices=[("received", "Received - Processing"), ("forwarded_oic", "Forwarded to OIC"), ("signed_oic", "Signed by OIC"), ("forwarded_head", "Forwarded to Head"), ("signed_head", "Signed by Head - Complete")], max_length=20)),
+                        ("step", models.CharField(choices=[("received", "Received - Processing"), ("forwarded_final", "Forwarded for final sign-off"), ("signed_final", "Final signature complete"), ("forwarded_head", "Forwarded to Head"), ("signed_head", "Signed by Head - Complete")], max_length=20)),
                         ("action_at", models.DateTimeField(auto_now_add=True)),
                         ("notes", models.TextField(blank=True)),
                         ("action_by", models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name="routing_actions", to=settings.AUTH_USER_MODEL)),

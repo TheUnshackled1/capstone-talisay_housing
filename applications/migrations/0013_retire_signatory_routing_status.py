@@ -21,7 +21,7 @@ class Migration(migrations.Migration):
                 choices=[
                     ('draft', 'Draft - Form Generated'),
                     ('completed', 'Completed - Signed by Applicant'),
-                    ('oic_signed', 'Signed by OIC - Fully Approved'),
+                    ('legacy_full_approval', 'Fully approved - legacy status'),
                     ('standby', 'Fully Approved - On Standby'),
                     ('awarded', 'Lot Awarded'),
                 ],

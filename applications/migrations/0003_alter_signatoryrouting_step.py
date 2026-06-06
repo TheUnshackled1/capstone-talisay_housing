@@ -16,8 +16,8 @@ class Migration(migrations.Migration):
             field=models.CharField(
                 choices=[
                     ("received", "Received - Processing"),
-                    ("forwarded_oic", "Forwarded to OIC"),
-                    ("signed_oic", "Signed by OIC"),
+                    ("forwarded_final", "Forwarded for final sign-off"),
+                    ("signed_final", "Final signature complete"),
                     ("forwarded_head", "Forwarded to Head"),
                     ("signed_head", "Signed by Head - Complete"),
                 ],

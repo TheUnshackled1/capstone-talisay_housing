@@ -1,5 +1,5 @@
 """
-OIC dashboard: cross-module recent activity from intake, applications, field desk, and cases.
+Staff dashboard: cross-module recent activity from intake, applications, field desk, and cases.
 """
 
 from __future__ import annotations
@@ -14,19 +14,19 @@ from documents.models import Document
 from intake.models import Applicant, Archive
 from units.models import Blacklist, LotAward, MonitoringReport
 
-OIC_ACTIVITY_STAFF_POSITIONS = frozenset({
+STAFF_ACTIVITY_POSITIONS = frozenset({
     'second_member',
     'fourth_member',
     'ronda',
     'field',
 })
 
-OIC_ACTIVITY_PAGE_SIZE = 10
-OIC_ACTIVITY_MAX_ITEMS = 50
+STAFF_ACTIVITY_PAGE_SIZE = 10
+STAFF_ACTIVITY_MAX_ITEMS = 50
 
 
-def paginate_oic_activity(items: list, page_size: int = OIC_ACTIVITY_PAGE_SIZE) -> list[list]:
-    """Split activity feed into fixed-size pages for the OIC dashboard carousel."""
+def paginate_staff_activity(items: list, page_size: int = STAFF_ACTIVITY_PAGE_SIZE) -> list[list]:
+    """Split activity feed into fixed-size pages for the dashboard carousel."""
     if not items:
         return []
     return [items[i:i + page_size] for i in range(0, len(items), page_size)]
@@ -55,7 +55,7 @@ def _relative_time_ago(dt) -> str:
 
 
 def _staff_in_scope(user) -> bool:
-    return bool(user and getattr(user, 'position', None) in OIC_ACTIVITY_STAFF_POSITIONS)
+    return bool(user and getattr(user, 'position', None) in STAFF_ACTIVITY_POSITIONS)
 
 
 def _staff_display(user) -> tuple[str, str]:
@@ -85,8 +85,8 @@ def _push_event(events, *, at, title, detail, module, user) -> None:
     })
 
 
-def build_oic_recent_activity(limit: int = 50) -> list[dict]:
-    """Merge recent staff actions across Module 1–5 for the OIC dashboard feed."""
+def build_staff_recent_activity(limit: int = 50) -> list[dict]:
+    """Merge recent staff actions across Module 1–5 for the dashboard activity feed."""
     events: list[dict] = []
     cutoff = timezone.now() - timedelta(days=120)
 

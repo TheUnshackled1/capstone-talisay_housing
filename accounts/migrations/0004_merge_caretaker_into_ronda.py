@@ -25,7 +25,6 @@ class Migration(migrations.Migration):
             field=models.CharField(
                 blank=True,
                 choices=[
-                    ("oic", "OIC-THA (Officer-in-Charge)"),
                     ("second_member", "Second Member"),
                     ("fourth_member", "Fourth Member"),
                     ("ronda", "Ronda (Field Personnel)"),

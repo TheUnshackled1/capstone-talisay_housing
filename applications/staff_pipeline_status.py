@@ -131,7 +131,7 @@ def _journey_step_detail(
         if status == 'awarded':
             return 'Lot awarded'
         if status == 'completed':
-            return 'Awaiting OIC / final approval'
+            return 'Awaiting final approval'
         if status == 'draft':
             return 'Form released — in progress'
         return app_obj.get_status_display() if hasattr(app_obj, 'get_status_display') else status or '—'

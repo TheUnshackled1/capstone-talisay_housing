@@ -103,7 +103,6 @@ class Migration(migrations.Migration):
                         blank=True,
                         choices=[
                             ("head", "First Member — Head"),
-                            ("oic", "OIC-THA (Officer-in-Charge)"),
                             ("second_member", "Second Member"),
                             ("third_member", "Third Member"),
                             ("fourth_member", "Fourth Member"),

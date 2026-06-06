@@ -78,7 +78,7 @@ class Migration(migrations.Migration):
                             ("draft", "Draft - Form Generated"),
                             ("completed", "Completed - Signed by Applicant"),
                             ("routing", "Under Signatory Routing"),
-                            ("oic_signed", "Signed by OIC"),
+                            ("legacy_full_approval", "Fully approved"),
                             ("head_signed", "Signed by Head - Fully Approved"),
                             ("standby", "Fully Approved - On Standby"),
                             ("awarded", "Lot Awarded"),
@@ -146,8 +146,8 @@ class Migration(migrations.Migration):
                     models.CharField(
                         choices=[
                             ("received", "Received by Third Member"),
-                            ("forwarded_oic", "Forwarded to OIC"),
-                            ("signed_oic", "Signed by OIC"),
+                            ("forwarded_final", "Forwarded for final sign-off"),
+                            ("signed_final", "Final signature complete"),
                             ("forwarded_head", "Forwarded to Head"),
                             ("signed_head", "Signed by Head - Complete"),
                         ],

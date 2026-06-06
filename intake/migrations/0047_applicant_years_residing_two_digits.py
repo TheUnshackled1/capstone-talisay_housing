@@ -37,7 +37,7 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name="applicant",
             constraint=models.CheckConstraint(
-                condition=models.Q(("years_residing__lte", 99)),
+                check=models.Q(("years_residing__lte", 99)),
                 name="applicant_years_residing_max_99",
             ),
         ),

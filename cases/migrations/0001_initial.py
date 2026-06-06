@@ -109,7 +109,7 @@ class Migration(migrations.Migration):
                     "referred_to",
                     models.CharField(
                         blank=True,
-                        help_text="E.g., City Engineering, OIC, Head",
+                        help_text="E.g., City Engineering, THA Head",
                         max_length=100,
                     ),
                 ),

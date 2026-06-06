@@ -5,7 +5,7 @@ from django.db import migrations, models
 
 def migrate_legacy_full_approval_to_standby(apps, schema_editor):
     Application = apps.get_model("applications", "Application")
-    Application.objects.filter(status="oic_signed").update(status="standby")
+    Application.objects.filter(status="legacy_full_approval").update(status="standby")
 
 
 def reverse_standby_to_legacy_full_approval(apps, schema_editor):

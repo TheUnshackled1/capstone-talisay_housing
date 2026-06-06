@@ -150,7 +150,6 @@ def get_module2_permissions(user):
     Module 2 Staff Roles:
     - Jocel (4th Member): Verify documents, generate forms, record lot awarding
     - Joie (2nd Member): Supervisor, routing backup, lot awarding backup
-    - Victor (OIC): Final signature
     """
     position = user.position
 
@@ -160,7 +159,6 @@ def get_module2_permissions(user):
         'can_generate_form': False,
         'can_receive_routing': False,
         'can_forward_routing': False,
-        'can_sign_oic': False,
         'can_award_lot': False,
         'role_description': '',
     }
@@ -184,13 +182,6 @@ def get_module2_permissions(user):
             'can_forward_routing': True,  # Supervisor backup for signatory handoff
             'can_award_lot': True,
             'role_description': 'Supervisor & Routing Backup',
-        })
-    elif position == 'oic':
-        # Victor - OIC signature
-        permissions.update({
-            'can_view': True,
-            'can_sign_oic': True,
-            'role_description': 'OIC Signatory',
         })
 
     return permissions
@@ -942,7 +933,7 @@ def _module2_applicant_row_payload(applicant, permissions, required_group_a_subm
     elif application and application.status == 'draft':
         current_stage = 'Form Released · awaiting signed scan'
     elif application and application.status == 'completed':
-        current_stage = 'Awaiting OIC approval'
+        current_stage = 'Awaiting final approval'
     elif rules.get('form_generation_ready'):
         current_stage = 'Document Gathering'
     elif applicant.module2_handoff_at:
@@ -1057,10 +1048,9 @@ def applications_list(request, position):
     ACCESS CONTROL:
     ✅ Jocel (4th Member) - Full access: verify docs, generate forms, award lots
     ✅ Joie (2nd Member) - Supervisor: verify docs and routing
-    ✅ Victor (OIC) - View + OIC full approval once applicant-signed scan is on file
     """
     # Check access
-    allowed_positions = ['fourth_member', 'second_member', 'oic']
+    allowed_positions = ['fourth_member', 'second_member']
     if request.user.position not in allowed_positions:
         messages.error(request, 'Access denied. Module 2 is for authorized staff only.')
         return redirect('accounts:dashboard')
@@ -1093,7 +1083,7 @@ def applications_list(request, position):
             form_queue_routed_at__isnull=False,
             application__status__in=['draft', 'completed'],
         ).count(),
-        'awaiting_oic': applicants.filter(application__status='completed').distinct().count(),
+        'awaiting_final_approval': applicants.filter(application__status='completed').distinct().count(),
         'fully_approved': applicants.filter(
             application__status='standby'
         ).count(),
@@ -1140,7 +1130,7 @@ def applications_list(request, position):
             'eligibility': 'Eligibility',
             'document_gathering': 'Document Gathering',
             'form_released': 'Form Released',
-            'awaiting_oic': 'Awaiting OIC approval',
+            'awaiting_final_approval': 'Awaiting final approval',
             'fully_approved': 'Fully Approved',
             'lot_awarded': 'Lot Awarded',
         }
@@ -1259,7 +1249,7 @@ def ready_for_form_queue(request, position):
     until fully approved - hidden from the main Application & Evaluation ledger during that window.
     URL: /applications/<position>/ready-for-form/
     """
-    allowed_positions = ['fourth_member', 'second_member', 'oic']
+    allowed_positions = ['fourth_member', 'second_member']
     if request.user.position not in allowed_positions:
         messages.error(request, 'Access denied. Module 2 is for authorized staff only.')
         return redirect('accounts:dashboard')
@@ -1403,7 +1393,7 @@ def lot_awarding_queue(request, position):
     Shows applications on awarding track (standby / fully-approved legacy rows).
     URL: /applications/<position>/lot-awarding-queue/
     """
-    allowed_positions = ['fourth_member', 'second_member', 'oic']
+    allowed_positions = ['fourth_member', 'second_member']
     if request.user.position not in allowed_positions:
         messages.error(request, 'Access denied. Module 2 is for authorized staff only.')
         return redirect('accounts:dashboard')
@@ -1801,7 +1791,7 @@ def update_cdrrmo_certification(request, position):
     """
     Module 2 endpoint for official CDRRMO disposition recording.
     """
-    allowed_positions = ['fourth_member', 'second_member', 'oic']
+    allowed_positions = ['fourth_member', 'second_member']
     if request.user.position not in allowed_positions:
         return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
 
@@ -1948,7 +1938,7 @@ def record_displacement_classification(request, position):
     The full POST body (``displacement_reason``, ``hazard_type``, etc.) remains
     supported as a legacy/administrative override when needed.
     """
-    allowed_positions = ['fourth_member', 'second_member', 'oic']
+    allowed_positions = ['fourth_member', 'second_member']
     if request.user.position not in allowed_positions:
         return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
 
@@ -2337,7 +2327,7 @@ def evaluate_precheck(request, position):
     Process 2 - First checklist precheck.
     Runs blacklist gate before deeper evaluation steps.
     """
-    allowed_positions = ['fourth_member', 'second_member', 'oic']
+    allowed_positions = ['fourth_member', 'second_member']
     if request.user.position not in allowed_positions:
         return JsonResponse({'success': False, 'error': 'Permission denied.'}, status=403)
 
@@ -2491,7 +2481,7 @@ def eligibility_snapshot(request, position):
     Process 2 checklist snapshot.
     Eligibility = profile checks + document completeness gates.
     """
-    allowed_positions = ['fourth_member', 'second_member', 'oic']
+    allowed_positions = ['fourth_member', 'second_member']
     if request.user.position not in allowed_positions:
         return JsonResponse({'success': False, 'error': 'Permission denied.'}, status=403)
 
@@ -2847,7 +2837,7 @@ def eligibility_snapshot(request, position):
 @verify_position
 @require_POST
 def save_eligibility_check_decision(request, position):
-    allowed_positions = ['fourth_member', 'second_member', 'oic']
+    allowed_positions = ['fourth_member', 'second_member']
     if request.user.position not in allowed_positions:
         return JsonResponse({'success': False, 'error': 'Permission denied.'}, status=403)
 
@@ -2938,7 +2928,7 @@ def save_eligibility_check_decision(request, position):
 @verify_position
 @require_POST
 def notify_ronda_for_situation(request, position):
-    allowed_positions = ['fourth_member', 'second_member', 'oic']
+    allowed_positions = ['fourth_member', 'second_member']
     if request.user.position not in allowed_positions:
         return JsonResponse({'success': False, 'error': 'Permission denied.'}, status=403)
 
@@ -2985,7 +2975,7 @@ def notify_ronda_for_situation(request, position):
 @verify_position
 @require_POST
 def mark_situation_certified(request, position):
-    allowed_positions = ['fourth_member', 'second_member', 'oic']
+    allowed_positions = ['fourth_member', 'second_member']
     if request.user.position not in allowed_positions:
         return JsonResponse({'success': False, 'error': 'Permission denied.'}, status=403)
 
@@ -3366,7 +3356,7 @@ def application_form_pdf(request, position, applicant_id):
 def proceed_to_lot_awarding_queue(request, position):
     """
     From Ready for Form queue, move a completed (applicant-signed) form directly
-    to the lot-awarding track (standby queue), skipping OIC routing.
+    to the lot-awarding track (standby queue).
     """
     allowed_positions = ['fourth_member', 'second_member']
     if request.user.position not in allowed_positions:
@@ -3683,7 +3673,7 @@ def lot_awarding_bulk_notify_sms(request, position):
     Send a coordination SMS to selected applicants still on the lot-awarding queue.
     Orientation date/time is required and woven into the message body.
     """
-    allowed_positions = ['fourth_member', 'second_member', 'oic']
+    allowed_positions = ['fourth_member', 'second_member']
     if request.user.position not in allowed_positions:
         return JsonResponse({'success': False, 'error': 'Access denied.'}, status=403)
 

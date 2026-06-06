@@ -175,7 +175,7 @@ class Case(models.Model):
     referred_to = models.CharField(
         max_length=100,
         blank=True,
-        help_text="E.g., City Engineering, OIC, Head"
+        help_text="E.g., City Engineering, THA Head"
     )
     referred_at = models.DateTimeField(null=True, blank=True)
     referral_notes = models.TextField(blank=True)

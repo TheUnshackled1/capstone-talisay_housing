@@ -3,13 +3,13 @@ from django.db import migrations, models
 
 def migrate_head_routing_steps(apps, schema_editor):
     """
-    Convert any existing forwarded_head/signed_head routing rows to signed_oic
-    so the new STEP_CHOICES (received → forwarded_oic → signed_oic) remains valid.
+    Convert any existing forwarded_head/signed_head routing rows to signed_final
+    so the new step choices (received → forwarded_final → signed_final) remain valid.
     """
     SignatoryRouting = apps.get_model('documents', 'SignatoryRouting')
     SignatoryRouting.objects.filter(
         step__in=['forwarded_head', 'signed_head']
-    ).update(step='signed_oic')
+    ).update(step='signed_final')
 
 
 def reverse_noop(apps, schema_editor):
@@ -31,8 +31,8 @@ class Migration(migrations.Migration):
             field=models.CharField(
                 choices=[
                     ('received', 'Received - Processing'),
-                    ('forwarded_oic', 'Forwarded to OIC'),
-                    ('signed_oic', 'Signed by OIC - Complete'),
+                    ('forwarded_final', 'Forwarded for final sign-off'),
+                    ('signed_final', 'Final signature complete'),
                 ],
                 max_length=20,
             ),

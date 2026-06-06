@@ -4,7 +4,7 @@ from django.db import migrations, models
 def migrate_head_signed_to_legacy_full_approval(apps, schema_editor):
     """Convert any existing head_signed applications to the legacy full-approval status."""
     Application = apps.get_model('applications', 'Application')
-    Application.objects.filter(status='head_signed').update(status='oic_signed')
+    Application.objects.filter(status='head_signed').update(status='legacy_full_approval')
 
 
 def reverse_noop(apps, schema_editor):
@@ -28,7 +28,7 @@ class Migration(migrations.Migration):
                     ('draft', 'Draft - Form Generated'),
                     ('completed', 'Completed - Signed by Applicant'),
                     ('routing', 'Under Signatory Routing'),
-                    ('oic_signed', 'Signed by OIC - Fully Approved'),
+                    ('legacy_full_approval', 'Fully approved - legacy status'),
                     ('standby', 'Fully Approved - On Standby'),
                     ('awarded', 'Lot Awarded'),
                 ],
