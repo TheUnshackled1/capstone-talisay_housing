@@ -364,7 +364,7 @@ class Applicant(models.Model):
         verbose_name_plural = "Applicants"
         constraints = [
             models.CheckConstraint(
-                check=models.Q(years_residing__lte=99),
+                condition=models.Q(years_residing__lte=99),
                 name='applicant_years_residing_max_99',
             ),
         ]
