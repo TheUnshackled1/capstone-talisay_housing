@@ -247,6 +247,8 @@ def build_filled_application_pdf(applicant, application) -> bytes:
     _baseline(p0, 428, 323.9, _safe_str(applicant.place_of_birth), fontsize=FS)
 
     _baseline(p0, LX, 336.0, 'Filipino', fontsize=FS)
+    civ_display = applicant.get_civil_status_display() if applicant.civil_status else ''
+    _baseline(p0, 392, 336.0, _overlay_ascii(civ_display, 22), fontsize=FS)
 
     barangay_name = getattr(applicant.barangay, 'name', None) or ''
     addr = ', '.join(x for x in (_safe_str(applicant.current_address), barangay_name) if x)

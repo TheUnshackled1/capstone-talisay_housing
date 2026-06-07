@@ -17,7 +17,7 @@ class ApplicantAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ('📋 PERSONAL INFORMATION', {
-            'fields': ('full_name', 'last_name', 'first_name', 'middle_name', 'extension_name', 'sex', 'date_of_birth', 'age', 'place_of_birth', 'phone_number'),
+            'fields': ('full_name', 'last_name', 'first_name', 'middle_name', 'extension_name', 'sex', 'civil_status', 'date_of_birth', 'age', 'place_of_birth', 'phone_number'),
         }),
         ('👥 SPOUSE INFORMATION', {
             'fields': ('spouse_name', 'spouse_phone'),

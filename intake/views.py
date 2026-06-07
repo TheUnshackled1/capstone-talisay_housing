@@ -1432,6 +1432,7 @@ def applicants_list(request, position):
             'middleName': app.middle_name or '',
             'extensionName': app.extension_name or '',
             'sex': app.sex or '',
+            'civilStatus': app.get_civil_status_display() if app.civil_status else '',
             'isRegisteredVoterTalisay': bool(app.is_registered_voter_talisay),
             'hasPropertyInTalisay': bool(app.has_property_in_talisay),
             'age': app.age or 0,
@@ -1689,6 +1690,7 @@ def applicants_list(request, position):
             'middleName': archive.middle_name_snapshot or '',
             'extensionName': archive.extension_name_snapshot or '',
             'sex': applicant.sex or '',
+            'civilStatus': applicant.get_civil_status_display() if applicant.civil_status else '',
             'age': applicant.age,
             'dateOfBirthDisplay': archive.date_of_birth_snapshot.strftime('%m/%d/%Y') if archive.date_of_birth_snapshot else '',
             'isRegisteredVoter': applicant.is_registered_voter_talisay,
@@ -1962,6 +1964,7 @@ def walkin_register(request, position):
         extension_name=form.cleaned_data.get('extension_name', '') or '',
         full_name=full_name,
         sex=form.cleaned_data.get('sex', ''),
+        civil_status=form.cleaned_data.get('civil_status', ''),
         age=computed_age,
         date_of_birth=date_of_birth,
         place_of_birth=(form.cleaned_data.get('place_of_birth') or '')[:30],
@@ -2074,6 +2077,8 @@ def walkin_register(request, position):
                 'firstName': applicant.first_name,
                 'middleName': applicant.middle_name,
                 'extensionName': applicant.extension_name,
+                'sex': applicant.sex or '',
+                'civilStatus': applicant.get_civil_status_display() if applicant.civil_status else '',
                 'referenceNumber': applicant.reference_number,
                 'dateRegistered': applicant.created_at.strftime('%Y-%m-%d'),
                 'channel': applicant.channel,
@@ -2102,11 +2107,16 @@ def walkin_register(request, position):
 
 
 @login_required
+@verify_position
 def archive_list(request, position):
     """
     Display Intake Archive receipts (records proceeded from the registration list).
-    URL: /intake/staff/<position>/archive/
+    URL: /intake/staff/<position>/archives/
     """
+    if request.user.position not in ('second_member', 'fourth_member'):
+        messages.error(request, 'Access denied. Archives are for Second and Fourth Member staff only.')
+        return redirect('accounts:dashboard')
+
     from django.core.paginator import Paginator
 
     selected_barangay = request.GET.get('barangay', '')

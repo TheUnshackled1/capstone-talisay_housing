@@ -1,5 +1,5 @@
 from django import forms
-from .models import HouseholdMember, Applicant
+from .models import HouseholdMember, Applicant, CIVIL_STATUS_CHOICES
 from django.core.exceptions import ValidationError
 import re
 
@@ -234,6 +234,12 @@ class WalkInApplicantForm(forms.ModelForm):
         label="Registered Voter in Talisay City",
         widget=forms.Select(attrs={'class': 'form-select'})
     )
+    civil_status = forms.ChoiceField(
+        choices=[('', '— Select —')] + list(CIVIL_STATUS_CHOICES),
+        required=True,
+        label="Civil Status",
+        widget=forms.Select(attrs={'class': 'form-select'}),
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -249,6 +255,7 @@ class WalkInApplicantForm(forms.ModelForm):
             'middle_name',
             'extension_name',
             'sex',
+            'civil_status',
             'age',
             'date_of_birth',
             'place_of_birth',
@@ -356,6 +363,7 @@ class WalkInApplicantForm(forms.ModelForm):
             'middle_name': 'Middle Name',
             'extension_name': 'Extension Name',
             'sex': 'Sex',
+            'civil_status': 'Civil Status',
             'age': 'Age',
             'date_of_birth': 'Date of Birth',
             'place_of_birth': 'Place of Birth',

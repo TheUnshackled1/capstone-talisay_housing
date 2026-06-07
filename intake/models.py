@@ -81,7 +81,14 @@ class Barangay(models.Model):
         return self.name
 
 
-
+CIVIL_STATUS_CHOICES = [
+    ('single', 'Single'),
+    ('married', 'Married'),
+    ('widowed', 'Widowed'),
+    ('divorced', 'Divorced'),
+    ('separated', 'Separated'),
+    ('common_law', 'Common-law'),
+]
 
 
 class Applicant(models.Model):
@@ -125,6 +132,13 @@ class Applicant(models.Model):
         choices=[('M', 'Male'), ('F', 'Female')],
         blank=True,
         verbose_name="Sex"
+    )
+    civil_status = models.CharField(
+        max_length=20,
+        choices=CIVIL_STATUS_CHOICES,
+        blank=True,
+        default='',
+        verbose_name="Civil Status",
     )
     age = models.PositiveIntegerField(null=True, blank=True, verbose_name="Age")
     date_of_birth = models.DateField(null=True, blank=True, verbose_name="Date of Birth")
@@ -458,14 +472,7 @@ class HouseholdMember(models.Model):
         ('other', 'Other Relative'),
     ]
 
-    CIVIL_STATUS_CHOICES = [
-        ('single', 'Single'),
-        ('married', 'Married'),
-        ('widowed', 'Widowed'),
-        ('divorced', 'Divorced'),
-        ('separated', 'Separated'),
-        ('common_law', 'Common-law'),
-    ]
+    CIVIL_STATUS_CHOICES = CIVIL_STATUS_CHOICES
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     applicant = models.ForeignKey(

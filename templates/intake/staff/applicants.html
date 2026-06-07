@@ -5073,9 +5073,15 @@
             {% endfor %}
         </select>
 
-        <a href="{% url 'intake:archive_list' request.user.position %}" class="btn-primary-add btn-primary-add--archives" style="margin-left: auto;">
-            🗂️ Archives
-        </a>
+        {% if can_modify %}
+        <button type="button" class="btn-primary-add" style="margin-left: auto;" onclick="openAddModal()">
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Register applicant
+        </button>
+        {% endif %}
     </div>
     <div class="formal-table-card">
     <div class="formal-table-scroll">
@@ -5270,6 +5276,10 @@
                             <div class="form-group">
                                 <label class="form-label">Sex</label>
                                 <input type="text" class="form-input" id="reviewSexB" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Civil status</label>
+                                <input type="text" class="form-input" id="reviewCivilStatusB" readonly>
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Age</label>
@@ -5537,6 +5547,10 @@
                             <div class="form-group">
                                 <label class="form-label">Sex</label>
                                 <input type="text" class="form-input" id="reviewSex" name="sex" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Civil status</label>
+                                <input type="text" class="form-input" id="reviewCivilStatus" name="civil_status" readonly>
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Age</label>
@@ -7364,6 +7378,21 @@
                         </div>
                     </div>
 
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Civil status <span style="color: #dc2626;">*</span></label>
+                            <select class="form-select" name="civil_status" id="civilStatus" required>
+                                <option value="">— Select —</option>
+                                <option value="single">Single</option>
+                                <option value="married">Married</option>
+                                <option value="widowed">Widowed</option>
+                                <option value="divorced">Divorced</option>
+                                <option value="separated">Separated</option>
+                                <option value="common_law">Common-law</option>
+                            </select>
+                        </div>
+                    </div>
+
                     <!-- Mobile, date of birth, age — one row -->
                     <div class="form-row three-cols">
                         <div class="form-group">
@@ -7621,6 +7650,7 @@
                     <div class="form-group"><label class="form-label">Middle name</label><input type="text" class="form-input" id="archiveViewMiddleName" readonly></div>
                     <div class="form-group"><label class="form-label">Extension name</label><input type="text" class="form-input" id="archiveViewExtensionName" readonly></div>
                     <div class="form-group"><label class="form-label">Sex</label><input type="text" class="form-input" id="archiveViewSex" readonly></div>
+                    <div class="form-group"><label class="form-label">Civil status</label><input type="text" class="form-input" id="archiveViewCivilStatus" readonly></div>
                     <div class="form-group"><label class="form-label">Age</label><input type="text" class="form-input" id="archiveViewAge" readonly></div>
                     <div class="form-group"><label class="form-label">Date of birth</label><input type="text" class="form-input" id="archiveViewDob" readonly></div>
                     <div class="form-group"><label class="form-label">Registered voter in Talisay City</label><input type="text" class="form-input" id="archiveViewVoter" readonly></div>
@@ -7759,7 +7789,8 @@
         setValue('archiveViewFirstName', payload.firstName);
         setValue('archiveViewMiddleName', payload.middleName);
         setValue('archiveViewExtensionName', payload.extensionName);
-        setValue('archiveViewSex', payload.sex);
+        setValue('archiveViewSex', payload.sex === 'M' ? 'Male' : payload.sex === 'F' ? 'Female' : (payload.sex || ''));
+        setValue('archiveViewCivilStatus', payload.civilStatus);
         setValue('archiveViewAge', payload.age);
         setValue('archiveViewDob', payload.dateOfBirthDisplay);
         setValue('archiveViewVoter', voter);
@@ -9927,6 +9958,7 @@
                 
                 // Populate Channel C form fields (with null checks)
                 const sexEl = document.getElementById('reviewSex');
+                const civilStatusEl = document.getElementById('reviewCivilStatus');
                 const ageEl = document.getElementById('reviewAge');
                 const dobEl = document.getElementById('reviewDateOfBirth');
                 const barangayEl = document.getElementById('reviewBarangay');
@@ -9953,7 +9985,8 @@
                 }
 
                 // Populate all fields
-                if (sexEl) sexEl.value = currentApplicant.sex || '';
+                if (sexEl) sexEl.value = currentApplicant.sex === 'M' ? 'Male' : currentApplicant.sex === 'F' ? 'Female' : (currentApplicant.sex || '');
+                if (civilStatusEl) civilStatusEl.value = currentApplicant.civilStatus || '';
                 if (ageEl) ageEl.value = currentApplicant.age || '';
                 if (dobEl) dobEl.value = currentApplicant.dateOfBirth || '';
                 if (barangayEl) barangayEl.value = currentApplicant.barangay || '';
@@ -10491,6 +10524,7 @@
         setValue('reviewExtensionNameB', applicant.extensionName);
         const sexDisplay = applicant.sex === 'M' ? 'Male' : applicant.sex === 'F' ? 'Female' : (applicant.sex || '');
         setValue('reviewSexB', sexDisplay);
+        setValue('reviewCivilStatusB', applicant.civilStatus || '');
         setValue('reviewAgeB', applicant.age);
         setValue('reviewDateOfBirthB', applicant.dateOfBirth);
         const voterEl = document.getElementById('reviewVoterB');
@@ -12313,6 +12347,23 @@
             });
             return;
         }
+
+        const civilStatusSelected = String(formData.get('civil_status') || '').trim();
+        if (!civilStatusSelected) {
+            showNoticeModal({
+                title: 'Civil Status Required',
+                message: 'Please select the applicant\'s civil status.',
+                type: 'warning',
+            });
+            const civilStatusEl = document.getElementById('civilStatus');
+            if (civilStatusEl) {
+                civilStatusEl.setCustomValidity('Civil status is required.');
+                civilStatusEl.reportValidity();
+            }
+            return;
+        }
+        const civilStatusEl = document.getElementById('civilStatus');
+        if (civilStatusEl) civilStatusEl.setCustomValidity('');
 
         // Validate applicant age policy: 18-55 by default; above 55 requires staff override.
         const ageResult = calculateAge();
