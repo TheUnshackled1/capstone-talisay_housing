@@ -112,10 +112,12 @@ def message_ready_for_form_queue_reminder(applicant) -> str:
     )
 
 
-# Baseline checklist codes (R01–R07, RVT) — listed by document name only (no R01/R02 codes in SMS).
-_BASELINE_APPLICANT_LIST_SMS_CODES = frozenset({
-    'R01', 'R02', 'R03', 'R04', 'R05', 'R06', 'R07', 'RVT',
+# Baseline checklist codes — document names only (no R01/R02 codes in SMS).
+_REQUIRED_BASELINE_APPLICANT_LIST_SMS_CODES = frozenset({
+    'R01', 'R02', 'R03', 'R04', 'R05', 'R06', 'R07',
 })
+_OPTIONAL_BASELINE_APPLICANT_LIST_SMS_CODES = frozenset({'RVT'})
+_BASELINE_APPLICANT_LIST_SMS_CODES = _REQUIRED_BASELINE_APPLICANT_LIST_SMS_CODES | _OPTIONAL_BASELINE_APPLICANT_LIST_SMS_CODES
 _SITUATIONAL_CHECKLIST_CODES = frozenset({'CDRRMO', 'ISF-SIT'})
 
 
@@ -154,20 +156,25 @@ def message_proceed_to_applicant_list(applicant, checklist_rows) -> str:
     """
     Hiligaynon SMS when staff archives a record to LIST OF APPLICANTS (review modal).
 
-    Baseline requirements (R01–R07, RVT) appear as document names only; situational follow-up
-    uses Hiligaynon clauses when Applicant Situation is A, B, C, or D.
+    Required baseline (R01–R07) appear as document names; RVT is optional follow-up.
+    Situational follow-up uses Hiligaynon clauses when Applicant Situation is A, B, C, or D.
     """
     head = _tha_ref_name_header(applicant)
     dr = getattr(applicant, 'displacement_reason', None) or ''
     baseline_names = []
+    optional_names = []
     situational_parts = []
     seen_situational = set()
     for row in checklist_rows or []:
         code = ((row.get('code') if isinstance(row, dict) else getattr(row, 'code', '')) or '').strip().upper()
         name = ((row.get('name') if isinstance(row, dict) else getattr(row, 'name', '')) or '').strip()
-        if code in _BASELINE_APPLICANT_LIST_SMS_CODES:
+        if code in _REQUIRED_BASELINE_APPLICANT_LIST_SMS_CODES:
             if name:
                 baseline_names.append(name)
+            continue
+        if code in _OPTIONAL_BASELINE_APPLICANT_LIST_SMS_CODES:
+            if name:
+                optional_names.append(name)
             continue
         if code in _SITUATIONAL_CHECKLIST_CODES:
             clause = _applicant_list_situational_sms_clause(code, dr)
@@ -181,6 +188,8 @@ def message_proceed_to_applicant_list(applicant, checklist_rows) -> str:
 
     doc_parts = list(baseline_names)
     doc_parts.extend(situational_parts)
+    if optional_names:
+        doc_parts.append(f'{optional_names[0]} (optional)')
     if not doc_parts:
         doc_parts = [
             'Brgy. Certificate of Residency',
@@ -190,7 +199,7 @@ def message_proceed_to_applicant_list(applicant, checklist_rows) -> str:
             'Certificate of No Property',
             '2x2 Picture',
             'Sketch of House Location',
-            'Voter Certification (COMELEC / Barangay voter record)',
+            'Voter Certification (COMELEC / Barangay voter record) (optional)',
         ]
 
     checklist = '\n'.join(doc_parts)

@@ -2509,15 +2509,27 @@ def eligibility_snapshot(request, position):
         auto_disqualified = _auto_disqualify_if_blacklisted(applicant, bl_entry, checked_by=request.user)
 
     # Build requirement scan evidence (same baseline source as Document Scan Checklist).
-    required_rows = list(
+    required_row_defs = list(
         Requirement.objects.filter(
             group='A',
             is_active=True,
             is_required_for_form=True,
         ).exclude(
             vault_document_type='',
-        ).order_by('order', 'code').values('code', 'name', 'vault_document_type')
+        ).order_by('order', 'code').values('code', 'name', 'vault_document_type', 'is_required_for_form')
     )
+    optional_row_defs = list(
+        Requirement.objects.filter(
+            group='A',
+            is_active=True,
+            is_required_for_form=False,
+        ).exclude(
+            vault_document_type='',
+        ).exclude(
+            code='ISF-SIT',
+        ).order_by('order', 'code').values('code', 'name', 'vault_document_type', 'is_required_for_form')
+    )
+    checklist_row_defs = list(required_row_defs) + list(optional_row_defs)
     req_scan_by_code = {}
     requirement_rows = []
     # Latest vault payload per document_type (upload vs scan label for checklist UI).
@@ -2536,7 +2548,7 @@ def eligibility_snapshot(request, position):
             'capture_method': capture_method,
             'filed_via_label': document_filed_via_display(capture_method),
         }
-    for row in required_rows:
+    for row in checklist_row_defs:
         files_count = applicant.documents.filter(document_type=row['vault_document_type']).count()
         scanned = files_count > 0
         meta = doc_type_to_latest_meta.get(row['vault_document_type'], {})
@@ -2548,6 +2560,7 @@ def eligibility_snapshot(request, position):
             'code': row['code'],
             'name': row['name'],
             'document_type': row['vault_document_type'],
+            'is_required_for_form': bool(row.get('is_required_for_form')),
             'scanned': scanned,
             'files_count': files_count,
             'filed_via': meta.get('capture_method', '') if scanned else '',
@@ -2558,7 +2571,7 @@ def eligibility_snapshot(request, position):
         return bool((req_scan_by_code.get(code) or {}).get('scanned'))
 
     def _latest_doc_for_req(code):
-        row = next((item for item in required_rows if item['code'] == code), None)
+        row = next((item for item in checklist_row_defs if item['code'] == code), None)
         if not row:
             return {'url': '', 'name': ''}
         return doc_type_to_latest_meta.get(row['vault_document_type'], {'url': '', 'name': ''})
@@ -2566,7 +2579,7 @@ def eligibility_snapshot(request, position):
     def _req_evidence_doc_label(code):
         if not _req_scanned(code):
             return M2_REQUIREMENT_MISSING_LABEL
-        row_def = next((item for item in required_rows if item['code'] == code), None)
+        row_def = next((item for item in checklist_row_defs if item['code'] == code), None)
         if not row_def:
             return M2_REQUIREMENT_MISSING_LABEL
         label = doc_type_to_latest_meta.get(row_def['vault_document_type'], {}).get('filed_via_label', '')
@@ -2588,7 +2601,6 @@ def eligibility_snapshot(request, position):
     income_evidence_ready = _req_scanned('R02')
     household_evidence_ready = _req_scanned('R03')
     voter_value_known = applicant.is_registered_voter_talisay is not None
-    voter_evidence_ready = _req_scanned('RVT')
     voter_doc_latest = _latest_doc_for_req('RVT')
 
     checks = {
@@ -2652,7 +2664,7 @@ def eligibility_snapshot(request, position):
         },
         'voter': {
             'title': 'Check Registered voters',
-            'status': _status(bool(rules.get('voter_ok')), pending=(not voter_value_known or not voter_evidence_ready)),
+            'status': _status(bool(rules.get('voter_ok')), pending=(not voter_value_known)),
             'reason': (
                 'Registered voter in Talisay City.'
                 if rules.get('voter_ok')
@@ -2660,7 +2672,7 @@ def eligibility_snapshot(request, position):
             ),
             'evidence': [
                 f'Profile voter flag: {"Yes" if applicant.is_registered_voter_talisay else "No"}',
-                f'Voter certification document: {_req_evidence_doc_label("RVT")}',
+                f'Voter certification document (optional): {_req_evidence_doc_label("RVT")}',
             ],
             'view_document': voter_doc_latest,
         },
@@ -2702,7 +2714,7 @@ def eligibility_snapshot(request, position):
 
     gates = {
         'required_docs': {
-            'title': 'Required baseline scans (Group A, incl. voter certification)',
+            'title': 'Required baseline scans (Group A, R01–R07)',
             'status': 'passed' if rules.get('required_docs_complete') else 'pending',
             'reason': f'{rules.get("required_docs_scanned", 0)}/{rules.get("required_docs_total", 0)} scanned.',
         },

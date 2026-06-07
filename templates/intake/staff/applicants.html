@@ -4667,10 +4667,8 @@
                     <table class="archive-req-table">
                         <thead>
                             <tr>
-                                <th>Code</th>
                                 <th>Name</th>
-                                <th>Is required for form</th>
-                                <th>Is active</th>
+                                <th>Requirement Status</th>
                                 <th>Actions</th>
                                 <th>Status</th>
                             </tr>
@@ -4725,7 +4723,7 @@
                 <div class="archive-replace-existing-req" id="archiveReplaceDocRequirement">—</div>
             </div>
             <p class="archive-replace-note">
-                Replacing will update this row in the checklist and the applicant’s record in Document Management (same vault slot as Upload or Scan).
+                Replacing will update this row in the checklist and the applicant’s record in Document Management (same vault slot as Scan).
             </p>
         </div>
         <div class="archive-replace-actions">
@@ -4755,7 +4753,7 @@
             <div class="docscan-summary">
                 <div class="docscan-chip">
                     <span class="docscan-chip-label">Required on file</span>
-                    <span class="docscan-chip-value" id="documentScanProgress">0/8</span>
+                    <span class="docscan-chip-value" id="documentScanProgress">0/7</span>
                 </div>
                 <div class="docscan-chip">
                     <span class="docscan-chip-label">Rows</span>
@@ -4778,10 +4776,8 @@
                         <thead>
                             <tr>
                                 <th>Checked</th>
-                                <th>Code</th>
                                 <th>Name</th>
-                                <th>Is required for form</th>
-                                <th>Is active</th>
+                                <th>Requirement Status</th>
                                 <th>View</th>
                                 <th>Action</th>
                             </tr>
@@ -4792,7 +4788,7 @@
             </div>
 
             <p class="docscan-footnote">
-                Each requirement is satisfied when a file is in the document vault — via <strong>Upload</strong> or <strong>Scan</strong> (same as the Eligibility checklist). All eight baseline requirements (R01–R07 and RVT) must be on file before proceed. Option A/B/C adds one optional situational row.
+                Each requirement is satisfied when a file is in the document vault via <strong>Scan</strong>. All seven baseline requirements (R01–R07) must be on file before proceed. Voter certification and Option A/B/C situational rows are optional follow-up.
             </p>
         </div>
 
@@ -8462,7 +8458,7 @@
         });
     }
 
-    /** Actions column — Upload + Scan disabled when blacklisted. */
+    /** Actions column — Scan only; filed status appears in the Status column. */
     function buildArchiveReqActionsInnerHtml(safeCode, row) {
         const rawCode = String(safeCode || '').trim().toUpperCase();
         if (!ARCHIVE_DOC_KEY_BY_CODE[rawCode]) {
@@ -8475,11 +8471,9 @@
         const disabledAttr = isBlacklisted ? ' disabled' : '';
         const disabledTitle = isBlacklisted ? ' — Resolve blacklist first' : '';
 
-        const uploadSvg = '<svg class="action-btn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:0.8rem; height:0.8rem; vertical-align:middle; margin-right:0.25rem;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>';
         const scanSvg = '<svg class="action-btn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:0.8rem; height:0.8rem; vertical-align:middle; margin-right:0.25rem;"><path d="M3 7V5a2 2 0 0 1 2-2h2"></path><path d="M17 3h2a2 2 0 0 1 2 2v2"></path><path d="M21 17v2a2 2 0 0 1-2 2h-2"></path><path d="M7 21H5a2 2 0 0 1-2-2v-2"></path><line x1="3" y1="12" x2="21" y2="12"></line></svg>';
 
         return '<div class="archive-req-actions-group">'
-            + '<button type="button" class="btn-modal secondary archive-req-upload-btn" data-archive-upload-code="' + safeCode + '" data-has-existing-doc="' + hasExistingAttr + '" data-existing-doc-name="' + docName + '" onclick="triggerArchiveRowDocumentUpload(this.getAttribute(\'data-archive-upload-code\'))" title="Choose a file from this computer — saves to document vault' + disabledTitle + '"' + disabledAttr + '>' + uploadSvg + 'Upload</button>'
             + '<button type="button" class="btn-modal secondary archive-req-row-scan-btn" data-archive-scan-code="' + safeCode + '" data-has-existing-doc="' + hasExistingAttr + '" data-existing-doc-name="' + docName + '" onclick="scanArchiveRequirementByCode(this.getAttribute(\'data-archive-scan-code\'))" title="Capture from scanner (TWAIN) — saves to document vault' + disabledTitle + '"' + disabledAttr + '>' + scanSvg + 'Scan</button>'
             + '</div>';
     }
@@ -8602,9 +8596,9 @@
         const rowEl = document.querySelector('#archiveRequirementsTableBody tr[data-archive-code="' + safeCode + '"]');
         if (!rowEl) return;
         const cells = rowEl.querySelectorAll('td');
-        if (cells.length < 6) return;
-        cells[4].innerHTML = buildArchiveReqActionsInnerHtml(safeCode, row);
-        cells[5].innerHTML = buildArchiveReqViewInnerHtml(row);
+        if (cells.length < 4) return;
+        cells[2].innerHTML = buildArchiveReqActionsInnerHtml(safeCode, row);
+        cells[3].innerHTML = buildArchiveReqViewInnerHtml(row);
     }
 
     function forceArchiveRowScannedDom(code, documentUrl) {
@@ -8698,12 +8692,12 @@
             strictBtn.style.cursor = isBusy ? 'wait' : 'pointer';
             strictBtn.textContent = isBusy ? 'Scanning documents...' : 'Scan documents';
         }
-        document.querySelectorAll('#archiveRequirementsModal .archive-req-upload-btn, #archiveRequirementsModal .archive-req-row-scan-btn').forEach(function (btn) {
+        document.querySelectorAll('#archiveRequirementsModal .archive-req-row-scan-btn').forEach(function (btn) {
             btn.disabled = isBusy;
             btn.style.opacity = isBusy ? '0.6' : '1';
             btn.style.cursor = isBusy ? 'wait' : 'pointer';
             if (!isBusy) {
-                const code = btn.getAttribute('data-archive-upload-code') || btn.getAttribute('data-archive-scan-code');
+                const code = btn.getAttribute('data-archive-scan-code');
                 if (code) {
                     renderArchiveRowStatusAndActions(code);
                 }
@@ -8942,7 +8936,7 @@
         if (!(requiredRows.length > 0 && scannedRequired === requiredRows.length)) {
             showNoticeModal({
                 title: 'Incomplete Requirements',
-                message: 'Complete all baseline required documents (R01–R07 and voter certification RVT) before proceeding to Application & Eligibility.',
+                message: 'Complete all baseline required documents (R01–R07) before proceeding to Application & Eligibility.',
                 type: 'warning',
             });
             return;
@@ -9155,7 +9149,7 @@
         if (!payload || !payload.rows || !payload.rows.length) {
             if (scannedSummaryEl) scannedSummaryEl.textContent = '0/0';
             if (rowSummaryEl) rowSummaryEl.textContent = '0';
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:1rem;color:#64748b;">No Group A requirements in the catalog. Seed requirements (e.g. R01–R07) to see this checklist.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:1rem;color:#64748b;">No Group A requirements in the catalog. Seed requirements (e.g. R01–R07) to see this checklist.</td></tr>';
             setArchiveScanButtonBusy(false);
         } else {
             var rows = payload.rows || [];
@@ -9165,9 +9159,6 @@
                 var reqBadge = r.is_required_for_form
                     ? '<span class="req-badge req-badge-yes">Required</span>'
                     : '<span class="req-badge req-badge-no">Optional</span>';
-                var activeBadge = r.is_active
-                    ? '<span class="req-badge req-badge-yes">Active</span>'
-                    : '<span class="req-badge req-badge-no">Inactive</span>';
                 var rawCode = String(r.code || '').trim().toUpperCase();
                 var code = escapeHtml(rawCode);
                 var dispReason = payload && payload.displacementReason ? String(payload.displacementReason).trim() : '';
@@ -9185,10 +9176,8 @@
                 var actionsCell = '<td class="archive-req-table-actions">' + buildArchiveReqActionsInnerHtml(rawCode, r) + '</td>';
                 var viewCell = '<td>' + buildArchiveReqViewInnerHtml(r) + '</td>';
                 return '<tr data-archive-code="' + code + '"' + rowStyle + '>'
-                    + '<td class="archive-req-table-code"><span class="code-badge">' + escapeHtml(String(r.code || '')) + '</span></td>'
                     + '<td class="archive-req-table-name"' + nameTitleAttr + '>' + escapeHtml(rowLabel) + (followUpBadge ? ' ' + followUpBadge : '') + '</td>'
                     + '<td>' + reqBadge + '</td>'
-                    + '<td>' + activeBadge + '</td>'
                     + actionsCell
                     + viewCell
                     + '</tr>';
@@ -10832,7 +10821,7 @@
             name: 'Voter Certification (COMELEC / Barangay voter record)',
             group: 'Applicant Requirements',
             dbKey: 'doc_voter_cert',
-            isRequired: true,
+            isRequired: false,
             isActive: true,
             scanned: isApplicantRequirementOnFile(applicant, 'RVT'),
         });
@@ -10909,7 +10898,6 @@
                         disabled
                     >
                 </td>
-                <td class="docscan-table-code">${escapeHtml(req.code)}</td>
                 <td class="docscan-table-name">
                     ${escapeHtml(req.name)}
                     ${isFollowUpRequirement(req.code) ? '<span class="req-badge req-badge-no" style="margin-left:0.45rem;">Follow-up</span>' : ''}
@@ -10917,11 +10905,6 @@
                 <td>
                     <span class="${req.isRequired ? 'req-badge req-badge-yes' : 'req-badge req-badge-no'}">
                         ${req.isRequired ? 'Required' : 'Optional'}
-                    </span>
-                </td>
-                <td>
-                    <span class="${req.isActive ? 'req-badge req-badge-yes' : 'req-badge req-badge-no'}">
-                        ${req.isActive ? 'Active' : 'Inactive'}
                     </span>
                 </td>
                 <td>
@@ -12797,7 +12780,7 @@
             app.eligibilityStatus || '',
             app.queueType || 'N/A',
             app.queuePosition || '',
-            `${app.docsCount || 0}/${app.docsTotal || 8}`,
+            `${app.docsCount || 0}/${app.docsTotal || 7}`,
             app.dateRegistered || '',
             app.handledBy || ''
         ]);

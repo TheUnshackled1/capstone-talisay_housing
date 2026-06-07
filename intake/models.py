@@ -302,7 +302,7 @@ class Applicant(models.Model):
         related_name='form_queue_routed_applicants'
     )
     
-    # Document Checklist (8 required baseline documents including voter certification)
+    # Document Checklist (7 required baseline R01–R07; voter certification optional)
     doc_brgy_residency = models.BooleanField(default=False, verbose_name="Brgy. Certificate of Residency")
     doc_brgy_indigency = models.BooleanField(default=False, verbose_name="Brgy. Certificate of Indigency")
     doc_cedula = models.BooleanField(default=False, verbose_name="Cedula")

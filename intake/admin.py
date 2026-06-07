@@ -37,7 +37,7 @@ class ApplicantAdmin(admin.ModelAdmin):
             'classes': ('collapse',),
             'description': 'Only applies when Channel is "Danger Zone Walk-in"',
         }),
-        ('📄 DOCUMENT CHECKLIST (8 baseline required)', {
+        ('📄 DOCUMENT CHECKLIST (7 required baseline; voter cert optional)', {
             'fields': (
                 'doc_brgy_residency',
                 'doc_brgy_indigency',
@@ -48,7 +48,7 @@ class ApplicantAdmin(admin.ModelAdmin):
                 'doc_sketch_location',
                 'doc_voter_cert',
             ),
-            'description': 'Check off documents as they are submitted by the applicant',
+            'description': 'R01–R07 are required for proceed; voter certification is optional follow-up.',
         }),
         ('⏰ DOCUMENT DEADLINE TRACKING', {
             'fields': ('document_deadline', 'documents_submitted_at'),

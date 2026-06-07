@@ -361,8 +361,8 @@ def _archive_requirement_scan_rows(requirements_group_a, scanned_types_set, disp
     - Option B/C: ISF situational documentation
     (Option D keeps the base count only).
 
-    Requirement `RVT` (voter certification) is rendered immediately after R01–R07; one optional
-    situational row follows when displacement is Options A, B, or C.
+    Requirement `RVT` (voter certification) is rendered immediately after R01–R07 as optional
+    follow-up; one optional situational row follows when displacement is Options A, B, or C.
     """
     scanned_types_set = scanned_types_set or set()
     latest_doc_by_type = latest_doc_by_type or {}
@@ -402,7 +402,10 @@ def _archive_requirement_scan_rows(requirements_group_a, scanned_types_set, disp
         dtype = (getattr(rvt_req, 'vault_document_type', None) or '').strip()
         scanned = bool(dtype and dtype in scanned_types_set)
         latest_meta = latest_doc_by_type.get(dtype, {}) if dtype else {}
-        rows.append(_requirement_scan_row_dict(rvt_req, scanned, latest_meta))
+        rvt_row = _requirement_scan_row_dict(rvt_req, scanned, latest_meta)
+        # Intake checklist: voter certification is optional (does not gate proceed).
+        rvt_row['is_required_for_form'] = False
+        rows.append(rvt_row)
         if dtype:
             trackable_total += 1
             if dtype in scanned_types_set:
@@ -1093,7 +1096,7 @@ def proceed_to_applications(request, position):
             }
         )
         # Optional promotion path used by the archive checklist CTA:
-        # once baseline required scans (including RVT) are complete, mark as handed off for Module 2 list visibility.
+        # once baseline required scans (R01–R07) are complete, mark as handed off for Module 2 list visibility.
         handoff_just_set = False
         if promote_to_module2 and applicant.module2_handoff_at is None:
             applicant.module2_handoff_at = timezone.now()
@@ -1310,9 +1313,8 @@ def applicants_list(request, position):
                 isf.doc_no_property,
                 isf.doc_2x2_picture,
                 isf.doc_sketch_location,
-                getattr(isf, 'doc_voter_cert', False),
             ]),
-            'docsTotal': 8,
+            'docsTotal': 7,
             # Individual document states for modal checkboxes
             'docBrgyResidency': isf.doc_brgy_residency,
             'docBrgyIndigency': isf.doc_brgy_indigency,
