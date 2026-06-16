@@ -46,8 +46,20 @@ class Command(BaseCommand):
         for user_data in superusers_data:
             username = user_data['username']
             if User.objects.filter(username=username).exists():
-                self.stdout.write(self.style.WARNING(f'  [SKIP] "{username}" already exists'))
-                skipped_count += 1
+                # User may exist from Google OAuth (no password set) — patch it.
+                user = User.objects.get(username=username)
+                if not user.has_usable_password():
+                    user.set_password('tha2026')
+                    user.is_staff = True
+                    user.is_superuser = True
+                    user.save(update_fields=['password', 'is_staff', 'is_superuser'])
+                    self.stdout.write(self.style.SUCCESS(
+                        f'  [PATCHED] "{username}" had no password — set to tha2026'
+                    ))
+                    created_count += 1
+                else:
+                    self.stdout.write(self.style.WARNING(f'  [SKIP] "{username}" already exists with password'))
+                    skipped_count += 1
                 continue
 
             user = User.objects.create_user(
@@ -68,8 +80,19 @@ class Command(BaseCommand):
         for user_data in staff_data:
             username = user_data['username']
             if User.objects.filter(username=username).exists():
-                self.stdout.write(self.style.WARNING(f'  [SKIP] "{username}" already exists'))
-                skipped_count += 1
+                # User may exist from Google OAuth (no password set) — patch it.
+                user = User.objects.get(username=username)
+                if not user.has_usable_password():
+                    user.set_password('tha2026')
+                    user.is_staff = True
+                    user.save(update_fields=['password', 'is_staff'])
+                    self.stdout.write(self.style.SUCCESS(
+                        f'  [PATCHED] "{username}" had no password — set to tha2026'
+                    ))
+                    created_count += 1
+                else:
+                    self.stdout.write(self.style.WARNING(f'  [SKIP] "{username}" already exists with password'))
+                    skipped_count += 1
                 continue
 
             user = User.objects.create_user(
