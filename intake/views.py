@@ -1229,107 +1229,6 @@ def applicants_list(request, position):
     # Build applicants list from danger zone channel only
     applicants = []
 
-    # ====== CHANNEL B: Danger Zone Applicants ======
-    # Landowner submission flow has been removed
-    # Removed ISFRecord queries since LandownerSubmission model deleted
-    isf_records = []
-
-    for isf in isf_records:
-        # Determine eligibility status display
-        if isf.status == 'pending':
-            eligibility_status = 'Pending'
-        elif isf.status == 'eligible':
-            eligibility_status = 'Eligible'
-        else:
-            eligibility_status = 'Disqualified'
-        
-        # Get queue info if converted to applicant
-        queue_type = 'None'
-        queue_position = None
-        if isf.converted_to_applicant:
-            try:
-                applicant_profile = Applicant.objects.filter(isf_record=isf).first()
-                if applicant_profile:
-                    queue_entry = QueueEntry.objects.filter(
-                        applicant=applicant_profile,
-                        status='active'
-                    ).first()
-                    if queue_entry:
-                        queue_type = 'Priority' if queue_entry.queue_type == 'priority' else 'Walk-in'
-                        queue_position = queue_entry.position
-            except:
-                pass
-        
-        local_created_at = timezone.localtime(isf.created_at)
-        applicants.append({
-            'id': str(isf.id),
-            'fullName': isf.full_name,
-            'referenceNumber': isf.reference_number,
-            'dateRegistered': local_created_at.strftime('%Y-%m-%d'),
-            'dateTime': local_created_at.strftime('%b %d, %Y | %I:%M %p'),
-            'dateTimeDatePart': local_created_at.strftime('%b %d, %Y') + ' |',
-            'dateTimeTimePart': local_created_at.strftime('%I:%M %p'),
-            'registeredAgo': _relative_time_ago(isf.created_at),
-            'channel': 'A',
-            'channelSource': 'staff_entry' if isf.submitted_by_staff else 'portal',  # Differentiate Channel A source
-            'submissionId': str(isf.submission.id),  # For Channel A review
-            'applicantId': None,
-            'barangay': isf.barangay or isf.submission.barangay or '',  # ISF barangay or submission barangay
-            'monthlyIncome': float(isf.monthly_income),
-            'incomeEligible': float(isf.monthly_income) <= MODULE1_MONTHLY_INCOME_CEILING_PESO,
-            'incomeCeilingPeso': MODULE1_MONTHLY_INCOME_CEILING_PESO,
-            'householdSize': isf.household_members,
-            'yearsResiding': isf.years_residing,
-            'residencyEligible': _is_residency_eligible(isf.years_residing),
-            'minYearsResidingTalisay': MODULE1_MIN_YEARS_RESIDING_TALISAY,
-            'phoneNumber': isf.phone_number or '',
-            # Landowner info from submission
-            'landownerName': isf.submission.landowner_name or '',
-            'landownerPhone': isf.submission.landowner_phone or '',
-            'propertyAddress': isf.submission.property_address or '',
-            'submissionBarangay': isf.submission.barangay or '',  # Landowner's barangay
-            'eligibilityStatus': eligibility_status,
-            'queueType': queue_type,
-            'queuePosition': queue_position,
-            'cdrrmoStatus': None,
-            'dangerZoneType': None,
-            'isCdrrmoFlagged': False,
-            'signatoryRoutingDelayed': False,
-            'disqualificationReason': isf.disqualification_reason or None,
-            # Staff who handled this record
-            # Priority: submitted_by_staff (if staff entered) → eligibility_checked_by (if reviewed) → Landowner Portal (public)
-            'handledBy': (isf.submitted_by_staff.get_full_name() if isf.submitted_by_staff else
-                         (isf.eligibility_checked_by.get_full_name() if isf.eligibility_checked_by else 'Landowner Portal')),
-            'handledByPosition': (isf.submitted_by_staff.get_position_display_short() if isf.submitted_by_staff else
-                                 (isf.eligibility_checked_by.get_position_display_short() if isf.eligibility_checked_by else 'Public')),
-            'handledByInitials': ((isf.submitted_by_staff.first_name[:1] + isf.submitted_by_staff.last_name[:1]).upper() if isf.submitted_by_staff else
-                                 ((isf.eligibility_checked_by.first_name[:1] + isf.eligibility_checked_by.last_name[:1]).upper() if isf.eligibility_checked_by else 'LP')),
-            # Document checklist count (baseline requirements)
-            'docsCount': sum([
-                isf.doc_brgy_residency,
-                isf.doc_brgy_indigency,
-                isf.doc_cedula,
-                isf.doc_police_clearance,
-                isf.doc_no_property,
-                isf.doc_2x2_picture,
-                isf.doc_sketch_location,
-            ]),
-            'docsTotal': 7,
-            # Individual document states for modal checkboxes
-            'docBrgyResidency': isf.doc_brgy_residency,
-            'docBrgyIndigency': isf.doc_brgy_indigency,
-            'docCedula': isf.doc_cedula,
-            'docPoliceClearance': isf.doc_police_clearance,
-            'docNoProperty': isf.doc_no_property,
-            'doc2x2Picture': isf.doc_2x2_picture,
-            'docSketchLocation': isf.doc_sketch_location,
-            'docVoterCert': getattr(isf, 'doc_voter_cert', False),
-            # SMS status
-            'registrationSmsSent': isf.registration_sms_sent,
-            'eligibilitySmsSent': isf.eligibility_sms_sent,
-            'hasPhone': bool(isf.phone_number),
-        })
-    
     # ====== CHANNEL B: Danger Zone Applicants + ALL OTHER APPLICANTS ======
     # Active "Total List": applicants not yet in Intake Archives (proceed button creates Archive only).
     walk_in_applicants = list(
@@ -1826,8 +1725,8 @@ def walkin_register(request, position):
     PURPOSE: Encode applicant identity, household, income, danger zone claim (if any).
     - Staff enters all required information
     - System generates reference number
-    - Registration SMS sent to applicant
     - Record saved to database — ready for Module 2 processing
+    - No SMS on registration (first applicant SMS is on proceed / handoff)
 
     NOTE: All screening (blacklist, eligibility, CDRRMO coordination) happens in Module 2.
     This view is ENCODING & RECORDING ONLY.

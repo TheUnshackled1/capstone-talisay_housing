@@ -49,7 +49,7 @@ def format_phone_number(phone_number):
     return phone
 
 
-def send_sms(phone_number, message, trigger_event, applicant=None, isf_record=None, module='intake'):
+def send_sms(phone_number, message, trigger_event, applicant=None, module='intake'):
     """
     Send SMS notification via configured SMS API and log to app-specific SMSLog.
 
@@ -58,8 +58,7 @@ def send_sms(phone_number, message, trigger_event, applicant=None, isf_record=No
         message: SMS message content
         trigger_event: Event that triggered SMS (registration, eligibility_passed, etc.)
         applicant: Applicant instance (optional)
-        isf_record: ISFRecord instance (optional)
-        module: App module for SMS logging ('intake', 'applications', 'units', 'cases').
+        module: App module for SMS logging ('intake', 'applications', 'units').
             ``documents`` is accepted as a legacy alias and logs to ``applications.SMSLog``.
 
     Returns:
@@ -72,8 +71,6 @@ def send_sms(phone_number, message, trigger_event, applicant=None, isf_record=No
         from applications.models import SMSLog
     elif module == 'units':
         from units.models import SMSLog
-    elif module == 'cases':
-        from cases.models import SMSLog
     else:
         logger.warning(f"Unknown SMS module: {module}")
         from .models import SMSLog  # Default to intake
@@ -315,135 +312,3 @@ def send_sms_semaphore(phone_number, message, sms_log):
         sms_log.error_message = error_msg
         sms_log.save(update_fields=['status', 'error_message'])
         return False
-
-
-def check_blacklist(
-    full_name,
-    phone_number=None,
-    applicant_id=None,
-    last_name=None,
-    first_name=None,
-    date_of_birth=None,
-    barangay_id=None,
-):
-    """
-    Check if a person is on the housing-units blacklist (units.Blacklist).
-
-    Intake no longer maintains a separate blacklist table; Module 2 and
-    intake helpers use the same Units monitoring source.
-
-    Returns:
-        tuple: (is_blacklisted: bool, adapter_or_None) — same shape as
-        ``applications.utils.check_blacklist_module2``.
-    """
-    from applications.utils import check_blacklist_module2
-
-    return check_blacklist_module2(
-        full_name,
-        phone_number,
-        applicant_id=applicant_id,
-        last_name=last_name,
-        first_name=first_name,
-        date_of_birth=date_of_birth,
-        barangay_id=barangay_id,
-    )
-
-
-def ensure_priority_queue_entry(applicant, added_by=None):
-    """
-    Ensure an applicant has one active Priority queue entry.
-
-    Returns:
-        tuple[QueueEntry, bool]: (entry, created)
-    """
-    from django.db import IntegrityError, transaction
-    from applications.models import QueueEntry
-
-    existing = applicant.queue_entries.filter(status='active').order_by('entered_at').first()
-    if existing:
-        return existing, False
-
-    for _ in range(3):
-        last_position = QueueEntry.objects.filter(
-            queue_type='priority',
-            status='active'
-        ).order_by('-position').values_list('position', flat=True).first() or 0
-
-        try:
-            with transaction.atomic():
-                entry = QueueEntry.objects.create(
-                    applicant=applicant,
-                    queue_type='priority',
-                    position=last_position + 1,
-                    status='active',
-                    added_by=added_by,
-                )
-            return entry, True
-        except IntegrityError:
-            # Retry when two staff actions race for same queue slot.
-            continue
-
-    entry = applicant.queue_entries.filter(status='active').order_by('entered_at').first()
-    if entry:
-        return entry, False
-
-    raise RuntimeError('Unable to allocate priority queue position')
-
-
-def create_applicant_from_isf(isf_record, checked_by_user):
-    """
-    Convert an eligible ISF record to a full Applicant profile.
-    Places applicant in Priority Queue.
-    
-    Args:
-        isf_record: ISFRecord instance
-        checked_by_user: User who checked eligibility
-    
-    Returns:
-        Applicant instance or None if failed
-    """
-    from .models import Applicant, Barangay
-    from django.utils import timezone
-    
-    try:
-        # Get barangay instance
-        barangay, _ = Barangay.objects.get_or_create(
-            name=isf_record.submission.barangay
-        )
-        
-        # Create Applicant profile
-        applicant = Applicant.objects.create(
-            full_name=isf_record.full_name,
-            phone_number=isf_record.phone_number,
-            barangay=barangay,
-            current_address=isf_record.submission.property_address,
-            years_residing=isf_record.years_residing,
-            monthly_income=isf_record.monthly_income,
-            channel='landowner',
-            status='eligible',
-            isf_record=isf_record,
-            has_property_in_talisay=False,  # Already checked during eligibility
-            eligibility_checked_by=checked_by_user,
-            eligibility_checked_at=timezone.now(),
-            registered_by=checked_by_user
-        )
-        
-        # Add to priority queue
-        ensure_priority_queue_entry(applicant, added_by=checked_by_user)
-        
-        # Mark ISF record as converted
-        isf_record.converted_to_applicant = True
-        isf_record.applicant_created_at = timezone.now()
-        isf_record.status = 'eligible'
-        isf_record.save(update_fields=['converted_to_applicant', 'applicant_created_at', 'status'])
-        
-        # Send eligibility SMS
-        isf_record.send_eligibility_sms(eligible=True)
-        
-        logger.info(f"Created applicant {applicant.reference_number} from ISF {isf_record.reference_number}")
-        
-        return applicant
-        
-    except Exception as e:
-        logger.error(f"Failed to create applicant from ISF: {str(e)}")
-        return None
