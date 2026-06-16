@@ -123,17 +123,10 @@ def login_view(request):
 
 
 def google_login_start(request):
-    """Store portal role in session and redirect to Google OAuth."""
+    """Store portal role in session (if any) and redirect to Google OAuth."""
     role = normalize_portal_role(request.GET.get('role', ''))
-    if not role:
-        messages.error(
-            request,
-            'Please sign in from your staff portal link on the homepage '
-            '(Second Member, Fourth Member, or Field verification desk).',
-        )
-        return redirect('accounts:login')
-
-    request.session[PORTAL_ROLE_SESSION_KEY] = role
+    if role:
+        request.session[PORTAL_ROLE_SESSION_KEY] = role
     return redirect('google_login')
 
 

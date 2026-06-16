@@ -54,13 +54,6 @@ class THASocialAccountAdapter(DefaultSocialAccountAdapter):
 
     def pre_social_login(self, request, sociallogin):
         portal_role = normalize_portal_role(request.session.get(PORTAL_ROLE_SESSION_KEY))
-        if not portal_role:
-            messages.error(
-                request,
-                'Please sign in from your staff portal link on the homepage '
-                '(Second Member, Fourth Member, or Field verification desk).',
-            )
-            raise ImmediateHttpResponse(redirect('accounts:login'))
 
         extra = sociallogin.account.extra_data or {}
         email = (extra.get('email') or sociallogin.user.email or '').strip()
@@ -89,10 +82,12 @@ class THASocialAccountAdapter(DefaultSocialAccountAdapter):
             sociallogin.connect(request, user)
 
         user = sociallogin.user
-        allowed, err = user_allowed_for_portal(user, portal_role)
-        if not allowed:
-            messages.error(request, err)
-            raise ImmediateHttpResponse(_login_redirect_with_role(portal_role))
+        
+        if portal_role:
+            allowed, err = user_allowed_for_portal(user, portal_role)
+            if not allowed:
+                messages.error(request, err)
+                raise ImmediateHttpResponse(_login_redirect_with_role(portal_role))
 
         request.session.pop(PORTAL_ROLE_SESSION_KEY, None)
 
