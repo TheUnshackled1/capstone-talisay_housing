@@ -1,0 +1,305 @@
+{% load static %}
+{% load i18n %}
+{% load allauth %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Sign in via Google — Integrated Housing Services and Monitoring System (IHSMS), Talisay City Housing Authority">
+    <title>Sign In via Google | IHSMS</title>
+    <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}">
+    <link rel="stylesheet" href="{% static 'css/tha-design-system.css' %}?v=1.1">
+    <link rel="stylesheet" href="{% static 'css/login.css' %}?v=1.1">
+    <style>
+        /* ─── Google confirm page overlay styles ─── */
+        .google-confirm-card {
+            max-width: 420px;
+        }
+
+        .provider-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.45rem 1rem;
+            background: rgba(66, 133, 244, 0.1);
+            border: 1px solid rgba(66, 133, 244, 0.25);
+            border-radius: 999px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #4285F4;
+            letter-spacing: 0.03em;
+            margin-top: 0.75rem;
+            animation: fadeInUp 0.5s ease both;
+            animation-delay: 0.15s;
+        }
+
+        .google-icon-sm {
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+        }
+
+        .confirm-message {
+            font-size: 0.9rem;
+            color: #64748b;
+            line-height: 1.55;
+            margin: 1.25rem 0 1.75rem;
+            text-align: center;
+            animation: fadeInUp 0.5s ease both;
+            animation-delay: 0.25s;
+        }
+
+        .confirm-message strong {
+            color: #334155;
+        }
+
+        .google-continue-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            width: 100%;
+            padding: 0.85rem 1.25rem;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #4285F4 0%, #3367d6 100%);
+            color: #fff;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+            box-shadow: 0 4px 16px rgba(66, 133, 244, 0.35);
+            animation: fadeInUp 0.5s ease both;
+            animation-delay: 0.35s;
+            letter-spacing: 0.01em;
+        }
+
+        .google-continue-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(66, 133, 244, 0.45);
+            filter: brightness(1.05);
+        }
+
+        .google-continue-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 3px 10px rgba(66, 133, 244, 0.3);
+        }
+
+        .google-continue-btn .google-icon-lg {
+            width: 20px;
+            height: 20px;
+            background: #fff;
+            border-radius: 50%;
+            padding: 2px;
+            flex-shrink: 0;
+        }
+
+        .divider-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin: 1.35rem 0;
+            animation: fadeInUp 0.5s ease both;
+            animation-delay: 0.45s;
+        }
+
+        .divider-info::before,
+        .divider-info::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #e2e8f0;
+        }
+
+        .divider-info span {
+            font-size: 0.7rem;
+            color: #94a3b8;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            white-space: nowrap;
+        }
+
+        .cancel-link {
+            display: block;
+            text-align: center;
+            font-size: 0.82rem;
+            color: #94a3b8;
+            text-decoration: none;
+            transition: color 0.15s ease;
+            animation: fadeInUp 0.5s ease both;
+            animation-delay: 0.55s;
+        }
+
+        .cancel-link:hover {
+            color: #475569;
+        }
+
+        .security-note {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid #f1f5f9;
+            font-size: 0.72rem;
+            color: #94a3b8;
+            animation: fadeInUp 0.5s ease both;
+            animation-delay: 0.6s;
+        }
+
+        .security-note svg {
+            width: 12px;
+            height: 12px;
+            flex-shrink: 0;
+            stroke: #94a3b8;
+        }
+
+        /* Pulse ring on the logo for google context */
+        .logo-circle.google-mode {
+            background: linear-gradient(135deg, #4285F4, #34A853);
+            box-shadow: 0 0 0 0 rgba(66, 133, 244, 0.4);
+            animation: googlePulse 2.5s ease-in-out infinite;
+        }
+
+        @keyframes googlePulse {
+            0%   { box-shadow: 0 0 0 0 rgba(66,133,244,0.4); }
+            50%  { box-shadow: 0 0 0 12px rgba(66,133,244,0); }
+            100% { box-shadow: 0 0 0 0 rgba(66,133,244,0); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(14px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .connecting-dots {
+            display: none;
+        }
+
+        .google-continue-btn.loading .btn-label {
+            display: none;
+        }
+
+        .google-continue-btn.loading .connecting-dots {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .connecting-dots span {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #fff;
+            animation: dotBounce 1.2s ease-in-out infinite;
+        }
+        .connecting-dots span:nth-child(2) { animation-delay: 0.15s; }
+        .connecting-dots span:nth-child(3) { animation-delay: 0.3s; }
+
+        @keyframes dotBounce {
+            0%, 80%, 100% { transform: scale(0.7); opacity: 0.5; }
+            40%            { transform: scale(1);   opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card google-confirm-card">
+            <div class="login-header">
+                <div class="logo-wrapper">
+                    <div class="logo-circle google-mode">
+                        <!-- Google G icon -->
+                        <svg class="logo-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <path fill="#fff" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                            <path fill="rgba(255,255,255,0.85)" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                            <path fill="rgba(255,255,255,0.7)" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                            <path fill="rgba(255,255,255,0.6)" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                        </svg>
+                    </div>
+                </div>
+                <h1 class="login-title">IHSMS</h1>
+                <p class="login-subtitle">Integrated Housing Services and Monitoring System</p>
+                <p class="login-agency" style="margin:0.35rem 0 0;font-size:0.8rem;color:#64748b;">Talisay City Housing Authority</p>
+
+                <div class="provider-badge">
+                    <svg class="google-icon-sm" viewBox="0 0 24 24" aria-hidden="true">
+                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    </svg>
+                    Google Authentication
+                </div>
+            </div>
+
+            <div class="login-body">
+                <p class="confirm-message">
+                    {% if process == "connect" %}
+                        You are about to <strong>connect your Google account</strong> to your IHSMS profile.
+                    {% else %}
+                        You are about to <strong>sign in securely</strong> using your Google account. Click Continue to proceed to Google's sign-in page.
+                    {% endif %}
+                </p>
+
+                <form method="post" id="googleConfirmForm">
+                    {% csrf_token %}
+                    <button type="submit" class="google-continue-btn" id="continueBtn">
+                        <svg class="google-icon-lg" viewBox="0 0 24 24" aria-hidden="true">
+                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                        </svg>
+                        <span class="btn-label">Continue with Google</span>
+                        <span class="connecting-dots">
+                            <span></span><span></span><span></span>
+                        </span>
+                    </button>
+                </form>
+
+                <div class="divider-info">
+                    <span>or</span>
+                </div>
+
+                <a href="{% url 'accounts:login' %}" class="cancel-link" id="cancelLink">
+                    ← Cancel and go back to login
+                </a>
+
+                <div class="security-note">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    </svg>
+                    <span>Secured via OAuth 2.0 · Data Privacy Act compliant</span>
+                </div>
+            </div>
+
+            <div class="login-footer">
+                <a href="{% url 'home' %}" class="back-link">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="15 18 9 12 15 6"/>
+                    </svg>
+                    <span>Back to Homepage</span>
+                </a>
+            </div>
+        </div>
+
+        <p class="gov-banner">
+            Official Housing Management Platform<br>
+            Talisay City, Negros Occidental · Republic of the Philippines
+        </p>
+    </div>
+
+    <script>
+        const form = document.getElementById('googleConfirmForm');
+        const btn  = document.getElementById('continueBtn');
+
+        form.addEventListener('submit', function() {
+            btn.disabled = true;
+            btn.classList.add('loading');
+        });
+    </script>
+</body>
+</html>

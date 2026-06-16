@@ -5,7 +5,7 @@ User = get_user_model()
 
 
 class Command(BaseCommand):
-    help = 'Seed initial THA staff users'
+    help = 'Seed initial THA staff users (emails must match Google accounts for OAuth sign-in)'
     
     def handle(self, *args, **options):
         # Superusers (Admin access)

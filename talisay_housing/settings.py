@@ -60,8 +60,13 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.humanize",
+    "django.contrib.sites",
     # Third-party
     'widget_tweaks',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
     # Local apps
     'accounts',
     'intake',
@@ -78,6 +83,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -164,6 +170,13 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # Custom user model
 AUTH_USER_MODEL = 'accounts.User'
 
+SITE_ID = 1
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+
 # Login/Logout URLs
 LOGIN_URL = 'accounts:login'
 LOGIN_REDIRECT_URL = 'accounts:dashboard'
@@ -172,6 +185,41 @@ LOGOUT_REDIRECT_URL = 'accounts:dashboard'
 # Session settings
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_COOKIE_AGE = 60 * 60 * 5  # 5 hours
+
+# =============================================================================
+# Google OAuth (staff portals via django-allauth)
+# =============================================================================
+GOOGLE_OAUTH_CLIENT_ID = os.environ.get('GOOGLE_OAUTH_CLIENT_ID', '').strip()
+GOOGLE_OAUTH_CLIENT_SECRET = os.environ.get('GOOGLE_OAUTH_CLIENT_SECRET', '').strip()
+_domains_raw = os.environ.get('GOOGLE_OAUTH_ALLOWED_DOMAINS', '').strip()
+if _domains_raw:
+    GOOGLE_OAUTH_ALLOWED_DOMAINS = tuple(
+        d.strip().lower().lstrip('@') for d in _domains_raw.split(',') if d.strip()
+    )
+elif os.environ.get('GOOGLE_OAUTH_ALLOWED_DOMAIN', '').strip():
+    GOOGLE_OAUTH_ALLOWED_DOMAINS = (
+        os.environ.get('GOOGLE_OAUTH_ALLOWED_DOMAIN', '').strip().lower().lstrip('@'),
+    )
+else:
+    # Default: personal Gmail + THA Workspace accounts
+    GOOGLE_OAUTH_ALLOWED_DOMAINS = ('gmail.com', 'talisayhousing.gov.ph')
+
+ACCOUNT_EMAIL_VERIFICATION = 'none'
+ACCOUNT_LOGIN_METHODS = {'username'}
+ACCOUNT_SIGNUP_FIELDS = ['email', 'username*', 'password1*', 'password2*']
+SOCIALACCOUNT_AUTO_SIGNUP = False
+SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
+SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
+SOCIALACCOUNT_ADAPTER = 'accounts.adapters.THASocialAccountAdapter'
+# Skip the intermediate "Sign In Via Google" confirmation page — go straight to Google.
+SOCIALACCOUNT_LOGIN_ON_GET = True
+# Credentials live in DB (python manage.py setup_google_oauth) — do not duplicate APP here.
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': ['profile', 'email'],
+        'AUTH_PARAMS': {'access_type': 'online'},
+    },
+}
 
 # =============================================================================
 # SMS — Semaphore (Philippines)

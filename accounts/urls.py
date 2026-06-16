@@ -6,6 +6,7 @@ app_name = 'accounts'
 urlpatterns = [
     # Authentication
     path('login/', views.login_view, name='login'),
+    path('login/google/', views.google_login_start, name='google_login_start'),
     path('logout/', views.logout_view, name='logout'),
 
     # Main Dashboard (redirects to position-specific dashboard)

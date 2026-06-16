@@ -17,6 +17,12 @@ from datetime import date, datetime, timedelta
 from urllib.parse import urlencode
 from .forms import LoginForm
 from .models import FIELD_DESK_POSITIONS
+from .auth_portal import (
+    PORTAL_ROLE_SESSION_KEY,
+    normalize_portal_role,
+    portal_role_display,
+    user_allowed_for_portal,
+)
 from intake.models import Applicant, Archive, SMSLog
 from accounts.staff_activity import (
     STAFF_ACTIVITY_MAX_ITEMS,
@@ -80,50 +86,24 @@ def login_view(request):
     """Staff login page."""
     if request.user.is_authenticated:
         return redirect('accounts:dashboard')
-    
-    # Get the requested role from URL parameter
-    role = request.GET.get('role', '')
-    # Legacy ?role=caretaker merged into ronda — treat as unified field desk
-    if role == 'caretaker':
-        role = 'field_desk'
-    role_display = None
 
-    # Map role codes to display names
-    role_map = {
-        'second_member': 'Second Member',
-        'fourth_member': 'Fourth Member',
-        'ronda': 'Ronda / Field Personnel',
-        'field': 'Field Personnel',
-        'field_desk': 'Field verification desk',
-    }
-    role_display = role_map.get(role, None)
-    
+    role = normalize_portal_role(request.GET.get('role', ''))
+    role_display = portal_role_display(role)
+
     if request.method == 'POST':
         form = LoginForm(request.POST)
         if form.is_valid():
             username = form.cleaned_data['username']
             password = form.cleaned_data['password']
-            
+
             user = authenticate(request, username=username, password=password)
-            
+
             if user is not None:
-                # ENFORCE: Portal must match the user's position (or unified field desk).
-                if role:
-                    if role == 'field_desk':
-                        if user.position not in FIELD_DESK_POSITIONS:
-                            messages.error(
-                                request,
-                                'Access denied: this portal is only for field desk staff (Ronda or Field).',
-                            )
-                            return _redirect_login_preserving_role(request)
-                    elif user.position != role:
-                        messages.error(
-                            request,
-                            f'Access Denied: Your account is registered as {user.get_position_display()}, '
-                            f'not {role_display}. Please use the correct login portal for your position.',
-                        )
-                        return _redirect_login_preserving_role(request)
-                
+                allowed, err = user_allowed_for_portal(user, role)
+                if not allowed:
+                    messages.error(request, err)
+                    return _redirect_login_preserving_role(request)
+
                 login(request, user)
                 messages.success(request, f'Welcome back, {user.first_name or user.username}!')
                 next_url = request.GET.get('next', 'accounts:dashboard')
@@ -134,12 +114,27 @@ def login_view(request):
             messages.error(request, 'Please enter both username and password.')
     else:
         form = LoginForm()
-    
+
     return render(request, 'accounts/login.html', {
         'form': form,
         'role': role,
         'role_display': role_display,
     })
+
+
+def google_login_start(request):
+    """Store portal role in session and redirect to Google OAuth."""
+    role = normalize_portal_role(request.GET.get('role', ''))
+    if not role:
+        messages.error(
+            request,
+            'Please sign in from your staff portal link on the homepage '
+            '(Second Member, Fourth Member, or Field verification desk).',
+        )
+        return redirect('accounts:login')
+
+    request.session[PORTAL_ROLE_SESSION_KEY] = role
+    return redirect('google_login')
 
 
 def logout_view(request):
