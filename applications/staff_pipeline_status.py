@@ -48,7 +48,7 @@ def staff_pipeline_primary_detail(
             )
         status_disp = unit.get_status_display() if hasattr(unit, 'get_status_display') else unit.status
         return (
-            'Awarded lot — not housing unit on file',
+            'Awarded lot',
             f'{loc} · {status_disp}',
         )
 
@@ -96,7 +96,7 @@ def _pipeline_cycle_index(
         'Ready for Form queue': 1,
         'Ready for Awarding': 2,
         'Awarded — pending unit linkage': 2,
-        'Awarded lot — not housing unit on file': 3,
+        'Awarded lot': 3,
         'Housing Units': 3,
     }
     return stage_map.get(primary, 0)
