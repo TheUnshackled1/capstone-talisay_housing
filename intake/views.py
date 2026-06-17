@@ -1247,6 +1247,156 @@ def _map_applicant_channel_to_archive(applicant):
         return channel_value
 
 
+def _build_intake_applicant_review_payload(
+    app,
+    *,
+    requirements_group_a,
+    vault_types,
+    date_registered_override=None,
+    module2_handed_off=False,
+    is_archived=False,
+):
+    """Full applicant dict for the intake Review modal (registration + archive list)."""
+    if app.channel == 'danger_zone' and app.status == 'pending_cdrrmo':
+        if app.danger_zone_type:
+            eligibility_status = 'Pending CDRRMO verification'
+        else:
+            eligibility_status = 'Pending eligibility check'
+    elif app.status == 'pending':
+        eligibility_status = 'Pending eligibility check'
+    elif app.status == 'eligible':
+        eligibility_status = 'Eligible'
+    elif app.status == 'disqualified':
+        eligibility_status = 'Disqualified'
+    else:
+        eligibility_status = app.get_status_display()
+
+    queue_type = 'None'
+    queue_position = None
+    active_queue = getattr(app, 'active_queue', None)
+    if active_queue:
+        queue_entry = active_queue[0]
+        qraw = (getattr(queue_entry, 'queue_type', None) or '').lower()
+        if qraw == 'walk_in' or qraw == 'walk-in':
+            queue_type = 'Walk-in'
+        else:
+            queue_type = 'Priority'
+        queue_position = queue_entry.position
+
+    cdrrmo_status = None
+    cdrrmo_status_value = None
+    danger_zone_type = None
+    is_cdrrmo_flagged = False
+    cdrrmo_days_pending = 0
+    result_recorded_by_name = None
+    certified_at = None
+    certification_notes = None
+    office_intake_notes = None
+    cdrrmo_disposition_source = 'pending'
+    ronda_evidence_photos = []
+    if app.channel == 'danger_zone':
+        cdrrmo_status = 'Not Requested'
+        cdrrmo_status_value = None
+        cdrrmo_disposition_source = 'pending'
+
+    local_created_at = timezone.localtime(app.created_at)
+    doc_scanned_count, doc_required_total = _required_requirement_counts(
+        vault_types or set(),
+        app.displacement_reason,
+        requirements_group_a,
+    )
+    date_registered = date_registered_override or local_created_at.strftime('%Y-%m-%d')
+    return {
+        'id': str(app.id),
+        'fullName': app.full_name,
+        'referenceNumber': app.reference_number,
+        'dateRegistered': date_registered,
+        'dateTime': local_created_at.strftime('%b %d, %Y | %I:%M %p'),
+        'dateTimeDatePart': local_created_at.strftime('%b %d, %Y') + ' |',
+        'dateTimeTimePart': local_created_at.strftime('%I:%M %p'),
+        'registeredAgo': _relative_time_ago(app.created_at),
+        'dateOfBirthDisplay': app.date_of_birth.strftime('%m/%d/%Y') if app.date_of_birth else '',
+        'channel': 'B' if app.channel == 'danger_zone' else 'C',
+        'submissionId': None,
+        'applicantId': str(app.id),
+        'lastName': app.last_name or '',
+        'firstName': app.first_name or '',
+        'middleName': app.middle_name or '',
+        'extensionName': app.extension_name or '',
+        'sex': app.sex or '',
+        'civilStatus': app.get_civil_status_display() if app.civil_status else '',
+        'isRegisteredVoterTalisay': bool(app.is_registered_voter_talisay),
+        'hasPropertyInTalisay': bool(app.has_property_in_talisay),
+        'age': app.age,
+        'dateOfBirth': app.date_of_birth.isoformat() if app.date_of_birth else '',
+        'barangay': app.barangay.name if app.barangay else 'Unknown',
+        'phoneNumber': app.phone_number or '',
+        'currentAddress': app.current_address or '',
+        'householdSize': app.household_size,
+        'householdMembers': [
+            {
+                'name': member.full_name or '',
+                'relationship': member.get_relationship_display() if hasattr(member, 'get_relationship_display') else (member.relationship or ''),
+                'age': member.age or 0,
+                'civilStatus': member.get_civil_status_display() if hasattr(member, 'get_civil_status_display') else (member.civil_status or ''),
+                'contactNumber': getattr(member, 'contact_number', '') or '',
+            }
+            for member in app.household_members.all()
+        ],
+        'monthlyIncome': float(app.monthly_income),
+        'incomeEligible': app.is_income_eligible,
+        'incomeCeilingPeso': MODULE1_MONTHLY_INCOME_CEILING_PESO,
+        'yearsResiding': app.years_residing,
+        'residencyEligible': _is_residency_eligible(app.years_residing),
+        'minYearsResidingTalisay': MODULE1_MIN_YEARS_RESIDING_TALISAY,
+        'occupation': app.occupation or '',
+        'employmentStatus': app.get_employment_status_display() if app.employment_status else '',
+        'isInDangerZone': app.channel == 'danger_zone' and bool(app.danger_zone_type),
+        'dangerZoneType': app.danger_zone_type if hasattr(app, 'danger_zone_type') and app.danger_zone_type else '',
+        'dangerZoneLocation': app.danger_zone_location if hasattr(app, 'danger_zone_location') and app.danger_zone_location else (danger_zone_type or ''),
+        'displacementReason': (app.displacement_reason or '').strip(),
+        'ejectionType': (app.ejection_type or '').strip() if hasattr(app, 'ejection_type') else '',
+        'ejectionDate': app.ejection_date.isoformat() if hasattr(app, 'ejection_date') and app.ejection_date else '',
+        'projectName': (app.project_name or '').strip() if hasattr(app, 'project_name') else '',
+        'eligibilityStatus': eligibility_status,
+        'applicantStatus': app.status,
+        'readyForModule2': app.status != 'disqualified',
+        'module2HandedOff': bool(module2_handed_off),
+        'isArchived': bool(is_archived),
+        'queueType': queue_type,
+        'queuePosition': queue_position,
+        'cdrrmoStatus': cdrrmo_status,
+        'cdrrmo_status': cdrrmo_status_value,
+        'cdrrmo_disposition_source': cdrrmo_disposition_source,
+        'office_intake_notes': office_intake_notes,
+        'result_recorded_by_name': result_recorded_by_name,
+        'certified_at': certified_at,
+        'certification_notes': certification_notes,
+        'ronda_evidence_photos': ronda_evidence_photos,
+        'isCdrrmoFlagged': is_cdrrmo_flagged,
+        'cdrrmoDaysPending': cdrrmo_days_pending,
+        'signatoryRoutingDelayed': False,
+        'disqualificationReason': app.disqualification_reason or None,
+        'handledBy': app.registered_by.get_full_name() if app.registered_by else 'Unknown',
+        'handledByPosition': app.registered_by.get_position_display_short() if app.registered_by else '',
+        'handledByInitials': (app.registered_by.first_name[:1] + app.registered_by.last_name[:1]).upper() if app.registered_by else '??',
+        'docsCount': doc_scanned_count,
+        'docsTotal': doc_required_total,
+        'vaultDocumentTypes': sorted(vault_types or set()),
+        'docBrgyResidency': app.doc_brgy_residency,
+        'docBrgyIndigency': app.doc_brgy_indigency,
+        'docCedula': app.doc_cedula,
+        'docPoliceClearance': app.doc_police_clearance,
+        'docNoProperty': app.doc_no_property,
+        'doc2x2Picture': app.doc_2x2_picture,
+        'docSketchLocation': app.doc_sketch_location,
+        'docVoterCert': app.doc_voter_cert,
+        'registrationSmsSent': app.registration_sms_sent,
+        'eligibilitySmsSent': app.eligibility_sms_sent,
+        'hasPhone': bool(app.phone_number),
+    }
+
+
 @login_required
 @verify_position
 def applicants_list(request, position):
@@ -1304,160 +1454,11 @@ def applicants_list(request, position):
                 walk_in_extra_doc_types_by_applicant[aid].add(doc_type)
 
     for app in walk_in_applicants:
-        # Determine eligibility status display
-        # For Channel B (Danger Zone): check if applicant actually selected "Yes" for danger zone
-        if app.channel == 'danger_zone' and app.status == 'pending_cdrrmo':
-            if app.danger_zone_type:
-                eligibility_status = 'Pending CDRRMO verification'
-            else:
-                eligibility_status = 'Pending eligibility check'
-        elif app.status == 'pending':
-            eligibility_status = 'Pending eligibility check'
-        elif app.status == 'eligible':
-            eligibility_status = 'Eligible'
-        elif app.status == 'disqualified':
-            eligibility_status = 'Disqualified'
-        else:
-            eligibility_status = app.get_status_display()
-
-        # Get queue info
-        queue_type = 'None'
-        queue_position = None
-        if app.active_queue:
-            queue_entry = app.active_queue[0]
-            qraw = (getattr(queue_entry, 'queue_type', None) or '').lower()
-            if qraw == 'walk_in' or qraw == 'walk-in':
-                queue_type = 'Walk-in'
-            else:
-                # Default / legacy: model uses 'priority' for danger-zone priority queue
-                queue_type = 'Priority'
-            queue_position = queue_entry.position
-
-        # Get CDRRMO status for danger zone
-        cdrrmo_status = None
-        cdrrmo_status_value = None  # actual status value: pending, certified, not_certified
-        danger_zone_type = None
-        is_cdrrmo_flagged = False
-        cdrrmo_days_pending = 0
-        result_recorded_by_name = None
-        certified_at = None
-        certification_notes = None
-        office_intake_notes = None
-        cdrrmo_disposition_source = 'pending'
-        ronda_evidence_photos = []
-        if app.channel == 'danger_zone':
-            # CDRRMO model has been removed from intake app
-            cdrrmo_status = 'Not Requested'
-            cdrrmo_status_value = None
-            cdrrmo_disposition_source = 'pending'
-
-        local_created_at = timezone.localtime(app.created_at)
-        doc_scanned_count, doc_required_total = _required_requirement_counts(
-            walk_in_vault_types_by_applicant.get(app.id, set()),
-            app.displacement_reason,
-            requirements_group_a,
-        )
-        applicants.append({
-            'id': str(app.id),
-            'fullName': app.full_name,
-            'referenceNumber': app.reference_number,
-            'dateRegistered': local_created_at.strftime('%Y-%m-%d'),
-            'dateTime': local_created_at.strftime('%b %d, %Y | %I:%M %p'),
-            'dateTimeDatePart': local_created_at.strftime('%b %d, %Y') + ' |',
-            'dateTimeTimePart': local_created_at.strftime('%I:%M %p'),
-            'registeredAgo': _relative_time_ago(app.created_at),
-            'dateOfBirthDisplay': app.date_of_birth.strftime('%m/%d/%Y') if app.date_of_birth else '',
-            'channel': 'B' if app.channel == 'danger_zone' else 'C',  # Map database channels to UI channels
-            'submissionId': None,
-            'applicantId': str(app.id),
-            # Section A: APPLICATION IDENTITY
-            'lastName': app.last_name or '',
-            'firstName': app.first_name or '',
-            'middleName': app.middle_name or '',
-            'extensionName': app.extension_name or '',
-            'sex': app.sex or '',
-            'civilStatus': app.get_civil_status_display() if app.civil_status else '',
-            'isRegisteredVoterTalisay': bool(app.is_registered_voter_talisay),
-            'hasPropertyInTalisay': bool(app.has_property_in_talisay),
-            'age': app.age,
-            'dateOfBirth': app.date_of_birth.isoformat() if app.date_of_birth else '',
-            'barangay': app.barangay.name if app.barangay else 'Unknown',
-            'phoneNumber': app.phone_number or '',
-            'currentAddress': app.current_address or '',
-            # Section B: HOUSEHOLD MEMBERS
-            'householdSize': app.household_size,
-            'householdMembers': [
-                {
-                    'name': member.full_name or '',
-                    'relationship': member.get_relationship_display() if hasattr(member, 'get_relationship_display') else (member.relationship or ''),
-                    'age': member.age or 0,
-                    'civilStatus': member.get_civil_status_display() if hasattr(member, 'get_civil_status_display') else (member.civil_status or ''),
-                    'contactNumber': getattr(member, 'contact_number', '') or '',
-                }
-                for member in app.household_members.all()
-            ],
-            # Section C: FAMILY INCOME
-            'monthlyIncome': float(app.monthly_income),
-            # Aligns with Applicant.is_income_eligible and update_eligibility (≤ ₱10,000)
-            'incomeEligible': app.is_income_eligible,
-            'incomeCeilingPeso': MODULE1_MONTHLY_INCOME_CEILING_PESO,
-            'yearsResiding': app.years_residing,
-            # Soft residency eligibility (≥ MODULE1_MIN_YEARS_RESIDING_TALISAY years).
-            # Not a hard block at intake — surfaced here for reviewer visibility.
-            'residencyEligible': _is_residency_eligible(app.years_residing),
-            'minYearsResidingTalisay': MODULE1_MIN_YEARS_RESIDING_TALISAY,
-            'occupation': app.occupation or '',
-            'employmentStatus': app.get_employment_status_display() if app.employment_status else '',
-            # Danger Zone details
-            'isInDangerZone': app.channel == 'danger_zone' and bool(app.danger_zone_type),
-            'dangerZoneType': app.danger_zone_type if hasattr(app, 'danger_zone_type') and app.danger_zone_type else '',
-            'dangerZoneLocation': app.danger_zone_location if hasattr(app, 'danger_zone_location') and app.danger_zone_location else (danger_zone_type or ''),
-            # Applicant Situation (A, B, C, D) and specific details
-            'displacementReason': (app.displacement_reason or '').strip(),
-            'ejectionType': (app.ejection_type or '').strip() if hasattr(app, 'ejection_type') else '',
-            'ejectionDate': app.ejection_date.isoformat() if hasattr(app, 'ejection_date') and app.ejection_date else '',
-            'projectName': (app.project_name or '').strip() if hasattr(app, 'project_name') else '',
-            'eligibilityStatus': eligibility_status,
-            'applicantStatus': app.status,
-            # Legacy JSON keys — "Module 2" here means ready to proceed to Intake Archives / not disqualified.
-            'readyForModule2': app.status != 'disqualified',
-            'module2HandedOff': False,
-            'queueType': queue_type,
-            'queuePosition': queue_position,
-            'cdrrmoStatus': cdrrmo_status,
-            'cdrrmo_status': cdrrmo_status_value,  # Raw status value for JS: pending, certified, not_certified
-            'cdrrmo_disposition_source': cdrrmo_disposition_source,
-            'office_intake_notes': office_intake_notes,
-            'result_recorded_by_name': result_recorded_by_name,  # Who verified
-            'certified_at': certified_at,  # When verified
-            'certification_notes': certification_notes,  # Field / Ronda on-site notes only
-            'ronda_evidence_photos': ronda_evidence_photos,  # Absolute URLs of field-captured evidence
-            'isCdrrmoFlagged': is_cdrrmo_flagged,
-            'cdrrmoDaysPending': cdrrmo_days_pending,
-            'signatoryRoutingDelayed': False,  # TODO: Link to Module 2
-            'disqualificationReason': app.disqualification_reason or None,
-            # Staff who handled this record
-            'handledBy': app.registered_by.get_full_name() if app.registered_by else 'Unknown',
-            'handledByPosition': app.registered_by.get_position_display_short() if app.registered_by else '',
-            'handledByInitials': (app.registered_by.first_name[:1] + app.registered_by.last_name[:1]).upper() if app.registered_by else '??',
-            # Document checklist count — vault is source of truth (upload or scan).
-            'docsCount': doc_scanned_count,
-            'docsTotal': doc_required_total,
-            'vaultDocumentTypes': sorted(walk_in_vault_types_by_applicant.get(app.id, set())),
-            # Individual document states for modal checkboxes
-            'docBrgyResidency': app.doc_brgy_residency,
-            'docBrgyIndigency': app.doc_brgy_indigency,
-            'docCedula': app.doc_cedula,
-            'docPoliceClearance': app.doc_police_clearance,
-            'docNoProperty': app.doc_no_property,
-            'doc2x2Picture': app.doc_2x2_picture,
-            'docSketchLocation': app.doc_sketch_location,
-            'docVoterCert': app.doc_voter_cert,
-            # SMS status
-            'registrationSmsSent': app.registration_sms_sent,
-            'eligibilitySmsSent': app.eligibility_sms_sent,
-            'hasPhone': bool(app.phone_number),
-        })
+        applicants.append(_build_intake_applicant_review_payload(
+            app,
+            requirements_group_a=requirements_group_a,
+            vault_types=walk_in_vault_types_by_applicant.get(app.id, set()),
+        ))
 
     # Read-only archive/receipt rows (proceed from modal creates Archive; no Module 2 handoff on Applicant).
     # Query Archive model for snapshot data
@@ -1468,7 +1469,16 @@ def applicants_list(request, position):
         ).select_related(
             'archived_by',
             'applicant',
+            'applicant__barangay',
+            'applicant__registered_by',
             'applicant__application__form_generated_by',
+        ).prefetch_related(
+            'applicant__household_members',
+            Prefetch(
+                'applicant__queue_entries',
+                queryset=QueueEntry.objects.filter(status='active'),
+                to_attr='active_queue',
+            ),
         ).order_by('archived_at')
     )
 
@@ -1590,66 +1600,22 @@ def applicants_list(request, position):
             **bl_gate,
         })
 
-    archive_form_modal = {}
+    archive_review_modal = {}
     for archive in archives:
         ref = archive.reference_number_snapshot or ''
         applicant = getattr(archive, 'applicant', None)
         if not ref or not applicant:
             continue
 
-        displacement_reason = (applicant.displacement_reason or '').strip()
-        displacement_map = {
-            'danger_zone': (
-                'Option A',
-                'Resident of Danger Zone or Hazard Area',
-                'Applicant resides in a flood-prone, landslide, storm-surge, riverbank, cliff-edge, or coastal hazard area requiring relocation for safety.',
-            ),
-            'ejected': (
-                'Option B',
-                'Ejected or Evicted from Prior Residence',
-                'Applicant has been evicted or displaced through private land eviction, court order, landowner recovery, or analogous proceedings.',
-            ),
-            'relocated': (
-                'Option C',
-                'Displaced by Government Project or Infrastructure',
-                'Applicant is required to relocate due to a road-widening, drainage, infrastructure, or other government-initiated project.',
-            ),
-            'not_abc': (
-                'Option D',
-                'None of A, B, or C (Other / not listed)',
-                'The situation does not fall under a hazard area, ejection, or a government project.',
-            ),
-        }
-        disp_label, disp_title, disp_desc = displacement_map.get(
-            displacement_reason,
-            ('N/A', 'Not recorded', 'Applicant situation has not been recorded.'),
+        local_archived_at = timezone.localtime(archive.archived_at) if archive.archived_at else None
+        archive_review_modal[ref] = _build_intake_applicant_review_payload(
+            applicant,
+            requirements_group_a=requirements_group_a,
+            vault_types=docs_by_applicant_id.get(applicant.id, set()),
+            date_registered_override=local_archived_at.strftime('%Y-%m-%d') if local_archived_at else None,
+            module2_handed_off=True,
+            is_archived=True,
         )
-
-        archive_form_modal[ref] = {
-            'fullName': archive.full_name_snapshot or '',
-            'referenceNumber': ref,
-            'dateRegistered': timezone.localtime(archive.archived_at).strftime('%Y-%m-%d') if archive.archived_at else '',
-            'lastName': archive.last_name_snapshot or '',
-            'firstName': archive.first_name_snapshot or '',
-            'middleName': archive.middle_name_snapshot or '',
-            'extensionName': archive.extension_name_snapshot or '',
-            'sex': applicant.sex or '',
-            'civilStatus': applicant.get_civil_status_display() if applicant.civil_status else '',
-            'age': applicant.age,
-            'dateOfBirthDisplay': archive.date_of_birth_snapshot.strftime('%m/%d/%Y') if archive.date_of_birth_snapshot else '',
-            'isRegisteredVoter': applicant.is_registered_voter_talisay,
-            'currentAddress': applicant.current_address or '',
-            'barangay': archive.barangay_name_snapshot or '',
-            'phoneNumber': applicant.phone_number or '',
-            'yearsResiding': applicant.years_residing,
-            'householdSize': applicant.household_size,
-            'occupation': applicant.occupation or '',
-            'employmentStatus': applicant.get_employment_status_display() if applicant.employment_status else '',
-            'monthlyIncome': str(applicant.monthly_income or ''),
-            'displacementOptionLabel': disp_label,
-            'displacementTitle': disp_title,
-            'displacementDescription': disp_desc,
-        }
     
     active_list_q = (request.GET.get('q') or '').strip()
     archive_list_q = (request.GET.get('archive_q') or '').strip()
@@ -1753,7 +1719,7 @@ def applicants_list(request, position):
         'archive_records': archive_records,
         'archive_records_total': len(archive_records),
         'archive_documents_modal': archive_documents_modal,
-        'archive_form_modal': json.dumps(archive_form_modal),
+        'archive_review_modal': json.dumps(archive_review_modal),
         'active_list_q': active_list_q,
         'archive_list_q': archive_list_q,
         'archive_list_barangay': archive_list_barangay,

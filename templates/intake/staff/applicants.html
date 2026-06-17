@@ -365,7 +365,7 @@
     .applicants-table th:nth-child(11),
     .applicants-table td:nth-child(11) { width: 9%; text-align: center; } /* Action */
 
-    /* Archive table — LIST OF APPLICANTS (11 columns incl. Time ago; no SMS column). */
+    /* Archive table — LIST OF APPLICANTS (7 columns). */
     .applicants-table--archive {
         width: 100% !important;
         min-width: 0 !important;
@@ -400,9 +400,9 @@
     .applicants-table--archive th:nth-child(5),
     .applicants-table--archive td:nth-child(5) { width: 15% !important; text-align: center; } /* Status */
     .applicants-table--archive th:nth-child(6),
-    .applicants-table--archive td:nth-child(6) { width: 13% !important; text-align: center; } /* Documents */
+    .applicants-table--archive td:nth-child(6) { width: 12% !important; text-align: center; } /* Documents */
     .applicants-table--archive th:nth-child(7),
-    .applicants-table--archive td:nth-child(7) { width: 10% !important; text-align: center; } /* VIEW Sheet */
+    .applicants-table--archive td:nth-child(7) { width: 11% !important; text-align: center; } /* Review */
 
     /* Keep date + compact IDs readable at higher browser zoom. */
     .applicants-table--archive td:nth-child(3) {
@@ -690,12 +690,10 @@
     }
 
     /* Row-primary action sizing — Active Applicants Review (.btn-review-walkin)
-       and LIST OF APPLICANTS View (.btn-archive-action) need to share the
-       same shape so the table action columns read consistently. The light
-       emerald ghost color of .btn-review is set globally in
-       tha-design-system.css; we layer sizing + responsiveness on top using
-       body-prefixed selectors so we match that file's specificity. */
+       and LIST OF APPLICANTS Review (.js-open-archive-review) share the same
+       column shape for consistent tap targets. */
     body .btn-review-walkin,
+    body .btn-review.js-open-archive-review,
     body .btn-archive-action {
         box-sizing: border-box;
         display: flex !important;
@@ -747,6 +745,7 @@
        Keeps the row tap-target intact while the label stays readable. */
     @media (max-width: 640px) {
         body .btn-review-walkin,
+        body .btn-review.js-open-archive-review,
         body .btn-archive-action {
             width: 100%;
             padding: 0.4rem 0.55rem;
@@ -3156,100 +3155,6 @@
     }
 
     /* ============================================================
-       Archive Form View Modal — mirror review modal polish
-       ============================================================ */
-    #archiveFormViewModal .modal-content.tha-review-modal {
-        border: 1px solid #cbd5e1;
-        border-radius: 1rem;
-        box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.28);
-        overflow: hidden;
-    }
-    #archiveFormViewModal .modal-content.tha-review-modal::before {
-        content: '';
-        position: sticky;
-        top: 0;
-        display: block;
-        height: 4px;
-        background: linear-gradient(90deg, #1e3a8a 0%, #2563eb 25%, #16a34a 50%, #d97706 75%, #7c3aed 100%);
-        z-index: 11;
-    }
-    #archiveFormViewModal .modal-header {
-        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-        border-bottom: 2px solid #e2e8f0;
-        padding: 1.1rem 1.5rem 1rem;
-    }
-    #archiveFormViewModal .tha-review-modal-kicker {
-        font-size: 0.6rem;
-        font-weight: 800;
-        text-transform: uppercase;
-        letter-spacing: 0.16em;
-        color: #1e3a8a;
-        margin: 0 0 0.4rem 0;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.4rem;
-    }
-    #archiveFormViewModal .tha-review-modal-kicker::before {
-        content: '';
-        width: 0.5rem;
-        height: 0.5rem;
-        background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
-        border-radius: 50%;
-        box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.12);
-    }
-    #archiveFormViewModal .modal-title {
-        font-size: 1.15rem;
-        font-weight: 700;
-        color: #0f172a;
-        letter-spacing: -0.02em;
-    }
-    #archiveFormViewModal .modal-subtitle {
-        font-size: 0.78rem;
-        color: #475569;
-        margin-top: 0.3rem;
-    }
-    #archiveFormViewModal .modal-body {
-        padding: 1.25rem 1.5rem;
-        background: #fafbfc;
-    }
-    #archiveFormViewModal .archive-form-section {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 0.75rem;
-        padding: 1.1rem 1.2rem !important;
-        margin-bottom: 0.85rem !important;
-        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-    }
-    #archiveFormViewModal .archive-form-section-title {
-        font-size: 0.78rem !important;
-        font-weight: 800 !important;
-        text-transform: uppercase !important;
-        letter-spacing: 0.12em !important;
-        margin: 0 0 1rem 0 !important;
-        color: #334155 !important;
-    }
-    #archiveFormViewModal .form-input[readonly] {
-        background: #ffffff !important;
-        border: 1px solid #cbd5e1 !important;
-        border-radius: 0.5rem !important;
-        color: #0f172a !important;
-        font-weight: 600 !important;
-    }
-    #archiveFormViewModal .archive-situation-card {
-        background: linear-gradient(135deg, #f0f9ff 0%, #f1f5f9 100%);
-        border: 2px solid #cbd5e1;
-        border-radius: 0.75rem;
-        padding: 1.5rem;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        margin-bottom: 1rem;
-    }
-    #archiveFormViewModal .modal-footer {
-        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-        border-top: 1px solid #e2e8f0;
-        padding: 0.85rem 1.5rem;
-    }
-
-    /* ============================================================
        Handoff Summary Modal — Applicant Journey timeline
        ============================================================ */
     #archiveSummaryModal .modal-content.archive-summary-modal {
@@ -4085,7 +3990,7 @@
 
     /* 5. High-Fidelity Action Buttons with Scaling and Gradients */
     .btn-review.js-open-review,
-    .btn-archive-action,
+    .btn-review.js-open-archive-review,
     .btn-archive-docs {
         display: inline-flex !important;
         align-items: center !important;
@@ -4103,13 +4008,14 @@
         white-space: nowrap !important;
     }
     .btn-review.js-open-review .btn-icon,
-    .btn-archive-action .btn-icon {
+    .btn-review.js-open-archive-review .btn-icon {
         width: 0.75rem !important;
         height: 0.75rem !important;
         flex-shrink: 0;
     }
 
-    .btn-review.js-open-review {
+    .btn-review.js-open-review,
+    .btn-review.js-open-archive-review {
         background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
         color: #ffffff !important;
         border-color: #1d4ed8 !important;
@@ -4117,12 +4023,15 @@
         font-size: 0.65rem !important;
         width: auto !important;
     }
-    .btn-review.js-open-review:hover:not(:disabled) {
+    .btn-review.js-open-review:hover:not(:disabled),
+    .btn-review.js-open-archive-review:hover:not(:disabled) {
         background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%) !important;
         transform: scale(1.04) translateY(-1px) !important;
         box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3) !important;
+        color: #ffffff !important;
     }
-    .btn-review.js-open-review:active:not(:disabled) {
+    .btn-review.js-open-review:active:not(:disabled),
+    .btn-review.js-open-archive-review:active:not(:disabled) {
         transform: scale(0.97) translateY(0) !important;
     }
 
@@ -4227,9 +4136,9 @@
     .applicants-table--archive th:nth-child(5),
     .applicants-table--archive td:nth-child(5) { width: 15% !important; text-align: center !important; } /* Status */
     .applicants-table--archive th:nth-child(6),
-    .applicants-table--archive td:nth-child(6) { width: 13% !important; text-align: center !important; } /* Documents */
+    .applicants-table--archive td:nth-child(6) { width: 12% !important; text-align: center !important; } /* Documents */
     .applicants-table--archive th:nth-child(7),
-    .applicants-table--archive td:nth-child(7) { width: 10% !important; text-align: center !important; } /* VIEW Sheet */
+    .applicants-table--archive td:nth-child(7) { width: 11% !important; text-align: center !important; } /* Review */
 
     /* Zoom-stable: scroll instead of crushing columns at 140–175% */
     .applicants-container .formal-table-scroll,
@@ -4250,8 +4159,7 @@
         line-height: 1.15 !important;
         text-align: center;
     }
-    .applicants-table--archive td:nth-child(6) .btn-archive-docs,
-    .applicants-table--archive td:nth-child(7) .btn-archive-action {
+    .applicants-table--archive td:nth-child(6) .btn-archive-docs {
         display: inline-flex !important;
         width: 100% !important;
         max-width: 100% !important;
@@ -4261,15 +4169,16 @@
         font-size: 0.58rem !important;
         padding: 0.35rem 0.4rem !important;
         min-height: 1.85rem;
-        transform: none !important;
         margin: 0 auto;
         align-items: center;
         justify-content: center;
         overflow: hidden;
         text-overflow: ellipsis;
     }
-    .applicants-table--archive td:nth-child(6) .btn-archive-docs:hover,
-    .applicants-table--archive td:nth-child(7) .btn-archive-action:hover {
+    .applicants-table--archive td:nth-child(6) .btn-archive-docs {
+        transform: none !important;
+    }
+    .applicants-table--archive td:nth-child(6) .btn-archive-docs:hover {
         transform: none !important;
     }
 </style>
@@ -5087,7 +4996,7 @@
                 <th>Staff Handled</th>
                 <th>Status</th>
                 <th>Documents</th>
-                <th>VIEW Sheet</th>
+                <th>Action</th>
             </tr>
         </thead>
         <tbody id="archiveTableBody">
@@ -5172,28 +5081,26 @@
                         Requirements {{ row.scannedCount }}/{{ row.requirementsTotal }}
                     </button>
                 </td>
-                <td style="vertical-align: middle; text-align: center;">
-                    {% if row.module3ApplicationNumber %}
-                    <span class="pastel-status-pill status--complete" style="padding: 0.35rem 0.6rem !important; border-radius: 4px !important;">
-                        Generated
-                    </span>
-                    <div style="font-size:0.56rem;color:#1e40af;margin-top:0.18rem;text-align:center;font-weight:600;font-family:monospace;">
-                        #{{ row.module3ApplicationNumber }}
+                <td class="applicants-archive-review-cell" style="vertical-align: middle; text-align: center;">
+                    <div style="display: flex; justify-content: center; width: 100%;">
+                        {% if row.applicantId %}
+                        <button
+                            type="button"
+                            class="btn-review js-open-archive-review"
+                            data-reference="{{ row.referenceNumber }}"
+                            title="Review applicant record"
+                        >
+                            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="9" cy="7" r="4"></circle>
+                                <polyline points="16 11 18 13 22 9"></polyline>
+                            </svg>
+                            Review
+                        </button>
+                        {% else %}
+                        <span style="color:#94a3b8;font-size:0.65rem;">—</span>
+                        {% endif %}
                     </div>
-                    {% else %}
-                    <button
-                        type="button"
-                        class="btn-archive-action"
-                        data-reference="{{ row.referenceNumber }}"
-                        onclick="openArchiveFormViewModal(this)"
-                    >
-                        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                            <circle cx="12" cy="12" r="3"/>
-                        </svg>
-                        View
-                    </button>
-                    {% endif %}
                 </td>
             </tr>
             {% empty %}
@@ -7609,81 +7516,6 @@
     </div>
 </div>
 
-<!-- Archive Form View Modal (read-only, styled like applicant review sections) -->
-<div class="modal-overlay" id="archiveFormViewModal" onclick="closeArchiveFormViewModal()">
-    <div class="modal-content tha-review-modal" style="max-width: 48rem; max-height: 90vh; overflow-y: auto;" onclick="event.stopPropagation()">
-        <div class="modal-header" style="position: sticky; top: 0; background: white; z-index: 10; justify-content: center;">
-            <div style="text-align: center;">
-                <p class="tha-review-modal-kicker">Talisay City Housing Authority Applicant record</p>
-                <h2 class="modal-title" id="archiveFormViewName">—</h2>
-                <p class="modal-subtitle" id="archiveFormViewReference">—</p>
-            </div>
-            <button class="btn-close" onclick="closeArchiveFormViewModal()" style="position: absolute; right: 1.5rem;">&times;</button>
-        </div>
-        <div class="modal-body">
-            <div class="archive-form-section">
-                <h4 class="archive-form-section-title">A. Application identity</h4>
-                <div class="form-grid identity-grid" style="margin-bottom: 1rem;">
-                    <div class="form-group"><label class="form-label">Last name</label><input type="text" class="form-input" id="archiveViewLastName" readonly></div>
-                    <div class="form-group"><label class="form-label">First name</label><input type="text" class="form-input" id="archiveViewFirstName" readonly></div>
-                    <div class="form-group"><label class="form-label">Middle name</label><input type="text" class="form-input" id="archiveViewMiddleName" readonly></div>
-                    <div class="form-group"><label class="form-label">Extension name</label><input type="text" class="form-input" id="archiveViewExtensionName" readonly></div>
-                    <div class="form-group"><label class="form-label">Sex</label><input type="text" class="form-input" id="archiveViewSex" readonly></div>
-                    <div class="form-group"><label class="form-label">Civil status</label><input type="text" class="form-input" id="archiveViewCivilStatus" readonly></div>
-                    <div class="form-group"><label class="form-label">Age</label><input type="text" class="form-input" id="archiveViewAge" readonly></div>
-                    <div class="form-group"><label class="form-label">Date of birth</label><input type="text" class="form-input" id="archiveViewDob" readonly></div>
-                    <div class="form-group"><label class="form-label">Registered voter in Talisay City</label><input type="text" class="form-input" id="archiveViewVoter" readonly></div>
-                    <div class="form-group" style="grid-column: span 2;"><label class="form-label">Present address</label><input type="text" class="form-input" id="archiveViewAddress" readonly></div>
-                    <div class="form-group"><label class="form-label">Barangay of residence</label><input type="text" class="form-input" id="archiveViewBarangay" readonly></div>
-                    <div class="form-group"><label class="form-label">Mobile / contact number</label><input type="text" class="form-input" id="archiveViewPhone" readonly></div>
-                    <div class="form-group"><label class="form-label">Years of residence in Talisay City</label><input type="text" class="form-input" id="archiveViewYears" readonly></div>
-                </div>
-            </div>
-
-            <div class="archive-form-section">
-                <h4 class="archive-form-section-title">B. Household members</h4>
-                <div id="archiveViewHouseholdNote" style="margin-bottom: 0.75rem; font-size: 0.8125rem; color: #475569;">No household members declared (applicant counts as one).</div>
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label class="form-label">Declared household size</label>
-                        <input type="text" class="form-input" id="archiveViewHouseholdSize" readonly>
-                    </div>
-                </div>
-            </div>
-
-            <div class="archive-form-section">
-                <h4 class="archive-form-section-title">C. Household income</h4>
-                <div class="form-grid">
-                    <div class="form-group"><label class="form-label">Principal occupation</label><input type="text" class="form-input" id="archiveViewOccupation" readonly></div>
-                    <div class="form-group"><label class="form-label">Employment status</label><input type="text" class="form-input" id="archiveViewEmployment" readonly></div>
-                    <div class="form-group"><label class="form-label">Declared monthly household income (PHP)</label><input type="text" class="form-input" id="archiveViewIncome" readonly></div>
-                </div>
-            </div>
-
-            <div class="archive-form-section">
-                <h4 class="archive-form-section-title">D. Applicant Situation</h4>
-                <div class="archive-situation-card">
-                    <p id="archiveViewSituationLine" style="font-size: 1rem; font-weight: 700; color: #1e293b; margin: 0 0 0.5rem 0;">ℹ️ —</p>
-                    <p id="archiveViewSituationDescription" style="font-size: 0.875rem; color: #475569; margin: 0; line-height: 1.6;">—</p>
-                </div>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button
-                type="button"
-                class="btn-modal"
-                id="archiveFormDeleteBlacklistedBtn"
-                style="background-color: #dc2626; border-color: #dc2626; color: white; display: none;"
-                onclick="deleteBlacklistedApplicantFromFormModal()"
-                title="Delete blacklisted applicant from active list"
-            >
-                Delete Blacklisted Applicant
-            </button>
-            <button type="button" class="btn-modal secondary" onclick="closeArchiveFormViewModal()">Close</button>
-        </div>
-    </div>
-</div>
-
 <!-- Premium Hover Card Popover Template -->
 <div id="applicantHoverCard" class="applicant-hover-card">
     <div class="hover-card-arrow"></div>
@@ -7721,7 +7553,7 @@
 </div>
 
 <script id="applicantsDataJson" type="application/json">{{ applicants_json|safe }}</script>
-<script id="archiveFormDataJson" type="application/json">{{ archive_form_modal|safe }}</script>
+<script id="archiveReviewDataJson" type="application/json">{{ archive_review_modal|safe }}</script>
 <input type="hidden" id="canModifyFlag" value="{{ can_modify|yesno:'true,false' }}">
 <script src="{% static 'Dynamic Web TWAIN SDK 19.3.3/Resources/dynamsoft.webtwain.initiate.js' %}"></script>
 <script src="{% static 'Dynamic Web TWAIN SDK 19.3.3/Resources/dynamsoft.webtwain.config.js' %}"></script>
@@ -7730,141 +7562,8 @@
 <script>
     // Store applicants data in JavaScript
     const applicantsData = JSON.parse(document.getElementById('applicantsDataJson')?.textContent || '[]');
-    const archiveFormData = JSON.parse(document.getElementById('archiveFormDataJson')?.textContent || '{}');
-    let currentArchiveFormPayload = null;
-    function openArchiveFormViewModal(buttonEl) {
-        const ref = buttonEl?.dataset?.reference || '';
-        const payload = archiveFormData[ref];
-        if (!payload) {
-            showNoticeModal({
-                title: 'Record Unavailable',
-                message: 'Unable to load this applicant form snapshot.',
-                type: 'warning',
-            });
-            return;
-        }
-
-        currentArchiveFormPayload = payload;
-
-        const setValue = (id, value) => {
-            const el = document.getElementById(id);
-            if (el) el.value = value == null || value === '' ? 'N/A' : String(value);
-        };
-        const setText = (id, value) => {
-            const el = document.getElementById(id);
-            if (el) el.textContent = value == null || value === '' ? 'N/A' : String(value);
-        };
-
-        const voter = payload.isRegisteredVoter === true ? 'Yes' : (payload.isRegisteredVoter === false ? 'No' : 'N/A');
-        const incomeRaw = Number(String(payload.monthlyIncome || '').replace(/,/g, ''));
-        const incomeText = Number.isFinite(incomeRaw) && !Number.isNaN(incomeRaw)
-            ? incomeRaw.toLocaleString('en-PH')
-            : 'N/A';
-        const householdSize = Number(payload.householdSize || 0);
-
-        setText('archiveFormViewName', payload.fullName || 'N/A');
-        setText('archiveFormViewReference', `${payload.referenceNumber || 'N/A'} · Reg. ${payload.dateRegistered || 'N/A'}`);
-        setValue('archiveViewLastName', payload.lastName);
-        setValue('archiveViewFirstName', payload.firstName);
-        setValue('archiveViewMiddleName', payload.middleName);
-        setValue('archiveViewExtensionName', payload.extensionName);
-        setValue('archiveViewSex', payload.sex === 'M' ? 'Male' : payload.sex === 'F' ? 'Female' : (payload.sex || ''));
-        setValue('archiveViewCivilStatus', payload.civilStatus);
-        setValue('archiveViewAge', payload.age);
-        setValue('archiveViewDob', payload.dateOfBirthDisplay);
-        setValue('archiveViewVoter', voter);
-        setValue('archiveViewAddress', payload.currentAddress);
-        setValue('archiveViewBarangay', payload.barangay);
-        setValue('archiveViewPhone', payload.phoneNumber);
-        setValue('archiveViewYears', payload.yearsResiding);
-        setValue('archiveViewHouseholdSize', payload.householdSize);
-        setValue('archiveViewOccupation', payload.occupation);
-        setValue('archiveViewEmployment', payload.employmentStatus);
-        setValue('archiveViewIncome', incomeText);
-        setText('archiveViewSituationLine', `ℹ️ ${payload.displacementOptionLabel || 'N/A'}`);
-        setText('archiveViewSituationDescription', payload.displacementDescription || 'Not recorded');
-        setText(
-            'archiveViewHouseholdNote',
-            householdSize <= 1
-                ? 'No household members declared (applicant counts as one).'
-                : 'Household members were declared during registration.',
-        );
-
-        // Show/hide delete button based on blacklist status
-        const deleteBtn = document.getElementById('archiveFormDeleteBlacklistedBtn');
-        if (deleteBtn) {
-            if (payload.blacklistBlocked) {
-                deleteBtn.style.display = '';
-            } else {
-                deleteBtn.style.display = 'none';
-            }
-        }
-
-        const modal = document.getElementById('archiveFormViewModal');
-        if (modal) modal.classList.add('active');
-    }
-
-    function closeArchiveFormViewModal() {
-        const modal = document.getElementById('archiveFormViewModal');
-        if (modal) modal.classList.remove('active');
-    }
-
-    function deleteBlacklistedApplicantFromFormModal() {
-        if (!currentArchiveFormPayload) {
-            showFlowAlert('Error: Applicant data not found.');
-            return;
-        }
-
-        const ref = currentArchiveFormPayload.referenceNumber || '';
-        const fullName = currentArchiveFormPayload.fullName || 'This applicant';
-        const applicantId = currentArchiveFormPayload.applicantId || '';
-
-        if (!applicantId) {
-            showFlowAlert('Error: Applicant ID not found.');
-            return;
-        }
-
-        if (!confirm(`Delete blacklisted applicant from the active list?\n\nName: ${fullName}\nReference: ${ref}\n\nThis action cannot be undone.`)) {
-            return;
-        }
-
-        const deleteBtn = document.getElementById('archiveFormDeleteBlacklistedBtn');
-        if (deleteBtn) {
-            deleteBtn.disabled = true;
-            deleteBtn.textContent = 'Deleting...';
-        }
-
-        const formData = new FormData();
-        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
-        formData.append('applicant_id', applicantId);
-
-        fetch('{% url "intake:delete_applicant" request.user.position %}', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showFlowAlert('Blacklisted applicant deleted successfully.', 'Success', null, 'success');
-                closeArchiveFormViewModal();
-                setTimeout(() => location.reload(), 600);
-            } else {
-                if (deleteBtn) {
-                    deleteBtn.disabled = false;
-                    deleteBtn.textContent = 'Delete Blacklisted Applicant';
-                }
-                showFlowAlert('Error: ' + (data.error || 'Unable to delete applicant'));
-            }
-        })
-        .catch(error => {
-            if (deleteBtn) {
-                deleteBtn.disabled = false;
-                deleteBtn.textContent = 'Delete Blacklisted Applicant';
-            }
-            showFlowAlert('Error: ' + error.message);
-        });
-    }
-    window.deleteBlacklistedApplicantFromFormModal = deleteBlacklistedApplicantFromFormModal;
+    const archiveReviewData = JSON.parse(document.getElementById('archiveReviewDataJson')?.textContent || '{}');
+    let reviewModalArchiveMode = false;
 
     const FIRST_REVIEW_INDEX = applicantsData.length > 0 ? 0 : -1;
     const canModify = (document.getElementById('canModifyFlag')?.value || 'false') === 'true';
@@ -9729,6 +9428,11 @@
                 if (!Number.isNaN(idx)) openReviewModal(idx);
             });
         });
+        document.querySelectorAll('.js-open-archive-review').forEach(btn => {
+            btn.addEventListener('click', function() {
+                openArchiveReviewModal(this);
+            });
+        });
         initializeTablePagination();
         const params = new URLSearchParams(window.location.search);
         if (params.get('q') && document.getElementById('searchInput')) {
@@ -9943,39 +9647,32 @@
         return Number(index) === FIRST_REVIEW_INDEX;
     }
 
-    function openReviewModal(index) {
-        try {
-            if (!canReviewApplicantIndex(index)) {
-                showNoticeModal({
-                    title: 'FIFO Review Order',
-                    message: 'Please review and proceed applicant #1 first. The next applicant unlocks automatically after the first is completed.',
-                    type: 'warning',
-                    primaryText: 'Understood',
-                });
-                return;
-            }
-            currentApplicant = applicantsData[index];
-            if (!currentApplicant) {
-                console.error('No applicant data at index:', index);
+    function populateReviewModalFromApplicant(applicant) {
+            if (!applicant) {
+                console.error('No applicant data for review modal');
                 showFlowAlert('Error: No applicant data found.');
                 return;
             }
-            
+            currentApplicant = applicant;
+
             const modal = document.getElementById('reviewModal');
             if (!modal) {
                 console.error('Review modal element not found');
                 showFlowAlert('Error: Modal not found in page.');
                 return;
             }
-            
+
             // Set header info (with null checks)
             const reviewNameEl = document.getElementById('reviewName');
             const reviewRefEl = document.getElementById('reviewReference');
             const reviewApplicantIdEl = document.getElementById('reviewApplicantId');
             const reviewChannelEl = document.getElementById('reviewChannel');
-            
+
             if (reviewNameEl) reviewNameEl.textContent = currentApplicant.fullName;
-            if (reviewRefEl) reviewRefEl.textContent = `${currentApplicant.referenceNumber} · Reg. ${currentApplicant.dateRegistered}`;
+            if (reviewRefEl) {
+                const regLabel = currentApplicant.isArchived ? 'Proceeded' : 'Reg.';
+                reviewRefEl.textContent = `${currentApplicant.referenceNumber} · ${regLabel} ${currentApplicant.dateRegistered}`;
+            }
             if (reviewApplicantIdEl) reviewApplicantIdEl.value = currentApplicant.applicantId || currentApplicant.id;
             if (reviewChannelEl) reviewChannelEl.value = currentApplicant.channel;
 
@@ -10328,6 +10025,21 @@
         updateEditModeUI();
         
         modal.classList.add('active');
+    }
+
+    function openReviewModal(index) {
+        try {
+            if (!canReviewApplicantIndex(index)) {
+                showNoticeModal({
+                    title: 'FIFO Review Order',
+                    message: 'Please review and proceed applicant #1 first. The next applicant unlocks automatically after the first is completed.',
+                    type: 'warning',
+                    primaryText: 'Understood',
+                });
+                return;
+            }
+            reviewModalArchiveMode = false;
+            populateReviewModalFromApplicant(applicantsData[index]);
         } catch (error) {
             console.error('Error opening review modal:', error);
             console.error('Stack trace:', error.stack);
@@ -10335,6 +10047,27 @@
             showFlowAlert('Error opening modal: ' + error.message + '\n\nCheck browser console (F12) for details.');
         }
     }
+
+    function openArchiveReviewModal(buttonEl) {
+        try {
+            const ref = String(buttonEl?.dataset?.reference || '').trim();
+            const applicant = ref ? archiveReviewData[ref] : null;
+            if (!applicant) {
+                showNoticeModal({
+                    title: 'Record Unavailable',
+                    message: 'Unable to load this applicant for review.',
+                    type: 'warning',
+                });
+                return;
+            }
+            reviewModalArchiveMode = true;
+            populateReviewModalFromApplicant(applicant);
+        } catch (error) {
+            console.error('Error opening archive review modal:', error);
+            showFlowAlert('Error opening modal: ' + error.message);
+        }
+    }
+    window.openArchiveReviewModal = openArchiveReviewModal;
     
     function populateISFList(applicant) {
         const container = document.getElementById('isfListContainer');
@@ -10746,7 +10479,8 @@
         // Proceed from modal → Intake Archives only (no Applicant.module2_handoff_*)
         if (btnProceedModule2) {
             const appStatus = String(applicant?.applicantStatus || '').toLowerCase();
-            btnProceedModule2.style.display = appStatus === 'disqualified' ? 'none' : 'inline-flex';
+            const hideProceed = appStatus === 'disqualified' || !!applicant?.isArchived;
+            btnProceedModule2.style.display = hideProceed ? 'none' : 'inline-flex';
         }
         
         // Show generic Mark Eligible / Disqualify only when this is not a pending field report case.
@@ -11186,6 +10920,7 @@
         if (dzRoot) clearLayer2ViolationClasses(dzRoot);
         currentApplicant = null;
         isEditMode = false;
+        reviewModalArchiveMode = false;
     }
     
     function toggleEditMode() {
