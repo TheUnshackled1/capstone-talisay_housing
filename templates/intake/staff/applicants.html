@@ -7080,13 +7080,6 @@
                     background: #f8fafc !important;
                 }
 
-                /* Over-age override note */
-                .tha-reg-modal #overAgeOverrideWrap {
-                    border-radius: 0.5rem !important;
-                    border: 1px solid #fde68a !important;
-                    background: #fffbeb !important;
-                }
-
                 /* Date inputs — minimal emerald accent, keep native icon */
                 .tha-reg-modal #addApplicantForm input[type="date"] {
                     accent-color: #047857;
@@ -7401,19 +7394,12 @@
                             <span class="help-text">Philippine mobile format: 11 digits beginning with 09. Whole numbers only.</span>
                         </div>
                         <div class="form-group tha-fp-anchor">
-                            <label class="form-label">Date of birth <span style="color: #dc2626;">*</span></label>
-                            <input type="text" class="form-input" name="date_of_birth" id="dateOfBirth" placeholder="dd/mm/yyyy" onchange="calculateAge()" autocomplete="bday" required>
+                            <label class="form-label">Date of birth</label>
+                            <input type="text" class="form-input" name="date_of_birth" id="dateOfBirth" placeholder="dd/mm/yyyy" onchange="calculateAge()" autocomplete="bday">
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Age <span style="color: #dc2626;">*</span> <span style="font-weight: 500; color: #64748b;">(computed)</span></label>
+                            <label class="form-label">Age <span style="font-weight: 500; color: #64748b;">(computed, optional)</span></label>
                             <input type="number" class="form-input" placeholder="From date of birth" name="age" id="age" min="0" readonly style="background-color: #f1f5f9; cursor: not-allowed; font-weight: 600;">
-                            <span class="help-text" id="ageEligibilityHint" style="display:none;"></span>
-                            <div id="overAgeOverrideWrap" style="display:none; margin-top:0.5rem; padding:0.5rem; border:1px solid #fcd34d; background:#fffbeb; border-radius:0.375rem;">
-                                <label style="display:flex; align-items:flex-start; gap:0.45rem; cursor:pointer; font-size:0.75rem; color:#92400e; line-height:1.35;">
-                                    <input type="checkbox" id="overAgeOverride" name="consider_overage" value="true" style="margin-top:0.1rem;">
-                                    <span>Applicant is above 55 years old. Staff consideration is required to proceed with this ISF registration.</span>
-                                </label>
-                            </div>
                         </div>
                     </div>
 
@@ -11630,18 +11616,6 @@
         }
         if (modal) modal.classList.remove('active');
         if (form) form.reset();
-        const ageHint = document.getElementById('ageEligibilityHint');
-        const overAgeWrap = document.getElementById('overAgeOverrideWrap');
-        const overAgeOverride = document.getElementById('overAgeOverride');
-        if (ageHint) {
-            ageHint.style.display = 'none';
-            ageHint.textContent = '';
-        }
-        if (overAgeWrap) overAgeWrap.style.display = 'none';
-        if (overAgeOverride) {
-            overAgeOverride.checked = false;
-            overAgeOverride.required = false;
-        }
         hideDuplicatePreview();
         syncRegistrationDisplacementPanels();
     }
@@ -12036,87 +12010,36 @@
         }
     }
 
-    // Auto-calculate age from date of birth
+    // Auto-calculate age from date of birth (optional; no eligibility gates).
     function calculateAge() {
         const dobInput = document.getElementById('dateOfBirth');
         const ageInput = document.getElementById('age');
-        const ageHint = document.getElementById('ageEligibilityHint');
-        const overAgeWrap = document.getElementById('overAgeOverrideWrap');
-        const overAgeOverride = document.getElementById('overAgeOverride');
+        if (!dobInput || !ageInput) return null;
 
         if (!dobInput.value) {
             ageInput.value = '';
-            if (ageHint) {
-                ageHint.style.display = 'none';
-                ageHint.textContent = '';
-            }
-            if (overAgeWrap) overAgeWrap.style.display = 'none';
-            if (overAgeOverride) {
-                overAgeOverride.checked = false;
-                overAgeOverride.required = false;
-            }
             return null;
         }
 
         const dob = new Date(dobInput.value);
+        if (Number.isNaN(dob.getTime())) {
+            ageInput.value = '';
+            return null;
+        }
+
         const today = new Date();
         let age = today.getFullYear() - dob.getFullYear();
         const monthDiff = today.getMonth() - dob.getMonth();
-
-        // Adjust age if birthday hasn't occurred this year
         if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
             age--;
         }
 
-        // Validate age (must be at least 18)
         if (age < 0) {
             ageInput.value = '';
-            console.warn('Invalid date of birth');
-            if (ageHint) {
-                ageHint.style.display = 'block';
-                ageHint.style.color = '#b91c1c';
-                ageHint.textContent = 'Invalid date of birth. Please review the selected date.';
-            }
-            if (overAgeWrap) overAgeWrap.style.display = 'none';
-            if (overAgeOverride) {
-                overAgeOverride.checked = false;
-                overAgeOverride.required = false;
-            }
             return null;
-        } else {
-            ageInput.value = age;
-            if (ageHint) {
-                ageHint.style.display = 'block';
-            }
-            if (age < 18) {
-                if (ageHint) {
-                    ageHint.style.color = '#b91c1c';
-                    ageHint.textContent = 'Registration is restricted to applicants aged 18 and above.';
-                }
-                if (overAgeWrap) overAgeWrap.style.display = 'none';
-                if (overAgeOverride) {
-                    overAgeOverride.checked = false;
-                    overAgeOverride.required = false;
-                }
-            } else if (age <= 55) {
-                if (ageHint) {
-                    ageHint.style.color = '#166534';
-                    ageHint.textContent = 'Eligible age range: 18 to 55 years old.';
-                }
-                if (overAgeWrap) overAgeWrap.style.display = 'none';
-                if (overAgeOverride) {
-                    overAgeOverride.checked = false;
-                    overAgeOverride.required = false;
-                }
-            } else {
-                if (ageHint) {
-                    ageHint.style.color = '#92400e';
-                    ageHint.textContent = 'Age is above 55. Staff consideration is required to proceed.';
-                }
-                if (overAgeWrap) overAgeWrap.style.display = 'block';
-                if (overAgeOverride) overAgeOverride.required = true;
-            }
         }
+
+        ageInput.value = age;
         return age;
     }
 
@@ -12365,35 +12288,7 @@
         const civilStatusEl = document.getElementById('civilStatus');
         if (civilStatusEl) civilStatusEl.setCustomValidity('');
 
-        // Validate applicant age policy: 18-55 by default; above 55 requires staff override.
-        const ageResult = calculateAge();
-        const computedAge = Number(ageResult);
-        if (ageResult == null || !Number.isFinite(computedAge)) {
-            showNoticeModal({
-                title: 'Date of Birth Required',
-                message: 'Date of birth is required to compute age.',
-                type: 'warning',
-            });
-            return;
-        }
-        if (computedAge < 18) {
-            showNoticeModal({
-                title: 'Age Requirement',
-                message: 'Applicant must be at least 18 years old.',
-                type: 'warning',
-            });
-            return;
-        }
-        const overAgeOverride = document.getElementById('overAgeOverride');
-        if (computedAge > 55 && (!overAgeOverride || !overAgeOverride.checked)) {
-            showNoticeModal({
-                title: 'Staff Confirmation Needed',
-                message: 'Applicant is above 55. Please confirm staff consideration to proceed.',
-                type: 'warning',
-            });
-            return;
-        }
-        formData.set('consider_overage', (computedAge > 55 && overAgeOverride && overAgeOverride.checked) ? 'true' : 'false');
+        calculateAge();
 
         // Validate household members - if any field is filled, all must be filled
         for (let i = 1; i <= householdMemberCount; i++) {

@@ -243,9 +243,12 @@ class WalkInApplicantForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Add Philippine phone validator to phone_number field
         if 'phone_number' in self.fields:
             self.fields['phone_number'].validators.append(validate_philippine_phone)
+        if 'age' in self.fields:
+            self.fields['age'].required = False
+        if 'date_of_birth' in self.fields:
+            self.fields['date_of_birth'].required = False
 
     class Meta:
         model = Applicant

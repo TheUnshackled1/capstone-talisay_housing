@@ -1770,52 +1770,36 @@ def walkin_register(request, position):
         messages.error(request, 'Please fill all required fields.')
         return redirect(applicants_list_url)
 
-    # Age policy (server-side): 18-55 standard, >55 requires explicit staff consideration.
     date_of_birth = form.cleaned_data.get('date_of_birth')
-    if not date_of_birth:
-        msg = 'Date of birth is required.'
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return JsonResponse({'success': False, 'error': msg})
-        messages.error(request, msg)
-        return redirect(applicants_list_url)
-    today = timezone.localdate()
-    computed_age = today.year - date_of_birth.year - (
-        (today.month, today.day) < (date_of_birth.month, date_of_birth.day)
-    )
-    if computed_age < 18:
-        msg = 'Applicant must be at least 18 years old.'
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return JsonResponse({'success': False, 'error': msg})
-        messages.error(request, msg)
-        return redirect(applicants_list_url)
-    staff_consideration_overage = str(request.POST.get('consider_overage', '')).lower() in {'1', 'true', 'yes', 'on'}
-    if computed_age > 55 and not staff_consideration_overage:
-        msg = 'Applicant is above 55 years old. Staff consideration must be confirmed to proceed.'
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return JsonResponse({'success': False, 'error': msg})
-        messages.error(request, msg)
-        return redirect(applicants_list_url)
+    computed_age = None
+    if date_of_birth:
+        today = timezone.localdate()
+        computed_age = today.year - date_of_birth.year - (
+            (today.month, today.day) < (date_of_birth.month, date_of_birth.day)
+        )
 
     # Get barangay instance
     barangay_name = form.cleaned_data['barangay']
     barangay, _ = Barangay.objects.get_or_create(name=barangay_name)
 
-    # Duplicate guard: same DOB + barangay + last name + first name.
+    # Duplicate guard: same DOB + barangay + last name + first name (only when DOB provided).
     duplicate_last_name = (form.cleaned_data.get('last_name') or '').strip()
     duplicate_first_name = (form.cleaned_data.get('first_name') or '').strip()
-    duplicate_applicant = (
-        Applicant.objects
-        .select_related('registered_by', 'barangay')
-        .prefetch_related('requirement_submissions')
-        .filter(
-            date_of_birth=date_of_birth,
-            barangay=barangay,
-            last_name__iexact=duplicate_last_name,
-            first_name__iexact=duplicate_first_name,
+    duplicate_applicant = None
+    if date_of_birth:
+        duplicate_applicant = (
+            Applicant.objects
+            .select_related('registered_by', 'barangay')
+            .prefetch_related('requirement_submissions')
+            .filter(
+                date_of_birth=date_of_birth,
+                barangay=barangay,
+                last_name__iexact=duplicate_last_name,
+                first_name__iexact=duplicate_first_name,
+            )
+            .order_by('-updated_at', '-created_at')
+            .first()
         )
-        .order_by('-updated_at', '-created_at')
-        .first()
-    )
     if duplicate_applicant:
         duplicate_msg = _build_duplicate_record_message(duplicate_applicant)
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
