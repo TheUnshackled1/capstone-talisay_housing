@@ -3307,6 +3307,68 @@ document.addEventListener('keydown', e => {
     closeUploadModal();
 });
 
+/** Cross-tab sync: intake checklist vault changes → reload this page without manual refresh. */
+const IHSMS_VAULT_SYNC_KEY = 'ihsms_vault_doc_sync';
+const IHSMS_VAULT_SYNC_BC = 'ihsms_vault_doc_sync_bc';
+let ihsmsVaultSyncTimer = null;
+let ihsmsVaultSyncLastTs = '';
+
+function getVaultSyncTs(raw) {
+    try {
+        const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+        return parsed && parsed.ts ? String(parsed.ts) : String(raw || '');
+    } catch (_err) {
+        return String(raw || '');
+    }
+}
+
+function scheduleVaultManagementReload() {
+    if (ihsmsVaultSyncTimer) clearTimeout(ihsmsVaultSyncTimer);
+    ihsmsVaultSyncTimer = setTimeout(function () {
+        ihsmsVaultSyncTimer = null;
+        location.reload();
+    }, 250);
+}
+
+function onVaultDocumentSyncEvent(raw) {
+    if (!raw) return;
+    const ts = getVaultSyncTs(raw);
+    if (ts && ts === ihsmsVaultSyncLastTs) return;
+    ihsmsVaultSyncLastTs = ts;
+    scheduleVaultManagementReload();
+}
+
+try {
+    const vaultSyncBoot = localStorage.getItem(IHSMS_VAULT_SYNC_KEY);
+    if (vaultSyncBoot) ihsmsVaultSyncLastTs = getVaultSyncTs(vaultSyncBoot);
+} catch (_bootErr) { /* ignore */ }
+
+window.addEventListener('storage', function (e) {
+    if (e.key !== IHSMS_VAULT_SYNC_KEY || e.newValue == null) return;
+    onVaultDocumentSyncEvent(e.newValue);
+});
+
+try {
+    if (typeof BroadcastChannel !== 'undefined') {
+        const vaultSyncBc = new BroadcastChannel(IHSMS_VAULT_SYNC_BC);
+        vaultSyncBc.onmessage = function (ev) {
+            onVaultDocumentSyncEvent(ev && ev.data);
+        };
+    }
+} catch (_bcErr) { /* ignore */ }
+
+document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState !== 'visible') return;
+    try {
+        const raw = localStorage.getItem(IHSMS_VAULT_SYNC_KEY);
+        if (!raw) return;
+        const ts = getVaultSyncTs(raw);
+        if (ts && ts !== ihsmsVaultSyncLastTs) {
+            onVaultDocumentSyncEvent(raw);
+        }
+    } catch (_visErr) { /* ignore */ }
+});
+
 // Deep link from Module 2 Applicant Situation Certification (vault upload shortcuts).
 document.addEventListener('DOMContentLoaded', () => {
     loadVaultDrawerMapFromDom();

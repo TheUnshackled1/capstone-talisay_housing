@@ -7894,6 +7894,8 @@
     };
     const APPLICANT_REQUIREMENT_SCAN_STATUS_URL = '{% url "intake:applicant_requirement_scan_status" request.user.position %}';
     const REMOVE_SCANNED_REQUIREMENT_URL = '{% url "intake:remove_scanned_requirement" request.user.position %}';
+    const IHSMS_VAULT_SYNC_KEY = 'ihsms_vault_doc_sync';
+    const IHSMS_VAULT_SYNC_BC = 'ihsms_vault_doc_sync_bc';
     let DWTObject = null;
     if (window.Dynamsoft?.DWT) {
         Dynamsoft.DWT.RegisterEvent("OnWebTwainReady", function () {
@@ -8388,11 +8390,51 @@
             payload.blacklistReason = fresh.blacklistReason || '';
             payload.blacklistRegistryName = fresh.blacklistRegistryName || '';
             payload.blacklistRegistryRef = fresh.blacklistRegistryRef || '';
+            if (fresh.scannedCount != null) payload.scannedCount = fresh.scannedCount;
+            if (fresh.trackableTotal != null) payload.trackableTotal = fresh.trackableTotal;
+            if (fresh.requiredScannedCount != null) payload.requiredScannedCount = fresh.requiredScannedCount;
+            if (fresh.requiredTotal != null) payload.requiredTotal = fresh.requiredTotal;
+            if (Array.isArray(fresh.vaultDocumentTypes)) payload.vaultDocumentTypes = fresh.vaultDocumentTypes;
             return payload;
         } catch (_err) {
             console.warn('Requirement scan refresh failed; using cached checklist.', _err);
             return payload;
         }
+    }
+
+    function publishVaultDocumentChange(meta) {
+        const ts = String(Date.now());
+        const envelope = Object.assign({ ts: ts }, meta || {});
+        try {
+            localStorage.setItem(IHSMS_VAULT_SYNC_KEY, JSON.stringify(envelope));
+        } catch (_err) { /* ignore */ }
+        try {
+            if (typeof BroadcastChannel !== 'undefined') {
+                const bc = new BroadcastChannel(IHSMS_VAULT_SYNC_BC);
+                bc.postMessage(envelope);
+                bc.close();
+            }
+        } catch (_err) { /* ignore */ }
+    }
+
+    function finalizeArchiveVaultSync(refreshedPayload) {
+        if (!refreshedPayload) return;
+        currentArchiveRequirementsPayload = refreshedPayload;
+        const scriptEl = document.getElementById('archive-pages-documents-payload');
+        const ref = String(refreshedPayload.referenceNumber || '').trim();
+        if (scriptEl && ref) {
+            try {
+                const payloadMap = JSON.parse(scriptEl.textContent || '{}');
+                payloadMap[ref] = refreshedPayload;
+                scriptEl.textContent = JSON.stringify(payloadMap);
+            } catch (_err) { /* ignore */ }
+        }
+        renderArchiveRequirementsChecklistTable(refreshedPayload);
+        applyArchiveRequirementsBlacklistState(refreshedPayload);
+        publishVaultDocumentChange({
+            applicantId: refreshedPayload.applicantId || '',
+            referenceNumber: ref,
+        });
     }
 
     function isFollowUpRequirement(code) {
@@ -8524,7 +8566,7 @@
         }
 
         const rows = payload.rows || [];
-        updateArchiveRequirementsSummary(rows);
+        updateArchiveRequirementsSummary(rows, payload);
         tbody.innerHTML = rows.map(function (r) {
             const reqBadge = r.is_required_for_form
                 ? '<span class="req-badge req-badge-yes">Required</span>'
@@ -8588,18 +8630,7 @@
                 throw new Error(data.error || 'Unable to remove requirement.');
             }
             const refreshed = await refreshApplicantRequirementScanPayload(payload);
-            currentArchiveRequirementsPayload = refreshed;
-            const scriptEl = document.getElementById('archive-pages-documents-payload');
-            const ref = String(refreshed.referenceNumber || '').trim();
-            if (scriptEl && ref) {
-                try {
-                    const payloadMap = JSON.parse(scriptEl.textContent || '{}');
-                    payloadMap[ref] = refreshed;
-                    scriptEl.textContent = JSON.stringify(payloadMap);
-                } catch (_err) { /* ignore */ }
-            }
-            renderArchiveRequirementsChecklistTable(refreshed);
-            applyArchiveRequirementsBlacklistState(refreshed);
+            finalizeArchiveVaultSync(refreshed);
             showFlowAlert(label + ' removed from file.', 'Success', null, 'success');
         } catch (error) {
             showFlowAlert(error.message || 'Unable to remove requirement.', 'Notice', null, 'warning');
@@ -8672,20 +8703,8 @@
             if (!isSaved) {
                 console.warn('Checklist flag sync fallback failed after successful vault upload for', code);
             }
-            if (payload && Array.isArray(payload.rows)) {
-                payload.rows.forEach(function (row) {
-                    if (String(row.code || '').trim().toUpperCase() === code) {
-                        row.scanned = true;
-                        if (uploadResult && uploadResult.document_url) row.latest_file_url = uploadResult.document_url;
-                        if (uploadResult && uploadResult.document_name) row.latest_file_name = uploadResult.document_name;
-                        row.filed_via = 'scan';
-                        row.filed_via_label = 'Scanned';
-                    }
-                });
-                updateArchiveRequirementsSummary(payload.rows);
-            }
-            renderArchiveRowStatusAndActions(code);
-            forceArchiveRowScannedDom(code, uploadResult && uploadResult.document_url ? uploadResult.document_url : '');
+            const refreshed = await refreshApplicantRequirementScanPayload(payload);
+            finalizeArchiveVaultSync(refreshed);
             if (typeof dwt.CloseSource === 'function') {
                 try { dwt.CloseSource(); } catch (_err) {}
             }
@@ -8771,26 +8790,13 @@
             credentials: 'same-origin',
         })
             .then(function (response) { return response.json(); })
-            .then(function (data) {
+            .then(async function (data) {
                 if (!data.success) {
                     throw new Error(data.error || 'Upload failed.');
                 }
                 const payload = currentArchiveRequirementsPayload;
-                if (payload && Array.isArray(payload.rows)) {
-                    payload.rows.forEach(function (row) {
-                        if (String(row.code || '').trim().toUpperCase() === ctx.code) {
-                            row.scanned = true;
-                            if (data.document_url) row.latest_file_url = data.document_url;
-                            if (data.document_name) row.latest_file_name = data.document_name;
-                            row.filed_via = data.capture_method || 'upload';
-                            row.filed_via_label = data.filed_via_label || 'Uploaded';
-                        }
-                    });
-                }
-                if (payload && payload.rows) {
-                    updateArchiveRequirementsSummary(payload.rows);
-                }
-                renderArchiveRowStatusAndActions(ctx.code);
+                const refreshed = await refreshApplicantRequirementScanPayload(payload);
+                finalizeArchiveVaultSync(refreshed);
             })
             .catch(function (err) {
                 showFlowAlert(err.message || 'Upload failed.', 'Notice', null, 'warning');
@@ -8857,8 +8863,9 @@
         if (!btn) return;
         const tr = btn.closest('tr');
         if (!tr) return;
-        const statusSpan = tr.querySelector('.list-req-status');
-        if (!statusSpan) return;
+        const statusTd = tr.querySelector('td[title*="Applicant requirements"], td[title*="Blacklisted"]');
+        const statusPill = statusTd ? statusTd.querySelector('.pastel-status-pill') : null;
+        if (!statusPill) return;
         const scanned = Number(scannedAll) || 0;
         const total = Number(totalAll) || 0;
         var label;
@@ -8866,50 +8873,52 @@
         if (payload && payload.blacklistBlocked) {
             label = 'Cannot proceed';
             tier = 'blocked';
-            statusSpan.textContent = label;
-            statusSpan.classList.remove(
-                'list-req-status--complete',
-                'list-req-status--incomplete',
-                'list-req-status--pending'
-            );
-            statusSpan.classList.add('list-req-status--blocked');
-            var blockedTd = statusSpan.closest('td');
-            if (blockedTd) {
-                blockedTd.title =
+            if (statusTd) {
+                statusTd.title =
                     'Blacklisted — cannot proceed to Applicant Evaluation and Eligibility (' +
                     scanned + '/' + total + ' docs on file)';
             }
-            return;
-        }
-        if (total <= 0) {
+        } else if (total <= 0) {
             label = 'Pending';
             tier = 'pending';
+            if (statusTd) {
+                statusTd.title =
+                    'Applicant requirements (scan checklist): ' +
+                    scanned + '/' + total + ' filed — same totals as Documents';
+            }
         } else if (scanned >= total) {
             label = 'Complete';
             tier = 'complete';
+            if (statusTd) {
+                statusTd.title =
+                    'Applicant requirements (scan checklist): ' +
+                    scanned + '/' + total + ' filed — same totals as Documents';
+            }
         } else if (scanned > 0) {
             label = 'Incomplete';
             tier = 'incomplete';
+            if (statusTd) {
+                statusTd.title =
+                    'Applicant requirements (scan checklist): ' +
+                    scanned + '/' + total + ' filed — same totals as Documents';
+            }
         } else {
             label = 'Pending';
             tier = 'pending';
+            if (statusTd) {
+                statusTd.title =
+                    'Applicant requirements (scan checklist): ' +
+                    scanned + '/' + total + ' filed — same totals as Documents';
+            }
         }
-        statusSpan.textContent = label;
-        statusSpan.classList.remove(
-            'list-req-status--complete',
-            'list-req-status--incomplete',
-            'list-req-status--pending',
-            'list-req-status--blocked'
-        );
-        statusSpan.classList.add('list-req-status--' + tier);
-        var statusTd = statusSpan.closest('td');
-        if (statusTd) {
-            statusTd.title =
-                'Applicant requirements (scan checklist): ' +
-                scanned +
-                '/' +
-                total +
-                ' filed — same totals as Documents';
+        const tierClasses = ['status--complete', 'status--incomplete', 'status--pending', 'status--blocked', 'status--disqualified', 'status--encoded'];
+        tierClasses.forEach(function (cls) { statusPill.classList.remove(cls); });
+        statusPill.classList.add('status--' + tier);
+        const needsPulse = tier === 'pending' || tier === 'incomplete';
+        if (needsPulse) {
+            statusPill.innerHTML = '<span class="pulse-dot"></span> ' + label;
+        } else {
+            statusPill.textContent = label;
         }
         var tds = tr.querySelectorAll('td');
         if (tds.length >= 11) {
@@ -8924,24 +8933,34 @@
         }
     }
 
-    function updateArchiveRequirementsSummary(rows) {
+    function updateArchiveRequirementsSummary(rows, payloadCtx) {
+        const payload = payloadCtx || currentArchiveRequirementsPayload;
         const scannedSummaryEl = document.getElementById('archiveRequirementsScannedSummary');
         const rowSummaryEl = document.getElementById('archiveRequirementsRowSummary');
         const safeRows = Array.isArray(rows) ? rows : [];
         const requiredRows = safeRows.filter(function (r) { return !!r.is_required_for_form; });
-        const scannedRequired = requiredRows.filter(function (r) { return !!r.scanned; }).length;
+        const scannedRequired = (payload && payload.requiredScannedCount != null)
+            ? Number(payload.requiredScannedCount)
+            : requiredRows.filter(function (r) { return !!r.scanned; }).length;
+        const requiredTotal = (payload && payload.requiredTotal != null)
+            ? Number(payload.requiredTotal)
+            : requiredRows.length;
         if (scannedSummaryEl) {
-            scannedSummaryEl.textContent = String(scannedRequired) + '/' + String(requiredRows.length);
+            scannedSummaryEl.textContent = String(scannedRequired) + '/' + String(requiredTotal);
             const chip = scannedSummaryEl.closest('.archive-req-chip');
-            if (chip) chip.classList.toggle('is-complete', requiredRows.length > 0 && scannedRequired >= requiredRows.length);
+            if (chip) chip.classList.toggle('is-complete', requiredTotal > 0 && scannedRequired >= requiredTotal);
         }
         if (rowSummaryEl) rowSummaryEl.textContent = String(safeRows.length);
         // LIST OF APPLICANTS badge: count every checklist row (incl. optional situational row for Options A/B/C).
-        const scannedAll = safeRows.filter(function (r) { return !!r.scanned; }).length;
-        const totalAll = safeRows.length;
+        const scannedAll = (payload && payload.scannedCount != null)
+            ? Number(payload.scannedCount)
+            : safeRows.filter(function (r) { return !!r.scanned; }).length;
+        const totalAll = (payload && payload.trackableTotal != null)
+            ? Number(payload.trackableTotal)
+            : safeRows.length;
         syncArchiveRequirementsButtonSummary(scannedAll, totalAll);
         syncArchiveRequirementsListRowStatus(scannedAll, totalAll);
-        updateArchiveProceedButton(requiredRows.length > 0 && scannedRequired === requiredRows.length);
+        updateArchiveProceedButton(requiredTotal > 0 && scannedRequired >= requiredTotal);
     }
 
     function updateArchiveProceedButton(canProceed) {
