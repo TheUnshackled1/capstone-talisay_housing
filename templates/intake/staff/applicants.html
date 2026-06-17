@@ -7607,10 +7607,10 @@
                 <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M5 13l4 4L19 7"/>
                 </svg>
-                Submit and run eligibility check
+                Submit
             </button>
             <button type="button" class="btn-modal danger" onclick="closeAddModal()">
-                Close without saving
+                Close
             </button>
         </div>
     </div>
@@ -9973,7 +9973,7 @@
                 // Populate all fields
                 if (sexEl) sexEl.value = currentApplicant.sex === 'M' ? 'Male' : currentApplicant.sex === 'F' ? 'Female' : (currentApplicant.sex || '');
                 if (civilStatusEl) civilStatusEl.value = currentApplicant.civilStatus || '';
-                if (ageEl) ageEl.value = currentApplicant.age || '';
+                if (ageEl) ageEl.value = currentApplicant.age ?? '';
                 if (dobEl) dobEl.value = currentApplicant.dateOfBirth || '';
                 if (barangayEl) barangayEl.value = currentApplicant.barangay || '';
                 if (incomeEl) incomeEl.value = formatIncomeInputValue(currentApplicant.monthlyIncome);
@@ -10511,7 +10511,7 @@
         const sexDisplay = applicant.sex === 'M' ? 'Male' : applicant.sex === 'F' ? 'Female' : (applicant.sex || '');
         setValue('reviewSexB', sexDisplay);
         setValue('reviewCivilStatusB', applicant.civilStatus || '');
-        setValue('reviewAgeB', applicant.age);
+        setValue('reviewAgeB', applicant.age ?? '');
         setValue('reviewDateOfBirthB', applicant.dateOfBirth);
         const voterEl = document.getElementById('reviewVoterB');
         if (voterEl) voterEl.value = applicant.isRegisteredVoterTalisay ? 'yes' : 'no';

@@ -1334,7 +1334,7 @@ def applicants_list(request, position):
             'civilStatus': app.get_civil_status_display() if app.civil_status else '',
             'isRegisteredVoterTalisay': bool(app.is_registered_voter_talisay),
             'hasPropertyInTalisay': bool(app.has_property_in_talisay),
-            'age': app.age or 0,
+            'age': app.age,
             'dateOfBirth': app.date_of_birth.isoformat() if app.date_of_birth else '',
             'barangay': app.barangay.name if app.barangay else 'Unknown',
             'phoneNumber': app.phone_number or '',
