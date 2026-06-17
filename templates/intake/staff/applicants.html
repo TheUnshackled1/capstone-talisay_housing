@@ -2250,7 +2250,7 @@
         border: 1px solid #fde68a;
         border-radius: 0.65rem;
         background: linear-gradient(180deg, #fffbeb 0%, #ffffff 100%);
-        text-align: left;
+        text-align: center;
     }
     .archive-replace-existing-label {
         font-size: 0.62rem;
@@ -2273,14 +2273,9 @@
         color: #64748b;
         line-height: 1.35;
     }
-    .archive-replace-note {
-        margin: 0;
-        font-size: 0.76rem;
-        color: #475569;
-        line-height: 1.45;
-    }
     .archive-replace-actions {
         display: flex;
+        flex-wrap: wrap;
         justify-content: center;
         gap: 0.65rem;
         padding: 0.85rem 1.25rem 1.1rem;
@@ -2320,6 +2315,20 @@
         color: #ffffff !important;
         transform: translateY(-1px) !important;
         box-shadow: 0 4px 8px rgba(239, 68, 68, 0.35) !important;
+    }
+    .archive-replace-actions .btn-modal.archive-replace-btn-remove {
+        background: #ffffff !important;
+        color: #475569 !important;
+        border: 1px solid #cbd5e1 !important;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06) !important;
+        transition: all 0.2s ease !important;
+    }
+    .archive-replace-actions .btn-modal.archive-replace-btn-remove:hover {
+        background: #f8fafc !important;
+        color: #b91c1c !important;
+        border-color: #fca5a5 !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 2px 6px rgba(239, 68, 68, 0.12) !important;
     }
 
     .modal-title {
@@ -4722,13 +4731,11 @@
                 <div class="archive-replace-existing-name" id="archiveReplaceDocFileName">—</div>
                 <div class="archive-replace-existing-req" id="archiveReplaceDocRequirement">—</div>
             </div>
-            <p class="archive-replace-note">
-                Replacing will update this row in the checklist and the applicant’s record in Document Management (same vault slot as Scan).
-            </p>
         </div>
         <div class="archive-replace-actions">
-            <button type="button" class="btn-modal secondary archive-replace-btn-cancel" onclick="archiveResolveReplaceDocConfirm(false)">Keep existing</button>
-            <button type="button" class="btn-modal primary archive-replace-btn-confirm" onclick="archiveResolveReplaceDocConfirm(true)">Yes, replace</button>
+            <button type="button" class="btn-modal secondary archive-replace-btn-cancel" onclick="archiveResolveReplaceDocConfirm('keep')">Keep existing</button>
+            <button type="button" class="btn-modal primary archive-replace-btn-confirm" onclick="archiveResolveReplaceDocConfirm('replace')">Yes, replace</button>
+            <button type="button" class="btn-modal secondary archive-replace-btn-remove" onclick="archiveResolveReplaceDocConfirm('remove')">Remove Requirement</button>
         </div>
     </div>
 </div>
@@ -7900,6 +7907,7 @@
         doc_isf_situational: 'isf_situational_docs',
     };
     const APPLICANT_REQUIREMENT_SCAN_STATUS_URL = '{% url "intake:applicant_requirement_scan_status" request.user.position %}';
+    const REMOVE_SCANNED_REQUIREMENT_URL = '{% url "intake:remove_scanned_requirement" request.user.position %}';
     let DWTObject = null;
     if (window.Dynamsoft?.DWT) {
         Dynamsoft.DWT.RegisterEvent("OnWebTwainReady", function () {
@@ -8408,6 +8416,7 @@
     let pendingArchiveUploadContext = null;
     let archiveRowUploadBusyButton = null;
     let archiveReplaceDocConfirmResolver = null;
+    let archiveReplaceDocPendingRow = null;
 
     function archiveReqFindRow(code) {
         const safeCode = String(code || '').trim().toUpperCase();
@@ -8425,11 +8434,11 @@
 
     function archiveCloseReplaceDocOverlay(event) {
         if (event && event.target && event.target.id !== 'archiveReplaceDocOverlay') return;
-        archiveResolveReplaceDocConfirm(false);
+        archiveResolveReplaceDocConfirm('keep');
     }
     window.archiveCloseReplaceDocOverlay = archiveCloseReplaceDocOverlay;
 
-    function archiveResolveReplaceDocConfirm(approved) {
+    function archiveResolveReplaceDocConfirm(action) {
         const overlay = document.getElementById('archiveReplaceDocOverlay');
         if (overlay) {
             overlay.classList.remove('active');
@@ -8438,16 +8447,18 @@
                 overlay._archiveReplaceEsc = null;
             }
         }
+        archiveReplaceDocPendingRow = null;
         if (typeof archiveReplaceDocConfirmResolver === 'function') {
             const resolver = archiveReplaceDocConfirmResolver;
             archiveReplaceDocConfirmResolver = null;
-            resolver(!!approved);
+            const normalized = action === 'replace' || action === 'remove' ? action : 'keep';
+            resolver(normalized);
         }
     }
     window.archiveResolveReplaceDocConfirm = archiveResolveReplaceDocConfirm;
 
     function archiveConfirmReplaceExistingDocument(row) {
-        if (!archiveReqRowHasFile(row)) return Promise.resolve(true);
+        if (!archiveReqRowHasFile(row)) return Promise.resolve('replace');
         const overlay = document.getElementById('archiveReplaceDocOverlay');
         const nameEl = document.getElementById('archiveReplaceDocFileName');
         const reqEl = document.getElementById('archiveReplaceDocRequirement');
@@ -8455,8 +8466,9 @@
             const name = String(row.latest_file_name || row.name || row.code || 'this requirement').trim();
             return Promise.resolve(window.confirm(
                 'A file is already on file for ' + name + '.\n\nReplace it with the new upload or scan?'
-            ));
+            ) ? 'replace' : 'keep');
         }
+        archiveReplaceDocPendingRow = row;
         const fileName = String(row.latest_file_name || row.name || 'Document on file').trim();
         const reqCode = String(row.code || '').trim();
         const reqName = String(row.name || '').trim();
@@ -8466,7 +8478,7 @@
         }
         overlay.classList.add('active');
         const escHandler = function (e) {
-            if (e.key === 'Escape') archiveResolveReplaceDocConfirm(false);
+            if (e.key === 'Escape') archiveResolveReplaceDocConfirm('keep');
         };
         overlay._archiveReplaceEsc = escHandler;
         document.addEventListener('keydown', escHandler);
@@ -8511,6 +8523,99 @@
         return '<span class="req-scan req-scan-done">' + label + '</span>';
     }
 
+    function renderArchiveRequirementsChecklistTable(payload) {
+        const tbody = document.getElementById('archiveRequirementsTableBody');
+        if (!tbody) return;
+        const scannedSummaryEl = document.getElementById('archiveRequirementsScannedSummary');
+        const rowSummaryEl = document.getElementById('archiveRequirementsRowSummary');
+
+        if (!payload || !payload.rows || !payload.rows.length) {
+            if (scannedSummaryEl) scannedSummaryEl.textContent = '0/0';
+            if (rowSummaryEl) rowSummaryEl.textContent = '0';
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:1rem;color:#64748b;">No Group A requirements in the catalog. Seed requirements (e.g. R01–R07) to see this checklist.</td></tr>';
+            setArchiveScanButtonBusy(false);
+            return;
+        }
+
+        const rows = payload.rows || [];
+        updateArchiveRequirementsSummary(rows);
+        tbody.innerHTML = rows.map(function (r) {
+            const reqBadge = r.is_required_for_form
+                ? '<span class="req-badge req-badge-yes">Required</span>'
+                : '<span class="req-badge req-badge-no">Optional</span>';
+            const rawCode = String(r.code || '').trim().toUpperCase();
+            const code = escapeHtml(rawCode);
+            const dispReason = payload && payload.displacementReason ? String(payload.displacementReason).trim() : '';
+            let rowLabel = String(r.name || '');
+            if (rawCode === 'ISF-SIT' && dispReason) {
+                const situLabel = archiveModalIsfSitRowLabel(dispReason);
+                if (situLabel) rowLabel = situLabel;
+            }
+            const tip = String(r.policy_tooltip || '').trim();
+            const nameTitleAttr = tip ? ' title="' + escapeHtml(tip) + '"' : '';
+            const followUpBadge = code === 'ISF-SIT'
+                ? '<span class="req-badge req-badge-no" style="margin-left:0.45rem;">Follow-up</span>'
+                : '';
+            const rowStyle = code === 'ISF-SIT' ? ' style="background:#f8fafc;"' : '';
+            const actionsCell = '<td class="archive-req-table-actions">' + buildArchiveReqActionsInnerHtml(rawCode, r) + '</td>';
+            const viewCell = '<td>' + buildArchiveReqViewInnerHtml(r) + '</td>';
+            return '<tr data-archive-code="' + code + '"' + rowStyle + '>'
+                + '<td class="archive-req-table-name"' + nameTitleAttr + '>' + escapeHtml(rowLabel) + (followUpBadge ? ' ' + followUpBadge : '') + '</td>'
+                + '<td>' + reqBadge + '</td>'
+                + actionsCell
+                + viewCell
+                + '</tr>';
+        }).join('');
+        setArchiveScanButtonBusy(false);
+    }
+
+    async function removeArchiveRequirementByCode(codeRaw) {
+        const code = String(codeRaw || '').trim().toUpperCase();
+        const docKey = ARCHIVE_DOC_KEY_BY_CODE[code];
+        const payload = currentArchiveRequirementsPayload;
+        if (!docKey || !payload || !payload.applicantId) {
+            showFlowAlert('Unable to remove this requirement.');
+            return;
+        }
+        const csrfEl = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (!csrfEl) {
+            showFlowAlert('Session token missing. Refresh the page and try again.');
+            return;
+        }
+        const formData = new FormData();
+        formData.append('csrfmiddlewaretoken', csrfEl.value);
+        formData.append('applicant_id', String(payload.applicantId));
+        formData.append('doc_key', docKey);
+
+        try {
+            const response = await fetch(REMOVE_SCANNED_REQUIREMENT_URL, {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin',
+            });
+            const data = await response.json();
+            if (!data.success) {
+                throw new Error(data.error || 'Unable to remove requirement.');
+            }
+            const refreshed = await refreshApplicantRequirementScanPayload(payload);
+            currentArchiveRequirementsPayload = refreshed;
+            const scriptEl = document.getElementById('archive-pages-documents-payload');
+            const ref = String(refreshed.referenceNumber || '').trim();
+            if (scriptEl && ref) {
+                try {
+                    const payloadMap = JSON.parse(scriptEl.textContent || '{}');
+                    payloadMap[ref] = refreshed;
+                    scriptEl.textContent = JSON.stringify(payloadMap);
+                } catch (_err) { /* ignore */ }
+            }
+            renderArchiveRequirementsChecklistTable(refreshed);
+            applyArchiveRequirementsBlacklistState(refreshed);
+        } catch (error) {
+            showFlowAlert(error.message || 'Unable to remove requirement.', 'Notice', null, 'warning');
+        }
+    }
+    window.removeArchiveRequirementByCode = removeArchiveRequirementByCode;
+
     async function triggerArchiveRowDocumentUpload(codeRaw) {
         const code = String(codeRaw || '').trim().toUpperCase();
         const docKey = ARCHIVE_DOC_KEY_BY_CODE[code];
@@ -8523,8 +8628,12 @@
             showFlowAlert('No applicant loaded.');
             return;
         }
-        const ok = await archiveConfirmReplaceExistingDocument(archiveReqFindRow(code));
-        if (!ok) return;
+        const choice = await archiveConfirmReplaceExistingDocument(archiveReqFindRow(code));
+        if (choice === 'keep') return;
+        if (choice === 'remove') {
+            await removeArchiveRequirementByCode(code);
+            return;
+        }
         pendingArchiveUploadContext = {
             applicantId: String(payload.applicantId),
             referenceNumber: payload.referenceNumber || '',
@@ -8548,8 +8657,12 @@
             showFlowAlert('Unable to scan this requirement.');
             return;
         }
-        const ok = await archiveConfirmReplaceExistingDocument(archiveReqFindRow(code));
-        if (!ok) return;
+        const choice = await archiveConfirmReplaceExistingDocument(archiveReqFindRow(code));
+        if (choice === 'keep') return;
+        if (choice === 'remove') {
+            await removeArchiveRequirementByCode(code);
+            return;
+        }
 
         const rowScanBtn = document.querySelector(
             '#archiveRequirementsModal button.archive-req-row-scan-btn[data-archive-scan-code="' + code + '"]'
@@ -9160,48 +9273,7 @@
         }
         if (!tbody) return;
 
-        const scannedSummaryEl = document.getElementById('archiveRequirementsScannedSummary');
-        const rowSummaryEl = document.getElementById('archiveRequirementsRowSummary');
-
-        if (!payload || !payload.rows || !payload.rows.length) {
-            if (scannedSummaryEl) scannedSummaryEl.textContent = '0/0';
-            if (rowSummaryEl) rowSummaryEl.textContent = '0';
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:1rem;color:#64748b;">No Group A requirements in the catalog. Seed requirements (e.g. R01–R07) to see this checklist.</td></tr>';
-            setArchiveScanButtonBusy(false);
-        } else {
-            var rows = payload.rows || [];
-            updateArchiveRequirementsSummary(rows);
-
-            tbody.innerHTML = payload.rows.map(function (r) {
-                var reqBadge = r.is_required_for_form
-                    ? '<span class="req-badge req-badge-yes">Required</span>'
-                    : '<span class="req-badge req-badge-no">Optional</span>';
-                var rawCode = String(r.code || '').trim().toUpperCase();
-                var code = escapeHtml(rawCode);
-                var dispReason = payload && payload.displacementReason ? String(payload.displacementReason).trim() : '';
-                var rowLabel = String(r.name || '');
-                if (rawCode === 'ISF-SIT' && dispReason) {
-                    var situLabel = archiveModalIsfSitRowLabel(dispReason);
-                    if (situLabel) rowLabel = situLabel;
-                }
-                var tip = String(r.policy_tooltip || '').trim();
-                var nameTitleAttr = tip ? ' title="' + escapeHtml(tip) + '"' : '';
-                var followUpBadge = code === 'ISF-SIT'
-                    ? '<span class="req-badge req-badge-no" style="margin-left:0.45rem;">Follow-up</span>'
-                    : '';
-                var rowStyle = code === 'ISF-SIT' ? ' style="background:#f8fafc;"' : '';
-                var actionsCell = '<td class="archive-req-table-actions">' + buildArchiveReqActionsInnerHtml(rawCode, r) + '</td>';
-                var viewCell = '<td>' + buildArchiveReqViewInnerHtml(r) + '</td>';
-                return '<tr data-archive-code="' + code + '"' + rowStyle + '>'
-                    + '<td class="archive-req-table-name"' + nameTitleAttr + '>' + escapeHtml(rowLabel) + (followUpBadge ? ' ' + followUpBadge : '') + '</td>'
-                    + '<td>' + reqBadge + '</td>'
-                    + actionsCell
-                    + viewCell
-                    + '</tr>';
-            }).join('');
-            setArchiveScanButtonBusy(false);
-        }
-
+        renderArchiveRequirementsChecklistTable(payload);
         applyArchiveRequirementsBlacklistState(payload);
 
         var modalEl = document.getElementById('archiveRequirementsModal');

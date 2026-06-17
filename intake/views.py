@@ -941,6 +941,51 @@ def upload_scanned_requirement(request, position):
 
 @login_required
 @verify_position
+@csrf_exempt
+@require_POST
+def remove_scanned_requirement(request, position):
+    """
+    Remove a scanned/uploaded requirement from the vault and clear the legacy checklist flag.
+    """
+    applicant_id = (request.POST.get('applicant_id') or '').strip()
+    doc_key = (request.POST.get('doc_key') or '').strip()
+
+    if not applicant_id or doc_key not in APPLICANT_DOC_KEY_TO_VAULT_TYPE:
+        return JsonResponse({'success': False, 'error': 'Missing or invalid applicant/document mapping.'}, status=400)
+
+    allowed_positions = ['fourth_member', 'second_member']
+    if request.user.position not in allowed_positions:
+        return JsonResponse({'success': False, 'error': 'Permission denied.'}, status=403)
+
+    try:
+        applicant = Applicant.objects.get(id=applicant_id)
+    except Applicant.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Applicant not found.'}, status=404)
+
+    document_type = APPLICANT_DOC_KEY_TO_VAULT_TYPE[doc_key]
+    doc = (
+        Document.objects.filter(applicant_id=applicant.pk, document_type=document_type)
+        .order_by('-uploaded_at')
+        .first()
+    )
+    if doc:
+        if doc.file:
+            doc.file.delete(save=False)
+        doc.delete()
+
+    update_fields = []
+    if hasattr(applicant, doc_key):
+        setattr(applicant, doc_key, False)
+        update_fields.append(doc_key)
+    if update_fields:
+        update_fields.append('updated_at')
+        applicant.save(update_fields=update_fields)
+
+    return JsonResponse({'success': True, 'message': 'Requirement removed.'})
+
+
+@login_required
+@verify_position
 def applicant_requirement_scan_status(request, position):
     """Fresh document scan checklist rows (vault upload or scan counts as filed)."""
     if request.method != 'GET':

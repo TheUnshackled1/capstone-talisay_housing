@@ -19,6 +19,7 @@ urlpatterns = [
     path('staff/<str:position>/update-eligibility/', views.update_eligibility, name='update_eligibility'),
     path('staff/<str:position>/update-applicant/', views.update_applicant, name='update_applicant'),
     path('staff/<str:position>/upload-scanned-requirement/', views.upload_scanned_requirement, name='upload_scanned_requirement'),
+    path('staff/<str:position>/remove-scanned-requirement/', views.remove_scanned_requirement, name='remove_scanned_requirement'),
     path(
         'staff/<str:position>/applicant-requirement-scan-status/',
         views.applicant_requirement_scan_status,
