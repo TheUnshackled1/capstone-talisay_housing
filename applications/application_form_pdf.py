@@ -9,12 +9,15 @@ If the city replaces the PDF, re-measure with PyMuPDF ``page.get_text('dict')`` 
 
 from __future__ import annotations
 
+import logging
 from decimal import Decimal
 from pathlib import Path
 
 import fitz  # PyMuPDF
 from django.conf import settings
 from django.utils import timezone
+
+logger = logging.getLogger(__name__)
 
 
 TEMPLATE_RELATIVE = Path('static') / 'forms' / 'APPLICATION-FORM-THA.pdf'
@@ -216,13 +219,25 @@ def build_filled_application_pdf(applicant, application) -> bytes:
     # --- Page 1 (identity / household / income) ---
     p0 = doc[0]
 
-    _insert_after(p0, 'Date:', gen_local.strftime('%m/%d/%Y'), fontsize=9)
-
-    header_note = _safe_str(application.application_number)
+    date_str = gen_local.strftime('%m/%d/%Y')
     ref = _safe_str(applicant.reference_number)
+    header_line = f'Date: {date_str}'
     if ref:
-        header_note = f'{header_note}  |  Ref {ref}'
-    _insert_box(p0, (74, 96, 430, 112), header_note, fontsize=7.5)
+        header_line = f'{header_line}  |  Ref {ref}'
+    _insert_box(p0, (74, 96, 540, 112), header_line, fontsize=7.5)
+
+    # White-out the template's standalone "Date:" label (right-side header) since
+    # the date is now rendered inline inside header_line above.
+    for _r in p0.search_for('Date:'):
+        if _r.x0 > 400:  # only the right-side header label, not any field labels below
+            p0.draw_rect(
+                fitz.Rect(_r.x0 - 2, _r.y0 - 2, _r.x1 + 50, _r.y1 + 2),
+                color=(1, 1, 1),
+                fill=(1, 1, 1),
+            )
+
+    # 2x2 photo overlay (screen-only — hidden when printed)
+    _overlay_2x2_photo(doc, p0, applicant)
 
     # Section A baselines measured from APPLICATION-FORM-THA underscore spans (insert_textbox sat too high).
     LX = 188
@@ -321,3 +336,51 @@ def build_filled_application_pdf(applicant, application) -> bytes:
     pdf_bytes = doc.tobytes(deflate=True, garbage=4, clean=True)
     doc.close()
     return pdf_bytes
+
+
+def _overlay_2x2_photo(doc, page, applicant):
+    """
+    Insert the applicant's 2x2 photo (from the document vault) onto page 1.
+
+    Uses an Optional Content Group (OCG) so the image is visible on-screen
+    but hidden when the PDF is printed — preserving the original blank form
+    for physical signatures.
+    """
+    try:
+        from documents.models import Document, DocumentBlob
+
+        photo_doc = (
+            Document.objects
+            .filter(applicant=applicant, document_type='photo_2x2')
+            .order_by('-uploaded_at')
+            .first()
+        )
+        if photo_doc is None:
+            return
+
+        try:
+            blob = photo_doc.blob_record
+            img_bytes = bytes(blob.data)
+        except DocumentBlob.DoesNotExist:
+            if photo_doc.file:
+                img_bytes = photo_doc.file.read()
+            else:
+                return
+
+        if not img_bytes:
+            return
+
+        # Create a screen-only layer (visible on screen, hidden when printed)
+        xref = doc.add_ocg('2x2 Photo', on=True, intent='View', usage='Print')
+
+        # Place photo in upper-right area of page 1, beside the mayor's address block
+        photo_rect = fitz.Rect(505, 82, 575, 172)
+
+        page.insert_image(
+            photo_rect,
+            stream=img_bytes,
+            keep_proportion=True,
+            oc=xref,
+        )
+    except Exception:
+        logger.debug('Could not overlay 2x2 photo on application PDF', exc_info=True)
