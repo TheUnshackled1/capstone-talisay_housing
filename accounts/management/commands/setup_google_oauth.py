@@ -5,8 +5,15 @@ Usage:
     python manage.py setup_google_oauth
 
 Requires GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET in .env.
-Redirect URI for dev: http://localhost:8000/auth/google/login/callback/
+Redirect URIs for dev (register both in Google Cloud Console):
+  http://localhost:8000/auth/google/login/callback/
+  http://127.0.0.1:8000/auth/google/login/callback/
 """
+
+DEV_OAUTH_CALLBACK_URIS = (
+    'http://localhost:8000/auth/google/login/callback/',
+    'http://127.0.0.1:8000/auth/google/login/callback/',
+)
 
 from django.conf import settings
 from django.contrib.sites.models import Site
@@ -66,9 +73,10 @@ class Command(BaseCommand):
         app.sites.set([site])
         verb = 'Created' if created else 'Updated'
         self.stdout.write(self.style.SUCCESS(f'{verb} Google SocialApp (client_id …{client_id[-8:]})'))
+        redirect_lines = '\n'.join(f'  {uri}' for uri in DEV_OAUTH_CALLBACK_URIS)
         self.stdout.write(
             self.style.NOTICE(
-                '\nGoogle Cloud redirect URI:\n'
-                f'  http://{site.domain}/auth/google/login/callback/\n'
+                '\nGoogle Cloud redirect URIs (register all in Credentials):\n'
+                f'{redirect_lines}\n'
             )
         )

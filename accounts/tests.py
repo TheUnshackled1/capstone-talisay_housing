@@ -171,3 +171,30 @@ class GoogleLoginStartTests(TestCase):
         client = Client()
         response = client.get(reverse('accounts:google_login_start'))
         self.assertRedirects(response, reverse('accounts:login'), fetch_redirect_response=False)
+
+
+@override_settings(DEBUG=True)
+class LocalhostCanonicalizationMiddlewareTests(TestCase):
+    def test_redirects_127_to_localhost(self):
+        client = Client()
+        response = client.get(
+            reverse('accounts:login'),
+            HTTP_HOST='127.0.0.1:8000',
+        )
+        self.assertEqual(response.status_code, 301)
+        self.assertTrue(response['Location'].startswith('http://localhost:8000/'))
+
+    def test_localhost_not_redirected(self):
+        client = Client()
+        response = client.get(
+            reverse('accounts:login'),
+            HTTP_HOST='localhost:8000',
+        )
+        self.assertEqual(response.status_code, 200)
+
+    def test_google_login_start_from_127_canonicalizes_host(self):
+        client = Client()
+        url = reverse('accounts:google_login_start') + '?role=second_member'
+        response = client.get(url, HTTP_HOST='127.0.0.1:8000')
+        self.assertEqual(response.status_code, 301)
+        self.assertIn('localhost:8000', response['Location'])
