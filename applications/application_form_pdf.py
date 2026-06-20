@@ -371,7 +371,8 @@ def _overlay_2x2_photo(doc, page, applicant):
             return
 
         # Create a screen-only layer (visible on screen, hidden when printed)
-        xref = doc.add_ocg('2x2 Photo', on=True, intent='View', usage='Print')
+        xref = doc.add_ocg('2x2 Photo', on=True)
+        doc.xref_set_key(xref, "Usage", "<< /Print << /PrintState /OFF >> /View << /ViewState /ON >> >>")
 
         # Place photo in upper-right area of page 1, beside the mayor's address block
         photo_rect = fitz.Rect(505, 82, 575, 172)
