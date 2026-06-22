@@ -5,6 +5,7 @@ from django.contrib.messages.storage.fallback import FallbackStorage
 from django.test import Client, RequestFactory, TestCase, override_settings
 from django.urls import reverse
 
+from allauth.account.models import EmailAddress
 from allauth.core.exceptions import ImmediateHttpResponse
 from allauth.socialaccount.models import SocialLogin
 
@@ -12,6 +13,7 @@ from accounts.adapters import THASocialAccountAdapter, _email_allowed_domain
 from accounts.auth_portal import (
     PORTAL_ROLE_SESSION_KEY,
     normalize_portal_role,
+    resolve_staff_user_for_portal,
     user_allowed_for_portal,
 )
 
@@ -53,6 +55,69 @@ class PortalRoleHelperTests(TestCase):
         self.assertIsNone(err)
 
 
+class ResolveStaffUserTests(TestCase):
+    shared_email = 'bivosomeryl@gmail.com'
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.second_member = User.objects.create_user(
+            username='lourynie.tingson',
+            email=cls.shared_email,
+            password='tha2026',
+            position='second_member',
+        )
+        cls.fourth_member = User.objects.create_user(
+            username='jocel.cuaysing',
+            email=cls.shared_email,
+            password='tha2026',
+            position='fourth_member',
+        )
+        cls.ronda = User.objects.create_user(
+            username='nonoy.cura',
+            email=cls.shared_email,
+            password='tha2026',
+            position='ronda',
+        )
+
+    def test_resolves_second_member_portal(self):
+        user, err = resolve_staff_user_for_portal(self.shared_email, 'second_member')
+        self.assertIsNone(err)
+        self.assertEqual(user, self.second_member)
+
+    def test_resolves_fourth_member_portal(self):
+        user, err = resolve_staff_user_for_portal(self.shared_email, 'fourth_member')
+        self.assertIsNone(err)
+        self.assertEqual(user, self.fourth_member)
+
+    def test_resolves_ronda_portal(self):
+        user, err = resolve_staff_user_for_portal(self.shared_email, 'ronda')
+        self.assertIsNone(err)
+        self.assertEqual(user, self.ronda)
+
+    def test_resolves_field_desk_portal_for_ronda(self):
+        user, err = resolve_staff_user_for_portal(self.shared_email, 'field_desk')
+        self.assertIsNone(err)
+        self.assertEqual(user, self.ronda)
+
+    def test_requires_portal_role(self):
+        user, err = resolve_staff_user_for_portal(self.shared_email, '')
+        self.assertIsNone(user)
+        self.assertIn('portal', err.lower())
+
+    def test_finds_user_via_emailaddress_only(self):
+        other_email = 'meryl.bivoso@chmsu.edu.ph'
+        user = User.objects.create_user(
+            username='joie.chmsu',
+            email='joie.tingson@talisayhousing.gov.ph',
+            password='tha2026',
+            position='second_member',
+        )
+        EmailAddress.objects.create(user=user, email=other_email, verified=False, primary=False)
+        resolved, err = resolve_staff_user_for_portal(other_email, 'second_member')
+        self.assertIsNone(err)
+        self.assertEqual(resolved, user)
+
+
 @override_settings(GOOGLE_OAUTH_ALLOWED_DOMAINS=('talisayhousing.gov.ph',))
 class EmailDomainTests(TestCase):
     def test_allowed_domain(self):
@@ -89,15 +154,25 @@ class THASocialAccountAdapterTests(TestCase):
         setattr(request, '_messages', FallbackStorage(request))
         return request
 
-    def _make_sociallogin(self, email='joie.tingson@talisayhousing.gov.ph', existing=False):
+    def _make_sociallogin(
+        self,
+        email='joie.tingson@talisayhousing.gov.ph',
+        existing=False,
+        user=None,
+        social_account_pk=None,
+    ):
         sociallogin = MagicMock(spec=SocialLogin)
         sociallogin.is_existing = existing
-        sociallogin.user = self.user if existing else MagicMock(email=email)
+        sociallogin.user = user if user is not None else (
+            self.user if existing else MagicMock(email=email)
+        )
         sociallogin.account = MagicMock(extra_data={'email': email})
+        sociallogin.account.pk = social_account_pk
 
-        def _connect(request, user):
-            sociallogin.user = user
+        def _connect(request, connect_user):
+            sociallogin.user = connect_user
 
+        sociallogin.account.save = MagicMock()
         sociallogin.connect = MagicMock(side_effect=_connect)
         return sociallogin
 
@@ -129,6 +204,101 @@ class THASocialAccountAdapterTests(TestCase):
     def test_is_open_for_signup_false(self):
         request = self.factory.get('/')
         self.assertFalse(self.adapter.is_open_for_signup(request, MagicMock()))
+
+
+@override_settings(GOOGLE_OAUTH_ALLOWED_DOMAINS=('gmail.com',))
+class SharedEmailOAuthTests(TestCase):
+    shared_email = 'bivosomeryl@gmail.com'
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.second_member = User.objects.create_user(
+            username='lourynie.tingson',
+            email=cls.shared_email,
+            password='tha2026',
+            position='second_member',
+        )
+        cls.fourth_member = User.objects.create_user(
+            username='jocel.cuaysing',
+            email=cls.shared_email,
+            password='tha2026',
+            position='fourth_member',
+        )
+        cls.ronda = User.objects.create_user(
+            username='nonoy.cura',
+            email=cls.shared_email,
+            password='tha2026',
+            position='ronda',
+        )
+
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.adapter = THASocialAccountAdapter()
+
+    def _request(self, portal_role):
+        request = self.factory.get('/auth/google/login/callback/')
+        request.session = {PORTAL_ROLE_SESSION_KEY: portal_role}
+        setattr(request, '_messages', FallbackStorage(request))
+        return request
+
+    def _make_sociallogin(self, linked_user=None, social_account_pk=None):
+        sociallogin = MagicMock(spec=SocialLogin)
+        sociallogin.is_existing = linked_user is not None
+        sociallogin.user = linked_user or MagicMock(email=self.shared_email)
+        sociallogin.account = MagicMock(extra_data={'email': self.shared_email})
+        sociallogin.account.pk = social_account_pk
+        sociallogin.account.save = MagicMock()
+
+        def _connect(request, user):
+            sociallogin.user = user
+
+        sociallogin.connect = MagicMock(side_effect=_connect)
+        return sociallogin
+
+    def test_oauth_second_member_portal(self):
+        request = self._request('second_member')
+        sociallogin = self._make_sociallogin()
+        self.adapter.pre_social_login(request, sociallogin)
+        self.assertEqual(sociallogin.user, self.second_member)
+        sociallogin.connect.assert_called_once_with(request, self.second_member)
+
+    def test_oauth_fourth_member_portal(self):
+        request = self._request('fourth_member')
+        sociallogin = self._make_sociallogin()
+        self.adapter.pre_social_login(request, sociallogin)
+        self.assertEqual(sociallogin.user, self.fourth_member)
+
+    def test_oauth_ronda_portal(self):
+        request = self._request('ronda')
+        sociallogin = self._make_sociallogin()
+        self.adapter.pre_social_login(request, sociallogin)
+        self.assertEqual(sociallogin.user, self.ronda)
+
+    def test_rebinds_existing_social_account_to_portal_user(self):
+        """Regression: Google linked to Ronda, login via Second Member portal."""
+        request = self._request('second_member')
+        sociallogin = self._make_sociallogin(
+            linked_user=self.ronda,
+            social_account_pk=42,
+        )
+        self.adapter.pre_social_login(request, sociallogin)
+        self.assertEqual(sociallogin.user, self.second_member)
+        sociallogin.account.save.assert_called_once_with(update_fields=['user_id'])
+        sociallogin.connect.assert_not_called()
+
+    def test_authenticate_by_email_respects_portal(self):
+        request = self._request('fourth_member')
+        self.adapter.request = request
+        sociallogin = MagicMock(spec=SocialLogin)
+        sociallogin.email_addresses = []
+        sociallogin.account = MagicMock(extra_data={'email': self.shared_email})
+        sociallogin.provider = MagicMock()
+        with self.settings(SOCIALACCOUNT_EMAIL_AUTHENTICATION=True):
+            result = self.adapter.authenticate_by_email(sociallogin)
+        self.assertIsNotNone(result)
+        user, email = result
+        self.assertEqual(user, self.fourth_member)
+        self.assertEqual(email, self.shared_email)
 
 
 class PasswordLoginTests(TestCase):

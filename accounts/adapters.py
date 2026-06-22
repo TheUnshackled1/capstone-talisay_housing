@@ -4,21 +4,21 @@ from __future__ import annotations
 
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AbstractUser
 from django.shortcuts import redirect
 from django.urls import reverse
 from urllib.parse import urlencode
 
 from allauth.core.exceptions import ImmediateHttpResponse
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
+from allauth.socialaccount.models import SocialLogin
 
 from .auth_portal import (
     PORTAL_ROLE_SESSION_KEY,
     normalize_portal_role,
+    resolve_staff_user_for_portal,
     user_allowed_for_portal,
 )
-
-User = get_user_model()
 
 
 def _login_redirect_with_role(portal_role: str):
@@ -52,6 +52,29 @@ class THASocialAccountAdapter(DefaultSocialAccountAdapter):
     def is_open_for_signup(self, request, sociallogin):
         return False
 
+    def authenticate_by_email(
+        self, sociallogin: SocialLogin
+    ) -> tuple[AbstractUser, str] | None:
+        """Match Google email to the staff user for the portal selected before OAuth."""
+        portal_role = normalize_portal_role(
+            self.request.session.get(PORTAL_ROLE_SESSION_KEY)
+        )
+        if not portal_role:
+            return None
+
+        emails = [e.email for e in sociallogin.email_addresses if e.verified]
+        extra_email = (sociallogin.account.extra_data or {}).get('email')
+        if extra_email and extra_email not in emails:
+            emails.append(extra_email)
+
+        for email in emails:
+            if not self.can_authenticate_by_email(sociallogin, email):
+                continue
+            user, err = resolve_staff_user_for_portal(email, portal_role)
+            if user is not None and err is None:
+                return user, email
+        return None
+
     def pre_social_login(self, request, sociallogin):
         portal_role = normalize_portal_role(request.session.get(PORTAL_ROLE_SESSION_KEY))
 
@@ -70,24 +93,23 @@ class THASocialAccountAdapter(DefaultSocialAccountAdapter):
             )
             raise ImmediateHttpResponse(_login_redirect_with_role(portal_role))
 
-        if not sociallogin.is_existing:
-            try:
-                user = User.objects.get(email__iexact=email)
-            except User.DoesNotExist:
-                messages.error(
-                    request,
-                    'This Google account is not provisioned in IHSMS. Contact your system administrator.',
-                )
-                raise ImmediateHttpResponse(_login_redirect_with_role(portal_role))
-            sociallogin.connect(request, user)
+        user, resolve_err = resolve_staff_user_for_portal(email, portal_role)
+        if resolve_err or user is None:
+            messages.error(request, resolve_err or 'Unable to sign in with this Google account.')
+            raise ImmediateHttpResponse(_login_redirect_with_role(portal_role))
 
-        user = sociallogin.user
-        
-        if portal_role:
-            allowed, err = user_allowed_for_portal(user, portal_role)
-            if not allowed:
-                messages.error(request, err)
-                raise ImmediateHttpResponse(_login_redirect_with_role(portal_role))
+        if sociallogin.user != user:
+            sociallogin.user = user
+            if sociallogin.account.pk:
+                sociallogin.account.user = user
+                sociallogin.account.save(update_fields=['user_id'])
+            else:
+                sociallogin.connect(request, user)
+
+        allowed, err = user_allowed_for_portal(user, portal_role)
+        if not allowed:
+            messages.error(request, err)
+            raise ImmediateHttpResponse(_login_redirect_with_role(portal_role))
 
         request.session.pop(PORTAL_ROLE_SESSION_KEY, None)
 

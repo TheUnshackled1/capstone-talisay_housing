@@ -47,6 +47,14 @@ EXTENSION_30DAY_SKIP_MIDPOINT_BLOCK = _env_bool(
 
 ALLOWED_HOSTS = ['*']  # Allow all hosts for development/testing
 
+# Allow your tunnel's domain to submit forms (login, OAuth callback, etc.)
+CSRF_TRUSTED_ORIGINS = ['https://m86m4vrs-8000.asse.devtunnels.ms']
+
+# Trust dev-tunnel / reverse-proxy forwarded headers (DEBUG only)
+if DEBUG:
+    USE_X_FORWARDED_HOST = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 
 # Application definition
 

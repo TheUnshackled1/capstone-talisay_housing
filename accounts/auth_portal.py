@@ -2,7 +2,13 @@
 
 from __future__ import annotations
 
+from django.contrib.auth import get_user_model
+
+from allauth.account.models import EmailAddress
+
 from .models import FIELD_DESK_POSITIONS
+
+User = get_user_model()
 
 PORTAL_ROLE_SESSION_KEY = 'login_portal_role'
 
@@ -57,3 +63,56 @@ def user_allowed_for_portal(user, portal_role: str | None) -> tuple[bool, str | 
         )
 
     return True, None
+
+
+def _users_for_email(email: str):
+    """All staff users linked to an email via User.email or allauth EmailAddress."""
+    email_l = (email or '').strip().lower()
+    if not email_l:
+        return User.objects.none()
+
+    user_ids = set(
+        User.objects.filter(email__iexact=email_l).values_list('pk', flat=True)
+    )
+    user_ids.update(
+        EmailAddress.objects.filter(email__iexact=email_l).values_list('user_id', flat=True)
+    )
+    return User.objects.filter(pk__in=user_ids)
+
+
+def resolve_staff_user_for_portal(email: str, portal_role: str | None):
+    """
+    Resolve a single staff user for Google OAuth when email may be shared across portals.
+
+    Returns (user, None) on success or (None, error_message) on failure.
+    """
+    role = normalize_portal_role(portal_role)
+    if not role:
+        return None, 'Select your staff portal before signing in with Google.'
+
+    candidates = _users_for_email(email)
+    if not candidates.exists():
+        return None, (
+            'This Google account is not provisioned in IHSMS. '
+            'Contact your system administrator.'
+        )
+
+    if role == 'field_desk':
+        matched = candidates.filter(position__in=FIELD_DESK_POSITIONS)
+    else:
+        matched = candidates.filter(position=role)
+
+    count = matched.count()
+    if count == 0:
+        expected = portal_role_display(role) or role
+        return None, (
+            f'No staff account for this Google email on the {expected} portal. '
+            f'Use the login page that matches your position.'
+        )
+    if count > 1:
+        return None, (
+            'Multiple staff accounts match this email for the selected portal. '
+            'Contact your system administrator.'
+        )
+
+    return matched.first(), None
