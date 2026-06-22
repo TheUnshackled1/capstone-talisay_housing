@@ -11,8 +11,12 @@ from allauth.socialaccount.models import SocialLogin
 
 from accounts.adapters import THASocialAccountAdapter, _email_allowed_domain
 from accounts.auth_portal import (
+    LAST_PORTAL_ROLE_COOKIE,
     PORTAL_ROLE_SESSION_KEY,
     normalize_portal_role,
+    portal_role_for_oauth,
+    portal_role_for_position,
+    resolve_login_portal_role,
     resolve_staff_user_for_portal,
     user_allowed_for_portal,
 )
@@ -23,6 +27,18 @@ User = get_user_model()
 class PortalRoleHelperTests(TestCase):
     def test_normalize_caretaker_legacy(self):
         self.assertEqual(normalize_portal_role('caretaker'), 'field_desk')
+
+    def test_normalize_ronda_and_field_to_field_desk(self):
+        self.assertEqual(normalize_portal_role('ronda'), 'field_desk')
+        self.assertEqual(normalize_portal_role('field'), 'field_desk')
+
+    def test_portal_role_for_oauth_prefers_oauth_state_over_session(self):
+        factory = RequestFactory()
+        request = factory.get('/auth/google/login/callback/')
+        request.session = {PORTAL_ROLE_SESSION_KEY: 'fourth_member'}
+        sociallogin = MagicMock(spec=SocialLogin)
+        sociallogin.state = {'portal_role': 'second_member'}
+        self.assertEqual(portal_role_for_oauth(request, sociallogin), 'second_member')
 
     def test_second_member_portal(self):
         user = User(position='second_member')
@@ -89,10 +105,21 @@ class ResolveStaffUserTests(TestCase):
         self.assertIsNone(err)
         self.assertEqual(user, self.fourth_member)
 
-    def test_resolves_ronda_portal(self):
+    def test_resolves_ronda_portal_alias(self):
         user, err = resolve_staff_user_for_portal(self.shared_email, 'ronda')
         self.assertIsNone(err)
         self.assertEqual(user, self.ronda)
+
+    def test_resolves_field_portal_alias_for_field_staff(self):
+        field_user = User.objects.create_user(
+            username='field.staff',
+            email='field.only@gmail.com',
+            password='tha2026',
+            position='field',
+        )
+        user, err = resolve_staff_user_for_portal('field.only@gmail.com', 'field')
+        self.assertIsNone(err)
+        self.assertEqual(user, field_user)
 
     def test_resolves_field_desk_portal_for_ronda(self):
         user, err = resolve_staff_user_for_portal(self.shared_email, 'field_desk')
@@ -117,6 +144,19 @@ class ResolveStaffUserTests(TestCase):
         self.assertIsNone(err)
         self.assertEqual(resolved, user)
 
+    def test_ignores_inactive_user_for_email(self):
+        inactive_email = 'inactive.staff@talisayhousing.gov.ph'
+        User.objects.create_user(
+            username='inactive.staff',
+            email=inactive_email,
+            password='tha2026',
+            position='second_member',
+            is_active=False,
+        )
+        resolved, err = resolve_staff_user_for_portal(inactive_email, 'second_member')
+        self.assertIsNone(resolved)
+        self.assertIn('not provisioned', err.lower())
+
 
 @override_settings(GOOGLE_OAUTH_ALLOWED_DOMAINS=('talisayhousing.gov.ph',))
 class EmailDomainTests(TestCase):
@@ -127,13 +167,16 @@ class EmailDomainTests(TestCase):
         self.assertFalse(_email_allowed_domain('user@gmail.com'))
 
 
-@override_settings(GOOGLE_OAUTH_ALLOWED_DOMAINS=('gmail.com', 'talisayhousing.gov.ph'))
+@override_settings(GOOGLE_OAUTH_ALLOWED_DOMAINS=('gmail.com', 'talisayhousing.gov.ph', 'chmsu.edu.ph'))
 class EmailDomainGmailTests(TestCase):
     def test_gmail_allowed(self):
         self.assertTrue(_email_allowed_domain('dev.tester@gmail.com'))
 
     def test_tha_domain_allowed(self):
         self.assertTrue(_email_allowed_domain('joie.tingson@talisayhousing.gov.ph'))
+
+    def test_chmsu_domain_allowed(self):
+        self.assertTrue(_email_allowed_domain('meryl.bivoso@chmsu.edu.ph'))
 
 
 @override_settings(GOOGLE_OAUTH_ALLOWED_DOMAINS=('talisayhousing.gov.ph',))
@@ -160,6 +203,7 @@ class THASocialAccountAdapterTests(TestCase):
         existing=False,
         user=None,
         social_account_pk=None,
+        portal_role=None,
     ):
         sociallogin = MagicMock(spec=SocialLogin)
         sociallogin.is_existing = existing
@@ -168,6 +212,7 @@ class THASocialAccountAdapterTests(TestCase):
         )
         sociallogin.account = MagicMock(extra_data={'email': email})
         sociallogin.account.pk = social_account_pk
+        sociallogin.state = {'portal_role': portal_role} if portal_role else {}
 
         def _connect(request, connect_user):
             sociallogin.user = connect_user
@@ -196,7 +241,7 @@ class THASocialAccountAdapterTests(TestCase):
 
     def test_allows_provisioned_user_on_correct_portal(self):
         request = self._request(session={PORTAL_ROLE_SESSION_KEY: 'second_member'})
-        sociallogin = self._make_sociallogin()
+        sociallogin = self._make_sociallogin(portal_role='second_member')
         self.adapter.pre_social_login(request, sociallogin)
         sociallogin.connect.assert_called_once_with(request, self.user)
         self.assertNotIn(PORTAL_ROLE_SESSION_KEY, request.session)
@@ -241,13 +286,14 @@ class SharedEmailOAuthTests(TestCase):
         setattr(request, '_messages', FallbackStorage(request))
         return request
 
-    def _make_sociallogin(self, linked_user=None, social_account_pk=None):
+    def _make_sociallogin(self, linked_user=None, social_account_pk=None, portal_role=None):
         sociallogin = MagicMock(spec=SocialLogin)
         sociallogin.is_existing = linked_user is not None
         sociallogin.user = linked_user or MagicMock(email=self.shared_email)
         sociallogin.account = MagicMock(extra_data={'email': self.shared_email})
         sociallogin.account.pk = social_account_pk
         sociallogin.account.save = MagicMock()
+        sociallogin.state = {'portal_role': portal_role} if portal_role else {}
 
         def _connect(request, user):
             sociallogin.user = user
@@ -256,6 +302,13 @@ class SharedEmailOAuthTests(TestCase):
         return sociallogin
 
     def test_oauth_second_member_portal(self):
+        request = self._request('fourth_member')
+        sociallogin = self._make_sociallogin(portal_role='second_member')
+        self.adapter.pre_social_login(request, sociallogin)
+        self.assertEqual(sociallogin.user, self.second_member)
+        sociallogin.connect.assert_called_once_with(request, self.second_member)
+
+    def test_oauth_second_member_portal_session_fallback(self):
         request = self._request('second_member')
         sociallogin = self._make_sociallogin()
         self.adapter.pre_social_login(request, sociallogin)
@@ -268,22 +321,23 @@ class SharedEmailOAuthTests(TestCase):
         self.adapter.pre_social_login(request, sociallogin)
         self.assertEqual(sociallogin.user, self.fourth_member)
 
-    def test_oauth_ronda_portal(self):
+    def test_oauth_ronda_portal_alias(self):
         request = self._request('ronda')
-        sociallogin = self._make_sociallogin()
+        sociallogin = self._make_sociallogin(portal_role='ronda')
         self.adapter.pre_social_login(request, sociallogin)
         self.assertEqual(sociallogin.user, self.ronda)
 
-    def test_rebinds_existing_social_account_to_portal_user(self):
+    def test_existing_social_account_logs_in_portal_user_without_db_rebind(self):
         """Regression: Google linked to Ronda, login via Second Member portal."""
-        request = self._request('second_member')
+        request = self._request('fourth_member')
         sociallogin = self._make_sociallogin(
             linked_user=self.ronda,
             social_account_pk=42,
+            portal_role='second_member',
         )
         self.adapter.pre_social_login(request, sociallogin)
         self.assertEqual(sociallogin.user, self.second_member)
-        sociallogin.account.save.assert_called_once_with(update_fields=['user_id'])
+        sociallogin.account.save.assert_not_called()
         sociallogin.connect.assert_not_called()
 
     def test_authenticate_by_email_respects_portal(self):
@@ -293,6 +347,7 @@ class SharedEmailOAuthTests(TestCase):
         sociallogin.email_addresses = []
         sociallogin.account = MagicMock(extra_data={'email': self.shared_email})
         sociallogin.provider = MagicMock()
+        sociallogin.state = {'portal_role': 'fourth_member'}
         with self.settings(SOCIALACCOUNT_EMAIL_AUTHENTICATION=True):
             result = self.adapter.authenticate_by_email(sociallogin)
         self.assertIsNotNone(result)
@@ -328,19 +383,120 @@ class PasswordLoginTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertIn('role=second_member', response.url)
 
+    def test_password_login_rejects_external_next_redirect(self):
+        url = (
+            reverse('accounts:login')
+            + '?role=fourth_member&next=https://evil.example/phish'
+        )
+        response = self.client.post(url, {
+            'username': 'jocel.cuaysing',
+            'password': 'tha2026',
+        })
+        self.assertRedirects(
+            response,
+            reverse('accounts:dashboard'),
+            fetch_redirect_response=False,
+        )
+
 
 class GoogleLoginStartTests(TestCase):
-    def test_stores_role_and_redirects(self):
+    def setUp(self):
+        from allauth.socialaccount.models import SocialApp
+        from django.contrib.sites.models import Site
+
+        site = Site.objects.get_current()
+        self.social_app = SocialApp.objects.create(
+            provider='google',
+            name='Google',
+            client_id='test-client-id',
+            secret='test-secret',
+        )
+        self.social_app.sites.add(site)
+
+    def test_redirects_to_google_with_portal_role_query(self):
         client = Client()
         url = reverse('accounts:google_login_start') + '?role=second_member'
         response = client.get(url)
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(client.session.get(PORTAL_ROLE_SESSION_KEY), 'second_member')
+        self.assertIn('portal_role=second_member', response.url)
+        self.assertIn('/auth/google/login/', response.url)
 
     def test_rejects_missing_role(self):
         client = Client()
         response = client.get(reverse('accounts:google_login_start'))
         self.assertRedirects(response, reverse('accounts:login'), fetch_redirect_response=False)
+
+
+class GoogleOAuthViewTests(TestCase):
+    def test_tha_google_oauth_login_without_social_app_redirects_to_login(self):
+        client = Client()
+        url = reverse('google_login') + '?portal_role=second_member'
+        response = client.get(url)
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('role=second_member', response.url)
+        self.assertIn(reverse('accounts:login'), response.url)
+
+    def test_google_login_start_without_social_app_redirects_to_login(self):
+        client = Client()
+        url = reverse('accounts:google_login_start') + '?role=second_member'
+        response = client.get(url)
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('role=second_member', response.url)
+        self.assertIn(reverse('accounts:login'), response.url)
+
+    def test_tha_google_oauth_login_with_social_app_redirects_to_google(self):
+        from allauth.socialaccount.models import SocialApp
+        from django.contrib.sites.models import Site
+
+        site = Site.objects.get_current()
+        app = SocialApp.objects.create(
+            provider='google',
+            name='Google',
+            client_id='test-client-id',
+            secret='test-secret',
+        )
+        app.sites.add(site)
+
+        client = Client()
+        url = reverse('google_login') + '?portal_role=second_member'
+        response = client.get(url)
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('accounts.google.com', response.url)
+
+
+class LoginPortalPersistenceTests(TestCase):
+    def test_login_restores_role_from_cookie_without_query_param(self):
+        client = Client()
+        client.cookies[LAST_PORTAL_ROLE_COOKIE] = 'second_member'
+        response = client.get(reverse('accounts:login') + '?next=/dashboard/')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Second Member')
+        self.assertContains(response, 'Sign in with Google')
+
+    def test_logout_redirects_to_portal_login(self):
+        user = User.objects.create_user(
+            username='lourynie.tingson',
+            email='joie@talisayhousing.gov.ph',
+            password='tha2026',
+            position='second_member',
+        )
+        client = Client()
+        client.login(username='lourynie.tingson', password='tha2026')
+        response = client.get(reverse('accounts:logout'))
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('role=second_member', response.url)
+
+    def test_portal_role_for_position_maps_field_staff(self):
+        self.assertEqual(portal_role_for_position('ronda'), 'field_desk')
+        self.assertEqual(portal_role_for_position('second_member'), 'second_member')
+
+
+class SignupDisabledTests(TestCase):
+    def test_signup_page_not_available(self):
+        client = Client()
+        response = client.get('/auth/signup/')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'Sign Up Closed', response.content)
 
 
 @override_settings(DEBUG=True)

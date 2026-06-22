@@ -11,11 +11,13 @@ from urllib.parse import urlencode
 
 from allauth.core.exceptions import ImmediateHttpResponse
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
+from allauth.account.adapter import DefaultAccountAdapter
 from allauth.socialaccount.models import SocialLogin
 
 from .auth_portal import (
     PORTAL_ROLE_SESSION_KEY,
     normalize_portal_role,
+    portal_role_for_oauth,
     resolve_staff_user_for_portal,
     user_allowed_for_portal,
 )
@@ -46,6 +48,13 @@ def _allowed_domains_display() -> str:
     return ', '.join(f'@{d}' for d in domains)
 
 
+class THAAccountAdapter(DefaultAccountAdapter):
+    """Staff-only app — no public username/password signup."""
+
+    def is_open_for_signup(self, request):
+        return False
+
+
 class THASocialAccountAdapter(DefaultSocialAccountAdapter):
     """Connect Google sign-in to pre-provisioned staff users only."""
 
@@ -56,9 +65,7 @@ class THASocialAccountAdapter(DefaultSocialAccountAdapter):
         self, sociallogin: SocialLogin
     ) -> tuple[AbstractUser, str] | None:
         """Match Google email to the staff user for the portal selected before OAuth."""
-        portal_role = normalize_portal_role(
-            self.request.session.get(PORTAL_ROLE_SESSION_KEY)
-        )
+        portal_role = portal_role_for_oauth(self.request, sociallogin)
         if not portal_role:
             return None
 
@@ -76,7 +83,7 @@ class THASocialAccountAdapter(DefaultSocialAccountAdapter):
         return None
 
     def pre_social_login(self, request, sociallogin):
-        portal_role = normalize_portal_role(request.session.get(PORTAL_ROLE_SESSION_KEY))
+        portal_role = portal_role_for_oauth(request, sociallogin)
 
         extra = sociallogin.account.extra_data or {}
         email = (extra.get('email') or sociallogin.user.email or '').strip()
@@ -100,10 +107,7 @@ class THASocialAccountAdapter(DefaultSocialAccountAdapter):
 
         if sociallogin.user != user:
             sociallogin.user = user
-            if sociallogin.account.pk:
-                sociallogin.account.user = user
-                sociallogin.account.save(update_fields=['user_id'])
-            else:
+            if not sociallogin.account.pk:
                 sociallogin.connect(request, user)
 
         allowed, err = user_allowed_for_portal(user, portal_role)
@@ -111,6 +115,7 @@ class THASocialAccountAdapter(DefaultSocialAccountAdapter):
             messages.error(request, err)
             raise ImmediateHttpResponse(_login_redirect_with_role(portal_role))
 
+        request._ihsms_save_portal_role = portal_role
         request.session.pop(PORTAL_ROLE_SESSION_KEY, None)
 
     def get_login_redirect_url(self, request):

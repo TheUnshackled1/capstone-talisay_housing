@@ -3,6 +3,8 @@
 from django.conf import settings
 from django.http import HttpResponsePermanentRedirect
 
+from .auth_portal import is_valid_portal_role, remember_portal_role_cookie
+
 
 class LocalhostCanonicalizationMiddleware:
     """
@@ -22,3 +24,17 @@ class LocalhostCanonicalizationMiddleware:
             url = url.replace(f'://{host}', f'://{canonical_host}', 1)
             return HttpResponsePermanentRedirect(url)
         return self.get_response(request)
+
+
+class LastPortalRoleCookieMiddleware:
+    """Write last portal role cookie when login/logout handlers queue it on the request."""
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+        role = getattr(request, '_ihsms_save_portal_role', None)
+        if role and is_valid_portal_role(role):
+            remember_portal_role_cookie(response, role)
+        return response

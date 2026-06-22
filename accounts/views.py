@@ -13,14 +13,25 @@ from django.db.models import Count, F, Q, Prefetch
 from django.urls import reverse
 from django.contrib.sessions.models import Session
 from django.contrib.auth import get_user_model
+from django.utils.http import url_has_allowed_host_and_scheme
 from datetime import date, datetime, timedelta
 from urllib.parse import urlencode
+
+from allauth.account.internal.decorators import login_not_required
+from allauth.socialaccount.adapter import get_adapter
+from allauth.socialaccount.providers.base.constants import AuthProcess
+
+from .auth_oauth import google_oauth_configured
 from .forms import LoginForm
 from .models import FIELD_DESK_POSITIONS
 from .auth_portal import (
     PORTAL_ROLE_SESSION_KEY,
+    is_valid_portal_role,
     normalize_portal_role,
     portal_role_display,
+    portal_role_for_position,
+    remember_portal_role_cookie,
+    resolve_login_portal_role,
     user_allowed_for_portal,
 )
 from intake.models import Applicant, Archive, SMSLog
@@ -39,11 +50,11 @@ from units.isf_population import isf_population_stats, resolve_isf_population_si
 from cases.models import Case
 
 
-def _redirect_login_preserving_role(request):
+def _redirect_login_preserving_role(request, role: str | None = None):
     """Return to login; keep ?role= so the portal badge and rules stay in sync after a failed check."""
-    role = request.GET.get('role', '')
-    if role:
-        return redirect(f"{reverse('accounts:login')}?{urlencode({'role': role})}")
+    resolved = normalize_portal_role(role or request.GET.get('role', '') or resolve_login_portal_role(request))
+    if resolved:
+        return redirect(f"{reverse('accounts:login')}?{urlencode({'role': resolved})}")
     return redirect('accounts:login')
 
 
@@ -87,7 +98,7 @@ def login_view(request):
     if request.user.is_authenticated:
         return redirect('accounts:dashboard')
 
-    role = normalize_portal_role(request.GET.get('role', ''))
+    role = resolve_login_portal_role(request)
     role_display = portal_role_display(role)
 
     if request.method == 'POST':
@@ -102,12 +113,24 @@ def login_view(request):
                 allowed, err = user_allowed_for_portal(user, role)
                 if not allowed:
                     messages.error(request, err)
-                    return _redirect_login_preserving_role(request)
+                    return _redirect_login_preserving_role(request, role=role)
 
                 login(request, user)
+                if role:
+                    request._ihsms_save_portal_role = role
                 messages.success(request, f'Welcome back, {user.first_name or user.username}!')
-                next_url = request.GET.get('next', 'accounts:dashboard')
-                return redirect(next_url)
+                next_url = request.GET.get('next')
+                if next_url and url_has_allowed_host_and_scheme(
+                    next_url,
+                    allowed_hosts={request.get_host()},
+                    require_https=request.is_secure(),
+                ):
+                    response = redirect(next_url)
+                else:
+                    response = redirect('accounts:dashboard')
+                if role:
+                    remember_portal_role_cookie(response, role)
+                return response
             else:
                 messages.error(request, 'Invalid username or password.')
         else:
@@ -115,28 +138,66 @@ def login_view(request):
     else:
         form = LoginForm()
 
-    return render(request, 'accounts/login.html', {
+    response = render(request, 'accounts/login.html', {
         'form': form,
         'role': role,
         'role_display': role_display,
     })
+    if role:
+        remember_portal_role_cookie(response, role)
+    return response
 
 
 def google_login_start(request):
-    """Store portal role in session (if any) and redirect to Google OAuth."""
+    """Validate portal role and hand off to Google OAuth (role stored in OAuth state)."""
     role = normalize_portal_role(request.GET.get('role', ''))
-    if not role:
+    if not is_valid_portal_role(role):
         messages.error(request, 'Select your staff portal before signing in with Google.')
         return redirect('accounts:login')
-    request.session[PORTAL_ROLE_SESSION_KEY] = role
-    return redirect('google_login')
+    if not google_oauth_configured():
+        messages.error(
+            request,
+            'Google sign-in is not set up. Ask an administrator to run: '
+            'python manage.py setup_google_oauth',
+        )
+        return redirect(f"{reverse('accounts:login')}?{urlencode({'role': role})}")
+    return redirect(f"{reverse('google_login')}?{urlencode({'portal_role': role})}")
+
+
+@login_not_required
+def tha_google_oauth_login(request):
+    """Start Google OAuth; embed portal_role in per-flow state (multi-tab safe)."""
+    role = normalize_portal_role(request.GET.get('portal_role', ''))
+    if not is_valid_portal_role(role):
+        messages.error(request, 'Select your staff portal before signing in with Google.')
+        return redirect('accounts:login')
+
+    if not google_oauth_configured():
+        messages.error(
+            request,
+            'Google sign-in is not set up. Ask an administrator to run: '
+            'python manage.py setup_google_oauth',
+        )
+        return redirect(f"{reverse('accounts:login')}?{urlencode({'role': role})}")
+
+    provider = get_adapter().get_provider(request, 'google')
+    return provider.redirect(request, process=AuthProcess.LOGIN, portal_role=role)
 
 
 def logout_view(request):
-    """Log out and redirect to home."""
+    """Log out and return to the portal login page."""
+    role = ''
+    if request.user.is_authenticated:
+        role = portal_role_for_position(request.user.position)
     logout(request)
     messages.info(request, 'You have been logged out.')
-    return redirect('home')
+    params = {}
+    if role:
+        params['role'] = role
+    login_url = reverse('accounts:login')
+    if params:
+        login_url = f'{login_url}?{urlencode(params)}'
+    return redirect(login_url)
 
 
 @login_required

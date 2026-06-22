@@ -32,10 +32,13 @@ def _env_bool(key: str, default: bool = False) -> bool:
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-l#!1!(warwnj*ld=dz=-kd13sfzq1s9m460mt8w^p3l4+0##lg"
+SECRET_KEY = os.environ.get(
+    'SECRET_KEY',
+    'django-insecure-l#!1!(warwnj*ld=dz=-kd13sfzq1s9m460mt8w^p3l4+0##lg',
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = _env_bool('DEBUG', default=True)
 
 # When True, staff housing monitoring UI does not block extension 30 Day (month_2) on the
 # caretaker midpoint—Confirm / Inspection details / Notify flow works for QA. Set env
@@ -45,13 +48,26 @@ EXTENSION_30DAY_SKIP_MIDPOINT_BLOCK = _env_bool(
     default=DEBUG,
 )
 
-ALLOWED_HOSTS = ['*']  # Allow all hosts for development/testing
+_hosts_raw = os.environ.get('ALLOWED_HOSTS', '').strip()
+if _hosts_raw:
+    ALLOWED_HOSTS = [h.strip() for h in _hosts_raw.split(',') if h.strip()]
+elif DEBUG:
+    ALLOWED_HOSTS = ['*']
+else:
+    ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
-# Allow your tunnel's domain to submit forms (login, OAuth callback, etc.)
-CSRF_TRUSTED_ORIGINS = ['https://m86m4vrs-8000.asse.devtunnels.ms']
+_csrf_origins_raw = os.environ.get('CSRF_TRUSTED_ORIGINS', '').strip()
+if _csrf_origins_raw:
+    CSRF_TRUSTED_ORIGINS = [
+        o.strip() for o in _csrf_origins_raw.split(',') if o.strip()
+    ]
+elif DEBUG:
+    CSRF_TRUSTED_ORIGINS = ['https://m86m4vrs-8000.asse.devtunnels.ms']
+else:
+    CSRF_TRUSTED_ORIGINS = []
 
-# Trust dev-tunnel / reverse-proxy forwarded headers (DEBUG only)
-if DEBUG:
+TRUST_PROXY_HEADERS = _env_bool('TRUST_PROXY_HEADERS', default=DEBUG)
+if TRUST_PROXY_HEADERS:
     USE_X_FORWARDED_HOST = True
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
@@ -95,6 +111,7 @@ MIDDLEWARE += [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "accounts.middleware.LastPortalRoleCookieMiddleware",
     "allauth.account.middleware.AccountMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -214,9 +231,10 @@ elif os.environ.get('GOOGLE_OAUTH_ALLOWED_DOMAIN', '').strip():
     )
 else:
     # Default: personal Gmail + THA Workspace accounts
-    GOOGLE_OAUTH_ALLOWED_DOMAINS = ('gmail.com', 'talisayhousing.gov.ph')
+    GOOGLE_OAUTH_ALLOWED_DOMAINS = ('gmail.com', 'talisayhousing.gov.ph', 'chmsu.edu.ph')
 
 ACCOUNT_EMAIL_VERIFICATION = 'none'
+ACCOUNT_ADAPTER = 'accounts.adapters.THAAccountAdapter'
 ACCOUNT_LOGIN_METHODS = {'username'}
 ACCOUNT_SIGNUP_FIELDS = ['email', 'username*', 'password1*', 'password2*']
 SOCIALACCOUNT_AUTO_SIGNUP = False
