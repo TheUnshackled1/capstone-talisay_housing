@@ -2852,7 +2852,10 @@
             <div class="lotplan-stage" id="lotplan-zoomable">
                 <img class="lotplan-img" src="{% static 'images/lot_plan.png' %}" alt="Subdivision lot plan for {{ site.name|default:'relocation site' }}">
                 <svg id="lotplan-svg" class="lotplan-overlay" viewBox="0 0 1000 1000" preserveAspectRatio="none"
-                     role="group" aria-label="Interactive lot zones" data-polygons-url="{% static 'units/lot_plan_polygons.json' %}"></svg>
+                     role="group" aria-label="Interactive lot zones"
+                     data-polygons-url="{% static 'units/lot_plan_polygons.json' %}"
+                     data-slots-url="{% static 'units/lot_plan_slots.json' %}"
+                     data-clusters-url="{% static 'units/lot_plan_clusters.json' %}"></svg>
             </div>
             <div class="lotplan-zoom-controls">
                 <button type="button" class="lotplan-zoom-btn" id="lotplan-zoom-in" title="Zoom in" aria-label="Zoom in">＋</button>
@@ -3860,35 +3863,25 @@ function loadLotPlanPolygons(url) {
     return lotPlanPolygonsPromise;
 }
 
-const LOT_PLAN_DB_BLOCK_REGIONS = [
-    { block: '1',  x: 0.130, y: 0.040, w: 0.130, h: 0.900 },
-    { block: '2',  x: 0.260, y: 0.040, w: 0.080, h: 0.900 },
-    { block: '3',  x: 0.335, y: 0.030, w: 0.115, h: 0.320 },
-    { block: '4',  x: 0.335, y: 0.310, w: 0.115, h: 0.200 },
-    { block: '5',  x: 0.450, y: 0.030, w: 0.105, h: 0.320 },
-    { block: '6',  x: 0.450, y: 0.310, w: 0.105, h: 0.220 },
-    { block: '7',  x: 0.560, y: 0.030, w: 0.120, h: 0.320 },
-    { block: '8',  x: 0.560, y: 0.310, w: 0.120, h: 0.220 },
-    { block: '9',  x: 0.680, y: 0.030, w: 0.120, h: 0.320 },
-    { block: '10', x: 0.680, y: 0.310, w: 0.120, h: 0.220 },
-    { block: '11', x: 0.800, y: 0.040, w: 0.095, h: 0.900 },
-];
+let lotPlanSlotsPromise = null;
+function loadLotPlanSlots(url) {
+    if (!lotPlanSlotsPromise) {
+        lotPlanSlotsPromise = fetch(url)
+            .then(r => (r.ok ? r.json() : Promise.reject(r.status)))
+            .catch(() => ({ blocks: {} }));
+    }
+    return lotPlanSlotsPromise;
+}
 
-// Per-block lot anchor positions on the plan (normalized cx/cy).
-// Block 4 when full (9 lots): L7 is bottom-right; L8 is to its left.
-const LOT_PLAN_BLOCK_SLOTS = {
-    '4': {
-        1: { cx: 0.370, cy: 0.347 },
-        2: { cx: 0.395, cy: 0.359 },
-        3: { cx: 0.421, cy: 0.361 },
-        4: { cx: 0.447, cy: 0.363 },
-        5: { cx: 0.369, cy: 0.388 },
-        6: { cx: 0.394, cy: 0.423 },
-        8: { cx: 0.419, cy: 0.423 },
-        7: { cx: 0.443, cy: 0.423 },
-        9: { cx: 0.368, cy: 0.506 },
-    },
-};
+let lotPlanClustersPromise = null;
+function loadLotPlanClusters(url) {
+    if (!lotPlanClustersPromise) {
+        lotPlanClustersPromise = fetch(url)
+            .then(r => (r.ok ? r.json() : Promise.reject(r.status)))
+            .catch(() => ({ blocks: {} }));
+    }
+    return lotPlanClustersPromise;
+}
 
 function lotPlanUnitsByBlock() {
     return Array.from(document.querySelectorAll('#gridView-content .vmap-block')).map(blockEl => {
@@ -3941,15 +3934,25 @@ function lotPlanClusterIntoRows(candidates, rowBand) {
 }
 
 /** Match inventory lots to nearest polygon using per-block anchor slots. */
-function lotPlanAssignBySlots(region, blockUnits, candidates, assignedPolyIdx, assignments, assignedUnitIds) {
-    const slots = LOT_PLAN_BLOCK_SLOTS[region.block];
-    if (!slots) return false;
+function lotPlanPolyMatchesSlotBounds(p, slot) {
+    const b = slot && slot.bounds;
+    if (!b) return true;
+    if (b.minCy != null && p.cy < b.minCy) return false;
+    if (b.maxCy != null && p.cy >= b.maxCy) return false;
+    if (b.minCx != null && p.cx < b.minCx) return false;
+    if (b.maxCx != null && p.cx >= b.maxCx) return false;
+    return true;
+}
+
+function lotPlanAssignBySlots(blockNum, blockUnits, candidates, blockSlots, assignedPolyIdx, assignments, assignedUnitIds) {
+    if (!blockSlots || !Object.keys(blockSlots).length) return false;
 
     const pool = [...candidates];
-    const lotNums = Object.keys(slots).map(n => parseInt(n, 10)).sort((a, b) => a - b);
+    const lotNums = Object.keys(blockSlots).map(n => parseInt(n, 10)).sort((a, b) => a - b);
 
     lotNums.forEach(lotNum => {
-        const slot = slots[lotNum];
+        const slot = blockSlots[String(lotNum)];
+        if (!slot) return;
         const unit = lotPlanUnitByLotNumber(blockUnits, lotNum);
         if (!unit || !pool.length) return;
         const uid = unit.dataset.unitId || '';
@@ -3958,6 +3961,7 @@ function lotPlanAssignBySlots(region, blockUnits, candidates, assignedPolyIdx, a
         let best = null;
         let bestDist = Infinity;
         pool.forEach(cand => {
+            if (!lotPlanPolyMatchesSlotBounds(cand.p, slot)) return;
             const dx = cand.p.cx - slot.cx;
             const dy = cand.p.cy - slot.cy;
             const dist = dx * dx + dy * dy;
@@ -3968,7 +3972,7 @@ function lotPlanAssignBySlots(region, blockUnits, candidates, assignedPolyIdx, a
         });
         if (!best) return;
 
-        const bl = lotPlanParseBlockLot(unit) || { block: region.block, lot: String(lotNum) };
+        const bl = lotPlanParseBlockLot(unit) || { block: blockNum, lot: String(lotNum) };
         assignments.set(best.i, { unit, block: bl.block, lot: bl.lot });
         assignedPolyIdx.add(best.i);
         assignedUnitIds.add(uid);
@@ -3978,32 +3982,39 @@ function lotPlanAssignBySlots(region, blockUnits, candidates, assignedPolyIdx, a
 }
 
 /**
- * Assign polygons in a block region to inventory lots.
- * Uses LOT_PLAN_BLOCK_SLOTS when defined (e.g. Block 4 grid); otherwise
- * fills lots 1..N in row-major order.
+ * Assign polygons in a block's primary physical cluster to inventory lots.
+ * Polygons outside the primary cluster are never used for this block.
  */
-function lotPlanAssignBlockRegion(region, blockUnits, lots, assignedPolyIdx, assignments, assignedUnitIds) {
+function lotPlanAssignBlockRegion(blockNum, primary, blockUnits, lots, blockSlots, assignedPolyIdx, assignments, assignedUnitIds) {
     const candidates = lots
         .map((p, i) => ({ p, i }))
-        .filter(({ p, i }) => !assignedPolyIdx.has(i) && lotPlanPolyInRegion(p, region));
+        .filter(({ p, i }) => !assignedPolyIdx.has(i) && lotPlanPolyInRegion(p, primary));
 
     if (!candidates.length || !blockUnits.length) return;
 
-    if (lotPlanAssignBySlots(region, blockUnits, candidates, assignedPolyIdx, assignments, assignedUnitIds)) {
+    const slots = blockSlots[blockNum];
+    if (lotPlanAssignBySlots(
+        blockNum, blockUnits, candidates, slots,
+        assignedPolyIdx, assignments, assignedUnitIds,
+    )) {
         return;
     }
 
     const rowBand = 0.04;
+    const sortedUnits = [...blockUnits].sort((a, b) => {
+        const la = parseInt((lotPlanParseBlockLot(a) || {}).lot || '0', 10);
+        const lb = parseInt((lotPlanParseBlockLot(b) || {}).lot || '0', 10);
+        return la - lb;
+    });
 
-    // Default: row-major, lots 1..N in DOM order.
     const rows = lotPlanClusterIntoRows(candidates, rowBand);
     const ordered = rows.flatMap(r => r.items);
-    blockUnits.forEach((unit, uIdx) => {
+    sortedUnits.forEach((unit, uIdx) => {
         const cand = ordered[uIdx];
         if (!cand) return;
         const uid = unit.dataset.unitId || '';
         if (assignedUnitIds.has(uid)) return;
-        const bl = lotPlanParseBlockLot(unit) || { block: region.block, lot: String(uIdx + 1) };
+        const bl = lotPlanParseBlockLot(unit) || { block: blockNum, lot: String(uIdx + 1) };
         assignments.set(cand.i, { unit, block: bl.block, lot: bl.lot });
         assignedPolyIdx.add(cand.i);
         assignedUnitIds.add(uid);
@@ -4075,8 +4086,16 @@ async function buildLotPlan() {
     unitsByBlock.forEach(b => { unitByBlockMap[b.block] = b.units; });
 
     const url = svg.dataset.polygonsUrl;
-    const data = url ? await loadLotPlanPolygons(url) : { lots: [] };
+    const slotsUrl = svg.dataset.slotsUrl;
+    const clustersUrl = svg.dataset.clustersUrl;
+    const [data, slotsData, clustersData] = await Promise.all([
+        url ? loadLotPlanPolygons(url) : { lots: [] },
+        slotsUrl ? loadLotPlanSlots(slotsUrl) : { blocks: {} },
+        clustersUrl ? loadLotPlanClusters(clustersUrl) : { blocks: {} },
+    ]);
     const lots = (data && data.lots) || [];
+    const blockSlots = (slotsData && slotsData.blocks) || {};
+    const blockClusters = (clustersData && clustersData.blocks) || {};
 
     while (svg.firstChild) svg.removeChild(svg.firstChild);
     if (!lots.length) return;
@@ -4085,30 +4104,28 @@ async function buildLotPlan() {
     const assignments = new Map();
     const assignedPolyIdx = new Set();
     const assignedUnitIds = new Set();
+    const blockGroups = new Map();
 
-    // Map polygons inside each block region to inventory lots (grid-aware per block).
-    LOT_PLAN_DB_BLOCK_REGIONS.forEach(region => {
-        const blockUnits = unitByBlockMap[region.block] || [];
-        if (!blockUnits.length) return;
-        lotPlanAssignBlockRegion(
-            region, blockUnits, lots, assignedPolyIdx, assignments, assignedUnitIds,
-        );
-    });
+    Object.keys(blockClusters)
+        .sort((a, b) => parseInt(a, 10) - parseInt(b, 10))
+        .forEach(blockNum => {
+            const blockUnits = unitByBlockMap[blockNum] || [];
+            const cluster = blockClusters[blockNum];
+            if (!blockUnits.length || !cluster || !cluster.primary) return;
+            lotPlanAssignBlockRegion(
+                blockNum, cluster.primary, blockUnits, lots, blockSlots,
+                assignedPolyIdx, assignments, assignedUnitIds,
+            );
+            const bg = document.createElementNS(SVG_NS, 'g');
+            bg.setAttribute('class', 'lotplan-block');
+            bg.dataset.block = blockNum;
+            blockGroups.set(blockNum, bg);
+            svg.appendChild(bg);
+        });
 
-    // Fallback: any remaining inventory lots → next unassigned polygons (reading order).
-    const unassignedUnits = units.filter(u => !assignedUnitIds.has(u.dataset.unitId || ''));
-    const unassignedPolyIdx = lots
-        .map((p, i) => i)
-        .filter(i => !assignedPolyIdx.has(i))
-        .sort((a, b) => ((lots[a].cy || 0) - (lots[b].cy || 0)) || ((lots[a].cx || 0) - (lots[b].cx || 0)));
-    unassignedUnits.forEach((unit, uIdx) => {
-        const pi = unassignedPolyIdx[uIdx];
-        if (pi === undefined) return;
-        const bl = lotPlanParseBlockLot(unit);
-        if (!bl) return;
-        assignments.set(pi, { unit, block: bl.block, lot: bl.lot });
-        assignedPolyIdx.add(pi);
-    });
+    const inertLayer = document.createElementNS(SVG_NS, 'g');
+    inertLayer.setAttribute('class', 'lotplan-inert-layer');
+    svg.appendChild(inertLayer);
 
     lots.forEach((poly, i) => {
         const g = document.createElementNS(SVG_NS, 'g');
@@ -4126,11 +4143,12 @@ async function buildLotPlan() {
         const assign = assignments.get(i);
         if (assign) {
             lotPlanWireLinkedLot(g, poly, assign.unit, assign.block, assign.lot, V);
+            const parent = blockGroups.get(assign.block) || svg;
+            parent.appendChild(g);
         } else {
             g.classList.add('lotplan-lot--inert');
+            inertLayer.appendChild(g);
         }
-
-        svg.appendChild(g);
     });
 }
 

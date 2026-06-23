@@ -827,6 +827,26 @@ def create_housing_unit(request, position):
             status=400,
         )
 
+    new_block = int(block_number)
+    existing_blocks = HousingUnit.objects.filter(site=site).values_list(
+        'block_number', flat=True,
+    ).distinct()
+    numeric_blocks = sorted(
+        int(b) for b in existing_blocks if str(b).isdigit()
+    )
+    max_block = numeric_blocks[-1] if numeric_blocks else 0
+    if new_block > max_block + 1:
+        next_block = max_block + 1
+        return JsonResponse(
+            {
+                'success': False,
+                'error': (
+                    f'Add Block {next_block} first before Block {new_block}.'
+                ),
+            },
+            status=400,
+        )
+
     existing = HousingUnit.objects.filter(
         site=site,
         block_number=block_number,
