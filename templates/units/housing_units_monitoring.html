@@ -547,7 +547,7 @@
         margin-top: 0.75rem;
         border: 1px solid #e2e8f0;
         border-radius: 14px;
-        background: #f1f5f9;
+        background: #ffffff;
         overflow: clip;
         box-shadow: 0 4px 24px rgba(15, 23, 42, 0.10), 0 1px 4px rgba(15, 23, 42, 0.06);
     }
@@ -636,7 +636,15 @@
         background: #f8fafc;
         color: #2563eb;
     }
+    .lotplan-roads-base {
+        position: absolute;
+        inset: 0;
+        background: #ffffff;
+        z-index: 0;
+    }
     .lotplan-img {
+        position: relative;
+        z-index: 1;
         display: block;
         width: 100%;
         height: auto;
@@ -650,14 +658,15 @@
         width: 100%;
         height: 100%;
         display: block;
+        z-index: 2;
     }
 
     /* Each lot = <g class="lotplan-lot"> holding a <polygon> (+ <text> when linked) */
     .lotplan-lot { cursor: default; }
     .lotplan-lot > polygon {
-        fill: rgba(148, 163, 184, 0.16);
-        stroke: rgba(71, 85, 105, 0.65);
-        stroke-width: 0.8;
+        fill: none;
+        stroke: rgba(71, 85, 105, 0.45);
+        stroke-width: 0.6;
         stroke-linejoin: round;
         transition: fill 0.12s ease, stroke 0.12s ease, stroke-width 0.12s ease;
     }
@@ -678,7 +687,7 @@
     .lotplan-lot--linked:hover > polygon {
         stroke: #1d4ed8;
         stroke-width: 1.6;
-        fill: rgba(59, 130, 246, 0.45);
+        fill: #93c5fd;
     }
     .lotplan-lot--linked:focus-visible { outline: none; }
     .lotplan-lot--linked:focus-visible > polygon {
@@ -686,29 +695,29 @@
         stroke-width: 2;
     }
 
-    /* Unlinked drawn lots — plain outlines, not interactive */
+    /* Unlinked lots — outline only; PNG underneath shows lot grid */
     .lotplan-lot--inert > polygon {
         fill: none;
-        stroke: rgba(100, 116, 139, 0.45);
-        stroke-width: 0.6;
+        stroke: rgba(100, 116, 139, 0.35);
+        stroke-width: 0.5;
     }
 
-    /* Status palettes mirror the schematic vmap-lot colors */
+    /* Status palettes — opaque fills on dark road background */
     .lotplan-lot--occupied > polygon {
-        fill: rgba(16, 185, 129, 0.45);
-        stroke: rgba(5, 150, 105, 0.9);
+        fill: #6ee7b7;
+        stroke: rgba(5, 150, 105, 0.95);
     }
     .lotplan-lot--vacant > polygon {
-        fill: rgba(59, 130, 246, 0.40);
-        stroke: rgba(37, 99, 235, 0.9);
+        fill: #93c5fd;
+        stroke: rgba(37, 99, 235, 0.95);
     }
     .lotplan-lot--housing-unit > polygon {
-        fill: rgba(45, 212, 191, 0.50);
-        stroke: rgba(13, 148, 136, 0.95);
+        fill: #5eead4;
+        stroke: rgba(13, 148, 136, 0.98);
     }
     .lotplan-lot--extension-failed > polygon {
-        fill: rgba(239, 68, 68, 0.45);
-        stroke: rgba(220, 38, 38, 0.95);
+        fill: #fca5a5;
+        stroke: rgba(220, 38, 38, 0.98);
     }
     .lotplan-empty {
         padding: 2rem 1rem;
@@ -3003,7 +3012,8 @@
                 <ul id="lotplan-search-results" class="lotplan-search-results" role="listbox" aria-label="Search results"></ul>
             </div>
             <div class="lotplan-stage" id="lotplan-zoomable">
-                <img class="lotplan-img" src="{% static 'images/lot_plan.png' %}" alt="Subdivision lot plan for {{ site.name|default:'relocation site' }}">
+                <div class="lotplan-roads-base" aria-hidden="true"></div>
+                <img class="lotplan-img" src="{% static 'images/lot_plan_roads.png' %}" alt="Subdivision lot plan for {{ site.name|default:'relocation site' }}">
                 <svg id="lotplan-svg" class="lotplan-overlay" viewBox="0 0 1000 1000" preserveAspectRatio="none"
                      role="group" aria-label="Interactive lot zones"
                      data-polygons-url="{% static 'units/lot_plan_polygons.json' %}"
