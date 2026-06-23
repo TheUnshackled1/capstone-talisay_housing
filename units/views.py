@@ -827,13 +827,24 @@ def create_housing_unit(request, position):
             status=400,
         )
 
-    if HousingUnit.objects.filter(
+    existing = HousingUnit.objects.filter(
         site=site,
         block_number=block_number,
         lot_number=lot_number,
-    ).exists():
+    ).first()
+    if existing is not None:
         return JsonResponse(
-            {'success': False, 'duplicate': True, 'error': _DUPLICATE_UNIT_MSG},
+            {
+                'success': False,
+                'duplicate': True,
+                'error': (
+                    f'Block {block_number} Lot {lot_number} is already in the inventory '
+                    f'at {site.name}.'
+                ),
+                'existing_unit_id': str(existing.id),
+                'existing_block': block_number,
+                'existing_lot': lot_number,
+            },
             status=400,
         )
 
@@ -846,8 +857,20 @@ def create_housing_unit(request, position):
             location_notes='',
         )
     except IntegrityError:
+        existing = HousingUnit.objects.filter(
+            site=site,
+            block_number=block_number,
+            lot_number=lot_number,
+        ).first()
         return JsonResponse(
-            {'success': False, 'duplicate': True, 'error': _DUPLICATE_UNIT_MSG},
+            {
+                'success': False,
+                'duplicate': True,
+                'error': _DUPLICATE_UNIT_MSG,
+                'existing_unit_id': str(existing.id) if existing else None,
+                'existing_block': block_number,
+                'existing_lot': lot_number,
+            },
             status=400,
         )
     except Exception as e:

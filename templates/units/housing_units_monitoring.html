@@ -534,6 +534,164 @@
         border: 1px solid #fca5a5;
     }
 
+    /* ==========================================================
+       LOT PLAN MAP — clickable zones overlaid on the real drawing
+       ========================================================== */
+    .lotplan-zoom-wrapper {
+        position: relative;
+        width: 100%;
+        margin-top: 0.5rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        background: #f8fafc;
+        overflow: hidden;
+    }
+    .lotplan-stage {
+        position: relative;
+        width: 100%;
+        transform-origin: 0 0;
+        cursor: grab;
+        line-height: 0;
+        transition: none;
+    }
+    .lotplan-stage.is-dragging {
+        cursor: grabbing;
+    }
+    /* Zoom controls — floating buttons like Google Maps */
+    .lotplan-zoom-controls {
+        position: absolute;
+        bottom: 1rem;
+        right: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        z-index: 10;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.18);
+    }
+    .lotplan-zoom-btn {
+        appearance: none;
+        border: none;
+        width: 40px;
+        height: 40px;
+        background: #ffffff;
+        color: #334155;
+        font-size: 1.25rem;
+        font-weight: 700;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.12s ease, color 0.12s ease;
+        line-height: 1;
+        font-family: inherit;
+    }
+    .lotplan-zoom-btn:hover {
+        background: #f1f5f9;
+        color: #0f172a;
+    }
+    .lotplan-zoom-btn:active {
+        background: #e2e8f0;
+    }
+    .lotplan-zoom-btn--reset {
+        font-size: 0.65rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+    }
+    .lotplan-zoom-level {
+        background: #ffffff;
+        text-align: center;
+        font-size: 0.65rem;
+        font-weight: 700;
+        color: #64748b;
+        padding: 2px 0;
+        line-height: 1;
+        user-select: none;
+        border-top: 1px solid #f1f5f9;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    .lotplan-img {
+        display: block;
+        width: 100%;
+        height: auto;
+        user-select: none;
+        -webkit-user-drag: none;
+    }
+    /* SVG overlay sits exactly on top of the plan image */
+    .lotplan-overlay {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        display: block;
+    }
+
+    /* Each lot = <g class="lotplan-lot"> holding a <polygon> (+ <text> when linked) */
+    .lotplan-lot { cursor: default; }
+    .lotplan-lot > polygon {
+        fill: rgba(148, 163, 184, 0.16);
+        stroke: rgba(71, 85, 105, 0.65);
+        stroke-width: 0.8;
+        stroke-linejoin: round;
+        transition: fill 0.12s ease, stroke 0.12s ease, stroke-width 0.12s ease;
+    }
+    .lotplan-lot > text {
+        fill: #0f172a;
+        font-size: 7.5px;
+        font-weight: 700;
+        text-anchor: middle;
+        dominant-baseline: central;
+        pointer-events: none;
+        paint-order: stroke;
+        stroke: rgba(255, 255, 255, 0.85);
+        stroke-width: 2px;
+    }
+
+    /* Linked (clickable) lots */
+    .lotplan-lot--linked { cursor: pointer; }
+    .lotplan-lot--linked:hover > polygon {
+        stroke: #1d4ed8;
+        stroke-width: 1.6;
+        fill: rgba(59, 130, 246, 0.45);
+    }
+    .lotplan-lot--linked:focus-visible { outline: none; }
+    .lotplan-lot--linked:focus-visible > polygon {
+        stroke: #1d4ed8;
+        stroke-width: 2;
+    }
+
+    /* Unlinked drawn lots — plain outlines, not interactive */
+    .lotplan-lot--inert > polygon {
+        fill: none;
+        stroke: rgba(100, 116, 139, 0.45);
+        stroke-width: 0.6;
+    }
+
+    /* Status palettes mirror the schematic vmap-lot colors */
+    .lotplan-lot--occupied > polygon {
+        fill: rgba(16, 185, 129, 0.45);
+        stroke: rgba(5, 150, 105, 0.9);
+    }
+    .lotplan-lot--vacant > polygon {
+        fill: rgba(59, 130, 246, 0.40);
+        stroke: rgba(37, 99, 235, 0.9);
+    }
+    .lotplan-lot--housing-unit > polygon {
+        fill: rgba(45, 212, 191, 0.50);
+        stroke: rgba(13, 148, 136, 0.95);
+    }
+    .lotplan-lot--extension-failed > polygon {
+        fill: rgba(239, 68, 68, 0.45);
+        stroke: rgba(220, 38, 38, 0.95);
+    }
+    .lotplan-empty {
+        padding: 2rem 1rem;
+        text-align: center;
+        color: #64748b;
+        font-size: 0.85rem;
+    }
+
     /* Tablet — single block per row, denser lot grid */
     @media (max-width: 900px) {
         .vmap-canvas { grid-template-columns: 1fr; }
@@ -2626,8 +2784,8 @@
 
     <!-- Filter Tabs (Removed) -->
 
-    <!-- VICINITY MAP VIEW (replaces card grid) -->
-    <div id="gridView-content" style="display: block;">
+    <!-- SCHEMATIC GRID — hidden; kept as the data source for the lot-plan map zones + KPI filters -->
+    <div id="gridView-content" style="display: none;">
         <div class="vmap-legend" role="group" aria-label="Lot status legend">
             <span class="vmap-legend-title">Site map{% if site %} · {{ site.name }}{% endif %}</span>
             <span class="vmap-legend-item vmap-legend--occupied"><i></i>Occupied</span>
@@ -2654,8 +2812,8 @@
                             data-status="{{ unit.status }}"
                             data-construction="{{ unit.construction_tokens }}"
                             onclick="openUnitModal('{{ unit.id }}')"
-                            title="Block {{ unit.block_number }} · Lot {{ unit.lot_number }} — {% if unit.is_housing_unit_on_file %}Housing unit — final monitoring complete, recorded in inventory{% elif unit.is_historical_beneficiary %}Unit — historical on-site beneficiary{% else %}{{ unit.get_status_display }}{% endif %}{% if unit.current_occupant %} · {{ unit.current_occupant.full_name }}{% elif unit.occupant_name %} · {{ unit.occupant_name }}{% endif %}">
-                        <span class="vmap-lot-id">{{ unit.block_number }}-{{ unit.lot_number }}</span>
+                            title="B{{ unit.block_number }} - L{{ unit.lot_number }} — {% if unit.is_housing_unit_on_file %}Housing unit — final monitoring complete, recorded in inventory{% elif unit.is_historical_beneficiary %}Unit — historical on-site beneficiary{% else %}{{ unit.get_status_display }}{% endif %}{% if unit.current_occupant %} · {{ unit.current_occupant.full_name }}{% elif unit.occupant_name %} · {{ unit.occupant_name }}{% endif %}">
+                        <span class="vmap-lot-id">B{{ unit.block_number }} - L{{ unit.lot_number }}</span>
                         <span class="vmap-lot-occ occupant-name applicant-name" 
                               style="cursor: pointer;"
                               {% if unit.current_occupant %}
@@ -2678,6 +2836,30 @@
                 </div>
             </section>
             {% endfor %}
+        </div>
+    </div>
+
+    <!-- LOT PLAN MAP VIEW (interactive zones over the real drawing) -->
+    <div id="planView-content" style="display: block;">
+        <div class="vmap-legend" role="group" aria-label="Lot status legend">
+            <span class="vmap-legend-title">Lot plan{% if site %} · {{ site.name }}{% endif %}</span>
+            <span class="vmap-legend-item vmap-legend--occupied"><i></i>Occupied</span>
+            <span class="vmap-legend-item vmap-legend--failed"><i></i>Failed</span>
+            <span class="vmap-legend-item vmap-legend--housing-file"><i></i>Housing unit</span>
+            <span class="vmap-legend-item vmap-legend--vacant"><i></i>Vacant</span>
+        </div>
+        <div class="lotplan-zoom-wrapper" id="lotplan-zoom-wrapper">
+            <div class="lotplan-stage" id="lotplan-zoomable">
+                <img class="lotplan-img" src="{% static 'images/lot_plan.png' %}" alt="Subdivision lot plan for {{ site.name|default:'relocation site' }}">
+                <svg id="lotplan-svg" class="lotplan-overlay" viewBox="0 0 1000 1000" preserveAspectRatio="none"
+                     role="group" aria-label="Interactive lot zones" data-polygons-url="{% static 'units/lot_plan_polygons.json' %}"></svg>
+            </div>
+            <div class="lotplan-zoom-controls">
+                <button type="button" class="lotplan-zoom-btn" id="lotplan-zoom-in" title="Zoom in" aria-label="Zoom in">＋</button>
+                <div class="lotplan-zoom-level" id="lotplan-zoom-level">100%</div>
+                <button type="button" class="lotplan-zoom-btn" id="lotplan-zoom-out" title="Zoom out" aria-label="Zoom out">−</button>
+                <button type="button" class="lotplan-zoom-btn lotplan-zoom-btn--reset" id="lotplan-zoom-reset" title="Reset zoom" aria-label="Reset zoom">FIT</button>
+            </div>
         </div>
     </div>
 
@@ -3594,7 +3776,14 @@ document.getElementById('addUnitForm')?.addEventListener('submit', async functio
                 function() { window.location.reload(); }
             );
         } else if (data.duplicate) {
-            monitoringFlowAlert(data.error || 'Existing block or lot!', 'Add housing unit', 'warning', null);
+            const dupMsg = data.error || 'Existing block or lot!';
+            const viewExisting = data.existing_unit_id
+                ? function () {
+                    closeAddUnitModal();
+                    openUnitModal(data.existing_unit_id);
+                }
+                : null;
+            monitoringFlowAlert(dupMsg, 'Add housing unit', 'warning', viewExisting);
         } else {
             errEl.textContent = data.error || 'Could not add unit.';
             errEl.style.display = 'block';
@@ -3638,6 +3827,484 @@ function switchView(view) {
     }
 }
 
+/* ==========================================================
+   LOT PLAN MAP — exact lot polygons traced from lot_plan.png.
+   Polygons (normalized 0..1) are loaded from a static JSON built
+   offline by scripts/trace_lot_plan.py and rendered as an SVG
+   overlay. Lots are linked to HousingUnit records (from the hidden
+   schematic grid) in reading order; extra drawn lots stay inert.
+   ========================================================== */
+const SVG_NS = 'http://www.w3.org/2000/svg';
+const LOT_PLAN_VIEW = 1000; // SVG viewBox size (normalized coords * this)
+const LOT_PLAN_STATUS_CLASSES = [
+    'vmap-lot--occupied',
+    'vmap-lot--vacant',
+    'vmap-lot--housing-unit',
+    'vmap-lot--extension-failed',
+];
+
+function lotPlanStatusClassFrom(sourceLot) {
+    for (const cls of LOT_PLAN_STATUS_CLASSES) {
+        if (sourceLot.classList.contains(cls)) return 'lotplan-' + cls.slice(5);
+    }
+    return '';
+}
+
+let lotPlanPolygonsPromise = null;
+function loadLotPlanPolygons(url) {
+    if (!lotPlanPolygonsPromise) {
+        lotPlanPolygonsPromise = fetch(url)
+            .then(r => (r.ok ? r.json() : Promise.reject(r.status)))
+            .catch(() => ({ lots: [] }));
+    }
+    return lotPlanPolygonsPromise;
+}
+
+const LOT_PLAN_DB_BLOCK_REGIONS = [
+    { block: '1',  x: 0.130, y: 0.040, w: 0.130, h: 0.900 },
+    { block: '2',  x: 0.260, y: 0.040, w: 0.080, h: 0.900 },
+    { block: '3',  x: 0.335, y: 0.030, w: 0.115, h: 0.320 },
+    { block: '4',  x: 0.335, y: 0.310, w: 0.115, h: 0.200 },
+    { block: '5',  x: 0.450, y: 0.030, w: 0.105, h: 0.320 },
+    { block: '6',  x: 0.450, y: 0.310, w: 0.105, h: 0.220 },
+    { block: '7',  x: 0.560, y: 0.030, w: 0.120, h: 0.320 },
+    { block: '8',  x: 0.560, y: 0.310, w: 0.120, h: 0.220 },
+    { block: '9',  x: 0.680, y: 0.030, w: 0.120, h: 0.320 },
+    { block: '10', x: 0.680, y: 0.310, w: 0.120, h: 0.220 },
+    { block: '11', x: 0.800, y: 0.040, w: 0.095, h: 0.900 },
+];
+
+// Per-block lot anchor positions on the plan (normalized cx/cy).
+// Block 4 when full (9 lots): L7 is bottom-right; L8 is to its left.
+const LOT_PLAN_BLOCK_SLOTS = {
+    '4': {
+        1: { cx: 0.370, cy: 0.347 },
+        2: { cx: 0.395, cy: 0.359 },
+        3: { cx: 0.421, cy: 0.361 },
+        4: { cx: 0.447, cy: 0.363 },
+        5: { cx: 0.369, cy: 0.388 },
+        6: { cx: 0.394, cy: 0.423 },
+        8: { cx: 0.419, cy: 0.423 },
+        7: { cx: 0.443, cy: 0.423 },
+        9: { cx: 0.368, cy: 0.506 },
+    },
+};
+
+function lotPlanUnitsByBlock() {
+    return Array.from(document.querySelectorAll('#gridView-content .vmap-block')).map(blockEl => {
+        const nameEl = blockEl.querySelector('.vmap-block-name');
+        const m = nameEl ? nameEl.textContent.match(/Block\s+(\d+)/i) : null;
+        return {
+            block: m ? m[1] : null,
+            units: Array.from(blockEl.querySelectorAll('.vmap-lot')),
+        };
+    }).filter(b => b.block && b.units.length);
+}
+
+function lotPlanPolyInRegion(poly, region) {
+    const cx = poly.cx || 0;
+    const cy = poly.cy || 0;
+    return cx >= region.x && cx < (region.x + region.w)
+        && cy >= region.y && cy < (region.y + region.h);
+}
+
+function lotPlanParseBlockLot(unitEl) {
+    const idEl = unitEl && unitEl.querySelector('.vmap-lot-id');
+    const m = idEl ? idEl.textContent.trim().match(/^B(\d+)\s*-\s*L(\d+)$/i) : null;
+    return m ? { block: m[1], lot: m[2] } : null;
+}
+
+function lotPlanUnitByLotNumber(blockUnits, lotNum) {
+    const want = String(lotNum);
+    return blockUnits.find(u => {
+        const bl = lotPlanParseBlockLot(u);
+        return bl && bl.lot === want;
+    });
+}
+
+/** Group polygon candidates into horizontal rows (top→bottom), each row left→right. */
+function lotPlanClusterIntoRows(candidates, rowBand) {
+    const sorted = [...candidates].sort((a, b) => (a.p.cy - b.p.cy) || (a.p.cx - b.p.cx));
+    const rows = [];
+    sorted.forEach(item => {
+        let row = rows.find(r => Math.abs(r.avgCy - item.p.cy) <= rowBand);
+        if (!row) {
+            row = { items: [], avgCy: item.p.cy };
+            rows.push(row);
+        }
+        row.items.push(item);
+        row.avgCy = row.items.reduce((s, x) => s + x.p.cy, 0) / row.items.length;
+    });
+    rows.sort((a, b) => a.avgCy - b.avgCy);
+    rows.forEach(r => r.items.sort((a, b) => a.p.cx - b.p.cx));
+    return rows;
+}
+
+/** Match inventory lots to nearest polygon using per-block anchor slots. */
+function lotPlanAssignBySlots(region, blockUnits, candidates, assignedPolyIdx, assignments, assignedUnitIds) {
+    const slots = LOT_PLAN_BLOCK_SLOTS[region.block];
+    if (!slots) return false;
+
+    const pool = [...candidates];
+    const lotNums = Object.keys(slots).map(n => parseInt(n, 10)).sort((a, b) => a - b);
+
+    lotNums.forEach(lotNum => {
+        const slot = slots[lotNum];
+        const unit = lotPlanUnitByLotNumber(blockUnits, lotNum);
+        if (!unit || !pool.length) return;
+        const uid = unit.dataset.unitId || '';
+        if (assignedUnitIds.has(uid)) return;
+
+        let best = null;
+        let bestDist = Infinity;
+        pool.forEach(cand => {
+            const dx = cand.p.cx - slot.cx;
+            const dy = cand.p.cy - slot.cy;
+            const dist = dx * dx + dy * dy;
+            if (dist < bestDist) {
+                bestDist = dist;
+                best = cand;
+            }
+        });
+        if (!best) return;
+
+        const bl = lotPlanParseBlockLot(unit) || { block: region.block, lot: String(lotNum) };
+        assignments.set(best.i, { unit, block: bl.block, lot: bl.lot });
+        assignedPolyIdx.add(best.i);
+        assignedUnitIds.add(uid);
+        pool.splice(pool.indexOf(best), 1);
+    });
+    return true;
+}
+
+/**
+ * Assign polygons in a block region to inventory lots.
+ * Uses LOT_PLAN_BLOCK_SLOTS when defined (e.g. Block 4 grid); otherwise
+ * fills lots 1..N in row-major order.
+ */
+function lotPlanAssignBlockRegion(region, blockUnits, lots, assignedPolyIdx, assignments, assignedUnitIds) {
+    const candidates = lots
+        .map((p, i) => ({ p, i }))
+        .filter(({ p, i }) => !assignedPolyIdx.has(i) && lotPlanPolyInRegion(p, region));
+
+    if (!candidates.length || !blockUnits.length) return;
+
+    if (lotPlanAssignBySlots(region, blockUnits, candidates, assignedPolyIdx, assignments, assignedUnitIds)) {
+        return;
+    }
+
+    const rowBand = 0.04;
+
+    // Default: row-major, lots 1..N in DOM order.
+    const rows = lotPlanClusterIntoRows(candidates, rowBand);
+    const ordered = rows.flatMap(r => r.items);
+    blockUnits.forEach((unit, uIdx) => {
+        const cand = ordered[uIdx];
+        if (!cand) return;
+        const uid = unit.dataset.unitId || '';
+        if (assignedUnitIds.has(uid)) return;
+        const bl = lotPlanParseBlockLot(unit) || { block: region.block, lot: String(uIdx + 1) };
+        assignments.set(cand.i, { unit, block: bl.block, lot: bl.lot });
+        assignedPolyIdx.add(cand.i);
+        assignedUnitIds.add(uid);
+    });
+}
+
+function lotPlanAppendLabel(g, poly, blockNum, lotNum, V) {
+    const cx = ((poly.cx || 0) * V).toFixed(1);
+    const cy = ((poly.cy || 0) * V).toFixed(1);
+    const text = document.createElementNS(SVG_NS, 'text');
+    text.setAttribute('x', cx);
+    text.setAttribute('y', cy);
+    const tspan1 = document.createElementNS(SVG_NS, 'tspan');
+    tspan1.setAttribute('x', cx);
+    tspan1.setAttribute('dy', '-0.4em');
+    tspan1.textContent = 'B' + blockNum;
+    const tspan2 = document.createElementNS(SVG_NS, 'tspan');
+    tspan2.setAttribute('x', cx);
+    tspan2.setAttribute('dy', '1.1em');
+    tspan2.textContent = 'L' + lotNum;
+    text.appendChild(tspan1);
+    text.appendChild(tspan2);
+    g.appendChild(text);
+}
+
+function lotPlanWireLinkedLot(g, poly, unit, blockNum, lotNum, V) {
+    g.classList.add('lotplan-lot--linked');
+    const unitId = unit.dataset.unitId || '';
+    g.dataset.unitId = unitId;
+    g.dataset.status = unit.dataset.status || '';
+    g.dataset.construction = unit.dataset.construction || '';
+    g.dataset.housingUnitOnFile = unit.dataset.housingUnitOnFile || '0';
+    g.dataset.historicalBeneficiary = unit.dataset.historicalBeneficiary || '0';
+    g.dataset.extensionFailed = unit.dataset.extensionFailed || '0';
+
+    const statusCls = lotPlanStatusClassFrom(unit);
+    if (statusCls) g.classList.add(statusCls);
+
+    const idText = 'B' + blockNum + ' - L' + lotNum;
+    const titleText = unit.getAttribute('title') || idText;
+    const titleEl = document.createElementNS(SVG_NS, 'title');
+    titleEl.textContent = titleText;
+    g.appendChild(titleEl);
+
+    lotPlanAppendLabel(g, poly, blockNum, lotNum, V);
+
+    g.setAttribute('role', 'button');
+    g.setAttribute('tabindex', '0');
+    g.setAttribute('aria-label', titleText);
+    if (unitId) {
+        g.addEventListener('click', () => openUnitModal(unitId));
+        g.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                openUnitModal(unitId);
+            }
+        });
+    }
+    if (unit.style.display === 'none') g.style.display = 'none';
+}
+
+async function buildLotPlan() {
+    const svg = document.getElementById('lotplan-svg');
+    if (!svg) return;
+
+    const units = Array.from(document.querySelectorAll('#gridView-content .vmap-lot'));
+    const unitsByBlock = lotPlanUnitsByBlock();
+    const unitByBlockMap = {};
+    unitsByBlock.forEach(b => { unitByBlockMap[b.block] = b.units; });
+
+    const url = svg.dataset.polygonsUrl;
+    const data = url ? await loadLotPlanPolygons(url) : { lots: [] };
+    const lots = (data && data.lots) || [];
+
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    if (!lots.length) return;
+
+    const V = LOT_PLAN_VIEW;
+    const assignments = new Map();
+    const assignedPolyIdx = new Set();
+    const assignedUnitIds = new Set();
+
+    // Map polygons inside each block region to inventory lots (grid-aware per block).
+    LOT_PLAN_DB_BLOCK_REGIONS.forEach(region => {
+        const blockUnits = unitByBlockMap[region.block] || [];
+        if (!blockUnits.length) return;
+        lotPlanAssignBlockRegion(
+            region, blockUnits, lots, assignedPolyIdx, assignments, assignedUnitIds,
+        );
+    });
+
+    // Fallback: any remaining inventory lots → next unassigned polygons (reading order).
+    const unassignedUnits = units.filter(u => !assignedUnitIds.has(u.dataset.unitId || ''));
+    const unassignedPolyIdx = lots
+        .map((p, i) => i)
+        .filter(i => !assignedPolyIdx.has(i))
+        .sort((a, b) => ((lots[a].cy || 0) - (lots[b].cy || 0)) || ((lots[a].cx || 0) - (lots[b].cx || 0)));
+    unassignedUnits.forEach((unit, uIdx) => {
+        const pi = unassignedPolyIdx[uIdx];
+        if (pi === undefined) return;
+        const bl = lotPlanParseBlockLot(unit);
+        if (!bl) return;
+        assignments.set(pi, { unit, block: bl.block, lot: bl.lot });
+        assignedPolyIdx.add(pi);
+    });
+
+    lots.forEach((poly, i) => {
+        const g = document.createElementNS(SVG_NS, 'g');
+        g.setAttribute('class', 'lotplan-lot');
+
+        const polygon = document.createElementNS(SVG_NS, 'polygon');
+        polygon.setAttribute(
+            'points',
+            (poly.points || [])
+                .map(p => (p[0] * V).toFixed(1) + ',' + (p[1] * V).toFixed(1))
+                .join(' ')
+        );
+        g.appendChild(polygon);
+
+        const assign = assignments.get(i);
+        if (assign) {
+            lotPlanWireLinkedLot(g, poly, assign.unit, assign.block, assign.lot, V);
+        } else {
+            g.classList.add('lotplan-lot--inert');
+        }
+
+        svg.appendChild(g);
+    });
+}
+
+/* ==========================================================
+   LOT PLAN ZOOM / PAN — Google-Maps-style interaction.
+   Wheel to zoom, drag to pan, +/- buttons, pinch on touch.
+   ========================================================== */
+function initLotPlanZoom() {
+    const wrapper = document.getElementById('lotplan-zoom-wrapper');
+    const stage   = document.getElementById('lotplan-zoomable');
+    if (!wrapper || !stage) return;
+
+    const btnIn    = document.getElementById('lotplan-zoom-in');
+    const btnOut   = document.getElementById('lotplan-zoom-out');
+    const btnReset = document.getElementById('lotplan-zoom-reset');
+    const levelEl  = document.getElementById('lotplan-zoom-level');
+
+    const MIN_ZOOM = 1;
+    const MAX_ZOOM = 5;
+    const ZOOM_STEP = 0.25;
+
+    let scale = 1;
+    let panX = 0;
+    let panY = 0;
+    let isDragging = false;
+    let dragStartX = 0;
+    let dragStartY = 0;
+    let panStartX = 0;
+    let panStartY = 0;
+
+    function clampPan() {
+        const wRect = wrapper.getBoundingClientRect();
+        const sW = wRect.width * scale;
+        const sH = stage.scrollHeight * scale;
+        const maxPanX = Math.max(0, sW - wRect.width);
+        const maxPanY = Math.max(0, sH - wRect.height);
+        panX = Math.max(-maxPanX, Math.min(0, panX));
+        panY = Math.max(-maxPanY, Math.min(0, panY));
+    }
+
+    function applyTransform() {
+        clampPan();
+        stage.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+        if (levelEl) levelEl.textContent = Math.round(scale * 100) + '%';
+    }
+
+    function zoomTo(newScale, cx, cy) {
+        const oldScale = scale;
+        newScale = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, newScale));
+        if (newScale === oldScale) return;
+        // Zoom toward the cursor position
+        const ratio = newScale / oldScale;
+        panX = cx - ratio * (cx - panX);
+        panY = cy - ratio * (cy - panY);
+        scale = newScale;
+        applyTransform();
+    }
+
+    function resetZoom() {
+        scale = 1;
+        panX = 0;
+        panY = 0;
+        applyTransform();
+    }
+
+    // --- Mouse wheel zoom ---
+    wrapper.addEventListener('wheel', function (e) {
+        e.preventDefault();
+        const rect = wrapper.getBoundingClientRect();
+        const cx = e.clientX - rect.left;
+        const cy = e.clientY - rect.top;
+        const delta = e.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP;
+        zoomTo(scale + delta, cx, cy);
+    }, { passive: false });
+
+    // --- Drag to pan ---
+    wrapper.addEventListener('mousedown', function (e) {
+        if (e.button !== 0) return;
+        // Don't start drag if clicking on a linked lot (let click event handle it)
+        if (scale <= 1) return;
+        isDragging = true;
+        dragStartX = e.clientX;
+        dragStartY = e.clientY;
+        panStartX = panX;
+        panStartY = panY;
+        stage.classList.add('is-dragging');
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function (e) {
+        if (!isDragging) return;
+        panX = panStartX + (e.clientX - dragStartX);
+        panY = panStartY + (e.clientY - dragStartY);
+        applyTransform();
+    });
+
+    document.addEventListener('mouseup', function () {
+        if (isDragging) {
+            isDragging = false;
+            stage.classList.remove('is-dragging');
+        }
+    });
+
+    // --- Touch: pinch-to-zoom + drag ---
+    let lastTouchDist = 0;
+    let lastTouchCenter = null;
+
+    wrapper.addEventListener('touchstart', function (e) {
+        if (e.touches.length === 2) {
+            e.preventDefault();
+            const dx = e.touches[0].clientX - e.touches[1].clientX;
+            const dy = e.touches[0].clientY - e.touches[1].clientY;
+            lastTouchDist = Math.hypot(dx, dy);
+            const rect = wrapper.getBoundingClientRect();
+            lastTouchCenter = {
+                x: (e.touches[0].clientX + e.touches[1].clientX) / 2 - rect.left,
+                y: (e.touches[0].clientY + e.touches[1].clientY) / 2 - rect.top,
+            };
+        } else if (e.touches.length === 1 && scale > 1) {
+            isDragging = true;
+            dragStartX = e.touches[0].clientX;
+            dragStartY = e.touches[0].clientY;
+            panStartX = panX;
+            panStartY = panY;
+        }
+    }, { passive: false });
+
+    wrapper.addEventListener('touchmove', function (e) {
+        if (e.touches.length === 2 && lastTouchDist) {
+            e.preventDefault();
+            const dx = e.touches[0].clientX - e.touches[1].clientX;
+            const dy = e.touches[0].clientY - e.touches[1].clientY;
+            const dist = Math.hypot(dx, dy);
+            const newScale = scale * (dist / lastTouchDist);
+            zoomTo(newScale, lastTouchCenter.x, lastTouchCenter.y);
+            lastTouchDist = dist;
+        } else if (isDragging && e.touches.length === 1) {
+            e.preventDefault();
+            panX = panStartX + (e.touches[0].clientX - dragStartX);
+            panY = panStartY + (e.touches[0].clientY - dragStartY);
+            applyTransform();
+        }
+    }, { passive: false });
+
+    wrapper.addEventListener('touchend', function () {
+        lastTouchDist = 0;
+        lastTouchCenter = null;
+        isDragging = false;
+    });
+
+    // --- Buttons ---
+    if (btnIn) btnIn.addEventListener('click', function () {
+        const rect = wrapper.getBoundingClientRect();
+        zoomTo(scale + ZOOM_STEP, rect.width / 2, rect.height / 2);
+    });
+    if (btnOut) btnOut.addEventListener('click', function () {
+        const rect = wrapper.getBoundingClientRect();
+        zoomTo(scale - ZOOM_STEP, rect.width / 2, rect.height / 2);
+    });
+    if (btnReset) btnReset.addEventListener('click', resetZoom);
+
+    // --- Double-click to zoom in ---
+    wrapper.addEventListener('dblclick', function (e) {
+        const rect = wrapper.getBoundingClientRect();
+        const cx = e.clientX - rect.left;
+        const cy = e.clientY - rect.top;
+        if (scale >= MAX_ZOOM) {
+            resetZoom();
+        } else {
+            zoomTo(scale + ZOOM_STEP * 2, cx, cy);
+        }
+    });
+}
+
 function applyUnitDetailHeader(unit) {
     const kicker = document.getElementById('modalUnitKicker');
     const titleEl = document.getElementById('modalUnitTitle');
@@ -3648,8 +4315,8 @@ function applyUnitDetailHeader(unit) {
         kicker.textContent = (isHu || isHistorical) ? 'Unit detail' : 'Lot detail';
     }
     titleEl.textContent = (isHu || isHistorical)
-        ? `Block ${unit.block}, Unit ${unit.lot}`
-        : `Block ${unit.block}, Lot ${unit.lot}`;
+        ? `B${unit.block} - Unit ${unit.lot}`
+        : `B${unit.block} - L${unit.lot}`;
 }
 
 function applyUnitDrawerStatusPill(unit) {
@@ -3685,6 +4352,28 @@ function applyUnitDrawerStatusPill(unit) {
 
 function applyVmapLotMapBadge(unit) {
     const unitId = String((unit && unit.id) != null ? unit.id : unit);
+
+    // Keep the lot-plan zone (if rendered) in sync with status changes.
+    const planZone = document.querySelector(`.lotplan-lot[data-unit-id="${unitId}"]`);
+    if (planZone) {
+        const zOnFile = !!(unit && unit.is_housing_unit_on_file);
+        const zHistorical = !!(unit && unit.is_historical_beneficiary);
+        const zExtFailed = !!(unit && unit.extension_final_visit_failed);
+        const zSt = (unit && unit.status) != null ? unit.status : (planZone.dataset.status || '');
+        planZone.dataset.housingUnitOnFile = zOnFile ? '1' : '0';
+        planZone.dataset.historicalBeneficiary = zHistorical ? '1' : '0';
+        planZone.dataset.extensionFailed = zExtFailed ? '1' : '0';
+        if (zSt) planZone.dataset.status = zSt;
+        planZone.classList.remove(
+            'lotplan-lot--occupied', 'lotplan-lot--vacant',
+            'lotplan-lot--housing-unit', 'lotplan-lot--extension-failed',
+        );
+        if (zOnFile || zHistorical) planZone.classList.add('lotplan-lot--housing-unit');
+        else if (zExtFailed) planZone.classList.add('lotplan-lot--extension-failed');
+        else if (zSt === 'Occupied') planZone.classList.add('lotplan-lot--occupied');
+        else if (zSt === 'Vacant — available') planZone.classList.add('lotplan-lot--vacant');
+    }
+
     const chip = document.querySelector(`button.vmap-lot[data-unit-id="${unitId}"]`);
     if (!chip) return;
     const tag = chip.querySelector('.vmap-lot-tag');
@@ -3768,6 +4457,25 @@ function kpiFilter(card) {
             l => l.style.display !== 'none'
         );
         block.style.display = any ? '' : 'none';
+    });
+
+    document.querySelectorAll('.lotplan-lot').forEach(lot => {
+        let show = true;
+        if (!showAll) {
+            if (kind === 'status') {
+                if (val === 'Occupied') {
+                    show = (lot.dataset.status || '') === val
+                        && (lot.dataset.historicalBeneficiary || '') !== '1';
+                } else {
+                    show = (lot.dataset.status || '') === val;
+                }
+            } else if (kind === 'housing_unit') {
+                show = (lot.dataset.housingUnitOnFile || '') === '1';
+            } else {
+                show = (' ' + (lot.dataset.construction || '') + ' ').indexOf(' ' + val + ' ') !== -1;
+            }
+        }
+        lot.style.display = show ? '' : 'none';
     });
 
     document.querySelectorAll('.unit-table-row').forEach(row => {
@@ -5928,6 +6636,11 @@ document.addEventListener('keydown', e => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Build lot-plan zones up front so status syncs work even before the
+    // plan view is opened (zones live-recolor via applyVmapLotMapBadge).
+    try { buildLotPlan(); } catch (e) { /* lot plan optional */ }
+    try { initLotPlanZoom(); } catch (e) { /* zoom optional */ }
+
     // Premium Hover Card popover initialization
     const hoverCard = document.getElementById('applicantHoverCard');
     const hcAvatar = document.getElementById('hcAvatar');
