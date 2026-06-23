@@ -664,7 +664,7 @@
     /* Each lot = <g class="lotplan-lot"> holding a <polygon> (+ <text> when linked) */
     .lotplan-lot { cursor: default; }
     .lotplan-lot > polygon {
-        fill: none;
+        fill: transparent;
         stroke: rgba(71, 85, 105, 0.45);
         stroke-width: 0.6;
         stroke-linejoin: round;
@@ -697,7 +697,7 @@
 
     /* Unlinked lots — outline only; PNG underneath shows lot grid */
     .lotplan-lot--inert > polygon {
-        fill: none;
+        fill: transparent;
         stroke: rgba(100, 116, 139, 0.35);
         stroke-width: 0.5;
     }
@@ -4206,29 +4206,29 @@ function lotPlanAppendLabel(g, poly, blockNum, lotNum, V) {
 function lotPlanWireLinkedLot(g, poly, unit, blockNum, lotNum, V) {
     g.classList.add('lotplan-lot--linked');
     const unitId = unit.dataset.unitId || '';
-    g.dataset.unitId = unitId;
-    g.dataset.status = unit.dataset.status || '';
-    g.dataset.construction = unit.dataset.construction || '';
-    g.dataset.housingUnitOnFile = unit.dataset.housingUnitOnFile || '0';
-    g.dataset.historicalBeneficiary = unit.dataset.historicalBeneficiary || '0';
-    g.dataset.extensionFailed = unit.dataset.extensionFailed || '0';
-    if (poly.cx != null) g.dataset.lotCx = String(poly.cx);
-    if (poly.cy != null) g.dataset.lotCy = String(poly.cy);
+    g.setAttribute('data-unit-id', unitId);
+    g.setAttribute('data-status', unit.dataset.status || '');
+    g.setAttribute('data-construction', unit.dataset.construction || '');
+    g.setAttribute('data-housing-unit-on-file', unit.dataset.housingUnitOnFile || '0');
+    g.setAttribute('data-historical-beneficiary', unit.dataset.historicalBeneficiary || '0');
+    g.setAttribute('data-extension-failed', unit.dataset.extensionFailed || '0');
+    if (poly.cx != null) g.setAttribute('data-lot-cx', String(poly.cx));
+    if (poly.cy != null) g.setAttribute('data-lot-cy', String(poly.cy));
 
     const statusCls = lotPlanStatusClassFrom(unit);
     if (statusCls) g.classList.add(statusCls);
 
     const idText = 'B' + blockNum + ' - L' + lotNum;
     const titleText = unit.getAttribute('title') || idText;
-    const titleEl = document.createElementNS(SVG_NS, 'title');
-    titleEl.textContent = titleText;
-    g.appendChild(titleEl);
+    // We intentionally do NOT create a <title> element here, 
+    // so the native tooltip doesn't conflict with the premium hover card popover.
 
     lotPlanAppendLabel(g, poly, blockNum, lotNum, V);
 
     g.setAttribute('role', 'button');
     g.setAttribute('tabindex', '0');
     g.setAttribute('aria-label', titleText);
+    g.setAttribute('title', ''); // Prevent Chrome from showing aria-label as native tooltip
     if (unitId) {
         g.addEventListener('click', () => openUnitModal(unitId));
         g.addEventListener('keydown', (e) => {
@@ -7070,13 +7070,30 @@ document.addEventListener('DOMContentLoaded', () => {
         // 1. Direct occupant-name span (table view)
         const nameSpan = e.target.closest('.occupant-name.applicant-name');
         if (nameSpan && nameSpan.dataset.fullName) return { source: nameSpan, anchor: nameSpan, mode: 'occupant' };
-        // 2. Any vmap-lot button — show hover card for ALL tiles
+        
+        // 2. SVG map polygon hover
+        const svgLot = e.target.closest('g.lotplan-lot--linked');
+        if (svgLot) {
+            const unitId = svgLot.getAttribute('data-unit-id') || svgLot.dataset?.unitId;
+            if (unitId) {
+                const vmapBtn = document.querySelector(`button.vmap-lot[data-unit-id="${unitId}"]`);
+                if (vmapBtn) {
+                    const inner = vmapBtn.querySelector('.occupant-name.applicant-name');
+                    if (inner && (inner.dataset.fullName || inner.getAttribute('data-full-name'))) {
+                        return { source: inner, anchor: svgLot, mode: 'occupant', originalBtn: vmapBtn };
+                    }
+                    return { source: null, anchor: svgLot, mode: 'vacant', originalBtn: vmapBtn };
+                }
+            }
+        }
+
+        // 3. Any vmap-lot button (grid view)
         const vmapBtn = e.target.closest('button.vmap-lot');
         if (vmapBtn) {
             const inner = vmapBtn.querySelector('.occupant-name.applicant-name');
-            if (inner && inner.dataset.fullName) return { source: inner, anchor: vmapBtn, mode: 'occupant' };
+            if (inner && inner.dataset.fullName) return { source: inner, anchor: vmapBtn, mode: 'occupant', originalBtn: vmapBtn };
             // Vacant / no occupant — show minimal unit info card
-            return { source: null, anchor: vmapBtn, mode: 'vacant' };
+            return { source: null, anchor: vmapBtn, mode: 'vacant', originalBtn: vmapBtn };
         }
         return null;
     }
@@ -7092,7 +7109,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const anchor = hit.anchor;
         const mode   = hit.mode;
-        const vmapBtn = anchor.closest('button.vmap-lot') || anchor;
+        const vmapBtn = hit.originalBtn || anchor.closest('button.vmap-lot') || anchor;
 
         // Block / Lot label from the tile
         const lotIdEl = vmapBtn.querySelector('.vmap-lot-id');
@@ -7231,8 +7248,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const isHoverCard = e.target.closest('#applicantHoverCard');
         const nameSpan = e.target.closest('.occupant-name.applicant-name');
         const vmapBtn = e.target.closest('button.vmap-lot');
+        const svgLot = e.target.closest('g.lotplan-lot--linked');
 
-        if (nameSpan || vmapBtn || isHoverCard) {
+        if (nameSpan || vmapBtn || svgLot || isHoverCard) {
             hideTimeout = setTimeout(function () {
                 hoverCard.classList.remove('active');
                 // Wait for CSS transition to finish before hiding
