@@ -44,9 +44,9 @@ class RelocationSiteAdmin(admin.ModelAdmin):
 
 @admin.register(HousingUnit)
 class HousingUnitAdmin(admin.ModelAdmin):
-    list_display = ('__str__', 'status', 'occupant_name', 'area_sqm')
+    list_display = ('__str__', 'block_number', 'lot_number', 'status', 'occupant_name', 'area_sqm')
     list_filter = ('status', 'site', 'created_at')
-    search_fields = ('occupant_name', 'occupant_id', 'site__name')
+    search_fields = ('block_number', 'lot_number', 'occupant_name', 'occupant_id', 'site__name')
     readonly_fields = ('created_at', 'updated_at')
 
     fieldsets = (

@@ -537,79 +537,104 @@
     /* ==========================================================
        LOT PLAN MAP — clickable zones overlaid on the real drawing
        ========================================================== */
+    /* Google Maps–style lot plan map */
     .lotplan-zoom-wrapper {
         position: relative;
         width: 100%;
-        margin-top: 0.5rem;
+        height: auto;
+        aspect-ratio: 1024 / 1009;
+        /* max-height removed so it can grow as large as the width allows */
+        margin-top: 0.75rem;
         border: 1px solid #e2e8f0;
-        border-radius: 10px;
-        background: #f8fafc;
-        overflow: hidden;
+        border-radius: 14px;
+        background: #f1f5f9;
+        overflow: clip;
+        box-shadow: 0 4px 24px rgba(15, 23, 42, 0.10), 0 1px 4px rgba(15, 23, 42, 0.06);
     }
     .lotplan-stage {
-        position: relative;
+        position: absolute;
+        top: 0;
+        left: 0;
         width: 100%;
         transform-origin: 0 0;
         cursor: grab;
         line-height: 0;
-        transition: none;
+        transition: transform 0.14s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        will-change: transform;
     }
     .lotplan-stage.is-dragging {
         cursor: grabbing;
+        transition: none;
     }
-    /* Zoom controls — floating buttons like Google Maps */
+    .lotplan-stage.is-wheeling {
+        transition: none;
+    }
+    /* Google Maps pill-style floating zoom controls */
     .lotplan-zoom-controls {
         position: absolute;
-        bottom: 1rem;
-        right: 1rem;
+        bottom: 1.5rem;
+        right: 1.5rem;
         display: flex;
         flex-direction: column;
-        gap: 2px;
+        align-items: center;
+        gap: 0;
         z-index: 10;
-        border-radius: 8px;
+        border-radius: 28px;
         overflow: hidden;
-        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.18);
+        box-shadow: 0 2px 14px rgba(15, 23, 42, 0.22), 0 1px 3px rgba(15, 23, 42, 0.12);
+        border: 1px solid rgba(226, 232, 240, 0.9);
     }
     .lotplan-zoom-btn {
         appearance: none;
         border: none;
-        width: 40px;
-        height: 40px;
+        border-radius: 0;
+        width: 44px;
+        height: 44px;
         background: #ffffff;
-        color: #334155;
-        font-size: 1.25rem;
-        font-weight: 700;
+        color: #374151;
+        font-size: 1.4rem;
+        font-weight: 400;
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
-        transition: background 0.12s ease, color 0.12s ease;
+        transition: background 0.1s ease, color 0.1s ease;
         line-height: 1;
         font-family: inherit;
+        position: relative;
     }
     .lotplan-zoom-btn:hover {
-        background: #f1f5f9;
+        background: #f8fafc;
         color: #0f172a;
     }
     .lotplan-zoom-btn:active {
         background: #e2e8f0;
     }
     .lotplan-zoom-btn--reset {
-        font-size: 0.65rem;
+        font-size: 0.6rem;
         font-weight: 800;
-        letter-spacing: 0.04em;
+        letter-spacing: 0.05em;
+        color: #2563eb;
+        height: 38px;
+        border-top: 1px solid #e2e8f0;
     }
     .lotplan-zoom-level {
         background: #ffffff;
         text-align: center;
-        font-size: 0.65rem;
+        font-size: 0.6rem;
         font-weight: 700;
         color: #64748b;
-        padding: 2px 0;
-        line-height: 1;
+        padding: 3px 0;
+        line-height: 1.2;
         user-select: none;
+        width: 100%;
         border-top: 1px solid #f1f5f9;
         border-bottom: 1px solid #f1f5f9;
+        cursor: pointer;
+    }
+    .lotplan-zoom-level:hover {
+        background: #f8fafc;
+        color: #2563eb;
     }
     .lotplan-img {
         display: block;
@@ -690,6 +715,116 @@
         text-align: center;
         color: #64748b;
         font-size: 0.85rem;
+    }
+
+    /* Google Maps-style lot search */
+    .lotplan-search {
+        position: absolute;
+        top: 1rem;
+        left: 1rem;
+        z-index: 12;
+        width: min(360px, calc(100% - 5rem));
+    }
+    .lotplan-search-box {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: #ffffff;
+        border-radius: 24px;
+        box-shadow: 0 2px 12px rgba(15, 23, 42, 0.18), 0 1px 3px rgba(15, 23, 42, 0.08);
+        border: 1px solid rgba(226, 232, 240, 0.95);
+        padding: 0.35rem 0.5rem 0.35rem 0.85rem;
+    }
+    .lotplan-search-icon {
+        flex-shrink: 0;
+        width: 18px;
+        height: 18px;
+        color: #64748b;
+    }
+    .lotplan-search-input {
+        flex: 1;
+        border: none;
+        outline: none;
+        background: transparent;
+        font-size: 0.875rem;
+        color: #0f172a;
+        min-width: 0;
+        font-family: inherit;
+    }
+    .lotplan-search-input::placeholder {
+        color: #94a3b8;
+    }
+    .lotplan-search-clear {
+        appearance: none;
+        border: none;
+        background: transparent;
+        color: #94a3b8;
+        cursor: pointer;
+        padding: 0.25rem;
+        border-radius: 50%;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        line-height: 0;
+    }
+    .lotplan-search-clear.is-visible {
+        display: flex;
+    }
+    .lotplan-search-clear:hover {
+        background: #f1f5f9;
+        color: #475569;
+    }
+    .lotplan-search-results {
+        list-style: none;
+        margin: 0.35rem 0 0;
+        padding: 0.35rem 0;
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(15, 23, 42, 0.18), 0 1px 3px rgba(15, 23, 42, 0.08);
+        border: 1px solid rgba(226, 232, 240, 0.95);
+        max-height: 240px;
+        overflow-y: auto;
+        display: none;
+    }
+    .lotplan-search-results.is-open {
+        display: block;
+    }
+    .lotplan-search-result {
+        padding: 0.55rem 0.9rem;
+        font-size: 0.82rem;
+        color: #334155;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    .lotplan-search-result:hover,
+    .lotplan-search-result.is-active {
+        background: #f1f5f9;
+    }
+    .lotplan-search-result-label {
+        font-weight: 700;
+        color: #0f172a;
+    }
+    .lotplan-search-result-status {
+        font-size: 0.72rem;
+        color: #64748b;
+        white-space: nowrap;
+    }
+    .lotplan-search-empty {
+        padding: 0.65rem 0.9rem;
+        font-size: 0.8rem;
+        color: #94a3b8;
+    }
+    @keyframes lotplan-search-pulse {
+        0%, 100% { stroke-width: 1.8; }
+        50% { stroke-width: 3.2; }
+    }
+    .lotplan-lot--search-hit > polygon {
+        stroke: #2563eb !important;
+        fill: rgba(59, 130, 246, 0.55) !important;
+        animation: lotplan-search-pulse 0.55s ease-in-out 4;
     }
 
     /* Tablet — single block per row, denser lot grid */
@@ -2718,6 +2853,10 @@
                 Create site
             </button>
             {% endif %}
+            <button type="button" class="units-header-action" onclick="window.location.reload()" title="Refresh inventory">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                Refresh
+            </button>
             {% if can_add_housing_unit %}
             <button type="button" id="openAddUnitModalBtn" class="units-header-action" onclick="openAddUnitModal()">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -2805,14 +2944,16 @@
                     {% for unit in units %}
                     <button type="button"
                             data-unit-id="{{ unit.id }}"
+                            data-block="{{ unit.block_number }}"
+                            data-lot="{{ unit.lot_number }}"
+                            data-unit-status="{% if unit.is_housing_unit_on_file %}Housing Unit{% elif unit.is_historical_beneficiary %}Unit (Historical){% elif unit.extension_final_visit_failed %}Failed{% else %}{{ unit.status }}{% endif %}"
                             data-housing-unit-on-file="{% if unit.is_housing_unit_on_file %}1{% else %}0{% endif %}"
                             data-historical-beneficiary="{% if unit.is_historical_beneficiary %}1{% else %}0{% endif %}"
                             data-extension-failed="{% if unit.extension_final_visit_failed %}1{% else %}0{% endif %}"
                             class="unit-card vmap-lot {% if unit.is_housing_unit_on_file %}vmap-lot--housing-unit{% elif unit.is_historical_beneficiary %}vmap-lot--housing-unit{% elif unit.extension_final_visit_failed %}vmap-lot--extension-failed{% elif unit.status == 'Occupied' %}vmap-lot--occupied{% elif unit.status == 'Vacant — available' %}vmap-lot--vacant{% endif %}"
                             data-status="{{ unit.status }}"
                             data-construction="{{ unit.construction_tokens }}"
-                            onclick="openUnitModal('{{ unit.id }}')"
-                            title="B{{ unit.block_number }} - L{{ unit.lot_number }} — {% if unit.is_housing_unit_on_file %}Housing unit — final monitoring complete, recorded in inventory{% elif unit.is_historical_beneficiary %}Unit — historical on-site beneficiary{% else %}{{ unit.get_status_display }}{% endif %}{% if unit.current_occupant %} · {{ unit.current_occupant.full_name }}{% elif unit.occupant_name %} · {{ unit.occupant_name }}{% endif %}">
+                            onclick="openUnitModal('{{ unit.id }}')">
                         <span class="vmap-lot-id">B{{ unit.block_number }} - L{{ unit.lot_number }}</span>
                         <span class="vmap-lot-occ occupant-name applicant-name" 
                               style="cursor: pointer;"
@@ -2849,6 +2990,18 @@
             <span class="vmap-legend-item vmap-legend--vacant"><i></i>Vacant</span>
         </div>
         <div class="lotplan-zoom-wrapper" id="lotplan-zoom-wrapper">
+            <div class="lotplan-search" id="lotplan-search">
+                <div class="lotplan-search-box">
+                    <svg class="lotplan-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input type="search" id="lotplan-search-input" class="lotplan-search-input"
+                           placeholder="Search block or lot (e.g. B12 L1)" autocomplete="off"
+                           aria-label="Search block or lot" aria-controls="lotplan-search-results" aria-expanded="false">
+                    <button type="button" id="lotplan-search-clear" class="lotplan-search-clear" title="Clear search" aria-label="Clear search">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                </div>
+                <ul id="lotplan-search-results" class="lotplan-search-results" role="listbox" aria-label="Search results"></ul>
+            </div>
             <div class="lotplan-stage" id="lotplan-zoomable">
                 <img class="lotplan-img" src="{% static 'images/lot_plan.png' %}" alt="Subdivision lot plan for {{ site.name|default:'relocation site' }}">
                 <svg id="lotplan-svg" class="lotplan-overlay" viewBox="0 0 1000 1000" preserveAspectRatio="none"
@@ -4049,6 +4202,8 @@ function lotPlanWireLinkedLot(g, poly, unit, blockNum, lotNum, V) {
     g.dataset.housingUnitOnFile = unit.dataset.housingUnitOnFile || '0';
     g.dataset.historicalBeneficiary = unit.dataset.historicalBeneficiary || '0';
     g.dataset.extensionFailed = unit.dataset.extensionFailed || '0';
+    if (poly.cx != null) g.dataset.lotCx = String(poly.cx);
+    if (poly.cy != null) g.dataset.lotCy = String(poly.cy);
 
     const statusCls = lotPlanStatusClassFrom(unit);
     if (statusCls) g.classList.add(statusCls);
@@ -4153,6 +4308,187 @@ async function buildLotPlan() {
 }
 
 /* ==========================================================
+   LOT PLAN SEARCH — Google Maps-style block/lot finder
+   ========================================================== */
+function lotPlanBuildSearchIndex() {
+    return Array.from(document.querySelectorAll('#gridView-content .vmap-lot')).map(el => {
+        const block = el.dataset.block || '';
+        const lot = el.dataset.lot || '';
+        const tag = el.querySelector('.vmap-lot-tag');
+        let status = el.dataset.status || '';
+        if (tag && tag.textContent.trim()) status = tag.textContent.trim();
+        return {
+            unitId: el.dataset.unitId || '',
+            block,
+            lot,
+            label: 'B' + block + ' - L' + lot,
+            status,
+        };
+    }).filter(item => item.unitId);
+}
+
+function lotPlanParseSearchQuery(q) {
+    const raw = (q || '').trim().toLowerCase();
+    if (!raw) return null;
+
+    let m = raw.match(/(?:block\s*)?(\d+)\s*(?:lot\s*|l\s*|[-/]\s*)?(\d+)?/);
+    if (!m) m = raw.match(/b\s*(\d+)\s*(?:l\s*|[-/]\s*)?(\d+)?/);
+    if (m) return { block: m[1], lot: m[2] || null };
+
+    const nums = raw.match(/\d+/g);
+    if (!nums || !nums.length) return null;
+    if (nums.length >= 2) return { block: nums[0], lot: nums[1] };
+    return { block: nums[0], lot: null };
+}
+
+function lotPlanSearchFilter(index, query) {
+    const parsed = lotPlanParseSearchQuery(query);
+    if (!parsed) return [];
+
+    return index.filter(item => {
+        if (parsed.lot) {
+            return item.block === parsed.block && item.lot === parsed.lot;
+        }
+        return item.block === parsed.block;
+    }).sort((a, b) => {
+        const bl = parseInt(a.lot, 10) - parseInt(b.lot, 10);
+        return bl || parseInt(a.block, 10) - parseInt(b.block, 10);
+    });
+}
+
+function lotPlanSearchSelect(unitId) {
+    const g = document.querySelector('.lotplan-lot--linked[data-unit-id="' + unitId + '"]');
+    if (g) {
+        const cx = parseFloat(g.dataset.lotCx);
+        const cy = parseFloat(g.dataset.lotCy);
+        if (window.lotPlanMap && !isNaN(cx) && !isNaN(cy)) {
+            window.lotPlanMap.flyTo(cx, cy, 2.5);
+        }
+        g.classList.remove('lotplan-lot--search-hit');
+        void g.offsetWidth;
+        g.classList.add('lotplan-lot--search-hit');
+        setTimeout(() => g.classList.remove('lotplan-lot--search-hit'), 2500);
+    }
+    openUnitModal(unitId);
+}
+
+function initLotPlanSearch() {
+    const input = document.getElementById('lotplan-search-input');
+    const resultsEl = document.getElementById('lotplan-search-results');
+    const clearBtn = document.getElementById('lotplan-search-clear');
+    if (!input || !resultsEl) return;
+
+    const index = lotPlanBuildSearchIndex();
+    let activeIdx = -1;
+    let visible = [];
+
+    function closeResults() {
+        resultsEl.classList.remove('is-open');
+        input.setAttribute('aria-expanded', 'false');
+        activeIdx = -1;
+        visible = [];
+    }
+
+    function renderResults(matches) {
+        visible = matches.slice(0, 8);
+        resultsEl.innerHTML = '';
+        if (!visible.length) {
+            const li = document.createElement('li');
+            li.className = 'lotplan-search-empty';
+            li.textContent = input.value.trim() ? 'No matching block/lot' : 'Type a block or lot (e.g. 12 1)';
+            resultsEl.appendChild(li);
+        } else {
+            visible.forEach((item, i) => {
+                const li = document.createElement('li');
+                li.className = 'lotplan-search-result' + (i === activeIdx ? ' is-active' : '');
+                li.setAttribute('role', 'option');
+                li.dataset.unitId = item.unitId;
+                li.innerHTML =
+                    '<span class="lotplan-search-result-label">' + item.label + '</span>' +
+                    '<span class="lotplan-search-result-status">' + (item.status || '—') + '</span>';
+                li.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    lotPlanSearchSelect(item.unitId);
+                    input.value = item.label;
+                    if (clearBtn) clearBtn.classList.add('is-visible');
+                    closeResults();
+                });
+                resultsEl.appendChild(li);
+            });
+        }
+        resultsEl.classList.add('is-open');
+        input.setAttribute('aria-expanded', 'true');
+    }
+
+    function runSearch() {
+        const q = input.value;
+        if (clearBtn) clearBtn.classList.toggle('is-visible', !!q.trim());
+        if (!q.trim()) {
+            closeResults();
+            resultsEl.innerHTML = '';
+            return;
+        }
+        activeIdx = -1;
+        renderResults(lotPlanSearchFilter(index, q));
+    }
+
+    input.addEventListener('input', runSearch);
+    input.addEventListener('focus', () => {
+        if (input.value.trim()) runSearch();
+    });
+
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeResults();
+            return;
+        }
+        if (!resultsEl.classList.contains('is-open') || !visible.length) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                runSearch();
+                if (visible.length === 1) {
+                    lotPlanSearchSelect(visible[0].unitId);
+                    input.value = visible[0].label;
+                    closeResults();
+                }
+            }
+            return;
+        }
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            activeIdx = Math.min(activeIdx + 1, visible.length - 1);
+            renderResults(visible);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            activeIdx = Math.max(activeIdx - 1, 0);
+            renderResults(visible);
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            const pick = visible[activeIdx >= 0 ? activeIdx : 0];
+            if (pick) {
+                lotPlanSearchSelect(pick.unitId);
+                input.value = pick.label;
+                closeResults();
+            }
+        }
+    });
+
+    if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+            input.value = '';
+            clearBtn.classList.remove('is-visible');
+            closeResults();
+            resultsEl.innerHTML = '';
+            input.focus();
+        });
+    }
+
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('#lotplan-search')) closeResults();
+    });
+}
+
+/* ==========================================================
    LOT PLAN ZOOM / PAN — Google-Maps-style interaction.
    Wheel to zoom, drag to pan, +/- buttons, pinch on touch.
    ========================================================== */
@@ -4167,8 +4503,8 @@ function initLotPlanZoom() {
     const levelEl  = document.getElementById('lotplan-zoom-level');
 
     const MIN_ZOOM = 1;
-    const MAX_ZOOM = 5;
-    const ZOOM_STEP = 0.25;
+    const MAX_ZOOM = 4;   // 400%
+    const ZOOM_STEP = 0.5;
 
     let scale = 1;
     let panX = 0;
@@ -4178,15 +4514,20 @@ function initLotPlanZoom() {
     let dragStartY = 0;
     let panStartX = 0;
     let panStartY = 0;
+    let wheelTimer = null;
+
+    function getNaturalStageH() {
+        // Height of stage at scale=1 (offsetHeight before transform)
+        return stage.offsetHeight;
+    }
 
     function clampPan() {
-        const wRect = wrapper.getBoundingClientRect();
-        const sW = wRect.width * scale;
-        const sH = stage.scrollHeight * scale;
-        const maxPanX = Math.max(0, sW - wRect.width);
-        const maxPanY = Math.max(0, sH - wRect.height);
-        panX = Math.max(-maxPanX, Math.min(0, panX));
-        panY = Math.max(-maxPanY, Math.min(0, panY));
+        const wW = wrapper.clientWidth;
+        const wH = wrapper.clientHeight;
+        const sW = wW * scale;
+        const sH = getNaturalStageH() * scale;
+        panX = Math.max(Math.min(0, panX), wW - sW);
+        panY = Math.max(Math.min(0, panY), wH - sH);
     }
 
     function applyTransform() {
@@ -4199,7 +4540,6 @@ function initLotPlanZoom() {
         const oldScale = scale;
         newScale = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, newScale));
         if (newScale === oldScale) return;
-        // Zoom toward the cursor position
         const ratio = newScale / oldScale;
         panX = cx - ratio * (cx - panX);
         panY = cy - ratio * (cy - panY);
@@ -4214,9 +4554,28 @@ function initLotPlanZoom() {
         applyTransform();
     }
 
-    // --- Mouse wheel zoom ---
+    function flyTo(normCx, normCy, targetScale) {
+        const wW = wrapper.clientWidth;
+        const wH = wrapper.clientHeight;
+        const stageW = wW;
+        const stageH = getNaturalStageH();
+        const px = normCx * stageW;
+        const py = normCy * stageH;
+        const newScale = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, targetScale || 2.5));
+        scale = newScale;
+        panX = wW / 2 - px * scale;
+        panY = wH / 2 - py * scale;
+        applyTransform();
+    }
+
+    window.lotPlanMap = { flyTo, resetZoom };
+
+    // --- Mouse wheel zoom (responsive — no transition during wheel) ---
     wrapper.addEventListener('wheel', function (e) {
         e.preventDefault();
+        stage.classList.add('is-wheeling');
+        clearTimeout(wheelTimer);
+        wheelTimer = setTimeout(() => stage.classList.remove('is-wheeling'), 120);
         const rect = wrapper.getBoundingClientRect();
         const cx = e.clientX - rect.left;
         const cy = e.clientY - rect.top;
@@ -4224,11 +4583,9 @@ function initLotPlanZoom() {
         zoomTo(scale + delta, cx, cy);
     }, { passive: false });
 
-    // --- Drag to pan ---
+    // --- Drag to pan (works at any zoom level) ---
     wrapper.addEventListener('mousedown', function (e) {
         if (e.button !== 0) return;
-        // Don't start drag if clicking on a linked lot (let click event handle it)
-        if (scale <= 1) return;
         isDragging = true;
         dragStartX = e.clientX;
         dragStartY = e.clientY;
@@ -4267,7 +4624,7 @@ function initLotPlanZoom() {
                 x: (e.touches[0].clientX + e.touches[1].clientX) / 2 - rect.left,
                 y: (e.touches[0].clientY + e.touches[1].clientY) / 2 - rect.top,
             };
-        } else if (e.touches.length === 1 && scale > 1) {
+        } else if (e.touches.length === 1) {
             isDragging = true;
             dragStartX = e.touches[0].clientX;
             dragStartY = e.touches[0].clientY;
@@ -4309,6 +4666,31 @@ function initLotPlanZoom() {
         zoomTo(scale - ZOOM_STEP, rect.width / 2, rect.height / 2);
     });
     if (btnReset) btnReset.addEventListener('click', resetZoom);
+    // Clicking the zoom level label also resets
+    if (levelEl) levelEl.addEventListener('click', resetZoom);
+
+    // --- Keyboard shortcuts (only when map is in view) ---
+    document.addEventListener('keydown', function (e) {
+        if (!wrapper) return;
+        const rect = wrapper.getBoundingClientRect();
+        const inViewport = rect.top < window.innerHeight && rect.bottom > 0;
+        if (!inViewport) return;
+        // Ignore if focus is inside a text input
+        const tag = document.activeElement && document.activeElement.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+        const cx = rect.width / 2;
+        const cy = rect.height / 2;
+        if (e.key === '+' || e.key === '=') {
+            e.preventDefault();
+            zoomTo(scale + ZOOM_STEP, cx, cy);
+        } else if (e.key === '-') {
+            e.preventDefault();
+            zoomTo(scale - ZOOM_STEP, cx, cy);
+        } else if (e.key === '0') {
+            e.preventDefault();
+            resetZoom();
+        }
+    });
 
     // --- Double-click to zoom in ---
     wrapper.addEventListener('dblclick', function (e) {
@@ -6658,6 +7040,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // plan view is opened (zones live-recolor via applyVmapLotMapBadge).
     try { buildLotPlan(); } catch (e) { /* lot plan optional */ }
     try { initLotPlanZoom(); } catch (e) { /* zoom optional */ }
+    try { initLotPlanSearch(); } catch (e) { /* search optional */ }
 
     // Premium Hover Card popover initialization
     const hoverCard = document.getElementById('applicantHoverCard');
@@ -6666,75 +7049,154 @@ document.addEventListener('DOMContentLoaded', () => {
     const hcTx = document.getElementById('hcTx');
     const hcRef = document.getElementById('hcRef');
     const hcRefRow = document.getElementById('hcRefRow');
+    const hcBlockLot = document.getElementById('hcBlockLot');
+    const hcBlockLotRow = document.getElementById('hcBlockLotRow');
     const hcBrgy = document.getElementById('hcBrgy');
     const hcDob = document.getElementById('hcDob');
 
     let hideTimeout;
 
-    document.addEventListener('mouseover', function (e) {
+    function resolveHoverTarget(e) {
+        // 1. Direct occupant-name span (table view)
         const nameSpan = e.target.closest('.occupant-name.applicant-name');
-        const isHoverCard = e.target.closest('#applicantHoverCard');
-
-        if (!nameSpan) {
-            if (isHoverCard) {
-                clearTimeout(hideTimeout);
-            }
-            return;
+        if (nameSpan && nameSpan.dataset.fullName) return { source: nameSpan, anchor: nameSpan, mode: 'occupant' };
+        // 2. Any vmap-lot button — show hover card for ALL tiles
+        const vmapBtn = e.target.closest('button.vmap-lot');
+        if (vmapBtn) {
+            const inner = vmapBtn.querySelector('.occupant-name.applicant-name');
+            if (inner && inner.dataset.fullName) return { source: inner, anchor: vmapBtn, mode: 'occupant' };
+            // Vacant / no occupant — show minimal unit info card
+            return { source: null, anchor: vmapBtn, mode: 'vacant' };
         }
+        return null;
+    }
+
+    document.addEventListener('mouseover', function (e) {
+        const isHoverCard = e.target.closest('#applicantHoverCard');
+        if (isHoverCard) { clearTimeout(hideTimeout); return; }
+
+        const hit = resolveHoverTarget(e);
+        if (!hit) return;
 
         clearTimeout(hideTimeout);
 
-        const fullName = nameSpan.dataset.fullName || nameSpan.textContent.trim();
-        const txId = nameSpan.dataset.txId || '';
-        const refCode = nameSpan.dataset.refCode || '';
-        const barangay = nameSpan.dataset.barangay || 'Not specified';
-        const dob = nameSpan.dataset.dob || 'Not specified';
+        const anchor = hit.anchor;
+        const mode   = hit.mode;
+        const vmapBtn = anchor.closest('button.vmap-lot') || anchor;
 
-        // Populate card
-        hcName.textContent = fullName;
-        hcAvatar.textContent = fullName.slice(0, 2).toUpperCase();
-        
-        // Client-side slicing safety for UUIDs and long transaction IDs
-        let displayTx = txId;
-        if (displayTx.startsWith('APP-')) {
-            const rawId = displayTx.substring(4).replace(/[^a-fA-F0-9\-]/g, '');
-            const cleanId = rawId.replace(/-/g, '');
-            displayTx = 'APP-' + cleanId.slice(0, 8) + '...';
-        } else if (displayTx.startsWith('TX-')) {
-            const rawId = displayTx.substring(3).replace(/[^a-fA-F0-9\-]/g, '');
-            const cleanId = rawId.replace(/-/g, '');
-            displayTx = 'TX-' + cleanId.slice(0, 8) + '...';
-        } else if (displayTx.length > 15) {
-            displayTx = displayTx.slice(0, 12) + '...';
-        }
-        hcTx.textContent = displayTx;
+        // Block / Lot label from the tile
+        const lotIdEl = vmapBtn.querySelector('.vmap-lot-id');
+        const blockLotText = lotIdEl ? lotIdEl.textContent.trim() : (vmapBtn.dataset.block ? `B${vmapBtn.dataset.block} - L${vmapBtn.dataset.lot}` : '');
+        const unitStatus = vmapBtn.dataset.unitStatus || vmapBtn.dataset.status || '';
 
-        if (refCode) {
-            hcRef.textContent = refCode;
-            hcRefRow.style.display = 'flex';
-        } else {
+        if (mode === 'vacant') {
+            // Minimal card for vacant / no-occupant tiles
+            hcName.textContent = blockLotText || 'Vacant Lot';
+            hcAvatar.textContent = '🏠';
+            hcAvatar.style.background = 'linear-gradient(135deg, #dbeafe 0%, #93c5fd 100%)';
+            hcAvatar.style.color = '#1e40af';
+            hcAvatar.style.fontSize = '1.1rem';
+            const hcTag = document.getElementById('hcTag');
+            if (hcTag) hcTag.textContent = 'Lot Status';
+            // TX row hidden for vacant
+            const txRow = document.getElementById('hcTxRow');
+            if (txRow) txRow.style.display = 'none';
             hcRefRow.style.display = 'none';
-        }
-        hcBrgy.textContent = barangay;
-        hcDob.textContent = dob;
+            // Status
+            const statusEl = document.getElementById('hcStatus');
+            const statusRowEl = document.getElementById('hcStatusRow');
+            if (statusEl && statusRowEl) {
+                statusEl.textContent = unitStatus || 'Vacant — available';
+                statusRowEl.style.display = 'flex';
+            }
+            // Block/Lot
+            hcBlockLot.textContent = blockLotText;
+            hcBlockLotRow.style.display = 'flex';
+            // Hide barangay/dob for vacant
+            const brgyRow = document.getElementById('hcBrgyRow');
+            const dobRow  = document.getElementById('hcDobRow');
+            if (brgyRow) brgyRow.style.display = 'none';
+            if (dobRow)  dobRow.style.display  = 'none';
+        } else {
+            // Full occupant card
+            const nameSpan = hit.source;
+            hcAvatar.style.background = 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)';
+            hcAvatar.style.color = '#ffffff';
+            hcAvatar.style.fontSize = '0.85rem';
+            const hcTag = document.getElementById('hcTag');
+            if (hcTag) hcTag.textContent = 'Applicant Profile';
 
-        // Position card
-        const rect = nameSpan.getBoundingClientRect();
+            const fullName = nameSpan.dataset.fullName || nameSpan.textContent.trim();
+            const txId = nameSpan.dataset.txId || '';
+            const refCode = nameSpan.dataset.refCode || '';
+            const barangay = nameSpan.dataset.barangay || 'Not specified';
+            const dob = nameSpan.dataset.dob || 'Not specified';
+
+            hcName.textContent = fullName;
+            hcAvatar.textContent = fullName.slice(0, 2).toUpperCase();
+
+            let displayTx = txId;
+            if (displayTx.startsWith('APP-')) {
+                const rawId = displayTx.substring(4).replace(/[^a-fA-F0-9\-]/g, '');
+                const cleanId = rawId.replace(/-/g, '');
+                displayTx = 'APP-' + cleanId.slice(0, 8) + '...';
+            } else if (displayTx.startsWith('TX-')) {
+                const rawId = displayTx.substring(3).replace(/[^a-fA-F0-9\-]/g, '');
+                const cleanId = rawId.replace(/-/g, '');
+                displayTx = 'TX-' + cleanId.slice(0, 8) + '...';
+            } else if (displayTx.length > 15) {
+                displayTx = displayTx.slice(0, 12) + '...';
+            }
+
+            const txRow = document.getElementById('hcTxRow');
+            if (txRow) txRow.style.display = 'flex';
+            hcTx.textContent = displayTx || '—';
+
+            if (refCode) {
+                hcRef.textContent = refCode;
+                hcRefRow.style.display = 'flex';
+            } else {
+                hcRefRow.style.display = 'none';
+            }
+
+            const statusEl = document.getElementById('hcStatus');
+            const statusRowEl = document.getElementById('hcStatusRow');
+            if (statusEl && statusRowEl) {
+                statusEl.textContent = unitStatus;
+                statusRowEl.style.display = unitStatus ? 'flex' : 'none';
+            }
+
+            hcBlockLot.textContent = blockLotText;
+            hcBlockLotRow.style.display = blockLotText ? 'flex' : 'none';
+
+            // Restore brgy/dob rows (may have been hidden in vacant mode)
+            const brgyRow = document.getElementById('hcBrgyRow');
+            const dobRow  = document.getElementById('hcDobRow');
+            if (brgyRow) brgyRow.style.display = 'flex';
+            if (dobRow)  dobRow.style.display  = 'flex';
+            hcBrgy.textContent = barangay;
+            hcDob.textContent = dob;
+        }
+
+        // Position card above the anchor element
+        const rect = anchor.getBoundingClientRect();
         
-        // Temporarily display to measure height
+        // Temporarily make visible off-screen to measure height
+        hoverCard.style.visibility = 'hidden';
         hoverCard.style.display = 'block';
         const cardWidth = hoverCard.offsetWidth || 290;
-        const cardHeight = hoverCard.offsetHeight || 190;
-        hoverCard.style.display = ''; // reset to CSS state
+        const cardHeight = hoverCard.offsetHeight || 220;
+        hoverCard.style.visibility = '';
+        // Note: display stays block; active class controls opacity/transform
 
         const scrollX = window.pageXOffset || document.documentElement.scrollLeft;
         const scrollY = window.pageYOffset || document.documentElement.scrollTop;
 
-        // Position directly above, centered
+        // Position directly above, centered on the anchor
         let targetLeft = rect.left + scrollX + (rect.width / 2) - (cardWidth / 2);
-        let targetTop = rect.top + scrollY - cardHeight - 12; // 12px gap
+        let targetTop = rect.top + scrollY - cardHeight - 12;
 
-        // Boundaries checks
+        // Boundary checks
         if (targetLeft < 10) targetLeft = 10;
         if (targetLeft + cardWidth > window.innerWidth - 10) {
             targetLeft = window.innerWidth - cardWidth - 10;
@@ -6750,17 +7212,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
         hoverCard.style.left = targetLeft + 'px';
         hoverCard.style.top = targetTop + 'px';
-        hoverCard.classList.add('active');
+        hoverCard.style.display = 'block';
+        // Use rAF so the transition runs after display:block takes effect
+        requestAnimationFrame(() => hoverCard.classList.add('active'));
     });
 
     document.addEventListener('mouseout', function (e) {
-        const nameSpan = e.target.closest('.occupant-name.applicant-name');
         const isHoverCard = e.target.closest('#applicantHoverCard');
+        const nameSpan = e.target.closest('.occupant-name.applicant-name');
+        const vmapBtn = e.target.closest('button.vmap-lot');
 
-        if (nameSpan || isHoverCard) {
+        if (nameSpan || vmapBtn || isHoverCard) {
             hideTimeout = setTimeout(function () {
                 hoverCard.classList.remove('active');
-            }, 250);
+                // Wait for CSS transition to finish before hiding
+                setTimeout(() => { hoverCard.style.display = 'none'; }, 220);
+            }, 200);
         }
     });
 
@@ -6771,26 +7238,27 @@ document.addEventListener('DOMContentLoaded', () => {
     hoverCard.addEventListener('mouseleave', function () {
         hideTimeout = setTimeout(function () {
             hoverCard.classList.remove('active');
-        }, 250);
+            setTimeout(() => { hoverCard.style.display = 'none'; }, 220);
+        }, 200);
     });
 });
 </script>
 
 <!-- Premium Hover Card Popover Template -->
-<div id="applicantHoverCard" class="applicant-hover-card">
+<div id="applicantHoverCard" class="applicant-hover-card" style="display:none;">
     <div class="hover-card-arrow"></div>
-    <div class="hover-card-banner" style="display: none;">
+    <div class="hover-card-banner">
         <img src="{% static 'images/tha_logo.png' %}" alt="Talisay City Housing Authority Logo" style="width: 100%; height: auto; display: block; border-radius: 6px; margin-bottom: 0.75rem; border: 1px solid #cbd5e1; padding: 0.2rem; background: #ffffff; box-sizing: border-box;">
     </div>
-    <div class="hover-card-header" style="display: none;">
+    <div class="hover-card-header">
         <div class="hover-card-avatar" id="hcAvatar">—</div>
         <div class="hover-card-title-group">
             <div class="hover-card-name" id="hcName">—</div>
-            <div class="hover-card-tag">Applicant Profile</div>
+            <div class="hover-card-tag" id="hcTag">Applicant Profile</div>
         </div>
     </div>
-    <div class="hover-card-body" style="display: none;">
-        <div class="hover-card-meta-row">
+    <div class="hover-card-body">
+        <div class="hover-card-meta-row" id="hcTxRow">
             <span class="hover-card-label">Transaction ID</span>
             <span class="case-number-badge" id="hcTx" style="font-family: monospace;">—</span>
         </div>
@@ -6798,16 +7266,24 @@ document.addEventListener('DOMContentLoaded', () => {
             <span class="hover-card-label">Reference Code</span>
             <span class="complainant-ref-code" id="hcRef" style="font-family: monospace;">—</span>
         </div>
-        <div class="hover-card-meta-row">
+        <div class="hover-card-meta-row" id="hcStatusRow">
+            <span class="hover-card-label">Status</span>
+            <span class="hover-card-value" id="hcStatus">—</span>
+        </div>
+        <div class="hover-card-meta-row" id="hcBlockLotRow">
+            <span class="hover-card-label">Block / Lot</span>
+            <span class="hover-card-value" id="hcBlockLot">—</span>
+        </div>
+        <div class="hover-card-meta-row" id="hcBrgyRow">
             <span class="hover-card-label">Barangay</span>
             <span class="hover-card-value" id="hcBrgy">—</span>
         </div>
-        <div class="hover-card-meta-row">
+        <div class="hover-card-meta-row" id="hcDobRow">
             <span class="hover-card-label">Birth Date</span>
             <span class="hover-card-value" id="hcDob">—</span>
         </div>
     </div>
-    <div class="hover-card-footer" style="display: none;">
+    <div class="hover-card-footer">
         <span>Talisay City Housing Authority</span>
     </div>
 </div>

@@ -5,6 +5,7 @@ from django.urls import reverse
 from django.http import JsonResponse, HttpResponse, HttpResponseForbidden
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods, require_POST
+from django.views.decorators.cache import never_cache
 from django.db import transaction, models, IntegrityError
 from django.db.models import Prefetch
 from django.utils import timezone
@@ -273,6 +274,7 @@ def verify_position(view_func):
 
 @login_required
 @verify_position
+@never_cache
 def housing_units_monitoring(request, position):
     """
     Housing Unit & Occupancy Monitoring Dashboard
