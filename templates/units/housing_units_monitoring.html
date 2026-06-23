@@ -318,50 +318,6 @@
        lot cells laid out spatially. Same data, calmer visual.
        Filter compat: each lot keeps `.unit-card` + `data-status`.
        ========================================================== */
-    .vmap-legend {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: 0.45rem 0.85rem;
-        padding: 0.55rem 0.85rem;
-        background: #ffffff;
-        border: 1px solid #e5e9ef;
-        border-radius: 0.65rem;
-        margin-bottom: 0.7rem;
-        font-size: 0.7rem;
-        color: #475569;
-        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-    }
-    .vmap-legend-title {
-        font-weight: 800;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
-        color: #0f172a;
-        font-size: 0.6rem;
-        padding-right: 0.6rem;
-        border-right: 1px solid #e2e8f0;
-        margin-right: 0.2rem;
-    }
-    .vmap-legend-item {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.35rem;
-        font-weight: 600;
-    }
-    .vmap-legend-item i {
-        width: 0.6rem;
-        height: 0.6rem;
-        border-radius: 3px;
-        display: inline-block;
-    }
-    .vmap-legend--occupied i { background: #10b981; }
-    .vmap-legend--failed i { background: #ef4444; }
-    .vmap-legend--housing-file i {
-        background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
-        box-shadow: 0 0 0 1px rgba(15, 118, 110, 0.35);
-    }
-    .vmap-legend--vacant   i { background: #3b82f6; }
-
     .vmap-canvas {
         background-color: #fafbfc;
         background-image: radial-gradient(circle, rgba(15, 23, 42, 0.06) 1px, transparent 1px);
@@ -726,29 +682,79 @@
         font-size: 0.85rem;
     }
 
-    /* Google Maps-style lot search */
+    /* Google Maps-style lot search — horizontal expand */
     .lotplan-search {
         position: absolute;
         top: 1rem;
         left: 1rem;
         z-index: 12;
-        width: min(360px, calc(100% - 5rem));
-    }
-    .lotplan-search-box {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
+    }
+    /* The outer pill that morphs from icon → search bar */
+    .lotplan-search-pill {
+        display: flex;
+        align-items: center;
+        height: 40px;
         background: #ffffff;
         border-radius: 24px;
-        box-shadow: 0 2px 12px rgba(15, 23, 42, 0.18), 0 1px 3px rgba(15, 23, 42, 0.08);
-        border: 1px solid rgba(226, 232, 240, 0.95);
-        padding: 0.35rem 0.5rem 0.35rem 0.85rem;
+        border: 1.5px solid rgba(226, 232, 240, 0.95);
+        box-shadow: 0 2px 14px rgba(15, 23, 42, 0.18), 0 1px 4px rgba(15, 23, 42, 0.08);
+        overflow: hidden;
+        width: 40px; /* collapsed = just the icon */
+        transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                    border-color 0.2s ease,
+                    box-shadow 0.2s ease;
+        cursor: pointer;
     }
-    .lotplan-search-icon {
+    .lotplan-search-pill.is-open {
+        width: min(340px, calc(100vw - 3rem));
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15),
+                    0 4px 18px rgba(15, 23, 42, 0.18),
+                    0 1px 4px rgba(15, 23, 42, 0.08);
+        cursor: default;
+    }
+    .lotplan-search-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
         flex-shrink: 0;
-        width: 18px;
-        height: 18px;
-        color: #64748b;
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        color: #475569;
+        transition: color 0.18s, background 0.18s;
+        padding: 0;
+    }
+    .lotplan-search-pill.is-open .lotplan-search-toggle {
+        color: #3b82f6;
+        cursor: pointer;
+    }
+    .lotplan-search-toggle:hover {
+        color: #1e40af;
+        background: rgba(30, 64, 175, 0.07);
+        border-radius: 50%;
+    }
+    .lotplan-search-expandable {
+        display: flex;
+        align-items: center;
+        flex: 1;
+        min-width: 0;
+        opacity: 0;
+        transform: translateX(-8px);
+        pointer-events: none;
+        transition: opacity 0.22s ease 0.1s, transform 0.22s ease 0.1s;
+        padding-right: 0.4rem;
+        gap: 0.25rem;
+    }
+    .lotplan-search-pill.is-open .lotplan-search-expandable {
+        opacity: 1;
+        transform: translateX(0);
+        pointer-events: auto;
     }
     .lotplan-search-input {
         flex: 1;
@@ -827,13 +833,18 @@
         color: #94a3b8;
     }
     @keyframes lotplan-search-pulse {
-        0%, 100% { stroke-width: 1.8; }
-        50% { stroke-width: 3.2; }
+        0%   { stroke-width: 0.8; fill-opacity: 0.5; }
+        25%  { stroke-width: 3.5; fill-opacity: 0.85; }
+        50%  { stroke-width: 0.8; fill-opacity: 0.5; }
+        75%  { stroke-width: 3.5; fill-opacity: 0.85; }
+        100% { stroke-width: 2;   fill-opacity: 0.75; }
     }
     .lotplan-lot--search-hit > polygon {
-        stroke: #2563eb !important;
-        fill: rgba(59, 130, 246, 0.55) !important;
-        animation: lotplan-search-pulse 0.55s ease-in-out 4;
+        stroke: #ea580c !important;
+        fill: rgba(251, 146, 60, 0.78) !important;
+        stroke-width: 2 !important;
+        filter: drop-shadow(0 0 6px rgba(234, 88, 12, 0.7));
+        animation: lotplan-search-pulse 0.6s ease-in-out 3;
     }
 
     /* Tablet — single block per row, denser lot grid */
@@ -845,19 +856,6 @@
 
     /* Phone landscape / small tablet */
     @media (max-width: 640px) {
-        .vmap-legend {
-            padding: 0.5rem 0.65rem;
-            gap: 0.35rem 0.6rem;
-            font-size: 0.66rem;
-        }
-        .vmap-legend-title {
-            flex: 1 0 100%;
-            border-right: none;
-            border-bottom: 1px solid #e2e8f0;
-            padding: 0 0 0.35rem;
-            margin: 0 0 0.2rem;
-        }
-        .vmap-legend-item i { width: 0.55rem; height: 0.55rem; }
         .vmap-block-head {
             padding: 0.5rem 0.7rem;
             gap: 0.45rem;
@@ -2862,10 +2860,6 @@
                 Create site
             </button>
             {% endif %}
-            <button type="button" class="units-header-action" onclick="window.location.reload()" title="Refresh inventory">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-                Refresh
-            </button>
             {% if can_add_housing_unit %}
             <button type="button" id="openAddUnitModalBtn" class="units-header-action" onclick="openAddUnitModal()">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -2930,17 +2924,8 @@
     </div>
     {% endif %}
 
-    <!-- Filter Tabs (Removed) -->
-
-    <!-- SCHEMATIC GRID — hidden; kept as the data source for the lot-plan map zones + KPI filters -->
+    <!-- SCHEMATIC GRID — hidden; data source for lot-plan map zones + KPI filters -->
     <div id="gridView-content" style="display: none;">
-        <div class="vmap-legend" role="group" aria-label="Lot status legend">
-            <span class="vmap-legend-title">Site map{% if site %} · {{ site.name }}{% endif %}</span>
-            <span class="vmap-legend-item vmap-legend--occupied"><i></i>Occupied</span>
-            <span class="vmap-legend-item vmap-legend--failed"><i></i>Failed</span>
-            <span class="vmap-legend-item vmap-legend--housing-file"><i></i>Housing unit</span>
-            <span class="vmap-legend-item vmap-legend--vacant"><i></i>Vacant</span>
-        </div>
         <div class="vmap-canvas">
             {% for block, units in units_by_block.items %}
             <section class="vmap-block">
@@ -2991,25 +2976,25 @@
 
     <!-- LOT PLAN MAP VIEW (interactive zones over the real drawing) -->
     <div id="planView-content" style="display: block;">
-        <div class="vmap-legend" role="group" aria-label="Lot status legend">
-            <span class="vmap-legend-title">Lot plan{% if site %} · {{ site.name }}{% endif %}</span>
-            <span class="vmap-legend-item vmap-legend--occupied"><i></i>Occupied</span>
-            <span class="vmap-legend-item vmap-legend--failed"><i></i>Failed</span>
-            <span class="vmap-legend-item vmap-legend--housing-file"><i></i>Housing unit</span>
-            <span class="vmap-legend-item vmap-legend--vacant"><i></i>Vacant</span>
-        </div>
         <div class="lotplan-zoom-wrapper" id="lotplan-zoom-wrapper">
             <div class="lotplan-search" id="lotplan-search">
-                <div class="lotplan-search-box">
-                    <svg class="lotplan-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                    <input type="search" id="lotplan-search-input" class="lotplan-search-input"
-                           placeholder="Search block or lot (e.g. B12 L1)" autocomplete="off"
-                           aria-label="Search block or lot" aria-controls="lotplan-search-results" aria-expanded="false">
-                    <button type="button" id="lotplan-search-clear" class="lotplan-search-clear" title="Clear search" aria-label="Clear search">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                <!-- Morphing pill: collapsed = circle icon, expanded = full search bar -->
+                <div class="lotplan-search-pill" id="lotplan-search-pill">
+                    <button type="button" id="lotplan-search-toggle" class="lotplan-search-toggle" title="Search block or lot" aria-label="Toggle search" aria-expanded="false">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                     </button>
+                    <!-- Expandable area slides in horizontally -->
+                    <div class="lotplan-search-expandable" id="lotplan-search-expandable">
+                        <input type="search" id="lotplan-search-input" class="lotplan-search-input"
+                               placeholder="Search block or lot (e.g. B12 L1)" autocomplete="off"
+                               aria-label="Search block or lot" aria-controls="lotplan-search-results" aria-expanded="false">
+                        <button type="button" id="lotplan-search-clear" class="lotplan-search-clear" title="Clear search" aria-label="Clear search">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
+                    </div>
                 </div>
-                <ul id="lotplan-search-results" class="lotplan-search-results" role="listbox" aria-label="Search results"></ul>
+                <ul id="lotplan-search-results" class="lotplan-search-results" role="listbox" aria-label="Search results"
+                    style="position:absolute; top:calc(100% + 0.4rem); left:0; min-width:220px; width:100%;"></ul>
             </div>
             <div class="lotplan-stage" id="lotplan-zoomable">
                 <div class="lotplan-roads-base" aria-hidden="true"></div>
@@ -3026,93 +3011,6 @@
                 <button type="button" class="lotplan-zoom-btn" id="lotplan-zoom-out" title="Zoom out" aria-label="Zoom out">−</button>
                 <button type="button" class="lotplan-zoom-btn lotplan-zoom-btn--reset" id="lotplan-zoom-reset" title="Reset zoom" aria-label="Reset zoom">FIT</button>
             </div>
-        </div>
-    </div>
-
-    <!-- TABLE VIEW -->
-    <div id="tableView-content" style="display: none;">
-        <div class="premium-table-wrap" style="background: white; border-radius: 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-top: 0;">
-            <table class="premium-table" style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">
-                <thead style="background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); border-bottom: 2px solid #0f172a;">
-                    <tr>
-                        <th style="padding: 1rem; text-align: left; font-weight: 700; color: #ffffff; border-right: 1px solid rgba(255, 255, 255, 0.22); background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); letter-spacing: 0.05em; text-transform: uppercase;">BLOCK</th>
-                        <th style="padding: 1rem; text-align: left; font-weight: 700; color: #ffffff; border-right: 1px solid rgba(255, 255, 255, 0.22); background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); letter-spacing: 0.05em; text-transform: uppercase;">LOT</th>
-                        <th style="padding: 1rem; text-align: left; font-weight: 700; color: #ffffff; border-right: 1px solid rgba(255, 255, 255, 0.22); background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); letter-spacing: 0.05em; text-transform: uppercase;">OCCUPANT</th>
-                        <th style="padding: 1rem; text-align: left; font-weight: 700; color: #ffffff; border-right: 1px solid rgba(255, 255, 255, 0.22); background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); letter-spacing: 0.05em; text-transform: uppercase;">STATUS</th>
-                        <th style="padding: 1rem; text-align: left; font-weight: 700; color: #ffffff; border-right: 1px solid rgba(255, 255, 255, 0.22); background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); letter-spacing: 0.05em; text-transform: uppercase;">NOTICE DEADLINE</th>
-                        <th style="padding: 1rem; text-align: center; font-weight: 700; color: #ffffff; background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); letter-spacing: 0.05em; text-transform: uppercase;"></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for block, units in units_by_block.items %}
-                        {% for unit in units %}
-                        <tr class="unit-table-row"
-                            data-unit-id="{{ unit.id }}"
-                            data-status="{{ unit.status }}"
-                            data-construction="{{ unit.construction_tokens }}"
-                            data-housing-unit-on-file="{% if unit.is_housing_unit_on_file %}1{% else %}0{% endif %}"
-                            data-historical-beneficiary="{% if unit.is_historical_beneficiary %}1{% else %}0{% endif %}"
-                            data-extension-failed="{% if unit.extension_final_visit_failed %}1{% else %}0{% endif %}"
-                            style="border-bottom: 1px solid var(--gray-100); hover:background: #f9fafb;">
-                            <td style="padding: 1rem;">{{ block }}</td>
-                            <td style="padding: 1rem;">{{ unit.lot_number }}</td>
-                            <td style="padding: 1rem;">
-                                {% if unit.current_occupant %}
-                                <span class="occupant-name applicant-name" 
-                                      style="cursor: pointer; font-weight: 700; color: #1e3a8a;"
-                                      data-full-name="{{ unit.current_occupant.full_name }}"
-                                      data-tx-id="APP-{{ unit.current_occupant.id|slice:":8" }}..."
-                                      data-ref-code="{{ unit.current_occupant.reference_number|default:'' }}"
-                                      data-barangay="{{ unit.current_occupant.barangay.name|default:'Not specified' }}"
-                                      data-dob="{{ unit.current_occupant.date_of_birth|date:'M d, Y'|default:'Not specified' }}">{{ unit.current_occupant.full_name }}</span>
-                                {% elif unit.occupant_name %}
-                                <span class="occupant-name applicant-name" 
-                                      style="cursor: pointer; font-weight: 600; color: #475569;"
-                                      data-full-name="{{ unit.occupant_name }}"
-                                      data-tx-id="{% if unit.occupant_id %}{{ unit.occupant_id }}{% else %}—{% endif %}"
-                                      data-ref-code=""
-                                      data-barangay="Not specified"
-                                      data-dob="Not specified">{{ unit.occupant_name }}</span>
-                                {% else %}
-                                <span style="color: #94a3b8;">—</span>
-                                {% endif %}
-                            </td>
-                            <td style="padding: 1rem;">
-                                {% if unit.extension_final_visit_failed %}
-                                <span style="display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.25rem 0.6rem; border-radius: 4px; font-weight: 600; background: rgba(239, 68, 68, 0.15); color: #b91c1c; border: 1px solid rgba(220, 38, 38, 0.35);">
-                                    <span style="width: 5px; height: 5px; border-radius: 50%; display: inline-block; background: #ef4444;"></span>
-                                    Failed
-                                </span>
-                                {% elif unit.is_housing_unit_on_file %}
-                                <span style="display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.25rem 0.6rem; border-radius: 4px; font-weight: 600; background: rgba(45, 212, 191, 0.2); color: #0f766e; border: 1px solid rgba(13, 148, 136, 0.35);">
-                                    <span style="width: 5px; height: 5px; border-radius: 50%; display: inline-block; background: #0d9488;"></span>
-                                    Housing unit
-                                </span>
-                                {% elif unit.is_historical_beneficiary %}
-                                <span style="display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.25rem 0.6rem; border-radius: 4px; font-weight: 600; background: rgba(45, 212, 191, 0.2); color: #0f766e; border: 1px solid rgba(13, 148, 136, 0.35);">
-                                    <span style="width: 5px; height: 5px; border-radius: 50%; display: inline-block; background: #0d9488;"></span>
-                                    Unit
-                                </span>
-                                {% else %}
-                                <span style="display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.25rem 0.6rem; border-radius: 4px; font-weight: 500;
-                                    {% if unit.status == 'Occupied' %}background: rgba(34, 197, 94, 0.15); color: #16a34a;{% elif unit.status == 'Vacant — available' %}background: rgba(37, 99, 235, 0.15); color: #2563eb;{% else %}background: rgba(148, 163, 184, 0.15); color: #475569;{% endif %}
-                                ">
-                                    <span style="width: 5px; height: 5px; border-radius: 50%; display: inline-block;
-                                        {% if unit.status == 'Occupied' %}background: #22c55e;{% elif unit.status == 'Vacant — available' %}background: #3b82f6;{% else %}background: #94a3b8;{% endif %}
-                                    "></span>
-                                    {{ unit.status|default:"—" }}
-                                </span>
-                                {% endif %}
-                            </td>
-                            <td style="padding: 1rem;">—</td>
-                            <td style="padding: 1rem; text-align: right;">
-                                <button onclick="openUnitModal('{{ unit.id }}'); event.stopPropagation();" style="padding: 0.4rem 0.75rem; background: var(--gray-100); color: var(--gray-700); border: none; border-radius: 6px; font-size: 0.75rem; cursor: pointer;">👁️ View</button>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    {% endfor %}
-                </tbody>
-            </table>
         </div>
     </div>
 
@@ -3974,25 +3872,6 @@ document.addEventListener('keydown', e => {
     }
 });
 
-function switchView(view) {
-    const gridViewContent = document.getElementById('gridView-content');
-    const tableViewContent = document.getElementById('tableView-content');
-    const gridBtn = document.getElementById('gridView');
-    const tableBtn = document.getElementById('tableView');
-
-    if (view === 'grid') {
-        if (gridViewContent) gridViewContent.style.display = 'grid';
-        if (tableViewContent) tableViewContent.style.display = 'none';
-        if (gridBtn) { gridBtn.style.background = 'var(--primary-600)'; gridBtn.style.color = 'white'; }
-        if (tableBtn) { tableBtn.style.background = 'white'; tableBtn.style.color = 'var(--gray-700)'; }
-    } else {
-        if (gridViewContent) gridViewContent.style.display = 'none';
-        if (tableViewContent) tableViewContent.style.display = 'block';
-        if (tableBtn) { tableBtn.style.background = 'var(--primary-600)'; tableBtn.style.color = 'white'; }
-        if (gridBtn) { gridBtn.style.background = 'white'; gridBtn.style.color = 'var(--gray-700)'; }
-    }
-}
-
 /* ==========================================================
    LOT PLAN MAP — exact lot polygons traced from lot_plan.png.
    Polygons (normalized 0..1) are loaded from a static JSON built
@@ -4190,13 +4069,16 @@ function lotPlanAppendLabel(g, poly, blockNum, lotNum, V) {
     const text = document.createElementNS(SVG_NS, 'text');
     text.setAttribute('x', cx);
     text.setAttribute('y', cy);
+    text.style.pointerEvents = 'none';
     const tspan1 = document.createElementNS(SVG_NS, 'tspan');
     tspan1.setAttribute('x', cx);
     tspan1.setAttribute('dy', '-0.4em');
+    tspan1.style.pointerEvents = 'none';
     tspan1.textContent = 'B' + blockNum;
     const tspan2 = document.createElementNS(SVG_NS, 'tspan');
     tspan2.setAttribute('x', cx);
     tspan2.setAttribute('dy', '1.1em');
+    tspan2.style.pointerEvents = 'none';
     tspan2.textContent = 'L' + lotNum;
     text.appendChild(tspan1);
     text.appendChild(tspan2);
@@ -4238,8 +4120,10 @@ function lotPlanWireLinkedLot(g, poly, unit, blockNum, lotNum, V) {
             }
         });
     }
+
     if (unit.style.display === 'none') g.style.display = 'none';
 }
+
 
 async function buildLotPlan() {
     const svg = document.getElementById('lotplan-svg');
@@ -4366,26 +4250,85 @@ function lotPlanSearchFilter(index, query) {
     });
 }
 
-function lotPlanSearchSelect(unitId) {
+let _lotPlanSearchHitEl = null;
+
+function lotPlanSearchSelect(unitId, keepHighlight) {
+    // Clear previous highlight
+    if (_lotPlanSearchHitEl) {
+        _lotPlanSearchHitEl.classList.remove('lotplan-lot--search-hit');
+        _lotPlanSearchHitEl = null;
+    }
+
     const g = document.querySelector('.lotplan-lot--linked[data-unit-id="' + unitId + '"]');
     if (g) {
-        const cx = parseFloat(g.dataset.lotCx);
-        const cy = parseFloat(g.dataset.lotCy);
-        if (window.lotPlanMap && !isNaN(cx) && !isNaN(cy)) {
-            window.lotPlanMap.flyTo(cx, cy, 2.5);
+        const cx = parseFloat(g.getAttribute('data-lot-cx') || g.dataset?.lotCx);
+        const cy = parseFloat(g.getAttribute('data-lot-cy') || g.dataset?.lotCy);
+        if (window.lotPlanScrollTo && !isNaN(cx) && !isNaN(cy)) {
+            window.lotPlanScrollTo(cx, cy);
         }
         g.classList.remove('lotplan-lot--search-hit');
-        void g.offsetWidth;
+        void g.getBoundingClientRect(); // force reflow
         g.classList.add('lotplan-lot--search-hit');
-        setTimeout(() => g.classList.remove('lotplan-lot--search-hit'), 2500);
+        _lotPlanSearchHitEl = g;
+
+        if (!keepHighlight) {
+            // Auto-clear after 4s if not persistent
+            setTimeout(() => {
+                g.classList.remove('lotplan-lot--search-hit');
+                if (_lotPlanSearchHitEl === g) _lotPlanSearchHitEl = null;
+            }, 4000);
+        }
+
+        // Scroll the polygon into view
+        const rect = g.getBoundingClientRect();
+        if (rect.top < 60 || rect.bottom > window.innerHeight - 60) {
+            g.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
     }
-    openUnitModal(unitId);
+    // Do NOT auto-open modal — just highlight
 }
 
 function initLotPlanSearch() {
     const input = document.getElementById('lotplan-search-input');
     const resultsEl = document.getElementById('lotplan-search-results');
     const clearBtn = document.getElementById('lotplan-search-clear');
+    const toggleBtn = document.getElementById('lotplan-search-toggle');
+    const expandable = document.getElementById('lotplan-search-expandable');
+    const pill = document.getElementById('lotplan-search-pill');
+
+    // Wire up the toggle button - morphs the pill horizontally
+    if (toggleBtn && pill) {
+        toggleBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            const isOpen = pill.classList.contains('is-open');
+            if (isOpen) {
+                pill.classList.remove('is-open');
+                toggleBtn.setAttribute('aria-expanded', 'false');
+                if (input) { input.value = ''; }
+                if (resultsEl) { resultsEl.classList.remove('is-open'); resultsEl.innerHTML = ''; }
+                if (clearBtn) clearBtn.classList.remove('is-visible');
+            } else {
+                pill.classList.add('is-open');
+                toggleBtn.setAttribute('aria-expanded', 'true');
+                // Focus input after width transition completes
+                setTimeout(() => { if (input) input.focus(); }, 360);
+            }
+        });
+
+        // Close when clicking outside the search
+        document.addEventListener('click', function (e) {
+            if (!pill.contains(e.target) && !resultsEl?.contains(e.target)) {
+                if (pill.classList.contains('is-open')) {
+                    pill.classList.remove('is-open');
+                    toggleBtn.setAttribute('aria-expanded', 'false');
+                    if (input) input.value = '';
+                    if (resultsEl) { resultsEl.classList.remove('is-open'); resultsEl.innerHTML = ''; }
+                    if (clearBtn) clearBtn.classList.remove('is-visible');
+                }
+            }
+        });
+    }
+
     if (!input || !resultsEl) return;
 
     const index = lotPlanBuildSearchIndex();
@@ -4418,7 +4361,7 @@ function initLotPlanSearch() {
                     '<span class="lotplan-search-result-status">' + (item.status || '—') + '</span>';
                 li.addEventListener('mousedown', (e) => {
                     e.preventDefault();
-                    lotPlanSearchSelect(item.unitId);
+                    lotPlanSearchSelect(item.unitId, true);
                     input.value = item.label;
                     if (clearBtn) clearBtn.classList.add('is-visible');
                     closeResults();
@@ -4457,7 +4400,7 @@ function initLotPlanSearch() {
                 e.preventDefault();
                 runSearch();
                 if (visible.length === 1) {
-                    lotPlanSearchSelect(visible[0].unitId);
+                    lotPlanSearchSelect(visible[0].unitId, true);
                     input.value = visible[0].label;
                     closeResults();
                 }
@@ -4476,7 +4419,7 @@ function initLotPlanSearch() {
             e.preventDefault();
             const pick = visible[activeIdx >= 0 ? activeIdx : 0];
             if (pick) {
-                lotPlanSearchSelect(pick.unitId);
+                lotPlanSearchSelect(pick.unitId, true);
                 input.value = pick.label;
                 closeResults();
             }
@@ -4488,6 +4431,11 @@ function initLotPlanSearch() {
             input.value = '';
             clearBtn.classList.remove('is-visible');
             closeResults();
+            // Clear the orange highlight
+            if (_lotPlanSearchHitEl) {
+                _lotPlanSearchHitEl.classList.remove('lotplan-lot--search-hit');
+                _lotPlanSearchHitEl = null;
+            }
             resultsEl.innerHTML = '';
             input.focus();
         });
@@ -4823,16 +4771,6 @@ function applyVmapLotMapBadge(unit) {
     }
 }
 
-/** @deprecated Use applyVmapLotMapBadge({ id, is_housing_unit_on_file, extension_final_visit_failed, status }) */
-function applyVmapLotHousingUnitVisual(unitId, isOnFile, occupancyStatus) {
-    applyVmapLotMapBadge({
-        id: unitId,
-        is_housing_unit_on_file: isOnFile,
-        extension_final_visit_failed: false,
-        status: occupancyStatus,
-    });
-}
-
 function kpiFilter(card) {
     if (!card) return;
     const kind = card.dataset.fkind;
@@ -4842,6 +4780,11 @@ function kpiFilter(card) {
     cards.forEach(c => c.classList.remove('is-active'));
     if (!reset) card.classList.add('is-active');
     const showAll = reset || kind === 'all';
+
+    function lotIsRecognizedHousingUnit(lot) {
+        return (lot.dataset.housingUnitOnFile || '') === '1'
+            || (lot.dataset.historicalBeneficiary || '') === '1';
+    }
 
     document.querySelectorAll('.vmap-lot').forEach(lot => {
         let show = true;
@@ -4854,9 +4797,7 @@ function kpiFilter(card) {
                     show = (lot.dataset.status || '') === val;
                 }
             } else if (kind === 'housing_unit') {
-                show = (lot.dataset.housingUnitOnFile || '') === '1';
-            } else {
-                show = (' ' + (lot.dataset.construction || '') + ' ').indexOf(' ' + val + ' ') !== -1;
+                show = lotIsRecognizedHousingUnit(lot);
             }
         }
         lot.style.display = show ? '' : 'none';
@@ -4880,33 +4821,10 @@ function kpiFilter(card) {
                     show = (lot.dataset.status || '') === val;
                 }
             } else if (kind === 'housing_unit') {
-                show = (lot.dataset.housingUnitOnFile || '') === '1';
-            } else {
-                show = (' ' + (lot.dataset.construction || '') + ' ').indexOf(' ' + val + ' ') !== -1;
+                show = lotIsRecognizedHousingUnit(lot);
             }
         }
         lot.style.display = show ? '' : 'none';
-    });
-
-    document.querySelectorAll('.unit-table-row').forEach(row => {
-        let show = true;
-        if (!showAll) {
-            if (kind === 'status') {
-                if (val === 'Occupied') {
-                    show = (row.dataset.status || '') === val
-                        && (row.dataset.historicalBeneficiary || '') !== '1';
-                } else {
-                    show = (row.dataset.status || '') === val;
-                }
-            } else if (kind === 'housing_unit') {
-                show = (row.dataset.housingUnitOnFile || '') === '1';
-            } else if (kind === 'construction') {
-                show = (' ' + (row.dataset.construction || '') + ' ').indexOf(' ' + val + ' ') !== -1;
-            } else {
-                show = true;
-            }
-        }
-        row.style.display = show ? '' : 'none';
     });
 }
 
@@ -7066,8 +6984,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let hideTimeout;
 
+    function isHoverPopoverZone(el) {
+        if (!el || el === document) return false;
+        return !!(
+            el.closest('#applicantHoverCard') ||
+            el.closest('.occupant-name.applicant-name') ||
+            el.closest('button.vmap-lot') ||
+            el.closest('g.lotplan-lot--linked')
+        );
+    }
+
+    function scheduleHoverHide(delayMs) {
+        clearTimeout(hideTimeout);
+        hideTimeout = setTimeout(function () {
+            hoverCard.classList.remove('active');
+            setTimeout(() => { hoverCard.style.display = 'none'; }, 220);
+        }, delayMs);
+    }
+
     function resolveHoverTarget(e) {
-        // 1. Direct occupant-name span (table view)
+        // Occupant name span (hidden grid tiles)
         const nameSpan = e.target.closest('.occupant-name.applicant-name');
         if (nameSpan && nameSpan.dataset.fullName) return { source: nameSpan, anchor: nameSpan, mode: 'occupant' };
         
@@ -7245,30 +7181,20 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.addEventListener('mouseout', function (e) {
-        const isHoverCard = e.target.closest('#applicantHoverCard');
-        const nameSpan = e.target.closest('.occupant-name.applicant-name');
-        const vmapBtn = e.target.closest('button.vmap-lot');
-        const svgLot = e.target.closest('g.lotplan-lot--linked');
-
-        if (nameSpan || vmapBtn || svgLot || isHoverCard) {
-            hideTimeout = setTimeout(function () {
-                hoverCard.classList.remove('active');
-                // Wait for CSS transition to finish before hiding
-                setTimeout(() => { hoverCard.style.display = 'none'; }, 220);
-            }, 200);
-        }
+        if (!isHoverPopoverZone(e.target)) return;
+        if (isHoverPopoverZone(e.relatedTarget)) return;
+        scheduleHoverHide(200);
     });
 
     hoverCard.addEventListener('mouseenter', function () {
         clearTimeout(hideTimeout);
     });
 
-    hoverCard.addEventListener('mouseleave', function () {
-        hideTimeout = setTimeout(function () {
-            hoverCard.classList.remove('active');
-            setTimeout(() => { hoverCard.style.display = 'none'; }, 220);
-        }, 200);
+    hoverCard.addEventListener('mouseleave', function (e) {
+        if (isHoverPopoverZone(e.relatedTarget)) return;
+        scheduleHoverHide(200);
     });
+
 });
 </script>
 
