@@ -2690,7 +2690,7 @@
 
     /* Premium Hover Card Popover CSS */
     .applicant-hover-card {
-        position: absolute;
+        position: fixed;
         z-index: 10000;
         width: 290px;
         background: #ffffff;
@@ -4121,6 +4121,7 @@ function lotPlanWireLinkedLot(g, poly, unit, blockNum, lotNum, V) {
         });
     }
 
+
     if (unit.style.display === 'none') g.style.display = 'none';
 }
 
@@ -4245,8 +4246,8 @@ function lotPlanSearchFilter(index, query) {
         }
         return item.block === parsed.block;
     }).sort((a, b) => {
-        const bl = parseInt(a.lot, 10) - parseInt(b.lot, 10);
-        return bl || parseInt(a.block, 10) - parseInt(b.block, 10);
+        const bk = parseInt(a.block, 10) - parseInt(b.block, 10);
+        return bk || parseInt(a.lot, 10) - parseInt(b.lot, 10);
     });
 }
 
@@ -6990,7 +6991,8 @@ document.addEventListener('DOMContentLoaded', () => {
             el.closest('#applicantHoverCard') ||
             el.closest('.occupant-name.applicant-name') ||
             el.closest('button.vmap-lot') ||
-            el.closest('g.lotplan-lot--linked')
+            el.closest('g.lotplan-lot--linked') ||
+            (el.nodeName === 'polygon' && el.parentElement && el.parentElement.classList.contains('lotplan-lot--linked'))
         );
     }
 
@@ -7003,32 +7005,34 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function resolveHoverTarget(e) {
-        // Occupant name span (hidden grid tiles)
+        // 1. Occupant name span (hidden grid tiles)
         const nameSpan = e.target.closest('.occupant-name.applicant-name');
         if (nameSpan && nameSpan.dataset.fullName) return { source: nameSpan, anchor: nameSpan, mode: 'occupant' };
-        
-        // 2. SVG map polygon hover
+
+        // 2. SVG map polygon — mouseover bubbles through SVG reliably even after pan mousedown
         const svgLot = e.target.closest('g.lotplan-lot--linked');
         if (svgLot) {
-            const unitId = svgLot.getAttribute('data-unit-id') || svgLot.dataset?.unitId;
-            if (unitId) {
-                const vmapBtn = document.querySelector(`button.vmap-lot[data-unit-id="${unitId}"]`);
-                if (vmapBtn) {
-                    const inner = vmapBtn.querySelector('.occupant-name.applicant-name');
-                    if (inner && (inner.dataset.fullName || inner.getAttribute('data-full-name'))) {
-                        return { source: inner, anchor: svgLot, mode: 'occupant', originalBtn: vmapBtn };
-                    }
-                    return { source: null, anchor: svgLot, mode: 'vacant', originalBtn: vmapBtn };
+            const unitId = svgLot.dataset.unitId || svgLot.getAttribute('data-unit-id') || '';
+            const vmapBtn = unitId ? document.querySelector(`button.vmap-lot[data-unit-id="${unitId}"]`) : null;
+            if (vmapBtn) {
+                const inner = vmapBtn.querySelector('.occupant-name.applicant-name');
+                if (inner && (inner.dataset.fullName || inner.getAttribute('data-full-name'))) {
+                    return { source: inner, anchor: svgLot, mode: 'occupant', originalBtn: vmapBtn };
                 }
+                return { source: null, anchor: svgLot, mode: 'vacant', originalBtn: vmapBtn };
             }
+            // Lot exists on the map but has no matching inventory entry — show minimal card
+            const blockNum = svgLot.getAttribute('data-block') || '';
+            const lotNum   = svgLot.getAttribute('data-lot')   || '';
+            return { source: null, anchor: svgLot, mode: 'vacant', originalBtn: null,
+                     fallbackLabel: blockNum && lotNum ? `B${blockNum} - L${lotNum}` : '' };
         }
 
-        // 3. Any vmap-lot button (grid view)
+        // 3. Any vmap-lot button (hidden grid)
         const vmapBtn = e.target.closest('button.vmap-lot');
         if (vmapBtn) {
             const inner = vmapBtn.querySelector('.occupant-name.applicant-name');
             if (inner && inner.dataset.fullName) return { source: inner, anchor: vmapBtn, mode: 'occupant', originalBtn: vmapBtn };
-            // Vacant / no occupant — show minimal unit info card
             return { source: null, anchor: vmapBtn, mode: 'vacant', originalBtn: vmapBtn };
         }
         return null;
@@ -7045,12 +7049,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const anchor = hit.anchor;
         const mode   = hit.mode;
-        const vmapBtn = hit.originalBtn || anchor.closest('button.vmap-lot') || anchor;
+        const vmapBtn = hit.originalBtn;
 
-        // Block / Lot label from the tile
-        const lotIdEl = vmapBtn.querySelector('.vmap-lot-id');
-        const blockLotText = lotIdEl ? lotIdEl.textContent.trim() : (vmapBtn.dataset.block ? `B${vmapBtn.dataset.block} - L${vmapBtn.dataset.lot}` : '');
-        const unitStatus = vmapBtn.dataset.unitStatus || vmapBtn.dataset.status || '';
+        // Block / Lot label — from grid tile, SVG data attributes, or fallback
+        let blockLotText = hit.fallbackLabel || '';
+        let unitStatus = '';
+        if (vmapBtn) {
+            const lotIdEl = vmapBtn.querySelector('.vmap-lot-id');
+            blockLotText = lotIdEl ? lotIdEl.textContent.trim()
+                : (vmapBtn.dataset.block ? `B${vmapBtn.dataset.block} - L${vmapBtn.dataset.lot}` : blockLotText);
+            unitStatus = vmapBtn.dataset.unitStatus || vmapBtn.dataset.status || '';
+        } else if (anchor && anchor.dataset) {
+            // SVG lot with no matching grid button
+            unitStatus = anchor.dataset.status || '';
+        }
 
         if (mode === 'vacant') {
             // Minimal card for vacant / no-occupant tiles
@@ -7141,42 +7153,32 @@ document.addEventListener('DOMContentLoaded', () => {
             hcDob.textContent = dob;
         }
 
-        // Position card above the anchor element
+        // Position card — fixed positioning uses viewport coordinates directly (no scroll offset)
         const rect = anchor.getBoundingClientRect();
-        
-        // Temporarily make visible off-screen to measure height
+
         hoverCard.style.visibility = 'hidden';
         hoverCard.style.display = 'block';
-        const cardWidth = hoverCard.offsetWidth || 290;
+        const cardWidth  = hoverCard.offsetWidth  || 290;
         const cardHeight = hoverCard.offsetHeight || 220;
         hoverCard.style.visibility = '';
-        // Note: display stays block; active class controls opacity/transform
 
-        const scrollX = window.pageXOffset || document.documentElement.scrollLeft;
-        const scrollY = window.pageYOffset || document.documentElement.scrollTop;
+        let targetLeft = rect.left + (rect.width / 2) - (cardWidth / 2);
+        let targetTop  = rect.top  - cardHeight - 12;
 
-        // Position directly above, centered on the anchor
-        let targetLeft = rect.left + scrollX + (rect.width / 2) - (cardWidth / 2);
-        let targetTop = rect.top + scrollY - cardHeight - 12;
-
-        // Boundary checks
         if (targetLeft < 10) targetLeft = 10;
-        if (targetLeft + cardWidth > window.innerWidth - 10) {
+        if (targetLeft + cardWidth > window.innerWidth - 10)
             targetLeft = window.innerWidth - cardWidth - 10;
-        }
 
         if (rect.top - cardHeight - 12 < 10) {
-            // Flip below
-            targetTop = rect.bottom + scrollY + 12;
+            targetTop = rect.bottom + 12;
             hoverCard.classList.add('position-below');
         } else {
             hoverCard.classList.remove('position-below');
         }
 
         hoverCard.style.left = targetLeft + 'px';
-        hoverCard.style.top = targetTop + 'px';
+        hoverCard.style.top  = targetTop  + 'px';
         hoverCard.style.display = 'block';
-        // Use rAF so the transition runs after display:block takes effect
         requestAnimationFrame(() => hoverCard.classList.add('active'));
     });
 
