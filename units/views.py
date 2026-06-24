@@ -786,6 +786,63 @@ def create_relocation_site(request, position):
     )
 
 
+def _housing_unit_inventory_editable(user, unit):
+    """Vacant inventory row with no active lot award — staff may edit block/lot metadata."""
+    if user.position not in _MODULE4_ADD_HOUSING_UNIT_POSITIONS:
+        return False
+    if not HousingUnit.is_vacant_available_status(unit.status):
+        return False
+    if LotAward.objects.filter(unit=unit, status='active').exists():
+        return False
+    return True
+
+
+def _housing_unit_inventory_deletable(user, unit):
+    """Stricter than edit: no award history, cases, or incident logs."""
+    if not _housing_unit_inventory_editable(user, unit):
+        return False
+    if LotAward.objects.filter(unit=unit).exists():
+        return False
+    if unit.cases.exists():
+        return False
+    if unit.settled_incident_logs.exists():
+        return False
+    return True
+
+
+def _validate_housing_unit_block_lot(site, block_number, lot_number, exclude_unit_id=None):
+    """Shared block/lot validation for create and update. Returns error message or None."""
+    if not block_number or not lot_number:
+        return 'Block and lot are required.'
+    if not block_number.isdigit() or not lot_number.isdigit():
+        return 'Block and lot must be digits only (0-9).'
+
+    new_block = int(block_number)
+    existing_qs = HousingUnit.objects.filter(site=site)
+    if exclude_unit_id:
+        existing_qs = existing_qs.exclude(id=exclude_unit_id)
+    existing_blocks = existing_qs.values_list('block_number', flat=True).distinct()
+    numeric_blocks = sorted(int(b) for b in existing_blocks if str(b).isdigit())
+    max_block = numeric_blocks[-1] if numeric_blocks else 0
+    if new_block > max_block + 1:
+        next_block = max_block + 1
+        return f'Add Block {next_block} first before Block {new_block}.'
+
+    dup_qs = HousingUnit.objects.filter(
+        site=site,
+        block_number=block_number,
+        lot_number=lot_number,
+    )
+    if exclude_unit_id:
+        dup_qs = dup_qs.exclude(id=exclude_unit_id)
+    if dup_qs.exists():
+        return (
+            f'Block {block_number} Lot {lot_number} is already in the inventory '
+            f'at {site.name}.'
+        )
+    return None
+
+
 @login_required
 @verify_position
 @require_POST
@@ -903,6 +960,147 @@ def create_housing_unit(request, position):
             'success': True,
             'message': f'Added Block {block_number} Lot {lot_number} at {site.name}.',
             'unit': {'id': str(unit.id), 'block': block_number, 'lot': lot_number},
+        }
+    )
+
+
+@login_required
+@verify_position
+@require_POST
+def update_housing_unit(request, position, unit_id):
+    """
+    Update vacant inventory metadata (block, lot, notes, area).
+
+    URL: /units/housing-units/<position>/<unit_id>/update/
+    """
+    if request.user.position not in _MODULE4_ADD_HOUSING_UNIT_POSITIONS:
+        return JsonResponse(
+            {'success': False, 'error': 'Only housing staff (4th / 2nd Member) can edit units.'},
+            status=403,
+        )
+
+    try:
+        unit = HousingUnit.objects.select_related('site').get(id=unit_id)
+    except HousingUnit.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Unit not found.'}, status=404)
+
+    if not _housing_unit_inventory_editable(request.user, unit):
+        return JsonResponse(
+            {
+                'success': False,
+                'error': 'Only vacant units with no active award can be edited.',
+            },
+            status=400,
+        )
+
+    block_number = (request.POST.get('block_number') or '').strip()[:10]
+    lot_number = (request.POST.get('lot_number') or '').strip()[:10]
+    location_notes = request.POST.get('location_notes')
+    area_raw = (request.POST.get('area_sqm') or '').strip()
+
+    block_err = _validate_housing_unit_block_lot(
+        unit.site, block_number, lot_number, exclude_unit_id=unit.id,
+    )
+    if block_err:
+        dup = HousingUnit.objects.filter(
+            site=unit.site,
+            block_number=block_number,
+            lot_number=lot_number,
+        ).exclude(id=unit.id).first()
+        if dup:
+            return JsonResponse(
+                {
+                    'success': False,
+                    'duplicate': True,
+                    'error': block_err,
+                    'existing_unit_id': str(dup.id),
+                    'existing_block': block_number,
+                    'existing_lot': lot_number,
+                },
+                status=400,
+            )
+        return JsonResponse({'success': False, 'error': block_err}, status=400)
+
+    unit.block_number = block_number
+    unit.lot_number = lot_number
+    if location_notes is not None:
+        unit.location_notes = location_notes.strip()
+    if area_raw:
+        try:
+            unit.area_sqm = area_raw
+        except (ValidationError, ValueError):
+            return JsonResponse(
+                {'success': False, 'error': 'Area must be a valid number.'},
+                status=400,
+            )
+    elif area_raw == '':
+        unit.area_sqm = None
+
+    try:
+        unit.save()
+    except IntegrityError:
+        return JsonResponse(
+            {'success': False, 'duplicate': True, 'error': 'Existing block or lot!'},
+            status=400,
+        )
+
+    return JsonResponse(
+        {
+            'success': True,
+            'message': f'Updated to Block {block_number} Lot {lot_number}.',
+            'unit': {'id': str(unit.id), 'block': block_number, 'lot': lot_number},
+        }
+    )
+
+
+@login_required
+@verify_position
+@require_POST
+def delete_housing_unit(request, position, unit_id):
+    """
+    Remove a vacant inventory row with no linked awards or case history.
+
+    URL: /units/housing-units/<position>/<unit_id>/delete/
+    """
+    if request.user.position not in _MODULE4_ADD_HOUSING_UNIT_POSITIONS:
+        return JsonResponse(
+            {'success': False, 'error': 'Only housing staff (4th / 2nd Member) can delete units.'},
+            status=403,
+        )
+
+    try:
+        unit = HousingUnit.objects.select_related('site').get(id=unit_id)
+    except HousingUnit.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Unit not found.'}, status=404)
+
+    if not _housing_unit_inventory_deletable(request.user, unit):
+        if not _housing_unit_inventory_editable(request.user, unit):
+            return JsonResponse(
+                {
+                    'success': False,
+                    'error': 'Only vacant units with no active award can be removed.',
+                },
+                status=400,
+            )
+        return JsonResponse(
+            {
+                'success': False,
+                'error': (
+                    'Cannot delete: this unit has lot award, case, or incident history. '
+                    'Contact an administrator if removal is required.'
+                ),
+            },
+            status=400,
+        )
+
+    label = f'Block {unit.block_number} Lot {unit.lot_number}'
+    site_name = unit.site.name if unit.site else ''
+    unit.delete()
+
+    return JsonResponse(
+        {
+            'success': True,
+            'message': f'Removed {label}' + (f' at {site_name}.' if site_name else '.'),
         }
     )
 
@@ -1459,6 +1657,9 @@ def get_unit_details(request, position, unit_id):
         record_case_query['unit_id'] = str(unit.id)
         record_case_query['new_case'] = '1'
 
+        can_edit_inventory = _housing_unit_inventory_editable(request.user, unit)
+        can_delete_inventory = _housing_unit_inventory_deletable(request.user, unit)
+
         return JsonResponse({
             'success': True,
             'unit': {
@@ -1466,6 +1667,10 @@ def get_unit_details(request, position, unit_id):
                 'block': unit.block_number,
                 'lot': unit.lot_number,
                 'status': unit.status,
+                'location_notes': unit.location_notes or '',
+                'area_sqm': str(unit.area_sqm) if unit.area_sqm is not None else '',
+                'can_edit_inventory': can_edit_inventory,
+                'can_delete_inventory': can_delete_inventory,
                 'is_housing_unit_on_file': is_housing_unit_on_file,
                 'is_historical_beneficiary': is_historical_beneficiary,
                 'historical_monitoring_message': (

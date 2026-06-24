@@ -507,6 +507,81 @@
         overflow: clip;
         box-shadow: 0 4px 24px rgba(15, 23, 42, 0.10), 0 1px 4px rgba(15, 23, 42, 0.06);
     }
+    .add-unit-form-error {
+        margin: 0 0 0.65rem;
+        font-size: 0.75rem;
+        color: #b91c1c;
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        border-radius: 8px;
+        padding: 0.5rem 0.65rem;
+    }
+    .add-unit-form-error p {
+        margin: 0;
+    }
+    .dup-view-existing-btn {
+        display: inline-block;
+        margin-top: 0.45rem;
+        padding: 0.35rem 0.65rem;
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: #1d4ed8;
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        border-radius: 6px;
+        cursor: pointer;
+    }
+    .dup-view-existing-btn:hover {
+        background: #dbeafe;
+    }
+    .lotplan-unmapped-panel {
+        margin-top: 0.65rem;
+        padding: 0.75rem 0.85rem;
+        border: 1px solid #fde68a;
+        border-radius: 10px;
+        background: #fffbeb;
+    }
+    .lotplan-unmapped-heading {
+        margin: 0;
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: #92400e;
+    }
+    .lotplan-unmapped-hint {
+        margin: 0.25rem 0 0.5rem;
+        font-size: 0.72rem;
+        color: #a16207;
+    }
+    .lotplan-unmapped-list {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem 0.5rem;
+    }
+    .lotplan-unmapped-list li {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+    .lotplan-unmapped-item {
+        padding: 0.28rem 0.55rem;
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: #1e40af;
+        background: #fff;
+        border: 1px solid #bfdbfe;
+        border-radius: 6px;
+        cursor: pointer;
+    }
+    .lotplan-unmapped-item:hover {
+        background: #eff6ff;
+    }
+    .lotplan-unmapped-status {
+        font-size: 0.68rem;
+        color: #64748b;
+    }
     .lotplan-stage {
         position: absolute;
         top: 0;
@@ -656,6 +731,18 @@
         fill: transparent;
         stroke: rgba(100, 116, 139, 0.35);
         stroke-width: 0.5;
+    }
+    .lotplan-lot--inert.lotplan-lot--addable {
+        cursor: pointer;
+    }
+    .lotplan-lot--inert.lotplan-lot--addable:hover > polygon,
+    .lotplan-lot--inert.lotplan-lot--addable:focus-visible > polygon {
+        fill: rgba(147, 197, 253, 0.4);
+        stroke: #2563eb;
+        stroke-width: 1.2;
+    }
+    .lotplan-lot--inert.lotplan-lot--addable:focus-visible {
+        outline: none;
     }
 
     /* Status palettes — opaque fills on dark road background */
@@ -2854,6 +2941,17 @@
             <h1 class="units-page-title" style="margin:0;">Housing Unit &amp; Occupancy Monitoring</h1>
         </div>
         <div class="units-page-header__toolbar">
+            {% if all_sites|length > 1 and site %}
+            <label class="units-header-site-select" style="display:inline-flex;align-items:center;gap:0.35rem;font-size:0.72rem;color:#475569;">
+                <span style="font-weight:600;text-transform:uppercase;letter-spacing:0.04em;">Site</span>
+                <select id="monitoringSiteSelect" onchange="if(this.value){window.location.href='?site_id='+encodeURIComponent(this.value);}"
+                    style="padding:0.35rem 0.5rem;border:1px solid #cbd5e1;border-radius:8px;font-size:0.78rem;font-family:inherit;background:#fff;max-width:12rem;">
+                    {% for s in all_sites %}
+                    <option value="{{ s.id }}" {% if s.id == site.id %}selected{% endif %}>{{ s.name }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            {% endif %}
             {% if can_create_relocation_site and no_relocation_sites %}
             <button type="button" class="units-header-action" onclick="openCreateSiteModal()">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -3012,6 +3110,13 @@
                 <button type="button" class="lotplan-zoom-btn lotplan-zoom-btn--reset" id="lotplan-zoom-reset" title="Reset zoom" aria-label="Reset zoom">FIT</button>
             </div>
         </div>
+        <div id="lotplan-unmapped-panel" class="lotplan-unmapped-panel" hidden>
+            <p class="lotplan-unmapped-heading">
+                Inventory not on map plan (<span id="lotplan-unmapped-count">0</span>)
+            </p>
+            <p class="lotplan-unmapped-hint">These lots exist in inventory but have no traced shape on the plan drawing.</p>
+            <ul id="lotplan-unmapped-list" class="lotplan-unmapped-list"></ul>
+        </div>
     </div>
 
 </div>
@@ -3134,12 +3239,55 @@
                         oninput="this.value=this.value.replace(/\D/g,'')">
                 </div>
             </div>
-            <p id="addUnitFormError" style="display: none; margin: 0 0 0.65rem; font-size: 0.75rem; color: #b91c1c; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 0.5rem 0.65rem;"></p>
+            <div id="addUnitFormError" class="add-unit-form-error" style="display: none;"></div>
             <div style="display: flex; justify-content: center; gap: 0.6rem; padding: 0.85rem 0 0.1rem; margin-top: 0.4rem; border-top: 1px solid #f1f5f9;">
                 <button type="button" onclick="closeAddUnitModal()"
                     style="padding: 0.6rem 1.4rem; background: #fff; border: 1px solid #cbd5e1; border-radius: 9px; font-size: 0.82rem; font-weight: 600; color: #475569; cursor: pointer; min-width: 7rem; transition: background 0.15s, border-color 0.15s;">Cancel</button>
                 <button type="submit" id="addUnitSubmitBtn"
                     style="padding: 0.6rem 1.4rem; background: linear-gradient(180deg, #0ea5e9 0%, #0284c7 100%); color: #fff; border: none; border-radius: 9px; font-size: 0.82rem; font-weight: 700; cursor: pointer; min-width: 7rem; box-shadow: 0 4px 10px -2px rgba(2, 132, 199, 0.35); transition: filter 0.15s, transform 0.1s;">Save unit</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+{% if can_add_housing_unit %}
+<!-- Edit vacant housing unit inventory -->
+<div id="editUnitModal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.55); align-items: center; justify-content: center; z-index: 1002; padding: 1rem;"
+    onclick="if (event.target === this) closeEditUnitModal();">
+    <div onclick="event.stopPropagation();" style="background: white; border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.4); max-width: 440px; width: 100%; overflow: hidden;">
+        <div style="padding: 1.25rem 1.15rem 0.85rem; border-bottom: 1px solid #e5e7eb;">
+            <h2 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: #0c4a6e;">Edit housing unit</h2>
+            <p style="margin: 0.35rem 0 0; font-size: 0.75rem; color: #64748b;">Vacant inventory only — block, lot, and optional notes.</p>
+        </div>
+        <form id="editUnitForm" style="padding: 1rem 1.15rem 1.1rem;">
+            {% csrf_token %}
+            <input type="hidden" id="editUnitId" name="unit_id" value="">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem; margin-bottom: 0.85rem;">
+                <div>
+                    <label for="editUnitBlock" style="display: block; font-size: 0.68rem; font-weight: 600; color: #374151; margin-bottom: 0.35rem; text-transform: uppercase;">Block</label>
+                    <input id="editUnitBlock" name="block_number" type="text" required maxlength="10" pattern="[0-9]+" inputmode="numeric"
+                        style="width: 100%; padding: 0.55rem 0.65rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.85rem; box-sizing: border-box;"
+                        oninput="this.value=this.value.replace(/\D/g,'')">
+                </div>
+                <div>
+                    <label for="editUnitLot" style="display: block; font-size: 0.68rem; font-weight: 600; color: #374151; margin-bottom: 0.35rem; text-transform: uppercase;">Lot</label>
+                    <input id="editUnitLot" name="lot_number" type="text" required maxlength="10" pattern="[0-9]+" inputmode="numeric"
+                        style="width: 100%; padding: 0.55rem 0.65rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.85rem; box-sizing: border-box;"
+                        oninput="this.value=this.value.replace(/\D/g,'')">
+                </div>
+            </div>
+            <div style="margin-bottom: 0.85rem;">
+                <label for="editUnitNotes" style="display: block; font-size: 0.68rem; font-weight: 600; color: #374151; margin-bottom: 0.35rem; text-transform: uppercase;">Location notes <span style="font-weight:500;text-transform:none;color:#94a3b8;">(optional)</span></label>
+                <textarea id="editUnitNotes" name="location_notes" rows="2"
+                    style="width: 100%; padding: 0.55rem 0.65rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.8rem; box-sizing: border-box; resize: vertical;"></textarea>
+            </div>
+            <p id="editUnitFormError" style="display: none; margin: 0 0 0.65rem; font-size: 0.75rem; color: #b91c1c; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 0.5rem 0.65rem;"></p>
+            <div style="display: flex; justify-content: center; gap: 0.6rem; padding-top: 0.5rem; border-top: 1px solid #f1f5f9;">
+                <button type="button" onclick="closeEditUnitModal()"
+                    style="padding: 0.6rem 1.2rem; background: #fff; border: 1px solid #cbd5e1; border-radius: 9px; font-size: 0.82rem; font-weight: 600; color: #475569; cursor: pointer;">Cancel</button>
+                <button type="submit" id="editUnitSubmitBtn"
+                    style="padding: 0.6rem 1.2rem; background: linear-gradient(180deg, #0ea5e9 0%, #0284c7 100%); color: #fff; border: none; border-radius: 9px; font-size: 0.82rem; font-weight: 700; cursor: pointer;">Save changes</button>
             </div>
         </form>
     </div>
@@ -3375,6 +3523,8 @@
         <!-- Footer -->
         <div class="unit-detail-footer">
             <div class="unit-detail-footer-actions">
+                <button type="button" id="editInventoryUnitBtn" class="unit-detail-footer-btn" style="display: none;" onclick="openEditUnitModal()">Edit block / lot</button>
+                <button type="button" id="deleteInventoryUnitBtn" class="unit-detail-footer-btn unit-detail-action-disqualify" style="display: none;" onclick="confirmDeleteHousingUnit()">Delete unit</button>
                 <button type="button" class="unit-detail-footer-btn unit-detail-action-sms" onclick="sendSMS()">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                         <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
@@ -3786,14 +3936,32 @@ document.getElementById('createSiteForm')?.addEventListener('submit', async func
 });
 {% endif %}
 
-function openAddUnitModal() {
+function openAddUnitModal(blockNumber, lotNumber) {
     const m = document.getElementById('addUnitModal');
     if (!m) return;
     const err = document.getElementById('addUnitFormError');
     if (err) { err.style.display = 'none'; err.textContent = ''; }
-    m.style.display = 'flex';
+
     const b = document.getElementById('addUnitBlock');
-    if (b) setTimeout(() => b.focus(), 50);
+    const l = document.getElementById('addUnitLot');
+    const hasPrefill = blockNumber != null && blockNumber !== ''
+        && lotNumber != null && lotNumber !== '';
+
+    if (!hasPrefill) {
+        const f = document.getElementById('addUnitForm');
+        if (f) f.reset();
+        {% if all_sites|length <= 1 %}
+        const hid = document.getElementById('addUnitSiteId');
+        if (hid && hid.type === 'hidden') hid.value = '{{ site.id }}';
+        {% endif %}
+    } else {
+        if (b) b.value = String(blockNumber).replace(/\D/g, '');
+        if (l) l.value = String(lotNumber).replace(/\D/g, '');
+    }
+
+    m.style.display = 'flex';
+    const focusEl = hasPrefill ? document.getElementById('addUnitSubmitBtn') : b;
+    if (focusEl) setTimeout(() => focusEl.focus(), 50);
 }
 
 function closeAddUnitModal() {
@@ -3840,14 +4008,31 @@ document.getElementById('addUnitForm')?.addEventListener('submit', async functio
                 function() { window.location.reload(); }
             );
         } else if (data.duplicate) {
-            const dupMsg = data.error || 'Existing block or lot!';
-            const viewExisting = data.existing_unit_id
-                ? function () {
+            const dupHead = 'Not created — this block/lot already exists. Nothing was saved again.';
+            const dupDetail = data.error || '';
+            errEl.textContent = '';
+            const msgP = document.createElement('p');
+            msgP.style.margin = '0';
+            msgP.textContent = dupHead + (dupDetail ? ' ' + dupDetail : '');
+            errEl.appendChild(msgP);
+            if (data.existing_unit_id) {
+                const viewBtn = document.createElement('button');
+                viewBtn.type = 'button';
+                viewBtn.className = 'dup-view-existing-btn';
+                viewBtn.textContent = 'View existing lot';
+                viewBtn.addEventListener('click', function () {
                     closeAddUnitModal();
                     openUnitModal(data.existing_unit_id);
-                }
-                : null;
-            monitoringFlowAlert(dupMsg, 'Add housing unit', 'warning', viewExisting);
+                });
+                errEl.appendChild(viewBtn);
+            }
+            errEl.style.display = 'block';
+            monitoringFlowAlert(
+                dupHead + (dupDetail ? '\n\n' + dupDetail : ''),
+                'Not created',
+                'warning',
+                null
+            );
         } else {
             errEl.textContent = data.error || 'Could not add unit.';
             errEl.style.display = 'block';
@@ -3861,6 +4046,111 @@ document.getElementById('addUnitForm')?.addEventListener('submit', async functio
 });
 {% endif %}
 
+function applyUnitInventoryActions(unit) {
+    const editBtn = document.getElementById('editInventoryUnitBtn');
+    const delBtn = document.getElementById('deleteInventoryUnitBtn');
+    if (editBtn) editBtn.style.display = unit && unit.can_edit_inventory ? 'inline-flex' : 'none';
+    if (delBtn) delBtn.style.display = unit && unit.can_delete_inventory ? 'inline-flex' : 'none';
+}
+
+{% if can_add_housing_unit %}
+function openEditUnitModal() {
+    const unit = lastOpenedUnitPayload;
+    if (!unit || !unit.can_edit_inventory) return;
+    const m = document.getElementById('editUnitModal');
+    if (!m) return;
+    document.getElementById('editUnitId').value = unit.id || '';
+    document.getElementById('editUnitBlock').value = unit.block || '';
+    document.getElementById('editUnitLot').value = unit.lot || '';
+    const notesEl = document.getElementById('editUnitNotes');
+    if (notesEl) notesEl.value = unit.location_notes || '';
+    const err = document.getElementById('editUnitFormError');
+    if (err) { err.style.display = 'none'; err.textContent = ''; }
+    m.style.display = 'flex';
+}
+
+function closeEditUnitModal() {
+    const m = document.getElementById('editUnitModal');
+    if (m) m.style.display = 'none';
+}
+
+document.getElementById('editUnitForm')?.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const unitId = document.getElementById('editUnitId')?.value;
+    if (!unitId) return;
+    const errEl = document.getElementById('editUnitFormError');
+    const btn = document.getElementById('editUnitSubmitBtn');
+    const position = '{{ request.user.position }}';
+    const body = new URLSearchParams();
+    const csrfInput = document.querySelector('#editUnitForm input[name="csrfmiddlewaretoken"]');
+    body.append('csrfmiddlewaretoken', (csrfInput && csrfInput.value) || getCookie('csrftoken') || '');
+    body.append('block_number', (document.getElementById('editUnitBlock')?.value || '').trim());
+    body.append('lot_number', (document.getElementById('editUnitLot')?.value || '').trim());
+    body.append('location_notes', (document.getElementById('editUnitNotes')?.value || '').trim());
+    errEl.style.display = 'none';
+    btn.disabled = true;
+    try {
+        const res = await fetch(`/units/housing-units/${position}/${unitId}/update/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: body.toString(),
+        });
+        const data = await res.json();
+        if (data.success) {
+            closeEditUnitModal();
+            closeUnitModal();
+            monitoringFlowAlert(data.message || 'Unit updated.', 'Success', 'success', function () {
+                window.location.reload();
+            });
+        } else {
+            errEl.textContent = data.error || 'Could not update unit.';
+            errEl.style.display = 'block';
+        }
+    } catch (ex) {
+        errEl.textContent = ex.message || 'Network error.';
+        errEl.style.display = 'block';
+    } finally {
+        btn.disabled = false;
+    }
+});
+
+function confirmDeleteHousingUnit() {
+    const unit = lastOpenedUnitPayload;
+    if (!unit || !unit.can_delete_inventory) return;
+    const label = `B${unit.block} - L${unit.lot}`;
+    monitoringFlowAlert(
+        `Remove ${label} from the inventory? This cannot be undone.`,
+        'Delete housing unit',
+        'warning',
+        function () { deleteHousingUnit(unit.id); },
+    );
+}
+
+async function deleteHousingUnit(unitId) {
+    const position = '{{ request.user.position }}';
+    const body = new URLSearchParams();
+    body.append('csrfmiddlewaretoken', getCookie('csrftoken') || '');
+    try {
+        const res = await fetch(`/units/housing-units/${position}/${unitId}/delete/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: body.toString(),
+        });
+        const data = await res.json();
+        if (data.success) {
+            closeUnitModal();
+            monitoringFlowAlert(data.message || 'Unit removed.', 'Deleted', 'success', function () {
+                window.location.reload();
+            });
+        } else {
+            monitoringFlowAlert(data.error || 'Could not delete unit.', 'Delete failed', 'default', null);
+        }
+    } catch (ex) {
+        monitoringFlowAlert(ex.message || 'Network error.', 'Delete failed', 'default', null);
+    }
+}
+{% endif %}
+
 document.addEventListener('keydown', e => {
     if (e.key === 'Escape' && document.getElementById('createSiteModal')?.style.display === 'flex') {
         closeCreateSiteModal();
@@ -3868,6 +4158,10 @@ document.addEventListener('keydown', e => {
     }
     if (e.key === 'Escape' && document.getElementById('addUnitModal')?.style.display === 'flex') {
         closeAddUnitModal();
+        return;
+    }
+    if (e.key === 'Escape' && document.getElementById('editUnitModal')?.style.display === 'flex') {
+        closeEditUnitModal();
         return;
     }
 });
@@ -3941,6 +4235,12 @@ function lotPlanPolyInRegion(poly, region) {
     const cy = poly.cy || 0;
     return cx >= region.x && cx < (region.x + region.w)
         && cy >= region.y && cy < (region.y + region.h);
+}
+
+/** Polygons tagged with block/lot in JSON are reserved for that block only. */
+function lotPlanPolyAvailableForBlock(poly, blockNum) {
+    if (poly.block == null || poly.block === '') return true;
+    return String(poly.block) === String(blockNum);
 }
 
 function lotPlanParseBlockLot(unitEl) {
@@ -4030,7 +4330,9 @@ function lotPlanAssignBySlots(blockNum, blockUnits, candidates, blockSlots, assi
 function lotPlanAssignBlockRegion(blockNum, primary, blockUnits, lots, blockSlots, assignedPolyIdx, assignments, assignedUnitIds) {
     const candidates = lots
         .map((p, i) => ({ p, i }))
-        .filter(({ p, i }) => !assignedPolyIdx.has(i) && lotPlanPolyInRegion(p, primary));
+        .filter(({ p, i }) => !assignedPolyIdx.has(i)
+            && lotPlanPolyInRegion(p, primary)
+            && lotPlanPolyAvailableForBlock(p, blockNum));
 
     if (!candidates.length || !blockUnits.length) return;
 
@@ -4125,6 +4427,67 @@ function lotPlanWireLinkedLot(g, poly, unit, blockNum, lotNum, V) {
     if (unit.style.display === 'none') g.style.display = 'none';
 }
 
+/** Empty traced lot on the plan — open Add housing unit with block/lot prefilled. */
+function lotPlanWireInertLot(g, blockNum, lotNum) {
+    if (!document.getElementById('addUnitModal')) return;
+    const block = String(blockNum);
+    const lot = String(lotNum);
+    if (!block || !lot) return;
+
+    g.classList.add('lotplan-lot--addable');
+    g.setAttribute('data-plan-block', block);
+    g.setAttribute('data-plan-lot', lot);
+    g.setAttribute('role', 'button');
+    g.setAttribute('tabindex', '0');
+    g.setAttribute('aria-label', 'Add housing unit B' + block + ' L' + lot);
+
+    const openAdd = function () {
+        openAddUnitModal(block, lot);
+    };
+    g.addEventListener('click', openAdd);
+    g.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            openAdd();
+        }
+    });
+    g.addEventListener('mousedown', function (e) {
+        e.stopPropagation();
+    });
+}
+
+/** Link inventory lots to polygons tagged with block/lot in lot_plan_polygons.json. */
+function lotPlanAssignByPolygonMetadata(allUnits, lots, assignedPolyIdx, assignments, assignedUnitIds, blockGroups, svg) {
+    allUnits.forEach(unit => {
+        const uid = unit.dataset.unitId || '';
+        if (!uid || assignedUnitIds.has(uid)) return;
+        const bl = lotPlanParseBlockLot(unit);
+        if (!bl) return;
+        const wantBlock = parseInt(bl.block, 10);
+        const wantLot = parseInt(bl.lot, 10);
+        if (!Number.isFinite(wantBlock) || !Number.isFinite(wantLot)) return;
+
+        const matchIdx = lots.findIndex((poly, i) => {
+            if (assignedPolyIdx.has(i)) return false;
+            const pb = parseInt(poly.block, 10);
+            const pl = parseInt(poly.lot, 10);
+            return pb === wantBlock && pl === wantLot;
+        });
+        if (matchIdx < 0) return;
+
+        assignments.set(matchIdx, { unit, block: bl.block, lot: bl.lot });
+        assignedPolyIdx.add(matchIdx);
+        assignedUnitIds.add(uid);
+
+        if (!blockGroups.has(bl.block)) {
+            const bg = document.createElementNS(SVG_NS, 'g');
+            bg.setAttribute('class', 'lotplan-block');
+            bg.dataset.block = bl.block;
+            blockGroups.set(bl.block, bg);
+            svg.appendChild(bg);
+        }
+    });
+}
 
 async function buildLotPlan() {
     const svg = document.getElementById('lotplan-svg');
@@ -4135,9 +4498,9 @@ async function buildLotPlan() {
     const unitByBlockMap = {};
     unitsByBlock.forEach(b => { unitByBlockMap[b.block] = b.units; });
 
-    const url = svg.dataset.polygonsUrl;
-    const slotsUrl = svg.dataset.slotsUrl;
-    const clustersUrl = svg.dataset.clustersUrl;
+    const url = svg.dataset.polygonsUrl ? (svg.dataset.polygonsUrl + '?v=' + Date.now()) : null;
+    const slotsUrl = svg.dataset.slotsUrl ? (svg.dataset.slotsUrl + '?v=' + Date.now()) : null;
+    const clustersUrl = svg.dataset.clustersUrl ? (svg.dataset.clustersUrl + '?v=' + Date.now()) : null;
     const [data, slotsData, clustersData] = await Promise.all([
         url ? loadLotPlanPolygons(url) : { lots: [] },
         slotsUrl ? loadLotPlanSlots(slotsUrl) : { blocks: {} },
@@ -4155,6 +4518,12 @@ async function buildLotPlan() {
     const assignedPolyIdx = new Set();
     const assignedUnitIds = new Set();
     const blockGroups = new Map();
+    const allGridUnits = Array.from(document.querySelectorAll('#gridView-content .vmap-lot'));
+
+    // Reserve polygons with explicit block/lot metadata before spatial cluster assignment.
+    lotPlanAssignByPolygonMetadata(
+        allGridUnits, lots, assignedPolyIdx, assignments, assignedUnitIds, blockGroups, svg,
+    );
 
     Object.keys(blockClusters)
         .sort((a, b) => parseInt(a, 10) - parseInt(b, 10))
@@ -4197,9 +4566,68 @@ async function buildLotPlan() {
             parent.appendChild(g);
         } else {
             g.classList.add('lotplan-lot--inert');
+            if (poly.block != null && poly.lot != null) {
+                lotPlanWireInertLot(g, poly.block, poly.lot);
+            }
             inertLayer.appendChild(g);
         }
     });
+    lotPlanRenderUnmappedPanel();
+}
+
+function lotPlanRenderUnmappedPanel() {
+    const panel = document.getElementById('lotplan-unmapped-panel');
+    const list = document.getElementById('lotplan-unmapped-list');
+    const countEl = document.getElementById('lotplan-unmapped-count');
+    if (!panel || !list) return;
+
+    const linkedIds = new Set(
+        Array.from(document.querySelectorAll('.lotplan-lot--linked[data-unit-id]'))
+            .map(g => g.getAttribute('data-unit-id'))
+            .filter(Boolean)
+    );
+
+    const unmapped = Array.from(document.querySelectorAll('#gridView-content .vmap-lot'))
+        .filter(el => {
+            const uid = el.dataset.unitId;
+            return uid && !linkedIds.has(uid);
+        })
+        .sort((a, b) => {
+            const ba = parseInt(a.dataset.block || '0', 10);
+            const bb = parseInt(b.dataset.block || '0', 10);
+            if (ba !== bb) return ba - bb;
+            return parseInt(a.dataset.lot || '0', 10) - parseInt(b.dataset.lot || '0', 10);
+        });
+
+    list.innerHTML = '';
+    if (!unmapped.length) {
+        panel.hidden = true;
+        return;
+    }
+
+    unmapped.forEach(el => {
+        const li = document.createElement('li');
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'lotplan-unmapped-item';
+        btn.textContent = 'B' + (el.dataset.block || '?') + ' - L' + (el.dataset.lot || '?');
+        const unitId = el.dataset.unitId;
+        if (unitId) {
+            btn.addEventListener('click', () => openUnitModal(unitId));
+        }
+        li.appendChild(btn);
+        const tag = el.querySelector('.vmap-lot-tag');
+        if (tag && tag.textContent.trim()) {
+            const status = document.createElement('span');
+            status.className = 'lotplan-unmapped-status';
+            status.textContent = tag.textContent.trim();
+            li.appendChild(status);
+        }
+        list.appendChild(li);
+    });
+
+    if (countEl) countEl.textContent = String(unmapped.length);
+    panel.hidden = false;
 }
 
 /* ==========================================================
@@ -4285,8 +4713,10 @@ function lotPlanSearchSelect(unitId, keepHighlight) {
         if (rect.top < 60 || rect.bottom > window.innerHeight - 60) {
             g.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
+    } else if (unitId && typeof openUnitModal === 'function') {
+        openUnitModal(unitId);
     }
-    // Do NOT auto-open modal — just highlight
+    // Do NOT auto-open modal when map zone exists — highlight only
 }
 
 function initLotPlanSearch() {
@@ -6887,6 +7317,7 @@ function openUnitModal(unitId) {
                 renderExplanationExtensionTaskCards(ext120);
                 applyVmapLotMapBadge(unit);
                 updateFooterSmsButton(unit);
+                applyUnitInventoryActions(unit);
                 document.getElementById('unitModal').style.display = 'flex';
                 if (unit.explanation_letter_workflow_applies === true && (unit.explanation_letter_case || unit.explanation_letter_view_url)) {
                     requestAnimationFrame(() => {
