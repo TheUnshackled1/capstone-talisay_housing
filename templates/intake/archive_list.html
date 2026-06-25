@@ -41,7 +41,7 @@
     .filter-select { padding:0.52rem 0.65rem; border:1px solid #dbe2ea; border-radius:9px; min-height:39px; font-size:0.74rem; background:#fff; color:#334155; }
     .table-scroll { overflow-x:auto; }
     .applicants-table { width:100%; border-collapse:collapse; font-size:0.7rem; min-width:980px; }
-    .applicants-table th, .applicants-table td { border:1px solid #e5e7eb; padding:0.4rem 0.45rem; text-align:left; vertical-align:middle; }
+    .applicants-table th, .applicants-table td { border:1px solid #e5e7eb; padding:0.4rem 0.45rem; text-align:center; vertical-align:middle; }
     .applicants-table th { background: linear-gradient(180deg, #1d4ed8 0%, #1e3a8a 100%); color:#ffffff; font-weight:700; text-transform:uppercase; letter-spacing:0.03em; font-size:0.54rem; padding:0.45rem 0.34rem; border-bottom:2px solid #172554; border-right:1px solid rgba(255,255,255,0.16); }
     .applicants-table td { font-size:0.6rem; padding:0.34rem 0.3rem; }
     .table-pagination { margin-top:0.6rem; padding-top:0.46rem; display:flex; justify-content:space-between; align-items:center; font-size:0.72rem; color:#64748b; gap:0.5rem; flex-wrap:wrap; }
@@ -55,22 +55,22 @@
         align-items: center;
         justify-content: center;
         gap: 0.35rem;
-        padding: 0.38rem 0.6rem;
-        border-radius: 0.5rem;
+        padding: 0.38rem 0.75rem;
+        border-radius: 9999px;
         font-size: 0.625rem;
         font-weight: 700;
         color: #ffffff !important;
-        background: linear-gradient(135deg, #059669 0%, #047857 100%);
-        border: 1px solid #047857;
+        background: #047857;
+        border: 1px solid #065f46;
         text-decoration: none;
         white-space: nowrap;
         line-height: 1;
         cursor: pointer;
-        box-shadow: 0 2px 4px rgba(4, 120, 87, 0.15);
+        box-shadow: 0 2px 4px rgba(4, 120, 87, 0.2);
         transition: all 0.18s ease;
     }
     body .applicants-table--archive .btn-archive-action:hover {
-        background: linear-gradient(135deg, #047857 0%, #065f46 100%);
+        background: #065f46;
         box-shadow: 0 4px 10px rgba(4, 120, 87, 0.3);
         transform: translateY(-1px);
         color: #ffffff !important;
@@ -212,76 +212,73 @@
     #archiveSummaryModal .archive-summary-section-title::after {
         display: none;
     }
-    #archiveSummaryModal a.archive-summary-section-link {
+    #archiveSummaryModal a.archive-summary-view-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.35rem;
+        padding: 0.38rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.625rem;
+        font-weight: 700;
+        color: #ffffff !important;
         text-decoration: none;
+        white-space: nowrap;
+        line-height: 1;
         cursor: pointer;
-        transition: color 0.15s ease, text-decoration-color 0.15s ease;
+        transition: all 0.18s ease;
+        margin: 0 !important;
     }
-    #archiveSummaryModal a.archive-summary-section-link:hover {
-        text-decoration: underline;
-        text-underline-offset: 0.2rem;
+    #archiveSummaryModal a.archive-summary-view-btn svg {
+        width: 0.75rem;
+        height: 0.75rem;
+        flex-shrink: 0;
     }
-    #archiveSummaryModal a.archive-summary-section-link--disabled {
+    #archiveSummaryModal a.archive-summary-view-btn:hover {
+        text-decoration: none;
+        transform: translateY(-1px);
+        color: #ffffff !important;
+    }
+    #archiveSummaryModal a.archive-summary-view-btn:active {
+        transform: translateY(0);
+    }
+    #archiveSummaryModal a.archive-summary-view-btn:focus-visible {
+        outline: 2px solid rgba(16, 185, 129, 0.45);
+        outline-offset: 2px;
+    }
+    #archiveSummaryModal a.archive-summary-view-btn--documents {
+        background: #d97706;
+        border: 1px solid #b45309;
+        box-shadow: 0 2px 4px rgba(180, 83, 9, 0.2);
+    }
+    #archiveSummaryModal a.archive-summary-view-btn--documents:hover {
+        background: #b45309;
+        box-shadow: 0 4px 10px rgba(180, 83, 9, 0.3);
+    }
+    #archiveSummaryModal a.archive-summary-view-btn--form {
+        background: #7c3aed;
+        border: 1px solid #6d28d9;
+        box-shadow: 0 2px 4px rgba(109, 40, 217, 0.2);
+    }
+    #archiveSummaryModal a.archive-summary-view-btn--form:hover {
+        background: #6d28d9;
+        box-shadow: 0 4px 10px rgba(109, 40, 217, 0.3);
+    }
+    #archiveSummaryModal a.archive-summary-view-btn--disabled {
         pointer-events: none;
         cursor: default;
         opacity: 0.55;
-        text-decoration: none;
+        transform: none;
+        box-shadow: none;
     }
-    #archiveSummaryModal .archive-summary-form-status {
-        display: inline-flex;
-        align-items: center;
-        padding: 0.2rem 0.55rem;
-        border-radius: 9999px;
-        font-size: 0.62rem;
-        font-weight: 700;
-        margin-bottom: 0.65rem;
-        background: #f1f5f9;
-        color: #475569;
-        border: 1px solid #e2e8f0;
-    }
-    #archiveSummaryModal .archive-summary-form-status.is-signed {
-        background: #dcfce7;
-        color: #166534;
-        border-color: #86efac;
-    }
-    #archiveSummaryModal .archive-summary-form-status.is-generated {
-        background: #eff6ff;
-        color: #1e40af;
-        border-color: #bfdbfe;
-    }
-    #archiveSummaryModal .archive-summary-form-preview-wrap {
-        width: 100%;
-    }
-    #archiveSummaryModal .archive-summary-section:last-child {
+    #archiveSummaryModal .archive-summary-links-row {
         display: flex;
-        flex-direction: column;
+        flex-wrap: wrap;
+        justify-content: center;
         align-items: center;
-    }
-    #archiveSummaryModal .archive-summary-section:last-child .archive-summary-form-preview-wrap {
-        width: 100%;
-        align-self: stretch;
-    }
-    #archiveSummaryModal iframe.archive-summary-form-preview {
-        width: 100%;
-        min-height: 420px;
-        border: 1px solid #e2e8f0;
-        border-radius: 0.5rem;
-        background: #fff;
-        display: block;
-    }
-    #archiveSummaryModal #archiveSummaryFormEmpty {
-        font-size: 0.78rem;
-        color: #64748b;
-        text-align: center;
-        padding: 1.25rem 0.75rem;
-        background: #f8fafc;
-        border: 1px dashed #cbd5e1;
-        border-radius: 0.5rem;
-        margin: 0;
+        gap: 0.75rem 1rem;
     }
     #archiveSummaryModal .archive-summary-section-title--m1 { color: #1e40af; }
-    #archiveSummaryModal .archive-summary-section-title--m3 { color: #d97706; }
-    #archiveSummaryModal .archive-summary-section-title--form { color: #6d28d9; }
     #archiveSummaryModal .archive-summary-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -313,32 +310,6 @@
         background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%) !important;
         border-color: #bfdbfe !important;
         letter-spacing: 0.01em !important;
-    }
-    #archiveSummaryModal .modal-footer {
-        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-        border-top: 1px solid #e2e8f0;
-        padding: 0.85rem 1.5rem;
-        display: flex;
-        justify-content: flex-end;
-    }
-    #archiveSummaryModal .btn-modal.secondary {
-        font-weight: 700;
-        font-size: 0.72rem;
-        letter-spacing: 0.04em;
-        padding: 0.55rem 1.1rem;
-        border-radius: 0.55rem;
-        text-transform: uppercase;
-        background: #ffffff;
-        color: #475569;
-        border: 1px solid #cbd5e1;
-        transition: all 0.18s ease;
-    }
-    #archiveSummaryModal .btn-modal.secondary:hover {
-        background: #f8fafc;
-        border-color: #94a3b8;
-        color: #1e293b;
-        transform: translateY(-1px);
-        box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
     }
     #archiveSummaryModal .btn-close {
         color: #64748b;
@@ -707,7 +678,7 @@
                         {{ row.fullName }}
                     </span>
                 </td>
-                <td><div style="display:flex; align-items:center; gap:0.375rem;"><div class="handled-by-avatar {% if row.handledByPosition == '2nd Member' %}second-member{% elif row.handledByPosition == '4th Member' %}fourth-member{% else %}other{% endif %}">{{ row.handledByInitials }}</div><div style="display:flex; flex-direction:column; min-width:0;"><span style="font-size:0.625rem; font-weight:500; color:#1e293b;">{{ row.handledBy }}</span><span style="font-size:0.5625rem; color:#64748b;">{{ row.handledByPosition }}</span></div></div></td>
+                <td><div style="display:flex; align-items:center; justify-content:center; gap:0.375rem;"><div class="handled-by-avatar {% if row.handledByPosition == '2nd Member' %}second-member{% elif row.handledByPosition == '4th Member' %}fourth-member{% else %}other{% endif %}">{{ row.handledByInitials }}</div><div style="display:flex; flex-direction:column; min-width:0; text-align:left;"><span style="font-size:0.625rem; font-weight:500; color:#1e293b;">{{ row.handledBy }}</span><span style="font-size:0.5625rem; color:#64748b;">{{ row.handledByPosition }}</span></div></div></td>
                 <td style="font-size:0.58rem; color:#334155; vertical-align:top;">
                     <span style="font-weight:600;">{{ row.applicantStatusLabel }}</span>
                     {% if row.applicantStatusDetail %}<div style="margin-top:0.25rem; font-size:0.54rem; color:#64748b; line-height:1.35;">{{ row.applicantStatusDetail }}</div>{% endif %}
@@ -729,15 +700,9 @@
                         data-sms="{{ row.smsText|default:'N/A' }}"
                         data-dob="{{ row.dateOfBirthDisplay|default:'N/A' }}"
                         data-barangay="{{ row.barangay|default:'N/A' }}"
-                        data-docs-progress="{{ row.scannedCount }}/{{ row.requirementsTotal }}"
-                        data-form-summary="{{ row.formGenSummary|default:'' }}"
-                        data-form-at="{{ row.formGenAt|default:'' }}"
-                        data-form-by="{{ row.formGenBy|default:'' }}"
                         data-applicant-id="{{ row.applicantId }}"
                         data-documents-vault-url="{{ row.documentsVaultUrl }}"
                         data-ready-for-form-url="{{ row.readyForFormUrl }}"
-                        data-form-preview-url="{{ row.formPreviewUrl }}"
-                        data-form-preview-kind="{{ row.formPreviewKind }}"
                     >
                         <svg style="width: 0.75rem; height: 0.75rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -746,7 +711,7 @@
                             <line x1="16" y1="17" x2="8" y2="17"></line>
                             <polyline points="10 9 9 9 8 9"></polyline>
                         </svg>
-                        Handoff Summary
+                        VIEW
                     </button>
                 </td>
             </tr>
@@ -814,24 +779,30 @@
                 </section>
 
                 <section class="archive-summary-section">
-                    <a id="archiveSummaryDocumentsLink" class="archive-summary-section-title archive-summary-section-title--m3 archive-summary-section-link" href="#" target="_blank" rel="noopener noreferrer">Documents</a>
-                    <div class="archive-summary-grid">
-                        <div><p class="archive-summary-field-label">Requirements scanned</p><div id="archiveSummaryDocsProgress">—</div></div>
-                    </div>
-                </section>
-
-                <section class="archive-summary-section">
-                    <a id="archiveSummaryFormLink" class="archive-summary-section-title archive-summary-section-title--form archive-summary-section-link" href="#" target="_blank" rel="noopener noreferrer">Housing application Form</a>
-                    <div id="archiveSummaryFormStatus" class="archive-summary-form-status" style="display:none;"></div>
-                    <div class="archive-summary-form-preview-wrap">
-                        <iframe id="archiveSummaryFormPreview" class="archive-summary-form-preview" title="Housing application form preview" style="display:none;"></iframe>
-                        <p id="archiveSummaryFormEmpty">Application form not generated yet.</p>
+                    <div class="archive-summary-links-row">
+                        <a id="archiveSummaryDocumentsLink" class="archive-summary-view-btn archive-summary-view-btn--documents" href="#" target="_blank" rel="noopener noreferrer">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                <polyline points="10 9 9 9 8 9"></polyline>
+                            </svg>
+                            VIEW Documents
+                        </a>
+                        <a id="archiveSummaryFormLink" class="archive-summary-view-btn archive-summary-view-btn--form" href="#" target="_blank" rel="noopener noreferrer">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                <polyline points="10 9 9 9 8 9"></polyline>
+                            </svg>
+                            VIEW Housing application Form
+                        </a>
                     </div>
                 </section>
             </div>
-        </div>
-        <div class="modal-footer">
-            <button type="button" class="btn-modal secondary" onclick="closeArchiveSummaryModal()">Close</button>
         </div>
     </div>
 </div>
@@ -924,18 +895,16 @@ function openArchiveHandoffSummary(buttonEl) {
     setText('archiveSummaryStaffRole', d.staffPosition || '');
     setText('archiveSummarySms', d.sms || '');
 
-    setText('archiveSummaryDocsProgress', d.docsProgress || '', '—');
-
     const docsLink = document.getElementById('archiveSummaryDocumentsLink');
     const vaultUrl = (d.documentsVaultUrl || '').trim();
     if (docsLink) {
         if (vaultUrl) {
             docsLink.href = vaultUrl;
-            docsLink.classList.remove('archive-summary-section-link--disabled');
+            docsLink.classList.remove('archive-summary-view-btn--disabled');
             docsLink.title = 'Open applicant document checklist in Document Management';
         } else {
             docsLink.href = '#';
-            docsLink.classList.add('archive-summary-section-link--disabled');
+            docsLink.classList.add('archive-summary-view-btn--disabled');
             docsLink.title = 'Document vault link unavailable';
         }
     }
@@ -945,45 +914,12 @@ function openArchiveHandoffSummary(buttonEl) {
     if (formLink) {
         if (rfqUrl) {
             formLink.href = rfqUrl;
-            formLink.classList.remove('archive-summary-section-link--disabled');
+            formLink.classList.remove('archive-summary-view-btn--disabled');
             formLink.title = 'Open Ready for Form queue for this applicant';
         } else {
             formLink.href = '#';
-            formLink.classList.add('archive-summary-section-link--disabled');
+            formLink.classList.add('archive-summary-view-btn--disabled');
             formLink.title = 'Ready for Form link unavailable';
-        }
-    }
-
-    const formPreviewKind = (d.formPreviewKind || 'none').trim().toLowerCase();
-    const formPreviewUrl = (d.formPreviewUrl || '').trim();
-    const formStatus = document.getElementById('archiveSummaryFormStatus');
-    const formPreview = document.getElementById('archiveSummaryFormPreview');
-    const formEmpty = document.getElementById('archiveSummaryFormEmpty');
-    if (formStatus) {
-        formStatus.className = 'archive-summary-form-status';
-        if (formPreviewKind === 'signed') {
-            formStatus.textContent = 'Signed application on file';
-            formStatus.classList.add('is-signed');
-            formStatus.style.display = 'inline-flex';
-        } else if (formPreviewKind === 'generated') {
-            formStatus.textContent = 'Generated form (unsigned)';
-            formStatus.classList.add('is-generated');
-            formStatus.style.display = 'inline-flex';
-        } else {
-            formStatus.textContent = '';
-            formStatus.style.display = 'none';
-        }
-    }
-    if (formPreview && formEmpty) {
-        if (formPreviewUrl) {
-            formPreview.src = formPreviewUrl;
-            formPreview.style.display = 'block';
-            formEmpty.style.display = 'none';
-        } else {
-            formPreview.removeAttribute('src');
-            formPreview.style.display = 'none';
-            formEmpty.style.display = 'block';
-            formEmpty.textContent = 'Application form not generated yet.';
         }
     }
 
@@ -992,11 +928,6 @@ function openArchiveHandoffSummary(buttonEl) {
 }
 function closeArchiveSummaryModal() {
     const modal = document.getElementById('archiveSummaryModal');
-    const formPreview = document.getElementById('archiveSummaryFormPreview');
-    if (formPreview) {
-        formPreview.removeAttribute('src');
-        formPreview.style.display = 'none';
-    }
     if (modal) modal.classList.remove('active');
 }
 
