@@ -14,6 +14,8 @@ from .models import Applicant, Barangay, Archive, SMSLog
 from applications.staff_pipeline_status import (
     applicant_journey_cycle,
     archive_applicant_status,
+    archive_stage_filter_key,
+    ARCHIVE_STAGE_FILTER_CHOICES,
     CASE_OPEN_STATUSES,
 )
 from cases.models import Case
@@ -2013,7 +2015,10 @@ def archive_list(request, position):
 
     from django.core.paginator import Paginator
 
-    selected_barangay = request.GET.get('barangay', '')
+    selected_stage = (request.GET.get('stage') or '').strip()
+    valid_stage_keys = {key for key, _ in ARCHIVE_STAGE_FILTER_CHOICES}
+    if selected_stage and selected_stage not in valid_stage_keys:
+        selected_stage = ''
     search_query = (request.GET.get('q') or '').strip()
 
     archives_qs = (
@@ -2032,8 +2037,6 @@ def archive_list(request, position):
         .order_by('archived_at')
     )
 
-    if selected_barangay:
-        archives_qs = archives_qs.filter(barangay_name_snapshot=selected_barangay)
     if search_query:
         txn_fragment = search_query.lstrip('#').strip()
         search_q = (
@@ -2053,9 +2056,6 @@ def archive_list(request, position):
         'channel_b_hazard': 'Channel B — Hazard',
         'channel_c': 'Channel C — Landowner',
     }
-
-    barangays = Archive.objects.values_list('barangay_name_snapshot', flat=True).distinct().order_by('barangay_name_snapshot')
-    barangays = [b for b in barangays if b]
 
     applicant_ids_for_blacklist = list(
         archives_qs.exclude(applicant_id__isnull=True).values_list('applicant_id', flat=True).distinct()
@@ -2125,6 +2125,11 @@ def archive_list(request, position):
         bl_row = blacklist_map.get(str(applicant_live.pk)) if applicant_live else None
         applicant_status_primary, applicant_status_detail = archive_applicant_status(applicant_live, bl_row)
 
+        app_obj = None
+        if archive.applicant_id and archive.applicant:
+            app_obj = getattr(archive.applicant, 'application', None)
+        application_stage_key = archive_stage_filter_key(applicant_live, app_obj, bl_row)
+
         # Convert to local timezone for display
         local_archived_at = timezone.localtime(archive.archived_at)
         date_time_display = local_archived_at.strftime('%b %d, %Y | %I:%M %p')
@@ -2147,13 +2152,11 @@ def archive_list(request, position):
         form_gen_summary = 'Application form not generated yet'
         form_gen_at = ''
         form_gen_by = ''
-        if archive.applicant_id and hasattr(archive.applicant, 'application'):
-            app_obj = getattr(archive.applicant, 'application', None)
-            if app_obj and app_obj.form_generated_at:
-                local_form_generated_at = timezone.localtime(app_obj.form_generated_at)
-                form_gen_at = local_form_generated_at.strftime('%Y-%m-%d %I:%M %p')
-                form_gen_by = app_obj.form_generated_by.get_full_name() if app_obj.form_generated_by else 'Unknown'
-                form_gen_summary = f"{app_obj.application_number or '—'} • Form generated {form_gen_at}"
+        if app_obj and app_obj.form_generated_at:
+            local_form_generated_at = timezone.localtime(app_obj.form_generated_at)
+            form_gen_at = local_form_generated_at.strftime('%Y-%m-%d %I:%M %p')
+            form_gen_by = app_obj.form_generated_by.get_full_name() if app_obj.form_generated_by else 'Unknown'
+            form_gen_summary = f"{app_obj.application_number or '—'} • Form generated {form_gen_at}"
 
         m2_handoff_at = ''
         m2_handoff_by = ''
@@ -2170,10 +2173,6 @@ def archive_list(request, position):
         sms_text = 'No Phone'
         if bool(archive.applicant.phone_number if archive.applicant else False):
             sms_text = 'Sent' if archive.sms_sent else 'Not Sent'
-
-        app_obj = None
-        if archive.applicant_id and archive.applicant:
-            app_obj = getattr(archive.applicant, 'application', None)
 
         case_bucket = (
             case_stats_by_applicant.get(archive.applicant_id)
@@ -2204,6 +2203,7 @@ def archive_list(request, position):
             'channelLabel': channel_display,
             'applicantStatusLabel': applicant_status_primary,
             'applicantStatusDetail': applicant_status_detail or '',
+            'applicationStageKey': application_stage_key,
             'handledBy': staff_name,
             'handledByPosition': staff_position_display,
             'handledByInitials': staff_initials,
@@ -2225,6 +2225,9 @@ def archive_list(request, position):
             'journeyCycleJson': json.dumps(journey_cycle),
         })
 
+    if selected_stage:
+        records = [r for r in records if r.get('applicationStageKey') == selected_stage]
+
     # Pagination
     paginator = Paginator(records, 10)  # 10 records per page
     page_number = request.GET.get('page', 1)
@@ -2234,14 +2237,19 @@ def archive_list(request, position):
     _q.pop('page', None)
     pagination_query = _q.urlencode()
 
-    # Context: barangay + search only (channel/reason/staff/date filters removed from UI).
+    selected_stage_label = ''
+    if selected_stage:
+        selected_stage_label = dict(ARCHIVE_STAGE_FILTER_CHOICES).get(selected_stage, selected_stage)
+
+    # Context: stage + search only (channel/reason/staff/date filters removed from UI).
     context = {
         'page_title': 'Archive Records',
         'staff_position': position,
         'position': position,
         'total_archived': paginator.count,
-        'barangays': barangays,
-        'selected_barangay': selected_barangay,
+        'selected_stage': selected_stage,
+        'selected_stage_label': selected_stage_label,
+        'stage_choices': ARCHIVE_STAGE_FILTER_CHOICES,
         'search_query': search_query,
         'archive_records': page_obj.object_list,
         'page_obj': page_obj,

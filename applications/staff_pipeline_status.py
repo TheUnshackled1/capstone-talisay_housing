@@ -81,6 +81,26 @@ CASE_OPEN_STATUSES = frozenset({
     'referred_engineering',
 })
 
+ARCHIVE_STAGE_FILTER_CHOICES = (
+    ('registration', 'Registration'),
+    ('evaluation', 'Evaluation & Eligibility'),
+    ('ready_for_form', 'Ready for Form Queue'),
+    ('ready_for_awarding', 'Ready for Awarding'),
+    ('housing_units', 'Housing Units'),
+)
+
+ARCHIVE_STAGE_PRIMARY_TO_KEY = {
+    'Registration': 'registration',
+    'Applicant Intake': 'registration',
+    'Evaluation & Eligibility': 'evaluation',
+    'Ready for Form queue': 'ready_for_form',
+    'Ready for Awarding': 'ready_for_awarding',
+    'Awarded — pending unit linkage': 'ready_for_awarding',
+    'Awarded lot': 'housing_units',
+    'Housing Units': 'housing_units',
+    'Historical beneficiary': 'housing_units',
+}
+
 
 def _pipeline_cycle_index(
     applicant: Applicant | None, app_obj, bl_row: Blacklist | None
@@ -210,13 +230,28 @@ def archive_applicant_status(
     applicant: Applicant | None, bl_row: Blacklist | None
 ) -> tuple[str, str | None]:
     """
-    Intake Archives table: current stage including pre–Module 2 handoff (Applicant Intake).
+    Intake Archives table: current stage including pre–Module 2 handoff (Registration).
     """
     if not applicant:
         return ('—', None)
     if bl_row:
         return ('Blacklisted Beneficiaries registry', None)
     if not getattr(applicant, 'module2_handoff_at', None):
-        return ('Applicant Intake', None)
+        return ('Registration', None)
     app_obj = getattr(applicant, 'application', None)
     return staff_pipeline_primary_detail(applicant, app_obj, None)
+
+
+def archive_stage_filter_key(
+    applicant: Applicant | None, app_obj, bl_row: Blacklist | None
+) -> str | None:
+    """
+    Stable filter key for Intake Archives stage dropdown.
+    Returns None for blacklisted or missing applicants (All Stages only).
+    """
+    if not applicant or bl_row:
+        return None
+    primary, _ = archive_applicant_status(applicant, bl_row)
+    if primary == '—':
+        return None
+    return ARCHIVE_STAGE_PRIMARY_TO_KEY.get(primary)
