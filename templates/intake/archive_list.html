@@ -50,37 +50,49 @@
     .handled-by-avatar { width:1.15rem; height:1.15rem; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:0.55rem; font-weight:700; color:#fff; background:#64748b; }
     .handled-by-avatar.second-member { background:#2563eb; }
     .handled-by-avatar.fourth-member { background:#7c3aed; }
-    body .applicants-table--archive .btn-archive-action {
+    body .applicants-table--archive .btn-archive-action,
+    #archiveSummaryModal a.btn-archive-action {
         display: inline-flex;
         align-items: center;
         justify-content: center;
         gap: 0.35rem;
         padding: 0.38rem 0.75rem;
-        border-radius: 9999px;
+        border-radius: 0.5rem;
         font-size: 0.625rem;
         font-weight: 700;
         color: #ffffff !important;
-        background: #047857;
-        border: 1px solid #065f46;
-        text-decoration: none;
+        background: #2563eb;
+        border: 1px solid #1d4ed8;
+        text-decoration: none !important;
         white-space: nowrap;
         line-height: 1;
         cursor: pointer;
-        box-shadow: 0 2px 4px rgba(4, 120, 87, 0.2);
+        box-shadow: 0 2px 4px rgba(37, 99, 235, 0.15);
         transition: all 0.18s ease;
     }
-    body .applicants-table--archive .btn-archive-action:hover {
-        background: #065f46;
-        box-shadow: 0 4px 10px rgba(4, 120, 87, 0.3);
+    body .applicants-table--archive .btn-archive-action:hover,
+    #archiveSummaryModal a.btn-archive-action:hover {
+        background: #1d4ed8;
+        box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
         transform: translateY(-1px);
         color: #ffffff !important;
+        text-decoration: none !important;
     }
-    body .applicants-table--archive .btn-archive-action:active {
+    body .applicants-table--archive .btn-archive-action:active,
+    #archiveSummaryModal a.btn-archive-action:active {
         transform: translateY(0);
     }
-    body .applicants-table--archive .btn-archive-action:focus-visible {
-        outline: 2px solid rgba(16, 185, 129, 0.45);
+    body .applicants-table--archive .btn-archive-action:focus-visible,
+    #archiveSummaryModal a.btn-archive-action:focus-visible {
+        outline: 2px solid rgba(37, 99, 235, 0.45);
         outline-offset: 2px;
+    }
+    #archiveSummaryModal a.btn-archive-action--disabled {
+        pointer-events: none;
+        cursor: default;
+        opacity: 0.55;
+        transform: none !important;
+        box-shadow: none !important;
     }
     .modal-overlay {
         display: none;
@@ -212,65 +224,7 @@
     #archiveSummaryModal .archive-summary-section-title::after {
         display: none;
     }
-    #archiveSummaryModal a.archive-summary-view-btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.35rem;
-        padding: 0.38rem 0.75rem;
-        border-radius: 9999px;
-        font-size: 0.625rem;
-        font-weight: 700;
-        color: #ffffff !important;
-        text-decoration: none;
-        white-space: nowrap;
-        line-height: 1;
-        cursor: pointer;
-        transition: all 0.18s ease;
-        margin: 0 !important;
-    }
-    #archiveSummaryModal a.archive-summary-view-btn svg {
-        width: 0.75rem;
-        height: 0.75rem;
-        flex-shrink: 0;
-    }
-    #archiveSummaryModal a.archive-summary-view-btn:hover {
-        text-decoration: none;
-        transform: translateY(-1px);
-        color: #ffffff !important;
-    }
-    #archiveSummaryModal a.archive-summary-view-btn:active {
-        transform: translateY(0);
-    }
-    #archiveSummaryModal a.archive-summary-view-btn:focus-visible {
-        outline: 2px solid rgba(16, 185, 129, 0.45);
-        outline-offset: 2px;
-    }
-    #archiveSummaryModal a.archive-summary-view-btn--documents {
-        background: #d97706;
-        border: 1px solid #b45309;
-        box-shadow: 0 2px 4px rgba(180, 83, 9, 0.2);
-    }
-    #archiveSummaryModal a.archive-summary-view-btn--documents:hover {
-        background: #b45309;
-        box-shadow: 0 4px 10px rgba(180, 83, 9, 0.3);
-    }
-    #archiveSummaryModal a.archive-summary-view-btn--form {
-        background: #7c3aed;
-        border: 1px solid #6d28d9;
-        box-shadow: 0 2px 4px rgba(109, 40, 217, 0.2);
-    }
-    #archiveSummaryModal a.archive-summary-view-btn--form:hover {
-        background: #6d28d9;
-        box-shadow: 0 4px 10px rgba(109, 40, 217, 0.3);
-    }
-    #archiveSummaryModal a.archive-summary-view-btn--disabled {
-        pointer-events: none;
-        cursor: default;
-        opacity: 0.55;
-        transform: none;
-        box-shadow: none;
-    }
+
     #archiveSummaryModal .archive-summary-links-row {
         display: flex;
         flex-wrap: wrap;
@@ -705,13 +659,11 @@
                         data-ready-for-form-url="{{ row.readyForFormUrl }}"
                     >
                         <svg style="width: 0.75rem; height: 0.75rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                            <polyline points="14 2 14 8 20 8"></polyline>
-                            <line x1="16" y1="13" x2="8" y2="13"></line>
-                            <line x1="16" y1="17" x2="8" y2="17"></line>
-                            <polyline points="10 9 9 9 8 9"></polyline>
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <polyline points="17 11 19 13 23 9"></polyline>
                         </svg>
-                        VIEW
+                        REVIEW
                     </button>
                 </td>
             </tr>
@@ -780,24 +732,10 @@
 
                 <section class="archive-summary-section">
                     <div class="archive-summary-links-row">
-                        <a id="archiveSummaryDocumentsLink" class="archive-summary-view-btn archive-summary-view-btn--documents" href="#" target="_blank" rel="noopener noreferrer">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                <polyline points="14 2 14 8 20 8"></polyline>
-                                <line x1="16" y1="13" x2="8" y2="13"></line>
-                                <line x1="16" y1="17" x2="8" y2="17"></line>
-                                <polyline points="10 9 9 9 8 9"></polyline>
-                            </svg>
+                        <a id="archiveSummaryDocumentsLink" class="btn-archive-action" href="#" target="_blank" rel="noopener noreferrer">
                             VIEW Documents
                         </a>
-                        <a id="archiveSummaryFormLink" class="archive-summary-view-btn archive-summary-view-btn--form" href="#" target="_blank" rel="noopener noreferrer">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                <polyline points="14 2 14 8 20 8"></polyline>
-                                <line x1="16" y1="13" x2="8" y2="13"></line>
-                                <line x1="16" y1="17" x2="8" y2="17"></line>
-                                <polyline points="10 9 9 9 8 9"></polyline>
-                            </svg>
+                        <a id="archiveSummaryFormLink" class="btn-archive-action" href="#" target="_blank" rel="noopener noreferrer">
                             VIEW Housing application Form
                         </a>
                     </div>
@@ -900,11 +838,11 @@ function openArchiveHandoffSummary(buttonEl) {
     if (docsLink) {
         if (vaultUrl) {
             docsLink.href = vaultUrl;
-            docsLink.classList.remove('archive-summary-view-btn--disabled');
+            docsLink.classList.remove('btn-archive-action--disabled');
             docsLink.title = 'Open applicant document checklist in Document Management';
         } else {
             docsLink.href = '#';
-            docsLink.classList.add('archive-summary-view-btn--disabled');
+            docsLink.classList.add('btn-archive-action--disabled');
             docsLink.title = 'Document vault link unavailable';
         }
     }
@@ -914,11 +852,11 @@ function openArchiveHandoffSummary(buttonEl) {
     if (formLink) {
         if (rfqUrl) {
             formLink.href = rfqUrl;
-            formLink.classList.remove('archive-summary-view-btn--disabled');
+            formLink.classList.remove('btn-archive-action--disabled');
             formLink.title = 'Open Ready for Form queue for this applicant';
         } else {
             formLink.href = '#';
-            formLink.classList.add('archive-summary-view-btn--disabled');
+            formLink.classList.add('btn-archive-action--disabled');
             formLink.title = 'Ready for Form link unavailable';
         }
     }
