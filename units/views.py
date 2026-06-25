@@ -843,6 +843,17 @@ def _validate_housing_unit_block_lot(site, block_number, lot_number, exclude_uni
     return None
 
 
+def _parse_plan_polygon_index(raw):
+    """Optional map polygon index from lot_plan_polygons.json lots[]."""
+    value = (raw or '').strip()
+    if not value or not value.isdigit():
+        return None
+    idx = int(value)
+    if idx < 0 or idx > 9999:
+        return None
+    return idx
+
+
 @login_required
 @verify_position
 @require_POST
@@ -853,7 +864,7 @@ def create_housing_unit(request, position):
 
     URL: /units/housing-units/<position>/unit/create/
 
-    POST: site_id, block_number, lot_number
+    POST: site_id, block_number, lot_number, plan_polygon_index (optional)
     """
     _DUPLICATE_UNIT_MSG = 'Existing block or lot!'
 
@@ -934,6 +945,9 @@ def create_housing_unit(request, position):
             lot_number=lot_number,
             status='Vacant — available',
             location_notes='',
+            plan_polygon_index=_parse_plan_polygon_index(
+                request.POST.get('plan_polygon_index'),
+            ),
         )
     except IntegrityError:
         existing = HousingUnit.objects.filter(
@@ -1049,6 +1063,67 @@ def update_housing_unit(request, position, unit_id):
             'success': True,
             'message': f'Updated to Block {block_number} Lot {lot_number}.',
             'unit': {'id': str(unit.id), 'block': block_number, 'lot': lot_number},
+        }
+    )
+
+
+@login_required
+@verify_position
+@require_POST
+def link_housing_unit_plan_polygon(request, position, unit_id):
+    """
+    Bind a vacant inventory row to the map polygon clicked when adding from the plan.
+
+    URL: /units/housing-units/<position>/<unit_id>/link-plan-polygon/
+    POST: plan_polygon_index
+    """
+    if request.user.position not in _MODULE4_ADD_HOUSING_UNIT_POSITIONS:
+        return JsonResponse(
+            {'success': False, 'error': 'Only housing staff (4th / 2nd Member) can link units.'},
+            status=403,
+        )
+
+    plan_polygon_index = _parse_plan_polygon_index(request.POST.get('plan_polygon_index'))
+    if plan_polygon_index is None:
+        return JsonResponse(
+            {'success': False, 'error': 'Invalid or missing map polygon.'},
+            status=400,
+        )
+
+    try:
+        unit = HousingUnit.objects.select_related('site').get(id=unit_id)
+    except HousingUnit.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Unit not found.'}, status=404)
+
+    if not _housing_unit_inventory_editable(request.user, unit):
+        return JsonResponse(
+            {
+                'success': False,
+                'error': 'Only vacant units with no active award can be linked to the map.',
+            },
+            status=400,
+        )
+
+    HousingUnit.objects.filter(
+        site=unit.site,
+        plan_polygon_index=plan_polygon_index,
+    ).exclude(id=unit.id).update(plan_polygon_index=None)
+
+    unit.plan_polygon_index = plan_polygon_index
+    unit.save(update_fields=['plan_polygon_index', 'updated_at'])
+
+    return JsonResponse(
+        {
+            'success': True,
+            'message': (
+                f'Block {unit.block_number} Lot {unit.lot_number} linked to the map plan.'
+            ),
+            'unit': {
+                'id': str(unit.id),
+                'block': unit.block_number,
+                'lot': unit.lot_number,
+                'plan_polygon_index': plan_polygon_index,
+            },
         }
     )
 

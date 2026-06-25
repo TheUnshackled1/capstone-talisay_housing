@@ -136,6 +136,9 @@ class HousingUnit(models.Model):
     # Location notes (helpful for field team)
     location_notes = models.TextField(blank=True)
 
+    # Index into lot_plan_polygons.json lots[] when staff adds from map click
+    plan_polygon_index = models.PositiveIntegerField(null=True, blank=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     

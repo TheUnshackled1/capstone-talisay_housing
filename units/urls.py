@@ -26,6 +26,11 @@ urlpatterns = [
     path('housing-units/<str:position>/site/create/', views.create_relocation_site, name='create_relocation_site'),
     path('housing-units/<str:position>/unit/create/', views.create_housing_unit, name='create_housing_unit'),
     path('housing-units/<str:position>/<uuid:unit_id>/update/', views.update_housing_unit, name='update_housing_unit'),
+    path(
+        'housing-units/<str:position>/<uuid:unit_id>/link-plan-polygon/',
+        views.link_housing_unit_plan_polygon,
+        name='link_housing_unit_plan_polygon',
+    ),
     path('housing-units/<str:position>/<uuid:unit_id>/delete/', views.delete_housing_unit, name='delete_housing_unit'),
     path('housing-units/<str:position>/unit/construction/update/', views.add_construction_update, name='add_construction_update'),
     path('housing-units/<str:position>/<uuid:unit_id>/details/', views.get_unit_details, name='get_unit_details'),
