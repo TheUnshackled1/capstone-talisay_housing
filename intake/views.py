@@ -10,15 +10,14 @@ from django.db.models import Q, Prefetch
 from django.views.decorators.csrf import csrf_exempt
 from django.core.exceptions import ObjectDoesNotExist
 from functools import wraps
+from urllib.parse import urlencode
 from .models import Applicant, Barangay, Archive, SMSLog
 from applications.staff_pipeline_status import (
-    applicant_journey_cycle,
     archive_applicant_status,
     archive_stage_filter_key,
     ARCHIVE_STAGE_FILTER_CHOICES,
-    CASE_OPEN_STATUSES,
 )
-from cases.models import Case
+from applications.form_pipeline import applicant_has_signed_application_payload
 from applications.models import QueueEntry
 from units.models import LotAward, Blacklist
 from units.historical_beneficiary import (
@@ -2074,38 +2073,15 @@ def archive_list(request, position):
             applicant_id__in=applicant_ids_for_docs,
         ).values_list('applicant_id', 'document_type'):
             docs_by_applicant_id[aid].add(doc_type)
+    signed_doc_by_applicant_id = {}
+    if applicant_ids_for_docs:
+        for doc in Document.objects.filter(
+            applicant_id__in=applicant_ids_for_docs,
+            document_type='signed_application',
+        ).order_by('-uploaded_at', '-id'):
+            if doc.applicant_id not in signed_doc_by_applicant_id:
+                signed_doc_by_applicant_id[doc.applicant_id] = doc
     requirements_group_a = list(Requirement.objects.filter(group='A').order_by('order', 'code'))
-
-    case_stats_by_applicant = defaultdict(lambda: {'total': 0, 'open': 0, 'latest': '', '_seen': set()})
-    applicant_id_set = set(applicant_ids_for_docs)
-    if applicant_id_set:
-        case_rows = (
-            Case.objects.filter(
-                Q(complainant_applicant_id__in=applicant_id_set)
-                | Q(subject_applicant_id__in=applicant_id_set)
-            )
-            .order_by('-received_at')
-            .values_list(
-                'id',
-                'complainant_applicant_id',
-                'subject_applicant_id',
-                'status',
-                'case_number',
-            )
-        )
-        for case_id, complainant_id, subject_id, status, case_number in case_rows:
-            for aid in (complainant_id, subject_id):
-                if not aid or aid not in applicant_id_set:
-                    continue
-                bucket = case_stats_by_applicant[aid]
-                if case_id in bucket['_seen']:
-                    continue
-                bucket['_seen'].add(case_id)
-                bucket['total'] += 1
-                if status in CASE_OPEN_STATUSES:
-                    bucket['open'] += 1
-                if not bucket['latest'] and case_number:
-                    bucket['latest'] = case_number
 
     # Prepare records for template
     records = []
@@ -2174,19 +2150,33 @@ def archive_list(request, position):
         if bool(archive.applicant.phone_number if archive.applicant else False):
             sms_text = 'Sent' if archive.sms_sent else 'Not Sent'
 
-        case_bucket = (
-            case_stats_by_applicant.get(archive.applicant_id)
-            if archive.applicant_id
-            else None
-        ) or {'total': 0, 'open': 0, 'latest': ''}
-        journey_cycle = applicant_journey_cycle(
-            applicant_live,
-            app_obj,
-            bl_row,
-            case_total=case_bucket['total'],
-            case_open=case_bucket['open'],
-            case_latest=case_bucket['latest'],
-        )
+        applicant_id_str = str(archive.applicant_id) if archive.applicant_id else ''
+        documents_vault_url = ''
+        ready_for_form_url = ''
+        signed_form_view_url = ''
+        generated_form_pdf_url = ''
+        form_preview_url = ''
+        form_preview_kind = 'none'
+        if archive.applicant_id:
+            vault_path = reverse('documents:management', kwargs={'position': position})
+            documents_vault_url = f"{vault_path}?{urlencode({'open_vault': '1', 'applicant_id': applicant_id_str})}"
+            ready_for_form_path = reverse('applications:ready_for_form_queue', kwargs={'position': position})
+            ready_for_form_url = f"{ready_for_form_path}?{urlencode({'applicant_id': applicant_id_str, 'from': 'archives'})}"
+            sa_doc = signed_doc_by_applicant_id.get(archive.applicant_id)
+            if sa_doc and applicant_live and applicant_has_signed_application_payload(applicant_live):
+                signed_form_view_url = reverse(
+                    'documents:blob_download',
+                    kwargs={'position': position, 'doc_id': sa_doc.pk},
+                )
+                form_preview_url = signed_form_view_url
+                form_preview_kind = 'signed'
+            elif app_obj and app_obj.form_generated_at:
+                generated_form_pdf_url = reverse(
+                    'applications:application_form_pdf',
+                    kwargs={'position': position, 'applicant_id': archive.applicant_id},
+                )
+                form_preview_url = generated_form_pdf_url
+                form_preview_kind = 'generated'
 
         records.append({
             'id': str(archive.id),
@@ -2222,7 +2212,13 @@ def archive_list(request, position):
             'formGenAt': form_gen_at,
             'formGenBy': form_gen_by,
             'readOnlyState': 'Read-only historical record',
-            'journeyCycleJson': json.dumps(journey_cycle),
+            'applicantId': applicant_id_str,
+            'documentsVaultUrl': documents_vault_url,
+            'readyForFormUrl': ready_for_form_url,
+            'signedFormViewUrl': signed_form_view_url,
+            'generatedFormPdfUrl': generated_form_pdf_url,
+            'formPreviewUrl': form_preview_url,
+            'formPreviewKind': form_preview_kind,
         })
 
     if selected_stage:
