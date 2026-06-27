@@ -1,11 +1,3 @@
-{% load static %}
-{# ================================================================
-   Analytics Panel — self-contained partial.
-   Included from dashboard.html (second_member) and can also be
-   included from staff_reports_analytics.html if needed.
-   Requires the analytics context produced by
-   _staff_reports_analytics_payload(request).
-   ================================================================ #}
 <style>
     /* ===================================================================
        Reports & Analytics — institutional dashboard
@@ -22,164 +14,11 @@
     }
 
     .rep-page {
-        padding: 1.4rem 1.5rem 2.5rem;
+        padding: 0 0 2rem;
         max-width: 1400px;
         margin: 0 auto;
         color: var(--rep-text);
         font-feature-settings: "tnum", "ss01";
-    }
-
-    /* Hero */
-    .rep-hero {
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: 1.25rem;
-        flex-wrap: wrap;
-        padding: 1.25rem 1.4rem;
-        margin-bottom: 1rem;
-        background: linear-gradient(180deg, #ecfdf5 0%, #ffffff 60%);
-        border: 1px solid #a7f3d0;
-        border-radius: 0.95rem;
-        box-shadow: var(--rep-card-shadow);
-        position: relative;
-        overflow: hidden;
-    }
-    .rep-hero::before {
-        content: '';
-        position: absolute;
-        top: 0; left: 0; right: 0;
-        height: 4px;
-        background: linear-gradient(90deg, #047857 0%, #10b981 50%, #6ee7b7 100%);
-    }
-    .rep-hero-text { min-width: 0; flex: 1 1 22rem; }
-    .rep-kicker {
-        margin: 0 0 0.3rem;
-        font-size: 0.62rem;
-        font-weight: 800;
-        letter-spacing: 0.18em;
-        text-transform: uppercase;
-        color: var(--rep-em);
-    }
-    .rep-title {
-        font-family: 'Source Serif Pro', Georgia, serif;
-        font-size: 1.5rem;
-        font-weight: 700;
-        margin: 0 0 0.4rem;
-        color: #064e3b;
-        letter-spacing: -0.015em;
-    }
-    .rep-meta {
-        margin: 0;
-        font-size: 0.82rem;
-        color: var(--rep-muted);
-        line-height: 1.55;
-    }
-    .rep-meta strong { color: #0f172a; font-weight: 700; }
-    .rep-back {
-        font-size: 0.78rem;
-        font-weight: 600;
-        color: var(--rep-em);
-        text-decoration: none;
-    }
-    .rep-back:hover { text-decoration: underline; }
-    .rep-period-chip {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.4rem;
-        padding: 0.32rem 0.7rem;
-        background: #ffffff;
-        border: 1px solid #a7f3d0;
-        border-radius: 999px;
-        font-size: 0.7rem;
-        font-weight: 700;
-        color: #047857;
-        margin-right: 0.5rem;
-        margin-top: 0.3rem;
-    }
-    .rep-period-chip::before {
-        content: '';
-        width: 0.42rem; height: 0.42rem;
-        border-radius: 50%;
-        background: #10b981;
-    }
-    .rep-role {
-        font-size: 0.72rem;
-        color: var(--rep-muted);
-        margin-top: 0.5rem;
-    }
-    .rep-role b { color: #0f172a; }
-
-    /* Toolbar */
-    .rep-toolbar {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.55rem 0.65rem;
-        align-items: flex-end;
-        flex-shrink: 0;
-    }
-    .rep-field { display: flex; flex-direction: column; }
-    .rep-field label {
-        font-size: 0.6rem;
-        font-weight: 800;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
-        color: var(--rep-muted);
-        margin-bottom: 0.2rem;
-    }
-    .rep-field select {
-        padding: 0.5rem 0.7rem;
-        border-radius: 8px;
-        border: 1px solid #cbd5e1;
-        background: #ffffff;
-        font-size: 0.82rem;
-        min-width: 9rem;
-        font-family: inherit;
-        color: #0f172a;
-        cursor: pointer;
-        transition: border-color 0.15s ease, box-shadow 0.15s ease;
-    }
-    .rep-field select:focus {
-        outline: none;
-        border-color: #6ee7b7;
-        box-shadow: 0 0 0 3px rgba(167, 243, 208, 0.5);
-    }
-    .rep-btn {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.4rem;
-        padding: 0.55rem 0.95rem;
-        border-radius: 8px;
-        font-weight: 700;
-        font-size: 0.78rem;
-        cursor: pointer;
-        text-decoration: none;
-        border: 1px solid transparent;
-        transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease, color 0.15s ease, border-color 0.15s ease;
-        white-space: nowrap;
-        font-family: inherit;
-    }
-    .rep-btn-primary {
-        background: linear-gradient(180deg, #10b981 0%, #059669 100%);
-        color: #ffffff;
-        border-color: #047857;
-        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.18);
-    }
-    .rep-btn-primary:hover {
-        background: linear-gradient(180deg, #059669 0%, #047857 100%);
-        box-shadow: 0 4px 14px rgba(5, 150, 105, 0.32);
-        transform: translateY(-1px);
-        color: #ffffff;
-    }
-    .rep-btn-outline {
-        background: #ffffff;
-        color: #047857;
-        border-color: #a7f3d0;
-    }
-    .rep-btn-outline:hover {
-        border-color: #10b981;
-        color: #065f46;
-        background: #ecfdf5;
     }
 
     /* Section heading band */
@@ -524,11 +363,7 @@
     .rep-aging-legend-dot { width: 8px; height: 8px; border-radius: 2px; }
 
     @media (max-width: 640px) {
-        .rep-page { padding: 1rem 1rem 2rem; }
-        .rep-hero { padding: 1rem; }
-        .rep-title { font-size: 1.25rem; }
-        .rep-toolbar { width: 100%; }
-        .rep-field select { min-width: 0; width: 100%; }
+        .rep-page { padding: 0 0 1.5rem; }
         .rep-ops-gauges { grid-template-columns: repeat(2, 1fr); }
     }
 
@@ -617,51 +452,6 @@
 </style>
 
 <div class="rep-page">
-    <!-- Hero -->
-    <div class="rep-hero">
-        <div class="rep-hero-text">
-            <p class="rep-kicker">{{ report_role_heading }}</p>
-            <h1 class="rep-title">ANALYTICS</h1>
-        </div>
-
-        <form class="rep-toolbar" method="get" action="">
-            <div class="rep-field">
-                <label for="report-month">Month</label>
-                <select id="report-month" name="month">
-                    {% for mnum, mname in months_for_select %}
-                    <option value="{{ mnum }}" {% if mnum == report_month %}selected{% endif %}>{{ mname }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="rep-field">
-                <label for="report-year">Year</label>
-                <select id="report-year" name="year">
-                    {% for y in year_options %}
-                    <option value="{{ y }}" {% if y == report_year %}selected{% endif %}>{{ y }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="rep-field">
-                <label for="report-site">Relocation site</label>
-                <select id="report-site" name="site_id">
-                    <option value="all" {% if isf_site_id == 'all' %}selected{% endif %}>All sites</option>
-                    {% for s in relocation_sites %}
-                    <option value="{{ s.id }}" {% if isf_site_id == s.id|stringformat:"s" %}selected{% endif %}>{{ s.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <button type="submit" class="rep-btn rep-btn-primary">Apply</button>
-            <a class="rep-btn rep-btn-outline" href="?year={{ report_year }}&amp;month={{ report_month }}&amp;site_id={{ isf_site_id|urlencode }}&amp;export=csv">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                    <polyline points="7 10 12 15 17 10"/>
-                    <line x1="12" y1="15" x2="12" y2="3"/>
-                </svg>
-                Export CSV
-            </a>
-        </form>
-    </div>
-
     {{ analytics_charts_data|json_script:"tha-analytics-charts" }}
 
     <!-- Section: Trend -->
@@ -768,7 +558,7 @@
     </div>
 
     <div class="rep-footer">
-        Generated {{ timestamp|date:"M j, Y g:i A" }} · The CSV export contains the same figures plus per-row breakdowns.
+        Generated {{ timestamp|date:"M j, Y g:i A" }}
     </div>
 </div>
 

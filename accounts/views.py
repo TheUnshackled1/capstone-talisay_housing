@@ -325,9 +325,6 @@ def dashboard_second_member(request):
 
         # ========== ANALYTICS PANEL ==========
         **analytics_data,
-        'report_role_heading': 'Second Member oversight',
-        'report_role_officer': 'Lourynie Joie V. Tingson',
-        'report_role_modules': 'M2, M3, M4, M6',
     }
 
     return render(request, 'accounts/dashboard.html', context)
