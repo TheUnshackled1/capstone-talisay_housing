@@ -293,6 +293,15 @@ def dashboard_second_member(request):
         updated_at__gte=this_month_start
     ).count()
 
+    # Analytics payload (handles ?month, ?year, ?site_id GET params)
+    analytics_data = _staff_reports_analytics_payload(request)
+
+    # CSV export — works via ?export=csv on the dashboard URL
+    if request.GET.get('export') == 'csv':
+        return _staff_reports_analytics_csv_response(
+            analytics_data, 'Second Member', 'second_member_report'
+        )
+
     context = {
         'page_title': 'Second Member Dashboard',
         'user_position': 'second_member',
@@ -313,6 +322,12 @@ def dashboard_second_member(request):
         'housing_units': total_housing_units,  # Shared stat card
         'approved_this_month': approved_this_month,  # Shared stat card
         **_dashboard_recent_activity_context(),
+
+        # ========== ANALYTICS PANEL ==========
+        **analytics_data,
+        'report_role_heading': 'Second Member oversight',
+        'report_role_officer': 'Lourynie Joie V. Tingson',
+        'report_role_modules': 'M2, M3, M4, M6',
     }
 
     return render(request, 'accounts/dashboard.html', context)

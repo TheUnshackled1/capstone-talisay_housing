@@ -62,10 +62,11 @@
                         <!-- Applicant Registration - Second & Fourth Members -->
                         {% if user.position == 'second_member' or user.position == 'fourth_member' %}
                         <a href="{% url 'intake:applicants_list' request.user.position %}" class="nav-link {% block nav_applicants %}{% endblock %}">
-                            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                                <circle cx="9" cy="7" r="4"/>
-                                <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+                            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                <circle cx="8.5" cy="7" r="4"/>
+                                <line x1="20" y1="8" x2="20" y2="14"/>
+                                <line x1="23" y1="11" x2="17" y2="11"/>
                             </svg>
                             <span>Applicant Registration</span>
                         </a>
@@ -73,29 +74,30 @@
                         
                         <!-- Applications - All Staff -->
                         <a href="{% url 'applications:applications_list' request.user.position %}" class="nav-link {% block nav_applications %}{% endblock %}">
-                            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                                <polyline points="14 2 14 8 20 8"/>
-                                <line x1="16" y1="13" x2="8" y2="13"/>
-                                <line x1="16" y1="17" x2="8" y2="17"/>
+                            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                                <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                                <polyline points="9 13 11 15 15 11"></polyline>
                             </svg>
                             <span>Evaluation &amp; Eligibility</span>
                         </a>
 
                         {% if user.position == 'fourth_member' or user.position == 'second_member' %}
                         <a href="{% url 'applications:ready_for_form_queue' request.user.position %}" class="nav-link {% block nav_ready_for_form %}{% endblock %}">
-                            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                                <polyline points="14 2 14 8 20 8"/>
-                                <path d="M12 18v-6"/>
-                                <path d="M9 15l3 3 3-3"/>
+                            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                <polyline points="10 9 9 9 8 9"></polyline>
                             </svg>
                             <span>Ready for Form queue</span>
                         </a>
                         <a href="{% url 'applications:lot_awarding_queue' request.user.position %}"
                             class="nav-link {% block nav_lot_awarding_queue %}{% endblock %}">
-                            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M12 2l3.2 6.49 7.16 1.04-5.18 5.05 1.22 7.1L12 18.27l-6.4 3.41 1.22-7.1L1.64 9.53l7.16-1.04L12 2z"/>
+                            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="8" r="7"></circle>
+                                <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
                             </svg>
                             <span>Ready for Awarding</span>
                         </a>
@@ -124,8 +126,9 @@
 
                 <!-- Cases - All Staff -->
                 <a href="{% url 'cases:case_dashboard' request.user.position %}" class="nav-link {% block nav_cases %}{% endblock %}">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
                     </svg>
                     <span>Cases</span>
                 </a>
