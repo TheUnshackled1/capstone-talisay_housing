@@ -48,47 +48,60 @@
                     <span>Dashboard</span>
                 </a>
                 
-                <!-- Applicant Registration - Second & Fourth Members -->
-                {% if user.position == 'second_member' or user.position == 'fourth_member' %}
-                <a href="{% url 'intake:applicants_list' request.user.position %}" class="nav-link {% block nav_applicants %}{% endblock %}">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                        <circle cx="9" cy="7" r="4"/>
-                        <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
-                    </svg>
-                    <span>Applicant Registration</span>
-                </a>
-                {% endif %}
-                
-                <!-- Applications - All Staff -->
-                <a href="{% url 'applications:applications_list' request.user.position %}" class="nav-link {% block nav_applications %}{% endblock %}">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                        <polyline points="14 2 14 8 20 8"/>
-                        <line x1="16" y1="13" x2="8" y2="13"/>
-                        <line x1="16" y1="17" x2="8" y2="17"/>
-                    </svg>
-                    <span>Evaluation &amp; Eligibility</span>
-                </a>
+                <!-- Application Stage Dropdown -->
+                <details class="sidebar-dropdown">
+                    <summary>
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                            <polyline points="2 17 12 22 22 17"></polyline>
+                            <polyline points="2 12 12 17 22 12"></polyline>
+                        </svg>
+                        <span>Application Stage</span>
+                    </summary>
+                    <div class="sidebar-dropdown-content">
+                        <!-- Applicant Registration - Second & Fourth Members -->
+                        {% if user.position == 'second_member' or user.position == 'fourth_member' %}
+                        <a href="{% url 'intake:applicants_list' request.user.position %}" class="nav-link {% block nav_applicants %}{% endblock %}">
+                            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                <circle cx="9" cy="7" r="4"/>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+                            </svg>
+                            <span>Applicant Registration</span>
+                        </a>
+                        {% endif %}
+                        
+                        <!-- Applications - All Staff -->
+                        <a href="{% url 'applications:applications_list' request.user.position %}" class="nav-link {% block nav_applications %}{% endblock %}">
+                            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14 2 14 8 20 8"/>
+                                <line x1="16" y1="13" x2="8" y2="13"/>
+                                <line x1="16" y1="17" x2="8" y2="17"/>
+                            </svg>
+                            <span>Evaluation &amp; Eligibility</span>
+                        </a>
 
-                {% if user.position == 'fourth_member' or user.position == 'second_member' %}
-                <a href="{% url 'applications:ready_for_form_queue' request.user.position %}" class="nav-link {% block nav_ready_for_form %}{% endblock %}">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                        <polyline points="14 2 14 8 20 8"/>
-                        <path d="M12 18v-6"/>
-                        <path d="M9 15l3 3 3-3"/>
-                    </svg>
-                    <span>Ready for Form queue</span>
-                </a>
-                <a href="{% url 'applications:lot_awarding_queue' request.user.position %}"
-                    class="nav-link {% block nav_lot_awarding_queue %}{% endblock %}">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M12 2l3.2 6.49 7.16 1.04-5.18 5.05 1.22 7.1L12 18.27l-6.4 3.41 1.22-7.1L1.64 9.53l7.16-1.04L12 2z"/>
-                    </svg>
-                    <span>Ready for Awarding</span>
-                </a>
-                {% endif %}
+                        {% if user.position == 'fourth_member' or user.position == 'second_member' %}
+                        <a href="{% url 'applications:ready_for_form_queue' request.user.position %}" class="nav-link {% block nav_ready_for_form %}{% endblock %}">
+                            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14 2 14 8 20 8"/>
+                                <path d="M12 18v-6"/>
+                                <path d="M9 15l3 3 3-3"/>
+                            </svg>
+                            <span>Ready for Form queue</span>
+                        </a>
+                        <a href="{% url 'applications:lot_awarding_queue' request.user.position %}"
+                            class="nav-link {% block nav_lot_awarding_queue %}{% endblock %}">
+                            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 2l3.2 6.49 7.16 1.04-5.18 5.05 1.22 7.1L12 18.27l-6.4 3.41 1.22-7.1L1.64 9.53l7.16-1.04L12 2z"/>
+                            </svg>
+                            <span>Ready for Awarding</span>
+                        </a>
+                        {% endif %}
+                    </div>
+                </details>
 
                 {% if user.position != 'second_member' and user.position != 'fourth_member' %}
                 <!-- Documents — modules for roles without Reports / Analytics block. -->

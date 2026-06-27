@@ -6,6 +6,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize all components
     initSidebar();
+    initSidebarDropdowns();
     initCurrentDate();
     initAlerts();
     initTooltips();
@@ -501,3 +502,70 @@ function initScrollAnimations() {
         scrollObserver.observe(element);
     });
 }
+
+/**
+ * Initialize Sidebar Dropdown menus (auto-opens if active item is inside)
+ */
+function initSidebarDropdowns() {
+    document.querySelectorAll('.sidebar-dropdown').forEach(function(dropdown) {
+        const summary = dropdown.querySelector('summary');
+        const content = dropdown.querySelector('.sidebar-dropdown-content');
+        
+        // Auto-open on load if active item is inside
+        if (dropdown.querySelector('.nav-link.active') || dropdown.querySelector('.nav-link[class*="active"]')) {
+            dropdown.setAttribute('open', '');
+            dropdown.classList.add('active');
+            dropdown.classList.add('open-animated');
+        }
+
+        if (!summary || !content) return;
+
+        summary.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            if (dropdown.hasAttribute('open')) {
+                // Animate closing
+                content.style.maxHeight = `${content.scrollHeight}px`;
+                content.style.opacity = '1';
+                content.style.transform = 'translateY(0) scaleY(1)';
+                
+                // Force reflow
+                content.offsetHeight;
+                
+                content.style.transition = 'all 0.22s cubic-bezier(0.4, 0, 0.2, 1)';
+                content.style.maxHeight = '0px';
+                content.style.opacity = '0';
+                content.style.transform = 'translateY(-10px) scaleY(0.95)';
+                
+                dropdown.classList.remove('open-animated');
+                
+                setTimeout(function() {
+                    dropdown.removeAttribute('open');
+                    content.removeAttribute('style');
+                }, 220);
+            } else {
+                // Open first
+                dropdown.setAttribute('open', '');
+                dropdown.classList.add('open-animated');
+                
+                content.style.maxHeight = '0px';
+                content.style.opacity = '0';
+                content.style.transform = 'translateY(-10px) scaleY(0.95)';
+                content.style.transformOrigin = 'top';
+                
+                // Force reflow
+                content.offsetHeight;
+                
+                content.style.transition = 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)';
+                content.style.maxHeight = `${content.scrollHeight}px`;
+                content.style.opacity = '1';
+                content.style.transform = 'translateY(0) scaleY(1)';
+                
+                setTimeout(function() {
+                    content.removeAttribute('style');
+                }, 250);
+            }
+        });
+    });
+}
+
