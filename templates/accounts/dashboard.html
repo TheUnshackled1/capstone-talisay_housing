@@ -459,9 +459,9 @@
         </div>
 
         <nav class="sidebar-nav">
+            {% if user.position == 'field' or user.position == 'ronda' %}
             <!-- Main Section - All Users -->
             <div class="nav-section">
-                <div class="nav-section-title">Main</div>
                 <a href="{% url 'accounts:dashboard' %}" class="nav-link active">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <rect x="3" y="3" width="7" height="7" rx="1"/>
@@ -473,7 +473,6 @@
                 </a>
             </div>
 
-            {% if user.position == 'field' or user.position == 'ronda' %}
             <!-- FIELD PERSONNEL — M1 Census/Verification, M4 Inspection, M5 Complaints -->
             <div class="nav-section">
                 <div class="nav-section-title">Intake (M1)</div>
@@ -540,7 +539,15 @@
             {% else %}
             <!-- DEFAULT - Joie (second_member) and Jocel (fourth_member) - Simplified Modules -->
             <div class="nav-section">
-                <div class="nav-section-title">Actions</div>
+                <a href="{% url 'accounts:dashboard' %}" class="nav-link active">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7" rx="1"/>
+                        <rect x="14" y="3" width="7" height="7" rx="1"/>
+                        <rect x="14" y="14" width="7" height="7" rx="1"/>
+                        <rect x="3" y="14" width="7" height="7" rx="1"/>
+                    </svg>
+                    <span>Dashboard</span>
+                </a>
                 <a href="{% url 'intake:applicants_list' request.user.position %}" class="nav-link {% block nav_applicants %}{% endblock %}">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
