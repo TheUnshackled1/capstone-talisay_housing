@@ -656,7 +656,6 @@
                         data-barangay="{{ row.barangay|default:'N/A' }}"
                         data-applicant-id="{{ row.applicantId }}"
                         data-documents-vault-url="{{ row.documentsVaultUrl }}"
-                        data-ready-for-form-url="{{ row.readyForFormUrl }}"
                     >
                         <svg style="width: 0.75rem; height: 0.75rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                             <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
@@ -734,9 +733,6 @@
                     <div class="archive-summary-links-row">
                         <a id="archiveSummaryDocumentsLink" class="btn-archive-action" href="#" target="_blank" rel="noopener noreferrer">
                             VIEW Documents
-                        </a>
-                        <a id="archiveSummaryFormLink" class="btn-archive-action" href="#" target="_blank" rel="noopener noreferrer">
-                            VIEW Housing application Form
                         </a>
                     </div>
                 </section>
@@ -844,20 +840,6 @@ function openArchiveHandoffSummary(buttonEl) {
             docsLink.href = '#';
             docsLink.classList.add('btn-archive-action--disabled');
             docsLink.title = 'Document vault link unavailable';
-        }
-    }
-
-    const formLink = document.getElementById('archiveSummaryFormLink');
-    const rfqUrl = (d.readyForFormUrl || '').trim();
-    if (formLink) {
-        if (rfqUrl) {
-            formLink.href = rfqUrl;
-            formLink.classList.remove('btn-archive-action--disabled');
-            formLink.title = 'Open Ready for Form queue for this applicant';
-        } else {
-            formLink.href = '#';
-            formLink.classList.add('btn-archive-action--disabled');
-            formLink.title = 'Ready for Form link unavailable';
         }
     }
 
