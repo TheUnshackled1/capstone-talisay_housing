@@ -1217,28 +1217,6 @@ def _staff_reports_analytics_csv_response(data, export_role_title, filename_pref
     return response
 
 
-@login_required
-def second_member_analytics(request):
-    """Second Member — same operational analytics dataset as Fourth Member (reports hub)."""
-    if request.user.position != 'second_member':
-        messages.error(request, 'Access denied. Analytics is for the Second Member position only.')
-        return redirect('accounts:dashboard')
-
-    data = _staff_reports_analytics_payload(request)
-    if request.GET.get('export') == 'csv':
-        return _staff_reports_analytics_csv_response(data, 'Second Member', 'second_member_report')
-
-    context = {
-        **data,
-        'page_title': 'Reports & analytics',
-        'report_meta_title': 'Reports & analytics — Second Member | THA',
-        'report_role_heading': 'Second Member oversight',
-        'report_role_officer': 'Lourynie Joie V. Tingson',
-        'report_role_modules': 'M2, M3, M4, M6',
-        'dashboard_url': reverse('accounts:dashboard_second_member'),
-    }
-    return render(request, 'accounts/staff_reports_analytics.html', context)
-
 
 @login_required
 def fourth_member_analytics(request):
