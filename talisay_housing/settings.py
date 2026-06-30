@@ -62,7 +62,11 @@ if _csrf_origins_raw:
         o.strip() for o in _csrf_origins_raw.split(',') if o.strip()
     ]
 elif DEBUG:
-    CSRF_TRUSTED_ORIGINS = ['https://m86m4vrs-8000.asse.devtunnels.ms']
+    CSRF_TRUSTED_ORIGINS = [
+        'https://m86m4vrs-8000.asse.devtunnels.ms',
+        'http://localhost:8000',
+        'http://127.0.0.1:8000',
+    ]
 else:
     CSRF_TRUSTED_ORIGINS = []
 
