@@ -1138,7 +1138,8 @@
         align-items: center;
     }
     #archiveRequirementsModal .archive-req-upload-btn,
-    #archiveRequirementsModal .archive-req-row-scan-btn {
+    #archiveRequirementsModal .archive-req-row-scan-btn,
+    #archiveRequirementsModal .archive-replace-btn-confirm {
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -1220,15 +1221,15 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        min-width: 4.8rem;
-        padding: 0.25rem 0.6rem;
-        border-radius: 9999px;
+        min-width: 4.5rem;
+        padding: 0.4rem 0.55rem;
+        border-radius: 0.5rem;
         border: 1px solid transparent;
-        font-size: 0.62rem;
+        font-size: 0.68rem;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.04em;
-        line-height: 1.15;
+        line-height: 1.2;
         box-shadow: 0 1px 1px rgba(15, 23, 42, 0.03);
     }
     #archiveRequirementsModal .req-badge::before {
@@ -1254,12 +1255,13 @@
         display: inline-flex;
         align-items: center;
         gap: 0.32rem;
-        padding: 0.25rem 0.65rem;
-        border-radius: 9999px;
+        padding: 0.4rem 0.55rem;
+        border-radius: 0.5rem;
         border: 1px solid transparent;
-        font-size: 0.62rem;
+        font-size: 0.68rem;
         font-weight: 800;
         letter-spacing: 0.03em;
+        line-height: 1.2;
         box-shadow: 0 1px 1px rgba(15, 23, 42, 0.03);
     }
     #archiveRequirementsModal .req-scan::before {
@@ -8219,10 +8221,10 @@
 
         const scanSvg = '<svg class="action-btn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:0.8rem; height:0.8rem; vertical-align:middle; margin-right:0.25rem;"><path d="M3 7V5a2 2 0 0 1 2-2h2"></path><path d="M17 3h2a2 2 0 0 1 2 2v2"></path><path d="M21 17v2a2 2 0 0 1-2 2h-2"></path><path d="M7 21H5a2 2 0 0 1-2-2v-2"></path><line x1="3" y1="12" x2="21" y2="12"></line></svg>';
 
-        let removeBtnHtml = '';
+        let removeBtnHtml = '<span style="color:#94a3b8;font-size:0.75rem;min-width:4.5rem;display:inline-flex;justify-content:center;align-items:center;">—</span>';
         if (hasFile) {
             const trashSvg = '<svg class="action-btn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:0.8rem; height:0.8rem; vertical-align:middle; margin-right:0.25rem;"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>';
-            removeBtnHtml = '<button type="button" class="btn-modal primary archive-replace-btn-confirm" style="background-color: #dc2626; border-color: #dc2626; color: white; padding: 0.35rem 0.55rem; font-size: 0.65rem;" data-archive-code="' + safeCode + '" onclick="removeArchiveRequirementByCode(this.getAttribute(\'data-archive-code\'))" title="Remove"' + disabledAttr + '>' + trashSvg + 'Remove</button>';
+            removeBtnHtml = '<button type="button" class="btn-modal primary archive-replace-btn-confirm" style="background-color: #dc2626; border-color: #dc2626; color: white;" data-archive-code="' + safeCode + '" onclick="removeArchiveRequirementByCode(this.getAttribute(\'data-archive-code\'))" title="Remove"' + disabledAttr + '>' + trashSvg + 'Remove</button>';
         }
 
         return '<div class="archive-req-actions-group">'
