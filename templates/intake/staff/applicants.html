@@ -1172,13 +1172,13 @@
         stroke: currentColor;
     }
     #archiveRequirementsModal .archive-req-row-scan-btn {
-        border-color: #a7f3d0;
-        color: #065f46;
-        background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+        border-color: #10b981 !important;
+        color: #ffffff !important;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
     }
     #archiveRequirementsModal .archive-req-row-scan-btn:hover {
-        border-color: #10b981;
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        border-color: #059669;
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
         color: #ffffff;
         box-shadow: 0 4px 12px rgba(16, 185, 129, 0.22);
         transform: translateY(-1.5px) scale(1.04);
@@ -1241,9 +1241,9 @@
         flex-shrink: 0;
     }
     #archiveRequirementsModal .req-badge-yes {
-        background: hsl(142.4, 76.2%, 96.3%);
-        color: hsl(142.4, 60%, 20%);
-        border-color: hsl(142.4, 70%, 85%);
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: #ffffff;
+        border-color: #10b981;
     }
     #archiveRequirementsModal .req-badge-no {
         background: hsl(210, 40%, 96.1%);
@@ -1272,9 +1272,9 @@
         animation: pulse-green 2s infinite ease-in-out;
     }
     #archiveRequirementsModal .req-scan-done {
-        color: #047857;
-        background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
-        border-color: #6ee7b7;
+        color: #ffffff;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        border-color: #10b981;
     }
     #archiveRequirementsModal .req-scan-pending {
         color: #64748b;
@@ -4630,7 +4630,6 @@
         <div class="archive-replace-actions">
             <button type="button" class="btn-modal secondary archive-replace-btn-cancel" onclick="archiveResolveReplaceDocConfirm('keep')">Keep existing</button>
             <button type="button" class="btn-modal primary archive-replace-btn-confirm" onclick="archiveResolveReplaceDocConfirm('replace')">Yes, replace</button>
-            <button type="button" class="btn-modal primary archive-replace-btn-confirm" onclick="archiveResolveReplaceDocConfirm('remove')">Remove Requirement</button>
         </div>
     </div>
 </div>
@@ -8220,8 +8219,15 @@
 
         const scanSvg = '<svg class="action-btn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:0.8rem; height:0.8rem; vertical-align:middle; margin-right:0.25rem;"><path d="M3 7V5a2 2 0 0 1 2-2h2"></path><path d="M17 3h2a2 2 0 0 1 2 2v2"></path><path d="M21 17v2a2 2 0 0 1-2 2h-2"></path><path d="M7 21H5a2 2 0 0 1-2-2v-2"></path><line x1="3" y1="12" x2="21" y2="12"></line></svg>';
 
+        let removeBtnHtml = '';
+        if (hasFile) {
+            const trashSvg = '<svg class="action-btn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:0.8rem; height:0.8rem; vertical-align:middle; margin-right:0.25rem;"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>';
+            removeBtnHtml = '<button type="button" class="btn-modal primary archive-replace-btn-confirm" style="background-color: #dc2626; border-color: #dc2626; color: white; padding: 0.35rem 0.55rem; font-size: 0.65rem;" data-archive-code="' + safeCode + '" onclick="removeArchiveRequirementByCode(this.getAttribute(\'data-archive-code\'))" title="Remove"' + disabledAttr + '>' + trashSvg + 'Remove</button>';
+        }
+
         return '<div class="archive-req-actions-group">'
             + '<button type="button" class="btn-modal secondary archive-req-row-scan-btn" data-archive-scan-code="' + safeCode + '" data-has-existing-doc="' + hasExistingAttr + '" data-existing-doc-name="' + docName + '" onclick="scanArchiveRequirementByCode(this.getAttribute(\'data-archive-scan-code\'))" title="Capture from scanner (TWAIN) — saves to document vault' + disabledTitle + '"' + disabledAttr + '>' + scanSvg + 'Scan</button>'
+            + removeBtnHtml
             + '</div>';
     }
 
