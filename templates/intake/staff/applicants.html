@@ -5862,6 +5862,331 @@
     </div>
 </div>
 
+<!-- Registration Confirmation Modal -->
+<div class="modal-overlay" id="registrationConfirmModal" style="display: none; z-index: 1002; padding-left: 14rem;">
+    <div class="modal-content tha-reg-confirm-modal" onclick="event.stopPropagation()">
+        <style>
+            .tha-reg-confirm-modal {
+                width: min(94%, 52rem);
+                max-width: min(94%, 52rem);
+                max-height: 90vh;
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+                border-radius: 0.75rem;
+                padding: 0;
+            }
+            .tha-reg-confirm-modal .rcm-hero {
+                background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+                color: #f8fafc;
+                padding: 1.25rem 1.5rem 1.1rem;
+                text-align: center;
+                position: relative;
+                flex-shrink: 0;
+            }
+            .tha-reg-confirm-modal .rcm-hero::after {
+                content: '';
+                position: absolute;
+                left: 0; right: 0; bottom: 0;
+                height: 3px;
+                background: linear-gradient(90deg, #047857 0%, #10b981 50%, #6ee7b7 100%);
+            }
+            .tha-reg-confirm-modal .rcm-hero-crest {
+                max-width: min(100%, 15rem);
+                height: 3rem;
+                margin: 0 auto 0.6rem;
+                border: 2px solid rgba(248,250,252,0.95);
+                border-radius: 0.375rem;
+                overflow: hidden;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: #fff;
+                padding: 0.2rem 0.5rem;
+            }
+            .tha-reg-confirm-modal .rcm-hero-crest img { height: 100%; width: auto; object-fit: contain; display: block; }
+            .tha-reg-confirm-modal .rcm-hero h2 {
+                margin: 0;
+                font-family: 'Source Serif Pro', Georgia, serif;
+                font-size: 1.05rem;
+                font-weight: 700;
+                letter-spacing: 0.03em;
+                color: #f8fafc;
+            }
+            .tha-reg-confirm-modal .rcm-hero-sub {
+                margin: 0.3rem 0 0;
+                font-size: 0.78rem;
+                color: #cbd5e1;
+                font-weight: 500;
+                letter-spacing: 0.03em;
+            }
+            .tha-reg-confirm-modal .rcm-close {
+                position: absolute;
+                right: 1rem; top: 0.9rem;
+                background: rgba(255,255,255,0.12);
+                border: 1px solid rgba(255,255,255,0.18);
+                border-radius: 8px;
+                width: 2rem; height: 2rem;
+                color: #cbd5e1;
+                display: inline-flex; align-items: center; justify-content: center;
+                cursor: pointer;
+                transition: background 0.15s, color 0.15s;
+            }
+            .tha-reg-confirm-modal .rcm-close:hover { background: rgba(255,255,255,0.22); color: #fff; }
+            .tha-reg-confirm-modal .rcm-body {
+                flex: 1;
+                overflow-y: auto;
+                padding: 1.1rem 1.375rem 0.5rem;
+                display: flex;
+                flex-direction: column;
+                gap: 0.8rem;
+            }
+            .tha-reg-confirm-modal .rcm-intro {
+                margin: 0;
+                font-size: 0.8rem;
+                color: #475569;
+                display: flex;
+                align-items: center;
+                gap: 0.4rem;
+            }
+            .tha-reg-confirm-modal .rcm-intro::before {
+                content: '';
+                width: 7px; height: 7px;
+                border-radius: 50%;
+                background: #10b981;
+                flex-shrink: 0;
+            }
+            .tha-reg-confirm-modal .rcm-section {
+                background: #fff;
+                border: 1px solid #e5e9ef;
+                border-left: 3px solid #10b981;
+                border-radius: 0.65rem;
+                padding: 0.9rem 1rem 0.95rem;
+                box-shadow: 0 1px 3px rgba(15,23,42,0.04);
+            }
+            .tha-reg-confirm-modal .rcm-section--members { border-left-color: #d97706; }
+            .tha-reg-confirm-modal .rcm-section--income  { border-left-color: #2563eb; }
+            .tha-reg-confirm-modal .rcm-section--situation { border-left-color: #7c3aed; }
+            .tha-reg-confirm-modal .rcm-section-title {
+                margin: 0 0 0.7rem;
+                padding-bottom: 0.45rem;
+                border-bottom: 1px solid #e5e9ef;
+                font-size: 0.68rem;
+                font-weight: 800;
+                color: #064e3b;
+                letter-spacing: 0.12em;
+                text-transform: uppercase;
+                display: flex;
+                align-items: center;
+                gap: 0.38rem;
+            }
+            .tha-reg-confirm-modal .rcm-section-title::before {
+                content: '';
+                width: 0.4rem; height: 0.4rem;
+                border-radius: 50%;
+                background: linear-gradient(135deg, #10b981, #047857);
+                flex-shrink: 0;
+            }
+            .tha-reg-confirm-modal .rcm-section--members .rcm-section-title { color: #92400e; }
+            .tha-reg-confirm-modal .rcm-section--members .rcm-section-title::before { background: linear-gradient(135deg,#f59e0b,#d97706); }
+            .tha-reg-confirm-modal .rcm-section--income .rcm-section-title  { color: #1e40af; }
+            .tha-reg-confirm-modal .rcm-section--income .rcm-section-title::before  { background: linear-gradient(135deg,#3b82f6,#2563eb); }
+            .tha-reg-confirm-modal .rcm-section--situation .rcm-section-title { color: #5b21b6; }
+            .tha-reg-confirm-modal .rcm-section--situation .rcm-section-title::before { background: linear-gradient(135deg,#8b5cf6,#7c3aed); }
+            .tha-reg-confirm-modal .rcm-grid {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 0.5rem;
+            }
+            .tha-reg-confirm-modal .rcm-grid-2 {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.5rem;
+            }
+            /* Side-by-side two-section row */
+            .tha-reg-confirm-modal .rcm-row-2 {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 0.8rem;
+            }
+            .tha-reg-confirm-modal .rcm-full { grid-column: span 4; }
+            .tha-reg-confirm-modal .rcm-half { grid-column: span 2; }
+            .tha-reg-confirm-modal .rcm-grid-2 .rcm-full { grid-column: span 2; }
+            .tha-reg-confirm-modal .rcm-field {
+                display: flex;
+                flex-direction: column;
+                gap: 0.18rem;
+                background: #f8fafc;
+                border: 1px solid #e2e8f0;
+                border-radius: 0.45rem;
+                padding: 0.45rem 0.6rem;
+            }
+            .tha-reg-confirm-modal .rcm-label {
+                font-size: 0.64rem;
+                font-weight: 700;
+                color: #94a3b8;
+                letter-spacing: 0.06em;
+                text-transform: uppercase;
+            }
+            .tha-reg-confirm-modal .rcm-value {
+                font-size: 0.84rem;
+                font-weight: 600;
+                color: #0f172a;
+            }
+            .tha-reg-confirm-modal .rcm-value.na {
+                color: #94a3b8;
+                font-weight: 400;
+                font-style: italic;
+            }
+            .tha-reg-confirm-modal .rcm-badge {
+                display: inline-block;
+                padding: 0.1rem 0.5rem;
+                border-radius: 999px;
+                font-size: 0.71rem;
+                font-weight: 700;
+            }
+            .tha-reg-confirm-modal .rcm-badge.yes { background: #dcfce7; color: #166534; }
+            .tha-reg-confirm-modal .rcm-badge.no  { background: #fee2e2; color: #991b1b; }
+            .tha-reg-confirm-modal .rcm-member-row {
+                padding: 0.45rem 0.6rem;
+                border-radius: 0.4rem;
+                background: #fffbeb;
+                border: 1px solid #fde68a;
+                margin-bottom: 0.4rem;
+                font-size: 0.81rem;
+                color: #0f172a;
+            }
+            .tha-reg-confirm-modal .rcm-member-row:last-child { margin-bottom: 0; }
+            .tha-reg-confirm-modal .rcm-income-big {
+                font-size: 1.15rem;
+                font-weight: 800;
+                color: #1d4ed8;
+            }
+            .tha-reg-confirm-modal .rcm-footer {
+                padding: 0.8rem 1.375rem;
+                border-top: 1px solid #e5e9ef;
+                background: #fff;
+                display: flex;
+                gap: 0.7rem;
+                align-items: center;
+                justify-content: center;
+                flex-shrink: 0;
+            }
+            .tha-reg-confirm-modal .rcm-btn-confirm {
+                background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+                border: 1px solid #047857;
+                color: #fff;
+                border-radius: 9px;
+                padding: 0.6rem 2rem;
+                font-size: 0.85rem;
+                font-weight: 700;
+                letter-spacing: 0.02em;
+                cursor: pointer;
+                box-shadow: 0 1px 3px rgba(5,150,105,0.3), inset 0 1px 0 rgba(255,255,255,0.18);
+                transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
+                font-family: inherit;
+            }
+            .tha-reg-confirm-modal .rcm-btn-confirm:hover {
+                background: linear-gradient(180deg, #059669 0%, #047857 100%);
+                box-shadow: 0 4px 14px rgba(5,150,105,0.35);
+                transform: translateY(-1px);
+            }
+            .tha-reg-confirm-modal .rcm-btn-back {
+                background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
+                border: 1px solid #1d4ed8;
+                color: #fff;
+                border-radius: 9px;
+                padding: 0.6rem 2rem;
+                font-size: 0.82rem;
+                font-weight: 600;
+                cursor: pointer;
+                transition: background 0.15s, box-shadow 0.15s, transform 0.15s;
+                font-family: inherit;
+            }
+            .tha-reg-confirm-modal .rcm-btn-back:hover {
+                background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
+                box-shadow: 0 4px 14px rgba(37,99,235,0.35);
+                transform: translateY(-1px);
+            }
+        </style>
+
+        <!-- Hero Header -->
+        <div class="rcm-hero">
+            <div class="rcm-hero-crest">
+                <img src="{% static 'images/favicon.png' %}" alt="">
+            </div>
+            <h2>Review Applicant Details</h2>
+            <p class="rcm-hero-sub">Talisay City Housing Authority</p>
+            <button class="rcm-close" type="button" onclick="closeRegistrationConfirmModal()" aria-label="Close">
+                <svg style="width: 0.9rem; height: 0.9rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Scrollable body -->
+        <div class="rcm-body">
+            <p class="rcm-intro" style="justify-content: center; text-align: center;">Please review all details before confirming the application.</p>
+
+            <!-- Identity -->
+            <div class="rcm-section">
+                <div class="rcm-section-title" style="justify-content: center;">Applicant Identity</div>
+                <div class="rcm-grid">
+                    <div class="rcm-field"><span class="rcm-label">Last name</span><span class="rcm-value" id="confirmRegLastName"></span></div>
+                    <div class="rcm-field"><span class="rcm-label">First name</span><span class="rcm-value" id="confirmRegFirstName"></span></div>
+                    <div class="rcm-field"><span class="rcm-label">Middle name</span><span class="rcm-value" id="confirmRegMiddleName"></span></div>
+                    <div class="rcm-field"><span class="rcm-label">Extension name</span><span class="rcm-value" id="confirmRegExtName"></span></div>
+                    <div class="rcm-field"><span class="rcm-label">Sex</span><span class="rcm-value" id="confirmRegSex"></span></div>
+                    <div class="rcm-field"><span class="rcm-label">Civil status</span><span class="rcm-value" id="confirmRegCivil"></span></div>
+                    <div class="rcm-field"><span class="rcm-label">Registered voter in Talisay</span><span class="rcm-value" id="confirmRegVoter"></span></div>
+                    <div class="rcm-field"><span class="rcm-label">Has property in Talisay</span><span class="rcm-value" id="confirmRegProperty"></span></div>
+                    <div class="rcm-field"><span class="rcm-label">Years of residence</span><span class="rcm-value" id="confirmRegYears"></span></div>
+                    <div class="rcm-field"><span class="rcm-label">Mobile number</span><span class="rcm-value" id="confirmRegContact"></span></div>
+                    <div class="rcm-field"><span class="rcm-label">Date of birth</span><span class="rcm-value" id="confirmRegDob"></span></div>
+                    <div class="rcm-field"><span class="rcm-label">Age</span><span class="rcm-value" id="confirmRegAge"></span></div>
+                    <div class="rcm-field"><span class="rcm-label">Barangay</span><span class="rcm-value" id="confirmRegBrgy"></span></div>
+                    <div class="rcm-field"><span class="rcm-label">Place of birth</span><span class="rcm-value" id="confirmRegPob"></span></div>
+                    <div class="rcm-field"><span class="rcm-label">Name of spouse</span><span class="rcm-value" id="confirmRegSpouse"></span></div>
+                    <div class="rcm-field"><span class="rcm-label">Spouse mobile number</span><span class="rcm-value" id="confirmRegSpousePhone"></span></div>
+                    <div class="rcm-field rcm-full"><span class="rcm-label">Present address</span><span class="rcm-value" id="confirmRegAddress"></span></div>
+                </div>
+            </div>
+
+            <!-- Members + Situation side by side -->
+            <div class="rcm-row-2">
+                <!-- Members -->
+                <div class="rcm-section rcm-section--members">
+                    <div class="rcm-section-title" style="justify-content: center;">Applicant Members&nbsp;<span style="font-weight:500;text-transform:none;letter-spacing:0;font-size:0.72rem;color:#92400e;">(Declared size: <span id="confirmRegHousehold"></span>)</span></div>
+                    <div id="confirmRegMembersList" style="font-size: 0.82rem;"></div>
+                </div>
+
+                <!-- Situation -->
+                <div class="rcm-section rcm-section--situation">
+                    <div class="rcm-section-title" style="justify-content: center;">Applicant Situation</div>
+                    <div class="rcm-field" style="border-color: #ede9fe; background: #faf5ff;" id="confirmRegSituation"></div>
+                </div>
+            </div>
+
+            <!-- Income -->
+            <div class="rcm-section rcm-section--income">
+                <div class="rcm-section-title" style="justify-content: center;">Applicant Income</div>
+                <div class="rcm-grid">
+                    <div class="rcm-field"><span class="rcm-label">Principal occupation</span><span class="rcm-value" id="confirmRegOcc"></span></div>
+                    <div class="rcm-field"><span class="rcm-label">Employment status</span><span class="rcm-value" id="confirmRegEmpStatus"></span></div>
+                    <div class="rcm-field rcm-half"><span class="rcm-label">Gross monthly household income</span><span class="rcm-income-big" id="confirmRegIncome"></span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="rcm-footer">
+            <button type="button" class="rcm-btn-confirm" onclick="executeRegistrationSubmit()">✓&nbsp; Confirm &amp; Submit</button>
+            <button type="button" class="rcm-btn-back" onclick="closeRegistrationConfirmModal()">← Go Back to Edit</button>
+        </div>
+    </div>
+</div>
+
 <!-- Add Applicant Modal -->
 <div class="modal-overlay" id="addModal" onclick="closeAddModal()">
     <div class="modal-content tha-reg-modal" style="width: min(94%, 64rem); max-width: min(94%, 64rem);" onclick="event.stopPropagation()">
@@ -12243,22 +12568,184 @@
             }
         }
 
-        // Submit to walkin_register endpoint
-        let endpoint = '{% url "intake:walkin_register" request.user.position %}';
+        // Store globally for the confirm submission modal
+        pendingRegistrationFormData = formData;
+        
+        // Populate confirm modal fields
+        
+        // --- Identity ---
+        const confirmLastName = document.getElementById('confirmRegLastName');
+        if (confirmLastName) confirmLastName.textContent = formData.get('last_name') || 'N/A';
+        const confirmFirstName = document.getElementById('confirmRegFirstName');
+        if (confirmFirstName) confirmFirstName.textContent = formData.get('first_name') || 'N/A';
+        const confirmMiddleName = document.getElementById('confirmRegMiddleName');
+        if (confirmMiddleName) confirmMiddleName.textContent = formData.get('middle_name') || 'N/A';
+        const confirmExtName = document.getElementById('confirmRegExtName');
+        if (confirmExtName) confirmExtName.textContent = formData.get('extension_name') || 'N/A';
 
-        // Get CSRF token from form
+        const confirmSex = document.getElementById('confirmRegSex');
+        if (confirmSex) {
+            const sexRadios = document.getElementsByName('sex');
+            let selectedSex = formData.get('sex') === 'M' ? 'Male' : 'Female';
+            for (const radio of sexRadios) {
+                if (radio.checked && radio.nextElementSibling) {
+                    selectedSex = radio.nextElementSibling.textContent.trim();
+                    break;
+                }
+            }
+            confirmSex.textContent = selectedSex || 'N/A';
+        }
+        
+        const confirmCivil = document.getElementById('confirmRegCivil');
+        const civilSelect = document.getElementById('civilStatus');
+        if (confirmCivil) {
+            confirmCivil.textContent = civilSelect && civilSelect.selectedIndex > 0 ? civilSelect.options[civilSelect.selectedIndex].text : 'N/A';
+        }
+
+        const confirmVoter = document.getElementById('confirmRegVoter');
+        if (confirmVoter) confirmVoter.textContent = formData.get('is_registered_voter_talisay') === 'true' ? 'Yes' : (formData.get('is_registered_voter_talisay') === 'false' ? 'No' : 'N/A');
+
+        const confirmProperty = document.getElementById('confirmRegProperty');
+        if (confirmProperty) confirmProperty.textContent = formData.get('has_property_in_talisay') === 'yes' ? 'Yes' : (formData.get('has_property_in_talisay') === 'no' ? 'No' : 'N/A');
+
+        const confirmYears = document.getElementById('confirmRegYears');
+        if (confirmYears) confirmYears.textContent = formData.get('years_residing') || 'N/A';
+
+        const confirmContact = document.getElementById('confirmRegContact');
+        if (confirmContact) confirmContact.textContent = formData.get('phone_number') || 'N/A';
+        
+        const confirmDob = document.getElementById('confirmRegDob');
+        if (confirmDob) confirmDob.textContent = formData.get('date_of_birth') || 'N/A';
+
+        const confirmAge = document.getElementById('confirmRegAge');
+        if (confirmAge) confirmAge.textContent = formData.get('age') || 'N/A';
+        
+        const confirmAddress = document.getElementById('confirmRegAddress');
+        if (confirmAddress) confirmAddress.textContent = formData.get('current_address') || 'N/A';
+        
+        const confirmBrgy = document.getElementById('confirmRegBrgy');
+        if (confirmBrgy) confirmBrgy.textContent = formData.get('barangay') || 'N/A';
+
+        const confirmPob = document.getElementById('confirmRegPob');
+        if (confirmPob) confirmPob.textContent = formData.get('place_of_birth') || 'N/A';
+
+        const confirmSpouse = document.getElementById('confirmRegSpouse');
+        if (confirmSpouse) confirmSpouse.textContent = formData.get('spouse_name') || 'N/A';
+
+        const confirmSpousePhone = document.getElementById('confirmRegSpousePhone');
+        if (confirmSpousePhone) confirmSpousePhone.textContent = formData.get('spouse_phone') || 'N/A';
+        
+        // --- Household Members ---
+        const confirmHousehold = document.getElementById('confirmRegHousehold');
+        if (confirmHousehold) confirmHousehold.textContent = formData.get('household_size') || '1';
+
+        const confirmMembersList = document.getElementById('confirmRegMembersList');
+        if (confirmMembersList) {
+            confirmMembersList.innerHTML = ''; // clear previous
+            let memberItems = [];
+            for (let i = 1; i <= householdMemberCount; i++) {
+                const nameF = document.querySelector(`input[name="hh_member_${i}_name"]`);
+                const relF = document.querySelector(`select[name="hh_member_${i}_relationship"]`);
+                const ageF = document.querySelector(`input[name="hh_member_${i}_age"]`);
+                const sexF = document.querySelector(`select[name="hh_member_${i}_sex"]`) || document.querySelector(`input[name="hh_member_${i}_sex"]:checked`);
+                const statF = document.querySelector(`select[name="hh_member_${i}_status"]`);
+                const contF = document.querySelector(`input[name="hh_member_${i}_contact"]`);
+                
+                if (nameF && nameF.value.trim()) {
+                    let sexText = '';
+                    if (sexF && sexF.options) {
+                        sexText = sexF.selectedIndex > 0 ? sexF.options[sexF.selectedIndex].text : '';
+                    } else if (sexF) {
+                        sexText = sexF.value === 'M' ? 'Male' : (sexF.value === 'F' ? 'Female' : '');
+                    }
+
+                    let itemText = `<strong>${nameF.value}</strong>`;
+                    let details = [];
+                    if (relF && relF.selectedIndex > 0) details.push(relF.options[relF.selectedIndex].text);
+                    if (ageF && ageF.value) details.push(ageF.value + ' yrs');
+                    if (sexText) details.push(sexText);
+                    if (statF && statF.selectedIndex > 0) details.push(statF.options[statF.selectedIndex].text);
+                    if (contF && contF.value) details.push(contF.value);
+                    
+                    if (details.length > 0) itemText += ` &mdash; <span style="color: #475569;">${details.join(', ')}</span>`;
+                    memberItems.push(`<div class="rcm-member-row">${itemText}</div>`);
+                }
+            }
+            if (memberItems.length > 0) {
+                confirmMembersList.innerHTML = memberItems.join('');
+            } else {
+                confirmMembersList.innerHTML = '<div class="rcm-field" style="border-style: dashed;"><span style="color: #94a3b8; font-style: italic; font-size: 0.8rem;">No household members added.</span></div>';
+            }
+        }
+        
+        // --- Income ---
+        const confirmOcc = document.getElementById('confirmRegOcc');
+        if (confirmOcc) confirmOcc.textContent = formData.get('occupation') || 'N/A';
+
+        const confirmEmpStatus = document.getElementById('confirmRegEmpStatus');
+        const empSelect = document.getElementById('employmentStatus');
+        if (confirmEmpStatus) {
+            confirmEmpStatus.textContent = empSelect && empSelect.selectedIndex > 0 ? empSelect.options[empSelect.selectedIndex].text : 'N/A';
+        }
+
+        const confirmIncome = document.getElementById('confirmRegIncome');
+        if (confirmIncome) {
+            const income = formData.get('monthly_income') || '0';
+            confirmIncome.textContent = '₱' + Number(income).toLocaleString();
+        }
+
+        // --- Situation ---
+        const confirmSituation = document.getElementById('confirmRegSituation');
+        if (confirmSituation) {
+            const situation = formData.get('displacement_reason') || '';
+            if (situation === 'danger_zone') {
+                const hz = document.getElementById('registrationDangerZoneType');
+                const hzText = hz && hz.selectedIndex > 0 ? hz.options[hz.selectedIndex].text : 'N/A';
+                const loc = formData.get('danger_zone_location') || 'N/A';
+                confirmSituation.innerHTML = `<strong>Option A: Danger Zone</strong><br><span style="color: #475569;">Hazard Type: ${hzText}<br>Location: ${loc}</span>`;
+            } else if (situation === 'ejected') {
+                const ej = document.getElementById('registrationEjectionType');
+                const ejText = ej && ej.selectedIndex > 0 ? ej.options[ej.selectedIndex].text : 'N/A';
+                confirmSituation.innerHTML = `<strong>Option B: Ejected/Evicted</strong><br><span style="color: #475569;">Ejection Type: ${ejText}</span>`;
+            } else if (situation === 'relocated') {
+                const pn = formData.get('project_name') || 'N/A';
+                confirmSituation.innerHTML = `<strong>Option C: Relocated by Gov't</strong><br><span style="color: #475569;">Project Name: ${pn}</span>`;
+            } else if (situation === 'other') {
+                confirmSituation.innerHTML = `<strong>Option D: Other / Not listed</strong>`;
+            } else {
+                confirmSituation.innerHTML = '<span style="color: #94a3b8; font-style: italic; font-size: 0.82rem;">Not specified</span>';
+            }
+        }
+        
+        const confirmModal = document.getElementById('registrationConfirmModal');
+        if (confirmModal) confirmModal.style.display = 'flex';
+    }
+
+    let pendingRegistrationFormData = null;
+
+    function closeRegistrationConfirmModal() {
+        const modal = document.getElementById('registrationConfirmModal');
+        if (modal) modal.style.display = 'none';
+    }
+
+    function executeRegistrationSubmit() {
+        if (!pendingRegistrationFormData) return;
+        
+        // Close the confirm modal immediately
+        closeRegistrationConfirmModal();
+
+        let endpoint = '{% url "intake:walkin_register" request.user.position %}';
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
         fetch(endpoint, {
             method: 'POST',
-            body: formData,
+            body: pendingRegistrationFormData,
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
                 'X-CSRFToken': csrfToken
             }
         })
         .then(response => {
-            // If not JSON, log the HTML for debugging
             const contentType = response.headers.get('content-type');
             if (!contentType || !contentType.includes('application/json')) {
                 return response.text().then(text => {
@@ -12270,9 +12757,7 @@
         })
         .then(data => {
             if (data.success) {
-                // Close the registration form modal
                 closeAddModal();
-
                 const successLine = data.message || 'Applicant registered successfully.';
                 const registered = parseRegistrationSuccessMessage(successLine);
                 showNoticeModal({
@@ -12285,7 +12770,6 @@
                     onPrimary: () => { location.reload(); },
                 });
             } else {
-                // Show detailed error message
                 const errorMsg = data.error || 'Unknown error occurred';
                 showNoticeModal({
                     title: 'Registration Error',
