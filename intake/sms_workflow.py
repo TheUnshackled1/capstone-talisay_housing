@@ -1,8 +1,6 @@
 """
 Central definitions for Module 1→2 SMS helpers (Hiligaynon) and SMSLog trigger keys.
 
-- Intake **Proceed to LIST OF APPLICANTS**: ``proceed_applicant_list`` via ``message_proceed_to_applicant_list``.
-- Intake Module 2 handoff (checklist): ``proceed_evaluation`` via ``message_proceed_to_evaluation``.
 - Applications **Proceed to Ready for Form queue** sends ``ready_for_form_queue_reminder``
   (``message_ready_for_form_queue_reminder``). Dedupe for that event only for repeat clicks.
 
@@ -151,64 +149,6 @@ def _applicant_list_situational_sms_clause(code: str, displacement_reason: str) 
         return 'Magasumiter sang imo ISF situational documentation sunod sa imo Applicant Situation.'
     return ''
 
-
-def message_proceed_to_applicant_list(applicant, checklist_rows) -> str:
-    """
-    Hiligaynon SMS when staff archives a record to LIST OF APPLICANTS (review modal).
-
-    Required baseline (R01–R07) appear as document names; RVT is optional follow-up.
-    Situational follow-up uses Hiligaynon clauses when Applicant Situation is A, B, C, or D.
-    """
-    head = _tha_ref_name_header(applicant)
-    dr = getattr(applicant, 'displacement_reason', None) or ''
-    baseline_names = []
-    optional_names = []
-    situational_parts = []
-    seen_situational = set()
-    for row in checklist_rows or []:
-        code = ((row.get('code') if isinstance(row, dict) else getattr(row, 'code', '')) or '').strip().upper()
-        name = ((row.get('name') if isinstance(row, dict) else getattr(row, 'name', '')) or '').strip()
-        if code in _REQUIRED_BASELINE_APPLICANT_LIST_SMS_CODES:
-            if name:
-                baseline_names.append(name)
-            continue
-        if code in _OPTIONAL_BASELINE_APPLICANT_LIST_SMS_CODES:
-            if name:
-                optional_names.append(name)
-            continue
-        if code in _SITUATIONAL_CHECKLIST_CODES:
-            clause = _applicant_list_situational_sms_clause(code, dr)
-            if clause and clause not in seen_situational:
-                seen_situational.add(clause)
-                situational_parts.append(clause)
-    if not situational_parts:
-        clause = _applicant_list_situational_sms_clause('', dr)
-        if clause and clause not in seen_situational:
-            situational_parts.append(clause)
-
-    doc_parts = list(baseline_names)
-    doc_parts.extend(situational_parts)
-    if optional_names:
-        doc_parts.append(f'{optional_names[0]} (optional)')
-    if not doc_parts:
-        doc_parts = [
-            'Brgy. Certificate of Residency',
-            'Brgy. Certificate of Indigency',
-            'Cedula',
-            'Police Clearance',
-            'Certificate of No Property',
-            '2x2 Picture',
-            'Sketch of House Location',
-            'Voter Certification (COMELEC / Barangay voter record) (optional)',
-        ]
-
-    checklist = '\n'.join(doc_parts)
-    return (
-        f'{head}: Ari kana subong sa LISTA sang mga aplikante.\n'
-        f'Dal-a ang masunod nga mga dokumento:\n'
-        f'{checklist}\n'
-        f'Salamat!'
-    )
 
 
 def message_proceed_to_evaluation(applicant) -> str:
