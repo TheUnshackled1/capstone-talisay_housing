@@ -134,21 +134,11 @@
                 </a>
             </div>
 
-            <!-- Analytics Section - dashboard and reports -->
             {% if user.position == 'second_member' or user.position == 'fourth_member' %}
             <div class="nav-section">
                 <div class="nav-section-title">Reports</div>
 
-                <a href="{% if user.position == 'second_member' %}{% url 'accounts:dashboard_second_member' %}{% elif user.position == 'fourth_member' %}{% url 'accounts:dashboard_fourth_member' %}{% else %}{% url 'accounts:dashboard' %}{% endif %}" class="nav-link {% block nav_analytics %}{% endblock %}">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="18" y1="20" x2="18" y2="10"/>
-                        <line x1="12" y1="20" x2="12" y2="4"/>
-                        <line x1="6" y1="20" x2="6" y2="14"/>
-                    </svg>
-                    <span>Analytics</span>
-                </a>
-
-                <!-- Documents — below Analytics for Second / Fourth Member -->
+                <!-- Documents for Second / Fourth Member -->
                 <a href="{% url 'documents:management' request.user.position %}" class="nav-link {% block nav_documents_reports %}{% endblock %}">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
