@@ -1,4 +1,4 @@
-﻿{% extends 'staff_base.html' %}
+{% extends 'staff_base.html' %}
 {% load static %}
 
 {% block nav_applicants %}active{% endblock %}
@@ -1058,6 +1058,35 @@
     #archiveRequirementsModal .archive-req-footer .archive-proceed-hint {
         flex: 1 1 100%;
         justify-content: center;
+    }
+    #archiveRequirementsModal .archive-evaluate-btn {
+        order: 2;
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        color: #ffffff;
+        border: 1px solid #1e40af;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-weight: 600;
+        padding: 0.5rem 1.25rem;
+        border-radius: 0.5rem;
+        font-size: 0.8125rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: 0 1px 2px rgba(37, 99, 235, 0.1);
+    }
+    #archiveRequirementsModal .archive-evaluate-btn:hover {
+        background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+        border-color: #1e3a8a;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2), 0 2px 4px -1px rgba(37, 99, 235, 0.1);
+    }
+    @media (max-width: 640px) {
+        #archiveRequirementsModal .archive-evaluate-btn,
+        #archiveRequirementsModal #archiveProceedToEvaluationBtn {
+            width: 100%;
+            justify-content: center;
+        }
     }
     #archiveRequirementsModal #archiveProceedToEvaluationBtn {
         order: 3;
@@ -4594,8 +4623,9 @@
                 id="archiveProceedToEvaluationBtn"
                 onclick="proceedToEvaluationFromArchiveRequirements()"
                 disabled
+                style="display: inline-flex; align-items: center; gap: 0.4rem;"
             >
-                Proceed to Application &amp; Eligibility
+                Proceed to Application &amp; Eligibility <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
             </button>
             <span
                 id="archiveProceedHint"
@@ -4612,7 +4642,9 @@
             >
                 Delete Blacklisted Applicant
             </button>
-            <button type="button" class="btn-modal" style="background-color: #dc2626; border-color: #dc2626; color: #ffffff;" onclick="closeArchiveRequirementsModal()">Close</button>
+            <button type="button" class="btn-modal archive-evaluate-btn" id="evaluateApplicantBtn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/><circle cx="12" cy="13" r="2"/></svg> Evaluate
+            </button>
         </div>
     </div>
 </div>
@@ -8904,10 +8936,10 @@
         }
 
         const proceedBtn = document.getElementById('archiveProceedToEvaluationBtn');
-        const originalText = proceedBtn ? proceedBtn.textContent : '';
+        const originalHtml = proceedBtn ? proceedBtn.innerHTML : '';
         if (proceedBtn) {
             proceedBtn.disabled = true;
-            proceedBtn.textContent = 'Proceeding...';
+            proceedBtn.innerHTML = 'Proceeding...';
         }
 
         const formData = new FormData();
@@ -8964,7 +8996,7 @@
             .finally(function () {
                 if (proceedBtn) {
                     proceedBtn.disabled = false;
-                    proceedBtn.textContent = originalText || 'Proceed to Application & Eligibility';
+                    proceedBtn.innerHTML = originalHtml || 'Proceed to Application &amp; Eligibility <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>';
                 }
             });
     }
