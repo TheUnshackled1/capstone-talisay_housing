@@ -1930,6 +1930,26 @@ def walkin_register(request, position):
                 # Skip invalid age values
                 pass
 
+    # Automatically proceed applicant to LIST OF APPLICANTS (IntakeArchive)
+    with transaction.atomic():
+        archive_record, created = Archive.objects.get_or_create(
+            applicant=applicant,
+            defaults={
+                'reference_number_snapshot': applicant.reference_number,
+                'full_name_snapshot': applicant.full_name,
+                'last_name_snapshot': applicant.last_name,
+                'first_name_snapshot': applicant.first_name,
+                'middle_name_snapshot': applicant.middle_name,
+                'extension_name_snapshot': applicant.extension_name,
+                'date_of_birth_snapshot': applicant.date_of_birth,
+                'channel': _map_applicant_channel_to_archive(applicant),
+                'barangay_name_snapshot': applicant.barangay.name if applicant.barangay else '',
+                'sms_sent': applicant.registration_sms_sent,
+                'cdrrmo_certified': bool(getattr(applicant, 'cdrrmo_certification', None) and applicant.cdrrmo_certification.status == 'certified'),
+                'archived_by': request.user,
+            }
+        )
+
     # No SMS on registration.
     # Policy: first applicant-facing SMS is sent when staff proceeds record to Module 2.
 
