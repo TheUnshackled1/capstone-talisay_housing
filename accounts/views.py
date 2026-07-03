@@ -1218,28 +1218,6 @@ def _staff_reports_analytics_csv_response(data, export_role_title, filename_pref
 
 
 
-@login_required
-def fourth_member_analytics(request):
-    """Fourth Member — same analytics datasets as Second Member (shared pipeline visibility)."""
-    if request.user.position != 'fourth_member':
-        messages.error(request, 'Access denied. Analytics is for the Fourth Member position only.')
-        return redirect('accounts:dashboard')
-
-    data = _staff_reports_analytics_payload(request)
-    if request.GET.get('export') == 'csv':
-        return _staff_reports_analytics_csv_response(data, 'Fourth Member', 'fourth_member_report')
-
-    context = {
-        **data,
-        'page_title': 'Reports & analytics',
-        'report_meta_title': 'Reports & analytics — Fourth Member | THA',
-        'report_role_heading': 'Fourth Member oversight',
-        'report_role_officer': 'Jocel O. Cuaysing',
-        'report_role_modules': 'M1, M2, M3, M4',
-        'dashboard_url': reverse('accounts:dashboard_fourth_member'),
-    }
-    return render(request, 'accounts/staff_reports_analytics.html', context)
-
 
 @login_required
 def dashboard_fourth_member(request):
@@ -1323,6 +1301,15 @@ def dashboard_fourth_member(request):
     available_count = len(available_lots)
     ready_to_award = min(standby_count, available_count)
 
+    # Analytics payload (handles ?month, ?year, ?site_id GET params)
+    analytics_data = _staff_reports_analytics_payload(request)
+
+    # CSV export — works via ?export=csv on the dashboard URL
+    if request.GET.get('export') == 'csv':
+        return _staff_reports_analytics_csv_response(
+            analytics_data, 'Fourth Member', 'fourth_member_report'
+        )
+
     context = {
         'page_title': 'Fourth Member Dashboard',
         'user_position': 'fourth_member',
@@ -1347,6 +1334,8 @@ def dashboard_fourth_member(request):
         'awaiting_reaward': awaiting_reaward,
         'ready_to_award': ready_to_award,
         **_dashboard_recent_activity_context(),
+        # ========== ANALYTICS PANEL ==========
+        **analytics_data,
     }
 
     return render(request, 'accounts/dashboard.html', context)

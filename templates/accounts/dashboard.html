@@ -904,7 +904,7 @@
                 {% endif %}
             </div>
 
-            {% if user.position == 'second_member' %}
+            {% if user.position == 'second_member' or user.position == 'fourth_member' %}
 <style>
     /* ===================================================================
        Reports & Analytics — institutional dashboard
@@ -2087,7 +2087,7 @@
 </script>
             {% endif %}
 
-            {% if user.position != 'second_member' %}
+            {% if user.position != 'second_member' and user.position != 'fourth_member' %}
             <!-- Quick Actions Section - Role Based -->
             <div class="section-header scroll-animate">
                 <h2 class="section-title">My Tasks</h2>
@@ -2138,7 +2138,7 @@
                     </div>
                 </a>
 
-                <a href="{% url 'accounts:fourth_member_analytics' %}" class="action-card scroll-animate-left scroll-delay-5">
+                <a href="{% url 'accounts:dashboard_fourth_member' %}" class="action-card scroll-animate-left scroll-delay-5">
                     <div class="action-icon-wrapper">
                         <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <line x1="18" y1="20" x2="18" y2="10"/>
