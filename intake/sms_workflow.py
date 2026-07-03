@@ -22,7 +22,6 @@ Smoke test: ``python manage.py test_sms --phone 09XXXXXXXXX --service semaphore`
 
 # --- trigger_event values (keep ≤ 50 chars; indexed in SMSLog) ---
 PROCEED_TO_EVALUATION = 'proceed_evaluation'
-PROCEED_TO_APPLICANT_LIST = 'proceed_applicant_list'
 READY_FOR_FORM_QUEUE_REMINDER = 'ready_for_form_queue_reminder'
 PROCEED_TO_LOT_AWARDING = 'proceed_to_lot_awarding'
 
