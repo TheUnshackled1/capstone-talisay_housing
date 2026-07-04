@@ -136,8 +136,6 @@
 
             {% if user.position == 'second_member' or user.position == 'fourth_member' %}
             <div class="nav-section">
-                <div class="nav-section-title">Reports</div>
-
                 <!-- Documents for Second / Fourth Member -->
                 <a href="{% url 'documents:management' request.user.position %}" class="nav-link {% block nav_documents_reports %}{% endblock %}">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -170,7 +168,6 @@
             <!-- Admin Section - Second Member and Superusers Only -->
             {% if user.is_superuser or user.position == 'second_member' %}
             <div class="nav-section">
-                <div class="nav-section-title">Admin</div>
                 <a href="{% url 'admin:index' %}" class="nav-link" target="_blank">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="3"/>
