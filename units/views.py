@@ -24,6 +24,7 @@ from units.models import (
     HousingUnit, LotAward, RelocationSite,
     ConstructionProgress, ConstructionProgressUpdate, Blacklist, OccupancyMonitoringCycle,
     MonitoringTask, MonitoringReport, ExplanationReview, ExtensionRecord,
+    LotAwardDocumentValidation,
 )
 from accounts.models import FIELD_DESK_POSITIONS
 from cases.views import cases_page_url, module5_case_rows_for_unit
@@ -1297,7 +1298,7 @@ def get_unit_details(request, position, unit_id):
         active_lot_award = (
             LotAward.objects
             .filter(unit=unit, status='active')
-            .select_related('application__applicant')
+            .select_related('application__applicant', 'awarded_by', 'authenticated_by')
             .order_by('-awarded_at')
             .first()
         )
@@ -1573,6 +1574,59 @@ def get_unit_details(request, position, unit_id):
 
         can_update_construction = request.user.position in (_MODULE4_ADD_HOUSING_UNIT_POSITIONS | FIELD_DESK_POSITIONS)
 
+        # --- Award profile: who awarded, who authenticated, validation log ---
+        _POSITION_LABELS = {
+            'second_member': '2nd Member',
+            'fourth_member': '4th Member',
+            'caretaker': 'Caretaker',
+            'field_desk': 'Field Desk',
+            'admin': 'Admin',
+        }
+
+        def _staff_profile(user):
+            if not user:
+                return None
+            return {
+                'full_name': user.get_full_name() or user.username,
+                'position': getattr(user, 'position', '') or '',
+                'position_label': _POSITION_LABELS.get(getattr(user, 'position', ''), getattr(user, 'position', '')),
+                'initials': ''.join(p[0].upper() for p in (user.get_full_name() or user.username).split() if p)[:2],
+            }
+
+        award_profile = None
+        can_validate_document = request.user.position in _MODULE4_ADD_HOUSING_UNIT_POSITIONS
+        if active_lot_award:
+            validation_logs = []
+            for vlog in (
+                active_lot_award.document_validations
+                .select_related('validated_by')
+                .order_by('-validated_at')[:20]
+            ):
+                validation_logs.append({
+                    'id': str(vlog.id),
+                    'validated_by': _staff_profile(vlog.validated_by),
+                    'validated_at': vlog.validated_at.isoformat(),
+                    'validated_at_display': timezone.localtime(vlog.validated_at).strftime('%b %d, %Y %I:%M %p'),
+                    'notes': vlog.notes or '',
+                })
+            award_profile = {
+                'lot_award_id': str(active_lot_award.id),
+                'awarded_by': _staff_profile(active_lot_award.awarded_by),
+                'awarded_at': active_lot_award.awarded_at.isoformat() if active_lot_award.awarded_at else None,
+                'awarded_at_display': (
+                    timezone.localtime(active_lot_award.awarded_at).strftime('%b %d, %Y %I:%M %p')
+                    if active_lot_award.awarded_at else '—'
+                ),
+                'authenticated_by': _staff_profile(active_lot_award.authenticated_by),
+                'authenticated_at': active_lot_award.authenticated_at.isoformat() if active_lot_award.authenticated_at else None,
+                'authenticated_at_display': (
+                    timezone.localtime(active_lot_award.authenticated_at).strftime('%b %d, %Y %I:%M %p')
+                    if active_lot_award.authenticated_at else '—'
+                ),
+                'validation_logs': validation_logs,
+                'can_validate_document': can_validate_document,
+            }
+
         # Construction monitoring snapshot (site-level) for drawer table + KPI chips.
         cm_filter = (request.GET.get('cm_filter') or 'all').strip()
         site_progress_rows = list(
@@ -1816,6 +1870,7 @@ def get_unit_details(request, position, unit_id):
                     if applicant_for_household
                     else None
                 ),
+                'award_profile': award_profile,
             }
         })
 
@@ -1829,6 +1884,112 @@ def get_unit_details(request, position, unit_id):
             'success': False,
             'error': str(e)
         }, status=500)
+
+
+@login_required
+@verify_position
+@require_POST
+def validate_lot_award_document(request, position, unit_id):
+    """
+    Module 4 unit detail: record a document validation event for the active lot award.
+
+    - Appends a LotAwardDocumentValidation row (always).
+    - If `authenticated_by` is not yet set on the LotAward, sets it to the current user
+      (first validator becomes the authenticator).
+    - Returns the updated award_profile payload so the frontend can refresh in place.
+
+    Access: 2nd member / 4th member only.
+    """
+    if request.user.position not in _MODULE4_ADD_HOUSING_UNIT_POSITIONS:
+        return JsonResponse({'success': False, 'error': 'Permission denied.'}, status=403)
+
+    try:
+        unit = HousingUnit.objects.get(id=unit_id)
+    except HousingUnit.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Unit not found.'}, status=404)
+
+    active_lot_award = (
+        LotAward.objects
+        .filter(unit=unit, status='active')
+        .select_related('awarded_by', 'authenticated_by')
+        .order_by('-awarded_at')
+        .first()
+    )
+    if not active_lot_award:
+        return JsonResponse({'success': False, 'error': 'No active lot award for this unit.'}, status=400)
+
+    try:
+        body = json.loads(request.body or '{}')
+    except json.JSONDecodeError:
+        body = {}
+    notes = (body.get('notes') or '').strip()[:500]
+
+    with transaction.atomic():
+        vlog = LotAwardDocumentValidation.objects.create(
+            lot_award=active_lot_award,
+            validated_by=request.user,
+            notes=notes,
+        )
+        # First validation also authenticates the document
+        if not active_lot_award.authenticated_by:
+            active_lot_award.authenticated_by = request.user
+            active_lot_award.authenticated_at = vlog.validated_at
+            active_lot_award.save(update_fields=['authenticated_by', 'authenticated_at'])
+
+    # Refresh and return updated award_profile
+    active_lot_award.refresh_from_db()
+    _POSITION_LABELS_V = {
+        'second_member': '2nd Member',
+        'fourth_member': '4th Member',
+        'caretaker': 'Caretaker',
+        'field_desk': 'Field Desk',
+        'admin': 'Admin',
+    }
+
+    def _sp(user):
+        if not user:
+            return None
+        return {
+            'full_name': user.get_full_name() or user.username,
+            'position': getattr(user, 'position', '') or '',
+            'position_label': _POSITION_LABELS_V.get(getattr(user, 'position', ''), getattr(user, 'position', '')),
+            'initials': ''.join(p[0].upper() for p in (user.get_full_name() or user.username).split() if p)[:2],
+        }
+
+    vlogs_out = []
+    for vl in (
+        active_lot_award.document_validations
+        .select_related('validated_by')
+        .order_by('-validated_at')[:20]
+    ):
+        vlogs_out.append({
+            'id': str(vl.id),
+            'validated_by': _sp(vl.validated_by),
+            'validated_at': vl.validated_at.isoformat(),
+            'validated_at_display': timezone.localtime(vl.validated_at).strftime('%b %d, %Y %I:%M %p'),
+            'notes': vl.notes or '',
+        })
+
+    return JsonResponse({
+        'success': True,
+        'award_profile': {
+            'lot_award_id': str(active_lot_award.id),
+            'awarded_by': _sp(active_lot_award.awarded_by),
+            'awarded_at': active_lot_award.awarded_at.isoformat() if active_lot_award.awarded_at else None,
+            'awarded_at_display': (
+                timezone.localtime(active_lot_award.awarded_at).strftime('%b %d, %Y %I:%M %p')
+                if active_lot_award.awarded_at else '—'
+            ),
+            'authenticated_by': _sp(active_lot_award.authenticated_by),
+            'authenticated_at': active_lot_award.authenticated_at.isoformat() if active_lot_award.authenticated_at else None,
+            'authenticated_at_display': (
+                timezone.localtime(active_lot_award.authenticated_at).strftime('%b %d, %Y %I:%M %p')
+                if active_lot_award.authenticated_at else '—'
+            ),
+            'validation_logs': vlogs_out,
+            'can_validate_document': True,
+        },
+    })
 
 
 @login_required

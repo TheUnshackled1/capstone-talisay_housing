@@ -241,6 +241,21 @@ class LotAward(models.Model):
     )
     draw_lots_date = models.DateField(null=True, blank=True)
     
+    # Document authentication (2nd or 4th member who authenticated the award document)
+    authenticated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='lot_awards_authenticated',
+        help_text="Staff member (2nd/4th member) who authenticated the lot award document"
+    )
+    authenticated_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="When the lot award document was authenticated"
+    )
+
     # End tracking
     ended_at = models.DateTimeField(null=True, blank=True)
     end_reason = models.TextField(blank=True)
@@ -254,6 +269,49 @@ class LotAward(models.Model):
     
     def __str__(self):
         return f"{self.unit} → {self.application.applicant.full_name}"
+
+
+class LotAwardDocumentValidation(models.Model):
+    """
+    Append-only audit log of document validation events for a lot award.
+    Each row records who validated the award document and when.
+    Created by 2nd or 4th member via the Housing Unit detail panel.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    lot_award = models.ForeignKey(
+        LotAward,
+        on_delete=models.CASCADE,
+        related_name='document_validations',
+        help_text="The lot award whose document was validated"
+    )
+
+    validated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='lot_award_validations',
+        help_text="Staff member who validated the document"
+    )
+
+    validated_at = models.DateTimeField(
+        auto_now_add=True,
+        help_text="Timestamp when validation was recorded"
+    )
+
+    notes = models.TextField(
+        blank=True,
+        help_text="Optional remarks about this validation event"
+    )
+
+    class Meta:
+        ordering = ['-validated_at']
+        verbose_name = "Lot Award Document Validation"
+        verbose_name_plural = "Lot Award Document Validations"
+
+    def __str__(self):
+        by = self.validated_by.get_full_name() if self.validated_by else 'Unknown'
+        return f"{self.lot_award} — validated by {by} at {self.validated_at}"
 
 
 class ConstructionProgress(models.Model):

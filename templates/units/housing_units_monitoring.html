@@ -2033,6 +2033,18 @@
     .premium-data-card.border-amber::before { display: none; }
     .premium-data-card.border-rose::before { display: none; }
     .premium-data-card.border-slate::before { display: none; }
+    .premium-data-card.border-indigo::before { display: none; }
+    .premium-data-card.border-indigo {
+        border-left: 3px solid #6366f1;
+    }
+    .premium-data-card.border-indigo > summary.premium-card-summary {
+        background: #f5f3ff;
+    }
+    .premium-data-card.border-indigo[open] > summary .premium-card-chevron {
+        background: #ede9fe;
+        border-color: #c4b5fd;
+        color: #4c1d95;
+    }
 
     .premium-card-title {
         font-size: 0.65rem;
@@ -2114,6 +2126,11 @@
     }
 
     /* Grid Improvements */
+    .premium-grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.25rem 1rem;
+    }
     .premium-grid-3 {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
@@ -3425,7 +3442,7 @@
             <!-- Occupant Section -->
             <section class="unit-detail-section">
                 <div id="beneficiaryDropdown" class="unit-monitor-panel">
-                    <details class="premium-data-card premium-data-card--collapsible border-green">
+                    <details class="premium-data-card premium-data-card--collapsible border-green" open>
                         <summary class="premium-card-summary">
                             <span class="premium-card-title">Lot beneficiary</span>
                             <span class="premium-card-chevron" aria-hidden="true">
@@ -3433,6 +3450,14 @@
                             </span>
                         </summary>
                         <div class="premium-card-body">
+                            <!-- Beneficiary profile avatar -->
+                            <div style="display:flex;align-items:center;gap:0.85rem;margin-bottom:1rem;padding-bottom:0.85rem;border-bottom:1px solid #f1f5f9;">
+                                <div id="beneficiaryAvatar" style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#0ea5e9,#6366f1);display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:700;color:#fff;letter-spacing:0.04em;flex-shrink:0;">—</div>
+                                <div>
+                                    <p id="beneficiaryAvatarName" style="margin:0;font-size:0.9rem;font-weight:700;color:#0f172a;line-height:1.2;">—</p>
+                                    <p id="beneficiaryAvatarRef" style="margin:0.2rem 0 0;font-size:0.72rem;font-weight:500;color:#64748b;font-family:monospace;">—</p>
+                                </div>
+                            </div>
                         <div class="premium-grid-4">
                             <div class="premium-data-cell">
                                 <p class="cell-label">Name</p>
@@ -3451,6 +3476,82 @@
                                 <p id="modalHouseholdMembers" class="cell-value">—</p>
                             </div>
                         </div>
+                        </div>
+                    </details>
+
+                    <!-- Lot Award Record card -->
+                    <details id="lotAwardRecordCard" class="premium-data-card premium-data-card--collapsible border-indigo" open hidden>
+                        <summary class="premium-card-summary">
+                            <span class="premium-card-title">Lot award record</span>
+                            <span class="premium-card-chevron" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                            </span>
+                        </summary>
+                        <div class="premium-card-body">
+                            <div class="premium-grid-2" style="margin-bottom:0.9rem;">
+                                <!-- Awarded by -->
+                                <div class="premium-data-cell">
+                                    <p class="cell-label">Awarded by</p>
+                                    <div id="awardedByProfile" style="display:flex;align-items:center;gap:0.5rem;margin-top:0.2rem;">
+                                        <div id="awardedByAvatar" style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#10b981,#059669);display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;color:#fff;flex-shrink:0;">—</div>
+                                        <div>
+                                            <p id="awardedByName" class="cell-value" style="margin:0;line-height:1.2;">—</p>
+                                            <span id="awardedByBadge" style="display:inline-block;font-size:0.62rem;font-weight:700;padding:0.1rem 0.4rem;border-radius:4px;background:#d1fae5;color:#065f46;letter-spacing:0.03em;margin-top:0.15rem;"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="premium-data-cell">
+                                    <p class="cell-label">Awarded at</p>
+                                    <p id="awardRecordAwardedAt" class="cell-value">—</p>
+                                </div>
+                                <!-- Authenticated by -->
+                                <div class="premium-data-cell">
+                                    <p class="cell-label">Authenticated by</p>
+                                    <div id="authenticatedByProfile" style="display:flex;align-items:center;gap:0.5rem;margin-top:0.2rem;">
+                                        <div id="authenticatedByAvatar" style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#4f46e5);display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;color:#fff;flex-shrink:0;">—</div>
+                                        <div>
+                                            <p id="authenticatedByName" class="cell-value" style="margin:0;line-height:1.2;">—</p>
+                                            <span id="authenticatedByBadge" style="display:inline-block;font-size:0.62rem;font-weight:700;padding:0.1rem 0.4rem;border-radius:4px;background:#ede9fe;color:#4c1d95;letter-spacing:0.03em;margin-top:0.15rem;"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="premium-data-cell">
+                                    <p class="cell-label">Authenticated at</p>
+                                    <p id="authenticatedAtValue" class="cell-value">—</p>
+                                </div>
+                            </div>
+                        </div>
+                    </details>
+
+                    <!-- Document Validation Log card -->
+                    <details id="validationLogCard" class="premium-data-card premium-data-card--collapsible border-amber" open hidden>
+                        <summary class="premium-card-summary">
+                            <span class="premium-card-title">Document validation log</span>
+                            <span id="validationLogCount" style="margin-left:0.4rem;font-size:0.68rem;font-weight:700;padding:0.1rem 0.45rem;border-radius:10px;background:#fef3c7;color:#92400e;"></span>
+                            <span class="premium-card-chevron" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                            </span>
+                        </summary>
+                        <div class="premium-card-body">
+                            <div id="validationLogEntries" style="margin-bottom:0.9rem;"></div>
+                            <!-- Mark as validated action -->
+                            <div id="validateDocumentAction" hidden>
+                                <details style="margin-top:0.5rem;">
+                                    <summary style="cursor:pointer;font-size:0.75rem;font-weight:600;color:#1d4ed8;list-style:none;display:flex;align-items:center;gap:0.35rem;">
+                                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
+                                        Mark as validated
+                                    </summary>
+                                    <div style="margin-top:0.6rem;padding:0.75rem;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;">
+                                        <label style="display:block;font-size:0.7rem;font-weight:600;color:#374151;margin-bottom:0.35rem;text-transform:uppercase;">Remarks <span style="font-weight:400;text-transform:none;color:#94a3b8;">(optional)</span></label>
+                                        <textarea id="validateDocNotes" rows="2" placeholder="e.g. Original document reviewed and signed off…" style="width:100%;padding:0.45rem 0.6rem;border:1px solid #cbd5e1;border-radius:7px;font-size:0.79rem;box-sizing:border-box;resize:vertical;"></textarea>
+                                        <button type="button" id="validateDocBtn" onclick="submitDocumentValidation()" style="margin-top:0.5rem;padding:0.45rem 1rem;background:linear-gradient(180deg,#1d4ed8,#1e40af);color:#fff;border:none;border-radius:7px;font-size:0.78rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:0.35rem;">
+                                            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                                            Submit validation
+                                        </button>
+                                        <p id="validateDocError" style="display:none;font-size:0.72rem;color:#b91c1c;margin:0.4rem 0 0;"></p>
+                                    </div>
+                                </details>
+                            </div>
                         </div>
                     </details>
 
@@ -7449,6 +7550,142 @@ async function submitDisqualifyBeneficiary() {
     }
 }
 
+/* ── Award profile: beneficiary avatar, lot award record, validation log ── */
+
+function applyBeneficiaryAvatar(ben) {
+    const avatarEl = document.getElementById('beneficiaryAvatar');
+    const nameEl = document.getElementById('beneficiaryAvatarName');
+    const refEl = document.getElementById('beneficiaryAvatarRef');
+    if (!avatarEl) return;
+    const name = (ben && ben.full_name) ? ben.full_name : '';
+    const ref = (ben && ben.reference_number) ? ben.reference_number : '';
+    if (name) {
+        const initials = name.split(' ').filter(Boolean).map(w => w[0].toUpperCase()).slice(0, 2).join('');
+        avatarEl.textContent = initials || '?';
+    } else {
+        avatarEl.textContent = '?';
+    }
+    if (nameEl) nameEl.textContent = name || '—';
+    if (refEl) refEl.textContent = ref || '—';
+}
+
+function _renderStaffPill(avatarEl, nameEl, badgeEl, profile, noAuthText) {
+    if (!avatarEl) return;
+    if (profile) {
+        const initials = (profile.initials || profile.full_name.split(' ').filter(Boolean).map(w => w[0].toUpperCase()).slice(0, 2).join('')) || '?';
+        avatarEl.textContent = initials;
+        avatarEl.style.opacity = '1';
+        if (nameEl) nameEl.textContent = profile.full_name || '—';
+        if (badgeEl) { badgeEl.textContent = profile.position_label || profile.position || ''; }
+    } else {
+        avatarEl.textContent = '—';
+        avatarEl.style.opacity = '0.4';
+        if (nameEl) nameEl.textContent = noAuthText || '—';
+        if (badgeEl) badgeEl.textContent = '';
+    }
+}
+
+function renderAwardProfile(profile) {
+    const recordCard = document.getElementById('lotAwardRecordCard');
+    const logCard = document.getElementById('validationLogCard');
+    if (!recordCard || !logCard) return;
+    if (!profile) {
+        recordCard.hidden = true;
+        logCard.hidden = true;
+        return;
+    }
+    recordCard.hidden = false;
+    logCard.hidden = false;
+
+    // Awarded by
+    _renderStaffPill(
+        document.getElementById('awardedByAvatar'),
+        document.getElementById('awardedByName'),
+        document.getElementById('awardedByBadge'),
+        profile.awarded_by,
+        '—'
+    );
+    const awardedAtEl = document.getElementById('awardRecordAwardedAt');
+    if (awardedAtEl) awardedAtEl.textContent = profile.awarded_at_display || '—';
+
+    // Authenticated by
+    _renderStaffPill(
+        document.getElementById('authenticatedByAvatar'),
+        document.getElementById('authenticatedByName'),
+        document.getElementById('authenticatedByBadge'),
+        profile.authenticated_by,
+        'Not yet authenticated'
+    );
+    const authAtEl = document.getElementById('authenticatedAtValue');
+    if (authAtEl) authAtEl.textContent = profile.authenticated_at_display || '—';
+
+    // Validation log
+    const logEntries = document.getElementById('validationLogEntries');
+    const logCount = document.getElementById('validationLogCount');
+    const logs = profile.validation_logs || [];
+    if (logCount) logCount.textContent = logs.length ? String(logs.length) : '';
+    if (logEntries) {
+        if (logs.length === 0) {
+            logEntries.innerHTML = '<p style="font-size:0.77rem;color:#94a3b8;font-style:italic;margin:0.5rem 0;">No validation events recorded yet.</p>';
+        } else {
+            logEntries.innerHTML = logs.map((vl, i) => {
+                const by = vl.validated_by ? vl.validated_by.full_name : '—';
+                const pos = vl.validated_by ? (vl.validated_by.position_label || '') : '';
+                const initials = vl.validated_by ? (vl.validated_by.initials || by.split(' ').filter(Boolean).map(w => w[0].toUpperCase()).slice(0, 2).join('')) : '?';
+                const isFirst = i === logs.length - 1;
+                return `<div style="display:flex;align-items:flex-start;gap:0.6rem;padding:0.55rem 0;${i > 0 ? 'border-top:1px solid #f1f5f9;' : ''}">
+                    <div style="width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#a855f7);display:flex;align-items:center;justify-content:center;font-size:0.62rem;font-weight:700;color:#fff;flex-shrink:0;">${initials}</div>
+                    <div style="flex:1;min-width:0;">
+                        <div style="display:flex;align-items:center;gap:0.4rem;flex-wrap:wrap;">
+                            <span style="font-size:0.78rem;font-weight:700;color:#0f172a;">${by}</span>
+                            ${pos ? `<span style="font-size:0.6rem;font-weight:700;padding:0.08rem 0.35rem;border-radius:4px;background:#ede9fe;color:#4c1d95;">${pos}</span>` : ''}
+                            ${isFirst ? '<span style="font-size:0.6rem;font-weight:700;padding:0.08rem 0.35rem;border-radius:4px;background:#fef3c7;color:#92400e;">First · Authenticator</span>' : ''}
+                        </div>
+                        <p style="margin:0.18rem 0 0;font-size:0.71rem;color:#475569;">${vl.validated_at_display}</p>
+                        ${vl.notes ? `<p style="margin:0.25rem 0 0;font-size:0.72rem;color:#374151;font-style:italic;">"${vl.notes}"</p>` : ''}
+                    </div>
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#10b981" stroke-width="2.5" style="flex-shrink:0;margin-top:0.2rem;"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>`;
+            }).join('');
+        }
+    }
+
+    // Show/hide validate action button
+    const validateAction = document.getElementById('validateDocumentAction');
+    if (validateAction) {
+        validateAction.hidden = !profile.can_validate_document;
+    }
+}
+
+async function submitDocumentValidation() {
+    const btn = document.getElementById('validateDocBtn');
+    const errEl = document.getElementById('validateDocError');
+    const notes = (document.getElementById('validateDocNotes') || {}).value || '';
+    if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
+    if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+    const position = '{{ request.user.position }}';
+    try {
+        const res = await fetch(`/units/housing-units/${position}/${currentUnitId}/lot-award/validate/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') || '' },
+            body: JSON.stringify({ notes }),
+        });
+        const data = await res.json();
+        if (data.success) {
+            renderAwardProfile(data.award_profile);
+            // Clear textarea
+            const ta = document.getElementById('validateDocNotes');
+            if (ta) ta.value = '';
+        } else {
+            if (errEl) { errEl.textContent = data.error || 'Validation failed.'; errEl.style.display = 'block'; }
+        }
+    } catch (e) {
+        if (errEl) { errEl.textContent = 'Network error. Please try again.'; errEl.style.display = 'block'; }
+    } finally {
+        if (btn) { btn.disabled = false; btn.innerHTML = '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Submit validation'; }
+    }
+}
+
 function openUnitModal(unitId) {
     currentUnitId = unitId;
     const position = '{{ request.user.position }}';
@@ -7492,6 +7729,9 @@ function openUnitModal(unitId) {
                     footnoteEl.textContent = unit.historical_possession_note
                         || 'The award date starts possession. The beneficiary has 30 days to show house-building progress before scheduled monitoring begins.';
                 }
+                // Profile avatar + award record + validation log
+                applyBeneficiaryAvatar(ben);
+                renderAwardProfile(unit.award_profile || null);
                 const main = unit.monitoring_tasks || [];
                 const ext120 = unit.explanation_extension_final_task || null;
                 const merged = mergeMonitoringTasksForState(main, ext120);
