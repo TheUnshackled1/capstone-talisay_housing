@@ -5393,6 +5393,20 @@ function initLotPlanZoom() {
             zoomTo(scale + ZOOM_STEP * 2, cx, cy);
         }
     });
+
+    // --- Initial setup ---
+    // Apply the default zoom scale (50%) immediately
+    applyTransform();
+
+    // Re-apply if the image loads after initialization (which changes offsetHeight)
+    const lotplanImg = stage.querySelector('.lotplan-img');
+    if (lotplanImg) {
+        if (lotplanImg.complete) {
+            applyTransform();
+        } else {
+            lotplanImg.addEventListener('load', applyTransform);
+        }
+    }
 }
 
 function applyUnitDetailHeader(unit) {
