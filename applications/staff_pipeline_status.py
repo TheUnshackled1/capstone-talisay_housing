@@ -62,6 +62,11 @@ def staff_pipeline_primary_detail(
 
     if getattr(applicant, 'form_queue_routed_at', None):
         return ('Ready for Form queue', None)
+
+    # Applicant has not been proceeded to Module 2 yet — still in Registration.
+    if not getattr(applicant, 'module2_handoff_at', None):
+        return ('Applicant Registration', None)
+
     return ('Evaluation & Eligibility', None)
 
 
@@ -91,6 +96,7 @@ ARCHIVE_STAGE_FILTER_CHOICES = (
 
 ARCHIVE_STAGE_PRIMARY_TO_KEY = {
     'Registration': 'registration',
+    'Applicant Registration': 'registration',
     'Applicant Intake': 'registration',
     'Evaluation & Eligibility': 'evaluation',
     'Ready for Form queue': 'ready_for_form',
