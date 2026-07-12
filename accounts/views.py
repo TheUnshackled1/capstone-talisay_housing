@@ -35,11 +35,6 @@ from .auth_portal import (
     user_allowed_for_portal,
 )
 from intake.models import Applicant, Archive, SMSLog
-from accounts.staff_activity import (
-    STAFF_ACTIVITY_MAX_ITEMS,
-    build_staff_recent_activity,
-    paginate_staff_activity,
-)
 from applications.models import CDRRMOCertification, FieldVerificationPhoto
 from applications.views import module2_ready_for_form_queue_rows
 from units.models import Blacklist as UnitsBlacklist
@@ -83,14 +78,6 @@ def _applicant_intake_docs_done_count(applicant):
     )
     return sum(1 for k in keys if getattr(applicant, k, False))
 
-
-def _dashboard_recent_activity_context():
-    """Recent activity feed + paginated pages (10 per carousel page) for staff dashboards."""
-    recent_activity = build_staff_recent_activity(limit=STAFF_ACTIVITY_MAX_ITEMS)
-    return {
-        'recent_activity': recent_activity,
-        'recent_activity_pages': paginate_staff_activity(recent_activity),
-    }
 
 
 def login_view(request):
@@ -321,7 +308,6 @@ def dashboard_second_member(request):
         'awaiting_signature': awaiting_signature_count,  # Shared stat card
         'housing_units': total_housing_units,  # Shared stat card
         'approved_this_month': approved_this_month,  # Shared stat card
-        **_dashboard_recent_activity_context(),
 
         # ========== ANALYTICS PANEL ==========
         **analytics_data,
@@ -1333,7 +1319,6 @@ def dashboard_fourth_member(request):
         'repossessed_count': repossessed_count,
         'awaiting_reaward': awaiting_reaward,
         'ready_to_award': ready_to_award,
-        **_dashboard_recent_activity_context(),
         # ========== ANALYTICS PANEL ==========
         **analytics_data,
     }
