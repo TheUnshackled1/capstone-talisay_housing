@@ -768,44 +768,78 @@
 
     /* HEADER — compact */
     .vault-drawer-head {
-        padding: 0.8rem 1rem 0.7rem;
-        border-bottom: 1px solid #e2e8f0;
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: 0.7rem;
-        background: linear-gradient(180deg, #f0fdfa 0%, #ffffff 100%);
+        background: #0f172a;
+        color: #f8fafc;
+        padding: 1.375rem 1.5rem 1.25rem;
+        width: 100%;
+        text-align: center;
+        border-bottom: 3px solid #b45309;
+        box-shadow: inset 0 -1px 0 rgba(255,255,255,0.06);
+        box-sizing: border-box;
+        position: relative;
     }
-    .vault-drawer-head h2 {
-        margin: 0;
-        font-family: 'Source Serif Pro', Georgia, serif;
-        font-size: 0.86rem;
-        font-weight: 700;
-        color: #115e59;
-        line-height: 1.3;
-        letter-spacing: -0.005em;
-    }
-    .vault-drawer-close {
-        flex-shrink: 0;
-        border: 1px solid #cbd5e1;
-        background: #ffffff;
-        color: #64748b;
-        width: 1.8rem;
-        height: 1.8rem;
-        border-radius: 0.45rem;
-        cursor: pointer;
-        font-size: 0.95rem;
-        line-height: 1;
-        transition: all 0.18s ease;
+    .vault-drawer-crest {
+        width: auto;
+        max-width: min(100%, 18rem);
+        height: 3.25rem;
+        margin: 0 auto 0.625rem;
+        border: 2px solid rgba(248, 250, 252, 0.95);
+        border-radius: 0.375rem;
+        overflow: hidden;
         display: flex;
         align-items: center;
         justify-content: center;
+        background: #ffffff;
+        padding: 0.2rem 0.5rem;
+        flex-shrink: 0;
+        box-sizing: border-box;
+    }
+    .vault-drawer-crest img {
+        width: auto;
+        height: 100%;
+        max-width: 100%;
+        object-fit: contain;
+        object-position: center;
+        display: block;
+    }
+    .vault-drawer-subtitle {
+        margin: 0.35rem 0 0;
+        font-size: 0.8125rem;
+        font-weight: 500;
+        letter-spacing: 0.02em;
+        opacity: 0.92;
+        color: #f8fafc;
+    }
+    .vault-drawer-head h2 {
+        margin: 0;
+        font-family: Georgia, 'Times New Roman', Times, serif;
+        font-size: 1.0625rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: none;
+        color: #f8fafc;
+    }
+    .vault-drawer-close {
+        position: absolute;
+        right: 0.75rem;
+        top: 0.75rem;
+        width: 2rem;
+        height: 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        color: #0f172a;
+        background: rgba(255,255,255,0.9);
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        transition: background 0.2s, transform 0.2s;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
     }
     .vault-drawer-close:hover {
-        background: #fef2f2;
-        border-color: #fecaca;
-        color: #b91c1c;
-        transform: scale(1.05);
+        background: #ffffff;
+        transform: scale(1.1);
     }
 
     /* META — applicant identity / situation (compact) */
@@ -1947,8 +1981,12 @@
 <div id="vaultDrawer" role="dialog" aria-modal="true" aria-labelledby="vaultDrawerTitle" onclick="if (event.target === this) closeVaultDrawer();">
     <div class="vault-drawer-panel" onclick="event.stopPropagation();">
         <div class="vault-drawer-head">
-            <h2 id="vaultDrawerTitle">Uploaded documents</h2>
-            <button type="button" class="vault-drawer-close" onclick="closeVaultDrawer();" aria-label="Close">✕</button>
+            <div class="vault-drawer-crest" aria-hidden="true">
+                <img src="{% static 'images/favicon.png' %}" alt="" decoding="async">
+            </div>
+            <h2 id="vaultDrawerTitle">Document Checklist</h2>
+            <p class="vault-drawer-subtitle">Talisay City Housing Authority</p>
+            <button type="button" class="vault-drawer-close" onclick="closeVaultDrawer();" aria-label="Close">&times;</button>
         </div>
         <div id="vaultDrawerMeta" class="vault-drawer-meta"></div>
         <div class="vault-drawer-scroll">
