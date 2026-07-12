@@ -3053,6 +3053,28 @@
         transition: border-color 0.15s ease;
     }
 
+    /* Select display text — shown in view mode instead of the dropdown */
+    #reviewModal .select-display-text {
+        display: block;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-left: 3px solid #1e3a8a;
+        color: #0f172a;
+        font-weight: 600;
+        font-size: 0.82rem;
+        padding: 0.55rem 0.7rem;
+        border-radius: 0.4rem;
+        cursor: default;
+        box-shadow: 0 1px 1px rgba(15, 23, 42, 0.03);
+        width: 100%;
+        box-sizing: border-box;
+        min-height: 2.1rem;
+    }
+    #reviewModal .select-display-text.hidden,
+    #reviewModal .select-hidden {
+        display: none !important;
+    }
+
     /* Editable mode (when EDIT clicked, readonly removed) — clear input affordance */
     #reviewModal .form-input:not([readonly]),
     #reviewModal .form-select:not([disabled]) {
@@ -5014,10 +5036,13 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Registered voter in Talisay City</label>
+                                <span class="select-display-text" id="reviewVoterBDisplay">No</span>
+                                <div id="reviewVoterBWrapper" style="display:none">
                                 <select class="form-select" id="reviewVoterB" name="is_registered_voter_talisay_b" disabled>
                                     <option value="no">No</option>
                                     <option value="yes">Yes</option>
                                 </select>
+                                </div>
                             </div>
                             <div class="form-group" style="grid-column: span 2;">
                                 <label class="form-label">Present address</label>
@@ -5025,12 +5050,15 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Barangay of residence</label>
+                                <span class="select-display-text" id="reviewBarangayBDisplay">—</span>
+                                <div id="reviewBarangayBWrapper" style="display:none">
                                 <select class="form-select" id="reviewBarangayB" name="barangay_b" disabled>
                                     <option value="">Select barangay...</option>
                                     {% for brgy in barangays %}
                                     <option value="{{ brgy }}">{{ brgy }}</option>
                                     {% endfor %}
                                 </select>
+                                </div>
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Mobile / contact number</label>
@@ -5042,10 +5070,13 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Has Property Ownership in Talisay City</label>
+                                <span class="select-display-text" id="reviewPropertyBDisplay">No</span>
+                                <div id="reviewPropertyBWrapper" style="display:none">
                                 <select class="form-select" id="reviewPropertyB" name="has_property_in_talisay_b" disabled>
                                     <option value="no">No</option>
                                     <option value="yes">Yes</option>
                                 </select>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -5297,12 +5328,15 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Barangay</label>
+                                <span class="select-display-text" id="reviewBarangayDisplay">—</span>
+                                <div id="reviewBarangayWrapper" style="display:none">
                                 <select class="form-select" id="reviewBarangay" name="barangay" disabled>
                                     <option value="">Select barangay...</option>
                                     {% for brgy in barangays %}
                                     <option value="{{ brgy }}">{{ brgy }}</option>
                                     {% endfor %}
                                 </select>
+                                </div>
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Applicant Contact Number</label>
@@ -9946,6 +9980,8 @@
                 if (ageEl) ageEl.value = currentApplicant.age ?? '';
                 if (dobEl) dobEl.value = currentApplicant.dateOfBirth || '';
                 if (barangayEl) barangayEl.value = currentApplicant.barangay || '';
+                const barangayDisplayEl = document.getElementById('reviewBarangayDisplay');
+                if (barangayDisplayEl) barangayDisplayEl.textContent = currentApplicant.barangay || '—';
                 if (incomeEl) incomeEl.value = formatIncomeInputValue(currentApplicant.monthlyIncome);
                 if (householdEl) householdEl.value = currentApplicant.householdSize || '';
                 if (yearsEl) yearsEl.value = currentApplicant.yearsResiding || '';
@@ -10053,6 +10089,8 @@
                 
                 if (fullNameBEl) fullNameBEl.value = currentApplicant.fullName || '';
                 if (barangayBEl) barangayBEl.value = currentApplicant.barangay || '';
+                const barangayBDisplayEl = document.getElementById('reviewBarangayBDisplay');
+                if (barangayBDisplayEl) barangayBDisplayEl.textContent = currentApplicant.barangay || '—';
                 if (incomeBEl) incomeBEl.value = formatIncomeInputValue(currentApplicant.monthlyIncome);
                 if (householdBEl) householdBEl.value = currentApplicant.householdSize || '';
                 if (yearsBEl) yearsBEl.value = currentApplicant.yearsResiding || '';
@@ -10521,10 +10559,17 @@
         setValue('reviewDateOfBirthB', applicant.dateOfBirth);
         const voterEl = document.getElementById('reviewVoterB');
         if (voterEl) voterEl.value = applicant.isRegisteredVoterTalisay ? 'yes' : 'no';
+        const voterDisplayEl = document.getElementById('reviewVoterBDisplay');
+        if (voterDisplayEl) voterDisplayEl.textContent = applicant.isRegisteredVoterTalisay ? 'Yes' : 'No';
         const propEl = document.getElementById('reviewPropertyB');
         if (propEl) {
             const hp = applicant.hasPropertyInTalisay;
             propEl.value = (hp === true || hp === 'true' || hp === 1) ? 'yes' : 'no';
+        }
+        const propDisplayEl = document.getElementById('reviewPropertyBDisplay');
+        if (propDisplayEl) {
+            const hp = applicant.hasPropertyInTalisay;
+            propDisplayEl.textContent = (hp === true || hp === 'true' || hp === 1) ? 'Yes' : 'No';
         }
         setValue('reviewOccupationB', applicant.occupation);
         setValue('reviewEmploymentStatusB', applicant.employmentStatus);
@@ -11141,9 +11186,15 @@
             if (el) el.readOnly = !isEditMode;
         });
         
+        // Channel C selects: only reviewBarangay has a display span
+        // Toggle: in view mode show span + hide wrapper; in edit mode show wrapper + hide span
         selectFieldsC.forEach(id => {
             const el = document.getElementById(id);
             if (el) el.disabled = !isEditMode;
+            const spanEl = document.getElementById(id + 'Display');
+            const wrapEl = document.getElementById(id + 'Wrapper');
+            if (spanEl) spanEl.style.display = isEditMode ? 'none' : 'block';
+            if (wrapEl) wrapEl.style.display = isEditMode ? '' : 'none';
         });
         
         // Update Channel B fields
@@ -11152,9 +11203,15 @@
             if (el) el.readOnly = !isEditMode;
         });
         
+        // Channel B selects: some have display spans (reviewBarangayB, reviewVoterB, reviewPropertyB)
+        // reviewDangerType does NOT have a wrapper — keep old behavior for it
         selectFieldsB.forEach(id => {
             const el = document.getElementById(id);
             if (el) el.disabled = !isEditMode;
+            const spanEl = document.getElementById(id + 'Display');
+            const wrapEl = document.getElementById(id + 'Wrapper');
+            if (spanEl) spanEl.style.display = isEditMode ? 'none' : 'block';
+            if (wrapEl) wrapEl.style.display = isEditMode ? '' : 'none';
         });
         
         // Update Channel A landowner fields
