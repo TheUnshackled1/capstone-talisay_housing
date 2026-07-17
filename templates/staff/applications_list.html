@@ -2489,8 +2489,9 @@
         background: #ffffff;
         border: 1px solid #cbd5e1;
         border-radius: 1rem;
-        width: min(94vw, 760px);
+        width: min(96vw, 1080px);
         max-height: 88vh;
+        margin-left: 250px; /* Offset for the left sidebar */
         display: flex;
         flex-direction: column;
         box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.28);
@@ -2659,6 +2660,53 @@
     .eligibility-check-chip.failed { background:#fee2e2; color:#991b1b; border:1px solid #fecaca; }
     .eligibility-check-chip.pending { background:#fef3c7; color:#92400e; border:1px solid #fde68a; }
     .eligibility-check-chip.not_required { background:#f1f5f9; color:#475569; border:1px solid #cbd5e1; }
+
+    /* Module 2 eligibility checklist cards — compact grid layout */
+    .m2-elig-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 0.65rem;
+    }
+    .m2-elig-card--compact {
+        padding: 0.5rem 0.65rem;
+    }
+    .m2-elig-card--compact .m2-elig-card-head {
+        gap: 0.35rem;
+        margin-bottom: 0.35rem;
+    }
+    .m2-elig-card--compact .m2-elig-card-title {
+        font-size: 0.8rem;
+    }
+    .m2-elig-card--compact .m2-elig-card-reason {
+        font-size: 0.75rem;
+        margin-bottom: 0.4rem;
+    }
+    .m2-elig-card--compact .eligibility-check-chip {
+        font-size: 0.6rem;
+        padding: 0.15rem 0.4rem;
+    }
+    .m2-elig-card--compact .m2-elig-evidence-box {
+        padding: 0.4rem 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+    .m2-elig-card--compact .m2-ev-grid-row {
+        padding: 0.25rem 0;
+        font-size: 0.7rem;
+    }
+    .m2-elig-card--compact .m2-elig-actions {
+        gap: 0.35rem;
+    }
+    .m2-elig-card--compact .eligibility-decision-btn,
+    .m2-elig-card--compact .m2-elig-upload-btn,
+    .m2-elig-card--compact .m2-elig-scan-btn,
+    .m2-elig-card--compact .eligibility-view-doc-btn {
+        padding: 0.25rem 0.45rem;
+        font-size: 0.7rem;
+    }
+    .m2-elig-card--compact svg {
+        width: 14px;
+        height: 14px;
+    }
 
     /* Module 2 eligibility checklist cards — readable hierarchy */
     .m2-elig-outer-card {
@@ -3229,7 +3277,7 @@
     .eligibility-next-back {
         border: 1px solid #eab308;
         background: linear-gradient(135deg, #facc15 0%, #eab308 100%);
-        color: #1a1a1a;
+        color: #ffffff;
         border-radius: 0.6rem;
         padding: 0.45rem 0.85rem;
         font-size: 0.8rem;
@@ -3254,10 +3302,16 @@
         background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
         border-color: #1d4ed8;
     }
+    @media (max-width: 1024px) {
+        .eligibility-next-modal {
+            margin-left: 0;
+        }
+    }
     @media (max-width: 640px) {
         .eligibility-next-modal {
             width: min(96vw, 640px);
             max-height: 92vh;
+            margin-left: 0;
         }
         .eligibility-next-header,
         .eligibility-next-body,
@@ -5947,38 +6001,7 @@
         showFlowAlert(msg, 'Eligibility', null, alertTone);
     }
 
-    let m2EligCarouselIndex = 0;
     let m2SitCarouselIndex = 0;
-
-    function m2EligCarouselSync() {
-        const track = document.getElementById('m2EligCarouselTrack');
-        const slides = track ? track.querySelectorAll('.m2-elig-carousel-slide') : [];
-        const total = slides.length;
-        if (!total) return;
-        if (m2EligCarouselIndex < 0) m2EligCarouselIndex = 0;
-        if (m2EligCarouselIndex >= total) m2EligCarouselIndex = total - 1;
-        track.style.transform = 'translateX(-' + (m2EligCarouselIndex * 100) + '%)';
-        const counter = document.getElementById('m2EligCarouselCounter');
-        if (counter) counter.textContent = (m2EligCarouselIndex + 1) + ' / ' + total;
-        document.querySelectorAll('.m2-elig-carousel-dot').forEach(function (dot, i) {
-            dot.classList.toggle('is-active', i === m2EligCarouselIndex);
-            dot.setAttribute('aria-current', i === m2EligCarouselIndex ? 'true' : 'false');
-        });
-        const prev = document.getElementById('m2EligCarouselPrev');
-        const next = document.getElementById('m2EligCarouselNext');
-        if (prev) prev.disabled = m2EligCarouselIndex <= 0;
-        if (next) next.disabled = m2EligCarouselIndex >= total - 1;
-    }
-
-    function m2EligCarouselStep(delta) {
-        m2EligCarouselIndex += delta;
-        m2EligCarouselSync();
-    }
-
-    function m2EligCarouselGoTo(index) {
-        m2EligCarouselIndex = index;
-        m2EligCarouselSync();
-    }
 
     function m2SitCarouselSync() {
         const track = document.getElementById('m2SitCarouselTrack');
@@ -6082,7 +6105,7 @@
                 : (isVoterAutoPassed
                     ? `<span class="eligibility-check-chip passed" title="Auto-passed: voter certification is optional and profile confirms registered voter">Auto-passed</span>`
                     : '');
-            let cardToneClass = 'm2-elig-card';
+            let cardToneClass = 'm2-elig-card m2-elig-card--compact';
             if (manualStatus === 'failed') cardToneClass += ' m2-elig-card--fail';
             else if (manualStatus === 'passed') cardToneClass += ' m2-elig-card--pass';
             else if (isVoterAutoPassed) cardToneClass += ' m2-elig-card--pass';
@@ -6131,44 +6154,17 @@
             `;
         };
 
-        if (m2EligCarouselIndex >= entries.length) {
-            m2EligCarouselIndex = Math.max(0, entries.length - 1);
-        }
-
-        const carouselDotsHtml = entries.map((entry, idx) => {
-            const d = getManualDecision(entry.key);
-            const st = d ? d.status : '';
-            let dotClass = 'm2-elig-carousel-dot';
-            if (idx === m2EligCarouselIndex) dotClass += ' is-active';
-            if (st === 'passed') dotClass += ' is-pass';
-            if (st === 'failed') dotClass += ' is-fail';
-            return `<button type="button" class="${dotClass}" aria-label="Go to check ${idx + 1}: ${escapeHtml(entry.title || 'Check')}" onclick="m2EligCarouselGoTo(${idx})"></button>`;
-        }).join('');
-
-        const checkSlides = entries.map((entry, idx) => (
-            `<div class="m2-elig-carousel-slide" role="group" aria-roledescription="slide" aria-label="Check ${idx + 1} of ${entries.length}">${buildCheckCardHtml(entry)}</div>`
-        )).join('');
+        const checkCards = entries.map((entry) => buildCheckCardHtml(entry)).join('');
 
         docEvidenceEl.innerHTML = '';
         listEl.innerHTML = `
-            <div class="m2-elig-outer-card">
+            <div class="m2-elig-outer-card" style="padding: 0.75rem;">
                 ${warningBanner}
-                <div class="m2-elig-carousel" id="m2EligCarousel">
-                    <div class="m2-elig-carousel-toolbar">
-                        <span class="m2-elig-carousel-counter" id="m2EligCarouselCounter">1 / ${entries.length}</span>
-                        <div class="m2-elig-carousel-dots" id="m2EligCarouselDots">${carouselDotsHtml}</div>
-                    </div>
-                    <div class="m2-elig-carousel-viewport">
-                        <button type="button" class="m2-elig-carousel-nav" id="m2EligCarouselPrev" aria-label="Previous check" onclick="m2EligCarouselStep(-1)">‹</button>
-                        <div class="m2-elig-carousel-track-wrap">
-                            <div class="m2-elig-carousel-track" id="m2EligCarouselTrack">${checkSlides}</div>
-                        </div>
-                        <button type="button" class="m2-elig-carousel-nav" id="m2EligCarouselNext" aria-label="Next check" onclick="m2EligCarouselStep(1)">›</button>
-                    </div>
+                <div class="m2-elig-grid">
+                    ${checkCards}
                 </div>
             </div>
         `;
-        m2EligCarouselSync();
     }
 
     async function fetchEligibilitySnapshot(applicantId, opts = {}) {
@@ -6230,7 +6226,6 @@
     }
 
     function openEligibilityNextModal(applicantName, applicantId) {
-        m2EligCarouselIndex = 0;
         currentEligibilityApplicantId = applicantId || '';
         const subtitle = document.getElementById('eligibilityNextSubtitle');
         if (subtitle) {
