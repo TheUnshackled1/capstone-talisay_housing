@@ -461,7 +461,7 @@ def housing_units_monitoring(request, position):
         'explanation_letter_office_tz': str(settings.TIME_ZONE),
     }
 
-    return render(request, 'units/housing_units_monitoring.html', context)
+    return render(request, 'staff/units/housing_units_monitoring.html', context)
 
 
 def _gk_masterlist_site(request):
@@ -643,7 +643,7 @@ def gk_masterlist(request, position):
         'can_import_historical': can_import_historical,
         'historical_csv_headers': CSV_HEADERS,
     }
-    return render(request, 'units/gk_masterlist.html', context)
+    return render(request, 'staff/units/gk_masterlist.html', context)
 
 
 @login_required
@@ -2760,7 +2760,7 @@ def blacklist_management(request, position):
         'page_obj': page_obj,
         'search': search_query,
     }
-    return render(request, 'units/blacklist_management.html', context)
+    return render(request, 'staff/units/blacklist_management.html', context)
 
 
 # =============================================================================
@@ -3303,7 +3303,7 @@ def caretaker_monitoring_dashboard(request):
         'task_notified': request.GET.get('notified') == '1',
     }
 
-    return render(request, 'units/caretaker_monitoring_dashboard.html', context)
+    return render(request, 'staff/units/caretaker_monitoring_dashboard.html', context)
 
 
 # =============================================================================
