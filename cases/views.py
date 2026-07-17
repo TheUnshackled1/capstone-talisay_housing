@@ -322,24 +322,24 @@ def case_desk_feed(request, position):
     }
     html = {
         'table_body': render_to_string(
-            'accounts/includes/case_desk_unified_tbody.html',
+            'accounts/field/includes/case_desk_unified_tbody.html',
             fragment_ctx,
             request=request,
         ),
         'settled_drawer': render_to_string(
-            'accounts/includes/case_desk_settled_drawer_inner.html',
+            'accounts/field/includes/case_desk_settled_drawer_inner.html',
             fragment_ctx,
             request=request,
         ),
         'resolved_drawer': render_to_string(
-            'accounts/includes/case_desk_resolved_drawer_inner.html',
+            'accounts/field/includes/case_desk_resolved_drawer_inner.html',
             fragment_ctx,
             request=request,
         ),
     }
     if position in FIELD_DESK_POSITIONS:
         html['mobile_cards'] = render_to_string(
-            'accounts/includes/case_desk_mobile_cards.html',
+            'accounts/field/includes/case_desk_mobile_cards.html',
             fragment_ctx,
             request=request,
         )
