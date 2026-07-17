@@ -1200,7 +1200,7 @@ def applications_list(request, position):
         ),
     }
     
-    return render(request, 'staff/applications/applications_list.html', context)
+    return render(request, 'staff/applications_list.html', context)
 
 
 def module2_ready_for_form_queue_rows(acting_user):
@@ -1344,7 +1344,7 @@ def ready_for_form_queue(request, position):
         'selected_row_included': selected_row_included,
         'selected_not_ready_reason': selected_not_ready_reason,
     }
-    return render(request, 'staff/applications/ready_for_form_list.html', context)
+    return render(request, 'staff/ready_for_form_list.html', context)
 
 
 def _lot_awarding_queue_sms_filter(qs):
@@ -1485,7 +1485,7 @@ def lot_awarding_queue(request, position):
             vacant_units_grouped_for_award_select() if permissions.get('can_award_lot') else []
         ),
     }
-    return render(request, 'staff/applications/lot_awarding_queue.html', context)
+    return render(request, 'staff/lot_awarding_queue.html', context)
 
 
 # =============================================================================

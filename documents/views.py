@@ -904,7 +904,7 @@ def document_management(request, position):
         'vault_drawer_can_intake_scan': request.user.position in ('second_member', 'fourth_member'),
     }
 
-    return render(request, 'staff/documents/management.html', context)
+    return render(request, 'staff/management.html', context)
 
 
 @login_required

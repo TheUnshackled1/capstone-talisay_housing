@@ -1687,7 +1687,7 @@ def applicants_list(request, position):
         'archive_list_q': archive_list_q,
         'archive_list_barangay': archive_list_barangay,
     }
-    return render(request, 'staff/intake/staff/applicants.html', context)
+    return render(request, 'staff/applicants.html', context)
 
 
 @login_required
@@ -2234,4 +2234,4 @@ def archive_list(request, position):
         'pagination_query': pagination_query,
     }
 
-    return render(request, 'staff/intake/archive_list.html', context)
+    return render(request, 'staff/archive_list.html', context)
