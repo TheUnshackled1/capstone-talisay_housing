@@ -6032,7 +6032,11 @@
         });
         const undecidedChecks = entries.filter((entry) => {
             const d = getManualDecision(entry.key);
-            return !(d && (d.status === 'passed' || d.status === 'failed'));
+            if (d && (d.status === 'passed' || d.status === 'failed')) return false; // manually decided
+            // Voter cert is optional — if the backend already resolved it as passed
+            // (profile voter flag = Yes), treat it as auto-passed so it does not block Next.
+            if (entry.key === 'voter' && entry.status === 'passed') return false;
+            return true;
         });
         const warningBanner = undecidedChecks.length
             ? `<div class="m2-elig-banner m2-elig-banner--pending"><strong>${undecidedChecks.length} pending</strong> — mark Passed or Failed on each card to enable Next.</div>`
@@ -6071,12 +6075,17 @@
             const hasManualStatus = manualStatus === 'passed' || manualStatus === 'failed';
             const manualLabel = manualStatus === 'passed' ? 'Passed' : (manualStatus === 'failed' ? 'Failed' : '');
             const evidenceHtml = formatM2EvidenceHtml(entry.evidence);
+            // Voter card: auto-pass when profile confirms voter and cert is optional
+            const isVoterAutoPassed = entry.key === 'voter' && entry.status === 'passed' && !hasManualStatus;
             const chipHtml = hasManualStatus
                 ? `<span class="eligibility-check-chip ${manualStatus}">${manualLabel}</span>`
-                : '';
+                : (isVoterAutoPassed
+                    ? `<span class="eligibility-check-chip passed" title="Auto-passed: voter certification is optional and profile confirms registered voter">Auto-passed</span>`
+                    : '');
             let cardToneClass = 'm2-elig-card';
             if (manualStatus === 'failed') cardToneClass += ' m2-elig-card--fail';
             else if (manualStatus === 'passed') cardToneClass += ' m2-elig-card--pass';
+            else if (isVoterAutoPassed) cardToneClass += ' m2-elig-card--pass';
             else cardToneClass += ' m2-elig-card--pending';
             const safeDocHref = docUrl ? String(docUrl).replace(/"/g, '&quot;') : '';
             const safeVaultUploadHref = vaultUploadUrl ? vaultUploadUrl.replace(/"/g, '&quot;') : '';
