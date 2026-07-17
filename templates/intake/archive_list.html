@@ -15,41 +15,190 @@
         box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
         margin-bottom: 0.95rem;
     }
+
+    /* ── Filter Bar — institutional toolbar ── */
     .controls-bar {
-        display:flex;
-        align-items:center;
-        gap:0.5rem;
-        flex-wrap:wrap;
-        margin-bottom:0.72rem;
-        padding:0.52rem;
-        border-radius:0.64rem;
+        display: flex;
+        gap: 0.6rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+        align-items: center;
+        padding: 0.75rem 0.85rem;
+        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
         border: 1px solid #e2e8f0;
-        background: #f8fafc;
+        border-radius: 0.75rem;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
     }
     .summary-chip-card {
-        display:inline-flex; align-items:center; gap:0.5rem; background:#f8fafc; border:1px solid #e2e8f0;
-        border-radius:0.52rem; padding:0.42rem 0.58rem; white-space:nowrap;
+        display: inline-flex; align-items: center; gap: 0.5rem; background: #f8fafc; border: 1px solid #e2e8f0;
+        border-radius: 0.52rem; padding: 0.42rem 0.58rem; white-space: nowrap;
     }
-    .search-box { flex:1 1 220px; min-width:0; position:relative; display:flex; align-items:stretch; }
-    .search-icon { position:absolute; left:0.65rem; top:50%; transform:translateY(-50%); width:0.9rem; height:0.9rem; color:#94a3b8; z-index:2; pointer-events:none; }
-    .search-input { flex:1; min-width:0; padding:0.52rem 0.65rem 0.52rem 2rem; border:1px solid #dbe2ea; border-radius:9px 0 0 9px; min-height:39px; font-size:0.74rem; color:#334155; }
+    .search-box { flex: 1 1 220px; min-width: 0; position: relative; display: flex; align-items: stretch; }
+    .search-icon { position: absolute; left: 0.65rem; top: 50%; transform: translateY(-50%); width: 0.9rem; height: 0.9rem; color: #94a3b8; z-index: 2; pointer-events: none; }
+    .search-input {
+        flex: 1; min-width: 0; padding: 0.625rem 0.75rem 0.625rem 2.5rem;
+        border: 1px solid #cbd5e1; border-radius: 0.55rem 0 0 0.55rem;
+        font-size: 0.875rem; background: white; min-height: 39px;
+        transition: all 0.18s ease; color: #334155;
+    }
+    .search-input:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12); }
+    .search-input::placeholder { color: #94a3b8; }
     .btn-search-submit {
-        padding:0 1rem; background:#15803d; color:#fff; border:1px solid #15803d; border-radius:0 9px 9px 0;
-        min-height:39px; font-size:0.74rem; font-weight:600; cursor:pointer; white-space:nowrap;
+        padding: 0 1rem; background: #15803d; color: #fff; border: 1px solid #15803d; border-radius: 0 0.55rem 0.55rem 0;
+        min-height: 39px; font-size: 0.74rem; font-weight: 600; cursor: pointer; white-space: nowrap;
+        transition: background 0.2s;
     }
-    .btn-search-submit:hover { background:#166534; border-color:#166534; }
-    .filter-select { padding:0.52rem 0.65rem; border:1px solid #dbe2ea; border-radius:9px; min-height:39px; font-size:0.74rem; background:#fff; color:#334155; }
-    .table-scroll { overflow-x:auto; }
-    .applicants-table { width:100%; border-collapse:collapse; font-size:0.7rem; min-width:980px; }
-    .applicants-table th, .applicants-table td { border:1px solid #e5e7eb; padding:0.4rem 0.45rem; text-align:center; vertical-align:middle; }
-    .applicants-table th { background: linear-gradient(180deg, #1d4ed8 0%, #1e3a8a 100%); color:#ffffff; font-weight:700; text-transform:uppercase; letter-spacing:0.03em; font-size:0.54rem; padding:0.45rem 0.34rem; border-bottom:2px solid #172554; border-right:1px solid rgba(255,255,255,0.16); }
-    .applicants-table td { font-size:0.6rem; padding:0.34rem 0.3rem; }
-    .table-pagination { margin-top:0.6rem; padding-top:0.46rem; display:flex; justify-content:space-between; align-items:center; font-size:0.72rem; color:#64748b; gap:0.5rem; flex-wrap:wrap; }
-    .table-pagination-controls { display:inline-flex; align-items:center; gap:0.4rem; }
-    .btn-page { border:1px solid #d1d5db; background:#fff; color:#334155; border-radius:6px; padding:0.25rem 0.5rem; min-height:25px; font-size:0.62rem; text-decoration:none; }
-    .handled-by-avatar { width:1.15rem; height:1.15rem; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:0.55rem; font-weight:700; color:#fff; background:#64748b; }
-    .handled-by-avatar.second-member { background:#2563eb; }
-    .handled-by-avatar.fourth-member { background:#7c3aed; }
+    .btn-search-submit:hover { background: #166534; border-color: #166534; }
+    .filter-select {
+        padding: 0.625rem 2rem 0.625rem 0.75rem; border: 1px solid #e2e8f0; border-radius: 0.5rem;
+        font-size: 0.875rem; background: white; cursor: pointer; appearance: none; min-height: 39px;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2364748b'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");
+        background-repeat: no-repeat; background-position: right 0.5rem center;
+    }
+    .filter-select:focus { outline: none; border-color: #3b82f6; }
+
+    /* ── Table container with gradient top bar ── */
+    .table-scroll {
+        overflow-x: auto;
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.85rem;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 4px 14px rgba(15, 23, 42, 0.04);
+        position: relative;
+    }
+    .table-scroll::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #1e3a8a 0%, #2563eb 35%, #0ea5e9 70%, #06b6d4 100%);
+        z-index: 1;
+    }
+
+    /* ── Table — matching Evaluation & Eligibility ── */
+    .applicants-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.7rem;
+        min-width: 780px;
+        background: white;
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
+        position: relative;
+    }
+    .applicants-table thead {
+        background: linear-gradient(180deg, #2563eb 0%, #1e3a8a 100%);
+        position: sticky;
+        top: 0;
+        z-index: 2;
+    }
+    .applicants-table th {
+        padding: 0.7rem 0.45rem;
+        text-align: center;
+        font-size: 0.58rem;
+        font-weight: 700;
+        color: #ffffff;
+        text-transform: uppercase;
+        letter-spacing: 0.085em;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        position: relative;
+        background: linear-gradient(180deg, #2563eb 0%, #1e3a8a 100%);
+    }
+    .applicants-table td {
+        padding: 0.55rem 0.45rem;
+        border: 1px solid #e5e7eb;
+        vertical-align: middle;
+        font-size: 0.625rem;
+        color: #334155;
+        white-space: normal;
+        overflow-wrap: anywhere;
+        overflow: hidden;
+        position: relative;
+    }
+    .applicants-table tbody tr {
+        transition: background 0.18s ease, box-shadow 0.18s ease;
+        position: relative;
+    }
+    .applicants-table tbody tr:nth-child(even) {
+        background: #fafbfc;
+    }
+    .applicants-table tbody tr:hover {
+        background: #eff6ff;
+        box-shadow: inset 3px 0 0 #2563eb;
+    }
+    .applicants-table tbody tr:hover td:first-child {
+        color: #1e3a8a;
+    }
+    .applicants-table tbody tr:last-child td {
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    /* ── Pagination ── */
+    .table-pagination {
+        margin-top: 0.75rem;
+        padding-top: 0.6rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.72rem;
+        color: #64748b;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    .table-pagination-controls { display: inline-flex; align-items: center; gap: 0.4rem; }
+    .btn-page {
+        border: 1px solid #d1d5db; background: #fff; color: #334155;
+        border-radius: 6px; padding: 0.35rem 0.65rem; min-height: 28px;
+        font-size: 0.68rem; font-weight: 600; text-decoration: none;
+        transition: all 0.18s ease; cursor: pointer;
+    }
+    .btn-page:hover { background: #eff6ff; border-color: #93c5fd; color: #1e3a8a; }
+    .page-indicator { font-weight: 600; color: #475569; font-size: 0.68rem; }
+
+    /* ── Staff avatar — matching Evaluation & Eligibility ── */
+    .handled-by-avatar {
+        width: 26px; height: 26px; border-radius: 50%;
+        color: #ffffff !important;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 0.6rem !important; font-weight: 700;
+        flex-shrink: 0; line-height: 1;
+        box-shadow: 0 2px 4px rgba(15, 23, 42, 0.18), inset 0 0 0 2px #ffffff;
+        letter-spacing: 0.02em;
+    }
+    .handled-by-avatar.second-member { background: linear-gradient(135deg, #4f46e5 0%, #2563eb 100%); }
+    .handled-by-avatar.fourth-member { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+    .handled-by-avatar.other { background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%); }
+
+    /* ── Workflow Status Badges ── */
+    .archive-workflow-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.35rem 0.65rem;
+        border-radius: 6px;
+        font-size: 0.6rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        line-height: 1.1;
+        border: 1px solid transparent;
+        box-sizing: border-box;
+        text-align: center;
+        white-space: normal;
+        word-break: break-word;
+    }
+    .archive-workflow-badge--registration { background: #fffbeb; color: #b45309; border-color: #fef3c7; }
+    .archive-workflow-badge--eligibility { background: #faf5ff; color: #6b21a8; border-color: #f3e8ff; }
+    .archive-workflow-badge--form { background: #f0f9ff; color: #0369a1; border-color: #e0f2fe; }
+    .archive-workflow-badge--award { background: #f0fdfa; color: #0d9488; border-color: #ccfbf1; }
+    .archive-workflow-badge--units { background: #ecfdf5; color: #047857; border-color: #d1fae5; }
+    .archive-workflow-badge--blacklisted { background: #fef2f2; color: #991b1b; border-color: #fecaca; }
+    .archive-workflow-badge--default { background: #f1f5f9; color: #475569; border-color: #e2e8f0; }
     body .applicants-table--archive .btn-archive-action,
     #archiveSummaryModal a.btn-archive-action {
         display: inline-flex;
@@ -105,22 +254,8 @@
         padding: 1rem;
     }
     .modal-overlay.active { display: flex; }
-    .btn-close {
-        border: 1px solid #e2e8f0;
-        background: #fff;
-        width: 1.8rem;
-        height: 1.8rem;
-        border-radius: 999px;
-        color: #334155;
-        cursor: pointer;
-        line-height: 1;
-        font-size: 1rem;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-    }
 
-    /* Handoff Summary Modal — Applicant Journey timeline */
+    /* Handoff Summary Modal — Premium Dark Navy Hero */
     #archiveSummaryModal .modal-content.archive-summary-modal {
         border: 1px solid #cbd5e1;
         border-radius: 1rem;
@@ -137,48 +272,93 @@
         position: sticky;
         top: 0;
         display: block;
-        height: 4px;
-        background: linear-gradient(90deg, #1e3a8a 0%, #2563eb 25%, #16a34a 50%, #d97706 75%, #7c3aed 100%);
+        height: 0;
         z-index: 11;
     }
+
+    /* Dark navy hero header */
     #archiveSummaryModal .modal-header {
-        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-        border-bottom: 2px solid #e2e8f0;
-        padding: 1.1rem 1.5rem 1rem;
-        position: sticky;
-        top: 0;
-        z-index: 10;
+        background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+        border-bottom: none;
+        padding: 1.375rem 1.5rem 1.25rem;
+        position: relative;
+        text-align: center;
+        color: #f8fafc;
     }
-    #archiveSummaryModal .tha-review-modal-kicker {
-        font-size: 0.6rem;
-        font-weight: 800;
-        text-transform: uppercase;
-        letter-spacing: 0.16em;
-        color: #1e3a8a;
-        margin: 0 0 0.4rem 0;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.4rem;
-    }
-    #archiveSummaryModal .tha-review-modal-kicker::before {
+    #archiveSummaryModal .modal-header::after {
         content: '';
-        width: 0.5rem;
-        height: 0.5rem;
-        background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
-        border-radius: 50%;
-        box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.12);
+        position: absolute;
+        left: 0; right: 0; bottom: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #047857 0%, #10b981 50%, #6ee7b7 100%);
     }
+
+    /* THA Logo crest in header */
+    #archiveSummaryModal .archive-modal-crest {
+        width: auto;
+        max-width: min(100%, 18rem);
+        height: 3.25rem;
+        margin: 0 auto 0.625rem;
+        border: 2px solid rgba(248, 250, 252, 0.95);
+        border-radius: 0.375rem;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #ffffff;
+        padding: 0.2rem 0.5rem;
+        box-sizing: border-box;
+    }
+    #archiveSummaryModal .archive-modal-crest img {
+        width: auto;
+        height: 100%;
+        max-width: 100%;
+        object-fit: contain;
+        display: block;
+    }
+
     #archiveSummaryModal .modal-title {
-        font-size: 1.15rem;
+        font-family: Georgia, 'Times New Roman', Times, serif;
+        font-size: 1.0625rem;
         font-weight: 700;
-        color: #0f172a;
-        letter-spacing: -0.02em;
+        color: #f8fafc;
+        letter-spacing: 0.04em;
+        margin: 0;
     }
     #archiveSummaryModal .modal-subtitle {
         font-size: 0.78rem;
-        color: #475569;
-        margin-top: 0.3rem;
+        color: #cbd5e1;
+        margin-top: 0.35rem;
+        font-weight: 500;
+        letter-spacing: 0.02em;
+        opacity: 0.92;
     }
+
+    /* Box-style close button */
+    #archiveSummaryModal .btn-close {
+        position: absolute;
+        top: 0.75rem;
+        right: 0.85rem;
+        background: rgba(255,255,255,0.08);
+        border: 1px solid rgba(255,255,255,0.12);
+        color: #94a3b8;
+        border-radius: 8px;
+        width: 2rem;
+        height: 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        line-height: 1;
+        cursor: pointer;
+        transition: background 0.15s, color 0.15s;
+    }
+    #archiveSummaryModal .btn-close:hover {
+        background: rgba(255,255,255,0.16);
+        color: #fff;
+    }
+
+    /* Modal body */
     #archiveSummaryModal .modal-body {
         padding: 1.25rem 1.5rem;
         background: #fafbfc;
@@ -265,14 +445,6 @@
         border-color: #bfdbfe !important;
         letter-spacing: 0.01em !important;
     }
-    #archiveSummaryModal .btn-close {
-        color: #64748b;
-        border-radius: 0.5rem;
-    }
-    #archiveSummaryModal .btn-close:hover {
-        background: #fee2e2;
-        color: #991b1b;
-    }
     /* ===================================================================
        Archives card theme — Amber identity (records / handoff history)
        =================================================================== */
@@ -318,42 +490,7 @@
     .summary-chip-card--amber p:first-of-type { color: #b45309 !important; }
     .summary-chip-card--amber p:last-of-type { color: #92400e !important; }
 
-    .controls-bar-actions {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        margin-left: auto;
-        flex-wrap: nowrap;
-        flex: 0 0 auto;
-    }
-    .btn-primary-nav {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.45rem;
-        padding: 0.52rem 0.88rem;
-        min-height: 39px;
-        border-radius: 0.5rem;
-        font-size: 0.72rem;
-        font-weight: 700;
-        text-decoration: none;
-        white-space: nowrap;
-        transition: all 0.18s ease;
-        border: 1px solid transparent;
-        cursor: pointer;
-        box-sizing: border-box;
-    }
-    .btn-primary-nav--intake {
-        background: linear-gradient(135deg, #059669 0%, #047857 100%);
-        border-color: #047857;
-        color: #ffffff;
-        box-shadow: 0 2px 6px rgba(4, 120, 87, 0.25);
-    }
-    .btn-primary-nav--intake:hover {
-        background: linear-gradient(135deg, #047857 0%, #065f46 100%);
-        box-shadow: 0 4px 10px rgba(4, 120, 87, 0.35);
-        transform: translateY(-1px);
-        color: #ffffff;
-    }
+
     .applicants-table th.col-action, .applicants-table td.col-action { text-align: center; }
 
     @media (max-width: 900px) {
@@ -393,7 +530,7 @@
             grid-row: auto;
         }
         .search-box { min-width: 0; }
-        .applicants-table { min-width: 820px; }
+        .applicants-table { min-width: 680px; }
         body .applicants-table--archive .btn-archive-action {
             padding: 0.28rem 0.48rem;
             font-size: 0.56rem;
@@ -621,7 +758,7 @@
         <tbody>
             {% for row in archive_records %}
             <tr>
-                <td style="font-weight:700; color:#1e293b;">{{ page_obj.start_index|add:forloop.counter0 }}</td>
+                <td style="font-weight:700; color:#1e3a8a; font-size:0.7rem; text-align:center; font-variant-numeric:tabular-nums;">{{ page_obj.start_index|add:forloop.counter0 }}</td>
                 <td style="font-weight:500;">
                     <span class="complainant-name applicant-name" style="cursor: pointer; position: relative; z-index: 10;"
                           data-full-name="{{ row.fullName }}"
@@ -633,9 +770,11 @@
                     </span>
                 </td>
                 <td><div style="display:flex; align-items:center; justify-content:center; gap:0.375rem;"><div class="handled-by-avatar {% if row.handledByPosition == '2nd Member' %}second-member{% elif row.handledByPosition == '4th Member' %}fourth-member{% else %}other{% endif %}">{{ row.handledByInitials }}</div><div style="display:flex; flex-direction:column; min-width:0; text-align:left;"><span style="font-size:0.625rem; font-weight:500; color:#1e293b;">{{ row.handledBy }}</span><span style="font-size:0.5625rem; color:#64748b;">{{ row.handledByPosition }}</span></div></div></td>
-                <td style="font-size:0.58rem; color:#334155; vertical-align:top;">
-                    <span style="font-weight:600;">{{ row.applicantStatusLabel }}</span>
-                    {% if row.applicantStatusDetail %}<div style="margin-top:0.25rem; font-size:0.54rem; color:#64748b; line-height:1.35;">{{ row.applicantStatusDetail }}</div>{% endif %}
+                <td style="text-align:center; vertical-align:middle;">
+                    <span class="archive-workflow-badge {% if 'Registration' in row.applicantStatusLabel %}archive-workflow-badge--registration{% elif 'Eligibility' in row.applicantStatusLabel %}archive-workflow-badge--eligibility{% elif 'Form' in row.applicantStatusLabel %}archive-workflow-badge--form{% elif 'Award' in row.applicantStatusLabel or 'Awarded' in row.applicantStatusLabel %}archive-workflow-badge--award{% elif 'Units' in row.applicantStatusLabel or 'Housing' in row.applicantStatusLabel %}archive-workflow-badge--units{% elif 'Blacklist' in row.applicantStatusLabel %}archive-workflow-badge--blacklisted{% elif 'Historical' in row.applicantStatusLabel %}archive-workflow-badge--units{% else %}archive-workflow-badge--default{% endif %}">
+                        {{ row.applicantStatusLabel }}
+                    </span>
+                    {% if row.applicantStatusDetail %}<div style="margin-top:0.3rem; font-size:0.54rem; color:#64748b; line-height:1.35;">{{ row.applicantStatusDetail }}</div>{% endif %}
                 </td>
                 <td class="col-action">
                     <button
@@ -698,17 +837,14 @@
 
 <div class="modal-overlay" id="archiveSummaryModal" onclick="closeArchiveSummaryModal()">
     <div class="modal-content archive-summary-modal" onclick="event.stopPropagation()">
-        <div class="modal-header" style="justify-content: center;">
-            <div style="text-align: center;">
-                <p class="tha-review-modal-kicker">Applicant Journey</p>
-                <p class="modal-subtitle" id="archiveSummarySubtitle">Complete handoff details</p>
+        <div class="modal-header">
+            <button class="btn-close" onclick="closeArchiveSummaryModal()" title="Close" aria-label="Close">&times;</button>
+            <div class="archive-modal-crest" aria-hidden="true">
+                <img src="{% static 'images/favicon.png' %}" alt="" decoding="async">
             </div>
-            <button class="btn-close" onclick="closeArchiveSummaryModal()" style="position: absolute; right: 1.5rem;">
-                <svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-            </button>
+            <h2 class="modal-title">Applicant Journey</h2>
+            <p class="modal-subtitle">Talisay City Housing Authority</p>
+            <p class="modal-subtitle" id="archiveSummarySubtitle" style="margin-top: 0.25rem; font-size: 0.68rem; opacity: 0.75;"></p>
         </div>
         <div class="modal-body">
             <div class="archive-summary-card">
@@ -732,6 +868,7 @@
                 <section class="archive-summary-section">
                     <div class="archive-summary-links-row">
                         <a id="archiveSummaryDocumentsLink" class="btn-archive-action" href="#" target="_blank" rel="noopener noreferrer">
+                            <svg style="width: 0.75rem; height: 0.75rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
                             VIEW Documents
                         </a>
                     </div>
