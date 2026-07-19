@@ -1516,14 +1516,19 @@ def applicants_list(request, position):
             latest_doc_by_type=latest_doc_meta_by_applicant_id.get(archive.applicant_id, {}),
         )
         requirements_total = trackable_total if trackable_total > 0 else max(len(requirement_scan_rows), 1)
+        scanned_required, required_total = _required_requirement_counts(
+            scanned_types,
+            disp_snapshot,
+            requirements_group_a,
+        )
         bl_gate = (
             _intake_module2_blacklist_check_payload(archive.applicant)
             if archive.applicant_id and archive.applicant
             else _intake_module2_blacklist_check_payload(None)
         )
         _req_status_label, _req_status_tier = _archive_list_status_label_and_tier(
-            scanned_count,
-            requirements_total,
+            scanned_required,
+            required_total,
             blacklist_blocked=bool(bl_gate.get('blacklistBlocked')),
         )
         archive_records.append({
@@ -1555,6 +1560,8 @@ def applicants_list(request, position):
             'requirementScanRows': requirement_scan_rows,
             'scannedCount': scanned_count,
             'requirementsTotal': requirements_total,
+            'requiredScannedCount': scanned_required,
+            'requiredTotal': required_total,
             'requirementsStatusLabel': _req_status_label,
             'requirementsStatusTier': _req_status_tier,
             'applicantId': str(archive.applicant_id) if archive.applicant_id else '',

@@ -4908,7 +4908,7 @@
                 <td style="text-align: center; vertical-align: middle;"
                     title="{% if row.blacklistBlocked %}Blacklisted — cannot proceed to Applicant Evaluation and Eligibility ({{ row.scannedCount }}/{{ row.requirementsTotal }} docs on file){% else %}Applicant requirements (scan checklist): {{ row.scannedCount }}/{{ row.requirementsTotal }} filed — same totals as Documents{% endif %}">
                     <span class="pastel-status-pill status--{{ row.requirementsStatusTier }}">
-                        {% if row.requirementsStatusTier == 'pending' or row.requirementsStatusTier == 'incomplete' %}
+                        {% if row.requirementsStatusTier == 'pending' or row.requirementsStatusTier == 'incomplete' or row.requirementsStatusTier == 'complete' %}
                             <span class="pulse-dot"></span>
                         {% endif %}
                         {{ row.requirementsStatusLabel }}
@@ -4917,7 +4917,7 @@
                 <td style="vertical-align: middle; text-align: center;">
                     <button
                         type="button"
-                        class="btn-archive-docs {% if row.scannedCount == row.requirementsTotal %}btn-archive-docs--done{% elif row.scannedCount > 0 %}btn-archive-docs--partial{% else %}btn-archive-docs--none{% endif %}"
+                        class="btn-archive-docs {% if row.requiredTotal > 0 and row.requiredScannedCount >= row.requiredTotal %}btn-archive-docs--done{% elif row.scannedCount > 0 %}btn-archive-docs--partial{% else %}btn-archive-docs--none{% endif %}"
                         onclick="openArchiveRequirementsModal(this)"
                         data-reference="{{ row.referenceNumber }}"
                         title="Applicant requirement scan checklist — {{ row.scannedCount }} of {{ row.requirementsTotal }} digitally filed"
@@ -8714,20 +8714,22 @@
         });
     }
 
-    function syncArchiveRequirementsButtonSummary(scannedRequired, totalRequired) {
+    function syncArchiveRequirementsButtonSummary(scannedRequired, requiredTotal, scannedAll, totalAll) {
         const payload = currentArchiveRequirementsPayload;
         const ref = payload && payload.referenceNumber ? String(payload.referenceNumber) : '';
         if (!ref) return;
         const btn = document.querySelector('.btn-archive-docs[data-reference="' + ref + '"]');
         if (!btn) return;
-        const scanned = Number(scannedRequired) || 0;
-        const total = Number(totalRequired) || 0;
-        btn.textContent = 'Requirements ' + scanned + '/' + total;
-        btn.title = 'Applicant requirement scan checklist — ' + scanned + ' of ' + total + ' digitally filed';
+        const scannedAllNum = Number(scannedAll) || 0;
+        const totalAllNum = Number(totalAll) || 0;
+        const scannedReqNum = Number(scannedRequired) || 0;
+        const totalReqNum = Number(requiredTotal) || 0;
+        btn.textContent = 'Requirements ' + scannedAllNum + '/' + totalAllNum;
+        btn.title = 'Applicant requirement scan checklist — ' + scannedAllNum + ' of ' + totalAllNum + ' digitally filed';
         btn.classList.remove('btn-archive-docs--done', 'btn-archive-docs--partial', 'btn-archive-docs--none');
-        if (total > 0 && scanned >= total) {
+        if (totalReqNum > 0 && scannedReqNum >= totalReqNum) {
             btn.classList.add('btn-archive-docs--done');
-        } else if (scanned > 0) {
+        } else if (scannedAllNum > 0) {
             btn.classList.add('btn-archive-docs--partial');
         } else {
             btn.classList.add('btn-archive-docs--none');
@@ -8737,7 +8739,7 @@
     /**
      * LIST OF APPLICANTS — keep Status column in sync with the scan checklist (same X/Y as Documents).
      */
-    function syncArchiveRequirementsListRowStatus(scannedAll, totalAll) {
+    function syncArchiveRequirementsListRowStatus(scannedRequired, requiredTotal, scannedAll, totalAll) {
         const payload = currentArchiveRequirementsPayload;
         const ref = payload && payload.referenceNumber ? String(payload.referenceNumber) : '';
         if (!ref) return;
@@ -8748,8 +8750,10 @@
         const statusTd = tr.querySelector('td[title*="Applicant requirements"], td[title*="Blacklisted"]');
         const statusPill = statusTd ? statusTd.querySelector('.pastel-status-pill') : null;
         if (!statusPill) return;
-        const scanned = Number(scannedAll) || 0;
-        const total = Number(totalAll) || 0;
+        const scannedAllNum = Number(scannedAll) || 0;
+        const totalAllNum = Number(totalAll) || 0;
+        const scannedReqNum = Number(scannedRequired) || 0;
+        const totalReqNum = Number(requiredTotal) || 0;
         var label;
         var tier;
         if (payload && payload.blacklistBlocked) {
@@ -8758,31 +8762,31 @@
             if (statusTd) {
                 statusTd.title =
                     'Blacklisted — cannot proceed to Applicant Evaluation and Eligibility (' +
-                    scanned + '/' + total + ' docs on file)';
+                    scannedAllNum + '/' + totalAllNum + ' docs on file)';
             }
-        } else if (total <= 0) {
+        } else if (totalReqNum <= 0) {
             label = 'Pending';
             tier = 'pending';
             if (statusTd) {
                 statusTd.title =
                     'Applicant requirements (scan checklist): ' +
-                    scanned + '/' + total + ' filed — same totals as Documents';
+                    scannedAllNum + '/' + totalAllNum + ' filed — same totals as Documents';
             }
-        } else if (scanned >= total) {
+        } else if (scannedReqNum >= totalReqNum) {
             label = 'Complete';
             tier = 'complete';
             if (statusTd) {
                 statusTd.title =
                     'Applicant requirements (scan checklist): ' +
-                    scanned + '/' + total + ' filed — same totals as Documents';
+                    scannedAllNum + '/' + totalAllNum + ' filed — same totals as Documents';
             }
-        } else if (scanned > 0) {
+        } else if (scannedAllNum > 0) {
             label = 'Incomplete';
             tier = 'incomplete';
             if (statusTd) {
                 statusTd.title =
                     'Applicant requirements (scan checklist): ' +
-                    scanned + '/' + total + ' filed — same totals as Documents';
+                    scannedAllNum + '/' + totalAllNum + ' filed — same totals as Documents';
             }
         } else {
             label = 'Pending';
@@ -8790,13 +8794,13 @@
             if (statusTd) {
                 statusTd.title =
                     'Applicant requirements (scan checklist): ' +
-                    scanned + '/' + total + ' filed — same totals as Documents';
+                    scannedAllNum + '/' + totalAllNum + ' filed — same totals as Documents';
             }
         }
         const tierClasses = ['status--complete', 'status--incomplete', 'status--pending', 'status--blocked', 'status--disqualified', 'status--encoded'];
         tierClasses.forEach(function (cls) { statusPill.classList.remove(cls); });
         statusPill.classList.add('status--' + tier);
-        const needsPulse = tier === 'pending' || tier === 'incomplete';
+        const needsPulse = tier === 'pending' || tier === 'incomplete' || tier === 'complete';
         if (needsPulse) {
             statusPill.innerHTML = '<span class="pulse-dot"></span> ' + label;
         } else {
@@ -8840,8 +8844,8 @@
         const totalAll = (payload && payload.trackableTotal != null)
             ? Number(payload.trackableTotal)
             : safeRows.length;
-        syncArchiveRequirementsButtonSummary(scannedAll, totalAll);
-        syncArchiveRequirementsListRowStatus(scannedAll, totalAll);
+        syncArchiveRequirementsButtonSummary(scannedRequired, requiredTotal, scannedAll, totalAll);
+        syncArchiveRequirementsListRowStatus(scannedRequired, requiredTotal, scannedAll, totalAll);
         updateArchiveProceedButton(requiredTotal > 0 && scannedRequired >= requiredTotal);
     }
 
