@@ -789,22 +789,22 @@ def _staff_reports_analytics_payload(request):
     applicants_by_channel = [
         {
             'channel': 'danger_zone',
-            'label': 'Option A — Resident of Danger Zone or Hazard Area',
+            'label': 'Option A',
             'count': situation_counts_map.get('danger_zone', 0),
         },
         {
             'channel': 'ejected',
-            'label': 'Option B — Ejected or Evicted from Prior Residence',
+            'label': 'Option B',
             'count': situation_counts_map.get('ejected', 0),
         },
         {
             'channel': 'relocated',
-            'label': 'Option C — Displaced by Government Project or Infrastructure',
+            'label': 'Option C',
             'count': situation_counts_map.get('relocated', 0),
         },
         {
             'channel': 'not_abc',
-            'label': 'Option D — None of A, B, or C (Other / not listed)',
+            'label': 'Option D',
             'count': situation_counts_map.get('not_abc', 0),
         },
     ]

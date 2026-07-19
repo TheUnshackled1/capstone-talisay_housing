@@ -1692,7 +1692,11 @@
                     }]
                 };
                 if (mode === 'donut') { config.options.cutout = '62%'; }
-                // Disable native legend — we inject custom HTML legend after chart init
+                // Force a perfect circle — maintainAspectRatio:true with aspectRatio:1
+                // means Chart.js will NEVER stretch the canvas into an oval.
+                config.options.maintainAspectRatio = true;
+                config.options.aspectRatio = 1;
+                // Disable native legend — we inject a custom wrappable HTML legend
                 config.options.plugins.legend.display = false;
                 config.options.plugins.tooltip.callbacks = {
                     footer: function (items) {
@@ -1786,28 +1790,56 @@
 
         chartInstances[canvasId] = new Chart(canvas, config);
 
-        // After chart creation — inject custom HTML legend for pie / donut
+        // After chart creation — inject custom HTML legend for pie / donut (single dataset)
         if ((mode === 'pie' || mode === 'donut') && dataset.type === 'single') {
             var labels = dataset.labels;
-            canvasWrapForLegend.style.cssText += '; display:flex !important; align-items:center; overflow:visible;';
-            canvas.style.flex = '0 0 55%';
-            canvas.style.width = '55%';
+
+            // Layout: make the wrapper a flex row so legend sits to the right.
+            // Chart.js now enforces aspectRatio:1, so it will draw a square by itself.
+            // We just need to make the canvas NOT stretch to 100% of the flex height.
+            canvasWrapForLegend.style.display = 'flex';
+            canvasWrapForLegend.style.alignItems = 'center';
+            canvasWrapForLegend.style.overflow = 'visible';
+            // Let the canvas size itself (Chart.js will keep it square via aspectRatio:1).
+            // Removing forced px values that were fighting Chart.js internals.
+            canvas.style.flex = '0 0 auto';
+            canvas.style.width = 'auto';
+            canvas.style.height = 'auto';
             canvas.style.minWidth = '0';
 
             var legendEl = document.createElement('div');
             legendEl.className = 'custom-html-legend';
-            legendEl.style.cssText = 'flex:1;min-width:0;display:flex;flex-direction:column;gap:0.45rem;padding-left:0.65rem;overflow-y:auto;max-height:240px;';
+            legendEl.style.cssText = [
+                'flex:1',
+                'min-width:0',
+                'display:flex',
+                'flex-direction:column',
+                'gap:0.4rem',
+                'padding-left:0.6rem',
+                'overflow-y:auto',
+                'max-height:240px',
+                'align-self:center'
+            ].join(';') + ';';
 
             labels.forEach(function(lbl, i) {
                 var row = document.createElement('div');
                 row.style.cssText = 'display:flex;align-items:flex-start;gap:0.4rem;';
 
                 var dot = document.createElement('div');
-                dot.style.cssText = 'width:9px;height:9px;border-radius:50%;flex-shrink:0;margin-top:0.18rem;background:' + PALETTE[i % PALETTE.length] + ';';
+                dot.style.cssText = [
+                    'width:9px', 'height:9px', 'border-radius:50%',
+                    'flex-shrink:0', 'margin-top:0.18rem',
+                    'background:' + PALETTE[i % PALETTE.length]
+                ].join(';') + ';';
 
                 var txt = document.createElement('span');
-                txt.textContent = lbl;
-                txt.style.cssText = 'font-size:0.7rem;color:#475569;line-height:1.35;white-space:normal;word-break:break-word;overflow-wrap:anywhere;';
+                // Trim label: if it has ' — ' only show the part before it
+                var displayLbl = lbl.indexOf(' \u2014 ') !== -1 ? lbl.split(' \u2014 ')[0].trim() : lbl;
+                txt.textContent = displayLbl;
+                txt.style.cssText = [
+                    'font-size:0.7rem', 'color:#475569', 'line-height:1.35',
+                    'white-space:normal', 'word-break:break-word', 'overflow-wrap:anywhere'
+                ].join(';') + ';';
 
                 row.appendChild(dot);
                 row.appendChild(txt);
