@@ -1463,7 +1463,16 @@
         if (!spec || !spec.labels || !spec.values || !spec.labels.length) return null;
         return {
             type: 'single',
-            labels: spec.labels.map(function(l) { return String(l); }),
+            labels: spec.labels.map(function(l) {
+                var s = String(l);
+                // Convert ALL-CAPS labels (e.g. 'DRUNK DISTURBANCE') to Title Case
+                if (s === s.toUpperCase() && s.length > 1) {
+                    s = s.replace(/\w\S*/g, function(w) {
+                        return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+                    });
+                }
+                return s;
+            }),
             values: spec.values.map(function(v) { return Number(v) || 0; })
         };
     }
@@ -1834,11 +1843,13 @@
 
                 var txt = document.createElement('span');
                 // Trim label: if it has ' — ' only show the part before it
-                var displayLbl = lbl.indexOf(' \u2014 ') !== -1 ? lbl.split(' \u2014 ')[0].trim() : lbl;
+                var displayLbl = lbl.indexOf(' — ') !== -1 ? lbl.split(' — ')[0].trim() : lbl;
+                // Convert to title case: capitalize first letter of each word
+                displayLbl = displayLbl.toLowerCase().split(' ').map(function(s) { return s.charAt(0).toUpperCase() + s.substring(1); }).join(' ');
                 txt.textContent = displayLbl;
                 txt.style.cssText = [
                     'font-size:0.7rem', 'color:#475569', 'line-height:1.35',
-                    'white-space:normal', 'word-break:break-word', 'overflow-wrap:anywhere'
+                    'white-space:normal', 'word-break:normal', 'overflow-wrap:break-word'
                 ].join(';') + ';';
 
                 row.appendChild(dot);
