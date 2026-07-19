@@ -668,16 +668,37 @@ button {
 }
 
 .stat-card {
-    background: rgba(255, 255, 255, 0.55);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    border-radius: 16px;
-    padding: 1.25rem;
-    box-shadow: 0 4px 24px rgba(15, 23, 42, 0.07), 0 1px 4px rgba(15, 23, 42, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.7);
-    transition: all var(--transition-fast);
+    background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.72) 0%,
+        rgba(255, 255, 255, 0.42) 100%
+    );
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border-radius: 20px;
+    padding: 1.35rem 1.4rem;
+    box-shadow:
+        0 8px 32px rgba(15, 23, 42, 0.10),
+        0 2px 8px rgba(15, 23, 42, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.65);
+    transition: all 0.25s ease;
     position: relative;
     overflow: hidden;
+}
+
+/* Shimmer highlight overlay */
+.stat-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.18) 0%,
+        rgba(255, 255, 255, 0.0) 60%
+    );
+    border-radius: inherit;
+    pointer-events: none;
 }
 
 .stat-card::before {
@@ -685,9 +706,16 @@ button {
 }
 
 .stat-card:hover {
-    background: rgba(255, 255, 255, 0.72);
-    box-shadow: 0 8px 32px rgba(15, 23, 42, 0.11), 0 2px 8px rgba(15, 23, 42, 0.06);
-    transform: translateY(-3px);
+    background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.88) 0%,
+        rgba(255, 255, 255, 0.60) 100%
+    );
+    box-shadow:
+        0 16px 48px rgba(15, 23, 42, 0.14),
+        0 4px 16px rgba(15, 23, 42, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 1);
+    transform: translateY(-5px);
 }
 
 .stat-card:hover::before {
