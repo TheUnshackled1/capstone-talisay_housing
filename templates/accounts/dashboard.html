@@ -283,6 +283,7 @@
             {% else %}
             <!-- DEFAULT - Joie (second_member) and Jocel (fourth_member) - Simplified Modules -->
             <div class="nav-section">
+                <span class="nav-group-label">Main</span>
                 <a href="{% url 'accounts:dashboard' %}" class="nav-link active">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <rect x="3" y="3" width="7" height="7" rx="1"/>
@@ -357,6 +358,7 @@
                 </a>
             </div>
             <div class="nav-section" id="Reports">
+                <span class="nav-group-label">Records</span>
                 <a href="{% url 'documents:management' request.user.position %}" class="nav-link {% block nav_documents %}{% endblock %}">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
@@ -469,10 +471,29 @@
             <!-- Role-Based Welcome Message -->
             <div class="welcome-banner scroll-animate">
                 <div class="welcome-content">
-                    <h2>Welcome, {{ user.first_name }}!</h2>
+                    <p class="welcome-greeting" id="welcomeGreeting">Good morning,</p>
+                    <h2>{{ user.first_name }} {{ user.last_name }}</h2>
                     <p class="welcome-role">{{ user.get_position_display }}</p>
                 </div>
-                <div class="welcome-date" id="welcomeDate"></div>
+                <div class="welcome-meta">
+                    <div class="welcome-date" id="welcomeDate"></div>
+                    {% if user.position == 'second_member' or user.position == 'fourth_member' %}
+                    <div class="welcome-summary">
+                        <div class="welcome-summary-item">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                            <span><strong>{{ total_applicants }}</strong> Applicants</span>
+                        </div>
+                        <div class="welcome-summary-item">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                            <span><strong>{{ cases_total }}</strong> Cases</span>
+                        </div>
+                        <div class="welcome-summary-item warn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                            <span><strong>{{ incomplete_docs }}</strong> Docs Pending</span>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
             </div>
 
             <!-- Stats Overview - Role Based -->
@@ -491,6 +512,7 @@
                     </div>
                     <div class="stat-value">{{ total_applicants }}</div>
                     <div class="stat-label">Total Applicants</div>
+                    <div class="stat-sub">All registered records</div>
                 </div>
 
                 <div class="stat-card green scroll-animate-scale scroll-delay-2">
@@ -502,7 +524,8 @@
                         </div>
                     </div>
                     <div class="stat-value">{{ cases_total }}</div>
-                    <div class="stat-label">Cases</div>
+                    <div class="stat-label">Open Cases</div>
+                    <div class="stat-sub">Active complaints</div>
                 </div>
 
                 <div class="stat-card amber scroll-animate-scale scroll-delay-3">
@@ -516,6 +539,7 @@
                     </div>
                     <div class="stat-value">{{ housing_units }}</div>
                     <div class="stat-label">Housing Units</div>
+                    <div class="stat-sub">Total inventory</div>
                 </div>
 
                 <div class="stat-card purple scroll-animate-right scroll-delay-4">
@@ -529,7 +553,8 @@
                         </div>
                     </div>
                     <div class="stat-value">{{ incomplete_docs }}</div>
-                    <div class="stat-label">Incomplete Documents</div>
+                    <div class="stat-label">Docs Incomplete</div>
+                    <div class="stat-sub">Requires attention</div>
                 </div>
 
 
@@ -547,6 +572,7 @@
                     </div>
                     <div class="stat-value">{{ total_applicants }}</div>
                     <div class="stat-label">Total Applicants</div>
+                    <div class="stat-sub">All registered records</div>
                 </div>
 
                 <div class="stat-card green scroll-animate-scale scroll-delay-2">
@@ -558,7 +584,8 @@
                         </div>
                     </div>
                     <div class="stat-value">{{ cases_total }}</div>
-                    <div class="stat-label">Cases</div>
+                    <div class="stat-label">Open Cases</div>
+                    <div class="stat-sub">Active complaints</div>
                 </div>
 
                 <div class="stat-card amber scroll-animate-scale scroll-delay-3">
@@ -572,6 +599,7 @@
                     </div>
                     <div class="stat-value">{{ housing_units }}</div>
                     <div class="stat-label">Housing Units</div>
+                    <div class="stat-sub">Total inventory</div>
                 </div>
 
                 <div class="stat-card purple scroll-animate-right scroll-delay-4">
@@ -585,7 +613,8 @@
                         </div>
                     </div>
                     <div class="stat-value">{{ incomplete_docs }}</div>
-                    <div class="stat-label">Incomplete Documents</div>
+                    <div class="stat-label">Docs Incomplete</div>
+                    <div class="stat-sub">Requires attention</div>
                 </div>
 
                 {% else %}
@@ -647,6 +676,35 @@
             </div>
 
             {% if user.position == 'second_member' or user.position == 'fourth_member' %}
+            <!-- Quick Actions Strip -->
+            <div style="margin-bottom: 0.5rem;">
+                <div class="quick-actions-label">Quick Actions</div>
+                <div class="quick-actions">
+                    <a href="{% url 'intake:applicants_list' request.user.position %}" class="quick-action-btn qa-primary">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        New Applicant
+                    </a>
+                    <a href="{% url 'cases:case_dashboard' request.user.position %}" class="quick-action-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                        View Cases
+                    </a>
+                    <a href="{% url 'units:housing_units_monitoring' request.user.position %}" class="quick-action-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                        Housing Units
+                    </a>
+                    <a href="{% url 'documents:management' request.user.position %}" class="quick-action-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        Documents
+                    </a>
+                    <a href="{% url 'applications:applications_list' request.user.position %}" class="quick-action-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>
+                        Applications
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if user.position == 'second_member' or user.position == 'fourth_member' %}
 <style>
     /* ===================================================================
        Reports & Analytics — institutional dashboard
@@ -679,50 +737,69 @@
     }
     .rep-section h2 {
         margin: 0;
-        font-size: 0.7rem;
+        font-size: 0.72rem;
         font-weight: 800;
-        letter-spacing: 0.14em;
+        letter-spacing: 0.1em;
         text-transform: uppercase;
-        color: #334155;
-        display: none;
+        color: #047857;
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        white-space: nowrap;
+    }
+    .rep-section h2::before {
+        content: '';
+        display: inline-block;
+        width: 0.55rem;
+        height: 0.55rem;
+        border-radius: 50%;
+        background: #10b981;
+        flex-shrink: 0;
     }
     .rep-section .rep-section-note {
         margin: 0;
         font-size: 0.74rem;
         color: var(--rep-muted);
         line-height: 1.4;
-        display: none;
     }
     .rep-section-rule {
         flex: 1;
         height: 1px;
-        background: linear-gradient(90deg, #e2e8f0 0%, transparent 100%);
+        background: linear-gradient(90deg, #d1fae5 0%, transparent 100%);
         margin-left: 0.25rem;
-        display: none;
     }
 
     /* Card primitives */
     .rep-card {
-        background: #ffffff;
-        border: 1px solid var(--rep-card-border);
-        border-radius: 0.7rem;
-        padding: 0.95rem 1.05rem 1rem;
-        box-shadow: var(--rep-card-shadow);
+        background: linear-gradient(135deg, rgba(255,255,255,0.82) 0%, rgba(255,255,255,0.60) 100%);
+        backdrop-filter: blur(12px) saturate(160%);
+        -webkit-backdrop-filter: blur(12px) saturate(160%);
+        border: 1px solid rgba(255,255,255,0.72);
+        border-radius: 1rem;
+        padding: 1.1rem 1.2rem 1.1rem;
+        box-shadow: 0 4px 20px rgba(15,23,42,0.08), 0 1px 4px rgba(15,23,42,0.04), inset 0 1px 0 rgba(255,255,255,0.9);
         position: relative;
         display: flex;
         flex-direction: column;
+        transition: box-shadow 0.22s ease, transform 0.22s ease;
+    }
+    .rep-card:hover {
+        box-shadow: 0 10px 32px rgba(15,23,42,0.11), 0 2px 8px rgba(15,23,42,0.06), inset 0 1px 0 rgba(255,255,255,1);
+        transform: translateY(-2px);
     }
     .rep-card-title {
-        margin: 0 0 0.4rem;
-        font-size: 0.66rem;
-        font-weight: 800;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
-        color: #475569;
+        margin: 0 0 0.55rem;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+        text-transform: none;
+        color: #1e293b;
         display: flex;
         align-items: baseline;
         justify-content: space-between;
         gap: 0.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid rgba(226,232,240,0.6);
     }
     .rep-card-sub {
         margin: 0 0 0.6rem;
@@ -804,6 +881,7 @@
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
         gap: 0.85rem;
+        margin-bottom: 1.25rem;
     }
     .rep-grid-4 {
         display: grid;
@@ -1095,17 +1173,166 @@
     .rep-timeline-node-label { font-size: 0.74rem; font-weight: 700; color: #0f172a; }
     .rep-timeline-node-sub { font-size: 0.65rem; color: #64748b; }
     .rep-timeline-node-value { font-size: 0.95rem; font-weight: 800; color: #0f172a; font-variant-numeric: tabular-nums; text-align: right; }
+
+    /* ── Welcome banner enhancements ── */
+    .welcome-greeting {
+        font-size: 0.78rem;
+        font-weight: 500;
+        color: rgba(255,255,255,0.75);
+        margin: 0 0 0.15rem;
+        letter-spacing: 0.02em;
+    }
+    .welcome-banner h2 {
+        font-size: 1.35rem;
+        font-weight: 800;
+        margin: 0 0 0.2rem;
+    }
+    .welcome-meta {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0.65rem;
+    }
+    .welcome-summary {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+    .welcome-summary-item {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.78rem;
+        color: rgba(255,255,255,0.85);
+        background: rgba(255,255,255,0.12);
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 999px;
+        padding: 0.28rem 0.75rem;
+        backdrop-filter: blur(4px);
+    }
+    .welcome-summary-item svg {
+        width: 13px; height: 13px;
+        stroke: rgba(255,255,255,0.8);
+        flex-shrink: 0;
+    }
+    .welcome-summary-item strong { color: #ffffff; font-weight: 800; }
+    .welcome-summary-item.warn {
+        background: rgba(251,191,36,0.18);
+        border-color: rgba(251,191,36,0.3);
+    }
+    .welcome-summary-item.warn strong { color: #fde68a; }
+    .welcome-summary-item.warn svg { stroke: #fde68a; }
+
+    /* ── Quick Actions strip ── */
+    .quick-actions {
+        display: flex;
+        gap: 0.65rem;
+        flex-wrap: nowrap;
+        margin-bottom: 1.1rem;
+    }
+    .quick-action-btn {
+        flex: 1;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.45rem;
+        padding: 0.52rem 1.05rem;
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: #0f172a;
+        background: rgba(255,255,255,0.72);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.7);
+        border-radius: 999px;
+        text-decoration: none;
+        box-shadow: 0 2px 8px rgba(15,23,42,0.07);
+        transition: all 0.2s ease;
+        cursor: pointer;
+        font-family: inherit;
+        white-space: nowrap;
+    }
+    .quick-action-btn:hover {
+        background: rgba(255,255,255,0.95);
+        box-shadow: 0 4px 16px rgba(15,23,42,0.12);
+        transform: translateY(-2px);
+        color: #047857;
+    }
+    .quick-action-btn svg {
+        width: 14px; height: 14px;
+        stroke: currentColor;
+        flex-shrink: 0;
+    }
+    .quick-action-btn.qa-primary {
+        background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+        color: #ffffff;
+        border-color: #047857;
+    }
+    .quick-action-btn.qa-primary:hover {
+        background: linear-gradient(135deg, #059669 0%, #065f46 100%);
+        color: #ffffff;
+    }
+    .quick-actions-label {
+        font-size: 0.65rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: #94a3b8;
+        margin-bottom: 0.45rem;
+    }
+
+    /* ── Nav group labels ── */
+    .nav-group-label {
+        font-size: 0.6rem;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: rgba(255,255,255,0.35);
+        padding: 0.85rem 1rem 0.3rem;
+        display: block;
+    }
+
+    /* ── Empty state ── */
+    .rep-empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.65rem;
+        padding: 2rem 1rem;
+        text-align: center;
+        color: #94a3b8;
+    }
+    .rep-empty-state svg {
+        width: 36px; height: 36px;
+        stroke: #10b981;
+        opacity: 0.7;
+    }
+    .rep-empty-state-title {
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: #334155;
+    }
+    .rep-empty-state-sub {
+        font-size: 0.72rem;
+        color: #64748b;
+        line-height: 1.5;
+    }
+    /* ── Stat card sub-label ── */
+    .stat-sub {
+        font-size: 0.65rem;
+        font-weight: 500;
+        color: #94a3b8;
+        margin-top: 0.2rem;
+        letter-spacing: 0.01em;
+    }
 </style>
 
 <div class="rep-page">
     {{ analytics_charts_data|json_script:"tha-analytics-charts" }}
 
-    <!-- Section: Applicant analytics -->
-    <div class="rep-section">
-        <h2>Applicant analytics</h2>
-        <p class="rep-section-note">Status, situation, and barangay distribution of all applicants.</p>
-        <span class="rep-section-rule"></span>
-    </div>
+
     <div class="rep-grid-3 rep-grid-charts">
         <div class="rep-card">
             <p class="rep-card-title">Applicants by status</p>
@@ -1124,12 +1351,7 @@
         </div>
     </div>
 
-    <!-- Section: Housing analytics -->
-    <div class="rep-section">
-        <h2>Housing analytics</h2>
-        <p class="rep-section-note">Module 2 applications and Module 4 inventory.</p>
-        <span class="rep-section-rule"></span>
-    </div>
+
     <div class="rep-grid-3 rep-grid-charts">
         <div class="rep-card">
             <p class="rep-card-title">ISF Population</p>
@@ -1144,7 +1366,18 @@
         <div class="rep-card">
             <p class="rep-card-title">Blacklisted</p>
             <p class="rep-card-sub">Permanently disqualified beneficiaries.</p>
+            {% if blacklist_count > 0 %}
             <div class="rep-chart-canvas"><canvas id="chartBlacklist"></canvas></div>
+            {% else %}
+            <div class="rep-empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                    <polyline points="22 4 12 14.01 9 11.01"/>
+                </svg>
+                <div class="rep-empty-state-title">No violations found</div>
+                <div class="rep-empty-state-sub">0 blacklisted applicants<br>All records are in good standing.</div>
+            </div>
+            {% endif %}
         </div>
     </div>
 
@@ -1354,7 +1587,7 @@
                 plugins: {
                     legend: {
                         position: 'bottom',
-                        labels: { boxWidth: 10, padding: 8, font: { size: 10 }, usePointStyle: true }
+                        labels: { boxWidth: 12, padding: 12, font: { size: 12, family: 'Inter, sans-serif' }, usePointStyle: true }
                     },
                     tooltip: {
                         backgroundColor: '#0f172a',
@@ -1977,6 +2210,15 @@
     </main>
 
     <script src="{% static 'js/dashboard.js' %}"></script>
+    <script>
+    // Time-of-day greeting
+    (function() {
+        var el = document.getElementById('welcomeGreeting');
+        if (!el) return;
+        var h = new Date().getHours();
+        el.textContent = h < 12 ? 'Good morning,' : h < 17 ? 'Good afternoon,' : 'Good evening,';
+    })();
+    </script>
 
 </body>
 </html>
