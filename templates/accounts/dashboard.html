@@ -1740,10 +1740,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     }]
                 };
                 if (mode === 'donut') { config.options.cutout = '62%'; }
-                // Force a perfect circle — maintainAspectRatio:true with aspectRatio:1
-                // means Chart.js will NEVER stretch the canvas into an oval.
-                config.options.maintainAspectRatio = true;
-                config.options.aspectRatio = 1;
+                // Set maintainAspectRatio to false so it fits the restricted container height.
+                // Chart.js natively keeps doughnut/pie charts perfectly circular.
+                config.options.maintainAspectRatio = false;
                 // Disable native legend — we inject a custom wrappable HTML legend
                 config.options.plugins.legend.display = false;
                 config.options.plugins.tooltip.callbacks = {
