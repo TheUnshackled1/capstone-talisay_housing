@@ -9979,7 +9979,7 @@
     function buildArchiveReqActionsInnerHtml(safeCode, row) {
         const rawCode = String(safeCode || '').trim().toUpperCase();
         if (!ARCHIVE_DOC_KEY_BY_CODE[rawCode]) {
-            return '<span style="color:#94a3b8;font-size:0.75rem;">—</span>';
+            return '<span style="color:#94a3b8;font-size:0.75rem;width:11.7rem;display:inline-flex;justify-content:center;align-items:center;">—</span>';
         }
         const hasFile = archiveReqRowHasFile(row);
         const docName = escapeHtml(String((row && row.latest_file_name) || (row && row.name) || rawCode).trim() || 'Document on file');
@@ -9990,14 +9990,14 @@
 
         const scanSvg = '<svg class="action-btn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:0.8rem; height:0.8rem; vertical-align:middle; margin-right:0.25rem;"><path d="M3 7V5a2 2 0 0 1 2-2h2"></path><path d="M17 3h2a2 2 0 0 1 2 2v2"></path><path d="M21 17v2a2 2 0 0 1-2 2h-2"></path><path d="M7 21H5a2 2 0 0 1-2-2v-2"></path><line x1="3" y1="12" x2="21" y2="12"></line></svg>';
 
-        let removeBtnHtml = '<span style="color:#94a3b8;font-size:0.75rem;min-width:4.5rem;display:inline-flex;justify-content:center;align-items:center;">—</span>';
+        let removeBtnHtml = '<span style="color:#94a3b8;font-size:0.75rem;width:6.2rem;display:inline-flex;justify-content:center;align-items:center;">—</span>';
         if (hasFile) {
             const trashSvg = '<svg class="action-btn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:0.8rem; height:0.8rem; vertical-align:middle; margin-right:0.25rem;"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>';
-            removeBtnHtml = '<button type="button" class="btn-modal primary archive-replace-btn-confirm" style="background-color: #dc2626; border-color: #dc2626; color: white;" data-archive-code="' + safeCode + '" onclick="removeArchiveRequirementByCode(this.getAttribute(\'data-archive-code\'))" title="Remove"' + disabledAttr + '>' + trashSvg + 'REMOVE</button>';
+            removeBtnHtml = '<button type="button" class="btn-modal primary archive-replace-btn-confirm" style="background-color: #dc2626; border-color: #dc2626; color: white; width: 6.2rem; justify-content: center;" data-archive-code="' + safeCode + '" onclick="removeArchiveRequirementByCode(this.getAttribute(\'data-archive-code\'))" title="Remove"' + disabledAttr + '>' + trashSvg + 'REMOVE</button>';
         }
 
-        return '<div class="archive-req-actions-group">'
-            + '<button type="button" class="btn-modal secondary archive-req-row-scan-btn" data-archive-scan-code="' + safeCode + '" data-has-existing-doc="' + hasExistingAttr + '" data-existing-doc-name="' + docName + '" onclick="scanArchiveRequirementByCode(this.getAttribute(\'data-archive-scan-code\'))" title="Capture from scanner (TWAIN) — saves to document vault' + disabledTitle + '"' + disabledAttr + '>' + scanSvg + 'SCAN</button>'
+        return '<div class="archive-req-actions-group" style="display:flex; gap:0.25rem;">'
+            + '<button type="button" class="btn-modal secondary archive-req-row-scan-btn" data-archive-scan-code="' + safeCode + '" data-has-existing-doc="' + hasExistingAttr + '" data-existing-doc-name="' + docName + '" onclick="scanArchiveRequirementByCode(this.getAttribute(\'data-archive-scan-code\'))" title="Capture from scanner (TWAIN) — saves to document vault' + disabledTitle + '"' + disabledAttr + ' style="width: 5.5rem; justify-content: center;">' + scanSvg + 'SCAN</button>'
             + removeBtnHtml
             + '</div>';
     }
