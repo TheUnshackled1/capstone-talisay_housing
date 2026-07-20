@@ -1739,10 +1739,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     }]
                 };
                 if (mode === 'donut') { config.options.cutout = '62%'; }
-                // Force a perfect circle — maintainAspectRatio:true with aspectRatio:1
-                // means Chart.js will NEVER stretch the canvas into an oval.
-                config.options.maintainAspectRatio = true;
-                config.options.aspectRatio = 1;
+                // Force a perfect circle — maintainAspectRatio:false prevents infinite growth in flex containers
+                config.options.maintainAspectRatio = false;
                 // Disable native legend — we inject a custom wrappable HTML legend
                 config.options.plugins.legend.display = false;
                 config.options.plugins.tooltip.callbacks = {
@@ -1849,9 +1847,9 @@ document.addEventListener('DOMContentLoaded', function () {
             canvasWrapForLegend.style.overflow = 'visible';
             // Let the canvas size itself (Chart.js will keep it square via aspectRatio:1).
             // Removing forced px values that were fighting Chart.js internals.
-            canvas.style.flex = '0 0 auto';
-            canvas.style.width = 'auto';
-            canvas.style.height = 'auto';
+            canvas.style.flex = '0 0 50%';
+            canvas.style.maxWidth = '50%';
+            canvas.style.height = '100%';
             canvas.style.minWidth = '0';
 
             var legendEl = document.createElement('div');
