@@ -4164,22 +4164,12 @@
         padding-right: 0.35rem !important;
     }
 
-    /* Slim widths — give Situation + Eligibility breathing room */
-    .applications-table.compact-table .col-applicant   { width: 12% !important; }
-    .applications-table.compact-table .col-transaction { width: 9% !important; }
-    .applications-table.compact-table .col-reference   { width: 8% !important; }
-    .applications-table.compact-table .col-encoded     { width: 10% !important; min-width: 6rem; }
-    .applications-table.compact-table .col-encoded-ago { width: 8% !important; min-width: 4.5rem; }
-    .applications-table.compact-table .col-status      { width: 17% !important; }
-    .applications-table.compact-table .col-staff       { width: 13% !important; }
-    /* Situation column uses both col-staff + col-status — staff rule must not shrink it */
-    .applications-table.compact-table th.col-staff.col-status,
-    .applications-table.compact-table td.col-staff.col-status {
-        width: 17% !important;
-        min-width: 8.25rem;
-    }
-    .applications-table.compact-table .col-eligibility { width: 15% !important; }
-    .applications-table.compact-table .col-actions     { width: 10% !important; }
+    /* Slim widths — redistributed without Situation Status column */
+    .applications-table.compact-table .col-applicant   { width: 22% !important; }
+    .applications-table.compact-table .col-encoded     { width: 15% !important; min-width: 6.5rem; }
+    .applications-table.compact-table .col-staff       { width: 18% !important; min-width: 9rem; }
+    .applications-table.compact-table .col-eligibility { width: 27% !important; }
+    .applications-table.compact-table .col-actions     { width: 14% !important; }
 
     /* Action stack — tighter gap */
     .applications-table.compact-table .m2-actions-stack {
@@ -4725,7 +4715,6 @@
                     <th class="col-num" title="Row number in this list">#</th>
                     <th class="col-applicant" title="Applicant &amp; Transactions">Applicant record</th>
                     <th class="col-encoded" title="Date and time proceeded to Application & Evaluation">Proceeded time</th>
-                    <th class="col-status" title="Applicant Situation selected during intake">Situation Status</th>
                     <th class="col-staff" title="Staff who proceeded from Module 1 (same as Intake Staff Handled)">Staff</th>
                     <th class="col-eligibility" title="Module 2 eligibility evaluation readiness (documents, checks, certification)">Eligibility status</th>
                     <th class="col-actions">Actions</th>
@@ -4789,34 +4778,6 @@
                             <div class="date-sub">
                                 {{ data.applicant.module2_handoff_at|default:data.applicant.created_at|date:"g:i A" }} · <span style="font-weight: 600; color: #475569;">{{ data.proceededAgo|default:"—" }}</span>
                             </div>
-                        </div>
-                    </td>
-                    <td class="col-status">
-                        <div class="col-status-wrap">
-                        {% if data.applicant.displacement_reason == 'danger_zone' %}
-                        <span class="situation-badge situation-badge--danger">
-                            Resident of Danger Zone or Hazard Area
-                        </span>
-                        <div style="font-size:0.55rem;color:#7f1d1d;margin-top:0.25rem;line-height:1.3;">Required: CDRRMO certification + Ronda / field photo evidence</div>
-                        {% elif data.applicant.displacement_reason == 'ejected' %}
-                        <span class="situation-badge situation-badge--ejected">
-                            Ejected or Evicted from Prior Residence
-                        </span>
-                        <div style="font-size:0.55rem;color:#9a3412;margin-top:0.25rem;line-height:1.3;">Required: Court Order + ISF docs</div>
-                        {% elif data.applicant.displacement_reason == 'relocated' %}
-                        <span class="situation-badge situation-badge--relocated">
-                            Displaced by Gov Project / Infra
-                        </span>
-                        <div style="font-size:0.55rem;color:#065f46;margin-top:0.25rem;line-height:1.3;">Required: Demand letter from legal office + ISF docs</div>
-                        {% elif data.applicant.displacement_reason == 'not_abc' %}
-                        <span class="situation-badge situation-badge--other">
-                            None of A, B, or C (Other)
-                        </span>
-                        {% else %}
-                        <span class="situation-badge situation-badge--other">
-                            Not set
-                        </span>
-                        {% endif %}
                         </div>
                     </td>
                     <td class="col-staff">
@@ -5091,7 +5052,7 @@
             <span class="hover-card-value" id="hcDob">—</span>
         </div>
         <div class="hover-card-meta-row" id="hcDispRow" style="display: none; margin-top: 0.35rem; align-items: center;">
-            <span class="hover-card-label">Situation</span>
+            <span class="hover-card-label">Situation Status</span>
             <span id="hcDispBadge"></span>
         </div>
     </div>
